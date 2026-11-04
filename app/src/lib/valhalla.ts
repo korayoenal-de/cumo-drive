@@ -82,7 +82,35 @@ async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promi
 export type RouteResult = { shape: LatLon[]; km: number; minutes: number };
 
 /** Route durch alle Punkte in Reihenfolge. */
+/** Der öffentliche Valhalla Server nimmt höchstens 10 Punkte pro Anfrage. */
+const MAX_LOCATIONS = 10;
+
+/**
+ * Route über beliebig viele Punkte: lange Listen werden in Stücke zu je höchstens 10 Punkten
+ * geteilt (das Ende eines Stücks ist der Anfang des nächsten) und wieder zusammengesetzt.
+ */
 export async function route(
+  points: LatLon[],
+  profile: Profile,
+  avoid: Avoid,
+  signal?: AbortSignal,
+  exclude: LatLon[] = [],
+  snapMajor = false,
+): Promise<RouteResult> {
+  if (points.length <= MAX_LOCATIONS) return routeChunk(points, profile, avoid, signal, exclude, snapMajor);
+  const out: RouteResult = { shape: [], km: 0, minutes: 0 };
+  for (let a = 0; a < points.length - 1; a += MAX_LOCATIONS - 1) {
+    const part = points.slice(a, Math.min(points.length, a + MAX_LOCATIONS));
+    if (part.length < 2) break;
+    const r = await routeChunk(part, profile, avoid, signal, exclude, snapMajor);
+    out.shape.push(...(out.shape.length ? r.shape.slice(1) : r.shape));
+    out.km += r.km;
+    out.minutes += r.minutes;
+  }
+  return out;
+}
+
+async function routeChunk(
   points: LatLon[],
   profile: Profile,
   avoid: Avoid,

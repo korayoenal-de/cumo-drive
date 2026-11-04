@@ -27,11 +27,12 @@ type Incident = {
     endTime?: string | null;
     from?: string;
     to?: string;
+    length?: number;
     events?: { description: string; iconCategory?: number }[];
   };
 };
 
-const FIELDS = '{incidents{type,geometry{type,coordinates},properties{iconCategory,events{description,iconCategory},startTime,endTime,from,to}}}';
+const FIELDS = '{incidents{type,geometry{type,coordinates},properties{iconCategory,events{description,iconCategory},startTime,endTime,from,to,length,roadNumbers}}}';
 
 /** Kacheln von 0,5 Grad, nur dort, wo Pässe liegen (etwa 2.000 km² je Kachel). */
 export function statusTiles(passes: Pass[], size = 0.5): [number, number, number, number][] {
@@ -63,22 +64,47 @@ function lineOf(i: Incident): LatLon[] {
   return (c as number[][]).map(([lon, lat]) => [lat, lon]);
 }
 
-/** Abstand Punkt zu Linie in Metern (über die Stützpunkte, für Sperrabschnitte reicht das). */
+/** Abstand Punkt zu Linie in Metern, über die Segmente (lokal eben gerechnet). */
 function distTo(p: LatLon, line: LatLon[]): number {
+  if (line.length === 1) return haversine(p, line[0]);
+  const kx = 111320 * Math.cos((p[0] * Math.PI) / 180);
+  const ky = 110540;
   let best = Infinity;
-  for (const q of line) best = Math.min(best, haversine(p, q));
+  for (let i = 1; i < line.length; i++) {
+    const ax = (line[i - 1][1] - p[1]) * kx, ay = (line[i - 1][0] - p[0]) * ky;
+    const bx = (line[i][1] - p[1]) * kx, by = (line[i][0] - p[0]) * ky;
+    const dx = bx - ax, dy = by - ay;
+    const len = dx * dx + dy * dy;
+    const t = len ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len)) : 0;
+    best = Math.min(best, Math.hypot(ax + t * dx, ay + t * dy));
+  }
   return best;
 }
 
+const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
+
+/** Nennt die Meldung den Pass beim Namen ("Nufenen-Pass", "Passo Giau")? */
+function namesPass(i: Incident, p: Pass): boolean {
+  const ends = [i.properties.from, i.properties.to].filter(Boolean).map((x) => norm(x!));
+  if (!ends.length) return false;
+  return [p.name, ...p.names].map(norm).filter((n) => n.length >= 5).some((n) => ends.some((e) => e.includes(n)));
+}
+
 /**
- * Ordnet Sperrungen den Pässen zu: Eine Sperrung zählt, wenn ihre Linie bis auf maxM an
- * den Passpunkt heranreicht. Kurze Baustellensperren weit unten im Tal zählen so nicht.
+ * Ordnet Sperrungen den Pässen zu. Eine Sperrung zählt, wenn sie mindestens 500 m lang ist und
+ * entweder bis auf maxM an den Passpunkt heranreicht oder den Pass beim Namen nennt und
+ * höchstens 8 km entfernt ist (Wintersperren beginnen oft am Schlagbaum unten im Tal).
  */
-export function matchStatus(passes: Pass[], incidents: Incident[], maxM = 400, now = new Date()): PassStatus[] {
+export function matchStatus(passes: Pass[], incidents: Incident[], maxM = 600, now = new Date()): PassStatus[] {
   const closures = incidents.filter((i) => i.properties.iconCategory === 8).map((i) => ({ i, line: lineOf(i) }));
   return passes.map((p) => {
     const pt = passPoint(p);
-    const hits = closures.filter((c) => distTo(pt, c.line) <= maxM);
+    const hits = closures.filter((c) => {
+      // kurze Sperrungen (Ausfahrten, Engstellen, Nebenstraßen) betreffen die Passstraße nicht
+      if ((c.i.properties.length ?? 0) < 500) return false;
+      const d = distTo(pt, c.line);
+      return d <= maxM || (d <= 8000 && namesPass(c.i, p));
+    });
     if (!hits.length) return { id: p.id, state: 'offen', until: null, since: null, text: null, checkedAt: now.toISOString() };
     const ends = hits.map((h) => h.i.properties.endTime).filter((e): e is string => !!e).sort();
     const starts = hits.map((h) => h.i.properties.startTime).filter((e): e is string => !!e).sort();
