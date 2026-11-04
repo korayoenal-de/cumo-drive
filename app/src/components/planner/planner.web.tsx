@@ -24,6 +24,7 @@ import { createHandoff } from '@/lib/handoff';
 import { createRide, joinRide, leaveRide, loadProfile, normalizeCode, QUICK_MESSAGES, sendMessage, setRole, useRide } from '@/lib/group/ride';
 import { encodeTour, expoGoLink } from '@/lib/share-code';
 import { closedHint, passState, usePassLive, type LiveRow } from '@/lib/pass-live';
+import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
 import { photoDate, photoGroupsGeoJson, photoUrl, thumbUrl, usePhotoGroups, type PhotoGroup } from '@/lib/photos';
 import { PASS_STATUS_URL, PASSES, passesAlong, passesGeoJson, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
 import QRCode from 'qrcode';
@@ -454,6 +455,7 @@ export default function Planner() {
               passes={passesOnRoute}
               passesNear={passesNear}
               onAddPass={(pass) => void addPoint('via', passPoint(pass))}
+              onAddVia={(p) => void addPoint('via', p)}
               live={live}
               profile={profile}
               setProfile={setProfile}
@@ -559,6 +561,7 @@ function TourPanel(props: {
   passes: { pass: Pass; km: number }[];
   passesNear: { pass: Pass; dKm: number }[];
   onAddPass: (p: Pass) => void;
+  onAddVia: (p: LatLon) => void;
   live: Map<string, LiveRow> | null;
   profile: Profile;
   setProfile: (p: Profile) => void;
@@ -688,6 +691,7 @@ function TourPanel(props: {
       ) : null}
 
       {pts.length >= 2 && !props.isSample ? <AddPass near={props.passesNear} live={props.live} busy={props.busy} onAdd={props.onAddPass} /> : null}
+      {pts.length >= 2 && !props.isSample ? <StopsPanel tour={props.tour} busy={props.busy} onAdd={props.onAddVia} /> : null}
 
       <Section title="Profil">
         <div style={S.chips}>
@@ -823,6 +827,56 @@ function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid }) {
 }
 
 /* ---------- Fotos ---------- */
+
+/** Stopps an der Strecke aus OpenStreetMap: Super Plus, Aussicht mit Parkplatz, Mittag, Kaffee. */
+function StopsPanel(props: { tour: PlannedTour; busy: boolean; onAdd: (p: LatLon) => void }) {
+  const [kind, setKind] = useState<StopKind | null>(null);
+  const [res, setRes] = useState<{ key: string; hits: StopHit[] | null; error: string | null } | null>(null);
+  const line = useMemo(() => flatten(props.tour).map((x) => x.p), [props.tour]);
+  const key = `${kind}|${line.length}|${line[0]?.join()}|${line[line.length - 1]?.join()}`;
+
+  useEffect(() => {
+    if (!kind || line.length < 2) return;
+    const ctrl = new AbortController();
+    stopsAlong(kind, line, ctrl.signal)
+      .then((hits) => setRes({ key, hits, error: null }))
+      .catch((e: Error) => !ctrl.signal.aborted && setRes({ key, hits: null, error: e.message }));
+    return () => ctrl.abort();
+  }, [kind, line, key]);
+
+  const cur = res?.key === key ? res : null;
+  return (
+    <Section title="Stopps an der Strecke">
+      <div style={S.chips}>
+        {STOP_KINDS.map((k) => (
+          <Chip key={k.id} on={kind === k.id} onClick={() => setKind(kind === k.id ? null : k.id)}>
+            {k.label}
+          </Chip>
+        ))}
+      </div>
+      {kind && <p style={S.muted}>{STOP_KINDS.find((k) => k.id === kind)?.hint}</p>}
+      {kind && !cur && <p style={S.muted}>Wird gesucht …</p>}
+      {cur?.error && <p style={S.muted}>Gerade nicht erreichbar ({cur.error}). Versuch es gleich noch mal.</p>}
+      {cur?.hits && cur.hits.length === 0 && <p style={S.muted}>Nichts direkt an der Strecke gefunden.</p>}
+      {cur?.hits && cur.hits.length > 0 && (
+        <ol style={S.passList}>
+          {cur.hits.map((h) => (
+            <li key={h.id} style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={S.legKm}>km {Math.round(h.km)}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={S.passName}>{h.name}</span>
+                <span style={S.dropDetail}>{[h.detail, h.offM > 150 ? `${formatKm(h.offM / 1000, 1)} km neben der Route` : 'direkt an der Route'].filter(Boolean).join(', ')}</span>
+              </span>
+              <button style={{ ...S.secondary, flex: 'none', padding: '0 12px' }} disabled={props.busy} onClick={() => props.onAdd(h.p)}>
+                Einplanen
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+    </Section>
+  );
+}
 
 /** Bekannte Pässe in die Tour einbauen: Suche nach Name plus Vorschläge in der Nähe der Route. */
 function AddPass(props: { near: { pass: Pass; dKm: number }[]; live: Map<string, LiveRow> | null; busy: boolean; onAdd: (p: Pass) => void }) {

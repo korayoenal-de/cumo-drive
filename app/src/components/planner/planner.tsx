@@ -4,7 +4,7 @@
  * Die Web Version liegt in planner.web.tsx.
  */
 import { router } from 'expo-router';
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -30,6 +30,7 @@ import { planChecked, type PlannedTour, type PlanStep } from '@/lib/plan';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { insertVia, movePoint, routePasses } from '@/lib/route-edit';
+import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
 import { flatten, formatKm, legs, PROFILES, type CheckClass, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
@@ -240,6 +241,22 @@ export default function Planner() {
     }, []);
   }
 
+  // Stopp in eine fertige Runde einplanen: Via Punkt mit kleinstem Umweg, dann neu planen
+  const [adding, setAdding] = useState(false);
+  async function addStop(p: LatLon) {
+    if (view.kind !== 'result') return;
+    const cur = view;
+    setAdding(true);
+    try {
+      const t = await planChecked(cur.tour.name, insertVia(cur.tour.wegpunkte, p), cur.req.profile, cur.req.avoid, () => undefined);
+      setView({ ...cur, tour: t });
+    } catch {
+      // bleibt bei der bisherigen Runde
+    } finally {
+      setAdding(false);
+    }
+  }
+
   function reroll(req: TourRequest) {
     void run(async () => req, lastStops.current);
   }
@@ -301,6 +318,8 @@ export default function Planner() {
           group={rideMode === 'gruppe'}
           onReroll={() => reroll(view.req)}
           onBack={() => setView({ kind: 'form' })}
+          adding={adding}
+          onAddStop={(p) => void addStop(p)}
         />
       </Screen>
     );
@@ -1187,6 +1206,8 @@ function TourMode({
         </Section>
       )}
 
+      {routeTour && <StopsSection line={line} busy={busy} onAdd={(p) => add('via', p)} />}
+
       <Section label="Profil">
         <View style={styles.wrap}>
           {PROFILES.map((p) => (
@@ -1496,10 +1517,54 @@ function ErrorCard({
   );
 }
 
+/** Stopps an der Strecke (OpenStreetMap): Super Plus, Aussicht mit Parkplatz, Mittag, Kaffee, mit Einplanen. */
+function StopsSection({ line, initial, busy, onAdd }: { line: LatLon[]; initial?: StopKind | null; busy: boolean; onAdd: (p: LatLon) => void }) {
+  const [kind, setKind] = useState<StopKind | null>(initial ?? null);
+  const [res, setRes] = useState<{ key: string; hits: StopHit[] | null; error: string | null } | null>(null);
+  const key = `${kind}|${line.length}|${line[0]?.join()}|${line[line.length - 1]?.join()}`;
+  useEffect(() => {
+    if (!kind || line.length < 2) return;
+    const ctrl = new AbortController();
+    stopsAlong(kind, line, ctrl.signal)
+      .then((hits) => setRes({ key, hits, error: null }))
+      .catch((e: Error) => !ctrl.signal.aborted && setRes({ key, hits: null, error: e.message }));
+    return () => ctrl.abort();
+  }, [kind, line, key]);
+  const cur = res?.key === key ? res : null;
+  return (
+    <Section label="Stopps an der Strecke">
+      <View style={styles.card}>
+        <View style={styles.wrap}>
+          {STOP_KINDS.map((k) => (
+            <Chip key={k.id} label={k.label} active={kind === k.id} onSurface onPress={() => setKind(kind === k.id ? null : k.id)} />
+          ))}
+        </View>
+        {kind && <AppText variant="caption" muted>{STOP_KINDS.find((k) => k.id === kind)?.hint}</AppText>}
+        {kind && !cur && <ActivityIndicator color={Colors.muted} />}
+        {cur?.error && <AppText variant="caption" muted>Gerade nicht erreichbar. Versuch es gleich noch mal.</AppText>}
+        {cur?.hits && cur.hits.length === 0 && <AppText variant="caption" muted>Nichts direkt an der Strecke gefunden.</AppText>}
+        {cur?.hits?.map((h) => (
+          <View key={h.id} style={styles.stopRow}>
+            <AppText variant="caption" muted style={styles.stopKm}>km {Math.round(h.km)}</AppText>
+            <View style={styles.flex}>
+              <AppText variant="title" numberOfLines={1}>{h.name}</AppText>
+              <AppText variant="caption" muted numberOfLines={1}>
+                {[h.detail, h.offM > 150 ? `${formatKm(h.offM / 1000, 1)} km neben der Route` : 'direkt an der Route'].filter(Boolean).join(', ')}
+              </AppText>
+            </View>
+            <SmallButton label={busy ? 'Plant' : 'Einplanen'} onPress={() => !busy && onAdd(h.p)} />
+          </View>
+        ))}
+      </View>
+    </Section>
+  );
+}
+
 function Result({
-  tour, req, stops, group, onReroll, onBack,
+  tour, req, stops, group, onReroll, onBack, onAddStop, adding,
 }: {
   tour: PlannedTour; req: TourRequest; stops: Stop[]; group: boolean; onReroll: () => void; onBack: () => void;
+  onAddStop: (p: LatLon) => void; adding: boolean;
 }) {
   const sauber = tour.km_je_klasse?.ok ?? 0;
   const total = tour.laenge_km;
@@ -1623,13 +1688,7 @@ function Result({
         </Section>
       )}
 
-      {stops.length > 0 && (
-        <View style={styles.card}>
-          <AppText variant="label">Stopps</AppText>
-          <AppText>{joinDe(stops.map((id) => STOPS.find((x) => x.id === id)!.label))}</AppText>
-          <AppText variant="caption" muted>Werden bald eingeplant, heute nur angezeigt.</AppText>
-        </View>
-      )}
+      <StopsSection line={line} initial={(stops.find((x) => x !== 'foto') as StopKind | undefined) ?? null} busy={adding} onAdd={onAddStop} />
 
       {group && <GroupBlock />}
 
@@ -1758,6 +1817,8 @@ const styles = StyleSheet.create({
   slotMain: { justifyContent: 'center', minHeight: 48, paddingVertical: Spacing.xs, paddingHorizontal: Spacing.s, borderRadius: Radius.s },
   slotEditing: { backgroundColor: Colors.surface2 },
   slotPlaceholder: { color: Colors.muted },
+  stopRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.s },
+  stopKm: { width: 52, fontVariant: ['tabular-nums'] },
   wpRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 52 },
   wpDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: Colors.line, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   wpDotEnd: { backgroundColor: Colors.signal, borderColor: Colors.signal },
