@@ -32,7 +32,7 @@ After=network-online.target
 [Service]
 User=cumo
 WorkingDirectory=/opt/cumo-routing
-ExecStart=/usr/bin/java -Xmx24g -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
+ExecStart=/usr/bin/java -Xmx18g -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
 Restart=always
 RestartSec=10
 
@@ -57,7 +57,7 @@ Persistent=true
 WantedBy=timers.target"""
 
 caddy_cmd = (
-    "IP=$(curl -s http://169.254.169.254/hetzner/v1/metadata/public-ipv4); "
+    "IP=$(curl -4 -s https://ifconfig.me || hostname -I | cut -d\\  -f1); "
     "printf 'routing.rallycumo.de, %s.sslip.io {\\n  encode gzip\\n  reverse_proxy 127.0.0.1:8989\\n}\\n' "
     '\\"${IP//./-}\\" > /etc/caddy/Caddyfile && systemctl restart caddy'
 )
@@ -108,3 +108,29 @@ runcmd:
 """
 (HERE / "cloud-init.yaml").write_text(ci)
 print(f"cloud-init.yaml geschrieben ({len(ci)} Zeichen)")
+
+# Dasselbe als Skript für Anbieter ohne Cloud config (zum Beispiel Contabo): per SSH als root ausführen.
+def heredoc(path: str, body: str, mode: str = "0644") -> str:
+    d = path.rsplit("/", 1)[0]
+    return f"mkdir -p {d}\ncat > {path} <<'CUMO_EOF'\n{body}\nCUMO_EOF\nchmod {mode} {path}\n"
+
+caddy_sh = caddy_cmd.replace('\\"', '"')
+inst = "#!/bin/bash\n# CUMO DRIVE Routing Server einrichten (Ubuntu 24.04), erzeugt aus build_cloud_init.py.\n"
+inst += "# Aufruf vom Mac: ssh root@IP 'bash -s' < install.sh\nset -euo pipefail\nexport DEBIAN_FRONTEND=noninteractive\n"
+inst += "apt-get update && apt-get -y upgrade\napt-get install -y openjdk-21-jre-headless osmium-tool caddy curl ufw\n"
+inst += "id cumo >/dev/null 2>&1 || useradd --system --shell /usr/sbin/nologin cumo\n"
+inst += heredoc("/opt/cumo-routing/config.yml", cfg)
+inst += heredoc("/opt/cumo-routing/custom_models/sportwagen.json", model)
+inst += heredoc("/opt/cumo-routing/setup-server.sh", setup, "0755")
+inst += heredoc("/etc/systemd/system/cumo-routing.service", unit)
+inst += heredoc("/etc/systemd/system/cumo-routing-update.service", upd_service)
+inst += heredoc("/etc/systemd/system/cumo-routing-update.timer", upd_timer)
+inst += "[ -f /swapfile ] || { fallocate -l 8G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab; }\n"
+inst += caddy_sh + "\n"
+inst += "ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw --force enable\n"
+inst += "systemctl daemon-reload\nsystemctl enable cumo-routing.service\nsystemctl enable --now cumo-routing-update.timer\n"
+inst += "echo 'Einrichtung fertig. Der Graph wird jetzt im Hintergrund gebaut (etwa eine Stunde).'\n"
+inst += "nohup /opt/cumo-routing/setup-server.sh > /opt/cumo-routing/first-run.log 2>&1 &\n"
+(HERE / "install.sh").write_text(inst)
+(HERE / "install.sh").chmod(0o755)
+print(f"install.sh geschrieben ({len(inst)} Zeichen)")
