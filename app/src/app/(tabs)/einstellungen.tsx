@@ -34,7 +34,9 @@ export default function Einstellungen() {
 
   return (
     <Screen>
-      <AppText variant="display">Einstellungen</AppText>
+      <AppText variant="display" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+        Einstellungen
+      </AppText>
       <Garage drives={session ? drives : null} />
       <View style={styles.gapM}>
         <AppText variant="label">Konto</AppText>
