@@ -1,11 +1,13 @@
 /**
  * Meine Touren: gespeicherte Touren mit Ordner, Suche und Kennzahlen.
- * Vorerst im Browser Speicher (localStorage); später über ein Konto synchronisiert.
- * Auf dem Handy liefert der Speicher vorerst nichts (kein localStorage).
+ * Im Browser Speicher (localStorage) und, sobald man angemeldet ist, im Konto (Supabase).
+ * syncLibrary gleicht beides ab: lokale Touren gehen hoch, Touren aus dem Konto kommen dazu.
  */
 import { useSyncExternalStore } from 'react';
 
-import { haversine, type LatLon, type Tour } from './tour';
+import { deleteCloudTour, listCloudTours, loadCloudTour, saveCloudTour } from './cloud-tours';
+import { supabase } from './supabase';
+import { haversine, type LatLon, type Profile, type Tour } from './tour';
 
 export type SavedTour = Tour & {
   id: string;
@@ -14,6 +16,11 @@ export type SavedTour = Tour & {
   updatedAt: string;
   minutes?: number;
   curves?: number;
+  profile?: Profile;
+  /** ID im Konto, sobald synchronisiert */
+  cloudId?: string;
+  /** Zeitpunkt des letzten Abgleichs (updatedAt danach heißt: lokal geändert) */
+  syncedAt?: string;
 };
 
 const KEY = 'cumo.drive.touren.v1';
@@ -62,7 +69,7 @@ function thinRuns(linie: Tour['linie']): Tour['linie'] {
   });
 }
 
-export function saveTour(t: Tour & { minutes?: number; curves?: number }, folder: string, id?: string): SavedTour {
+export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?: Profile }, folder: string, id?: string): SavedTour {
   const list = read();
   const now = new Date().toISOString();
   const old = id ? list.find((x) => x.id === id) : undefined;
@@ -73,13 +80,76 @@ export function saveTour(t: Tour & { minutes?: number; curves?: number }, folder
     folder: folder.trim(),
     createdAt: old?.createdAt ?? now,
     updatedAt: now,
+    cloudId: old?.cloudId,
+    syncedAt: old?.syncedAt,
   };
   write([saved, ...list.filter((x) => x.id !== saved.id)]);
   return saved;
 }
 
 export function deleteTour(id: string) {
+  const t = read().find((x) => x.id === id);
   write(read().filter((x) => x.id !== id));
+  if (t?.cloudId) void deleteCloudTour(t.cloudId).catch(() => undefined);
+}
+
+export type SyncState = { running: boolean; last: string | null; error: string | null };
+let sync: SyncState = { running: false, last: null, error: null };
+const syncListeners = new Set<() => void>();
+function setSync(p: Partial<SyncState>) {
+  sync = { ...sync, ...p };
+  for (const l of syncListeners) l();
+}
+export function useSyncState(): SyncState {
+  return useSyncExternalStore(
+    (l) => {
+      syncListeners.add(l);
+      return () => {
+        syncListeners.delete(l);
+      };
+    },
+    () => sync,
+    () => sync,
+  );
+}
+
+/** Lokale Touren und Konto abgleichen (nur angemeldet). */
+export async function syncLibrary(): Promise<void> {
+  if (sync.running) return;
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) return;
+  setSync({ running: true, error: null });
+  try {
+    // 1. lokal neue oder geänderte Touren hochladen
+    for (const t of read()) {
+      if (t.cloudId && t.syncedAt && t.syncedAt >= t.updatedAt) continue;
+      const cloudId = await saveCloudTour(t, { id: t.cloudId, folder: t.folder, profile: t.profile });
+      const now = new Date().toISOString();
+      write(read().map((x) => (x.id === t.id ? { ...x, cloudId, syncedAt: now, updatedAt: x.updatedAt > now ? x.updatedAt : now } : x)));
+    }
+    // 2. Touren aus dem Konto, die hier fehlen, herunterladen
+    const local = new Set(read().map((x) => x.cloudId).filter(Boolean));
+    for (const c of await listCloudTours()) {
+      if (local.has(c.id)) continue;
+      const full = await loadCloudTour(c.id);
+      const saved: SavedTour = {
+        ...full.tour,
+        linie: thinRuns(full.tour.linie),
+        id: `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+        folder: c.folder,
+        createdAt: c.updated_at,
+        updatedAt: c.updated_at,
+        curves: c.curves ?? undefined,
+        profile: c.profile,
+        cloudId: c.id,
+        syncedAt: c.updated_at,
+      };
+      write([saved, ...read()]);
+    }
+    setSync({ running: false, last: new Date().toISOString() });
+  } catch (e) {
+    setSync({ running: false, error: (e as Error).message });
+  }
 }
 
 export function folders(list: SavedTour[]): string[] {

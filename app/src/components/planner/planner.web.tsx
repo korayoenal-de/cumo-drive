@@ -15,7 +15,8 @@ import { smartRoundTrip } from '@/lib/smart-roundtrip';
 import { flatten, formatKm, legs, parseGpx, PROFILES, reverseTour, toGpx, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { countCurves, elevationProfile, resample, type ElevationProfile } from '@/lib/stats';
 import { cumoAvailable } from '@/lib/cumo-routing';
-import { deleteTour, filterTours, folders, saveTour, useLibrary, type SavedTour, type SortKey } from '@/lib/library';
+import { signIn, signOut, signUp, useSession } from '@/lib/auth';
+import { deleteTour, filterTours, folders, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
@@ -443,9 +444,10 @@ export default function Planner() {
               savedId={isSample ? null : savedId}
               onSave={(folder) => {
                 try {
-                  const saved = saveTour({ ...tour, curves }, folder, savedId ?? undefined);
+                  const saved = saveTour({ ...tour, curves, profile }, folder, savedId ?? undefined);
                   setSavedId(saved.id);
                   setError(null);
+                  void syncLibrary();
                 } catch (e) {
                   setError((e as Error).message);
                 }
@@ -855,8 +857,9 @@ function LibraryPanel(props: { currentId: string | null; onOpen: (t: SavedTour) 
     <div style={S.stack}>
       <div>
         <h2 style={S.h2}>Meine Touren</h2>
-        <p style={S.muted}>{list.length ? `${list.length} gespeicherte Touren.` : 'Noch keine Tour gespeichert. Plane oder importiere eine Tour und speichere sie im Tab Tour.'} Gespeichert wird vorerst in diesem Browser.</p>
+        <p style={S.muted}>{list.length ? `${list.length} gespeicherte Touren.` : 'Noch keine Tour gespeichert. Plane oder importiere eine Tour und speichere sie im Tab Tour.'}</p>
       </div>
+      <AccountBox />
       {list.length ? (
         <>
           <input id="lib-search" aria-label="Touren durchsuchen" placeholder="Touren durchsuchen" value={q} onChange={(e) => setQ(e.target.value)} style={S.search} />
@@ -907,6 +910,75 @@ function LibraryPanel(props: { currentId: string | null; onOpen: (t: SavedTour) 
         </>
       ) : null}
     </div>
+  );
+}
+
+/** Anmelden, damit Touren im Konto liegen und in der App erscheinen. */
+function AccountBox() {
+  const session = useSession();
+  const sync = useSyncState();
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const userId = session?.user.id;
+  useEffect(() => {
+    if (userId) void syncLibrary();
+  }, [userId]);
+
+  if (session) {
+    return (
+      <div style={S.accountBox}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+          <span>
+            Angemeldet als <b>{session.user.email}</b>
+          </span>
+          <button style={S.link} onClick={() => void signOut()}>
+            Abmelden
+          </button>
+        </div>
+        <span style={sync.error ? { ...S.small, color: C.signal } : S.small}>
+          {sync.running
+            ? 'Touren werden abgeglichen …'
+            : sync.error
+              ? `Abgleich fehlgeschlagen: ${sync.error}`
+              : 'Deine Touren liegen im Konto und erscheinen in der App unter Garage.'}
+        </span>
+      </div>
+    );
+  }
+  const run = async (fn: (e: string, p: string) => Promise<void>) => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await fn(email, pw);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <form
+      style={S.accountBox}
+      onSubmit={(e) => {
+        e.preventDefault();
+        void run(signIn);
+      }}>
+      <b>Konto</b>
+      <span style={S.small}>Ohne Konto bleiben Touren nur in diesem Browser. Mit Konto stehen sie auch in der App.</span>
+      <input id="acc-email" type="email" autoComplete="email" aria-label="E-Mail" placeholder="E-Mail" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...S.search, height: 40 }} />
+      <input id="acc-pw" type="password" autoComplete="current-password" aria-label="Passwort" placeholder="Passwort, mindestens 8 Zeichen" value={pw} onChange={(e) => setPw(e.target.value)} style={{ ...S.search, height: 40 }} />
+      {err ? <span style={{ ...S.small, color: C.signal }}>{err}</span> : null}
+      <div style={S.btnRow}>
+        <button type="submit" style={S.primary} disabled={busy || !email || !pw}>
+          Anmelden
+        </button>
+        <button type="button" style={S.secondary} disabled={busy || !email || !pw} onClick={() => void run(signUp)}>
+          Registrieren
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -1156,8 +1228,13 @@ function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick: (p: Pl
         detail: `Pass, ${passSummary(p, undefined, passState(p, live).note)}, ${p.region}`,
         p: passPoint(p),
       }));
-      searchPlaces(q, props.near, ctrl.signal)
-        .then((h) => {
+      // Städte und Gemeinden zuerst, damit "Heppenheim" die Stadt ist und nicht der Ortsteil von Worms
+      Promise.all([searchTowns(q, props.near, ctrl.signal).catch(() => [] as Place[]), searchPlaces(q, props.near, ctrl.signal)])
+        .then(([towns, places]) => {
+          const near = (a: Place, b: Place) => Math.abs(a.p[0] - b.p[0]) + Math.abs(a.p[1] - b.p[1]) < 0.02;
+          const merged: Place[] = [];
+          for (const x of [...towns.slice(0, 3), ...places]) if (!merged.some((y) => y.name === x.name && near(x, y))) merged.push(x);
+          const h = merged.slice(0, 7);
           setHits([...passHits, ...h.filter((x) => !passHits.some((y) => y.name === x.name))]);
           setOpen(true);
         })
@@ -1387,6 +1464,7 @@ const S: Record<string, CSSProperties> = {
   lightboxImg: { maxWidth: '100%', maxHeight: 'calc(100% - 60px)', objectFit: 'contain', borderRadius: 6 },
   lightboxBar: { display: 'flex', alignItems: 'center', gap: 12, color: C.text, font: `500 14px ${BODY}` },
   lbBtn: { width: 36, height: 36, borderRadius: 18, border: `1px solid ${C.line}`, background: C.surface, color: C.text, fontSize: 20, cursor: 'pointer' },
+  accountBox: { display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: C.surface, border: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}` },
   menuHead: { display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 12px 10px', marginBottom: 2, borderBottom: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}`, maxWidth: 260 },
   winterNote: { display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 12px', borderRadius: 12, background: 'rgba(232,176,58,0.12)', color: C.warn, font: `500 13px ${BODY}`, lineHeight: 1.4 },
   winterLink: { color: C.text, fontWeight: 600 },

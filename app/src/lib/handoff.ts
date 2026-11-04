@@ -10,7 +10,7 @@ import type { Avoid } from './valhalla';
 
 export const HANDOFF_PREFIX = 'h:';
 
-type Packed = {
+export type Packed = {
   v: 2;
   profile: Profile;
   avoid?: Avoid;
@@ -41,15 +41,22 @@ function encodePolyline6(points: LatLon[]): string {
   return out;
 }
 
-export async function createHandoff(tour: Tour & { minutes?: number }, profile: Profile, avoid?: Avoid): Promise<string> {
+/** Tour kompakt verpacken (Linie als Polyline), für Übergabe Codes und die Ablage in Supabase. */
+export function packTour(tour: Tour & { minutes?: number }, profile: Profile, avoid?: Avoid): Packed {
   const { linie, minutes, ...rest } = tour;
-  const packed: Packed = {
-    v: 2,
-    profile,
-    avoid,
-    minutes,
-    tour: { ...rest, linie: linie.map((l) => ({ c: l.c, s: encodePolyline6(l.p) })) },
+  return { v: 2, profile, avoid, minutes, tour: { ...rest, linie: linie.map((l) => ({ c: l.c, s: encodePolyline6(l.p) })) } };
+}
+
+export function unpackTour(p: Packed): { tour: Tour & { minutes?: number }; profile: Profile; avoid?: Avoid } {
+  return {
+    profile: p.profile,
+    avoid: p.avoid,
+    tour: { ...p.tour, minutes: p.minutes, linie: p.tour.linie.map((l) => ({ c: l.c, p: decodePolyline6(l.s) })) },
   };
+}
+
+export async function createHandoff(tour: Tour & { minutes?: number }, profile: Profile, avoid?: Avoid): Promise<string> {
+  const packed = packTour(tour, profile, avoid);
   const { data, error } = await supabase.rpc('create_handoff', { payload: packed });
   if (error || typeof data !== 'string') throw new Error(error?.message ?? 'Übergabe fehlgeschlagen');
   return HANDOFF_PREFIX + data;
@@ -63,10 +70,5 @@ export async function fetchHandoff(code: string): Promise<{ tour: Tour & { minut
   const { data, error } = await supabase.rpc('get_handoff', { code: code.slice(HANDOFF_PREFIX.length) });
   if (error) throw new Error(error.message);
   if (!data) return null;
-  const p = data as Packed;
-  return {
-    profile: p.profile,
-    avoid: p.avoid,
-    tour: { ...p.tour, minutes: p.minutes, linie: p.tour.linie.map((l) => ({ c: l.c, p: decodePolyline6(l.s) })) },
-  };
+  return unpackTour(data as Packed);
 }
