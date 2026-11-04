@@ -1,11 +1,14 @@
 /**
  * Planer für das Handy: Tour beschreiben (Freitext plus Chips), Rundtour einstellen oder
  * eine Tour von Hand aus Start, Via Punkten und Ziel bauen. Danach prüfen und als Vorschau zeigen.
+ * Aufbau wie Apple Maps: Die Karte füllt den Screen, der Planer liegt als Blatt mit drei Höhen darauf.
  * Die Web Version liegt in planner.web.tsx.
  */
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import * as Location from 'expo-location';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { RouteMap } from '@/components/map/route-map';
@@ -18,7 +21,7 @@ import {
 } from '@/components/planner/create-tour';
 import { CLASS_COLORS } from '@/components/planner/route-preview';
 import { Chip } from '@/components/ui/chip';
-import { Screen } from '@/components/ui/screen';
+import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
@@ -128,6 +131,14 @@ export default function Planner() {
   const [view, setView] = useState<Stage>({ kind: 'form' });
   const abort = useRef<AbortController | null>(null);
   const lastStops = useRef<Stop[]>([]);
+  const insets = useSafeAreaInsets();
+
+  // Blatt über der Karte: klein, halb oder groß
+  const [detent, setDetent] = useState<Detent>(0);
+  const scroll = useRef<ScrollViewInstance>(null);
+  const toTop = () => scroll.current?.scrollTo({ y: 0, animated: false });
+  /** Beim Tippen in ein Suchfeld groß, damit Tastatur und Treffer Platz haben */
+  const expand = () => setDetent(2);
 
   // Beschreiben
   const [text, setText] = useState('');
@@ -153,8 +164,24 @@ export default function Planner() {
 
   const roundKm = lengthBy === 'km' ? KM_STEPS[kmIdx] : targetKm({ minutes: MIN_STEPS[minIdx] }, profile);
 
-  // Tour von Hand: Zustand lebt hier, damit er beim Wechsel der Modi erhalten bleibt
-  const tourPlan = useTourPlan();
+  // Tour von Hand: Zustand lebt hier, damit er beim Wechsel der Modi erhalten bleibt.
+  // Steht eine Route, geht das Blatt auf halbe Höhe, damit sie auf der Karte zu sehen ist.
+  const tourPlan = useTourPlan(() => setDetent(1));
+  const [pending, setPending] = useState<PendingPoint | null>(null);
+
+  // Ist der Standort schon freigegeben, zeigt die Karte gleich die Umgebung (ohne neue Abfrage)
+  useEffect(() => {
+    let gone = false;
+    Location.getForegroundPermissionsAsync()
+      .then((perm) => (perm.granted ? locate() : null))
+      .then((spot) => {
+        if (spot && !gone) setHere((cur) => cur ?? spot);
+      })
+      .catch(() => undefined);
+    return () => {
+      gone = true;
+    };
+  }, []);
 
   async function findHere() {
     setLocating(true);
@@ -203,11 +230,16 @@ export default function Planner() {
       });
     };
     step('start');
+    toTop();
     let req: TourRequest | undefined;
     try {
       req = await prepare(ctrl.signal);
       const tour = await buildTour(req, seed, step, ctrl.signal);
-      if (!ctrl.signal.aborted) setView({ kind: 'result', tour, req, stops });
+      if (!ctrl.signal.aborted) {
+        setView({ kind: 'result', tour, req, stops });
+        setDetent(1);
+        toTop();
+      }
     } catch (e) {
       const error = toPlanError(e, ctrl.signal);
       if (error.kind === 'aborted') setView({ kind: 'form' });
@@ -266,9 +298,99 @@ export default function Planner() {
     setView({ kind: 'form' });
   }
 
+  // Was die große Karte zeigt: Ergebnis, geplante Route oder ohne Route den eigenen Standort
+  const tourPts = tourPlan.pts;
+  const tourFits = !!tourPlan.planned && samePts(tourPlan.planned.wegpunkte, tourPts);
+  const routeTour = tourFits ? tourPlan.planned : null;
+  const inTour = view.kind === 'form' && mode === 'tour';
+  const mapTour: Tour =
+    view.kind === 'result'
+      ? view.tour
+      : inTour
+        ? (routeTour ?? { name: tourPlan.name, laenge_km: 0, wegpunkte: tourPts, linie: [], warnungen: [] })
+        : EMPTY_TOUR;
+  const pins = inTour
+    ? tourPts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: tourPlan.names[keyOf(p)] ?? `Via Punkt ${i + 1}` }))
+    : undefined;
+  const focus = inTour
+    ? (pending?.p ?? (tourPts.length ? tourPts[tourPts.length - 1] : here?.p ?? null))
+    : (picked?.p ?? here?.p ?? null);
+
+  function onMapLongPress(p: LatLon) {
+    if (!tourPts.length) {
+      tourPlan.add('start', p, profile, avoid);
+      return;
+    }
+    setPending({ p, name: null });
+    if (detent === 0) setDetent(1);
+    toTop();
+    reverseName(p)
+      .then((n) => setPending((cur) => (cur && cur.p === p ? { ...cur, name: n } : cur)))
+      .catch(() => undefined);
+  }
+
+  const shown: PlannedTour | null = view.kind === 'result' ? view.tour : inTour ? routeTour : null;
+  function driveShown() {
+    if (view.kind === 'result') setActiveTour(view.tour, view.req.profile, view.req.avoid);
+    else if (routeTour) setActiveTour({ ...routeTour, name: tourPlan.name.trim() || routeTour.name }, profile, avoid);
+    else return;
+    router.push('/navigation');
+  }
+
+  // Kopf des Blatts: Modus und die wichtigste Zeile, auch in der kleinen Höhe sichtbar
   const header = (
+    <>
+      {view.kind === 'form' ? (
+        <Segmented
+          value={mode === 'tour' ? 'route' : 'runde'}
+          options={[
+            { id: 'runde', label: 'Schnelle Runde' },
+            { id: 'route', label: 'Route planen' },
+          ]}
+          onChange={(v) => switchMode(v === 'route' ? 'tour' : lastRunde.current)}
+        />
+      ) : (
+        <AppText variant="label">
+          {view.kind === 'result' ? view.tour.name : view.kind === 'working' ? 'Tour wird erstellt' : 'Das hat nicht geklappt'}
+        </AppText>
+      )}
+      {shown ? (
+        <View style={styles.summary}>
+          <View style={styles.flex}>
+            <AppText style={styles.summaryBig}>{formatKm(shown.laenge_km, 0)} km</AppText>
+            <AppText variant="caption" muted numberOfLines={1}>
+              {formatMinutes(Math.round(shown.minutes))} Fahrzeit{inTour ? `, ${tourPlan.name.trim() || shown.name}` : ''}
+            </AppText>
+          </View>
+          <Pressable accessibilityRole="button" onPress={driveShown} style={({ pressed }) => [styles.goSmall, pressed && styles.pressed]}>
+            <AppText style={styles.goSmallText}>Losfahren</AppText>
+          </Pressable>
+        </View>
+      ) : view.kind === 'working' || (inTour && tourPlan.step) ? (
+        <View style={styles.summary}>
+          <ActivityIndicator color={Colors.signal} />
+          <AppText style={styles.flex} numberOfLines={1}>
+            {view.kind === 'working' ? PHASES.find((x) => x.id === view.phase)?.label : tourPlan.step ? STEP_TEXT[tourPlan.step] : ''}
+          </AppText>
+        </View>
+      ) : (
+        <AppText variant="caption" muted numberOfLines={2} style={styles.summaryHint}>
+          {view.kind === 'error'
+            ? view.error.message
+            : mode === 'tour'
+              ? tourPts.length
+                ? 'Lange auf die Karte drücken setzt einen weiteren Punkt.'
+                : 'Gib Start und Ziel ein oder drück lange auf die Karte.'
+              : mode === 'beschreiben'
+                ? 'Beschreib deine Runde in einem Satz, wir planen sie.'
+                : `Rundtour ab ${picked?.name ?? here?.name ?? 'deinem Standort'}, etwa ${roundKm} km`}
+        </AppText>
+      )}
+    </>
+  );
+
+  const rideBlock = (
     <View style={styles.headerBlock}>
-      <AppText variant="display">{mode === 'tour' ? 'Route\nplanen' : 'Schnelle\nRunde'}</AppText>
       <Segmented
         value={rideMode}
         options={RIDE_MODES.map((m) => ({ id: m.id, label: m.label }))}
@@ -280,19 +402,18 @@ export default function Planner() {
     </View>
   );
 
+  let body: ReactNode;
   if (view.kind === 'working') {
-    return (
-      <Screen>
-        {header}
+    body = (
+      <>
+        {rideBlock}
         <Progress phase={view.phase} done={view.done} onCancel={cancel} />
-      </Screen>
+      </>
     );
-  }
-
-  if (view.kind === 'error') {
-    return (
-      <Screen>
-        {header}
+  } else if (view.kind === 'error') {
+    body = (
+      <>
+        {rideBlock}
         <ErrorCard
           error={view.error}
           mode={mode}
@@ -303,14 +424,12 @@ export default function Planner() {
             setMode('rundtour');
           }}
         />
-      </Screen>
+      </>
     );
-  }
-
-  if (view.kind === 'result') {
-    return (
-      <Screen>
-        {header}
+  } else if (view.kind === 'result') {
+    body = (
+      <>
+        {rideBlock}
         <Result
           tour={view.tour}
           req={view.req}
@@ -321,21 +440,12 @@ export default function Planner() {
           adding={adding}
           onAddStop={(p) => void addStop(p)}
         />
-      </Screen>
+      </>
     );
-  }
-
-  return (
-    <Screen>
-      {header}
-      <Segmented
-        value={mode === 'tour' ? 'route' : 'runde'}
-        options={[
-          { id: 'runde', label: 'Schnelle Runde' },
-          { id: 'route', label: 'Route planen' },
-        ]}
-        onChange={(v) => switchMode(v === 'route' ? 'tour' : lastRunde.current)}
-      />
+  } else {
+    body = (
+    <>
+      {rideBlock}
       {mode !== 'tour' && (
         <Segmented
           value={mode}
@@ -357,6 +467,9 @@ export default function Planner() {
           avoid={avoid}
           setAvoid={setAvoid}
           group={rideMode === 'gruppe'}
+          pending={pending}
+          setPending={setPending}
+          onSearchFocus={expand}
         />
       ) : mode === 'beschreiben' ? (
         <>
@@ -367,6 +480,7 @@ export default function Planner() {
               placeholder="Was willst du erleben?"
               placeholderTextColor={Colors.muted}
               multiline
+              onFocus={expand}
               style={styles.freeText}
               accessibilityLabel="Tourwunsch"
             />
@@ -523,6 +637,7 @@ export default function Planner() {
                   placeholder="Anderen Startort suchen"
                   placeholderTextColor={Colors.muted}
                   returnKeyType="search"
+                  onFocus={expand}
                   style={styles.search}
                 />
                 <Pressable accessibilityRole="button" onPress={() => void runSearch()} style={styles.searchBtn}>
@@ -637,9 +752,37 @@ export default function Planner() {
           <PrimaryButton label="Tour erstellen" onPress={createRoundTrip} />
         </>
       )}
-    </Screen>
+    </>
+    );
+  }
+
+  return (
+    <MapSheet
+      detent={detent}
+      onDetentChange={setDetent}
+      scrollRef={scroll}
+      grabberLabel="Planer Höhe ändern"
+      header={header}
+      background={(covered) => (
+        <RouteMap
+          tour={mapTour}
+          pins={pins}
+          showUser
+          focus={focus}
+          onLongPress={inTour ? onMapLongPress : undefined}
+          edgePadding={{ top: insets.top + Spacing.xxxl, right: Spacing.xxxl, bottom: covered + Spacing.xl, left: Spacing.xxxl }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}>
+      {body}
+    </MapSheet>
   );
 }
+
+/** Leere Tour für die Karte, solange nichts geplant ist */
+const EMPTY_TOUR: Tour = { name: '', laenge_km: 0, wegpunkte: [], linie: [], warnungen: [] };
+
+type PendingPoint = { p: LatLon; name: string | null };
 
 /* Tour von Hand */
 
@@ -660,7 +803,7 @@ type TourPlan = ReturnType<typeof useTourPlan>;
  * Zustand und Aktionen der Route: feste Felder Start, Via Punkte, Ziel (wie im Web Planer).
  * Geplant wird, sobald Start und Ziel gesetzt sind.
  */
-function useTourPlan() {
+function useTourPlan(onPlanned?: () => void) {
   const [start, setStart] = useState<LatLon | null>(null);
   const [vias, setVias] = useState<LatLon[]>([]);
   const [ziel, setZiel] = useState<LatLon | null>(null);
@@ -698,7 +841,10 @@ function useTourPlan() {
     setStep('route');
     try {
       const t = await planChecked(tourName.trim() || 'Neue Tour', points, profile, avoid, (st) => !ctrl.signal.aborted && setStep(st), ctrl.signal);
-      if (!ctrl.signal.aborted) setPlanned(t);
+      if (!ctrl.signal.aborted) {
+        setPlanned(t);
+        onPlanned?.();
+      }
     } catch (e) {
       if (ctrl.signal.aborted) return;
       const err = toPlanError(e, ctrl.signal);
@@ -789,7 +935,7 @@ function useTourPlan() {
 }
 
 function TourMode({
-  plan, here, onHere, profile, setProfile, avoid, setAvoid, group,
+  plan, here, onHere, profile, setProfile, avoid, setAvoid, group, pending, setPending, onSearchFocus,
 }: {
   plan: TourPlan;
   here: Spot | null;
@@ -799,6 +945,11 @@ function TourMode({
   avoid: Avoid;
   setAvoid: (a: Avoid) => void;
   group: boolean;
+  /** Punkt aus dem langen Druck auf die große Karte, wartet auf die Rolle */
+  pending: PendingPoint | null;
+  setPending: (p: PendingPoint | null) => void;
+  /** Suchfeld bekommt den Fokus: das Blatt geht auf volle Höhe */
+  onSearchFocus: () => void;
 }) {
   const session = useSession();
   const live = usePassLive();
@@ -811,7 +962,6 @@ function TourMode({
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<Place[] | null>(null);
   const [searching, setSearching] = useState(false);
-  const [pending, setPending] = useState<{ p: LatLon; name: string | null } | null>(null);
   const [passQuery, setPassQuery] = useState('');
   const [planChanged, setPlanChanged] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -822,10 +972,6 @@ function TourMode({
   const curves = useMemo(() => (line.length > 1 ? countCurves(line) : 0), [line]);
   const parts = useMemo(() => (routeTour ? legs(routeTour) : []), [routeTour]);
   const hint = closedHint(along.map((x) => x.pass), live);
-
-  const mapTour: Tour = routeTour ?? { name: plan.name, laenge_km: 0, wegpunkte: pts, linie: [], warnungen: [] };
-  const pins = pts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: plan.names[keyOf(p)] ?? `Via Punkt ${i + 1}` }));
-  const focus = pending?.p ?? (pts.length ? pts[pts.length - 1] : here?.p ?? null);
 
   const add = (kind: PointKind, p: LatLon, known?: string) => {
     setPlanChanged(false);
@@ -896,6 +1042,7 @@ function TourMode({
           placeholderTextColor={Colors.muted}
           returnKeyType="search"
           autoFocus
+          onFocus={onSearchFocus}
           style={styles.search}
           accessibilityLabel="Ort oder Pass suchen"
         />
@@ -920,17 +1067,6 @@ function TourMode({
     </View>
   );
 
-  function onLongPress(p: LatLon) {
-    if (!pts.length) {
-      add('start', p);
-      return;
-    }
-    setPending({ p, name: null });
-    reverseName(p)
-      .then((n) => setPending((cur) => (cur && cur.p === p ? { ...cur, name: n } : cur)))
-      .catch(() => undefined);
-  }
-
   function addPending(kind: PointKind) {
     if (!pending) return;
     add(kind, pending.p, pending.name ?? undefined);
@@ -953,40 +1089,9 @@ function TourMode({
     setActiveTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, profile, avoid);
     router.push('/navigation');
   };
-  const openMap = () => {
-    if (!routeTour) return;
-    setActiveTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, profile, avoid);
-    router.push('/karte');
-  };
 
   return (
     <>
-      <View style={styles.gapS}>
-        <AppText variant="label">Name</AppText>
-        <TextInput
-          value={plan.name}
-          onChangeText={plan.setName}
-          placeholder="Name der Tour"
-          placeholderTextColor={Colors.muted}
-          style={styles.search}
-          accessibilityLabel="Name der Tour"
-        />
-      </View>
-
-      <View style={styles.gapS}>
-        <View style={styles.mapBox}>
-          <RouteMap tour={mapTour} pins={pins} showUser focus={focus} onLongPress={onLongPress} style={styles.map} />
-          {routeTour && (
-            <Pressable accessibilityRole="button" accessibilityLabel="Karte groß öffnen" onPress={openMap} style={styles.mapBadge}>
-              <AppText style={styles.mapBadgeText}>Karte groß</AppText>
-            </Pressable>
-          )}
-        </View>
-        <AppText variant="caption" muted>
-          {pts.length ? 'Lange auf die Karte drücken setzt einen weiteren Punkt.' : 'Gib unten Start und Ziel ein, oder drück lange auf die Karte.'}
-        </AppText>
-      </View>
-
       {pending && (
         <View style={[styles.card, styles.pendingCard]}>
           <View style={styles.flex}>
@@ -1001,6 +1106,18 @@ function TourMode({
           </View>
         </View>
       )}
+
+      <View style={styles.gapS}>
+        <AppText variant="label">Name</AppText>
+        <TextInput
+          value={plan.name}
+          onChangeText={plan.setName}
+          placeholder="Name der Tour"
+          placeholderTextColor={Colors.muted}
+          style={styles.search}
+          accessibilityLabel="Name der Tour"
+        />
+      </View>
 
       <Section label="Route">
         <View style={styles.card}>
@@ -1173,6 +1290,7 @@ function TourMode({
               onChangeText={setPassQuery}
               placeholder="Pass suchen, zum Beispiel Stelvio"
               placeholderTextColor={Colors.muted}
+              onFocus={onSearchFocus}
               style={styles.search}
               accessibilityLabel="Pass suchen"
             />
@@ -1575,10 +1693,6 @@ function Result({
   const curves = countCurves(line);
   const live = usePassLive();
   const hint = closedHint(passes.map((x) => x.pass), live);
-  const openMap = () => {
-    setActiveTour(tour, req.profile, req.avoid);
-    router.push('/karte');
-  };
   const drive = () => {
     setActiveTour(tour, req.profile, req.avoid);
     router.push('/navigation');
@@ -1591,12 +1705,6 @@ function Result({
           {PROFILE_WORD[req.profile]}, {req.towardName ? `Richtung ${req.towardName}` : dirPhrase(req.direction)}
         </AppText>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel="Karte groß öffnen" onPress={openMap} style={styles.mapBox}>
-        <RouteMap tour={tour} interactive={false} style={styles.map} />
-        <View style={styles.mapBadge}>
-          <AppText style={styles.mapBadgeText}>Karte groß</AppText>
-        </View>
-      </Pressable>
       <View style={styles.legend}>
         {(['ok', 'pruefen', 'raus'] as CheckClass[]).map((c) => (
           <View key={c} style={styles.legendItem}>
@@ -1790,10 +1898,11 @@ const styles = StyleSheet.create({
 
   errorCard: { backgroundColor: Colors.signalTint },
 
-  mapBox: { height: 320, borderRadius: Radius.l, overflow: 'hidden', backgroundColor: Colors.surface },
-  map: { flex: 1 },
-  mapBadge: { position: 'absolute', right: Spacing.m, bottom: Spacing.m, height: 36, paddingHorizontal: 14, borderRadius: Radius.pill, backgroundColor: 'rgba(11,11,12,0.88)', justifyContent: 'center' },
-  mapBadgeText: { fontFamily: Fonts.semibold, fontSize: 14 },
+  summary: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
+  summaryBig: { fontFamily: Fonts.display, fontSize: 26, lineHeight: 30, fontVariant: ['tabular-nums'] },
+  summaryHint: { minHeight: 36 },
+  goSmall: { height: 48, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  goSmallText: { fontFamily: Fonts.display, fontSize: 16, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
   go: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   goText: { fontFamily: Fonts.display, fontSize: 20, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
 

@@ -6,16 +6,16 @@
  * Bewusst in JS gebaut (PanResponder plus Reanimated), damit es ohne neue native Abhängigkeit
  * im vorhandenen App Build läuft.
  */
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import {
   PanResponder,
-  Pressable,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
   type AccessibilityActionEvent,
   type LayoutChangeEvent,
+  type ScrollViewInstance,
 } from 'react-native';
 import Animated, { cancelAnimation, Extrapolation, interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,7 +46,7 @@ type Props = {
   children: ReactNode;
   /** Hintergrund, meist die Karte. Bekommt die Höhe, die das Blatt unten verdeckt (klein oder halb). */
   background: (covered: number) => ReactNode;
-  scrollRef?: RefObject<ScrollView | null>;
+  scrollRef?: RefObject<ScrollViewInstance | null>;
   /** Sprechtext für den Griff */
   grabberLabel: string;
 };
@@ -70,63 +70,77 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
 
   const y = useSharedValue(snaps[0]);
   const smallY = useSharedValue(snaps[0]);
-
-  // Für die Zieh Geste, die außerhalb des Renderns läuft
-  const live = useRef({ snaps, detent, onDetentChange });
-  const velocity = useRef(0);
+  // Für die Zieh Geste, die außerhalb des Renderns läuft, als Shared Values statt Refs
+  const snapsNow = useSharedValue(snaps);
+  const detentNow = useSharedValue<number>(detent);
+  const fling = useSharedValue(0);
+  const startY = useSharedValue(0);
   const placed = useRef(false);
-  const startY = useRef(0);
+
   useEffect(() => {
-    live.current = { snaps, detent, onDetentChange };
-  });
+    snapsNow.set([snaps[0], snaps[1], snaps[2]]);
+    detentNow.set(detent);
+    // die Werte stecken alle in snaps[0..2] und detent
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snaps[0], snaps[1], snaps[2], detent, snapsNow, detentNow]);
 
   // Zur gewählten Höhe federn; beim ersten Messen ohne Animation hinsetzen
   const measured = boxH > 0 && headH > 0;
   useEffect(() => {
     smallY.set(snaps[0]);
-    const v = velocity.current;
-    velocity.current = 0;
+    const v = fling.get();
+    fling.set(0);
     if (placed.current) y.set(withSpring(target, { ...SPRING, velocity: v }));
     else y.set(target);
     if (measured) placed.current = true;
     // snaps[0] reicht, die anderen Werte hängen an target
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, snaps[0], measured, y, smallY]);
+  }, [target, snaps[0], measured, y, smallY, fling]);
 
-  const [pan] = useState(() => {
+  const pan = useMemo(() => {
     function settle(vy: number) {
-      const { snaps: s, detent: cur, onDetentChange: change } = live.current;
+      const s = snapsNow.get();
       const projected = y.get() + vy * PROJECT_MS;
       let best = 0;
       for (let i = 1; i < s.length; i++) if (Math.abs(s[i] - projected) < Math.abs(s[best] - projected)) best = i;
       const v = vy * 1000;
-      if (best === cur) y.set(withSpring(s[best], { ...SPRING, velocity: v }));
+      if (best === detentNow.get()) y.set(withSpring(s[best], { ...SPRING, velocity: v }));
       else {
-        velocity.current = v;
-        change(best as Detent);
+        fling.set(v);
+        onDetentChange(best as Detent);
       }
     }
-    return PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 6 && Math.abs(g.dy) > Math.abs(g.dx),
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: () => {
-        cancelAnimation(y);
-        startY.current = y.get();
-      },
-      onPanResponderMove: (_, g) => {
-        const s = live.current.snaps;
-        const top = s[2];
-        const bottom = s[0];
-        let next = startY.current + g.dy;
-        if (next < top) next = top - rubber(top - next);
-        if (next > bottom) next = bottom + rubber(next - bottom);
-        y.set(next);
-      },
-      onPanResponderRelease: (_, g) => settle(g.vy),
-      onPanResponderTerminate: (_, g) => settle(g.vy),
-    });
-  });
+    /** grab: der Griff selbst, nimmt jede Berührung an und wertet ein kurzes Tippen als Höhenwechsel */
+    const make = (grab: boolean) =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => grab,
+        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 6 && Math.abs(g.dy) > Math.abs(g.dx),
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderGrant: () => {
+          cancelAnimation(y);
+          startY.set(y.get());
+        },
+        onPanResponderMove: (_, g) => {
+          const s = snapsNow.get();
+          const top = s[2];
+          const bottom = s[0];
+          let next = startY.get() + g.dy;
+          if (next < top) next = top - rubber(top - next);
+          if (next > bottom) next = bottom + rubber(next - bottom);
+          y.set(next);
+        },
+        onPanResponderRelease: (_, g) => {
+          if (grab && Math.abs(g.dy) < 6 && Math.abs(g.dx) < 6) {
+            const d = detentNow.get();
+            onDetentChange((d === 2 ? 0 : d + 1) as Detent);
+            return;
+          }
+          settle(g.vy);
+        },
+        onPanResponderTerminate: (_, g) => settle(g.vy),
+      });
+    return { head: make(false), grab: make(true) };
+  }, [onDetentChange, y, snapsNow, detentNow, fling, startY]);
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
   // In der kleinen Höhe blendet der Inhalt unter dem Kopf aus, er läge sonst hinter der Tab Leiste
@@ -145,19 +159,19 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
     <View style={styles.box} onLayout={(e: LayoutChangeEvent) => setBoxH(Math.round(e.nativeEvent.layout.height))}>
       <View style={StyleSheet.absoluteFill}>{background(visible[Math.min(detent, 1)])}</View>
       <Animated.View style={[styles.sheet, { top: H - large, height: large }, sheetStyle]}>
-        <View {...pan.panHandlers} onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))} style={styles.head}>
-          <Pressable
+        <View {...pan.head.panHandlers} onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))} style={styles.head}>
+          <View
+            {...pan.grab.panHandlers}
+            accessible
             accessibilityRole="adjustable"
             accessibilityLabel={grabberLabel}
             accessibilityHint="Wischen nach oben oder unten ändert die Höhe"
             accessibilityValue={{ text: DETENT_NAME[detent] }}
             accessibilityActions={[{ name: 'increment', label: 'Größer' }, { name: 'decrement', label: 'Kleiner' }, { name: 'activate' }]}
             onAccessibilityAction={onAction}
-            onPress={() => onDetentChange(detent === 2 ? 0 : ((detent + 1) as Detent))}
-            hitSlop={{ top: 8, bottom: 4 }}
             style={styles.grabberZone}>
             <View style={styles.grabber} />
-          </Pressable>
+          </View>
           {header}
         </View>
         <Animated.View style={[styles.flex, contentStyle]}>
@@ -190,7 +204,7 @@ const styles = StyleSheet.create({
     boxShadow: '0 -6px 24px rgba(0,0,0,0.45)',
   },
   head: { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.l, gap: Spacing.m },
-  grabberZone: { height: 22, alignItems: 'center', justifyContent: 'center', marginBottom: -Spacing.xs },
+  grabberZone: { height: 28, alignItems: 'center', justifyContent: 'center', marginBottom: -Spacing.s },
   grabber: { width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.surface2 },
   content: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xs, gap: Spacing.xxl },
 });
