@@ -1,112 +1,83 @@
 /**
- * Pfeil Symbole je Manöver als eigene SVG Zeichnung.
- * Abbiegepfeile werden aus einem Winkel gebaut (0 geradeaus, positiv nach rechts).
+ * Navigationssymbole aus maneuver-geometry.ts (gleiche Formen wie im Design System).
+ * Mit soon stupst das Symbol in Fahrtrichtung an, damit klar ist: gleich ist es so weit.
  */
-import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
+import { useEffect } from 'react';
+import Animated, { cancelAnimation, Easing, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import type { ReactNode } from 'react';
+import Svg, { G, Path, Rect } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
 import type { ManeuverKind } from '@/lib/navigation/types';
 
-const TURN: Partial<Record<ManeuverKind, number>> = {
-  geradeaus: 0,
-  leicht_rechts: 45,
-  rechts: 90,
-  scharf_rechts: 135,
-  leicht_links: -45,
-  links: -90,
-  scharf_links: -135,
-  auffahrt: 35,
-  abfahrt: 35,
-};
+import { symbolFor, symbolGeometry, type NavSymbol, type Paint } from './maneuver-geometry';
 
-const W = 6;
-
-function turnArrow(angle: number, color: string) {
-  const rad = (angle * Math.PI) / 180;
-  const knee = { x: 32, y: 34 };
-  const len = angle === 0 ? 20 : Math.abs(angle) > 100 ? 13 : 16;
-  const dx = Math.sin(rad);
-  const dy = -Math.cos(rad);
-  const tip = { x: knee.x + dx * len, y: knee.y + dy * len };
-  // Spitze des Pfeils: Dreieck in Laufrichtung
-  const h = 11;
-  const back = { x: tip.x - dx * h, y: tip.y - dy * h };
-  const nx = -dy;
-  const ny = dx;
-  const head = `M ${tip.x + dx * 4} ${tip.y + dy * 4} L ${back.x + nx * 9} ${back.y + ny * 9} L ${back.x - nx * 9} ${back.y - ny * 9} Z`;
-  const shaft = `M 32 56 L ${knee.x} ${knee.y} L ${back.x} ${back.y}`;
+export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground = Colors.ground, soon = false }: { symbol: NavSymbol; size?: number; color?: string; ground?: string; soon?: boolean }) {
+  const g = symbolGeometry(symbol);
+  const paint: Record<Paint, string> = { ink: color, faint: color, ground, signal: Colors.signal };
+  const body = g.shapes.map((s, i) =>
+    s.t === 'stroke' ? (
+      <Path key={i} d={s.d} stroke={paint[s.paint]} strokeOpacity={s.paint === 'faint' ? 0.35 : 1} strokeWidth={s.w} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    ) : (
+      <Path
+        key={i}
+        d={s.d}
+        fill={paint[s.paint]}
+        fillOpacity={s.paint === 'faint' ? 0.35 : 1}
+        fillRule={s.evenodd ? 'evenodd' : 'nonzero'}
+        {...(s.round ? { stroke: paint[s.paint], strokeWidth: 2, strokeLinejoin: 'round' as const } : {})}
+      />
+    ),
+  );
   return (
-    <G>
-      <Path d={shaft} stroke={color} strokeWidth={W} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <Path d={head} fill={color} stroke={color} strokeWidth={2} strokeLinejoin="round" />
-    </G>
+    <Soon active={soon} nudge={g.nudge} size={size}>
+      <Svg width={size} height={size} viewBox="0 0 64 64">
+        {g.mirror ? <G transform="matrix(-1 0 0 1 64 0)">{body}</G> : body}
+      </Svg>
+    </Soon>
   );
 }
 
-export function ManeuverIcon({ kind, size = 64, color = Colors.text }: { kind: ManeuverKind; size?: number; color?: string }) {
-  let body;
-  const angle = TURN[kind];
-  if (angle != null) {
-    body = (
-      <G>
-        {(kind === 'auffahrt' || kind === 'abfahrt') && (
-          <Path d="M 18 56 L 18 8" stroke={color} strokeOpacity={0.35} strokeWidth={W} strokeLinecap="round" />
-        )}
-        {turnArrow(angle, color)}
-      </G>
+/** Manöver Symbol; im Kreisverkehr mit der Ausfahrt Nummer. */
+export function ManeuverIcon({ kind, exit, size = 64, color = Colors.text, soon = false }: { kind: ManeuverKind; exit?: number; size?: number; color?: string; soon?: boolean }) {
+  return <NavSymbolIcon symbol={symbolFor(kind, exit)} size={size} color={color} soon={soon} />;
+}
+
+/**
+ * Anstupsen: kurz in Fahrtrichtung vor und zurück, dazu leicht größer. Symbole ohne Richtung pulsieren nur.
+ * Bei „Bewegung reduzieren“ bleibt es bei einem sanften Pulsieren der Deckkraft.
+ */
+function Soon({ active, nudge, size, children }: { active: boolean; nudge: { x: number; y: number } | null; size: number; children: ReactNode }) {
+  const t = useSharedValue(0);
+  const reduce = useReducedMotion();
+  useEffect(() => {
+    if (!active) {
+      cancelAnimation(t);
+      t.value = withTiming(0, { duration: 150 });
+      return;
+    }
+    t.value = 0;
+    t.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic), reduceMotion: ReduceMotion.Never }),
+        withTiming(0, { duration: 520, easing: Easing.inOut(Easing.cubic), reduceMotion: ReduceMotion.Never }),
+      ),
+      -1,
     );
-  } else if (kind === 'wenden') {
-    body = (
-      <G>
-        <Path d="M 40 56 L 40 26 A 10 10 0 0 0 20 26 L 20 40" stroke={color} strokeWidth={W} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        <Path d="M 20 52 L 11 38 L 29 38 Z" fill={color} stroke={color} strokeWidth={2} strokeLinejoin="round" />
-      </G>
-    );
-  } else if (kind === 'kreisverkehr') {
-    body = (
-      <G>
-        <Circle cx={32} cy={30} r={11} stroke={color} strokeWidth={W} fill="none" />
-        <Path d="M 32 58 L 32 41" stroke={color} strokeWidth={W} strokeLinecap="round" />
-        <Path d="M 40 22 L 48 14" stroke={color} strokeWidth={W} strokeLinecap="round" />
-        <Path d="M 54 8 L 41 11 L 51 21 Z" fill={color} stroke={color} strokeWidth={2} strokeLinejoin="round" />
-      </G>
-    );
-  } else if (kind === 'ziel') {
-    body = (
-      <G>
-        <Path d="M 18 58 L 18 8" stroke={color} strokeWidth={W} strokeLinecap="round" />
-        <Rect x={21} y={8} width={28} height={22} fill={Colors.ground} stroke={color} strokeWidth={3} />
-        <Rect x={21} y={8} width={7} height={5.5} fill={color} />
-        <Rect x={35} y={8} width={7} height={5.5} fill={color} />
-        <Rect x={28} y={13.5} width={7} height={5.5} fill={color} />
-        <Rect x={42} y={13.5} width={7} height={5.5} fill={color} />
-        <Rect x={21} y={19} width={7} height={5.5} fill={color} />
-        <Rect x={35} y={19} width={7} height={5.5} fill={color} />
-        <Rect x={28} y={24.5} width={7} height={5.5} fill={color} />
-        <Rect x={42} y={24.5} width={7} height={5.5} fill={color} />
-      </G>
-    );
-  } else if (kind === 'zwischenziel') {
-    body = (
-      <G>
-        <Path d="M 32 58 C 32 58 14 38 14 26 A 18 18 0 0 1 50 26 C 50 38 32 58 32 58 Z" fill={color} />
-        <Circle cx={32} cy={26} r={7} fill={Colors.ground} />
-      </G>
-    );
-  } else {
-    // start
-    body = (
-      <G>
-        <Circle cx={32} cy={32} r={22} stroke={color} strokeWidth={W} fill="none" />
-        <Path d="M 32 18 L 44 44 L 32 37 L 20 44 Z" fill={Colors.signal} />
-      </G>
-    );
-  }
-  return (
-    <Svg width={size} height={size} viewBox="0 0 64 64">
-      {body}
-    </Svg>
-  );
+    return () => cancelAnimation(t);
+  }, [active, t]);
+  const dist = (size / 64) * 6;
+  const style = useAnimatedStyle(() => {
+    if (reduce) return { opacity: 1 - t.value * 0.35 };
+    return {
+      transform: [
+        { translateX: (nudge?.x ?? 0) * dist * t.value },
+        { translateY: (nudge?.y ?? 0) * dist * t.value },
+        { scale: 1 + t.value * (nudge ? 0.04 : 0.1) },
+      ],
+    };
+  });
+  return <Animated.View style={style}>{children}</Animated.View>;
 }
 
 /** Lautsprecher, an oder aus. */

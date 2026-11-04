@@ -21,7 +21,21 @@ export type ManeuverKind =
   | 'kreisverkehr'
   | 'auffahrt'
   | 'abfahrt'
-  | 'zwischenziel';
+  | 'zwischenziel'
+  | 'rechts_halten'
+  | 'links_halten'
+  | 'einfaedeln_rechts'
+  | 'einfaedeln_links'
+  | 'auffahrt_rechts'
+  | 'auffahrt_links'
+  | 'abfahrt_rechts'
+  | 'abfahrt_links'
+  | 'wenden_rechts'
+  | 'kreisverkehr_verlassen'
+  | 'faehre_an_bord'
+  | 'faehre_verlassen'
+  | 'ziel_links'
+  | 'ziel_rechts';
 
 export type Maneuver = {
   kind: ManeuverKind;

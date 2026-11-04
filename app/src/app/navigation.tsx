@@ -10,6 +10,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RouteMap } from '@/components/map/route-map';
+import { soonThresholdM } from '@/components/navigation/maneuver-geometry';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
@@ -183,7 +184,7 @@ export default function NavigationScreen() {
       />
 
       <View style={[styles.top, { paddingTop: insets.top + Spacing.s }]} pointerEvents="box-none">
-        {running && maneuver && <ManeuverCard maneuver={maneuver} distM={state.distToNextM} then={then} />}
+        {running && maneuver && <ManeuverCard maneuver={maneuver} distM={state.distToNextM} then={then} soon={state.distToNextM != null && state.distToNextM <= soonThresholdM(state.speedKmh)} />}
         {status === 'neuberechnung' && <Recalculating first={!route} />}
       </View>
 

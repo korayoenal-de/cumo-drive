@@ -166,8 +166,29 @@ export function addPassLayers(map: MapInstance, data: unknown) {
   );
 }
 
-/** Fotoorte als Kreise mit Anzahl, über den Pässen und unter der Tour. */
+/** Fotoapparat als Kartenbild (weiß, doppelte Auflösung). */
+function cameraImage(): ImageData | null {
+  if (typeof document === 'undefined') return null;
+  const px = 2;
+  const c = document.createElement('canvas');
+  c.width = c.height = 20 * px;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  g.scale(px, px);
+  g.fillStyle = '#FFFFFF';
+  // Gehäuse mit Sucherbuckel, Objektiv ausgestanzt
+  const body = new Path2D('M 2 7 a 2 2 0 0 1 2 -2 h 2.5 l 1.5 -2 h 4 l 1.5 2 h 2.5 a 2 2 0 0 1 2 2 v 8 a 2 2 0 0 1 -2 2 h -12 a 2 2 0 0 1 -2 -2 Z M 10 7.5 a 3.6 3.6 0 1 0 0.01 0 Z');
+  g.fill(body, 'evenodd');
+  g.beginPath();
+  g.arc(10, 11.1, 1.8, 0, Math.PI * 2);
+  g.fill();
+  return g.getImageData(0, 0, c.width, c.height);
+}
+
+/** Fotospots als Kreis mit Fotoapparat, über den Pässen und unter der Tour. */
 export function addPhotoLayers(map: MapInstance) {
+  const img = cameraImage();
+  if (img && !map.hasImage('cumo-camera')) map.addImage('cumo-camera', img, { pixelRatio: 2 });
   map.addSource('photos', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
   map.addLayer(
     {
@@ -175,7 +196,7 @@ export function addPhotoLayers(map: MapInstance) {
       type: 'circle',
       source: 'photos',
       paint: {
-        'circle-radius': ['interpolate', ['linear'], ['get', 'n'], 1, 9, 15, 15],
+        'circle-radius': 13,
         'circle-color': '#161618',
         'circle-opacity': 0.95,
         'circle-stroke-color': '#E2461C',
@@ -189,8 +210,7 @@ export function addPhotoLayers(map: MapInstance) {
       id: 'photo-count',
       type: 'symbol',
       source: 'photos',
-      layout: { 'text-field': ['to-string', ['get', 'n']], 'text-size': 11, 'text-font': ['Noto Sans Bold'], 'text-allow-overlap': true },
-      paint: { 'text-color': '#FFFFFF' },
+      layout: { 'icon-image': 'cumo-camera', 'icon-allow-overlap': true, 'icon-ignore-placement': true },
     },
     'tour-casing',
   );

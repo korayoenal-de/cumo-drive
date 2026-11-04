@@ -12,7 +12,7 @@ import { parseWish, STOPS, targetKm, formatMinutes, type Stop } from '@/lib/inte
 import { planChecked, type PlanStep } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { smartRoundTrip } from '@/lib/smart-roundtrip';
-import { flatten, formatKm, legs, parseGpx, PROFILES, reverseTour, toGpx, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { flatten, formatKm, haversine, legs, parseGpx, PROFILES, reverseTour, toGpx, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { countCurves, elevationProfile, resample, type ElevationProfile } from '@/lib/stats';
 import { cumoAvailable } from '@/lib/cumo-routing';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
@@ -208,11 +208,6 @@ export default function Planner() {
   const photoGroups = usePhotoGroups();
   const [showPhotos, setShowPhotos] = useState(true);
   const [gallery, setGallery] = useState<{ g: PhotoGroup; i: number | null } | null>(null);
-  useEffect(() => {
-    const m = map.current;
-    if (!mapReady || !m || !photoGroups) return;
-    m.getSource('photos')?.setData(photoGroupsGeoJson(showPhotos ? photoGroups : []));
-  }, [mapReady, photoGroups, showPhotos]);
 
   // Klick auf die Karte setzt einen neuen Zielpunkt
   useEffect(() => {
@@ -277,6 +272,10 @@ export default function Planner() {
     if (!menu) return;
     const p = menu.p;
     setMenu(null);
+    await addPoint(kind, p);
+  };
+
+  const addPoint = async (kind: 'start' | 'via' | 'ziel' | 'rundtour', p: LatLon) => {
     if (kind === 'rundtour') {
       setRtStart({ p, name: await reverseName(p) });
       setMode('rundtour');
@@ -287,7 +286,7 @@ export default function Planner() {
     let pts: LatLon[];
     if (kind === 'start') pts = base.length ? [p, ...base.slice(1)] : [p];
     else if (kind === 'ziel') pts = [...base, p];
-    else pts = base.length >= 2 ? [...base.slice(0, -1), p, base[base.length - 1]] : [...base, p];
+    else pts = insertVia(base, p);
     if (pts.length < 2) {
       setTour({ name: 'Neue Tour', laenge_km: 0, wegpunkte: pts, linie: [], warnungen: [] });
       setIsSample(false);
@@ -306,6 +305,30 @@ export default function Planner() {
 
 
   const passesOnRoute = useMemo(() => passesAlong(PASSES, line), [line]);
+  // Stützpunkte der Route für Abstandsrechnungen (höchstens etwa 400)
+  const probe = useMemo(() => line.filter((_, i) => i % Math.max(1, Math.ceil(line.length / 400)) === 0 || i === line.length - 1), [line]);
+  const distToRoute = useCallback((p: LatLon) => probe.reduce((d, q) => Math.min(d, haversine(p, q)), Infinity), [probe]);
+  // Fotospots nur dort, wo die Route vorbeiführt (bis 1,5 km)
+  const photosOnRoute = useMemo(
+    () => (photoGroups && probe.length > 1 ? photoGroups.filter((g) => distToRoute(g.p) <= 1500) : []),
+    [photoGroups, probe, distToRoute],
+  );
+  useEffect(() => {
+    const m = map.current;
+    if (!mapReady || !m) return;
+    m.getSource('photos')?.setData(photoGroupsGeoJson(showPhotos ? photosOnRoute : []));
+  }, [mapReady, photosOnRoute, showPhotos]);
+  // Bekannte Pässe in der Nähe, die die Route noch nicht fährt: zum Einbauen
+  const passesNear = useMemo(() => {
+    if (probe.length < 2) return [];
+    const on = new Set(passesOnRoute.map((x) => x.pass.id));
+    const rank: Record<string, number> = { ikone: 0, bekannt: 1, mittel: 2 };
+    return PASSES.filter((p) => !on.has(p.id))
+      .map((pass) => ({ pass, dKm: distToRoute(passPoint(pass)) / 1000 }))
+      .filter((x) => x.dKm <= 25)
+      .sort((a, b) => (rank[a.pass.tier] ?? 3) - (rank[b.pass.tier] ?? 3) || a.dKm - b.dKm)
+      .slice(0, 6);
+  }, [probe, passesOnRoute, distToRoute]);
 
   const hoverLine = useMemo(() => resample(line, 100), [line]);
   const onHoverKm = useCallback(
@@ -353,12 +376,22 @@ export default function Planner() {
       <div style={S.mapWrap}>
         <div ref={mapEl} style={S.map} aria-label="Karte" />
         {mapError ? <div style={S.mapError}>{mapError}</div> : null}
-        {photoGroups?.length ? (
+        {photosOnRoute.length ? (
           <button style={showPhotos ? S.photoToggleOn : S.photoToggle} onClick={() => setShowPhotos(!showPhotos)} aria-pressed={showPhotos}>
-            Fotos von Touren
+            Fotospots an der Strecke ({photosOnRoute.length})
           </button>
         ) : null}
-        {gallery ? <Gallery gallery={gallery} onChange={setGallery} /> : null}
+        {gallery ? (
+          <Gallery
+            gallery={gallery}
+            onChange={setGallery}
+            canAdd={!busy}
+            onAddVia={(p) => {
+              setGallery(null);
+              void addPoint('via', p);
+            }}
+          />
+        ) : null}
         {mode === 'tour' && !busy ? <div style={S.hint}>Klick setzt ein Ziel, Rechtsklick öffnet weitere Optionen</div> : null}
         {menu ? (
           <div style={{ ...S.menu, left: menu.x, top: menu.y }} role="menu" onContextMenu={(e) => e.preventDefault()}>
@@ -382,7 +415,7 @@ export default function Planner() {
               </button>
             ) : null}
             <button role="menuitem" style={S.menuItem} onClick={() => menuAction('start')}>Als Start setzen</button>
-            <button role="menuitem" style={S.menuItem} onClick={() => menuAction('via')}>Als Via Punkt einfügen</button>
+            <button role="menuitem" style={S.menuItem} onClick={() => menuAction('via')}>{menu.pass ? 'Pass in die Tour einbauen' : 'Als Via Punkt einfügen'}</button>
             <button role="menuitem" style={S.menuItem} onClick={() => menuAction('ziel')}>Als Ziel setzen</button>
             <button role="menuitem" style={S.menuItem} onClick={() => menuAction('rundtour')}>Rundtour von hier</button>
           </div>
@@ -427,6 +460,8 @@ export default function Planner() {
               isSample={isSample}
               names={names}
               passes={passesOnRoute}
+              passesNear={passesNear}
+              onAddPass={(pass) => void addPoint('via', passPoint(pass))}
               live={live}
               profile={profile}
               setProfile={setProfile}
@@ -530,6 +565,8 @@ function TourPanel(props: {
   isSample: boolean;
   names: Record<string, string>;
   passes: { pass: Pass; km: number }[];
+  passesNear: { pass: Pass; dKm: number }[];
+  onAddPass: (p: Pass) => void;
   live: Map<string, LiveRow> | null;
   profile: Profile;
   setProfile: (p: Profile) => void;
@@ -657,6 +694,8 @@ function TourPanel(props: {
           </ol>
         </Section>
       ) : null}
+
+      {pts.length >= 2 && !props.isSample ? <AddPass near={props.passesNear} live={props.live} busy={props.busy} onAdd={props.onAddPass} /> : null}
 
       <Section title="Profil">
         <div style={S.chips}>
@@ -793,7 +832,68 @@ function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid }) {
 
 /* ---------- Fotos ---------- */
 
-function Gallery(props: { gallery: { g: PhotoGroup; i: number | null }; onChange: (g: { g: PhotoGroup; i: number | null } | null) => void }) {
+/** Bekannte Pässe in die Tour einbauen: Suche nach Name plus Vorschläge in der Nähe der Route. */
+function AddPass(props: { near: { pass: Pass; dKm: number }[]; live: Map<string, LiveRow> | null; busy: boolean; onAdd: (p: Pass) => void }) {
+  const [q, setQ] = useState('');
+  const searching = q.trim().length >= 2;
+  const hits: { pass: Pass; dKm: number | null }[] = searching ? searchPasses(PASSES, q, 5).map((pass) => ({ pass, dKm: null })) : props.near;
+  return (
+    <Section title="Pässe einbauen" aside={!searching && props.near.length ? 'in der Nähe' : undefined}>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Pass suchen, zum Beispiel Stelvio" style={S.search} aria-label="Pass suchen" />
+      {hits.length ? (
+        <ol style={S.passList}>
+          {hits.map(({ pass, dKm }) => (
+            <li key={pass.id} style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={pass.tier === 'ikone' ? S.passDotIcon : S.passDot} />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={S.passName}>{pass.name}</span>
+                <span style={S.dropDetail}>
+                  {[passSummary(pass, undefined, passState(pass, props.live).note), dKm != null ? `${formatKm(dKm, dKm < 10 ? 1 : 0)} km neben der Route` : null].filter(Boolean).join(', ')}
+                </span>
+              </span>
+              <button
+                style={{ ...S.secondary, flex: 'none', padding: '0 12px' }}
+                disabled={props.busy}
+                onClick={() => {
+                  props.onAdd(pass);
+                  setQ('');
+                }}>
+                Einbauen
+              </button>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p style={S.muted}>{searching ? 'Kein Pass gefunden.' : 'Keine bekannten Pässe in der Nähe der Route.'}</p>
+      )}
+    </Section>
+  );
+}
+
+/**
+ * Neuen Zwischenpunkt dort einfügen, wo er den kleinsten Umweg macht (nie vor dem Start, nie hinter dem Ziel).
+ * Bei weniger als zwei Punkten wird er einfach angehängt.
+ */
+function insertVia(pts: LatLon[], p: LatLon): LatLon[] {
+  if (pts.length < 2) return [...pts, p];
+  let best = 1;
+  let bestCost = Infinity;
+  for (let i = 1; i < pts.length; i++) {
+    const cost = haversine(pts[i - 1], p) + haversine(p, pts[i]) - haversine(pts[i - 1], pts[i]);
+    if (cost < bestCost) {
+      bestCost = cost;
+      best = i;
+    }
+  }
+  return [...pts.slice(0, best), p, ...pts.slice(best)];
+}
+
+function Gallery(props: {
+  gallery: { g: PhotoGroup; i: number | null };
+  onChange: (g: { g: PhotoGroup; i: number | null } | null) => void;
+  onAddVia: (p: LatLon) => void;
+  canAdd: boolean;
+}) {
   const { g, i } = props.gallery;
   const [place, setPlace] = useState<{ key: string; name: string } | null>(null);
   useEffect(() => {
@@ -841,9 +941,14 @@ function Gallery(props: { gallery: { g: PhotoGroup; i: number | null }; onChange
             {g.photos.length} {g.photos.length === 1 ? 'Foto' : 'Fotos'}, CUMO DRIVERS CLUB, {photoDate(g.photos[0])}
           </span>
         </div>
-        <button aria-label="Galerie schließen" style={S.iconBtn} onClick={() => props.onChange(null)}>
-          ×
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+          <button style={{ ...S.secondary, flex: 'none', padding: '0 14px' }} disabled={!props.canAdd} onClick={() => props.onAddVia(g.p)}>
+            Als Zwischenziel einfügen
+          </button>
+          <button aria-label="Galerie schließen" style={S.iconBtn} onClick={() => props.onChange(null)}>
+            ×
+          </button>
+        </div>
       </div>
       <div style={S.thumbs}>
         {g.photos.map((ph, k) => (

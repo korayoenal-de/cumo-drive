@@ -196,18 +196,19 @@ export function kindFor(type: number): ManeuverKind {
     case 3:
       return 'start';
     case 4:
-    case 5:
-    case 6:
       return 'ziel';
+    case 5:
+      return 'ziel_rechts';
+    case 6:
+      return 'ziel_links';
     case 9:
-    case 23:
-    case 37:
       return 'leicht_rechts';
     case 10:
       return 'rechts';
     case 11:
       return 'scharf_rechts';
     case 12:
+      return 'wenden_rechts';
     case 13:
       return 'wenden';
     case 14:
@@ -215,19 +216,34 @@ export function kindFor(type: number): ManeuverKind {
     case 15:
       return 'links';
     case 16:
-    case 24:
-    case 38:
       return 'leicht_links';
     case 17:
-    case 18:
-    case 19:
       return 'auffahrt';
+    case 18:
+      return 'auffahrt_rechts';
+    case 19:
+      return 'auffahrt_links';
     case 20:
+      return 'abfahrt_rechts';
     case 21:
-      return 'abfahrt';
+      return 'abfahrt_links';
+    case 23:
+      return 'rechts_halten';
+    case 24:
+      return 'links_halten';
+    case 25:
+    case 38:
+      return 'einfaedeln_links';
+    case 37:
+      return 'einfaedeln_rechts';
     case 26:
-    case 27:
       return 'kreisverkehr';
+    case 27:
+      return 'kreisverkehr_verlassen';
+    case 28:
+      return 'faehre_an_bord';
+    case 29:
+      return 'faehre_verlassen';
     default:
       return 'geradeaus';
   }

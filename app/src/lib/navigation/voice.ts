@@ -66,16 +66,36 @@ export function nowPhrase(m: Maneuver): string {
     case 'scharf_rechts':
       return 'Jetzt scharf rechts abbiegen.';
     case 'wenden':
+    case 'wenden_rechts':
       return 'Jetzt wenden.';
+    case 'rechts_halten':
+      return 'Jetzt rechts halten.';
+    case 'links_halten':
+      return 'Jetzt links halten.';
+    case 'einfaedeln_rechts':
+    case 'einfaedeln_links':
+      return 'Jetzt einfädeln.';
+    case 'kreisverkehr_verlassen':
+      return 'Jetzt den Kreisverkehr verlassen.';
+    case 'faehre_an_bord':
+      return 'Jetzt auf die Fähre.';
+    case 'faehre_verlassen':
+      return 'Jetzt die Fähre verlassen.';
     case 'kreisverkehr':
       return m.exit && m.exit < ORDINAL.length
         ? `Jetzt in den Kreisverkehr, ${ORDINAL[m.exit]} Ausfahrt nehmen.`
         : 'Jetzt in den Kreisverkehr fahren.';
     case 'auffahrt':
+    case 'auffahrt_rechts':
+    case 'auffahrt_links':
       return 'Jetzt auffahren.';
     case 'abfahrt':
+    case 'abfahrt_rechts':
+    case 'abfahrt_links':
       return 'Jetzt abfahren.';
     case 'ziel':
+    case 'ziel_links':
+    case 'ziel_rechts':
       return 'Sie haben das Ziel erreicht.';
     case 'zwischenziel':
       return 'Sie sind jetzt auf der Tour.';
@@ -86,7 +106,7 @@ export function nowPhrase(m: Maneuver): string {
 
 /** Vorankündigung mit Entfernung. */
 export function aheadPhrase(m: Maneuver, distM: number): string {
-  const base = m.kind === 'ziel' ? 'erreichen Sie das Ziel.' : lowerFirst(m.speech);
+  const base = m.kind === 'ziel' || m.kind === 'ziel_links' || m.kind === 'ziel_rechts' ? 'erreichen Sie das Ziel.' : lowerFirst(m.speech);
   return `In ${distanceWords(distM)} ${base}`;
 }
 
@@ -118,7 +138,7 @@ export function createVoiceGuide(speak: (text: string) => void = defaultSpeak, s
       if (stage !== 'weit') done.add(`${next}:weit`);
       if (stage === 'jetzt') done.add(`${next}:nah`);
       // Ankunft sagt die Navigation selbst an, sobald der Status wechselt
-      if (m.kind === 'ziel' && stage === 'jetzt') return;
+      if (m.kind.startsWith('ziel') && stage === 'jetzt') return;
       // Bei sehr kurzem Abstand zur Vorankündigung lohnt "weit" nicht
       if (stage === 'weit' && distToNextM < th.nah * 1.5) return;
       say(stage === 'jetzt' ? nowPhrase(m) : aheadPhrase(m, distToNextM), stage === 'jetzt');

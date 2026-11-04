@@ -11,13 +11,14 @@ import type { Maneuver } from '@/lib/navigation/types';
 import { formatClock, formatDistance, formatRemaining } from './format';
 import { ManeuverIcon, MicIcon, SpeakerIcon } from './maneuver-icon';
 
-export function ManeuverCard({ maneuver, distM, then }: { maneuver: Maneuver; distM: number | null; then?: Maneuver }) {
+/** soon: das Manöver steht kurz bevor (etwa 150 m), dann stupst der Pfeil an. */
+export function ManeuverCard({ maneuver, distM, then, soon = false }: { maneuver: Maneuver; distM: number | null; then?: Maneuver; soon?: boolean }) {
   const d = formatDistance(distM);
   return (
     <View style={styles.maneuver}>
       <View style={styles.maneuverRow}>
         <View style={styles.arrowBox}>
-          <ManeuverIcon kind={maneuver.kind} size={72} />
+          <ManeuverIcon kind={maneuver.kind} exit={maneuver.exit} size={72} soon={soon} />
           {maneuver.kind === 'kreisverkehr' && maneuver.exit != null && (
             <AppText style={styles.exit}>{maneuver.exit}. Ausfahrt</AppText>
           )}
@@ -38,7 +39,7 @@ export function ManeuverCard({ maneuver, distM, then }: { maneuver: Maneuver; di
       {then && (
         <View style={styles.then}>
           <AppText variant="caption" muted>Dann</AppText>
-          <ManeuverIcon kind={then.kind} size={22} color={Colors.muted} />
+          <ManeuverIcon kind={then.kind} exit={then.exit} size={22} color={Colors.muted} />
           <AppText variant="caption" muted numberOfLines={1} style={styles.flex}>{then.text}</AppText>
         </View>
       )}
