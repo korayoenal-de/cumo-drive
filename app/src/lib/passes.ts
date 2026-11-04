@@ -150,21 +150,23 @@ export const PASS_STATUS_URL = 'https://www.ace.de/reisen/reiseinformationen/alp
 export const PASSES = passData as Pass[];
 
 /** Kurzbeschreibung für Listen und Karten, zum Beispiel "2757 m, Ikone, 82 Kehren". */
-export function passSummary(p: Pass, month?: number): string {
+export function passSummary(p: Pass, month?: number, stateNote?: string): string {
   const parts = [`${p.ele.toLocaleString('de-DE')} m`, TIER_LABEL[p.tier]];
   if (p.hairpins) parts.push(`${p.hairpins} Kehren`);
   if (p.toll) parts.push('Maut');
-  if (month !== undefined && likelyClosed(p, month)) parts.push(p.closed_months ? `gesperrt ${p.closed_months}` : 'im Winter wohl gesperrt');
+  if (stateNote !== undefined) {
+    if (stateNote) parts.push(stateNote);
+  } else if (month !== undefined && likelyClosed(p, month)) parts.push(p.closed_months ? `gesperrt ${p.closed_months}` : 'im Winter wohl gesperrt');
   return parts.join(', ');
 }
 
 /** GeoJSON für die Kartenebene. */
-export function passesGeoJson(list: Pass[], month: number) {
+export function passesGeoJson(list: Pass[], month: number, isClosed: (p: Pass) => boolean = (p) => likelyClosed(p, month)) {
   return {
     type: 'FeatureCollection',
     features: list.map((p) => ({
       type: 'Feature',
-      properties: { id: p.id, name: p.name, ele: p.ele, tier: p.tier, closed: likelyClosed(p, month) },
+      properties: { id: p.id, name: p.name, ele: p.ele, tier: p.tier, closed: isClosed(p) },
       geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
     })),
   };

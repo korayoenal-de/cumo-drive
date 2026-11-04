@@ -12,7 +12,8 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { planChecked, type PlanStep } from '@/lib/plan';
-import { decodeTour } from '@/lib/share-code';
+import { fetchHandoff, isHandoffCode } from '@/lib/handoff';
+import { decodeTour, extractCode } from '@/lib/share-code';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 
 const STEP_TEXT: Record<PlanStep, string> = {
@@ -34,7 +35,22 @@ export default function ScanScreen() {
 
   const onScan = async (r: BarcodeScanningResult) => {
     if (handled.current) return;
-    const shared = decodeTour(r.data);
+    const raw = extractCode(r.data);
+    if (isHandoffCode(raw)) {
+      handled.current = true;
+      setStatus({ kind: 'busy', text: 'Tour wird geladen', name: 'Tour vom Planer' });
+      try {
+        const h = await fetchHandoff(raw);
+        if (!h) throw new Error('Der Code ist abgelaufen. Im Planer einen neuen erzeugen.');
+        setActiveTour(h.tour, h.profile, h.avoid ?? DEFAULT_AVOID);
+        router.replace('/karte');
+      } catch (e) {
+        handled.current = false;
+        setStatus({ kind: 'error', text: e instanceof Error ? e.message : 'Die Tour konnte nicht geladen werden.' });
+      }
+      return;
+    }
+    const shared = decodeTour(raw);
     if (!shared) {
       setStatus({ kind: 'error', text: 'Das ist kein CUMO DRIVE Code. Im Web Planer auf „An die App senden“ klicken.' });
       return;

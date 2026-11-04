@@ -8,7 +8,8 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, TextInput, V
 import Svg, { Path } from 'react-native-svg';
 
 import { RouteMap } from '@/components/map/route-map';
-import { closedNote, likelyClosed, PASS_STATUS_URL, PASSES, passesAlong, passSummary } from '@/lib/passes';
+import { closedHint, passState, usePassLive } from '@/lib/pass-live';
+import { PASS_STATUS_URL, PASSES, passesAlong, passSummary } from '@/lib/passes';
 import {
   buildTour, findPlace, locate, newSeed, PHASES, toPlanError,
   type PlanError, type PlanPhase, type Spot, type TourRequest,
@@ -759,8 +760,8 @@ function Result({
   const share = total > 0 ? Math.round((sauber / total) * 100) : 0;
   const warnings = tour.warnungen.filter((w) => w.klasse !== 'ok');
   const passes = passesAlong(PASSES, flatten(tour).map((x) => x.p));
-  const month = new Date().getMonth() + 1;
-  const closed = passes.map((x) => x.pass).filter((p) => likelyClosed(p, month));
+  const live = usePassLive();
+  const hint = closedHint(passes.map((x) => x.pass), live);
   const openMap = () => {
     setActiveTour(tour, req.profile, req.avoid);
     router.push('/karte');
@@ -792,11 +793,11 @@ function Result({
         ))}
       </View>
 
-      {closed.length > 0 && (
+      {hint && (
         <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PASS_STATUS_URL)} style={styles.winter}>
-          <AppText style={styles.winterTitle}>Wintersperre möglich</AppText>
+          <AppText style={styles.winterTitle}>{hint.title}</AppText>
           <AppText variant="caption" style={styles.winterText}>
-            {closedNote(closed)} {closed.length > 1 ? 'sind' : 'ist'} um diese Jahreszeit meist zu. Vor der Fahrt den Status prüfen. Tippen für den aktuellen Passstatus.
+            {hint.text} Tippen für den aktuellen Passstatus.
           </AppText>
         </Pressable>
       )}
@@ -835,7 +836,7 @@ function Result({
                 <View style={styles.flex}>
                   <AppText variant="title">{pass.name}</AppText>
                   <AppText variant="caption" muted>
-                    {passSummary(pass, month)}
+                    {passSummary(pass, undefined, passState(pass, live).note)}
                   </AppText>
                 </View>
                 <AppText variant="caption" muted>

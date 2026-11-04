@@ -18,8 +18,10 @@ import { cumoAvailable } from '@/lib/cumo-routing';
 import { deleteTour, filterTours, folders, saveTour, useLibrary, type SavedTour, type SortKey } from '@/lib/library';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
+import { createHandoff } from '@/lib/handoff';
 import { encodeTour, expoGoLink } from '@/lib/share-code';
-import { closedNote, likelyClosed, PASS_STATUS_URL, PASSES, passesAlong, passesGeoJson, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
+import { closedHint, passState, usePassLive, type LiveRow } from '@/lib/pass-live';
+import { PASS_STATUS_URL, PASSES, passesAlong, passesGeoJson, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
 import QRCode from 'qrcode';
 
 import { addPassLayers, addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
@@ -254,6 +256,13 @@ export default function Planner() {
     replan(pts, isSample ? 'Neue Tour' : tour.name);
   };
 
+  const live = usePassLive();
+  useEffect(() => {
+    const m = map.current;
+    if (!mapReady || !m || !live) return;
+    m.getSource('passes')?.setData(passesGeoJson(PASSES, new Date().getMonth() + 1, (p) => passState(p, live).closed));
+  }, [mapReady, live]);
+
   const passesOnRoute = useMemo(() => passesAlong(PASSES, line), [line]);
 
   const hoverLine = useMemo(() => resample(line, 100), [line]);
@@ -308,7 +317,7 @@ export default function Planner() {
             {menu.pass ? (
               <div style={S.menuHead}>
                 <b>{menu.pass.name}</b>
-                <span style={S.dropDetail}>{passSummary(menu.pass, new Date().getMonth() + 1)}</span>
+                <span style={S.dropDetail}>{passSummary(menu.pass, undefined, passState(menu.pass, live).note)}</span>
                 {menu.pass.car_note ? <span style={S.dropDetail}>{menu.pass.car_note}</span> : null}
               </div>
             ) : null}
@@ -358,6 +367,7 @@ export default function Planner() {
               isSample={isSample}
               names={names}
               passes={passesOnRoute}
+              live={live}
               profile={profile}
               setProfile={setProfile}
               avoid={avoid}
@@ -459,6 +469,7 @@ function TourPanel(props: {
   isSample: boolean;
   names: Record<string, string>;
   passes: { pass: Pass; km: number }[];
+  live: Map<string, LiveRow> | null;
   profile: Profile;
   setProfile: (p: Profile) => void;
   avoid: Avoid;
@@ -481,6 +492,7 @@ function TourPanel(props: {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const k = tour.km_je_klasse;
   const pts = tour.wegpunkte;
+  const hint = closedHint(props.passes.map((x) => x.pass), props.live);
 
   return (
     <div style={S.stack}>
@@ -515,7 +527,7 @@ function TourPanel(props: {
 
       {!props.isSample && tour.linie.length ? <SaveBox savedId={props.savedId} onSave={props.onSave} busy={props.busy} /> : null}
 
-      {tour.linie.length ? <SendToApp tour={tour} profile={props.profile} /> : null}
+      {tour.linie.length ? <SendToApp tour={tour} profile={props.profile} avoid={props.avoid} /> : null}
 
       <PlaceSearch near={pts[pts.length - 1]} placeholder={pts.length ? 'Ziel oder Via Punkt hinzufügen' : 'Wo geht es los?'} onPick={(p) => props.onAddPlace(p.p)} />
 
@@ -556,13 +568,10 @@ function TourPanel(props: {
         <p style={S.muted}>Setze den Start per Suche oder Klick auf die Karte, dann das Ziel.</p>
       )}
 
-      {props.passes.some((x) => likelyClosed(x.pass, new Date().getMonth() + 1)) ? (
+      {hint ? (
         <div style={S.winterNote}>
-          <b>Wintersperre möglich</b>
-          <span>
-            {closedNote(props.passes.map((x) => x.pass).filter((p) => likelyClosed(p, new Date().getMonth() + 1)))}{' '}
-            {props.passes.filter((x) => likelyClosed(x.pass, new Date().getMonth() + 1)).length > 1 ? 'sind' : 'ist'} um diese Jahreszeit meist zu. Planen und speichern geht trotzdem, vor der Fahrt den Status prüfen.
-          </span>
+          <b>{hint.title}</b>
+          <span>{hint.text}</span>
           <a href={PASS_STATUS_URL} target="_blank" rel="noreferrer" style={S.winterLink}>
             Aktuellen Passstatus ansehen
           </a>
@@ -578,7 +587,7 @@ function TourPanel(props: {
                   <span style={pass.tier === 'ikone' ? S.passDotIcon : S.passDot} />
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={S.passName}>{pass.name}</span>
-                    <span style={S.dropDetail}>{passSummary(pass, new Date().getMonth() + 1)}</span>
+                    <span style={S.dropDetail}>{passSummary(pass, undefined, passState(pass, props.live).note)}</span>
                   </span>
                   <span style={S.legKm}>km {Math.round(km)}</span>
                 </button>
@@ -673,22 +682,34 @@ function SaveBox(props: { savedId: string | null; onSave: (folder: string) => vo
   );
 }
 
-/** QR Code für die App: Tab Entdecken, „Tour vom Planer holen“, Code scannen. */
-function SendToApp(props: { tour: Tour; profile: Profile }) {
+/**
+ * QR Code für die App. Bevorzugt ein kurzer Übergabe Code über Supabase (die App bekommt die
+ * exakt geplante Tour); ohne Verbindung fällt er auf Stützpunkte im Code zurück (App plant neu).
+ */
+function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid }) {
+  const { tour, profile, avoid } = props;
   const [open, setOpen] = useState(false);
-  const [img, setImg] = useState<{ code: string; url: string } | null>(null);
-  const code = useMemo(() => (open ? encodeTour(props.tour, props.profile) : ''), [open, props.tour, props.profile]);
+  const [qr, setQr] = useState<{ tour: Tour; url: string; short: boolean } | null>(null);
   useEffect(() => {
-    if (!code) return;
+    if (!open) return;
     let alive = true;
-    QRCode.toDataURL(expoGoLink(code), { errorCorrectionLevel: 'L', margin: 3, width: 720, color: { dark: '#0B0B0C', light: '#FFFFFF' } })
-      .then((url) => alive && setImg({ code, url }))
-      .catch(() => alive && setImg(null));
+    (async () => {
+      let code: string;
+      let short = true;
+      try {
+        code = await createHandoff(tour, profile, avoid);
+      } catch {
+        code = encodeTour(tour, profile);
+        short = false;
+      }
+      const url = await QRCode.toDataURL(expoGoLink(code), { errorCorrectionLevel: 'M', margin: 3, width: 720, color: { dark: '#0B0B0C', light: '#FFFFFF' } });
+      if (alive) setQr({ tour, url, short });
+    })().catch(() => undefined);
     return () => {
       alive = false;
     };
-  }, [code]);
-  const url = img && img.code === code ? img.url : null;
+  }, [open, tour, profile, avoid]);
+  const current = qr && qr.tour === tour ? qr : null;
   if (!open)
     return (
       <button style={{ ...S.secondary, flex: 'none', minHeight: 42 }} onClick={() => setOpen(true)}>
@@ -703,9 +724,13 @@ function SendToApp(props: { tour: Tour; profile: Profile }) {
           ×
         </button>
       </div>
-      {url ? <img src={url} alt="QR Code der Tour" style={S.qrImg} /> : <div style={{ ...S.qrImg, background: '#fff' }} />}
+      {current ? <img src={current.url} alt="QR Code der Tour" style={S.qrImg} /> : <div style={{ ...S.qrImg, background: '#fff' }} />}
       <p style={S.small}>
-        Mit der iPhone Kamera scannen und auf „In Expo Go öffnen“ tippen. CUMO DRIVE übernimmt die Tour, plant sie neu und prüft sie. Alternativ in der App unter Entdecken „Tour vom Planer holen“ wählen.
+        Mit der iPhone Kamera scannen und auf „In Expo Go öffnen“ tippen.{' '}
+        {current && !current.short
+          ? 'Ohne Verbindung zum Server enthält der Code nur Stützpunkte, die App plant die Strecke neu.'
+          : 'Die App übernimmt die Tour genau so, wie sie hier geplant ist.'}{' '}
+        Alternativ in der App unter Entdecken „Tour vom Planer holen“ wählen.
       </p>
     </div>
   );
@@ -1012,6 +1037,7 @@ function DescribePanel(props: {
 /* ---------- Bausteine ---------- */
 
 function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick: (p: Place) => void }) {
+  const live = usePassLive();
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<Place[]>([]);
   const [open, setOpen] = useState(false);
@@ -1020,10 +1046,9 @@ function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick: (p: Pl
     if (q.trim().length < 3) return;
     const ctrl = new AbortController();
     const t = setTimeout(() => {
-      const month = new Date().getMonth() + 1;
       const passHits: Place[] = searchPasses(PASSES, q, 3).map((p) => ({
         name: p.name,
-        detail: `Pass, ${passSummary(p, month)}${likelyClosed(p, month) ? '' : `, ${p.region}`}`,
+        detail: `Pass, ${passSummary(p, undefined, passState(p, live).note)}, ${p.region}`,
         p: passPoint(p),
       }));
       searchPlaces(q, props.near, ctrl.signal)
@@ -1037,7 +1062,7 @@ function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick: (p: Pl
       clearTimeout(t);
       ctrl.abort();
     };
-  }, [q, props.near]);
+  }, [q, props.near, live]);
   return (
     <div style={{ position: 'relative' }}>
       <input
