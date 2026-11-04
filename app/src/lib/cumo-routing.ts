@@ -5,29 +5,28 @@
  * 2,5 m praktisch ausgeschlossen, Autobahn abgewertet. Der Etappen Check läuft hier ohne
  * fremden Dienst direkt auf den Straßendaten, die der Server mitliefert.
  *
- * Adresse: EXPO_PUBLIC_ROUTING_URL, sonst automatisch derselbe Rechner wie der Expo Server
- * (Port 8989). Auf dem iPhone ist das die WLAN Adresse des Macs.
+ * Adresse: EXPO_PUBLIC_ROUTING_URL, sonst der eigene Server (CUMO_ROUTING_URL); im Browser auf
+ * localhost oder im lokalen Netz der Server auf dem Mac (Port 8989).
  */
-import Constants from 'expo-constants';
 
 import type { PlannedTour } from './plan';
 import { countCurves } from './stats';
 import { haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import type { Avoid } from './valhalla';
 
+/** Eigener Routing Server (Contabo, GraphHopper mit Sportwagen Profil). Später unter routing.rallycumo.de. */
+export const CUMO_ROUTING_URL = 'https://13-140-213-164.sslip.io';
+
 export function routingServerUrl(): string | null {
   const env = process.env.EXPO_PUBLIC_ROUTING_URL;
   if (env) return env.replace(/\/$/, '');
   if (typeof window !== 'undefined' && typeof window.location?.hostname === 'string' && window.location.hostname) {
-    // Nur im lokalen Netz suchen (localhost oder private Adresse). Auf drive.rallycumo.de
-    // gibt es keinen eigenen Server, dort planen die öffentlichen Dienste.
+    // Entwicklung im lokalen Netz: Server auf dem Mac, sonst der eigene Server im Netz
     const h = window.location.hostname;
     const local = h === 'localhost' || h === '127.0.0.1' || /^(10|192\.168|172\.(1[6-9]|2\d|3[01]))\./.test(h);
-    return local ? `http://${h}:8989` : null;
+    return local ? `http://${h}:8989` : CUMO_ROUTING_URL;
   }
-  const hostUri = Constants.expoConfig?.hostUri; // zum Beispiel 192.168.178.20:8081
-  const host = hostUri?.split(':')[0];
-  return host ? `http://${host}:8989` : null;
+  return CUMO_ROUTING_URL;
 }
 
 let availability: { at: number; ok: boolean } | null = null;
@@ -135,7 +134,7 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile) {
   const ex = exclusionModel(exclude) as { areas?: unknown; priority?: { if: string; multiply_by: string }[] };
   const priority = [...WIDTH_MODEL, ...profileModel(profile), ...avoidModel(avoid), ...(ex.priority ?? [])];
   if (!priority.length) return undefined;
-  return { ...(ex.areas ? { areas: ex.areas } : {}), priority, ...(profile === 'kurvig' || profile === 'paesse' ? { distance_influence: 5 } : {}) };
+  return { ...(ex.areas ? { areas: ex.areas } : {}), priority, ...(profile === 'kurvig' || profile === 'paesse' ? { distance_influence: 15 } : {}) };
 }
 
 /* ---------- Etappen Check auf den Server Details ---------- */
