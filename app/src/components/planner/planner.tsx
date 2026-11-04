@@ -21,7 +21,6 @@ import {
 } from '@/components/planner/create-tour';
 import { CLASS_COLORS } from '@/components/planner/route-preview';
 import { ElevationChart } from '@/components/planner/elevation-chart';
-import { ExportRow } from '@/components/planner/export-row';
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
@@ -1521,7 +1520,6 @@ function TourMode({
           />
           {plan.saveMsg && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
           {!session && !plan.saveMsg && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
-          <ExportRow tour={routeTour} />
         </View>
       )}
 
@@ -1984,7 +1982,6 @@ function Result({
 
       <View style={styles.gapS}>
         <SecondaryButton label={savedId ? 'Gespeichert unter Meine Touren' : 'Speichern'} onPress={saveResult} />
-        <ExportRow tour={tour} />
         <PrimaryButton label="Neu würfeln" onPress={onReroll} />
         <SecondaryButton label="Zurück zum Formular" onPress={onBack} />
       </View>
