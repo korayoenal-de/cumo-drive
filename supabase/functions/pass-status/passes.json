@@ -4568,5 +4568,2557 @@
     "toll": true,
     "car_note": null,
     "source": "https://de.wikipedia.org/wiki/Lienbachsattel"
+  },
+  {
+    "id": "col-de-la-schlucht",
+    "name": "Col de la Schlucht",
+    "names": [
+      "Schlucht",
+      "Schluchtpass"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.06417,
+    "lon": 7.02266,
+    "ele": 1139,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Schlucht"
+  },
+  {
+    "id": "grand-ballon",
+    "name": "Grand Ballon (Route des Crêtes)",
+    "names": [
+      "Route des Crêtes",
+      "Großer Belchen",
+      "Ballon de Guebwiller"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.90368,
+    "lon": 7.10326,
+    "ele": 1341,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Route des Crêtes im Winter abschnittsweise gesperrt (Schlucht bis Calvaire, Bonhomme bis Bagenelles, Grand Ballon bis Kastelberg)",
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Grand_Ballon"
+  },
+  {
+    "id": "ballon-d-alsace",
+    "name": "Ballon d'Alsace",
+    "names": [
+      "Col du Ballon d'Alsace",
+      "Elsässer Belchen"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.82087,
+    "lon": 6.83691,
+    "ele": 1174,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Ballon_d%27Alsace"
+  },
+  {
+    "id": "col-du-bonhomme",
+    "name": "Col du Bonhomme",
+    "names": [
+      "Bonhomme"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.16462,
+    "lon": 7.08,
+    "ele": 949,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Bonhomme_%28Vosges%29"
+  },
+  {
+    "id": "col-du-calvaire",
+    "name": "Col du Calvaire",
+    "names": [
+      "Calvaire",
+      "Lac Blanc"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.1367,
+    "lon": 7.08661,
+    "ele": 1144,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Calvaire"
+  },
+  {
+    "id": "col-de-bussang",
+    "name": "Col de Bussang",
+    "names": [
+      "Bussang"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.88951,
+    "lon": 6.89714,
+    "ele": 727,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Bussang"
+  },
+  {
+    "id": "col-du-wettstein",
+    "name": "Col du Wettstein",
+    "names": [
+      "Wettstein"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.08787,
+    "lon": 7.11601,
+    "ele": 882,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Wettstein"
+  },
+  {
+    "id": "col-d-oderen",
+    "name": "Col d'Oderen",
+    "names": [
+      "Oderen"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.92269,
+    "lon": 6.91736,
+    "ele": 884,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_d%27Oderen"
+  },
+  {
+    "id": "col-de-bramont",
+    "name": "Col de Bramont",
+    "names": [
+      "Bramont"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.00049,
+    "lon": 6.9454,
+    "ele": 955,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Bramont"
+  },
+  {
+    "id": "col-du-platzerwasel",
+    "name": "Col du Platzerwasel",
+    "names": [
+      "Platzerwasel"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.9695,
+    "lon": 7.04289,
+    "ele": 1183,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Platzerwasel"
+  },
+  {
+    "id": "col-du-hundsruck",
+    "name": "Col du Hundsruck",
+    "names": [
+      "Hundsruck"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.80631,
+    "lon": 7.04246,
+    "ele": 746,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Hundsruck"
+  },
+  {
+    "id": "col-de-la-grosse-pierre",
+    "name": "Col de Grosse Pierre",
+    "names": [
+      "Grosse Pierre"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.02639,
+    "lon": 6.88556,
+    "ele": 954,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Grosse_Pierre"
+  },
+  {
+    "id": "col-des-feignes-sous-vologne",
+    "name": "Col des Feignes sous Vologne",
+    "names": [
+      "Col des Feignes"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.04761,
+    "lon": 6.9758,
+    "ele": 954,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_des_Feignes"
+  },
+  {
+    "id": "col-du-hahnenbrunnen",
+    "name": "Col du Hahnenbrunnen",
+    "names": [
+      "Hahnenbrunnen"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.95157,
+    "lon": 7.01951,
+    "ele": 1186,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Hahnenbrunnen"
+  },
+  {
+    "id": "col-du-herrenberg",
+    "name": "Col du Herrenberg",
+    "names": [
+      "Herrenberg"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.9795,
+    "lon": 6.9838,
+    "ele": 1191,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Herrenberg"
+  },
+  {
+    "id": "col-du-firstplan",
+    "name": "Col du Firstplan",
+    "names": [
+      "Firstplan"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.99926,
+    "lon": 7.18512,
+    "ele": 722,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Firstplan"
+  },
+  {
+    "id": "col-amic",
+    "name": "Col Amic",
+    "names": [
+      "Amic"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.8753,
+    "lon": 7.12757,
+    "ele": 828,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_Amic"
+  },
+  {
+    "id": "col-du-silberloch",
+    "name": "Col du Silberloch",
+    "names": [
+      "Silberloch",
+      "Hartmannswillerkopf"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.85858,
+    "lon": 7.14856,
+    "ele": 906,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Silberloch"
+  },
+  {
+    "id": "col-du-linge",
+    "name": "Col du Linge",
+    "names": [
+      "Linge",
+      "Lingekopf"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.08342,
+    "lon": 7.13974,
+    "ele": 987,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Linge"
+  },
+  {
+    "id": "col-de-la-charbonniere",
+    "name": "Col de la Charbonnière",
+    "names": [
+      "Charbonnière"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.38349,
+    "lon": 7.25743,
+    "ele": 961,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Charbonni%C3%A8re"
+  },
+  {
+    "id": "col-du-donon",
+    "name": "Col du Donon",
+    "names": [
+      "Donon"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.50725,
+    "lon": 7.14623,
+    "ele": 728,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Donon"
+  },
+  {
+    "id": "champ-du-feu",
+    "name": "Col du Champ du Feu",
+    "names": [
+      "Champ du Feu",
+      "Hohfeld"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.39419,
+    "lon": 7.26881,
+    "ele": 1098,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Champ_du_Feu"
+  },
+  {
+    "id": "col-des-bagenelles",
+    "name": "Col des Bagenelles",
+    "names": [
+      "Bagenelles"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.19248,
+    "lon": 7.11394,
+    "ele": 904,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_des_Bagenelles"
+  },
+  {
+    "id": "col-de-sainte-marie",
+    "name": "Col de Sainte Marie",
+    "names": [
+      "Col de Sainte-Marie",
+      "Col des Bagenelles"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.24336,
+    "lon": 7.13294,
+    "ele": 772,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Sainte-Marie"
+  },
+  {
+    "id": "col-du-mont-de-fourche",
+    "name": "Col du Mont de Fourche",
+    "names": [
+      "Mont de Fourche"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.90431,
+    "lon": 6.64564,
+    "ele": 620,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Mont_de_Fourche"
+  },
+  {
+    "id": "col-des-croix",
+    "name": "Col des Croix",
+    "names": [
+      "Croix"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.85973,
+    "lon": 6.74707,
+    "ele": 679,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_des_Croix"
+  },
+  {
+    "id": "col-de-martimpre",
+    "name": "Col de Martimpré",
+    "names": [
+      "Martimpré"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 48.10338,
+    "lon": 6.90566,
+    "ele": 797,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Martimpr%C3%A9"
+  },
+  {
+    "id": "col-du-haag",
+    "name": "Col du Haag",
+    "names": [
+      "Haag"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Vogesen",
+    "lat": 47.90507,
+    "lon": 7.09039,
+    "ele": 1232,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Haag"
+  },
+  {
+    "id": "col-de-la-faucille",
+    "name": "Col de la Faucille",
+    "names": [
+      "Faucille"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Jura",
+    "lat": 46.36929,
+    "lon": 6.01934,
+    "ele": 1320,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Faucille"
+  },
+  {
+    "id": "col-de-la-croix-de-la-serra",
+    "name": "Col de la Croix de la Serra",
+    "names": [
+      "Col de la Croix-de-la-Serra"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Jura",
+    "lat": 46.28864,
+    "lon": 5.79954,
+    "ele": 1048,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Croix_de_la_Serra"
+  },
+  {
+    "id": "col-de-la-savine",
+    "name": "Col de la Savine",
+    "names": [
+      "Savine"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Jura",
+    "lat": 46.56332,
+    "lon": 6.00535,
+    "ele": 984,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Savine"
+  },
+  {
+    "id": "grand-colombier",
+    "name": "Col du Grand Colombier",
+    "names": [
+      "Grand Colombier"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Jura",
+    "lat": 45.90346,
+    "lon": 5.76166,
+    "ele": 1498,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Apr",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Grand_Colombier"
+  },
+  {
+    "id": "col-de-richemond",
+    "name": "Col de Richemond",
+    "names": [
+      "Richemond"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Jura",
+    "lat": 46.00827,
+    "lon": 5.74838,
+    "ele": 1036,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Richemond"
+  },
+  {
+    "id": "col-de-la-biche",
+    "name": "Col de la Biche",
+    "names": [
+      "Biche"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Jura",
+    "lat": 45.95247,
+    "lon": 5.74901,
+    "ele": 1310,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Biche"
+  },
+  {
+    "id": "col-de-la-lebe",
+    "name": "Col de la Lèbe",
+    "names": [
+      "Lèbe"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Jura",
+    "lat": 45.91905,
+    "lon": 5.61953,
+    "ele": 914,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_L%C3%A8be"
+  },
+  {
+    "id": "col-de-l-iseran",
+    "name": "Col de l'Iseran",
+    "names": [
+      "Iseran"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.41711,
+    "lon": 7.03085,
+    "ele": 2764,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": false,
+    "car_note": "oberhalb der Baumgrenze deutlich schmalere Straße",
+    "source": "https://fr.wikipedia.org/wiki/Col_de_l%27Iseran"
+  },
+  {
+    "id": "col-du-galibier",
+    "name": "Col du Galibier",
+    "names": [
+      "Galibier"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen und Hautes Alpes",
+    "lat": 45.06414,
+    "lon": 6.40786,
+    "ele": 2642,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": false,
+    "car_note": "Scheiteltunnel nur einspurig mit Ampelregelung, Passstrecke gesperrt für Fahrzeuge über 19 t oder 4,10 m Höhe",
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Galibier"
+  },
+  {
+    "id": "col-du-telegraphe",
+    "name": "Col du Télégraphe",
+    "names": [
+      "Télégraphe"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.2027,
+    "lon": 6.44461,
+    "ele": 1566,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_T%C3%A9l%C3%A9graphe"
+  },
+  {
+    "id": "col-de-la-croix-de-fer",
+    "name": "Col de la Croix de Fer",
+    "names": [
+      "Col de la Croix-de-Fer",
+      "Croix de Fer"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.22749,
+    "lon": 6.20333,
+    "ele": 2065,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Croix-de-Fer"
+  },
+  {
+    "id": "col-du-glandon",
+    "name": "Col du Glandon",
+    "names": [
+      "Glandon"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen und Isère",
+    "lat": 45.2396,
+    "lon": 6.17553,
+    "ele": 1922,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": "Nordauffahrt über die schmalere D927, steiler letzter Abschnitt mit sechs Kehren",
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Glandon"
+  },
+  {
+    "id": "col-de-la-madeleine",
+    "name": "Col de la Madeleine",
+    "names": [
+      "Madeleine"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.43495,
+    "lon": 6.37552,
+    "ele": 1993,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Jun",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Madeleine"
+  },
+  {
+    "id": "col-d-izoard",
+    "name": "Col d'Izoard",
+    "names": [
+      "Izoard"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hautes Alpes",
+    "lat": 44.81966,
+    "lon": 6.73498,
+    "ele": 2362,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Jun",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_d%27Izoard"
+  },
+  {
+    "id": "cime-de-la-bonette",
+    "name": "Cime de la Bonette",
+    "names": [
+      "Col de la Bonette",
+      "Bonette",
+      "Col de Restefond"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes und Alpes de Haute Provence",
+    "lat": 44.32052,
+    "lon": 6.80746,
+    "ele": 2802,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "schmale, durchgehend asphaltierte Straße, Schleife um die Cime auf 2802 m, höchste asphaltierte Straße Frankreichs",
+    "source": "https://fr.wikipedia.org/wiki/Route_de_la_Bonette"
+  },
+  {
+    "id": "col-du-lautaret",
+    "name": "Col du Lautaret",
+    "names": [
+      "Lautaret"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hautes Alpes",
+    "lat": 45.0354,
+    "lon": 6.40519,
+    "ele": 2057,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Lautaret"
+  },
+  {
+    "id": "col-de-vars",
+    "name": "Col de Vars",
+    "names": [
+      "Vars"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hautes Alpes und Alpes de Haute Provence",
+    "lat": 44.5388,
+    "lon": 6.70284,
+    "ele": 2108,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Vars"
+  },
+  {
+    "id": "col-d-allos",
+    "name": "Col d'Allos",
+    "names": [
+      "Allos"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes de Haute Provence",
+    "lat": 44.29722,
+    "lon": 6.59383,
+    "ele": 2240,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_d%27Allos"
+  },
+  {
+    "id": "col-de-la-cayolle",
+    "name": "Col de la Cayolle",
+    "names": [
+      "Cayolle"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes und Alpes de Haute Provence",
+    "lat": 44.25914,
+    "lon": 6.74397,
+    "ele": 2324,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Cayolle"
+  },
+  {
+    "id": "col-de-turini",
+    "name": "Col de Turini",
+    "names": [
+      "Turini"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes",
+    "lat": 43.97757,
+    "lon": 7.3916,
+    "ele": 1604,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Turini"
+  },
+  {
+    "id": "col-de-la-colombiere",
+    "name": "Col de la Colombière",
+    "names": [
+      "Colombière"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen",
+    "lat": 45.99223,
+    "lon": 6.47569,
+    "ele": 1607,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Colombi%C3%A8re"
+  },
+  {
+    "id": "col-des-aravis",
+    "name": "Col des Aravis",
+    "names": [
+      "Aravis"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen und Savoyen",
+    "lat": 45.87228,
+    "lon": 6.46487,
+    "ele": 1486,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_des_Aravis"
+  },
+  {
+    "id": "col-de-joux-plane",
+    "name": "Col de Joux Plane",
+    "names": [
+      "Joux Plane"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen",
+    "lat": 46.12962,
+    "lon": 6.71291,
+    "ele": 1712,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Joux_Plane"
+  },
+  {
+    "id": "col-de-romeyere",
+    "name": "Col de Romeyère",
+    "names": [
+      "Romeyère"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Isère (Vercors)",
+    "lat": 45.14387,
+    "lon": 5.47967,
+    "ele": 1068,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Romey%C3%A8re"
+  },
+  {
+    "id": "col-de-la-forclaz-montmin",
+    "name": "Col de la Forclaz (Annecy)",
+    "names": [
+      "Col de la Forclaz de Montmin",
+      "Forclaz"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen",
+    "lat": 45.80846,
+    "lon": 6.24476,
+    "ele": 1147,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Forclaz_de_Montmin"
+  },
+  {
+    "id": "col-de-la-croix-fry",
+    "name": "Col de la Croix Fry",
+    "names": [
+      "Croix Fry"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen",
+    "lat": 45.87758,
+    "lon": 6.40602,
+    "ele": 1467,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Croix_Fry"
+  },
+  {
+    "id": "col-des-saisies",
+    "name": "Col des Saisies",
+    "names": [
+      "Saisies"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.76156,
+    "lon": 6.53336,
+    "ele": 1632,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_des_Saisies"
+  },
+  {
+    "id": "col-du-pre",
+    "name": "Col du Pré",
+    "names": [
+      "Pré"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.6903,
+    "lon": 6.59797,
+    "ele": 1703,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Pr%C3%A9"
+  },
+  {
+    "id": "cormet-de-roselend",
+    "name": "Cormet de Roselend",
+    "names": [
+      "Roselend"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.69133,
+    "lon": 6.69062,
+    "ele": 1968,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Cormet_de_Roselend"
+  },
+  {
+    "id": "col-de-romme",
+    "name": "Col de Romme",
+    "names": [
+      "Romme"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen",
+    "lat": 46.03005,
+    "lon": 6.57458,
+    "ele": 1297,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Romme"
+  },
+  {
+    "id": "col-de-la-ramaz",
+    "name": "Col de la Ramaz",
+    "names": [
+      "Ramaz"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen",
+    "lat": 46.16284,
+    "lon": 6.57477,
+    "ele": 1559,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Ramaz"
+  },
+  {
+    "id": "col-des-gets",
+    "name": "Col des Gets",
+    "names": [
+      "Les Gets"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen",
+    "lat": 46.16038,
+    "lon": 6.66908,
+    "ele": 1170,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_des_Gets"
+  },
+  {
+    "id": "col-des-montets",
+    "name": "Col des Montets",
+    "names": [
+      "Montets"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen",
+    "lat": 46.00391,
+    "lon": 6.92363,
+    "ele": 1461,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_des_Montets"
+  },
+  {
+    "id": "col-de-tamie",
+    "name": "Col de Tamié",
+    "names": [
+      "Tamié"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.67025,
+    "lon": 6.3079,
+    "ele": 908,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Tami%C3%A9"
+  },
+  {
+    "id": "col-de-leschaux",
+    "name": "Col de Leschaux",
+    "names": [
+      "Leschaux"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen",
+    "lat": 45.77183,
+    "lon": 6.13168,
+    "ele": 897,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Leschaux"
+  },
+  {
+    "id": "col-du-granier",
+    "name": "Col du Granier",
+    "names": [
+      "Granier"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen (Chartreuse)",
+    "lat": 45.48049,
+    "lon": 5.91498,
+    "ele": 1133,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Granier"
+  },
+  {
+    "id": "col-du-cucheron",
+    "name": "Col du Cucheron",
+    "names": [
+      "Cucheron"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Isère (Chartreuse)",
+    "lat": 45.36546,
+    "lon": 5.83412,
+    "ele": 1139,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Cucheron"
+  },
+  {
+    "id": "col-de-porte",
+    "name": "Col de Porte",
+    "names": [
+      "Porte"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Isère (Chartreuse)",
+    "lat": 45.28994,
+    "lon": 5.767,
+    "ele": 1324,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Porte_%28Chartreuse%29"
+  },
+  {
+    "id": "col-du-mollard",
+    "name": "Col du Mollard",
+    "names": [
+      "Mollard"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.21048,
+    "lon": 6.33714,
+    "ele": 1630,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Auffahrt von Villargondran mit fast 50 Kehren",
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Mollard"
+  },
+  {
+    "id": "col-du-grand-cucheron",
+    "name": "Col du Grand Cucheron",
+    "names": [
+      "Grand Cucheron"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.48992,
+    "lon": 6.2481,
+    "ele": 1188,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Grand_Cucheron"
+  },
+  {
+    "id": "col-du-chaussy",
+    "name": "Col du Chaussy",
+    "names": [
+      "Chaussy",
+      "Lacets de Montvernier"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Savoyen",
+    "lat": 45.34322,
+    "lon": 6.35716,
+    "ele": 1531,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Chaussy"
+  },
+  {
+    "id": "col-de-sarenne",
+    "name": "Col de Sarenne",
+    "names": [
+      "Sarenne"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Isère",
+    "lat": 45.08753,
+    "lon": 6.14906,
+    "ele": 1999,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Sarenne"
+  },
+  {
+    "id": "col-d-ornon",
+    "name": "Col d'Ornon",
+    "names": [
+      "Ornon"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Isère",
+    "lat": 45.00828,
+    "lon": 5.96744,
+    "ele": 1360,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_d%27Ornon"
+  },
+  {
+    "id": "col-bayard",
+    "name": "Col Bayard",
+    "names": [
+      "Bayard"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hautes Alpes",
+    "lat": 44.61379,
+    "lon": 6.08113,
+    "ele": 1250,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_Bayard"
+  },
+  {
+    "id": "col-du-noyer",
+    "name": "Col du Noyer",
+    "names": [
+      "Noyer"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hautes Alpes",
+    "lat": 44.69255,
+    "lon": 5.9843,
+    "ele": 1664,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Noyer"
+  },
+  {
+    "id": "col-de-manse",
+    "name": "Col de Manse",
+    "names": [
+      "Manse"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hautes Alpes",
+    "lat": 44.6117,
+    "lon": 6.13178,
+    "ele": 1269,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Manse"
+  },
+  {
+    "id": "col-de-l-echelle",
+    "name": "Col de l'Échelle",
+    "names": [
+      "Échelle",
+      "Colle della Scala"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hautes Alpes",
+    "lat": 45.02648,
+    "lon": 6.65699,
+    "ele": 1762,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_l%27%C3%89chelle"
+  },
+  {
+    "id": "col-des-champs",
+    "name": "Col des Champs",
+    "names": [
+      "Champs"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes und Alpes de Haute Provence",
+    "lat": 44.17503,
+    "lon": 6.69791,
+    "ele": 2087,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_des_Champs"
+  },
+  {
+    "id": "col-de-valberg",
+    "name": "Col de Valberg",
+    "names": [
+      "Valberg"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes",
+    "lat": 44.09537,
+    "lon": 6.92905,
+    "ele": 1672,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Valberg"
+  },
+  {
+    "id": "col-de-la-couillole",
+    "name": "Col de la Couillole",
+    "names": [
+      "Couillole"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes",
+    "lat": 44.10023,
+    "lon": 7.02293,
+    "ele": 1678,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Couillole"
+  },
+  {
+    "id": "col-saint-martin",
+    "name": "Col Saint Martin",
+    "names": [
+      "Col Saint-Martin",
+      "Col de la Colmiane",
+      "Colmiane"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes",
+    "lat": 44.07096,
+    "lon": 7.22137,
+    "ele": 1501,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_Saint-Martin"
+  },
+  {
+    "id": "col-de-braus",
+    "name": "Col de Braus",
+    "names": [
+      "Braus"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes",
+    "lat": 43.87263,
+    "lon": 7.39893,
+    "ele": 1002,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Braus"
+  },
+  {
+    "id": "col-de-castillon",
+    "name": "Col de Castillon",
+    "names": [
+      "Castillon"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes",
+    "lat": 43.83951,
+    "lon": 7.46077,
+    "ele": 728,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Castillon"
+  },
+  {
+    "id": "col-de-vence",
+    "name": "Col de Vence",
+    "names": [
+      "Vence"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes",
+    "lat": 43.76062,
+    "lon": 7.07512,
+    "ele": 963,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Vence_%28Alpes-Maritimes%29"
+  },
+  {
+    "id": "col-de-bleine",
+    "name": "Col de Bleine",
+    "names": [
+      "Bleine"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes Maritimes",
+    "lat": 43.81508,
+    "lon": 6.80387,
+    "ele": 1439,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Bleine"
+  },
+  {
+    "id": "col-de-la-croix-haute",
+    "name": "Col de la Croix Haute",
+    "names": [
+      "Col de la Croix-Haute",
+      "Croix Haute"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Drôme und Isère",
+    "lat": 44.72379,
+    "lon": 5.67742,
+    "ele": 1176,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Croix-Haute"
+  },
+  {
+    "id": "col-de-grimone",
+    "name": "Col de Grimone",
+    "names": [
+      "Grimone"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Drôme",
+    "lat": 44.69145,
+    "lon": 5.65399,
+    "ele": 1319,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Grimone"
+  },
+  {
+    "id": "col-de-cabre",
+    "name": "Col de Cabre",
+    "names": [
+      "Cabre"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Drôme und Hautes Alpes",
+    "lat": 44.5496,
+    "lon": 5.59833,
+    "ele": 1180,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Cabre_%28Alpes%29"
+  },
+  {
+    "id": "col-de-perty",
+    "name": "Col de Perty",
+    "names": [
+      "Perty"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Drôme und Hautes Alpes",
+    "lat": 44.28721,
+    "lon": 5.54975,
+    "ele": 1302,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Perty"
+  },
+  {
+    "id": "col-de-la-machine",
+    "name": "Col de la Machine",
+    "names": [
+      "Machine",
+      "Combe Laval"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Drôme (Vercors)",
+    "lat": 44.97613,
+    "lon": 5.33393,
+    "ele": 1011,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Machine"
+  },
+  {
+    "id": "col-du-festre",
+    "name": "Col du Festre",
+    "names": [
+      "Festre"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hautes Alpes",
+    "lat": 44.6652,
+    "lon": 5.85529,
+    "ele": 1441,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Festre"
+  },
+  {
+    "id": "col-du-corbier",
+    "name": "Col du Corbier",
+    "names": [
+      "Corbier"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Hochsavoyen",
+    "lat": 46.28415,
+    "lon": 6.64525,
+    "ele": 1237,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Corbier"
+  },
+  {
+    "id": "mont-ventoux",
+    "name": "Mont Ventoux",
+    "names": [
+      "Ventoux",
+      "Géant de Provence"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Provence (Vaucluse)",
+    "lat": 44.17331,
+    "lon": 5.27844,
+    "ele": 1909,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": "Gipfelstraße zum Schluss deutlich schmaler",
+    "source": "https://de.wikipedia.org/wiki/Mont_Ventoux"
+  },
+  {
+    "id": "col-des-leques",
+    "name": "Col des Lèques",
+    "names": [
+      "Lèques",
+      "Route Napoléon"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes de Haute Provence",
+    "lat": 43.86546,
+    "lon": 6.464,
+    "ele": 1147,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_des_L%C3%A8ques"
+  },
+  {
+    "id": "col-de-l-espigoulier",
+    "name": "Col de l'Espigoulier",
+    "names": [
+      "Espigoulier"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Provence",
+    "lat": 43.31629,
+    "lon": 5.65917,
+    "ele": 723,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_l%27Espigoulier"
+  },
+  {
+    "id": "col-de-murs",
+    "name": "Col de Murs",
+    "names": [
+      "Murs"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Provence (Vaucluse)",
+    "lat": 43.97708,
+    "lon": 5.22591,
+    "ele": 626,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Murs"
+  },
+  {
+    "id": "col-de-la-gineste",
+    "name": "Col de la Gineste",
+    "names": [
+      "Gineste"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Provence",
+    "lat": 43.24026,
+    "lon": 5.45776,
+    "ele": 326,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Gineste"
+  },
+  {
+    "id": "col-de-luens",
+    "name": "Col de Luens",
+    "names": [
+      "Luens",
+      "Route Napoléon"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Provence (Var)",
+    "lat": 43.81861,
+    "lon": 6.587,
+    "ele": 1058,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Luens"
+  },
+  {
+    "id": "pas-de-peyrol",
+    "name": "Pas de Peyrol",
+    "names": [
+      "Puy Mary",
+      "Col du Pas de Peyrol"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Zentralmassiv (Cantal)",
+    "lat": 45.11409,
+    "lon": 2.67175,
+    "ele": 1588,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Pas_de_Peyrol"
+  },
+  {
+    "id": "col-de-la-croix-morand",
+    "name": "Col de la Croix Morand",
+    "names": [
+      "Col de la Croix-Morand",
+      "Croix Morand"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Zentralmassiv (Auvergne)",
+    "lat": 45.59708,
+    "lon": 2.85082,
+    "ele": 1403,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Croix-Morand"
+  },
+  {
+    "id": "col-de-guery",
+    "name": "Col de Guéry",
+    "names": [
+      "Guéry"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Zentralmassiv (Auvergne)",
+    "lat": 45.62111,
+    "lon": 2.82067,
+    "ele": 1268,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Gu%C3%A9ry"
+  },
+  {
+    "id": "col-de-prat-de-bouc",
+    "name": "Col de Prat de Bouc",
+    "names": [
+      "Col de Prat-de-Bouc"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Zentralmassiv (Cantal)",
+    "lat": 45.05263,
+    "lon": 2.79387,
+    "ele": 1392,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Prat-de-Bouc"
+  },
+  {
+    "id": "col-du-beal",
+    "name": "Col du Béal",
+    "names": [
+      "Béal"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Zentralmassiv (Forez)",
+    "lat": 45.68524,
+    "lon": 3.78281,
+    "ele": 1387,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_B%C3%A9al"
+  },
+  {
+    "id": "col-de-finiels",
+    "name": "Col de Finiels",
+    "names": [
+      "Finiels",
+      "Mont Lozère"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Zentralmassiv (Cevennen)",
+    "lat": 44.4241,
+    "lon": 3.76853,
+    "ele": 1541,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Finiels"
+  },
+  {
+    "id": "mont-aigoual",
+    "name": "Mont Aigoual",
+    "names": [
+      "Aigoual",
+      "Observatoire du Mont Aigoual"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Zentralmassiv (Cevennen)",
+    "lat": 44.12129,
+    "lon": 3.57768,
+    "ele": 1565,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Mont_Aigoual"
+  },
+  {
+    "id": "col-du-tourmalet",
+    "name": "Col du Tourmalet",
+    "names": [
+      "Tourmalet"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.90839,
+    "lon": 0.1453,
+    "ele": 2115,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Dez bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Tourmalet"
+  },
+  {
+    "id": "col-d-aubisque",
+    "name": "Col d'Aubisque",
+    "names": [
+      "Aubisque"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.97657,
+    "lon": -0.33979,
+    "ele": 1709,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_d%27Aubisque"
+  },
+  {
+    "id": "col-du-soulor",
+    "name": "Col du Soulor",
+    "names": [
+      "Soulor"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.96061,
+    "lon": -0.26113,
+    "ele": 1471,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Soulor"
+  },
+  {
+    "id": "col-d-aspin",
+    "name": "Col d'Aspin",
+    "names": [
+      "Aspin"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.94233,
+    "lon": 0.32738,
+    "ele": 1493,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "recht schmale Straße, zwei Wohnmobile kommen nur mit Mühe aneinander vorbei",
+    "source": "https://fr.wikipedia.org/wiki/Col_d%27Aspin"
+  },
+  {
+    "id": "col-de-peyresourde",
+    "name": "Col de Peyresourde",
+    "names": [
+      "Peyresourde"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.80231,
+    "lon": 0.46307,
+    "ele": 1568,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Peyresourde"
+  },
+  {
+    "id": "col-de-puymorens",
+    "name": "Col de Puymorens",
+    "names": [
+      "Puymorens"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.55962,
+    "lon": 1.81084,
+    "ele": 1920,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Puymorens"
+  },
+  {
+    "id": "port-de-bales",
+    "name": "Port de Balès",
+    "names": [
+      "Balès"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.87417,
+    "lon": 0.50064,
+    "ele": 1755,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "schmale Straße, Westseite erst 2006 asphaltiert",
+    "source": "https://fr.wikipedia.org/wiki/Port_de_Bal%C3%A8s"
+  },
+  {
+    "id": "col-de-portet-d-aspet",
+    "name": "Col de Portet d'Aspet",
+    "names": [
+      "Col de Portet-d'Aspet"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.94475,
+    "lon": 0.85371,
+    "ele": 1070,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Portet-d%27Aspet"
+  },
+  {
+    "id": "col-de-marie-blanque",
+    "name": "Col de Marie Blanque",
+    "names": [
+      "Col de Marie-Blanque"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 43.07047,
+    "lon": -0.5077,
+    "ele": 1035,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Marie-Blanque"
+  },
+  {
+    "id": "col-du-pourtalet",
+    "name": "Col du Pourtalet",
+    "names": [
+      "Puerto de Portalet",
+      "Portalet"
+    ],
+    "country": [
+      "FR",
+      "ES"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.80589,
+    "lon": -0.41847,
+    "ele": 1794,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Pourtalet"
+  },
+  {
+    "id": "col-du-somport",
+    "name": "Col du Somport",
+    "names": [
+      "Puerto de Somport",
+      "Somport"
+    ],
+    "country": [
+      "FR",
+      "ES"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.79576,
+    "lon": -0.52474,
+    "ele": 1632,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Somport"
+  },
+  {
+    "id": "col-de-la-pierre-saint-martin",
+    "name": "Col de la Pierre Saint Martin",
+    "names": [
+      "Col de la Pierre-Saint-Martin",
+      "Puerto de Belagua"
+    ],
+    "country": [
+      "FR",
+      "ES"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.96895,
+    "lon": -0.76829,
+    "ele": 1765,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Pierre_Saint-Martin"
+  },
+  {
+    "id": "col-de-pailheres",
+    "name": "Col de Pailhères",
+    "names": [
+      "Pailhères"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.7336,
+    "lon": 1.99246,
+    "ele": 2001,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "ab der Skistation schmal bis zur Passhöhe, im oberen Teil lange Kehrenserie",
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Pailh%C3%A8res"
+  },
+  {
+    "id": "hourquette-d-ancizan",
+    "name": "Hourquette d'Ancizan",
+    "names": [
+      "Ancizan"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.89994,
+    "lon": 0.30577,
+    "ele": 1564,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Hourquette_d%27Ancizan"
+  },
+  {
+    "id": "col-de-jau",
+    "name": "Col de Jau",
+    "names": [
+      "Jau"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.68791,
+    "lon": 2.25071,
+    "ele": 1506,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Jau"
+  },
+  {
+    "id": "col-de-port",
+    "name": "Col de Port",
+    "names": [
+      "Port"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.89904,
+    "lon": 1.45285,
+    "ele": 1249,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_Port"
+  },
+  {
+    "id": "col-d-agnes",
+    "name": "Col d'Agnes",
+    "names": [
+      "Agnes"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Pyrenäen",
+    "lat": 42.79399,
+    "lon": 1.37412,
+    "ele": 1570,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Dez bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_d%27Agnes"
   }
 ]

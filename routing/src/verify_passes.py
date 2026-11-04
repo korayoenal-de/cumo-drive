@@ -4,7 +4,7 @@
 * Höhe am Punkt über den Valhalla Höhendienst (valhalla1.openstreetmap.de/height)
   gegen das Feld ele, Toleranz 80 m
 * doppelte ids
-* Koordinaten außerhalb der Länder Box (lat 43 bis 55, lon 5 bis 17)
+* Koordinaten außerhalb der Länder Box (lat 42,3 bis 55, lon -2 bis 17, mit Frankreich inkl. Pyrenäen und Zentralmassiv)
 * Pflichtfelder und erlaubte Werte
 
 Aufruf:  python3 routing/src/verify_passes.py [pfad/zu/passes.json]
@@ -20,7 +20,7 @@ from pathlib import Path
 HEIGHT_URL = "https://valhalla1.openstreetmap.de/height"
 BATCH = 200
 TOLERANCE_M = 80
-BOX = {"lat": (43.0, 55.0), "lon": (5.0, 17.0)}
+BOX = {"lat": (42.3, 55.0), "lon": (-2.0, 17.0)}
 TIERS = ("ikone", "bekannt", "mittel")
 REQUIRED = ("id", "name", "names", "country", "region", "lat", "lon", "ele", "tier",
             "hairpins", "winter_closed", "closed_months", "toll", "car_note", "source")
