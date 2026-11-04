@@ -21,6 +21,16 @@ export type Role = 'lead' | 'schluss' | 'mitfahrer';
 export type Me = { id: string; name: string; car: string };
 export type Member = Me & { role: Role; p: LatLon | null; heading: number | null; speedKmh: number | null; seenAt: number | null };
 export type RideMsg = { id: string; from: string; name: string; text: string; at: number };
+/** Gründe für eine zentrale Halt Ansage der Lead */
+export type StopReason = 'parkplatz' | 'tanken' | 'pause' | 'foto';
+export const STOP_REASONS: { id: StopReason; label: string; title: string }[] = [
+  { id: 'parkplatz', label: 'Parkplatz', title: 'Wir fahren gleich auf einen Parkplatz' },
+  { id: 'tanken', label: 'Tanken', title: 'Wir fahren gleich zum Tanken' },
+  { id: 'pause', label: 'Pause', title: 'Gleich machen wir Pause' },
+  { id: 'foto', label: 'Fotostopp', title: 'Gleich halten wir für Fotos' },
+];
+/** Halt Ansage: wo die Lead war, als sie getippt hat, und warum */
+export type RideStop = { id: string; from: string; name: string; reason: StopReason; p: LatLon | null; at: number };
 
 export type RideState = {
   status: 'aus' | 'verbinde' | 'aktiv' | 'fehler';
@@ -31,6 +41,8 @@ export type RideState = {
   messages: RideMsg[];
   /** Übergabe Code der Tour, die die Lead geteilt hat */
   tourCode: string | null;
+  /** Aktuelle Halt Ansage der Lead, null wenn keine */
+  stop: RideStop | null;
   error: string | null;
 };
 
@@ -39,7 +51,7 @@ export const QUICK_MESSAGES = ['Bitte warten', 'Alles ok', 'Tankstopp', 'Pause',
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 const PROFILE_KEY = 'cumo.drive.fahrer.v1';
 
-let state: RideState = { status: 'aus', code: null, me: null, myRole: 'mitfahrer', members: [], messages: [], tourCode: null, error: null };
+let state: RideState = { status: 'aus', code: null, me: null, myRole: 'mitfahrer', members: [], messages: [], tourCode: null, stop: null, error: null };
 const listeners = new Set<() => void>();
 let channel: RealtimeChannel | null = null;
 let watch: Location.LocationSubscription | null = null;
@@ -152,7 +164,7 @@ export async function joinRide(code: string, name: string, car: string, role: Ro
   const me: Me = { id: Math.random().toString(36).slice(2, 10), name: name.trim() || 'Fahrer', car: car.trim() };
   await saveProfile(me.name, me.car);
   positions.clear();
-  set({ status: 'verbinde', code: c, me, myRole: role, members: [], messages: [], tourCode, error: null });
+  set({ status: 'verbinde', code: c, me, myRole: role, members: [], messages: [], tourCode, stop: null, error: null });
 
   const ch = supabase.channel(`ride-${c}`, { config: { broadcast: { self: false }, presence: { key: me.id } } });
   channel = ch;
@@ -169,6 +181,12 @@ export async function joinRide(code: string, name: string, car: string, role: Ro
   ch.on('broadcast', { event: 'msg' }, ({ payload }) => {
     const m = payload as RideMsg;
     set({ messages: [m, ...state.messages].slice(0, 30) });
+  });
+  ch.on('broadcast', { event: 'stop' }, ({ payload }) => {
+    const s = payload as RideStop | { id: string; clear: true };
+    if ('clear' in s) {
+      if (state.stop?.id === s.id) set({ stop: null });
+    } else set({ stop: s });
   });
   ch.on('broadcast', { event: 'tour' }, ({ payload }) => {
     const t = payload as { code: string };
@@ -214,7 +232,7 @@ export async function leaveRide() {
   }
   channel = null;
   positions.clear();
-  set({ status: 'aus', code: null, members: [], messages: [], tourCode: null, error: null, myRole: 'mitfahrer' });
+  set({ status: 'aus', code: null, members: [], messages: [], tourCode: null, stop: null, error: null, myRole: 'mitfahrer' });
 }
 
 export function sendMessage(text: string) {
@@ -223,6 +241,24 @@ export function sendMessage(text: string) {
   const m: RideMsg = { id: Math.random().toString(36).slice(2, 10), from: me.id, name: me.name, text, at: Date.now() };
   set({ messages: [m, ...state.messages].slice(0, 30) });
   void channel.send({ type: 'broadcast', event: 'msg', payload: m });
+}
+
+/** Lead kündigt einen Halt an: alle anderen bekommen ein großes Overlay und eine Ansage. */
+export function announceStop(reason: StopReason) {
+  const me = state.me;
+  if (!channel || !me) return;
+  const p = positions.get(me.id)?.p ?? lastSent?.p ?? null;
+  const s: RideStop = { id: Math.random().toString(36).slice(2, 10), from: me.id, name: me.name, reason, p, at: Date.now() };
+  set({ stop: s });
+  void channel.send({ type: 'broadcast', event: 'stop', payload: s });
+}
+
+/** Halt Ansage zurücknehmen (Lead) oder nur für sich ausblenden. */
+export function clearStop(forAll = false) {
+  const s = state.stop;
+  if (!s) return;
+  set({ stop: null });
+  if (forAll && channel) void channel.send({ type: 'broadcast', event: 'stop', payload: { id: s.id, clear: true } });
 }
 
 /** Lead teilt eine Tour (Übergabe Code aus handoff.ts) mit allen. */

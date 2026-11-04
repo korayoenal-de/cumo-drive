@@ -290,6 +290,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     [voice],
   );
 
+  const say = useCallback((text: string) => voice().say(text), [voice]);
+
   /**
    * Simulation ohne GPS. Braucht eine Route; läuft noch keine, wird sie ab dem Tour Anfang
    * geholt (ohne Standort Abfrage). Startet an der aktuellen Stelle auf der Route.
@@ -357,5 +359,5 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     setState((s) => ({ ...INITIAL, voice: s.voice }));
   }, [req?.tour, cleanup]);
 
-  return [state, { start, stop, setVoice, simulate }];
+  return [state, { start, stop, setVoice, say, simulate }];
 }

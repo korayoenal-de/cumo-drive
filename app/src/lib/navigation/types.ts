@@ -101,6 +101,8 @@ export type NavControls = {
   start: () => Promise<void>;
   stop: () => void;
   setVoice: (on: boolean) => void;
+  /** Freie Ansage (zum Beispiel Highlights), respektiert Stumm */
+  say: (text: string) => void;
   /** Für Tests ohne Fahrt: Position entlang der Route simulieren (km pro Sekunde Faktor) */
   simulate: (on: boolean, speedKmh?: number) => void;
 };

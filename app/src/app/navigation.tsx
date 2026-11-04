@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteMap } from '@/components/map/route-map';
 import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM } from '@/components/navigation/maneuver-geometry';
+import { HighlightCard, LeadStopButton, MessageToast, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
@@ -20,8 +21,10 @@ import { endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live'
 import { useSession } from '@/lib/auth';
 import { saveDrive } from '@/lib/drives';
 import { useNavigation } from '@/lib/navigation';
-import type { NavEntry, NavRequest } from '@/lib/navigation/types';
-import { QUICK_MESSAGES, sendMessage, sendPosition, useRide } from '@/lib/group/ride';
+import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
+import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
+import { elevationProfile } from '@/lib/stats';
+import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, STOP_REASONS, useRide, type RideMsg } from '@/lib/group/ride';
 import { useRideMode } from '@/lib/ride-mode';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
@@ -93,6 +96,65 @@ export default function NavigationScreen() {
         })),
     [ride.members, ride.me?.id],
   );
+  // Highlights (Pässe) entlang der Route: mit Höhenprofil für Anfang und Ende des Abschnitts
+  const [hl, setHl] = useState<{ route: NavRoute; list: Highlight[] } | null>(null);
+  useEffect(() => {
+    const r = state.route;
+    if (!r) return;
+    const ctrl = new AbortController();
+    elevationProfile(r.shape, ctrl.signal)
+      .then((e) => setHl({ route: r, list: findHighlights(r.shape, r.cumKm, e) }))
+      .catch(() => {
+        if (!ctrl.signal.aborted) setHl({ route: r, list: findHighlights(r.shape, r.cumKm, null) });
+      });
+    return () => ctrl.abort();
+  }, [state.route]);
+  const atKm = state.route && state.remainingKm != null ? state.route.km - state.remainingKm : null;
+  const nextHl =
+    hl && hl.route === state.route && atKm != null ? (hl.list.find((h) => atKm >= h.startKm - 1 && atKm <= h.startKm + 0.3) ?? null) : null;
+  const hlDistM = nextHl && atKm != null ? (nextHl.startKm - atKm) * 1000 : 0;
+  const saidHl = useRef(new Set<string>());
+  useEffect(() => {
+    if (!nextHl || state.status !== 'laeuft' || hlDistM > 650 || saidHl.current.has(nextHl.id)) return;
+    saidHl.current.add(nextHl.id);
+    controls.say(highlightSpeech(nextHl, hlDistM));
+  }, [nextHl, hlDistM, state.status, controls]);
+
+  // Halt Ansage der Lead: großes Overlay und Ansage für alle anderen
+  const stop = inRide ? ride.stop : null;
+  const myStop = !!stop && stop.from === ride.me?.id;
+  const stopDistM = stop?.p && state.position ? haversine(state.position, stop.p) : null;
+  const saidStop = useRef<string | null>(null);
+  useEffect(() => {
+    if (!stop || myStop || saidStop.current === stop.id) return;
+    saidStop.current = stop.id;
+    const r = STOP_REASONS.find((x) => x.id === stop.reason) ?? STOP_REASONS[0];
+    controls.say(`Achtung. ${r.title}. Bitte gleich anhalten.`);
+  }, [stop, myStop, controls]);
+  // angekommen: Overlay nach einer Minute am Haltepunkt von selbst weg
+  useEffect(() => {
+    if (!stop || myStop || stopDistM == null || stopDistM > 60) return;
+    const id = setTimeout(() => clearStop(false), 60000);
+    return () => clearTimeout(id);
+  }, [stop, myStop, stopDistM]);
+
+  // Kurznachrichten der anderen für acht Sekunden einblenden und vorlesen
+  const [mountedAt] = useState(() => Date.now());
+  const [toastGone, setToastGone] = useState<string | null>(null);
+  const lastMsg: RideMsg | undefined = inRide ? ride.messages[0] : undefined;
+  const toast = lastMsg && lastMsg.from !== ride.me?.id && lastMsg.at > mountedAt && lastMsg.id !== toastGone ? lastMsg : null;
+  const saidMsg = useRef<string | null>(null);
+  useEffect(() => {
+    if (!toast || saidMsg.current === toast.id) return;
+    saidMsg.current = toast.id;
+    controls.say(`Nachricht von ${toast.name}: ${toast.text}`);
+  }, [toast, controls]);
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToastGone(toast.id), 8000);
+    return () => clearTimeout(id);
+  }, [toast]);
+
   // Restkilometer beim Start, daraus ergeben sich am Ende die gefahrenen km
   const [startKm, setStartKm] = useState<number | null>(null);
   if (state.status === 'laeuft' && startKm == null && state.remainingKm != null) setStartKm(state.remainingKm);
@@ -233,11 +295,21 @@ export default function NavigationScreen() {
       <View style={[styles.top, { paddingTop: insets.top + Spacing.s }]} pointerEvents="box-none">
         {running && maneuver && <ManeuverCard maneuver={maneuver} distM={state.distToNextM} then={then} soon={state.distToNextM != null && state.distToNextM <= soonThresholdM(state.speedKmh)} />}
         {status === 'neuberechnung' && <Recalculating first={!route} />}
+        {running && stop && (
+          <StopAlert stop={stop} distM={stopDistM} mine={myStop} onDismiss={() => clearStop(false)} onCancel={() => clearStop(true)} />
+        )}
+        {running && !stop && nextHl && <HighlightCard h={nextHl} distM={hlDistM} />}
+        {running && !stop && toast && <MessageToast msg={toast} />}
       </View>
 
       <View style={[styles.bottom, !running && { paddingBottom: insets.bottom + Spacing.m }]} pointerEvents="box-none">
         {running && (
           <>
+            {inRide && ride.myRole === 'lead' && !msgOpen && (
+              <View style={styles.leadWrap}>
+                <LeadStopButton onAnnounce={announceStop} />
+              </View>
+            )}
             {inRide && msgOpen && (
               <View style={styles.msgSheet}>
                 <AppText variant="label">An die Gruppe</AppText>
@@ -518,6 +590,7 @@ const styles = StyleSheet.create({
     gap: Spacing.s,
   },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  leadWrap: { paddingHorizontal: Spacing.m, paddingBottom: Spacing.s },
   tourName: {
     fontFamily: Fonts.display,
     fontSize: 26,
