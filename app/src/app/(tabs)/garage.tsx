@@ -1,23 +1,19 @@
 /**
- * Garage: Konto und Meine Touren aus dem Konto (im Web Planer gespeichert oder in der App).
+ * Garage: Konto, gefahrene Touren mit Statistik.
  * Dazu das Fahrzeugprofil: Modell, Breite, Bodenfreiheit, Reichweite und Sprit.
  */
-import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
-import { setActiveTour } from '@/lib/active-tour';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
-import { listCloudTours, loadCloudTour, type CloudTour } from '@/lib/cloud-tours';
 import { listDrives, type Drive } from '@/lib/drives';
 import { FUELS, saveVehicle, useVehicle, vehicleSummary, type Vehicle } from '@/lib/vehicle';
 import { fmtG } from '@/lib/ride-stats';
 import { formatKm } from '@/lib/tour';
-import { DEFAULT_AVOID } from '@/lib/valhalla';
 
 export default function Garage() {
   const session = useSession();
@@ -86,35 +82,6 @@ function Login() {
 }
 
 function Tours({ email }: { email: string }) {
-  const [list, setList] = useState<CloudTour[] | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const [opening, setOpening] = useState<string | null>(null);
-
-  const refresh = useCallback(() => {
-    listCloudTours()
-      .then((l) => {
-        setList(l);
-        setErr(null);
-      })
-      .catch((e: Error) => setErr(e.message));
-  }, []);
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  const open = async (t: CloudTour) => {
-    setOpening(t.id);
-    try {
-      const full = await loadCloudTour(t.id);
-      setActiveTour(full.tour, full.profile, full.avoid ?? DEFAULT_AVOID);
-      router.push('/karte');
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Die Tour konnte nicht geladen werden.');
-    } finally {
-      setOpening(null);
-    }
-  };
-
   return (
     <>
       <View style={styles.accountRow}>
@@ -124,32 +91,6 @@ function Tours({ email }: { email: string }) {
         <Pressable accessibilityRole="button" onPress={() => void signOut()}>
           <AppText variant="caption">Abmelden</AppText>
         </Pressable>
-      </View>
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <AppText variant="label" style={styles.flex}>
-            Meine Touren
-          </AppText>
-          <Pressable accessibilityRole="button" onPress={refresh}>
-            <AppText variant="caption">Aktualisieren</AppText>
-          </Pressable>
-        </View>
-        {err && <AppText style={styles.error}>{err}</AppText>}
-        {list === null && !err && <ActivityIndicator color={Colors.muted} />}
-        {list?.length === 0 && <AppText muted>Noch keine Tour im Konto. Im Web Planer anmelden und eine Tour speichern, dann erscheint sie hier.</AppText>}
-        {list?.map((t, i) => (
-          <Pressable key={t.id} accessibilityRole="button" onPress={() => open(t)} style={styles.tourRow}>
-            <View style={styles.flex}>
-              <AppText style={styles.tourName} numberOfLines={1}>
-                {t.name}
-              </AppText>
-              <AppText variant="caption" muted>
-                {[`${formatKm(t.km, 0)} km`, t.curves ? `${t.curves} Kurven` : null, t.folder || null, new Date(t.updated_at).toLocaleDateString('de-DE')].filter(Boolean).join(', ')}
-              </AppText>
-            </View>
-            {opening === t.id ? <ActivityIndicator color={Colors.signal} /> : <AppText style={styles.arrow}>›</AppText>}
-          </Pressable>
-        ))}
       </View>
       <Drives />
     </>

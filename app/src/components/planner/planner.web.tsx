@@ -1108,7 +1108,7 @@ function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; isSampl
           style={S.link}
           onClick={() => {
             navigator.clipboard
-              ?.writeText(`Fahr mit bei CUMO DRIVE. Code ${ride.code!.toUpperCase()} in der App unter Gruppe eingeben oder öffnen: ${link}`)
+              ?.writeText(`Fahr mit bei CUMO DRIVE. Code ${ride.code!.toUpperCase()} in der App unter Planen, Gruppe, eingeben oder öffnen: ${link}`)
               .then(() => setCopied(true))
               .catch(() => setCopied(false));
           }}>

@@ -1,8 +1,9 @@
 /**
  * Meine Touren: gespeicherte Touren mit Ordner, Suche und Kennzahlen.
- * Im Browser Speicher (localStorage) und, sobald man angemeldet ist, im Konto (Supabase).
+ * Im Browser im localStorage, in der App im AsyncStorage, und sobald man angemeldet ist, im Konto (Supabase).
  * syncLibrary gleicht beides ab: lokale Touren gehen hoch, Touren aus dem Konto kommen dazu.
  */
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
 import { deleteCloudTour, listCloudTours, loadCloudTour, saveCloudTour } from './cloud-tours';
@@ -37,20 +38,49 @@ function storage(): Storage | null {
 
 function read(): SavedTour[] {
   if (cache) return cache;
+  const st = storage();
+  if (!st) {
+    // App: AsyncStorage ist asynchron, bis zum Laden gilt die leere Liste
+    cache = [];
+    void hydrate();
+    return cache;
+  }
   try {
-    cache = JSON.parse(storage()?.getItem(KEY) ?? '[]') as SavedTour[];
+    cache = JSON.parse(st.getItem(KEY) ?? '[]') as SavedTour[];
   } catch {
     cache = [];
   }
   return cache;
 }
 
+let hydrating = false;
+async function hydrate() {
+  if (hydrating) return;
+  hydrating = true;
+  try {
+    const raw = await AsyncStorage.getItem(KEY);
+    const stored = raw ? (JSON.parse(raw) as SavedTour[]) : [];
+    // was in der Zwischenzeit gespeichert wurde, bleibt vorn
+    const now = cache ?? [];
+    const ids = new Set(now.map((t) => t.id));
+    cache = [...now, ...stored.filter((t) => !ids.has(t.id))];
+    for (const l of listeners) l();
+  } catch {
+    // ohne Speicher bleibt die Liste leer
+  }
+}
+
 function write(list: SavedTour[]) {
   cache = list;
-  try {
-    storage()?.setItem(KEY, JSON.stringify(list));
-  } catch {
-    throw new Error('Der Speicher im Browser ist voll. Lösche alte Touren oder exportiere sie als GPX.');
+  const st = storage();
+  if (st) {
+    try {
+      st.setItem(KEY, JSON.stringify(list));
+    } catch {
+      throw new Error('Der Speicher im Browser ist voll. Lösche alte Touren oder exportiere sie als GPX.');
+    }
+  } else {
+    void AsyncStorage.setItem(KEY, JSON.stringify(list)).catch(() => undefined);
   }
   for (const l of listeners) l();
 }

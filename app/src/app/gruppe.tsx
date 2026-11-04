@@ -39,6 +39,20 @@ function rideLink(code: string) {
   return `exp://u.expo.dev/44e0d073-6f59-455d-8a50-0f11f6fef4b7/--/gruppe?runtime-version=exposdk%3A58.0.0&channel-name=preview&code=${code}`;
 }
 
+/** Zurück zum Planer: die Gruppenfahrt ist kein eigener Tab mehr. */
+function BackLink() {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Zurück"
+      hitSlop={12}
+      onPress={() => (router.canGoBack() ? router.back() : router.navigate('/planen'))}
+      style={styles.back}>
+      <AppText style={styles.backText}>‹ Zurück</AppText>
+    </Pressable>
+  );
+}
+
 export default function Gruppe() {
   const ride = useRide();
   return ride.status === 'aus' || ride.status === 'fehler' ? <Start error={ride.error} /> : <Active />;
@@ -90,6 +104,7 @@ function Start({ error }: { error: string | null }) {
 
   return (
     <Screen>
+      <BackLink />
       <AppText variant="display">{'Gruppen\nfahrt'}</AppText>
       <AppText muted>Alle sehen sich live auf der Karte und schicken sich Kurznachrichten. Sprechfunk folgt.</AppText>
 
@@ -214,7 +229,7 @@ function Active() {
 
   const invite = () =>
     Share.share({
-      message: `Fahr mit bei CUMO DRIVE. Code ${ride.code!.toUpperCase()} in der App unter Gruppe eingeben oder diesen Link öffnen: ${rideLink(ride.code!)}`,
+      message: `Fahr mit bei CUMO DRIVE. Code ${ride.code!.toUpperCase()} in der App unter Planen, Gruppe, eingeben oder diesen Link öffnen: ${rideLink(ride.code!)}`,
     }).catch(() => undefined);
 
   const isLead = ride.myRole === 'lead';
@@ -222,6 +237,7 @@ function Active() {
 
   return (
     <Screen>
+      <BackLink />
       <View style={styles.headRow}>
         <View style={styles.flex}>
           <AppText variant="label">Fahrtcode</AppText>
@@ -321,6 +337,8 @@ function MemberRow({ m, me, myPos, now, canAssign }: { m: Member; me: boolean; m
 }
 
 const styles = StyleSheet.create({
+  back: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
+  backText: { fontFamily: Fonts.semibold, fontSize: 16, color: Colors.muted },
   flex: { flex: 1 },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   input: {

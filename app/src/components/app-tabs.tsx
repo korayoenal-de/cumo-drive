@@ -38,10 +38,9 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Label>Planen</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="point.topleft.down.to.point.bottomright.curvepath" md="route" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="gruppe">
-        <NativeTabs.Trigger.Label>Gruppe</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="mic" md="mic" />
-        {active && ride.members.length > 0 && <NativeTabs.Trigger.Badge>{String(ride.members.length)}</NativeTabs.Trigger.Badge>}
+      <NativeTabs.Trigger name="touren">
+        <NativeTabs.Trigger.Label>Meine Touren</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'bookmark', selected: 'bookmark.fill' }} md="bookmarks" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="garage">
         <NativeTabs.Trigger.Label>Garage</NativeTabs.Trigger.Label>
@@ -51,14 +50,14 @@ export default function AppTabs() {
   );
 }
 
-/** Inhalt der Zusatzleiste: Gruppenfahrt mit Anzahl Fahrer und letzter Kurznachricht. Tippen öffnet den Tab Gruppe. */
+/** Inhalt der Zusatzleiste: Gruppenfahrt mit Anzahl Fahrer und letzter Kurznachricht. Tippen öffnet die Gruppenfahrt. */
 function RideAccessory({ ride }: { ride: RideState }) {
   const placement = NativeTabs.BottomAccessory.usePlacement();
   const n = ride.members.length;
   const last = ride.messages[0];
   const title = ride.status === 'verbinde' ? 'Gruppe verbindet' : `Gruppenfahrt, ${n} ${n === 1 ? 'Fahrer' : 'Fahrer'}`;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${title}, Gruppe öffnen`} onPress={() => router.navigate('/gruppe')} style={styles.row}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${title}, Gruppe öffnen`} onPress={() => router.push('/gruppe')} style={styles.row}>
       <View style={styles.dot} />
       <View style={styles.flex}>
         <AppText style={styles.title} numberOfLines={1}>

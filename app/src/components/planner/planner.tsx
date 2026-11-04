@@ -26,7 +26,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { useSession } from '@/lib/auth';
-import { saveCloudTour } from '@/lib/cloud-tours';
+import { saveTour, syncLibrary } from '@/lib/library';
 import { reverseName, searchPlaces, type Place } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
 import { planChecked, type PlannedTour, type PlanStep } from '@/lib/plan';
@@ -399,6 +399,7 @@ export default function Planner() {
       <AppText variant="caption" muted>
         {RIDE_MODES.find((m) => m.id === rideMode)!.hint}
       </AppText>
+      {rideMode === 'gruppe' && <SecondaryButton label="Gruppenfahrt öffnen" onPress={() => router.push('/gruppe')} />}
     </View>
   );
 
@@ -900,9 +901,11 @@ function useTourPlan(onPlanned?: () => void) {
     setSaving(true);
     setSaveMsg(null);
     try {
-      const id = await saveCloudTour({ ...planned, name: name.trim() || planned.name, curves }, { id: cloudId ?? undefined, profile, avoid });
-      setCloudId(id);
-      setSaveMsg('Im Konto gespeichert. Du findest die Tour in der Garage.');
+      // auf dem Gerät speichern (Meine Touren), angemeldet auch ins Konto
+      const saved = saveTour({ ...planned, name: name.trim() || planned.name, curves, profile }, '', cloudId ?? undefined);
+      setCloudId(saved.id);
+      void syncLibrary();
+      setSaveMsg('Gespeichert, du findest die Tour unter Meine Touren.');
     } catch (e) {
       setSaveMsg(`Speichern hat nicht geklappt: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -1382,17 +1385,12 @@ function TourMode({
           <Pressable accessibilityRole="button" onPress={drive} style={({ pressed }) => [styles.go, pressed && styles.pressed]}>
             <AppText style={styles.goText}>Losfahren</AppText>
           </Pressable>
-          {session ? (
-            <>
-              <SecondaryButton
-                label={plan.saving ? 'Wird gespeichert' : plan.cloudId ? 'Im Konto aktualisieren' : 'Im Konto speichern'}
-                onPress={() => !plan.saving && void plan.save(curves, profile, avoid)}
-              />
-              {plan.saveMsg && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
-            </>
-          ) : (
-            <AppText variant="caption" muted>Melde dich in der Garage an, dann kannst du Touren im Konto speichern.</AppText>
-          )}
+          <SecondaryButton
+            label={plan.saving ? 'Wird gespeichert' : plan.cloudId ? 'Änderungen speichern' : 'Speichern'}
+            onPress={() => !plan.saving && void plan.save(curves, profile, avoid)}
+          />
+          {plan.saveMsg && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
+          {!session && !plan.saveMsg && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
         </View>
       )}
 
@@ -1694,6 +1692,14 @@ function Result({
   const curves = countCurves(line);
   const live = usePassLive();
   const hint = closedHint(passes.map((x) => x.pass), live);
+  // fertige Runde unter Meine Touren speichern (bei neuer Runde wieder frei)
+  const [saved, setSaved] = useState<{ tour: PlannedTour; id: string } | null>(null);
+  const savedId = saved?.tour === tour ? saved.id : null;
+  const saveResult = () => {
+    const t = saveTour({ ...tour, curves, profile: req.profile }, '', savedId ?? undefined);
+    setSaved({ tour, id: t.id });
+    void syncLibrary();
+  };
   const drive = () => {
     setActiveTour(tour, req.profile, req.avoid);
     router.push('/navigation');
@@ -1802,6 +1808,7 @@ function Result({
       {group && <GroupBlock />}
 
       <View style={styles.gapS}>
+        <SecondaryButton label={savedId ? 'Gespeichert unter Meine Touren' : 'Speichern'} onPress={saveResult} />
         <PrimaryButton label="Neu würfeln" onPress={onReroll} />
         <SecondaryButton label="Zurück zum Formular" onPress={onBack} />
       </View>
@@ -1817,8 +1824,9 @@ function GroupBlock() {
       <AppText>Fahrt diese Runde zusammen.</AppText>
       <SecondaryButton label="Mitfahrer einladen" onSurface onPress={() => setHint(true)} />
       {hint && <AppText variant="caption" muted>Einladen per Link folgt bald.</AppText>}
+      <SecondaryButton label="Gruppenfahrt öffnen" onSurface onPress={() => router.push('/gruppe')} />
       <AppText variant="caption" muted>
-        Funk und Live Positionen laufen während der Fahrt im Tab Gruppe.
+        Dort startest du die Fahrt, teilst die Tour und siehst die Positionen der anderen.
       </AppText>
     </View>
   );
