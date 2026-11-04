@@ -9,7 +9,7 @@ const PREFIX = 'cumo1:';
 
 export type SharedTour = { name: string; profile: Profile; points: LatLon[] };
 
-function encodePolyline(points: LatLon[]): string {
+function encodePolyline(points: LatLon[], factor = 1e5): string {
   let out = '';
   let pLat = 0;
   let pLon = 0;
@@ -23,8 +23,8 @@ function encodePolyline(points: LatLon[]): string {
     return s + String.fromCharCode(n + 63);
   };
   for (const [la, lo] of points) {
-    const a = Math.round(la * 1e5);
-    const b = Math.round(lo * 1e5);
+    const a = Math.round(la * factor);
+    const b = Math.round(lo * factor);
     out += enc(a - pLat) + enc(b - pLon);
     pLat = a;
     pLon = b;
@@ -32,7 +32,7 @@ function encodePolyline(points: LatLon[]): string {
   return out;
 }
 
-function decodePolyline(str: string): LatLon[] {
+function decodePolyline(str: string, factor = 1e5): LatLon[] {
   const out: LatLon[] = [];
   let i = 0;
   let lat = 0;
@@ -52,7 +52,7 @@ function decodePolyline(str: string): LatLon[] {
     }
     lat += vals[0];
     lon += vals[1];
-    out.push([lat / 1e5, lon / 1e5]);
+    out.push([lat / factor, lon / factor]);
   }
   return out;
 }
@@ -76,7 +76,7 @@ function b64urlDecode(s: string): string {
  * Stützpunkte: alle Wegpunkte plus etwa alle stepKm ein Punkt der Linie, damit das
  * Nachplanen dieselbe Strecke trifft. Höchstens maxPoints, damit der QR Code lesbar bleibt.
  */
-export function supportPoints(tour: Tour, stepKm = 3, maxPoints = 60): LatLon[] {
+export function supportPoints(tour: Tour, stepKm = 6, maxPoints = 26): LatLon[] {
   const pts = flatten(tour);
   if (pts.length < 2) return tour.wegpunkte;
   const total = pts[pts.length - 1].km;
@@ -96,7 +96,9 @@ export function supportPoints(tour: Tour, stepKm = 3, maxPoints = 60): LatLon[] 
 }
 
 export function encodeTour(tour: Tour, profile: Profile): string {
-  const payload = { n: tour.name.slice(0, 60), p: profile, v: encodePolyline(supportPoints(tour)) };
+  // 4 Nachkommastellen (etwa 10 m) und höchstens 26 Stützpunkte halten den QR Code grob,
+  // damit die iPhone Kamera ihn auch vom Bildschirm sicher liest. Die App plant ohnehin neu.
+  const payload = { n: tour.name.slice(0, 40), p: profile, q: 4, v: encodePolyline(supportPoints(tour), 1e4) };
   return PREFIX + b64urlEncode(JSON.stringify(payload));
 }
 
@@ -126,9 +128,9 @@ export function decodeTour(code: string): SharedTour | null {
   const raw = extractCode(code);
   if (!raw.startsWith(PREFIX)) return null;
   try {
-    const d = JSON.parse(b64urlDecode(raw.slice(PREFIX.length))) as { n?: string; p?: Profile; v?: string };
+    const d = JSON.parse(b64urlDecode(raw.slice(PREFIX.length))) as { n?: string; p?: Profile; q?: number; v?: string };
     if (!d.v) return null;
-    const points = decodePolyline(d.v);
+    const points = decodePolyline(d.v, d.q === 4 ? 1e4 : 1e5);
     if (points.length < 2) return null;
     return { name: d.n || 'Tour vom Planer', profile: d.p ?? 'kurvig', points };
   } catch {

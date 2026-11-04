@@ -681,7 +681,7 @@ function SendToApp(props: { tour: Tour; profile: Profile }) {
   useEffect(() => {
     if (!code) return;
     let alive = true;
-    QRCode.toDataURL(shareUrl(code), { errorCorrectionLevel: 'L', margin: 2, width: 560, color: { dark: '#0B0B0C', light: '#FFFFFF' } })
+    QRCode.toDataURL(shareUrl(code), { errorCorrectionLevel: 'L', margin: 3, width: 720, color: { dark: '#0B0B0C', light: '#FFFFFF' } })
       .then((url) => alive && setImg({ code, url }))
       .catch(() => alive && setImg(null));
     return () => {
@@ -1258,7 +1258,7 @@ const S: Record<string, CSSProperties> = {
   menuItem: { textAlign: 'left', background: 'transparent', border: 'none', color: C.text, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', font: `500 14px ${BODY}` },
   saveBox: { display: 'flex', gap: 8, alignItems: 'center' },
   qrBox: { display: 'flex', flexDirection: 'column', gap: 10, padding: 14, background: C.surface2, border: `1px solid ${C.line}`, borderRadius: 14, color: C.text, font: `500 14px ${BODY}` },
-  qrImg: { width: '100%', maxWidth: 280, aspectRatio: '1', alignSelf: 'center', borderRadius: 10, imageRendering: 'pixelated' },
+  qrImg: { width: '100%', maxWidth: 340, aspectRatio: '1', alignSelf: 'center', borderRadius: 10, imageRendering: 'pixelated' },
   libRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 8px', borderTop: `1px solid ${C.surface2}`, borderRadius: 8, listStyle: 'none' },
   libOpen: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start', textAlign: 'left', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', font: `500 14px ${BODY}`, padding: 0 },
   badgeStop: { fontSize: 11, fontWeight: 700, color: '#FF8A66', background: 'rgba(226,70,28,0.16)', padding: '2px 8px', borderRadius: 9, whiteSpace: 'nowrap' },
