@@ -770,7 +770,8 @@ export default function Planner() {
           showUser
           focus={focus}
           onLongPress={inTour ? onMapLongPress : undefined}
-          edgePadding={{ top: insets.top + Spacing.xxxl, right: Spacing.xxxl, bottom: covered + Spacing.xl, left: Spacing.xxxl }}
+          mapPadding={{ top: 0, right: 0, bottom: covered, left: 0 }}
+          edgePadding={{ top: insets.top + Spacing.xxxl, right: Spacing.xxxl, bottom: Spacing.xl, left: Spacing.xxxl }}
           style={StyleSheet.absoluteFill}
         />
       )}>

@@ -30,6 +30,8 @@ export type RouteMapProps = {
   pins?: MapPin[];
   /** Langer Druck auf die Karte, liefert den Punkt (zum Beispiel neuer Wegpunkt im Planer) */
   onLongPress?: (p: LatLon) => void;
+  /** Verdeckter Rand der Karte (zum Beispiel durch ein Sheet); hält auch den Apple Maps Rechtshinweis sichtbar */
+  mapPadding?: { top: number; right: number; bottom: number; left: number };
   /** Punkt, auf den die Karte springt, solange keine Tour Linie da ist */
   focus?: LatLon | null;
 };

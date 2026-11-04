@@ -31,6 +31,7 @@ export function RouteMap({
   highlightIndex,
   position,
   edgePadding,
+  mapPadding,
   others,
   pins,
   onLongPress,
@@ -122,6 +123,7 @@ export function RouteMap({
     <View style={[styles.box, style, !interactive && styles.noTouch]}>
       <MapView
         ref={map}
+        mapPadding={mapPadding}
         style={StyleSheet.absoluteFill}
         userInterfaceStyle="dark"
         mapType="mutedStandard"
