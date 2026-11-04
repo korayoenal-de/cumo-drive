@@ -26,7 +26,11 @@ export type RouteMapProps = {
   edgePadding?: { top: number; right: number; bottom: number; left: number };
   /** Andere Fahrer der Gruppenfahrt */
   others?: OtherDriver[];
+  /** Markierte Punkte, zum Beispiel Spitzenwerte der Fahrtstatistik */
+  pins?: MapPin[];
 };
+
+export type MapPin = { id: string; p: LatLon; label: string; title: string };
 
 export type OtherDriver = { id: string; p: LatLon; name: string; role: 'lead' | 'schluss' | 'mitfahrer'; stale: boolean };
 

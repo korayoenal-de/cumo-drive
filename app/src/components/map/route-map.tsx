@@ -32,6 +32,7 @@ export function RouteMap({
   position,
   edgePadding,
   others,
+  pins,
 }: RouteMapProps) {
   const map = useRef<MapView>(null);
   const markers = useRef<(MapMarker | null)[]>([]);
@@ -186,6 +187,14 @@ export function RouteMap({
           </Marker>
         ))}
 
+        {(pins ?? []).map((pin) => (
+          <Marker key={pin.id} coordinate={ll(pin.p)} anchor={{ x: 0.5, y: 1 }} title={pin.title} zIndex={35} tracksViewChanges={false}>
+            <View style={styles.pin}>
+              <AppText style={styles.pinText}>{pin.label}</AppText>
+            </View>
+          </Marker>
+        ))}
+
         {(others ?? []).map((o) => (
           <Marker key={o.id} coordinate={ll(o.p)} anchor={{ x: 0.5, y: 0.5 }} title={o.name} description={{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[o.role]} zIndex={30} tracksViewChanges={false}>
             <View style={[styles.other, { borderColor: ROLE_COLOR[o.role] }, o.stale && styles.otherStale]}>
@@ -236,6 +245,8 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.signal,
     marginTop: -3,
   },
+  pin: { paddingHorizontal: 8, height: 26, borderRadius: 13, backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.signal, justifyContent: 'center' },
+  pinText: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.text },
   other: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.surface, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
   otherStale: { opacity: 0.45 },
   otherText: { fontFamily: Fonts.bold, fontSize: 13, color: Colors.text },
