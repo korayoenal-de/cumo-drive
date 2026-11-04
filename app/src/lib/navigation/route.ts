@@ -338,7 +338,7 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
   let tourLine = line;
   let lead: Piece | null = null;
   if (from && haversine(from, line[0]) > APPROACH_M) {
-    const j = joinIndex(line, lineCum, from, isRoundTrip(line));
+    const j = req.entry === 'start' ? 0 : joinIndex(line, lineCum, from, isRoundTrip(line));
     if (haversine(from, line[j]) > APPROACH_M) {
       const h = bearing(line[Math.max(0, Math.min(j, line.length - 2))], line[Math.min(j + 1, line.length - 1)]);
       lead = await approach(from, line[j], h, req, signal);

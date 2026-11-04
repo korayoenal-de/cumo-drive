@@ -14,7 +14,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { useNavigation } from '@/lib/navigation';
-import type { NavRequest } from '@/lib/navigation/types';
+import type { NavEntry, NavRequest } from '@/lib/navigation/types';
 import { useRideMode } from '@/lib/ride-mode';
 import { formatKm, type Tour } from '@/lib/tour';
 
@@ -26,9 +26,10 @@ export default function NavigationScreen() {
   const [secret, setSecret] = useState(false);
   const showSim = __DEV__ || secret;
 
+  const [entry, setEntry] = useState<NavEntry>('einsteigen');
   const req = useMemo<NavRequest | null>(
-    () => (active ? { tour: active.tour, profile: active.profile, avoid: active.avoid } : null),
-    [active],
+    () => (active ? { tour: active.tour, profile: active.profile, avoid: active.avoid, entry } : null),
+    [active, entry],
   );
   const [state, controls] = useNavigation(req);
   // Restkilometer beim Start, daraus ergeben sich am Ende die gefahrenen km
@@ -110,6 +111,29 @@ export default function NavigationScreen() {
                   {active.tour.minutes ? `, etwa ${Math.round(active.tour.minutes)} min` : ''}
                 </AppText>
               </Pressable>
+              <View style={styles.entry} accessibilityRole="radiogroup">
+                {(
+                  [
+                    { id: 'einsteigen', label: 'Einsteigen', hint: 'An der nächsten Stelle in die Tour' },
+                    { id: 'start', label: 'Über den Startpunkt fahren', hint: 'Die ganze Tour von Anfang an' },
+                  ] as { id: NavEntry; label: string; hint: string }[]
+                ).map((o) => (
+                  <Pressable
+                    key={o.id}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: entry === o.id }}
+                    onPress={() => setEntry(o.id)}
+                    style={styles.entryRow}>
+                    <View style={styles.flex}>
+                      <AppText style={styles.entryLabel}>{o.label}</AppText>
+                      <AppText variant="caption" muted>
+                        {o.hint}
+                      </AppText>
+                    </View>
+                    <View style={[styles.radio, entry === o.id && styles.radioOn]}>{entry === o.id && <View style={styles.radioDot} />}</View>
+                  </Pressable>
+                ))}
+              </View>
               <BigButton label="Start" onPress={() => void controls.start()} />
               <View style={styles.row}>
                 <View style={styles.flex}>
@@ -158,6 +182,12 @@ const styles = StyleSheet.create({
   pad: { paddingHorizontal: Spacing.l },
   flex: { flex: 1 },
   row: { flexDirection: 'row', gap: Spacing.s },
+  entry: { gap: 2 },
+  entryRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingVertical: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
+  entryLabel: { fontFamily: Fonts.semibold, fontSize: 16 },
+  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: Colors.muted, alignItems: 'center', justifyContent: 'center' },
+  radioOn: { borderColor: Colors.text },
+  radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.text },
   top: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: Spacing.m, gap: Spacing.s },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   tourName: { fontFamily: Fonts.display, fontSize: 26, lineHeight: 30, textTransform: 'uppercase', marginTop: 4 },

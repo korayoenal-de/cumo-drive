@@ -511,7 +511,7 @@ function TourPanel(props: {
           {k ? <Stat big={formatKm(k.raus)} unit="km" label="raus" tone={k.raus > 0 ? 'stop' : 'good'} /> : null}
         </div>
         <div style={S.statsRow}>
-          <Stat big={String(props.curves)} label="Kurven" small />
+          <Stat big={String(props.curves)} label={tour.laenge_km > 0 ? `Kurven, ${Math.round((props.curves / tour.laenge_km) * 100)} je 100 km` : 'Kurven'} small />
           <Stat big={props.elev ? props.elev.up.toLocaleString('de-DE') : '…'} unit="m" label="bergauf" small />
           <Stat big={props.elev ? props.elev.max.toLocaleString('de-DE') : '…'} unit="m" label="höchster Punkt" small />
         </div>

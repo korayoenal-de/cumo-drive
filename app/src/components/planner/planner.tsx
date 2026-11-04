@@ -10,6 +10,7 @@ import Svg, { Path } from 'react-native-svg';
 import { RouteMap } from '@/components/map/route-map';
 import { closedHint, passState, usePassLive } from '@/lib/pass-live';
 import { PASS_STATUS_URL, PASSES, passesAlong, passSummary } from '@/lib/passes';
+import { countCurves } from '@/lib/stats';
 import {
   buildTour, findPlace, locate, newSeed, PHASES, toPlanError,
   type PlanError, type PlanPhase, type Spot, type TourRequest,
@@ -759,7 +760,9 @@ function Result({
   const total = tour.laenge_km;
   const share = total > 0 ? Math.round((sauber / total) * 100) : 0;
   const warnings = tour.warnungen.filter((w) => w.klasse !== 'ok');
-  const passes = passesAlong(PASSES, flatten(tour).map((x) => x.p));
+  const line = flatten(tour).map((x) => x.p);
+  const passes = passesAlong(PASSES, line);
+  const curves = countCurves(line);
   const live = usePassLive();
   const hint = closedHint(passes.map((x) => x.pass), live);
   const openMap = () => {
@@ -814,6 +817,12 @@ function Result({
         <View style={styles.flex}>
           <AppText style={styles.statBig}>{formatMinutes(Math.round(tour.minutes))}</AppText>
           <AppText variant="caption" muted>Fahrzeit</AppText>
+        </View>
+        <View style={styles.flex}>
+          <AppText style={styles.statBig}>{curves}</AppText>
+          <AppText variant="caption" muted>
+            Kurven{total > 0 ? `, ${Math.round((curves / total) * 100)} je 100 km` : ''}
+          </AppText>
         </View>
       </View>
 

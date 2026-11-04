@@ -50,10 +50,14 @@ export type NavRoute = {
   source: 'cumo' | 'valhalla';
 };
 
+/** einsteigen: an der nächsten passenden Stelle in die Tour; start: erst zum Startpunkt fahren */
+export type NavEntry = 'einsteigen' | 'start';
+
 export type NavRequest = {
   tour: Tour;
   profile: Profile;
   avoid: Avoid;
+  entry?: NavEntry;
 };
 
 export type NavState = {
