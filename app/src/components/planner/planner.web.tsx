@@ -18,7 +18,7 @@ import { cumoAvailable } from '@/lib/cumo-routing';
 import { deleteTour, filterTours, folders, saveTour, useLibrary, type SavedTour, type SortKey } from '@/lib/library';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
-import { encodeTour, shareUrl } from '@/lib/share-code';
+import { encodeTour, expoGoLink } from '@/lib/share-code';
 import { closedNote, likelyClosed, PASS_STATUS_URL, PASSES, passesAlong, passesGeoJson, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
 import QRCode from 'qrcode';
 
@@ -681,7 +681,7 @@ function SendToApp(props: { tour: Tour; profile: Profile }) {
   useEffect(() => {
     if (!code) return;
     let alive = true;
-    QRCode.toDataURL(shareUrl(code), { errorCorrectionLevel: 'L', margin: 3, width: 720, color: { dark: '#0B0B0C', light: '#FFFFFF' } })
+    QRCode.toDataURL(expoGoLink(code), { errorCorrectionLevel: 'L', margin: 3, width: 720, color: { dark: '#0B0B0C', light: '#FFFFFF' } })
       .then((url) => alive && setImg({ code, url }))
       .catch(() => alive && setImg(null));
     return () => {
@@ -705,7 +705,7 @@ function SendToApp(props: { tour: Tour; profile: Profile }) {
       </div>
       {url ? <img src={url} alt="QR Code der Tour" style={S.qrImg} /> : <div style={{ ...S.qrImg, background: '#fff' }} />}
       <p style={S.small}>
-        Mit der iPhone Kamera scannen und „In CUMO DRIVE öffnen“ tippen. Oder in der App unter Entdecken „Tour vom Planer holen“ wählen. Die App plant die Strecke neu und prüft sie.
+        Mit der iPhone Kamera scannen und auf „In Expo Go öffnen“ tippen. CUMO DRIVE übernimmt die Tour, plant sie neu und prüft sie. Alternativ in der App unter Entdecken „Tour vom Planer holen“ wählen.
       </p>
     </div>
   );
