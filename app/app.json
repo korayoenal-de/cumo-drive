@@ -17,7 +17,8 @@
           "location",
           "audio"
         ],
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "de"
       }
     },
     "android": {
@@ -75,11 +76,17 @@
           "frequentUpdates": true,
           "enablePushNotifications": false
         }
-      ]
+      ],
+      "expo-app-intents"
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": true,
+      "inlineModules": {
+        "watchedDirectories": [
+          "app-intents"
+        ]
+      }
     },
     "backgroundColor": "#0B0B0C",
     "owner": "korayoenals-team",

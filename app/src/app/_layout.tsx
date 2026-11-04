@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { RideBanner } from '@/components/group/ride-banner';
+import { AppIntentHandler } from '@/live/intents';
 import { Colors } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -60,6 +61,7 @@ export default function RootLayout() {
         />
       </Stack>
       <RideBanner />
+      <AppIntentHandler />
     </ThemeProvider>
   );
 }
