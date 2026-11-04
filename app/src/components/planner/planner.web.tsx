@@ -13,7 +13,7 @@ import { planChecked, type PlanStep } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { smartRoundTrip } from '@/lib/smart-roundtrip';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
-import { flatten, formatKm, legs, parseRouteFile, PROFILES, reverseTour, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { flatten, formatKm, legs, parseRouteFile, PROFILES, PROFILE_CHOICES, reverseTour, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { countCurves, elevationProfile, resample, type ElevationProfile } from '@/lib/stats';
 import { cumoAvailable } from '@/lib/cumo-routing';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
@@ -689,7 +689,7 @@ function TourPanel(props: {
 
       <Section title="Profil">
         <div style={S.chips}>
-          {PROFILES.map((p) => (
+          {PROFILE_CHOICES.map((p) => (
             <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
               {p.label}
             </Chip>
@@ -1319,7 +1319,7 @@ function RoundTripPanel(props: {
       </Section>
       <Section title="Profil">
         <div style={S.chips}>
-          {PROFILES.map((p) => (
+          {PROFILE_CHOICES.map((p) => (
             <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
               {p.label}
             </Chip>

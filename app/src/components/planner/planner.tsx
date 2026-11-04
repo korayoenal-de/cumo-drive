@@ -37,7 +37,7 @@ import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { insertVia, movePoint, routePasses } from '@/lib/route-edit';
 import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
-import { flatten, formatKm, legs, PROFILES, type CheckClass, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { flatten, formatKm, legs, PROFILES, PROFILE_CHOICES, type CheckClass, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { selectVehicle, useVehicles } from '@/lib/vehicle';
 
@@ -53,13 +53,20 @@ const DURATIONS: { minutes: number; big: string; unit: string }[] = [
   { minutes: 420, big: '1', unit: 'Tag' },
 ];
 
-const STYLE_PROFILES: Profile[] = ['kurvig', 'paesse', 'entspannt'];
+const STYLE_PROFILES: Profile[] = ['kurvig', 'entspannt'];
 const PROFILE_WORD: Record<Profile, string> = { kurvig: 'kurvig', paesse: 'mit Pässen', entspannt: 'entspannt', schnell: 'zügig' };
 
 const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
 const MIN_STEPS = [60, 90, 120, 180, 240, 300, 420];
 
 const CLASS_LABEL: Record<CheckClass, string> = { ok: 'Sauber', pruefen: 'Prüfen', raus: 'Gesperrt' };
+
+/** Fahrzeit kompakt für große Zahlen, damit sie in eine Zeile passt: 2:11 h oder 45 min. */
+function bigDuration(min: number): string {
+  const m = Math.round(min);
+  if (m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')} h`;
+}
 
 function dirPhrase(d: Direction): string {
   if (d === 'zufall') return 'in zufälliger Richtung';
@@ -150,6 +157,7 @@ export default function Planner() {
   const [locError, setLocError] = useState<PlanError | null>(null);
   const [picked, setPicked] = useState<Spot | null>(null);
   const [query, setQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   const [hits, setHits] = useState<Place[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [lengthBy, setLengthBy] = useState<'km' | 'dauer'>('km');
@@ -326,15 +334,7 @@ export default function Planner() {
       .catch(() => undefined);
   }
 
-  const shown: PlannedTour | null = view.kind === 'result' ? view.tour : inTour ? routeTour : null;
-  function driveShown() {
-    if (view.kind === 'result') setActiveTour(view.tour, view.req.profile, view.req.avoid);
-    else if (routeTour) setActiveTour({ ...routeTour, name: tourPlan.name.trim() || routeTour.name }, profile, avoid);
-    else return;
-    router.push('/navigation');
-  }
-
-  // Kopf des Blatts: Modus und die wichtigste Zeile, auch in der kleinen Höhe sichtbar
+  // Kopf des Blatts: Modus oder Name der Tour, darunter Fortschritt oder Hinweis
   const header = (
     <>
       {view.kind === 'form' ? (
@@ -351,19 +351,7 @@ export default function Planner() {
           {view.kind === 'result' ? view.tour.name : view.kind === 'working' ? 'Tour wird erstellt' : 'Das hat nicht geklappt'}
         </AppText>
       )}
-      {shown ? (
-        <View style={styles.summary}>
-          <View style={styles.flex}>
-            <AppText style={styles.summaryBig}>{formatKm(shown.laenge_km, 0)} km</AppText>
-            <AppText variant="caption" muted numberOfLines={1}>
-              {formatMinutes(Math.round(shown.minutes))} Fahrzeit{inTour ? `, ${tourPlan.name.trim() || shown.name}` : ''}
-            </AppText>
-          </View>
-          <Pressable accessibilityRole="button" onPress={driveShown} style={({ pressed }) => [styles.goSmall, pressed && styles.pressed]}>
-            <AppText style={styles.goSmallText}>Losfahren</AppText>
-          </Pressable>
-        </View>
-      ) : view.kind === 'working' || (inTour && tourPlan.step) ? (
+      {view.kind === 'working' || (inTour && tourPlan.step) ? (
         <View style={styles.summary}>
           <ActivityIndicator color={Colors.signal} />
           <AppText style={styles.flex} numberOfLines={1}>
@@ -621,8 +609,14 @@ export default function Planner() {
                   </View>
                 </View>
               )}
+              {!showSearch && !hits ? (
+                <Pressable accessibilityRole="button" onPress={() => setShowSearch(true)} style={styles.linkBtn}>
+                  <AppText style={styles.linkText}>Anderen Startort wählen</AppText>
+                </Pressable>
+              ) : (
               <View style={styles.searchRow}>
                 <TextInput
+                  autoFocus={showSearch && !hits}
                   value={query}
                   onChangeText={setQuery}
                   onSubmitEditing={() => void runSearch()}
@@ -636,6 +630,7 @@ export default function Planner() {
                   {searching ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.searchBtnText}>Suchen</AppText>}
                 </Pressable>
               </View>
+              )}
               {hits && (
                 <View>
                   {hits.length === 0 && <AppText variant="caption" muted>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
@@ -647,6 +642,7 @@ export default function Planner() {
                         setPicked({ p: h.p, name: h.name });
                         setHits(null);
                         setQuery('');
+                        setShowSearch(false);
                       }}
                       style={styles.hit}>
                       <AppText variant="title">{h.name}</AppText>
@@ -697,7 +693,7 @@ export default function Planner() {
 
           <Section label="Profil">
             <View style={styles.wrap}>
-              {PROFILES.map((p) => (
+              {PROFILE_CHOICES.map((p) => (
                 <Chip key={p.id} label={p.label} active={profile === p.id} onPress={() => setProfile(p.id)} />
               ))}
             </View>
@@ -1182,15 +1178,15 @@ function TourMode({
 
           <View style={styles.stats}>
             <View style={styles.flex}>
-              <AppText style={styles.statBig}>{formatKm(total, 0)}</AppText>
+              <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{formatKm(total, 0)}</AppText>
               <AppText variant="caption" muted>km</AppText>
             </View>
             <View style={styles.flex}>
-              <AppText style={styles.statBig}>{formatMinutes(Math.round(routeTour.minutes))}</AppText>
+              <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{bigDuration(routeTour.minutes)}</AppText>
               <AppText variant="caption" muted>Fahrzeit</AppText>
             </View>
             <View style={styles.flex}>
-              <AppText style={styles.statBig}>{curves}</AppText>
+              <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{curves}</AppText>
               <AppText variant="caption" muted>
                 Kurven{total > 0 ? `, ${Math.round((curves / total) * 100)} je 100 km` : ''}
               </AppText>
@@ -1304,7 +1300,7 @@ function TourMode({
 
       <Section label="Profil">
         <View style={styles.wrap}>
-          {PROFILES.map((p) => (
+          {PROFILE_CHOICES.map((p) => (
             <Chip
               key={p.id}
               label={p.label}
@@ -1706,7 +1702,6 @@ function Result({
   return (
     <View style={styles.gapL}>
       <View style={styles.gapS}>
-        <AppText variant="label">{tour.name}</AppText>
         <AppText variant="caption" muted>
           {PROFILE_WORD[req.profile]}, {req.towardName ? `Richtung ${req.towardName}` : dirPhrase(req.direction)}
         </AppText>
@@ -1735,15 +1730,15 @@ function Result({
 
       <View style={styles.stats}>
         <View style={styles.flex}>
-          <AppText style={styles.statBig}>{formatKm(total, 0)}</AppText>
+          <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{formatKm(total, 0)}</AppText>
           <AppText variant="caption" muted>km</AppText>
         </View>
         <View style={styles.flex}>
-          <AppText style={styles.statBig}>{formatMinutes(Math.round(tour.minutes))}</AppText>
+          <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{bigDuration(tour.minutes)}</AppText>
           <AppText variant="caption" muted>Fahrzeit</AppText>
         </View>
         <View style={styles.flex}>
-          <AppText style={styles.statBig}>{curves}</AppText>
+          <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{curves}</AppText>
           <AppText variant="caption" muted>
             Kurven{total > 0 ? `, ${Math.round((curves / total) * 100)} je 100 km` : ''}
           </AppText>
@@ -1906,10 +1901,7 @@ const styles = StyleSheet.create({
   errorCard: { backgroundColor: Colors.signalTint },
 
   summary: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
-  summaryBig: { fontFamily: Fonts.display, fontSize: 26, lineHeight: 30, fontVariant: ['tabular-nums'] },
   summaryHint: { minHeight: 36 },
-  goSmall: { height: 48, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  goSmallText: { fontFamily: Fonts.display, fontSize: 16, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
   go: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   goText: { fontFamily: Fonts.display, fontSize: 20, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
 
@@ -1918,6 +1910,8 @@ const styles = StyleSheet.create({
   legendSwatch: { width: 14, height: 4, borderRadius: 2 },
 
   stats: { flexDirection: 'row', gap: Spacing.l },
+  linkBtn: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
+  linkText: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.signal },
   statBig: { fontFamily: Fonts.display, fontSize: 44, lineHeight: 48, fontVariant: ['tabular-nums'] },
   checkCard: { flexDirection: 'row', alignItems: 'flex-start' },
 

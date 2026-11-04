@@ -36,6 +36,9 @@ export const PROFILES: { id: Profile; label: string }[] = [
   { id: 'schnell', label: 'Schnell' },
 ];
 
+/** Auswahl in der Oberfläche: Pässe sind keine eigene Option, Pässe an der Strecke zeigt der Planer immer. */
+export const PROFILE_CHOICES = PROFILES.filter((p) => p.id !== 'paesse');
+
 export function haversine(a: LatLon, b: LatLon): number {
   const r = 6371000;
   const toRad = (d: number) => (d * Math.PI) / 180;
