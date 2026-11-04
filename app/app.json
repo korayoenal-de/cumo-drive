@@ -8,7 +8,17 @@
     "scheme": "cumodrive",
     "userInterfaceStyle": "dark",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "de.rallycumo.drive",
+      "appleTeamId": "N9DX399W33",
+      "supportsTablet": false,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location",
+          "audio"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,11 +29,13 @@
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
-      ]
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
+      ],
+      "package": "de.rallycumo.drive"
     },
     "web": {
       "output": "static",
@@ -42,7 +54,10 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "CUMO DRIVE nutzt deinen Standort als Start für Rundtouren."
+          "locationWhenInUsePermission": "CUMO DRIVE nutzt deinen Standort für die Navigation und als Start für Rundtouren.",
+          "locationAlwaysAndWhenInUsePermission": "CUMO DRIVE nutzt deinen Standort auch bei gesperrtem Bildschirm, damit Routenführung und Gruppenfahrt weiterlaufen.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
         }
       ],
       [

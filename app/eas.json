@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "distribution": "store",
+      "channel": "preview",
+      "autoIncrement": true
+    },
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "preview": {
+      "ios": {
+        "appleTeamId": "N9DX399W33"
+      }
+    },
+    "production": {
+      "ios": {
+        "appleTeamId": "N9DX399W33"
+      }
+    }
+  }
+}
