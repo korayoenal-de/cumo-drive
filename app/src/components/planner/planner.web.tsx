@@ -12,12 +12,13 @@ import { parseWish, STOPS, targetKm, formatMinutes, type Stop } from '@/lib/inte
 import { planChecked, type PlanStep } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { smartRoundTrip } from '@/lib/smart-roundtrip';
-import { flatten, formatKm, haversine, legs, parseGpx, PROFILES, reverseTour, toGpx, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { flatten, formatKm, legs, parseGpx, PROFILES, reverseTour, toGpx, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { countCurves, elevationProfile, resample, type ElevationProfile } from '@/lib/stats';
 import { cumoAvailable } from '@/lib/cumo-routing';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { deleteTour, filterTours, folders, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
+import { distToProbe, insertVia, passesNearRoute, probeLine } from '@/lib/route-edit';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
 import { createRide, joinRide, leaveRide, loadProfile, normalizeCode, QUICK_MESSAGES, sendMessage, setRole, useRide } from '@/lib/group/ride';
@@ -306,8 +307,8 @@ export default function Planner() {
 
   const passesOnRoute = useMemo(() => passesAlong(PASSES, line), [line]);
   // Stützpunkte der Route für Abstandsrechnungen (höchstens etwa 400)
-  const probe = useMemo(() => line.filter((_, i) => i % Math.max(1, Math.ceil(line.length / 400)) === 0 || i === line.length - 1), [line]);
-  const distToRoute = useCallback((p: LatLon) => probe.reduce((d, q) => Math.min(d, haversine(p, q)), Infinity), [probe]);
+  const probe = useMemo(() => probeLine(line), [line]);
+  const distToRoute = useCallback((p: LatLon) => distToProbe(probe, p), [probe]);
   // Fotospots nur dort, wo die Route vorbeiführt (bis 1,5 km)
   const photosOnRoute = useMemo(
     () => (photoGroups && probe.length > 1 ? photoGroups.filter((g) => distToRoute(g.p) <= 1500) : []),
@@ -319,16 +320,7 @@ export default function Planner() {
     m.getSource('photos')?.setData(photoGroupsGeoJson(showPhotos ? photosOnRoute : []));
   }, [mapReady, photosOnRoute, showPhotos]);
   // Bekannte Pässe in der Nähe, die die Route noch nicht fährt: zum Einbauen
-  const passesNear = useMemo(() => {
-    if (probe.length < 2) return [];
-    const on = new Set(passesOnRoute.map((x) => x.pass.id));
-    const rank: Record<string, number> = { ikone: 0, bekannt: 1, mittel: 2 };
-    return PASSES.filter((p) => !on.has(p.id))
-      .map((pass) => ({ pass, dKm: distToRoute(passPoint(pass)) / 1000 }))
-      .filter((x) => x.dKm <= 25)
-      .sort((a, b) => (rank[a.pass.tier] ?? 3) - (rank[b.pass.tier] ?? 3) || a.dKm - b.dKm)
-      .slice(0, 6);
-  }, [probe, passesOnRoute, distToRoute]);
+  const passesNear = useMemo(() => passesNearRoute(PASSES, probe, passesOnRoute), [probe, passesOnRoute]);
 
   const hoverLine = useMemo(() => resample(line, 100), [line]);
   const onHoverKm = useCallback(
@@ -868,24 +860,6 @@ function AddPass(props: { near: { pass: Pass; dKm: number }[]; live: Map<string,
       )}
     </Section>
   );
-}
-
-/**
- * Neuen Zwischenpunkt dort einfügen, wo er den kleinsten Umweg macht (nie vor dem Start, nie hinter dem Ziel).
- * Bei weniger als zwei Punkten wird er einfach angehängt.
- */
-function insertVia(pts: LatLon[], p: LatLon): LatLon[] {
-  if (pts.length < 2) return [...pts, p];
-  let best = 1;
-  let bestCost = Infinity;
-  for (let i = 1; i < pts.length; i++) {
-    const cost = haversine(pts[i - 1], p) + haversine(p, pts[i]) - haversine(pts[i - 1], pts[i]);
-    if (cost < bestCost) {
-      bestCost = cost;
-      best = i;
-    }
-  }
-  return [...pts.slice(0, best), p, ...pts.slice(best)];
 }
 
 function Gallery(props: {

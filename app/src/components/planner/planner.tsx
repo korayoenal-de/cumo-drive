@@ -1,15 +1,16 @@
 /**
- * Planer für das Handy: Tour beschreiben (Freitext plus Chips) oder Rundtour einstellen,
- * dann Tour erstellen, prüfen und als Vorschau zeigen. Die Web Version liegt in planner.web.tsx.
+ * Planer für das Handy: Tour beschreiben (Freitext plus Chips), Rundtour einstellen oder
+ * eine Tour von Hand aus Start, Via Punkten und Ziel bauen. Danach prüfen und als Vorschau zeigen.
+ * Die Web Version liegt in planner.web.tsx.
  */
 import { router } from 'expo-router';
-import { useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { RouteMap } from '@/components/map/route-map';
 import { closedHint, passState, usePassLive } from '@/lib/pass-live';
-import { PASS_STATUS_URL, PASSES, passesAlong, passSummary } from '@/lib/passes';
+import { PASS_STATUS_URL, PASSES, passesAlong, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import {
   buildTour, findPlace, locate, newSeed, PHASES, toPlanError,
@@ -21,17 +22,20 @@ import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
-import { searchPlaces, type Place } from '@/lib/geocode';
+import { useSession } from '@/lib/auth';
+import { saveCloudTour } from '@/lib/cloud-tours';
+import { reverseName, searchPlaces, type Place } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
-import type { PlannedTour } from '@/lib/plan';
+import { planChecked, type PlannedTour, type PlanStep } from '@/lib/plan';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
-import { flatten, formatKm, PROFILES, type CheckClass, type Profile } from '@/lib/tour';
+import { insertVia, movePoint, routePasses } from '@/lib/route-edit';
+import { flatten, formatKm, legs, PROFILES, type CheckClass, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
 const WARN = '#E8B03A';
 
-type Mode = 'beschreiben' | 'rundtour';
+type Mode = 'beschreiben' | 'rundtour' | 'tour';
 
 const DURATIONS: { minutes: number; big: string; unit: string }[] = [
   { minutes: 60, big: '1', unit: 'h' },
@@ -148,6 +152,9 @@ export default function Planner() {
 
   const roundKm = lengthBy === 'km' ? KM_STEPS[kmIdx] : targetKm({ minutes: MIN_STEPS[minIdx] }, profile);
 
+  // Tour von Hand: Zustand lebt hier, damit er beim Wechsel der Modi erhalten bleibt
+  const tourPlan = useTourPlan();
+
   async function findHere() {
     setLocating(true);
     setLocError(null);
@@ -162,7 +169,7 @@ export default function Planner() {
 
   function switchMode(m: Mode) {
     setMode(m);
-    if (m === 'rundtour' && !here && !locating) void findHere();
+    if ((m === 'rundtour' || m === 'tour') && !here && !locating) void findHere();
   }
 
   async function runSearch() {
@@ -241,7 +248,7 @@ export default function Planner() {
 
   const header = (
     <View style={styles.headerBlock}>
-      <AppText variant="display">{mode === 'beschreiben' ? 'Tour\nbeschreiben' : 'Rundtour'}</AppText>
+      <AppText variant="display">{mode === 'beschreiben' ? 'Tour\nbeschreiben' : mode === 'tour' ? 'Tour\nplanen' : 'Rundtour'}</AppText>
       <Segmented
         value={rideMode}
         options={RIDE_MODES.map((m) => ({ id: m.id, label: m.label }))}
@@ -304,11 +311,23 @@ export default function Planner() {
         options={[
           { id: 'beschreiben', label: 'Beschreiben' },
           { id: 'rundtour', label: 'Rundtour' },
+          { id: 'tour', label: 'Tour' },
         ]}
         onChange={switchMode}
       />
 
-      {mode === 'beschreiben' ? (
+      {mode === 'tour' ? (
+        <TourMode
+          plan={tourPlan}
+          here={here}
+          onHere={setHere}
+          profile={profile}
+          setProfile={setProfile}
+          avoid={avoid}
+          setAvoid={setAvoid}
+          group={rideMode === 'gruppe'}
+        />
+      ) : mode === 'beschreiben' ? (
         <>
           <View style={styles.inputCard}>
             <TextInput
@@ -588,6 +607,611 @@ export default function Planner() {
         </>
       )}
     </Screen>
+  );
+}
+
+/* Tour von Hand */
+
+const STEP_TEXT: Record<PlanStep, string> = {
+  route: 'Route wird berechnet',
+  check: 'Etappen Check läuft',
+  fix: 'Gesperrte Stellen werden umfahren',
+};
+
+const keyOf = (p: LatLon) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`;
+const samePts = (a: LatLon[], b: LatLon[]) => a.length === b.length && a.every((p, i) => p[0] === b[i][0] && p[1] === b[i][1]);
+
+type PointKind = 'start' | 'via' | 'ziel';
+
+type TourPlan = ReturnType<typeof useTourPlan>;
+
+/** Zustand und Aktionen der Tour von Hand: Wegpunkte, Namen, geplante Route, Speichern. */
+function useTourPlan() {
+  const [pts, setPts] = useState<LatLon[]>([]);
+  const [names, setNames] = useState<Record<string, string>>({});
+  const [name, setName] = useState('Neue Tour');
+  const [planned, setPlanned] = useState<PlannedTour | null>(null);
+  const [step, setStep] = useState<PlanStep | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [cloudId, setCloudId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const abort = useRef<AbortController | null>(null);
+
+  function rememberName(p: LatLon, known?: string) {
+    const k = keyOf(p);
+    if (known) {
+      setNames((old) => ({ ...old, [k]: known }));
+      return;
+    }
+    reverseName(p)
+      .then((n) => n && setNames((old) => (old[k] ? old : { ...old, [k]: n })))
+      .catch(() => undefined);
+  }
+
+  async function plan(points: LatLon[], profile: Profile, avoid: Avoid, tourName = name) {
+    abort.current?.abort();
+    const ctrl = new AbortController();
+    abort.current = ctrl;
+    setError(null);
+    setSaveMsg(null);
+    setStep('route');
+    try {
+      const t = await planChecked(tourName.trim() || 'Neue Tour', points, profile, avoid, (st) => !ctrl.signal.aborted && setStep(st), ctrl.signal);
+      if (!ctrl.signal.aborted) setPlanned(t);
+    } catch (e) {
+      if (ctrl.signal.aborted) return;
+      const err = toPlanError(e, ctrl.signal);
+      setPlanned(null);
+      setError(err.kind === 'network' ? err.message : 'Für diese Punkte hat der Routenplaner keine Strecke gefunden. Verschieb einen Punkt etwas oder nimm ein anderes Profil.');
+    } finally {
+      if (abort.current === ctrl) setStep(null);
+    }
+  }
+
+  /** Neue Punktliste übernehmen und ab zwei Punkten sofort neu planen. */
+  function update(next: LatLon[], profile: Profile, avoid: Avoid) {
+    setPts(next);
+    if (next.length >= 2) {
+      void plan(next, profile, avoid);
+      return;
+    }
+    abort.current?.abort();
+    setStep(null);
+    setError(null);
+    setPlanned(null);
+  }
+
+  function add(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string) {
+    rememberName(p, known);
+    let next: LatLon[];
+    if (kind === 'start') next = pts.length ? [p, ...pts.slice(1)] : [p];
+    else if (kind === 'ziel') next = pts.length >= 2 ? [...pts.slice(0, -1), p] : [...pts, p];
+    else next = insertVia(pts, p);
+    update(next, profile, avoid);
+  }
+
+  async function save(curves: number, profile: Profile, avoid: Avoid) {
+    if (!planned) return;
+    setSaving(true);
+    setSaveMsg(null);
+    try {
+      const id = await saveCloudTour({ ...planned, name: name.trim() || planned.name, curves }, { id: cloudId ?? undefined, profile, avoid });
+      setCloudId(id);
+      setSaveMsg('Im Konto gespeichert. Du findest die Tour in der Garage.');
+    } catch (e) {
+      setSaveMsg(`Speichern hat nicht geklappt: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function reset() {
+    abort.current?.abort();
+    setPts([]);
+    setPlanned(null);
+    setStep(null);
+    setError(null);
+    setCloudId(null);
+    setSaveMsg(null);
+    setName('Neue Tour');
+  }
+
+  return {
+    pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg,
+    add, update, plan, save, reset,
+    remove: (i: number, profile: Profile, avoid: Avoid) => update(pts.filter((_, k) => k !== i), profile, avoid),
+    move: (i: number, dir: -1 | 1, profile: Profile, avoid: Avoid) => update(movePoint(pts, i, dir), profile, avoid),
+  };
+}
+
+function TourMode({
+  plan, here, onHere, profile, setProfile, avoid, setAvoid, group,
+}: {
+  plan: TourPlan;
+  here: Spot | null;
+  onHere: (s: Spot) => void;
+  profile: Profile;
+  setProfile: (p: Profile) => void;
+  avoid: Avoid;
+  setAvoid: (a: Avoid) => void;
+  group: boolean;
+}) {
+  const session = useSession();
+  const live = usePassLive();
+  const { pts, planned } = plan;
+  const busy = plan.step !== null;
+  // Die geplante Route passt nur, solange die Punkte dieselben sind
+  const fits = !!planned && samePts(planned.wegpunkte, pts);
+  const routeTour = fits ? planned : null;
+
+  const [query, setQuery] = useState('');
+  const [hits, setHits] = useState<Place[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [pending, setPending] = useState<{ p: LatLon; name: string | null } | null>(null);
+  const [passQuery, setPassQuery] = useState('');
+  const [planChanged, setPlanChanged] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [locMsg, setLocMsg] = useState<string | null>(null);
+
+  const line = useMemo(() => (routeTour ? flatten(routeTour).map((x) => x.p) : []), [routeTour]);
+  const { along, near } = useMemo(() => (line.length > 1 ? routePasses(PASSES, line) : { along: [], near: [] }), [line]);
+  const curves = useMemo(() => (line.length > 1 ? countCurves(line) : 0), [line]);
+  const parts = useMemo(() => (routeTour ? legs(routeTour) : []), [routeTour]);
+  const hint = closedHint(along.map((x) => x.pass), live);
+
+  const mapTour: Tour = routeTour ?? { name: plan.name, laenge_km: 0, wegpunkte: pts, linie: [], warnungen: [] };
+  const pins = pts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: plan.names[keyOf(p)] ?? `Via Punkt ${i + 1}` }));
+  const focus = pending?.p ?? (pts.length ? pts[pts.length - 1] : here?.p ?? null);
+
+  const add = (kind: PointKind, p: LatLon, known?: string) => {
+    setPlanChanged(false);
+    plan.add(kind, p, profile, avoid, known);
+  };
+
+  async function runSearch() {
+    const q = query.trim();
+    if (q.length < 2) return;
+    setSearching(true);
+    const passHits: Place[] = searchPasses(PASSES, q, 3).map((x) => ({
+      name: x.name,
+      detail: `Pass, ${passSummary(x, undefined, passState(x, live).note)}, ${x.region}`,
+      p: passPoint(x),
+    }));
+    try {
+      const places = await searchPlaces(q, pts[pts.length - 1] ?? here?.p);
+      setHits([...passHits, ...places.filter((x) => !passHits.some((y) => y.name === x.name)).slice(0, 7)]);
+    } catch {
+      setHits(passHits);
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  function pick(h: Place, kind: PointKind) {
+    add(kind, h.p, h.name);
+    setHits(null);
+    setQuery('');
+  }
+
+  function onLongPress(p: LatLon) {
+    if (!pts.length) {
+      add('start', p);
+      return;
+    }
+    setPending({ p, name: null });
+    reverseName(p)
+      .then((n) => setPending((cur) => (cur && cur.p === p ? { ...cur, name: n } : cur)))
+      .catch(() => undefined);
+  }
+
+  function addPending(kind: PointKind) {
+    if (!pending) return;
+    add(kind, pending.p, pending.name ?? undefined);
+    setPending(null);
+  }
+
+  async function startHere() {
+    setLocMsg(null);
+    if (here) {
+      add('start', here.p, here.name);
+      return;
+    }
+    setLocating(true);
+    try {
+      const spot = await locate();
+      onHere(spot);
+      add('start', spot.p, spot.name);
+    } catch (e) {
+      setLocMsg(toPlanError(e).message);
+    } finally {
+      setLocating(false);
+    }
+  }
+
+  const searching2 = passQuery.trim().length >= 2;
+  const passHits: { pass: Pass; dKm: number | null }[] = searching2
+    ? searchPasses(PASSES, passQuery, 5).map((pass) => ({ pass, dKm: null }))
+    : near;
+
+  const k = routeTour?.km_je_klasse;
+  const sauber = k?.ok ?? 0;
+  const total = routeTour?.laenge_km ?? 0;
+  const share = total > 0 ? Math.round((sauber / total) * 100) : 0;
+  const warnings = routeTour ? routeTour.warnungen.filter((w) => w.klasse !== 'ok') : [];
+
+  const drive = () => {
+    if (!routeTour) return;
+    setActiveTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, profile, avoid);
+    router.push('/navigation');
+  };
+  const openMap = () => {
+    if (!routeTour) return;
+    setActiveTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, profile, avoid);
+    router.push('/karte');
+  };
+
+  return (
+    <>
+      <View style={styles.gapS}>
+        <AppText variant="label">Name</AppText>
+        <TextInput
+          value={plan.name}
+          onChangeText={plan.setName}
+          placeholder="Name der Tour"
+          placeholderTextColor={Colors.muted}
+          style={styles.search}
+          accessibilityLabel="Name der Tour"
+        />
+      </View>
+
+      <View style={styles.gapS}>
+        <View style={styles.mapBox}>
+          <RouteMap tour={mapTour} pins={pins} showUser focus={focus} onLongPress={onLongPress} style={styles.map} />
+          {routeTour && (
+            <Pressable accessibilityRole="button" accessibilityLabel="Karte groß öffnen" onPress={openMap} style={styles.mapBadge}>
+              <AppText style={styles.mapBadgeText}>Karte groß</AppText>
+            </Pressable>
+          )}
+        </View>
+        <AppText variant="caption" muted>
+          {pts.length ? 'Lange auf die Karte drücken setzt einen weiteren Punkt.' : 'Lange auf die Karte drücken setzt den Start, oder such unten nach einem Ort.'}
+        </AppText>
+      </View>
+
+      {pending && (
+        <View style={[styles.card, styles.pendingCard]}>
+          <View style={styles.flex}>
+            <AppText variant="label">Neuer Punkt</AppText>
+            <AppText variant="title">{pending.name ?? `${pending.p[0].toFixed(4)}, ${pending.p[1].toFixed(4)}`}</AppText>
+          </View>
+          <View style={styles.wrap}>
+            <SmallButton label="Als Start" onPress={() => addPending('start')} />
+            {pts.length >= 2 && <SmallButton label="Als Via Punkt" onPress={() => addPending('via')} />}
+            <SmallButton label="Als Ziel" onPress={() => addPending('ziel')} strong />
+            <SmallButton label="Abbrechen" onPress={() => setPending(null)} />
+          </View>
+        </View>
+      )}
+
+      <Section label="Wegpunkte">
+        <View style={styles.card}>
+          {pts.length === 0 ? (
+            <View style={styles.gapS}>
+              <AppText variant="caption" muted>Noch keine Punkte. Setz den Start per Suche, Standort oder langem Druck auf die Karte, dann das Ziel.</AppText>
+              <SmallButton label={locating ? 'Standort wird bestimmt' : 'Mein Standort als Start'} onPress={() => !locating && void startHere()} />
+              {locMsg && <AppText variant="caption" style={styles.signalText}>{locMsg}</AppText>}
+            </View>
+          ) : (
+            pts.map((p, i) => {
+              const end = i === 0 || i === pts.length - 1;
+              const label = i === 0 ? 'S' : i === pts.length - 1 ? 'Z' : String(i);
+              const role = i === 0 ? 'Start' : i === pts.length - 1 ? 'Ziel' : `Via Punkt ${i}`;
+              const leg = parts[i];
+              const nm = plan.names[keyOf(p)] ?? `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`;
+              return (
+                <View key={`${keyOf(p)},${i}`} style={[styles.wpRow, i > 0 && styles.warnBorder]}>
+                  <View style={[styles.wpDot, end && styles.wpDotEnd]}>
+                    <AppText style={[styles.wpDotText, end && styles.onSignal]}>{label}</AppText>
+                  </View>
+                  <View style={styles.flex}>
+                    <AppText variant="title" numberOfLines={1}>{nm}</AppText>
+                    <AppText variant="caption" muted>
+                      {role}
+                      {leg ? `, ${formatKm(leg.endKm - leg.startKm)} km bis zum nächsten Punkt` : ''}
+                      {leg && leg.warnings.some((w) => w.klasse === 'raus') ? ', gesperrte Stelle' : ''}
+                    </AppText>
+                  </View>
+                  <IconButton kind="up" label={`${role} nach oben`} disabled={i === 0} onPress={() => plan.move(i, -1, profile, avoid)} />
+                  <IconButton kind="down" label={`${role} nach unten`} disabled={i === pts.length - 1} onPress={() => plan.move(i, 1, profile, avoid)} />
+                  <IconButton kind="remove" label={`${role} entfernen`} onPress={() => plan.remove(i, profile, avoid)} />
+                </View>
+              );
+            })
+          )}
+          <View style={styles.searchRow}>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              onSubmitEditing={() => void runSearch()}
+              placeholder={pts.length ? 'Ziel oder Via Punkt suchen' : 'Wo geht es los?'}
+              placeholderTextColor={Colors.muted}
+              returnKeyType="search"
+              style={styles.search}
+              accessibilityLabel="Ort oder Pass suchen"
+            />
+            <Pressable accessibilityRole="button" onPress={() => void runSearch()} style={styles.searchBtn}>
+              {searching ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.searchBtnText}>Suchen</AppText>}
+            </Pressable>
+          </View>
+          {hits && (
+            <View>
+              {hits.length === 0 && <AppText variant="caption" muted>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
+              {hits.map((h, i) => (
+                <View key={`${h.p[0]},${h.p[1]},${i}`} style={styles.hitRow}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${h.name} ${pts.length ? 'als Ziel' : 'als Start'} setzen`}
+                    onPress={() => pick(h, pts.length ? 'ziel' : 'start')}
+                    style={styles.hitMain}>
+                    <AppText variant="title">{h.name}</AppText>
+                    {!!h.detail && <AppText variant="caption" muted>{h.detail}</AppText>}
+                  </Pressable>
+                  {pts.length >= 2 && <SmallButton label="Via" onPress={() => pick(h, 'via')} />}
+                  <SmallButton label={pts.length ? 'Ziel' : 'Start'} onPress={() => pick(h, pts.length ? 'ziel' : 'start')} strong />
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      </Section>
+
+      {plan.step && (
+        <View style={[styles.card, styles.statusRow]}>
+          <ActivityIndicator color={Colors.signal} />
+          <AppText style={styles.flex}>{STEP_TEXT[plan.step]}</AppText>
+        </View>
+      )}
+      {plan.error && (
+        <View style={[styles.card, styles.errorCard]}>
+          <AppText variant="label" style={styles.signalText}>Das hat nicht geklappt</AppText>
+          <AppText>{plan.error}</AppText>
+          {pts.length >= 2 && <SecondaryButton label="Nochmal versuchen" onPress={() => void plan.plan(pts, profile, avoid)} />}
+        </View>
+      )}
+
+      {routeTour && (
+        <>
+          <View style={styles.legend}>
+            {(['ok', 'pruefen', 'raus'] as CheckClass[]).map((c) => (
+              <View key={c} style={styles.legendItem}>
+                <View style={[styles.legendSwatch, { backgroundColor: CLASS_COLORS[c] }]} />
+                <AppText variant="caption" muted>{CLASS_LABEL[c]}</AppText>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.stats}>
+            <View style={styles.flex}>
+              <AppText style={styles.statBig}>{formatKm(total, 0)}</AppText>
+              <AppText variant="caption" muted>km</AppText>
+            </View>
+            <View style={styles.flex}>
+              <AppText style={styles.statBig}>{formatMinutes(Math.round(routeTour.minutes))}</AppText>
+              <AppText variant="caption" muted>Fahrzeit</AppText>
+            </View>
+            <View style={styles.flex}>
+              <AppText style={styles.statBig}>{curves}</AppText>
+              <AppText variant="caption" muted>
+                Kurven{total > 0 ? `, ${Math.round((curves / total) * 100)} je 100 km` : ''}
+              </AppText>
+            </View>
+          </View>
+
+          <View style={[styles.card, styles.checkCard]}>
+            <View style={[styles.dot, (k?.raus ?? 0) > 0 ? styles.dotStop : warnings.length ? styles.dotWarn : null]} />
+            <View style={styles.flex}>
+              <AppText variant="title">
+                {(k?.raus ?? 0) > 0 ? `Etappen Check: ${formatKm(k!.raus)} km ungeeignet` : `Etappen Check: ${formatKm(sauber)} km sauber`}
+              </AppText>
+              <AppText variant="caption" muted>
+                {share} % der Strecke ohne Auffälligkeiten
+                {routeTour.fixes > 0 ? `, ${routeTour.fixes} mal um gesperrte Stellen umgeplant` : ''}.
+              </AppText>
+            </View>
+          </View>
+
+          {warnings.length > 0 && (
+            <Section label={`Warnungen (${warnings.length})`}>
+              <View style={styles.card}>
+                {warnings.map((w, i) => (
+                  <View key={i} style={[styles.warnRow, i > 0 && styles.warnBorder]}>
+                    <View style={[styles.badge, { borderColor: CLASS_COLORS[w.klasse] }]}>
+                      <AppText style={[styles.badgeText, { color: CLASS_COLORS[w.klasse] }]}>{CLASS_LABEL[w.klasse]}</AppText>
+                    </View>
+                    <View style={styles.flex}>
+                      <AppText variant="title">{w.name || 'Unbenannter Abschnitt'}</AppText>
+                      <AppText variant="caption" muted>
+                        bei km {formatKm(w.start_km)}, {formatKm(w.laenge_km)} km lang
+                      </AppText>
+                      {w.gruende.length > 0 && <AppText variant="caption">{w.gruende.join(', ')}</AppText>}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </Section>
+          )}
+
+          {hint && (
+            <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PASS_STATUS_URL)} style={styles.winter}>
+              <AppText style={styles.winterTitle}>{hint.title}</AppText>
+              <AppText variant="caption" style={styles.winterText}>
+                {hint.text} Tippen für den aktuellen Passstatus.
+              </AppText>
+            </Pressable>
+          )}
+
+          {along.length > 0 && (
+            <Section label={`Pässe auf der Strecke (${along.length})`}>
+              <View style={styles.card}>
+                {along.map(({ pass, km }, i) => (
+                  <View key={pass.id} style={[styles.warnRow, i > 0 && styles.warnBorder]}>
+                    <View style={styles.flex}>
+                      <AppText variant="title">{pass.name}</AppText>
+                      <AppText variant="caption" muted>{passSummary(pass, undefined, passState(pass, live).note)}</AppText>
+                    </View>
+                    <AppText variant="caption" muted>km {Math.round(km)}</AppText>
+                  </View>
+                ))}
+              </View>
+            </Section>
+          )}
+        </>
+      )}
+
+      {pts.length >= 2 && (
+        <Section label={!searching2 && near.length ? 'Pässe einbauen, in der Nähe' : 'Pässe einbauen'}>
+          <View style={styles.card}>
+            <TextInput
+              value={passQuery}
+              onChangeText={setPassQuery}
+              placeholder="Pass suchen, zum Beispiel Stelvio"
+              placeholderTextColor={Colors.muted}
+              style={styles.search}
+              accessibilityLabel="Pass suchen"
+            />
+            {passHits.length ? (
+              passHits.map(({ pass, dKm }, i) => (
+                <View key={pass.id} style={[styles.passRow, i > 0 && styles.warnBorder]}>
+                  <View style={[styles.passDot, pass.tier === 'ikone' && styles.passDotIcon]} />
+                  <View style={styles.flex}>
+                    <AppText variant="title">{pass.name}</AppText>
+                    <AppText variant="caption" muted>
+                      {[passSummary(pass, undefined, passState(pass, live).note), dKm != null ? `${formatKm(dKm, dKm < 10 ? 1 : 0)} km neben der Route` : null]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </AppText>
+                  </View>
+                  <SmallButton
+                    label="Einbauen"
+                    onPress={() => {
+                      add('via', passPoint(pass), pass.name);
+                      setPassQuery('');
+                    }}
+                  />
+                </View>
+              ))
+            ) : (
+              <AppText variant="caption" muted>
+                {searching2 ? 'Kein Pass gefunden.' : routeTour ? 'Keine bekannten Pässe in der Nähe der Route.' : 'Vorschläge erscheinen, sobald die Route steht.'}
+              </AppText>
+            )}
+          </View>
+        </Section>
+      )}
+
+      <Section label="Profil">
+        <View style={styles.wrap}>
+          {PROFILES.map((p) => (
+            <Chip
+              key={p.id}
+              label={p.label}
+              active={profile === p.id}
+              onPress={() => {
+                setProfile(p.id);
+                if (pts.length >= 2) setPlanChanged(true);
+              }}
+            />
+          ))}
+        </View>
+      </Section>
+
+      <Section label="Vermeiden">
+        <View style={styles.card}>
+          {(
+            [
+              ['closures', 'Gesperrte Straßen', 'calimoto warnt nur, wir meiden.'],
+              ['ferries', 'Fähren', undefined],
+              ['tolls', 'Maut', undefined],
+              ['rough', 'Rauer Belag', 'Kopfsteinpflaster und schlechter Asphalt.'],
+            ] as const
+          ).map(([key, label, note]) => (
+            <Toggle
+              key={key}
+              label={label}
+              note={note}
+              value={avoid[key]}
+              onChange={(v) => {
+                setAvoid({ ...avoid, [key]: v });
+                if (pts.length >= 2) setPlanChanged(true);
+              }}
+            />
+          ))}
+        </View>
+      </Section>
+
+      {pts.length >= 2 && (planChanged || !routeTour) && !busy && (
+        <PrimaryButton
+          label={planChanged ? 'Mit neuen Einstellungen planen' : 'Route planen'}
+          onPress={() => {
+            setPlanChanged(false);
+            void plan.plan(pts, profile, avoid);
+          }}
+        />
+      )}
+
+      {routeTour && (
+        <View style={styles.gapM}>
+          <Pressable accessibilityRole="button" onPress={drive} style={({ pressed }) => [styles.go, pressed && styles.pressed]}>
+            <AppText style={styles.goText}>Losfahren</AppText>
+          </Pressable>
+          {session ? (
+            <>
+              <SecondaryButton
+                label={plan.saving ? 'Wird gespeichert' : plan.cloudId ? 'Im Konto aktualisieren' : 'Im Konto speichern'}
+                onPress={() => !plan.saving && void plan.save(curves, profile, avoid)}
+              />
+              {plan.saveMsg && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
+            </>
+          ) : (
+            <AppText variant="caption" muted>Melde dich in der Garage an, dann kannst du Touren im Konto speichern.</AppText>
+          )}
+        </View>
+      )}
+
+      {group && routeTour && <GroupBlock />}
+
+      {pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
+    </>
+  );
+}
+
+function SmallButton({ label, onPress, strong }: { label: string; onPress: () => void; strong?: boolean }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.small, strong && styles.smallStrong, pressed && styles.pressed]}>
+      <AppText style={[styles.smallText, strong && styles.onSignal]}>{label}</AppText>
+    </Pressable>
+  );
+}
+
+function IconButton({ kind, label, disabled, onPress }: { kind: 'up' | 'down' | 'remove'; label: string; disabled?: boolean; onPress: () => void }) {
+  const d = kind === 'up' ? 'M6 15l6 -6l6 6' : kind === 'down' ? 'M6 9l6 6l6 -6' : 'M7 7l10 10M17 7l-10 10';
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
+      disabled={disabled}
+      hitSlop={2}
+      onPress={onPress}
+      style={[styles.iconBtn, disabled && styles.disabled]}>
+      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={Colors.text} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+        <Path d={d} />
+      </Svg>
+    </Pressable>
   );
 }
 
@@ -1004,4 +1628,21 @@ const styles = StyleSheet.create({
   warnBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line, paddingTop: Spacing.m },
   badge: { borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: Spacing.s, height: 24, justifyContent: 'center', alignSelf: 'flex-start' },
   badgeText: { fontFamily: Fonts.semibold, fontSize: 12 },
+
+  dotStop: { backgroundColor: Colors.signal },
+  statusRow: { flexDirection: 'row', alignItems: 'center' },
+  pendingCard: { borderWidth: 1, borderColor: Colors.signal },
+  wpRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 52 },
+  wpDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: Colors.line, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  wpDotEnd: { backgroundColor: Colors.signal, borderColor: Colors.signal },
+  wpDotText: { fontFamily: Fonts.bold, fontSize: 12 },
+  iconBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  small: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, borderWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
+  smallStrong: { backgroundColor: Colors.signal, borderColor: Colors.signal },
+  smallText: { fontFamily: Fonts.semibold, fontSize: 14 },
+  hitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
+  hitMain: { flex: 1, minHeight: 44, justifyContent: 'center' },
+  passRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingTop: Spacing.s },
+  passDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.muted },
+  passDotIcon: { backgroundColor: Colors.signal },
 });

@@ -17,6 +17,38 @@ export const CLASS_COLORS: Record<CheckClass, string> = {
 
 const PAD = 18;
 
+export type Projection = {
+  xy: (p: LatLon) => [number, number];
+  /** Umkehrung: Punkt auf der Fläche zurück in Breite und Länge */
+  toLatLon: (x: number, y: number) => LatLon;
+};
+
+/**
+ * Einfache Projektion der Tour Linie auf eine Fläche (Längengrade mit cos(Breite) gestaucht).
+ * Ohne Linie oder Fläche gibt es keine Projektion.
+ */
+export function projectTour(tour: Tour, width: number, height: number): Projection | null {
+  const all = tour.linie.flatMap((r) => r.p);
+  if (width <= 0 || height <= 0 || all.length < 2) return null;
+  let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+  for (const [la, lo] of all) {
+    if (la < minLat) minLat = la;
+    if (la > maxLat) maxLat = la;
+    if (lo < minLon) minLon = lo;
+    if (lo > maxLon) maxLon = lo;
+  }
+  const k = Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180);
+  const spanX = Math.max((maxLon - minLon) * k, 1e-6);
+  const spanY = Math.max(maxLat - minLat, 1e-6);
+  const s = Math.min((width - PAD * 2) / spanX, (height - PAD * 2) / spanY);
+  const offX = (width - spanX * s) / 2;
+  const offY = (height - spanY * s) / 2;
+  return {
+    xy: ([la, lo]) => [offX + (lo - minLon) * k * s, offY + (maxLat - la) * s],
+    toLatLon: (x, y) => [maxLat - (y - offY) / s, minLon + (x - offX) / (k * s)],
+  };
+}
+
 export function RoutePreview({ tour, height = 260 }: { tour: Tour; height?: number }) {
   const [width, setWidth] = useState(0);
   const all = tour.linie.flatMap((r) => r.p);
@@ -24,22 +56,9 @@ export function RoutePreview({ tour, height = 260 }: { tour: Tour; height?: numb
 
   let runs: { c: CheckClass; pts: string }[] = [];
   let startXY: [number, number] | null = null;
-  if (width > 0 && all.length > 1) {
-    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
-    for (const [la, lo] of all) {
-      if (la < minLat) minLat = la;
-      if (la > maxLat) maxLat = la;
-      if (lo < minLon) minLon = lo;
-      if (lo > maxLon) maxLon = lo;
-    }
-    // einfache Projektion: Längengrade mit cos(Breite) stauchen
-    const k = Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180);
-    const spanX = Math.max((maxLon - minLon) * k, 1e-6);
-    const spanY = Math.max(maxLat - minLat, 1e-6);
-    const s = Math.min((width - PAD * 2) / spanX, (height - PAD * 2) / spanY);
-    const offX = (width - spanX * s) / 2;
-    const offY = (height - spanY * s) / 2;
-    const xy = ([la, lo]: LatLon): [number, number] => [offX + (lo - minLon) * k * s, offY + (maxLat - la) * s];
+  const proj = projectTour(tour, width, height);
+  if (proj) {
+    const { xy } = proj;
     // ok zuerst zeichnen, damit Warnstellen oben liegen
     const order: CheckClass[] = ['ok', 'pruefen', 'raus'];
     runs = order.flatMap((c) =>

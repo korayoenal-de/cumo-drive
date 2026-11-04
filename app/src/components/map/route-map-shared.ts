@@ -28,6 +28,10 @@ export type RouteMapProps = {
   others?: OtherDriver[];
   /** Markierte Punkte, zum Beispiel Spitzenwerte der Fahrtstatistik */
   pins?: MapPin[];
+  /** Langer Druck auf die Karte, liefert den Punkt (zum Beispiel neuer Wegpunkt im Planer) */
+  onLongPress?: (p: LatLon) => void;
+  /** Punkt, auf den die Karte springt, solange keine Tour Linie da ist */
+  focus?: LatLon | null;
 };
 
 export type MapPin = { id: string; p: LatLon; label: string; title: string };

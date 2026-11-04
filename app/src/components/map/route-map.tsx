@@ -33,6 +33,8 @@ export function RouteMap({
   edgePadding,
   others,
   pins,
+  onLongPress,
+  focus,
 }: RouteMapProps) {
   const map = useRef<MapView>(null);
   const markers = useRef<(MapMarker | null)[]>([]);
@@ -66,6 +68,17 @@ export function RouteMap({
     // pad ist ein Objekt, die Werte reichen als Abhängigkeit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, followUser, highlightIndex, fitCoords, pad.top, pad.right, pad.bottom, pad.left]);
+
+  // Ohne Linie: auf den Fokus Punkt springen (zum Beispiel erster Wegpunkt im Planer)
+  const focusLat = focus?.[0];
+  const focusLon = focus?.[1];
+  useEffect(() => {
+    if (!ready || followUser || fitCoords.length >= 2 || focusLat == null || focusLon == null) return;
+    map.current?.animateCamera(
+      { center: { latitude: focusLat, longitude: focusLon }, zoom: 10, altitude: 60000, pitch: 0, heading: 0 },
+      { duration: 600 },
+    );
+  }, [ready, followUser, fitCoords.length, focusLat, focusLon]);
 
   // Ohne Tour: auf die Gruppe einpassen (sobald Positionen da sind, einmal pro neuer Teilnehmerzahl)
   const groupPts = (others ?? []).map((o) => o.p);
@@ -125,7 +138,12 @@ export function RouteMap({
         scrollEnabled={interactive}
         zoomEnabled={interactive}
         onMapReady={() => setReady(true)}
-        onPanDrag={followUser && position ? () => setPaused((n) => n + 1) : undefined}>
+        onPanDrag={followUser && position ? () => setPaused((n) => n + 1) : undefined}
+        onLongPress={
+          onLongPress
+            ? (e) => onLongPress([e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude])
+            : undefined
+        }>
         {runs.map((r, i) => (
           <Polyline
             key={`rand${i}`}
