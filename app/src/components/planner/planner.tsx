@@ -996,8 +996,6 @@ function TourMode({
   const routeTour = fits ? planned : null;
 
   const [query, setQuery] = useState('');
-  const [hits, setHits] = useState<Place[] | null>(null);
-  const [searching, setSearching] = useState(false);
   const [planChanged, setPlanChanged] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locMsg, setLocMsg] = useState<string | null>(null);
@@ -1047,35 +1045,35 @@ function TourMode({
     setMenu(null);
     setLegMenu(null);
     setQuery('');
-    setHits(null);
     setLocMsg(null);
   }
 
-  async function runSearch() {
-    const q = query.trim();
-    if (q.length < 2) return;
-    setSearching(true);
-    const passHits: Place[] = searchPasses(PASSES, q, 3).map((x) => ({
-      name: x.name,
-      detail: `Pass, ${passSummary(x, undefined, passState(x, live).note)}, ${x.region}`,
-      p: passPoint(x),
-    }));
-    try {
-      const places = await searchPlaces(q, pts[pts.length - 1] ?? here?.p);
-      setHits([...passHits, ...places.filter((x) => !passHits.some((y) => y.name === x.name)).slice(0, 7)]);
-    } catch {
-      setHits(passHits);
-    } finally {
-      setSearching(false);
-    }
-  }
+  // Vorschläge schon beim Tippen: passende Pässe zuerst, dann Orte in der Nähe des letzten Punkts
+  const lastPt = pts[pts.length - 1] ?? here?.p;
+  const nearLat = lastPt?.[0];
+  const nearLon = lastPt?.[1];
+  const near = useMemo<LatLon | undefined>(() => (nearLat != null && nearLon != null ? [nearLat, nearLon] : undefined), [nearLat, nearLon]);
+  const suggest = usePlaceSuggest(query, near);
+  const passHits = useMemo<Place[]>(
+    () =>
+      query.trim().length >= 2
+        ? searchPasses(PASSES, query.trim(), 3).map((x) => ({
+            name: x.name,
+            detail: `Pass, ${passSummary(x, undefined, passState(x, live).note)}, ${x.region}`,
+            p: passPoint(x),
+          }))
+        : [],
+    [query, live],
+  );
+  const hits: Place[] | null =
+    query.trim().length < 2 ? null : [...passHits, ...(suggest.hits ?? []).filter((x) => !passHits.some((y) => y.name === x.name)).slice(0, 7)];
+  const searching = suggest.searching;
 
   function pick(p: LatLon, name: string | undefined) {
     if (!edit) return;
     setPlanChanged(false);
     if (edit.insert) plan.insertAt(edit.index ?? plan.vias.length, p, profile, avoid, name);
     else plan.setSlot(edit.kind, p, profile, avoid, name, edit.index);
-    setHits(null);
     setQuery('');
     // Nach dem Start gleich das Ziel abfragen
     setEdit(edit.kind === 'start' && !plan.ziel ? { kind: 'ziel' } : null);
@@ -1102,7 +1100,6 @@ function TourMode({
         <TextInput
           value={query}
           onChangeText={setQuery}
-          onSubmitEditing={() => void runSearch()}
           placeholder={edit?.kind === 'start' ? 'Wo geht es los?' : edit?.kind === 'ziel' ? 'Wohin soll es gehen?' : 'Ort oder Pass für das Zwischenziel'}
           placeholderTextColor={Colors.muted}
           returnKeyType="search"
@@ -1111,9 +1108,7 @@ function TourMode({
           style={[styles.search, styles.searchOnGround]}
           accessibilityLabel="Ort oder Pass suchen"
         />
-        <Pressable accessibilityRole="button" onPress={() => void runSearch()} style={[styles.searchBtn, styles.searchOnGround]}>
-          {searching ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.searchBtnText}>Suchen</AppText>}
-        </Pressable>
+        {searching && <ActivityIndicator color={Colors.muted} />}
       </View>
       <View style={styles.wrap}>
         {edit?.kind !== 'via' && <Pill label={locating ? 'Standort wird bestimmt' : 'Mein Standort'} onPress={() => !locating && void takeHere()} />}
