@@ -19,9 +19,13 @@ export type CloudTour = {
 };
 
 export async function listCloudTours(): Promise<CloudTour[]> {
+  // nur eigene Touren: veröffentlichte Touren anderer sind seit der Community ebenfalls lesbar
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return [];
   const { data, error } = await supabase
     .from('tours')
     .select('id,name,folder,profile,km,minutes,curves,updated_at')
+    .eq('owner', u.user.id)
     .order('updated_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as CloudTour[];

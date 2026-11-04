@@ -1,8 +1,9 @@
 /**
- * Garage: Konto, gefahrene Touren mit Statistik.
- * Dazu das Fahrzeugprofil: Modell, Breite, Bodenfreiheit, Reichweite und Sprit.
+ * Einstellungen: Konto und Garage. In der Garage legt man seine Fahrzeuge an; pro Fahrzeug
+ * stehen die gefahrenen Kilometer und Touren aus dem Konto.
  */
-import { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Chip } from '@/components/ui/chip';
@@ -11,18 +12,46 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { listDrives, type Drive } from '@/lib/drives';
-import { FUELS, saveVehicle, useVehicle, vehicleSummary, type Vehicle } from '@/lib/vehicle';
-import { fmtG } from '@/lib/ride-stats';
 import { formatKm } from '@/lib/tour';
+import { deleteVehicle, FUELS, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleSummary, type Vehicle } from '@/lib/vehicle';
 
-export default function Garage() {
+export default function Einstellungen() {
   const session = useSession();
+  const [drives, setDrives] = useState<Drive[] | null>(null);
+
+  // nach der Anmeldung Fahrzeuge abgleichen und Fahrten für die Kilometer je Fahrzeug laden
+  useEffect(() => {
+    if (session) void syncVehicles();
+  }, [session]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!session) return;
+      listDrives()
+        .then(setDrives)
+        .catch(() => setDrives([]));
+    }, [session]),
+  );
+
   return (
     <Screen>
-      <AppText variant="display">Garage</AppText>
-      {session ? <Tours email={session.user.email ?? ''} /> : <Login />}
-      <VehicleCard />
+      <AppText variant="display">Einstellungen</AppText>
+      <Garage drives={session ? drives : null} />
+      <View style={styles.gapM}>
+        <AppText variant="label">Konto</AppText>
+        {session ? <Account email={session.user.email ?? ''} /> : <Login />}
+      </View>
     </Screen>
+  );
+}
+
+function Account({ email }: { email: string }) {
+  return (
+    <View style={styles.card}>
+      <AppText muted>Angemeldet als {email}. Touren, Fahrten und Fahrzeuge liegen in deinem Konto und im Web Planer.</AppText>
+      <Pressable accessibilityRole="button" onPress={() => void signOut()} style={styles.secondary}>
+        <AppText style={styles.secondaryText}>Abmelden</AppText>
+      </Pressable>
+    </View>
   );
 }
 
@@ -45,8 +74,7 @@ function Login() {
   const ready = !!email.trim() && pw.length > 0 && !busy;
   return (
     <View style={styles.card}>
-      <AppText variant="label">Konto</AppText>
-      <AppText muted>Melde dich an, dann findest du hier alle Touren aus dem Web Planer.</AppText>
+      <AppText muted>Mit Konto findest du deine Touren auch im Web Planer, kannst Touren veröffentlichen und deine Fahrten werden gespeichert.</AppText>
       <TextInput
         value={email}
         onChangeText={setEmail}
@@ -81,161 +109,152 @@ function Login() {
   );
 }
 
-function Tours({ email }: { email: string }) {
-  return (
-    <>
-      <View style={styles.accountRow}>
-        <AppText variant="caption" muted style={styles.flex}>
-          Angemeldet als {email}
-        </AppText>
-        <Pressable accessibilityRole="button" onPress={() => void signOut()}>
-          <AppText variant="caption">Abmelden</AppText>
-        </Pressable>
-      </View>
-      <Drives />
-    </>
-  );
-}
+/** Garage: alle Fahrzeuge, das aktuelle ist markiert; Tippen öffnet das Formular. */
+function Garage({ drives }: { drives: Drive[] | null }) {
+  const { list, current } = useVehicles();
+  const [edit, setEdit] = useState<Vehicle | null>(null);
+  const [confirm, setConfirm] = useState<string | null>(null);
 
-/** Gefahrene Touren mit den wichtigsten Werten der Fahrtstatistik. */
-function Drives() {
-  const [list, setList] = useState<Drive[] | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  useEffect(() => {
-    listDrives()
-      .then(setList)
-      .catch((e: Error) => setErr(e.message));
-  }, []);
+  const statsFor = (v: Vehicle) => {
+    const mine = (drives ?? []).filter((d) => d.vehicle_id === v.id);
+    return { n: mine.length, km: mine.reduce((s, d) => s + Number(d.km), 0) };
+  };
+  const unassigned = (drives ?? []).filter((d) => !d.vehicle_id);
+
   return (
-    <View style={styles.card}>
-      <AppText variant="label">Gefahrene Touren</AppText>
-      {err && <AppText style={styles.error}>{err}</AppText>}
-      {list === null && !err && <ActivityIndicator color={Colors.muted} />}
-      {list?.length === 0 && <AppText muted>Noch keine Fahrt gespeichert. Nach jeder Navigation landet die Fahrtstatistik hier.</AppText>}
-      {list?.map((d, i) => {
-        const h = Math.floor(d.moving_min / 60);
-        const m = d.moving_min % 60;
-        return (
-          <View key={d.id} style={styles.driveRow}>
-            <View style={styles.row}>
-              <AppText style={[styles.tourName, styles.flex]} numberOfLines={1}>
-                {d.name}
-              </AppText>
+    <View style={styles.gapM}>
+      <AppText variant="label">Garage</AppText>
+      {list.length === 0 && !edit && (
+        <View style={styles.card}>
+          <AppText muted>Leg deine Fahrzeuge an. Vor jeder Fahrt wählst du, womit du fährst, dann landen Kilometer und Touren beim richtigen Auto. Tankstopps passen zur Reichweite.</AppText>
+        </View>
+      )}
+      {list.map((v) =>
+        edit?.id === v.id ? (
+          <VehicleForm key={v.id} value={edit} onChange={setEdit} onDone={() => setEdit(null)} />
+        ) : (
+          <View key={v.id} style={styles.card}>
+            <Pressable accessibilityRole="button" accessibilityHint="Fahrzeug bearbeiten" onPress={() => setEdit(v)} style={styles.gapS}>
+              <View style={styles.row}>
+                <AppText style={[styles.name, styles.flex]} numberOfLines={1}>
+                  {v.model.trim() || 'Fahrzeug ohne Namen'}
+                </AppText>
+                {current?.id === v.id && (
+                  <View style={styles.badge}>
+                    <AppText variant="caption" style={styles.badgeText}>
+                      Aktuell
+                    </AppText>
+                  </View>
+                )}
+              </View>
               <AppText variant="caption" muted>
-                {new Date(d.started_at).toLocaleDateString('de-DE')}
+                {vehicleSummary(v, false)}
               </AppText>
+              {drives && (
+                <AppText style={styles.stat}>
+                  {(() => {
+                    const s = statsFor(v);
+                    return s.n ? `${formatKm(s.km, 0)} km in ${s.n} ${s.n === 1 ? 'Tour' : 'Touren'}` : 'Noch keine Fahrt mit diesem Auto';
+                  })()}
+                </AppText>
+              )}
+            </Pressable>
+            <View style={styles.row}>
+              {current?.id !== v.id && (
+                <Pressable accessibilityRole="button" onPress={() => void selectVehicle(v.id)} style={[styles.secondary, styles.flex]}>
+                  <AppText style={styles.secondaryText}>Als aktuell wählen</AppText>
+                </Pressable>
+              )}
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  if (confirm === v.id) {
+                    void deleteVehicle(v.id);
+                    setConfirm(null);
+                  } else setConfirm(v.id);
+                }}
+                style={[styles.secondary, styles.flex, confirm === v.id && styles.danger]}>
+                <AppText style={[styles.secondaryText, confirm === v.id && styles.dangerText]}>{confirm === v.id ? 'Wirklich löschen' : 'Löschen'}</AppText>
+              </Pressable>
             </View>
-            <AppText variant="caption" muted>
-              {[
-                `${formatKm(Number(d.km), 0)} km`,
-                h ? `${h}:${String(m).padStart(2, '0')} h` : `${m} min`,
-                d.curves ? `${d.curves} Kurven` : null,
-                d.max_lat_g ? `quer ${fmtG(Number(d.max_lat_g))}` : null,
-                d.max_kmh ? `bis ${Math.round(Number(d.max_kmh))} km/h` : null,
-              ]
-                .filter(Boolean)
-                .join(', ')}
-            </AppText>
           </View>
-        );
-      })}
+        ),
+      )}
+      {edit && !list.some((v) => v.id === edit.id) && <VehicleForm value={edit} onChange={setEdit} onDone={() => setEdit(null)} />}
+      {!edit && (
+        <Pressable accessibilityRole="button" onPress={() => setEdit(newVehicle())} style={styles.primary}>
+          <AppText style={styles.primaryText}>Fahrzeug hinzufügen</AppText>
+        </Pressable>
+      )}
+      {drives && unassigned.length > 0 && (
+        <AppText variant="caption" muted>
+          {formatKm(
+            unassigned.reduce((s, d) => s + Number(d.km), 0),
+            0,
+          )}{' '}
+          km aus {unassigned.length} früheren {unassigned.length === 1 ? 'Fahrt' : 'Fahrten'} ohne Fahrzeug.
+        </AppText>
+      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
-  card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
-  input: { height: 50, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
-  primary: { height: 50, borderRadius: 25, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 16 },
-  secondary: { height: 50, borderRadius: 25, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  secondaryText: { fontFamily: Fonts.semibold, fontSize: 16 },
-  disabled: { opacity: 0.4 },
-  error: { color: Colors.signal, fontFamily: Fonts.semibold },
-  accountRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
-  tourRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingVertical: Spacing.m },
-  tourName: { fontFamily: Fonts.semibold, fontSize: 16 },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
-  driveRow: { gap: 2, paddingVertical: Spacing.m },
-  arrow: { fontFamily: Fonts.display, fontSize: 24, color: Colors.muted },
-});
-
-/** Fahrzeugprofil: zeigt die Angaben, Tippen öffnet das Formular. */
-function VehicleCard() {
-  const v = useVehicle();
-  const [edit, setEdit] = useState<Vehicle | null>(null);
+function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v: Vehicle) => void; onDone: () => void }) {
   const num = (t: string) => {
     const x = parseFloat(t.replace(',', '.'));
     return Number.isFinite(x) && x > 0 ? x : null;
   };
   const str = (x: number | null) => (x == null ? '' : String(x).replace('.', ','));
-  if (!edit) {
-    const filled = v.model.trim() || v.widthM || v.rangeKm;
-    return (
-      <View style={styles.card}>
-        <AppText variant="label">Fahrzeug</AppText>
-        <AppText muted>{filled ? vehicleSummary(v) : 'Trag dein Auto ein. Damit sieht die Gruppe, wer was fährt, und Tankstopps passen zu deiner Reichweite.'}</AppText>
-        <Pressable accessibilityRole="button" onPress={() => setEdit(v)} style={styles.secondary}>
-          <AppText style={styles.secondaryText}>{filled ? 'Fahrzeug bearbeiten' : 'Fahrzeug eintragen'}</AppText>
-        </Pressable>
-      </View>
-    );
-  }
-  const set = (patch: Partial<Vehicle>) => setEdit({ ...edit, ...patch });
+  const set = (patch: Partial<Vehicle>) => onChange({ ...value, ...patch });
   return (
     <View style={styles.card}>
-      <AppText variant="label">Fahrzeug</AppText>
-      <TextInput value={edit.model} onChangeText={(t) => set({ model: t })} placeholder="Modell, zum Beispiel Porsche 911 GT3" placeholderTextColor={Colors.muted} style={styles.input} accessibilityLabel="Modell" />
+      <TextInput value={value.model} onChangeText={(t) => set({ model: t })} placeholder="Modell, zum Beispiel Porsche 911 GT3" placeholderTextColor={Colors.muted} style={styles.input} accessibilityLabel="Modell" />
       <View style={styles.row}>
-        <TextInput
-          defaultValue={str(edit.widthM)}
-          onChangeText={(t) => set({ widthM: num(t) })}
-          placeholder="Breite in m"
-          placeholderTextColor={Colors.muted}
-          keyboardType="decimal-pad"
-          style={[styles.input, styles.flex]}
-          accessibilityLabel="Breite in Metern"
-        />
-        <TextInput
-          defaultValue={str(edit.clearanceCm)}
-          onChangeText={(t) => set({ clearanceCm: num(t) })}
-          placeholder="Bodenfreiheit cm"
-          placeholderTextColor={Colors.muted}
-          keyboardType="number-pad"
-          style={[styles.input, styles.flex]}
-          accessibilityLabel="Bodenfreiheit in Zentimetern"
-        />
+        <TextInput defaultValue={str(value.widthM)} onChangeText={(t) => set({ widthM: num(t) })} placeholder="Breite in m" placeholderTextColor={Colors.muted} keyboardType="decimal-pad" style={[styles.input, styles.flex]} accessibilityLabel="Breite in Metern" />
+        <TextInput defaultValue={str(value.clearanceCm)} onChangeText={(t) => set({ clearanceCm: num(t) })} placeholder="Bodenfreiheit cm" placeholderTextColor={Colors.muted} keyboardType="number-pad" style={[styles.input, styles.flex]} accessibilityLabel="Bodenfreiheit in Zentimetern" />
       </View>
-      <TextInput
-        defaultValue={str(edit.rangeKm)}
-        onChangeText={(t) => set({ rangeKm: num(t) })}
-        placeholder="Reichweite mit vollem Tank in km"
-        placeholderTextColor={Colors.muted}
-        keyboardType="number-pad"
-        style={styles.input}
-        accessibilityLabel="Reichweite in Kilometern"
-      />
+      <TextInput defaultValue={str(value.rangeKm)} onChangeText={(t) => set({ rangeKm: num(t) })} placeholder="Reichweite mit vollem Tank in km" placeholderTextColor={Colors.muted} keyboardType="number-pad" style={styles.input} accessibilityLabel="Reichweite in Kilometern" />
       <View style={styles.wrap}>
         {FUELS.map((f) => (
-          <Chip key={f.id} label={f.label} active={edit.fuel === f.id} onSurface onPress={() => set({ fuel: f.id })} />
+          <Chip key={f.id} label={f.label} active={value.fuel === f.id} onSurface onPress={() => set({ fuel: f.id })} />
         ))}
       </View>
       <View style={styles.row}>
         <Pressable
           accessibilityRole="button"
           onPress={() => {
-            void saveVehicle(edit);
-            setEdit(null);
+            void saveVehicle(value);
+            onDone();
           }}
           style={[styles.primary, styles.flex]}>
           <AppText style={styles.primaryText}>Speichern</AppText>
         </Pressable>
-        <Pressable accessibilityRole="button" onPress={() => setEdit(null)} style={[styles.secondary, styles.flex]}>
+        <Pressable accessibilityRole="button" onPress={onDone} style={[styles.secondary, styles.flex]}>
           <AppText style={styles.secondaryText}>Abbrechen</AppText>
         </Pressable>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  gapS: { gap: Spacing.xs },
+  gapM: { gap: Spacing.m },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
+  card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
+  name: { fontFamily: Fonts.semibold, fontSize: 17 },
+  stat: { fontFamily: Fonts.semibold, fontSize: 15, fontVariant: ['tabular-nums'] },
+  badge: { backgroundColor: Colors.goodTint, borderRadius: 999, paddingHorizontal: Spacing.s, paddingVertical: 2 },
+  badgeText: { color: Colors.good, fontFamily: Fonts.semibold },
+  input: { height: 50, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
+  primary: { height: 50, borderRadius: 25, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 16 },
+  secondary: { height: 48, borderRadius: 24, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  secondaryText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  disabled: { opacity: 0.4 },
+  error: { color: Colors.signal, fontFamily: Fonts.semibold },
+  danger: { backgroundColor: Colors.signalTint },
+  dangerText: { color: Colors.signal },
+});

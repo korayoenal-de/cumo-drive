@@ -31,10 +31,6 @@ export default function AppTabs() {
         </NativeTabs.BottomAccessory>
       )}
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Entdecken</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="safari" md="explore" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="planen">
         <NativeTabs.Trigger.Label>Planen</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="point.topleft.down.to.point.bottomright.curvepath" md="route" />
       </NativeTabs.Trigger>
@@ -42,9 +38,13 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Label>Meine Touren</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'bookmark', selected: 'bookmark.fill' }} md="bookmarks" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="garage">
-        <NativeTabs.Trigger.Label>Garage</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="car" md="directions_car" />
+      <NativeTabs.Trigger name="community">
+        <NativeTabs.Trigger.Label>Community</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'person.2', selected: 'person.2.fill' }} md="groups" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="einstellungen">
+        <NativeTabs.Trigger.Label>Einstellungen</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'gearshape', selected: 'gearshape.fill' }} md="settings" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

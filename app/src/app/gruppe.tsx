@@ -46,7 +46,7 @@ function BackLink() {
       accessibilityRole="button"
       accessibilityLabel="Zurück"
       hitSlop={12}
-      onPress={() => (router.canGoBack() ? router.back() : router.navigate('/planen'))}
+      onPress={() => (router.canGoBack() ? router.back() : router.navigate('/'))}
       style={styles.back}>
       <AppText style={styles.backText}>‹ Zurück</AppText>
     </Pressable>

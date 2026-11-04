@@ -16,6 +16,8 @@ export type Drive = {
   max_lat_g: number | null;
   max_brake_g: number | null;
   curves: number | null;
+  vehicle_id: string | null;
+  vehicle_name: string | null;
 };
 
 function encode(points: LatLon[]): string {
@@ -54,7 +56,7 @@ function thin(samples: Sample[]): LatLon[] {
 const r1 = (v: number | undefined | null) => (v == null ? null : Math.round(v * 10) / 10);
 const r2 = (v: number | undefined | null) => (v == null ? null : Math.round(v * 100) / 100);
 
-export async function saveDrive(name: string, stats: RideStats, samples: Sample[]): Promise<string> {
+export async function saveDrive(name: string, stats: RideStats, samples: Sample[], vehicle?: { id: string; model: string } | null): Promise<string> {
   const row = {
     name: name.slice(0, 120) || 'Fahrt',
     started_at: new Date(samples[0]?.t ?? Date.now()).toISOString(),
@@ -67,16 +69,17 @@ export async function saveDrive(name: string, stats: RideStats, samples: Sample[
     max_accel_g: r2(stats.maxAccelG?.value),
     curves: stats.curves,
     track: encode(thin(samples)),
+    ...(vehicle ? { vehicle_id: vehicle.id, vehicle_name: vehicle.model.slice(0, 80) || null } : {}),
   };
   const { data, error } = await supabase.from('drives').insert(row).select('id').single();
   if (error) throw new Error(error.message);
   return (data as { id: string }).id;
 }
 
-export async function listDrives(limit = 30): Promise<Drive[]> {
+export async function listDrives(limit = 200): Promise<Drive[]> {
   const { data, error } = await supabase
     .from('drives')
-    .select('id,name,started_at,km,moving_min,avg_kmh,max_kmh,max_lat_g,max_brake_g,curves')
+    .select('id,name,started_at,km,moving_min,avg_kmh,max_kmh,max_lat_g,max_brake_g,curves,vehicle_id,vehicle_name')
     .order('started_at', { ascending: false })
     .limit(limit);
   if (error) throw new Error(error.message);

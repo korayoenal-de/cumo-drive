@@ -22,6 +22,8 @@ export type SavedTour = Tour & {
   cloudId?: string;
   /** Zeitpunkt des letzten Abgleichs (updatedAt danach heißt: lokal geändert) */
   syncedAt?: string;
+  /** In der Community veröffentlicht */
+  published?: boolean;
 };
 
 const KEY = 'cumo.drive.touren.v1';
@@ -115,6 +117,11 @@ export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?
   };
   write([saved, ...list.filter((x) => x.id !== saved.id)]);
   return saved;
+}
+
+/** Felder ändern, ohne die Tour als geändert zu markieren (zum Beispiel nach dem Veröffentlichen). */
+export function patchTour(id: string, patch: Partial<SavedTour>) {
+  write(read().map((x) => (x.id === id ? { ...x, ...patch } : x)));
 }
 
 export function deleteTour(id: string) {

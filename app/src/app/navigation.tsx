@@ -14,6 +14,7 @@ import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM } from '@/components/navigation/maneuver-geometry';
 import { HighlightCard, LeadStopButton, MessageToast, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
+import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
@@ -26,6 +27,7 @@ import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
 import { elevationProfile } from '@/lib/stats';
 import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, STOP_REASONS, useRide, type RideMsg } from '@/lib/group/ride';
 import { useRideMode } from '@/lib/ride-mode';
+import { currentVehicle, selectVehicle, useVehicles } from '@/lib/vehicle';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
 
@@ -77,6 +79,7 @@ export default function NavigationScreen() {
   );
   const [state, controls] = useNavigation(req);
   const ride = useRide();
+  const vehicles = useVehicles();
   const inRide = ride.status === 'aktiv';
   const [msgOpen, setMsgOpen] = useState(false);
   // Position der Navigation (auch simuliert) an die Gruppe geben
@@ -199,7 +202,7 @@ export default function NavigationScreen() {
       const t = setTimeout(() => setSaved(why), 0);
       return () => clearTimeout(t);
     }
-    saveDrive(active.tour.name, shownStats, samples.current)
+    saveDrive(active.tour.name, shownStats, samples.current, currentVehicle())
       .then(() => setSaved('ok'))
       .catch(() => setSaved('fehler'));
   }, [shownStats, session, active]);
@@ -215,7 +218,7 @@ export default function NavigationScreen() {
   const exit = () => {
     controls.stop();
     if (router.canGoBack()) router.back();
-    else router.replace('/planen');
+    else router.replace('/');
   };
   // Beenden mitten in der Fahrt: erst die Statistik zeigen, wenn es genug Punkte gibt
   const close = () => {
@@ -414,6 +417,13 @@ export default function NavigationScreen() {
                   </Pressable>
                 ))}
               </View>
+              {vehicles.list.length > 0 && (
+                <View style={styles.vehicleRow} accessibilityRole="radiogroup" accessibilityLabel="Fahrzeug für diese Fahrt">
+                  {vehicles.list.map((v) => (
+                    <Chip key={v.id} label={v.model.trim() || 'Fahrzeug'} active={vehicles.current?.id === v.id} onPress={() => void selectVehicle(v.id)} />
+                  ))}
+                </View>
+              )}
               <BigButton label="Start" onPress={() => void controls.start()} />
               <View style={styles.row}>
                 <View style={styles.flex}>
@@ -482,10 +492,10 @@ export default function NavigationScreen() {
 
 function SavedNote({ saved }: { saved: string | null }) {
   const text: Record<string, string> = {
-    ok: 'Im Konto gespeichert, du findest die Fahrt in der Garage.',
+    ok: 'Im Konto gespeichert, du findest die Fahrt unter Meine Touren, Gefahren.',
     fehler: 'Speichern hat nicht geklappt. Prüfe die Verbindung.',
     simulation: 'Simulation, wird nicht gespeichert.',
-    ohne_konto: 'Melde dich in der Garage an, dann werden deine Fahrten gespeichert.',
+    ohne_konto: 'Melde dich unter Einstellungen an, dann werden deine Fahrten gespeichert.',
   };
   if (!saved || !text[saved]) return null;
   return (
@@ -535,6 +545,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   row: { flexDirection: 'row', gap: Spacing.s },
   entry: { gap: Spacing.s },
+  vehicleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   msgSheet: {
     marginHorizontal: Spacing.l,
     marginBottom: Spacing.s,

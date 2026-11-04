@@ -38,6 +38,7 @@ import { insertVia, movePoint, routePasses } from '@/lib/route-edit';
 import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
 import { flatten, formatKm, legs, PROFILES, type CheckClass, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
+import { selectVehicle, useVehicles } from '@/lib/vehicle';
 
 const WARN = '#E8B03A';
 
@@ -571,13 +572,7 @@ export default function Planner() {
             </View>
           </Section>
 
-          <View style={styles.card}>
-            <AppText variant="label">Fahrzeug</AppText>
-            <AppText variant="title">Noch kein Fahrzeug in der Garage</AppText>
-            <AppText variant="caption" muted>
-              Breite, Bodenfreiheit und Sprit fließen bald in die Prüfung ein. Bis dahin planen wir für einen typischen Sportwagen.
-            </AppText>
-          </View>
+          <VehiclePick />
 
           <View style={styles.understood}>
             <View style={styles.dot} />
@@ -1403,6 +1398,30 @@ function TourMode({
 
       {pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
     </>
+  );
+}
+
+/** Fahrzeug für diese Tour (optional): die gefahrenen km landen bei diesem Auto. */
+function VehiclePick() {
+  const { list, current } = useVehicles();
+  return (
+    <View style={styles.card}>
+      <AppText variant="label">Fahrzeug</AppText>
+      {list.length === 0 ? (
+        <>
+          <AppText variant="caption" muted>
+            Noch kein Fahrzeug in der Garage. Leg es unter Einstellungen an, dann landen Kilometer und Touren beim richtigen Auto.
+          </AppText>
+          <SecondaryButton label="Zur Garage" onSurface onPress={() => router.navigate('/einstellungen')} />
+        </>
+      ) : (
+        <View style={styles.wrap}>
+          {list.map((v) => (
+            <Chip key={v.id} label={v.model.trim() || 'Fahrzeug'} active={current?.id === v.id} onSurface onPress={() => void selectVehicle(v.id)} />
+          ))}
+        </View>
+      )}
+    </View>
   );
 }
 

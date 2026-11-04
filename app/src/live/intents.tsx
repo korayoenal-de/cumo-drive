@@ -45,9 +45,9 @@ const handled = new Set<string>();
 
 function run(inv: Invocation) {
   if (inv.name === 'startTour') {
-    router.navigate(getActiveTour() ? '/navigation' : '/planen');
+    router.navigate(getActiveTour() ? '/navigation' : '/');
   } else if (inv.name === 'planRound') {
-    router.navigate('/planen');
+    router.navigate('/');
   } else if (inv.name === 'groupMessage') {
     const text = MESSAGE_TEXT[String(inv.params.message)];
     if (text && rideState().status === 'aktiv') sendMessage(text);
