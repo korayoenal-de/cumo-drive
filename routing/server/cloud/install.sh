@@ -89,7 +89,7 @@ cat > /opt/cumo-routing/setup-server.sh <<'CUMO_EOF'
 set -euo pipefail
 BASE=/opt/cumo-routing
 GH_VERSION=11.0
-HEAP=20g
+HEAP=24g
 REGIONS=(
   europe/dach-latest.osm.pbf
   europe/italy/nord-est-latest.osm.pbf
@@ -121,9 +121,10 @@ log "Graph bauen (dauert etwa eine Stunde)"
 rm -rf data/graph-cache.new
 sed 's#data/graph-cache#data/graph-cache.new#; s#data/region.osm.pbf#data/region.new.osm.pbf#' config.yml > config.import.yml
 chown -R cumo:cumo "$BASE"
-# Bei 24 GB RAM passen Import und laufender Server nicht gleichzeitig in den Speicher.
-# Der Server pausiert deshalb während des Imports (sonntags nachts), die App nutzt solange Valhalla.
-systemctl stop cumo-routing || true
+# Unter 40 GB RAM passen Import und laufender Server nicht gleichzeitig in den Speicher.
+# Der Server pausiert dann während des Imports (sonntags nachts), die App nutzt solange Valhalla.
+MEM_GB=$(free -g | awk '/^Mem:/{print $2}')
+if [ "$MEM_GB" -lt 40 ]; then systemctl stop cumo-routing || true; fi
 sudo -u cumo java -Xmx$HEAP -jar "bin/graphhopper-web-$GH_VERSION.jar" import config.import.yml >> "$BASE/import.log" 2>&1
 rm -rf data/graph-cache data/region.osm.pbf
 mv data/graph-cache.new data/graph-cache
