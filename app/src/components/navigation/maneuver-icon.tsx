@@ -89,11 +89,24 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
   const lens = g.shapes.map((s) => (s.t === 'stroke' && s.len ? s.len : 0));
   const total = lens.reduce((n, l) => n + l, 0);
   const starts = lens.map((_, i) => lens.slice(0, i).reduce((n, l) => n + l, 0));
+  const isInk = (s: Shape) => (s.t === 'stroke' && !!s.len) || (s.t === 'fill' && !!s.round);
+  // Schwache Ebene: der ganze Pfeil als eine Gruppe, die als Ganzes transparent wird, damit Linie und Spitze nicht doppelt durchscheinen
+  const ghost = draw ? (
+    <G opacity={GHOST}>
+      {g.shapes.map((s, i) => (isInk(s) ? <StaticShape key={i} shape={s} color={paint[s.paint]} /> : null))}
+    </G>
+  ) : null;
   const body = g.shapes.map((s, i) => {
     if (s.t === 'stroke' && s.len && draw) return <DrawnStroke key={i} shape={s} color={paint[s.paint]} from={starts[i]} total={total} p={p} />;
     if (s.t === 'fill' && s.round && draw) return <DrawnHead key={i} d={s.d} color={paint[s.paint]} p={p} />;
     return <StaticShape key={i} shape={s} color={paint[s.paint]} />;
   });
+  const all = (
+    <>
+      {ghost}
+      {body}
+    </>
+  );
 
   const style = useAnimatedStyle(() => {
     if (reduce) return { opacity: 1 - pulse.value * 0.35 };
@@ -103,7 +116,7 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
   return (
     <Animated.View style={style}>
       <Svg width={size} height={size} viewBox="0 0 64 64">
-        {g.mirror ? <G transform="matrix(-1 0 0 1 64 0)">{body}</G> : body}
+        {g.mirror ? <G transform="matrix(-1 0 0 1 64 0)">{all}</G> : all}
       </Svg>
     </Animated.View>
   );
@@ -124,25 +137,20 @@ function StaticShape({ shape: s, color }: { shape: Shape; color: string }) {
   );
 }
 
-/** Linie, die sich über die Länge aufbaut; schwach darunter die ganze Linie. */
+/** Linie, die sich über die Länge aufbaut (die schwache Fassung liegt in der Gruppe darunter). */
 function DrawnStroke({ shape: s, color, from, total, p }: { shape: Extract<Shape, { t: 'stroke' }>; color: string; from: number; total: number; p: SharedValue<number> }) {
   const len = s.len ?? 1;
   const props = useAnimatedProps(() => {
     const local = Math.min(1, Math.max(0, (p.value * total - from) / len));
-    return { strokeDashoffset: len * (1 - local) };
+    return { strokeDashoffset: len * (1 - local), strokeOpacity: local > 0 ? 1 : 0 };
   });
-  return (
-    <G>
-      <Path d={s.d} stroke={color} strokeOpacity={GHOST} strokeWidth={s.w} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <AnimatedPath d={s.d} stroke={color} strokeWidth={s.w} strokeLinecap="round" strokeLinejoin="round" fill="none" strokeDasharray={[len, len]} animatedProps={props} />
-    </G>
-  );
+  return <AnimatedPath d={s.d} stroke={color} strokeWidth={s.w} strokeLinecap="round" strokeLinejoin="round" fill="none" strokeDasharray={[len, len]} animatedProps={props} />;
 }
 
-/** Spitze: schwach, bis die Linie sie erreicht, dann voll. */
+/** Spitze: erscheint, sobald die Linie sie erreicht. */
 function DrawnHead({ d, color, p }: { d: string; color: string; p: SharedValue<number> }) {
   const props = useAnimatedProps(() => {
-    const o = interpolate(p.value, [0.82, 0.97], [GHOST, 1], 'clamp');
+    const o = interpolate(p.value, [0.85, 0.97], [0, 1], 'clamp');
     return { fillOpacity: o, strokeOpacity: o };
   });
   return <AnimatedPath d={d} fill={color} stroke={color} strokeWidth={2} strokeLinejoin="round" animatedProps={props} />;
