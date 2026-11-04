@@ -21,7 +21,7 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { G, Path, Rect } from 'react-native-svg';
+import Svg, { G, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
 import type { ManeuverKind } from '@/lib/navigation/types';
@@ -117,6 +117,11 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
     <Animated.View style={style}>
       <Svg width={size} height={size} viewBox="0 0 64 64">
         {g.mirror ? <G transform="matrix(-1 0 0 1 64 0)">{all}</G> : all}
+        {g.ring && /_(\d)$/.test(symbol) && (
+          <SvgText x={g.ring.x} y={g.ring.y + 5} fontSize={14} fontWeight="800" fill={color} textAnchor="middle">
+            {symbol.slice(-1)}
+          </SvgText>
+        )}
       </Svg>
     </Animated.View>
   );

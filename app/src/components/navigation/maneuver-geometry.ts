@@ -100,6 +100,8 @@ export type IconGeometry = {
   mirror?: boolean;
   /** Richtung auf dem Bildschirm (nach dem Spiegeln), in die das Symbol beim Näherkommen anstupst (Einheitsvektor, y nach unten). null: nur pulsieren */
   nudge: { x: number; y: number } | null;
+  /** Mitte des Kreisverkehrs, dort steht die Nummer der Ausfahrt */
+  ring?: { x: number; y: number };
 };
 
 export const STROKE = 6;
@@ -210,6 +212,9 @@ function shift(d: string, o: Pt): string {
 }
 
 /** Setzt Teile mittig ins Feld. */
+/** Verschiebung des letzten compose Aufrufs (für die Mitte des Kreisverkehrs). */
+let lastOffset = { x: 0, y: 0 };
+
 function compose(parts: Part[], extra = 0): Shape[] {
   const all = parts.flatMap((p) => p.pts);
   const half = STROKE / 2 + extra;
@@ -218,6 +223,7 @@ function compose(parts: Part[], extra = 0): Shape[] {
   const minY = Math.min(...all.map((p) => p.y)) - half;
   const maxY = Math.max(...all.map((p) => p.y)) + half;
   const o = { x: SIZE / 2 - (minX + maxX) / 2, y: SIZE / 2 - (minY + maxY) / 2 };
+  lastOffset = o;
   return parts.map((p) => p.emit(o));
 }
 
@@ -289,8 +295,11 @@ function roundabout(exit: number | null, withEntry = true): Shape[] {
       parts.push(...arrowFrom(pen, add(c, unit(exit), R), exit));
     }
   }
-  return compose(parts);
+  const shapes = compose(parts);
+  ringCenter = { x: c.x + lastOffset.x, y: c.y + lastOffset.y };
+  return shapes;
 }
+let ringCenter = { x: 32, y: 32 };
 
 /** Ring Abschnitt plus Ausfahrt: Bogen als eigener Strich, Ausfahrt als Pfeil. */
 function arrowFrom(pen: Pen, exitPt: Pt, exit: number): Part[] {
@@ -371,7 +380,8 @@ export function symbolGeometry(sym: NavSymbol): IconGeometry {
     case 'kreisverkehr_4':
     case 'kreisverkehr_5': {
       const exit = ROUNDABOUT_EXITS[Number(sym.slice(-1)) - 1];
-      return { shapes: roundabout(exit), nudge: unit(exit) };
+      const shapes = roundabout(exit);
+      return { shapes, nudge: unit(exit), ring: ringCenter };
     }
     case 'kreisverkehr_verlassen':
       return { shapes: roundabout(0, false), nudge: unit(0) };

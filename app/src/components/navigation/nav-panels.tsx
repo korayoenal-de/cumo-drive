@@ -27,9 +27,6 @@ export function ManeuverCard({ maneuver, distM, then, soon = false }: { maneuver
       <View style={styles.maneuverRow}>
         <View style={styles.arrowBox}>
           <ManeuverIcon kind={maneuver.kind} exit={maneuver.exit} size={72} soon={soon} />
-          {maneuver.kind === 'kreisverkehr' && maneuver.exit != null && (
-            <AppText style={styles.exit}>{maneuver.exit}. Ausfahrt</AppText>
-          )}
         </View>
         <View style={styles.flex}>
           {d.value !== '' && (
