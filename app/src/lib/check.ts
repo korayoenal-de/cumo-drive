@@ -18,20 +18,20 @@ const NUMBERED = /\b([A-Z]{1,3}\s?\d{1,4}[a-z]?|\d{2,4})\b/;
 
 function classify(e: Edge): { c: CheckClass; why: string[] } {
   const why: string[] = [];
-  if (e.use && NON_CAR_USE.has(e.use)) why.push(`als ${useLabel(e.use)} eingetragen`);
+  if (e.use && NON_CAR_USE.has(e.use)) why.push(`als ${kindLabel(e.use)} eingetragen`);
   if (e.unpaved) why.push('unbefestigt');
   else if (e.surface && BAD_SURFACE.has(e.surface)) why.push(`Belag ${surfaceLabel(e.surface)}`);
   if (why.length) return { c: 'raus', why };
   const soft: string[] = [];
   if (e.surface === 'paved_rough') soft.push('rauer Belag');
-  if (e.use && SMALL_USE.has(e.use)) soft.push(`als ${useLabel(e.use)} eingetragen`);
+  if (e.use && SMALL_USE.has(e.use)) soft.push(`als ${kindLabel(e.use)} eingetragen`);
   if (e.road_class === 'service_other' || e.road_class === 'residential') {
     if ((e.lane_count ?? 1) <= 1 && !(e.names ?? []).length) soft.push('kleine Straße ohne Namen');
   }
   return soft.length ? { c: 'pruefen', why: soft } : { c: 'ok', why: [] };
 }
 
-function useLabel(u: string) {
+function kindLabel(u: string) {
   return (
     { track: 'Wirtschafts oder Waldweg', cycleway: 'Radweg', footway: 'Fußweg', path: 'Pfad', steps: 'Treppe', pedestrian: 'Fußgängerzone', bridleway: 'Reitweg', mountain_bike: 'MTB Strecke', living_street: 'Spielstraße', driveway: 'Zufahrt', alley: 'Gasse', parking_aisle: 'Parkplatzgasse', sidewalk: 'Gehweg' } as Record<string, string>
   )[u] ?? u;

@@ -7,12 +7,13 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 
 import sample from '@/data/sample-e3.json';
 import { checkLine } from '@/lib/check';
-import { reverseName, searchPlaces, type Place } from '@/lib/geocode';
+import { reverseName, searchPlaces, searchTowns, type Place } from '@/lib/geocode';
 import { parseWish, STOPS, targetKm, formatMinutes, type Stop } from '@/lib/intent';
 import { planChecked, type PlanStep } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, roundTrip, type Direction } from '@/lib/roundtrip';
 import { flatten, formatKm, legs, parseGpx, PROFILES, reverseTour, toGpx, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { countCurves, elevationProfile, resample, type ElevationProfile } from '@/lib/stats';
+import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
 import { addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
@@ -42,6 +43,7 @@ export default function Planner() {
   const [mapError, setMapError] = useState<string | null>(null);
 
   const [mode, setMode] = useState<Mode>('tour');
+  const [rideMode, setRideMode] = useRideMode();
   const [tour, setTour] = useState<PlannedTour>(SAMPLE);
   const [isSample, setIsSample] = useState(true);
   const [profile, setProfile] = useState<Profile>('kurvig');
@@ -50,17 +52,20 @@ export default function Planner() {
   const [error, setError] = useState<string | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
   const abort = useRef<AbortController | null>(null);
-  const [elev, setElev] = useState<ElevationProfile | null>(null);
   const line = useMemo(() => flatten(tour).map((x) => x.p), [tour]);
+  // Höhenprofil gehört zu genau einer Linie; passt die Linie nicht mehr, gilt es als leer
+  const [elevFor, setElevFor] = useState<{ line: LatLon[]; data: ElevationProfile } | null>(null);
+  const elev = elevFor && elevFor.line === line ? elevFor.data : null;
   const curves = useMemo(() => (line.length > 1 ? countCurves(line) : 0), [line]);
 
   // Höhenprofil nachladen, wenn sich die Linie ändert
   useEffect(() => {
-    setElev(null);
     if (line.length < 2) return;
     const ctrl = new AbortController();
     const t = setTimeout(() => {
-      elevationProfile(line, ctrl.signal).then(setElev).catch(() => undefined);
+      elevationProfile(line, ctrl.signal)
+        .then((data) => setElevFor({ line, data }))
+        .catch(() => undefined);
     }, 300);
     return () => {
       clearTimeout(t);
@@ -215,8 +220,16 @@ export default function Planner() {
       </div>
       <aside style={S.side}>
         <div style={S.brandRow}>
-          <span style={S.brand}>CUMO DRIVE</span>
-          <span style={S.beta}>Web Planer</span>
+          <a href="/" style={{ ...S.brand, color: C.text, textDecoration: 'none' }}>
+            CUMO DRIVE
+          </a>
+          <div style={S.ride} role="radiogroup" aria-label="Fahrmodus">
+            {RIDE_MODES.map((r) => (
+              <button key={r.id} role="radio" aria-checked={rideMode === r.id} title={r.hint} onClick={() => setRideMode(r.id)} style={rideMode === r.id ? S.rideOn : S.rideOff}>
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
         <div style={S.tabs} role="tablist">
           {(['tour', 'rundtour', 'beschreiben'] as Mode[]).map((m) => (
@@ -233,6 +246,7 @@ export default function Planner() {
           {mode === 'tour' ? (
             <TourPanel
               tour={tour}
+              group={rideMode === 'gruppe'}
               curves={curves}
               elev={elev}
               onHoverKm={onHoverKm}
@@ -312,6 +326,7 @@ export default function Planner() {
 
 function TourPanel(props: {
   tour: PlannedTour;
+  group: boolean;
   curves: number;
   elev: ElevationProfile | null;
   onHoverKm: (km: number | null) => void;
@@ -417,6 +432,18 @@ function TourPanel(props: {
           ))}
         </div>
       </Section>
+
+      {props.group ? (
+        <Section title="Gruppe">
+          <div style={S.groupBox}>
+            <p style={{ margin: 0 }}>Mitfahrer sehen sich während der Fahrt live auf der Karte und funken per Walkie Talkie im Tab Gruppe der App.</p>
+            <button style={S.secondary} disabled title="Einladen per Link folgt">
+              Mitfahrer einladen (folgt)
+            </button>
+            <p style={S.small}>Bald hier: Treffpunkt, Rollen Lead und Schluss, Sammelpunkte nach Ortsdurchfahrten.</p>
+          </div>
+        </Section>
+      ) : null}
 
       <Section title="Vermeiden">
         <Toggle id="av-closures" on={props.avoid.closures} label="Gesperrte Straßen" note="calimoto warnt nur, wir umfahren" onChange={(v) => props.setAvoid({ ...props.avoid, closures: v })} />
@@ -623,7 +650,7 @@ function DescribePanel(props: {
       let start = props.center();
       let startName = 'Kartenmitte';
       if (wish.startName) {
-        const hits = await searchPlaces(wish.startName, start ?? undefined, signal);
+        const hits = await searchTowns(wish.startName, start ?? undefined, signal);
         if (!hits.length) throw new Error(`Startort "${wish.startName}" nicht gefunden. Schreib ihn genauer oder wähle die Kartenmitte.`);
         start = hits[0].p;
         startName = hits[0].name;
@@ -631,7 +658,7 @@ function DescribePanel(props: {
       if (!start) throw new Error('Kein Start gefunden. Nenne einen Ort im Text.');
       let bearing: number | undefined;
       if (wish.towardName) {
-        const hits = await searchPlaces(wish.towardName, start, signal);
+        const hits = await searchTowns(wish.towardName, start, signal);
         if (hits.length) bearing = bearingTo(start, hits[0].p);
       }
       const r = await roundTrip({ start, km, direction: wish.direction ?? 'zufall', bearing, profile: effProfile, avoid: props.avoid }, signal);
@@ -693,11 +720,9 @@ function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick: (p: Pl
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<Place[]>([]);
   const [open, setOpen] = useState(false);
+  const enough = q.trim().length >= 3;
   useEffect(() => {
-    if (q.trim().length < 3) {
-      setHits([]);
-      return;
-    }
+    if (q.trim().length < 3) return;
     const ctrl = new AbortController();
     const t = setTimeout(() => {
       searchPlaces(q, props.near, ctrl.signal)
@@ -723,7 +748,7 @@ function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick: (p: Pl
         onFocus={() => setOpen(true)}
         style={S.search}
       />
-      {open && hits.length ? (
+      {open && enough && hits.length ? (
         <ul style={S.dropdown} role="listbox">
           {hits.map((h, i) => (
             <li key={i} style={{ listStyle: 'none' }}>
@@ -859,9 +884,12 @@ const S: Record<string, CSSProperties> = {
   mapError: { position: 'absolute', top: 16, left: 16, right: 16, padding: 14, background: C.surface, borderRadius: 12, color: C.text },
   hint: { position: 'absolute', left: 16, bottom: 16, padding: '8px 12px', background: 'rgba(11,11,12,0.85)', borderRadius: 999, color: C.muted, fontSize: 12 },
   side: { width: 400, maxWidth: '100%', display: 'flex', flexDirection: 'column', borderLeft: `1px solid ${C.surface2}`, background: C.ground },
-  brandRow: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '18px 20px 10px' },
+  brandRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 12px' },
   brand: { fontFamily: DISPLAY, fontSize: 15, letterSpacing: 2 },
-  beta: { color: C.muted, fontSize: 12 },
+  ride: { display: 'flex', background: C.surface, borderRadius: 999, padding: 3 },
+  rideOn: { ...chipBase, height: 28, background: C.text, color: C.ground, border: 'none', fontWeight: 700 },
+  rideOff: { ...chipBase, height: 28, background: 'transparent', color: C.muted, border: 'none' },
+  groupBox: { display: 'flex', flexDirection: 'column', gap: 10, background: C.surface, borderRadius: 12, padding: 14, lineHeight: 1.45 },
   tabs: { display: 'flex', gap: 4, padding: '0 16px 12px', borderBottom: `1px solid ${C.surface2}` },
   tab: { ...btnBase, height: 34, background: 'transparent', color: C.muted, border: 'none' },
   tabOn: { ...btnBase, height: 34, background: C.surface2, color: C.text, border: 'none' },

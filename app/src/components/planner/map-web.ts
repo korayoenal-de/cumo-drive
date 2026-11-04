@@ -8,9 +8,7 @@ import type { LatLon, Tour } from '@/lib/tour';
 const VERSION = '5.7.3';
 export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type MapLib = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type MapInstance = any;
 
 let loading: Promise<MapLib> | null = null;

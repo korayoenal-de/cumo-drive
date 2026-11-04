@@ -6,7 +6,7 @@
  * Routenplaner mit dem gewählten Profil fährt. Straßen sind länger als die Luftlinie,
  * deshalb wird der Kreis kleiner angesetzt und nach dem ersten Versuch einmal nachgeregelt.
  */
-import { route, type Avoid } from './valhalla';
+import { route, VALHALLA_URL, type Avoid } from './valhalla';
 import type { LatLon, Profile } from './tour';
 
 export type Direction = 'N' | 'NO' | 'O' | 'SO' | 'S' | 'SW' | 'W' | 'NW' | 'zufall';
@@ -84,6 +84,49 @@ export function loopPoints(start: LatLon, circumferenceKm: number, bearing: numb
   return pts;
 }
 
+/**
+ * Schiebt Via Punkte ins Hügelland: Für jeden Punkt werden Kandidaten im Umkreis geprüft und
+ * der mit dem stärksten Relief gewählt (Höhenunterschied im Umkreis von 1 km). Hügel heißen
+ * Kurven, solange der Routenplaner Kurven nicht selbst bevorzugen kann. Bei "Pässe" zählt
+ * zusätzlich die absolute Höhe.
+ */
+export async function hillyVia(via: LatLon[], spreadKm: number, profile: Profile, signal?: AbortSignal): Promise<LatLon[]> {
+  if (profile !== 'kurvig' && profile !== 'paesse') return via;
+  const slots = via.map((p) => [p, ...[0, 60, 120, 180, 240, 300].map((b) => destination(p, spreadKm, b))]);
+  const probe = (c: LatLon) => [c, ...[0, 90, 180, 270].map((b) => destination(c, 1, b))];
+  const shape = slots.flat().flatMap(probe);
+  try {
+    const res = await fetch(`${VALHALLA_URL}/height`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shape: shape.map(([lat, lon]) => ({ lat, lon })) }),
+      signal,
+    });
+    const data = (await res.json()) as { height?: (number | null)[] };
+    const h = data.height ?? [];
+    let k = 0;
+    return slots.map((cands) => {
+      let best = cands[0];
+      let bestScore = -Infinity;
+      for (const c of cands) {
+        const hs = h.slice(k, k + 5).filter((x): x is number => typeof x === 'number');
+        k += 5;
+        if (hs.length < 3) continue;
+        const relief = Math.max(...hs) - Math.min(...hs);
+        const score = profile === 'paesse' ? relief + hs[0] * 0.3 : relief;
+        if (score > bestScore) {
+          bestScore = score;
+          best = c;
+        }
+      }
+      return best;
+    });
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    return via; // Höhendaten nicht erreichbar: ohne Verschiebung weiter
+  }
+}
+
 export async function roundTrip(req: RoundTripRequest, signal?: AbortSignal): Promise<RoundTripResult> {
   const seed = req.seed ?? Math.floor(Math.random() * 1e9);
   const bearing =
@@ -94,7 +137,8 @@ export async function roundTrip(req: RoundTripRequest, signal?: AbortSignal): Pr
   let lastError: unknown = null;
   let variant = 0;
   for (let attempt = 0; attempt < 5; attempt++) {
-    const via = loopPoints(req.start, circ, bearing, seed + variant);
+    const base = loopPoints(req.start, circ, bearing, seed + variant);
+    const via = await hillyVia(base, Math.max(2, circ / (2 * Math.PI) * 0.35), req.profile, signal);
     let r;
     try {
       r = await route([req.start, ...via, req.start], req.profile, req.avoid, signal, [], true);

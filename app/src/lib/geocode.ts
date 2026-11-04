@@ -5,8 +5,19 @@ import type { LatLon } from './tour';
 
 export type Place = { name: string; detail: string; p: LatLon };
 
-export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSignal): Promise<Place[]> {
+/**
+ * Ortsname zu Ort, mit Vorrang für Städte und Gemeinden. So wird "Heppenheim" zur Stadt an der
+ * Bergstraße und nicht zum gleichnamigen Stadtteil von Worms. Regionen wie "Odenwald" fallen
+ * auf die normale Suche zurück.
+ */
+export async function searchTowns(q: string, near?: LatLon, signal?: AbortSignal): Promise<Place[]> {
+  const towns = await searchPlaces(q, near, signal, ['city', 'locality']);
+  return towns.length ? towns : searchPlaces(q, near, signal);
+}
+
+export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSignal, layers: string[] = []): Promise<Place[]> {
   const url = new URL('https://photon.komoot.io/api/');
+  for (const l of layers) url.searchParams.append('layer', l);
   url.searchParams.set('q', q);
   url.searchParams.set('limit', '6');
   url.searchParams.set('lang', 'de');

@@ -4,9 +4,9 @@
  */
 import * as Location from 'expo-location';
 
-import { searchPlaces, reverseName, type Place } from '@/lib/geocode';
+import { searchTowns, reverseName, type Place } from '@/lib/geocode';
 import { planChecked, type PlannedTour } from '@/lib/plan';
-import { bearingTo, roundTrip, type Direction } from '@/lib/roundtrip';
+import { roundTrip, type Direction } from '@/lib/roundtrip';
 import type { LatLon, Profile } from '@/lib/tour';
 import type { Avoid } from '@/lib/valhalla';
 
@@ -70,7 +70,7 @@ export async function locate(signal?: AbortSignal): Promise<Spot> {
 
 /** Erster Treffer der Ortssuche oder ein freundlicher Fehler. */
 export async function findPlace(q: string, near: LatLon | undefined, what: string, signal?: AbortSignal): Promise<Place> {
-  const hits = await searchPlaces(q, near, signal);
+  const hits = await searchTowns(q, near, signal);
   if (!hits.length) throw new PlanError('notfound', `${what} "${q}" haben wir nicht gefunden.`);
   return hits[0];
 }
