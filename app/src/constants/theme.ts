@@ -15,6 +15,10 @@ export const Colors = {
   good: '#4CC38A',
   warn: '#E8B03A',
   onSignal: '#FFFFFF',
+  /** Getönte Flächen für Zustände statt farbiger Rahmen, gleiche Werte wie im Web Planer. */
+  signalTint: 'rgba(226,70,28,0.14)',
+  goodTint: 'rgba(76,195,138,0.12)',
+  warnTint: 'rgba(232,176,58,0.12)',
 } as const;
 
 export const Fonts = {
@@ -33,6 +37,7 @@ export const Spacing = {
   l: 16,
   xl: 20,
   xxl: 28,
+  xxxl: 48,
 } as const;
 
 export const Radius = {

@@ -3,13 +3,16 @@ import { Pressable, StyleSheet } from 'react-native';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius } from '@/constants/theme';
 
-export function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+/** onSurface: der Chip liegt auf einer Surface Karte und bekommt deshalb die hellere Füllung. */
+export function Chip({
+  label, active, onPress, onSurface,
+}: { label: string; active: boolean; onPress: () => void; onSurface?: boolean }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       onPress={onPress}
-      style={[styles.chip, active ? styles.on : styles.off]}>
+      style={[styles.chip, active ? styles.on : onSurface ? styles.offOnSurface : styles.off]}>
       <AppText style={[styles.label, active && styles.labelOn]}>{label}</AppText>
     </Pressable>
   );
@@ -18,7 +21,8 @@ export function Chip({ label, active, onPress }: { label: string; active: boolea
 const styles = StyleSheet.create({
   chip: { height: 36, paddingHorizontal: 16, borderRadius: Radius.pill, justifyContent: 'center' },
   on: { backgroundColor: Colors.signal },
-  off: { borderWidth: 1, borderColor: Colors.line },
+  off: { backgroundColor: Colors.surface },
+  offOnSurface: { backgroundColor: Colors.surface2 },
   label: { fontSize: 14, fontFamily: Fonts.medium },
   labelOn: { color: Colors.onSignal, fontFamily: Fonts.bold },
 });
