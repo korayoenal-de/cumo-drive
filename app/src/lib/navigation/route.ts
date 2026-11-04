@@ -307,10 +307,11 @@ async function traceLine(line: LatLon[], signal?: AbortSignal): Promise<Piece> {
   return acc;
 }
 
-async function approach(from: LatLon, to: LatLon, toHeading: number, req: NavRequest, signal?: AbortSignal): Promise<Piece> {
+async function approach(from: LatLon, to: LatLon, toHeading: number, req: NavRequest, signal?: AbortSignal, fromHeading?: number | null): Promise<Piece> {
   const body = {
     locations: [
-      { lat: from[0], lon: from[1], type: 'break', radius: 50 },
+      // mit Fahrtrichtung: weiterfahren statt wenden, wenn es vorne einen Weg zurück gibt
+      { lat: from[0], lon: from[1], type: 'break', radius: 50, ...(fromHeading != null ? { heading: Math.round(fromHeading), heading_tolerance: 45 } : {}) },
       // Ankunft in Fahrtrichtung der Tour, damit man nicht falsch herum einsteigt
       { lat: to[0], lon: to[1], type: 'break', heading: Math.round(toHeading), heading_tolerance: 60, minimum_reachability: 300 },
     ],
@@ -442,16 +443,72 @@ export async function fetchNavRoute(req: NavRequest, from?: LatLon, signal?: Abo
  * unverändert, es wird also nichts umgeplant und nur ein kurzes Stück neu angefragt.
  * Eingestiegen wird am nächstgelegenen Punkt des Rests.
  */
+/** Fahrzeit in Sekunden vom Standort zu mehreren Punkten (Valhalla Matrix), null wo kein Weg. */
+async function timesTo(from: LatLon, fromHeading: number | null | undefined, targets: LatLon[], req: NavRequest, signal?: AbortSignal): Promise<(number | null)[]> {
+  const res = await fetch(`${VALHALLA_URL}/sources_to_targets`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sources: [{ lat: from[0], lon: from[1], ...(fromHeading != null ? { heading: Math.round(fromHeading), heading_tolerance: 45 } : {}) }],
+      targets: targets.map(([lat, lon]) => ({ lat, lon })),
+      ...costingFor(req.profile, req.avoid),
+    }),
+    signal,
+  });
+  if (!res.ok) throw new Error(`Matrix ${res.status}`);
+  const data = (await res.json()) as { sources_to_targets: { time: number | null }[][] };
+  return data.sources_to_targets[0].map((c) => c.time ?? null);
+}
+
+/**
+ * Bester Einstieg zurück in die Tour: nicht stur der nächste Punkt (der oft hinter einem liegt
+ * und Wenden bedeutet), sondern der Punkt in den nächsten 2 km, an dem man am schnellsten wieder
+ * auf der Tour ist, ohne viel von ihr auszulassen.
+ */
+async function bestRejoin(current: NavRoute, j0: number, from: LatLon, heading: number | null | undefined, req: NavRequest, signal?: AbortSignal): Promise<number> {
+  const { shape, cumKm } = current;
+  const base = cumKm[j0];
+  const cands: number[] = [];
+  for (const d of [0, 0.15, 0.3, 0.5, 0.8, 1.2, 2]) {
+    let k = j0;
+    while (k < shape.length - 2 && cumKm[k] - base < d) k++;
+    if (!cands.includes(k)) cands.push(k);
+  }
+  try {
+    const times = await timesTo(from, heading, cands.map((k) => shape[k]), req, signal);
+    const secPerKm = current.km > 0 ? (current.minutes * 60) / current.km : 60;
+    let best = j0;
+    let bestCost = Infinity;
+    cands.forEach((k, i) => {
+      const t = times[i];
+      if (t == null) return;
+      // Möglichst früh zurück auf die Tour: jeder ausgelassene Tour Kilometer zählt dreifach,
+      // ein Wendemanöver lohnt sich also nur, wenn es vorne keinen kurzen Weg zurück gibt.
+      const cost = t + (cumKm[k] - base) * secPerKm * 3;
+      if (cost < bestCost - 5) {
+        bestCost = cost;
+        best = k;
+      }
+    });
+    return best;
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    return j0;
+  }
+}
+
 export async function rejoinNavRoute(
   req: NavRequest,
   current: NavRoute,
   doneIndex: number,
   from: LatLon,
   signal?: AbortSignal,
+  heading?: number | null,
 ): Promise<NavRouteDetail> {
   const { shape } = current;
   const start = Math.max(0, Math.min(doneIndex, shape.length - 2));
-  const j = nearestIndex(shape, from, start);
+  const j0 = nearestIndex(shape, from, start);
+  const j = j0 < shape.length - 1 && current.km - current.cumKm[j0] >= 0.05 ? await bestRejoin(current, j0, from, heading, req, signal) : j0;
   if (j >= shape.length - 1 || current.km - current.cumKm[j] < 0.05) {
     // praktisch am Ziel: direkt dorthin
     const lead = await approach(from, shape[shape.length - 1], 0, req, signal);
@@ -463,7 +520,7 @@ export async function rejoinNavRoute(
     };
   }
   const h = bearing(shape[j], shape[j + 1]);
-  const lead = await approach(from, shape[j], h, req, signal);
+  const lead = await approach(from, shape[j], h, req, signal, heading);
   const join = lead.shape.length - 1;
   const newShape = [...lead.shape, ...shape.slice(j + 1)];
   const cumKm = cumulativeKm(newShape);
@@ -492,6 +549,7 @@ export async function rejoinNavRoute(
       km: cumKm[cumKm.length - 1],
       minutes: lead.seconds / 60 + current.minutes * restShare,
       source: 'valhalla',
+      rejoinIndex: join,
     },
     tourStartIndex: join,
   };

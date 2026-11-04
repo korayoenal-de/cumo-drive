@@ -84,8 +84,11 @@ export default function NavigationScreen() {
   const [msgOpen, setMsgOpen] = useState(false);
   // Position der Navigation (auch simuliert) an die Gruppe geben
   useEffect(() => {
-    if (inRide && state.position) sendPosition(state.position, state.heading, state.speedKmh);
-  }, [inRide, state.position, state.heading, state.speedKmh]);
+    if (!inRide || !state.position) return;
+    const r = state.route;
+    const backKm = r?.rejoinIndex != null && state.remainingKm != null ? r.cumKm[r.rejoinIndex] - (r.km - state.remainingKm) : 0;
+    sendPosition(state.position, state.heading, state.speedKmh, (state.offRouteM ?? 0) > 60 || backKm > 0.02);
+  }, [inRide, state.position, state.heading, state.speedKmh, state.offRouteM, state.route, state.remainingKm]);
   const others = useMemo(
     () =>
       ride.members
@@ -96,6 +99,7 @@ export default function NavigationScreen() {
           name: m.name,
           role: m.role,
           stale: !m.seenAt,
+          off: m.off,
         })),
     [ride.members, ride.me?.id],
   );
@@ -166,11 +170,17 @@ export default function NavigationScreen() {
   const mapTour = useMemo<Tour | null>(() => {
     if (!active) return null;
     if (!state.route) return active.tour;
+    // Nach einer Abweichung: der Weg zurück wird gestrichelt gezeichnet, durchgezogen nur die Tour
+    const from = state.route.rejoinIndex ?? 0;
     return {
       ...active.tour,
-      linie: [{ c: 'ok', p: state.route.shape }, ...active.tour.linie],
+      linie: [{ c: 'ok', p: state.route.shape.slice(from) }, ...active.tour.linie],
     };
   }, [active, state.route]);
+  const dashed = useMemo(
+    () => (state.route?.rejoinIndex ? state.route.shape.slice(0, state.route.rejoinIndex + 1) : null),
+    [state.route],
+  );
 
   // Fahrtstatistik: GPS Punkte während der Fahrt sammeln
   const samples = useRef<Sample[]>([]);
@@ -272,6 +282,10 @@ export default function NavigationScreen() {
 
   const { status, route } = state;
   const running = status === 'laeuft' || status === 'pausiert' || status === 'neuberechnung';
+  // Abseits der Tour: Meter bis zurück auf die Route (gestrichelter Weg), oder nur abseits ohne neue Route
+  const rejoinM =
+    route?.rejoinIndex != null && state.remainingKm != null ? (route.cumKm[route.rejoinIndex] - (route.km - state.remainingKm)) * 1000 : null;
+  const offTour = running && ((rejoinM != null && rejoinM > 20) || (state.offRouteM != null && state.offRouteM > 60));
   const maneuver = route?.maneuvers[state.next];
   const then = route?.maneuvers[state.next + 1];
   const drivenKm = route ? Math.max(0, (startKm ?? route.km) - (state.remainingKm ?? 0)) : 0;
@@ -287,6 +301,7 @@ export default function NavigationScreen() {
         heading={state.heading}
         others={others}
         pins={pins}
+        dashed={rejoinM != null && rejoinM > 0 ? dashed : null}
         edgePadding={{
           top: insets.top + 60,
           right: 40,
@@ -298,6 +313,16 @@ export default function NavigationScreen() {
       <View style={[styles.top, { paddingTop: insets.top + Spacing.s }]} pointerEvents="box-none">
         {running && maneuver && <ManeuverCard maneuver={maneuver} distM={state.distToNextM} then={then} soon={state.distToNextM != null && state.distToNextM <= soonThresholdM(state.speedKmh)} />}
         {status === 'neuberechnung' && <Recalculating first={!route} />}
+        {offTour && (
+          <View style={styles.offTour} accessibilityRole="alert">
+            <View style={styles.offDash} />
+            <AppText style={styles.offText} numberOfLines={1}>
+              {rejoinM != null && rejoinM > 20 && status !== 'neuberechnung'
+                ? `Abseits der Tour, zurück in ${formatDistance(rejoinM).value} ${formatDistance(rejoinM).unit}`
+                : 'Abseits der Tour'}
+            </AppText>
+          </View>
+        )}
         {running && stop && (
           <StopAlert stop={stop} distM={stopDistM} mine={myStop} onDismiss={() => clearStop(false)} onCancel={() => clearStop(true)} />
         )}
@@ -602,6 +627,9 @@ const styles = StyleSheet.create({
   },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   leadWrap: { paddingHorizontal: Spacing.m, paddingBottom: Spacing.s },
+  offTour: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: 'rgba(11,11,12,0.92)', borderRadius: 999, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
+  offDash: { width: 22, height: 0, borderTopWidth: 3, borderStyle: 'dashed', borderColor: Colors.warn },
+  offText: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.warn },
   tourName: {
     fontFamily: Fonts.display,
     fontSize: 26,

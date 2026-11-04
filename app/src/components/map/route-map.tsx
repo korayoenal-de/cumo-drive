@@ -36,6 +36,7 @@ export function RouteMap({
   pins,
   onLongPress,
   focus,
+  dashed,
 }: RouteMapProps) {
   const map = useRef<MapView>(null);
   const markers = useRef<(MapMarker | null)[]>([]);
@@ -169,6 +170,18 @@ export function RouteMap({
           />
         ))}
 
+        {dashed && dashed.length > 1 && (
+          <Polyline
+            key="zurueck"
+            coordinates={dashed.map(ll)}
+            strokeColor={Colors.text}
+            strokeWidth={5}
+            lineDashPattern={[10, 10]}
+            lineCap="butt"
+            zIndex={30}
+          />
+        )}
+
         {ziel && !roundTrip && (
           <Marker coordinate={ll(ziel)} anchor={{ x: 0.5, y: 0.5 }} title="Ziel" zIndex={20}>
             <View style={styles.ziel}>
@@ -216,8 +229,8 @@ export function RouteMap({
         ))}
 
         {(others ?? []).map((o) => (
-          <Marker key={o.id} coordinate={ll(o.p)} anchor={{ x: 0.5, y: 0.5 }} title={o.name} description={{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[o.role]} zIndex={30} tracksViewChanges={false}>
-            <View style={[styles.other, { borderColor: ROLE_COLOR[o.role] }, o.stale && styles.otherStale]}>
+          <Marker key={`${o.id}${o.off ? '-ab' : ''}`} coordinate={ll(o.p)} anchor={{ x: 0.5, y: 0.5 }} title={o.name} description={`${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[o.role]}${o.off ? ', abseits der Tour' : ''}`} zIndex={30} tracksViewChanges={false}>
+            <View style={[styles.other, { borderColor: o.off ? Colors.warn : ROLE_COLOR[o.role] }, o.off && styles.otherOff, o.stale && styles.otherStale]}>
               <AppText style={styles.otherText}>{o.name.slice(0, 1).toUpperCase()}</AppText>
             </View>
           </Marker>
@@ -269,6 +282,7 @@ const styles = StyleSheet.create({
   pinText: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.text },
   other: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.surface, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
   otherStale: { opacity: 0.45 },
+  otherOff: { borderStyle: 'dashed' },
   otherText: { fontFamily: Fonts.bold, fontSize: 13, color: Colors.text },
   recenter: {
     position: 'absolute',

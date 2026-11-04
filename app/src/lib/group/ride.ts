@@ -19,7 +19,7 @@ import type { LatLon } from '../tour';
 
 export type Role = 'lead' | 'schluss' | 'mitfahrer';
 export type Me = { id: string; name: string; car: string };
-export type Member = Me & { role: Role; p: LatLon | null; heading: number | null; speedKmh: number | null; seenAt: number | null };
+export type Member = Me & { role: Role; p: LatLon | null; heading: number | null; speedKmh: number | null; seenAt: number | null; /** gerade abseits der Tour */ off?: boolean };
 export type RideMsg = { id: string; from: string; name: string; text: string; at: number };
 /** Gründe für eine zentrale Halt Ansage der Lead */
 export type StopReason = 'parkplatz' | 'tanken' | 'pause' | 'foto';
@@ -56,7 +56,7 @@ const listeners = new Set<() => void>();
 let channel: RealtimeChannel | null = null;
 let watch: Location.LocationSubscription | null = null;
 let lastSent: { p: LatLon; at: number } | null = null;
-const positions = new Map<string, Pick<Member, 'p' | 'heading' | 'speedKmh' | 'seenAt'>>();
+const positions = new Map<string, Pick<Member, 'p' | 'heading' | 'speedKmh' | 'seenAt' | 'off'>>();
 
 function set(patch: Partial<RideState>) {
   state = { ...state, ...patch };
@@ -114,7 +114,7 @@ function rebuildMembers() {
     const e = entries[0];
     if (!e) continue;
     const pos = positions.get(e.id);
-    list.push({ id: e.id, name: e.name, car: e.car, role: e.role, p: pos?.p ?? null, heading: pos?.heading ?? null, speedKmh: pos?.speedKmh ?? null, seenAt: pos?.seenAt ?? null });
+    list.push({ id: e.id, name: e.name, car: e.car, role: e.role, p: pos?.p ?? null, heading: pos?.heading ?? null, speedKmh: pos?.speedKmh ?? null, seenAt: pos?.seenAt ?? null, off: pos?.off ?? false });
   }
   const order: Record<Role, number> = { lead: 0, mitfahrer: 1, schluss: 2 };
   list.sort((a, b) => order[a.role] - order[b.role] || a.name.localeCompare(b.name));
@@ -142,16 +142,16 @@ async function startWatching() {
 
 /** Position senden (auch aus der Navigation oder Simulation nutzbar). */
 let lastPosAt = 0;
-export function sendPosition(p: LatLon, heading: number | null, speedKmh: number | null) {
+export function sendPosition(p: LatLon, heading: number | null, speedKmh: number | null, off = false) {
   const me = state.me;
   if (!channel || !me) return;
   // höchstens alle 2 Sekunden, auch wenn GPS und Navigation beide senden
   const now = Date.now();
   if (now - lastPosAt < 2000) return;
   lastPosAt = now;
-  positions.set(me.id, { p, heading, speedKmh, seenAt: Date.now() });
+  positions.set(me.id, { p, heading, speedKmh, seenAt: Date.now(), off });
   rebuildMembers();
-  void channel.send({ type: 'broadcast', event: 'pos', payload: { id: me.id, lat: p[0], lon: p[1], h: heading, v: speedKmh } });
+  void channel.send({ type: 'broadcast', event: 'pos', payload: { id: me.id, lat: p[0], lon: p[1], h: heading, v: speedKmh, off } });
 }
 
 export async function joinRide(code: string, name: string, car: string, role: Role = 'mitfahrer', tourCode: string | null = null) {
@@ -174,8 +174,8 @@ export async function joinRide(code: string, name: string, car: string, role: Ro
     if (state.myRole === 'lead' && state.tourCode) void ch.send({ type: 'broadcast', event: 'tour', payload: { code: state.tourCode } });
   });
   ch.on('broadcast', { event: 'pos' }, ({ payload }) => {
-    const x = payload as { id: string; lat: number; lon: number; h: number | null; v: number | null };
-    positions.set(x.id, { p: [x.lat, x.lon], heading: x.h, speedKmh: x.v, seenAt: Date.now() });
+    const x = payload as { id: string; lat: number; lon: number; h: number | null; v: number | null; off?: boolean };
+    positions.set(x.id, { p: [x.lat, x.lon], heading: x.h, speedKmh: x.v, seenAt: Date.now(), off: !!x.off });
     rebuildMembers();
   });
   ch.on('broadcast', { event: 'msg' }, ({ payload }) => {

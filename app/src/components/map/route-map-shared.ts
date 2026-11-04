@@ -32,13 +32,15 @@ export type RouteMapProps = {
   onLongPress?: (p: LatLon) => void;
   /** Verdeckter Rand der Karte (zum Beispiel durch ein Sheet); hält auch den Apple Maps Rechtshinweis sichtbar */
   mapPadding?: { top: number; right: number; bottom: number; left: number };
+  /** Weg zurück auf die Tour nach einer Abweichung, gestrichelt gezeichnet */
+  dashed?: LatLon[] | null;
   /** Punkt, auf den die Karte springt, solange keine Tour Linie da ist */
   focus?: LatLon | null;
 };
 
 export type MapPin = { id: string; p: LatLon; label: string; title: string };
 
-export type OtherDriver = { id: string; p: LatLon; name: string; role: 'lead' | 'schluss' | 'mitfahrer'; stale: boolean };
+export type OtherDriver = { id: string; p: LatLon; name: string; role: 'lead' | 'schluss' | 'mitfahrer'; stale: boolean; /** abseits der Tour */ off?: boolean };
 
 /** Farbe je Rolle: Lead im Signal Orange, Schlusslicht gelb, Mitfahrer hell. */
 export const ROLE_COLOR: Record<OtherDriver['role'], string> = { lead: '#E2461C', schluss: '#E8B03A', mitfahrer: '#F4F4F2' };

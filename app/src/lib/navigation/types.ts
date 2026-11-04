@@ -62,6 +62,8 @@ export type NavRoute = {
   minutes: number;
   /** Quelle der Anweisungen */
   source: 'cumo' | 'valhalla';
+  /** Nach einer Abweichung: bis zu diesem Index führt die Route zurück auf die Tour (gestrichelt) */
+  rejoinIndex?: number;
 };
 
 /**

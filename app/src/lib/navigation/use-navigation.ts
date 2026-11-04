@@ -121,7 +121,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
 
   /** Neue Route nach einer Abweichung holen, höchstens alle 20 s. */
   const reroute = useCallback(
-    async (pos: LatLon) => {
+    async (pos: LatLon, heading?: number | null) => {
       const r = reqRef.current;
       const current = routeRef.current;
       if (!r || !current || reroutingRef.current) return;
@@ -132,7 +132,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       try {
-        const { route } = await rejoinNavRoute(r, current, doneIndexRef.current, pos, ctrl.signal);
+        const { route } = await rejoinNavRoute(r, current, doneIndexRef.current, pos, ctrl.signal, heading);
         if (!activeRef.current) return;
         setRoute(route);
         setState((s) => ({ ...s, status: 'laeuft', route, error: undefined }));
@@ -181,7 +181,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       if (!arrived && snap.offM > OFF_ROUTE_M) {
         if (offSinceRef.current == null) offSinceRef.current = now;
         if (now - offSinceRef.current > OFF_ROUTE_MS && Date.now() - lastRerouteRef.current > REROUTE_GAP_MS) {
-          void reroute(fix.pos);
+          void reroute(fix.pos, fix.heading);
         }
       } else {
         offSinceRef.current = null;
