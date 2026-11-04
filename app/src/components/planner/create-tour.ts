@@ -5,8 +5,9 @@
 import * as Location from 'expo-location';
 
 import { searchTowns, reverseName, type Place } from '@/lib/geocode';
-import { planChecked, type PlannedTour } from '@/lib/plan';
-import { roundTrip, type Direction } from '@/lib/roundtrip';
+import type { PlannedTour } from '@/lib/plan';
+import type { Direction } from '@/lib/roundtrip';
+import { smartRoundTrip } from '@/lib/smart-roundtrip';
 import type { LatLon, Profile } from '@/lib/tour';
 import type { Avoid } from '@/lib/valhalla';
 
@@ -79,26 +80,26 @@ export function newSeed(): number {
   return Math.floor(Math.random() * 1e9);
 }
 
-/** Rundtour bauen und prüfen. */
+/** Rundtour bauen und prüfen (GraphHopper Varianten, sonst Valhalla). */
 export async function buildTour(
   req: TourRequest,
   seed: number,
   onPhase: (p: PlanPhase) => void,
   signal?: AbortSignal,
 ): Promise<PlannedTour> {
-  onPhase('route');
-  const rt = await roundTrip(
-    { start: req.start.p, km: req.km, direction: req.direction, bearing: req.bearing, profile: req.profile, avoid: req.avoid, seed },
+  return smartRoundTrip(
+    {
+      name: `Rundtour ab ${req.start.name}`,
+      start: req.start.p,
+      km: req.km,
+      direction: req.direction,
+      bearing: req.bearing,
+      profile: req.profile,
+      avoid: req.avoid,
+      seed,
+    },
+    (s: PlanPhase) => onPhase(s),
     signal,
-  );
-  return planChecked(
-    `Rundtour ab ${req.start.name}`,
-    [req.start.p, ...rt.via, req.start.p],
-    req.profile,
-    req.avoid,
-    (s) => onPhase(s),
-    signal,
-    true,
   );
 }
 

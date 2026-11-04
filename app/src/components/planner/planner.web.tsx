@@ -10,9 +10,11 @@ import { checkLine } from '@/lib/check';
 import { reverseName, searchPlaces, searchTowns, type Place } from '@/lib/geocode';
 import { parseWish, STOPS, targetKm, formatMinutes, type Stop } from '@/lib/intent';
 import { planChecked, type PlanStep } from '@/lib/plan';
-import { bearingTo, DIRECTIONS, roundTrip, type Direction } from '@/lib/roundtrip';
+import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
+import { smartRoundTrip } from '@/lib/smart-roundtrip';
 import { flatten, formatKm, legs, parseGpx, PROFILES, reverseTour, toGpx, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { countCurves, elevationProfile, resample, type ElevationProfile } from '@/lib/stats';
+import { deleteTour, filterTours, folders, saveTour, useLibrary, type SavedTour, type SortKey } from '@/lib/library';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
@@ -25,7 +27,8 @@ const C = {
 const DISPLAY = 'Archivo_900Black, Archivo, "Arial Narrow", Inter, system-ui, sans-serif';
 const BODY = 'Inter_400Regular, Inter, system-ui, sans-serif';
 
-type Mode = 'tour' | 'rundtour' | 'beschreiben';
+type Mode = 'tour' | 'rundtour' | 'beschreiben' | 'touren';
+type MenuState = { x: number; y: number; p: LatLon } | null;
 type PlannedTour = Tour & { minutes?: number; fixes?: number };
 
 const STEP_TEXT: Record<PlanStep, string> = {
@@ -44,6 +47,9 @@ export default function Planner() {
 
   const [mode, setMode] = useState<Mode>('tour');
   const [rideMode, setRideMode] = useRideMode();
+  const [menu, setMenu] = useState<MenuState>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [rtStart, setRtStart] = useState<{ p: LatLon; name: string } | null>(null);
   const [tour, setTour] = useState<PlannedTour>(SAMPLE);
   const [isSample, setIsSample] = useState(true);
   const [profile, setProfile] = useState<Profile>('kurvig');
@@ -124,7 +130,7 @@ export default function Planner() {
   }, [tour.wegpunkte, names]);
 
   const run = useCallback(
-    async (label: string, job: (signal: AbortSignal, step: (s: PlanStep) => void) => Promise<PlannedTour>) => {
+    async (label: string, job: (signal: AbortSignal, step: (s: PlanStep) => void) => Promise<PlannedTour>, keepSaved = false) => {
       abort.current?.abort();
       const ctrl = new AbortController();
       abort.current = ctrl;
@@ -135,6 +141,8 @@ export default function Planner() {
         setTour(t);
         setIsSample(false);
         setMode('tour');
+        // Rundtouren und Importe sind neue Touren; Umplanen einer gespeicherten Tour behält die Ablage
+        if (!keepSaved) setSavedId(null);
         fitTour(t);
       } catch (e) {
         if (!ctrl.signal.aborted) setError((e as Error).message);
@@ -147,7 +155,7 @@ export default function Planner() {
 
   const replan = useCallback(
     (points: LatLon[], name = tour.name) =>
-      run('Route wird berechnet', (signal, step) => planChecked(name, points, profile, avoid, step, signal)),
+      run('Route wird berechnet', (signal, step) => planChecked(name, points, profile, avoid, step, signal), true),
     [run, tour.name, profile, avoid],
   );
 
@@ -156,6 +164,10 @@ export default function Planner() {
     const m = map.current;
     if (!mapReady || !m) return;
     const onClick = (e: { lngLat: { lat: number; lng: number } }) => {
+      if (menu) {
+        setMenu(null);
+        return;
+      }
       if (mode !== 'tour' || busy) return;
       const p: LatLon = [e.lngLat.lat, e.lngLat.lng];
       const pts = isSample ? [p] : [...tour.wegpunkte, p];
@@ -166,9 +178,54 @@ export default function Planner() {
       }
       replan(pts, isSample ? 'Neue Tour' : tour.name);
     };
+    const onContext = (e: { lngLat: { lat: number; lng: number }; point: { x: number; y: number }; preventDefault?: () => void }) => {
+      e.preventDefault?.();
+      setMenu({ x: e.point.x, y: e.point.y, p: [e.lngLat.lat, e.lngLat.lng] });
+    };
+    const onMove = () => setMenu(null);
     m.on('click', onClick);
-    return () => m.off('click', onClick);
-  }, [mapReady, mode, busy, isSample, tour, replan]);
+    m.on('contextmenu', onContext);
+    m.on('movestart', onMove);
+    return () => {
+      m.off('click', onClick);
+      m.off('contextmenu', onContext);
+      m.off('movestart', onMove);
+    };
+  }, [mapReady, mode, busy, isSample, tour, replan, menu]);
+
+  // Escape schließt das Kontextmenü
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenu(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menu]);
+
+  const menuAction = async (kind: 'start' | 'via' | 'ziel' | 'rundtour') => {
+    if (!menu) return;
+    const p = menu.p;
+    setMenu(null);
+    if (kind === 'rundtour') {
+      setRtStart({ p, name: await reverseName(p) });
+      setMode('rundtour');
+      return;
+    }
+    setMode('tour');
+    const base = isSample ? [] : tour.wegpunkte;
+    let pts: LatLon[];
+    if (kind === 'start') pts = base.length ? [p, ...base.slice(1)] : [p];
+    else if (kind === 'ziel') pts = [...base, p];
+    else pts = base.length >= 2 ? [...base.slice(0, -1), p, base[base.length - 1]] : [...base, p];
+    if (pts.length < 2) {
+      setTour({ name: 'Neue Tour', laenge_km: 0, wegpunkte: pts, linie: [], warnungen: [] });
+      setIsSample(false);
+      setSavedId(null);
+      return;
+    }
+    replan(pts, isSample ? 'Neue Tour' : tour.name);
+  };
 
   const hoverLine = useMemo(() => resample(line, 100), [line]);
   const onHoverKm = useCallback(
@@ -216,7 +273,15 @@ export default function Planner() {
       <div style={S.mapWrap}>
         <div ref={mapEl} style={S.map} aria-label="Karte" />
         {mapError ? <div style={S.mapError}>{mapError}</div> : null}
-        {mode === 'tour' && !busy ? <div style={S.hint}>Klick auf die Karte setzt einen neuen Zielpunkt</div> : null}
+        {mode === 'tour' && !busy ? <div style={S.hint}>Klick setzt ein Ziel, Rechtsklick öffnet weitere Optionen</div> : null}
+        {menu ? (
+          <div style={{ ...S.menu, left: menu.x, top: menu.y }} role="menu" onContextMenu={(e) => e.preventDefault()}>
+            <button role="menuitem" style={S.menuItem} onClick={() => menuAction('start')}>Als Start setzen</button>
+            <button role="menuitem" style={S.menuItem} onClick={() => menuAction('via')}>Als Via Punkt einfügen</button>
+            <button role="menuitem" style={S.menuItem} onClick={() => menuAction('ziel')}>Als Ziel setzen</button>
+            <button role="menuitem" style={S.menuItem} onClick={() => menuAction('rundtour')}>Rundtour von hier</button>
+          </div>
+        ) : null}
       </div>
       <aside style={S.side}>
         <div style={S.brandRow}>
@@ -232,9 +297,9 @@ export default function Planner() {
           </div>
         </div>
         <div style={S.tabs} role="tablist">
-          {(['tour', 'rundtour', 'beschreiben'] as Mode[]).map((m) => (
+          {(['tour', 'rundtour', 'beschreiben', 'touren'] as Mode[]).map((m) => (
             <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} style={mode === m ? S.tabOn : S.tab}>
-              {{ tour: 'Tour', rundtour: 'Rundtour', beschreiben: 'Beschreiben' }[m]}
+              {{ tour: 'Tour', rundtour: 'Rundtour', beschreiben: 'Beschreiben', touren: 'Meine Touren' }[m]}
             </button>
           ))}
         </div>
@@ -284,11 +349,35 @@ export default function Planner() {
                 fitTour(SAMPLE);
               }}
               onRename={(n) => setTour({ ...tour, name: n })}
+              savedId={isSample ? null : savedId}
+              onSave={(folder) => {
+                try {
+                  const saved = saveTour({ ...tour, curves }, folder, savedId ?? undefined);
+                  setSavedId(saved.id);
+                  setError(null);
+                } catch (e) {
+                  setError((e as Error).message);
+                }
+              }}
               busy={!!busy}
+            />
+          ) : null}
+          {mode === 'touren' ? (
+            <LibraryPanel
+              currentId={savedId}
+              onOpen={(t) => {
+                setTour(t);
+                setIsSample(false);
+                setSavedId(t.id);
+                setMode('tour');
+                fitTour(t);
+              }}
             />
           ) : null}
           {mode === 'rundtour' ? (
             <RoundTripPanel
+              key={rtStart ? rtStart.p.join(',') : 'leer'}
+              initialStart={rtStart}
               center={() => {
                 const c = map.current?.getCenter();
                 return c ? ([c.lat, c.lng] as LatLon) : null;
@@ -297,11 +386,7 @@ export default function Planner() {
               setProfile={setProfile}
               busy={!!busy}
               onCreate={(start, km, dir, name) =>
-                run('Rundtour wird gebaut', async (signal, step) => {
-                  step('route');
-                  const r = await roundTrip({ start, km, direction: dir, profile, avoid }, signal);
-                  return planChecked(name, [start, ...r.via, start], profile, avoid, step, signal, true);
-                })
+                run('Rundtour wird gebaut', (signal, step) => smartRoundTrip({ name, start, km, direction: dir, profile, avoid }, step, signal))
               }
             />
           ) : null}
@@ -345,6 +430,8 @@ function TourPanel(props: {
   onExport: () => void;
   onSample: () => void;
   onRename: (n: string) => void;
+  savedId: string | null;
+  onSave: (folder: string) => void;
   busy: boolean;
 }) {
   const { tour } = props;
@@ -383,6 +470,8 @@ function TourPanel(props: {
           </div>
         ) : null}
       </div>
+
+      {!props.isSample && tour.linie.length ? <SaveBox savedId={props.savedId} onSave={props.onSave} busy={props.busy} /> : null}
 
       <PlaceSearch near={pts[pts.length - 1]} placeholder={pts.length ? 'Ziel oder Via Punkt hinzufügen' : 'Wo geht es los?'} onPick={(p) => props.onAddPlace(p.p)} />
 
@@ -489,18 +578,107 @@ function TourPanel(props: {
   );
 }
 
+function SaveBox(props: { savedId: string | null; onSave: (folder: string) => void; busy: boolean }) {
+  const list = useLibrary();
+  const current = list.find((t) => t.id === props.savedId);
+  const [folder, setFolder] = useState(current?.folder ?? '');
+  return (
+    <div style={S.saveBox}>
+      <input id="save-folder" list="save-folders" aria-label="Ordner" placeholder="Ordner, zum Beispiel RCO 26" value={folder} onChange={(e) => setFolder(e.target.value)} style={{ ...S.search, height: 38, flex: 1 }} />
+      <datalist id="save-folders">
+        {folders(list).map((f) => (
+          <option key={f} value={f} />
+        ))}
+      </datalist>
+      <button style={{ ...S.secondary, flex: 'none' }} disabled={props.busy} onClick={() => props.onSave(folder)}>
+        {current ? 'Aktualisieren' : 'Speichern'}
+      </button>
+    </div>
+  );
+}
+
+/* ---------- Meine Touren ---------- */
+
+function LibraryPanel(props: { currentId: string | null; onOpen: (t: SavedTour) => void }) {
+  const list = useLibrary();
+  const [q, setQ] = useState('');
+  const [folder, setFolder] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortKey>('neu');
+  const [confirm, setConfirm] = useState<string | null>(null);
+  const shown = filterTours(list, q, folder, sort);
+  const fs = folders(list);
+  return (
+    <div style={S.stack}>
+      <div>
+        <h2 style={S.h2}>Meine Touren</h2>
+        <p style={S.muted}>{list.length ? `${list.length} gespeicherte Touren.` : 'Noch keine Tour gespeichert. Plane oder importiere eine Tour und speichere sie im Tab Tour.'} Gespeichert wird vorerst in diesem Browser.</p>
+      </div>
+      {list.length ? (
+        <>
+          <input id="lib-search" aria-label="Touren durchsuchen" placeholder="Touren durchsuchen" value={q} onChange={(e) => setQ(e.target.value)} style={S.search} />
+          {fs.length ? (
+            <div style={S.chips}>
+              <Chip on={folder === null} onClick={() => setFolder(null)}>Alle</Chip>
+              {fs.map((f) => (
+                <Chip key={f} on={folder === f} onClick={() => setFolder(f)}>
+                  {f}
+                </Chip>
+              ))}
+            </div>
+          ) : null}
+          <div style={S.chips}>
+            {(['neu', 'name', 'laenge'] as SortKey[]).map((k) => (
+              <Chip key={k} on={sort === k} onClick={() => setSort(k)}>
+                {{ neu: 'Zuletzt geändert', name: 'Name', laenge: 'Länge' }[k]}
+              </Chip>
+            ))}
+          </div>
+          <ul style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
+            {shown.map((t) => (
+              <li key={t.id} style={{ ...S.libRow, ...(t.id === props.currentId ? { background: C.surface } : {}) }}>
+                <button style={S.libOpen} onClick={() => props.onOpen(t)}>
+                  <span style={{ fontWeight: 600 }}>{t.name}</span>
+                  <span style={S.small}>
+                    {formatKm(t.laenge_km, 0)} km{t.curves ? `, ${t.curves} Kurven` : ''}
+                    {t.folder ? `, ${t.folder}` : ''}, {new Date(t.updatedAt).toLocaleDateString('de-DE')}
+                  </span>
+                </button>
+                {t.km_je_klasse ? (
+                  <span style={t.km_je_klasse.raus > 0 ? S.badgeStop : S.badgeGood}>{t.km_je_klasse.raus > 0 ? `${formatKm(t.km_je_klasse.raus)} km raus` : 'geprüft'}</span>
+                ) : null}
+                {confirm === t.id ? (
+                  <span style={{ display: 'flex', gap: 6 }}>
+                    <button style={S.dangerSmall} onClick={() => deleteTour(t.id)}>Löschen</button>
+                    <button style={S.link} onClick={() => setConfirm(null)}>Nein</button>
+                  </span>
+                ) : (
+                  <button aria-label={`${t.name} löschen`} style={S.iconBtn} onClick={() => setConfirm(t.id)}>
+                    ×
+                  </button>
+                )}
+              </li>
+            ))}
+            {!shown.length ? <p style={S.muted}>Keine Tour passt zur Suche.</p> : null}
+          </ul>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 /* ---------- Rundtour ---------- */
 
 const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
 
 function RoundTripPanel(props: {
+  initialStart: { p: LatLon; name: string } | null;
   center: () => LatLon | null;
   profile: Profile;
   setProfile: (p: Profile) => void;
   busy: boolean;
   onCreate: (start: LatLon, km: number, dir: Direction, name: string) => void;
 }) {
-  const [start, setStart] = useState<{ p: LatLon; name: string } | null>(null);
+  const [start, setStart] = useState<{ p: LatLon; name: string } | null>(props.initialStart);
   const [km, setKm] = useState(50);
   const [dir, setDir] = useState<Direction>('O');
   const [locError, setLocError] = useState<string | null>(null);
@@ -661,8 +839,11 @@ function DescribePanel(props: {
         const hits = await searchTowns(wish.towardName, start, signal);
         if (hits.length) bearing = bearingTo(start, hits[0].p);
       }
-      const r = await roundTrip({ start, km, direction: wish.direction ?? 'zufall', bearing, profile: effProfile, avoid: props.avoid }, signal);
-      return planChecked(`${wish.towardName ?? 'Rundtour'} ab ${startName}`, [start, ...r.via, start], effProfile, props.avoid, step, signal, true);
+      return smartRoundTrip(
+        { name: `${wish.towardName ?? 'Rundtour'} ab ${startName}`, start, km, direction: wish.direction ?? 'zufall', bearing, profile: effProfile, avoid: props.avoid },
+        step,
+        signal,
+      );
     });
 
   return (
@@ -890,9 +1071,9 @@ const S: Record<string, CSSProperties> = {
   rideOn: { ...chipBase, height: 28, background: C.text, color: C.ground, border: 'none', fontWeight: 700 },
   rideOff: { ...chipBase, height: 28, background: 'transparent', color: C.muted, border: 'none' },
   groupBox: { display: 'flex', flexDirection: 'column', gap: 10, background: C.surface, borderRadius: 12, padding: 14, lineHeight: 1.45 },
-  tabs: { display: 'flex', gap: 4, padding: '0 16px 12px', borderBottom: `1px solid ${C.surface2}` },
-  tab: { ...btnBase, height: 34, background: 'transparent', color: C.muted, border: 'none' },
-  tabOn: { ...btnBase, height: 34, background: C.surface2, color: C.text, border: 'none' },
+  tabs: { display: 'flex', gap: 2, padding: '0 14px 12px', borderBottom: `1px solid ${C.surface2}`, overflowX: 'auto' },
+  tab: { ...btnBase, height: 34, padding: '0 11px', background: 'transparent', color: C.muted, border: 'none', whiteSpace: 'nowrap' },
+  tabOn: { ...btnBase, height: 34, padding: '0 11px', background: C.surface2, color: C.text, border: 'none', whiteSpace: 'nowrap' },
   scroll: { flex: 1, overflowY: 'auto', padding: '16px 20px 32px' },
   stack: { display: 'flex', flexDirection: 'column', gap: 18 },
   stackTight: { display: 'flex', flexDirection: 'column', gap: 8 },
@@ -943,12 +1124,20 @@ const S: Record<string, CSSProperties> = {
   spinner: { width: 14, height: 14, borderRadius: 7, border: `2px solid ${C.line}`, borderTopColor: C.signal, animation: 'cdspin 0.8s linear infinite' },
   error: { margin: '12px 20px 0', padding: '10px 12px', background: 'rgba(226,70,28,0.14)', color: '#FF8A66', borderRadius: 12 },
   errorText: { color: '#FF8A66', margin: 0, fontSize: 13 },
+  menu: { position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: 200, padding: 4, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
+  menuItem: { textAlign: 'left', background: 'transparent', border: 'none', color: C.text, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', font: `500 14px ${BODY}` },
+  saveBox: { display: 'flex', gap: 8, alignItems: 'center' },
+  libRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 8px', borderTop: `1px solid ${C.surface2}`, borderRadius: 8, listStyle: 'none' },
+  libOpen: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start', textAlign: 'left', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', font: `500 14px ${BODY}`, padding: 0 },
+  badgeStop: { fontSize: 11, fontWeight: 700, color: '#FF8A66', background: 'rgba(226,70,28,0.16)', padding: '2px 8px', borderRadius: 9, whiteSpace: 'nowrap' },
+  badgeGood: { fontSize: 11, fontWeight: 700, color: C.good, background: 'rgba(76,195,138,0.14)', padding: '2px 8px', borderRadius: 9, whiteSpace: 'nowrap' },
+  dangerSmall: { background: C.signal, color: '#fff', border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', font: `600 12px ${BODY}` },
 };
 
 // Drehanimation für den Ladekreis einmalig registrieren
 if (typeof document !== 'undefined' && !document.getElementById('cd-spin')) {
   const st = document.createElement('style');
   st.id = 'cd-spin';
-  st.textContent = '@keyframes cdspin{to{transform:rotate(360deg)}} button:disabled{opacity:.45;cursor:default} button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #E2461C;outline-offset:2px}';
+  st.textContent = '@keyframes cdspin{to{transform:rotate(360deg)}} button:disabled{opacity:.45;cursor:default} [role=menuitem]:hover{background:#1F1F22} button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #E2461C;outline-offset:2px}';
   document.head.appendChild(st);
 }
