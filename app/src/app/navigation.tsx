@@ -10,11 +10,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RouteMap } from '@/components/map/route-map';
+import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM } from '@/components/navigation/maneuver-geometry';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
+import { endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
 import { useSession } from '@/lib/auth';
 import { saveDrive } from '@/lib/drives';
 import { useNavigation } from '@/lib/navigation';
@@ -165,6 +167,31 @@ export default function NavigationScreen() {
     }
     exit();
   };
+
+  // Live Activity: nächstes Manöver auf Sperrbildschirm, Dynamic Island und CarPlay Dashboard
+  useEffect(() => {
+    const st = state.status;
+    const running = st === 'laeuft' || st === 'pausiert' || st === 'neuberechnung';
+    const m = state.route?.maneuvers[state.next];
+    if (!running || !m || !active) {
+      if (st === 'angekommen' || st === 'fehler') endNavActivity();
+      return;
+    }
+    const d = formatDistance(state.distToNextM);
+    // gröber runden, damit nicht jede Sekunde aktualisiert wird
+    showNavActivity({
+      symbol: symbolForKind(m.kind, m.exit),
+      dist: d.value,
+      unit: d.unit,
+      text: m.text,
+      street: m.street ?? '',
+      eta: formatClock(state.eta),
+      rest: state.remainingKm != null ? `${formatKm(state.remainingKm, 0)} km` : '',
+      soon: state.distToNextM != null && state.distToNextM <= soonThresholdM(state.speedKmh),
+      tour: active.tour.name,
+    });
+  }, [state.status, state.route, state.next, state.distToNextM, state.eta, state.remainingKm, state.speedKmh, active]);
+  useEffect(() => () => endNavActivity(), []);
 
   if (!active || !mapTour) {
     return (

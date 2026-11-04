@@ -83,9 +83,7 @@
     },
     "backgroundColor": "#0B0B0C",
     "owner": "korayoenals-team",
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
+    "runtimeVersion": "1.1.0",
     "extra": {
       "router": {
         "asyncRoutes": {

@@ -10,6 +10,7 @@ import type { Maneuver } from '@/lib/navigation/types';
 
 import { formatClock, formatDistance, formatRemaining } from './format';
 import { ManeuverIcon, MicIcon, SpeakerIcon } from './maneuver-icon';
+import { GlassPanel } from '@/components/ui/glass-panel';
 
 /**
  * Zustands Karten über der Karte: Colors.signalTint und Colors.goodTint auf Ground verrechnet,
@@ -22,7 +23,7 @@ const GOOD_OVERLAY = 'rgba(19,33,27,0.96)';
 export function ManeuverCard({ maneuver, distM, then, soon = false }: { maneuver: Maneuver; distM: number | null; then?: Maneuver; soon?: boolean }) {
   const d = formatDistance(distM);
   return (
-    <View style={styles.maneuver}>
+    <GlassPanel style={styles.maneuver} fallback="rgba(11,11,12,0.94)">
       <View style={styles.maneuverRow}>
         <View style={styles.arrowBox}>
           <ManeuverIcon kind={maneuver.kind} exit={maneuver.exit} size={72} soon={soon} />
@@ -50,13 +51,18 @@ export function ManeuverCard({ maneuver, distM, then, soon = false }: { maneuver
           <AppText variant="caption" muted numberOfLines={1} style={styles.flex}>{then.text}</AppText>
         </View>
       )}
-    </View>
+    </GlassPanel>
   );
 }
 
 export function InfoCard({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'neutral' | 'signal' | 'good' }) {
   return (
-    <View style={[styles.info, tone === 'signal' && styles.infoSignal, tone === 'good' && styles.infoGood]}>{children}</View>
+    <GlassPanel
+      style={styles.info}
+      fallback={tone === 'signal' ? SIGNAL_OVERLAY : tone === 'good' ? GOOD_OVERLAY : 'rgba(11,11,12,0.94)'}
+      tint={tone === 'signal' ? 'rgba(90,30,14,0.6)' : tone === 'good' ? 'rgba(20,60,42,0.6)' : undefined}>
+      {children}
+    </GlassPanel>
   );
 }
 
@@ -111,7 +117,7 @@ export function BottomBar({
   }, [funkHint]);
 
   return (
-    <View style={[styles.bar, { paddingBottom: bottomInset }]}>
+    <GlassPanel style={[styles.bar, { paddingBottom: bottomInset }]} fallback="rgba(11,11,12,0.96)">
       {funkHint && (
         <View style={styles.funkHint}>
           <AppText variant="caption">Funk folgt bald.</AppText>
@@ -154,7 +160,7 @@ export function BottomBar({
           <AppText variant="caption" muted>Simulieren</AppText>
         </Pressable>
       )}
-    </View>
+    </GlassPanel>
   );
 }
 
@@ -174,7 +180,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   pressed: { opacity: 0.8 },
 
-  maneuver: { backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
+  maneuver: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   maneuverRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l },
   arrowBox: { width: 84, height: 84, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   exit: { position: 'absolute', bottom: 2, fontFamily: Fonts.bold, fontSize: 10, color: Colors.onSignal },
@@ -184,11 +190,9 @@ const styles = StyleSheet.create({
   street: { fontFamily: Fonts.regular, fontSize: 15, color: Colors.muted, marginTop: 2 },
   then: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingTop: Spacing.m },
 
-  info: { backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
-  infoSignal: { backgroundColor: SIGNAL_OVERLAY },
-  infoGood: { backgroundColor: GOOD_OVERLAY },
+  info: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
 
-  bar: { backgroundColor: 'rgba(11,11,12,0.96)', borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l, paddingHorizontal: Spacing.xl, paddingTop: Spacing.l, gap: Spacing.s },
+  bar: { borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l, paddingHorizontal: Spacing.xl, paddingTop: Spacing.l, gap: Spacing.s },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   eta: { fontFamily: Fonts.display, fontSize: 40, lineHeight: 44, fontVariant: ['tabular-nums'] },
   round: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
