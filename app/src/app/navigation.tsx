@@ -2,22 +2,40 @@
  * Navigationsscreen: Karte vollflächig, oben das nächste Manöver, unten Ankunft und Steuerung.
  * Läuft außerhalb der Tabs im Vollbild. Die Logik kommt aus useNavigation (src/lib/navigation).
  */
-import { useKeepAwake } from 'expo-keep-awake';
-import { router } from 'expo-router';
-import * as Location from 'expo-location';
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeepAwake } from "expo-keep-awake";
+import { router } from "expo-router";
+import * as Location from "expo-location";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { RouteMap } from '@/components/map/route-map';
-import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
-import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Spacing } from '@/constants/theme';
-import { useActiveTour } from '@/lib/active-tour';
-import { useNavigation } from '@/lib/navigation';
-import type { NavEntry, NavRequest } from '@/lib/navigation/types';
-import { useRideMode } from '@/lib/ride-mode';
-import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
+import { RouteMap } from "@/components/map/route-map";
+import {
+  BigButton,
+  BottomBar,
+  InfoCard,
+  ManeuverCard,
+  Recalculating,
+} from "@/components/navigation/nav-panels";
+import { AppText } from "@/components/ui/text";
+import { Colors, Fonts, Spacing } from "@/constants/theme";
+import { useActiveTour } from "@/lib/active-tour";
+import { useNavigation } from "@/lib/navigation";
+import type { NavEntry, NavRequest } from "@/lib/navigation/types";
+import {
+  QUICK_MESSAGES,
+  sendMessage,
+  sendPosition,
+  useRide,
+} from "@/lib/group/ride";
+import { useRideMode } from "@/lib/ride-mode";
+import {
+  flatten,
+  formatKm,
+  haversine,
+  type LatLon,
+  type Tour,
+} from "@/lib/tour";
 
 export default function NavigationScreen() {
   useKeepAwake();
@@ -27,7 +45,7 @@ export default function NavigationScreen() {
   const [secret, setSecret] = useState(false);
   const showSim = __DEV__ || secret;
 
-  const [entry, setEntry] = useState<NavEntry>('einsteigen');
+  const [entry, setEntry] = useState<NavEntry>("einsteigen");
   // Abstand zum Tourstart vorab, damit bei weiter Anreise die passende Wahl vorgeschlagen wird
   const [here, setHere] = useState<LatLon | null>(null);
   useEffect(() => {
@@ -35,7 +53,11 @@ export default function NavigationScreen() {
     (async () => {
       const perm = await Location.getForegroundPermissionsAsync();
       if (!perm.granted) return;
-      const p = (await Location.getLastKnownPositionAsync()) ?? (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
+      const p =
+        (await Location.getLastKnownPositionAsync()) ??
+        (await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        }));
       if (alive && p) setHere([p.coords.latitude, p.coords.longitude]);
     })().catch(() => undefined);
     return () => {
@@ -48,35 +70,76 @@ export default function NavigationScreen() {
   }, [here, active]);
   const far = toStartKm != null && toStartKm > 30;
   const [entryTouched, setEntryTouched] = useState(false);
-  const effEntry: NavEntry = entryTouched ? entry : far ? 'anfahrt' : entry;
+  const effEntry: NavEntry = entryTouched ? entry : far ? "anfahrt" : entry;
   const req = useMemo<NavRequest | null>(
-    () => (active ? { tour: active.tour, profile: active.profile, avoid: active.avoid, entry: effEntry } : null),
+    () =>
+      active
+        ? {
+            tour: active.tour,
+            profile: active.profile,
+            avoid: active.avoid,
+            entry: effEntry,
+          }
+        : null,
     [active, effEntry],
   );
   const [state, controls] = useNavigation(req);
+  const ride = useRide();
+  const inRide = ride.status === "aktiv";
+  const [msgOpen, setMsgOpen] = useState(false);
+  // Position der Navigation (auch simuliert) an die Gruppe geben
+  useEffect(() => {
+    if (inRide && state.position)
+      sendPosition(state.position, state.heading, state.speedKmh);
+  }, [inRide, state.position, state.heading, state.speedKmh]);
+  const others = useMemo(
+    () =>
+      ride.members
+        .filter((m) => m.id !== ride.me?.id && m.p)
+        .map((m) => ({
+          id: m.id,
+          p: m.p!,
+          name: m.name,
+          role: m.role,
+          stale: !m.seenAt,
+        })),
+    [ride.members, ride.me?.id],
+  );
   // Restkilometer beim Start, daraus ergeben sich am Ende die gefahrenen km
   const [startKm, setStartKm] = useState<number | null>(null);
-  if (state.status === 'laeuft' && startKm == null && state.remainingKm != null) setStartKm(state.remainingKm);
+  if (state.status === "laeuft" && startKm == null && state.remainingKm != null)
+    setStartKm(state.remainingKm);
 
   // Tour für die Karte: geplante Linie mit Warnungen, darunter die gefahrene Route der Navigation
   const mapTour = useMemo<Tour | null>(() => {
     if (!active) return null;
     if (!state.route) return active.tour;
-    return { ...active.tour, linie: [{ c: 'ok', p: state.route.shape }, ...active.tour.linie] };
+    return {
+      ...active.tour,
+      linie: [{ c: "ok", p: state.route.shape }, ...active.tour.linie],
+    };
   }, [active, state.route]);
 
   const close = () => {
     controls.stop();
     if (router.canGoBack()) router.back();
-    else router.replace('/planen');
+    else router.replace("/planen");
   };
 
   if (!active || !mapTour) {
     return (
-      <View style={[styles.root, styles.pad, { paddingTop: insets.top + Spacing.xl }]}>
+      <View
+        style={[
+          styles.root,
+          styles.pad,
+          { paddingTop: insets.top + Spacing.xl },
+        ]}
+      >
         <InfoCard>
           <AppText variant="title">Keine Tour gewählt.</AppText>
-          <AppText muted>Erstelle zuerst eine Tour im Tab Planen und tippe auf Losfahren.</AppText>
+          <AppText muted>
+            Erstelle zuerst eine Tour im Tab Planen und tippe auf Losfahren.
+          </AppText>
           <BigButton label="Schließen" kind="ghost" onPress={close} />
         </InfoCard>
       </View>
@@ -84,10 +147,13 @@ export default function NavigationScreen() {
   }
 
   const { status, route } = state;
-  const running = status === 'laeuft' || status === 'pausiert' || status === 'neuberechnung';
+  const running =
+    status === "laeuft" || status === "pausiert" || status === "neuberechnung";
   const maneuver = route?.maneuvers[state.next];
   const then = route?.maneuvers[state.next + 1];
-  const drivenKm = route ? Math.max(0, (startKm ?? route.km) - (state.remainingKm ?? 0)) : 0;
+  const drivenKm = route
+    ? Math.max(0, (startKm ?? route.km) - (state.remainingKm ?? 0))
+    : 0;
 
   return (
     <View style={styles.root}>
@@ -98,52 +164,126 @@ export default function NavigationScreen() {
         showUser
         position={state.position}
         heading={state.heading}
-        edgePadding={{ top: insets.top + 60, right: 40, bottom: insets.bottom + 260, left: 40 }}
+        others={others}
+        edgePadding={{
+          top: insets.top + 60,
+          right: 40,
+          bottom: insets.bottom + 260,
+          left: 40,
+        }}
       />
 
-      <View style={[styles.top, { paddingTop: insets.top + Spacing.s }]} pointerEvents="box-none">
-        {running && maneuver && <ManeuverCard maneuver={maneuver} distM={state.distToNextM} then={then} />}
-        {status === 'neuberechnung' && <Recalculating first={!route} />}
-      </View>
-
-      <View style={[styles.bottom, !running && { paddingBottom: insets.bottom + Spacing.m }]} pointerEvents="box-none">
-        {running && (
-          <BottomBar
-            eta={state.eta}
-            remainingKm={state.remainingKm}
-            voice={state.voice}
-            group={rideMode === 'gruppe'}
-            showSim={showSim}
-            bottomInset={insets.bottom + Spacing.m}
-            onEnd={close}
-            onVoice={() => controls.setVoice(!state.voice)}
-            onSecret={() => setSecret(true)}
-            onSimulate={() => controls.simulate(true)}
+      <View
+        style={[styles.top, { paddingTop: insets.top + Spacing.s }]}
+        pointerEvents="box-none"
+      >
+        {running && maneuver && (
+          <ManeuverCard
+            maneuver={maneuver}
+            distM={state.distToNextM}
+            then={then}
           />
         )}
+        {status === "neuberechnung" && <Recalculating first={!route} />}
+      </View>
 
-        {status === 'bereit' && (
+      <View
+        style={[
+          styles.bottom,
+          !running && { paddingBottom: insets.bottom + Spacing.m },
+        ]}
+        pointerEvents="box-none"
+      >
+        {running && (
+          <>
+            {inRide && msgOpen && (
+              <View style={styles.msgSheet}>
+                <AppText variant="label">An die Gruppe</AppText>
+                <View style={styles.msgChips}>
+                  {QUICK_MESSAGES.map((m) => (
+                    <Pressable
+                      key={m}
+                      accessibilityRole="button"
+                      onPress={() => {
+                        sendMessage(m);
+                        setMsgOpen(false);
+                      }}
+                      style={({ pressed }) => [
+                        styles.msgChip,
+                        pressed && { opacity: 0.7 },
+                      ]}
+                    >
+                      <AppText style={styles.msgChipText}>{m}</AppText>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
+            <BottomBar
+              eta={state.eta}
+              remainingKm={state.remainingKm}
+              voice={state.voice}
+              group={rideMode === "gruppe" || inRide}
+              onFunk={inRide ? () => setMsgOpen(!msgOpen) : undefined}
+              showSim={showSim}
+              bottomInset={insets.bottom + Spacing.m}
+              onEnd={close}
+              onVoice={() => controls.setVoice(!state.voice)}
+              onSecret={() => setSecret(true)}
+              onSimulate={() => controls.simulate(true)}
+            />
+          </>
+        )}
+
+        {status === "bereit" && (
           <View style={styles.pad}>
             <InfoCard>
-              <Pressable onLongPress={() => setSecret(true)} delayLongPress={800}>
+              <Pressable
+                onLongPress={() => setSecret(true)}
+                delayLongPress={800}
+              >
                 <AppText variant="label">Bereit</AppText>
-                <AppText style={styles.tourName} numberOfLines={2}>{active.tour.name}</AppText>
+                <AppText style={styles.tourName} numberOfLines={2}>
+                  {active.tour.name}
+                </AppText>
                 <AppText variant="caption" muted>
                   {formatKm(route?.km ?? active.tour.laenge_km, 0)} km
-                  {active.tour.minutes ? `, etwa ${Math.round(active.tour.minutes)} min` : ''}
+                  {active.tour.minutes
+                    ? `, etwa ${Math.round(active.tour.minutes)} min`
+                    : ""}
                 </AppText>
               </Pressable>
               {far && (
                 <AppText style={styles.farNote}>
-                  Der Start ist {Math.round(toStartKm!).toLocaleString('de-DE')} km entfernt. Lieber erst zum Start fahren oder unterwegs einsteigen?
+                  Der Start ist {Math.round(toStartKm!).toLocaleString("de-DE")}{" "}
+                  km entfernt. Lieber erst zum Start fahren oder unterwegs
+                  einsteigen?
                 </AppText>
               )}
               <View style={styles.entry} accessibilityRole="radiogroup">
                 {(
                   [
-                    ...(far ? [{ id: 'anfahrt', label: 'Zum Start navigieren', hint: 'Schnellste Route mit Autobahn, die Tour startest du dort' }] : []),
-                    { id: 'einsteigen', label: 'Einsteigen', hint: 'An der nächsten Stelle in die Tour' },
-                    { id: 'start', label: 'Über den Startpunkt fahren', hint: far ? 'Anreise schnell, dann die ganze Tour' : 'Die ganze Tour von Anfang an' },
+                    ...(far
+                      ? [
+                          {
+                            id: "anfahrt",
+                            label: "Zum Start navigieren",
+                            hint: "Schnellste Route mit Autobahn, die Tour startest du dort",
+                          },
+                        ]
+                      : []),
+                    {
+                      id: "einsteigen",
+                      label: "Einsteigen",
+                      hint: "An der nächsten Stelle in die Tour",
+                    },
+                    {
+                      id: "start",
+                      label: "Über den Startpunkt fahren",
+                      hint: far
+                        ? "Anreise schnell, dann die ganze Tour"
+                        : "Die ganze Tour von Anfang an",
+                    },
                   ] as { id: NavEntry; label: string; hint: string }[]
                 ).map((o) => (
                   <Pressable
@@ -154,14 +294,22 @@ export default function NavigationScreen() {
                       setEntry(o.id);
                       setEntryTouched(true);
                     }}
-                    style={styles.entryRow}>
+                    style={styles.entryRow}
+                  >
                     <View style={styles.flex}>
                       <AppText style={styles.entryLabel}>{o.label}</AppText>
                       <AppText variant="caption" muted>
                         {o.hint}
                       </AppText>
                     </View>
-                    <View style={[styles.radio, effEntry === o.id && styles.radioOn]}>{effEntry === o.id && <View style={styles.radioDot} />}</View>
+                    <View
+                      style={[
+                        styles.radio,
+                        effEntry === o.id && styles.radioOn,
+                      ]}
+                    >
+                      {effEntry === o.id && <View style={styles.radioDot} />}
+                    </View>
                   </Pressable>
                 ))}
               </View>
@@ -172,7 +320,11 @@ export default function NavigationScreen() {
                 </View>
                 {showSim && (
                   <View style={styles.flex}>
-                    <BigButton label="Simulieren" kind="ghost" onPress={() => controls.simulate(true)} />
+                    <BigButton
+                      label="Simulieren"
+                      kind="ghost"
+                      onPress={() => controls.simulate(true)}
+                    />
                   </View>
                 )}
               </View>
@@ -180,25 +332,31 @@ export default function NavigationScreen() {
           </View>
         )}
 
-        {status === 'angekommen' && (
+        {status === "angekommen" && (
           <View style={styles.pad}>
             <InfoCard tone="good">
               <AppText variant="label">Angekommen</AppText>
               <AppText style={styles.congrats}>Starke Runde!</AppText>
               <AppText muted>
-                {formatKm(drivenKm || route?.km || active.tour.laenge_km)} km gefahren auf {active.tour.name}.
+                {formatKm(drivenKm || route?.km || active.tour.laenge_km)} km
+                gefahren auf {active.tour.name}.
               </AppText>
               <BigButton label="Fertig" onPress={close} />
             </InfoCard>
           </View>
         )}
 
-        {status === 'fehler' && (
+        {status === "fehler" && (
           <View style={styles.pad}>
             <InfoCard tone="signal">
               <AppText variant="label">Navigation gestoppt</AppText>
-              <AppText>{state.error || 'Die Route konnte nicht geladen werden.'}</AppText>
-              <BigButton label="Nochmal" onPress={() => void controls.start()} />
+              <AppText>
+                {state.error || "Die Route konnte nicht geladen werden."}
+              </AppText>
+              <BigButton
+                label="Nochmal"
+                onPress={() => void controls.start()}
+              />
               <BigButton label="Schließen" kind="ghost" onPress={close} />
             </InfoCard>
           </View>
@@ -212,16 +370,78 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
   pad: { paddingHorizontal: Spacing.l },
   flex: { flex: 1 },
-  row: { flexDirection: 'row', gap: Spacing.s },
+  row: { flexDirection: "row", gap: Spacing.s },
   entry: { gap: 2 },
-  farNote: { fontFamily: Fonts.semibold, fontSize: 15, lineHeight: 21, color: Colors.warn },
-  entryRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingVertical: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
+  msgSheet: {
+    marginHorizontal: Spacing.l,
+    marginBottom: Spacing.s,
+    padding: Spacing.l,
+    gap: Spacing.m,
+    borderRadius: 16,
+    backgroundColor: "rgba(22,22,24,0.97)",
+    borderWidth: 1,
+    borderColor: Colors.line,
+  },
+  msgChips: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.s },
+  msgChip: {
+    minHeight: 52,
+    paddingHorizontal: Spacing.l,
+    borderRadius: 26,
+    backgroundColor: Colors.surface2,
+    justifyContent: "center",
+  },
+  msgChipText: { fontFamily: Fonts.bold, fontSize: 17 },
+  farNote: {
+    fontFamily: Fonts.semibold,
+    fontSize: 15,
+    lineHeight: 21,
+    color: Colors.warn,
+  },
+  entryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.m,
+    paddingVertical: Spacing.s,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.line,
+  },
   entryLabel: { fontFamily: Fonts.semibold, fontSize: 16 },
-  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: Colors.muted, alignItems: 'center', justifyContent: 'center' },
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.muted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   radioOn: { borderColor: Colors.text },
-  radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.text },
-  top: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: Spacing.m, gap: Spacing.s },
-  bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
-  tourName: { fontFamily: Fonts.display, fontSize: 26, lineHeight: 30, textTransform: 'uppercase', marginTop: 4 },
-  congrats: { fontFamily: Fonts.display, fontSize: 34, lineHeight: 38, textTransform: 'uppercase' },
+  radioDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Colors.text,
+  },
+  top: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: Spacing.m,
+    gap: Spacing.s,
+  },
+  bottom: { position: "absolute", left: 0, right: 0, bottom: 0 },
+  tourName: {
+    fontFamily: Fonts.display,
+    fontSize: 26,
+    lineHeight: 30,
+    textTransform: "uppercase",
+    marginTop: 4,
+  },
+  congrats: {
+    fontFamily: Fonts.display,
+    fontSize: 34,
+    lineHeight: 38,
+    textTransform: "uppercase",
+  },
 });

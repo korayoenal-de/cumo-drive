@@ -10,7 +10,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius } from '@/constants/theme';
 import type { CheckClass, LatLon } from '@/lib/tour';
 
-import { CLASS_LINE, sampleLine, tourWarnings, type RouteMapProps } from './route-map-shared';
+import { CLASS_LINE, ROLE_COLOR, sampleLine, tourWarnings, type RouteMapProps } from './route-map-shared';
 
 export type { RouteMapProps } from './route-map-shared';
 
@@ -31,6 +31,7 @@ export function RouteMap({
   highlightIndex,
   position,
   edgePadding,
+  others,
 }: RouteMapProps) {
   const map = useRef<MapView>(null);
   const markers = useRef<(MapMarker | null)[]>([]);
@@ -64,6 +65,18 @@ export function RouteMap({
     // pad ist ein Objekt, die Werte reichen als Abhängigkeit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, followUser, highlightIndex, fitCoords, pad.top, pad.right, pad.bottom, pad.left]);
+
+  // Ohne Tour: auf die Gruppe einpassen (sobald Positionen da sind, einmal pro neuer Teilnehmerzahl)
+  const groupPts = (others ?? []).map((o) => o.p);
+  const groupKey = groupPts.length;
+  useEffect(() => {
+    if (!ready || followUser || fitCoords.length >= 2 || groupKey === 0) return;
+    const pts = [...groupPts, ...(position ? [position] : [])].map(ll);
+    if (pts.length === 1) map.current?.animateCamera({ center: pts[0], zoom: 13, altitude: 8000, pitch: 0, heading: 0 }, { duration: 600 });
+    else map.current?.fitToCoordinates(pts, { edgePadding: pad, animated: true });
+    // nur bei neuer Teilnehmerzahl neu einpassen, nicht bei jeder Bewegung
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, followUser, fitCoords.length, groupKey]);
 
   // Zur gewählten Warnung springen und ihren Grund zeigen
   useEffect(() => {
@@ -173,6 +186,14 @@ export function RouteMap({
           </Marker>
         ))}
 
+        {(others ?? []).map((o) => (
+          <Marker key={o.id} coordinate={ll(o.p)} anchor={{ x: 0.5, y: 0.5 }} title={o.name} description={{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[o.role]} zIndex={30} tracksViewChanges={false}>
+            <View style={[styles.other, { borderColor: ROLE_COLOR[o.role] }, o.stale && styles.otherStale]}>
+              <AppText style={styles.otherText}>{o.name.slice(0, 1).toUpperCase()}</AppText>
+            </View>
+          </Marker>
+        ))}
+
         {position && (
           <Marker coordinate={ll(position)} anchor={{ x: 0.5, y: 0.5 }} flat rotation={heading ?? 0} zIndex={40}>
             <View style={styles.me}>
@@ -215,6 +236,9 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.signal,
     marginTop: -3,
   },
+  other: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.surface, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  otherStale: { opacity: 0.45 },
+  otherText: { fontFamily: Fonts.bold, fontSize: 13, color: Colors.text },
   recenter: {
     position: 'absolute',
     right: 16,

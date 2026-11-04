@@ -24,7 +24,14 @@ export type RouteMapProps = {
   position?: LatLon | null;
   /** Rand beim Einpassen der Tour in Punkten */
   edgePadding?: { top: number; right: number; bottom: number; left: number };
+  /** Andere Fahrer der Gruppenfahrt */
+  others?: OtherDriver[];
 };
+
+export type OtherDriver = { id: string; p: LatLon; name: string; role: 'lead' | 'schluss' | 'mitfahrer'; stale: boolean };
+
+/** Farbe je Rolle: Lead im Signal Orange, Schlusslicht gelb, Mitfahrer hell. */
+export const ROLE_COLOR: Record<OtherDriver['role'], string> = { lead: '#E2461C', schluss: '#E8B03A', mitfahrer: '#F4F4F2' };
 
 export const WARN_COLOR = '#E8B03A';
 

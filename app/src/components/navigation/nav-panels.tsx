@@ -79,7 +79,7 @@ function useNow(): number {
 }
 
 export function BottomBar({
-  eta, remainingKm, voice, group, showSim, bottomInset, onEnd, onVoice, onSecret, onSimulate,
+  eta, remainingKm, voice, group, showSim, bottomInset, onEnd, onVoice, onSecret, onSimulate, onFunk,
 }: {
   eta: Date | null;
   remainingKm: number | null;
@@ -91,6 +91,8 @@ export function BottomBar({
   onVoice: () => void;
   onSecret: () => void;
   onSimulate: () => void;
+  /** Gruppenfahrt aktiv: Funk Knopf öffnet die Kurznachrichten */
+  onFunk?: () => void;
 }) {
   const now = useNow();
   const [funkHint, setFunkHint] = useState(false);
@@ -121,7 +123,7 @@ export function BottomBar({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Funk"
-            onPress={() => setFunkHint(true)}
+            onPress={() => (onFunk ? onFunk() : setFunkHint(true))}
             style={({ pressed }) => [styles.funk, pressed && styles.pressed]}>
             <MicIcon />
           </Pressable>

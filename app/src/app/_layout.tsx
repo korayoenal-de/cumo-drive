@@ -11,6 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { RideBanner } from '@/components/group/ride-banner';
 import { Colors } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -57,6 +58,7 @@ export default function RootLayout() {
           options={{ presentation: 'fullScreenModal', title: 'Navigation', gestureEnabled: false }}
         />
       </Stack>
+      <RideBanner />
     </ThemeProvider>
   );
 }
