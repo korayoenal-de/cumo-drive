@@ -44,6 +44,14 @@
         {
           "locationWhenInUsePermission": "CUMO DRIVE nutzt deinen Standort als Start für Rundtouren."
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "CUMO DRIVE nutzt die Kamera, um Touren aus dem Web Planer per QR Code zu übernehmen.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
       ]
     ],
     "experiments": {

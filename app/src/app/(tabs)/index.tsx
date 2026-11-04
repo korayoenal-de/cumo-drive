@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -51,6 +52,16 @@ export default function Entdecken() {
           ))}
         </View>
       </View>
+
+      <Pressable accessibilityRole="button" style={styles.fetch} onPress={() => router.push('/scan')}>
+        <View style={{ flex: 1, gap: 3 }}>
+          <AppText style={{ fontFamily: Fonts.semibold, fontSize: 15 }}>Tour vom Planer holen</AppText>
+          <AppText variant="caption" muted>
+            Am Rechner planen, QR Code scannen, losfahren
+          </AppText>
+        </View>
+        <AppText style={styles.fetchArrow}>›</AppText>
+      </Pressable>
 
       <View>
         <AppText variant="label" style={{ paddingBottom: Spacing.s }}>
@@ -121,6 +132,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.surface2,
   },
+  fetch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: Spacing.l,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.l,
+    borderWidth: 1,
+    borderColor: Colors.signal,
+  },
+  fetchArrow: { fontFamily: Fonts.display, fontSize: 28, color: Colors.signal },
   good: { fontFamily: Fonts.semibold, fontSize: 12, color: Colors.good },
   group: {
     flexDirection: 'row',

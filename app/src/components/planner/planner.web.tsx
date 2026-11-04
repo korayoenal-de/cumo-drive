@@ -18,6 +18,8 @@ import { cumoAvailable } from '@/lib/cumo-routing';
 import { deleteTour, filterTours, folders, saveTour, useLibrary, type SavedTour, type SortKey } from '@/lib/library';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
+import { encodeTour } from '@/lib/share-code';
+import QRCode from 'qrcode';
 
 import { addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
 
@@ -491,6 +493,8 @@ function TourPanel(props: {
 
       {!props.isSample && tour.linie.length ? <SaveBox savedId={props.savedId} onSave={props.onSave} busy={props.busy} /> : null}
 
+      {tour.linie.length ? <SendToApp tour={tour} profile={props.profile} /> : null}
+
       <PlaceSearch near={pts[pts.length - 1]} placeholder={pts.length ? 'Ziel oder Via Punkt hinzufügen' : 'Wo geht es los?'} onPick={(p) => props.onAddPlace(p.p)} />
 
       {pts.length ? (
@@ -611,6 +615,44 @@ function SaveBox(props: { savedId: string | null; onSave: (folder: string) => vo
       <button style={{ ...S.secondary, flex: 'none' }} disabled={props.busy} onClick={() => props.onSave(folder)}>
         {current ? 'Aktualisieren' : 'Speichern'}
       </button>
+    </div>
+  );
+}
+
+/** QR Code für die App: Tab Entdecken, „Tour vom Planer holen“, Code scannen. */
+function SendToApp(props: { tour: Tour; profile: Profile }) {
+  const [open, setOpen] = useState(false);
+  const [img, setImg] = useState<{ code: string; url: string } | null>(null);
+  const code = useMemo(() => (open ? encodeTour(props.tour, props.profile) : ''), [open, props.tour, props.profile]);
+  useEffect(() => {
+    if (!code) return;
+    let alive = true;
+    QRCode.toDataURL(code, { errorCorrectionLevel: 'L', margin: 2, width: 560, color: { dark: '#0B0B0C', light: '#FFFFFF' } })
+      .then((url) => alive && setImg({ code, url }))
+      .catch(() => alive && setImg(null));
+    return () => {
+      alive = false;
+    };
+  }, [code]);
+  const url = img && img.code === code ? img.url : null;
+  if (!open)
+    return (
+      <button style={S.secondary} onClick={() => setOpen(true)}>
+        An die App senden
+      </button>
+    );
+  return (
+    <div style={S.qrBox}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <b>An die App senden</b>
+        <button aria-label="Schließen" style={S.iconBtn} onClick={() => setOpen(false)}>
+          ×
+        </button>
+      </div>
+      {url ? <img src={url} alt="QR Code der Tour" style={S.qrImg} /> : <div style={{ ...S.qrImg, background: '#fff' }} />}
+      <p style={S.small}>
+        In der CUMO DRIVE App unter Entdecken auf „Tour vom Planer holen“ tippen und den Code scannen. Die App plant die Strecke neu und prüft sie.
+      </p>
     </div>
   );
 }
@@ -1147,6 +1189,8 @@ const S: Record<string, CSSProperties> = {
   menu: { position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: 200, padding: 4, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
   menuItem: { textAlign: 'left', background: 'transparent', border: 'none', color: C.text, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', font: `500 14px ${BODY}` },
   saveBox: { display: 'flex', gap: 8, alignItems: 'center' },
+  qrBox: { display: 'flex', flexDirection: 'column', gap: 10, padding: 14, background: C.surface2, border: `1px solid ${C.line}`, borderRadius: 14, color: C.text, font: `500 14px ${BODY}` },
+  qrImg: { width: '100%', maxWidth: 280, aspectRatio: '1', alignSelf: 'center', borderRadius: 10, imageRendering: 'pixelated' },
   libRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 8px', borderTop: `1px solid ${C.surface2}`, borderRadius: 8, listStyle: 'none' },
   libOpen: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start', textAlign: 'left', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', font: `500 14px ${BODY}`, padding: 0 },
   badgeStop: { fontSize: 11, fontWeight: 700, color: '#FF8A66', background: 'rgba(226,70,28,0.16)', padding: '2px 8px', borderRadius: 9, whiteSpace: 'nowrap' },
