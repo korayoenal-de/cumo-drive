@@ -195,9 +195,9 @@ export function RouteMap({
           <Polyline
             key={`zurueck-${dashed.length}-${dashed[0][0].toFixed(5)}`}
             coordinates={dashed.map(ll)}
-            strokeColor={Colors.text}
-            strokeWidth={5}
-            lineDashPattern={[10, 10]}
+            strokeColor={Colors.warn}
+            strokeWidth={3}
+            lineDashPattern={[6, 7]}
             lineCap="butt"
             zIndex={30}
           />

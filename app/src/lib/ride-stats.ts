@@ -41,8 +41,11 @@ export function rideStats(samples: Sample[]): RideStats | null {
   let movingS = 0;
   // Tempo in m/s je Punkt: GPS Wert, sonst aus Abstand und Zeit
   const v: number[] = samples.map((s, i) => {
-    if (s.v != null) return s.v / 3.6;
     if (i === 0) return 0;
+    const dtS = (s.t - samples[i - 1].t) / 1000;
+    const moved = dtS > 0 ? haversine(samples[i - 1].p, s.p) / dtS : 0;
+    // GPS Tempo nur, wenn es zur tatsächlich zurückgelegten Strecke passt (sonst Ausreißer)
+    if (s.v != null) return dtS > 0 && dtS < 10 && s.v / 3.6 > moved * 1.8 + 3 ? moved : s.v / 3.6;
     const dt = (s.t - samples[i - 1].t) / 1000;
     return dt > 0 ? haversine(samples[i - 1].p, s.p) / dt : 0;
   });
@@ -65,8 +68,10 @@ export function rideStats(samples: Sample[]): RideStats | null {
     const d = haversine(a.p, b.p);
     km += d / 1000;
     if (v[i] > 1.5 && dt > 0 && dt < 30) movingS += dt;
-    const kmh = v[i] * 3.6;
-    if (kmh < 330 && (!maxKmh || kmh > maxKmh.value)) maxKmh = { value: kmh, p: b.p };
+    // Spitze nur, wenn das Tempo über drei Punkte gehalten wird: einzelne GPS Ausreißer
+    // (Sprung beim Start, schlechter Empfang) ergeben sonst Fantasiewerte
+    const kmh = Math.min(v[i - 1], v[i], v[Math.min(i + 1, v.length - 1)]) * 3.6;
+    if (i > 1 && kmh < 330 && (!maxKmh || kmh > maxKmh.value)) maxKmh = { value: kmh, p: b.p };
     if (dt < 0.5 || dt > 5) continue;
     // längs: Bremsen und Beschleunigen
     const along = (v[i] - v[i - 1]) / dt / G;

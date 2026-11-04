@@ -177,10 +177,16 @@ export default function NavigationScreen() {
       linie: [{ c: 'ok', p: state.route.shape.slice(from) }, ...active.tour.linie],
     };
   }, [active, state.route]);
-  const dashed = useMemo(
-    () => (state.route?.rejoinIndex ? state.route.shape.slice(0, state.route.rejoinIndex + 1) : null),
-    [state.route],
-  );
+  // nur den noch zu fahrenden Teil des Rückwegs zeigen (in 50 m Schritten, damit die Linie nicht bei jeder Position neu entsteht)
+  const doneStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 20) : 0;
+  const dashed = useMemo(() => {
+    const r = state.route;
+    if (!r?.rejoinIndex) return null;
+    const at = doneStep / 20;
+    let i = 0;
+    while (i < r.rejoinIndex && r.cumKm[i + 1] <= at) i++;
+    return r.shape.slice(i, r.rejoinIndex + 1);
+  }, [state.route, doneStep]);
 
   // Fahrtstatistik: GPS Punkte während der Fahrt sammeln
   const samples = useRef<Sample[]>([]);
