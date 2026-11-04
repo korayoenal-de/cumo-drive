@@ -1,0 +1,38 @@
+name: EAS Update (TestFlight)
+
+# Schickt den aktuellen JS Stand als OTA Update an den Kanal preview,
+# also an die TestFlight Builds. Läuft bei jedem Push auf main, der die App
+# betrifft, oder per Hand unter Actions. Braucht das Repo Secret EXPO_TOKEN.
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**']
+  workflow_dispatch:
+    inputs:
+      message:
+        description: Notiz zum Update
+        required: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - name: Update veröffentlichen
+        env:
+          MSG: ${{ github.event.inputs.message || github.event.head_commit.message }}
+        run: eas update --channel preview --non-interactive --message "$(printf '%s' "$MSG" | head -n 1)"
