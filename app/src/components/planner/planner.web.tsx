@@ -14,6 +14,7 @@ import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { smartRoundTrip } from '@/lib/smart-roundtrip';
 import { flatten, formatKm, legs, parseGpx, PROFILES, reverseTour, toGpx, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { countCurves, elevationProfile, resample, type ElevationProfile } from '@/lib/stats';
+import { cumoAvailable } from '@/lib/cumo-routing';
 import { deleteTour, filterTours, folders, saveTour, useLibrary, type SavedTour, type SortKey } from '@/lib/library';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
@@ -50,6 +51,19 @@ export default function Planner() {
   const [menu, setMenu] = useState<MenuState>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [rtStart, setRtStart] = useState<{ p: LatLon; name: string } | null>(null);
+  const [ownServer, setOwnServer] = useState<boolean | null>(null);
+
+  // Eigenen Routing Server suchen (alle 30 Sekunden erneut)
+  useEffect(() => {
+    let alive = true;
+    const probe = () => cumoAvailable().then((ok) => alive && setOwnServer(ok));
+    probe();
+    const t = setInterval(probe, 30000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, []);
   const [tour, setTour] = useState<PlannedTour>(SAMPLE);
   const [isSample, setIsSample] = useState(true);
   const [profile, setProfile] = useState<Profile>('kurvig');
@@ -304,6 +318,10 @@ export default function Planner() {
           ))}
         </div>
 
+        <div style={S.engine} title="Der eigene Server läuft auf deinem Mac (routing/server, bash start.sh)">
+          <span style={{ ...S.dot, background: ownServer ? C.good : C.muted }} />
+          {ownServer === null ? 'Routing wird gesucht' : ownServer ? 'Eigener Routing Server mit Sportwagen Profil' : 'Öffentliche Routing Dienste (eigener Server aus)'}
+        </div>
         {busy ? <Status text={busy} onCancel={() => abort.current?.abort()} /> : null}
         {error ? <div style={S.error}>{error}</div> : null}
 
@@ -1124,6 +1142,8 @@ const S: Record<string, CSSProperties> = {
   spinner: { width: 14, height: 14, borderRadius: 7, border: `2px solid ${C.line}`, borderTopColor: C.signal, animation: 'cdspin 0.8s linear infinite' },
   error: { margin: '12px 20px 0', padding: '10px 12px', background: 'rgba(226,70,28,0.14)', color: '#FF8A66', borderRadius: 12 },
   errorText: { color: '#FF8A66', margin: 0, fontSize: 13 },
+  engine: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px', color: C.muted, fontSize: 12, borderBottom: `1px solid ${C.surface2}` },
+  dot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
   menu: { position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: 200, padding: 4, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
   menuItem: { textAlign: 'left', background: 'transparent', border: 'none', color: C.text, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', font: `500 14px ${BODY}` },
   saveBox: { display: 'flex', gap: 8, alignItems: 'center' },

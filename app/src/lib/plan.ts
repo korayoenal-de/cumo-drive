@@ -4,6 +4,7 @@
  * Das unterscheidet uns von calimoto, das gesperrte Straßen nur anzeigt.
  */
 import { checkLine } from './check';
+import { cumoAvailable, cumoPlan } from './cumo-routing';
 import { route, type Avoid } from './valhalla';
 import { haversine, type LatLon, type Profile, type Tour } from './tour';
 
@@ -36,6 +37,15 @@ export async function planChecked(
   signal?: AbortSignal,
   snapMajor = false,
 ): Promise<PlannedTour> {
+  // Eigener Routing Server (Sportwagen Profil, Prüfung ohne fremde Dienste) hat Vorrang
+  if (await cumoAvailable()) {
+    try {
+      onStep?.('route');
+      return await cumoPlan(name, points, profile, avoid, signal);
+    } catch (e) {
+      if (signal?.aborted) throw e;
+    }
+  }
   let exclude: LatLon[] = [];
   let best: PlannedTour | null = null;
   for (let round = 0; round < 3; round++) {

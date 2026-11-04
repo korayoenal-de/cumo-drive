@@ -1,0 +1,44 @@
+# CUMO DRIVE Routing Server (GraphHopper) für die Entwicklung auf dem Mac.
+# Start über ./start.sh, nicht direkt. Pfade sind relativ zu diesem Ordner.
+graphhopper:
+  datareader.file: data/region.osm.pbf
+  graph.location: data/graph-cache
+
+  # Merkmale, die das Sportwagen Profil braucht
+  graph.encoded_values: car_access, car_average_speed, road_class, road_environment, road_access, surface, track_type, max_width, curvature, toll
+
+  # Wege, die für Autos nie in Frage kommen, gar nicht erst einlesen
+  import.osm.ignored_highways: footway,cycleway,path,pedestrian,steps,bridleway,construction,proposed,platform,corridor,via_ferrata
+
+  custom_models.directory: custom_models
+
+  profiles:
+    - name: sportwagen
+      custom_model_files: [sportwagen.json]
+    - name: auto
+      custom_model_files: [car.json]
+
+  # Landmarken beschleunigen flexible Anfragen (Rundtouren, Änderungen zur Laufzeit)
+  profiles_lm:
+    - profile: sportwagen
+    - profile: auto
+  profiles_ch: []
+
+  prepare.min_network_size: 200
+  prepare.lm.landmarks: 16
+  routing.non_ch.max_waypoint_distance: 1000000
+  routing.max_visited_nodes: 3000000
+  graph.dataaccess.default_type: RAM_STORE
+
+server:
+  application_connectors:
+    - type: http
+      port: 8989
+      # 0.0.0.0, damit das iPhone im selben WLAN den Server erreicht
+      bind_host: 0.0.0.0
+  request_log:
+    appenders: []
+  admin_connectors:
+    - type: http
+      port: 8990
+      bind_host: localhost

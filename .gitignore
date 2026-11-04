@@ -5,3 +5,5 @@ node_modules/
 routing/data/
 __pycache__/
 .cumo.bundle
+routing/server/data/
+routing/server/bin/

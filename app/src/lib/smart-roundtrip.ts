@@ -10,6 +10,7 @@
  * leistet erst ein eigener Routing Server mit Sportwagen Profil.
  */
 import { checkLine } from './check';
+import { cumoAvailable, cumoRoundTrips } from './cumo-routing';
 import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from './graphhopper';
 import { planChecked, type PlannedTour, type PlanStep } from './plan';
 import { DIRECTIONS, roundTrip, type Direction } from './roundtrip';
@@ -28,7 +29,7 @@ export type SmartRequest = {
   seed?: number;
 };
 
-export type Engine = 'graphhopper' | 'valhalla';
+export type Engine = 'cumo' | 'graphhopper' | 'valhalla';
 export type SmartTour = PlannedTour & { engine: Engine; score: number; curves: number };
 
 /** Gleiche Bewertung für alle Kandidaten; gesperrte km wiegen schwer. */
@@ -45,6 +46,20 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
     req.bearing ?? (req.direction === 'zufall' ? seed % 360 : DIRECTIONS.find((d) => d.id === req.direction)!.bearing);
   const candidates: SmartTour[] = [];
   let lastError: unknown = null;
+
+  // 0. Eigener Routing Server: Sportwagen Profil mit Kurven, mehrere Varianten, alles lokal
+  if (await cumoAvailable()) {
+    try {
+      onStep?.('route');
+      const own = await cumoRoundTrips(req.name, req.start, req.km, heading, req.profile, req.avoid, 5, seed % 100000, signal);
+      for (const t of own) candidates.push({ ...t, engine: 'cumo', score: scoreTour(t, t.curves, 0, req.km) });
+      const clean = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0);
+      if (clean.length) return clean.sort((a, b) => b.score - a.score)[0];
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      lastError = e;
+    }
+  }
 
   // 1. Valhalla: ohne Autobahn, Via Punkte im Hügelland, geprüft und umgeplant
   onStep?.('route');
