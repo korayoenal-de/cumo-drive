@@ -12,6 +12,8 @@ import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { listCloudTours, loadCloudTour, type CloudTour } from '@/lib/cloud-tours';
+import { listDrives, type Drive } from '@/lib/drives';
+import { fmtG } from '@/lib/ride-stats';
 import { formatKm } from '@/lib/tour';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 
@@ -150,7 +152,54 @@ function Tours({ email }: { email: string }) {
           </Pressable>
         ))}
       </View>
+      <Drives />
     </>
+  );
+}
+
+/** Gefahrene Touren mit den wichtigsten Werten der Fahrtstatistik. */
+function Drives() {
+  const [list, setList] = useState<Drive[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    listDrives()
+      .then(setList)
+      .catch((e: Error) => setErr(e.message));
+  }, []);
+  return (
+    <View style={styles.card}>
+      <AppText variant="label">Gefahrene Touren</AppText>
+      {err && <AppText style={styles.error}>{err}</AppText>}
+      {list === null && !err && <ActivityIndicator color={Colors.muted} />}
+      {list?.length === 0 && <AppText muted>Noch keine Fahrt gespeichert. Nach jeder Navigation landet die Fahrtstatistik hier.</AppText>}
+      {list?.map((d, i) => {
+        const h = Math.floor(d.moving_min / 60);
+        const m = d.moving_min % 60;
+        return (
+          <View key={d.id} style={[styles.driveRow, i > 0 && styles.border]}>
+            <View style={styles.row}>
+              <AppText style={[styles.tourName, styles.flex]} numberOfLines={1}>
+                {d.name}
+              </AppText>
+              <AppText variant="caption" muted>
+                {new Date(d.started_at).toLocaleDateString('de-DE')}
+              </AppText>
+            </View>
+            <AppText variant="caption" muted>
+              {[
+                `${formatKm(Number(d.km), 0)} km`,
+                h ? `${h}:${String(m).padStart(2, '0')} h` : `${m} min`,
+                d.curves ? `${d.curves} Kurven` : null,
+                d.max_lat_g ? `quer ${fmtG(Number(d.max_lat_g))}` : null,
+                d.max_kmh ? `bis ${Math.round(Number(d.max_kmh))} km/h` : null,
+              ]
+                .filter(Boolean)
+                .join(', ')}
+            </AppText>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
@@ -169,5 +218,6 @@ const styles = StyleSheet.create({
   tourRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingVertical: Spacing.m },
   border: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
   tourName: { fontFamily: Fonts.semibold, fontSize: 16 },
+  driveRow: { gap: 2, paddingVertical: Spacing.m },
   arrow: { fontFamily: Fonts.display, fontSize: 24, color: Colors.muted },
 });

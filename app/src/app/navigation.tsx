@@ -15,6 +15,8 @@ import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/c
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
+import { useSession } from '@/lib/auth';
+import { saveDrive } from '@/lib/drives';
 import { useNavigation } from '@/lib/navigation';
 import type { NavEntry, NavRequest } from '@/lib/navigation/types';
 import { QUICK_MESSAGES, sendMessage, sendPosition, useRide } from '@/lib/group/ride';
@@ -119,6 +121,24 @@ export default function NavigationScreen() {
     return () => clearTimeout(t);
   }, [state.status]);
   const shownStats = summary ?? arrivedStats;
+
+  // Gefahrene Tour einmal im Konto speichern (nicht bei Simulation, nicht ohne Konto)
+  const simulated = useRef(false);
+  const session = useSession();
+  const [saved, setSaved] = useState<'nein' | 'ok' | 'fehler' | 'simulation' | 'ohne_konto' | null>(null);
+  const savedFor = useRef<RideStats | null>(null);
+  useEffect(() => {
+    if (!shownStats || savedFor.current === shownStats || !active) return;
+    savedFor.current = shownStats;
+    const why = simulated.current ? 'simulation' : !session ? 'ohne_konto' : shownStats.km < 1 ? 'nein' : null;
+    if (why) {
+      const t = setTimeout(() => setSaved(why), 0);
+      return () => clearTimeout(t);
+    }
+    saveDrive(active.tour.name, shownStats, samples.current)
+      .then(() => setSaved('ok'))
+      .catch(() => setSaved('fehler'));
+  }, [shownStats, session, active]);
   const pins = useMemo(() => {
     if (!shownStats) return undefined;
     const out = [];
@@ -222,7 +242,10 @@ export default function NavigationScreen() {
               onEnd={close}
               onVoice={() => controls.setVoice(!state.voice)}
               onSecret={() => setSecret(true)}
-              onSimulate={() => controls.simulate(true)}
+              onSimulate={() => {
+                simulated.current = true;
+                controls.simulate(true);
+              }}
             />
           </>
         )}
@@ -299,7 +322,14 @@ export default function NavigationScreen() {
                 </View>
                 {showSim && (
                   <View style={styles.flex}>
-                    <BigButton label="Simulieren" kind="ghost" onPress={() => controls.simulate(true)} />
+                    <BigButton
+                      label="Simulieren"
+                      kind="ghost"
+                      onPress={() => {
+                        simulated.current = true;
+                        controls.simulate(true);
+                      }}
+                    />
                   </View>
                 )}
               </View>
@@ -315,6 +345,7 @@ export default function NavigationScreen() {
                 {active.tour.name}
               </AppText>
               <StatsGrid st={summary} />
+              <SavedNote saved={saved} />
               <BigButton label="Fertig" onPress={exit} />
             </InfoCard>
           </View>
@@ -329,6 +360,7 @@ export default function NavigationScreen() {
                 {formatKm(drivenKm || route?.km || active.tour.laenge_km)} km gefahren auf {active.tour.name}.
               </AppText>
               {arrivedStats && <StatsGrid st={arrivedStats} />}
+              <SavedNote saved={saved} />
               <BigButton label="Fertig" onPress={exit} />
             </InfoCard>
           </View>
@@ -346,6 +378,21 @@ export default function NavigationScreen() {
         )}
       </View>
     </View>
+  );
+}
+
+function SavedNote({ saved }: { saved: string | null }) {
+  const text: Record<string, string> = {
+    ok: 'Im Konto gespeichert, du findest die Fahrt in der Garage.',
+    fehler: 'Speichern hat nicht geklappt. Prüfe die Verbindung.',
+    simulation: 'Simulation, wird nicht gespeichert.',
+    ohne_konto: 'Melde dich in der Garage an, dann werden deine Fahrten gespeichert.',
+  };
+  if (!saved || !text[saved]) return null;
+  return (
+    <AppText variant="caption" muted>
+      {text[saved]}
+    </AppText>
   );
 }
 
