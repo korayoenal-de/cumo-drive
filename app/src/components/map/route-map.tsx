@@ -2,9 +2,9 @@
  * Karte mit einer Tour. Heute react-native-maps (auf dem iPhone Apple Maps, läuft in Expo Go).
  * Später mit eigenem App Build MapLibre: dann wird nur diese Datei ersetzt, die Props bleiben.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import MapView, { Marker, Polyline, type LatLng } from 'react-native-maps';
+import { useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
+import { Easing, Pressable, StyleSheet, View } from 'react-native';
+import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-native-maps';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius } from '@/constants/theme';
@@ -106,12 +106,31 @@ export function RouteMap({
     return () => clearTimeout(t);
   }, [ready, highlightIndex, tour]);
 
-  // Kamera folgt der Position mit Blickrichtung und etwas Neigung
+  // Eigener Punkt gleitet zwischen den GPS Positionen (etwa eine pro Sekunde), statt zu springen
+  const [me] = useState(() => new AnimatedRegion({ latitude: position?.[0] ?? 0, longitude: position?.[1] ?? 0, latitudeDelta: 0, longitudeDelta: 0 }));
+  const placed = useRef(false);
+  const lastFix = useRef(0);
+  useEffect(() => {
+    if (!position) return;
+    const now = Date.now();
+    const gap = now - lastFix.current;
+    lastFix.current = now;
+    const to = { latitude: position[0], longitude: position[1], latitudeDelta: 0, longitudeDelta: 0 };
+    if (!placed.current || gap > 4000) {
+      placed.current = true;
+      me.setValue(to);
+      return;
+    }
+    me.stopAnimation(() => undefined);
+    me.timing({ ...to, duration: Math.min(1500, Math.max(300, gap)), easing: Easing.linear, useNativeDriver: false, toValue: 0 }).start();
+  }, [position, me]);
+
+  // Kamera folgt der Position mit Blickrichtung und etwas Neigung, so lange wie der Abstand der Positionen
   useEffect(() => {
     if (!ready || !following || !position) return;
     map.current?.animateCamera(
       { center: ll(position), heading: heading ?? 0, pitch: 50, zoom: 17, altitude: 500 },
-      { duration: 900 },
+      { duration: 1000 },
     );
   }, [ready, following, position, heading]);
 
@@ -239,11 +258,11 @@ export function RouteMap({
         ))}
 
         {position && (
-          <Marker coordinate={ll(position)} anchor={{ x: 0.5, y: 0.5 }} flat rotation={heading ?? 0} zIndex={40}>
+          <MeMarker coordinate={me as unknown as LatLng} anchor={{ x: 0.5, y: 0.5 }} flat rotation={heading ?? 0} zIndex={40} tracksViewChanges={false}>
             <View style={styles.me}>
               <View style={styles.meArrow} />
             </View>
-          </Marker>
+          </MeMarker>
         )}
       </MapView>
 
@@ -257,6 +276,8 @@ export function RouteMap({
 }
 
 type MapMarker = InstanceType<typeof Marker>;
+/** Marker mit animierter Position (Typen von react-native-maps kennen die Kinder nicht). */
+const MeMarker = Marker.Animated as unknown as ComponentType<ComponentProps<typeof Marker>>;
 
 const styles = StyleSheet.create({
   box: { backgroundColor: Colors.surface, overflow: 'hidden' },

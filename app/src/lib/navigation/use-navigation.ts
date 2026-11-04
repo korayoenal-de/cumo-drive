@@ -111,7 +111,9 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const setRoute = useCallback(
     (route: NavRoute) => {
       routeRef.current = route;
-      hintRef.current = -1;
+      // Neue Routen beginnen am Standort (Anfahrt) oder am Tour Start: von vorne suchen. Sonst landet
+      // man bei einer Runde, deren Start gleich Ziel ist, sofort am Ende (Ziel erreicht).
+      hintRef.current = 0;
       doneIndexRef.current = 0;
       offSinceRef.current = null;
       voice().reset();
@@ -159,7 +161,9 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const pr = progress(route, snap.km);
       const end = route.shape[route.shape.length - 1];
       const toEndM = haversine(fix.pos, end);
-      const arrived = toEndM < ARRIVE_M && pr.remainingKm < 0.3;
+      // angekommen erst, wenn man den größten Teil der Route gefahren ist (Runden enden am Start)
+      const covered = route.km < 2 || route.cumKm[Math.min(doneIndexRef.current, route.cumKm.length - 1)] > route.km * 0.6;
+      const arrived = toEndM < ARRIVE_M && pr.remainingKm < 0.3 && covered;
 
       // Ankunftszeit: Restzeit anteilig aus der geplanten Fahrzeit
       const restMin = route.km > 0 ? route.minutes * (pr.remainingKm / route.km) : 0;

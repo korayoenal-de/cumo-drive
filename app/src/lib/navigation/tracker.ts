@@ -32,6 +32,8 @@ const WINDOW_AHEAD_KM = 3;
 const LOCAL_OK_M = 80;
 /** Ein globaler Treffer muss so viel näher sein, um den lokalen zu ersetzen */
 const GLOBAL_MARGIN_M = 40;
+/** Bis zu diesem Abstand bleibt man auf dem lokalen Abschnitt, statt weit nach vorne zu springen */
+const JUMP_KEEP_M = 250;
 
 /** Projektion von p auf das Segment a b in einer lokalen ebenen Näherung. */
 function project(a: LatLon, b: LatLon, p: LatLon): { t: number; point: LatLon; dist: number } {
@@ -95,6 +97,9 @@ export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number): Sn
     if (local && local.offM <= LOCAL_OK_M) return local;
     const all = searchRange(route, pos, 0, n - 1)!;
     if (local && all.offM > local.offM - GLOBAL_MARGIN_M) return local;
+    // Weit nach vorne springen nur, wenn man wirklich nicht mehr in der Nähe ist. Sonst springt man
+    // bei Runden (Ende liegt am Start) sofort ans Ende und die Navigation meldet Ziel erreicht.
+    if (local && local.offM < JUMP_KEEP_M && all.km - local.km > WINDOW_AHEAD_KM) return local;
     return all;
   }
   return searchRange(route, pos, 0, n - 1)!;
