@@ -49,8 +49,10 @@ function isMinor(e: Edge) {
 /**
  * Bewertet Kanten, inklusive Abschnittsregel.
  * lenient: für importierte Touren mit dünnen Punkten (calimoto exportiert nur alle paar hundert
- * Meter einen Punkt). Isolierte Sperrstücke unter 400 m außerhalb eines gesperrten Abschnitts
- * sind dann meist Abgleichfehler und werden nur zum Prüfhinweis.
+ * Meter einen Punkt). Isolierte Sperrstücke unter 1 km außerhalb eines gesperrten Abschnitts
+ * sind dann meist Abgleichfehler (etwa an Passhöhen mit Parkplätzen) und werden nur zum
+ * Prüfhinweis; Abschnitte unter 1 km zählen nicht als gesperrte Zone. Kalibriert an fünf
+ * gefahrenen CDC Etappen: gute Etappen 0 km raus, Val Resia (RCO EAST 26 E3) bleibt 15,7 km raus.
  */
 export function rateEdges(edges: Edge[], lenient = false): { c: CheckClass; why: string[] }[] {
   const rated = edges.map(classify);
@@ -69,7 +71,8 @@ export function rateEdges(edges: Edge[], lenient = false): { c: CheckClass; why:
       km += edges[j].length ?? 0;
       j++;
     }
-    if (hits >= 2) {
+    // bei Importen (dünne Punkte) zählen Mini Zonen unter 1 km nicht als gesperrter Abschnitt
+    if (hits >= 2 && !(lenient && km < 1)) {
       const reason = `Teil eines ${km.toFixed(1).replace('.', ',')} km langen Nebenstraßen Abschnitts mit ${hits} Sperrsignalen`;
       for (let k = i; k < j; k++) {
         inZone[k] = true;
@@ -88,7 +91,7 @@ export function rateEdges(edges: Edge[], lenient = false): { c: CheckClass; why:
       let b = a;
       let km = 0;
       while (b < edges.length && rated[b].c === 'raus' && !inZone[b]) km += edges[b++].length ?? 0;
-      if (km < 0.4) {
+      if (km < 1) {
         for (let k = a; k < b; k++) rated[k] = { c: 'pruefen', why: ['kurzes Stück, vermutlich Abgleichfehler', ...rated[k].why] };
       }
       a = b;
@@ -115,8 +118,21 @@ export async function checkLine(
 ): Promise<Pick<Tour, 'linie' | 'warnungen' | 'km_je_klasse' | 'laenge_km'>> {
   const pts = thin(line, 40);
   const CHUNK = 600;
+  // Stücke nach Punktzahl und Länge: der öffentliche Server nimmt höchstens 200 km pro Abgleich
+  const MAX_CHUNK_M = 150000;
   const chunks: LatLon[][] = [];
-  for (let s = 0; s < pts.length - 1; s += CHUNK - 1) chunks.push(pts.slice(s, s + CHUNK));
+  let cur: LatLon[] = [pts[0]];
+  let curM = 0;
+  for (let i = 1; i < pts.length; i++) {
+    cur.push(pts[i]);
+    curM += haversine(pts[i - 1], pts[i]);
+    if ((cur.length >= CHUNK || curM >= MAX_CHUNK_M) && i < pts.length - 1) {
+      chunks.push(cur);
+      cur = [pts[i]];
+      curM = 0;
+    }
+  }
+  if (cur.length > 1) chunks.push(cur);
   const edges: Edge[] = [];
   const shapes: LatLon[][] = [];
   for (let k = 0; k < chunks.length; k++) {
