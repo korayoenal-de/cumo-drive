@@ -1,0 +1,7 @@
+# Supabase Projekt CUMO DRIVE. Über die GitHub Integration spielt Supabase bei jedem Push auf
+# main die Migrationen und die hier deklarierten Edge Functions ein.
+project_id = "cumo-drive"
+
+[functions.pass-status]
+# Öffentlich aufrufbar; die Funktion fragt TomTom höchstens alle 2 Stunden ab.
+verify_jwt = false
