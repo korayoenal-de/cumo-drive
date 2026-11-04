@@ -197,7 +197,7 @@ export default function Planner() {
     fitTour(parsed);
     await run('Etappen Check läuft', async (signal) => {
       const line = flatten(parsed).map((x) => x.p);
-      const c = await checkLine(line, (d, n) => setBusy(`Etappen Check läuft (${d} von ${n})`), signal);
+      const c = await checkLine(line, (d, n) => setBusy(`Etappen Check läuft (${d} von ${n})`), signal, true);
       return { ...parsed, ...c, geprueft: true };
     });
   };

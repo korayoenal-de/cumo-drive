@@ -46,9 +46,15 @@ function isMinor(e: Edge) {
   return !(e.names ?? []).some((n) => NUMBERED.test(n));
 }
 
-/** Bewertet Kanten, inklusive Abschnittsregel. */
-export function rateEdges(edges: Edge[]): { c: CheckClass; why: string[] }[] {
+/**
+ * Bewertet Kanten, inklusive Abschnittsregel.
+ * lenient: für importierte Touren mit dünnen Punkten (calimoto exportiert nur alle paar hundert
+ * Meter einen Punkt). Isolierte Sperrstücke unter 400 m außerhalb eines gesperrten Abschnitts
+ * sind dann meist Abgleichfehler und werden nur zum Prüfhinweis.
+ */
+export function rateEdges(edges: Edge[], lenient = false): { c: CheckClass; why: string[] }[] {
   const rated = edges.map(classify);
+  const inZone = new Array(edges.length).fill(false);
   let i = 0;
   while (i < edges.length) {
     if (!isMinor(edges[i])) {
@@ -66,10 +72,27 @@ export function rateEdges(edges: Edge[]): { c: CheckClass; why: string[] }[] {
     if (hits >= 2) {
       const reason = `Teil eines ${km.toFixed(1).replace('.', ',')} km langen Nebenstraßen Abschnitts mit ${hits} Sperrsignalen`;
       for (let k = i; k < j; k++) {
+        inZone[k] = true;
         if (rated[k].c !== 'raus') rated[k] = { c: 'raus', why: [reason, ...rated[k].why] };
       }
     }
     i = j;
+  }
+  if (lenient) {
+    let a = 0;
+    while (a < edges.length) {
+      if (rated[a].c !== 'raus' || inZone[a]) {
+        a++;
+        continue;
+      }
+      let b = a;
+      let km = 0;
+      while (b < edges.length && rated[b].c === 'raus' && !inZone[b]) km += edges[b++].length ?? 0;
+      if (km < 0.4) {
+        for (let k = a; k < b; k++) rated[k] = { c: 'pruefen', why: ['kurzes Stück, vermutlich Abgleichfehler', ...rated[k].why] };
+      }
+      a = b;
+    }
   }
   return rated;
 }
@@ -88,6 +111,7 @@ export async function checkLine(
   line: LatLon[],
   onProgress?: (done: number, total: number) => void,
   signal?: AbortSignal,
+  lenient = false,
 ): Promise<Pick<Tour, 'linie' | 'warnungen' | 'km_je_klasse' | 'laenge_km'>> {
   const pts = thin(line, 40);
   const CHUNK = 600;
@@ -103,7 +127,7 @@ export async function checkLine(
     }
     onProgress?.(k + 1, chunks.length);
   }
-  const rated = rateEdges(edges);
+  const rated = rateEdges(edges, lenient);
 
   const linie: Tour['linie'] = [];
   const warnungen: Warning[] = [];
