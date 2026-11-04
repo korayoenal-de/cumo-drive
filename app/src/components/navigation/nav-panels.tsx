@@ -11,6 +11,13 @@ import type { Maneuver } from '@/lib/navigation/types';
 import { formatClock, formatDistance, formatRemaining } from './format';
 import { ManeuverIcon, MicIcon, SpeakerIcon } from './maneuver-icon';
 
+/**
+ * Zustands Karten über der Karte: Colors.signalTint und Colors.goodTint auf Ground verrechnet,
+ * damit die Fläche deckend genug bleibt und die Karte nicht durchscheint.
+ */
+const SIGNAL_OVERLAY = 'rgba(41,19,14,0.96)';
+const GOOD_OVERLAY = 'rgba(19,33,27,0.96)';
+
 /** soon: das Manöver steht kurz bevor (etwa 150 m), dann stupst der Pfeil an. */
 export function ManeuverCard({ maneuver, distM, then, soon = false }: { maneuver: Maneuver; distM: number | null; then?: Maneuver; soon?: boolean }) {
   const d = formatDistance(distM);
@@ -167,7 +174,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   pressed: { opacity: 0.8 },
 
-  maneuver: { backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.l, borderWidth: 1, borderColor: Colors.line, gap: Spacing.m },
+  maneuver: { backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   maneuverRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l },
   arrowBox: { width: 84, height: 84, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   exit: { position: 'absolute', bottom: 2, fontFamily: Fonts.bold, fontSize: 10, color: Colors.onSignal },
@@ -175,24 +182,24 @@ const styles = StyleSheet.create({
   distUnit: { fontFamily: Fonts.displayBold, fontSize: 24, color: Colors.muted },
   instruction: { fontFamily: Fonts.semibold, fontSize: 18, lineHeight: 23 },
   street: { fontFamily: Fonts.regular, fontSize: 15, color: Colors.muted, marginTop: 2 },
-  then: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line, paddingTop: Spacing.s },
+  then: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingTop: Spacing.m },
 
-  info: { backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.l, borderWidth: 1, borderColor: Colors.line, gap: Spacing.m },
-  infoSignal: { borderColor: Colors.signal },
-  infoGood: { borderColor: Colors.good },
+  info: { backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
+  infoSignal: { backgroundColor: SIGNAL_OVERLAY },
+  infoGood: { backgroundColor: GOOD_OVERLAY },
 
-  bar: { backgroundColor: 'rgba(11,11,12,0.96)', borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l, paddingHorizontal: Spacing.xl, paddingTop: Spacing.l, gap: Spacing.s, borderWidth: 1, borderColor: Colors.line, borderBottomWidth: 0 },
+  bar: { backgroundColor: 'rgba(11,11,12,0.96)', borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l, paddingHorizontal: Spacing.xl, paddingTop: Spacing.l, gap: Spacing.s },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   eta: { fontFamily: Fonts.display, fontSize: 40, lineHeight: 44, fontVariant: ['tabular-nums'] },
-  round: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: Colors.line, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  round: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   funk: { width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.surface2, borderWidth: 2, borderColor: Colors.good, alignItems: 'center', justifyContent: 'center' },
   funkHint: { position: 'absolute', top: -44, alignSelf: 'center', backgroundColor: Colors.surface2, borderRadius: Radius.pill, paddingHorizontal: Spacing.l, height: 34, justifyContent: 'center' },
   end: { height: 52, paddingHorizontal: Spacing.l, borderRadius: Radius.m, backgroundColor: Colors.signal, justifyContent: 'center' },
   endText: { fontFamily: Fonts.bold, fontSize: 16, color: Colors.onSignal },
-  sim: { alignSelf: 'flex-start', height: 30, paddingHorizontal: Spacing.m, borderRadius: Radius.pill, borderWidth: 1, borderColor: Colors.line, justifyContent: 'center' },
+  sim: { alignSelf: 'flex-start', height: 30, paddingHorizontal: Spacing.m, borderRadius: Radius.pill, backgroundColor: Colors.surface, justifyContent: 'center' },
 
   big: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   bigText: { fontFamily: Fonts.display, fontSize: 20, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
-  ghost: { height: 52, borderRadius: Radius.m, borderWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
+  ghost: { height: 52, borderRadius: Radius.m, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   ghostText: { fontFamily: Fonts.semibold, fontSize: 16 },
 });

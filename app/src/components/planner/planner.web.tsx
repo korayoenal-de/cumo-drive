@@ -916,7 +916,7 @@ function Gallery(props: {
           </span>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-          <button style={{ ...S.secondary, flex: 'none', padding: '0 14px' }} disabled={!props.canAdd} onClick={() => props.onAddVia(g.p)}>
+          <button style={{ ...S.secondaryOnSurface, flex: 'none', padding: '0 14px' }} disabled={!props.canAdd} onClick={() => props.onAddVia(g.p)}>
             Als Zwischenziel einfügen
           </button>
           <button aria-label="Galerie schließen" style={S.iconBtn} onClick={() => props.onChange(null)}>
@@ -972,7 +972,7 @@ function LibraryPanel(props: { currentId: string | null; onOpen: (t: SavedTour) 
               </Chip>
             ))}
           </div>
-          <ul style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
+          <ul style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
             {shown.map((t) => (
               <li key={t.id} style={{ ...S.libRow, ...(t.id === props.currentId ? { background: C.surface } : {}) }}>
                 <button style={S.libOpen} onClick={() => props.onOpen(t)}>
@@ -1021,7 +1021,7 @@ function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; isSampl
     return (
       <div style={S.groupBox}>
         <p style={{ margin: 0 }}>Alle Mitfahrer sehen sich live auf der Karte, in der App und hier im Planer. Sprechfunk folgt.</p>
-        <input id="grp-name" aria-label="Dein Name" placeholder="Dein Name" value={name} onChange={(e) => setName(e.target.value)} style={{ ...S.search, height: 40 }} />
+        <input id="grp-name" aria-label="Dein Name" placeholder="Dein Name" value={name} onChange={(e) => setName(e.target.value)} style={{ ...S.search, height: 40, background: C.surface2 }} />
         <button
           style={S.primary}
           disabled={busy || !name.trim()}
@@ -1034,8 +1034,8 @@ function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; isSampl
           {canShare ? 'Fahrt mit dieser Tour starten' : 'Fahrt starten'}
         </button>
         <div style={S.btnRow}>
-          <input id="grp-code" aria-label="Fahrtcode" placeholder="Fahrtcode" value={code} onChange={(e) => setCode(normalizeCode(e.target.value))} style={{ ...S.search, height: 40, flex: 1, letterSpacing: 4, textTransform: 'uppercase' }} />
-          <button style={{ ...S.secondary, flex: 'none' }} disabled={busy || !name.trim() || code.length !== 6} onClick={() => void joinRide(code, name, 'Planer')}>
+          <input id="grp-code" aria-label="Fahrtcode" placeholder="Fahrtcode" value={code} onChange={(e) => setCode(normalizeCode(e.target.value))} style={{ ...S.search, height: 40, flex: 1, background: C.surface2, letterSpacing: 4, textTransform: 'uppercase' }} />
+          <button style={{ ...S.secondaryOnSurface, flex: 'none' }} disabled={busy || !name.trim() || code.length !== 6} onClick={() => void joinRide(code, name, 'Planer')}>
             Beitreten
           </button>
         </div>
@@ -1084,7 +1084,7 @@ function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; isSampl
       </ul>
       <div style={S.chips}>
         {QUICK_MESSAGES.map((m) => (
-          <Chip key={m} on={false} onClick={() => sendMessage(m)}>
+          <Chip key={m} on={false} onSurface onClick={() => sendMessage(m)}>
             {m}
           </Chip>
         ))}
@@ -1155,14 +1155,14 @@ function AccountBox() {
       }}>
       <b>Konto</b>
       <span style={S.small}>Ohne Konto bleiben Touren nur in diesem Browser. Mit Konto stehen sie auch in der App.</span>
-      <input id="acc-email" type="email" autoComplete="email" aria-label="E-Mail" placeholder="E-Mail" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...S.search, height: 40 }} />
-      <input id="acc-pw" type="password" autoComplete="current-password" aria-label="Passwort" placeholder="Passwort, mindestens 8 Zeichen" value={pw} onChange={(e) => setPw(e.target.value)} style={{ ...S.search, height: 40 }} />
+      <input id="acc-email" type="email" autoComplete="email" aria-label="E-Mail" placeholder="E-Mail" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...S.search, height: 40, background: C.surface2 }} />
+      <input id="acc-pw" type="password" autoComplete="current-password" aria-label="Passwort" placeholder="Passwort, mindestens 8 Zeichen" value={pw} onChange={(e) => setPw(e.target.value)} style={{ ...S.search, height: 40, background: C.surface2 }} />
       {err ? <span style={{ ...S.small, color: C.signal }}>{err}</span> : null}
       <div style={S.btnRow}>
         <button type="submit" style={S.primary} disabled={busy || !email || !pw}>
           Anmelden
         </button>
-        <button type="button" style={S.secondary} disabled={busy || !email || !pw} onClick={() => void run(signUp)}>
+        <button type="button" style={S.secondaryOnSurface} disabled={busy || !email || !pw} onClick={() => void run(signUp)}>
           Registrieren
         </button>
       </div>
@@ -1479,9 +1479,10 @@ function Section(props: { title: string; aside?: string; children: ReactNode }) 
   );
 }
 
-function Chip(props: { on: boolean; onClick: () => void; children: ReactNode }) {
+/** onSurface: Chip liegt in einer Surface Box und bekommt die hellere Füllung. */
+function Chip(props: { on: boolean; onClick: () => void; onSurface?: boolean; children: ReactNode }) {
   return (
-    <button aria-pressed={props.on} onClick={props.onClick} style={props.on ? S.chipOn : S.chip}>
+    <button aria-pressed={props.on} onClick={props.onClick} style={props.on ? S.chipOn : props.onSurface ? S.chipOnSurface : S.chip}>
       {props.children}
     </button>
   );
@@ -1579,14 +1580,14 @@ const S: Record<string, CSSProperties> = {
   map: { position: 'absolute', inset: 0 },
   mapError: { position: 'absolute', top: 16, left: 16, right: 16, padding: 14, background: C.surface, borderRadius: 12, color: C.text },
   hint: { position: 'absolute', left: 16, bottom: 16, padding: '8px 12px', background: 'rgba(11,11,12,0.85)', borderRadius: 999, color: C.muted, fontSize: 12 },
-  side: { width: 400, maxWidth: '100%', display: 'flex', flexDirection: 'column', borderLeft: `1px solid ${C.surface2}`, background: C.ground },
+  side: { width: 400, maxWidth: '100%', display: 'flex', flexDirection: 'column', background: C.ground },
   brandRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 12px' },
   brand: { fontFamily: DISPLAY, fontSize: 15, letterSpacing: 2 },
   ride: { display: 'flex', background: C.surface, borderRadius: 999, padding: 3 },
   rideOn: { ...chipBase, height: 28, background: C.text, color: C.ground, border: 'none', fontWeight: 700 },
   rideOff: { ...chipBase, height: 28, background: 'transparent', color: C.muted, border: 'none' },
   groupBox: { display: 'flex', flexDirection: 'column', gap: 10, background: C.surface, borderRadius: 12, padding: 14, lineHeight: 1.45 },
-  tabs: { display: 'flex', gap: 2, padding: '0 14px 12px', borderBottom: `1px solid ${C.surface2}`, overflowX: 'auto' },
+  tabs: { display: 'flex', gap: 2, padding: '0 14px 12px', overflowX: 'auto' },
   tab: { ...btnBase, height: 34, padding: '0 11px', background: 'transparent', color: C.muted, border: 'none', whiteSpace: 'nowrap' },
   tabOn: { ...btnBase, height: 34, padding: '0 11px', background: C.surface2, color: C.text, border: 'none', whiteSpace: 'nowrap' },
   scroll: { flex: 1, overflowY: 'auto', padding: '16px 20px 32px' },
@@ -1600,8 +1601,8 @@ const S: Record<string, CSSProperties> = {
   statsRow: { display: 'flex', gap: 26, paddingTop: 6 },
   checkGood: { background: 'rgba(76,195,138,0.12)', color: C.good, padding: '10px 12px', borderRadius: 12, fontWeight: 600 },
   checkBad: { background: 'rgba(226,70,28,0.14)', color: '#FF8A66', padding: '10px 12px', borderRadius: 12, fontWeight: 600 },
-  search: { width: '100%', boxSizing: 'border-box', height: 44, padding: '0 14px', background: C.surface, color: C.text, border: `1px solid ${C.surface2}`, borderRadius: 12, font: `500 14px ${BODY}`, outline: 'none' },
-  dropdown: { position: 'absolute', zIndex: 5, top: 48, left: 0, right: 0, margin: 0, padding: 4, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 12 },
+  search: { width: '100%', boxSizing: 'border-box', height: 44, padding: '0 14px', background: C.surface, color: C.text, border: 'none', borderRadius: 12, font: `500 14px ${BODY}`, outline: 'none' },
+  dropdown: { position: 'absolute', zIndex: 5, top: 48, left: 0, right: 0, margin: 0, padding: 4, background: C.surface, border: 'none', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
   dropItem: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', padding: '8px 10px', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', borderRadius: 8, textAlign: 'left', font: `500 14px ${BODY}` },
   dropDetail: { color: C.muted, fontSize: 12 },
   wpList: { margin: 0, padding: 0, display: 'flex', flexDirection: 'column' },
@@ -1620,41 +1621,43 @@ const S: Record<string, CSSProperties> = {
   label: { fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: C.muted },
   aside: { fontSize: 13, fontWeight: 600 },
   chips: { display: 'flex', flexWrap: 'wrap', gap: 6 },
-  chip: { ...chipBase, background: 'transparent', color: C.text, border: `1px solid ${C.line}` },
-  chipOn: { ...chipBase, background: C.text, color: C.ground, border: `1px solid ${C.text}`, fontWeight: 700 },
+  chip: { ...chipBase, background: C.surface, color: C.text, border: 'none' },
+  chipOnSurface: { ...chipBase, background: C.surface2, color: C.text, border: 'none' },
+  chipOn: { ...chipBase, background: C.text, color: C.ground, border: 'none', fontWeight: 700 },
   toggleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: 'pointer', padding: '4px 0' },
   switch: { width: 40, height: 22, borderRadius: 11, position: 'relative', flexShrink: 0, transition: 'background 150ms' },
   knob: { position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: 9, background: '#fff', transition: 'transform 150ms' },
   btnRow: { display: 'flex', gap: 8, flexWrap: 'wrap' },
   primary: { ...btnBase, height: 46, background: C.signal, color: '#fff', border: 'none', fontWeight: 700, flex: 1 },
-  secondary: { ...btnBase, background: 'transparent', color: C.text, border: `1px solid ${C.line}`, flex: 1 },
+  secondary: { ...btnBase, background: C.surface, color: C.text, border: 'none', flex: 1 },
+  secondaryOnSurface: { ...btnBase, background: C.surface2, color: C.text, border: 'none', flex: 1 },
   link: { background: 'transparent', border: 'none', color: C.text, textDecoration: 'underline', cursor: 'pointer', font: `600 13px ${BODY}`, padding: 0, alignSelf: 'flex-start' },
   startRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: C.surface, padding: '10px 12px', borderRadius: 12, fontWeight: 600 },
   compass: { display: 'grid', gridTemplateColumns: 'repeat(3, 44px)', gap: 6 },
-  compassBtn: { width: 44, height: 44, borderRadius: 12, background: C.surface, color: C.text, border: `1px solid ${C.surface2}`, fontSize: 18, cursor: 'pointer' },
+  compassBtn: { width: 44, height: 44, borderRadius: 12, background: C.surface, color: C.text, border: 'none', fontSize: 18, cursor: 'pointer' },
   compassOn: { width: 44, height: 44, borderRadius: 12, background: C.signal, color: '#fff', border: 'none', fontSize: 18, cursor: 'pointer' },
-  textarea: { width: '100%', boxSizing: 'border-box', background: C.surface, color: C.text, border: `1px solid ${C.surface2}`, borderRadius: 14, padding: 14, font: `500 15px/1.4 ${BODY}`, resize: 'vertical', outline: 'none' },
+  textarea: { width: '100%', boxSizing: 'border-box', background: C.surface, color: C.text, border: 'none', borderRadius: 14, padding: 14, font: `500 15px/1.4 ${BODY}`, resize: 'vertical', outline: 'none' },
   understood: { display: 'flex', flexDirection: 'column', gap: 4, lineHeight: 1.45 },
   status: { display: 'flex', alignItems: 'center', gap: 10, margin: '12px 20px 0', padding: '10px 12px', background: C.surface, borderRadius: 12 },
   spinner: { width: 14, height: 14, borderRadius: 7, border: `2px solid ${C.line}`, borderTopColor: C.signal, animation: 'cdspin 0.8s linear infinite' },
   error: { margin: '12px 20px 0', padding: '10px 12px', background: 'rgba(226,70,28,0.14)', color: '#FF8A66', borderRadius: 12 },
   errorText: { color: '#FF8A66', margin: 0, fontSize: 13 },
-  engine: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px', color: C.muted, fontSize: 12, borderBottom: `1px solid ${C.surface2}` },
+  engine: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px', color: C.muted, fontSize: 12 },
   dot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-  menu: { position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: 200, padding: 4, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
-  photoToggle: { position: 'absolute', top: 12, left: 12, zIndex: 5, height: 32, padding: '0 12px', borderRadius: 16, border: `1px solid ${C.line}`, background: 'rgba(11,11,12,0.85)', color: C.muted, font: `600 13px ${BODY}`, cursor: 'pointer' },
+  menu: { position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: 200, padding: 4, background: C.surface, border: 'none', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
+  photoToggle: { position: 'absolute', top: 12, left: 12, zIndex: 5, height: 32, padding: '0 12px', borderRadius: 16, border: 'none', background: 'rgba(11,11,12,0.85)', color: C.muted, font: `600 13px ${BODY}`, cursor: 'pointer' },
   photoToggleOn: { position: 'absolute', top: 12, left: 12, zIndex: 5, height: 32, padding: '0 12px', borderRadius: 16, border: `1px solid ${C.signal}`, background: 'rgba(11,11,12,0.85)', color: C.text, font: `600 13px ${BODY}`, cursor: 'pointer' },
-  gallery: { position: 'absolute', left: 12, right: 12, bottom: 40, zIndex: 6, display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: 'rgba(22,22,24,0.96)', border: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}` },
+  gallery: { position: 'absolute', left: 12, right: 12, bottom: 40, zIndex: 6, display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: 'rgba(22,22,24,0.96)', border: 'none', color: C.text, font: `500 14px ${BODY}` },
   thumbs: { display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 },
   thumbBtn: { flex: 'none', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: 8, overflow: 'hidden' },
   thumb: { display: 'block', height: 110, width: 'auto', borderRadius: 8 },
   lightbox: { position: 'absolute', inset: 0, zIndex: 20, background: 'rgba(0,0,0,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 16 },
   lightboxImg: { maxWidth: '100%', maxHeight: 'calc(100% - 60px)', objectFit: 'contain', borderRadius: 6 },
   lightboxBar: { display: 'flex', alignItems: 'center', gap: 12, color: C.text, font: `500 14px ${BODY}` },
-  lbBtn: { width: 36, height: 36, borderRadius: 18, border: `1px solid ${C.line}`, background: C.surface, color: C.text, fontSize: 20, cursor: 'pointer' },
+  lbBtn: { width: 36, height: 36, borderRadius: 18, border: 'none', background: C.surface, color: C.text, fontSize: 20, cursor: 'pointer' },
   rideCode: { font: `900 28px ${DISPLAY}`, letterSpacing: 4, color: C.text },
-  accountBox: { display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: C.surface, border: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}` },
-  menuHead: { display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 12px 10px', marginBottom: 2, borderBottom: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}`, maxWidth: 260 },
+  accountBox: { display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: C.surface, border: 'none', color: C.text, font: `500 14px ${BODY}` },
+  menuHead: { display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 12px 12px', marginBottom: 4, color: C.text, font: `500 14px ${BODY}`, maxWidth: 260 },
   winterNote: { display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 12px', borderRadius: 12, background: 'rgba(232,176,58,0.12)', color: C.warn, font: `500 13px ${BODY}`, lineHeight: 1.4 },
   winterLink: { color: C.text, fontWeight: 600 },
   passList: { margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2 },
@@ -1664,9 +1667,9 @@ const S: Record<string, CSSProperties> = {
   passDotIcon: { width: 12, height: 12, borderRadius: 6, background: C.warn, flexShrink: 0 },
   menuItem: { textAlign: 'left', background: 'transparent', border: 'none', color: C.text, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', font: `500 14px ${BODY}` },
   saveBox: { display: 'flex', gap: 8, alignItems: 'center' },
-  qrBox: { display: 'flex', flexDirection: 'column', gap: 10, padding: 14, background: C.surface2, border: `1px solid ${C.line}`, borderRadius: 14, color: C.text, font: `500 14px ${BODY}` },
+  qrBox: { display: 'flex', flexDirection: 'column', gap: 10, padding: 14, background: C.surface2, border: 'none', borderRadius: 14, color: C.text, font: `500 14px ${BODY}` },
   qrImg: { width: '100%', maxWidth: 340, aspectRatio: '1', alignSelf: 'center', borderRadius: 10, imageRendering: 'pixelated' },
-  libRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 8px', borderTop: `1px solid ${C.surface2}`, borderRadius: 8, listStyle: 'none' },
+  libRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '12px 10px', borderRadius: 12, listStyle: 'none' },
   libOpen: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start', textAlign: 'left', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', font: `500 14px ${BODY}`, padding: 0 },
   badgeStop: { fontSize: 11, fontWeight: 700, color: '#FF8A66', background: 'rgba(226,70,28,0.16)', padding: '2px 8px', borderRadius: 9, whiteSpace: 'nowrap' },
   badgeGood: { fontSize: 11, fontWeight: 700, color: C.good, background: 'rgba(76,195,138,0.14)', padding: '2px 8px', borderRadius: 9, whiteSpace: 'nowrap' },

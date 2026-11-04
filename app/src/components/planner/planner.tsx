@@ -482,9 +482,9 @@ export default function Planner() {
               {locError && !picked && (
                 <View style={styles.wrap}>
                   {locError.kind === 'permission' || locError.kind === 'services' ? (
-                    <Chip label="Einstellungen öffnen" active={false} onPress={() => void Linking.openSettings()} />
+                    <Chip label="Einstellungen öffnen" active={false} onSurface onPress={() => void Linking.openSettings()} />
                   ) : null}
-                  <Chip label="Nochmal versuchen" active={false} onPress={() => void findHere()} />
+                  <Chip label="Nochmal versuchen" active={false} onSurface onPress={() => void findHere()} />
                 </View>
               )}
               {picked && (
@@ -535,8 +535,8 @@ export default function Planner() {
           <Section label="Länge">
             <View style={styles.card}>
               <View style={styles.wrap}>
-                <Chip label="Kilometer" active={lengthBy === 'km'} onPress={() => setLengthBy('km')} />
-                <Chip label="Dauer" active={lengthBy === 'dauer'} onPress={() => setLengthBy('dauer')} />
+                <Chip label="Kilometer" active={lengthBy === 'km'} onSurface onPress={() => setLengthBy('km')} />
+                <Chip label="Dauer" active={lengthBy === 'dauer'} onSurface onPress={() => setLengthBy('dauer')} />
               </View>
               <View style={styles.stepper}>
                 <StepButton
@@ -1053,7 +1053,7 @@ function TourMode({
         <View style={[styles.card, styles.errorCard]}>
           <AppText variant="label" style={styles.signalText}>Das hat nicht geklappt</AppText>
           <AppText>{plan.error}</AppText>
-          {pts.length >= 2 && <SecondaryButton label="Nochmal versuchen" onPress={() => void plan.plan(pts, profile, avoid)} />}
+          {pts.length >= 2 && <SecondaryButton label="Nochmal versuchen" onSurface onPress={() => void plan.plan(pts, profile, avoid)} />}
         </View>
       )}
 
@@ -1102,7 +1102,7 @@ function TourMode({
             <Section label={`Warnungen (${warnings.length})`}>
               <View style={styles.card}>
                 {warnings.map((w, i) => (
-                  <View key={i} style={[styles.warnRow, i > 0 && styles.warnBorder]}>
+                  <View key={i} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
                     <View style={[styles.badge, { borderColor: CLASS_COLORS[w.klasse] }]}>
                       <AppText style={[styles.badgeText, { color: CLASS_COLORS[w.klasse] }]}>{CLASS_LABEL[w.klasse]}</AppText>
                     </View>
@@ -1132,7 +1132,7 @@ function TourMode({
             <Section label={`Pässe auf der Strecke (${along.length})`}>
               <View style={styles.card}>
                 {along.map(({ pass, km }, i) => (
-                  <View key={pass.id} style={[styles.warnRow, i > 0 && styles.warnBorder]}>
+                  <View key={pass.id} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
                     <View style={styles.flex}>
                       <AppText variant="title">{pass.name}</AppText>
                       <AppText variant="caption" muted>{passSummary(pass, undefined, passState(pass, live).note)}</AppText>
@@ -1159,7 +1159,7 @@ function TourMode({
             />
             {passHits.length ? (
               passHits.map(({ pass, dKm }, i) => (
-                <View key={pass.id} style={[styles.passRow, i > 0 && styles.warnBorder]}>
+                <View key={pass.id} style={[styles.passRow, i > 0 && styles.rowSpaced]}>
                   <View style={[styles.passDot, pass.tier === 'ikone' && styles.passDotIcon]} />
                   <View style={styles.flex}>
                     <AppText variant="title">{pass.name}</AppText>
@@ -1373,9 +1373,13 @@ function PrimaryButton({ label, onPress }: { label: string; onPress: () => void 
   );
 }
 
-function SecondaryButton({ label, onPress }: { label: string; onPress: () => void }) {
+/** onSurface: liegt in einer Surface Karte, dann mit hellerer Füllung. */
+function SecondaryButton({ label, onPress, onSurface }: { label: string; onPress: () => void; onSurface?: boolean }) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.secondary, onSurface && styles.secondaryOnSurface, pressed && styles.pressed]}>
       <AppText style={styles.secondaryText}>{label}</AppText>
     </Pressable>
   );
@@ -1582,7 +1586,7 @@ function Result({
         <Section label={`Pässe auf der Strecke (${passes.length})`}>
           <View style={styles.card}>
             {passes.map(({ pass, km }, i) => (
-              <View key={pass.id} style={[styles.warnRow, i > 0 && styles.warnBorder]}>
+              <View key={pass.id} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
                 <View style={styles.flex}>
                   <AppText variant="title">{pass.name}</AppText>
                   <AppText variant="caption" muted>
@@ -1602,7 +1606,7 @@ function Result({
         <Section label={`Warnungen (${warnings.length})`}>
           <View style={styles.card}>
             {warnings.map((w, i) => (
-              <View key={i} style={[styles.warnRow, i > 0 && styles.warnBorder]}>
+              <View key={i} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
                 <View style={[styles.badge, { borderColor: CLASS_COLORS[w.klasse] }]}>
                   <AppText style={[styles.badgeText, { color: CLASS_COLORS[w.klasse] }]}>{CLASS_LABEL[w.klasse]}</AppText>
                 </View>
@@ -1643,7 +1647,7 @@ function GroupBlock() {
     <View style={styles.card}>
       <AppText variant="label">Gruppe</AppText>
       <AppText>Fahrt diese Runde zusammen.</AppText>
-      <SecondaryButton label="Mitfahrer einladen" onPress={() => setHint(true)} />
+      <SecondaryButton label="Mitfahrer einladen" onSurface onPress={() => setHint(true)} />
       {hint && <AppText variant="caption" muted>Einladen per Link folgt bald.</AppText>}
       <AppText variant="caption" muted>
         Funk und Live Positionen laufen während der Fahrt im Tab Gruppe.
@@ -1668,29 +1672,30 @@ const styles = StyleSheet.create({
   signalText: { color: Colors.signal },
   onSignal: { color: Colors.onSignal },
 
-  segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: 4, borderWidth: 1, borderColor: Colors.line },
+  segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: 4 },
   segItem: { flex: 1, height: 38, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
   segOn: { backgroundColor: Colors.surface2 },
   segText: { fontFamily: Fonts.medium, fontSize: 15, color: Colors.muted },
   segTextOn: { fontFamily: Fonts.semibold, color: Colors.text },
 
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
-  inputCard: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, flexDirection: 'row', gap: Spacing.m, borderWidth: 1, borderColor: Colors.line },
+  inputCard: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, flexDirection: 'row', gap: Spacing.m },
   freeText: { flex: 1, minHeight: 96, color: Colors.text, fontFamily: Fonts.regular, fontSize: 17, textAlignVertical: 'top', padding: 0 },
   mic: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-end' },
 
   durRow: { flexDirection: 'row', gap: Spacing.s },
-  durTile: { flex: 1, minHeight: 72, borderRadius: Radius.m, borderWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2 },
-  tileOn: { backgroundColor: Colors.signal, borderColor: Colors.signal },
+  durTile: { flex: 1, minHeight: 72, borderRadius: Radius.m, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2 },
+  tileOn: { backgroundColor: Colors.signal },
   durBig: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 32 },
 
-  understood: { flexDirection: 'row', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, borderWidth: 1, borderColor: Colors.line },
+  understood: { flexDirection: 'row', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.good, marginTop: 5 },
   dotWarn: { backgroundColor: WARN },
 
   primary: { height: 56, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { fontFamily: Fonts.bold, fontSize: 17, color: Colors.onSignal },
-  secondary: { height: 50, borderRadius: Radius.m, borderWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
+  secondary: { height: 50, borderRadius: Radius.m, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  secondaryOnSurface: { backgroundColor: Colors.surface2 },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: 16, color: Colors.text },
   pressed: { opacity: 0.8 },
   disabled: { opacity: 0.35 },
@@ -1701,12 +1706,12 @@ const styles = StyleSheet.create({
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.signal },
   searchRow: { flexDirection: 'row', gap: Spacing.s },
   search: { flex: 1, height: 44, borderRadius: Radius.s, backgroundColor: Colors.surface2, color: Colors.text, paddingHorizontal: Spacing.m, fontFamily: Fonts.regular, fontSize: 15 },
-  searchBtn: { height: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, borderWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
+  searchBtn: { height: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   searchBtnText: { fontFamily: Fonts.semibold, fontSize: 15 },
-  hit: { paddingVertical: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
+  hit: { paddingVertical: Spacing.m },
 
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepBtn: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
+  stepBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   barH: { position: 'absolute', width: 18, height: 2, borderRadius: 1, backgroundColor: Colors.text },
   barV: { position: 'absolute', width: 2, height: 18, borderRadius: 1, backgroundColor: Colors.text },
   stepValue: { alignItems: 'center' },
@@ -1714,7 +1719,7 @@ const styles = StyleSheet.create({
 
   grid: { gap: Spacing.s },
   gridRow: { flexDirection: 'row', gap: Spacing.s },
-  gridCell: { flex: 1, height: 56, borderRadius: Radius.m, borderWidth: 1, borderColor: Colors.line, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  gridCell: { flex: 1, height: 56, borderRadius: Radius.m, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   gridText: { fontFamily: Fonts.displayBold, fontSize: 16 },
 
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
@@ -1724,11 +1729,11 @@ const styles = StyleSheet.create({
   phaseDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: Colors.line },
   phaseDotDone: { backgroundColor: Colors.good, borderColor: Colors.good },
 
-  errorCard: { borderWidth: 1, borderColor: Colors.signal },
+  errorCard: { backgroundColor: Colors.signalTint },
 
-  mapBox: { height: 320, borderRadius: Radius.l, overflow: 'hidden', borderWidth: 1, borderColor: Colors.line },
+  mapBox: { height: 320, borderRadius: Radius.l, overflow: 'hidden', backgroundColor: Colors.surface },
   map: { flex: 1 },
-  mapBadge: { position: 'absolute', right: Spacing.m, bottom: Spacing.m, height: 36, paddingHorizontal: 14, borderRadius: Radius.pill, backgroundColor: 'rgba(11,11,12,0.88)', borderWidth: 1, borderColor: Colors.line, justifyContent: 'center' },
+  mapBadge: { position: 'absolute', right: Spacing.m, bottom: Spacing.m, height: 36, paddingHorizontal: 14, borderRadius: Radius.pill, backgroundColor: 'rgba(11,11,12,0.88)', justifyContent: 'center' },
   mapBadgeText: { fontFamily: Fonts.semibold, fontSize: 14 },
   go: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   goText: { fontFamily: Fonts.display, fontSize: 20, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
@@ -1742,13 +1747,13 @@ const styles = StyleSheet.create({
   checkCard: { flexDirection: 'row', alignItems: 'flex-start' },
 
   warnRow: { flexDirection: 'row', gap: Spacing.m, paddingTop: Spacing.s },
-  warnBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line, paddingTop: Spacing.m },
+  rowSpaced: { paddingTop: Spacing.m },
   badge: { borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: Spacing.s, height: 24, justifyContent: 'center', alignSelf: 'flex-start' },
   badgeText: { fontFamily: Fonts.semibold, fontSize: 12 },
 
   dotStop: { backgroundColor: Colors.signal },
   statusRow: { flexDirection: 'row', alignItems: 'center' },
-  pendingCard: { borderWidth: 1, borderColor: Colors.signal },
+  pendingCard: { backgroundColor: Colors.signalTint },
   editor: { gap: Spacing.s, paddingBottom: Spacing.s },
   slotMain: { justifyContent: 'center', minHeight: 48, paddingVertical: Spacing.xs, paddingHorizontal: Spacing.s, borderRadius: Radius.s },
   slotEditing: { backgroundColor: Colors.surface2 },
@@ -1758,10 +1763,10 @@ const styles = StyleSheet.create({
   wpDotEnd: { backgroundColor: Colors.signal, borderColor: Colors.signal },
   wpDotText: { fontFamily: Fonts.bold, fontSize: 12 },
   iconBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  small: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, borderWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
-  smallStrong: { backgroundColor: Colors.signal, borderColor: Colors.signal },
+  small: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  smallStrong: { backgroundColor: Colors.signal },
   smallText: { fontFamily: Fonts.semibold, fontSize: 14 },
-  hitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
+  hitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.m },
   hitMain: { flex: 1, minHeight: 44, justifyContent: 'center' },
   passRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingTop: Spacing.s },
   passDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.muted },

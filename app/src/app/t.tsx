@@ -99,8 +99,6 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     borderRadius: Radius.l,
     backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.line,
   },
   brand: { fontFamily: Fonts.display, fontSize: 15, letterSpacing: 2 },
   title: { fontSize: 34, lineHeight: 38 },

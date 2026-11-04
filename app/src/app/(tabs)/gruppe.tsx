@@ -142,7 +142,7 @@ function Start({ error }: { error: string | null }) {
           style={[styles.input, styles.codeInput]}
           accessibilityLabel="Fahrtcode"
         />
-        <Pressable accessibilityRole="button" disabled={busy || !name.trim()} onPress={join} style={[styles.secondary, (busy || !name.trim()) && styles.disabled]}>
+        <Pressable accessibilityRole="button" disabled={busy || !name.trim()} onPress={join} style={[styles.secondary, styles.secondaryOnSurface, (busy || !name.trim()) && styles.disabled]}>
           <AppText style={styles.secondaryText}>Beitreten</AppText>
         </Pressable>
       </View>
@@ -335,8 +335,9 @@ const styles = StyleSheet.create({
   codeInput: { fontFamily: Fonts.displayBold, fontSize: 22, letterSpacing: 6, textTransform: 'uppercase' },
   primary: { height: 54, borderRadius: 27, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 17 },
-  secondary: { minHeight: 50, borderRadius: 25, borderWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
-  secondarySmall: { height: 40, borderRadius: 20, borderWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
+  secondary: { minHeight: 50, borderRadius: 25, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
+  secondaryOnSurface: { backgroundColor: Colors.surface2 },
+  secondarySmall: { height: 40, borderRadius: 20, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.text },
   disabled: { opacity: 0.4 },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingVertical: Spacing.xs },
   dot: { width: 12, height: 12, borderRadius: 6 },
   memberName: { fontFamily: Fonts.semibold, fontSize: 16 },
-  roleBtn: { paddingHorizontal: Spacing.m, height: 32, borderRadius: 16, borderWidth: 1, borderColor: Colors.line, justifyContent: 'center' },
+  roleBtn: { paddingHorizontal: Spacing.m, height: 32, borderRadius: 16, backgroundColor: Colors.surface2, justifyContent: 'center' },
   leave: { alignSelf: 'center', paddingVertical: Spacing.m },
   leaveText: { color: Colors.muted, fontFamily: Fonts.semibold },
 });

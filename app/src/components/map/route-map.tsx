@@ -276,8 +276,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: Radius.pill,
     backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.line,
     justifyContent: 'center',
   },
   recenterText: { fontFamily: Fonts.semibold, fontSize: 14 },

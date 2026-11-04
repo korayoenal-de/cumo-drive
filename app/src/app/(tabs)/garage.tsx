@@ -139,7 +139,7 @@ function Tours({ email }: { email: string }) {
         {list === null && !err && <ActivityIndicator color={Colors.muted} />}
         {list?.length === 0 && <AppText muted>Noch keine Tour im Konto. Im Web Planer anmelden und eine Tour speichern, dann erscheint sie hier.</AppText>}
         {list?.map((t, i) => (
-          <Pressable key={t.id} accessibilityRole="button" onPress={() => open(t)} style={[styles.tourRow, i > 0 && styles.border]}>
+          <Pressable key={t.id} accessibilityRole="button" onPress={() => open(t)} style={styles.tourRow}>
             <View style={styles.flex}>
               <AppText style={styles.tourName} numberOfLines={1}>
                 {t.name}
@@ -176,7 +176,7 @@ function Drives() {
         const h = Math.floor(d.moving_min / 60);
         const m = d.moving_min % 60;
         return (
-          <View key={d.id} style={[styles.driveRow, i > 0 && styles.border]}>
+          <View key={d.id} style={styles.driveRow}>
             <View style={styles.row}>
               <AppText style={[styles.tourName, styles.flex]} numberOfLines={1}>
                 {d.name}
@@ -210,13 +210,12 @@ const styles = StyleSheet.create({
   input: { height: 50, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
   primary: { height: 50, borderRadius: 25, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 16 },
-  secondary: { height: 50, borderRadius: 25, borderWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
+  secondary: { height: 50, borderRadius: 25, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: 16 },
   disabled: { opacity: 0.4 },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
   accountRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   tourRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingVertical: Spacing.m },
-  border: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
   tourName: { fontFamily: Fonts.semibold, fontSize: 16 },
   driveRow: { gap: 2, paddingVertical: Spacing.m },
   arrow: { fontFamily: Fonts.display, fontSize: 24, color: Colors.muted },

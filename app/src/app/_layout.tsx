@@ -23,7 +23,8 @@ const theme = {
     background: Colors.ground,
     card: Colors.ground,
     text: Colors.text,
-    border: Colors.surface2,
+    // Keine Trennlinien unter Headern und Leisten
+    border: Colors.ground,
     primary: Colors.signal,
   },
 };

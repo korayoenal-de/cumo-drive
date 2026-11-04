@@ -98,5 +98,5 @@ export function RoutePreview({ tour, height = 260 }: { tour: Tour; height?: numb
 }
 
 const styles = StyleSheet.create({
-  box: { backgroundColor: Colors.surface, borderRadius: Radius.l, overflow: 'hidden', borderWidth: 1, borderColor: Colors.line },
+  box: { backgroundColor: Colors.surface, borderRadius: Radius.l, overflow: 'hidden' },
 });

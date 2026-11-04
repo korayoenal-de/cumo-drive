@@ -67,6 +67,14 @@
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.de.rallycumo.drive",
+          "frequentUpdates": true,
+          "enablePushNotifications": false
+        }
       ]
     ],
     "experiments": {

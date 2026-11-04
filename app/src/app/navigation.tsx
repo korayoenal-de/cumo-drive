@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   pad: { paddingHorizontal: Spacing.l },
   flex: { flex: 1 },
   row: { flexDirection: 'row', gap: Spacing.s },
-  entry: { gap: 2 },
+  entry: { gap: Spacing.s },
   msgSheet: {
     marginHorizontal: Spacing.l,
     marginBottom: Spacing.s,
@@ -443,8 +443,6 @@ const styles = StyleSheet.create({
     gap: Spacing.m,
     borderRadius: 16,
     backgroundColor: 'rgba(22,22,24,0.97)',
-    borderWidth: 1,
-    borderColor: Colors.line,
   },
   msgChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   msgChip: {
@@ -466,8 +464,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.m,
     paddingVertical: Spacing.s,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.line,
   },
   entryLabel: { fontFamily: Fonts.semibold, fontSize: 16 },
   radio: {

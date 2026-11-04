@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   closeText: { fontFamily: Fonts.semibold, fontSize: 14 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   frame: { width: 250, height: 250, borderRadius: Radius.l, borderWidth: 3, borderColor: Colors.signal },
-  card: { alignSelf: 'stretch', gap: Spacing.m, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: 'rgba(22,22,24,0.96)', borderWidth: 1, borderColor: Colors.line },
+  card: { alignSelf: 'stretch', gap: Spacing.m, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: 'rgba(22,22,24,0.96)' },
   bottom: { paddingHorizontal: Spacing.l },
   hint: { textAlign: 'center', fontFamily: Fonts.medium, fontSize: 15, lineHeight: 21, backgroundColor: 'rgba(11,11,12,0.8)', padding: Spacing.m, borderRadius: Radius.m, overflow: 'hidden' },
   primary: { height: 50, borderRadius: 25, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
