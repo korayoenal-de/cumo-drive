@@ -8,6 +8,7 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, TextInput, V
 import Svg, { Path } from 'react-native-svg';
 
 import { RouteMap } from '@/components/map/route-map';
+import { PASSES, passesAlong, passSummary } from '@/lib/passes';
 import {
   buildTour, findPlace, locate, newSeed, PHASES, toPlanError,
   type PlanError, type PlanPhase, type Spot, type TourRequest,
@@ -23,7 +24,7 @@ import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } f
 import type { PlannedTour } from '@/lib/plan';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
-import { formatKm, PROFILES, type CheckClass, type Profile } from '@/lib/tour';
+import { flatten, formatKm, PROFILES, type CheckClass, type Profile } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
 const WARN = '#E8B03A';
@@ -757,6 +758,8 @@ function Result({
   const total = tour.laenge_km;
   const share = total > 0 ? Math.round((sauber / total) * 100) : 0;
   const warnings = tour.warnungen.filter((w) => w.klasse !== 'ok');
+  const passes = passesAlong(PASSES, flatten(tour).map((x) => x.p));
+  const month = new Date().getMonth() + 1;
   const openMap = () => {
     setActiveTour(tour, req.profile, req.avoid);
     router.push('/karte');
@@ -813,6 +816,26 @@ function Result({
           </AppText>
         </View>
       </View>
+
+      {passes.length > 0 && (
+        <Section label={`Pässe auf der Strecke (${passes.length})`}>
+          <View style={styles.card}>
+            {passes.map(({ pass, km }, i) => (
+              <View key={pass.id} style={[styles.warnRow, i > 0 && styles.warnBorder]}>
+                <View style={styles.flex}>
+                  <AppText variant="title">{pass.name}</AppText>
+                  <AppText variant="caption" muted>
+                    {passSummary(pass, month)}
+                  </AppText>
+                </View>
+                <AppText variant="caption" muted>
+                  km {Math.round(km)}
+                </AppText>
+              </View>
+            ))}
+          </View>
+        </Section>
+      )}
 
       {warnings.length > 0 && (
         <Section label={`Warnungen (${warnings.length})`}>

@@ -1,0 +1,4572 @@
+[
+  {
+    "id": "stilfser-joch",
+    "name": "Stilfser Joch",
+    "names": [
+      "Passo dello Stelvio",
+      "Stelvio",
+      "Stilfserjoch"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Südtirol und Lombardei",
+    "lat": 46.52862,
+    "lon": 10.45321,
+    "ele": 2757,
+    "tier": "ikone",
+    "hairpins": 82,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Stilfser_Joch"
+  },
+  {
+    "id": "gavia",
+    "name": "Gaviapass",
+    "names": [
+      "Passo di Gavia",
+      "Gavia"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 46.34348,
+    "lon": 10.48733,
+    "ele": 2621,
+    "tier": "ikone",
+    "hairpins": 25,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Südrampe teils nur 2,5 bis 4 m breit, einige sehr enge Kehren, Ausweichstellen",
+    "source": "https://de.wikipedia.org/wiki/Gaviapass"
+  },
+  {
+    "id": "sellajoch",
+    "name": "Sellajoch",
+    "names": [
+      "Passo Sella",
+      "Jëuf de Sela"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.50807,
+    "lon": 11.76733,
+    "ele": 2218,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Sellajoch"
+  },
+  {
+    "id": "pordoijoch",
+    "name": "Pordoijoch",
+    "names": [
+      "Passo Pordoi",
+      "Pordoi"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.48754,
+    "lon": 11.81223,
+    "ele": 2239,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Pordoijoch"
+  },
+  {
+    "id": "giau",
+    "name": "Passo Giau",
+    "names": [
+      "Passo di Giau",
+      "Giau"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.48252,
+    "lon": 12.05367,
+    "ele": 2236,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_di_Giau"
+  },
+  {
+    "id": "groedner-joch",
+    "name": "Grödner Joch",
+    "names": [
+      "Passo Gardena",
+      "Jëuf de Frea"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.54982,
+    "lon": 11.80839,
+    "ele": 2121,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Gr%C3%B6dner_Joch"
+  },
+  {
+    "id": "campolongo",
+    "name": "Campolongopass",
+    "names": [
+      "Passo di Campolongo",
+      "Campolongo"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.51386,
+    "lon": 11.87237,
+    "ele": 1875,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Campolongopass"
+  },
+  {
+    "id": "falzarego",
+    "name": "Falzaregopass",
+    "names": [
+      "Passo di Falzarego",
+      "Falzarego"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.51875,
+    "lon": 12.00843,
+    "ele": 2105,
+    "tier": "bekannt",
+    "hairpins": 38,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_di_Falzarego"
+  },
+  {
+    "id": "valparola",
+    "name": "Valparolapass",
+    "names": [
+      "Passo di Valparola",
+      "Valparola"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.53168,
+    "lon": 11.98888,
+    "ele": 2168,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Valparolapass"
+  },
+  {
+    "id": "fedaia",
+    "name": "Fedaiapass",
+    "names": [
+      "Passo Fedaia",
+      "Fedaia"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.46402,
+    "lon": 11.86259,
+    "ele": 2057,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Fedaia"
+  },
+  {
+    "id": "karerpass",
+    "name": "Karerpass",
+    "names": [
+      "Passo di Costalunga",
+      "Costalunga"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.40428,
+    "lon": 11.60899,
+    "ele": 1752,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Karerpass"
+  },
+  {
+    "id": "nigerpass",
+    "name": "Nigerpass",
+    "names": [
+      "Passo Nigra",
+      "Niger"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.45599,
+    "lon": 11.58588,
+    "ele": 1690,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Nigerpass"
+  },
+  {
+    "id": "san-pellegrino",
+    "name": "Passo San Pellegrino",
+    "names": [
+      "San Pellegrino"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.37836,
+    "lon": 11.79172,
+    "ele": 1918,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_San_Pellegrino"
+  },
+  {
+    "id": "rolle",
+    "name": "Passo Rolle",
+    "names": [
+      "Rollepass"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.2963,
+    "lon": 11.78632,
+    "ele": 1970,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Rolle"
+  },
+  {
+    "id": "valles",
+    "name": "Vallespass",
+    "names": [
+      "Passo Valles",
+      "Valles"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.33861,
+    "lon": 11.80026,
+    "ele": 2032,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Vallespass"
+  },
+  {
+    "id": "tre-croci",
+    "name": "Passo Tre Croci",
+    "names": [
+      "Tre Croci",
+      "Dreikreuzpass"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.55702,
+    "lon": 12.20185,
+    "ele": 1809,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Tre_Croci"
+  },
+  {
+    "id": "duran",
+    "name": "Passo Duran",
+    "names": [
+      "Duranpass"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.32491,
+    "lon": 12.09605,
+    "ele": 1605,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Duran"
+  },
+  {
+    "id": "staulanza",
+    "name": "Staulanzapass",
+    "names": [
+      "Passo Staulanza",
+      "Staulanza"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.4207,
+    "lon": 12.1045,
+    "ele": 1773,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Staulanzapass"
+  },
+  {
+    "id": "cibiana",
+    "name": "Passo Cibiana",
+    "names": [
+      "Cibianapass"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.37443,
+    "lon": 12.25981,
+    "ele": 1530,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Cibiana"
+  },
+  {
+    "id": "mauria",
+    "name": "Mauriapass",
+    "names": [
+      "Passo della Mauria",
+      "Mauria"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul und Venetien",
+    "lat": 46.45442,
+    "lon": 12.51334,
+    "ele": 1298,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Mauriapass"
+  },
+  {
+    "id": "kreuzbergpass",
+    "name": "Kreuzbergpass",
+    "names": [
+      "Passo di Monte Croce di Comelico",
+      "Monte Croce Comelico"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.65594,
+    "lon": 12.42011,
+    "ele": 1636,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Kreuzbergpass"
+  },
+  {
+    "id": "furkelpass",
+    "name": "Furkelpass",
+    "names": [
+      "Passo Furcia",
+      "Furcia"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Südtirol",
+    "lat": 46.72291,
+    "lon": 11.96892,
+    "ele": 1789,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Furkelpass"
+  },
+  {
+    "id": "wuerzjoch",
+    "name": "Würzjoch",
+    "names": [
+      "Passo delle Erbe",
+      "Erbe"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.67511,
+    "lon": 11.81431,
+    "ele": 1982,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Apr",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/W%C3%BCrzjoch"
+  },
+  {
+    "id": "jaufenpass",
+    "name": "Jaufenpass",
+    "names": [
+      "Passo di Monte Giovo",
+      "Monte Giovo",
+      "Jaufen"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Südtirol",
+    "lat": 46.8396,
+    "lon": 11.32147,
+    "ele": 2094,
+    "tier": "bekannt",
+    "hairpins": 20,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Jaufenpass"
+  },
+  {
+    "id": "penser-joch",
+    "name": "Penser Joch",
+    "names": [
+      "Passo di Pennes",
+      "Pennes"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Südtirol",
+    "lat": 46.81878,
+    "lon": 11.44125,
+    "ele": 2211,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Dez bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Penser_Joch"
+  },
+  {
+    "id": "timmelsjoch",
+    "name": "Timmelsjoch",
+    "names": [
+      "Passo del Rombo",
+      "Rombo"
+    ],
+    "country": [
+      "AT",
+      "IT"
+    ],
+    "region": "Tirol und Südtirol",
+    "lat": 46.90534,
+    "lon": 11.09732,
+    "ele": 2474,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Jun",
+    "toll": true,
+    "car_note": "Nachtsperre 20 bis 7 Uhr",
+    "source": "https://de.wikipedia.org/wiki/Timmelsjoch"
+  },
+  {
+    "id": "reschenpass",
+    "name": "Reschenpass",
+    "names": [
+      "Passo di Resia",
+      "Resia"
+    ],
+    "country": [
+      "IT",
+      "AT"
+    ],
+    "region": "Südtirol und Tirol",
+    "lat": 46.83435,
+    "lon": 10.51024,
+    "ele": 1507,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Reschenpass"
+  },
+  {
+    "id": "gampenpass",
+    "name": "Gampenpass",
+    "names": [
+      "Passo delle Palade",
+      "Palade"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Südtirol",
+    "lat": 46.52955,
+    "lon": 11.1118,
+    "ele": 1518,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Gampenpass"
+  },
+  {
+    "id": "mendelpass",
+    "name": "Mendelpass",
+    "names": [
+      "Passo della Mendola",
+      "Mendola"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Südtirol und Trentino",
+    "lat": 46.41676,
+    "lon": 11.20833,
+    "ele": 1363,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Mendelpass"
+  },
+  {
+    "id": "tonale",
+    "name": "Tonalepass",
+    "names": [
+      "Passo del Tonale",
+      "Tonale"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino und Lombardei",
+    "lat": 46.25801,
+    "lon": 10.58185,
+    "ele": 1882,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Tonalepass"
+  },
+  {
+    "id": "mortirolo",
+    "name": "Mortirolopass",
+    "names": [
+      "Passo del Mortirolo",
+      "Mortirolo",
+      "Passo della Foppa"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 46.24786,
+    "lon": 10.29831,
+    "ele": 1852,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "stellenweise nur einspurig",
+    "source": "https://de.wikipedia.org/wiki/Mortirolopass"
+  },
+  {
+    "id": "foscagno",
+    "name": "Foscagnopass",
+    "names": [
+      "Passo di Foscagno",
+      "Foscagno"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 46.49636,
+    "lon": 10.20786,
+    "ele": 2291,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_di_Foscagno"
+  },
+  {
+    "id": "forcola-di-livigno",
+    "name": "Forcola di Livigno",
+    "names": [
+      "Forcola",
+      "Passo della Forcola"
+    ],
+    "country": [
+      "CH",
+      "IT"
+    ],
+    "region": "Graubünden und Lombardei",
+    "lat": 46.44094,
+    "lon": 10.05619,
+    "ele": 2315,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Jun",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Forcola_di_Livigno"
+  },
+  {
+    "id": "aprica",
+    "name": "Apricapass",
+    "names": [
+      "Passo dell'Aprica",
+      "Aprica"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 46.15433,
+    "lon": 10.15418,
+    "ele": 1176,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_dell%E2%80%99Aprica"
+  },
+  {
+    "id": "vivione",
+    "name": "Vivionepass",
+    "names": [
+      "Passo del Vivione",
+      "Vivione"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 46.03659,
+    "lon": 10.19927,
+    "ele": 1828,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": false,
+    "car_note": "nur einspurig ausgebaut, kurven und kehrenreich",
+    "source": "https://de.wikipedia.org/wiki/Passo_del_Vivione"
+  },
+  {
+    "id": "croce-domini",
+    "name": "Passo di Croce Domini",
+    "names": [
+      "Crocedomini",
+      "Passo di Crocedomini"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 45.90753,
+    "lon": 10.40951,
+    "ele": 1895,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_di_Croce_Domini"
+  },
+  {
+    "id": "san-marco",
+    "name": "Passo San Marco",
+    "names": [
+      "Passo di San Marco"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 46.04719,
+    "lon": 9.62278,
+    "ele": 1985,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Sep bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_San_Marco"
+  },
+  {
+    "id": "campo-carlo-magno",
+    "name": "Campo Carlo Magno",
+    "names": [
+      "Passo Campo Carlo Magno"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino",
+    "lat": 46.24312,
+    "lon": 10.84023,
+    "ele": 1682,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Campo_Carlo_Magno"
+  },
+  {
+    "id": "lavaze",
+    "name": "Lavazèjoch",
+    "names": [
+      "Passo di Lavazè",
+      "Lavazè"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino und Südtirol",
+    "lat": 46.35467,
+    "lon": 11.49273,
+    "ele": 1808,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Lavaz%C3%A8joch"
+  },
+  {
+    "id": "manghen",
+    "name": "Manghenpass",
+    "names": [
+      "Passo Manghen",
+      "Manghen"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino",
+    "lat": 46.17526,
+    "lon": 11.43922,
+    "ele": 2047,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Manghenpass"
+  },
+  {
+    "id": "brocon",
+    "name": "Passo Brocon",
+    "names": [
+      "Broconpass"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino",
+    "lat": 46.11861,
+    "lon": 11.68854,
+    "ele": 1615,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Brocon"
+  },
+  {
+    "id": "cereda",
+    "name": "Passo Cereda",
+    "names": [
+      "Ceredapass"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino und Venetien",
+    "lat": 46.19305,
+    "lon": 11.90542,
+    "ele": 1369,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Cereda"
+  },
+  {
+    "id": "croce-d-aune",
+    "name": "Passo Croce d'Aune",
+    "names": [
+      "Croce d'Aune"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Venetien",
+    "lat": 46.0618,
+    "lon": 11.83008,
+    "ele": 1015,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Croce_d%E2%80%99Aune"
+  },
+  {
+    "id": "san-boldo",
+    "name": "Passo San Boldo",
+    "names": [
+      "San Boldo"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Venetien",
+    "lat": 46.006,
+    "lon": 12.16968,
+    "ele": 706,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "nur einspurig befahrbar, Verkehr durch Ampeln geregelt",
+    "source": "https://de.wikipedia.org/wiki/Passo_San_Boldo"
+  },
+  {
+    "id": "staller-sattel",
+    "name": "Staller Sattel",
+    "names": [
+      "Passo Stalle",
+      "Stallersattel"
+    ],
+    "country": [
+      "AT",
+      "IT"
+    ],
+    "region": "Osttirol und Südtirol",
+    "lat": 46.88772,
+    "lon": 12.19969,
+    "ele": 2052,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": false,
+    "car_note": "Westseite einspurig mit stündlicher Einbahnregelung, Verbot für Wohnwagen und Busse",
+    "source": "https://de.wikipedia.org/wiki/Staller_Sattel"
+  },
+  {
+    "id": "pian-delle-fugazze",
+    "name": "Pian delle Fugazze",
+    "names": [
+      "Passo Pian delle Fugazze"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Venetien und Trentino",
+    "lat": 45.7602,
+    "lon": 11.17332,
+    "ele": 1163,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Pian_delle_Fugazze"
+  },
+  {
+    "id": "vezzena",
+    "name": "Passo Vezzena",
+    "names": [
+      "Vezzenapass"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino und Venetien",
+    "lat": 45.95661,
+    "lon": 11.32859,
+    "ele": 1417,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Vezzena"
+  },
+  {
+    "id": "ploeckenpass",
+    "name": "Plöckenpass",
+    "names": [
+      "Passo di Monte Croce Carnico",
+      "Monte Croce Carnico"
+    ],
+    "country": [
+      "AT",
+      "IT"
+    ],
+    "region": "Kärnten und Friaul",
+    "lat": 46.60356,
+    "lon": 12.94513,
+    "ele": 1357,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Pl%C3%B6ckenpass"
+  },
+  {
+    "id": "nassfeld",
+    "name": "Nassfeldpass",
+    "names": [
+      "Passo di Pramollo",
+      "Pramollo",
+      "Nassfeld"
+    ],
+    "country": [
+      "AT",
+      "IT"
+    ],
+    "region": "Kärnten und Friaul",
+    "lat": 46.55996,
+    "lon": 13.27556,
+    "ele": 1530,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Nassfeld"
+  },
+  {
+    "id": "sella-nevea",
+    "name": "Sella Nevea",
+    "names": [
+      "Neveasattel"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul",
+    "lat": 46.39039,
+    "lon": 13.47634,
+    "ele": 1195,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Neveasattel"
+  },
+  {
+    "id": "predil",
+    "name": "Predilpass",
+    "names": [
+      "Passo del Predil",
+      "Predel"
+    ],
+    "country": [
+      "IT",
+      "SI"
+    ],
+    "region": "Friaul",
+    "lat": 46.41855,
+    "lon": 13.57817,
+    "ele": 1156,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Predilpass"
+  },
+  {
+    "id": "kleiner-st-bernhard",
+    "name": "Kleiner St. Bernhard",
+    "names": [
+      "Colle del Piccolo San Bernardo",
+      "Col du Petit Saint Bernard"
+    ],
+    "country": [
+      "IT",
+      "FR"
+    ],
+    "region": "Aostatal",
+    "lat": 45.67925,
+    "lon": 6.88294,
+    "ele": 2188,
+    "tier": "bekannt",
+    "hairpins": 27,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Kleiner_Sankt_Bernhard"
+  },
+  {
+    "id": "grosser-st-bernhard",
+    "name": "Großer St. Bernhard",
+    "names": [
+      "Colle del Gran San Bernardo",
+      "Col du Grand Saint Bernard"
+    ],
+    "country": [
+      "CH",
+      "IT"
+    ],
+    "region": "Wallis und Aostatal",
+    "lat": 45.86906,
+    "lon": 7.1704,
+    "ele": 2469,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Jun",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Grosser_St._Bernhard"
+  },
+  {
+    "id": "col-agnel",
+    "name": "Col Agnel",
+    "names": [
+      "Colle dell'Agnello",
+      "Agnello"
+    ],
+    "country": [
+      "IT",
+      "FR"
+    ],
+    "region": "Piemont",
+    "lat": 44.68388,
+    "lon": 6.97959,
+    "ele": 2744,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Jun",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_Agnel"
+  },
+  {
+    "id": "colle-della-lombarda",
+    "name": "Colle della Lombarda",
+    "names": [
+      "Col de la Lombarde"
+    ],
+    "country": [
+      "IT",
+      "FR"
+    ],
+    "region": "Piemont",
+    "lat": 44.20267,
+    "lon": 7.1501,
+    "ele": 2350,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Jun",
+    "toll": false,
+    "car_note": "oberhalb Isola 2000 teils nur einspurig",
+    "source": "https://de.wikipedia.org/wiki/Col_de_la_Lombarde"
+  },
+  {
+    "id": "colle-della-maddalena",
+    "name": "Colle della Maddalena",
+    "names": [
+      "Col de Larche",
+      "Maddalena"
+    ],
+    "country": [
+      "IT",
+      "FR"
+    ],
+    "region": "Piemont",
+    "lat": 44.42183,
+    "lon": 6.89843,
+    "ele": 1991,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_de_Larche"
+  },
+  {
+    "id": "nivolet",
+    "name": "Colle del Nivolet",
+    "names": [
+      "Nivolet"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Piemont und Aostatal",
+    "lat": 45.47921,
+    "lon": 7.14232,
+    "ele": 2641,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Colle_del_Nivolet"
+  },
+  {
+    "id": "sestriere",
+    "name": "Colle del Sestriere",
+    "names": [
+      "Sestriere"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Piemont",
+    "lat": 44.95909,
+    "lon": 6.88254,
+    "ele": 2035,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.wikidata.org/wiki/Q2685264"
+  },
+  {
+    "id": "mont-cenis",
+    "name": "Col du Mont Cenis",
+    "names": [
+      "Colle del Moncenisio",
+      "Moncenisio",
+      "Mont Cenis"
+    ],
+    "country": [
+      "FR",
+      "IT"
+    ],
+    "region": "Savoyen und Piemont",
+    "lat": 45.25983,
+    "lon": 6.90088,
+    "ele": 2081,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_du_Mont_Cenis"
+  },
+  {
+    "id": "montgenevre",
+    "name": "Col de Montgenèvre",
+    "names": [
+      "Colle del Monginevro",
+      "Monginevro"
+    ],
+    "country": [
+      "FR",
+      "IT"
+    ],
+    "region": "Hautes Alpes und Piemont",
+    "lat": 44.93127,
+    "lon": 6.7257,
+    "ele": 1854,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_de_Montgen%C3%A8vre"
+  },
+  {
+    "id": "sampeyre",
+    "name": "Colle di Sampeyre",
+    "names": [
+      "Sampeyre"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Piemont",
+    "lat": 44.55095,
+    "lon": 7.11958,
+    "ele": 2284,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Colle_di_Sampeyre"
+  },
+  {
+    "id": "colle-san-carlo",
+    "name": "Colle San Carlo",
+    "names": [
+      "Col Saint Charles"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Aostatal",
+    "lat": 45.74282,
+    "lon": 6.98861,
+    "ele": 1951,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.wikidata.org/wiki/Q2691729"
+  },
+  {
+    "id": "col-de-joux",
+    "name": "Col de Joux",
+    "names": [
+      "Colle di Joux"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Aostatal",
+    "lat": 45.75398,
+    "lon": 7.70285,
+    "ele": 1639,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_de_Joux"
+  },
+  {
+    "id": "futa",
+    "name": "Futapass",
+    "names": [
+      "Passo della Futa",
+      "Futa"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Apennin",
+    "lat": 44.09356,
+    "lon": 11.27831,
+    "ele": 903,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Futapass"
+  },
+  {
+    "id": "raticosa",
+    "name": "Passo della Raticosa",
+    "names": [
+      "Raticosa"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Apennin",
+    "lat": 44.17291,
+    "lon": 11.33841,
+    "ele": 968,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.wikidata.org/wiki/Q3897403"
+  },
+  {
+    "id": "muraglione",
+    "name": "Passo del Muraglione",
+    "names": [
+      "Muraglione"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Apennin",
+    "lat": 43.93292,
+    "lon": 11.65481,
+    "ele": 907,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.wikidata.org/wiki/Q3897374"
+  },
+  {
+    "id": "bracco",
+    "name": "Passo del Bracco",
+    "names": [
+      "Bracco"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Ligurien",
+    "lat": 44.24948,
+    "lon": 9.56974,
+    "ele": 615,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_del_Bracco"
+  },
+  {
+    "id": "cisa",
+    "name": "Cisapass",
+    "names": [
+      "Passo della Cisa",
+      "Cisa"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Apennin",
+    "lat": 44.47158,
+    "lon": 9.9285,
+    "ele": 1041,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.wikidata.org/wiki/Q1239141"
+  },
+  {
+    "id": "presolana",
+    "name": "Passo della Presolana",
+    "names": [
+      "Presolana"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 45.92921,
+    "lon": 10.09902,
+    "ele": 1297,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.wikidata.org/wiki/Q2920550"
+  },
+  {
+    "id": "spluegen",
+    "name": "Splügenpass",
+    "names": [
+      "Passo dello Spluga",
+      "Spluga"
+    ],
+    "country": [
+      "CH",
+      "IT"
+    ],
+    "region": "Graubünden und Lombardei",
+    "lat": 46.50561,
+    "lon": 9.33034,
+    "ele": 2114,
+    "tier": "bekannt",
+    "hairpins": 74,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Spl%C3%BCgenpass"
+  },
+  {
+    "id": "umbrail",
+    "name": "Umbrailpass",
+    "names": [
+      "Giogo di Santa Maria",
+      "Pass Umbrail"
+    ],
+    "country": [
+      "CH",
+      "IT"
+    ],
+    "region": "Graubünden",
+    "lat": 46.54165,
+    "lon": 10.43318,
+    "ele": 2501,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Umbrailpass"
+  },
+  {
+    "id": "grossglockner",
+    "name": "Großglockner Hochalpenstraße (Hochtor)",
+    "names": [
+      "Hochtor",
+      "Großglockner",
+      "Grossglockner"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Salzburg und Kärnten",
+    "lat": 47.08119,
+    "lon": 12.84258,
+    "ele": 2504,
+    "tier": "ikone",
+    "hairpins": 36,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": true,
+    "car_note": "Nachtsperre",
+    "source": "https://de.wikipedia.org/wiki/Hochtor_%28Pass%29"
+  },
+  {
+    "id": "silvretta-bielerhoehe",
+    "name": "Silvretta Hochalpenstraße (Bielerhöhe)",
+    "names": [
+      "Bielerhöhe",
+      "Silvretta"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Vorarlberg und Tirol",
+    "lat": 46.91804,
+    "lon": 10.09561,
+    "ele": 2037,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Apr",
+    "toll": true,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Bielerh%C3%B6he"
+  },
+  {
+    "id": "gerlospass",
+    "name": "Gerlospass",
+    "names": [
+      "Gerlos"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol und Salzburg",
+    "lat": 47.24285,
+    "lon": 12.10939,
+    "ele": 1531,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Gerlospass"
+  },
+  {
+    "id": "hahntennjoch",
+    "name": "Hahntennjoch",
+    "names": [
+      "Hahntenn"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol",
+    "lat": 47.28735,
+    "lon": 10.65547,
+    "ele": 1894,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Apr",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Hahntennjoch"
+  },
+  {
+    "id": "hochtannberg",
+    "name": "Hochtannbergpass",
+    "names": [
+      "Hochtannberg"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Vorarlberg",
+    "lat": 47.26947,
+    "lon": 10.13045,
+    "ele": 1660,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Hochtannbergpass"
+  },
+  {
+    "id": "flexenpass",
+    "name": "Flexenpass",
+    "names": [
+      "Flexen"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Vorarlberg",
+    "lat": 47.15838,
+    "lon": 10.16486,
+    "ele": 1773,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Flexenpass"
+  },
+  {
+    "id": "arlbergpass",
+    "name": "Arlbergpass",
+    "names": [
+      "Arlberg",
+      "Passo dell'Arlberg"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol und Vorarlberg",
+    "lat": 47.12984,
+    "lon": 10.21063,
+    "ele": 1793,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Arlberg"
+  },
+  {
+    "id": "furkajoch",
+    "name": "Furkajoch",
+    "names": [
+      "Furka Joch"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Vorarlberg",
+    "lat": 47.26663,
+    "lon": 9.8329,
+    "ele": 1759,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Furkajoch"
+  },
+  {
+    "id": "faschinajoch",
+    "name": "Faschinajoch",
+    "names": [
+      "Faschina"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Vorarlberg",
+    "lat": 47.27173,
+    "lon": 9.90726,
+    "ele": 1486,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Faschinajoch"
+  },
+  {
+    "id": "fernpass",
+    "name": "Fernpass",
+    "names": [
+      "Fern"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol",
+    "lat": 47.36392,
+    "lon": 10.83494,
+    "ele": 1216,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Fernpass"
+  },
+  {
+    "id": "gaichtpass",
+    "name": "Gaichtpass",
+    "names": [
+      "Gaicht"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol",
+    "lat": 47.46058,
+    "lon": 10.61665,
+    "ele": 1093,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Gaichtpass"
+  },
+  {
+    "id": "holzleitensattel",
+    "name": "Holzleitensattel",
+    "names": [
+      "Holzleiten"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol",
+    "lat": 47.30534,
+    "lon": 10.89342,
+    "ele": 1119,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Holzleitensattel"
+  },
+  {
+    "id": "kuehtai",
+    "name": "Kühtaisattel",
+    "names": [
+      "Kühtai"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol",
+    "lat": 47.2138,
+    "lon": 11.02437,
+    "ele": 2017,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/K%C3%BChtaisattel"
+  },
+  {
+    "id": "seefelder-sattel",
+    "name": "Seefelder Sattel",
+    "names": [
+      "Seefeld"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol",
+    "lat": 47.31798,
+    "lon": 11.19855,
+    "ele": 1185,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Seefelder_Sattel"
+  },
+  {
+    "id": "achenpass",
+    "name": "Achenpass",
+    "names": [
+      "Achen"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Oberbayern und Tirol",
+    "lat": 47.60459,
+    "lon": 11.63591,
+    "ele": 941,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Achenpass"
+  },
+  {
+    "id": "pass-thurn",
+    "name": "Pass Thurn",
+    "names": [
+      "Thurnpass"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol und Salzburg",
+    "lat": 47.30856,
+    "lon": 12.40852,
+    "ele": 1274,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Pass_Thurn"
+  },
+  {
+    "id": "katschberg",
+    "name": "Katschberg",
+    "names": [
+      "Katschberghöhe",
+      "Katschbergpass"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Salzburg und Kärnten",
+    "lat": 47.05915,
+    "lon": 13.61566,
+    "ele": 1641,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Katschberg"
+  },
+  {
+    "id": "radstaedter-tauern",
+    "name": "Radstädter Tauernpass",
+    "names": [
+      "Obertauern",
+      "Radstädter Tauern"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Salzburg",
+    "lat": 47.24799,
+    "lon": 13.55926,
+    "ele": 1738,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Radst%C3%A4dter_Tauernpass"
+  },
+  {
+    "id": "soelkpass",
+    "name": "Sölkpass",
+    "names": [
+      "Sölk"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark",
+    "lat": 47.27169,
+    "lon": 14.07967,
+    "ele": 1788,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/S%C3%B6lkpass"
+  },
+  {
+    "id": "turracher-hoehe",
+    "name": "Turracher Höhe",
+    "names": [
+      "Turrach"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark und Kärnten",
+    "lat": 46.91316,
+    "lon": 13.87645,
+    "ele": 1795,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Turracher_H%C3%B6he"
+  },
+  {
+    "id": "wurzenpass",
+    "name": "Wurzenpass",
+    "names": [
+      "Korensko sedlo",
+      "Passo di Wurzen"
+    ],
+    "country": [
+      "AT",
+      "SI"
+    ],
+    "region": "Kärnten",
+    "lat": 46.51769,
+    "lon": 13.75154,
+    "ele": 1071,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Wurzenpass"
+  },
+  {
+    "id": "seebergsattel",
+    "name": "Seebergsattel",
+    "names": [
+      "Jezersko sedlo",
+      "Seeberg"
+    ],
+    "country": [
+      "AT",
+      "SI"
+    ],
+    "region": "Kärnten",
+    "lat": 46.41913,
+    "lon": 14.52703,
+    "ele": 1215,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Seebergsattel"
+  },
+  {
+    "id": "paulitschsattel",
+    "name": "Paulitschsattel",
+    "names": [
+      "Pavličevo sedlo",
+      "Paulitsch"
+    ],
+    "country": [
+      "AT",
+      "SI"
+    ],
+    "region": "Kärnten",
+    "lat": 46.42522,
+    "lon": 14.58523,
+    "ele": 1338,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Paulitschsattel"
+  },
+  {
+    "id": "iselsberg",
+    "name": "Iselsberg",
+    "names": [
+      "Iselsbergpass"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Osttirol und Kärnten",
+    "lat": 46.85425,
+    "lon": 12.85812,
+    "ele": 1209,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Iselsberg_%28Pass%29"
+  },
+  {
+    "id": "gailbergsattel",
+    "name": "Gailbergsattel",
+    "names": [
+      "Gailberg"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Kärnten",
+    "lat": 46.71779,
+    "lon": 12.96701,
+    "ele": 981,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Gailbergsattel"
+  },
+  {
+    "id": "kartitscher-sattel",
+    "name": "Kartitscher Sattel",
+    "names": [
+      "Sella di Kartitsch",
+      "Kartitsch"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Osttirol",
+    "lat": 46.71795,
+    "lon": 12.54104,
+    "ele": 1525,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Kartitscher_Sattel"
+  },
+  {
+    "id": "windische-hoehe",
+    "name": "Windische Höhe",
+    "names": [
+      "Windische Hoehe"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Kärnten",
+    "lat": 46.63596,
+    "lon": 13.54668,
+    "ele": 1110,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Windische_H%C3%B6he"
+  },
+  {
+    "id": "kreuzbergsattel",
+    "name": "Kreuzbergsattel",
+    "names": [
+      "Kreuzberg Kärnten"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Kärnten",
+    "lat": 46.70918,
+    "lon": 13.25549,
+    "ele": 1074,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Kreuzbergsattel"
+  },
+  {
+    "id": "flattnitzer-hoehe",
+    "name": "Flattnitzer Höhe",
+    "names": [
+      "Flattnitz"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Kärnten und Steiermark",
+    "lat": 46.94577,
+    "lon": 14.02936,
+    "ele": 1400,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Flattnitzer_H%C3%B6he"
+  },
+  {
+    "id": "klippitztoerl",
+    "name": "Klippitztörl",
+    "names": [
+      "Klippitz"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Kärnten",
+    "lat": 46.9367,
+    "lon": 14.67414,
+    "ele": 1644,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Klippitzt%C3%B6rl"
+  },
+  {
+    "id": "packsattel",
+    "name": "Packsattel",
+    "names": [
+      "Pack",
+      "Packer Höhe"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark und Kärnten",
+    "lat": 46.96546,
+    "lon": 14.97793,
+    "ele": 1169,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Pack_%28Sattel%29"
+  },
+  {
+    "id": "gaberl",
+    "name": "Gaberl",
+    "names": [
+      "Gaberlsattel"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark",
+    "lat": 47.10734,
+    "lon": 14.91674,
+    "ele": 1547,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Gaberl"
+  },
+  {
+    "id": "obdacher-sattel",
+    "name": "Obdacher Sattel",
+    "names": [
+      "Obdach"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark und Kärnten",
+    "lat": 47.04518,
+    "lon": 14.71874,
+    "ele": 955,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Obdacher_Sattel"
+  },
+  {
+    "id": "praebichl",
+    "name": "Präbichl",
+    "names": [
+      "Präbichlpass"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark",
+    "lat": 47.52424,
+    "lon": 14.94724,
+    "ele": 1226,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Pr%C3%A4bichl"
+  },
+  {
+    "id": "pyhrnpass",
+    "name": "Pyhrnpass",
+    "names": [
+      "Pyhrn"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Oberösterreich und Steiermark",
+    "lat": 47.61909,
+    "lon": 14.29797,
+    "ele": 954,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Pyhrnpass"
+  },
+  {
+    "id": "hengstpass",
+    "name": "Hengstpass",
+    "names": [
+      "Hengst"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Oberösterreich",
+    "lat": 47.70221,
+    "lon": 14.46035,
+    "ele": 985,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Hengstpass"
+  },
+  {
+    "id": "poetschenpass",
+    "name": "Pötschenpass",
+    "names": [
+      "Pötschen"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Oberösterreich und Steiermark",
+    "lat": 47.62203,
+    "lon": 13.69522,
+    "ele": 993,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/P%C3%B6tschenpass"
+  },
+  {
+    "id": "pass-gschuett",
+    "name": "Pass Gschütt",
+    "names": [
+      "Gschütt"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Oberösterreich und Salzburg",
+    "lat": 47.59137,
+    "lon": 13.50563,
+    "ele": 957,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Pass_Gsch%C3%BCtt"
+  },
+  {
+    "id": "dientner-sattel",
+    "name": "Dientner Sattel",
+    "names": [
+      "Dienten"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Salzburg",
+    "lat": 47.39161,
+    "lon": 13.04921,
+    "ele": 1342,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Dientner_Sattel"
+  },
+  {
+    "id": "filzensattel",
+    "name": "Filzensattel",
+    "names": [
+      "Filzen"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Salzburg",
+    "lat": 47.39725,
+    "lon": 13.00097,
+    "ele": 1290,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Filzensattel"
+  },
+  {
+    "id": "griessenpass",
+    "name": "Grießenpass",
+    "names": [
+      "Griessenpass"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol und Salzburg",
+    "lat": 47.45816,
+    "lon": 12.64037,
+    "ele": 975,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Grie%C3%9Fenpass"
+  },
+  {
+    "id": "lahnsattel",
+    "name": "Lahnsattel",
+    "names": [
+      "Lahn"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Niederösterreich und Steiermark",
+    "lat": 47.77489,
+    "lon": 15.48568,
+    "ele": 1015,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Lahnsattel_%28Pass%29"
+  },
+  {
+    "id": "zellerrain",
+    "name": "Zellerrain",
+    "names": [
+      "Zeller Rain"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Niederösterreich und Steiermark",
+    "lat": 47.7915,
+    "lon": 15.21515,
+    "ele": 1121,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Zellerrain"
+  },
+  {
+    "id": "semmering",
+    "name": "Semmering",
+    "names": [
+      "Semmeringpass"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Niederösterreich und Steiermark",
+    "lat": 47.63266,
+    "lon": 15.82912,
+    "ele": 984,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Semmering-Pass"
+  },
+  {
+    "id": "niederalpl",
+    "name": "Niederalpl",
+    "names": [
+      "Niederalplpass"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark",
+    "lat": 47.68095,
+    "lon": 15.37777,
+    "ele": 1221,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Niederalpl"
+  },
+  {
+    "id": "steirischer-seeberg",
+    "name": "Seebergsattel Steiermark",
+    "names": [
+      "Steirischer Seeberg",
+      "Seeberg"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark",
+    "lat": 47.62586,
+    "lon": 15.2822,
+    "ele": 1246,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Steirischer_Seeberg"
+  },
+  {
+    "id": "triebener-tauern",
+    "name": "Triebener Tauern",
+    "names": [
+      "Hohentauern",
+      "Hohentauernpass"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark",
+    "lat": 47.43334,
+    "lon": 14.4802,
+    "ele": 1274,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Triebener_Tauern"
+  },
+  {
+    "id": "preiner-gscheid",
+    "name": "Preiner Gscheid",
+    "names": [],
+    "country": [
+      "AT"
+    ],
+    "region": "Niederösterreich und Steiermark",
+    "lat": 47.67574,
+    "lon": 15.72364,
+    "ele": 1070,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Preiner_Gscheid"
+  },
+  {
+    "id": "annaberg",
+    "name": "Annaberg",
+    "names": [
+      "Annabergsattel"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Niederösterreich",
+    "lat": 47.87139,
+    "lon": 15.3778,
+    "ele": 976,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Annaberg_%28Pass%29"
+  },
+  {
+    "id": "weinebene",
+    "name": "Weinebene",
+    "names": [],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark und Kärnten",
+    "lat": 46.83991,
+    "lon": 15.01648,
+    "ele": 1668,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Weinebene"
+  },
+  {
+    "id": "soboth",
+    "name": "Soboth",
+    "names": [
+      "Sobothpass"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark und Kärnten",
+    "lat": 46.66835,
+    "lon": 15.00998,
+    "ele": 1347,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Soboth_%28Pass%29"
+  },
+  {
+    "id": "radlpass",
+    "name": "Radlpass",
+    "names": [
+      "Radeljski prelaz",
+      "Radlpaß"
+    ],
+    "country": [
+      "AT",
+      "SI"
+    ],
+    "region": "Steiermark",
+    "lat": 46.64509,
+    "lon": 15.20649,
+    "ele": 662,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Radlpass"
+  },
+  {
+    "id": "ammersattel",
+    "name": "Ammersattel",
+    "names": [
+      "Ammer"
+    ],
+    "country": [
+      "DE",
+      "AT"
+    ],
+    "region": "Allgäu und Tirol",
+    "lat": 47.53316,
+    "lon": 10.88385,
+    "ele": 1115,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Ammersattel"
+  },
+  {
+    "id": "nockalmstrasse",
+    "name": "Nockalmstraße (Schiestelscharte)",
+    "names": [
+      "Schiestelscharte",
+      "Nockalmstraße"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Kärnten",
+    "lat": 46.93558,
+    "lon": 13.75926,
+    "ele": 2049,
+    "tier": "bekannt",
+    "hairpins": 52,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": true,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Schiestelscharte"
+  },
+  {
+    "id": "hochrindl",
+    "name": "Hochrindl",
+    "names": [],
+    "country": [
+      "AT"
+    ],
+    "region": "Kärnten",
+    "lat": 46.85995,
+    "lon": 13.99416,
+    "ele": 1617,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Hochrindl"
+  },
+  {
+    "id": "oberjoch",
+    "name": "Oberjochpass",
+    "names": [
+      "Oberjoch",
+      "Jochpass"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Allgäu",
+    "lat": 47.52684,
+    "lon": 10.43293,
+    "ele": 1178,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Oberjochpass"
+  },
+  {
+    "id": "riedbergpass",
+    "name": "Riedbergpass",
+    "names": [
+      "Riedberg"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Allgäu",
+    "lat": 47.43696,
+    "lon": 10.17714,
+    "ele": 1407,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.motorradundreisen.de/alpenpaesse/2_riedberg-pass.html"
+  },
+  {
+    "id": "kesselberg",
+    "name": "Kesselberg",
+    "names": [
+      "Kesselbergstraße"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Oberbayern",
+    "lat": 47.62157,
+    "lon": 11.3492,
+    "ele": 858,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "durchgehend 60 km/h und Überholverbot, bergauf von April bis Oktober 15 bis 22 Uhr für Motorräder gesperrt",
+    "source": "https://de.wikipedia.org/wiki/Kesselberg_%28Pass%29"
+  },
+  {
+    "id": "sudelfeld",
+    "name": "Sudelfeldpass",
+    "names": [
+      "Sudelfeld",
+      "Tatzelwurm"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Oberbayern",
+    "lat": 47.67881,
+    "lon": 12.03555,
+    "ele": 1123,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Sudelfeldpass"
+  },
+  {
+    "id": "rossfeld",
+    "name": "Roßfeld Panoramastraße",
+    "names": [
+      "Rossfeld",
+      "Roßfeldstraße",
+      "Rossfeld Panoramastrasse"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Berchtesgadener Land",
+    "lat": 47.62605,
+    "lon": 13.09204,
+    "ele": 1570,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": true,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Ro%C3%9Ffeldh%C3%B6henringstra%C3%9Fe"
+  },
+  {
+    "id": "spitzingsattel",
+    "name": "Spitzingsattel",
+    "names": [
+      "Spitzing"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Oberbayern",
+    "lat": 47.67263,
+    "lon": 11.8867,
+    "ele": 1129,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Spitzingsattel"
+  },
+  {
+    "id": "ettaler-sattel",
+    "name": "Ettaler Sattel",
+    "names": [
+      "Ettaler Berg"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Oberbayern",
+    "lat": 47.56178,
+    "lon": 11.10113,
+    "ele": 869,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Ettaler_Sattel"
+  },
+  {
+    "id": "schwarzbachwacht",
+    "name": "Schwarzbachwacht",
+    "names": [
+      "Schwarzbachwachtsattel"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Berchtesgadener Land",
+    "lat": 47.63832,
+    "lon": 12.85384,
+    "ele": 868,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Schwarzbachwacht"
+  },
+  {
+    "id": "ursprungpass",
+    "name": "Ursprungpass",
+    "names": [
+      "Ursprung"
+    ],
+    "country": [
+      "DE",
+      "AT"
+    ],
+    "region": "Oberbayern und Tirol",
+    "lat": 47.61646,
+    "lon": 12.02166,
+    "ele": 836,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Ursprungpass"
+  },
+  {
+    "id": "feldbergpass",
+    "name": "Feldbergpass",
+    "names": [
+      "Feldberg Pass"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Schwarzwald",
+    "lat": 47.85631,
+    "lon": 8.02908,
+    "ele": 1231,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Feldbergpass"
+  },
+  {
+    "id": "notschrei",
+    "name": "Notschrei",
+    "names": [
+      "Notschreipass"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Schwarzwald",
+    "lat": 47.87626,
+    "lon": 7.90965,
+    "ele": 1120,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Notschrei"
+  },
+  {
+    "id": "wiedener-eck",
+    "name": "Wiedener Eck",
+    "names": [
+      "Wiedenereck"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Schwarzwald",
+    "lat": 47.84487,
+    "lon": 7.867,
+    "ele": 1035,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Wiedener_Eck"
+  },
+  {
+    "id": "ruhestein",
+    "name": "Ruhestein",
+    "names": [
+      "Ruhesteinpass"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Schwarzwald",
+    "lat": 48.56126,
+    "lon": 8.22172,
+    "ele": 912,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Ruhestein"
+  },
+  {
+    "id": "alexanderschanze",
+    "name": "Alexanderschanze",
+    "names": [],
+    "country": [
+      "DE"
+    ],
+    "region": "Schwarzwald",
+    "lat": 48.48006,
+    "lon": 8.27614,
+    "ele": 971,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Alexanderschanze"
+  },
+  {
+    "id": "fohrenbuehl",
+    "name": "Fohrenbühl",
+    "names": [],
+    "country": [
+      "DE"
+    ],
+    "region": "Schwarzwald",
+    "lat": 48.23541,
+    "lon": 8.29417,
+    "ele": 786,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Fohrenb%C3%BChl"
+  },
+  {
+    "id": "seibelseckle",
+    "name": "Seibelseckle",
+    "names": [],
+    "country": [
+      "DE"
+    ],
+    "region": "Schwarzwald",
+    "lat": 48.59562,
+    "lon": 8.21734,
+    "ele": 956,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Seibelseckle"
+  },
+  {
+    "id": "lochenpass",
+    "name": "Lochenpass",
+    "names": [
+      "Lochen"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Schwäbische Alb",
+    "lat": 48.21813,
+    "lon": 8.85277,
+    "ele": 888,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Wochenendfahrverbot für Motorräder in Richtung Tieringen",
+    "source": "https://de.wikipedia.org/wiki/Lochenpass"
+  },
+  {
+    "id": "juhoehe",
+    "name": "Juhöhe",
+    "names": [
+      "Juhoehe"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Odenwald",
+    "lat": 49.62312,
+    "lon": 8.69602,
+    "ele": 371,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Juh%C3%B6he"
+  },
+  {
+    "id": "kreidacher-hoehe",
+    "name": "Kreidacher Höhe",
+    "names": [
+      "Kreidach"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Odenwald",
+    "lat": 49.56275,
+    "lon": 8.81224,
+    "ele": 423,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Kreidacher_H%C3%B6he"
+  },
+  {
+    "id": "rotes-kreuz-taunus",
+    "name": "Rotes Kreuz",
+    "names": [
+      "Rotes Kreuz Feldberg"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Taunus",
+    "lat": 50.2256,
+    "lon": 8.43649,
+    "ele": 688,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Rotes_Kreuz_%28Taunus%29"
+  },
+  {
+    "id": "furkapass",
+    "name": "Furkapass",
+    "names": [
+      "Passo della Furka",
+      "Furka"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Uri und Wallis",
+    "lat": 46.57268,
+    "lon": 8.41518,
+    "ele": 2429,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Furkapass"
+  },
+  {
+    "id": "grimselpass",
+    "name": "Grimselpass",
+    "names": [
+      "Passo del Grimsel",
+      "Grimsel"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Bern und Wallis",
+    "lat": 46.56153,
+    "lon": 8.3377,
+    "ele": 2163,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Grimselpass"
+  },
+  {
+    "id": "sustenpass",
+    "name": "Sustenpass",
+    "names": [
+      "Passo del Susten",
+      "Susten"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Bern und Uri",
+    "lat": 46.72912,
+    "lon": 8.44652,
+    "ele": 2224,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Sustenpass"
+  },
+  {
+    "id": "nufenenpass",
+    "name": "Nufenenpass",
+    "names": [
+      "Passo della Novena",
+      "Novena",
+      "Nufenen"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Wallis und Tessin",
+    "lat": 46.47712,
+    "lon": 8.38783,
+    "ele": 2478,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Okt bis Jun",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Nufenenpass"
+  },
+  {
+    "id": "gotthardpass",
+    "name": "Gotthardpass",
+    "names": [
+      "Passo del San Gottardo",
+      "San Gottardo",
+      "Tremola"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Uri und Tessin",
+    "lat": 46.55931,
+    "lon": 8.56115,
+    "ele": 2107,
+    "tier": "ikone",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Gotthardpass"
+  },
+  {
+    "id": "klausenpass",
+    "name": "Klausenpass",
+    "names": [
+      "Klausen"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Uri und Glarus",
+    "lat": 46.8682,
+    "lon": 8.85548,
+    "ele": 1948,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Klausenpass"
+  },
+  {
+    "id": "oberalppass",
+    "name": "Oberalppass",
+    "names": [
+      "Pass d'Alpsu",
+      "Passo dell'Oberalp",
+      "Oberalp"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Uri und Graubünden",
+    "lat": 46.65874,
+    "lon": 8.67117,
+    "ele": 2044,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Oberalppass"
+  },
+  {
+    "id": "lukmanierpass",
+    "name": "Lukmanierpass",
+    "names": [
+      "Passo del Lucomagno",
+      "Pass dal Lucmagn",
+      "Lukmanier"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden und Tessin",
+    "lat": 46.56277,
+    "lon": 8.80091,
+    "ele": 1917,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "im Winter Nachtsperren",
+    "source": "https://de.wikipedia.org/wiki/Lukmanierpass"
+  },
+  {
+    "id": "san-bernardino",
+    "name": "San Bernardino Pass",
+    "names": [
+      "Passo del San Bernardino",
+      "San Bernardino"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden",
+    "lat": 46.4971,
+    "lon": 9.1711,
+    "ele": 2066,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Dez bis Apr",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/San-Bernardino-Pass"
+  },
+  {
+    "id": "malojapass",
+    "name": "Malojapass",
+    "names": [
+      "Passo del Maloja",
+      "Maloja"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden",
+    "lat": 46.39993,
+    "lon": 9.69581,
+    "ele": 1812,
+    "tier": "bekannt",
+    "hairpins": 13,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Malojapass"
+  },
+  {
+    "id": "julierpass",
+    "name": "Julierpass",
+    "names": [
+      "Pass dal Güglia",
+      "Passo del Giulia",
+      "Julier"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden",
+    "lat": 46.47221,
+    "lon": 9.72815,
+    "ele": 2284,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Julierpass"
+  },
+  {
+    "id": "albulapass",
+    "name": "Albulapass",
+    "names": [
+      "Pass d'Alvra",
+      "Passo dell'Albula",
+      "Albula"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden",
+    "lat": 46.58223,
+    "lon": 9.83768,
+    "ele": 2312,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Jun",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Albulapass"
+  },
+  {
+    "id": "fluelapass",
+    "name": "Flüelapass",
+    "names": [
+      "Pass dal Flüela",
+      "Flüela"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden",
+    "lat": 46.7475,
+    "lon": 9.95028,
+    "ele": 2383,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Jan bis Apr",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Fl%C3%BCelapass"
+  },
+  {
+    "id": "ofenpass",
+    "name": "Ofenpass",
+    "names": [
+      "Pass dal Fuorn",
+      "Passo del Forno"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden",
+    "lat": 46.63977,
+    "lon": 10.29217,
+    "ele": 2149,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Ofenpass"
+  },
+  {
+    "id": "berninapass",
+    "name": "Berninapass",
+    "names": [
+      "Passo del Bernina",
+      "Bernina"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden",
+    "lat": 46.4162,
+    "lon": 10.01353,
+    "ele": 2235,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Berninapass"
+  },
+  {
+    "id": "simplonpass",
+    "name": "Simplonpass",
+    "names": [
+      "Passo del Sempione",
+      "Col du Simplon",
+      "Simplon"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Wallis",
+    "lat": 46.25021,
+    "lon": 8.03168,
+    "ele": 2005,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Simplonpass"
+  },
+  {
+    "id": "col-de-la-forclaz",
+    "name": "Col de la Forclaz",
+    "names": [
+      "Forclaz"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Wallis",
+    "lat": 46.05773,
+    "lon": 7.00135,
+    "ele": 1527,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_de_la_Forclaz"
+  },
+  {
+    "id": "col-des-mosses",
+    "name": "Col des Mosses",
+    "names": [
+      "Mosses"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Waadt",
+    "lat": 46.39898,
+    "lon": 7.10263,
+    "ele": 1445,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_des_Mosses"
+  },
+  {
+    "id": "col-du-pillon",
+    "name": "Col du Pillon",
+    "names": [
+      "Pillon"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Waadt und Bern",
+    "lat": 46.35343,
+    "lon": 7.2046,
+    "ele": 1546,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_du_Pillon"
+  },
+  {
+    "id": "col-de-la-croix",
+    "name": "Col de la Croix",
+    "names": [
+      "Col de la Croix Villars"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Waadt",
+    "lat": 46.32263,
+    "lon": 7.12766,
+    "ele": 1733,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_de_la_Croix_%28Waadt%29"
+  },
+  {
+    "id": "jaunpass",
+    "name": "Jaunpass",
+    "names": [
+      "Col du Jaun",
+      "Jaun"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Bern und Freiburg",
+    "lat": 46.59216,
+    "lon": 7.33908,
+    "ele": 1508,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Jaunpass"
+  },
+  {
+    "id": "glaubenbielen",
+    "name": "Glaubenbielen",
+    "names": [
+      "Glaubenbielenpass",
+      "Panoramastrasse"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Obwalden und Luzern",
+    "lat": 46.81881,
+    "lon": 8.09317,
+    "ele": 1611,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": "nach der Mörlialp einspurig",
+    "source": "https://de.wikipedia.org/wiki/Glaubenbielen"
+  },
+  {
+    "id": "glaubenberg",
+    "name": "Glaubenberg",
+    "names": [
+      "Glaubenbergpass"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Obwalden und Luzern",
+    "lat": 46.89245,
+    "lon": 8.10767,
+    "ele": 1543,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Apr",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Glaubenberg"
+  },
+  {
+    "id": "bruenigpass",
+    "name": "Brünigpass",
+    "names": [
+      "Brünig"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Bern und Obwalden",
+    "lat": 46.75686,
+    "lon": 8.13698,
+    "ele": 1008,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Br%C3%BCnigpass"
+  },
+  {
+    "id": "pragelpass",
+    "name": "Pragelpass",
+    "names": [
+      "Pragel"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Schwyz und Glarus",
+    "lat": 46.99466,
+    "lon": 8.86675,
+    "ele": 1548,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Jun",
+    "toll": false,
+    "car_note": "mehrheitlich einspurig, bis 18 % steil, kurzes Stück der Ostrampe an Wochenenden für Motorfahrzeuge gesperrt",
+    "source": "https://de.wikipedia.org/wiki/Pragelpass"
+  },
+  {
+    "id": "ibergeregg",
+    "name": "Ibergeregg",
+    "names": [
+      "Ibergereggpass"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Schwyz",
+    "lat": 47.01743,
+    "lon": 8.73321,
+    "ele": 1406,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Ibergeregg"
+  },
+  {
+    "id": "sattelegg",
+    "name": "Sattelegg",
+    "names": [
+      "Satteleggpass"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Schwyz",
+    "lat": 47.12733,
+    "lon": 8.84686,
+    "ele": 1190,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Sattelegg"
+  },
+  {
+    "id": "schwaegalp",
+    "name": "Schwägalp",
+    "names": [
+      "Schwägalppass"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Appenzell und St. Gallen",
+    "lat": 47.25583,
+    "lon": 9.30824,
+    "ele": 1278,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Schw%C3%A4galp"
+  },
+  {
+    "id": "wolfgangpass",
+    "name": "Wolfgangpass",
+    "names": [
+      "Wolfgang"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden",
+    "lat": 46.83266,
+    "lon": 9.85374,
+    "ele": 1631,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Wolfgang_%28Pass%29"
+  },
+  {
+    "id": "lenzerheide",
+    "name": "Lenzerheide Pass",
+    "names": [
+      "Lenzerheide",
+      "Lai"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden",
+    "lat": 46.75343,
+    "lon": 9.5585,
+    "ele": 1547,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Lenzerheide_%28Pass%29"
+  },
+  {
+    "id": "wildhaus",
+    "name": "Wildhauser Pass",
+    "names": [
+      "Wildhaus"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "St. Gallen",
+    "lat": 47.20333,
+    "lon": 9.35051,
+    "ele": 1090,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Wildhaus_%28Pass%29"
+  },
+  {
+    "id": "rickenpass",
+    "name": "Rickenpass",
+    "names": [
+      "Ricken"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "St. Gallen",
+    "lat": 47.26867,
+    "lon": 9.04853,
+    "ele": 805,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Rickenpass"
+  },
+  {
+    "id": "hulftegg",
+    "name": "Hulftegg",
+    "names": [
+      "Hulfteggpass"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Zürich und St. Gallen",
+    "lat": 47.36217,
+    "lon": 8.96664,
+    "ele": 953,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Hulftegg"
+  },
+  {
+    "id": "kerenzerberg",
+    "name": "Kerenzerberg",
+    "names": [
+      "Kerenzerbergpass"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Glarus",
+    "lat": 47.12091,
+    "lon": 9.12785,
+    "ele": 743,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Kerenzerberg"
+  },
+  {
+    "id": "pas-de-morgins",
+    "name": "Pas de Morgins",
+    "names": [
+      "Col de Morgins",
+      "Morgins"
+    ],
+    "country": [
+      "CH",
+      "FR"
+    ],
+    "region": "Wallis",
+    "lat": 46.2497,
+    "lon": 6.84589,
+    "ele": 1369,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Pas_de_Morgins"
+  },
+  {
+    "id": "col-du-marchairuz",
+    "name": "Col du Marchairuz",
+    "names": [
+      "Marchairuz"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Waadt (Jura)",
+    "lat": 46.55279,
+    "lon": 6.25029,
+    "ele": 1447,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_du_Marchairuz"
+  },
+  {
+    "id": "col-du-mollendruz",
+    "name": "Col du Mollendruz",
+    "names": [
+      "Mollendruz"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Waadt (Jura)",
+    "lat": 46.64991,
+    "lon": 6.36589,
+    "ele": 1180,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_du_Mollendruz"
+  },
+  {
+    "id": "col-de-la-givrine",
+    "name": "Col de la Givrine",
+    "names": [
+      "Givrine"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Waadt (Jura)",
+    "lat": 46.456,
+    "lon": 6.08844,
+    "ele": 1228,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_de_la_Givrine"
+  },
+  {
+    "id": "vue-des-alpes",
+    "name": "Vue des Alpes",
+    "names": [
+      "Col de la Vue des Alpes"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Neuenburg (Jura)",
+    "lat": 47.07272,
+    "lon": 6.86982,
+    "ele": 1283,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Vue_des_Alpes"
+  },
+  {
+    "id": "weissensteinpass",
+    "name": "Weissensteinpass",
+    "names": [
+      "Weissenstein"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Solothurn (Jura)",
+    "lat": 47.25517,
+    "lon": 7.5083,
+    "ele": 1261,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Weissensteinpass"
+  },
+  {
+    "id": "gurnigel",
+    "name": "Gurnigelpass",
+    "names": [
+      "Gurnigel"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Bern",
+    "lat": 46.73203,
+    "lon": 7.44788,
+    "ele": 1608,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Gurnigel"
+  },
+  {
+    "id": "schallenberg",
+    "name": "Schallenbergpass",
+    "names": [
+      "Schallenberg"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Bern",
+    "lat": 46.82615,
+    "lon": 7.79686,
+    "ele": 1168,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Schallenbergpass"
+  },
+  {
+    "id": "saanenmoeser",
+    "name": "Saanenmöser",
+    "names": [
+      "Saanenmöserpass"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Bern",
+    "lat": 46.51445,
+    "lon": 7.3047,
+    "ele": 1274,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Saanenm%C3%B6ser_%28Pass%29"
+  },
+  {
+    "id": "col-du-chasseral",
+    "name": "Col du Chasseral",
+    "names": [
+      "Chasseral"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Bern (Jura)",
+    "lat": 47.11942,
+    "lon": 7.0323,
+    "ele": 1502,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_du_Chasseral"
+  },
+  {
+    "id": "mont-crosin",
+    "name": "Mont Crosin",
+    "names": [
+      "Col du Mont Crosin"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Bern (Jura)",
+    "lat": 47.19062,
+    "lon": 7.03991,
+    "ele": 1227,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Mont_Crosin"
+  },
+  {
+    "id": "col-des-rangiers",
+    "name": "Col des Rangiers",
+    "names": [
+      "Rangiers"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Jura",
+    "lat": 47.38482,
+    "lon": 7.21915,
+    "ele": 856,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_des_Rangiers"
+  },
+  {
+    "id": "pierre-pertuis",
+    "name": "Col de Pierre Pertuis",
+    "names": [
+      "Pierre Pertuis"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Bern (Jura)",
+    "lat": 47.21002,
+    "lon": 7.19423,
+    "ele": 827,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_de_Pierre_Pertuis"
+  },
+  {
+    "id": "sanetschpass",
+    "name": "Sanetschpass",
+    "names": [
+      "Col du Sanetsch",
+      "Sanetsch"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Wallis",
+    "lat": 46.33157,
+    "lon": 7.28622,
+    "ele": 2252,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Sanetschpass"
+  },
+  {
+    "id": "moosalp",
+    "name": "Moosalp",
+    "names": [
+      "Moosalppass"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Wallis",
+    "lat": 46.25128,
+    "lon": 7.82967,
+    "ele": 2048,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Moosalp"
+  },
+  {
+    "id": "alpe-di-neggia",
+    "name": "Alpe di Neggia",
+    "names": [
+      "Neggia"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Tessin",
+    "lat": 46.11067,
+    "lon": 8.84545,
+    "ele": 1395,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Alpe_di_Neggia"
+  },
+  {
+    "id": "albispass",
+    "name": "Albispass",
+    "names": [
+      "Albis"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Zürich",
+    "lat": 47.27601,
+    "lon": 8.52114,
+    "ele": 790,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Albispass"
+  },
+  {
+    "id": "staffelegg",
+    "name": "Staffelegg",
+    "names": [
+      "Staffeleggpass"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Aargau",
+    "lat": 47.43382,
+    "lon": 8.06046,
+    "ele": 621,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Staffelegg"
+  },
+  {
+    "id": "aecherlipass",
+    "name": "Ächerlipass",
+    "names": [
+      "Ächerli"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Nidwalden und Obwalden",
+    "lat": 46.91097,
+    "lon": 8.34365,
+    "ele": 1398,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Apr",
+    "toll": false,
+    "car_note": "meist einspurig und recht schmal mit Ausweichstellen",
+    "source": "https://de.wikipedia.org/wiki/%C3%84cherlipass"
+  },
+  {
+    "id": "col-des-etroits",
+    "name": "Col des Étroits",
+    "names": [
+      "Etroits"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Waadt (Jura)",
+    "lat": 46.82986,
+    "lon": 6.49504,
+    "ele": 1152,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Col_des_%C3%89troits"
+  },
+  {
+    "id": "passo-coe",
+    "name": "Passo Coe",
+    "names": [
+      "Coe"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino",
+    "lat": 45.87732,
+    "lon": 11.21206,
+    "ele": 1610,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_Coe"
+  },
+  {
+    "id": "passo-del-sommo",
+    "name": "Passo del Sommo",
+    "names": [
+      "Sommo"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino",
+    "lat": 45.91956,
+    "lon": 11.20627,
+    "ele": 1341,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_del_Sommo"
+  },
+  {
+    "id": "cimabanche",
+    "name": "Im Gemärk",
+    "names": [
+      "Passo Cimabanche",
+      "Cimabanche"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.62059,
+    "lon": 12.18398,
+    "ele": 1530,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Im_Gem%C3%A4rk"
+  },
+  {
+    "id": "brennerpass",
+    "name": "Brennerpass",
+    "names": [
+      "Passo del Brennero",
+      "Brenner",
+      "Brennero"
+    ],
+    "country": [
+      "AT",
+      "IT"
+    ],
+    "region": "Tirol und Südtirol",
+    "lat": 47.0074,
+    "lon": 11.5067,
+    "ele": 1370,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Brennerpass"
+  },
+  {
+    "id": "maniva",
+    "name": "Passo del Maniva",
+    "names": [
+      "Giogo del Maniva",
+      "Maniva"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 45.82263,
+    "lon": 10.4101,
+    "ele": 1664,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.wikidata.org/wiki/Q2108573"
+  },
+  {
+    "id": "pillerhoehe",
+    "name": "Pillerhöhe",
+    "names": [
+      "Pillersattel",
+      "Piller"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol",
+    "lat": 47.11806,
+    "lon": 10.66694,
+    "ele": 1559,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Pillerh%C3%B6he"
+  },
+  {
+    "id": "wagrainer-hoehe",
+    "name": "Wagrainer Höhe",
+    "names": [
+      "Wagrain"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Salzburg",
+    "lat": 47.3547,
+    "lon": 13.32553,
+    "ele": 961,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Wagrainer_H%C3%B6he"
+  },
+  {
+    "id": "hallthurm",
+    "name": "Hallthurm",
+    "names": [
+      "Hallthurmpass"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Berchtesgadener Land",
+    "lat": 47.70138,
+    "lon": 12.93357,
+    "ele": 693,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Hallthurm"
+  },
+  {
+    "id": "kalteck",
+    "name": "Kalteck",
+    "names": [
+      "Kalteckpass"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Bayerischer Wald",
+    "lat": 48.93933,
+    "lon": 12.91941,
+    "ele": 750,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Kalteck_%28Bayerischer_Wald%29"
+  },
+  {
+    "id": "thurner",
+    "name": "Thurner",
+    "names": [
+      "Thurnerpass"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Schwarzwald",
+    "lat": 47.97197,
+    "lon": 8.1214,
+    "ele": 1030,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Thurner_%28St._M%C3%A4rgen%29"
+  },
+  {
+    "id": "sant-antonio",
+    "name": "Passo Sant'Antonio",
+    "names": [
+      "Passo San Antonio",
+      "Sant'Antonio"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Dolomiten",
+    "lat": 46.572,
+    "lon": 12.48236,
+    "ele": 1489,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mär",
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passo_San_Antonio"
+  },
+  {
+    "id": "postalm",
+    "name": "Postalmstraße (Lienbachsattel)",
+    "names": [
+      "Lienbachsattel",
+      "Postalm"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Salzburg",
+    "lat": 47.62664,
+    "lon": 13.41402,
+    "ele": 1304,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": true,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Lienbachsattel"
+  }
+]

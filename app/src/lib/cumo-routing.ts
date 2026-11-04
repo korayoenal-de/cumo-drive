@@ -86,6 +86,16 @@ function exclusionModel(points: LatLon[]) {
  * Kurvig und Pässe: an Rundtouren ab Heppenheim getestet, 37 bis 53 Kurven pro 100 km
  * statt 24 bis 32 mit dem Grundprofil, weiter ohne unbefestigte Kilometer.
  */
+/**
+ * Mindestbreite pro Anfrage, damit der laufende Server ohne neuen Import greift:
+ * unter 1,9 m passt kein Sportwagen, 2,5 bis 3 m ist einspurig, bis 4,5 m wird es eng.
+ */
+const WIDTH_MODEL = [
+  { if: 'max_width < 1.9', multiply_by: '0' },
+  { else_if: 'max_width >= 2.5 && max_width < 3', multiply_by: '0.1' },
+  { else_if: 'max_width >= 3 && max_width < 4.5', multiply_by: '0.6' },
+];
+
 function profileModel(profile: Profile): { if?: string; else_if?: string; multiply_by: string }[] {
   if (profile === 'kurvig' || profile === 'paesse') {
     return [
@@ -123,7 +133,7 @@ async function post(body: Record<string, unknown>, signal?: AbortSignal): Promis
 
 function model(avoid: Avoid, exclude: LatLon[], profile: Profile) {
   const ex = exclusionModel(exclude) as { areas?: unknown; priority?: { if: string; multiply_by: string }[] };
-  const priority = [...profileModel(profile), ...avoidModel(avoid), ...(ex.priority ?? [])];
+  const priority = [...WIDTH_MODEL, ...profileModel(profile), ...avoidModel(avoid), ...(ex.priority ?? [])];
   if (!priority.length) return undefined;
   return { ...(ex.areas ? { areas: ex.areas } : {}), priority, ...(profile === 'kurvig' || profile === 'paesse' ? { distance_influence: 5 } : {}) };
 }
@@ -169,9 +179,15 @@ export function checkFromDetails(path: GhPath): Pick<Tour, 'linie' | 'warnungen'
     if (NON_CAR.has(rc)) why.push(rc === 'track' ? 'Wirtschafts oder Waldweg' : `als ${rc} eingetragen`);
     if (UNPAVED.has(sf)) why.push(`Belag ${sf}`);
     if (tt && tt !== 'missing' && tt !== 'grade1') why.push(`Wegklasse ${tt}`);
+    // Mindestbreite: zwei Autos müssen aneinander vorbeikommen. GraphHopper führt maxwidth
+    // (Engstelle, meist 2 bis 2,5 m) und die Straßenbreite width im selben Wert:
+    // unter 1,9 m passt kein Sportwagen, 2,5 bis 3 m ist eine einspurige Straße, beides raus.
+    const mwText = typeof mw === 'number' ? String(mw).replace('.', ',') : '';
+    if (typeof mw === 'number' && (mw < 1.9 || (mw >= 2.5 && mw < 3))) why.push(`nur ${mwText} m breit`);
     let c: CheckClass = why.length ? 'raus' : 'ok';
     if (c === 'ok') {
-      if (typeof mw === 'number' && mw < 2.5) why.push(`Höchstbreite ${String(mw).replace('.', ',')} m`);
+      if (typeof mw === 'number' && mw < 2.5) why.push(`Engstelle ${mwText} m`);
+      else if (typeof mw === 'number' && mw < 4.5) why.push(`schmal, ${mwText} m, Gegenverkehr wird eng`);
       if (sf === 'cobblestone' || sf === 'paving_stones') why.push('Pflaster');
       if (why.length) c = 'pruefen';
     }

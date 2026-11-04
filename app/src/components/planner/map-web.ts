@@ -118,3 +118,50 @@ export function boundsOf(points: LatLon[]): [[number, number], [number, number]]
   }
   return [[w, s], [e, n]];
 }
+
+/**
+ * Pässe als eigene Ebene unter der Tour: Ikonen ab Zoom 5, bekannte ab 6,5, Geheimtipps ab 8.
+ * Wahrscheinlich gesperrte Pässe sind gedimmt.
+ */
+export function addPassLayers(map: MapInstance, data: unknown) {
+  map.addSource('passes', { type: 'geojson', data });
+  const minZoom = ['match', ['get', 'tier'], 'ikone', 5, 'bekannt', 6.5, 8];
+  const visible = ['>=', ['zoom'], minZoom];
+  map.addLayer(
+    {
+      id: 'pass-circle',
+      type: 'circle',
+      source: 'passes',
+      filter: visible,
+      paint: {
+        'circle-radius': ['match', ['get', 'tier'], 'ikone', 7, 'bekannt', 5.5, 4.5],
+        'circle-color': ['case', ['get', 'closed'], '#5A5A60', ['match', ['get', 'tier'], 'ikone', '#E8B03A', 'bekannt', '#F4F4F2', '#9A9A9F']],
+        'circle-stroke-color': '#0B0B0C',
+        'circle-stroke-width': 2,
+      },
+    },
+    'tour-casing',
+  );
+  map.addLayer(
+    {
+      id: 'pass-label',
+      type: 'symbol',
+      source: 'passes',
+      filter: ['all', visible, ['>=', ['zoom'], ['match', ['get', 'tier'], 'ikone', 6, 'bekannt', 8, 9.5]]],
+      layout: {
+        'text-field': ['concat', ['get', 'name'], '\n', ['to-string', ['get', 'ele']], ' m'],
+        'text-size': ['match', ['get', 'tier'], 'ikone', 12, 11],
+        'text-font': ['Noto Sans Bold'],
+        'text-offset': [0, 1.1],
+        'text-anchor': 'top',
+        'text-optional': true,
+      },
+      paint: {
+        'text-color': ['case', ['get', 'closed'], '#7A7A80', ['match', ['get', 'tier'], 'ikone', '#E8B03A', '#F4F4F2']],
+        'text-halo-color': '#0B0B0C',
+        'text-halo-width': 1.6,
+      },
+    },
+    'tour-casing',
+  );
+}

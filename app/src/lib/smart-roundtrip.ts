@@ -12,6 +12,7 @@
 import { checkLine } from './check';
 import { cumoAvailable, cumoRoundTrips } from './cumo-routing';
 import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from './graphhopper';
+import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
 import { planChecked, type PlannedTour, type PlanStep } from './plan';
 import { DIRECTIONS, roundTrip, type Direction } from './roundtrip';
 import { countCurves } from './stats';
@@ -30,7 +31,7 @@ export type SmartRequest = {
 };
 
 export type Engine = 'cumo' | 'graphhopper' | 'valhalla';
-export type SmartTour = PlannedTour & { engine: Engine; score: number; curves: number };
+export type SmartTour = PlannedTour & { engine: Engine; score: number; curves: number; passes?: string[] };
 
 /** Gleiche Bewertung für alle Kandidaten; gesperrte km wiegen schwer. */
 function scoreTour(t: PlannedTour, curves: number, fastKm: number, targetKm: number): number {
@@ -46,6 +47,47 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
     req.bearing ?? (req.direction === 'zufall' ? seed % 360 : DIRECTIONS.find((d) => d.id === req.direction)!.bearing);
   const candidates: SmartTour[] = [];
   let lastError: unknown = null;
+
+  // Pässe Profil: gezielt über bekannte Pässe in Reichweite, die jetzt offen sind.
+  // Bergstraßen sind viel länger als die Luftlinie; passt die Länge nicht, wird die Reichweite
+  // nachgeregelt und neu gewählt (höchstens drei Versuche).
+  if (req.profile === 'paesse') {
+    const month = new Date().getMonth() + 1;
+    const dir = req.direction === 'zufall' && req.bearing === undefined ? null : heading;
+    const own = await cumoAvailable();
+    let reachKm = req.km;
+    const tried = new Set<string>();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const loop = passLoopVia(PASSES, req.start, reachKm, dir, month);
+      if (!loop) break;
+      const key = loop.passes.map((p) => p.id).join('+');
+      if (tried.has(key)) break;
+      tried.add(key);
+      try {
+        onStep?.('route');
+        const t = await planChecked(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, onStep, signal, true);
+        const curves = countCurves(flatten(t).map((x) => x.p));
+        const bonus = loop.passes.reduce((sum, p) => sum + TIER_WEIGHT[p.tier] * 15, 0);
+        const cand: SmartTour = {
+          ...t,
+          engine: own ? 'cumo' : 'valhalla',
+          curves,
+          score: scoreTour(t, curves, 0, req.km) + bonus,
+          passes: loop.passes.map((p) => p.name),
+        };
+        candidates.push(cand);
+        const ratio = t.laenge_km / req.km;
+        if ((t.km_je_klasse?.raus ?? 0) === 0 && ratio > 0.7 && ratio < 1.3) return cand;
+        reachKm = reachKm / Math.max(0.5, Math.min(2.5, ratio));
+      } catch (e) {
+        if (signal?.aborted) throw e;
+        lastError = e;
+        break;
+      }
+    }
+    const fit = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0 && c.laenge_km < req.km * 1.5);
+    if (fit.length) return fit.sort((a, b) => b.score - a.score)[0];
+  }
 
   // 0. Eigener Routing Server: Sportwagen Profil mit Kurven, mehrere Varianten, alles lokal
   if (await cumoAvailable()) {

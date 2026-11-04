@@ -19,9 +19,10 @@ import { deleteTour, filterTours, folders, saveTour, useLibrary, type SavedTour,
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { encodeTour } from '@/lib/share-code';
+import { likelyClosed, PASSES, passesAlong, passesGeoJson, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
 import QRCode from 'qrcode';
 
-import { addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
+import { addPassLayers, addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
 
 const C = {
   ground: '#0B0B0C', surface: '#161618', surface2: '#1F1F22', line: '#2A2A2E', text: '#F4F4F2',
@@ -31,7 +32,7 @@ const DISPLAY = 'Archivo_900Black, Archivo, "Arial Narrow", Inter, system-ui, sa
 const BODY = 'Inter_400Regular, Inter, system-ui, sans-serif';
 
 type Mode = 'tour' | 'rundtour' | 'beschreiben' | 'touren';
-type MenuState = { x: number; y: number; p: LatLon } | null;
+type MenuState = { x: number; y: number; p: LatLon; pass?: Pass } | null;
 type PlannedTour = Tour & { minutes?: number; fixes?: number };
 
 const STEP_TEXT: Record<PlanStep, string> = {
@@ -105,6 +106,9 @@ export default function Planner() {
         m.addControl(new ml.NavigationControl({ showCompass: false }), 'bottom-right');
         m.on('load', () => {
           addTourLayers(m);
+          addPassLayers(m, passesGeoJson(PASSES, new Date().getMonth() + 1));
+          m.on('mouseenter', 'pass-circle', () => (m.getCanvas().style.cursor = 'pointer'));
+          m.on('mouseleave', 'pass-circle', () => (m.getCanvas().style.cursor = ''));
           setMapReady(true);
         });
         map.current = m;
@@ -179,9 +183,16 @@ export default function Planner() {
   useEffect(() => {
     const m = map.current;
     if (!mapReady || !m) return;
-    const onClick = (e: { lngLat: { lat: number; lng: number } }) => {
+    const onClick = (e: { lngLat: { lat: number; lng: number }; point: { x: number; y: number } }) => {
       if (menu) {
         setMenu(null);
+        return;
+      }
+      // Klick auf einen Pass öffnet seine Karte mit den Aktionen
+      const hit = m.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ['pass-circle'] })[0];
+      const pass = hit ? PASSES.find((x) => x.id === hit.properties.id) : undefined;
+      if (pass) {
+        setMenu({ x: e.point.x, y: e.point.y, p: passPoint(pass), pass });
         return;
       }
       if (mode !== 'tour' || busy) return;
@@ -243,6 +254,8 @@ export default function Planner() {
     replan(pts, isSample ? 'Neue Tour' : tour.name);
   };
 
+  const passesOnRoute = useMemo(() => passesAlong(PASSES, line), [line]);
+
   const hoverLine = useMemo(() => resample(line, 100), [line]);
   const onHoverKm = useCallback(
     (km: number | null) => {
@@ -292,6 +305,13 @@ export default function Planner() {
         {mode === 'tour' && !busy ? <div style={S.hint}>Klick setzt ein Ziel, Rechtsklick öffnet weitere Optionen</div> : null}
         {menu ? (
           <div style={{ ...S.menu, left: menu.x, top: menu.y }} role="menu" onContextMenu={(e) => e.preventDefault()}>
+            {menu.pass ? (
+              <div style={S.menuHead}>
+                <b>{menu.pass.name}</b>
+                <span style={S.dropDetail}>{passSummary(menu.pass, new Date().getMonth() + 1)}</span>
+                {menu.pass.car_note ? <span style={S.dropDetail}>{menu.pass.car_note}</span> : null}
+              </div>
+            ) : null}
             <button role="menuitem" style={S.menuItem} onClick={() => menuAction('start')}>Als Start setzen</button>
             <button role="menuitem" style={S.menuItem} onClick={() => menuAction('via')}>Als Via Punkt einfügen</button>
             <button role="menuitem" style={S.menuItem} onClick={() => menuAction('ziel')}>Als Ziel setzen</button>
@@ -337,6 +357,7 @@ export default function Planner() {
               onHoverKm={onHoverKm}
               isSample={isSample}
               names={names}
+              passes={passesOnRoute}
               profile={profile}
               setProfile={setProfile}
               avoid={avoid}
@@ -437,6 +458,7 @@ function TourPanel(props: {
   onHoverKm: (km: number | null) => void;
   isSample: boolean;
   names: Record<string, string>;
+  passes: { pass: Pass; km: number }[];
   profile: Profile;
   setProfile: (p: Profile) => void;
   avoid: Avoid;
@@ -533,6 +555,25 @@ function TourPanel(props: {
       ) : (
         <p style={S.muted}>Setze den Start per Suche oder Klick auf die Karte, dann das Ziel.</p>
       )}
+
+      {props.passes.length ? (
+        <Section title="Pässe auf der Strecke" aside={String(props.passes.length)}>
+          <ol style={S.passList}>
+            {props.passes.map(({ pass, km }) => (
+              <li key={pass.id} style={{ listStyle: 'none' }}>
+                <button style={S.passRow} onClick={() => props.onFly(passPoint(pass))}>
+                  <span style={pass.tier === 'ikone' ? S.passDotIcon : S.passDot} />
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={S.passName}>{pass.name}</span>
+                    <span style={S.dropDetail}>{passSummary(pass, new Date().getMonth() + 1)}</span>
+                  </span>
+                  <span style={S.legKm}>km {Math.round(km)}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </Section>
+      ) : null}
 
       <Section title="Profil">
         <div style={S.chips}>
@@ -637,7 +678,7 @@ function SendToApp(props: { tour: Tour; profile: Profile }) {
   const url = img && img.code === code ? img.url : null;
   if (!open)
     return (
-      <button style={S.secondary} onClick={() => setOpen(true)}>
+      <button style={{ ...S.secondary, flex: 'none', minHeight: 42 }} onClick={() => setOpen(true)}>
         An die App senden
       </button>
     );
@@ -966,9 +1007,15 @@ function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick: (p: Pl
     if (q.trim().length < 3) return;
     const ctrl = new AbortController();
     const t = setTimeout(() => {
+      const month = new Date().getMonth() + 1;
+      const passHits: Place[] = searchPasses(PASSES, q, 3).map((p) => ({
+        name: p.name,
+        detail: `Pass, ${passSummary(p, month)}${likelyClosed(p, month) ? '' : `, ${p.region}`}`,
+        p: passPoint(p),
+      }));
       searchPlaces(q, props.near, ctrl.signal)
         .then((h) => {
-          setHits(h);
+          setHits([...passHits, ...h.filter((x) => !passHits.some((y) => y.name === x.name))]);
           setOpen(true);
         })
         .catch(() => undefined);
@@ -1187,6 +1234,12 @@ const S: Record<string, CSSProperties> = {
   engine: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px', color: C.muted, fontSize: 12, borderBottom: `1px solid ${C.surface2}` },
   dot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
   menu: { position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: 200, padding: 4, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
+  menuHead: { display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 12px 10px', marginBottom: 2, borderBottom: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}`, maxWidth: 260 },
+  passList: { margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2 },
+  passRow: { display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '7px 4px', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', textAlign: 'left', font: `500 14px ${BODY}` },
+  passName: { display: 'block', fontWeight: 600 },
+  passDot: { width: 10, height: 10, borderRadius: 5, background: C.text, flexShrink: 0 },
+  passDotIcon: { width: 12, height: 12, borderRadius: 6, background: C.warn, flexShrink: 0 },
   menuItem: { textAlign: 'left', background: 'transparent', border: 'none', color: C.text, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', font: `500 14px ${BODY}` },
   saveBox: { display: 'flex', gap: 8, alignItems: 'center' },
   qrBox: { display: 'flex', flexDirection: 'column', gap: 10, padding: 14, background: C.surface2, border: `1px solid ${C.line}`, borderRadius: 14, color: C.text, font: `500 14px ${BODY}` },

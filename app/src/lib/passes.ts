@@ -2,6 +2,8 @@
  * Pässe: eigene, geprüfte Datenbank (DE, AT, CH, IT) mit Stufe, Höhe, Kehren, Wintersperre.
  * calimoto findet Pässe nicht in der Suche und zeigt nur die Höhe; hier sind sie Kern der Planung.
  */
+import passData from '@/data/passes.json';
+
 import { bearingTo, destination } from './roundtrip';
 import { haversine, type LatLon } from './tour';
 
@@ -95,11 +97,61 @@ export function passesNear(list: Pass[], p: LatLon, radiusKm: number): { pass: P
     .sort((a, b) => TIER_WEIGHT[b.pass.tier] - TIER_WEIGHT[a.pass.tier] || a.km - b.km);
 }
 
-/** Ist ein Pass in diesem Monat (1 bis 12) typischerweise gesperrt? Grob, nach closed_months. */
+const MONTHS: [RegExp, number][] = [
+  [/^jan/, 1], [/^feb/, 2], [/^m(ä|ae|a)r/, 3], [/^apr/, 4], [/^mai/, 5], [/^jun/, 6],
+  [/^jul/, 7], [/^aug/, 8], [/^sep/, 9], [/^okt/, 10], [/^nov/, 11], [/^dez/, 12],
+];
+
+function monthOf(word: string): number | null {
+  const w = word.toLowerCase();
+  for (const [re, m] of MONTHS) if (re.test(w)) return m;
+  return null;
+}
+
+/** "Nov bis Mai" zu [11, 5]; null, wenn sich nichts lesen lässt. */
+export function closedRange(text: string | null): [number, number] | null {
+  if (!text) return null;
+  const found = text.split(/[^A-Za-zÄÖÜäöü]+/).map(monthOf).filter((m): m is number => m !== null);
+  return found.length >= 2 ? [found[0], found[found.length - 1]] : null;
+}
+
+/**
+ * Ist ein Pass in diesem Monat (1 bis 12) wahrscheinlich gesperrt?
+ * Mit Monatsangabe gilt die Angabe. Ohne Angabe sind Pässe mit bekannter Wintersperre und alle
+ * ab 2000 m vorsichtshalber von November bis Mai zu, weil die Quellen dort oft schweigen.
+ */
 export function likelyClosed(p: Pass, month: number): boolean {
-  if (!p.winter_closed) return false;
-  // Faustregel ohne genaue Daten: November bis Mai gesperrt, Grenzmonate als unsicher werten
+  const range = closedRange(p.closed_months);
+  if (range) {
+    const [a, b] = range;
+    return a <= b ? month >= a && month <= b : month >= a || month <= b;
+  }
+  if (!p.winter_closed && p.ele < 2000) return false;
   return month >= 11 || month <= 5;
+}
+
+/** Alle geprüften Pässe (DE, AT, CH, IT und Grenzpässe). */
+export const PASSES = passData as Pass[];
+
+/** Kurzbeschreibung für Listen und Karten, zum Beispiel "2757 m, Ikone, 82 Kehren". */
+export function passSummary(p: Pass, month?: number): string {
+  const parts = [`${p.ele.toLocaleString('de-DE')} m`, TIER_LABEL[p.tier]];
+  if (p.hairpins) parts.push(`${p.hairpins} Kehren`);
+  if (p.toll) parts.push('Maut');
+  if (month !== undefined && likelyClosed(p, month)) parts.push(p.closed_months ? `gesperrt ${p.closed_months}` : 'im Winter wohl gesperrt');
+  return parts.join(', ');
+}
+
+/** GeoJSON für die Kartenebene. */
+export function passesGeoJson(list: Pass[], month: number) {
+  return {
+    type: 'FeatureCollection',
+    features: list.map((p) => ({
+      type: 'Feature',
+      properties: { id: p.id, name: p.name, ele: p.ele, tier: p.tier, closed: likelyClosed(p, month) },
+      geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
+    })),
+  };
 }
 
 /**
@@ -113,8 +165,8 @@ export function passLoopVia(
   bearing: number | null,
   month: number,
 ): { via: LatLon[]; passes: Pass[] } | null {
-  // Ein Pass in Luftlinie r erzeugt grob eine Runde von 2 bis 3 mal r Straßen km
-  const reach = km / 2.6;
+  // Ein Pass in Luftlinie r erzeugt im Gebirge grob eine Runde von 3 bis 3,5 mal r Straßen km
+  const reach = km / 3.3;
   const open = passesNear(list, start, reach).filter((x) => !likelyClosed(x.pass, month) && x.km > 3);
   if (!open.length) return null;
   const score = (x: { pass: Pass; km: number }) => {
@@ -127,7 +179,7 @@ export function passLoopVia(
   // zweiter Pass: nicht zu nah am ersten, passt mit in die Länge
   for (const x of ranked.slice(1)) {
     const gap = haversine(passPoint(first.pass), passPoint(x.pass)) / 1000;
-    if (gap > 8 && first.km + gap + x.km <= km / 1.3) {
+    if (gap > 8 && first.km + gap + x.km <= km / 1.7) {
       chosen.push(x);
       break;
     }

@@ -102,15 +102,20 @@ def classify(tags):
         if tags.get(k) in ("no", "private", "forestry", "agricultural"):
             reasons.append(f"{k}={tags[k]}")
             break
+    # Mindestbreite: zwei Autos kommen aneinander vorbei. Unter 3 m geht das nicht.
     w = parse_m(tags.get("width"))
-    if w is not None and w < 3.5:
-        reasons.append(f"width={w:g} m")
+    if w is not None and w < 3:
+        reasons.append(f"width={w:g} m (zu schmal für Gegenverkehr)")
+    mw = parse_m(tags.get("maxwidth") or tags.get("maxwidth:physical"))
+    if mw is not None and mw < 1.9:
+        reasons.append(f"maxwidth={mw:g} m (schmaler als ein Sportwagen)")
     if reasons:
         return "raus", reasons
     soft = []
-    mw = parse_m(tags.get("maxwidth") or tags.get("maxwidth:physical"))
     if mw is not None and mw < 2.5:
         soft.append(f"maxwidth={mw:g} m (Engstelle, nur schmale Fahrzeuge)")
+    if w is not None and w < 4.5:
+        soft.append(f"width={w:g} m (schmal, Gegenverkehr wird eng)")
     if hw in ("unclassified", "residential", "service", "road") and "surface" not in tags:
         soft.append(f"highway={hw} ohne Belagsangabe")
     if hw == "service":
