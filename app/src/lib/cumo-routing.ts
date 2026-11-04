@@ -11,6 +11,7 @@
 
 import type { PlannedTour } from './plan';
 import { countCurves } from './stats';
+import { doubledStretch } from './doubled';
 import { haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import type { Avoid } from './valhalla';
 
@@ -59,25 +60,34 @@ type GhPath = {
   details: Record<string, Detail[]>;
 };
 
+/** Ab so vielen doppelt gefahrenen Kilometern wird neu gerechnet. */
+const DOUBLE_MAX_KM = 2;
+/** Wird false, sobald der Server pass_through ablehnt. */
+let passThroughOk = true;
+
 const DETAILS = ['road_class', 'surface', 'track_type', 'max_width', 'street_name', 'street_ref', 'curvature'];
 
 /** Kleine Quadrate (etwa 120 m) um gesperrte Stellen, für den Ausschluss per custom_model. */
-function exclusionModel(points: LatLon[]) {
-  if (!points.length) return {};
+function exclusionModel(points: LatLon[], penalize: LatLon[] = []) {
+  if (!points.length && !penalize.length) return {};
   const d = 0.0006;
-  const features = points.slice(0, 40).map(([la, lo], i) => ({
+  const box = ([la, lo]: LatLon, id: string) => ({
     type: 'Feature',
-    id: `ex${i}`,
+    id,
     properties: {},
     geometry: {
       type: 'Polygon',
       coordinates: [[[lo - d, la - d], [lo + d, la - d], [lo + d, la + d], [lo - d, la + d], [lo - d, la - d]]],
     },
-  }));
-  return {
-    areas: { type: 'FeatureCollection', features },
-    priority: [{ if: features.map((f) => `in_${f.id}`).join(' || '), multiply_by: '0' }],
-  };
+  });
+  const ex = points.slice(0, 40).map((p, i) => box(p, `ex${i}`));
+  // Schon befahrene Straße: deutlich teurer, aber nicht verboten (manchmal gibt es nur die eine)
+  const dup = penalize.slice(0, 60).map((p, i) => box(p, `dup${i}`));
+  const priority = [
+    ...(ex.length ? [{ if: ex.map((f) => `in_${f.id}`).join(' || '), multiply_by: '0' }] : []),
+    ...(dup.length ? [{ if: dup.map((f) => `in_${f.id}`).join(' || '), multiply_by: '0.25' }] : []),
+  ];
+  return { areas: { type: 'FeatureCollection', features: [...ex, ...dup] }, priority };
 }
 
 /**
@@ -130,8 +140,8 @@ async function post(body: Record<string, unknown>, signal?: AbortSignal): Promis
   return data.paths[0];
 }
 
-function model(avoid: Avoid, exclude: LatLon[], profile: Profile) {
-  const ex = exclusionModel(exclude) as { areas?: unknown; priority?: { if: string; multiply_by: string }[] };
+function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatLon[] = []) {
+  const ex = exclusionModel(exclude, penalize) as { areas?: unknown; priority?: { if: string; multiply_by: string }[] };
   const priority = [...WIDTH_MODEL, ...profileModel(profile), ...avoidModel(avoid), ...(ex.priority ?? [])];
   if (!priority.length) return undefined;
   return { ...(ex.areas ? { areas: ex.areas } : {}), priority, ...(profile === 'kurvig' || profile === 'paesse' ? { distance_influence: 15 } : {}) };
@@ -251,7 +261,11 @@ function toTour(name: string, wegpunkte: LatLon[], p: GhPath): PlannedTour & { c
   };
 }
 
-/** Route durch Punkte, geprüft; gesperrte Stellen werden bis zu zweimal ausgeschlossen. */
+/**
+ * Route durch Punkte, geprüft; gesperrte Stellen werden bis zu zweimal ausgeschlossen.
+ * An Zwischenzielen kein Wenden (pass_through). Fährt die Route danach noch mehr als
+ * DOUBLE_MAX_KM auf derselben Straße zurück, wird sie einmal mit verteuerten Stücken neu gerechnet.
+ */
 export async function cumoPlan(
   name: string,
   points: LatLon[],
@@ -259,17 +273,28 @@ export async function cumoPlan(
   avoid: Avoid,
   signal?: AbortSignal,
 ): Promise<PlannedTour & { curves: number }> {
+  const ask = async (exclude: LatLon[], penalize: LatLon[]) => {
+    const m = model(avoid, exclude, profile, penalize);
+    const body = {
+      points: points.map(([la, lo]) => [lo, la]),
+      profile: profile === 'schnell' ? 'auto' : 'sportwagen',
+      ...(m ? { custom_model: m } : {}),
+    };
+    if (points.length > 2 && passThroughOk) {
+      try {
+        return await post({ ...body, pass_through: true }, signal);
+      } catch (e) {
+        if (signal?.aborted) throw e;
+        // Server kennt pass_through nicht oder findet so keinen Weg: ohne weiter
+        passThroughOk = false;
+      }
+    }
+    return post(body, signal);
+  };
   let exclude: LatLon[] = [];
   let best: (PlannedTour & { curves: number }) | null = null;
   for (let round = 0; round < 3; round++) {
-    const p = await post(
-      {
-        points: points.map(([la, lo]) => [lo, la]),
-        profile: profile === 'schnell' ? 'auto' : 'sportwagen',
-        ...(model(avoid, exclude, profile) ? { custom_model: model(avoid, exclude, profile) } : {}),
-      },
-      signal,
-    );
+    const p = await ask(exclude, []);
     const t = { ...toTour(name, points, p), fixes: round };
     if (!best || (t.km_je_klasse?.raus ?? 0) < (best.km_je_klasse?.raus ?? Infinity)) best = t;
     if ((t.km_je_klasse?.raus ?? 0) === 0) break;
@@ -278,7 +303,23 @@ export async function cumoPlan(
     if (!more.length) break;
     exclude = [...exclude, ...more].slice(0, 40);
   }
-  return best!;
+  const first = best!;
+  const dup = doubledStretch(first.linie.flatMap((r) => r.p));
+  if (dup.km <= DOUBLE_MAX_KM) return first;
+  // Die doppelten Stücke nicht in die Nähe der Wegpunkte legen, dort muss die Route hin
+  const penalize = dup.points.filter((q) => !points.some((w) => haversine(w, q) < 600));
+  if (!penalize.length) return first;
+  try {
+    const p = await ask(exclude, penalize);
+    const t = { ...toTour(name, points, p), fixes: first.fixes };
+    const again = doubledStretch(t.linie.flatMap((r) => r.p));
+    const notWorse = (t.km_je_klasse?.raus ?? 0) <= (first.km_je_klasse?.raus ?? 0);
+    const notMuchLonger = t.laenge_km <= first.laenge_km * 1.2 + 5;
+    if (again.km < dup.km - 1 && notWorse && notMuchLonger) return t;
+  } catch (e) {
+    if (signal?.aborted) throw e;
+  }
+  return first;
 }
 
 /** Rundtour Varianten vom eigenen Server (lokal, ohne Kontingent). */

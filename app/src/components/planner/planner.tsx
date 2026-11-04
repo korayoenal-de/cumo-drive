@@ -13,7 +13,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { RouteMap } from '@/components/map/route-map';
 import { closedHint, passState, usePassLive } from '@/lib/pass-live';
-import { PASS_STATUS_URL, PASSES, passesAlong, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
+import { PASS_STATUS_URL, PASSES, passesAlong, passPoint, passSummary, searchPasses } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import {
   buildTour, findPlace, locate, newSeed, PHASES, toPlanError,
@@ -35,7 +35,8 @@ import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } f
 import { planChecked, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
-import { insertVia, movePoint, passesNearLeg, routePasses, straightLine } from '@/lib/route-edit';
+import { doubledStretch } from '@/lib/doubled';
+import { insertVia, movePoint, passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
 import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
 import { flatten, formatKm, legs, PROFILES, PROFILE_CHOICES, type CheckClass, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
@@ -1008,29 +1009,23 @@ function TourMode({
   const line = useMemo(() => flat.map((x) => x.p), [flat]);
   const along = useMemo(() => (line.length > 1 ? routePasses(PASSES, line).along : []), [line]);
   const curves = useMemo(() => (line.length > 1 ? countCurves(line) : 0), [line]);
+  const twiceKm = useMemo(() => (line.length > 1 ? doubledStretch(line).km : 0), [line]);
   const parts = useMemo(() => (routeTour ? legs(routeTour) : []), [routeTour]);
   const hint = closedHint(along.map((x) => x.pass), live);
 
-  // Pässe und Highlights je Etappe: im Korridor der geplanten Linie, sonst der Luftlinie
+  // Pässe je Etappe, nur wenn sie auf dem Weg liegen (Umweg und Fortschritt), jeder nur einmal
   const { start: pStart, vias: pVias, ziel: pZiel, complete } = plan;
   const legSuggest = useMemo(() => {
     const slots = [pStart, ...pVias, pZiel];
-    const points = slots.filter((p): p is LatLon => !!p);
     const skip = new Set(along.map((x) => x.pass.id));
-    const out: { pass: Pass; dKm: number }[][] = [];
-    for (let i = 0; i < slots.length - 1; i++) {
-      const a = slots[i];
+    const lines = slots.slice(0, -1).map((a, i) => {
       const b = slots[i + 1];
-      if (!a || !b) {
-        out.push([]);
-        continue;
-      }
+      if (!a || !b) return [];
       const part = complete ? parts[i] : undefined;
       const routed = part ? flat.filter((x) => x.km >= part.startKm && x.km <= part.endKm).map((x) => x.p) : [];
-      const legLine = routed.length > 1 ? routed : straightLine(a, b);
-      out.push(passesNearLeg(PASSES, legLine, skip, points, routed.length > 1 ? 15 : 25, 8));
-    }
-    return out;
+      return routed.length > 1 ? routed : straightLine(a, b);
+    });
+    return passesOnLegs(PASSES, slots, lines, skip);
   }, [pStart, pVias, pZiel, complete, parts, flat, along]);
 
   const add = (kind: PointKind, p: LatLon, known?: string) => {
@@ -1286,11 +1281,11 @@ function TourMode({
             )}
             {suggestions.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestRow}>
-                {suggestions.map(({ pass, dKm }) => (
+                {suggestions.map(({ pass, detourKm }) => (
                   <Pressable
                     key={pass.id}
                     accessibilityRole="button"
-                    accessibilityLabel={`${pass.name} einbauen, ${formatKm(dKm, dKm < 10 ? 1 : 0)} km neben der Etappe`}
+                    accessibilityLabel={`${pass.name} einbauen, etwa ${Math.max(1, Math.round(detourKm))} km Umweg`}
                     onPress={() => {
                       setPlanChanged(false);
                       plan.insertAt(i, passPoint(pass), profile, avoid, pass.name);
@@ -1298,8 +1293,9 @@ function TourMode({
                     style={({ pressed }) => [styles.suggestChip, pressed && styles.pressed]}>
                     {pass.tier === 'ikone' && <View style={styles.suggestDot} />}
                     <AppText style={styles.suggestText} numberOfLines={1}>
-                      {pass.name} +
+                      {pass.name}
                     </AppText>
+                    <AppText style={styles.suggestDetour}>+{Math.max(1, Math.round(detourKm))} km</AppText>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -1417,6 +1413,18 @@ function TourMode({
               </AppText>
             </View>
           </View>
+
+          {twiceKm >= 1 && (
+            <View style={[styles.card, styles.checkCard]}>
+              <View style={[styles.dot, styles.dotWarn]} />
+              <View style={styles.flex}>
+                <AppText variant="title">{formatKm(twiceKm, 0)} km fährst du zweimal</AppText>
+                <AppText variant="caption" muted>
+                  Ein Stück geht auf derselben Straße zurück. Ein anderes Zwischenziel oder eine andere Reihenfolge ändert das oft.
+                </AppText>
+              </View>
+            </View>
+          )}
 
           {warnings.length > 0 && (
             <Section label={`Warnungen (${warnings.length})`}>
@@ -2140,6 +2148,7 @@ const styles = StyleSheet.create({
   suggestChip: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.signalTint },
   suggestDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.signal },
   suggestText: { fontFamily: Fonts.medium, fontSize: 14 },
+  suggestDetour: { fontFamily: Fonts.medium, fontSize: 14, color: Colors.muted, fontVariant: ['tabular-nums'] },
   pill: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   pillOn: { backgroundColor: Colors.signal },
   pillText: { fontFamily: Fonts.medium, fontSize: 14 },
