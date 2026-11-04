@@ -19,7 +19,11 @@ export function routingServerUrl(): string | null {
   const env = process.env.EXPO_PUBLIC_ROUTING_URL;
   if (env) return env.replace(/\/$/, '');
   if (typeof window !== 'undefined' && typeof window.location?.hostname === 'string' && window.location.hostname) {
-    return `http://${window.location.hostname}:8989`;
+    // Nur im lokalen Netz suchen (localhost oder private Adresse). Auf drive.rallycumo.de
+    // gibt es keinen eigenen Server, dort planen die öffentlichen Dienste.
+    const h = window.location.hostname;
+    const local = h === 'localhost' || h === '127.0.0.1' || /^(10|192\.168|172\.(1[6-9]|2\d|3[01]))\./.test(h);
+    return local ? `http://${h}:8989` : null;
   }
   const hostUri = Constants.expoConfig?.hostUri; // zum Beispiel 192.168.178.20:8081
   const host = hostUri?.split(':')[0];
