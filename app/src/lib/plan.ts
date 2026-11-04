@@ -6,7 +6,7 @@
 import { checkLine } from './check';
 import { cumoAvailable, cumoPlan } from './cumo-routing';
 import { route, type Avoid } from './valhalla';
-import { haversine, type LatLon, type Profile, type Tour } from './tour';
+import { haversine, type CheckClass, type LatLon, type Profile, type Tour } from './tour';
 
 export type PlanStep = 'route' | 'check' | 'fix';
 
@@ -134,4 +134,71 @@ export async function planChecked(
     exclude = [...exclude, ...more];
   }
   return best!;
+}
+
+/**
+ * Einzeln geplante Etappen zu einer Tour zusammenfügen: Linien aneinander (der doppelte erste Punkt
+ * späterer Etappen fällt weg), Kilometer, Minuten, Umplanungen und km je Klasse summiert,
+ * Warnungen um die bis dahin gefahrenen Kilometer verschoben.
+ */
+export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]): PlannedTour {
+  const linie: Tour['linie'] = [];
+  const warnungen: Tour['warnungen'] = [];
+  const klassen: Record<CheckClass, number> = { ok: 0, pruefen: 0, raus: 0 };
+  let hasKlassen = false;
+  let km = 0;
+  let minutes = 0;
+  let fixes = 0;
+  let geprueft = true;
+  parts.forEach((t, i) => {
+    t.linie.forEach((run, j) => {
+      const p = i > 0 && j === 0 ? run.p.slice(1) : run.p;
+      if (p.length) linie.push({ c: run.c, p });
+    });
+    for (const w of t.warnungen) warnungen.push({ ...w, start_km: +(w.start_km + km).toFixed(2) });
+    if (t.km_je_klasse) {
+      hasKlassen = true;
+      for (const c of ['ok', 'pruefen', 'raus'] as CheckClass[]) klassen[c] += t.km_je_klasse[c] ?? 0;
+    }
+    km += t.laenge_km;
+    minutes += t.minutes;
+    fixes += t.fixes;
+    geprueft = geprueft && !!t.geprueft;
+  });
+  return {
+    name,
+    wegpunkte: points,
+    linie,
+    warnungen,
+    ...(hasKlassen ? { km_je_klasse: klassen } : {}),
+    laenge_km: +km.toFixed(1),
+    minutes,
+    fixes,
+    geprueft,
+  };
+}
+
+/**
+ * Planen mit eigenem Profil je Etappe (profiles[i] gilt von points[i] bis points[i+1]).
+ * Haben alle Etappen dasselbe Profil, bleibt es bei einem einzigen Aufruf wie bisher.
+ * Sonst wird jede Etappe nacheinander geplant und danach zusammengefügt.
+ */
+export async function planLegs(
+  name: string,
+  points: LatLon[],
+  profiles: Profile[],
+  avoid: Avoid,
+  onStep?: (s: PlanStep) => void,
+  signal?: AbortSignal,
+): Promise<PlannedTour> {
+  const first = profiles[0] ?? 'kurvig';
+  if (points.length < 3 || profiles.every((p) => p === first)) {
+    return planChecked(name, points, first, avoid, onStep, signal);
+  }
+  const parts: PlannedTour[] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    if (signal?.aborted) throw new Error('Abgebrochen');
+    parts.push(await planChecked(name, [points[i], points[i + 1]], profiles[i] ?? first, avoid, onStep, signal));
+  }
+  return mergeLegs(name, points, parts);
 }

@@ -7,7 +7,7 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as Location from 'expo-location';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Switch, TextInput, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -32,10 +32,10 @@ import { useSession } from '@/lib/auth';
 import { saveTour, syncLibrary } from '@/lib/library';
 import { reverseName, searchPlaces, type Place } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
-import { planChecked, type PlannedTour, type PlanStep } from '@/lib/plan';
+import { planChecked, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
-import { insertVia, movePoint, routePasses } from '@/lib/route-edit';
+import { insertVia, movePoint, passesNearLeg, routePasses, straightLine } from '@/lib/route-edit';
 import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
 import { flatten, formatKm, legs, PROFILES, PROFILE_CHOICES, type CheckClass, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
@@ -158,8 +158,6 @@ export default function Planner() {
   const [picked, setPicked] = useState<Spot | null>(null);
   const [query, setQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-  const [hits, setHits] = useState<Place[] | null>(null);
-  const [searching, setSearching] = useState(false);
   const [lengthBy, setLengthBy] = useState<'km' | 'dauer'>('km');
   const [kmIdx, setKmIdx] = useState(3);
   const [minIdx, setMinIdx] = useState(2);
@@ -208,18 +206,9 @@ export default function Planner() {
     if ((m === 'rundtour' || m === 'tour') && !here && !locating) void findHere();
   }
 
-  async function runSearch() {
-    const q = query.trim();
-    if (q.length < 2) return;
-    setSearching(true);
-    try {
-      setHits(await searchPlaces(q, here?.p));
-    } catch {
-      setHits([]);
-    } finally {
-      setSearching(false);
-    }
-  }
+  // Startort Vorschläge schon beim Tippen
+  const startSuggest = usePlaceSuggest(showSearch ? query : '', here?.p);
+  const hits = startSuggest.hits;
 
   async function run(prepare: (signal: AbortSignal) => Promise<TourRequest>, stops: Stop[], seed = newSeed()) {
     abort.current?.abort();
@@ -315,7 +304,7 @@ export default function Planner() {
         ? (routeTour ?? { name: tourPlan.name, laenge_km: 0, wegpunkte: tourPts, linie: [], warnungen: [] })
         : EMPTY_TOUR;
   const pins = inTour
-    ? tourPts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: tourPlan.names[keyOf(p)] ?? `Via Punkt ${i + 1}` }))
+    ? tourPts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: tourPlan.names[keyOf(p)] ?? `Zwischenziel ${i + 1}` }))
     : undefined;
   const focus = inTour
     ? (pending?.p ?? (tourPts.length ? tourPts[tourPts.length - 1] : here?.p ?? null))
@@ -449,7 +438,6 @@ export default function Planner() {
           here={here}
           onHere={setHere}
           profile={profile}
-          setProfile={setProfile}
           avoid={avoid}
           setAvoid={setAvoid}
           group={rideMode === 'gruppe'}
@@ -609,38 +597,39 @@ export default function Planner() {
                   </View>
                 </View>
               )}
-              {!showSearch && !hits ? (
+              {!showSearch ? (
                 <Pressable accessibilityRole="button" onPress={() => setShowSearch(true)} style={styles.linkBtn}>
                   <AppText style={styles.linkText}>Anderen Startort wählen</AppText>
                 </Pressable>
               ) : (
-              <View style={styles.searchRow}>
-                <TextInput
-                  autoFocus={showSearch && !hits}
-                  value={query}
-                  onChangeText={setQuery}
-                  onSubmitEditing={() => void runSearch()}
-                  placeholder="Anderen Startort suchen"
-                  placeholderTextColor={Colors.muted}
-                  returnKeyType="search"
-                  onFocus={expand}
-                  style={styles.search}
-                />
-                <Pressable accessibilityRole="button" onPress={() => void runSearch()} style={styles.searchBtn}>
-                  {searching ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.searchBtnText}>Suchen</AppText>}
-                </Pressable>
-              </View>
+                <View style={styles.searchRow}>
+                  <TextInput
+                    autoFocus
+                    value={query}
+                    onChangeText={setQuery}
+                    placeholder="Anderen Startort suchen"
+                    placeholderTextColor={Colors.muted}
+                    returnKeyType="search"
+                    onFocus={expand}
+                    style={styles.search}
+                    accessibilityLabel="Anderen Startort suchen"
+                  />
+                  {startSuggest.searching && (
+                    <View style={styles.searchSpinner}>
+                      <ActivityIndicator color={Colors.muted} />
+                    </View>
+                  )}
+                </View>
               )}
               {hits && (
                 <View>
-                  {hits.length === 0 && <AppText variant="caption" muted>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
+                  {hits.length === 0 && !startSuggest.searching && <AppText variant="caption" muted>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
                   {hits.map((h, i) => (
                     <Pressable
                       key={`${h.p[0]},${h.p[1]},${i}`}
                       accessibilityRole="button"
                       onPress={() => {
                         setPicked({ p: h.p, name: h.name });
-                        setHits(null);
                         setQuery('');
                         setShowSearch(false);
                       }}
@@ -749,6 +738,30 @@ export default function Planner() {
   );
 }
 
+/**
+ * Ortsvorschläge beim Tippen: ab zwei Zeichen, 300 ms nach dem letzten Tastendruck,
+ * ältere Anfragen werden abgebrochen. Bis neue Treffer da sind, bleiben die letzten stehen.
+ */
+function usePlaceSuggest(query: string, near?: LatLon) {
+  const q = query.trim();
+  const enough = q.length >= 2;
+  const [res, setRes] = useState<{ q: string; hits: Place[] } | null>(null);
+  useEffect(() => {
+    if (q.length < 2) return;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => {
+      searchPlaces(q, near, ctrl.signal)
+        .then((hits) => !ctrl.signal.aborted && setRes({ q, hits }))
+        .catch(() => !ctrl.signal.aborted && setRes({ q, hits: [] }));
+    }, 300);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [q, near]);
+  return { hits: enough && res ? res.hits : null, searching: enough && res?.q !== q };
+}
+
 /** Leere Tour für die Karte, solange nichts geplant ist */
 const EMPTY_TOUR: Tour = { name: '', laenge_km: 0, wegpunkte: [], linie: [], warnungen: [] };
 
@@ -767,16 +780,31 @@ const samePts = (a: LatLon[], b: LatLon[]) => a.length === b.length && a.every((
 
 type PointKind = 'start' | 'via' | 'ziel';
 
+/** Profil einer Etappe; null heißt: das allgemeine Profil gilt. */
+type LegProfile = Profile | null;
+
+/** Etappenprofile auf die Zahl der Etappen bringen (Zwischenziele plus eins). */
+function fitLegs(lp: LegProfile[], vias: number): LegProfile[] {
+  const n = vias + 1;
+  if (lp.length === n) return lp;
+  if (lp.length > n) return lp.slice(0, n);
+  return [...lp, ...Array<LegProfile>(n - lp.length).fill(lp[lp.length - 1] ?? null)];
+}
+
+const profileWord = (p: Profile) => (PROFILES.find((x) => x.id === p)?.label ?? p).toLowerCase();
+
 type TourPlan = ReturnType<typeof useTourPlan>;
 
 /**
- * Zustand und Aktionen der Route: feste Felder Start, Via Punkte, Ziel (wie im Web Planer).
+ * Zustand und Aktionen der Route: feste Felder Start, Zwischenziele, Ziel (wie im Web Planer).
+ * Jede Etappe (Punkt zu Punkt) hat ihr eigenes Profil, gespeichert neben der Liste der Zwischenziele.
  * Geplant wird, sobald Start und Ziel gesetzt sind.
  */
 function useTourPlan(onPlanned?: () => void) {
   const [start, setStart] = useState<LatLon | null>(null);
   const [vias, setVias] = useState<LatLon[]>([]);
   const [ziel, setZiel] = useState<LatLon | null>(null);
+  const [legProfiles, setLegProfiles] = useState<LegProfile[]>([null]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [name, setName] = useState('Neue Tour');
   const [planned, setPlanned] = useState<PlannedTour | null>(null);
@@ -791,6 +819,15 @@ function useTourPlan(onPlanned?: () => void) {
   /** Alle gesetzten Punkte in Reihenfolge; vollständig, sobald Start und Ziel da sind. */
   const pts: LatLon[] = [...(start ? [start] : []), ...vias, ...(ziel ? [ziel] : [])];
 
+  /** Profil der Etappe i (von Feld i zu Feld i+1), ohne eigenes Profil das allgemeine. */
+  const legProfile = (i: number, global: Profile): Profile => legProfiles[i] ?? global;
+
+  /** Profile passend zu den gesetzten Punkten (fehlt der Start, beginnt es bei der zweiten Etappe). */
+  function profilesFor(lp: LegProfile[], s: LatLon | null, count: number, global: Profile): Profile[] {
+    const offset = s ? 0 : 1;
+    return Array.from({ length: Math.max(1, count - 1) }, (_, i) => lp[i + offset] ?? global);
+  }
+
   function rememberName(p: LatLon, known?: string) {
     const k = keyOf(p);
     if (known) {
@@ -802,7 +839,7 @@ function useTourPlan(onPlanned?: () => void) {
       .catch(() => undefined);
   }
 
-  async function plan(points: LatLon[], profile: Profile, avoid: Avoid, tourName = name) {
+  async function plan(points: LatLon[], profiles: Profile[], avoid: Avoid, tourName = name) {
     abort.current?.abort();
     const ctrl = new AbortController();
     abort.current = ctrl;
@@ -810,7 +847,7 @@ function useTourPlan(onPlanned?: () => void) {
     setSaveMsg(null);
     setStep('route');
     try {
-      const t = await planChecked(tourName.trim() || 'Neue Tour', points, profile, avoid, (st) => !ctrl.signal.aborted && setStep(st), ctrl.signal);
+      const t = await planLegs(tourName.trim() || 'Neue Tour', points, profiles, avoid, (st) => !ctrl.signal.aborted && setStep(st), ctrl.signal);
       if (!ctrl.signal.aborted) {
         setPlanned(t);
         onPlanned?.();
@@ -826,12 +863,14 @@ function useTourPlan(onPlanned?: () => void) {
   }
 
   /** Felder übernehmen und, sobald Start und Ziel stehen, sofort neu planen. */
-  function apply(s: LatLon | null, v: LatLon[], z: LatLon | null, profile: Profile, avoid: Avoid) {
+  function apply(s: LatLon | null, v: LatLon[], z: LatLon | null, lp: LegProfile[], profile: Profile, avoid: Avoid) {
+    const fitted = fitLegs(lp, v.length);
     setStart(s);
     setVias(v);
     setZiel(z);
+    setLegProfiles(fitted);
     if (s && z) {
-      void plan([s, ...v, z], profile, avoid);
+      void plan([s, ...v, z], fitted.map((p) => p ?? profile), avoid);
       return;
     }
     abort.current?.abort();
@@ -840,28 +879,42 @@ function useTourPlan(onPlanned?: () => void) {
     setPlanned(null);
   }
 
-  /** Punkt in ein Feld setzen: Start, Ziel oder Via Punkt an Stelle index (am Ende: neu). */
-  function setSlot(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string, index?: number) {
+  /** Neues Zwischenziel auf Etappe leg einfügen; beide neuen Etappen erben deren Profil. */
+  function insertAt(leg: number, p: LatLon, profile: Profile, avoid: Avoid, known?: string) {
     rememberName(p, known);
-    if (kind === 'start') apply(p, vias, ziel, profile, avoid);
-    else if (kind === 'ziel') apply(start, vias, p, profile, avoid);
+    const at = Math.max(0, Math.min(leg, vias.length));
+    const v = [...vias];
+    v.splice(at, 0, p);
+    const lp = fitLegs(legProfiles, vias.length);
+    const next = [...lp];
+    next.splice(at, 0, lp[at] ?? null);
+    apply(start, v, ziel, next, profile, avoid);
+  }
+
+  /** Punkt in ein Feld setzen: Start, Ziel oder Zwischenziel an Stelle index (am Ende: neu). */
+  function setSlot(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string, index?: number) {
+    if (kind === 'via' && (index == null || index >= vias.length)) {
+      insertAt(vias.length, p, profile, avoid, known);
+      return;
+    }
+    rememberName(p, known);
+    if (kind === 'start') apply(p, vias, ziel, legProfiles, profile, avoid);
+    else if (kind === 'ziel') apply(start, vias, p, legProfiles, profile, avoid);
     else {
       const v = [...vias];
-      if (index != null && index < v.length) v[index] = p;
-      else v.push(p);
-      apply(start, v, ziel, profile, avoid);
+      v[index!] = p;
+      apply(start, v, ziel, legProfiles, profile, avoid);
     }
   }
 
-  /** Von der Karte oder für Pässe: Via Punkt dort einfügen, wo er den kleinsten Umweg macht. */
+  /** Von der Karte oder für Stopps: Zwischenziel dort einfügen, wo es den kleinsten Umweg macht. */
   function add(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string) {
     if (kind !== 'via' || !start || !ziel) {
       setSlot(kind === 'via' && !start ? 'start' : kind === 'via' && !ziel ? 'ziel' : kind, p, profile, avoid, known);
       return;
     }
-    rememberName(p, known);
     const full = insertVia([start, ...vias, ziel], p);
-    apply(start, full.slice(1, -1), ziel, profile, avoid);
+    insertAt(full.indexOf(p) - 1, p, profile, avoid, known);
   }
 
   async function save(curves: number, profile: Profile, avoid: Avoid) {
@@ -886,6 +939,7 @@ function useTourPlan(onPlanned?: () => void) {
     setStart(null);
     setVias([]);
     setZiel(null);
+    setLegProfiles([null]);
     setPlanned(null);
     setStep(null);
     setError(null);
@@ -896,24 +950,34 @@ function useTourPlan(onPlanned?: () => void) {
 
   return {
     start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg,
-    setSlot, add, plan, save, reset,
-    plan2: (profile: Profile, avoid: Avoid) => start && ziel && void plan([start, ...vias, ziel], profile, avoid),
-    removeStart: (profile: Profile, avoid: Avoid) => apply(null, vias, ziel, profile, avoid),
-    removeZiel: (profile: Profile, avoid: Avoid) => apply(start, vias, null, profile, avoid),
-    removeVia: (i: number, profile: Profile, avoid: Avoid) => apply(start, vias.filter((_, k) => k !== i), ziel, profile, avoid),
-    moveVia: (i: number, dir: -1 | 1, profile: Profile, avoid: Avoid) => apply(start, movePoint(vias, i, dir), ziel, profile, avoid),
-    swap: (profile: Profile, avoid: Avoid) => apply(ziel, [...vias].reverse(), start, profile, avoid),
+    legProfile, setSlot, add, insertAt, save, reset,
+    /** Mit den gesetzten Punkten und den Profilen je Etappe neu planen. */
+    planNow: (profile: Profile, avoid: Avoid) => pts.length >= 2 && void plan(pts, profilesFor(legProfiles, start, pts.length, profile), avoid),
+    setLegProfile: (leg: number, p: Profile, profile: Profile, avoid: Avoid) => {
+      const lp = [...fitLegs(legProfiles, vias.length)];
+      lp[leg] = p;
+      apply(start, vias, ziel, lp, profile, avoid);
+    },
+    removeStart: (profile: Profile, avoid: Avoid) => apply(null, vias, ziel, legProfiles, profile, avoid),
+    removeZiel: (profile: Profile, avoid: Avoid) => apply(start, vias, null, legProfiles, profile, avoid),
+    // Fällt ein Zwischenziel weg, verschmelzen die Etappen davor und danach; das Profil davor bleibt
+    removeVia: (i: number, profile: Profile, avoid: Avoid) =>
+      apply(start, vias.filter((_, k) => k !== i), ziel, fitLegs(legProfiles, vias.length).filter((_, k) => k !== i + 1), profile, avoid),
+    moveVia: (i: number, dir: -1 | 1, profile: Profile, avoid: Avoid) => apply(start, movePoint(vias, i, dir), ziel, legProfiles, profile, avoid),
+    swap: (profile: Profile, avoid: Avoid) => apply(ziel, [...vias].reverse(), start, [...fitLegs(legProfiles, vias.length)].reverse(), profile, avoid),
   };
 }
 
+type EditTarget = { kind: PointKind; index?: number; insert?: boolean };
+
 function TourMode({
-  plan, here, onHere, profile, setProfile, avoid, setAvoid, group, pending, setPending, onSearchFocus,
+  plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onSearchFocus,
 }: {
   plan: TourPlan;
   here: Spot | null;
   onHere: (s: Spot) => void;
+  /** Allgemeines Profil: gilt für jede Etappe ohne eigenes Profil */
   profile: Profile;
-  setProfile: (p: Profile) => void;
   avoid: Avoid;
   setAvoid: (a: Avoid) => void;
   group: boolean;
@@ -934,16 +998,42 @@ function TourMode({
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<Place[] | null>(null);
   const [searching, setSearching] = useState(false);
-  const [passQuery, setPassQuery] = useState('');
   const [planChanged, setPlanChanged] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locMsg, setLocMsg] = useState<string | null>(null);
+  /** Punkt, dessen Aktionen (Ändern, Verschieben, Entfernen) gerade offen sind */
+  const [menu, setMenu] = useState<string | null>(null);
+  /** Etappe, deren Profilauswahl gerade offen ist */
+  const [legMenu, setLegMenu] = useState<number | null>(null);
 
-  const line = useMemo(() => (routeTour ? flatten(routeTour).map((x) => x.p) : []), [routeTour]);
-  const { along, near } = useMemo(() => (line.length > 1 ? routePasses(PASSES, line) : { along: [], near: [] }), [line]);
+  const flat = useMemo(() => (routeTour ? flatten(routeTour) : []), [routeTour]);
+  const line = useMemo(() => flat.map((x) => x.p), [flat]);
+  const along = useMemo(() => (line.length > 1 ? routePasses(PASSES, line).along : []), [line]);
   const curves = useMemo(() => (line.length > 1 ? countCurves(line) : 0), [line]);
   const parts = useMemo(() => (routeTour ? legs(routeTour) : []), [routeTour]);
   const hint = closedHint(along.map((x) => x.pass), live);
+
+  // Pässe und Highlights je Etappe: im Korridor der geplanten Linie, sonst der Luftlinie
+  const { start: pStart, vias: pVias, ziel: pZiel, complete } = plan;
+  const legSuggest = useMemo(() => {
+    const slots = [pStart, ...pVias, pZiel];
+    const points = slots.filter((p): p is LatLon => !!p);
+    const skip = new Set(along.map((x) => x.pass.id));
+    const out: { pass: Pass; dKm: number }[][] = [];
+    for (let i = 0; i < slots.length - 1; i++) {
+      const a = slots[i];
+      const b = slots[i + 1];
+      if (!a || !b) {
+        out.push([]);
+        continue;
+      }
+      const part = complete ? parts[i] : undefined;
+      const routed = part ? flat.filter((x) => x.km >= part.startKm && x.km <= part.endKm).map((x) => x.p) : [];
+      const legLine = routed.length > 1 ? routed : straightLine(a, b);
+      out.push(passesNearLeg(PASSES, legLine, skip, points, routed.length > 1 ? 15 : 25, 8));
+    }
+    return out;
+  }, [pStart, pVias, pZiel, complete, parts, flat, along]);
 
   const add = (kind: PointKind, p: LatLon, known?: string) => {
     setPlanChanged(false);
@@ -951,9 +1041,11 @@ function TourMode({
   };
 
   /** Feld, das gerade bearbeitet wird; dort öffnet sich die Suche. Ohne Start beginnt es mit dem Start. */
-  const [edit, setEdit] = useState<{ kind: PointKind; index?: number } | null>(() => (plan.start ? null : { kind: 'start' }));
-  function openEdit(e: { kind: PointKind; index?: number }) {
+  const [edit, setEdit] = useState<EditTarget | null>(() => (plan.start ? null : { kind: 'start' }));
+  function openEdit(e: EditTarget) {
     setEdit(e);
+    setMenu(null);
+    setLegMenu(null);
     setQuery('');
     setHits(null);
     setLocMsg(null);
@@ -981,7 +1073,8 @@ function TourMode({
   function pick(p: LatLon, name: string | undefined) {
     if (!edit) return;
     setPlanChanged(false);
-    plan.setSlot(edit.kind, p, profile, avoid, name, edit.index);
+    if (edit.insert) plan.insertAt(edit.index ?? plan.vias.length, p, profile, avoid, name);
+    else plan.setSlot(edit.kind, p, profile, avoid, name, edit.index);
     setHits(null);
     setQuery('');
     // Nach dem Start gleich das Ziel abfragen
@@ -1010,21 +1103,21 @@ function TourMode({
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={() => void runSearch()}
-          placeholder={edit?.kind === 'start' ? 'Wo geht es los?' : edit?.kind === 'ziel' ? 'Wohin soll es gehen?' : 'Ort oder Pass für den Via Punkt'}
+          placeholder={edit?.kind === 'start' ? 'Wo geht es los?' : edit?.kind === 'ziel' ? 'Wohin soll es gehen?' : 'Ort oder Pass für das Zwischenziel'}
           placeholderTextColor={Colors.muted}
           returnKeyType="search"
           autoFocus
           onFocus={onSearchFocus}
-          style={styles.search}
+          style={[styles.search, styles.searchOnGround]}
           accessibilityLabel="Ort oder Pass suchen"
         />
-        <Pressable accessibilityRole="button" onPress={() => void runSearch()} style={styles.searchBtn}>
+        <Pressable accessibilityRole="button" onPress={() => void runSearch()} style={[styles.searchBtn, styles.searchOnGround]}>
           {searching ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.searchBtnText}>Suchen</AppText>}
         </Pressable>
       </View>
       <View style={styles.wrap}>
-        {edit?.kind !== 'via' && <SmallButton label={locating ? 'Standort wird bestimmt' : 'Mein Standort'} onPress={() => !locating && void takeHere()} />}
-        <SmallButton label="Abbrechen" onPress={() => setEdit(null)} />
+        {edit?.kind !== 'via' && <Pill label={locating ? 'Standort wird bestimmt' : 'Mein Standort'} onPress={() => !locating && void takeHere()} />}
+        <Pill label="Abbrechen" onPress={() => setEdit(null)} />
       </View>
       {locMsg && <AppText variant="caption" style={styles.signalText}>{locMsg}</AppText>}
       {hits && hits.length === 0 && <AppText variant="caption" muted>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
@@ -1045,22 +1138,175 @@ function TourMode({
     setPending(null);
   }
 
-  const searching2 = passQuery.trim().length >= 2;
-  const passHits: { pass: Pass; dKm: number | null }[] = searching2
-    ? searchPasses(PASSES, passQuery, 5).map((pass) => ({ pass, dKm: null }))
-    : near;
-
   const k = routeTour?.km_je_klasse;
   const sauber = k?.ok ?? 0;
   const total = routeTour?.laenge_km ?? 0;
   const share = total > 0 ? Math.round((sauber / total) * 100) : 0;
   const warnings = routeTour ? routeTour.warnungen.filter((w) => w.klasse !== 'ok') : [];
+  // Für Navigation und Speichern: Profil der ersten Etappe (sonst das allgemeine)
+  const firstProfile = plan.legProfile(plan.start ? 0 : 1, profile);
 
   const drive = () => {
     if (!routeTour) return;
-    setActiveTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, profile, avoid);
+    setActiveTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, firstProfile, avoid);
     router.push('/navigation');
   };
+
+  const nameOf = (p: LatLon) => plan.names[keyOf(p)] ?? `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`;
+
+  /** Eine Zeile der Punktliste mit Aktionen und, falls offen, dem Suchfeld darunter. */
+  function pointRow(id: string, kind: PointKind, p: LatLon | null, index?: number) {
+    const viaNo = (index ?? 0) + 1;
+    const role = kind === 'start' ? 'Start' : kind === 'ziel' ? 'Ziel' : `Zwischenziel ${viaNo}`;
+    const isEditing = !!edit && !edit.insert && edit.kind === kind && (kind !== 'via' || edit.index === index);
+    const open = menu === id;
+    const actions: { label: string; onPress: () => void }[] = p
+      ? [
+          { label: 'Ändern', onPress: () => openEdit({ kind, index }) },
+          ...(kind === 'via' && index! > 0 ? [{ label: 'Nach oben', onPress: () => plan.moveVia(index!, -1, profile, avoid) }] : []),
+          ...(kind === 'via' && index! < plan.vias.length - 1 ? [{ label: 'Nach unten', onPress: () => plan.moveVia(index!, 1, profile, avoid) }] : []),
+          {
+            label: 'Entfernen',
+            onPress: () =>
+              kind === 'start' ? plan.removeStart(profile, avoid) : kind === 'ziel' ? plan.removeZiel(profile, avoid) : plan.removeVia(index!, profile, avoid),
+          },
+        ]
+      : [];
+    return (
+      <View key={id} style={styles.gapS}>
+        <View style={[styles.pointRow, isEditing && styles.pointRowEditing]}>
+          <PointSymbol kind={kind} label={String(viaNo)} />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${role} ${p ? `ändern, jetzt ${nameOf(p)}` : 'wählen'}`}
+            onPress={() => openEdit({ kind, index })}
+            style={styles.pointMain}>
+            <AppText variant="title" numberOfLines={1} style={!p && styles.slotPlaceholder}>
+              {p ? nameOf(p) : kind === 'start' ? 'Start wählen' : 'Ziel wählen'}
+            </AppText>
+          </Pressable>
+          {p && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Aktionen für ${role}`}
+              accessibilityState={{ expanded: open }}
+              onPress={() => {
+                setMenu(open ? null : id);
+                setLegMenu(null);
+              }}
+              style={styles.moreBtn}>
+              <AppText style={styles.moreText}>⋯</AppText>
+            </Pressable>
+          )}
+        </View>
+        {open && (
+          <View style={styles.wrap}>
+            {actions.map((a) => (
+              <Pill
+                key={a.label}
+                label={a.label}
+                onPress={() => {
+                  setMenu(null);
+                  a.onPress();
+                }}
+              />
+            ))}
+          </View>
+        )}
+        {isEditing && editor}
+      </View>
+    );
+  }
+
+  /** Etappe zwischen Feld i und Feld i+1: Zwischenziel einfügen, Profil der Etappe, Vorschläge. */
+  function legRow(i: number, a: LatLon | null, b: LatLon | null) {
+    const ready = !!a && !!b;
+    const lp = plan.legProfile(i, profile);
+    const part = plan.complete && routeTour ? parts[i] : undefined;
+    const suggestions = legSuggest[i] ?? [];
+    const inserting = !!edit?.insert && edit.index === i;
+    const choosing = legMenu === i;
+    return (
+      <View key={`leg${i}`} style={styles.legBlock}>
+        <View style={styles.connector}>
+          {Array.from({ length: 5 }, (_, d) => (
+            <View key={d} style={styles.connectorDot} />
+          ))}
+        </View>
+        {ready ? (
+          <View style={styles.legBody}>
+            <View style={styles.legControls}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Zwischenziel auf Etappe ${i + 1} einfügen`}
+                onPress={() => openEdit({ kind: 'via', index: i, insert: true })}
+                style={({ pressed }) => [styles.plusBtn, inserting && styles.plusBtnOn, pressed && styles.pressed]}>
+                <View style={styles.plusH} />
+                <View style={styles.plusV} />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Profil der Etappe ${i + 1}: ${profileWord(lp)}, ändern`}
+                accessibilityState={{ expanded: choosing }}
+                onPress={() => {
+                  setLegMenu(choosing ? null : i);
+                  setMenu(null);
+                }}
+                style={({ pressed }) => [styles.profilePill, choosing && styles.profilePillOn, pressed && styles.pressed]}>
+                <AppText style={styles.profileText}>{profileWord(lp)} ⌄</AppText>
+              </Pressable>
+              {part && (
+                <AppText variant="caption" muted style={styles.legKm} numberOfLines={1}>
+                  {formatKm(part.endKm - part.startKm)} km
+                </AppText>
+              )}
+            </View>
+            {choosing && (
+              <View style={styles.wrap}>
+                {PROFILE_CHOICES.map((c) => (
+                  <Pill
+                    key={c.id}
+                    label={c.label}
+                    active={lp === c.id}
+                    onPress={() => {
+                      setLegMenu(null);
+                      setPlanChanged(false);
+                      if (c.id !== lp) plan.setLegProfile(i, c.id, profile, avoid);
+                    }}
+                  />
+                ))}
+              </View>
+            )}
+            {suggestions.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestRow}>
+                {suggestions.map(({ pass, dKm }) => (
+                  <Pressable
+                    key={pass.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${pass.name} einbauen, ${formatKm(dKm, dKm < 10 ? 1 : 0)} km neben der Etappe`}
+                    onPress={() => {
+                      setPlanChanged(false);
+                      plan.insertAt(i, passPoint(pass), profile, avoid, pass.name);
+                    }}
+                    style={({ pressed }) => [styles.suggestChip, pressed && styles.pressed]}>
+                    {pass.tier === 'ikone' && <View style={styles.suggestDot} />}
+                    <AppText style={styles.suggestText} numberOfLines={1}>
+                      {pass.name} +
+                    </AppText>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
+            {inserting && editor}
+          </View>
+        ) : (
+          <View style={styles.legGap} />
+        )}
+      </View>
+    );
+  }
+
+  const slots: (LatLon | null)[] = [plan.start, ...plan.vias, plan.ziel];
 
   return (
     <>
@@ -1072,7 +1318,7 @@ function TourMode({
           </View>
           <View style={styles.wrap}>
             <SmallButton label="Als Start" onPress={() => addPending('start')} />
-            {plan.complete && <SmallButton label="Als Via Punkt" onPress={() => addPending('via')} />}
+            {plan.complete && <SmallButton label="Als Zwischenziel" onPress={() => addPending('via')} />}
             <SmallButton label="Als Ziel" onPress={() => addPending('ziel')} strong />
             <SmallButton label="Abbrechen" onPress={() => setPending(null)} />
           </View>
@@ -1086,68 +1332,27 @@ function TourMode({
           onChangeText={plan.setName}
           placeholder="Name der Tour"
           placeholderTextColor={Colors.muted}
-          style={styles.search}
+          style={[styles.search, styles.searchOnGround]}
           accessibilityLabel="Name der Tour"
         />
       </View>
 
       <Section label="Route">
-        <View style={styles.card}>
-          <SlotRow
-            label="S"
-            end
-            role="Start"
-            name={plan.start ? (plan.names[keyOf(plan.start)] ?? `${plan.start[0].toFixed(4)}, ${plan.start[1].toFixed(4)}`) : null}
-            placeholder="Start eingeben"
-            sub={plan.complete && parts[0] ? `${formatKm(parts[0].endKm - parts[0].startKm)} km bis zum nächsten Punkt` : undefined}
-            editing={edit?.kind === 'start'}
-            onEdit={() => openEdit({ kind: 'start' })}
-            onRemove={plan.start ? () => plan.removeStart(profile, avoid) : undefined}
-          />
-          {edit?.kind === 'start' && editor}
-          {plan.vias.map((v, i) => {
-            const leg = plan.complete ? parts[i + 1] : undefined;
+        <View>
+          {slots.map((p, i) => {
+            const kind: PointKind = i === 0 ? 'start' : i === slots.length - 1 ? 'ziel' : 'via';
             return (
-              <View key={`${keyOf(v)},${i}`}>
-                <SlotRow
-                  label={String(i + 1)}
-                  role={`Via Punkt ${i + 1}`}
-                  name={plan.names[keyOf(v)] ?? `${v[0].toFixed(4)}, ${v[1].toFixed(4)}`}
-                  placeholder=""
-                  sub={leg ? `${formatKm(leg.endKm - leg.startKm)} km bis zum nächsten Punkt` : undefined}
-                  editing={edit?.kind === 'via' && edit.index === i}
-                  onEdit={() => openEdit({ kind: 'via', index: i })}
-                  onUp={i > 0 ? () => plan.moveVia(i, -1, profile, avoid) : undefined}
-                  onDown={i < plan.vias.length - 1 ? () => plan.moveVia(i, 1, profile, avoid) : undefined}
-                  onRemove={() => plan.removeVia(i, profile, avoid)}
-                />
-                {edit?.kind === 'via' && edit.index === i && editor}
+              <View key={kind === 'via' ? `via${i - 1}-${p ? keyOf(p) : ''}` : kind}>
+                {pointRow(kind === 'via' ? `via${i - 1}` : kind, kind, p, kind === 'via' ? i - 1 : undefined)}
+                {i < slots.length - 1 && legRow(i, p, slots[i + 1])}
               </View>
             );
           })}
-          {edit?.kind === 'via' && edit.index === plan.vias.length && (
-            <>
-              <SlotRow label={String(plan.vias.length + 1)} role="Neuer Via Punkt" name={null} placeholder="Via Punkt eingeben" editing onEdit={() => undefined} />
-              {editor}
-            </>
+          {plan.complete && (
+            <Pressable accessibilityRole="button" onPress={() => plan.swap(profile, avoid)} style={styles.linkBtn}>
+              <AppText style={styles.linkText}>Start und Ziel tauschen</AppText>
+            </Pressable>
           )}
-          <SlotRow
-            label="Z"
-            end
-            role="Ziel"
-            name={plan.ziel ? (plan.names[keyOf(plan.ziel)] ?? `${plan.ziel[0].toFixed(4)}, ${plan.ziel[1].toFixed(4)}`) : null}
-            placeholder="Ziel eingeben"
-            editing={edit?.kind === 'ziel'}
-            onEdit={() => openEdit({ kind: 'ziel' })}
-            onRemove={plan.ziel ? () => plan.removeZiel(profile, avoid) : undefined}
-          />
-          {edit?.kind === 'ziel' && editor}
-          <View style={styles.wrap}>
-            {!!plan.start && !(edit?.kind === 'via' && edit.index === plan.vias.length) && (
-              <SmallButton label="Via Punkt hinzufügen" onPress={() => openEdit({ kind: 'via', index: plan.vias.length })} />
-            )}
-            {plan.complete && <SmallButton label="Start und Ziel tauschen" onPress={() => plan.swap(profile, avoid)} />}
-          </View>
         </View>
       </Section>
 
@@ -1161,7 +1366,7 @@ function TourMode({
         <View style={[styles.card, styles.errorCard]}>
           <AppText variant="label" style={styles.signalText}>Das hat nicht geklappt</AppText>
           <AppText>{plan.error}</AppText>
-          {pts.length >= 2 && <SecondaryButton label="Nochmal versuchen" onSurface onPress={() => void plan.plan(pts, profile, avoid)} />}
+          {pts.length >= 2 && <SecondaryButton label="Nochmal versuchen" onSurface onPress={() => plan.planNow(profile, avoid)} />}
         </View>
       )}
 
@@ -1254,65 +1459,7 @@ function TourMode({
         </>
       )}
 
-      {pts.length >= 2 && (
-        <Section label={!searching2 && near.length ? 'Pässe einbauen, in der Nähe' : 'Pässe einbauen'}>
-          <View style={styles.card}>
-            <TextInput
-              value={passQuery}
-              onChangeText={setPassQuery}
-              placeholder="Pass suchen, zum Beispiel Stelvio"
-              placeholderTextColor={Colors.muted}
-              onFocus={onSearchFocus}
-              style={styles.search}
-              accessibilityLabel="Pass suchen"
-            />
-            {passHits.length ? (
-              passHits.map(({ pass, dKm }, i) => (
-                <View key={pass.id} style={[styles.passRow, i > 0 && styles.rowSpaced]}>
-                  <View style={[styles.passDot, pass.tier === 'ikone' && styles.passDotIcon]} />
-                  <View style={styles.flex}>
-                    <AppText variant="title">{pass.name}</AppText>
-                    <AppText variant="caption" muted>
-                      {[passSummary(pass, undefined, passState(pass, live).note), dKm != null ? `${formatKm(dKm, dKm < 10 ? 1 : 0)} km neben der Route` : null]
-                        .filter(Boolean)
-                        .join(', ')}
-                    </AppText>
-                  </View>
-                  <SmallButton
-                    label="Einbauen"
-                    onPress={() => {
-                      add('via', passPoint(pass), pass.name);
-                      setPassQuery('');
-                    }}
-                  />
-                </View>
-              ))
-            ) : (
-              <AppText variant="caption" muted>
-                {searching2 ? 'Kein Pass gefunden.' : routeTour ? 'Keine bekannten Pässe in der Nähe der Route.' : 'Vorschläge erscheinen, sobald die Route steht.'}
-              </AppText>
-            )}
-          </View>
-        </Section>
-      )}
-
       {routeTour && <StopsSection line={line} busy={busy} onAdd={(p) => add('via', p)} />}
-
-      <Section label="Profil">
-        <View style={styles.wrap}>
-          {PROFILE_CHOICES.map((p) => (
-            <Chip
-              key={p.id}
-              label={p.label}
-              active={profile === p.id}
-              onPress={() => {
-                setProfile(p.id);
-                if (pts.length >= 2) setPlanChanged(true);
-              }}
-            />
-          ))}
-        </View>
-      </Section>
 
       <Section label="Vermeiden">
         <View style={styles.card}>
@@ -1343,7 +1490,7 @@ function TourMode({
           label={planChanged ? 'Mit neuen Einstellungen planen' : 'Route planen'}
           onPress={() => {
             setPlanChanged(false);
-            void plan.plan(pts, profile, avoid);
+            plan.planNow(profile, avoid);
           }}
         />
       )}
@@ -1355,7 +1502,7 @@ function TourMode({
           </Pressable>
           <SecondaryButton
             label={plan.saving ? 'Wird gespeichert' : plan.cloudId ? 'Änderungen speichern' : 'Speichern'}
-            onPress={() => !plan.saving && void plan.save(curves, profile, avoid)}
+            onPress={() => !plan.saving && void plan.save(curves, firstProfile, avoid)}
           />
           {plan.saveMsg && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
           {!session && !plan.saveMsg && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
@@ -1407,60 +1554,45 @@ function SmallButton({ label, onPress, strong }: { label: string; onPress: () =>
   );
 }
 
-/** Ein Feld der Route: Start, Via Punkt oder Ziel. Tippen öffnet die Suche für genau dieses Feld. */
-function SlotRow({
-  label, role, name, placeholder, sub, end, editing, onEdit, onUp, onDown, onRemove,
-}: {
-  label: string;
-  role: string;
-  name: string | null;
-  placeholder: string;
-  sub?: string;
-  end?: boolean;
-  editing: boolean;
-  onEdit: () => void;
-  onUp?: () => void;
-  onDown?: () => void;
-  onRemove?: () => void;
-}) {
-  return (
-    <View style={styles.wpRow}>
-      <View style={[styles.wpDot, end && styles.wpDotEnd]}>
-        <AppText style={[styles.wpDotText, end && styles.onSignal]}>{label}</AppText>
+/** Kleines Zeichen vor einem Punkt: Ring für den Start, Nummer für Zwischenziele, Fahne für das Ziel. */
+function PointSymbol({ kind, label }: { kind: PointKind; label: string }) {
+  if (kind === 'start') {
+    return (
+      <View style={styles.symbol}>
+        <View style={styles.startRing}>
+          <View style={styles.startCore} />
+        </View>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`${role} ${name ? `ändern, jetzt ${name}` : 'eingeben'}`} onPress={onEdit} style={[styles.flex, styles.slotMain, editing && styles.slotEditing]}>
-        <AppText variant="title" numberOfLines={1} style={!name && styles.slotPlaceholder}>
-          {name ?? placeholder}
-        </AppText>
-        <AppText variant="caption" muted numberOfLines={1}>
-          {sub ? `${role}, ${sub}` : role}
-        </AppText>
-      </Pressable>
-      {onUp !== undefined || onDown !== undefined ? (
-        <>
-          <IconButton kind="up" label={`${role} nach oben`} disabled={!onUp} onPress={() => onUp?.()} />
-          <IconButton kind="down" label={`${role} nach unten`} disabled={!onDown} onPress={() => onDown?.()} />
-        </>
-      ) : null}
-      {onRemove && <IconButton kind="remove" label={`${role} entfernen`} onPress={onRemove} />}
+    );
+  }
+  if (kind === 'ziel') {
+    return (
+      <View style={styles.symbol}>
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={Colors.signal} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+          <Path d="M5 21V4" />
+          <Path d="M5 4h11l-2 4l2 4H5" fill={Colors.signal} />
+        </Svg>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.symbol}>
+      <View style={styles.viaBadge}>
+        <AppText style={styles.viaBadgeText}>{label}</AppText>
+      </View>
     </View>
   );
 }
 
-function IconButton({ kind, label, disabled, onPress }: { kind: 'up' | 'down' | 'remove'; label: string; disabled?: boolean; onPress: () => void }) {
-  const d = kind === 'up' ? 'M6 15l6 -6l6 6' : kind === 'down' ? 'M6 9l6 6l6 -6' : 'M7 7l10 10M17 7l-10 10';
+/** Kompakte Taste in Pillenform mit 44 pt Höhe; active hebt sie in Signalfarbe hervor. */
+function Pill({ label, onPress, active }: { label: string; onPress: () => void; active?: boolean }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: !!disabled }}
-      disabled={disabled}
-      hitSlop={2}
+      accessibilityState={active !== undefined ? { selected: active } : undefined}
       onPress={onPress}
-      style={[styles.iconBtn, disabled && styles.disabled]}>
-      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={Colors.text} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-        <Path d={d} />
-      </Svg>
+      style={({ pressed }) => [styles.pill, active && styles.pillOn, pressed && styles.pressed]}>
+      <AppText style={[styles.pillText, active && styles.pillTextOn]}>{label}</AppText>
     </Pressable>
   );
 }
@@ -1882,6 +2014,7 @@ const styles = StyleSheet.create({
   searchBtn: { height: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   searchBtnText: { fontFamily: Fonts.semibold, fontSize: 15 },
   hit: { paddingVertical: Spacing.m },
+  searchSpinner: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   stepBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
@@ -1924,22 +2057,47 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: 'row', alignItems: 'center' },
   pendingCard: { backgroundColor: Colors.signalTint },
   editor: { gap: Spacing.s, paddingBottom: Spacing.s },
-  slotMain: { justifyContent: 'center', minHeight: 48, paddingVertical: Spacing.xs, paddingHorizontal: Spacing.s, borderRadius: Radius.s },
-  slotEditing: { backgroundColor: Colors.surface2 },
   slotPlaceholder: { color: Colors.muted },
   stopRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.s },
   stopKm: { width: 52, fontVariant: ['tabular-nums'] },
-  wpRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 52 },
-  wpDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: Colors.line, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  wpDotEnd: { backgroundColor: Colors.signal, borderColor: Colors.signal },
-  wpDotText: { fontFamily: Fonts.bold, fontSize: 12 },
-  iconBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   small: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   smallStrong: { backgroundColor: Colors.signal },
   smallText: { fontFamily: Fonts.semibold, fontSize: 14 },
   hitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.m },
   hitMain: { flex: 1, minHeight: 44, justifyContent: 'center' },
-  passRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingTop: Spacing.s },
-  passDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.muted },
-  passDotIcon: { backgroundColor: Colors.signal },
+
+  // Route planen: Punktliste und Etappen im calimoto Stil, Flächen statt Linien
+  searchOnGround: { backgroundColor: Colors.surface },
+  pointRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.s },
+  pointRowEditing: { backgroundColor: Colors.surface2 },
+  pointMain: { flex: 1, minHeight: 52, justifyContent: 'center', paddingHorizontal: Spacing.s },
+  symbol: { width: 28, alignItems: 'center', justifyContent: 'center' },
+  startRing: { width: 16, height: 16, borderRadius: 8, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center' },
+  startCore: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.surface },
+  viaBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  viaBadgeText: { fontFamily: Fonts.bold, fontSize: 12 },
+  moreBtn: { width: 44, height: 52, alignItems: 'center', justifyContent: 'center' },
+  moreText: { fontFamily: Fonts.bold, fontSize: 20, color: Colors.muted },
+  legBlock: { flexDirection: 'row', paddingLeft: Spacing.s },
+  connector: { width: 28, alignItems: 'center', justifyContent: 'space-evenly', paddingVertical: Spacing.xs },
+  connectorDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: Colors.muted },
+  legBody: { flex: 1, gap: Spacing.s, paddingVertical: Spacing.s, paddingLeft: Spacing.s },
+  legControls: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  legGap: { height: Spacing.l },
+  legKm: { flex: 1, textAlign: 'right', paddingRight: Spacing.s, fontVariant: ['tabular-nums'] },
+  plusBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  plusBtnOn: { backgroundColor: Colors.surface2 },
+  plusH: { position: 'absolute', width: 14, height: 2, borderRadius: 1, backgroundColor: Colors.text },
+  plusV: { position: 'absolute', width: 2, height: 14, borderRadius: 1, backgroundColor: Colors.text },
+  profilePill: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, justifyContent: 'center' },
+  profilePillOn: { backgroundColor: Colors.surface2 },
+  profileText: { fontFamily: Fonts.semibold, fontSize: 14 },
+  suggestRow: { gap: Spacing.s, paddingRight: Spacing.l },
+  suggestChip: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.signalTint },
+  suggestDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.signal },
+  suggestText: { fontFamily: Fonts.medium, fontSize: 14 },
+  pill: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  pillOn: { backgroundColor: Colors.signal },
+  pillText: { fontFamily: Fonts.medium, fontSize: 14 },
+  pillTextOn: { color: Colors.onSignal, fontFamily: Fonts.bold },
 });

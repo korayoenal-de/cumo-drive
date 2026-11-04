@@ -2,7 +2,7 @@
  * Wegpunkte einer Tour bearbeiten, gemeinsam für Web Planer und Handy Planer:
  * Via Punkt mit kleinstem Umweg einfügen, Punkte verschieben, Pässe in der Nähe der Route finden.
  */
-import { passesAlong, passPoint, type Pass } from './passes';
+import { passesAlong, passPoint, TIER_WEIGHT, type Pass } from './passes';
 import { haversine, type LatLon } from './tour';
 
 /**
@@ -63,6 +63,47 @@ export function passesNearRoute(
     .map((pass) => ({ pass, dKm: distToProbe(probe, passPoint(pass)) / 1000 }))
     .filter((x) => x.dKm <= maxKm)
     .sort((a, b) => (RANK[a.pass.tier] ?? 3) - (RANK[b.pass.tier] ?? 3) || a.dKm - b.dKm)
+    .slice(0, limit);
+}
+
+/** Gerade Linie von a nach b als Stützpunkte (für Etappen ohne geplante Route). */
+export function straightLine(a: LatLon, b: LatLon, n = 24): LatLon[] {
+  const out: LatLon[] = [];
+  for (let i = 0; i <= n; i++) out.push([a[0] + ((b[0] - a[0]) * i) / n, a[1] + ((b[1] - a[1]) * i) / n]);
+  return out;
+}
+
+/**
+ * Pässe für eine Etappe vorschlagen: im Korridor um die Linie der Etappe, ohne Pässe, die schon
+ * auf der Route oder als Punkt gesetzt sind. Sortiert nach Bekanntheit (TIER_WEIGHT), dann Abstand.
+ */
+export function passesNearLeg(
+  list: Pass[],
+  legLine: LatLon[],
+  skip: Set<string>,
+  points: LatLon[],
+  maxKm = 20,
+  limit = 8,
+): { pass: Pass; dKm: number }[] {
+  if (legLine.length < 2) return [];
+  const probe = probeLine(legLine, 120);
+  // grobe Vorauswahl über den Rahmen der Etappe plus Korridor
+  const pad = maxKm / 111;
+  let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+  for (const [la, lo] of probe) {
+    minLat = Math.min(minLat, la);
+    maxLat = Math.max(maxLat, la);
+    minLon = Math.min(minLon, lo);
+    maxLon = Math.max(maxLon, lo);
+  }
+  const padLon = pad / Math.max(0.2, Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180));
+  return list
+    .filter((p) => !skip.has(p.id))
+    .filter((p) => p.lat >= minLat - pad && p.lat <= maxLat + pad && p.lon >= minLon - padLon && p.lon <= maxLon + padLon)
+    .filter((p) => !points.some((w) => haversine(w, passPoint(p)) < 1000))
+    .map((pass) => ({ pass, dKm: distToProbe(probe, passPoint(pass)) / 1000 }))
+    .filter((x) => x.dKm <= maxKm)
+    .sort((a, b) => TIER_WEIGHT[b.pass.tier] - TIER_WEIGHT[a.pass.tier] || a.dKm - b.dKm)
     .slice(0, limit);
 }
 
