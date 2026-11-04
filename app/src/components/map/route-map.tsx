@@ -3,12 +3,12 @@
  * Später mit eigenem App Build MapLibre: dann wird nur diese Datei ersetzt, die Props bleiben.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline, type LatLng } from 'react-native-maps';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius } from '@/constants/theme';
-import type { CheckClass, LatLon, Tour } from '@/lib/tour';
+import type { CheckClass, LatLon } from '@/lib/tour';
 
 import { CLASS_LINE, sampleLine, tourWarnings, type RouteMapProps } from './route-map-shared';
 
@@ -35,8 +35,9 @@ export function RouteMap({
   const map = useRef<MapView>(null);
   const markers = useRef<(MapMarker | null)[]>([]);
   const [ready, setReady] = useState(false);
-  const [pausedUntil, setPausedUntil] = useState(0);
-  const following = followUser && !!position && Date.now() >= pausedUntil;
+  // nach eigenem Verschieben folgt die Kamera eine Weile nicht
+  const [paused, setPaused] = useState(0);
+  const following = followUser && !!position && paused === 0;
 
   const runs = useMemo(() => {
     // ok zuerst, damit Warnstellen oben liegen
@@ -85,19 +86,20 @@ export function RouteMap({
 
   // nach der Pause wieder folgen
   useEffect(() => {
-    if (!pausedUntil) return;
-    const t = setTimeout(() => setPausedUntil(0), Math.max(0, pausedUntil - Date.now()));
+    if (!paused) return;
+    const t = setTimeout(() => setPaused(0), FOLLOW_PAUSE_MS);
     return () => clearTimeout(t);
-  }, [pausedUntil]);
+  }, [paused]);
 
   return (
-    <View style={[styles.box, style]} pointerEvents={interactive ? 'auto' : 'none'}>
+    <View style={[styles.box, style, !interactive && styles.noTouch]}>
       <MapView
         ref={map}
         style={StyleSheet.absoluteFill}
         userInterfaceStyle="dark"
         mapType="mutedStandard"
-        showsUserLocation={showUser && !position}
+        showsUserLocation={(showUser || followUser) && !position}
+        followsUserLocation={followUser && !position}
         showsMyLocationButton={false}
         showsCompass={interactive && !followUser}
         showsPointsOfInterests={false}
@@ -109,7 +111,7 @@ export function RouteMap({
         scrollEnabled={interactive}
         zoomEnabled={interactive}
         onMapReady={() => setReady(true)}
-        onPanDrag={followUser ? () => setPausedUntil(Date.now() + FOLLOW_PAUSE_MS) : undefined}>
+        onPanDrag={followUser && position ? () => setPaused((n) => n + 1) : undefined}>
         {runs.map((r, i) => (
           <Polyline
             key={`rand${i}`}
@@ -181,7 +183,7 @@ export function RouteMap({
       </MapView>
 
       {followUser && position && !following && (
-        <Pressable accessibilityRole="button" onPress={() => setPausedUntil(0)} style={styles.recenter}>
+        <Pressable accessibilityRole="button" onPress={() => setPaused(0)} style={styles.recenter}>
           <AppText style={styles.recenterText}>Zentrieren</AppText>
         </Pressable>
       )}
@@ -193,6 +195,7 @@ type MapMarker = InstanceType<typeof Marker>;
 
 const styles = StyleSheet.create({
   box: { backgroundColor: Colors.surface, overflow: 'hidden' },
+  noTouch: { pointerEvents: 'none' },
   start: { width: 14, height: 14, borderRadius: 7, backgroundColor: Colors.signal, borderWidth: 2, borderColor: Colors.ground },
   startHalo: { width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(226,70,28,0.3)', alignItems: 'center', justifyContent: 'center' },
   ziel: { width: 18, height: 18, borderRadius: 4, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },

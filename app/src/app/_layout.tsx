@@ -49,6 +49,11 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.ground } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="planer" options={{ title: 'CUMO DRIVE Planer' }} />
+        <Stack.Screen name="karte" options={{ presentation: 'fullScreenModal', title: 'Karte' }} />
+        <Stack.Screen
+          name="navigation"
+          options={{ presentation: 'fullScreenModal', title: 'Navigation', gestureEnabled: false }}
+        />
       </Stack>
     </ThemeProvider>
   );

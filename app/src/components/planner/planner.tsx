@@ -2,19 +2,22 @@
  * Planer für das Handy: Tour beschreiben (Freitext plus Chips) oder Rundtour einstellen,
  * dann Tour erstellen, prüfen und als Vorschau zeigen. Die Web Version liegt in planner.web.tsx.
  */
+import { router } from 'expo-router';
 import { useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { RouteMap } from '@/components/map/route-map';
 import {
   buildTour, findPlace, locate, newSeed, PHASES, toPlanError,
   type PlanError, type PlanPhase, type Spot, type TourRequest,
 } from '@/components/planner/create-tour';
-import { CLASS_COLORS, RoutePreview } from '@/components/planner/route-preview';
+import { CLASS_COLORS } from '@/components/planner/route-preview';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { setActiveTour } from '@/lib/active-tour';
 import { searchPlaces, type Place } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
 import type { PlannedTour } from '@/lib/plan';
@@ -754,6 +757,14 @@ function Result({
   const total = tour.laenge_km;
   const share = total > 0 ? Math.round((sauber / total) * 100) : 0;
   const warnings = tour.warnungen.filter((w) => w.klasse !== 'ok');
+  const openMap = () => {
+    setActiveTour(tour, req.profile, req.avoid);
+    router.push('/karte');
+  };
+  const drive = () => {
+    setActiveTour(tour, req.profile, req.avoid);
+    router.push('/navigation');
+  };
   return (
     <View style={styles.gapL}>
       <View style={styles.gapS}>
@@ -762,7 +773,12 @@ function Result({
           {PROFILE_WORD[req.profile]}, {req.towardName ? `Richtung ${req.towardName}` : dirPhrase(req.direction)}
         </AppText>
       </View>
-      <RoutePreview tour={tour} />
+      <Pressable accessibilityRole="button" accessibilityLabel="Karte groß öffnen" onPress={openMap} style={styles.mapBox}>
+        <RouteMap tour={tour} interactive={false} style={styles.map} />
+        <View style={styles.mapBadge}>
+          <AppText style={styles.mapBadgeText}>Karte groß</AppText>
+        </View>
+      </Pressable>
       <View style={styles.legend}>
         {(['ok', 'pruefen', 'raus'] as CheckClass[]).map((c) => (
           <View key={c} style={styles.legendItem}>
@@ -771,6 +787,10 @@ function Result({
           </View>
         ))}
       </View>
+
+      <Pressable accessibilityRole="button" onPress={drive} style={({ pressed }) => [styles.go, pressed && styles.pressed]}>
+        <AppText style={styles.goText}>Losfahren</AppText>
+      </Pressable>
 
       <View style={styles.stats}>
         <View style={styles.flex}>
@@ -918,6 +938,13 @@ const styles = StyleSheet.create({
   phaseDotDone: { backgroundColor: Colors.good, borderColor: Colors.good },
 
   errorCard: { borderWidth: 1, borderColor: Colors.signal },
+
+  mapBox: { height: 320, borderRadius: Radius.l, overflow: 'hidden', borderWidth: 1, borderColor: Colors.line },
+  map: { flex: 1 },
+  mapBadge: { position: 'absolute', right: Spacing.m, bottom: Spacing.m, height: 36, paddingHorizontal: 14, borderRadius: Radius.pill, backgroundColor: 'rgba(11,11,12,0.88)', borderWidth: 1, borderColor: Colors.line, justifyContent: 'center' },
+  mapBadgeText: { fontFamily: Fonts.semibold, fontSize: 14 },
+  go: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  goText: { fontFamily: Fonts.display, fontSize: 20, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
 
   legend: { flexDirection: 'row', gap: Spacing.l },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
