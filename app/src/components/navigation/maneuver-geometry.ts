@@ -91,7 +91,7 @@ export const SYMBOL_NAMES: Record<NavSymbol, string> = {
 /** ink: Hauptfarbe, faint: Hauptfarbe schwach (Umgebung), ground: Untergrund, signal: Akzent */
 export type Paint = 'ink' | 'faint' | 'ground' | 'signal';
 export type Shape =
-  | { t: 'stroke'; d: string; w: number; paint: Paint }
+  | { t: 'stroke'; d: string; w: number; paint: Paint; len?: number }
   | { t: 'fill'; d: string; paint: Paint; evenodd?: boolean; round?: boolean };
 
 export type IconGeometry = {
@@ -133,6 +133,7 @@ class Pen {
   h: number;
   d: string;
   pts: Pt[];
+  len = 0;
   constructor(start: Pt, heading = 0) {
     this.p = start;
     this.h = heading;
@@ -141,6 +142,7 @@ class Pen {
   }
   fwd(len: number) {
     this.p = add(this.p, unit(this.h), len);
+    this.len += Math.abs(len);
     this.d += ` L ${f(this.p.x)} ${f(this.p.y)}`;
     this.pts.push(this.p);
     return this;
@@ -154,6 +156,7 @@ class Pen {
     const end = at(this.h + a);
     this.d += ` A ${f(r)} ${f(r)} 0 ${Math.abs(a) > 180 ? 1 : 0} ${s > 0 ? 1 : 0} ${f(end.x)} ${f(end.y)}`;
     this.p = end;
+    this.len += (Math.abs(a) * Math.PI * r) / 180;
     this.h += a;
     return this;
   }
@@ -167,8 +170,9 @@ function arrow(pen: Pen, post = 0, paint: Paint = 'ink'): Part[] {
   const tip = add(pen.p, unit(pen.h), UNDER);
   const head = headPts(tip, pen.h);
   const shaftD = pen.d;
+  const len = pen.len;
   return [
-    { pts: pen.pts, emit: (o) => ({ t: 'stroke', d: shift(shaftD, o), w: STROKE, paint }) },
+    { pts: pen.pts, emit: (o) => ({ t: 'stroke', d: shift(shaftD, o), w: STROKE, paint, len }) },
     { pts: head, emit: (o) => ({ t: 'fill', d: poly(head, o), paint, round: true }) },
   ];
 }
@@ -290,11 +294,11 @@ function roundabout(exit: number | null, withEntry = true): Shape[] {
 
 /** Ring Abschnitt plus Ausfahrt: Bogen als eigener Strich, Ausfahrt als Pfeil. */
 function arrowFrom(pen: Pen, exitPt: Pt, exit: number): Part[] {
-  const ringPart: Part = { pts: pen.pts, emit: lineEmit(pen.d) };
+  const ringPart: Part = { pts: pen.pts, emit: lineEmit(pen.d, pen.len) };
   const out = new Pen(exitPt, exit).fwd(4);
   return [ringPart, ...arrow(out, 2)];
 }
-const lineEmit = (d: string) => (o: Pt): Shape => ({ t: 'stroke', d: shift(d, o), w: STROKE, paint: 'ink' });
+const lineEmit = (d: string, len: number) => (o: Pt): Shape => ({ t: 'stroke', d: shift(d, o), w: STROKE, paint: 'ink', len });
 
 /** Kehre: schräg hoch, enge Kehre, schräg zurück hoch. */
 function hairpin(): Shape[] {
