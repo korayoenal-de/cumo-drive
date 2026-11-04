@@ -138,7 +138,7 @@ export default function Planner() {
   const insets = useSafeAreaInsets();
 
   // Blatt über der Karte: klein, halb oder groß
-  const [detent, setDetent] = useState<Detent>(0);
+  const [detent, setDetent] = useState<Detent>(1);
   const scroll = useRef<ScrollViewInstance>(null);
   const toTop = () => scroll.current?.scrollTo({ y: 0, animated: false });
   /** Beim Tippen in ein Suchfeld groß, damit Tastatur und Treffer Platz haben */
@@ -327,11 +327,11 @@ export default function Planner() {
   const header = (
     <>
       {view.kind === 'form' ? (
-        <Segmented
+        <TypoTabs
           value={mode === 'tour' ? 'route' : 'runde'}
           options={[
             { id: 'runde', label: 'Schnelle Runde' },
-            { id: 'route', label: 'Route planen' },
+            { id: 'route', label: 'Route' },
           ]}
           onChange={(v) => switchMode(v === 'route' ? 'tour' : lastRunde.current)}
         />
@@ -1446,7 +1446,7 @@ function TourMode({
           )}
 
           {along.length > 0 && (
-            <Section label={`Pässe auf der Strecke (${along.length})`}>
+            <Section label={`Highlights auf der Strecke (${along.length})`}>
               <View style={styles.card}>
                 {along.map(({ pass, km }, i) => (
                   <View key={pass.id} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
@@ -1636,6 +1636,29 @@ function Segmented<T extends string>({
             onPress={() => onChange(o.id)}
             style={[styles.segItem, active && styles.segOn]}>
             <AppText style={[styles.segText, active && styles.segTextOn]}>{o.label}</AppText>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Tabs als große Schrift im Stil von Trade Republic: aktiv in text, inaktiv in faint, ohne Fläche. */
+function TypoTabs<T extends string>({
+  value, options, onChange,
+}: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void }) {
+  return (
+    <View style={styles.typoTabs} accessibilityRole="tablist">
+      {options.map((o) => {
+        const active = o.id === value;
+        return (
+          <Pressable
+            key={o.id}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            onPress={() => onChange(o.id)}>
+            <AppText style={[styles.typoTab, active && styles.typoTabOn]}>{o.label}</AppText>
           </Pressable>
         );
       })}
@@ -1904,7 +1927,7 @@ function Result({
       </View>
 
       {passes.length > 0 && (
-        <Section label={`Pässe auf der Strecke (${passes.length})`}>
+        <Section label={`Highlights auf der Strecke (${passes.length})`}>
           <View style={styles.card}>
             {passes.map(({ pass, km }, i) => (
               <View key={pass.id} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
@@ -1990,6 +2013,9 @@ const styles = StyleSheet.create({
   signalText: { color: Colors.signal },
   onSignal: { color: Colors.onSignal },
 
+  typoTabs: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 22 },
+  typoTab: { fontFamily: Fonts.displayBold, fontSize: 28, lineHeight: 34, letterSpacing: -0.3, color: Colors.faint },
+  typoTabOn: { color: Colors.text },
   segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: 4 },
   segItem: { flex: 1, height: 38, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
   segOn: { backgroundColor: Colors.surface2 },

@@ -666,7 +666,7 @@ function TourPanel(props: {
       ) : null}
 
       {props.passes.length ? (
-        <Section title="Pässe auf der Strecke" aside={String(props.passes.length)}>
+        <Section title="Highlights auf der Strecke" aside={String(props.passes.length)}>
           <ol style={S.passList}>
             {props.passes.map(({ pass, km }) => (
               <li key={pass.id} style={{ listStyle: 'none' }}>

@@ -1,7 +1,9 @@
 /**
  * Karte mit Blatt darüber, wie in Apple Maps: Die Karte füllt den ganzen Screen, das Blatt liegt
- * darauf und hat drei Höhen (klein, halb, groß). Ziehen am Kopf verschiebt das Blatt, beim Loslassen
- * rastet es mit einer Feder an der nächsten Höhe ein. Der Inhalt darunter scrollt.
+ * darauf und hat drei Höhen (klein, halb, groß). Ziehen am Griff verschiebt das Blatt, beim Loslassen
+ * rastet es mit einer Feder an der nächsten Höhe ein. Nur der Griff steht fest, Kopf und Inhalt
+ * scrollen gemeinsam. Wer auf halber Höhe nach oben scrollt, öffnet das Blatt ganz; wer auf voller
+ * Höhe oben weiter nach unten zieht, bringt es zurück auf halbe Höhe.
  *
  * Bewusst in JS gebaut (PanResponder plus Reanimated), damit es ohne neue native Abhängigkeit
  * im vorhandenen App Build läuft.
@@ -15,6 +17,8 @@ import {
   View,
   type AccessibilityActionEvent,
   type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   type ScrollViewInstance,
 } from 'react-native';
 import Animated, { cancelAnimation, Extrapolation, interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -27,10 +31,16 @@ import { Colors, Radius, Spacing } from '@/constants/theme';
 export type Detent = 0 | 1 | 2;
 
 const DETENT_NAME = ['klein', 'halb', 'groß'] as const;
-const MEDIUM = 0.5;
+const MEDIUM = 0.6;
 const LARGE = 0.92;
-/** Geschätzte Kopfhöhe, bis sie gemessen ist */
+/** Geschätzte Kopfhöhe samt Griff, bis sie gemessen ist */
 const HEAD_GUESS = 132;
+/** Höhe der festen Griff Zone */
+const GRAB_H = 28;
+/** So weit nach oben gescrollt öffnet das halbe Blatt ganz */
+const EXPAND_AT = 24;
+/** So weit oben über den Anfang hinaus gezogen schließt das volle Blatt auf halb */
+const COLLAPSE_AT = -64;
 const SPRING = { damping: 32, stiffness: 320, mass: 1 };
 /** So weit in Millisekunden wird die Wurfbewegung beim Loslassen fortgeschrieben */
 const PROJECT_MS = 180;
@@ -41,7 +51,7 @@ const rubber = (over: number) => over * 0.25;
 type Props = {
   detent: Detent;
   onDetentChange: (d: Detent) => void;
-  /** Kopf des Blatts: bleibt auch in der kleinen Höhe sichtbar und ist die Zieh Fläche */
+  /** Kopf des Blatts: steht oben im Inhalt und scrollt mit, in der kleinen Höhe ist er das Einzige, was zu sehen ist */
   header: ReactNode;
   children: ReactNode;
   /** Hintergrund, meist die Karte. Bekommt die Höhe, die das Blatt unten verdeckt (klein oder halb). */
@@ -62,7 +72,7 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   const bottomSpace = insets.bottom + TAB_BAR_SPACE;
   const large = Math.round(Math.min(H * LARGE, H - insets.top - Spacing.s));
   const medium = Math.round(H * MEDIUM);
-  const small = Math.round(Math.min((headH || HEAD_GUESS) + bottomSpace, medium - Spacing.xxxl));
+  const small = Math.round(Math.min((headH ? headH + GRAB_H : HEAD_GUESS) + bottomSpace, medium - Spacing.xxxl));
   const visible = [small, medium, large];
   /** Verschiebung nach unten je Höhe; das Blatt selbst ist so hoch wie die große Höhe */
   const snaps = visible.map((v) => large - v);
@@ -155,37 +165,64 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
     else if (e.nativeEvent.actionName === 'activate') onDetentChange(detent === 2 ? 0 : ((detent + 1) as Detent));
   }
 
+  // In der kleinen Höhe zeigt das Blatt nur den Kopf: zurück nach oben, Scrollen aus
+  useEffect(() => {
+    if (detent === 0) scrollRef?.current?.scrollTo({ y: 0, animated: false });
+  }, [detent, scrollRef]);
+
+  /** Scrollen steuert die Höhe: halb und hoch gescrollt öffnet, voll und oben gezogen schließt auf halb */
+  const switching = useRef(false);
+  useEffect(() => {
+    switching.current = false;
+  }, [detent]);
+  function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
+    if (switching.current) return;
+    const off = e.nativeEvent.contentOffset.y;
+    if (detent === 1 && off > EXPAND_AT) {
+      switching.current = true;
+      onDetentChange(2);
+    } else if (detent === 2 && off < COLLAPSE_AT) {
+      switching.current = true;
+      onDetentChange(1);
+    }
+  }
+
   return (
     <View style={styles.box} onLayout={(e: LayoutChangeEvent) => setBoxH(Math.round(e.nativeEvent.layout.height))}>
       <View style={StyleSheet.absoluteFill}>{background(visible[Math.min(detent, 1)])}</View>
       <Animated.View style={[styles.sheet, { top: H - large, height: large }, sheetStyle]}>
-        <View {...pan.head.panHandlers} onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))} style={styles.head}>
-          <View
-            {...pan.grab.panHandlers}
-            accessible
-            accessibilityRole="adjustable"
-            accessibilityLabel={grabberLabel}
-            accessibilityHint="Wischen nach oben oder unten ändert die Höhe"
-            accessibilityValue={{ text: DETENT_NAME[detent] }}
-            accessibilityActions={[{ name: 'increment', label: 'Größer' }, { name: 'decrement', label: 'Kleiner' }, { name: 'activate' }]}
-            onAccessibilityAction={onAction}
-            style={styles.grabberZone}>
-            <View style={styles.grabber} />
-          </View>
-          {header}
+        <View
+          {...pan.grab.panHandlers}
+          accessible
+          accessibilityRole="adjustable"
+          accessibilityLabel={grabberLabel}
+          accessibilityHint="Wischen nach oben oder unten ändert die Höhe"
+          accessibilityValue={{ text: DETENT_NAME[detent] }}
+          accessibilityActions={[{ name: 'increment', label: 'Größer' }, { name: 'decrement', label: 'Kleiner' }, { name: 'activate' }]}
+          onAccessibilityAction={onAction}
+          style={styles.grabberZone}>
+          <View style={styles.grabber} />
         </View>
-        <Animated.View style={[styles.flex, contentStyle]}>
-          <ScrollView
-            ref={scrollRef}
-            style={styles.flex}
-            contentContainerStyle={[styles.content, { paddingBottom: snaps[detent] + bottomSpace + Spacing.xl }]}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="interactive"
-            automaticallyAdjustKeyboardInsets
-            showsVerticalScrollIndicator={false}>
-            {children}
-          </ScrollView>
-        </Animated.View>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.flex}
+          contentContainerStyle={[styles.content, { paddingBottom: snaps[detent] + bottomSpace + Spacing.xl }]}
+          scrollEnabled={detent !== 0}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}>
+          {/* In der kleinen Höhe ist der Kopf die Zieh Fläche, sonst scrollt er mit */}
+          <View
+            {...(detent === 0 ? pan.head.panHandlers : null)}
+            onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))}
+            style={styles.head}>
+            {header}
+          </View>
+          <Animated.View style={[styles.body, contentStyle]}>{children}</Animated.View>
+        </ScrollView>
       </Animated.View>
     </View>
   );
@@ -203,8 +240,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: Radius.l,
     boxShadow: '0 -6px 24px rgba(0,0,0,0.45)',
   },
-  head: { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.l, gap: Spacing.m },
-  grabberZone: { height: 28, alignItems: 'center', justifyContent: 'center', marginBottom: -Spacing.s },
+  head: { paddingTop: Spacing.s, paddingBottom: Spacing.l, gap: Spacing.s },
+  body: { gap: Spacing.xxl },
+  grabberZone: { height: GRAB_H, alignItems: 'center', justifyContent: 'center' },
   grabber: { width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.surface2 },
-  content: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xs, gap: Spacing.xxl },
+  content: { paddingHorizontal: Spacing.xl },
 });

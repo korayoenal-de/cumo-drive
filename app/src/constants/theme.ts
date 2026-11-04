@@ -11,6 +11,8 @@ export const Colors = {
   line: '#2A2A2E',
   text: '#F4F4F2',
   muted: '#9A9A9F',
+  /** Inaktive Typo Tabs: deutlich zurückgenommen, ab 24 px noch über 3 zu 1 auf ground. */
+  faint: '#6E6E73',
   signal: '#E2461C',
   good: '#4CC38A',
   warn: '#E8B03A',
