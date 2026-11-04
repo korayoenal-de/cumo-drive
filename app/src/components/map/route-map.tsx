@@ -51,7 +51,9 @@ export function RouteMap({
     return order.flatMap((c) =>
       tour.linie
         .filter((r) => r.c === c && r.p.length > 1)
-        .map((r) => ({ c, coords: r.p.map(ll) })),
+        // Schlüssel aus dem Inhalt: Apple Maps verliert beim Ändern der Punkte einer bestehenden Linie
+        // manchmal die Farbe (Linie wird schwarz). Mit neuem Schlüssel wird sie neu angelegt.
+        .map((r) => ({ c, coords: r.p.map(ll), key: `${c}-${r.p.length}-${r.p[0][0].toFixed(5)}-${r.p[r.p.length - 1][1].toFixed(5)}` })),
     );
   }, [tour]);
 
@@ -149,7 +151,7 @@ export function RouteMap({
         }>
         {runs.map((r, i) => (
           <Polyline
-            key={`rand${i}`}
+            key={`rand-${r.key}-${i}`}
             coordinates={r.coords}
             strokeColor={Colors.ground}
             strokeWidth={CLASS_LINE[r.c].width + 3}
@@ -160,7 +162,7 @@ export function RouteMap({
         ))}
         {runs.map((r, i) => (
           <Polyline
-            key={`linie${i}`}
+            key={`linie-${r.key}-${i}`}
             coordinates={r.coords}
             strokeColor={CLASS_LINE[r.c].color}
             strokeWidth={CLASS_LINE[r.c].width}
@@ -172,7 +174,7 @@ export function RouteMap({
 
         {dashed && dashed.length > 1 && (
           <Polyline
-            key="zurueck"
+            key={`zurueck-${dashed.length}-${dashed[0][0].toFixed(5)}`}
             coordinates={dashed.map(ll)}
             strokeColor={Colors.text}
             strokeWidth={5}
