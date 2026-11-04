@@ -1,6 +1,6 @@
 /**
  * Touren Datenmodell und Hilfsfunktionen (GPX lesen und schreiben, Abschnitte berechnen).
- * Plattformunabhängig bis auf parseGpx, das einen DOMParser braucht (Web).
+ * Plattformunabhängig, GPX und KML werden ohne DOMParser gelesen.
  */
 
 export type LatLon = [number, number];
@@ -112,30 +112,82 @@ export function reverseTour(tour: Tour): Tour {
   };
 }
 
-/** Liest eine GPX Datei (Wegpunkte, Route oder Track). Braucht DOMParser. */
-export function parseGpx(text: string, fallbackName: string): Tour {
-  const doc = new DOMParser().parseFromString(text, 'application/xml');
-  const read = (tag: string): LatLon[] =>
-    Array.from(doc.getElementsByTagName(tag)).map((el) => [
-      parseFloat(el.getAttribute('lat') ?? '0'),
-      parseFloat(el.getAttribute('lon') ?? '0'),
-    ]);
-  const route = read('rtept');
-  const track = read('trkpt');
-  const line = track.length > route.length ? track : route;
-  if (line.length < 2) throw new Error('In der Datei sind keine Routen oder Trackpunkte.');
-  let wegpunkte = read('wpt');
-  if (wegpunkte.length < 2) wegpunkte = [line[0], line[line.length - 1]];
-  const name = doc.getElementsByTagName('name')[0]?.textContent?.trim() || fallbackName;
-  const tour: Tour = { name, laenge_km: 0, wegpunkte, linie: [{ c: 'ok', p: line }], warnungen: [], geprueft: false };
+const decode = (s: string) =>
+  s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&').trim();
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** Punkte eines GPX Tags (wpt, rtept, trkpt) ohne DOMParser, damit es auch in der App läuft. */
+function gpxPoints(text: string, tag: string): LatLon[] {
+  const out: LatLon[] = [];
+  const re = new RegExp(`<${tag}\\b([^>]*)>`, 'g');
+  for (const m of text.matchAll(re)) {
+    const lat = /\blat\s*=\s*["']([-\d.eE+]+)["']/.exec(m[1]);
+    const lon = /\blon\s*=\s*["']([-\d.eE+]+)["']/.exec(m[1]);
+    if (lat && lon) out.push([parseFloat(lat[1]), parseFloat(lon[1])]);
+  }
+  return out;
+}
+
+function finish(name: string, line: LatLon[], wegpunkte: LatLon[]): Tour {
+  if (line.length < 2) throw new Error('In der Datei ist keine Route oder Strecke.');
+  const wp = wegpunkte.length >= 2 ? wegpunkte : [line[0], line[line.length - 1]];
+  const tour: Tour = { name, laenge_km: 0, wegpunkte: wp, linie: [{ c: 'ok', p: line }], warnungen: [], geprueft: false };
   const pts = flatten(tour);
   tour.laenge_km = +pts[pts.length - 1].km.toFixed(1);
   return tour;
 }
 
+/** Liest eine GPX Datei (Wegpunkte, Route oder Track). */
+export function parseGpx(text: string, fallbackName: string): Tour {
+  const route = gpxPoints(text, 'rtept');
+  const track = gpxPoints(text, 'trkpt');
+  const line = track.length > route.length ? track : route;
+  const name = /<name>([\s\S]*?)<\/name>/.exec(text);
+  return finish((name && decode(name[1])) || fallbackName, line, gpxPoints(text, 'wpt'));
+}
+
+/** Liest eine KML Datei (Google My Maps, Google Earth, calimoto): längste Linie und Punkte. */
+export function parseKml(text: string, fallbackName: string): Tour {
+  const coords = (s: string): LatLon[] =>
+    s
+      .trim()
+      .split(/\s+/)
+      .map((c) => c.split(',').map(Number))
+      .filter((c) => c.length >= 2 && Number.isFinite(c[0]) && Number.isFinite(c[1]))
+      .map((c) => [c[1], c[0]] as LatLon);
+  const lines: LatLon[][] = [];
+  for (const m of text.matchAll(/<LineString\b[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/g)) lines.push(coords(m[1]));
+  // gx:Track (Google Earth Aufzeichnung)
+  const gx = Array.from(text.matchAll(/<gx:coord>([^<]+)<\/gx:coord>/g)).map((m) => {
+    const [lon, lat] = m[1].trim().split(/\s+/).map(Number);
+    return [lat, lon] as LatLon;
+  });
+  if (gx.length > 1) lines.push(gx);
+  // mehrere Abschnitte (zum Beispiel Etappen) hintereinander zu einer Linie verbinden
+  const line = lines.filter((l) => l.length > 1).flat();
+  const points: LatLon[] = [];
+  for (const m of text.matchAll(/<Point\b[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/g)) points.push(...coords(m[1]).slice(0, 1));
+  const name = /<Document\b[\s\S]*?<name>([\s\S]*?)<\/name>/.exec(text) ?? /<name>([\s\S]*?)<\/name>/.exec(text);
+  return finish((name && decode(name[1])) || fallbackName, line, points.length >= 2 ? points : []);
+}
+
+/** Erkennt GPX oder KML am Inhalt. */
+export function parseRouteFile(text: string, fileName: string): Tour {
+  const base = fileName.replace(/\.(gpx|kml|xml)$/i, '') || 'Importierte Tour';
+  if (/<kml\b/i.test(text)) return parseKml(text, base);
+  if (/<gpx\b/i.test(text)) return parseGpx(text, base);
+  throw new Error('Das ist keine GPX oder KML Datei.');
+}
+
+/** Dateiname ohne Sonderzeichen. */
+export function fileBase(name: string): string {
+  return name.replace(/[^\wäöüÄÖÜß -]+/g, '').replace(/\s+/g, ' ').trim() || 'tour';
+}
+
 export function toGpx(tour: Tour): string {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const wpts = tour.wegpunkte.map(([la, lo]) => `  <wpt lat="${la}" lon="${lo}"></wpt>`).join('\n');
+  const wpts = tour.wegpunkte
+    .map(([la, lo], i) => `  <wpt lat="${la}" lon="${lo}"><name>${i === 0 ? 'Start' : i === tour.wegpunkte.length - 1 ? 'Ziel' : `Via ${i}`}</name></wpt>`)
+    .join('\n');
   const pts = flatten(tour)
     .map(({ p }) => `      <trkpt lat="${p[0]}" lon="${p[1]}"></trkpt>`)
     .join('\n');
@@ -150,6 +202,35 @@ ${pts}
     </trkseg>
   </trk>
 </gpx>
+`;
+}
+
+/** KML für Google My Maps, Google Earth und andere Planer: Strecke plus Start, Via und Ziel. */
+export function toKml(tour: Tour): string {
+  const line = flatten(tour)
+    .map(({ p }) => `${p[1]},${p[0]},0`)
+    .join(' ');
+  const marks = tour.wegpunkte
+    .map(([la, lo], i) => {
+      const n = i === 0 ? 'Start' : i === tour.wegpunkte.length - 1 ? 'Ziel' : `Via ${i}`;
+      return `    <Placemark><name>${n}</name><styleUrl>#punkt</styleUrl><Point><coordinates>${lo},${la},0</coordinates></Point></Placemark>`;
+    })
+    .join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${esc(tour.name)}</name>
+    <Style id="strecke"><LineStyle><color>ff1c46e2</color><width>5</width></LineStyle></Style>
+    <Style id="punkt"><IconStyle><scale>0.9</scale></IconStyle></Style>
+    <Placemark>
+      <name>${esc(tour.name)}</name>
+      <description>${formatKm(tour.laenge_km)} km, geplant mit CUMO DRIVE</description>
+      <styleUrl>#strecke</styleUrl>
+      <LineString><tessellate>1</tessellate><coordinates>${line}</coordinates></LineString>
+    </Placemark>
+${marks}
+  </Document>
+</kml>
 `;
 }
 

@@ -6,14 +6,18 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { ElevationChart } from '@/components/planner/elevation-chart';
+import { ExportRow } from '@/components/planner/export-row';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { useSession } from '@/lib/auth';
-import { deleteTour, filterTours, folders, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
-import { formatKm } from '@/lib/tour';
+import { deleteTour, filterTours, folders, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
+import { importTourFile } from '@/lib/route-file';
+import { countCurves } from '@/lib/stats';
+import { flatten, formatKm, type Tour } from '@/lib/tour';
 
 const SORTS: { id: SortKey; label: string }[] = [
   { id: 'neu', label: 'Neueste' },
@@ -30,6 +34,23 @@ export default function Touren() {
   const [sort, setSort] = useState<SortKey>('neu');
   const [open, setOpen] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
+
+  // GPX oder KML aus Dateien, Mail oder anderen Planern übernehmen
+  const importFile = async () => {
+    setImportMsg(null);
+    try {
+      const t = await importTourFile();
+      if (!t) return;
+      const curves = countCurves(flatten(t).map((x) => x.p));
+      const saved = saveTour({ ...t, curves }, 'Importiert');
+      setOpen(saved.id);
+      setImportMsg(`${saved.name} importiert, ${formatKm(saved.laenge_km, 0)} km.`);
+      if (session) void syncLibrary();
+    } catch (e) {
+      setImportMsg(e instanceof Error ? e.message : 'Import hat nicht geklappt.');
+    }
+  };
 
   // Beim Öffnen des Tabs mit dem Konto abgleichen
   useFocusEffect(
@@ -65,6 +86,13 @@ export default function Touren() {
                 ? `Abgleich hat nicht geklappt: ${sync.error}`
                 : 'Mit deinem Konto abgeglichen, auch im Web Planer.'}
         </AppText>
+      </View>
+
+      <View style={styles.gapS}>
+        <Pressable accessibilityRole="button" onPress={() => void importFile()} style={styles.secondary}>
+          <AppText style={styles.secondaryText}>GPX oder KML importieren</AppText>
+        </Pressable>
+        {importMsg && <AppText variant="caption" muted>{importMsg}</AppText>}
       </View>
 
       {list.length === 0 ? (
@@ -129,6 +157,7 @@ export default function Touren() {
                       <Pressable accessibilityRole="button" onPress={() => drive(t)} style={styles.primary}>
                         <AppText style={styles.primaryText}>Losfahren</AppText>
                       </Pressable>
+                      <TourDetails tour={t} />
                       <View style={styles.row}>
                         <Pressable accessibilityRole="button" onPress={() => show(t)} style={[styles.secondary, styles.flex]}>
                           <AppText style={styles.secondaryText}>Auf der Karte</AppText>
@@ -155,6 +184,17 @@ export default function Touren() {
         </>
       )}
     </Screen>
+  );
+}
+
+/** Höhenprofil und Export einer gespeicherten Tour, erst beim Aufklappen geladen. */
+function TourDetails({ tour }: { tour: Tour }) {
+  const line = useMemo(() => flatten(tour).map((x) => x.p), [tour]);
+  return (
+    <View style={styles.gapM}>
+      <ElevationChart line={line} onSurface />
+      <ExportRow tour={tour} onSurface />
+    </View>
   );
 }
 

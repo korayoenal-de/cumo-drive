@@ -20,6 +20,8 @@ import {
   type PlanError, type PlanPhase, type Spot, type TourRequest,
 } from '@/components/planner/create-tour';
 import { CLASS_COLORS } from '@/components/planner/route-preview';
+import { ElevationChart } from '@/components/planner/elevation-chart';
+import { ExportRow } from '@/components/planner/export-row';
 import { Chip } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
@@ -1391,8 +1393,11 @@ function TourMode({
           />
           {plan.saveMsg && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
           {!session && !plan.saveMsg && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
+          <ExportRow tour={routeTour} />
         </View>
       )}
+
+      {routeTour && <ElevationChart line={line} />}
 
       {group && routeTour && <GroupBlock />}
 
@@ -1687,7 +1692,7 @@ function Result({
   const total = tour.laenge_km;
   const share = total > 0 ? Math.round((sauber / total) * 100) : 0;
   const warnings = tour.warnungen.filter((w) => w.klasse !== 'ok');
-  const line = flatten(tour).map((x) => x.p);
+  const line = useMemo(() => flatten(tour).map((x) => x.p), [tour]);
   const passes = passesAlong(PASSES, line);
   const curves = countCurves(line);
   const live = usePassLive();
@@ -1751,6 +1756,8 @@ function Result({
         </View>
       </View>
 
+      <ElevationChart line={line} />
+
       <View style={[styles.card, styles.checkCard]}>
         <View style={[styles.dot, warnings.length ? styles.dotWarn : null]} />
         <View style={styles.flex}>
@@ -1809,6 +1816,7 @@ function Result({
 
       <View style={styles.gapS}>
         <SecondaryButton label={savedId ? 'Gespeichert unter Meine Touren' : 'Speichern'} onPress={saveResult} />
+        <ExportRow tour={tour} />
         <PrimaryButton label="Neu würfeln" onPress={onReroll} />
         <SecondaryButton label="Zurück zum Formular" onPress={onBack} />
       </View>

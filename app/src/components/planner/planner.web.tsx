@@ -12,7 +12,8 @@ import { parseWish, STOPS, targetKm, formatMinutes, type Stop } from '@/lib/inte
 import { planChecked, type PlanStep } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { smartRoundTrip } from '@/lib/smart-roundtrip';
-import { flatten, formatKm, legs, parseGpx, PROFILES, reverseTour, toGpx, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { exportTour, type RouteFormat } from '@/lib/route-file';
+import { flatten, formatKm, legs, parseRouteFile, PROFILES, reverseTour, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { countCurves, elevationProfile, resample, type ElevationProfile } from '@/lib/stats';
 import { cumoAvailable } from '@/lib/cumo-routing';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
@@ -340,7 +341,7 @@ export default function Planner() {
     const text = await file.text();
     let parsed: Tour;
     try {
-      parsed = parseGpx(text, file.name.replace(/\.gpx$/i, ''));
+      parsed = parseRouteFile(text, file.name);
     } catch (e) {
       setError((e as Error).message);
       return;
@@ -355,14 +356,7 @@ export default function Planner() {
     });
   };
 
-  const exportGpx = () => {
-    const blob = new Blob([toGpx(tour)], { type: 'application/gpx+xml' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${tour.name.replace(/[^\wäöüÄÖÜß ]+/g, '').trim() || 'tour'}.gpx`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
+  const exportFile = (f: RouteFormat) => void exportTour(tour, f);
 
   return (
     <div style={S.root}>
@@ -482,7 +476,7 @@ export default function Planner() {
                 }
               }}
               onImport={importGpx}
-              onExport={exportGpx}
+              onExport={exportFile}
               onSample={() => {
                 setTour(SAMPLE);
                 setIsSample(true);
@@ -573,7 +567,7 @@ function TourPanel(props: {
   onRemove: (i: number) => void;
   onAddPlace: (p: LatLon) => void;
   onImport: (f: File) => void;
-  onExport: () => void;
+  onExport: (f: RouteFormat) => void;
   onSample: () => void;
   onRename: (n: string) => void;
   savedId: string | null;
@@ -726,16 +720,21 @@ function TourPanel(props: {
       </div>
       <div style={S.btnRow}>
         <button style={S.secondary} onClick={() => fileRef.current?.click()} disabled={props.busy}>
-          GPX importieren
+          GPX oder KML importieren
         </button>
-        <button style={S.secondary} onClick={props.onExport} disabled={tour.linie.length === 0}>
+      </div>
+      <div style={S.btnRow}>
+        <button style={S.secondary} onClick={() => props.onExport('gpx')} disabled={tour.linie.length === 0}>
           GPX exportieren
+        </button>
+        <button style={S.secondary} onClick={() => props.onExport('kml')} disabled={tour.linie.length === 0}>
+          KML exportieren
         </button>
         <input
           ref={fileRef}
           id="gpx-file"
           type="file"
-          accept=".gpx,application/gpx+xml"
+          accept=".gpx,.kml,application/gpx+xml,application/vnd.google-earth.kml+xml"
           style={{ display: 'none' }}
           onChange={(e) => {
             const f = e.target.files?.[0];
