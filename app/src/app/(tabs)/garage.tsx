@@ -1,11 +1,12 @@
 /**
  * Garage: Konto und Meine Touren aus dem Konto (im Web Planer gespeichert oder in der App).
- * Das Fahrzeugprofil (Breite, Bodenfreiheit, Reichweite) folgt hier später.
+ * Dazu das Fahrzeugprofil: Modell, Breite, Bodenfreiheit, Reichweite und Sprit.
  */
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
@@ -13,6 +14,7 @@ import { setActiveTour } from '@/lib/active-tour';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { listCloudTours, loadCloudTour, type CloudTour } from '@/lib/cloud-tours';
 import { listDrives, type Drive } from '@/lib/drives';
+import { FUELS, saveVehicle, useVehicle, vehicleSummary, type Vehicle } from '@/lib/vehicle';
 import { fmtG } from '@/lib/ride-stats';
 import { formatKm } from '@/lib/tour';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
@@ -23,10 +25,7 @@ export default function Garage() {
     <Screen>
       <AppText variant="display">Garage</AppText>
       {session ? <Tours email={session.user.email ?? ''} /> : <Login />}
-      <View style={styles.card}>
-        <AppText variant="label">Fahrzeug</AppText>
-        <AppText muted>Bald hier: Breite, Bodenfreiheit, Reichweite und Sprit. Damit plant CUMO DRIVE passend zu deinem Auto.</AppText>
-      </View>
+      <VehicleCard />
     </Screen>
   );
 }
@@ -217,6 +216,85 @@ const styles = StyleSheet.create({
   accountRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   tourRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingVertical: Spacing.m },
   tourName: { fontFamily: Fonts.semibold, fontSize: 16 },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   driveRow: { gap: 2, paddingVertical: Spacing.m },
   arrow: { fontFamily: Fonts.display, fontSize: 24, color: Colors.muted },
 });
+
+/** Fahrzeugprofil: zeigt die Angaben, Tippen öffnet das Formular. */
+function VehicleCard() {
+  const v = useVehicle();
+  const [edit, setEdit] = useState<Vehicle | null>(null);
+  const num = (t: string) => {
+    const x = parseFloat(t.replace(',', '.'));
+    return Number.isFinite(x) && x > 0 ? x : null;
+  };
+  const str = (x: number | null) => (x == null ? '' : String(x).replace('.', ','));
+  if (!edit) {
+    const filled = v.model.trim() || v.widthM || v.rangeKm;
+    return (
+      <View style={styles.card}>
+        <AppText variant="label">Fahrzeug</AppText>
+        <AppText muted>{filled ? vehicleSummary(v) : 'Trag dein Auto ein. Damit sieht die Gruppe, wer was fährt, und Tankstopps passen zu deiner Reichweite.'}</AppText>
+        <Pressable accessibilityRole="button" onPress={() => setEdit(v)} style={styles.secondary}>
+          <AppText style={styles.secondaryText}>{filled ? 'Fahrzeug bearbeiten' : 'Fahrzeug eintragen'}</AppText>
+        </Pressable>
+      </View>
+    );
+  }
+  const set = (patch: Partial<Vehicle>) => setEdit({ ...edit, ...patch });
+  return (
+    <View style={styles.card}>
+      <AppText variant="label">Fahrzeug</AppText>
+      <TextInput value={edit.model} onChangeText={(t) => set({ model: t })} placeholder="Modell, zum Beispiel Porsche 911 GT3" placeholderTextColor={Colors.muted} style={styles.input} accessibilityLabel="Modell" />
+      <View style={styles.row}>
+        <TextInput
+          defaultValue={str(edit.widthM)}
+          onChangeText={(t) => set({ widthM: num(t) })}
+          placeholder="Breite in m"
+          placeholderTextColor={Colors.muted}
+          keyboardType="decimal-pad"
+          style={[styles.input, styles.flex]}
+          accessibilityLabel="Breite in Metern"
+        />
+        <TextInput
+          defaultValue={str(edit.clearanceCm)}
+          onChangeText={(t) => set({ clearanceCm: num(t) })}
+          placeholder="Bodenfreiheit cm"
+          placeholderTextColor={Colors.muted}
+          keyboardType="number-pad"
+          style={[styles.input, styles.flex]}
+          accessibilityLabel="Bodenfreiheit in Zentimetern"
+        />
+      </View>
+      <TextInput
+        defaultValue={str(edit.rangeKm)}
+        onChangeText={(t) => set({ rangeKm: num(t) })}
+        placeholder="Reichweite mit vollem Tank in km"
+        placeholderTextColor={Colors.muted}
+        keyboardType="number-pad"
+        style={styles.input}
+        accessibilityLabel="Reichweite in Kilometern"
+      />
+      <View style={styles.wrap}>
+        {FUELS.map((f) => (
+          <Chip key={f.id} label={f.label} active={edit.fuel === f.id} onSurface onPress={() => set({ fuel: f.id })} />
+        ))}
+      </View>
+      <View style={styles.row}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            void saveVehicle(edit);
+            setEdit(null);
+          }}
+          style={[styles.primary, styles.flex]}>
+          <AppText style={styles.primaryText}>Speichern</AppText>
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={() => setEdit(null)} style={[styles.secondary, styles.flex]}>
+          <AppText style={styles.secondaryText}>Abbrechen</AppText>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
