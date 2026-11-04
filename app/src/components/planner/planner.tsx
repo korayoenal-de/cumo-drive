@@ -1178,7 +1178,9 @@ function TourMode({
       : [];
     return (
       <View key={id} style={styles.gapS}>
-        <View style={[styles.pointRow, isEditing && styles.pointRowEditing]}>
+        {/* Beim Bearbeiten ersetzt das Suchfeld die Zeile, sonst stünden Platzhalter und Feld doppelt da */}
+        {!isEditing && (
+        <View style={styles.pointRow}>
           <PointSymbol kind={kind} label={String(viaNo)} />
           <Pressable
             accessibilityRole="button"
@@ -1203,7 +1205,8 @@ function TourMode({
             </Pressable>
           )}
         </View>
-        {open && (
+        )}
+        {open && !isEditing && (
           <View style={styles.wrap}>
             {actions.map((a) => (
               <Pill
@@ -2111,7 +2114,6 @@ const styles = StyleSheet.create({
   fieldInput: { flex: 1, height: 48, color: Colors.text, fontFamily: Fonts.regular, fontSize: 16 },
   fieldIcon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   pointRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.s },
-  pointRowEditing: { backgroundColor: Colors.surface2 },
   pointMain: { flex: 1, minHeight: 52, justifyContent: 'center', paddingHorizontal: Spacing.s },
   symbol: { width: 28, alignItems: 'center', justifyContent: 'center' },
   startRing: { width: 16, height: 16, borderRadius: 8, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center' },
