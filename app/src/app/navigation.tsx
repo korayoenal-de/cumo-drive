@@ -4,7 +4,8 @@
  */
 import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import * as Location from 'expo-location';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,7 +17,7 @@ import { useActiveTour } from '@/lib/active-tour';
 import { useNavigation } from '@/lib/navigation';
 import type { NavEntry, NavRequest } from '@/lib/navigation/types';
 import { useRideMode } from '@/lib/ride-mode';
-import { formatKm, type Tour } from '@/lib/tour';
+import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
 
 export default function NavigationScreen() {
   useKeepAwake();
@@ -27,9 +28,30 @@ export default function NavigationScreen() {
   const showSim = __DEV__ || secret;
 
   const [entry, setEntry] = useState<NavEntry>('einsteigen');
+  // Abstand zum Tourstart vorab, damit bei weiter Anreise die passende Wahl vorgeschlagen wird
+  const [here, setHere] = useState<LatLon | null>(null);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const perm = await Location.getForegroundPermissionsAsync();
+      if (!perm.granted) return;
+      const p = (await Location.getLastKnownPositionAsync()) ?? (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
+      if (alive && p) setHere([p.coords.latitude, p.coords.longitude]);
+    })().catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const toStartKm = useMemo(() => {
+    const first = active ? flatten(active.tour)[0]?.p : undefined;
+    return here && first ? haversine(here, first) / 1000 : null;
+  }, [here, active]);
+  const far = toStartKm != null && toStartKm > 30;
+  const [entryTouched, setEntryTouched] = useState(false);
+  const effEntry: NavEntry = entryTouched ? entry : far ? 'anfahrt' : entry;
   const req = useMemo<NavRequest | null>(
-    () => (active ? { tour: active.tour, profile: active.profile, avoid: active.avoid, entry } : null),
-    [active, entry],
+    () => (active ? { tour: active.tour, profile: active.profile, avoid: active.avoid, entry: effEntry } : null),
+    [active, effEntry],
   );
   const [state, controls] = useNavigation(req);
   // Restkilometer beim Start, daraus ergeben sich am Ende die gefahrenen km
@@ -111,18 +133,27 @@ export default function NavigationScreen() {
                   {active.tour.minutes ? `, etwa ${Math.round(active.tour.minutes)} min` : ''}
                 </AppText>
               </Pressable>
+              {far && (
+                <AppText style={styles.farNote}>
+                  Der Start ist {Math.round(toStartKm!).toLocaleString('de-DE')} km entfernt. Lieber erst zum Start fahren oder unterwegs einsteigen?
+                </AppText>
+              )}
               <View style={styles.entry} accessibilityRole="radiogroup">
                 {(
                   [
+                    ...(far ? [{ id: 'anfahrt', label: 'Zum Start navigieren', hint: 'Schnellste Route mit Autobahn, die Tour startest du dort' }] : []),
                     { id: 'einsteigen', label: 'Einsteigen', hint: 'An der nächsten Stelle in die Tour' },
-                    { id: 'start', label: 'Über den Startpunkt fahren', hint: 'Die ganze Tour von Anfang an' },
+                    { id: 'start', label: 'Über den Startpunkt fahren', hint: far ? 'Anreise schnell, dann die ganze Tour' : 'Die ganze Tour von Anfang an' },
                   ] as { id: NavEntry; label: string; hint: string }[]
                 ).map((o) => (
                   <Pressable
                     key={o.id}
                     accessibilityRole="radio"
-                    accessibilityState={{ checked: entry === o.id }}
-                    onPress={() => setEntry(o.id)}
+                    accessibilityState={{ checked: effEntry === o.id }}
+                    onPress={() => {
+                      setEntry(o.id);
+                      setEntryTouched(true);
+                    }}
                     style={styles.entryRow}>
                     <View style={styles.flex}>
                       <AppText style={styles.entryLabel}>{o.label}</AppText>
@@ -130,7 +161,7 @@ export default function NavigationScreen() {
                         {o.hint}
                       </AppText>
                     </View>
-                    <View style={[styles.radio, entry === o.id && styles.radioOn]}>{entry === o.id && <View style={styles.radioDot} />}</View>
+                    <View style={[styles.radio, effEntry === o.id && styles.radioOn]}>{effEntry === o.id && <View style={styles.radioDot} />}</View>
                   </Pressable>
                 ))}
               </View>
@@ -183,6 +214,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   row: { flexDirection: 'row', gap: Spacing.s },
   entry: { gap: 2 },
+  farNote: { fontFamily: Fonts.semibold, fontSize: 15, lineHeight: 21, color: Colors.warn },
   entryRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingVertical: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
   entryLabel: { fontFamily: Fonts.semibold, fontSize: 16 },
   radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: Colors.muted, alignItems: 'center', justifyContent: 'center' },

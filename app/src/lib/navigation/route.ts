@@ -38,6 +38,8 @@ const CHUNK = 1500;
 const OVERLAP = 40;
 /** Ab diesem Abstand zum Linienanfang gibt es ein Anfahrtsstück */
 const APPROACH_M = 150;
+/** Ab dieser Luftlinie zur Tour fährt die Anfahrt die schnellste Route statt des Tourprofils. */
+export const LONG_APPROACH_M = 30000;
 
 type VManeuver = {
   type: number;
@@ -296,7 +298,8 @@ async function approach(from: LatLon, to: LatLon, toHeading: number, req: NavReq
       // Ankunft in Fahrtrichtung der Tour, damit man nicht falsch herum einsteigt
       { lat: to[0], lon: to[1], type: 'break', heading: Math.round(toHeading), heading_tolerance: 60, minimum_reachability: 300 },
     ],
-    ...costingFor(req.profile, req.avoid),
+    // Weite Anreise: schnellste Route mit Autobahn, das Tourprofil gilt erst auf der Tour
+    ...costingFor(haversine(from, to) > LONG_APPROACH_M ? 'schnell' : req.profile, req.avoid),
     directions_options: DIRECTIONS,
   };
   return piece(await post('route', body, signal));
@@ -334,6 +337,21 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
   if (line.length < 2) throw new Error('Die Tour hat keine Linie.');
   const lineCum = line.map(() => 0);
   for (let i = 1; i < line.length; i++) lineCum[i] = lineCum[i - 1] + haversine(line[i - 1], line[i]) / 1000;
+
+  // Nur zum Startpunkt navigieren (weite Anreise)
+  if (req.entry === 'anfahrt' && from) {
+    const h = bearing(line[0], line[Math.min(1, line.length - 1)]);
+    const lead = await approach(from, line[0], h, req, signal);
+    const cumKm = cumulativeKm(lead.shape);
+    const maneuvers = lead.maneuvers.map((m) => {
+      const out = toManeuver(m, cumKm);
+      return isDestination(m.type) ? { ...out, text: 'Start der Tour erreicht.', speech: 'Sie haben den Start der Tour erreicht.' } : out;
+    });
+    return {
+      route: { shape: lead.shape, cumKm, maneuvers, km: cumKm[cumKm.length - 1], minutes: lead.seconds / 60, source: 'valhalla' },
+      tourStartIndex: lead.shape.length - 1,
+    };
+  }
 
   let tourLine = line;
   let lead: Piece | null = null;
