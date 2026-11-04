@@ -39,8 +39,13 @@ def hav(a, b):
     return 2 * r * math.asin(math.sqrt(d))
 
 
+HARD_BARRIERS = {"cycle_barrier", "bollard", "block", "gate", "lift_gate", "swing_gate", "kissing_gate", "stile", "chain"}
+MAJOR = {"motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link", "secondary", "secondary_link"}
+
+
 def load(folder):
     nodes, ways, places = {}, {}, []
+    node_flags = {}
     for f in glob.glob(os.path.join(folder, "*.osm")):
         root = ET.parse(f).getroot()
         for el in root:
@@ -50,12 +55,33 @@ def load(folder):
                 tags = {t.get("k"): t.get("v") for t in el.findall("tag")}
                 if tags.get("place") in ("village", "town", "city", "hamlet") and "name" in tags:
                     places.append((nodes[nid], tags["name"], tags["place"]))
+                flag = node_flag(tags)
+                if flag:
+                    node_flags[nid] = flag
             elif el.tag == "way":
                 tags = {t.get("k"): t.get("v") for t in el.findall("tag")}
                 if "highway" not in tags:
                     continue
                 ways[int(el.get("id"))] = ([int(n.get("ref")) for n in el.findall("nd")], tags)
-    return nodes, ways, places
+    return nodes, ways, places, node_flags
+
+
+def node_flag(tags):
+    """Sperrende Punkte auf einer Straße: Barrieren und Furten."""
+    if tags.get("barrier") in HARD_BARRIERS:
+        if tags.get("motor_vehicle") in ("yes", "designated") or tags.get("access") == "yes":
+            return None
+        return f"barrier={tags['barrier']} auf der Strecke"
+    if tags.get("ford") in ("yes", "stepping_stones"):
+        return "ford=yes (Furt)"
+    return None
+
+
+def parse_m(v):
+    try:
+        return float(v.replace(",", ".").replace("m", "").split()[0])
+    except (ValueError, IndexError, AttributeError):
+        return None
 
 
 def classify(tags):
@@ -76,15 +102,15 @@ def classify(tags):
         if tags.get(k) in ("no", "private", "forestry", "agricultural"):
             reasons.append(f"{k}={tags[k]}")
             break
-    try:
-        w = float(tags.get("width", "").replace(",", ".").split()[0])
-        if w < 3.5:
-            reasons.append(f"width={w:g} m")
-    except (ValueError, IndexError):
-        pass
+    w = parse_m(tags.get("width"))
+    if w is not None and w < 3.5:
+        reasons.append(f"width={w:g} m")
     if reasons:
         return "raus", reasons
     soft = []
+    mw = parse_m(tags.get("maxwidth") or tags.get("maxwidth:physical"))
+    if mw is not None and mw < 2.5:
+        soft.append(f"maxwidth={mw:g} m (Engstelle, nur schmale Fahrzeuge)")
     if hw in ("unclassified", "residential", "service", "road") and "surface" not in tags:
         soft.append(f"highway={hw} ohne Belagsangabe")
     if hw == "service":
@@ -94,6 +120,44 @@ def classify(tags):
     if soft:
         return "pruefen", soft
     return "ok", []
+
+
+def is_minor(tags):
+    """Nebenstraße ohne Nummer: hier wirkt ein Sperrsignal auf den ganzen Abschnitt."""
+    return tags["highway"] not in MAJOR and not tags.get("ref")
+
+
+def zone_flags(edges, ways, node_flags, min_hits=2):
+    """Markiert ganze Läufe von Nebenstraßen ohne Nummer, wenn darin mindestens
+    min_hits harte Signale stecken (Pfad, Track, Furt, Barriere, Höchstbreite).
+    Gibt {kantenindex: grund} zurück."""
+    out, run = {}, []
+
+    def close():
+        signals, km = set(), 0.0
+        for i in run:
+            u, v, wid, length = edges[i]
+            km += length / 1000
+            cls, reasons = classify(ways[wid][1])
+            if cls == "raus" or any("maxwidth" in r for r in reasons):
+                signals.add(("way", wid))
+            for n in (u, v):
+                if n in node_flags:
+                    signals.add(("node", n))
+        if len(signals) >= min_hits:
+            for i in run:
+                out[i] = f"Teil eines {str(round(km, 1)).replace('.', ',')} km langen Nebenstraßen Abschnitts mit {len(signals)} Sperrsignalen"
+
+    for i, (u, v, wid, length) in enumerate(edges):
+        if is_minor(ways[wid][1]):
+            run.append(i)
+        else:
+            if run:
+                close()
+            run = []
+    if run:
+        close()
+    return out
 
 
 def build_graph(nodes, ways):
@@ -138,7 +202,7 @@ class Grid:
 def main():
     gpx, folder, out = sys.argv[1:4]
     pts = read_points(gpx)
-    nodes, ways, places = load(folder)
+    nodes, ways, places, node_flags = load(folder)
     g = build_graph(nodes, ways)
     grid = Grid(nodes, list(g.nodes))
     snapped = [grid.nearest(p) for p in pts]
@@ -166,9 +230,15 @@ def main():
     stats = {"ok": 0.0, "pruefen": 0.0, "raus": 0.0}
     hw_km = {}
     line = []
-    for u, v, wid, length in edges:
+    zone = zone_flags(edges, ways, node_flags)
+    for idx, (u, v, wid, length) in enumerate(edges):
         tags = ways[wid][1]
         cls, reasons = classify(tags)
+        for n in (u, v):
+            if n in node_flags:
+                cls, reasons = "raus", reasons + [node_flags[n]] if cls == "raus" else [node_flags[n]]
+        if cls != "raus" and idx in zone:
+            cls, reasons = "raus", [zone[idx]] + reasons
         stats[cls] += length
         hw_km[tags["highway"]] = hw_km.get(tags["highway"], 0) + length
         line.append({"a": nodes[u], "b": nodes[v], "c": cls})
