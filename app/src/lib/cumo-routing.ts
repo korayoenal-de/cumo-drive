@@ -77,6 +77,25 @@ function exclusionModel(points: LatLon[]) {
   };
 }
 
+/**
+ * Feinabstimmung je Profil zur Anfrage dazu (ohne den Graphen neu zu bauen).
+ * Kurvig und Pässe: an Rundtouren ab Heppenheim getestet, 37 bis 53 Kurven pro 100 km
+ * statt 24 bis 32 mit dem Grundprofil, weiter ohne unbefestigte Kilometer.
+ */
+function profileModel(profile: Profile): { if?: string; else_if?: string; multiply_by: string }[] {
+  if (profile === 'kurvig' || profile === 'paesse') {
+    return [
+      { if: 'road_class == PRIMARY', multiply_by: '0.35' },
+      { if: 'road_class == SECONDARY', multiply_by: '0.7' },
+      { if: 'road_class == RESIDENTIAL', multiply_by: '0.5' },
+      { if: 'curvature > 0.95', multiply_by: '0.3' },
+      { else_if: 'curvature > 0.85', multiply_by: '0.6' },
+    ];
+  }
+  if (profile === 'entspannt') return [{ if: 'road_class == RESIDENTIAL', multiply_by: '0.6' }];
+  return [];
+}
+
 function avoidModel(avoid: Avoid) {
   const priority: { if: string; multiply_by: string }[] = [];
   if (avoid.tolls) priority.push({ if: 'toll != NO', multiply_by: '0.05' });
@@ -98,11 +117,11 @@ async function post(body: Record<string, unknown>, signal?: AbortSignal): Promis
   return data.paths[0];
 }
 
-function model(avoid: Avoid, exclude: LatLon[]) {
+function model(avoid: Avoid, exclude: LatLon[], profile: Profile) {
   const ex = exclusionModel(exclude) as { areas?: unknown; priority?: { if: string; multiply_by: string }[] };
-  const priority = [...avoidModel(avoid), ...(ex.priority ?? [])];
+  const priority = [...profileModel(profile), ...avoidModel(avoid), ...(ex.priority ?? [])];
   if (!priority.length) return undefined;
-  return { ...(ex.areas ? { areas: ex.areas } : {}), priority };
+  return { ...(ex.areas ? { areas: ex.areas } : {}), priority, ...(profile === 'kurvig' || profile === 'paesse' ? { distance_influence: 5 } : {}) };
 }
 
 /* ---------- Etappen Check auf den Server Details ---------- */
@@ -228,7 +247,7 @@ export async function cumoPlan(
       {
         points: points.map(([la, lo]) => [lo, la]),
         profile: profile === 'schnell' ? 'auto' : 'sportwagen',
-        ...(model(avoid, exclude) ? { custom_model: model(avoid, exclude) } : {}),
+        ...(model(avoid, exclude, profile) ? { custom_model: model(avoid, exclude, profile) } : {}),
       },
       signal,
     );
@@ -263,10 +282,11 @@ export async function cumoRoundTrips(
           points: [[start[1], start[0]]],
           profile: profile === 'schnell' ? 'auto' : 'sportwagen',
           algorithm: 'round_trip',
-          'round_trip.distance': Math.round(km * 1000),
+          // GraphHopper Rundtouren werden auf kurvigen Profilen etwa 30 % länger als angefragt
+          'round_trip.distance': Math.round(km * 1000 * (profile === 'kurvig' || profile === 'paesse' ? 0.75 : 0.9)),
           'round_trip.seed': seed + i,
           heading: [heading],
-          ...(model(avoid, []) ? { custom_model: model(avoid, []) } : {}),
+          ...(model(avoid, [], profile) ? { custom_model: model(avoid, [], profile) } : {}),
         },
         signal,
       );
