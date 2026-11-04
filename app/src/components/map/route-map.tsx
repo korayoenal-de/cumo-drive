@@ -3,7 +3,7 @@
  * Später mit eigenem App Build MapLibre: dann wird nur diese Datei ersetzt, die Props bleiben.
  */
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
-import { Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-native-maps';
 
 import { AppText } from '@/components/ui/text';
@@ -106,33 +106,52 @@ export function RouteMap({
     return () => clearTimeout(t);
   }, [ready, highlightIndex, tour]);
 
-  // Eigener Punkt gleitet zwischen den GPS Positionen (etwa eine pro Sekunde), statt zu springen
+  // Flüssige Bewegung: GPS kommt etwa einmal pro Sekunde. Dazwischen rechnen wir Punkt und Kamera
+  // in jedem Frame weiter (linear zwischen den letzten beiden Positionen, kurz darüber hinaus
+  // fortgeschrieben), statt jede Sekunde eine neue Kamera Animation mit Abbremsen zu starten.
   const [me] = useState(() => new AnimatedRegion({ latitude: position?.[0] ?? 0, longitude: position?.[1] ?? 0, latitudeDelta: 0, longitudeDelta: 0 }));
-  const placed = useRef(false);
-  const lastFix = useRef(0);
+  const motion = useRef<{ from: LatLon; to: LatLon; hFrom: number; hTo: number; t0: number; dur: number } | null>(null);
+  const shown = useRef<{ p: LatLon; h: number } | null>(null);
   useEffect(() => {
     if (!position) return;
     const now = Date.now();
-    const gap = now - lastFix.current;
-    lastFix.current = now;
-    const to = { latitude: position[0], longitude: position[1], latitudeDelta: 0, longitudeDelta: 0 };
-    if (!placed.current || gap > 4000) {
-      placed.current = true;
-      me.setValue(to);
+    const h = heading ?? shown.current?.h ?? 0;
+    const prev = motion.current;
+    const gap = prev ? now - prev.t0 : Infinity;
+    // Start oder lange Pause: springen statt gleiten
+    if (!prev || !shown.current || gap > 4000) {
+      motion.current = { from: position, to: position, hFrom: h, hTo: h, t0: now, dur: 1000 };
+      shown.current = { p: position, h };
+      me.setValue({ latitude: position[0], longitude: position[1], latitudeDelta: 0, longitudeDelta: 0 });
       return;
     }
-    me.stopAnimation(() => undefined);
-    me.timing({ ...to, duration: Math.min(1500, Math.max(300, gap)), easing: Easing.linear, useNativeDriver: false, toValue: 0 }).start();
-  }, [position, me]);
+    motion.current = { from: shown.current.p, to: position, hFrom: shown.current.h, hTo: h, t0: now, dur: Math.min(1500, Math.max(400, gap)) };
+  }, [position, heading, me]);
 
-  // Kamera folgt der Position mit Blickrichtung und etwas Neigung, so lange wie der Abstand der Positionen
   useEffect(() => {
-    if (!ready || !following || !position) return;
-    map.current?.animateCamera(
-      { center: ll(position), heading: heading ?? 0, pitch: 50, zoom: 17, altitude: 500 },
-      { duration: 1000 },
-    );
-  }, [ready, following, position, heading]);
+    if (!ready || !position) return;
+    let raf = 0;
+    let frame = 0;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      // 30 Bilder pro Sekunde reichen und sparen Akku
+      if (++frame % 2) return;
+      const m = motion.current;
+      if (!m) return;
+      // bis 15 % über die letzte Position hinaus fortschreiben, damit es bis zur nächsten nicht stehen bleibt
+      const k = Math.min(1.15, (Date.now() - m.t0) / m.dur);
+      const p: LatLon = [m.from[0] + (m.to[0] - m.from[0]) * k, m.from[1] + (m.to[1] - m.from[1]) * k];
+      const dh = ((m.hTo - m.hFrom + 540) % 360) - 180;
+      const h = (m.hFrom + dh * Math.min(1, k) + 360) % 360;
+      shown.current = { p, h };
+      me.setValue({ latitude: p[0], longitude: p[1], latitudeDelta: 0, longitudeDelta: 0 });
+      if (following) map.current?.setCamera({ center: ll(p), heading: h, pitch: 50, zoom: 17, altitude: 500 });
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // position nur als Schalter (an oder aus), die Werte kommen über motion
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, following, !!position, me]);
 
   // nach der Pause wieder folgen
   useEffect(() => {
