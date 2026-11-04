@@ -123,7 +123,7 @@ type Stage =
 
 export default function Planner() {
   const [rideMode, setRideMode] = useRideMode();
-  const [mode, setMode] = useState<Mode>('beschreiben');
+  const [mode, setMode] = useState<Mode>('rundtour');
   const [view, setView] = useState<Stage>({ kind: 'form' });
   const abort = useRef<AbortController | null>(null);
   const lastStops = useRef<Stop[]>([]);
@@ -167,7 +167,10 @@ export default function Planner() {
     }
   }
 
+  // Welche Art der schnellen Runde zuletzt offen war
+  const lastRunde = useRef<Mode>('rundtour');
   function switchMode(m: Mode) {
+    if (m !== 'tour') lastRunde.current = m;
     setMode(m);
     if ((m === 'rundtour' || m === 'tour') && !here && !locating) void findHere();
   }
@@ -248,7 +251,7 @@ export default function Planner() {
 
   const header = (
     <View style={styles.headerBlock}>
-      <AppText variant="display">{mode === 'beschreiben' ? 'Tour\nbeschreiben' : mode === 'tour' ? 'Tour\nplanen' : 'Rundtour'}</AppText>
+      <AppText variant="display">{mode === 'tour' ? 'Route\nplanen' : 'Schnelle\nRunde'}</AppText>
       <Segmented
         value={rideMode}
         options={RIDE_MODES.map((m) => ({ id: m.id, label: m.label }))}
@@ -307,14 +310,23 @@ export default function Planner() {
     <Screen>
       {header}
       <Segmented
-        value={mode}
+        value={mode === 'tour' ? 'route' : 'runde'}
         options={[
-          { id: 'beschreiben', label: 'Beschreiben' },
-          { id: 'rundtour', label: 'Rundtour' },
-          { id: 'tour', label: 'Tour' },
+          { id: 'runde', label: 'Schnelle Runde' },
+          { id: 'route', label: 'Route planen' },
         ]}
-        onChange={switchMode}
+        onChange={(v) => switchMode(v === 'route' ? 'tour' : lastRunde.current)}
       />
+      {mode !== 'tour' && (
+        <Segmented
+          value={mode}
+          options={[
+            { id: 'rundtour', label: 'Einstellen' },
+            { id: 'beschreiben', label: 'Beschreiben' },
+          ]}
+          onChange={switchMode}
+        />
+      )}
 
       {mode === 'tour' ? (
         <TourMode
@@ -625,9 +637,14 @@ type PointKind = 'start' | 'via' | 'ziel';
 
 type TourPlan = ReturnType<typeof useTourPlan>;
 
-/** Zustand und Aktionen der Tour von Hand: Wegpunkte, Namen, geplante Route, Speichern. */
+/**
+ * Zustand und Aktionen der Route: feste Felder Start, Via Punkte, Ziel (wie im Web Planer).
+ * Geplant wird, sobald Start und Ziel gesetzt sind.
+ */
 function useTourPlan() {
-  const [pts, setPts] = useState<LatLon[]>([]);
+  const [start, setStart] = useState<LatLon | null>(null);
+  const [vias, setVias] = useState<LatLon[]>([]);
+  const [ziel, setZiel] = useState<LatLon | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
   const [name, setName] = useState('Neue Tour');
   const [planned, setPlanned] = useState<PlannedTour | null>(null);
@@ -637,6 +654,10 @@ function useTourPlan() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
+
+  const complete = !!start && !!ziel;
+  /** Alle gesetzten Punkte in Reihenfolge; vollständig, sobald Start und Ziel da sind. */
+  const pts: LatLon[] = [...(start ? [start] : []), ...vias, ...(ziel ? [ziel] : [])];
 
   function rememberName(p: LatLon, known?: string) {
     const k = keyOf(p);
@@ -669,11 +690,13 @@ function useTourPlan() {
     }
   }
 
-  /** Neue Punktliste übernehmen und ab zwei Punkten sofort neu planen. */
-  function update(next: LatLon[], profile: Profile, avoid: Avoid) {
-    setPts(next);
-    if (next.length >= 2) {
-      void plan(next, profile, avoid);
+  /** Felder übernehmen und, sobald Start und Ziel stehen, sofort neu planen. */
+  function apply(s: LatLon | null, v: LatLon[], z: LatLon | null, profile: Profile, avoid: Avoid) {
+    setStart(s);
+    setVias(v);
+    setZiel(z);
+    if (s && z) {
+      void plan([s, ...v, z], profile, avoid);
       return;
     }
     abort.current?.abort();
@@ -682,13 +705,28 @@ function useTourPlan() {
     setPlanned(null);
   }
 
-  function add(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string) {
+  /** Punkt in ein Feld setzen: Start, Ziel oder Via Punkt an Stelle index (am Ende: neu). */
+  function setSlot(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string, index?: number) {
     rememberName(p, known);
-    let next: LatLon[];
-    if (kind === 'start') next = pts.length ? [p, ...pts.slice(1)] : [p];
-    else if (kind === 'ziel') next = pts.length >= 2 ? [...pts.slice(0, -1), p] : [...pts, p];
-    else next = insertVia(pts, p);
-    update(next, profile, avoid);
+    if (kind === 'start') apply(p, vias, ziel, profile, avoid);
+    else if (kind === 'ziel') apply(start, vias, p, profile, avoid);
+    else {
+      const v = [...vias];
+      if (index != null && index < v.length) v[index] = p;
+      else v.push(p);
+      apply(start, v, ziel, profile, avoid);
+    }
+  }
+
+  /** Von der Karte oder für Pässe: Via Punkt dort einfügen, wo er den kleinsten Umweg macht. */
+  function add(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string) {
+    if (kind !== 'via' || !start || !ziel) {
+      setSlot(kind === 'via' && !start ? 'start' : kind === 'via' && !ziel ? 'ziel' : kind, p, profile, avoid, known);
+      return;
+    }
+    rememberName(p, known);
+    const full = insertVia([start, ...vias, ziel], p);
+    apply(start, full.slice(1, -1), ziel, profile, avoid);
   }
 
   async function save(curves: number, profile: Profile, avoid: Avoid) {
@@ -708,7 +746,9 @@ function useTourPlan() {
 
   function reset() {
     abort.current?.abort();
-    setPts([]);
+    setStart(null);
+    setVias([]);
+    setZiel(null);
     setPlanned(null);
     setStep(null);
     setError(null);
@@ -718,10 +758,14 @@ function useTourPlan() {
   }
 
   return {
-    pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg,
-    add, update, plan, save, reset,
-    remove: (i: number, profile: Profile, avoid: Avoid) => update(pts.filter((_, k) => k !== i), profile, avoid),
-    move: (i: number, dir: -1 | 1, profile: Profile, avoid: Avoid) => update(movePoint(pts, i, dir), profile, avoid),
+    start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg,
+    setSlot, add, plan, save, reset,
+    plan2: (profile: Profile, avoid: Avoid) => start && ziel && void plan([start, ...vias, ziel], profile, avoid),
+    removeStart: (profile: Profile, avoid: Avoid) => apply(null, vias, ziel, profile, avoid),
+    removeZiel: (profile: Profile, avoid: Avoid) => apply(start, vias, null, profile, avoid),
+    removeVia: (i: number, profile: Profile, avoid: Avoid) => apply(start, vias.filter((_, k) => k !== i), ziel, profile, avoid),
+    moveVia: (i: number, dir: -1 | 1, profile: Profile, avoid: Avoid) => apply(start, movePoint(vias, i, dir), ziel, profile, avoid),
+    swap: (profile: Profile, avoid: Avoid) => apply(ziel, [...vias].reverse(), start, profile, avoid),
   };
 }
 
@@ -769,6 +813,15 @@ function TourMode({
     plan.add(kind, p, profile, avoid, known);
   };
 
+  /** Feld, das gerade bearbeitet wird; dort öffnet sich die Suche. Ohne Start beginnt es mit dem Start. */
+  const [edit, setEdit] = useState<{ kind: PointKind; index?: number } | null>(() => (plan.start ? null : { kind: 'start' }));
+  function openEdit(e: { kind: PointKind; index?: number }) {
+    setEdit(e);
+    setQuery('');
+    setHits(null);
+    setLocMsg(null);
+  }
+
   async function runSearch() {
     const q = query.trim();
     if (q.length < 2) return;
@@ -788,11 +841,65 @@ function TourMode({
     }
   }
 
-  function pick(h: Place, kind: PointKind) {
-    add(kind, h.p, h.name);
+  function pick(p: LatLon, name: string | undefined) {
+    if (!edit) return;
+    setPlanChanged(false);
+    plan.setSlot(edit.kind, p, profile, avoid, name, edit.index);
     setHits(null);
     setQuery('');
+    // Nach dem Start gleich das Ziel abfragen
+    setEdit(edit.kind === 'start' && !plan.ziel ? { kind: 'ziel' } : null);
   }
+
+  async function takeHere() {
+    if (!edit) return;
+    setLocMsg(null);
+    setLocating(true);
+    try {
+      const spot = here ?? (await locate());
+      if (!here) onHere(spot);
+      pick(spot.p, spot.name ?? 'Mein Standort');
+    } catch (e) {
+      setLocMsg(toPlanError(e).message);
+    } finally {
+      setLocating(false);
+    }
+  }
+
+  const editor = (
+    <View style={styles.editor}>
+      <View style={styles.searchRow}>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          onSubmitEditing={() => void runSearch()}
+          placeholder={edit?.kind === 'start' ? 'Wo geht es los?' : edit?.kind === 'ziel' ? 'Wohin soll es gehen?' : 'Ort oder Pass für den Via Punkt'}
+          placeholderTextColor={Colors.muted}
+          returnKeyType="search"
+          autoFocus
+          style={styles.search}
+          accessibilityLabel="Ort oder Pass suchen"
+        />
+        <Pressable accessibilityRole="button" onPress={() => void runSearch()} style={styles.searchBtn}>
+          {searching ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.searchBtnText}>Suchen</AppText>}
+        </Pressable>
+      </View>
+      <View style={styles.wrap}>
+        {edit?.kind !== 'via' && <SmallButton label={locating ? 'Standort wird bestimmt' : 'Mein Standort'} onPress={() => !locating && void takeHere()} />}
+        <SmallButton label="Abbrechen" onPress={() => setEdit(null)} />
+      </View>
+      {locMsg && <AppText variant="caption" style={styles.signalText}>{locMsg}</AppText>}
+      {hits && hits.length === 0 && <AppText variant="caption" muted>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
+      {hits?.map((h, i) => (
+        <Pressable key={`${h.p[0]},${h.p[1]},${i}`} accessibilityRole="button" onPress={() => pick(h.p, h.name)} style={styles.hitRow}>
+          <View style={styles.hitMain}>
+            <AppText variant="title">{h.name}</AppText>
+            {!!h.detail && <AppText variant="caption" muted>{h.detail}</AppText>}
+          </View>
+        </Pressable>
+      ))}
+    </View>
+  );
 
   function onLongPress(p: LatLon) {
     if (!pts.length) {
@@ -809,24 +916,6 @@ function TourMode({
     if (!pending) return;
     add(kind, pending.p, pending.name ?? undefined);
     setPending(null);
-  }
-
-  async function startHere() {
-    setLocMsg(null);
-    if (here) {
-      add('start', here.p, here.name);
-      return;
-    }
-    setLocating(true);
-    try {
-      const spot = await locate();
-      onHere(spot);
-      add('start', spot.p, spot.name);
-    } catch (e) {
-      setLocMsg(toPlanError(e).message);
-    } finally {
-      setLocating(false);
-    }
   }
 
   const searching2 = passQuery.trim().length >= 2;
@@ -875,7 +964,7 @@ function TourMode({
           )}
         </View>
         <AppText variant="caption" muted>
-          {pts.length ? 'Lange auf die Karte drücken setzt einen weiteren Punkt.' : 'Lange auf die Karte drücken setzt den Start, oder such unten nach einem Ort.'}
+          {pts.length ? 'Lange auf die Karte drücken setzt einen weiteren Punkt.' : 'Gib unten Start und Ziel ein, oder drück lange auf die Karte.'}
         </AppText>
       </View>
 
@@ -887,82 +976,70 @@ function TourMode({
           </View>
           <View style={styles.wrap}>
             <SmallButton label="Als Start" onPress={() => addPending('start')} />
-            {pts.length >= 2 && <SmallButton label="Als Via Punkt" onPress={() => addPending('via')} />}
+            {plan.complete && <SmallButton label="Als Via Punkt" onPress={() => addPending('via')} />}
             <SmallButton label="Als Ziel" onPress={() => addPending('ziel')} strong />
             <SmallButton label="Abbrechen" onPress={() => setPending(null)} />
           </View>
         </View>
       )}
 
-      <Section label="Wegpunkte">
+      <Section label="Route">
         <View style={styles.card}>
-          {pts.length === 0 ? (
-            <View style={styles.gapS}>
-              <AppText variant="caption" muted>Noch keine Punkte. Setz den Start per Suche, Standort oder langem Druck auf die Karte, dann das Ziel.</AppText>
-              <SmallButton label={locating ? 'Standort wird bestimmt' : 'Mein Standort als Start'} onPress={() => !locating && void startHere()} />
-              {locMsg && <AppText variant="caption" style={styles.signalText}>{locMsg}</AppText>}
-            </View>
-          ) : (
-            pts.map((p, i) => {
-              const end = i === 0 || i === pts.length - 1;
-              const label = i === 0 ? 'S' : i === pts.length - 1 ? 'Z' : String(i);
-              const role = i === 0 ? 'Start' : i === pts.length - 1 ? 'Ziel' : `Via Punkt ${i}`;
-              const leg = parts[i];
-              const nm = plan.names[keyOf(p)] ?? `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`;
-              return (
-                <View key={`${keyOf(p)},${i}`} style={[styles.wpRow, i > 0 && styles.warnBorder]}>
-                  <View style={[styles.wpDot, end && styles.wpDotEnd]}>
-                    <AppText style={[styles.wpDotText, end && styles.onSignal]}>{label}</AppText>
-                  </View>
-                  <View style={styles.flex}>
-                    <AppText variant="title" numberOfLines={1}>{nm}</AppText>
-                    <AppText variant="caption" muted>
-                      {role}
-                      {leg ? `, ${formatKm(leg.endKm - leg.startKm)} km bis zum nächsten Punkt` : ''}
-                      {leg && leg.warnings.some((w) => w.klasse === 'raus') ? ', gesperrte Stelle' : ''}
-                    </AppText>
-                  </View>
-                  <IconButton kind="up" label={`${role} nach oben`} disabled={i === 0} onPress={() => plan.move(i, -1, profile, avoid)} />
-                  <IconButton kind="down" label={`${role} nach unten`} disabled={i === pts.length - 1} onPress={() => plan.move(i, 1, profile, avoid)} />
-                  <IconButton kind="remove" label={`${role} entfernen`} onPress={() => plan.remove(i, profile, avoid)} />
-                </View>
-              );
-            })
+          <SlotRow
+            label="S"
+            end
+            role="Start"
+            name={plan.start ? (plan.names[keyOf(plan.start)] ?? `${plan.start[0].toFixed(4)}, ${plan.start[1].toFixed(4)}`) : null}
+            placeholder="Start eingeben"
+            sub={plan.complete && parts[0] ? `${formatKm(parts[0].endKm - parts[0].startKm)} km bis zum nächsten Punkt` : undefined}
+            editing={edit?.kind === 'start'}
+            onEdit={() => openEdit({ kind: 'start' })}
+            onRemove={plan.start ? () => plan.removeStart(profile, avoid) : undefined}
+          />
+          {edit?.kind === 'start' && editor}
+          {plan.vias.map((v, i) => {
+            const leg = plan.complete ? parts[i + 1] : undefined;
+            return (
+              <View key={`${keyOf(v)},${i}`}>
+                <SlotRow
+                  label={String(i + 1)}
+                  role={`Via Punkt ${i + 1}`}
+                  name={plan.names[keyOf(v)] ?? `${v[0].toFixed(4)}, ${v[1].toFixed(4)}`}
+                  placeholder=""
+                  sub={leg ? `${formatKm(leg.endKm - leg.startKm)} km bis zum nächsten Punkt` : undefined}
+                  editing={edit?.kind === 'via' && edit.index === i}
+                  onEdit={() => openEdit({ kind: 'via', index: i })}
+                  onUp={i > 0 ? () => plan.moveVia(i, -1, profile, avoid) : undefined}
+                  onDown={i < plan.vias.length - 1 ? () => plan.moveVia(i, 1, profile, avoid) : undefined}
+                  onRemove={() => plan.removeVia(i, profile, avoid)}
+                />
+                {edit?.kind === 'via' && edit.index === i && editor}
+              </View>
+            );
+          })}
+          {edit?.kind === 'via' && edit.index === plan.vias.length && (
+            <>
+              <SlotRow label={String(plan.vias.length + 1)} role="Neuer Via Punkt" name={null} placeholder="Via Punkt eingeben" editing onEdit={() => undefined} />
+              {editor}
+            </>
           )}
-          <View style={styles.searchRow}>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={() => void runSearch()}
-              placeholder={pts.length ? 'Ziel oder Via Punkt suchen' : 'Wo geht es los?'}
-              placeholderTextColor={Colors.muted}
-              returnKeyType="search"
-              style={styles.search}
-              accessibilityLabel="Ort oder Pass suchen"
-            />
-            <Pressable accessibilityRole="button" onPress={() => void runSearch()} style={styles.searchBtn}>
-              {searching ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.searchBtnText}>Suchen</AppText>}
-            </Pressable>
+          <SlotRow
+            label="Z"
+            end
+            role="Ziel"
+            name={plan.ziel ? (plan.names[keyOf(plan.ziel)] ?? `${plan.ziel[0].toFixed(4)}, ${plan.ziel[1].toFixed(4)}`) : null}
+            placeholder="Ziel eingeben"
+            editing={edit?.kind === 'ziel'}
+            onEdit={() => openEdit({ kind: 'ziel' })}
+            onRemove={plan.ziel ? () => plan.removeZiel(profile, avoid) : undefined}
+          />
+          {edit?.kind === 'ziel' && editor}
+          <View style={styles.wrap}>
+            {!!plan.start && !(edit?.kind === 'via' && edit.index === plan.vias.length) && (
+              <SmallButton label="Via Punkt hinzufügen" onPress={() => openEdit({ kind: 'via', index: plan.vias.length })} />
+            )}
+            {plan.complete && <SmallButton label="Start und Ziel tauschen" onPress={() => plan.swap(profile, avoid)} />}
           </View>
-          {hits && (
-            <View>
-              {hits.length === 0 && <AppText variant="caption" muted>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
-              {hits.map((h, i) => (
-                <View key={`${h.p[0]},${h.p[1]},${i}`} style={styles.hitRow}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${h.name} ${pts.length ? 'als Ziel' : 'als Start'} setzen`}
-                    onPress={() => pick(h, pts.length ? 'ziel' : 'start')}
-                    style={styles.hitMain}>
-                    <AppText variant="title">{h.name}</AppText>
-                    {!!h.detail && <AppText variant="caption" muted>{h.detail}</AppText>}
-                  </Pressable>
-                  {pts.length >= 2 && <SmallButton label="Via" onPress={() => pick(h, 'via')} />}
-                  <SmallButton label={pts.length ? 'Ziel' : 'Start'} onPress={() => pick(h, pts.length ? 'ziel' : 'start')} strong />
-                </View>
-              ))}
-            </View>
-          )}
         </View>
       </Section>
 
@@ -1194,6 +1271,46 @@ function SmallButton({ label, onPress, strong }: { label: string; onPress: () =>
       style={({ pressed }) => [styles.small, strong && styles.smallStrong, pressed && styles.pressed]}>
       <AppText style={[styles.smallText, strong && styles.onSignal]}>{label}</AppText>
     </Pressable>
+  );
+}
+
+/** Ein Feld der Route: Start, Via Punkt oder Ziel. Tippen öffnet die Suche für genau dieses Feld. */
+function SlotRow({
+  label, role, name, placeholder, sub, end, editing, onEdit, onUp, onDown, onRemove,
+}: {
+  label: string;
+  role: string;
+  name: string | null;
+  placeholder: string;
+  sub?: string;
+  end?: boolean;
+  editing: boolean;
+  onEdit: () => void;
+  onUp?: () => void;
+  onDown?: () => void;
+  onRemove?: () => void;
+}) {
+  return (
+    <View style={styles.wpRow}>
+      <View style={[styles.wpDot, end && styles.wpDotEnd]}>
+        <AppText style={[styles.wpDotText, end && styles.onSignal]}>{label}</AppText>
+      </View>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${role} ${name ? `ändern, jetzt ${name}` : 'eingeben'}`} onPress={onEdit} style={[styles.flex, styles.slotMain, editing && styles.slotEditing]}>
+        <AppText variant="title" numberOfLines={1} style={!name && styles.slotPlaceholder}>
+          {name ?? placeholder}
+        </AppText>
+        <AppText variant="caption" muted numberOfLines={1}>
+          {sub ? `${role}, ${sub}` : role}
+        </AppText>
+      </Pressable>
+      {onUp !== undefined || onDown !== undefined ? (
+        <>
+          <IconButton kind="up" label={`${role} nach oben`} disabled={!onUp} onPress={() => onUp?.()} />
+          <IconButton kind="down" label={`${role} nach unten`} disabled={!onDown} onPress={() => onDown?.()} />
+        </>
+      ) : null}
+      {onRemove && <IconButton kind="remove" label={`${role} entfernen`} onPress={onRemove} />}
+    </View>
   );
 }
 
@@ -1632,6 +1749,10 @@ const styles = StyleSheet.create({
   dotStop: { backgroundColor: Colors.signal },
   statusRow: { flexDirection: 'row', alignItems: 'center' },
   pendingCard: { borderWidth: 1, borderColor: Colors.signal },
+  editor: { gap: Spacing.s, paddingBottom: Spacing.s },
+  slotMain: { justifyContent: 'center', minHeight: 48, paddingVertical: Spacing.xs, paddingHorizontal: Spacing.s, borderRadius: Radius.s },
+  slotEditing: { backgroundColor: Colors.surface2 },
+  slotPlaceholder: { color: Colors.muted },
   wpRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 52 },
   wpDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: Colors.line, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   wpDotEnd: { backgroundColor: Colors.signal, borderColor: Colors.signal },

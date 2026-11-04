@@ -9,7 +9,7 @@ import { useSyncExternalStore } from 'react';
 export type RideMode = 'allein' | 'gruppe';
 
 export const RIDE_MODES: { id: RideMode; label: string; hint: string }[] = [
-  { id: 'allein', label: 'Allein', hint: 'Schnelle Runde, ohne Gruppenfahrt und ohne Funk.' },
+  { id: 'allein', label: 'Allein', hint: 'Allein unterwegs, ohne Gruppenfahrt und ohne Funk.' },
   { id: 'gruppe', label: 'Gruppe', hint: 'Ihr seht euch auf der Karte und habt Walkie Talkie.' },
 ];
 
