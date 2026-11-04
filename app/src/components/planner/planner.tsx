@@ -22,6 +22,7 @@ import {
 import { CLASS_COLORS } from '@/components/planner/route-preview';
 import { ElevationChart } from '@/components/planner/elevation-chart';
 import { ExportRow } from '@/components/planner/export-row';
+import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
@@ -57,13 +58,6 @@ const PROFILE_WORD: Record<Profile, string> = { kurvig: 'kurvig', paesse: 'mit P
 
 const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
 const MIN_STEPS = [60, 90, 120, 180, 240, 300, 420];
-
-/** 3x3 Raster: acht Richtungen und in der Mitte Zufall */
-const GRID: Direction[][] = [
-  ['NW', 'N', 'NO'],
-  ['W', 'zufall', 'O'],
-  ['SW', 'S', 'SO'],
-];
 
 const CLASS_LABEL: Record<CheckClass, string> = { ok: 'Sauber', pruefen: 'Prüfen', raus: 'Gesperrt' };
 
@@ -698,26 +692,7 @@ export default function Planner() {
           </Section>
 
           <Section label="Richtung">
-            <View style={styles.grid}>
-              {GRID.map((row, r) => (
-                <View key={r} style={styles.gridRow}>
-                  {row.map((d) => {
-                    const active = direction === d;
-                    return (
-                      <Pressable
-                        key={d}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: active }}
-                        accessibilityLabel={d === 'zufall' ? 'Zufall' : DIRECTIONS.find((x) => x.id === d)!.label}
-                        onPress={() => setDirection(d)}
-                        style={[styles.gridCell, active && styles.tileOn]}>
-                        <AppText style={[styles.gridText, active && styles.onSignal]}>{d === 'zufall' ? 'Zufall' : d}</AppText>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ))}
-            </View>
+            <DirectionDial value={direction} onChange={setDirection} />
           </Section>
 
           <Section label="Profil">
@@ -1920,10 +1895,6 @@ const styles = StyleSheet.create({
   stepValue: { alignItems: 'center' },
   bigNumber: { fontFamily: Fonts.display, fontSize: 48, lineHeight: 52, fontVariant: ['tabular-nums'] },
 
-  grid: { gap: Spacing.s },
-  gridRow: { flexDirection: 'row', gap: Spacing.s },
-  gridCell: { flex: 1, height: 56, borderRadius: Radius.m, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
-  gridText: { fontFamily: Fonts.displayBold, fontSize: 16 },
 
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
 
