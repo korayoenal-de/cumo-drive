@@ -7,3 +7,5 @@ __pycache__/
 .cumo.bundle
 routing/server/data/
 routing/server/bin/
+.fotos-web.zip
+app/public/fotos/

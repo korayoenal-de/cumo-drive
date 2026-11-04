@@ -165,3 +165,33 @@ export function addPassLayers(map: MapInstance, data: unknown) {
     'tour-casing',
   );
 }
+
+/** Fotoorte als Kreise mit Anzahl, über den Pässen und unter der Tour. */
+export function addPhotoLayers(map: MapInstance) {
+  map.addSource('photos', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer(
+    {
+      id: 'photo-circle',
+      type: 'circle',
+      source: 'photos',
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['get', 'n'], 1, 9, 15, 15],
+        'circle-color': '#161618',
+        'circle-opacity': 0.95,
+        'circle-stroke-color': '#E2461C',
+        'circle-stroke-width': 2.5,
+      },
+    },
+    'tour-casing',
+  );
+  map.addLayer(
+    {
+      id: 'photo-count',
+      type: 'symbol',
+      source: 'photos',
+      layout: { 'text-field': ['to-string', ['get', 'n']], 'text-size': 11, 'text-font': ['Noto Sans Bold'], 'text-allow-overlap': true },
+      paint: { 'text-color': '#FFFFFF' },
+    },
+    'tour-casing',
+  );
+}

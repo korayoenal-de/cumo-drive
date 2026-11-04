@@ -21,10 +21,11 @@ import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
 import { encodeTour, expoGoLink } from '@/lib/share-code';
 import { closedHint, passState, usePassLive, type LiveRow } from '@/lib/pass-live';
+import { photoDate, photoGroupsGeoJson, photoUrl, thumbUrl, usePhotoGroups, type PhotoGroup } from '@/lib/photos';
 import { PASS_STATUS_URL, PASSES, passesAlong, passesGeoJson, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
 import QRCode from 'qrcode';
 
-import { addPassLayers, addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
+import { addPassLayers, addPhotoLayers, addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
 
 const C = {
   ground: '#0B0B0C', surface: '#161618', surface2: '#1F1F22', line: '#2A2A2E', text: '#F4F4F2',
@@ -109,8 +110,11 @@ export default function Planner() {
         m.on('load', () => {
           addTourLayers(m);
           addPassLayers(m, passesGeoJson(PASSES, new Date().getMonth() + 1));
-          m.on('mouseenter', 'pass-circle', () => (m.getCanvas().style.cursor = 'pointer'));
-          m.on('mouseleave', 'pass-circle', () => (m.getCanvas().style.cursor = ''));
+          addPhotoLayers(m);
+          for (const layer of ['pass-circle', 'photo-circle']) {
+            m.on('mouseenter', layer, () => (m.getCanvas().style.cursor = 'pointer'));
+            m.on('mouseleave', layer, () => (m.getCanvas().style.cursor = ''));
+          }
           setMapReady(true);
         });
         map.current = m;
@@ -181,6 +185,15 @@ export default function Planner() {
     [run, tour.name, profile, avoid],
   );
 
+  const photoGroups = usePhotoGroups();
+  const [showPhotos, setShowPhotos] = useState(true);
+  const [gallery, setGallery] = useState<{ g: PhotoGroup; i: number | null } | null>(null);
+  useEffect(() => {
+    const m = map.current;
+    if (!mapReady || !m || !photoGroups) return;
+    m.getSource('photos')?.setData(photoGroupsGeoJson(showPhotos ? photoGroups : []));
+  }, [mapReady, photoGroups, showPhotos]);
+
   // Klick auf die Karte setzt einen neuen Zielpunkt
   useEffect(() => {
     const m = map.current;
@@ -188,6 +201,14 @@ export default function Planner() {
     const onClick = (e: { lngLat: { lat: number; lng: number }; point: { x: number; y: number } }) => {
       if (menu) {
         setMenu(null);
+        return;
+      }
+      // Klick auf einen Fotoort öffnet die Galerie
+      const box = [[e.point.x - 8, e.point.y - 8], [e.point.x + 8, e.point.y + 8]];
+      const ph = m.queryRenderedFeatures(box, { layers: ['photo-circle'] })[0];
+      const group = ph ? photoGroups?.find((g) => g.key === ph.properties.key) : undefined;
+      if (group) {
+        setGallery({ g: group, i: null });
         return;
       }
       // Klick auf einen Pass öffnet seine Karte mit den Aktionen
@@ -220,7 +241,7 @@ export default function Planner() {
       m.off('contextmenu', onContext);
       m.off('movestart', onMove);
     };
-  }, [mapReady, mode, busy, isSample, tour, replan, menu]);
+  }, [mapReady, mode, busy, isSample, tour, replan, menu, photoGroups]);
 
   // Escape schließt das Kontextmenü
   useEffect(() => {
@@ -262,6 +283,7 @@ export default function Planner() {
     if (!mapReady || !m || !live) return;
     m.getSource('passes')?.setData(passesGeoJson(PASSES, new Date().getMonth() + 1, (p) => passState(p, live).closed));
   }, [mapReady, live]);
+
 
   const passesOnRoute = useMemo(() => passesAlong(PASSES, line), [line]);
 
@@ -311,6 +333,12 @@ export default function Planner() {
       <div style={S.mapWrap}>
         <div ref={mapEl} style={S.map} aria-label="Karte" />
         {mapError ? <div style={S.mapError}>{mapError}</div> : null}
+        {photoGroups?.length ? (
+          <button style={showPhotos ? S.photoToggleOn : S.photoToggle} onClick={() => setShowPhotos(!showPhotos)} aria-pressed={showPhotos}>
+            Fotos von Touren
+          </button>
+        ) : null}
+        {gallery ? <Gallery gallery={gallery} onChange={setGallery} /> : null}
         {mode === 'tour' && !busy ? <div style={S.hint}>Klick setzt ein Ziel, Rechtsklick öffnet weitere Optionen</div> : null}
         {menu ? (
           <div style={{ ...S.menu, left: menu.x, top: menu.y }} role="menu" onContextMenu={(e) => e.preventDefault()}>
@@ -320,6 +348,18 @@ export default function Planner() {
                 <span style={S.dropDetail}>{passSummary(menu.pass, undefined, passState(menu.pass, live).note)}</span>
                 {menu.pass.car_note ? <span style={S.dropDetail}>{menu.pass.car_note}</span> : null}
               </div>
+            ) : null}
+            {menu.pass && photoGroups?.some((g) => g.pass?.id === menu.pass!.id) ? (
+              <button
+                role="menuitem"
+                style={S.menuItem}
+                onClick={() => {
+                  const gs = photoGroups.filter((g) => g.pass?.id === menu.pass!.id);
+                  setGallery({ g: { ...gs[0], photos: gs.flatMap((g) => g.photos) }, i: null });
+                  setMenu(null);
+                }}>
+                Fotos ansehen ({photoGroups.filter((g) => g.pass?.id === menu.pass!.id).reduce((n, g) => n + g.photos.length, 0)})
+              </button>
             ) : null}
             <button role="menuitem" style={S.menuItem} onClick={() => menuAction('start')}>Als Start setzen</button>
             <button role="menuitem" style={S.menuItem} onClick={() => menuAction('via')}>Als Via Punkt einfügen</button>
@@ -732,6 +772,71 @@ function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid }) {
           : 'Die App übernimmt die Tour genau so, wie sie hier geplant ist.'}{' '}
         Alternativ in der App unter Entdecken „Tour vom Planer holen“ wählen.
       </p>
+    </div>
+  );
+}
+
+/* ---------- Fotos ---------- */
+
+function Gallery(props: { gallery: { g: PhotoGroup; i: number | null }; onChange: (g: { g: PhotoGroup; i: number | null } | null) => void }) {
+  const { g, i } = props.gallery;
+  const [place, setPlace] = useState<{ key: string; name: string } | null>(null);
+  useEffect(() => {
+    if (g.pass) return;
+    let alive = true;
+    reverseName(g.p)
+      .then((n) => alive && n && setPlace({ key: g.key, name: n }))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [g]);
+  const title = g.pass ? g.pass.name : place?.key === g.key ? `Fotospot bei ${place.name}` : 'Fotospot';
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') props.onChange(i === null ? null : { g, i: null });
+      if (i !== null && e.key === 'ArrowRight') props.onChange({ g, i: (i + 1) % g.photos.length });
+      if (i !== null && e.key === 'ArrowLeft') props.onChange({ g, i: (i - 1 + g.photos.length) % g.photos.length });
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [g, i, props]);
+  if (i !== null) {
+    const ph = g.photos[i];
+    return (
+      <div style={S.lightbox} role="dialog" aria-label={`Foto ${i + 1} von ${g.photos.length}`} onClick={() => props.onChange({ g, i: null })}>
+        <img src={photoUrl(ph)} alt={`${title}, ${photoDate(ph)}`} style={S.lightboxImg} onClick={(e) => e.stopPropagation()} />
+        <div style={S.lightboxBar} onClick={(e) => e.stopPropagation()}>
+          <button style={S.lbBtn} onClick={() => props.onChange({ g, i: (i - 1 + g.photos.length) % g.photos.length })} aria-label="Vorheriges Foto">‹</button>
+          <span>
+            {title}, {photoDate(ph)} · {i + 1} / {g.photos.length}
+          </span>
+          <button style={S.lbBtn} onClick={() => props.onChange({ g, i: (i + 1) % g.photos.length })} aria-label="Nächstes Foto">›</button>
+          <button style={S.lbBtn} onClick={() => props.onChange({ g, i: null })} aria-label="Schließen">×</button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={S.gallery}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+        <div>
+          <b>{title}</b>
+          <span style={{ ...S.dropDetail, marginLeft: 8 }}>
+            {g.photos.length} {g.photos.length === 1 ? 'Foto' : 'Fotos'}, CUMO DRIVERS CLUB, {photoDate(g.photos[0])}
+          </span>
+        </div>
+        <button aria-label="Galerie schließen" style={S.iconBtn} onClick={() => props.onChange(null)}>
+          ×
+        </button>
+      </div>
+      <div style={S.thumbs}>
+        {g.photos.map((ph, k) => (
+          <button key={ph.id} style={S.thumbBtn} onClick={() => props.onChange({ g, i: k })} aria-label={`Foto ${k + 1} öffnen`}>
+            <img src={thumbUrl(ph)} alt="" style={S.thumb} loading="lazy" />
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1272,6 +1377,16 @@ const S: Record<string, CSSProperties> = {
   engine: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px', color: C.muted, fontSize: 12, borderBottom: `1px solid ${C.surface2}` },
   dot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
   menu: { position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: 200, padding: 4, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
+  photoToggle: { position: 'absolute', top: 12, left: 12, zIndex: 5, height: 32, padding: '0 12px', borderRadius: 16, border: `1px solid ${C.line}`, background: 'rgba(11,11,12,0.85)', color: C.muted, font: `600 13px ${BODY}`, cursor: 'pointer' },
+  photoToggleOn: { position: 'absolute', top: 12, left: 12, zIndex: 5, height: 32, padding: '0 12px', borderRadius: 16, border: `1px solid ${C.signal}`, background: 'rgba(11,11,12,0.85)', color: C.text, font: `600 13px ${BODY}`, cursor: 'pointer' },
+  gallery: { position: 'absolute', left: 12, right: 12, bottom: 40, zIndex: 6, display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: 'rgba(22,22,24,0.96)', border: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}` },
+  thumbs: { display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 },
+  thumbBtn: { flex: 'none', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: 8, overflow: 'hidden' },
+  thumb: { display: 'block', height: 110, width: 'auto', borderRadius: 8 },
+  lightbox: { position: 'absolute', inset: 0, zIndex: 20, background: 'rgba(0,0,0,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 16 },
+  lightboxImg: { maxWidth: '100%', maxHeight: 'calc(100% - 60px)', objectFit: 'contain', borderRadius: 6 },
+  lightboxBar: { display: 'flex', alignItems: 'center', gap: 12, color: C.text, font: `500 14px ${BODY}` },
+  lbBtn: { width: 36, height: 36, borderRadius: 18, border: `1px solid ${C.line}`, background: C.surface, color: C.text, fontSize: 20, cursor: 'pointer' },
   menuHead: { display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 12px 10px', marginBottom: 2, borderBottom: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}`, maxWidth: 260 },
   winterNote: { display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 12px', borderRadius: 12, background: 'rgba(232,176,58,0.12)', color: C.warn, font: `500 13px ${BODY}`, lineHeight: 1.4 },
   winterLink: { color: C.text, fontWeight: 600 },
