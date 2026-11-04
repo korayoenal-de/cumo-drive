@@ -1,0 +1,926 @@
+/**
+ * Web Planer (Desktop): Karte links, Seitenleiste rechts.
+ * Modi: Tour (Wegpunkte, Abschnitte, Etappen Check, GPX), Rundtour, Beschreiben (KI Formular).
+ * Expo nimmt diese Datei nur im Browser; auf dem Handy gilt planner.tsx.
+ */
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+
+import sample from '@/data/sample-e3.json';
+import { checkLine } from '@/lib/check';
+import { reverseName, searchPlaces, type Place } from '@/lib/geocode';
+import { parseWish, STOPS, targetKm, formatMinutes, type Stop } from '@/lib/intent';
+import { planChecked, type PlanStep } from '@/lib/plan';
+import { bearingTo, DIRECTIONS, roundTrip, type Direction } from '@/lib/roundtrip';
+import { flatten, formatKm, legs, parseGpx, PROFILES, reverseTour, toGpx, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { countCurves, elevationProfile, resample, type ElevationProfile } from '@/lib/stats';
+import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
+
+import { addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
+
+const C = {
+  ground: '#0B0B0C', surface: '#161618', surface2: '#1F1F22', line: '#2A2A2E', text: '#F4F4F2',
+  muted: '#9A9A9F', signal: '#E2461C', good: '#4CC38A', warn: '#E8B03A',
+};
+const DISPLAY = 'Archivo_900Black, Archivo, "Arial Narrow", Inter, system-ui, sans-serif';
+const BODY = 'Inter_400Regular, Inter, system-ui, sans-serif';
+
+type Mode = 'tour' | 'rundtour' | 'beschreiben';
+type PlannedTour = Tour & { minutes?: number; fixes?: number };
+
+const STEP_TEXT: Record<PlanStep, string> = {
+  route: 'Route wird berechnet',
+  check: 'Etappen Check läuft',
+  fix: 'Gesperrte Stellen werden umfahren',
+};
+
+const SAMPLE: PlannedTour = { ...(sample as unknown as Tour), geprueft: true, minutes: 277 };
+
+export default function Planner() {
+  const mapEl = useRef<HTMLDivElement | null>(null);
+  const map = useRef<MapInstance | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+
+  const [mode, setMode] = useState<Mode>('tour');
+  const [tour, setTour] = useState<PlannedTour>(SAMPLE);
+  const [isSample, setIsSample] = useState(true);
+  const [profile, setProfile] = useState<Profile>('kurvig');
+  const [avoid, setAvoid] = useState<Avoid>(DEFAULT_AVOID);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [names, setNames] = useState<Record<string, string>>({});
+  const abort = useRef<AbortController | null>(null);
+  const [elev, setElev] = useState<ElevationProfile | null>(null);
+  const line = useMemo(() => flatten(tour).map((x) => x.p), [tour]);
+  const curves = useMemo(() => (line.length > 1 ? countCurves(line) : 0), [line]);
+
+  // Höhenprofil nachladen, wenn sich die Linie ändert
+  useEffect(() => {
+    setElev(null);
+    if (line.length < 2) return;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => {
+      elevationProfile(line, ctrl.signal).then(setElev).catch(() => undefined);
+    }, 300);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [line]);
+
+  // Karte einmal aufbauen
+  useEffect(() => {
+    let cancelled = false;
+    loadMapLibre()
+      .then((ml) => {
+        if (cancelled || !mapEl.current) return;
+        const m = new ml.Map({ container: mapEl.current, style: MAP_STYLE, center: [13.2, 46.45], zoom: 8, attributionControl: { compact: true } });
+        m.addControl(new ml.NavigationControl({ showCompass: false }), 'bottom-right');
+        m.on('load', () => {
+          addTourLayers(m);
+          setMapReady(true);
+        });
+        map.current = m;
+      })
+      .catch((e: Error) => setMapError(e.message));
+    return () => {
+      cancelled = true;
+      map.current?.remove();
+    };
+  }, []);
+
+  // Tour auf der Karte zeichnen
+  useEffect(() => {
+    const m = map.current;
+    if (!mapReady || !m) return;
+    m.getSource('tour')?.setData(tourGeoJson(tour));
+    m.getSource('wp')?.setData(pointsGeoJson(tour.wegpunkte));
+  }, [tour, mapReady]);
+
+  const fitTour = useCallback((t: Tour) => {
+    const m = map.current;
+    const b = boundsOf(flatten(t).map((x) => x.p));
+    if (m && b) m.fitBounds(b, { padding: 60, duration: 600 });
+  }, []);
+
+  useEffect(() => {
+    if (mapReady) fitTour(tour);
+    // nur beim ersten Bereitstehen der Karte
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady]);
+
+  // Ortsnamen der Wegpunkte nachladen
+  useEffect(() => {
+    tour.wegpunkte.forEach((p) => {
+      const key = p.join(',');
+      if (names[key]) return;
+      reverseName(p).then((n) => setNames((old) => ({ ...old, [key]: n })));
+    });
+  }, [tour.wegpunkte, names]);
+
+  const run = useCallback(
+    async (label: string, job: (signal: AbortSignal, step: (s: PlanStep) => void) => Promise<PlannedTour>) => {
+      abort.current?.abort();
+      const ctrl = new AbortController();
+      abort.current = ctrl;
+      setError(null);
+      setBusy(label);
+      try {
+        const t = await job(ctrl.signal, (s) => setBusy(STEP_TEXT[s]));
+        setTour(t);
+        setIsSample(false);
+        setMode('tour');
+        fitTour(t);
+      } catch (e) {
+        if (!ctrl.signal.aborted) setError((e as Error).message);
+      } finally {
+        if (abort.current === ctrl) setBusy(null);
+      }
+    },
+    [fitTour],
+  );
+
+  const replan = useCallback(
+    (points: LatLon[], name = tour.name) =>
+      run('Route wird berechnet', (signal, step) => planChecked(name, points, profile, avoid, step, signal)),
+    [run, tour.name, profile, avoid],
+  );
+
+  // Klick auf die Karte setzt einen neuen Zielpunkt
+  useEffect(() => {
+    const m = map.current;
+    if (!mapReady || !m) return;
+    const onClick = (e: { lngLat: { lat: number; lng: number } }) => {
+      if (mode !== 'tour' || busy) return;
+      const p: LatLon = [e.lngLat.lat, e.lngLat.lng];
+      const pts = isSample ? [p] : [...tour.wegpunkte, p];
+      if (pts.length < 2) {
+        setTour({ name: 'Neue Tour', laenge_km: 0, wegpunkte: pts, linie: [], warnungen: [] });
+        setIsSample(false);
+        return;
+      }
+      replan(pts, isSample ? 'Neue Tour' : tour.name);
+    };
+    m.on('click', onClick);
+    return () => m.off('click', onClick);
+  }, [mapReady, mode, busy, isSample, tour, replan]);
+
+  const hoverLine = useMemo(() => resample(line, 100), [line]);
+  const onHoverKm = useCallback(
+    (km: number | null) => {
+      const m = map.current;
+      if (!mapReady || !m) return;
+      const p = km === null ? null : hoverLine[Math.min(hoverLine.length - 1, Math.round((km * 1000) / 100))] ?? null;
+      m.getSource('hover')?.setData(hoverGeoJson(p));
+    },
+    [mapReady, hoverLine],
+  );
+
+  const flyTo = (p: LatLon) => map.current?.flyTo({ center: [p[1], p[0]], zoom: 13, duration: 800 });
+
+  const importGpx = async (file: File) => {
+    const text = await file.text();
+    let parsed: Tour;
+    try {
+      parsed = parseGpx(text, file.name.replace(/\.gpx$/i, ''));
+    } catch (e) {
+      setError((e as Error).message);
+      return;
+    }
+    setTour(parsed);
+    setIsSample(false);
+    fitTour(parsed);
+    await run('Etappen Check läuft', async (signal) => {
+      const line = flatten(parsed).map((x) => x.p);
+      const c = await checkLine(line, (d, n) => setBusy(`Etappen Check läuft (${d} von ${n})`), signal);
+      return { ...parsed, ...c, geprueft: true };
+    });
+  };
+
+  const exportGpx = () => {
+    const blob = new Blob([toGpx(tour)], { type: 'application/gpx+xml' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${tour.name.replace(/[^\wäöüÄÖÜß ]+/g, '').trim() || 'tour'}.gpx`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  return (
+    <div style={S.root}>
+      <div style={S.mapWrap}>
+        <div ref={mapEl} style={S.map} aria-label="Karte" />
+        {mapError ? <div style={S.mapError}>{mapError}</div> : null}
+        {mode === 'tour' && !busy ? <div style={S.hint}>Klick auf die Karte setzt einen neuen Zielpunkt</div> : null}
+      </div>
+      <aside style={S.side}>
+        <div style={S.brandRow}>
+          <span style={S.brand}>CUMO DRIVE</span>
+          <span style={S.beta}>Web Planer</span>
+        </div>
+        <div style={S.tabs} role="tablist">
+          {(['tour', 'rundtour', 'beschreiben'] as Mode[]).map((m) => (
+            <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} style={mode === m ? S.tabOn : S.tab}>
+              {{ tour: 'Tour', rundtour: 'Rundtour', beschreiben: 'Beschreiben' }[m]}
+            </button>
+          ))}
+        </div>
+
+        {busy ? <Status text={busy} onCancel={() => abort.current?.abort()} /> : null}
+        {error ? <div style={S.error}>{error}</div> : null}
+
+        <div style={S.scroll}>
+          {mode === 'tour' ? (
+            <TourPanel
+              tour={tour}
+              curves={curves}
+              elev={elev}
+              onHoverKm={onHoverKm}
+              isSample={isSample}
+              names={names}
+              profile={profile}
+              setProfile={setProfile}
+              avoid={avoid}
+              setAvoid={setAvoid}
+              onFly={flyTo}
+              onReplan={() => replan(tour.wegpunkte)}
+              onReverse={() => {
+                const r = reverseTour(tour);
+                setTour({ ...r, minutes: tour.minutes });
+              }}
+              onRemove={(i) => {
+                const pts = tour.wegpunkte.filter((_, k) => k !== i);
+                if (pts.length >= 2) replan(pts);
+                else setTour({ ...tour, wegpunkte: pts, linie: [], warnungen: [], laenge_km: 0 });
+              }}
+              onAddPlace={(p) => {
+                const pts = isSample ? [p] : [...tour.wegpunkte, p];
+                if (pts.length >= 2) replan(pts, isSample ? 'Neue Tour' : tour.name);
+                else {
+                  setTour({ name: 'Neue Tour', laenge_km: 0, wegpunkte: pts, linie: [], warnungen: [] });
+                  setIsSample(false);
+                  flyTo(p);
+                }
+              }}
+              onImport={importGpx}
+              onExport={exportGpx}
+              onSample={() => {
+                setTour(SAMPLE);
+                setIsSample(true);
+                fitTour(SAMPLE);
+              }}
+              onRename={(n) => setTour({ ...tour, name: n })}
+              busy={!!busy}
+            />
+          ) : null}
+          {mode === 'rundtour' ? (
+            <RoundTripPanel
+              center={() => {
+                const c = map.current?.getCenter();
+                return c ? ([c.lat, c.lng] as LatLon) : null;
+              }}
+              profile={profile}
+              setProfile={setProfile}
+              busy={!!busy}
+              onCreate={(start, km, dir, name) =>
+                run('Rundtour wird gebaut', async (signal, step) => {
+                  step('route');
+                  const r = await roundTrip({ start, km, direction: dir, profile, avoid }, signal);
+                  return planChecked(name, [start, ...r.via, start], profile, avoid, step, signal, true);
+                })
+              }
+            />
+          ) : null}
+          {mode === 'beschreiben' ? (
+            <DescribePanel
+              center={() => {
+                const c = map.current?.getCenter();
+                return c ? ([c.lat, c.lng] as LatLon) : null;
+              }}
+              busy={!!busy}
+              onCreate={(job) => run('Tour wird gebaut', job)}
+              avoid={avoid}
+            />
+          ) : null}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+/* ---------- Tour ---------- */
+
+function TourPanel(props: {
+  tour: PlannedTour;
+  curves: number;
+  elev: ElevationProfile | null;
+  onHoverKm: (km: number | null) => void;
+  isSample: boolean;
+  names: Record<string, string>;
+  profile: Profile;
+  setProfile: (p: Profile) => void;
+  avoid: Avoid;
+  setAvoid: (a: Avoid) => void;
+  onFly: (p: LatLon) => void;
+  onReplan: () => void;
+  onReverse: () => void;
+  onRemove: (i: number) => void;
+  onAddPlace: (p: LatLon) => void;
+  onImport: (f: File) => void;
+  onExport: () => void;
+  onSample: () => void;
+  onRename: (n: string) => void;
+  busy: boolean;
+}) {
+  const { tour } = props;
+  const parts = useMemo(() => legs(tour), [tour]);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const k = tour.km_je_klasse;
+  const pts = tour.wegpunkte;
+
+  return (
+    <div style={S.stack}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {props.isSample ? <span style={S.sampleTag}>Beispiel: deine RCO Etappe mit Etappen Check</span> : null}
+        <input
+          id="tour-name"
+          aria-label="Tourname"
+          value={tour.name}
+          onChange={(e) => props.onRename(e.target.value)}
+          style={S.nameInput}
+        />
+        <div style={S.statsRow}>
+          <Stat big={formatKm(tour.laenge_km, 0)} unit="km" label="Strecke" />
+          {tour.minutes ? <Stat big={formatMinutes(Math.round(tour.minutes))} label="Fahrzeit" /> : null}
+          {k ? <Stat big={formatKm(k.raus)} unit="km" label="raus" tone={k.raus > 0 ? 'stop' : 'good'} /> : null}
+        </div>
+        <div style={S.statsRow}>
+          <Stat big={String(props.curves)} label="Kurven" small />
+          <Stat big={props.elev ? props.elev.up.toLocaleString('de-DE') : '…'} unit="m" label="bergauf" small />
+          <Stat big={props.elev ? props.elev.max.toLocaleString('de-DE') : '…'} unit="m" label="höchster Punkt" small />
+        </div>
+        {props.elev && props.elev.km.length > 2 ? <ElevationChart e={props.elev} onHoverKm={props.onHoverKm} /> : null}
+        {tour.geprueft ? (
+          <div style={k && k.raus > 0 ? S.checkBad : S.checkGood}>
+            {k && k.raus > 0
+              ? `Etappen Check: ${formatKm(k.raus)} km sind für Sportwagen ungeeignet.${tour.fixes ? '' : ' Neu planen umfährt sie.'}`
+              : `Etappen Check bestanden${tour.fixes ? `, ${tour.fixes} Mal umgeplant` : ''}.`}
+          </div>
+        ) : null}
+      </div>
+
+      <PlaceSearch near={pts[pts.length - 1]} placeholder={pts.length ? 'Ziel oder Via Punkt hinzufügen' : 'Wo geht es los?'} onPick={(p) => props.onAddPlace(p.p)} />
+
+      {pts.length ? (
+        <ol style={S.wpList}>
+          {pts.map((p, i) => {
+            const leg = parts[i];
+            const label = i === 0 ? 'S' : i === pts.length - 1 ? 'Z' : String(i);
+            return (
+              <li key={`${p[0]},${p[1]},${i}`} style={{ listStyle: 'none' }}>
+                <div style={S.wpRow}>
+                  <span style={i === 0 || i === pts.length - 1 ? S.wpDotEnd : S.wpDot}>{label}</span>
+                  <button style={S.wpName} onClick={() => props.onFly(p)}>
+                    {props.names[p.join(',')] ?? `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`}
+                  </button>
+                  {!props.isSample ? (
+                    <button aria-label="Wegpunkt entfernen" style={S.iconBtn} onClick={() => props.onRemove(i)} disabled={props.busy}>
+                      ×
+                    </button>
+                  ) : null}
+                </div>
+                {leg ? (
+                  <div style={S.leg}>
+                    <span style={S.legKm}>{formatKm(leg.endKm - leg.startKm)} km</span>
+                    {leg.warnings.map((w, j) => (
+                      <button key={j} style={w.klasse === 'raus' ? S.warnStop : S.warnSoft} onClick={() => props.onFly(w.mitte)}>
+                        <b>{w.klasse === 'raus' ? 'Raus' : 'Prüfen'}</b> km {Math.round(w.start_km)}, {formatKm(w.laenge_km)} km{w.name ? `, ${w.name}` : ''}
+                        <span style={S.warnWhy}>{w.gruende.slice(0, 2).join('; ')}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <p style={S.muted}>Setze den Start per Suche oder Klick auf die Karte, dann das Ziel.</p>
+      )}
+
+      <Section title="Profil">
+        <div style={S.chips}>
+          {PROFILES.map((p) => (
+            <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
+              {p.label}
+            </Chip>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Vermeiden">
+        <Toggle id="av-closures" on={props.avoid.closures} label="Gesperrte Straßen" note="calimoto warnt nur, wir umfahren" onChange={(v) => props.setAvoid({ ...props.avoid, closures: v })} />
+        <Toggle id="av-rough" on={props.avoid.rough} label="Rauer Belag und Kopfsteinpflaster" onChange={(v) => props.setAvoid({ ...props.avoid, rough: v })} />
+        <Toggle id="av-ferries" on={props.avoid.ferries} label="Fähren" onChange={(v) => props.setAvoid({ ...props.avoid, ferries: v })} />
+        <Toggle id="av-tolls" on={props.avoid.tolls} label="Mautstraßen" onChange={(v) => props.setAvoid({ ...props.avoid, tolls: v })} />
+      </Section>
+
+      <div style={S.btnRow}>
+        <button style={S.primary} disabled={props.busy || pts.length < 2} onClick={props.onReplan}>
+          {props.isSample ? 'Mit Sportwagen Profil neu planen' : 'Neu planen'}
+        </button>
+        <button style={S.secondary} disabled={props.busy || pts.length < 2} onClick={props.onReverse}>
+          Umkehren
+        </button>
+      </div>
+      <div style={S.btnRow}>
+        <button style={S.secondary} onClick={() => fileRef.current?.click()} disabled={props.busy}>
+          GPX importieren
+        </button>
+        <button style={S.secondary} onClick={props.onExport} disabled={tour.linie.length === 0}>
+          GPX exportieren
+        </button>
+        <input
+          ref={fileRef}
+          id="gpx-file"
+          type="file"
+          accept=".gpx,application/gpx+xml"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) props.onImport(f);
+            e.target.value = '';
+          }}
+        />
+      </div>
+      {!props.isSample ? (
+        <button style={S.link} onClick={props.onSample}>
+          Beispiel RCO EAST 26 E3 laden
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/* ---------- Rundtour ---------- */
+
+const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
+
+function RoundTripPanel(props: {
+  center: () => LatLon | null;
+  profile: Profile;
+  setProfile: (p: Profile) => void;
+  busy: boolean;
+  onCreate: (start: LatLon, km: number, dir: Direction, name: string) => void;
+}) {
+  const [start, setStart] = useState<{ p: LatLon; name: string } | null>(null);
+  const [km, setKm] = useState(50);
+  const [dir, setDir] = useState<Direction>('O');
+  const [locError, setLocError] = useState<string | null>(null);
+
+  const useLocation = () => {
+    setLocError(null);
+    if (!navigator.geolocation) {
+      setLocError('Dein Browser gibt keinen Standort heraus. Wähle den Start über die Suche.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const p: LatLon = [pos.coords.latitude, pos.coords.longitude];
+        setStart({ p, name: await reverseName(p) });
+      },
+      () => setLocError('Standort nicht freigegeben. Erlaube ihn im Browser oder wähle den Start über die Suche.'),
+      { enableHighAccuracy: false, timeout: 10000 },
+    );
+  };
+
+  const grid: (Direction | 'mitte')[] = ['NW', 'N', 'NO', 'W', 'mitte', 'O', 'SW', 'S', 'SO'];
+  const arrow: Record<string, string> = { NW: '↖', N: '↑', NO: '↗', W: '←', O: '→', SW: '↙', S: '↓', SO: '↘' };
+
+  return (
+    <div style={S.stack}>
+      <div>
+        <h2 style={S.h2}>Rundtour</h2>
+        <p style={S.muted}>Start wählen, Länge und Richtung festlegen. Die Route wird gleich mit dem Etappen Check geprüft.</p>
+      </div>
+      <Section title="Start">
+        {start ? (
+          <div style={S.startRow}>
+            <span>{start.name}</span>
+            <button style={S.link} onClick={() => setStart(null)}>
+              ändern
+            </button>
+          </div>
+        ) : (
+          <div style={S.stackTight}>
+            <div style={S.btnRow}>
+              <button style={S.secondary} onClick={useLocation}>
+                Mein Standort
+              </button>
+              <button
+                style={S.secondary}
+                onClick={async () => {
+                  const c = props.center();
+                  if (c) setStart({ p: c, name: `Kartenmitte (${await reverseName(c)})` });
+                }}>
+                Kartenmitte
+              </button>
+            </div>
+            <PlaceSearch placeholder="Startort suchen" onPick={(p) => setStart({ p: p.p, name: p.name })} />
+            {locError ? <p style={S.errorText}>{locError}</p> : null}
+          </div>
+        )}
+      </Section>
+      <Section title="Länge" aside={`${km} km, etwa ${formatMinutes(Math.round((km / 55) * 60))}`}>
+        <div style={S.chips}>
+          {KM_STEPS.map((v) => (
+            <Chip key={v} on={km === v} onClick={() => setKm(v)}>
+              {v} km
+            </Chip>
+          ))}
+        </div>
+      </Section>
+      <Section title="Richtung" aside={dir === 'zufall' ? 'Zufall' : DIRECTIONS.find((d) => d.id === dir)?.label}>
+        <div style={S.compass}>
+          {grid.map((g) =>
+            g === 'mitte' ? (
+              <button key={g} style={dir === 'zufall' ? S.compassOn : S.compassBtn} onClick={() => setDir('zufall')} aria-label="Zufällige Richtung">
+                ?
+              </button>
+            ) : (
+              <button key={g} style={dir === g ? S.compassOn : S.compassBtn} onClick={() => setDir(g)} aria-label={DIRECTIONS.find((d) => d.id === g)?.label}>
+                {arrow[g]}
+              </button>
+            ),
+          )}
+        </div>
+      </Section>
+      <Section title="Profil">
+        <div style={S.chips}>
+          {PROFILES.map((p) => (
+            <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
+              {p.label}
+            </Chip>
+          ))}
+        </div>
+      </Section>
+      <button
+        style={S.primary}
+        disabled={props.busy || !start}
+        onClick={() => start && props.onCreate(start.p, km, dir, `Rundtour ${km} km ab ${start.name.replace(/^Kartenmitte \((.*)\)$/, '$1')}`)}>
+        {start ? 'Rundtour erstellen' : 'Erst Start wählen'}
+      </button>
+      {start ? (
+        <button style={S.link} disabled={props.busy} onClick={() => props.onCreate(start.p, km, dir, `Rundtour ${km} km ab ${start.name}`)}>
+          Andere Variante würfeln
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/* ---------- Beschreiben (KI Formular) ---------- */
+
+const DURATIONS: { label: string; min: number }[] = [
+  { label: '1 h', min: 60 },
+  { label: '2 h', min: 120 },
+  { label: '3 h', min: 180 },
+  { label: 'Halber Tag', min: 270 },
+  { label: 'Tag', min: 420 },
+];
+
+function DescribePanel(props: {
+  center: () => LatLon | null;
+  busy: boolean;
+  avoid: Avoid;
+  onCreate: (job: (signal: AbortSignal, step: (s: PlanStep) => void) => Promise<PlannedTour>) => void;
+}) {
+  const [text, setText] = useState('Ab Heppenheim in den Odenwald, Mittag mit Aussicht');
+  const wish = useMemo(() => parseWish(text), [text]);
+  const [minutes, setMinutes] = useState<number | null>(null);
+  const [style, setStyle] = useState<Profile | null>(null);
+  const [stops, setStops] = useState<Stop[] | null>(null);
+
+  // Chips folgen dem Text, bis man sie selbst antippt
+  const effMinutes = minutes ?? wish.minutes ?? (wish.km ? null : 180);
+  const effProfile = style ?? wish.profile ?? 'kurvig';
+  const effStops = stops ?? wish.stops;
+  const km = targetKm({ km: minutes === null ? wish.km : undefined, minutes: effMinutes ?? undefined }, effProfile);
+
+  const summary = [
+    `Rundtour ${wish.startName ? `ab ${wish.startName}` : 'ab Kartenmitte'}`,
+    wish.towardName ? `Richtung ${wish.towardName}` : wish.direction ? DIRECTIONS.find((d) => d.id === wish.direction)?.label.replace(/^/, 'Richtung ') : null,
+    effMinutes && (minutes !== null || !wish.km) ? `etwa ${formatMinutes(effMinutes)}` : `${km} km`,
+    PROFILES.find((p) => p.id === effProfile)?.label.toLowerCase(),
+    effStops.length ? `mit ${effStops.map((s) => STOPS.find((x) => x.id === s)?.label).join(', ')}` : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  const create = () =>
+    props.onCreate(async (signal, step) => {
+      step('route');
+      let start = props.center();
+      let startName = 'Kartenmitte';
+      if (wish.startName) {
+        const hits = await searchPlaces(wish.startName, start ?? undefined, signal);
+        if (!hits.length) throw new Error(`Startort "${wish.startName}" nicht gefunden. Schreib ihn genauer oder wähle die Kartenmitte.`);
+        start = hits[0].p;
+        startName = hits[0].name;
+      }
+      if (!start) throw new Error('Kein Start gefunden. Nenne einen Ort im Text.');
+      let bearing: number | undefined;
+      if (wish.towardName) {
+        const hits = await searchPlaces(wish.towardName, start, signal);
+        if (hits.length) bearing = bearingTo(start, hits[0].p);
+      }
+      const r = await roundTrip({ start, km, direction: wish.direction ?? 'zufall', bearing, profile: effProfile, avoid: props.avoid }, signal);
+      return planChecked(`${wish.towardName ?? 'Rundtour'} ab ${startName}`, [start, ...r.via, start], effProfile, props.avoid, step, signal, true);
+    });
+
+  return (
+    <div style={S.stack}>
+      <div>
+        <h2 style={S.h2}>Tour beschreiben</h2>
+        <p style={S.muted}>Schreib, was du erleben willst. Die Chips übernehmen, was erkannt wurde, und lassen sich anpassen.</p>
+      </div>
+      <textarea id="wish" aria-label="Was willst du erleben?" value={text} onChange={(e) => setText(e.target.value)} rows={3} style={S.textarea} placeholder="Was willst du erleben?" />
+      <Section title="Dauer" aside={effMinutes ? formatMinutes(effMinutes) : `${km} km`}>
+        <div style={S.chips}>
+          {DURATIONS.map((d) => (
+            <Chip key={d.label} on={effMinutes === d.min} onClick={() => setMinutes(d.min)}>
+              {d.label}
+            </Chip>
+          ))}
+        </div>
+      </Section>
+      <Section title="Fahrstil">
+        <div style={S.chips}>
+          {PROFILES.filter((p) => p.id !== 'schnell').map((p) => (
+            <Chip key={p.id} on={effProfile === p.id} onClick={() => setStyle(p.id)}>
+              {p.label}
+            </Chip>
+          ))}
+        </div>
+      </Section>
+      <Section title="Stopps unterwegs">
+        <div style={S.chips}>
+          {STOPS.map((s) => {
+            const on = effStops.includes(s.id);
+            return (
+              <Chip key={s.id} on={on} onClick={() => setStops(on ? effStops.filter((x) => x !== s.id) : [...effStops, s.id])}>
+                {s.label}
+              </Chip>
+            );
+          })}
+        </div>
+        <p style={S.small}>Stopps werden bald direkt eingeplant, heute fließen sie noch nicht in die Route ein.</p>
+      </Section>
+      <div style={S.understood}>
+        <span style={S.label}>Verstanden</span>
+        <span>{summary}. Nur Straßen, die der Etappen Check freigibt.</span>
+      </div>
+      <button style={S.primary} disabled={props.busy} onClick={create}>
+        Tour erstellen
+      </button>
+    </div>
+  );
+}
+
+/* ---------- Bausteine ---------- */
+
+function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick: (p: Place) => void }) {
+  const [q, setQ] = useState('');
+  const [hits, setHits] = useState<Place[]>([]);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (q.trim().length < 3) {
+      setHits([]);
+      return;
+    }
+    const ctrl = new AbortController();
+    const t = setTimeout(() => {
+      searchPlaces(q, props.near, ctrl.signal)
+        .then((h) => {
+          setHits(h);
+          setOpen(true);
+        })
+        .catch(() => undefined);
+    }, 300);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [q, props.near]);
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        id={`search-${props.placeholder.replace(/\W+/g, '-')}`}
+        aria-label={props.placeholder}
+        placeholder={props.placeholder}
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onFocus={() => setOpen(true)}
+        style={S.search}
+      />
+      {open && hits.length ? (
+        <ul style={S.dropdown} role="listbox">
+          {hits.map((h, i) => (
+            <li key={i} style={{ listStyle: 'none' }}>
+              <button
+                style={S.dropItem}
+                onClick={() => {
+                  props.onPick(h);
+                  setQ('');
+                  setHits([]);
+                  setOpen(false);
+                }}>
+                <span>{h.name}</span>
+                <span style={S.dropDetail}>{h.detail}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function Section(props: { title: string; aside?: string; children: ReactNode }) {
+  return (
+    <section style={S.section}>
+      <div style={S.sectionHead}>
+        <span style={S.label}>{props.title}</span>
+        {props.aside ? <span style={S.aside}>{props.aside}</span> : null}
+      </div>
+      {props.children}
+    </section>
+  );
+}
+
+function Chip(props: { on: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button aria-pressed={props.on} onClick={props.onClick} style={props.on ? S.chipOn : S.chip}>
+      {props.children}
+    </button>
+  );
+}
+
+function Toggle(props: { id: string; on: boolean; label: string; note?: string; onChange: (v: boolean) => void }) {
+  return (
+    <label htmlFor={props.id} style={S.toggleRow}>
+      <span style={{ display: 'flex', flexDirection: 'column' }}>
+        <span>{props.label}</span>
+        {props.note ? <span style={S.small}>{props.note}</span> : null}
+      </span>
+      <input id={props.id} type="checkbox" checked={props.on} onChange={(e) => props.onChange(e.target.checked)} style={{ display: 'none' }} />
+      <span style={{ ...S.switch, background: props.on ? C.signal : C.line }}>
+        <span style={{ ...S.knob, transform: props.on ? 'translateX(18px)' : 'translateX(0)' }} />
+      </span>
+    </label>
+  );
+}
+
+function ElevationChart(props: { e: ElevationProfile; onHoverKm: (km: number | null) => void }) {
+  const { e } = props;
+  const W = 360;
+  const H = 86;
+  const maxKm = e.km[e.km.length - 1] || 1;
+  const lo = Math.floor(e.min / 100) * 100;
+  const hi = Math.ceil(e.max / 100) * 100 || lo + 100;
+  const x = (km: number) => (km / maxKm) * W;
+  const y = (m: number) => H - 4 - ((m - lo) / (hi - lo)) * (H - 12);
+  const d = e.km.map((k, i) => `${i ? 'L' : 'M'}${x(k).toFixed(1)},${y(e.m[i]).toFixed(1)}`).join(' ');
+  const [hover, setHover] = useState<number | null>(null);
+  const idx = hover === null ? -1 : e.km.findIndex((k) => k >= hover);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={S.sectionHead}>
+        <span style={S.label}>Höhenprofil</span>
+        <span style={S.small}>{idx >= 0 ? `km ${Math.round(e.km[idx])}: ${Math.round(e.m[idx])} m` : `${lo} bis ${hi} m`}</span>
+      </div>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        style={{ width: '100%', height: 'auto', background: C.surface, borderRadius: 10, cursor: 'crosshair' }}
+        role="img"
+        aria-label={`Höhenprofil von ${e.min} bis ${e.max} Meter`}
+        onMouseMove={(ev) => {
+          const r = (ev.currentTarget as SVGSVGElement).getBoundingClientRect();
+          const km = ((ev.clientX - r.left) / r.width) * maxKm;
+          setHover(km);
+          props.onHoverKm(km);
+        }}
+        onMouseLeave={() => {
+          setHover(null);
+          props.onHoverKm(null);
+        }}>
+        <path d={`${d} L${W},${H} L0,${H} Z`} fill={C.surface2} />
+        <path d={d} fill="none" stroke={C.text} strokeWidth={1.4} />
+        {idx >= 0 ? <line x1={x(e.km[idx])} x2={x(e.km[idx])} y1={0} y2={H} stroke={C.signal} strokeWidth={1.5} /> : null}
+      </svg>
+    </div>
+  );
+}
+
+function Stat(props: { big: string; unit?: string; label: string; tone?: 'stop' | 'good'; small?: boolean }) {
+  const color = props.tone === 'stop' ? C.signal : props.tone === 'good' ? C.good : C.text;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <span style={{ fontFamily: DISPLAY, fontSize: props.small ? 20 : 30, lineHeight: 1, color, fontVariantNumeric: 'tabular-nums' }}>
+        {props.big}
+        {props.unit ? <span style={{ fontSize: 15 }}> {props.unit}</span> : null}
+      </span>
+      <span style={S.small}>{props.label}</span>
+    </div>
+  );
+}
+
+function Status(props: { text: string; onCancel: () => void }) {
+  return (
+    <div style={S.status} role="status">
+      <span style={S.spinner} />
+      <span style={{ flex: 1 }}>{props.text}</span>
+      <button style={S.link} onClick={props.onCancel}>
+        Abbrechen
+      </button>
+    </div>
+  );
+}
+
+/* ---------- Stile ---------- */
+
+const btnBase: CSSProperties = { font: `600 14px ${BODY}`, borderRadius: 999, cursor: 'pointer', padding: '0 16px', height: 40 };
+const chipBase: CSSProperties = { font: `500 13px ${BODY}`, borderRadius: 999, cursor: 'pointer', padding: '0 12px', height: 32 };
+
+const S: Record<string, CSSProperties> = {
+  root: { display: 'flex', height: '100vh', width: '100%', background: C.ground, color: C.text, fontFamily: BODY, fontSize: 14, overflow: 'hidden' },
+  mapWrap: { position: 'relative', flex: 1, minWidth: 0 },
+  map: { position: 'absolute', inset: 0 },
+  mapError: { position: 'absolute', top: 16, left: 16, right: 16, padding: 14, background: C.surface, borderRadius: 12, color: C.text },
+  hint: { position: 'absolute', left: 16, bottom: 16, padding: '8px 12px', background: 'rgba(11,11,12,0.85)', borderRadius: 999, color: C.muted, fontSize: 12 },
+  side: { width: 400, maxWidth: '100%', display: 'flex', flexDirection: 'column', borderLeft: `1px solid ${C.surface2}`, background: C.ground },
+  brandRow: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '18px 20px 10px' },
+  brand: { fontFamily: DISPLAY, fontSize: 15, letterSpacing: 2 },
+  beta: { color: C.muted, fontSize: 12 },
+  tabs: { display: 'flex', gap: 4, padding: '0 16px 12px', borderBottom: `1px solid ${C.surface2}` },
+  tab: { ...btnBase, height: 34, background: 'transparent', color: C.muted, border: 'none' },
+  tabOn: { ...btnBase, height: 34, background: C.surface2, color: C.text, border: 'none' },
+  scroll: { flex: 1, overflowY: 'auto', padding: '16px 20px 32px' },
+  stack: { display: 'flex', flexDirection: 'column', gap: 18 },
+  stackTight: { display: 'flex', flexDirection: 'column', gap: 8 },
+  h2: { fontFamily: DISPLAY, fontSize: 24, textTransform: 'uppercase', margin: '0 0 6px', lineHeight: 1 },
+  muted: { color: C.muted, margin: 0, lineHeight: 1.45 },
+  small: { color: C.muted, fontSize: 12, margin: 0 },
+  sampleTag: { alignSelf: 'flex-start', fontSize: 11, fontWeight: 700, color: C.warn, background: 'rgba(232,176,58,0.14)', padding: '2px 8px', borderRadius: 9 },
+  nameInput: { background: 'transparent', border: 'none', color: C.text, font: `700 20px ${BODY}`, padding: 0, outline: 'none' },
+  statsRow: { display: 'flex', gap: 26, paddingTop: 6 },
+  checkGood: { background: 'rgba(76,195,138,0.12)', color: C.good, padding: '10px 12px', borderRadius: 12, fontWeight: 600 },
+  checkBad: { background: 'rgba(226,70,28,0.14)', color: '#FF8A66', padding: '10px 12px', borderRadius: 12, fontWeight: 600 },
+  search: { width: '100%', boxSizing: 'border-box', height: 44, padding: '0 14px', background: C.surface, color: C.text, border: `1px solid ${C.surface2}`, borderRadius: 12, font: `500 14px ${BODY}`, outline: 'none' },
+  dropdown: { position: 'absolute', zIndex: 5, top: 48, left: 0, right: 0, margin: 0, padding: 4, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 12 },
+  dropItem: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', padding: '8px 10px', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', borderRadius: 8, textAlign: 'left', font: `500 14px ${BODY}` },
+  dropDetail: { color: C.muted, fontSize: 12 },
+  wpList: { margin: 0, padding: 0, display: 'flex', flexDirection: 'column' },
+  wpRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' },
+  wpDot: { width: 24, height: 24, borderRadius: 12, background: C.text, color: C.ground, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  wpDotEnd: { width: 24, height: 24, borderRadius: 12, background: C.signal, color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  wpName: { flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', border: 'none', color: C.text, font: `600 14px ${BODY}`, cursor: 'pointer', padding: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  iconBtn: { background: 'transparent', border: 'none', color: C.muted, fontSize: 18, cursor: 'pointer', padding: '0 4px' },
+  leg: { marginLeft: 11, paddingLeft: 21, borderLeft: `2px dotted ${C.line}`, display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 6 },
+  legKm: { color: C.muted, fontSize: 12, fontVariantNumeric: 'tabular-nums' },
+  warnStop: { display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left', background: 'rgba(226,70,28,0.14)', color: '#FF8A66', border: 'none', borderRadius: 10, padding: '8px 10px', cursor: 'pointer', font: `500 13px ${BODY}` },
+  warnSoft: { display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left', background: 'rgba(232,176,58,0.12)', color: C.warn, border: 'none', borderRadius: 10, padding: '8px 10px', cursor: 'pointer', font: `500 13px ${BODY}` },
+  warnWhy: { color: C.muted, fontSize: 12 },
+  section: { display: 'flex', flexDirection: 'column', gap: 10 },
+  sectionHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' },
+  label: { fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: C.muted },
+  aside: { fontSize: 13, fontWeight: 600 },
+  chips: { display: 'flex', flexWrap: 'wrap', gap: 6 },
+  chip: { ...chipBase, background: 'transparent', color: C.text, border: `1px solid ${C.line}` },
+  chipOn: { ...chipBase, background: C.text, color: C.ground, border: `1px solid ${C.text}`, fontWeight: 700 },
+  toggleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: 'pointer', padding: '4px 0' },
+  switch: { width: 40, height: 22, borderRadius: 11, position: 'relative', flexShrink: 0, transition: 'background 150ms' },
+  knob: { position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: 9, background: '#fff', transition: 'transform 150ms' },
+  btnRow: { display: 'flex', gap: 8, flexWrap: 'wrap' },
+  primary: { ...btnBase, height: 46, background: C.signal, color: '#fff', border: 'none', fontWeight: 700, flex: 1 },
+  secondary: { ...btnBase, background: 'transparent', color: C.text, border: `1px solid ${C.line}`, flex: 1 },
+  link: { background: 'transparent', border: 'none', color: C.text, textDecoration: 'underline', cursor: 'pointer', font: `600 13px ${BODY}`, padding: 0, alignSelf: 'flex-start' },
+  startRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: C.surface, padding: '10px 12px', borderRadius: 12, fontWeight: 600 },
+  compass: { display: 'grid', gridTemplateColumns: 'repeat(3, 44px)', gap: 6 },
+  compassBtn: { width: 44, height: 44, borderRadius: 12, background: C.surface, color: C.text, border: `1px solid ${C.surface2}`, fontSize: 18, cursor: 'pointer' },
+  compassOn: { width: 44, height: 44, borderRadius: 12, background: C.signal, color: '#fff', border: 'none', fontSize: 18, cursor: 'pointer' },
+  textarea: { width: '100%', boxSizing: 'border-box', background: C.surface, color: C.text, border: `1px solid ${C.surface2}`, borderRadius: 14, padding: 14, font: `500 15px/1.4 ${BODY}`, resize: 'vertical', outline: 'none' },
+  understood: { display: 'flex', flexDirection: 'column', gap: 4, lineHeight: 1.45 },
+  status: { display: 'flex', alignItems: 'center', gap: 10, margin: '12px 20px 0', padding: '10px 12px', background: C.surface, borderRadius: 12 },
+  spinner: { width: 14, height: 14, borderRadius: 7, border: `2px solid ${C.line}`, borderTopColor: C.signal, animation: 'cdspin 0.8s linear infinite' },
+  error: { margin: '12px 20px 0', padding: '10px 12px', background: 'rgba(226,70,28,0.14)', color: '#FF8A66', borderRadius: 12 },
+  errorText: { color: '#FF8A66', margin: 0, fontSize: 13 },
+};
+
+// Drehanimation für den Ladekreis einmalig registrieren
+if (typeof document !== 'undefined' && !document.getElementById('cd-spin')) {
+  const st = document.createElement('style');
+  st.id = 'cd-spin';
+  st.textContent = '@keyframes cdspin{to{transform:rotate(360deg)}} button:disabled{opacity:.45;cursor:default} button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #E2461C;outline-offset:2px}';
+  document.head.appendChild(st);
+}
