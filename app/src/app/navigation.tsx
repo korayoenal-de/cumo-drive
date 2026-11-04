@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteMap } from '@/components/map/route-map';
 import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM } from '@/components/navigation/maneuver-geometry';
-import { HighlightCard, LeadStopButton, MessageToast, StopAlert } from '@/components/navigation/nav-alerts';
+import { HighlightCard, LeadStopButton, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
@@ -25,7 +25,7 @@ import { useNavigation } from '@/lib/navigation';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
 import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
 import { elevationProfile } from '@/lib/stats';
-import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, STOP_REASONS, useRide, type RideMsg } from '@/lib/group/ride';
+import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, STOP_REASONS, useRide } from '@/lib/group/ride';
 import { useRideMode } from '@/lib/ride-mode';
 import { currentVehicle, selectVehicle, useVehicles } from '@/lib/vehicle';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
@@ -145,22 +145,6 @@ export default function NavigationScreen() {
     return () => clearTimeout(id);
   }, [stop, myStop, stopDistM]);
 
-  // Kurznachrichten der anderen für acht Sekunden einblenden und vorlesen
-  const [mountedAt] = useState(() => Date.now());
-  const [toastGone, setToastGone] = useState<string | null>(null);
-  const lastMsg: RideMsg | undefined = inRide ? ride.messages[0] : undefined;
-  const toast = lastMsg && lastMsg.from !== ride.me?.id && lastMsg.at > mountedAt && lastMsg.id !== toastGone ? lastMsg : null;
-  const saidMsg = useRef<string | null>(null);
-  useEffect(() => {
-    if (!toast || saidMsg.current === toast.id) return;
-    saidMsg.current = toast.id;
-    controls.say(`Nachricht von ${toast.name}: ${toast.text}`);
-  }, [toast, controls]);
-  useEffect(() => {
-    if (!toast) return;
-    const id = setTimeout(() => setToastGone(toast.id), 8000);
-    return () => clearTimeout(id);
-  }, [toast]);
 
   // Restkilometer beim Start, daraus ergeben sich am Ende die gefahrenen km
   const [startKm, setStartKm] = useState<number | null>(null);
@@ -333,7 +317,6 @@ export default function NavigationScreen() {
           <StopAlert stop={stop} distM={stopDistM} mine={myStop} onDismiss={() => clearStop(false)} onCancel={() => clearStop(true)} />
         )}
         {running && !stop && nextHl && <HighlightCard h={nextHl} distM={hlDistM} />}
-        {running && !stop && toast && <MessageToast msg={toast} />}
       </View>
 
       <View style={[styles.bottom, !running && { paddingBottom: insets.bottom + Spacing.m }]} pointerEvents="box-none">

@@ -157,9 +157,52 @@ export function createVoiceGuide(speak: (text: string) => void = defaultSpeak, s
   };
 }
 
+type AudioModule = typeof import('expo-audio');
+let audio: AudioModule | null | undefined;
+function getAudio(): AudioModule | null {
+  if (audio !== undefined) return audio;
+  try {
+    audio = require('expo-audio') as AudioModule;
+  } catch {
+    audio = null; // ältere Builds ohne expo-audio
+  }
+  return audio;
+}
+
+/**
+ * Musik (Spotify, Apple Music) während der Ansage nur leiser stellen und danach wieder freigeben.
+ * Ohne das hält iOS die Audiositzung der App aktiv und andere Apps pausieren dauerhaft.
+ */
+let speaking = 0;
+let releaseTimer: ReturnType<typeof setTimeout> | null = null;
+function audioOn() {
+  const a = getAudio();
+  if (!a) return;
+  if (releaseTimer) clearTimeout(releaseTimer);
+  releaseTimer = null;
+  void a.setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'duckOthers', shouldPlayInBackground: true }).catch(() => {});
+  void a.setIsAudioActiveAsync(true).catch(() => {});
+}
+function audioOff() {
+  const a = getAudio();
+  if (!a) return;
+  // kurz warten, falls gleich die nächste Ansage kommt
+  if (releaseTimer) clearTimeout(releaseTimer);
+  releaseTimer = setTimeout(() => {
+    if (speaking > 0) return;
+    void a.setIsAudioActiveAsync(false).catch(() => {});
+  }, 600);
+}
+
 function defaultSpeak(text: string) {
   try {
-    Speech.speak(text, { language: 'de-DE', rate: 1.0 });
+    speaking++;
+    audioOn();
+    const done = () => {
+      speaking = Math.max(0, speaking - 1);
+      if (!speaking) audioOff();
+    };
+    Speech.speak(text, { language: 'de-DE', rate: 1.0, onDone: done, onStopped: done, onError: done });
   } catch {
     // Sprachausgabe ist nicht wichtig genug, um die Navigation zu stören
   }
@@ -167,4 +210,9 @@ function defaultSpeak(text: string) {
 
 function defaultStop() {
   Speech.stop().catch(() => {});
+  speaking = 0;
+  audioOff();
 }
+
+/** Freie Ansage außerhalb der Navigation (zum Beispiel Gruppennachrichten), mit leiserer Musik. */
+export const speakText = defaultSpeak;

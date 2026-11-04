@@ -2,7 +2,7 @@
  * Zeigt neue Kurznachrichten der Gruppe überall in der App oben als Banner und liest sie vor.
  * Eigene Nachrichten werden nicht angesagt.
  */
-import * as Speech from 'expo-speech';
+import { speakText } from '@/lib/navigation/voice';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,7 +23,7 @@ export function RideBanner() {
     seen.current = latest.id;
     if (latest.from === ride.me?.id) return;
     const t0 = setTimeout(() => setShown(latest), 0);
-    Speech.speak(`${latest.name}: ${latest.text}`, { language: 'de-DE' });
+    speakText(`${latest.name}: ${latest.text}`);
     const t1 = setTimeout(() => setShown((s) => (s?.id === latest.id ? null : s)), 8000);
     return () => {
       clearTimeout(t0);
