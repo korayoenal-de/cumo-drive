@@ -1096,7 +1096,7 @@ function TourMode({
 
   const editor = (
     <View style={styles.editor}>
-      <View style={styles.searchRow}>
+      <View style={styles.field}>
         <TextInput
           value={query}
           onChangeText={setQuery}
@@ -1105,13 +1105,22 @@ function TourMode({
           returnKeyType="search"
           autoFocus
           onFocus={onSearchFocus}
-          style={[styles.search, styles.searchOnGround]}
+          style={styles.fieldInput}
           accessibilityLabel="Ort oder Pass suchen"
         />
         {searching && <ActivityIndicator color={Colors.muted} />}
+        {edit?.kind !== 'via' && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={locating ? 'Standort wird bestimmt' : 'Mein Standort'}
+            onPress={() => !locating && void takeHere()}
+            hitSlop={6}
+            style={({ pressed }) => [styles.fieldIcon, pressed && styles.pressed]}>
+            {locating ? <ActivityIndicator color={Colors.signal} /> : <LocationIcon />}
+          </Pressable>
+        )}
       </View>
       <View style={styles.wrap}>
-        {edit?.kind !== 'via' && <Pill label={locating ? 'Standort wird bestimmt' : 'Mein Standort'} onPress={() => !locating && void takeHere()} />}
         <Pill label="Abbrechen" onPress={() => setEdit(null)} />
       </View>
       {locMsg && <AppText variant="caption" style={styles.signalText}>{locMsg}</AppText>}
@@ -1535,6 +1544,15 @@ function VehiclePick() {
         </View>
       )}
     </View>
+  );
+}
+
+/** Standort Pfeil wie in Apple Karten */
+function LocationIcon() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24">
+      <Path d="M21 3 L3 10.6 L11.2 12.8 L13.4 21 Z" fill={Colors.signal} stroke={Colors.signal} strokeWidth={1.5} strokeLinejoin="round" />
+    </Svg>
   );
 }
 
@@ -2063,6 +2081,9 @@ const styles = StyleSheet.create({
 
   // Route planen: Punktliste und Etappen im calimoto Stil, Flächen statt Linien
   searchOnGround: { backgroundColor: Colors.surface },
+  field: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 48, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.m },
+  fieldInput: { flex: 1, height: 48, color: Colors.text, fontFamily: Fonts.regular, fontSize: 16 },
+  fieldIcon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   pointRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.s },
   pointRowEditing: { backgroundColor: Colors.surface2 },
   pointMain: { flex: 1, minHeight: 52, justifyContent: 'center', paddingHorizontal: Spacing.s },
