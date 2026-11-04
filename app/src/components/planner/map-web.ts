@@ -195,3 +195,39 @@ export function addPhotoLayers(map: MapInstance) {
     'tour-casing',
   );
 }
+
+/** Fahrer der Gruppenfahrt: Kreis in der Farbe der Rolle mit Anfangsbuchstaben. */
+export function addMemberLayers(map: MapInstance) {
+  map.addSource('members', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer({
+    id: 'member-circle',
+    type: 'circle',
+    source: 'members',
+    paint: {
+      'circle-radius': 13,
+      'circle-color': '#161618',
+      'circle-stroke-width': 3,
+      'circle-stroke-color': ['match', ['get', 'role'], 'lead', '#E2461C', 'schluss', '#E8B03A', '#F4F4F2'],
+      'circle-opacity': ['case', ['get', 'stale'], 0.5, 1],
+    },
+  });
+  map.addLayer({
+    id: 'member-label',
+    type: 'symbol',
+    source: 'members',
+    layout: {
+      'text-field': ['get', 'initial'],
+      'text-size': 12,
+      'text-font': ['Noto Sans Bold'],
+      'text-allow-overlap': true,
+    },
+    paint: { 'text-color': '#F4F4F2' },
+  });
+  map.addLayer({
+    id: 'member-name',
+    type: 'symbol',
+    source: 'members',
+    layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-font': ['Noto Sans Bold'], 'text-offset': [0, 1.6], 'text-anchor': 'top' },
+    paint: { 'text-color': '#F4F4F2', 'text-halo-color': '#0B0B0C', 'text-halo-width': 1.6 },
+  });
+}

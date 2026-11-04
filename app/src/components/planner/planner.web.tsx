@@ -20,13 +20,14 @@ import { deleteTour, filterTours, folders, saveTour, syncLibrary, useLibrary, us
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
+import { createRide, joinRide, leaveRide, loadProfile, normalizeCode, QUICK_MESSAGES, sendMessage, setRole, useRide } from '@/lib/group/ride';
 import { encodeTour, expoGoLink } from '@/lib/share-code';
 import { closedHint, passState, usePassLive, type LiveRow } from '@/lib/pass-live';
 import { photoDate, photoGroupsGeoJson, photoUrl, thumbUrl, usePhotoGroups, type PhotoGroup } from '@/lib/photos';
 import { PASS_STATUS_URL, PASSES, passesAlong, passesGeoJson, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
 import QRCode from 'qrcode';
 
-import { addPassLayers, addPhotoLayers, addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
+import { addMemberLayers, addPassLayers, addPhotoLayers, addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
 
 const C = {
   ground: '#0B0B0C', surface: '#161618', surface2: '#1F1F22', line: '#2A2A2E', text: '#F4F4F2',
@@ -112,6 +113,7 @@ export default function Planner() {
           addTourLayers(m);
           addPassLayers(m, passesGeoJson(PASSES, new Date().getMonth() + 1));
           addPhotoLayers(m);
+          addMemberLayers(m);
           for (const layer of ['pass-circle', 'photo-circle']) {
             m.on('mouseenter', layer, () => (m.getCanvas().style.cursor = 'pointer'));
             m.on('mouseleave', layer, () => (m.getCanvas().style.cursor = ''));
@@ -185,6 +187,23 @@ export default function Planner() {
       run('Route wird berechnet', (signal, step) => planChecked(name, points, profile, avoid, step, signal), true),
     [run, tour.name, profile, avoid],
   );
+
+  const ride = useRide();
+  useEffect(() => {
+    const m = map.current;
+    if (!mapReady || !m) return;
+    const now = Date.now();
+    m.getSource('members')?.setData({
+      type: 'FeatureCollection',
+      features: ride.members
+        .filter((x) => x.p)
+        .map((x) => ({
+          type: 'Feature',
+          properties: { initial: x.name.slice(0, 1).toUpperCase(), name: x.id === ride.me?.id ? 'Du' : x.name, role: x.role, stale: !x.seenAt || now - x.seenAt > 60000 },
+          geometry: { type: 'Point', coordinates: [x.p![1], x.p![0]] },
+        })),
+    });
+  }, [mapReady, ride.members, ride.me?.id]);
 
   const photoGroups = usePhotoGroups();
   const [showPhotos, setShowPhotos] = useState(true);
@@ -650,14 +669,8 @@ function TourPanel(props: {
       </Section>
 
       {props.group ? (
-        <Section title="Gruppe">
-          <div style={S.groupBox}>
-            <p style={{ margin: 0 }}>Mitfahrer sehen sich während der Fahrt live auf der Karte und funken per Walkie Talkie im Tab Gruppe der App.</p>
-            <button style={S.secondary} disabled title="Einladen per Link folgt">
-              Mitfahrer einladen (folgt)
-            </button>
-            <p style={S.small}>Bald hier: Treffpunkt, Rollen Lead und Schluss, Sammelpunkte nach Ortsdurchfahrten.</p>
-          </div>
+        <Section title="Gruppenfahrt">
+          <GroupPanel tour={tour} profile={props.profile} avoid={props.avoid} isSample={props.isSample} />
         </Section>
       ) : null}
 
@@ -909,6 +922,102 @@ function LibraryPanel(props: { currentId: string | null; onOpen: (t: SavedTour) 
           </ul>
         </>
       ) : null}
+    </div>
+  );
+}
+
+/** Gruppenfahrt im Web: starten oder beitreten, Mitfahrer live auf der Karte, Kurznachrichten. */
+function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; isSample: boolean }) {
+  const ride = useRide();
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    loadProfile().then((p) => p && setName((n) => n || p.name));
+  }, []);
+
+  if (ride.status === 'aus' || ride.status === 'fehler') {
+    const canShare = !props.isSample && props.tour.linie.length > 0;
+    return (
+      <div style={S.groupBox}>
+        <p style={{ margin: 0 }}>Alle Mitfahrer sehen sich live auf der Karte, in der App und hier im Planer. Sprechfunk folgt.</p>
+        <input id="grp-name" aria-label="Dein Name" placeholder="Dein Name" value={name} onChange={(e) => setName(e.target.value)} style={{ ...S.search, height: 40 }} />
+        <button
+          style={S.primary}
+          disabled={busy || !name.trim()}
+          onClick={async () => {
+            setBusy(true);
+            const tc = canShare ? await createHandoff(props.tour, props.profile, props.avoid).catch(() => null) : null;
+            await createRide(name, 'Planer', tc);
+            setBusy(false);
+          }}>
+          {canShare ? 'Fahrt mit dieser Tour starten' : 'Fahrt starten'}
+        </button>
+        <div style={S.btnRow}>
+          <input id="grp-code" aria-label="Fahrtcode" placeholder="Fahrtcode" value={code} onChange={(e) => setCode(normalizeCode(e.target.value))} style={{ ...S.search, height: 40, flex: 1, letterSpacing: 4, textTransform: 'uppercase' }} />
+          <button style={{ ...S.secondary, flex: 'none' }} disabled={busy || !name.trim() || code.length !== 6} onClick={() => void joinRide(code, name, 'Planer')}>
+            Beitreten
+          </button>
+        </div>
+        {ride.error ? <span style={{ ...S.small, color: C.signal }}>{ride.error}</span> : null}
+      </div>
+    );
+  }
+  const link = `exp://u.expo.dev/44e0d073-6f59-455d-8a50-0f11f6fef4b7/--/gruppe?runtime-version=exposdk%3A58.0.0&channel-name=preview&code=${ride.code}`;
+  return (
+    <div style={S.groupBox}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+        <span style={S.rideCode}>
+          {ride.code!.slice(0, 3).toUpperCase()} {ride.code!.slice(3).toUpperCase()}
+        </span>
+        <button
+          style={S.link}
+          onClick={() => {
+            navigator.clipboard
+              ?.writeText(`Fahr mit bei CUMO DRIVE. Code ${ride.code!.toUpperCase()} in der App unter Gruppe eingeben oder öffnen: ${link}`)
+              .then(() => setCopied(true))
+              .catch(() => setCopied(false));
+          }}>
+          {copied ? 'Einladung kopiert' : 'Einladung kopieren'}
+        </button>
+      </div>
+      <span style={S.small}>
+        {ride.status === 'verbinde' ? 'Verbinde …' : `${ride.members.length} in der Gruppe, du bist ${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[ride.myRole]}`}
+        {ride.tourCode ? ', Tour geteilt' : ''}
+      </span>
+      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {ride.members.map((mb) => (
+          <li key={mb.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 10, height: 10, borderRadius: 5, background: mb.role === 'lead' ? C.signal : mb.role === 'schluss' ? C.warn : C.text }} />
+            <span style={{ flex: 1 }}>
+              {mb.name}
+              {mb.id === ride.me?.id ? ' (du)' : ''}
+              <span style={S.small}> {mb.car}{mb.p ? '' : ', noch keine Position'}</span>
+            </span>
+            {ride.myRole === 'lead' && mb.id !== ride.me?.id ? (
+              <button style={S.link} onClick={() => setRole(mb.id, mb.role === 'schluss' ? 'mitfahrer' : 'schluss')}>
+                {mb.role === 'schluss' ? 'Kein Schluss' : 'Schlusslicht'}
+              </button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      <div style={S.chips}>
+        {QUICK_MESSAGES.map((m) => (
+          <Chip key={m} on={false} onClick={() => sendMessage(m)}>
+            {m}
+          </Chip>
+        ))}
+      </div>
+      {ride.messages.slice(0, 5).map((m) => (
+        <span key={m.id} style={S.small}>
+          {new Date(m.at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} {m.from === ride.me?.id ? 'Du' : m.name}: {m.text}
+        </span>
+      ))}
+      <button style={S.link} onClick={() => void leaveRide()}>
+        Fahrt verlassen
+      </button>
     </div>
   );
 }
@@ -1464,6 +1573,7 @@ const S: Record<string, CSSProperties> = {
   lightboxImg: { maxWidth: '100%', maxHeight: 'calc(100% - 60px)', objectFit: 'contain', borderRadius: 6 },
   lightboxBar: { display: 'flex', alignItems: 'center', gap: 12, color: C.text, font: `500 14px ${BODY}` },
   lbBtn: { width: 36, height: 36, borderRadius: 18, border: `1px solid ${C.line}`, background: C.surface, color: C.text, fontSize: 20, cursor: 'pointer' },
+  rideCode: { font: `900 28px ${DISPLAY}`, letterSpacing: 4, color: C.text },
   accountBox: { display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: C.surface, border: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}` },
   menuHead: { display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 12px 10px', marginBottom: 2, borderBottom: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}`, maxWidth: 260 },
   winterNote: { display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 12px', borderRadius: 12, background: 'rgba(232,176,58,0.12)', color: C.warn, font: `500 13px ${BODY}`, lineHeight: 1.4 },
