@@ -18,12 +18,14 @@
   "submit": {
     "preview": {
       "ios": {
-        "appleTeamId": "N9DX399W33"
+        "appleTeamId": "N9DX399W33",
+        "ascAppId": "6830681049"
       }
     },
     "production": {
       "ios": {
-        "appleTeamId": "N9DX399W33"
+        "appleTeamId": "N9DX399W33",
+        "ascAppId": "6830681049"
       }
     }
   }
