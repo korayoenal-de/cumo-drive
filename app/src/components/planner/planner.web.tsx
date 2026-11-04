@@ -18,8 +18,8 @@ import { cumoAvailable } from '@/lib/cumo-routing';
 import { deleteTour, filterTours, folders, saveTour, useLibrary, type SavedTour, type SortKey } from '@/lib/library';
 import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
-import { encodeTour } from '@/lib/share-code';
-import { likelyClosed, PASSES, passesAlong, passesGeoJson, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
+import { encodeTour, shareUrl } from '@/lib/share-code';
+import { closedNote, likelyClosed, PASS_STATUS_URL, PASSES, passesAlong, passesGeoJson, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
 import QRCode from 'qrcode';
 
 import { addPassLayers, addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
@@ -556,6 +556,19 @@ function TourPanel(props: {
         <p style={S.muted}>Setze den Start per Suche oder Klick auf die Karte, dann das Ziel.</p>
       )}
 
+      {props.passes.some((x) => likelyClosed(x.pass, new Date().getMonth() + 1)) ? (
+        <div style={S.winterNote}>
+          <b>Wintersperre möglich</b>
+          <span>
+            {closedNote(props.passes.map((x) => x.pass).filter((p) => likelyClosed(p, new Date().getMonth() + 1)))}{' '}
+            {props.passes.filter((x) => likelyClosed(x.pass, new Date().getMonth() + 1)).length > 1 ? 'sind' : 'ist'} um diese Jahreszeit meist zu. Planen und speichern geht trotzdem, vor der Fahrt den Status prüfen.
+          </span>
+          <a href={PASS_STATUS_URL} target="_blank" rel="noreferrer" style={S.winterLink}>
+            Aktuellen Passstatus ansehen
+          </a>
+        </div>
+      ) : null}
+
       {props.passes.length ? (
         <Section title="Pässe auf der Strecke" aside={String(props.passes.length)}>
           <ol style={S.passList}>
@@ -668,7 +681,7 @@ function SendToApp(props: { tour: Tour; profile: Profile }) {
   useEffect(() => {
     if (!code) return;
     let alive = true;
-    QRCode.toDataURL(code, { errorCorrectionLevel: 'L', margin: 2, width: 560, color: { dark: '#0B0B0C', light: '#FFFFFF' } })
+    QRCode.toDataURL(shareUrl(code), { errorCorrectionLevel: 'L', margin: 2, width: 560, color: { dark: '#0B0B0C', light: '#FFFFFF' } })
       .then((url) => alive && setImg({ code, url }))
       .catch(() => alive && setImg(null));
     return () => {
@@ -692,7 +705,7 @@ function SendToApp(props: { tour: Tour; profile: Profile }) {
       </div>
       {url ? <img src={url} alt="QR Code der Tour" style={S.qrImg} /> : <div style={{ ...S.qrImg, background: '#fff' }} />}
       <p style={S.small}>
-        In der CUMO DRIVE App unter Entdecken auf „Tour vom Planer holen“ tippen und den Code scannen. Die App plant die Strecke neu und prüft sie.
+        Mit der iPhone Kamera scannen und „In CUMO DRIVE öffnen“ tippen. Oder in der App unter Entdecken „Tour vom Planer holen“ wählen. Die App plant die Strecke neu und prüft sie.
       </p>
     </div>
   );
@@ -1235,6 +1248,8 @@ const S: Record<string, CSSProperties> = {
   dot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
   menu: { position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: 200, padding: 4, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
   menuHead: { display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 12px 10px', marginBottom: 2, borderBottom: `1px solid ${C.line}`, color: C.text, font: `500 14px ${BODY}`, maxWidth: 260 },
+  winterNote: { display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 12px', borderRadius: 12, background: 'rgba(232,176,58,0.12)', color: C.warn, font: `500 13px ${BODY}`, lineHeight: 1.4 },
+  winterLink: { color: C.text, fontWeight: 600 },
   passList: { margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2 },
   passRow: { display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '7px 4px', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', textAlign: 'left', font: `500 14px ${BODY}` },
   passName: { display: 'block', fontWeight: 600 },

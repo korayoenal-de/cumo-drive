@@ -130,6 +130,22 @@ export function likelyClosed(p: Pass, month: number): boolean {
   return month >= 11 || month <= 5;
 }
 
+/** Pässe auf einer Linie, die im Monat wahrscheinlich gesperrt sind (nur als Hinweis). */
+export function closedAlong(list: Pass[], line: LatLon[], month: number): Pass[] {
+  return passesAlong(list, line)
+    .map((x) => x.pass)
+    .filter((p) => likelyClosed(p, month));
+}
+
+/** Text für den Hinweis, zum Beispiel "Stilfser Joch (Nov bis Mai) und Gavia". */
+export function closedNote(closed: Pass[]): string {
+  const names = closed.map((p) => (p.closed_months ? `${p.name} (${p.closed_months})` : p.name));
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} und ${names[names.length - 1]}` : names[0] ?? '';
+}
+
+/** Übersicht mit aktuellem Status, bis wir eine eigene Live Quelle haben. */
+export const PASS_STATUS_URL = 'https://www.ace.de/reisen/reiseinformationen/alpenpaesse';
+
 /** Alle geprüften Pässe (DE, AT, CH, IT und Grenzpässe). */
 export const PASSES = passData as Pass[];
 
@@ -167,11 +183,13 @@ export function passLoopVia(
 ): { via: LatLon[]; passes: Pass[] } | null {
   // Ein Pass in Luftlinie r erzeugt im Gebirge grob eine Runde von 3 bis 3,5 mal r Straßen km
   const reach = km / 3.3;
-  const open = passesNear(list, start, reach).filter((x) => !likelyClosed(x.pass, month) && x.km > 3);
+  // Wintersperren verhindern keine Planung (Touren werden oft im Winter für den Sommer geplant).
+  // Bei gleicher Eignung gewinnt der offene Pass knapp, die Tour zeigt Sperren als Hinweis.
+  const open = passesNear(list, start, reach).filter((x) => x.km > 3);
   if (!open.length) return null;
   const score = (x: { pass: Pass; km: number }) => {
     const dirFit = bearing === null ? 1 : Math.cos(((bearingTo(start, passPoint(x.pass)) - bearing) * Math.PI) / 180) * 0.5 + 0.5;
-    return TIER_WEIGHT[x.pass.tier] * 2 + dirFit * 3 + (x.km / reach) * 1.5;
+    return TIER_WEIGHT[x.pass.tier] * 2 + dirFit * 3 + (x.km / reach) * 1.5 - (likelyClosed(x.pass, month) ? 0.5 : 0);
   };
   const ranked = [...open].sort((a, b) => score(b) - score(a));
   const first = ranked[0];

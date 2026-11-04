@@ -3,7 +3,7 @@
  * und prüfen, dann als aktive Tour auf der Karte zeigen.
  */
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +29,8 @@ export default function ScanScreen() {
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => () => abort.current?.abort(), []);
+
+  const { code } = useLocalSearchParams<{ code?: string }>();
 
   const onScan = async (r: BarcodeScanningResult) => {
     if (handled.current) return;
@@ -58,6 +60,13 @@ export default function ScanScreen() {
       setStatus({ kind: 'error', text: e instanceof Error ? e.message : 'Die Tour konnte nicht geplant werden.' });
     }
   };
+
+  // Über einen Link geöffnet (?code=...): Tour sofort übernehmen, ohne Kamera
+  useEffect(() => {
+    if (!code) return;
+    const t = setTimeout(() => onScan({ data: String(code) } as BarcodeScanningResult), 0);
+    return () => clearTimeout(t);
+  }, [code]);
 
   const retry = () => {
     handled.current = false;

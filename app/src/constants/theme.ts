@@ -13,6 +13,7 @@ export const Colors = {
   muted: '#9A9A9F',
   signal: '#E2461C',
   good: '#4CC38A',
+  warn: '#E8B03A',
   onSignal: '#FFFFFF',
 } as const;
 

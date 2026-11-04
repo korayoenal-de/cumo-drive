@@ -8,7 +8,7 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, TextInput, V
 import Svg, { Path } from 'react-native-svg';
 
 import { RouteMap } from '@/components/map/route-map';
-import { PASSES, passesAlong, passSummary } from '@/lib/passes';
+import { closedNote, likelyClosed, PASS_STATUS_URL, PASSES, passesAlong, passSummary } from '@/lib/passes';
 import {
   buildTour, findPlace, locate, newSeed, PHASES, toPlanError,
   type PlanError, type PlanPhase, type Spot, type TourRequest,
@@ -760,6 +760,7 @@ function Result({
   const warnings = tour.warnungen.filter((w) => w.klasse !== 'ok');
   const passes = passesAlong(PASSES, flatten(tour).map((x) => x.p));
   const month = new Date().getMonth() + 1;
+  const closed = passes.map((x) => x.pass).filter((p) => likelyClosed(p, month));
   const openMap = () => {
     setActiveTour(tour, req.profile, req.avoid);
     router.push('/karte');
@@ -790,6 +791,15 @@ function Result({
           </View>
         ))}
       </View>
+
+      {closed.length > 0 && (
+        <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PASS_STATUS_URL)} style={styles.winter}>
+          <AppText style={styles.winterTitle}>Wintersperre möglich</AppText>
+          <AppText variant="caption" style={styles.winterText}>
+            {closedNote(closed)} {closed.length > 1 ? 'sind' : 'ist'} um diese Jahreszeit meist zu. Vor der Fahrt den Status prüfen. Tippen für den aktuellen Passstatus.
+          </AppText>
+        </Pressable>
+      )}
 
       <Pressable accessibilityRole="button" onPress={drive} style={({ pressed }) => [styles.go, pressed && styles.pressed]}>
         <AppText style={styles.goText}>Losfahren</AppText>
@@ -892,6 +902,9 @@ function GroupBlock() {
 }
 
 const styles = StyleSheet.create({
+  winter: { gap: 4, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: 'rgba(232,176,58,0.12)' },
+  winterTitle: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.warn },
+  winterText: { color: Colors.warn },
   flex: { flex: 1, gap: 2 },
   gapS: { gap: Spacing.s },
   gapM: { gap: Spacing.m },

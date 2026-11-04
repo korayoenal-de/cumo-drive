@@ -100,8 +100,30 @@ export function encodeTour(tour: Tour, profile: Profile): string {
   return PREFIX + b64urlEncode(JSON.stringify(payload));
 }
 
+/** Web Adresse für den QR Code: Die iPhone Kamera erkennt sie als Link. Der Code steht hinter #, geht also nicht an den Server. */
+export const SHARE_BASE = 'https://drive.rallycumo.de/t';
+
+export function shareUrl(code: string): string {
+  return `${SHARE_BASE}#${code}`;
+}
+
+/** Link, der die App in Expo Go öffnet und die Tour direkt übernimmt (bis es eine eigene App gibt). */
+export function expoGoLink(code: string): string {
+  return `exp://u.expo.dev/44e0d073-6f59-455d-8a50-0f11f6fef4b7/--/scan?runtime-version=exposdk%3A58.0.0&channel-name=preview&code=${encodeURIComponent(code)}`;
+}
+
+/** Holt den Code aus einem reinen Code, einer Web Adresse mit # oder einem Link mit ?code= */
+export function extractCode(text: string): string {
+  const t = text.trim();
+  const hash = t.indexOf('#');
+  if (hash >= 0) return decodeURIComponent(t.slice(hash + 1));
+  const m = /[?&]code=([^&]+)/.exec(t);
+  if (m) return decodeURIComponent(m[1]);
+  return t;
+}
+
 export function decodeTour(code: string): SharedTour | null {
-  const raw = code.trim();
+  const raw = extractCode(code);
   if (!raw.startsWith(PREFIX)) return null;
   try {
     const d = JSON.parse(b64urlDecode(raw.slice(PREFIX.length))) as { n?: string; p?: Profile; v?: string };
