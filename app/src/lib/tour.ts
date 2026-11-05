@@ -31,13 +31,20 @@ export type Profile = 'kurvig' | 'paesse' | 'entspannt' | 'schnell';
 
 export const PROFILES: { id: Profile; label: string }[] = [
   { id: 'kurvig', label: 'Kurvig' },
-  { id: 'paesse', label: 'Pässe' },
+  { id: 'paesse', label: 'Sehr kurvig' },
   { id: 'entspannt', label: 'Entspannt' },
   { id: 'schnell', label: 'Schnell' },
 ];
 
-/** Auswahl in der Oberfläche: Pässe sind keine eigene Option, Pässe an der Strecke zeigt der Planer immer. */
-export const PROFILE_CHOICES = PROFILES.filter((p) => p.id !== 'paesse');
+/**
+ * Auswahl in der Oberfläche: nur Kurvig und Sehr kurvig, darum geht es in der App.
+ * Sehr kurvig nutzt intern das Profil "paesse" (stärker auf Kurven gewichtet, Runden auch über Pässe).
+ * Entspannt und Schnell bleiben für ältere gespeicherte Touren und die Anfahrt bestehen.
+ */
+export const PROFILE_CHOICES = PROFILES.filter((p) => p.id === 'kurvig' || p.id === 'paesse');
+
+/** Je Etappe einer Route zusätzlich Schnell: zügig zum Ziel, danach die Genussstrecke (bis München schnell, dann sehr kurvig bis Imst). */
+export const LEG_PROFILE_CHOICES = PROFILES.filter((p) => p.id === 'schnell' || p.id === 'kurvig' || p.id === 'paesse');
 
 export function haversine(a: LatLon, b: LatLon): number {
   const r = 6371000;

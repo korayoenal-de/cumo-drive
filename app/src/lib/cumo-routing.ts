@@ -107,7 +107,18 @@ const WIDTH_MODEL = [
 ];
 
 function profileModel(profile: Profile): { if?: string; else_if?: string; multiply_by: string }[] {
-  if (profile === 'kurvig' || profile === 'paesse') {
+  if (profile === 'paesse') {
+    // Sehr kurvig: große Straßen deutlich teurer, gerade Stücke stark abgewertet
+    return [
+      { if: 'road_class == PRIMARY', multiply_by: '0.2' },
+      { if: 'road_class == SECONDARY', multiply_by: '0.55' },
+      { if: 'road_class == RESIDENTIAL', multiply_by: '0.4' },
+      { if: 'curvature > 0.95', multiply_by: '0.15' },
+      { else_if: 'curvature > 0.85', multiply_by: '0.4' },
+      { else_if: 'curvature > 0.75', multiply_by: '0.8' },
+    ];
+  }
+  if (profile === 'kurvig') {
     return [
       { if: 'road_class == PRIMARY', multiply_by: '0.35' },
       { if: 'road_class == SECONDARY', multiply_by: '0.7' },

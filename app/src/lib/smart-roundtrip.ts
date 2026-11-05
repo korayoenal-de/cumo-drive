@@ -104,7 +104,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         curvy ? favoriteLoops(req, free ? undefined : heading, seed, signal) : Promise.resolve([]),
       ]);
       // Kurze Stichstraßen hin und zurück (Sackgasse ins Tal und wieder raus) sind nie schön: stark abwerten
-      for (const t of [...own, ...loops]) candidates.push({ ...t, engine: 'cumo', score: scoreTour(t, t.curves, 0, req.km) - spurKm(t) * 60 + favKm(t) * 4 });
+      for (const t of [...own, ...loops]) candidates.push({ ...t, engine: 'cumo', score: scoreTour(t, t.curves, 0, req.km) - spurKm(t) * 100 + favKm(t) * 4 });
       const clean = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0);
       if (clean.length) {
         const best = clean.sort((a, b) => b.score - a.score)[0];
@@ -155,9 +155,19 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
   return candidates[0];
 }
 
-/** Doppelt gefahrene km auf kurzen Stücken: Stichstraßen und kleine Schleifen durch Ortschaften. */
+/**
+ * Doppelt gefahrene km auf kurzen Stücken: Stichstraßen und kleine Schleifen durch Ortschaften.
+ * Rund um den Start zählt nicht, Hin und Rückweg von zu Hause lassen sich nicht vermeiden.
+ */
+function spurOf(t: PlannedTour) {
+  const line = flatten(t).map((x) => x.p);
+  const d = doubledStretch(line, 300, 20);
+  const home = line[0];
+  const points = d.points.filter((q) => haversine(q, home) > 1500);
+  return { km: d.points.length ? (d.km * points.length) / d.points.length : 0, points };
+}
 function spurKm(t: PlannedTour): number {
-  return doubledStretch(flatten(t).map((x) => x.p), 300, 20).km;
+  return spurOf(t).km;
 }
 
 /**
@@ -167,7 +177,7 @@ function spurKm(t: PlannedTour): number {
  */
 async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Promise<SmartTour> {
   const line = flatten(t);
-  const spur = doubledStretch(line.map((x) => x.p), 300, 20);
+  const spur = spurOf(t);
   if (spur.km < 0.2) return t;
   const via: LatLon[] = [];
   let last = 0;
@@ -225,8 +235,9 @@ async function favoriteLoops(req: SmartRequest, heading: number | undefined, see
   const roads = [...near.slice(shift), ...near.slice(0, shift)];
   const plans: LatLon[][] = [];
   for (const r of roads.slice(0, 2)) {
-    const a = r.line[0];
-    const b = r.line[r.line.length - 1];
+    // nicht genau die Enden: die liegen oft an Abzweigen oder Ortsrändern, dort entstehen Stichstraßen
+    const a = r.line[Math.min(r.line.length - 1, Math.max(1, Math.round(r.line.length * 0.1)))];
+    const b = r.line[Math.max(0, Math.min(r.line.length - 2, Math.round(r.line.length * 0.9)))];
     // je Seed andersherum fahren, damit Neu würfeln auch hier Abwechslung bringt
     const near1 = haversine(req.start, a) <= haversine(req.start, b);
     const [p, q] = near1 !== (seed % 2 === 1) ? [a, b] : [b, a];
@@ -234,8 +245,8 @@ async function favoriteLoops(req: SmartRequest, heading: number | undefined, see
     // Zweite Strecke anhängen, falls eine weitere in der Nähe des Endes liegt
     const next = roads.find((o) => o !== r && Math.min(...o.line.map((x) => haversine(q, x))) < reach * 500);
     if (next) {
-      const c = next.line[0];
-      const d = next.line[next.line.length - 1];
+      const c = next.line[Math.min(next.line.length - 1, Math.max(1, Math.round(next.line.length * 0.1)))];
+      const d = next.line[Math.max(0, Math.min(next.line.length - 2, Math.round(next.line.length * 0.9)))];
       const [m, n] = haversine(q, c) <= haversine(q, d) ? [c, d] : [d, c];
       plans.push([req.start, p, q, m, n, req.start]);
     }

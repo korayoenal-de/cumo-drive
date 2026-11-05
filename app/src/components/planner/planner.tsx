@@ -37,7 +37,7 @@ import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { doubledStretch } from '@/lib/doubled';
 import { insertVia, movePoint, passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
 import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
-import { flatten, formatKm, haversine, legs, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour, type Warning } from '@/lib/tour';
+import { flatten, formatKm, haversine, legs, PROFILES, PROFILE_CHOICES, LEG_PROFILE_CHOICES, type LatLon, type Profile, type Tour, type Warning } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { selectVehicle, useVehicles } from '@/lib/vehicle';
 
@@ -54,7 +54,7 @@ const DURATIONS: { minutes: number; big: string; unit: string }[] = [
 ];
 
 const STYLE_PROFILES: Profile[] = ['kurvig', 'entspannt'];
-const PROFILE_WORD: Record<Profile, string> = { kurvig: 'kurvig', paesse: 'mit Pässen', entspannt: 'entspannt', schnell: 'zügig' };
+const PROFILE_WORD: Record<Profile, string> = { kurvig: 'kurvig', paesse: 'sehr kurvig', entspannt: 'entspannt', schnell: 'zügig' };
 
 const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
 const MIN_STEPS = [60, 90, 120, 180, 240, 300, 420];
@@ -219,6 +219,7 @@ export default function Planner() {
   }
 
   // Welche Art der schnellen Runde zuletzt offen war
+  // Beschreiben ist entfernt: Schnelle Runde ist immer die Einstellung
   const lastRunde = useRef<Mode>('rundtour');
   function switchMode(m: Mode) {
     if (m !== 'tour') lastRunde.current = m;
@@ -437,16 +438,6 @@ export default function Planner() {
   } else {
     body = (
     <>
-      {mode !== 'tour' && (
-        <Segmented
-          value={mode}
-          options={[
-            { id: 'rundtour', label: 'Einstellen' },
-            { id: 'beschreiben', label: 'Beschreiben' },
-          ]}
-          onChange={switchMode}
-        />
-      )}
 
       {mode === 'tour' ? (
         <TourMode
@@ -1319,7 +1310,7 @@ function TourMode({
             </View>
             {choosing && (
               <View style={styles.wrap}>
-                {PROFILE_CHOICES.map((c) => (
+                {LEG_PROFILE_CHOICES.map((c) => (
                   <Pill
                     key={c.id}
                     label={c.label}
@@ -1641,27 +1632,6 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Segmented<T extends string>({
-  value, options, onChange,
-}: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void }) {
-  return (
-    <View style={styles.segment} accessibilityRole="tablist">
-      {options.map((o) => {
-        const active = o.id === value;
-        return (
-          <Pressable
-            key={o.id}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
-            onPress={() => onChange(o.id)}
-            style={[styles.segItem, active && styles.segOn]}>
-            <AppText style={[styles.segText, active && styles.segTextOn]}>{o.label}</AppText>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
 
 /** Tabs als große Schrift im Stil von Trade Republic: aktiv in text, inaktiv in faint, ohne Fläche. */
 function TypoTabs<T extends string>({
