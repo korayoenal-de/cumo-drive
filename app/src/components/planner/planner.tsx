@@ -13,6 +13,7 @@ import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { MapLayersButton } from '@/components/map/map-settings-sheet';
 import { RouteMap } from '@/components/map/route-map';
 import { closedHint, passState, usePassLive } from '@/lib/pass-live';
 import { PASS_STATUS_URL, PASSES, passesAlong, passPoint, passSummary, searchPasses } from '@/lib/passes';
@@ -734,7 +735,9 @@ export default function Planner() {
       grabberLabel="Planer Höhe ändern"
       header={header}
       background={(covered) => (
-        <RouteMap
+        <>
+          <RouteMap
+          layers
           tour={mapTour}
           pins={pins}
           showUser
@@ -745,6 +748,8 @@ export default function Planner() {
           edgePadding={{ top: insets.top + Spacing.xxxl, right: Spacing.xxxl, bottom: Spacing.xl + insets.bottom, left: Spacing.xxxl }}
           style={StyleSheet.absoluteFill}
         />
+          <MapLayersButton style={[styles.layersBtn, { top: insets.top + Spacing.s }]} />
+        </>
       )}>
       {body}
     </MapSheet>
@@ -2283,6 +2288,7 @@ const styles = StyleSheet.create({
   field: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 48, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.m },
   fieldInput: { flex: 1, height: 48, color: Colors.text, fontFamily: Fonts.regular, fontSize: 16 },
   fieldIcon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  layersBtn: { position: 'absolute', right: Spacing.l },
   pointRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.s },
   pointMain: { flex: 1, minHeight: 52, justifyContent: 'center', paddingHorizontal: Spacing.s },
   symbol: { width: 28, alignItems: 'center', justifyContent: 'center' },

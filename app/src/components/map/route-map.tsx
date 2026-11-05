@@ -8,6 +8,10 @@ import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-na
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius } from '@/constants/theme';
+import { listDriveTracks } from '@/lib/drives';
+import { useLibrary } from '@/lib/library';
+import { useMapSettings, type MapStyle } from '@/lib/map-settings';
+import { passPoint, PASSES } from '@/lib/passes';
 import type { CheckClass, LatLon } from '@/lib/tour';
 
 import { CLASS_LINE, ROLE_COLOR, sampleLine, tourWarnings, type RouteMapProps } from './route-map-shared';
@@ -19,6 +23,12 @@ const EDGE = { top: 60, right: 40, bottom: 60, left: 40 };
 const FOLLOW_PAUSE_MS = 10000;
 
 const ll = ([latitude, longitude]: LatLon): LatLng => ({ latitude, longitude });
+
+const MAP_TYPE: Record<MapStyle, 'mutedStandard' | 'hybrid' | 'hybridFlyover'> = { standard: 'mutedStandard', satellit: 'hybrid', '3d': 'hybridFlyover' };
+const TIER_DOT = { ikone: Colors.signal, bekannt: Colors.warn, mittel: Colors.text } as const;
+
+/** Spuren der eigenen Fahrten, einmal geladen und dann behalten */
+let driveCache: { id: string; p: LatLng[] }[] | null = null;
 
 export function RouteMap({
   tour,
@@ -37,7 +47,31 @@ export function RouteMap({
   onLongPress,
   focus,
   dashed,
+  layers = false,
 }: RouteMapProps) {
+  const settings = useMapSettings();
+  const library = useLibrary();
+  const showTours = layers && settings.myTours;
+  const tourLines = useMemo(
+    () => (showTours ? library.map((t) => ({ id: t.id, p: sampleLine(t, 250).map(ll) })).filter((t) => t.p.length > 1) : []),
+    [showTours, library],
+  );
+  const showDrives = layers && settings.drives;
+  const [drives, setDrives] = useState(driveCache);
+  useEffect(() => {
+    if (!showDrives || driveCache) return;
+    let alive = true;
+    listDriveTracks()
+      .then((d) => {
+        driveCache = d.map((x) => ({ id: x.id, p: x.p.map(ll) }));
+        if (alive) setDrives(driveCache);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [showDrives]);
+
   const map = useRef<MapView>(null);
   const markers = useRef<(MapMarker | null)[]>([]);
   const [ready, setReady] = useState(false);
@@ -58,7 +92,8 @@ export function RouteMap({
   }, [tour]);
 
   const fitCoords = useMemo(() => sampleLine(tour, 300).map(ll), [tour]);
-  const warnings = useMemo(() => tourWarnings(tour), [tour]);
+  const allWarnings = useMemo(() => tourWarnings(tour), [tour]);
+  const warnings = settings.warnings ? allWarnings : [];
   const all = tour.linie.flatMap((r) => r.p);
   const start = tour.wegpunkte[0] ?? all[0];
   const ziel = tour.wegpunkte[tour.wegpunkte.length - 1] ?? all[all.length - 1];
@@ -167,13 +202,13 @@ export function RouteMap({
         mapPadding={mapPadding}
         style={StyleSheet.absoluteFill}
         userInterfaceStyle="dark"
-        mapType="mutedStandard"
+        mapType={MAP_TYPE[settings.style]}
         showsUserLocation={(showUser || followUser) && !position}
         followsUserLocation={followUser && !position}
         showsMyLocationButton={false}
         showsCompass={interactive && !followUser}
         showsPointsOfInterests={false}
-        showsBuildings={followUser}
+        showsBuildings={followUser || settings.style === '3d'}
         showsTraffic={false}
         toolbarEnabled={false}
         pitchEnabled={interactive}
@@ -187,6 +222,27 @@ export function RouteMap({
             ? (e) => onLongPress([e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude])
             : undefined
         }>
+        {tourLines.map((t) => (
+          <Polyline key={`meine-${t.id}`} coordinates={t.p} strokeColor="rgba(244,244,242,0.45)" strokeWidth={2.5} lineCap="round" lineJoin="round" zIndex={0} />
+        ))}
+        {showDrives &&
+          (drives ?? []).map((d) => (
+            <Polyline key={`fahrt-${d.id}`} coordinates={d.p} strokeColor="rgba(76,195,138,0.7)" strokeWidth={2.5} lineCap="round" lineJoin="round" zIndex={0} />
+          ))}
+        {layers &&
+          settings.passes &&
+          PASSES.map((ps) => (
+            <Marker
+              key={`pass-${ps.id}`}
+              coordinate={ll(passPoint(ps))}
+              anchor={{ x: 0.5, y: 0.5 }}
+              title={ps.name}
+              description={`${ps.ele.toLocaleString('de-DE')} m`}
+              zIndex={10}
+              tracksViewChanges={false}>
+              <View style={[styles.passDot, { backgroundColor: TIER_DOT[ps.tier] }]} />
+            </Marker>
+          ))}
         {runs.map((r, i) => (
           <Polyline
             key={`rand-${r.key}-${i}`}
@@ -341,6 +397,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.signal,
     marginTop: -3,
   },
+  passDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: Colors.ground },
   pin: { paddingHorizontal: 8, height: 26, borderRadius: 13, backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.signal, justifyContent: 'center' },
   pinText: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.text },
   other: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.surface, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },

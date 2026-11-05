@@ -36,6 +36,8 @@ export type RouteMapProps = {
   dashed?: LatLon[] | null;
   /** Punkt, auf den die Karte springt, solange keine Tour Linie da ist */
   focus?: LatLon | null;
+  /** Zusätzliche Ebenen aus den Karteneinstellungen zeigen (Pässe, Meine Touren, Fahrten) */
+  layers?: boolean;
 };
 
 export type MapPin = { id: string; p: LatLon; label: string; title: string };

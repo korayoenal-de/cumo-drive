@@ -110,3 +110,41 @@ export async function rateDrive(id: string, rating: DriveRating, reasons?: strin
   const { error } = await supabase.rpc('rate_drive', { p_id: id, p_rating: rating, p_reasons: rating === 1 && reasons?.length ? reasons : null, p_note: rating === 1 ? (note ?? null) : null });
   if (error) throw new Error(error.message);
 }
+
+function decode(str: string): LatLon[] {
+  const out: LatLon[] = [];
+  let i = 0;
+  let la = 0;
+  let lo = 0;
+  const next = () => {
+    let r = 0;
+    let s = 0;
+    let b: number;
+    do {
+      b = str.charCodeAt(i++) - 63;
+      r |= (b & 0x1f) << s;
+      s += 5;
+    } while (b >= 0x20 && i < str.length);
+    return r & 1 ? ~(r >> 1) : r >> 1;
+  };
+  while (i < str.length) {
+    la += next();
+    lo += next();
+    out.push([la / 1e5, lo / 1e5]);
+  }
+  return out;
+}
+
+/** Spuren der letzten Fahrten für die Karte, jede auf höchstens 400 Punkte ausgedünnt. */
+export async function listDriveTracks(limit = 60): Promise<{ id: string; p: LatLon[] }[]> {
+  const { data, error } = await supabase.from('drives').select('id,track').order('started_at', { ascending: false }).limit(limit);
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as { id: string; track: string | null }[])
+    .filter((d) => d.track)
+    .map((d) => {
+      const p = decode(d.track!);
+      const step = Math.ceil(p.length / 400);
+      return { id: d.id, p: step > 1 ? p.filter((_, k) => k % step === 0 || k === p.length - 1) : p };
+    })
+    .filter((d) => d.p.length > 1);
+}
