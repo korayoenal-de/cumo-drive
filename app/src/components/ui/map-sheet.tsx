@@ -29,6 +29,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollViewMarker } from 'react-native-screens/experimental';
 
 import { TAB_BAR_SPACE } from '@/components/ui/screen';
+import { reportScroll } from '@/lib/tab-bar';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 
 /** 0 klein (nur der Kopf), 1 halb, 2 groß */
@@ -158,6 +159,7 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
     collapsing.current = false;
   }, [detent]);
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
+    reportScroll(e.nativeEvent.contentOffset.y);
     if (detent === 2 && !collapsing.current && e.nativeEvent.contentOffset.y < -48) {
       collapsing.current = true;
       onDetentChange(1);
