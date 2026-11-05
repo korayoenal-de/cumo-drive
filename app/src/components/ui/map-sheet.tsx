@@ -2,10 +2,11 @@
  * Karte mit Blatt darüber, wie in Apple Maps: Die Karte füllt den ganzen Screen, das Blatt liegt
  * darauf und hat drei Höhen (klein, halb, groß). Ziehen am Griff verschiebt das Blatt, beim Loslassen
  * rastet es mit einer Feder an der nächsten Höhe ein. Einfache Regeln:
- * 1. Der Kopf (Tabs oder Überschrift) steht immer fest, er scrollt nie weg.
+ * 1. Der Kopf (Tabs oder Überschrift) steht oben im Inhalt und scrollt mit (kein fester Kopf,
+ *    Entscheidung 5.11.: er verdeckte Inhalt). In der kleinen Höhe ist nur er zu sehen.
  * 2. Klein und halb zieht jede Wischbewegung das ganze Blatt, nichts scrollt.
- * 3. Erst ganz offen scrollt der Inhalt unter dem Kopf; ganz oben weiter nach unten ziehen bringt
- *    das Blatt zurück auf halb. Läuft Inhalt unter dem Kopf durch, trennt ihn eine feine Linie.
+ * 3. Erst ganz offen scrollt der Inhalt; ganz oben weiter nach unten ziehen bringt das Blatt
+ *    zurück auf halb.
  * Der Inhalt reicht bis zum unteren Rand und läuft unter der Tab Leiste durch; der Weichzeichner
  * von iOS 26 an dieser Kante ist abgeschaltet, unten bleibt Luft, damit alles hochscrollbar ist.
  *
@@ -154,9 +155,7 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
   /** Der Inhaltsbereich wächst mit dem Blatt bis zum unteren Rand; unten Luft für die Tab Leiste */
-  const areaStyle = useAnimatedStyle(() => ({ height: Math.max(0, large - y.get() - GRAB_H - headH) }));
-  /** Feine Linie unter dem Kopf, sobald Inhalt darunter durchläuft */
-  const [scrolled, setScrolled] = useState(false);
+  const areaStyle = useAnimatedStyle(() => ({ height: Math.max(0, large - y.get() - GRAB_H) }));
 
   /** Volle Höhe: oben weiter nach unten ziehen bringt das Blatt zurück auf halb */
   const collapsing = useRef(false);
@@ -165,8 +164,6 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   }, [detent]);
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     reportScroll(e.nativeEvent.contentOffset.y);
-    const sc = e.nativeEvent.contentOffset.y > 4;
-    if (sc !== scrolled) setScrolled(sc);
     if (detent === 2 && !collapsing.current && e.nativeEvent.contentOffset.y < -48) {
       collapsing.current = true;
       onDetentChange(1);
@@ -203,10 +200,6 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
         </View>
         {/* Ab iOS 26 legt das System unter die schwebende Tab Leiste einen Weichzeichner über den
             Inhalt (Scroll Edge Effect). Im Blatt verdeckt das Inhalt, deshalb aus. */}
-        {/* Kopf (Tabs oder Überschrift) steht immer fest und zieht das Blatt */}
-        <View {...pan.sheet.panHandlers} onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))} style={[styles.head, scrolled && styles.headLine]}>
-          {header}
-        </View>
         <Animated.View style={areaStyle} {...(detent < 2 && !lockScroll ? pan.sheet.panHandlers : null)}>
         <ScrollViewMarker style={styles.flex} scrollEdgeEffects={{ bottom: 'hidden' }}>
         <ScrollView
@@ -220,6 +213,10 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
           keyboardDismissMode="interactive"
           automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}>
+          {/* Kopf (Tabs oder Überschrift) scrollt mit; seine Höhe bestimmt die kleine Höhe des Blatts */}
+          <View onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))} style={styles.head}>
+            {header}
+          </View>
           <View style={styles.body}>{children}</View>
         </ScrollView>
         </ScrollViewMarker>
@@ -241,10 +238,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: Radius.l,
     boxShadow: Shadow.sheet,
   },
-  head: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.l, paddingBottom: Spacing.m, gap: Spacing.s, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'transparent' },
-  headLine: { borderBottomColor: Colors.line },
+  head: { paddingTop: Spacing.l, paddingBottom: Spacing.xxl, gap: Spacing.s },
   body: { gap: Spacing.section },
   grabberZone: { height: GRAB_H, alignItems: 'center', justifyContent: 'center' },
   grabber: { width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.surface2 },
-  content: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.l },
+  content: { paddingHorizontal: Spacing.xl },
 });
