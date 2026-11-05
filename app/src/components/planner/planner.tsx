@@ -7,7 +7,9 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as Location from 'expo-location';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Switch, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, Linking, PanResponder, Pressable, ScrollView, StyleSheet, Switch, TextInput, View, type ScrollViewInstance } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -23,7 +25,6 @@ import { ElevationChart } from '@/components/planner/elevation-chart';
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
 import { ActionBar } from '@/components/ui/action-bar';
-import { ReorderPoints } from '@/components/planner/reorder-points';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
@@ -141,6 +142,7 @@ export default function Planner() {
   const toTop = () => scroll.current?.scrollTo({ y: 0, animated: false });
   /** Beim Tippen in ein Suchfeld groß, damit Tastatur und Treffer Platz haben */
   const expand = () => setDetent(2);
+  const [dragging, setDragging] = useState(false);
 
   // Beschreiben
   const [text, setText] = useState('');
@@ -452,6 +454,7 @@ export default function Planner() {
           pending={pending}
           setPending={setPending}
           onSearchFocus={expand}
+          onDragChange={setDragging}
         />
       ) : mode === 'beschreiben' ? (
         <>
@@ -727,6 +730,7 @@ export default function Planner() {
       detent={detent}
       onDetentChange={setDetent}
       scrollRef={scroll}
+      lockScroll={dragging}
       grabberLabel="Planer Höhe ändern"
       header={header}
       background={(covered) => (
@@ -1030,7 +1034,7 @@ function useTourPlan(onPlanned?: () => void) {
 type EditTarget = { kind: PointKind; index?: number; insert?: boolean };
 
 function TourMode({
-  plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onSearchFocus,
+  plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onSearchFocus, onDragChange,
 }: {
   plan: TourPlan;
   here: Spot | null;
@@ -1045,6 +1049,8 @@ function TourMode({
   setPending: (p: PendingPoint | null) => void;
   /** Suchfeld bekommt den Fokus: das Blatt geht auf volle Höhe */
   onSearchFocus: () => void;
+  /** Ziehen am Anfasser läuft: das Blatt darf solange nicht scrollen */
+  onDragChange: (on: boolean) => void;
 }) {
   const session = useSession();
   const live = usePassLive();
@@ -1060,8 +1066,16 @@ function TourMode({
   const [locMsg, setLocMsg] = useState<string | null>(null);
   /** Punkt, dessen Aktionen (Ändern, Verschieben, Entfernen) gerade offen sind */
   const [menu, setMenu] = useState<string | null>(null);
-  /** Drag and Drop Modus für die Reihenfolge der Punkte */
-  const [reordering, setReordering] = useState(false);
+  /** Drag and Drop am Anfasser: welcher Punkt gezogen wird und wohin er fallen würde */
+  const [drag, setDrag] = useState<{ from: number; to: number } | null>(null);
+  const dragY = useSharedValue(0);
+  /** Mitte jeder Punktzeile in der Liste, für das Ziel beim Ziehen */
+  const centers = useRef<number[]>([]);
+  const dragStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: dragY.get() }, { scale: 1.02 }],
+    boxShadow: '0 10px 28px rgba(0,0,0,0.55)',
+    backgroundColor: Colors.surface2,
+  }));
   /** Etappe, deren Profilauswahl gerade offen ist */
   const [legMenu, setLegMenu] = useState<number | null>(null);
 
@@ -1211,7 +1225,7 @@ function TourMode({
   const nameOf = (p: LatLon) => plan.names[keyOf(p)] ?? `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`;
 
   /** Eine Zeile der Punktliste mit Aktionen und, falls offen, dem Suchfeld darunter. */
-  function pointRow(id: string, kind: PointKind, p: LatLon | null, index?: number) {
+  function pointRow(id: string, kind: PointKind, p: LatLon | null, index: number | undefined, slot: number) {
     const viaNo = (index ?? 0) + 1;
     const role = kind === 'start' ? 'Start' : kind === 'ziel' ? 'Ziel' : `Zwischenziel ${viaNo}`;
     const isEditing = !!edit && !edit.insert && edit.kind === kind && (kind !== 'via' || edit.index === index);
@@ -1232,25 +1246,49 @@ function TourMode({
       <View key={id} style={styles.gapS}>
         {/* Beim Bearbeiten ersetzt das Suchfeld die Zeile, sonst stünden Platzhalter und Feld doppelt da */}
         {!isEditing && (
-        <View style={styles.pointRow}>
+        <Animated.View style={[styles.pointRow, drag?.from === slot && dragStyle, drag && drag.from !== slot && drag.to === slot && styles.dropTarget]}>
           <PointSymbol kind={kind} label={String(viaNo)} />
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${role} ${p ? `ändern, jetzt ${nameOf(p)}` : 'wählen'}`}
             onPress={() => openEdit({ kind, index })}
-            onLongPress={() => {
-              if (!plan.complete) return;
-              setMenu(null);
-              setLegMenu(null);
-              setReordering(true);
-            }}
-            delayLongPress={350}
-            accessibilityHint="Gedrückt halten, um die Reihenfolge zu ändern"
             style={styles.pointMain}>
             <AppText variant="title" numberOfLines={1} style={!p && styles.slotPlaceholder}>
               {p ? nameOf(p) : kind === 'start' ? 'Start wählen' : 'Ziel wählen'}
             </AppText>
           </Pressable>
+          {p && plan.complete && (
+            <DragHandle
+              label={`${role} verschieben`}
+              onStart={() => {
+                setMenu(null);
+                setLegMenu(null);
+                onDragChange(true);
+                setDrag({ from: slot, to: slot });
+              }}
+              onMove={(dy) => {
+                dragY.set(dy);
+                const c = centers.current;
+                const y = (c[slot] ?? 0) + dy;
+                let best = slot;
+                for (let k = 0; k < c.length; k++) if (Math.abs(c[k] - y) < Math.abs(c[best] - y)) best = k;
+                setDrag((d) => (d && d.to !== best ? { ...d, to: best } : d));
+              }}
+              onEnd={() => {
+                setDrag((d) => {
+                  if (d && d.to !== d.from) {
+                    const order = centers.current.map((_, k) => k);
+                    order.splice(d.from, 1);
+                    order.splice(d.to, 0, d.from);
+                    plan.reorder(order, profile, avoid);
+                  }
+                  return null;
+                });
+                dragY.set(0);
+                onDragChange(false);
+              }}
+            />
+          )}
           {p && (
             <Pressable
               accessibilityRole="button"
@@ -1264,7 +1302,7 @@ function TourMode({
               <AppText style={styles.moreText}>⋯</AppText>
             </Pressable>
           )}
-        </View>
+        </Animated.View>
         )}
         {open && !isEditing && (
           <View style={styles.wrap}>
@@ -1406,37 +1444,29 @@ function TourMode({
       </View>
 
       <Section label="Route">
-        {reordering && plan.complete ? (
-          <View style={styles.gapM}>
-            <ReorderPoints
-              items={slots.filter((p): p is LatLon => !!p).map((p, i) => ({ key: `${i}-${keyOf(p)}`, label: nameOf(p) }))}
-              onReorder={(order) => plan.reorder(order, profile, avoid)}
-            />
-            <View style={styles.reorderBar}>
-              <AppText variant="caption" muted style={styles.flex}>
-                Gedrückt halten und ziehen. Oben ist der Start, unten das Ziel.
-              </AppText>
-              <SmallButton label="Fertig" onPress={() => setReordering(false)} strong />
-            </View>
-          </View>
-        ) : (
         <View>
           {slots.map((p, i) => {
             const kind: PointKind = i === 0 ? 'start' : i === slots.length - 1 ? 'ziel' : 'via';
             return (
-              <View key={kind === 'via' ? `via${i - 1}-${p ? keyOf(p) : ''}` : kind}>
-                {pointRow(kind === 'via' ? `via${i - 1}` : kind, kind, p, kind === 'via' ? i - 1 : undefined)}
+              <View
+                key={kind === 'via' ? `via${i - 1}-${p ? keyOf(p) : ''}` : kind}
+                style={drag?.from === i && styles.dragging}
+                onLayout={(e) => {
+                  // Mitte der Punktzeile (oben in diesem Block, 52 hoch)
+                  centers.current[i] = e.nativeEvent.layout.y + 26;
+                  centers.current.length = slots.length;
+                }}>
+                {pointRow(kind === 'via' ? `via${i - 1}` : kind, kind, p, kind === 'via' ? i - 1 : undefined, i)}
                 {i < slots.length - 1 && legRow(i, p, slots[i + 1])}
               </View>
             );
           })}
           {plan.complete && (
-            <Pressable accessibilityRole="button" onPress={() => setReordering(true)} style={styles.linkBtn}>
-              <AppText style={styles.linkText}>Reihenfolge ändern</AppText>
+            <Pressable accessibilityRole="button" onPress={() => plan.swap(profile, avoid)} style={styles.linkBtn}>
+              <AppText style={styles.linkText}>Start und Ziel tauschen</AppText>
             </Pressable>
           )}
         </View>
-        )}
       </Section>
 
       {plan.step && (
@@ -2028,6 +2058,39 @@ function Warnings({ warnings, checked }: { warnings: Warning[]; checked: boolean
   );
 }
 
+/**
+ * Anfasser zum Verschieben eines Punkts: drei Striche rechts in der Zeile. Ziehen beginnt sofort
+ * beim Berühren des Anfassers, ohne Bibliothek (PanResponder), die Zeile folgt dem Finger.
+ */
+function DragHandle({ label, onStart, onMove, onEnd }: { label: string; onStart: () => void; onMove: (dy: number) => void; onEnd: () => void }) {
+  const cb = useRef({ onStart, onMove, onEnd });
+  useEffect(() => {
+    cb.current = { onStart, onMove, onEnd };
+  });
+  // Die Handler lesen die jeweils neuesten Callbacks aus der Ref, erst beim Ziehen, nie beim Rendern
+  /* eslint-disable react-hooks/refs */
+  const pan = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderTerminationRequest: () => false,
+        onShouldBlockNativeResponder: () => true,
+        onPanResponderGrant: () => cb.current.onStart(),
+        onPanResponderMove: (_, g) => cb.current.onMove(g.dy),
+        onPanResponderRelease: () => cb.current.onEnd(),
+        onPanResponderTerminate: () => cb.current.onEnd(),
+      }),
+    [],
+  );
+  /* eslint-enable react-hooks/refs */
+  return (
+    <View {...pan.panHandlers} accessible accessibilityLabel={label} accessibilityHint="Halten und nach oben oder unten ziehen" style={styles.handle}>
+      <SymbolView name="line.3.horizontal" size={17} tintColor={Colors.muted} weight="semibold" />
+    </View>
+  );
+}
+
 /** Gruppe: Mitfahrer lädt man mit Namen zu einer gespeicherten Tour ein (Meine Touren, Als Gruppe fahren). */
 function GroupBlock({ savedId }: { savedId: string | null }) {
   return (
@@ -2046,7 +2109,9 @@ function GroupBlock({ savedId }: { savedId: string | null }) {
 }
 
 const styles = StyleSheet.create({
-  reorderBar: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
+  dragging: { zIndex: 10 },
+  handle: { width: 40, height: 52, alignItems: 'center', justifyContent: 'center' },
+  dropTarget: { backgroundColor: Colors.signalTint },
   changed: { color: Colors.warn },
   winter: { gap: 4, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: 'rgba(232,176,58,0.12)' },
   winterTitle: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.warn },

@@ -61,9 +61,11 @@ type Props = {
   scrollRef?: RefObject<ScrollViewInstance | null>;
   /** Sprechtext für den Griff */
   grabberLabel: string;
+  /** Inhalt darf gerade nicht scrollen (etwa beim Ziehen eines Punkts) */
+  lockScroll?: boolean;
 };
 
-export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel }: Props) {
+export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel, lockScroll }: Props) {
   const insets = useSafeAreaInsets();
   const win = useWindowDimensions();
   const [boxH, setBoxH] = useState(0);
@@ -205,13 +207,13 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
         <View {...pan.sheet.panHandlers} onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))} style={[styles.head, scrolled && styles.headLine]}>
           {header}
         </View>
-        <Animated.View style={areaStyle} {...(detent < 2 ? pan.sheet.panHandlers : null)}>
+        <Animated.View style={areaStyle} {...(detent < 2 && !lockScroll ? pan.sheet.panHandlers : null)}>
         <ScrollViewMarker style={styles.flex} scrollEdgeEffects={{ bottom: 'hidden' }}>
         <ScrollView
           ref={scrollRef}
           style={styles.flex}
           contentContainerStyle={[styles.content, { paddingBottom: bottomSpace + Spacing.xl }]}
-          scrollEnabled={detent === 2}
+          scrollEnabled={detent === 2 && !lockScroll}
           onScroll={onScroll}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
