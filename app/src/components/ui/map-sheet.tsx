@@ -164,6 +164,8 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   }, [detent]);
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     reportScroll(e.nativeEvent.contentOffset.y);
+    // Unter voller Höhe bleibt der Inhalt immer oben, der Kopf ist dann immer zu sehen
+    if (detent < 2 && e.nativeEvent.contentOffset.y > 1) scrollRef?.current?.scrollTo({ y: 0, animated: false });
     if (detent === 2 && !collapsing.current && e.nativeEvent.contentOffset.y < -48) {
       collapsing.current = true;
       onDetentChange(1);
@@ -178,8 +180,18 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   }
 
   // Unter voller Höhe scrollt nichts: zurück an den Anfang, damit der Kopf zu sehen ist
+  // (Kopf versteckt bei halber Höhe am 5.11.: ein Aufruf reichte nicht, wenn das Scrollen im selben
+  // Moment gesperrt wird. Daher gleich, nach dem nächsten Bild und nach der Feder noch einmal.)
   useEffect(() => {
-    if (detent < 2) scrollRef?.current?.scrollTo({ y: 0, animated: true });
+    if (detent === 2) return;
+    const top = () => scrollRef?.current?.scrollTo({ y: 0, animated: false });
+    top();
+    const raf = requestAnimationFrame(top);
+    const t = setTimeout(top, 400);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+    };
   }, [detent, scrollRef]);
 
   return (
