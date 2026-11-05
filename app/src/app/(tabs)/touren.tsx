@@ -154,54 +154,9 @@ export default function Touren() {
 
           <View style={styles.list}>
             {shown.length === 0 && <AppText muted>Keine Tour passt zur Suche.</AppText>}
-            {shown.map((t) => {
-              const isOpen = open === t.id;
-              return (
-                <View key={t.id} style={styles.card}>
-                  <Pressable accessibilityRole="button" accessibilityState={{ expanded: isOpen }} onPress={() => setOpen(isOpen ? null : t.id)} style={styles.rowMain}>
-                    <AppText style={styles.name} numberOfLines={2}>
-                      {t.name}
-                    </AppText>
-                    <AppText variant="caption" muted>
-                      {[
-                        `${formatKm(t.laenge_km, 0)} km`,
-                        t.curves ? `${t.curves} Kurven` : null,
-                        t.folder || null,
-                        new Date(t.updatedAt).toLocaleDateString('de-DE'),
-                        t.cloudId ? 'im Konto' : null,
-                      ]
-                        .filter(Boolean)
-                        .join(', ')}
-                    </AppText>
-                  </Pressable>
-                  {isOpen && (
-                    <View style={styles.gapS}>
-                      <Pressable accessibilityRole="button" onPress={() => drive(t)} style={styles.primary}>
-                        <AppText style={styles.primaryText}>Losfahren</AppText>
-                      </Pressable>
-                      <TourDetails tour={t} />
-                      <View style={styles.row}>
-                        <Pressable accessibilityRole="button" onPress={() => show(t)} style={[styles.secondary, styles.flex]}>
-                          <AppText style={styles.secondaryText}>Auf der Karte</AppText>
-                        </Pressable>
-                        <Pressable
-                          accessibilityRole="button"
-                          onPress={() => {
-                            if (confirm === t.id) {
-                              deleteTour(t.id);
-                              setConfirm(null);
-                              setOpen(null);
-                            } else setConfirm(t.id);
-                          }}
-                          style={[styles.secondary, styles.flex, confirm === t.id && styles.danger]}>
-                          <AppText style={[styles.secondaryText, confirm === t.id && styles.dangerText]}>{confirm === t.id ? 'Wirklich löschen' : 'Löschen'}</AppText>
-                        </Pressable>
-                      </View>
-                    </View>
-                  )}
-                </View>
-              );
-            })}
+            {shown.map((t) => (
+              <TourCard key={t.id} tour={t} />
+            ))}
           </View>
         </>
       )}
@@ -211,14 +166,136 @@ export default function Touren() {
   );
 }
 
-/** Höhenprofil und Export einer gespeicherten Tour, erst beim Aufklappen geladen. */
-function TourDetails({ tour }: { tour: SavedTour }) {
-  const line = useMemo(() => flatten(tour).map((x) => x.p), [tour]);
+/**
+ * Kompakte Karte einer gespeicherten Tour: Name, Länge und Datum, darunter die Aktionen.
+ * Losfahren fragt nach allein oder als Gruppe, das Menü hinter "⋯" bietet Export, Community und Löschen.
+ */
+function TourCard({ tour: t }: { tour: SavedTour }) {
+  const [panel, setPanel] = useState<'start' | 'more' | null>(null);
+  const toggle = (p: 'start' | 'more') => setPanel((cur) => (cur === p ? null : p));
+
+  const alone = () => {
+    setActiveTour(t, t.profile ?? 'kurvig');
+    router.push('/navigation');
+  };
+  const group = () => {
+    setActiveTour(t, t.profile ?? 'kurvig');
+    router.push({ pathname: '/gruppe/neu', params: { tour: t.id } });
+  };
+  const show = () => {
+    setActiveTour(t, t.profile ?? 'kurvig');
+    router.push('/karte');
+  };
+  // Im Planer unter "Route" mit allen Punkten öffnen; Speichern ersetzt dann diese Tour
+  const edit = () => {
+    setEditTour(t);
+    router.navigate('/');
+  };
+
+  const meta = [`${formatKm(t.laenge_km, 0)} km`, new Date(t.updatedAt).toLocaleDateString('de-DE'), t.published ? 'in der Community' : null]
+    .filter(Boolean)
+    .join(', ');
+
   return (
-    <View style={styles.gapM}>
-      <ElevationChart line={line} onSurface />
-      <ExportRow tour={tour} onSurface />
+    <View style={styles.tourCard}>
+      <View style={styles.head}>
+        <AppText style={styles.name} numberOfLines={2}>
+          {t.name}
+        </AppText>
+        <AppText variant="caption" muted numberOfLines={1}>
+          {meta}
+        </AppText>
+      </View>
+
+      <View style={styles.actions}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: panel === 'start' }}
+          accessibilityHint="Wählt, ob du allein oder als Gruppe fährst"
+          onPress={() => toggle('start')}
+          style={({ pressed }) => [styles.pillPrimary, pressed && styles.pressed]}>
+          <AppText style={styles.pillPrimaryText} numberOfLines={1}>
+            Losfahren
+          </AppText>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Auf Karte anzeigen" onPress={show} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
+          <AppText style={styles.pillText}>Karte</AppText>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Im Planer ändern" onPress={edit} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
+          <AppText style={styles.pillText}>Ändern</AppText>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Weitere Aktionen"
+          accessibilityState={{ expanded: panel === 'more' }}
+          onPress={() => toggle('more')}
+          style={({ pressed }) => [styles.round, panel === 'more' && styles.roundOn, pressed && styles.pressed]}>
+          <AppText style={styles.roundText}>⋯</AppText>
+        </Pressable>
+      </View>
+
+      {panel === 'start' && (
+        <View style={styles.row}>
+          <Pressable accessibilityRole="button" onPress={alone} style={({ pressed }) => [styles.choice, pressed && styles.pressed]}>
+            <AppText style={styles.pillText}>Allein fahren</AppText>
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={group} style={({ pressed }) => [styles.choice, pressed && styles.pressed]}>
+            <AppText style={styles.pillText}>Als Gruppe fahren</AppText>
+          </Pressable>
+        </View>
+      )}
+
+      {panel === 'more' && <MoreMenu tour={t} />}
+    </View>
+  );
+}
+
+/** Weitere Aktionen einer Tour: Export, Community und Löschen (mit Rückfrage auf der Karte). */
+function MoreMenu({ tour }: { tour: SavedTour }) {
+  const [busy, setBusy] = useState<RouteFormat | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState(false);
+  const exp = async (f: RouteFormat) => {
+    if (busy) return;
+    setBusy(f);
+    setErr(null);
+    try {
+      await exportTour(tour, f);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Export hat nicht geklappt.');
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <View style={styles.menu} accessibilityRole="menu">
+      {(['gpx', 'kml'] as const).map((f) => (
+        <Pressable key={f} accessibilityRole="menuitem" onPress={() => void exp(f)} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
+          <AppText style={styles.itemText}>Als {f.toUpperCase()} exportieren</AppText>
+          {busy === f && <ActivityIndicator color={Colors.muted} />}
+        </Pressable>
+      ))}
+      {err && <AppText variant="caption" style={styles.dangerText}>{err}</AppText>}
       <PublishBlock tour={tour} />
+      {confirm ? (
+        <View style={styles.confirm}>
+          <AppText variant="caption" muted>
+            Die Tour wird vom Gerät und aus deinem Konto gelöscht.
+          </AppText>
+          <View style={styles.row}>
+            <Pressable accessibilityRole="button" onPress={() => deleteTour(tour.id)} style={({ pressed }) => [styles.choice, styles.danger, pressed && styles.pressed]}>
+              <AppText style={[styles.pillText, styles.dangerText]}>Endgültig löschen</AppText>
+            </Pressable>
+            <Pressable accessibilityRole="button" onPress={() => setConfirm(false)} style={({ pressed }) => [styles.choice, pressed && styles.pressed]}>
+              <AppText style={styles.pillText}>Abbrechen</AppText>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable accessibilityRole="menuitem" onPress={() => setConfirm(true)} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
+          <AppText style={[styles.itemText, styles.dangerText]}>Löschen</AppText>
+        </Pressable>
+      )}
     </View>
   );
 }

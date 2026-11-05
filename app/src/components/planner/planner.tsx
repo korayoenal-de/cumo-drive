@@ -28,7 +28,8 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { useSession } from '@/lib/auth';
-import { saveTour, syncLibrary } from '@/lib/library';
+import { onEditTour, takeEditTour } from '@/lib/edit-tour';
+import { saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName, searchPlaces, type Place } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
 import { planChecked, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
@@ -171,6 +172,29 @@ export default function Planner() {
   // Steht eine Route, geht das Blatt auf halbe Höhe, damit sie auf der Karte zu sehen ist.
   const tourPlan = useTourPlan(() => setDetent(1));
   const [pending, setPending] = useState<PendingPoint | null>(null);
+
+  // Aus Meine Touren "Ändern": Tour in "Route" öffnen und einmal planen
+  const loadTour = tourPlan.load;
+  useEffect(() => {
+    const take = () => {
+      const t = takeEditTour();
+      if (!t) return;
+      abort.current?.abort();
+      const p = t.profile ?? profile;
+      setView({ kind: 'form' });
+      setMode('tour');
+      setPending(null);
+      setProfile(p);
+      loadTour(t, p, avoid);
+    };
+    // Vorgemerkt, bevor der Planer da war, oder später, während er schon offen ist
+    const id = setTimeout(take, 0);
+    const off = onEditTour(take);
+    return () => {
+      clearTimeout(id);
+      off();
+    };
+  }, [loadTour, profile, avoid]);
 
   // Ist der Standort schon freigegeben, zeigt die Karte gleich die Umgebung (ohne neue Abfrage)
   useEffect(() => {
@@ -821,6 +845,8 @@ function useTourPlan(onPlanned?: () => void) {
   const [step, setStep] = useState<PlanStep | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cloudId, setCloudId] = useState<string | null>(null);
+  /** Ordner der Tour in Meine Touren, bleibt beim Ändern einer gespeicherten Tour erhalten */
+  const [folder, setFolder] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
@@ -933,7 +959,7 @@ function useTourPlan(onPlanned?: () => void) {
     setSaveMsg(null);
     try {
       // auf dem Gerät speichern (Meine Touren), angemeldet auch ins Konto
-      const saved = saveTour({ ...planned, name: name.trim() || planned.name, curves, profile }, '', cloudId ?? undefined);
+      const saved = saveTour({ ...planned, name: name.trim() || planned.name, curves, profile }, folder, cloudId ?? undefined);
       setCloudId(saved.id);
       void syncLibrary();
       setSaveMsg('Gespeichert, du findest die Tour unter Meine Touren.');
@@ -954,13 +980,38 @@ function useTourPlan(onPlanned?: () => void) {
     setStep(null);
     setError(null);
     setCloudId(null);
+    setFolder('');
     setSaveMsg(null);
     setName('Neue Tour');
   }
 
+  /** Gespeicherte Tour zum Ändern laden: erster Wegpunkt Start, letzter Ziel, dazwischen Zwischenziele. Speichern ersetzt dieselbe Tour. */
+  function load(t: SavedTour, profile: Profile, avoid: Avoid) {
+    abort.current?.abort();
+    const w = t.wegpunkte;
+    const s = w[0] ?? null;
+    const z = w.length > 1 ? w[w.length - 1] : null;
+    const v = w.slice(1, -1);
+    const lp = fitLegs([null], v.length);
+    setStart(s);
+    setVias(v);
+    setZiel(z);
+    setLegProfiles(lp);
+    setNames({});
+    setName(t.name);
+    setCloudId(t.id);
+    setFolder(t.folder);
+    setPlanned(null);
+    setError(null);
+    setSaveMsg(null);
+    // Namen für Start und Ziel nachschlagen, bei wenigen Punkten auch für die Zwischenziele
+    for (const p of v.length <= 8 ? w : [s, z]) if (p) rememberName(p);
+    if (s && z) void plan([s, ...v, z], lp.map((x) => x ?? profile), avoid, t.name);
+  }
+
   return {
     start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg,
-    legProfile, setSlot, add, insertAt, save, reset,
+    legProfile, setSlot, add, insertAt, save, reset, load,
     /** Mit den gesetzten Punkten und den Profilen je Etappe neu planen. */
     planNow: (profile: Profile, avoid: Avoid) => pts.length >= 2 && void plan(pts, profilesFor(legProfiles, start, pts.length, profile), avoid),
     setLegProfile: (leg: number, p: Profile, profile: Profile, avoid: Avoid) => {
