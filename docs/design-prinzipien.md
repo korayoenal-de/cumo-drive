@@ -27,12 +27,12 @@ Ziel: die schönste, modernste und einfachste App für Genussfahrer. Jede Ansich
 * Labels und Nebenzeilen in Inter Semibold grau, über dem Wert, nicht kleiner als 15 pt.
 * Vorbild für die Ruhe: Trade Republic. Hierarchie über Gewicht und Grau, kaum über Größe.
 
-## 5b. Fahrspaß Pegel (entschieden am 5.11.2026)
+## 5b. Fahrspaß Pegel (entschieden am 5.11.2026, Variante E)
 * Jede Strecke und jedes Highlight trägt einen Pegel in fünf Stufen: Nett, Lohnend, Stark, Traumstraße, Legende.
-* Form: sechs Dreiecke auf einem offenen Kreis (270 Grad, Lücke unten), Spitzen zur Mitte, aus dem CDC Keyvisual. Gefüllt in Signal Orange, leer als dunkle Fläche.
-* Stufen füllen 1, 2, 4, 5, 6 Dreiecke. Lücken zwischen den Dreiecken knapp (25 % kleiner als der erste Entwurf).
-* Größen: Liste 20 pt, Karte 30 pt, Ansage 45 pt. Auf Satellit mit dunkler Plakette.
-* Startwert ist die kuratierte Qualität 1 bis 5, Bewertungen nach der Fahrt verschieben ihn.
+* Form: sieben Dreiecke auf einem geschlossenen Kreis, Spitzen zur Mitte, aus dem CDC Keyvisual. Sie stoßen an der Basis aneinander, in der Negativform bleibt ein siebenzackiger Stern frei.
+* Stufen füllen 1, 3, 4, 6, 7 Dreiecke im Uhrzeigersinn ab oben links, gefüllt in Signal Orange, leer als dunkle Fläche. Unter 20 pt nur die orangen Dreiecke ohne graue Flächen.
+* Legende animiert (Ansage in der Navigation): Dreiecke füllen sich nacheinander, springen auseinander und verschwinden, aus der Negativform erscheint der orange Stern, pulsiert auf 125 % und zurück, blendet aus, die Dreiecke kehren zurück. Bei reduzierter Bewegung statisch.
+* Größen: Liste 28 pt, Karte 30 pt, Ansage 44 pt. Startwert ist die kuratierte Qualität 1 bis 5, Bewertungen nach der Fahrt verschieben ihn.
 
 ## 6. Ruhe
 * Dunkler Grund, wenige Flächen (`surface`, `surface2`), Signalfarbe nur für die Hauptaktion und Strecken.

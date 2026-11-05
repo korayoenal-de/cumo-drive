@@ -40,7 +40,7 @@ export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
             {highlightFacts(h)}
           </AppText>
         </View>
-        <FunGauge level={toFunLevel(h.level)} size={44} />
+        <FunGauge level={toFunLevel(h.level)} size={44} animate />
       </View>
     </GlassPanel>
   );
