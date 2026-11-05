@@ -63,6 +63,19 @@ export function InfoCard({ children, tone = 'neutral' }: { children: ReactNode; 
   );
 }
 
+function Extra({ value, label }: { value: string; label: string }) {
+  return (
+    <View style={styles.extra}>
+      <AppText style={styles.extraValue} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </AppText>
+      <AppText variant="caption" muted numberOfLines={1}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
 export function Recalculating({ first = false }: { first?: boolean }) {
   return (
     <InfoCard>
@@ -89,11 +102,23 @@ function useNow(): number {
   return now;
 }
 
+export type NavExtra = {
+  /** Anteil der Route, der schon gefahren ist */
+  donePct: number;
+  nextLabel: string;
+  nextKm: number;
+  nextMin: number;
+  drivenKm: number;
+  startedAt: number | null;
+};
+
 export function BottomBar({
-  eta, remainingKm, voice, group, showSim, bottomInset, onEnd, onVoice, onSecret, onSimulate, onFunk,
+  eta, remainingKm, extra, voice, group, showSim, bottomInset, onEnd, onVoice, onSecret, onSimulate, onFunk,
 }: {
   eta: Date | null;
   remainingKm: number | null;
+  /** Zusätzliche Werte über der Ankunftszeit */
+  extra?: NavExtra;
   voice: boolean;
   group: boolean;
   showSim: boolean;
@@ -118,6 +143,22 @@ export function BottomBar({
       {funkHint && (
         <View style={styles.funkHint}>
           <AppText variant="caption">Funk folgt bald.</AppText>
+        </View>
+      )}
+      {extra && (
+        <View style={styles.extraRow}>
+          <Extra value={`${Math.max(0, Math.min(100, extra.donePct))} %`} label="gefahren" />
+          <Extra
+            value={`${extra.nextKm.toFixed(extra.nextKm < 10 ? 1 : 0).replace('.', ',')} km`}
+            label={`${extra.nextLabel}, ${extra.nextMin < 60 ? `${Math.max(1, Math.round(extra.nextMin))} min` : `${Math.floor(extra.nextMin / 60)}:${String(Math.round(extra.nextMin % 60)).padStart(2, '0')} h`}`}
+          />
+          <Extra
+            value={(() => {
+              const h = extra.startedAt ? (now - extra.startedAt) / 3600000 : 0;
+              return h > 0.02 && extra.drivenKm > 0.3 ? `${Math.round(extra.drivenKm / h)} km/h` : '--';
+            })()}
+            label="Schnitt"
+          />
         </View>
       )}
       <View style={styles.barRow}>
@@ -192,6 +233,9 @@ const styles = StyleSheet.create({
   bar: { borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l, paddingHorizontal: Spacing.xl, paddingTop: Spacing.l, gap: Spacing.s },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   eta: { fontFamily: Fonts.display, fontSize: 40, lineHeight: 44, fontVariant: ['tabular-nums'] },
+  extraRow: { flexDirection: 'row', gap: Spacing.s, paddingBottom: Spacing.m },
+  extra: { flex: 1, minWidth: 0, gap: 2 },
+  extraValue: { fontFamily: Fonts.displayBold, fontSize: 18, fontVariant: ['tabular-nums'] },
   round: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   funk: { width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.surface2, borderWidth: 2, borderColor: Colors.good, alignItems: 'center', justifyContent: 'center' },
   funkHint: { position: 'absolute', top: -44, alignSelf: 'center', backgroundColor: Colors.surface2, borderRadius: Radius.pill, paddingHorizontal: Spacing.l, height: 34, justifyContent: 'center' },

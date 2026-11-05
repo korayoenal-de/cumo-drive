@@ -149,6 +149,38 @@ export default function NavigationScreen() {
   // Restkilometer beim Start, daraus ergeben sich am Ende die gefahrenen km
   const [startKm, setStartKm] = useState<number | null>(null);
   if (state.status === 'laeuft' && startKm == null && state.remainingKm != null) setStartKm(state.remainingKm);
+  // Beginn der Fahrt für den Schnitt (erste Position im Fahrbetrieb)
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (state.status !== 'laeuft' || startedAt != null) return;
+    const id = setTimeout(() => setStartedAt(Date.now()), 0);
+    return () => clearTimeout(id);
+  }, [state.status, startedAt]);
+
+  // Zwischenziele der Tour als km auf der Route, für "bis zum nächsten Punkt"
+  const viaKms = useMemo(() => {
+    const r = state.route;
+    const wp = active?.tour.wegpunkte ?? [];
+    if (!r || wp.length < 3) return [];
+    const out: number[] = [];
+    let from = 0;
+    for (const w of wp.slice(1, -1)) {
+      let best = from;
+      let bd = Infinity;
+      for (let i = from; i < r.shape.length; i++) {
+        const d = haversine(w, r.shape[i]);
+        if (d < bd) {
+          bd = d;
+          best = i;
+        }
+      }
+      if (bd < 500) {
+        out.push(r.cumKm[best]);
+        from = best;
+      }
+    }
+    return out;
+  }, [state.route, active]);
 
   // Tour für die Karte: geplante Linie mit Warnungen, darunter die gefahrene Route der Navigation
   const mapTour = useMemo<Tour | null>(() => {
@@ -350,6 +382,20 @@ export default function NavigationScreen() {
             <BottomBar
               eta={state.eta}
               remainingKm={state.remainingKm}
+              extra={(() => {
+                if (!route || state.remainingKm == null) return undefined;
+                const at = route.km - state.remainingKm;
+                const nextVia = viaKms.find((k) => k > at + 0.05);
+                const toKm = (nextVia ?? route.km) - at;
+                return {
+                  donePct: route.km > 0 ? Math.round((at / route.km) * 100) : 0,
+                  nextLabel: nextVia != null ? 'Nächstes Zwischenziel' : 'Ziel',
+                  nextKm: toKm,
+                  nextMin: route.km > 0 ? (toKm / route.km) * route.minutes : 0,
+                  drivenKm,
+                  startedAt,
+                };
+              })()}
               voice={state.voice}
               group={rideMode === 'gruppe' || inRide}
               onFunk={inRide ? () => setMsgOpen(!msgOpen) : undefined}
