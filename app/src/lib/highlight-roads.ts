@@ -7,7 +7,7 @@
  * genannten Straßennummer. Danach gleichmäßig auf etwa alle 700 m ausgedünnt, damit Richtung und
  * Abgleich mit der Route funktionieren. Stand: November 2026.
  *
- * Ansage: `say` ist der gesprochene Teil nach "beginnt" (In 500 Metern beginnt die alte Rallyestrecke Zotzenbach).
+ * Ansage: `say` ist der gesprochene Teil (in beiden Fahrtrichtungen passend) nach "beginnt" (In 500 Metern beginnt die alte Rallyestrecke Zotzenbach).
  * Ohne `say` wird "die {note} {name}" gesprochen, deshalb sind alle Notizen weiblich (Strecke, Straße).
  */
 import type { LatLon } from './tour';
@@ -101,7 +101,6 @@ export const HIGHLIGHT_ROADS: HighlightRoad[] = [
     name: 'Siegfriedstraße',
     kind: 'strecke',
     note: 'Kurvenstrecke',
-    say: 'die Siegfriedstraße zur Wegscheide',
     line: [
       [49.66514, 8.80284], [49.66708, 8.81091], [49.66747, 8.81853], [49.66446, 8.82497], [49.66218, 8.83186], [49.65988, 8.8395],
       [49.65794, 8.84597], [49.66165, 8.85128], [49.65948, 8.85862], [49.65598, 8.86428],
@@ -122,10 +121,10 @@ export const HIGHLIGHT_ROADS: HighlightRoad[] = [
   {
     // B 47 Nibelungenstraße von Gadernheim über Kolmbach nach Lindenfels. Linie 5,3 km.
     id: 'kolmbach',
-    name: 'Kolmbach bis Lindenfels',
+    name: 'Kolmbach',
     kind: 'strecke',
     note: 'Kurvenstrecke',
-    say: 'die Kurvenstrecke über Kolmbach nach Lindenfels',
+    say: 'die Kurvenstrecke über Kolmbach',
     line: [
       [49.71597, 8.74183], [49.71108, 8.74522], [49.70727, 8.74975], [49.70694, 8.75642], [49.70215, 8.7569], [49.70275, 8.76475],
       [49.69966, 8.76949], [49.69482, 8.77022], [49.69213, 8.77714], [49.68921, 8.78157],

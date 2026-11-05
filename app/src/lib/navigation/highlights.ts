@@ -269,7 +269,20 @@ export function roadsAlong(
       });
     }
   }
-  return out.sort((a, b) => a.startKm - b.startKm);
+  out.sort((a, b) => a.startKm - b.startKm);
+  // Lange Strecken in mehreren Teilen (Schwarzwaldhochstraße Nord und Süd): direkt hintereinander gefahren nur eine Ankündigung
+  const merged: Highlight[] = [];
+  for (const h of out) {
+    const prev = merged[merged.length - 1];
+    if (prev && prev.name === h.name && h.startKm - prev.endKm < 1) {
+      prev.endKm = Math.max(prev.endKm, h.endKm);
+      prev.hairpins = pins.filter((k) => k >= prev.startKm && k <= prev.endKm).length;
+      const top = elev ? highest(elev, prev.startKm, prev.endKm) : null;
+      prev.topKm = top?.km ?? prev.startKm;
+      prev.climbM = top?.climb ?? null;
+    } else merged.push({ ...h });
+  }
+  return merged;
 }
 
 /** Höchster Punkt und Höhenunterschied zwischen zwei Routen km. */
