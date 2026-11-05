@@ -11,9 +11,10 @@
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 
+import { MorphButton, SOFT_LAYOUT, softEnter } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -24,7 +25,7 @@ import { exportTour, type RouteFormat } from '@/lib/route-file';
 import { flatten, formatKm } from '@/lib/tour';
 
 const SPRING = Motion.press;
-const LAYOUT = LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness);
+const LAYOUT = SOFT_LAYOUT;
 
 export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: SavedTour) => void }) {
   const [share, setShare] = useState(false);
@@ -113,29 +114,6 @@ function RouteThumb({ tour }: { tour: SavedTour }) {
   );
 }
 
-/** Rundes Symbol, das sich beim Öffnen dreht und zum X wird. */
-function MorphButton({ open, icon, label, onPress }: { open: boolean; icon: SFSymbol; label: string; onPress: () => void }) {
-  const p = useSharedValue(0);
-  useEffect(() => {
-    p.set(withSpring(open ? 1 : 0, SPRING));
-  }, [open, p]);
-  const a = useAnimatedStyle(() => ({ opacity: 1 - p.get(), transform: [{ rotate: `${p.get() * 90}deg` }, { scale: 1 - p.get() * 0.4 }] }));
-  const b = useAnimatedStyle(() => ({ opacity: p.get(), transform: [{ rotate: `${(p.get() - 1) * 90}deg` }, { scale: 0.6 + p.get() * 0.4 }] }));
-  const bg = useAnimatedStyle(() => ({ backgroundColor: p.get() > 0.5 ? Colors.line : Colors.surface2 }));
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ expanded: open }} onPress={onPress} hitSlop={4}>
-      <Animated.View style={[styles.round, bg]}>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.center, a]}>
-          <SymbolView name={icon} size={19} tintColor={Colors.text} weight="semibold" />
-        </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.center, b]}>
-          <SymbolView name="xmark" size={16} tintColor={Colors.text} weight="bold" />
-        </Animated.View>
-      </Animated.View>
-    </Pressable>
-  );
-}
-
 /** Papierkorb, der beim ersten Tippen zur roten Taste "Löschen" aufzieht. */
 function DeleteButton({ armed, onArm, onDelete }: { armed: boolean; onArm: () => void; onDelete: () => void }) {
   return (
@@ -192,7 +170,7 @@ function ShareMenu({ tour }: { tour: SavedTour }) {
   return (
     <Animated.View layout={LAYOUT} style={styles.menu} accessibilityRole="menu">
       {items.map((it, i) => (
-        <Animated.View key={it.key} entering={FadeInDown.springify().damping(18).stiffness(240).delay(i * Motion.stagger)} exiting={FadeOut.duration(100)}>
+        <Animated.View key={it.key} entering={softEnter(i)} exiting={FadeOut.duration(100)}>
           <Pressable accessibilityRole="menuitem" accessibilityHint={it.hint} onPress={it.onPress} style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}>
             <View style={styles.itemIcon}>
               <SymbolView name={it.icon} size={17} tintColor={Colors.text} weight="medium" />
@@ -245,7 +223,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: () => void }) 
     );
   if (tour.published)
     return (
-      <Animated.View entering={FadeInDown.springify().damping(18)} style={styles.form}>
+      <Animated.View entering={softEnter(0)} style={styles.form}>
         <AppText muted>Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.</AppText>
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => unpublishTour(tour))} style={({ pressed }) => [styles.primary, pressed && styles.itemPressed]}>
           {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Aus der Community nehmen</AppText>}
@@ -255,7 +233,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: () => void }) 
     );
   const can = !busy && !!author.trim();
   return (
-    <Animated.View entering={FadeInDown.springify().damping(18)} style={styles.form}>
+    <Animated.View entering={softEnter(0)} style={styles.form}>
       <TextInput value={author} onChangeText={setAuthor} placeholder="Dein Name in der Community" placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel="Name in der Community" maxLength={60} />
       <TextInput
         value={desc}

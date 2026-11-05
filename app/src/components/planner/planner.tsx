@@ -22,6 +22,7 @@ import {
 import { ElevationChart } from '@/components/planner/elevation-chart';
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
+import { ActionBar } from '@/components/ui/action-bar';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
@@ -1515,23 +1516,27 @@ function TourMode({
       {/* Aktionen am Ende: Losfahren als Hauptaktion, darunter die übrigen */}
       {(routeTour || pts.length > 0) && (
       <View style={styles.actions}>
-        {routeTour && (
-          <>
-            <GoButton onPress={drive} />
-            {plan.cloudId && !plan.dirty && (
-              <SecondaryButton label="Als Gruppe fahren" onPress={() => router.push({ pathname: '/gruppe/neu', params: { tour: plan.cloudId! } })} />
+        {routeTour ? (
+          <ActionBar
+            primary={{ label: 'Losfahren', onPress: drive }}
+            save={{ saved: !plan.dirty, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) }}
+            more={[
+              ...(plan.cloudId && !plan.dirty
+                ? [{ key: 'group', icon: 'person.2' as const, label: 'Als Gruppe fahren', hint: 'Mitfahrer mit ihrem Namen einladen', onPress: () => router.push({ pathname: '/gruppe/neu', params: { tour: plan.cloudId! } }) }]
+                : []),
+              { key: 'new', icon: 'trash', label: plan.cloudId ? 'Schließen' : 'Tour verwerfen', hint: plan.cloudId ? 'Gespeicherte Tour bleibt in Meine Touren' : 'Alle Punkte entfernen', danger: !plan.cloudId, onPress: plan.reset },
+            ]}>
+            {plan.cloudId && plan.dirty && !plan.saving && (
+              <AppText variant="caption" style={styles.changed}>
+                Geändert. Tippe auf das Lesezeichen, um die Änderungen zu speichern.
+              </AppText>
             )}
-            {plan.dirty && (
-              <SecondaryButton
-                label={plan.saving ? 'Wird gespeichert' : plan.cloudId ? 'Änderungen speichern' : 'Speichern'}
-                onPress={() => !plan.saving && void plan.save(curves, firstProfile, avoid)}
-              />
-            )}
-            {plan.saveMsg && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
+            {plan.saveMsg && !plan.dirty && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
             {!session && !plan.saveMsg && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
-          </>
+          </ActionBar>
+        ) : (
+          pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />
         )}
-        {pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
       </View>
       )}
     </>
@@ -1924,13 +1929,23 @@ function Result({
 
       {group && <GroupBlock savedId={savedId} />}
 
-      {/* Aktionen am Ende: Losfahren als Hauptaktion, darunter die übrigen */}
-      <View style={styles.actions}>
-        <GoButton onPress={drive} />
-        <SecondaryButton label={savedId ? 'Gespeichert unter Meine Touren' : 'Speichern'} onPress={saveResult} />
-        <SecondaryButton label="Neu würfeln" onPress={onReroll} />
-        <SecondaryButton label="Tour verwerfen" onPress={onBack} />
-      </View>
+      {/* Aktionen am Ende: Losfahren, Speichern als Symbol, Seltenes im Menü */}
+      <ActionBar
+        primary={{ label: 'Losfahren', onPress: drive }}
+        save={{ saved: !!savedId, onPress: saveResult }}
+        more={[
+          { key: 'reroll', icon: 'dice', label: 'Neu würfeln', hint: 'Gleiche Länge und Richtung, andere Strecke', onPress: onReroll },
+          ...(savedId
+            ? [{ key: 'group', icon: 'person.2' as const, label: 'Als Gruppe fahren', hint: 'Mitfahrer mit ihrem Namen einladen', onPress: () => router.push({ pathname: '/gruppe/neu', params: { tour: savedId } }) }]
+            : []),
+          { key: 'back', icon: 'trash', label: 'Tour verwerfen', hint: 'Zurück zur Auswahl', danger: true, onPress: onBack },
+        ]}>
+        {savedId && (
+          <AppText variant="caption" muted>
+            Gespeichert unter Meine Touren.
+          </AppText>
+        )}
+      </ActionBar>
     </View>
   );
 }
@@ -2008,15 +2023,6 @@ function Warnings({ warnings, checked }: { warnings: Warning[]; checked: boolean
   );
 }
 
-/** Hauptaktion am Ende der Ergebnisse */
-function GoButton({ onPress }: { onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.go, pressed && styles.pressed]}>
-      <AppText style={styles.goText}>Losfahren</AppText>
-    </Pressable>
-  );
-}
-
 /** Gruppe: Mitfahrer lädt man mit Namen zu einer gespeicherten Tour ein (Meine Touren, Als Gruppe fahren). */
 function GroupBlock({ savedId }: { savedId: string | null }) {
   return (
@@ -2035,6 +2041,7 @@ function GroupBlock({ savedId }: { savedId: string | null }) {
 }
 
 const styles = StyleSheet.create({
+  changed: { color: Colors.warn },
   winter: { gap: 4, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: 'rgba(232,176,58,0.12)' },
   winterTitle: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.warn },
   winterText: { color: Colors.warn },

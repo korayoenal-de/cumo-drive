@@ -1,9 +1,9 @@
 /**
  * Karte mit Blatt darüber, wie in Apple Maps: Die Karte füllt den ganzen Screen, das Blatt liegt
  * darauf und hat drei Höhen (klein, halb, groß). Ziehen am Griff verschiebt das Blatt, beim Loslassen
- * rastet es mit einer Feder an der nächsten Höhe ein. Das Blatt verhält sich wie eine Fläche:
- * In der kleinen und halben Höhe zieht jede senkrechte Wischbewegung das ganze Blatt, erst in der
- * vollen Höhe scrollt der Inhalt. Wer dort oben weiter nach unten zieht, bringt es zurück auf halb.
+ * rastet es mit einer Feder an der nächsten Höhe ein. Einfache Regel: Griff und Kopf (die Tabs)
+ * stehen fest und ziehen das Blatt, der Inhalt darunter scrollt nur in sich. Scrollen ändert nie
+ * die Höhe, und der Kopf scrollt nie weg.
  * Der Inhalt reicht bis zum unteren Rand und läuft unter der Tab Leiste durch; der Weichzeichner
  * von iOS 26 an dieser Kante ist abgeschaltet, unten bleibt Luft, damit alles hochscrollbar ist.
  *
@@ -19,8 +19,6 @@ import {
   View,
   type AccessibilityActionEvent,
   type LayoutChangeEvent,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
   type ScrollViewInstance,
 } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -40,8 +38,6 @@ const LARGE = 0.92;
 const HEAD_GUESS = 132;
 /** Höhe der festen Griff Zone */
 const GRAB_H = 28;
-/** So weit oben über den Anfang hinaus gezogen schließt das volle Blatt auf halb */
-const COLLAPSE_AT = -40;
 const SPRING = { damping: 32, stiffness: 320, mass: 1 };
 /** So weit in Millisekunden wird die Wurfbewegung beim Loslassen fortgeschrieben */
 const PROJECT_MS = 180;
@@ -151,7 +147,7 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
   /** Der Inhaltsbereich wächst mit dem Blatt bis zum unteren Rand; unten Luft für die Tab Leiste */
-  const areaStyle = useAnimatedStyle(() => ({ height: Math.max(0, large - y.get() - GRAB_H) }));
+  const areaStyle = useAnimatedStyle(() => ({ height: Math.max(0, large - y.get() - GRAB_H - headH) }));
 
   const step = (d: number) => onDetentChange(Math.max(0, Math.min(2, detent + d)) as Detent);
   function onAction(e: AccessibilityActionEvent) {
@@ -160,29 +156,15 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
     else if (e.nativeEvent.actionName === 'activate') onDetentChange(detent === 2 ? 0 : ((detent + 1) as Detent));
   }
 
-  // Unter voller Höhe scrollt nichts: zurück an den Anfang
+  // Klein zeigt nur den Kopf: Inhalt zurück an den Anfang
   useEffect(() => {
-    if (detent < 2) scrollRef?.current?.scrollTo({ y: 0, animated: true });
+    if (detent === 0) scrollRef?.current?.scrollTo({ y: 0, animated: false });
   }, [detent, scrollRef]);
-
-  /** Scrollen steuert die Höhe: halb und hoch gescrollt öffnet, voll und oben gezogen schließt auf halb */
-  const switching = useRef(false);
-  useEffect(() => {
-    switching.current = false;
-  }, [detent]);
-  function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    if (switching.current) return;
-    const off = e.nativeEvent.contentOffset.y;
-    if (detent === 2 && off < COLLAPSE_AT) {
-      switching.current = true;
-      onDetentChange(1);
-    }
-  }
 
   return (
     <View style={styles.box} onLayout={(e: LayoutChangeEvent) => setBoxH(Math.round(e.nativeEvent.layout.height))}>
       <View style={StyleSheet.absoluteFill}>{background(visible[Math.min(detent, 1)])}</View>
-      <Animated.View {...(detent < 2 ? pan.sheet.panHandlers : null)} style={[styles.sheet, { top: H - large, height: large }, sheetStyle]}>
+      <Animated.View style={[styles.sheet, { top: H - large, height: large }, sheetStyle]}>
         <View
           {...pan.grab.panHandlers}
           accessible
@@ -197,24 +179,21 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
         </View>
         {/* Ab iOS 26 legt das System unter die schwebende Tab Leiste einen Weichzeichner über den
             Inhalt (Scroll Edge Effect). Im Blatt verdeckt das Inhalt, deshalb aus. */}
+        {/* Kopf steht fest unter dem Griff und zieht das Blatt, nur der Inhalt darunter scrollt */}
+        <View {...pan.sheet.panHandlers} onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))} style={styles.head}>
+          {header}
+        </View>
         <Animated.View style={areaStyle}>
         <ScrollViewMarker style={styles.flex} scrollEdgeEffects={{ bottom: 'hidden' }}>
         <ScrollView
           ref={scrollRef}
           style={styles.flex}
           contentContainerStyle={[styles.content, { paddingBottom: bottomSpace + Spacing.xl }]}
-          scrollEnabled={detent === 2}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
+          scrollEnabled={detent !== 0}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
           automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}>
-          <View
-            onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))}
-            style={styles.head}>
-            {header}
-          </View>
           <View style={styles.body}>{children}</View>
         </ScrollView>
         </ScrollViewMarker>
@@ -236,7 +215,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: Radius.l,
     boxShadow: '0 -6px 24px rgba(0,0,0,0.45)',
   },
-  head: { paddingTop: Spacing.s, paddingBottom: Spacing.l, gap: Spacing.s },
+  head: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xs, paddingBottom: Spacing.m, gap: Spacing.s },
   body: { gap: Spacing.xxl },
   grabberZone: { height: GRAB_H, alignItems: 'center', justifyContent: 'center' },
   grabber: { width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.surface2 },
