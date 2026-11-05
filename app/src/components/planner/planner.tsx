@@ -1140,7 +1140,7 @@ function TourMode({
   const [locating, setLocating] = useState(false);
   const [locMsg, setLocMsg] = useState<string | null>(null);
   /** Punkt, dessen Aktionen (Ändern, Verschieben, Entfernen) gerade offen sind */
-  const [menu, setMenu] = useState<string | null>(null);
+  const [, setMenu] = useState<string | null>(null);
   /** Drag and Drop am Anfasser: welcher Punkt gezogen wird und wohin er fallen würde */
   const [drag, setDrag] = useState<{ from: number; to: number } | null>(null);
   const dragY = useSharedValue(0);
@@ -1184,12 +1184,27 @@ function TourMode({
 
   /** Feld, das gerade bearbeitet wird; dort öffnet sich die Suche. Ohne Start beginnt es mit dem Start. */
   const [edit, setEdit] = useState<EditTarget | null>(() => (plan.start ? null : { kind: 'start' }));
+  /** Punkt, der gerade bearbeitet wird (null bei neuem Punkt oder leerem Feld) */
+  const pointOf = (e: EditTarget | null): LatLon | null =>
+    !e || e.insert ? null : e.kind === 'start' ? plan.start : e.kind === 'ziel' ? plan.ziel : (plan.vias[e.index ?? -1] ?? null);
   function openEdit(e: EditTarget) {
     setEdit(e);
     setMenu(null);
     setLegMenu(null);
-    setQuery('');
+    // Gesetzter Punkt: sein Name steht im Feld (markiert, Tippen ersetzt ihn), das X entfernt den Punkt
+    const cur = pointOf(e);
+    const name = cur ? nameOf(cur) : '';
+    setQuery(name);
+    setEditName(name);
     setLocMsg(null);
+  }
+  const [editName, setEditName] = useState('');
+  const editPoint = pointOf(edit);
+  function removeEdited() {
+    if (!edit) return;
+    if (edit.kind === 'start') plan.removeStart(profile, avoid);
+    else if (edit.kind === 'ziel') plan.removeZiel(profile, avoid);
+    else plan.removeVia(edit.index!, profile, avoid);
   }
 
   // Vorschläge schon beim Tippen: passende Pässe zuerst, dann Orte in der Nähe des letzten Punkts
@@ -1197,7 +1212,8 @@ function TourMode({
   const nearLat = lastPt?.[0];
   const nearLon = lastPt?.[1];
   const near = useMemo<LatLon | undefined>(() => (nearLat != null && nearLon != null ? [nearLat, nearLon] : undefined), [nearLat, nearLon]);
-  const suggest = usePlaceSuggest(query, near);
+  // Solange der Name des Punkts unverändert im Feld steht, keine Vorschläge
+  const suggest = usePlaceSuggest(query === editName ? '' : query, near);
   const passHits = useMemo<Place[]>(
     () =>
       query.trim().length >= 2
@@ -1248,6 +1264,8 @@ function TourMode({
           placeholderTextColor={Colors.muted}
           returnKeyType="search"
           autoFocus
+          selectTextOnFocus
+          onSubmitEditing={() => query === editName && setEdit(null)}
           onFocus={onSearchFocus}
           style={styles.fieldInput}
           accessibilityLabel="Ort oder Pass suchen"
@@ -1265,8 +1283,9 @@ function TourMode({
         )}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Suche schließen"
+          accessibilityLabel={editPoint ? 'Punkt entfernen' : 'Suche schließen'}
           onPress={() => {
+            if (editPoint) removeEdited();
             setQuery('');
             setEdit(null);
           }}
@@ -1312,19 +1331,6 @@ function TourMode({
     const viaNo = (index ?? 0) + 1;
     const role = kind === 'start' ? 'Start' : kind === 'ziel' ? 'Ziel' : `Zwischenziel ${viaNo}`;
     const isEditing = !!edit && !edit.insert && edit.kind === kind && (kind !== 'via' || edit.index === index);
-    const open = menu === id;
-    const actions: { label: string; onPress: () => void }[] = p
-      ? [
-          { label: 'Ändern', onPress: () => openEdit({ kind, index }) },
-          ...(kind === 'via' && index! > 0 ? [{ label: 'Nach oben', onPress: () => plan.moveVia(index!, -1, profile, avoid) }] : []),
-          ...(kind === 'via' && index! < plan.vias.length - 1 ? [{ label: 'Nach unten', onPress: () => plan.moveVia(index!, 1, profile, avoid) }] : []),
-          {
-            label: 'Entfernen',
-            onPress: () =>
-              kind === 'start' ? plan.removeStart(profile, avoid) : kind === 'ziel' ? plan.removeZiel(profile, avoid) : plan.removeVia(index!, profile, avoid),
-          },
-        ]
-      : [];
     return (
       <View key={id} style={styles.gapS}>
         {/* Beim Bearbeiten ersetzt das Suchfeld die Zeile, sonst stünden Platzhalter und Feld doppelt da */}
@@ -1372,34 +1378,7 @@ function TourMode({
               }}
             />
           )}
-          {p && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Aktionen für ${role}`}
-              accessibilityState={{ expanded: open }}
-              onPress={() => {
-                setMenu(open ? null : id);
-                setLegMenu(null);
-              }}
-              style={styles.moreBtn}>
-              <AppText style={styles.moreText}>⋯</AppText>
-            </Pressable>
-          )}
         </Animated.View>
-        )}
-        {open && !isEditing && (
-          <View style={styles.wrap}>
-            {actions.map((a) => (
-              <Pill
-                key={a.label}
-                label={a.label}
-                onPress={() => {
-                  setMenu(null);
-                  a.onPress();
-                }}
-              />
-            ))}
-          </View>
         )}
         {isEditing && editor}
       </View>
