@@ -10,13 +10,14 @@
  * leistet erst ein eigener Routing Server mit Sportwagen Profil.
  */
 import { checkLine } from './check';
-import { cumoAvailable, cumoRoundTrips } from './cumo-routing';
+import { cumoAvailable, cumoPlan, cumoRoundTrips } from './cumo-routing';
+import { doubledStretch } from './doubled';
 import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from './graphhopper';
 import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
 import { planChecked, type PlannedTour, type PlanStep } from './plan';
 import { DIRECTIONS, roundTrip, type Direction } from './roundtrip';
 import { countCurves } from './stats';
-import { flatten, type LatLon, type Profile } from './tour';
+import { flatten, haversine, type LatLon, type Profile } from './tour';
 import type { Avoid } from './valhalla';
 
 export type SmartRequest = {
@@ -96,9 +97,13 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       // Ohne Richtung in sechs Richtungen suchen: so gewinnt das Hügelland mit Kurven statt der Weg durch die Ebene und Städte
       const free = req.direction === 'zufall' && req.bearing === undefined;
       const own = await cumoRoundTrips(req.name, req.start, req.km, heading, req.profile, req.avoid, free ? 6 : 5, seed % 100000, signal, free);
-      for (const t of own) candidates.push({ ...t, engine: 'cumo', score: scoreTour(t, t.curves, 0, req.km) });
+      // Kurze Stichstraßen hin und zurück (Sackgasse ins Tal und wieder raus) sind nie schön: stark abwerten
+      for (const t of own) candidates.push({ ...t, engine: 'cumo', score: scoreTour(t, t.curves, 0, req.km) - spurKm(t) * 60 });
       const clean = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0);
-      if (clean.length) return clean.sort((a, b) => b.score - a.score)[0];
+      if (clean.length) {
+        const best = clean.sort((a, b) => b.score - a.score)[0];
+        return await despur(best, req, signal);
+      }
     } catch (e) {
       if (signal?.aborted) throw e;
       lastError = e;
@@ -142,4 +147,37 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
   if (!candidates.length) throw lastError ?? new Error('Keine Rundtour gefunden.');
   candidates.sort((a, b) => b.score - a.score);
   return candidates[0];
+}
+
+/** Doppelt gefahrene km auf kurzen Stücken: Stichstraßen und kleine Schleifen durch Ortschaften. */
+function spurKm(t: PlannedTour): number {
+  return doubledStretch(flatten(t).map((x) => x.p), 300, 20).km;
+}
+
+/**
+ * Bleibt im Sieger eine Stichstraße, die Tour ohne sie neu rechnen: Stützpunkte etwa alle 7 km
+ * entlang der Strecke, aber keiner in der Nähe der Stichstraße. Übernommen, wenn die Stichstraße
+ * weg ist und die Tour nicht viel länger wird.
+ */
+async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Promise<SmartTour> {
+  const line = flatten(t);
+  const spur = doubledStretch(line.map((x) => x.p), 300, 20);
+  if (spur.km < 0.2) return t;
+  const via: LatLon[] = [];
+  let last = 0;
+  for (const x of line) {
+    if (x.km - last < 7 || x.km > t.laenge_km - 3) continue;
+    if (spur.points.some((q) => haversine(q, x.p) < 600)) continue;
+    via.push(x.p);
+    last = x.km;
+  }
+  try {
+    const r = await cumoPlan(req.name, [req.start, ...via, req.start], req.profile, req.avoid, signal);
+    if (spurKm(r) < spur.km - 0.1 && r.laenge_km <= t.laenge_km * 1.15 + 3 && (r.km_je_klasse?.raus ?? 0) === 0) {
+      return { ...t, ...r, engine: 'cumo', curves: r.curves, score: t.score };
+    }
+  } catch (e) {
+    if (signal?.aborted) throw e;
+  }
+  return t;
 }
