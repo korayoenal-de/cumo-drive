@@ -3,6 +3,7 @@
  */
 import type { StyleProp, ViewStyle } from 'react-native';
 
+import type { Pass } from '@/lib/passes';
 import type { CheckClass, LatLon, Tour, Warning } from '@/lib/tour';
 
 export type RouteMapProps = {
@@ -38,6 +39,10 @@ export type RouteMapProps = {
   focus?: LatLon | null;
   /** Zusätzliche Ebenen aus den Karteneinstellungen zeigen (Pässe, Meine Touren, Fahrten) */
   layers?: boolean;
+  /** Tipp auf einen Pass der Pässe Ebene (zum Beispiel zur Route hinzufügen) */
+  onPressPass?: (pass: Pass) => void;
+  /** Pässe, die schon als Punkt in der Planung stehen: sie erscheinen markiert */
+  pickedPassIds?: ReadonlySet<string>;
 };
 
 export type MapPin = { id: string; p: LatLon; label: string; title: string };

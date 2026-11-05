@@ -48,6 +48,8 @@ export function RouteMap({
   focus,
   dashed,
   layers = false,
+  onPressPass,
+  pickedPassIds,
 }: RouteMapProps) {
   const settings = useMapSettings();
   const library = useLibrary();
@@ -233,14 +235,18 @@ export function RouteMap({
           settings.passes &&
           PASSES.map((ps) => (
             <Marker
-              key={`pass-${ps.id}`}
+              // Zustand im Schlüssel: ohne tracksViewChanges zeichnet Apple Maps einen Marker sonst nicht neu
+              key={`pass-${ps.id}-${pickedPassIds?.has(ps.id) ? 'drin' : 'frei'}`}
               coordinate={ll(passPoint(ps))}
               anchor={{ x: 0.5, y: 0.5 }}
               title={ps.name}
               description={`${ps.ele.toLocaleString('de-DE')} m`}
-              zIndex={10}
+              zIndex={pickedPassIds?.has(ps.id) ? 12 : 10}
+              onPress={onPressPass ? () => onPressPass(ps) : undefined}
               tracksViewChanges={false}>
-              <View style={[styles.passDot, { backgroundColor: TIER_DOT[ps.tier] }]} />
+              <View
+                style={[styles.passDot, { backgroundColor: TIER_DOT[ps.tier] }, pickedPassIds?.has(ps.id) && styles.passPicked]}
+              />
             </Marker>
           ))}
         {runs.map((r, i) => (
@@ -398,6 +404,7 @@ const styles = StyleSheet.create({
     marginTop: -3,
   },
   passDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: Colors.ground },
+  passPicked: { width: 18, height: 18, borderRadius: 9, borderWidth: 3, borderColor: Colors.signal },
   pin: { paddingHorizontal: 8, height: 26, borderRadius: 13, backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.signal, justifyContent: 'center' },
   pinText: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.text },
   other: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.surface, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
