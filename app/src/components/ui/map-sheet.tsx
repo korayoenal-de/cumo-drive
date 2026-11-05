@@ -4,7 +4,8 @@
  * rastet es mit einer Feder an der nächsten Höhe ein. Das Blatt verhält sich wie eine Fläche:
  * In der kleinen und halben Höhe zieht jede senkrechte Wischbewegung das ganze Blatt, erst in der
  * vollen Höhe scrollt der Inhalt. Wer dort oben weiter nach unten zieht, bringt es zurück auf halb.
- * Der sichtbare Inhalt endet immer über der Tab Leiste, damit iOS dort nichts ausblendet.
+ * Der Inhalt reicht bis zum unteren Rand und läuft unter der Tab Leiste durch; der Weichzeichner
+ * von iOS 26 an dieser Kante ist abgeschaltet, unten bleibt Luft, damit alles hochscrollbar ist.
  *
  * Bewusst in JS gebaut (PanResponder plus Reanimated), damit es ohne neue native Abhängigkeit
  * im vorhandenen App Build läuft.
@@ -149,8 +150,8 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   }, [onDetentChange, y, snapsNow, detentNow, fling, startY]);
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
-  /** Der Inhaltsbereich wächst mit dem Blatt und endet immer über der Tab Leiste */
-  const areaStyle = useAnimatedStyle(() => ({ height: Math.max(0, large - y.get() - GRAB_H - bottomSpace) }));
+  /** Der Inhaltsbereich wächst mit dem Blatt bis zum unteren Rand; unten Luft für die Tab Leiste */
+  const areaStyle = useAnimatedStyle(() => ({ height: Math.max(0, large - y.get() - GRAB_H) }));
 
   const step = (d: number) => onDetentChange(Math.max(0, Math.min(2, detent + d)) as Detent);
   function onAction(e: AccessibilityActionEvent) {
@@ -195,13 +196,13 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
           <View style={styles.grabber} />
         </View>
         {/* Ab iOS 26 legt das System unter die schwebende Tab Leiste einen Weichzeichner über den
-            Inhalt (Scroll Edge Effect). Der Inhalt reicht deshalb nie unter die Leiste, zusätzlich aus. */}
+            Inhalt (Scroll Edge Effect). Im Blatt verdeckt das Inhalt, deshalb aus. */}
         <Animated.View style={areaStyle}>
         <ScrollViewMarker style={styles.flex} scrollEdgeEffects={{ bottom: 'hidden' }}>
         <ScrollView
           ref={scrollRef}
           style={styles.flex}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: bottomSpace + Spacing.xl }]}
           scrollEnabled={detent === 2}
           onScroll={onScroll}
           scrollEventThrottle={16}
@@ -239,5 +240,5 @@ const styles = StyleSheet.create({
   body: { gap: Spacing.xxl },
   grabberZone: { height: GRAB_H, alignItems: 'center', justifyContent: 'center' },
   grabber: { width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.surface2 },
-  content: { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xl },
+  content: { paddingHorizontal: Spacing.xl },
 });
