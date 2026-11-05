@@ -1,6 +1,7 @@
 /**
  * Overlays in der Navigation:
- * HighlightCard kündigt einen Pass kurz vorher an (In 500 m, Stilfser Joch, 40 km, 76 Kehren).
+ * HighlightCard kündigt einen Pass oder eine kuratierte Strecke kurz vorher an
+ * (In 500 m, Stilfser Joch, 40 km, 76 Kehren; In 500 m, Zotzenbach, alte Rallyestrecke, 7 km).
  * StopAlert zeigt allen in der Gruppe groß, dass die Lead gleich anhält.
  * LeadStopButton ist der schnelle Knopf der Lead, um den Halt anzusagen.
  * MessageToast zeigt Kurznachrichten der anderen für ein paar Sekunden.
@@ -15,14 +16,17 @@ import { STOP_REASONS, type RideMsg, type RideStop, type StopReason } from '@/li
 import { highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 
 import { formatDistance } from './format';
+import type { NavSymbol } from './maneuver-geometry';
 import { NavSymbolIcon } from './maneuver-icon';
+
+const HIGHLIGHT_SYMBOL: Record<Highlight['kind'], NavSymbol> = { pass: 'passhoehe', rallye: 'kehre', strecke: 'kehre', aussicht: 'aussicht' };
 
 export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
   const d = formatDistance(Math.max(0, distM));
   return (
     <GlassPanel style={styles.card} fallback="rgba(11,11,12,0.94)">
       <View style={styles.row} accessible accessibilityRole="alert" accessibilityLabel={`${distM > 50 ? `In ${d.value} ${d.unit === 'm' ? 'Metern' : 'Kilometern'}` : 'Jetzt'} ${h.name}, ${highlightFacts(h)}`}>
-        <NavSymbolIcon symbol="passhoehe" size={44} soon />
+        <NavSymbolIcon symbol={HIGHLIGHT_SYMBOL[h.kind]} size={44} soon />
         <View style={styles.flex}>
           <AppText variant="caption" style={styles.kicker}>
             {distM > 50 ? `In ${d.value} ${d.unit}` : 'Jetzt'}
