@@ -26,7 +26,6 @@ import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigatio
 import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
 import { elevationProfile } from '@/lib/stats';
 import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, STOP_REASONS, useRide } from '@/lib/group/ride';
-import { useRideMode } from '@/lib/ride-mode';
 import { currentVehicle, selectVehicle, useVehicles } from '@/lib/vehicle';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
@@ -35,7 +34,6 @@ export default function NavigationScreen() {
   useKeepAwake();
   const active = useActiveTour();
   const insets = useSafeAreaInsets();
-  const [rideMode] = useRideMode();
   const [secret, setSecret] = useState(false);
   const showSim = __DEV__ || secret;
 
@@ -397,7 +395,7 @@ export default function NavigationScreen() {
                 };
               })()}
               voice={state.voice}
-              group={rideMode === 'gruppe' || inRide}
+              group={inRide}
               onFunk={inRide ? () => setMsgOpen(!msgOpen) : undefined}
               showSim={showSim}
               bottomInset={insets.bottom + Spacing.m}

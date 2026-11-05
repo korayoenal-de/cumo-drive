@@ -33,7 +33,6 @@ import { saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName, searchPlaces, type Place } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
 import { planChecked, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
-import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { doubledStretch } from '@/lib/doubled';
 import { insertVia, movePoint, passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
@@ -131,7 +130,6 @@ type Stage =
   | { kind: 'error'; error: PlanError; req?: TourRequest };
 
 export default function Planner() {
-  const [rideMode, setRideMode] = useRideMode();
   const [mode, setMode] = useState<Mode>('rundtour');
   const [view, setView] = useState<Stage>({ kind: 'form' });
   const abort = useRef<AbortController | null>(null);
@@ -397,31 +395,16 @@ export default function Planner() {
     </>
   );
 
-  const rideBlock = (
-    <View style={styles.headerBlock}>
-      <Segmented
-        value={rideMode}
-        options={RIDE_MODES.map((m) => ({ id: m.id, label: m.label }))}
-        onChange={setRideMode}
-      />
-      <AppText variant="caption" muted>
-        {RIDE_MODES.find((m) => m.id === rideMode)!.hint}
-      </AppText>
-    </View>
-  );
-
   let body: ReactNode;
   if (view.kind === 'working') {
     body = (
       <>
-        {rideBlock}
         <Progress phase={view.phase} done={view.done} onCancel={cancel} />
       </>
     );
   } else if (view.kind === 'error') {
     body = (
       <>
-        {rideBlock}
         <ErrorCard
           error={view.error}
           mode={mode}
@@ -437,12 +420,11 @@ export default function Planner() {
   } else if (view.kind === 'result') {
     body = (
       <>
-        {rideBlock}
         <Result
           tour={view.tour}
           req={view.req}
           stops={view.stops}
-          group={rideMode === 'gruppe'}
+          group={false}
           onReroll={() => reroll(view.req)}
           onBack={() => setView({ kind: 'form' })}
           adding={adding}
@@ -453,7 +435,6 @@ export default function Planner() {
   } else {
     body = (
     <>
-      {rideBlock}
       {mode !== 'tour' && (
         <Segmented
           value={mode}
@@ -473,7 +454,7 @@ export default function Planner() {
           profile={profile}
           avoid={avoid}
           setAvoid={setAvoid}
-          group={rideMode === 'gruppe'}
+          group={false}
           pending={pending}
           setPending={setPending}
           onSearchFocus={expand}
