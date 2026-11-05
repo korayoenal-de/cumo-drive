@@ -38,7 +38,7 @@ export async function cumoAvailable(): Promise<boolean> {
   if (!url) return false;
   if (availability && Date.now() - availability.at < 30000) return availability.ok;
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 1500);
+  const t = setTimeout(() => ctrl.abort(), 3000);
   let ok = false;
   try {
     const res = await fetch(`${url}/info`, { signal: ctrl.signal });

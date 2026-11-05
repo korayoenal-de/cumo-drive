@@ -5,7 +5,7 @@
  */
 import { checkLine } from './check';
 import { cumoAvailable, cumoPlan } from './cumo-routing';
-import { route, type Avoid } from './valhalla';
+import { route, VALHALLA_URL, type Avoid } from './valhalla';
 import { haversine, type CheckClass, type LatLon, type Profile, type Tour } from './tour';
 
 export type PlanStep = 'route' | 'check' | 'fix';
@@ -80,6 +80,23 @@ export function fixSpurs(points: LatLon[], shape: LatLon[], minSpurM = 150): Lat
   return changed ? out : null;
 }
 
+/** Nächster Punkt auf einer Straße (Valhalla locate), null wenn keine gefunden. */
+async function snapToRoad(p: LatLon, signal?: AbortSignal): Promise<LatLon | null> {
+  try {
+    const res = await fetch(`${VALHALLA_URL}/locate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ locations: [{ lat: p[0], lon: p[1] }], costing: 'auto', verbose: false }),
+      signal,
+    });
+    const data = (await res.json()) as { edges?: { correlated_lat: number; correlated_lon: number }[] | null }[];
+    const e = data[0]?.edges?.[0];
+    return e ? [e.correlated_lat, e.correlated_lon] : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function planChecked(
   name: string,
   points: LatLon[],
@@ -91,11 +108,22 @@ export async function planChecked(
 ): Promise<PlannedTour> {
   // Eigener Routing Server (Sportwagen Profil, Prüfung ohne fremde Dienste) hat Vorrang
   if (await cumoAvailable()) {
-    try {
-      onStep?.('route');
-      return await cumoPlan(name, points, profile, avoid, signal);
-    } catch (e) {
-      if (signal?.aborted) throw e;
+    onStep?.('route');
+    let pts = points;
+    // Punkte abseits der Straße (zum Beispiel Passhöhen aus der Liste) findet der Server nicht.
+    // Dann den Punkt auf die nächste Straße setzen und nochmal, statt auf den langsamen Weg zu fallen.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        return await cumoPlan(name, pts, profile, avoid, signal);
+      } catch (e) {
+        if (signal?.aborted) throw e;
+        const m = /Cannot find point (\d+)/.exec((e as Error).message);
+        if (!m) break;
+        const i = Number(m[1]);
+        const snapped = await snapToRoad(pts[i], signal);
+        if (!snapped) break;
+        pts = pts.map((p, k) => (k === i ? snapped : p));
+      }
     }
   }
   let exclude: LatLon[] = [];
