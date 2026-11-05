@@ -276,7 +276,7 @@ export function RouteMap({
           </Marker>
         ))}
 
-        {position && (
+        {position && !following && (
           <MeMarker coordinate={me as unknown as LatLng} anchor={{ x: 0.5, y: 0.5 }} flat rotation={heading ?? 0} zIndex={40} tracksViewChanges={false}>
             <View style={styles.me}>
               <View style={styles.meArrow} />
@@ -284,6 +284,26 @@ export function RouteMap({
           </MeMarker>
         )}
       </MapView>
+
+      {/* Beim Mitfahren steht der eigene Punkt fest in der Kartenmitte; die Kamera bewegt sich bildweise darunter.
+          So ruckelt er nicht wie ein Marker, dessen Position jede Sekunde neu gesetzt wird. */}
+      {position && following && (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.meOverlay,
+            {
+              top: mapPadding?.top ?? 0,
+              bottom: mapPadding?.bottom ?? 0,
+              left: mapPadding?.left ?? 0,
+              right: mapPadding?.right ?? 0,
+            },
+          ]}>
+          <View style={styles.me}>
+            <View style={styles.meArrow} />
+          </View>
+        </View>
+      )}
 
       {followUser && position && !following && (
         <Pressable accessibilityRole="button" onPress={() => setPaused(0)} style={styles.recenter}>
@@ -308,6 +328,7 @@ const styles = StyleSheet.create({
   warn: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
   warnOn: { transform: [{ scale: 1.3 }], borderColor: Colors.text },
   warnText: { fontFamily: Fonts.display, fontSize: 14, lineHeight: 16, color: Colors.ground },
+  meOverlay: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   me: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: Colors.signal },
   meArrow: {
     width: 0,

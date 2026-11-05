@@ -13,9 +13,12 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { AuthScreen } from '@/components/auth/auth-screen';
+import { EntitlementGate } from '@/components/paywall/entitlement-gate';
+import { NameScreen } from '@/components/auth/name-screen';
 import { RideBanner } from '@/components/group/ride-banner';
 import { useAuthReady, useSession } from '@/lib/auth';
 import { syncLibrary } from '@/lib/library';
+import { useMyProfile } from '@/lib/profile';
 import { syncVehicles } from '@/lib/vehicle';
 import { AppIntentHandler } from '@/live/intents';
 import { Colors } from '@/constants/theme';
@@ -57,6 +60,7 @@ export default function RootLayout() {
 
   // nach der Anmeldung Touren und Fahrzeuge mit dem Konto abgleichen
   const userId = session?.user.id;
+  const profile = useMyProfile(userId);
   useEffect(() => {
     if (!userId) return;
     void syncLibrary();
@@ -72,10 +76,20 @@ export default function RootLayout() {
       </ThemeProvider>
     );
   }
+  // einmalig nach dem Namen fragen, unter dem einen andere einladen
+  if (needAuth && profile && !profile.displayName) {
+    return (
+      <ThemeProvider value={theme}>
+        <StatusBar style="light" />
+        <NameScreen />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider value={theme}>
       <StatusBar style="light" />
+      <EntitlementGate>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.ground } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="planer" options={{ title: 'CUMO DRIVE Planer' }} />
@@ -86,7 +100,9 @@ export default function RootLayout() {
           name="navigation"
           options={{ presentation: 'fullScreenModal', title: 'Navigation', gestureEnabled: false }}
         />
+        <Stack.Screen name="mitgliedschaft" options={{ presentation: 'fullScreenModal', title: 'Mitgliedschaft' }} />
       </Stack>
+      </EntitlementGate>
       <RideBanner />
       <AppIntentHandler />
     </ThemeProvider>

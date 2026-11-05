@@ -1,7 +1,11 @@
 /**
- * Gruppenfahrt über Supabase Realtime, ohne Konto: Wer den Fahrtcode kennt, ist dabei.
+ * Gruppenfahrt über Supabase Realtime.
  *
- * Kanal `ride-<code>`:
+ * In der App lädt der Ersteller einer Tour die Mitfahrer mit Namen ein (siehe invites.ts), die Fahrt
+ * hat dann eine ID in public.rides und läuft im Kanal `ride-<rideId>` (startRide). Der Web Planer
+ * nutzt noch den alten Weg mit Fahrtcode (createRide, joinRide), Kanal `ride-<code>`.
+ *
+ * Im Kanal:
  * * Presence: wer dabei ist (Name, Auto, Rolle).
  * * Broadcast `pos`: Position, Richtung, Tempo, etwa alle 3 Sekunden oder nach 25 m.
  * * Broadcast `msg`: Kurznachrichten wie „Bitte warten“ oder „Tankstopp“ (Vorstufe zum Funk).
@@ -34,7 +38,12 @@ export type RideStop = { id: string; from: string; name: string; reason: StopRea
 
 export type RideState = {
   status: 'aus' | 'verbinde' | 'aktiv' | 'fehler';
+  /** alter Fahrtcode (nur Web Planer), sonst null */
   code: string | null;
+  /** ID der Fahrt in public.rides bei Fahrten mit Einladung */
+  rideId: string | null;
+  /** Name der Fahrt (meist der Tourname) */
+  name: string | null;
   me: Me | null;
   myRole: Role;
   members: Member[];
@@ -51,7 +60,7 @@ export const QUICK_MESSAGES = ['Bitte warten', 'Alles ok', 'Tankstopp', 'Pause',
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 const PROFILE_KEY = 'cumo.drive.fahrer.v1';
 
-let state: RideState = { status: 'aus', code: null, me: null, myRole: 'mitfahrer', members: [], messages: [], tourCode: null, stop: null, error: null };
+let state: RideState = { status: 'aus', code: null, rideId: null, name: null, me: null, myRole: 'mitfahrer', members: [], messages: [], tourCode: null, stop: null, error: null };
 const listeners = new Set<() => void>();
 let channel: RealtimeChannel | null = null;
 let watch: Location.LocationSubscription | null = null;
@@ -163,10 +172,30 @@ export async function joinRide(code: string, name: string, car: string, role: Ro
   }
   const me: Me = { id: Math.random().toString(36).slice(2, 10), name: name.trim() || 'Fahrer', car: car.trim() };
   await saveProfile(me.name, me.car);
-  positions.clear();
-  set({ status: 'verbinde', code: c, me, myRole: role, members: [], messages: [], tourCode, stop: null, error: null });
+  connect(`ride-${c}`, me, role, { code: c, rideId: null, name: null, tourCode });
+}
 
-  const ch = supabase.channel(`ride-${c}`, { config: { broadcast: { self: false }, presence: { key: me.id } } });
+/**
+ * Einer Fahrt mit Einladung beitreten (Ersteller als Lead, Eingeladene als Mitfahrer).
+ * Name und Fahrzeug kommen aus dem Profil und der Garage. Ist man schon in dieser Fahrt, passiert nichts.
+ */
+export async function startRide(rideId: string, role: Role, opts: { name: string; car: string; rideName?: string | null }) {
+  if (state.rideId === rideId && (state.status === 'aktiv' || state.status === 'verbinde')) return;
+  await leaveRide();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) {
+    set({ status: 'fehler', error: 'Bitte anmelden, um mitzufahren.' });
+    return;
+  }
+  const me: Me = { id: data.user.id, name: opts.name.trim() || 'Fahrer', car: opts.car.trim() };
+  connect(`ride-${rideId}`, me, role, { code: null, rideId, name: opts.rideName ?? null, tourCode: null });
+}
+
+function connect(topic: string, me: Me, role: Role, info: { code: string | null; rideId: string | null; name: string | null; tourCode: string | null }) {
+  positions.clear();
+  set({ status: 'verbinde', ...info, me, myRole: role, members: [], messages: [], stop: null, error: null });
+
+  const ch = supabase.channel(topic, { config: { broadcast: { self: false }, presence: { key: me.id } } });
   channel = ch;
   ch.on('presence', { event: 'sync' }, rebuildMembers);
   ch.on('presence', { event: 'join' }, () => {
@@ -191,6 +220,10 @@ export async function joinRide(code: string, name: string, car: string, role: Ro
   ch.on('broadcast', { event: 'tour' }, ({ payload }) => {
     const t = payload as { code: string };
     if (t.code && t.code !== state.tourCode) set({ tourCode: t.code });
+  });
+  ch.on('broadcast', { event: 'ende' }, () => {
+    // Lead hat die Fahrt für alle beendet
+    void leaveRide().then(() => set({ error: 'Die Lead hat die Gruppenfahrt beendet.' }));
   });
   ch.on('broadcast', { event: 'role' }, ({ payload }) => {
     const r = payload as { id: string; role: Role };
@@ -232,7 +265,19 @@ export async function leaveRide() {
   }
   channel = null;
   positions.clear();
-  set({ status: 'aus', code: null, members: [], messages: [], tourCode: null, stop: null, error: null, myRole: 'mitfahrer' });
+  set({ status: 'aus', code: null, rideId: null, name: null, members: [], messages: [], tourCode: null, stop: null, error: null, myRole: 'mitfahrer' });
+}
+
+/** Lead beendet die Fahrt für alle: die anderen verlassen den Kanal. */
+export async function endRideForAll() {
+  if (channel && state.myRole === 'lead') {
+    try {
+      await channel.send({ type: 'broadcast', event: 'ende', payload: {} });
+    } catch {
+      // die anderen merken es spätestens, wenn keine Positionen mehr kommen
+    }
+  }
+  await leaveRide();
 }
 
 export function sendMessage(text: string) {
@@ -271,4 +316,13 @@ export function shareTour(tourCode: string) {
 export function setRole(memberId: string, role: Role) {
   if (!channel || state.myRole !== 'lead') return;
   void channel.send({ type: 'broadcast', event: 'role', payload: { id: memberId, role } });
+  // bei Fahrten mit Einladung auch in der Fahrt merken (die ID ist dort die Konto ID)
+  if (state.rideId) {
+    void supabase
+      .from('ride_members')
+      .update({ role })
+      .eq('ride_id', state.rideId)
+      .eq('user_id', memberId)
+      .then(() => undefined);
+  }
 }

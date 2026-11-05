@@ -8,7 +8,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
-import { signIn, signUp } from '@/lib/auth';
+import { NameField, useNameCheck } from '@/components/auth/name-field';
+import { signIn } from '@/lib/auth';
+import { signUpWithName } from '@/lib/profile';
 
 export function AuthScreen() {
   const insets = useSafeAreaInsets();
@@ -17,14 +19,17 @@ export function AuthScreen() {
   const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const ready = !!email.trim() && pw.length > 0 && !busy;
+  const [name, setName] = useState('');
+  const check = useNameCheck(mode === 'register' ? name : '');
+  const ready = !!email.trim() && pw.length > 0 && !busy && (mode === 'login' || check.state === 'frei');
 
   const submit = async () => {
     if (!ready) return;
     setBusy(true);
     setErr(null);
     try {
-      await (mode === 'login' ? signIn : signUp)(email, pw);
+      if (mode === 'login') await signIn(email, pw);
+      else await signUpWithName(email, pw, name);
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
     } finally {
@@ -44,6 +49,7 @@ export function AuthScreen() {
         </View>
 
         <View style={styles.gapM}>
+          {mode === 'register' && <NameField value={name} onChange={setName} check={check} />}
           <TextInput
             value={email}
             onChangeText={setEmail}

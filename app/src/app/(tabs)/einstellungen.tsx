@@ -6,12 +6,15 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { MembershipSection } from '@/components/paywall/membership-section';
+import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { listDrives, type Drive } from '@/lib/drives';
+import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { formatKm } from '@/lib/tour';
 import { deleteVehicle, FUELS, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleSummary, type Vehicle } from '@/lib/vehicle';
 
@@ -38,6 +41,7 @@ export default function Einstellungen() {
         Einstellungen
       </AppText>
       <Garage drives={session ? drives : null} />
+      {session && <MembershipSection />}
       <View style={styles.gapM}>
         <AppText variant="label">Konto</AppText>
         {session ? <Account email={session.user.email ?? ''} /> : <Login />}
@@ -49,10 +53,68 @@ export default function Einstellungen() {
 function Account({ email }: { email: string }) {
   return (
     <View style={styles.card}>
+      <DisplayName />
       <AppText muted>Angemeldet als {email}. Touren, Fahrten und Fahrzeuge liegen in deinem Konto und im Web Planer.</AppText>
       <Pressable accessibilityRole="button" onPress={() => void signOut()} style={styles.secondary}>
         <AppText style={styles.secondaryText}>Abmelden</AppText>
       </Pressable>
+    </View>
+  );
+}
+
+/** Name, unter dem einen andere finden und einladen; ändern mit Prüfung, ob der neue Name frei ist. */
+function DisplayName() {
+  const session = useSession();
+  const profile = useMyProfile(session?.user.id);
+  const [draft, setDraft] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const current = profile?.displayName ?? null;
+  const check = useNameCheck(draft ?? '', current);
+
+  const save = async () => {
+    if (draft == null || check.state !== 'frei') return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await setDisplayName(draft);
+      setDraft(null);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (draft == null) {
+    return (
+      <View style={styles.row}>
+        <View style={styles.flex}>
+          <AppText variant="caption" muted>
+            Dein Name
+          </AppText>
+          <AppText style={styles.name} numberOfLines={1}>
+            {current ?? 'Noch kein Name'}
+          </AppText>
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Namen ändern" onPress={() => setDraft(current ?? '')} style={[styles.secondary, styles.padH]}>
+          <AppText style={styles.secondaryText}>Ändern</AppText>
+        </Pressable>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.gapS}>
+      <NameField value={draft} onChange={setDraft} check={check} onSurface />
+      {err && <AppText style={styles.error}>{err}</AppText>}
+      <View style={styles.row}>
+        <Pressable accessibilityRole="button" disabled={busy || check.state !== 'frei'} onPress={() => void save()} style={[styles.primary, styles.flex, (busy || check.state !== 'frei') && styles.disabled]}>
+          {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Speichern</AppText>}
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={() => setDraft(null)} style={[styles.secondary, styles.flex]}>
+          <AppText style={styles.secondaryText}>Abbrechen</AppText>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -256,6 +318,7 @@ const styles = StyleSheet.create({
   secondary: { height: 48, borderRadius: 24, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: 15 },
   disabled: { opacity: 0.4 },
+  padH: { paddingHorizontal: Spacing.l },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
   danger: { backgroundColor: Colors.signalTint },
   dangerText: { color: Colors.signal },

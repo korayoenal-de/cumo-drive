@@ -407,7 +407,6 @@ export default function Planner() {
       <AppText variant="caption" muted>
         {RIDE_MODES.find((m) => m.id === rideMode)!.hint}
       </AppText>
-      {rideMode === 'gruppe' && <SecondaryButton label="Gruppenfahrt öffnen" onPress={() => router.push('/gruppe')} />}
     </View>
   );
 
@@ -1586,7 +1585,7 @@ function TourMode({
 
       {routeTour && <ElevationChart line={line} />}
 
-      {group && routeTour && <GroupBlock />}
+      {group && routeTour && <GroupBlock savedId={plan.cloudId} />}
 
       {pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
     </>
@@ -2040,7 +2039,7 @@ function Result({
 
       <StopsSection line={line} initial={(stops.find((x) => x !== 'foto') as StopKind | undefined) ?? null} busy={adding} onAdd={onAddStop} />
 
-      {group && <GroupBlock />}
+      {group && <GroupBlock savedId={savedId} />}
 
       <View style={styles.gapS}>
         <SecondaryButton label={savedId ? 'Gespeichert unter Meine Touren' : 'Speichern'} onPress={saveResult} />
@@ -2051,18 +2050,19 @@ function Result({
   );
 }
 
-function GroupBlock() {
-  const [hint, setHint] = useState(false);
+/** Gruppe: Mitfahrer lädt man mit Namen zu einer gespeicherten Tour ein (Meine Touren, Als Gruppe fahren). */
+function GroupBlock({ savedId }: { savedId: string | null }) {
   return (
     <View style={styles.card}>
       <AppText variant="label">Gruppe</AppText>
-      <AppText>Fahrt diese Runde zusammen.</AppText>
-      <SecondaryButton label="Mitfahrer einladen" onSurface onPress={() => setHint(true)} />
-      {hint && <AppText variant="caption" muted>Einladen per Link folgt bald.</AppText>}
-      <SecondaryButton label="Gruppenfahrt öffnen" onSurface onPress={() => router.push('/gruppe')} />
-      <AppText variant="caption" muted>
-        Dort startest du die Fahrt, teilst die Tour und siehst die Positionen der anderen.
-      </AppText>
+      <AppText>Fahrt diese Runde zusammen, mit bis zu 5 Mitfahrern.</AppText>
+      {savedId ? (
+        <SecondaryButton label="Mitfahrer einladen" onSurface onPress={() => router.push({ pathname: '/gruppe/neu', params: { tour: savedId } })} />
+      ) : (
+        <AppText variant="caption" muted>
+          Speichere die Tour zuerst. Danach lädst du die Mitfahrer mit ihrem Namen ein.
+        </AppText>
+      )}
     </View>
   );
 }

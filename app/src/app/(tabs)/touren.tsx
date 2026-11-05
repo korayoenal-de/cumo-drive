@@ -1,26 +1,26 @@
 /**
  * Meine Touren: gespeicherte Touren aus App und Web Planer (ohne Konto auf dem Gerät, angemeldet
  * zusätzlich im Konto) und gefahrene Touren mit Fahrtstatistik je Fahrzeug.
- * Eigene Touren lassen sich hier in der Community veröffentlichen.
+ * Jede gespeicherte Tour ist eine kompakte Karte: losfahren (allein oder als Gruppe), auf der Karte
+ * zeigen, im Planer ändern; Export, Community und Löschen liegen im Menü der Karte.
  */
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { ElevationChart } from '@/components/planner/elevation-chart';
-import { ExportRow } from '@/components/planner/export-row';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { useSession } from '@/lib/auth';
+import { setEditTour } from '@/lib/edit-tour';
 import { deleteTour, filterTours, folders, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
 import { publishTour, unpublishTour } from '@/lib/community';
 import { listDrives, type Drive } from '@/lib/drives';
 import { loadProfile } from '@/lib/group/ride';
 import { fmtG } from '@/lib/ride-stats';
-import { importTourFile } from '@/lib/route-file';
+import { exportTour, importTourFile, type RouteFormat } from '@/lib/route-file';
 import { countCurves } from '@/lib/stats';
 import { flatten, formatKm } from '@/lib/tour';
 
@@ -37,8 +37,6 @@ export default function Touren() {
   const [q, setQ] = useState('');
   const [folder, setFolder] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>('neu');
-  const [open, setOpen] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<string | null>(null);
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [tab, setTab] = useState<'gespeichert' | 'gefahren'>('gespeichert');
 
@@ -50,7 +48,6 @@ export default function Touren() {
       if (!t) return;
       const curves = countCurves(flatten(t).map((x) => x.p));
       const saved = saveTour({ ...t, curves }, 'Importiert');
-      setOpen(saved.id);
       setImportMsg(`${saved.name} importiert, ${formatKm(saved.laenge_km, 0)} km.`);
       if (session) void syncLibrary();
     } catch (e) {
@@ -67,15 +64,6 @@ export default function Touren() {
 
   const dirs = useMemo(() => folders(list), [list]);
   const shown = useMemo(() => filterTours(list, q, folder, sort), [list, q, folder, sort]);
-
-  const drive = (t: SavedTour) => {
-    setActiveTour(t, t.profile ?? 'kurvig');
-    router.push('/navigation');
-  };
-  const show = (t: SavedTour) => {
-    setActiveTour(t, t.profile ?? 'kurvig');
-    router.push('/karte');
-  };
 
   return (
     <Screen>
@@ -283,8 +271,8 @@ function MoreMenu({ tour }: { tour: SavedTour }) {
             Die Tour wird vom Gerät und aus deinem Konto gelöscht.
           </AppText>
           <View style={styles.row}>
-            <Pressable accessibilityRole="button" onPress={() => deleteTour(tour.id)} style={({ pressed }) => [styles.choice, styles.danger, pressed && styles.pressed]}>
-              <AppText style={[styles.pillText, styles.dangerText]}>Endgültig löschen</AppText>
+            <Pressable accessibilityRole="button" onPress={() => deleteTour(tour.id)} style={({ pressed }) => [styles.choice, styles.dangerSolid, pressed && styles.pressed]}>
+              <AppText style={[styles.pillText, styles.onSignal]}>Endgültig löschen</AppText>
             </Pressable>
             <Pressable accessibilityRole="button" onPress={() => setConfirm(false)} style={({ pressed }) => [styles.choice, pressed && styles.pressed]}>
               <AppText style={styles.pillText}>Abbrechen</AppText>
@@ -329,18 +317,20 @@ function PublishBlock({ tour }: { tour: SavedTour }) {
   };
   if (!session)
     return (
-      <AppText variant="caption" muted>
+      <AppText variant="caption" muted style={styles.itemNote}>
         Zum Veröffentlichen in der Community meldest du dich unter Einstellungen an.
       </AppText>
     );
   if (tour.published)
     return (
       <View style={styles.gapS}>
-        <AppText variant="caption" style={styles.goodText}>
-          In der Community veröffentlicht
-        </AppText>
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => unpublishTour(tour), 'Aus der Community zurückgezogen.')} style={styles.secondary}>
-          <AppText style={styles.secondaryText}>Zurückziehen</AppText>
+        <Pressable
+          accessibilityRole="menuitem"
+          disabled={busy}
+          onPress={() => void run(() => unpublishTour(tour), 'Aus der Community zurückgezogen.')}
+          style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
+          <AppText style={styles.itemText}>Aus der Community zurückziehen</AppText>
+          {busy && <ActivityIndicator color={Colors.muted} />}
         </Pressable>
         {msg && <AppText variant="caption" muted>{msg}</AppText>}
       </View>
@@ -348,8 +338,8 @@ function PublishBlock({ tour }: { tour: SavedTour }) {
   if (!form)
     return (
       <View style={styles.gapS}>
-        <Pressable accessibilityRole="button" onPress={() => setForm(true)} style={styles.secondary}>
-          <AppText style={styles.secondaryText}>In der Community veröffentlichen</AppText>
+        <Pressable accessibilityRole="menuitem" onPress={() => setForm(true)} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
+          <AppText style={styles.itemText}>In der Community veröffentlichen</AppText>
         </Pressable>
         {msg && <AppText variant="caption" muted>{msg}</AppText>}
       </View>
@@ -498,7 +488,25 @@ const styles = StyleSheet.create({
   segTextOn: { fontFamily: Fonts.semibold, color: Colors.text },
   field: { minHeight: 48, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
   area: { minHeight: 96, textAlignVertical: 'top' },
-  goodText: { color: Colors.good, fontFamily: Fonts.semibold },
+  tourCard: { backgroundColor: Colors.surface, borderRadius: Radius.l, paddingHorizontal: Spacing.m, paddingVertical: Spacing.m, gap: Spacing.s },
+  head: { gap: 2, paddingHorizontal: Spacing.xs },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  pressed: { opacity: 0.7 },
+  pillPrimary: { flex: 1, height: 44, paddingHorizontal: Spacing.m, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  pillPrimaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 15 },
+  pill: { height: 44, paddingHorizontal: Spacing.m, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  pillText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  roundOn: { backgroundColor: Colors.line },
+  roundText: { fontFamily: Fonts.bold, fontSize: 18, lineHeight: 22 },
+  choice: { flex: 1, height: 44, paddingHorizontal: Spacing.m, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  menu: { gap: Spacing.xs },
+  item: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.s, paddingHorizontal: Spacing.l, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
+  itemText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  itemNote: { paddingHorizontal: Spacing.xs, paddingVertical: Spacing.xs },
+  dangerSolid: { backgroundColor: Colors.signal },
+  onSignal: { color: Colors.onSignal },
+  confirm: { gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.signalTint },
   total: { fontFamily: Fonts.semibold, fontSize: 15, fontVariant: ['tabular-nums'] },
   dangerText: { color: Colors.signal },
 });

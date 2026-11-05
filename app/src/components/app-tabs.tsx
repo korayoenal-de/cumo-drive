@@ -65,7 +65,7 @@ function RideAccessory({ ride }: { ride: RideState }) {
         </AppText>
         {placement === 'regular' && (
           <AppText variant="caption" muted numberOfLines={1}>
-            {last ? `${last.name}: ${last.text}` : `Code ${ride.code?.toUpperCase() ?? ''}`}
+            {last ? `${last.name}: ${last.text}` : (ride.name ?? (ride.code ? `Code ${ride.code.toUpperCase()}` : 'Live auf der Karte'))}
           </AppText>
         )}
       </View>
