@@ -99,26 +99,19 @@ export default function Touren() {
       ) : (
         <>
 
-      <View style={styles.syncRow}>
-        {sync.running && <ActivityIndicator color={Colors.muted} />}
-        <AppText variant="caption" muted style={styles.flex}>
-          {!session
-            ? 'Auf diesem Gerät gespeichert. Melde dich unter Einstellungen an, dann findest du deine Touren auch im Web Planer.'
-            : sync.running
-              ? 'Wird mit deinem Konto abgeglichen'
-              : sync.error
-                ? `Abgleich hat nicht geklappt: ${sync.error}`
-                : 'Mit deinem Konto abgeglichen, auch im Web Planer.'}
-        </AppText>
-      </View>
+      {(sync.running || sync.error) && (
+        <View style={styles.syncRow}>
+          {sync.running && <ActivityIndicator color={Colors.muted} />}
+          <AppText variant="caption" muted style={styles.flex}>
+            {sync.running ? 'Wird mit deinem Konto abgeglichen' : `Abgleich hat nicht geklappt: ${sync.error}`}
+          </AppText>
+        </View>
+      )}
 
       <View style={styles.gapS}>
         <View style={styles.row}>
           <Pressable accessibilityRole="button" onPress={() => void importFile()} style={[styles.secondary, styles.flex]}>
-            <AppText style={styles.secondaryText}>GPX oder KML</AppText>
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityHint="QR Code aus dem Web Planer scannen" onPress={() => router.push('/scan')} style={[styles.secondary, styles.flex]}>
-            <AppText style={styles.secondaryText}>Vom Web Planer</AppText>
+            <AppText style={styles.secondaryText}>GPX oder KML importieren</AppText>
           </Pressable>
         </View>
         {importMsg && <AppText variant="caption" muted>{importMsg}</AppText>}

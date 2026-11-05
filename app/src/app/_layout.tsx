@@ -10,8 +10,13 @@ import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 
+import { AuthScreen } from '@/components/auth/auth-screen';
 import { RideBanner } from '@/components/group/ride-banner';
+import { useAuthReady, useSession } from '@/lib/auth';
+import { syncLibrary } from '@/lib/library';
+import { syncVehicles } from '@/lib/vehicle';
 import { AppIntentHandler } from '@/live/intents';
 import { Colors } from '@/constants/theme';
 
@@ -40,11 +45,33 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
-  useEffect(() => {
-    if (loaded || error) SplashScreen.hideAsync();
-  }, [loaded, error]);
+  // In der App nur mit Konto: Touren, Fahrten und Fahrzeuge liegen im Konto (der Web Planer bleibt offen)
+  const session = useSession();
+  const authReady = useAuthReady();
+  const needAuth = Platform.OS !== 'web';
+  const fontsDone = loaded || !!error;
 
-  if (!loaded && !error) return null;
+  useEffect(() => {
+    if (fontsDone && (!needAuth || authReady)) SplashScreen.hideAsync();
+  }, [fontsDone, needAuth, authReady]);
+
+  // nach der Anmeldung Touren und Fahrzeuge mit dem Konto abgleichen
+  const userId = session?.user.id;
+  useEffect(() => {
+    if (!userId) return;
+    void syncLibrary();
+    void syncVehicles();
+  }, [userId]);
+
+  if (!fontsDone || (needAuth && !authReady)) return null;
+  if (needAuth && !session) {
+    return (
+      <ThemeProvider value={theme}>
+        <StatusBar style="light" />
+        <AuthScreen />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider value={theme}>

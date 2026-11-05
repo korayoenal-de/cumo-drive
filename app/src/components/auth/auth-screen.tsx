@@ -1,0 +1,108 @@
+/**
+ * Anmeldung beim Start: Die App ist nur mit Konto nutzbar. So liegen Touren, Fahrten und Fahrzeuge
+ * von Anfang an im Konto und sind in App und Web Planer dieselben.
+ */
+import { useState } from 'react';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { AppText } from '@/components/ui/text';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { signIn, signUp } from '@/lib/auth';
+
+export function AuthScreen() {
+  const insets = useSafeAreaInsets();
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const ready = !!email.trim() && pw.length > 0 && !busy;
+
+  const submit = async () => {
+    if (!ready) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await (mode === 'login' ? signIn : signUp)(email, pw);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.xxxl, paddingBottom: insets.bottom + Spacing.xl }]} keyboardShouldPersistTaps="handled">
+        <View style={styles.gapS}>
+          <AppText variant="caption" style={styles.brand}>
+            CUMO DRIVE
+          </AppText>
+          <AppText variant="display">{mode === 'login' ? 'Willkommen\nzurück' : 'Konto\nanlegen'}</AppText>
+          <AppText muted>Kurvige Touren planen, in der Gruppe fahren und jede Fahrt festhalten. Deine Touren liegen in deinem Konto, in der App und im Web Planer.</AppText>
+        </View>
+
+        <View style={styles.gapM}>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            placeholder="E-Mail"
+            placeholderTextColor={Colors.muted}
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+            keyboardType="email-address"
+            returnKeyType="next"
+            style={styles.input}
+            accessibilityLabel="E-Mail"
+          />
+          <TextInput
+            value={pw}
+            onChangeText={setPw}
+            placeholder={mode === 'register' ? 'Passwort, mindestens 8 Zeichen' : 'Passwort'}
+            placeholderTextColor={Colors.muted}
+            secureTextEntry
+            autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+            textContentType={mode === 'register' ? 'newPassword' : 'password'}
+            returnKeyType="go"
+            onSubmitEditing={() => void submit()}
+            style={styles.input}
+            accessibilityLabel="Passwort"
+          />
+          {err && <AppText style={styles.error}>{err}</AppText>}
+          <Pressable accessibilityRole="button" disabled={!ready} onPress={() => void submit()} style={[styles.primary, !ready && styles.disabled]}>
+            {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{mode === 'login' ? 'Anmelden' : 'Registrieren'}</AppText>}
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setMode(mode === 'login' ? 'register' : 'login');
+              setErr(null);
+            }}
+            style={styles.switch}>
+            <AppText muted>
+              {mode === 'login' ? 'Noch kein Konto? ' : 'Schon ein Konto? '}
+              <AppText style={styles.link}>{mode === 'login' ? 'Registrieren' : 'Anmelden'}</AppText>
+            </AppText>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: Colors.ground },
+  content: { flexGrow: 1, justifyContent: 'space-between', paddingHorizontal: Spacing.xl, gap: Spacing.xxl },
+  gapS: { gap: Spacing.m },
+  gapM: { gap: Spacing.m },
+  brand: { color: Colors.signal, fontFamily: Fonts.bold, letterSpacing: 2 },
+  input: { height: 54, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
+  primary: { height: 54, borderRadius: 27, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 17 },
+  disabled: { opacity: 0.4 },
+  error: { color: Colors.signal, fontFamily: Fonts.semibold },
+  switch: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  link: { color: Colors.text, fontFamily: Fonts.semibold },
+});

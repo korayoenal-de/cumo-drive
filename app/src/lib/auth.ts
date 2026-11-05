@@ -8,18 +8,26 @@ import { useSyncExternalStore } from 'react';
 import { supabase } from './supabase';
 
 let session: Session | null = null;
+/** true, sobald die gespeicherte Sitzung gelesen ist (vorher weiß man nicht, ob angemeldet) */
+let ready = false;
 let started = false;
 const listeners = new Set<() => void>();
 
 function start() {
   if (started) return;
   started = true;
-  supabase.auth.getSession().then(({ data }) => {
-    session = data.session;
-    for (const l of listeners) l();
-  });
+  supabase.auth
+    .getSession()
+    .then(({ data }) => {
+      session = data.session;
+    })
+    .finally(() => {
+      ready = true;
+      for (const l of listeners) l();
+    });
   supabase.auth.onAuthStateChange((_e, s) => {
     session = s;
+    ready = true;
     for (const l of listeners) l();
   });
 }
@@ -34,6 +42,11 @@ function subscribe(l: () => void) {
 
 export function useSession(): Session | null {
   return useSyncExternalStore(subscribe, () => session, () => null);
+}
+
+/** Wie useSession, dazu ob die Sitzung schon geladen ist (für die Anmeldepflicht beim Start). */
+export function useAuthReady(): boolean {
+  return useSyncExternalStore(subscribe, () => ready, () => false);
 }
 
 function german(msg: string): string {
