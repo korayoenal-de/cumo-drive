@@ -6,7 +6,7 @@ import { useCallback } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { formatUntil, PRICES, refreshEntitlement, useEntitlement, type Entitlement } from '@/lib/entitlement';
 
 import { TrialBadge } from './entitlement-gate';
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   gapM: { gap: Spacing.m },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
-  title: { fontFamily: Fonts.semibold, fontSize: 17 },
+  title: { fontFamily: Fonts.semibold, fontSize: Type.title },
   secondary: { height: 48, borderRadius: 24, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  secondaryText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
 });

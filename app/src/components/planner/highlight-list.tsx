@@ -9,7 +9,7 @@ import Animated from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/action-bar';
 import { FUN_NAMES, FunGauge, toFunLevel } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { findHighlights, highlightFacts } from '@/lib/navigation/highlights';
 import { cumulativeKm } from '@/lib/navigation/route';
 import type { LatLon } from '@/lib/tour';
@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
   card: { borderRadius: Radius.l, backgroundColor: Colors.surface, paddingHorizontal: Spacing.m },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64, paddingVertical: Spacing.s },
   line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
-  name: { fontFamily: Fonts.bold, fontSize: 17, color: Colors.text },
-  sub: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.muted },
+  name: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
+  sub: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   gauge: { alignItems: 'center', gap: 2, minWidth: 72 },
-  level: { fontFamily: Fonts.bold, fontSize: 13, color: Colors.muted },
+  level: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.muted },
 });

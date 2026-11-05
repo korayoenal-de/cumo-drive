@@ -11,7 +11,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { copyCommunityTour, listCommunity, loadCommunityTour, type CommunityTour } from '@/lib/community';
 import { formatMinutes } from '@/lib/intent';
@@ -188,12 +188,12 @@ const styles = StyleSheet.create({
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   roundSaved: { backgroundColor: Colors.signalTint },
   rowMain: { gap: 2, minHeight: 44, justifyContent: 'center' },
-  name: { fontFamily: Fonts.semibold, fontSize: 17 },
-  search: { height: 48, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
+  name: { fontFamily: Fonts.semibold, fontSize: Type.title },
+  search: { height: 48, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   primary: { height: 50, borderRadius: 25, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 16 },
+  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
   secondary: { height: 48, borderRadius: 24, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  secondaryText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   disabled: { opacity: 0.4 },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
 });

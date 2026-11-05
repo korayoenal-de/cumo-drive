@@ -21,6 +21,45 @@ export const Colors = {
   signalTint: 'rgba(226,70,28,0.14)',
   goodTint: 'rgba(76,195,138,0.12)',
   warnTint: 'rgba(232,176,58,0.12)',
+  /** Leere Stufe im Fahrspaß Pegel und andere inaktive Flächen auf surface */
+  empty: '#3A3A3F',
+  /** Schwebende Karten über der Karte (Ansagen, Pass Aktionen): ground fast deckend */
+  overlay: 'rgba(11,11,12,0.94)',
+  /** Schwebende Leisten (Tableiste, Navigation unten): surface fast deckend */
+  overlaySurface: 'rgba(22,22,24,0.97)',
+  /** Gedrückt oder ausgewählt auf dunklem Glas */
+  pressTint: 'rgba(255,255,255,0.10)',
+  shadow: '#000000',
+} as const;
+
+/**
+ * Schriftgrößen in pt. Neue Texte nehmen eine dieser Stufen; Ausnahmen (Navigation, Kennzahlen in
+ * Versalien) stehen direkt im Bauteil und sind dort begründet.
+ */
+export const Type = {
+  /** kleine Zusätze, Plaketten */
+  caption: 13,
+  small: 14,
+  /** Labels und Nebenzeilen, nicht kleiner als 15 pt (Design Prinzipien 5) */
+  body: 15,
+  /** Eingabefelder */
+  input: 16,
+  /** Namen in Listen, Zeilentitel */
+  title: 17,
+  /** Tasten */
+  button: 18,
+  h3: 20,
+  h2: 24,
+  h1: 30,
+  /** große Kennzahlen und Tournamen */
+  display: 34,
+} as const;
+
+/** Schatten für schwebende Flächen (React Native boxShadow) */
+export const Shadow = {
+  float: '0 8px 24px rgba(0,0,0,0.35)',
+  sheet: '0 -6px 24px rgba(0,0,0,0.45)',
+  lift: '0 10px 28px rgba(0,0,0,0.55)',
 } as const;
 
 export const Fonts = {

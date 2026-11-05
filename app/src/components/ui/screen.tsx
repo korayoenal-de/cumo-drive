@@ -1,3 +1,6 @@
+/**
+ * Grundgerüst einer scrollbaren Seite: dunkler Grund, sichere Ränder, meldet das Scrollen an die Tableiste (schrumpft beim Runterscrollen).
+ */
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -17,7 +17,7 @@ import { HighlightCard, LeadStopButton, StopAlert } from '@/components/navigatio
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
 import { useSession } from '@/lib/auth';
@@ -616,8 +616,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.s,
     padding: Spacing.l,
     gap: Spacing.m,
-    borderRadius: 16,
-    backgroundColor: 'rgba(22,22,24,0.97)',
+    borderRadius: Radius.l,
+    backgroundColor: Colors.overlaySurface,
   },
   msgChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   msgChip: {
@@ -627,10 +627,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface2,
     justifyContent: 'center',
   },
-  msgChipText: { fontFamily: Fonts.bold, fontSize: 17 },
+  msgChipText: { fontFamily: Fonts.bold, fontSize: Type.title },
   farNote: {
     fontFamily: Fonts.semibold,
-    fontSize: 15,
+    fontSize: Type.body,
     lineHeight: 21,
     color: Colors.warn,
   },
@@ -640,11 +640,11 @@ const styles = StyleSheet.create({
     gap: Spacing.m,
     paddingVertical: Spacing.s,
   },
-  entryLabel: { fontFamily: Fonts.semibold, fontSize: 16 },
+  entryLabel: { fontFamily: Fonts.semibold, fontSize: Type.input },
   radio: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: Radius.s,
     borderWidth: 2,
     borderColor: Colors.muted,
     alignItems: 'center',
@@ -667,19 +667,19 @@ const styles = StyleSheet.create({
   },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   leadWrap: { paddingHorizontal: Spacing.m, paddingBottom: Spacing.s },
-  offTour: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: 'rgba(11,11,12,0.92)', borderRadius: 999, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
+  offTour: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: 'rgba(11,11,12,0.92)', borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
   offDash: { width: 22, height: 0, borderTopWidth: 3, borderStyle: 'dashed', borderColor: Colors.warn },
-  offText: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.warn },
+  offText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
   tourName: {
     fontFamily: Fonts.display,
     fontSize: 26,
     lineHeight: 30,
     textTransform: 'uppercase',
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
   congrats: {
     fontFamily: Fonts.display,
-    fontSize: 34,
+    fontSize: Type.display,
     lineHeight: 38,
     textTransform: 'uppercase',
   },

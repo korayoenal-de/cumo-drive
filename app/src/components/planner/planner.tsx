@@ -30,7 +30,7 @@ import { Chip } from '@/components/ui/chip';
 import { ActionBar } from '@/components/ui/action-bar';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { useSession } from '@/lib/auth';
 import { onEditTour, takeEditTour } from '@/lib/edit-tour';
@@ -46,7 +46,7 @@ import { flatten, formatKm, haversine, legs, PROFILES, PROFILE_CHOICES, LEG_PROF
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { selectVehicle, useVehicles } from '@/lib/vehicle';
 
-const WARN = '#E8B03A';
+const WARN = Colors.warn;
 
 type Mode = 'beschreiben' | 'rundtour' | 'tour';
 
@@ -1148,7 +1148,7 @@ function TourMode({
   const centers = useRef<number[]>([]);
   const dragStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: dragY.get() }, { scale: 1.03 }],
-    boxShadow: '0 10px 28px rgba(0,0,0,0.55)',
+    boxShadow: Shadow.lift,
     backgroundColor: Colors.surface2,
   }));
   /** Etappe, deren Profilauswahl gerade offen ist */
@@ -2196,8 +2196,8 @@ const styles = StyleSheet.create({
   dropDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.signal },
   dropBar: { flex: 1, height: 3, borderRadius: 2, backgroundColor: Colors.signal },
   changed: { color: Colors.warn },
-  winter: { gap: 4, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: 'rgba(232,176,58,0.12)' },
-  winterTitle: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.warn },
+  winter: { gap: Spacing.xs, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: Colors.warnTint },
+  winterTitle: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
   winterText: { color: Colors.warn },
   flex: { flex: 1, gap: 2 },
   gapS: { gap: Spacing.s },
@@ -2214,15 +2214,15 @@ const styles = StyleSheet.create({
   typoTabs: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 22 },
   typoTab: { fontFamily: Fonts.displayBold, fontSize: 28, lineHeight: 34, letterSpacing: -0.3, color: Colors.faint },
   typoTabOn: { color: Colors.text },
-  segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: 4 },
+  segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: Spacing.xs },
   segItem: { flex: 1, height: 38, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
   segOn: { backgroundColor: Colors.surface2 },
-  segText: { fontFamily: Fonts.medium, fontSize: 15, color: Colors.muted },
+  segText: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted },
   segTextOn: { fontFamily: Fonts.semibold, color: Colors.text },
 
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   inputCard: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, flexDirection: 'row', gap: Spacing.m },
-  freeText: { flex: 1, minHeight: 96, color: Colors.text, fontFamily: Fonts.regular, fontSize: 17, textAlignVertical: 'top', padding: 0 },
+  freeText: { flex: 1, minHeight: 96, color: Colors.text, fontFamily: Fonts.regular, fontSize: Type.title, textAlignVertical: 'top', padding: 0 },
   mic: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-end' },
 
   durRow: { flexDirection: 'row', gap: Spacing.s },
@@ -2235,10 +2235,10 @@ const styles = StyleSheet.create({
   dotWarn: { backgroundColor: WARN },
 
   primary: { height: 56, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { fontFamily: Fonts.bold, fontSize: 17, color: Colors.onSignal },
+  primaryText: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.onSignal },
   secondary: { height: 50, borderRadius: Radius.m, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   secondaryOnSurface: { backgroundColor: Colors.surface2 },
-  secondaryText: { fontFamily: Fonts.semibold, fontSize: 16, color: Colors.text },
+  secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.text },
   pressed: { opacity: 0.8 },
   disabled: { opacity: 0.35 },
 
@@ -2247,9 +2247,9 @@ const styles = StyleSheet.create({
   radioOn: { borderColor: Colors.signal },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.signal },
   searchRow: { flexDirection: 'row', gap: Spacing.s },
-  search: { flex: 1, height: 44, borderRadius: Radius.s, backgroundColor: Colors.surface2, color: Colors.text, paddingHorizontal: Spacing.m, fontFamily: Fonts.regular, fontSize: 15 },
+  search: { flex: 1, height: 44, borderRadius: Radius.s, backgroundColor: Colors.surface2, color: Colors.text, paddingHorizontal: Spacing.m, fontFamily: Fonts.regular, fontSize: Type.body },
   searchBtn: { height: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  searchBtnText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  searchBtnText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   hit: { paddingVertical: Spacing.m },
   searchSpinner: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 
@@ -2273,20 +2273,20 @@ const styles = StyleSheet.create({
   summary: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
   summaryHint: { minHeight: 36 },
   go: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  goText: { fontFamily: Fonts.bold, fontSize: 18, color: Colors.onSignal },
+  goText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
 
   headline: { fontSize: 28, lineHeight: 30 },
   actions: { gap: Spacing.s, marginTop: Spacing.s },
   trust: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s },
-  trustDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.good, marginTop: 4 },
+  trustDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.good, marginTop: Spacing.xs },
   warnDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.warn, marginTop: 6 },
 
   // Drei Kennzahlen nebeneinander: 30 pt passt "3:15 h" in ein Drittel eines 375 pt breiten Blatts
   stats: { flexDirection: 'row', gap: Spacing.m },
   linkBtn: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
-  linkText: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.signal },
+  linkText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.signal },
   statBig: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 34, textTransform: 'uppercase', fontVariant: ['tabular-nums'] },
-  statLabel: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.muted },
+  statLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   checkCard: { flexDirection: 'row', alignItems: 'flex-start' },
 
   warnRow: { flexDirection: 'row', gap: Spacing.m, paddingTop: Spacing.s },
@@ -2305,14 +2305,14 @@ const styles = StyleSheet.create({
   stopKm: { width: 52, fontVariant: ['tabular-nums'] },
   small: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   smallStrong: { backgroundColor: Colors.signal },
-  smallText: { fontFamily: Fonts.semibold, fontSize: 14 },
+  smallText: { fontFamily: Fonts.semibold, fontSize: Type.small },
   hitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.m },
   hitMain: { flex: 1, minHeight: 44, justifyContent: 'center' },
 
   // Route planen: Punktliste und Etappen im calimoto Stil, Flächen statt Linien
   searchOnGround: { backgroundColor: Colors.surface },
   field: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 48, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.m },
-  fieldInput: { flex: 1, height: 48, color: Colors.text, fontFamily: Fonts.regular, fontSize: 16 },
+  fieldInput: { flex: 1, height: 48, color: Colors.text, fontFamily: Fonts.regular, fontSize: Type.input },
   fieldIcon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   layersBtn: { position: 'absolute', right: Spacing.l },
   pointRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.s },
@@ -2323,7 +2323,7 @@ const styles = StyleSheet.create({
   viaBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   viaBadgeText: { fontFamily: Fonts.bold, fontSize: 12 },
   moreBtn: { width: 44, height: 52, alignItems: 'center', justifyContent: 'center' },
-  moreText: { fontFamily: Fonts.bold, fontSize: 20, color: Colors.muted },
+  moreText: { fontFamily: Fonts.bold, fontSize: Type.h3, color: Colors.muted },
   legBlock: { flexDirection: 'row', paddingLeft: Spacing.s },
   connector: { width: 28, alignItems: 'center', justifyContent: 'space-evenly', paddingVertical: Spacing.xs },
   connectorDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: Colors.muted },
@@ -2337,14 +2337,14 @@ const styles = StyleSheet.create({
   plusV: { position: 'absolute', width: 2, height: 14, borderRadius: 1, backgroundColor: Colors.text },
   profilePill: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, justifyContent: 'center' },
   profilePillOn: { backgroundColor: Colors.surface2 },
-  profileText: { fontFamily: Fonts.semibold, fontSize: 14 },
+  profileText: { fontFamily: Fonts.semibold, fontSize: Type.small },
   suggestRow: { gap: Spacing.s, paddingRight: Spacing.l },
   suggestChip: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.signalTint },
   suggestDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.signal },
-  suggestText: { fontFamily: Fonts.medium, fontSize: 14 },
-  suggestDetour: { fontFamily: Fonts.medium, fontSize: 14, color: Colors.muted, fontVariant: ['tabular-nums'] },
+  suggestText: { fontFamily: Fonts.medium, fontSize: Type.small },
+  suggestDetour: { fontFamily: Fonts.medium, fontSize: Type.small, color: Colors.muted, fontVariant: ['tabular-nums'] },
   pill: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   pillOn: { backgroundColor: Colors.signal },
-  pillText: { fontFamily: Fonts.medium, fontSize: 14 },
+  pillText: { fontFamily: Fonts.medium, fontSize: Type.small },
   pillTextOn: { color: Colors.onSignal, fontFamily: Fonts.bold },
 });

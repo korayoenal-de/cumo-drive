@@ -31,10 +31,11 @@ import { PASS_STATUS_URL, PASSES, passesAlong, passesGeoJson, passPoint, passSum
 import QRCode from 'qrcode';
 
 import { addMemberLayers, addPassLayers, addPhotoLayers, addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
+import { Colors, Radius, Spacing, Type } from '@/constants/theme';
 
 const C = {
-  ground: '#0B0B0C', surface: '#161618', surface2: '#1F1F22', line: '#2A2A2E', text: '#F4F4F2',
-  muted: '#9A9A9F', signal: '#E2461C', good: '#4CC38A', warn: '#E8B03A',
+  ground: Colors.ground, surface: Colors.surface, surface2: Colors.surface2, line: Colors.line, text: Colors.text,
+  muted: Colors.muted, signal: Colors.signal, good: Colors.good, warn: Colors.warn,
 };
 const DISPLAY = 'Archivo_900Black, Archivo, "Arial Narrow", Inter, system-ui, sans-serif';
 const BODY = 'Inter_400Regular, Inter, system-ui, sans-serif';
@@ -791,7 +792,7 @@ function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid }) {
         code = encodeTour(tour, profile);
         short = false;
       }
-      const url = await QRCode.toDataURL(expoGoLink(code), { errorCorrectionLevel: 'M', margin: 3, width: 720, color: { dark: '#0B0B0C', light: '#FFFFFF' } });
+      const url = await QRCode.toDataURL(expoGoLink(code), { errorCorrectionLevel: 'M', margin: 3, width: 720, color: { dark: Colors.ground, light: '#FFFFFF' } });
       if (alive) setQr({ tour, url, short });
     })().catch(() => undefined);
     return () => {
@@ -860,7 +861,7 @@ function StopsPanel(props: { tour: PlannedTour; busy: boolean; onAdd: (p: LatLon
       {cur?.hits && cur.hits.length > 0 && (
         <ol style={S.passList}>
           {cur.hits.map((h) => (
-            <li key={h.id} style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <li key={h.id} style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: Spacing.s }}>
               <span style={S.legKm}>km {Math.round(h.km)}</span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={S.passName}>{h.name}</span>
@@ -888,7 +889,7 @@ function AddPass(props: { near: { pass: Pass; dKm: number }[]; live: Map<string,
       {hits.length ? (
         <ol style={S.passList}>
           {hits.map(({ pass, dKm }) => (
-            <li key={pass.id} style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <li key={pass.id} style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: Spacing.s }}>
               <span style={pass.tier === 'ikone' ? S.passDotIcon : S.passDot} />
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={S.passName}>{pass.name}</span>
@@ -961,14 +962,14 @@ function Gallery(props: {
   }
   return (
     <div style={S.gallery}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: Spacing.s }}>
         <div>
           <b>{title}</b>
-          <span style={{ ...S.dropDetail, marginLeft: 8 }}>
+          <span style={{ ...S.dropDetail, marginLeft: Spacing.s }}>
             {g.photos.length} {g.photos.length === 1 ? 'Foto' : 'Fotos'}, CUMO DRIVERS CLUB, {photoDate(g.photos[0])}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: Spacing.s, alignItems: 'center', flexShrink: 0 }}>
           <button style={{ ...S.secondaryOnSurface, flex: 'none', padding: '0 14px' }} disabled={!props.canAdd} onClick={() => props.onAddVia(g.p)}>
             Als Zwischenziel einfügen
           </button>
@@ -1025,7 +1026,7 @@ function LibraryPanel(props: { currentId: string | null; onOpen: (t: SavedTour) 
               </Chip>
             ))}
           </div>
-          <ul style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <ul style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: Spacing.xs }}>
             {shown.map((t) => (
               <li key={t.id} style={{ ...S.libRow, ...(t.id === props.currentId ? { background: C.surface } : {}) }}>
                 <button style={S.libOpen} onClick={() => props.onOpen(t)}>
@@ -1099,7 +1100,7 @@ function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; isSampl
   const link = `exp://u.expo.dev/44e0d073-6f59-455d-8a50-0f11f6fef4b7/--/gruppe?runtime-version=exposdk%3A58.0.0&channel-name=preview&code=${ride.code}`;
   return (
     <div style={S.groupBox}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: Spacing.s }}>
         <span style={S.rideCode}>
           {ride.code!.slice(0, 3).toUpperCase()} {ride.code!.slice(3).toUpperCase()}
         </span>
@@ -1118,9 +1119,9 @@ function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; isSampl
         {ride.status === 'verbinde' ? 'Verbinde …' : `${ride.members.length} in der Gruppe, du bist ${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[ride.myRole]}`}
         {ride.tourCode ? ', Tour geteilt' : ''}
       </span>
-      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: Spacing.xs }}>
         {ride.members.map((mb) => (
-          <li key={mb.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <li key={mb.id} style={{ display: 'flex', alignItems: 'center', gap: Spacing.s }}>
             <span style={{ width: 10, height: 10, borderRadius: 5, background: mb.role === 'lead' ? C.signal : mb.role === 'schluss' ? C.warn : C.text }} />
             <span style={{ flex: 1 }}>
               {mb.name}
@@ -1170,7 +1171,7 @@ function AccountBox() {
   if (session) {
     return (
       <div style={S.accountBox}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: Spacing.s, alignItems: 'center' }}>
           <span>
             Angemeldet als <b>{session.user.email}</b>
           </span>
@@ -1569,7 +1570,7 @@ function ElevationChart(props: { e: ElevationProfile; onHoverKm: (km: number | n
   const [hover, setHover] = useState<number | null>(null);
   const idx = hover === null ? -1 : e.km.findIndex((k) => k >= hover);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.xs }}>
       <div style={S.sectionHead}>
         <span style={S.label}>Höhenprofil</span>
         <span style={S.small}>{idx >= 0 ? `km ${Math.round(e.km[idx])}: ${Math.round(e.m[idx])} m` : `${lo} bis ${hi} m`}</span>
@@ -1603,7 +1604,7 @@ function Stat(props: { big: string; unit?: string; label: string; tone?: 'stop' 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <span style={{ fontFamily: DISPLAY, fontSize: props.small ? 20 : 30, lineHeight: 1, color, fontVariantNumeric: 'tabular-nums' }}>
         {props.big}
-        {props.unit ? <span style={{ fontSize: 15 }}> {props.unit}</span> : null}
+        {props.unit ? <span style={{ fontSize: Type.body }}> {props.unit}</span> : null}
       </span>
       <span style={S.small}>{props.label}</span>
     </div>
@@ -1624,94 +1625,94 @@ function Status(props: { text: string; onCancel: () => void }) {
 
 /* ---------- Stile ---------- */
 
-const btnBase: CSSProperties = { font: `600 14px ${BODY}`, borderRadius: 999, cursor: 'pointer', padding: '0 16px', height: 40 };
-const chipBase: CSSProperties = { font: `500 13px ${BODY}`, borderRadius: 999, cursor: 'pointer', padding: '0 12px', height: 32 };
+const btnBase: CSSProperties = { font: `600 14px ${BODY}`, borderRadius: Radius.pill, cursor: 'pointer', padding: '0 16px', height: 40 };
+const chipBase: CSSProperties = { font: `500 13px ${BODY}`, borderRadius: Radius.pill, cursor: 'pointer', padding: '0 12px', height: 32 };
 
 const S: Record<string, CSSProperties> = {
-  root: { display: 'flex', height: '100vh', width: '100%', background: C.ground, color: C.text, fontFamily: BODY, fontSize: 14, overflow: 'hidden' },
+  root: { display: 'flex', height: '100vh', width: '100%', background: C.ground, color: C.text, fontFamily: BODY, fontSize: Type.small, overflow: 'hidden' },
   mapWrap: { position: 'relative', flex: 1, minWidth: 0 },
   map: { position: 'absolute', inset: 0 },
-  mapError: { position: 'absolute', top: 16, left: 16, right: 16, padding: 14, background: C.surface, borderRadius: 12, color: C.text },
-  hint: { position: 'absolute', left: 16, bottom: 16, padding: '8px 12px', background: 'rgba(11,11,12,0.85)', borderRadius: 999, color: C.muted, fontSize: 12 },
+  mapError: { position: 'absolute', top: 16, left: 16, right: 16, padding: 14, background: C.surface, borderRadius: Radius.s, color: C.text },
+  hint: { position: 'absolute', left: 16, bottom: 16, padding: '8px 12px', background: 'rgba(11,11,12,0.85)', borderRadius: Radius.pill, color: C.muted, fontSize: 12 },
   side: { width: 400, maxWidth: '100%', display: 'flex', flexDirection: 'column', background: C.ground },
   brandRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 12px' },
-  brand: { fontFamily: DISPLAY, fontSize: 15, letterSpacing: 2 },
-  ride: { display: 'flex', background: C.surface, borderRadius: 999, padding: 3 },
+  brand: { fontFamily: DISPLAY, fontSize: Type.body, letterSpacing: 2 },
+  ride: { display: 'flex', background: C.surface, borderRadius: Radius.pill, padding: 3 },
   rideOn: { ...chipBase, height: 28, background: C.text, color: C.ground, border: 'none', fontWeight: 700 },
   rideOff: { ...chipBase, height: 28, background: 'transparent', color: C.muted, border: 'none' },
-  groupBox: { display: 'flex', flexDirection: 'column', gap: 10, background: C.surface, borderRadius: 12, padding: 14, lineHeight: 1.45 },
+  groupBox: { display: 'flex', flexDirection: 'column', gap: 10, background: C.surface, borderRadius: Radius.s, padding: 14, lineHeight: 1.45 },
   tabs: { display: 'flex', gap: 2, padding: '0 14px 12px', overflowX: 'auto' },
   tab: { ...btnBase, height: 34, padding: '0 11px', background: 'transparent', color: C.muted, border: 'none', whiteSpace: 'nowrap' },
   tabOn: { ...btnBase, height: 34, padding: '0 11px', background: C.surface2, color: C.text, border: 'none', whiteSpace: 'nowrap' },
   scroll: { flex: 1, overflowY: 'auto', padding: '16px 20px 32px' },
   stack: { display: 'flex', flexDirection: 'column', gap: 18 },
-  stackTight: { display: 'flex', flexDirection: 'column', gap: 8 },
-  h2: { fontFamily: DISPLAY, fontSize: 24, textTransform: 'uppercase', margin: '0 0 6px', lineHeight: 1 },
+  stackTight: { display: 'flex', flexDirection: 'column', gap: Spacing.s },
+  h2: { fontFamily: DISPLAY, fontSize: Type.h2, textTransform: 'uppercase', margin: '0 0 6px', lineHeight: 1 },
   muted: { color: C.muted, margin: 0, lineHeight: 1.45 },
   small: { color: C.muted, fontSize: 12, margin: 0 },
   sampleTag: { alignSelf: 'flex-start', fontSize: 11, fontWeight: 700, color: C.warn, background: 'rgba(232,176,58,0.14)', padding: '2px 8px', borderRadius: 9 },
   nameInput: { background: 'transparent', border: 'none', color: C.text, font: `700 20px ${BODY}`, padding: 0, outline: 'none' },
   statsRow: { display: 'flex', gap: 26, paddingTop: 6 },
-  checkGood: { background: 'rgba(76,195,138,0.12)', color: C.good, padding: '10px 12px', borderRadius: 12, fontWeight: 600 },
-  checkBad: { background: 'rgba(226,70,28,0.14)', color: '#FF8A66', padding: '10px 12px', borderRadius: 12, fontWeight: 600 },
-  search: { width: '100%', boxSizing: 'border-box', height: 44, padding: '0 14px', background: C.surface, color: C.text, border: 'none', borderRadius: 12, font: `500 14px ${BODY}`, outline: 'none' },
-  dropdown: { position: 'absolute', zIndex: 5, top: 48, left: 0, right: 0, margin: 0, padding: 4, background: C.surface, border: 'none', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
+  checkGood: { background: Colors.goodTint, color: C.good, padding: '10px 12px', borderRadius: Radius.s, fontWeight: 600 },
+  checkBad: { background: Colors.signalTint, color: '#FF8A66', padding: '10px 12px', borderRadius: Radius.s, fontWeight: 600 },
+  search: { width: '100%', boxSizing: 'border-box', height: 44, padding: '0 14px', background: C.surface, color: C.text, border: 'none', borderRadius: Radius.s, font: `500 14px ${BODY}`, outline: 'none' },
+  dropdown: { position: 'absolute', zIndex: 5, top: 48, left: 0, right: 0, margin: 0, padding: Spacing.xs, background: C.surface, border: 'none', borderRadius: Radius.s, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
   dropItem: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', padding: '8px 10px', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', borderRadius: 8, textAlign: 'left', font: `500 14px ${BODY}` },
   dropDetail: { color: C.muted, fontSize: 12 },
   wpList: { margin: 0, padding: 0, display: 'flex', flexDirection: 'column' },
   wpRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' },
-  wpDot: { width: 24, height: 24, borderRadius: 12, background: C.text, color: C.ground, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  wpDotEnd: { width: 24, height: 24, borderRadius: 12, background: C.signal, color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  wpDot: { width: 24, height: 24, borderRadius: Radius.s, background: C.text, color: C.ground, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  wpDotEnd: { width: 24, height: 24, borderRadius: Radius.s, background: C.signal, color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   wpName: { flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', border: 'none', color: C.text, font: `600 14px ${BODY}`, cursor: 'pointer', padding: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  iconBtn: { background: 'transparent', border: 'none', color: C.muted, fontSize: 18, cursor: 'pointer', padding: '0 4px' },
+  iconBtn: { background: 'transparent', border: 'none', color: C.muted, fontSize: Type.button, cursor: 'pointer', padding: '0 4px' },
   leg: { marginLeft: 11, paddingLeft: 21, borderLeft: `2px dotted ${C.line}`, display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 6 },
   legKm: { color: C.muted, fontSize: 12, fontVariantNumeric: 'tabular-nums' },
-  warnStop: { display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left', background: 'rgba(226,70,28,0.14)', color: '#FF8A66', border: 'none', borderRadius: 10, padding: '8px 10px', cursor: 'pointer', font: `500 13px ${BODY}` },
-  warnSoft: { display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left', background: 'rgba(232,176,58,0.12)', color: C.warn, border: 'none', borderRadius: 10, padding: '8px 10px', cursor: 'pointer', font: `500 13px ${BODY}` },
+  warnStop: { display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left', background: Colors.signalTint, color: '#FF8A66', border: 'none', borderRadius: 10, padding: '8px 10px', cursor: 'pointer', font: `500 13px ${BODY}` },
+  warnSoft: { display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left', background: Colors.warnTint, color: C.warn, border: 'none', borderRadius: 10, padding: '8px 10px', cursor: 'pointer', font: `500 13px ${BODY}` },
   warnWhy: { color: C.muted, fontSize: 12 },
   section: { display: 'flex', flexDirection: 'column', gap: 10 },
   sectionHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' },
   label: { fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: C.muted },
-  aside: { fontSize: 13, fontWeight: 600 },
+  aside: { fontSize: Type.caption, fontWeight: 600 },
   chips: { display: 'flex', flexWrap: 'wrap', gap: 6 },
   chip: { ...chipBase, background: C.surface, color: C.text, border: 'none' },
   chipOnSurface: { ...chipBase, background: C.surface2, color: C.text, border: 'none' },
   chipOn: { ...chipBase, background: C.text, color: C.ground, border: 'none', fontWeight: 700 },
-  toggleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: 'pointer', padding: '4px 0' },
+  toggleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.m, cursor: 'pointer', padding: '4px 0' },
   switch: { width: 40, height: 22, borderRadius: 11, position: 'relative', flexShrink: 0, transition: 'background 150ms' },
   knob: { position: 'absolute', top: 2, left: 2, width: 18, height: 18, borderRadius: 9, background: '#fff', transition: 'transform 150ms' },
-  btnRow: { display: 'flex', gap: 8, flexWrap: 'wrap' },
+  btnRow: { display: 'flex', gap: Spacing.s, flexWrap: 'wrap' },
   primary: { ...btnBase, height: 46, background: C.signal, color: '#fff', border: 'none', fontWeight: 700, flex: 1 },
   secondary: { ...btnBase, background: C.surface, color: C.text, border: 'none', flex: 1 },
   secondaryOnSurface: { ...btnBase, background: C.surface2, color: C.text, border: 'none', flex: 1 },
   link: { background: 'transparent', border: 'none', color: C.text, textDecoration: 'underline', cursor: 'pointer', font: `600 13px ${BODY}`, padding: 0, alignSelf: 'flex-start' },
-  startRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: C.surface, padding: '10px 12px', borderRadius: 12, fontWeight: 600 },
+  startRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: C.surface, padding: '10px 12px', borderRadius: Radius.s, fontWeight: 600 },
   compass: { display: 'grid', gridTemplateColumns: 'repeat(3, 44px)', gap: 6 },
-  compassBtn: { width: 44, height: 44, borderRadius: 12, background: C.surface, color: C.text, border: 'none', fontSize: 18, cursor: 'pointer' },
-  compassOn: { width: 44, height: 44, borderRadius: 12, background: C.signal, color: '#fff', border: 'none', fontSize: 18, cursor: 'pointer' },
-  textarea: { width: '100%', boxSizing: 'border-box', background: C.surface, color: C.text, border: 'none', borderRadius: 14, padding: 14, font: `500 15px/1.4 ${BODY}`, resize: 'vertical', outline: 'none' },
-  understood: { display: 'flex', flexDirection: 'column', gap: 4, lineHeight: 1.45 },
-  status: { display: 'flex', alignItems: 'center', gap: 10, margin: '12px 20px 0', padding: '10px 12px', background: C.surface, borderRadius: 12 },
+  compassBtn: { width: 44, height: 44, borderRadius: Radius.s, background: C.surface, color: C.text, border: 'none', fontSize: Type.button, cursor: 'pointer' },
+  compassOn: { width: 44, height: 44, borderRadius: Radius.s, background: C.signal, color: '#fff', border: 'none', fontSize: Type.button, cursor: 'pointer' },
+  textarea: { width: '100%', boxSizing: 'border-box', background: C.surface, color: C.text, border: 'none', borderRadius: Radius.m, padding: 14, font: `500 15px/1.4 ${BODY}`, resize: 'vertical', outline: 'none' },
+  understood: { display: 'flex', flexDirection: 'column', gap: Spacing.xs, lineHeight: 1.45 },
+  status: { display: 'flex', alignItems: 'center', gap: 10, margin: '12px 20px 0', padding: '10px 12px', background: C.surface, borderRadius: Radius.s },
   spinner: { width: 14, height: 14, borderRadius: 7, border: `2px solid ${C.line}`, borderTopColor: C.signal, animation: 'cdspin 0.8s linear infinite' },
-  error: { margin: '12px 20px 0', padding: '10px 12px', background: 'rgba(226,70,28,0.14)', color: '#FF8A66', borderRadius: 12 },
-  errorText: { color: '#FF8A66', margin: 0, fontSize: 13 },
-  engine: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px', color: C.muted, fontSize: 12 },
+  error: { margin: '12px 20px 0', padding: '10px 12px', background: Colors.signalTint, color: '#FF8A66', borderRadius: Radius.s },
+  errorText: { color: '#FF8A66', margin: 0, fontSize: Type.caption },
+  engine: { display: 'flex', alignItems: 'center', gap: Spacing.s, padding: '8px 20px', color: C.muted, fontSize: 12 },
   dot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-  menu: { position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: 200, padding: 4, background: C.surface, border: 'none', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
-  photoToggle: { position: 'absolute', top: 12, left: 12, zIndex: 5, height: 32, padding: '0 12px', borderRadius: 16, border: 'none', background: 'rgba(11,11,12,0.85)', color: C.muted, font: `600 13px ${BODY}`, cursor: 'pointer' },
-  photoToggleOn: { position: 'absolute', top: 12, left: 12, zIndex: 5, height: 32, padding: '0 12px', borderRadius: 16, border: `1px solid ${C.signal}`, background: 'rgba(11,11,12,0.85)', color: C.text, font: `600 13px ${BODY}`, cursor: 'pointer' },
-  gallery: { position: 'absolute', left: 12, right: 12, bottom: 40, zIndex: 6, display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: 'rgba(22,22,24,0.96)', border: 'none', color: C.text, font: `500 14px ${BODY}` },
-  thumbs: { display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 },
+  menu: { position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: 200, padding: Spacing.xs, background: C.surface, border: 'none', borderRadius: Radius.s, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' },
+  photoToggle: { position: 'absolute', top: 12, left: 12, zIndex: 5, height: 32, padding: '0 12px', borderRadius: Radius.l, border: 'none', background: 'rgba(11,11,12,0.85)', color: C.muted, font: `600 13px ${BODY}`, cursor: 'pointer' },
+  photoToggleOn: { position: 'absolute', top: 12, left: 12, zIndex: 5, height: 32, padding: '0 12px', borderRadius: Radius.l, border: `1px solid ${C.signal}`, background: 'rgba(11,11,12,0.85)', color: C.text, font: `600 13px ${BODY}`, cursor: 'pointer' },
+  gallery: { position: 'absolute', left: 12, right: 12, bottom: 40, zIndex: 6, display: 'flex', flexDirection: 'column', gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, background: 'rgba(22,22,24,0.96)', border: 'none', color: C.text, font: `500 14px ${BODY}` },
+  thumbs: { display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: Spacing.xs },
   thumbBtn: { flex: 'none', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: 8, overflow: 'hidden' },
   thumb: { display: 'block', height: 110, width: 'auto', borderRadius: 8 },
-  lightbox: { position: 'absolute', inset: 0, zIndex: 20, background: 'rgba(0,0,0,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 16 },
+  lightbox: { position: 'absolute', inset: 0, zIndex: 20, background: 'rgba(0,0,0,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: Spacing.l },
   lightboxImg: { maxWidth: '100%', maxHeight: 'calc(100% - 60px)', objectFit: 'contain', borderRadius: 6 },
-  lightboxBar: { display: 'flex', alignItems: 'center', gap: 12, color: C.text, font: `500 14px ${BODY}` },
-  lbBtn: { width: 36, height: 36, borderRadius: 18, border: 'none', background: C.surface, color: C.text, fontSize: 20, cursor: 'pointer' },
+  lightboxBar: { display: 'flex', alignItems: 'center', gap: Spacing.m, color: C.text, font: `500 14px ${BODY}` },
+  lbBtn: { width: 36, height: 36, borderRadius: 18, border: 'none', background: C.surface, color: C.text, fontSize: Type.h3, cursor: 'pointer' },
   rideCode: { font: `900 28px ${DISPLAY}`, letterSpacing: 4, color: C.text },
-  accountBox: { display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: C.surface, border: 'none', color: C.text, font: `500 14px ${BODY}` },
-  menuHead: { display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 12px 12px', marginBottom: 4, color: C.text, font: `500 14px ${BODY}`, maxWidth: 260 },
-  winterNote: { display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 12px', borderRadius: 12, background: 'rgba(232,176,58,0.12)', color: C.warn, font: `500 13px ${BODY}`, lineHeight: 1.4 },
+  accountBox: { display: 'flex', flexDirection: 'column', gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, background: C.surface, border: 'none', color: C.text, font: `500 14px ${BODY}` },
+  menuHead: { display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 12px 12px', marginBottom: Spacing.xs, color: C.text, font: `500 14px ${BODY}`, maxWidth: 260 },
+  winterNote: { display: 'flex', flexDirection: 'column', gap: Spacing.xs, padding: '10px 12px', borderRadius: Radius.s, background: Colors.warnTint, color: C.warn, font: `500 13px ${BODY}`, lineHeight: 1.4 },
   winterLink: { color: C.text, fontWeight: 600 },
   passList: { margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2 },
   passRow: { display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '7px 4px', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', textAlign: 'left', font: `500 14px ${BODY}` },
@@ -1719,14 +1720,14 @@ const S: Record<string, CSSProperties> = {
   passDot: { width: 10, height: 10, borderRadius: 5, background: C.text, flexShrink: 0 },
   passDotIcon: { width: 12, height: 12, borderRadius: 6, background: C.warn, flexShrink: 0 },
   menuItem: { textAlign: 'left', background: 'transparent', border: 'none', color: C.text, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', font: `500 14px ${BODY}` },
-  saveBox: { display: 'flex', gap: 8, alignItems: 'center' },
-  qrBox: { display: 'flex', flexDirection: 'column', gap: 10, padding: 14, background: C.surface2, border: 'none', borderRadius: 14, color: C.text, font: `500 14px ${BODY}` },
+  saveBox: { display: 'flex', gap: Spacing.s, alignItems: 'center' },
+  qrBox: { display: 'flex', flexDirection: 'column', gap: 10, padding: 14, background: C.surface2, border: 'none', borderRadius: Radius.m, color: C.text, font: `500 14px ${BODY}` },
   qrImg: { width: '100%', maxWidth: 340, aspectRatio: '1', alignSelf: 'center', borderRadius: 10, imageRendering: 'pixelated' },
-  libRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '12px 10px', borderRadius: 12, listStyle: 'none' },
+  libRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '12px 10px', borderRadius: Radius.s, listStyle: 'none' },
   libOpen: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start', textAlign: 'left', background: 'transparent', border: 'none', color: C.text, cursor: 'pointer', font: `500 14px ${BODY}`, padding: 0 },
   badgeStop: { fontSize: 11, fontWeight: 700, color: '#FF8A66', background: 'rgba(226,70,28,0.16)', padding: '2px 8px', borderRadius: 9, whiteSpace: 'nowrap' },
   badgeGood: { fontSize: 11, fontWeight: 700, color: C.good, background: 'rgba(76,195,138,0.14)', padding: '2px 8px', borderRadius: 9, whiteSpace: 'nowrap' },
-  dangerSmall: { background: C.signal, color: '#fff', border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', font: `600 12px ${BODY}` },
+  dangerSmall: { background: C.signal, color: '#fff', border: 'none', borderRadius: Radius.pill, padding: '4px 10px', cursor: 'pointer', font: `600 12px ${BODY}` },
 };
 
 // Drehanimation für den Ladekreis einmalig registrieren

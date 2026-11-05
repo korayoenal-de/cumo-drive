@@ -1,3 +1,6 @@
+/**
+ * Tab Bereich: verwendet die eigene Tableiste (components/app-tabs.tsx).
+ */
 import { Platform } from 'react-native';
 
 import AppTabs from '@/components/app-tabs';

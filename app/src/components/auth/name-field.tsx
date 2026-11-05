@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { cleanName, NAME_MAX, nameAvailable, nameProblem } from '@/lib/profile';
 
 export type NameCheck = { state: 'leer' | 'ungueltig' | 'pruefe' | 'frei' | 'vergeben' | 'fehler' | 'gleich'; message: string | null };
@@ -73,7 +73,7 @@ export function NameField({ value, onChange, check, onSurface }: { value: string
 
 const styles = StyleSheet.create({
   gap: { gap: Spacing.xs },
-  input: { height: 54, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
+  input: { height: 54, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   inputOnSurface: { backgroundColor: Colors.surface2, height: 50 },
   good: { color: Colors.good },
   bad: { color: Colors.signal },

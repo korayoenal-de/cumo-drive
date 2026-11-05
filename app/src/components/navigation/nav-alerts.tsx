@@ -12,7 +12,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { STOP_REASONS, type RideMsg, type RideStop, type StopReason } from '@/lib/group/ride';
 import { highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 
@@ -26,7 +26,7 @@ const HIGHLIGHT_SYMBOL: Record<Highlight['kind'], NavSymbol> = { pass: 'passhoeh
 export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
   const d = formatDistance(Math.max(0, distM));
   return (
-    <GlassPanel style={styles.card} fallback="rgba(11,11,12,0.94)">
+    <GlassPanel style={styles.card} fallback={Colors.overlay}>
       <View style={styles.row} accessible accessibilityRole="alert" accessibilityLabel={`${distM > 50 ? `In ${d.value} ${d.unit === 'm' ? 'Metern' : 'Kilometern'}` : 'Jetzt'} ${h.name}, ${highlightFacts(h)}`}>
         <NavSymbolIcon symbol={HIGHLIGHT_SYMBOL[h.kind]} size={44} soon />
         <View style={styles.flex}>
@@ -85,7 +85,7 @@ export function LeadStopButton({ onAnnounce }: { onAnnounce: (r: StopReason) => 
       </Pressable>
     );
   return (
-    <GlassPanel style={styles.card} fallback="rgba(11,11,12,0.94)">
+    <GlassPanel style={styles.card} fallback={Colors.overlay}>
       <AppText variant="label">Halt an die Gruppe</AppText>
       <View style={styles.grid}>
         {STOP_REASONS.map((r) => (
@@ -112,7 +112,7 @@ export function LeadStopButton({ onAnnounce }: { onAnnounce: (r: StopReason) => 
 
 export function MessageToast({ msg }: { msg: RideMsg }) {
   return (
-    <GlassPanel style={[styles.card, styles.toast]} fallback="rgba(11,11,12,0.94)">
+    <GlassPanel style={[styles.card, styles.toast]} fallback={Colors.overlay}>
       <View accessible accessibilityRole="alert">
         <AppText variant="caption" muted>
           {msg.name}
@@ -128,22 +128,22 @@ const styles = StyleSheet.create({
   gapS: { gap: Spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   card: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
-  kicker: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.signal },
+  kicker: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.signal },
   title: { fontFamily: Fonts.bold, fontSize: 22, lineHeight: 26, letterSpacing: -0.3 },
-  num: { fontFamily: Fonts.semibold, fontSize: 15, fontVariant: ['tabular-nums'] },
+  num: { fontFamily: Fonts.semibold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
   stop: { padding: Spacing.xl },
   stopKicker: { fontFamily: Fonts.semibold, color: 'rgba(255,255,255,0.8)' },
   stopTitle: { fontFamily: Fonts.display, fontSize: 32, lineHeight: 36, color: Colors.onSignal },
-  stopText: { fontFamily: Fonts.medium, fontSize: 17, color: Colors.onSignal },
+  stopText: { fontFamily: Fonts.medium, fontSize: Type.title, color: Colors.onSignal },
   stopBtn: { height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
-  stopBtnText: { fontFamily: Fonts.bold, fontSize: 16, color: Colors.onSignal },
+  stopBtnText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.onSignal },
   leadBtn: { alignSelf: 'flex-end', height: 52, paddingHorizontal: Spacing.xl, borderRadius: 26, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  leadText: { fontFamily: Fonts.bold, fontSize: 16, color: Colors.onSignal },
+  leadText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.onSignal },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   reason: { flexGrow: 1, flexBasis: '45%', height: 56, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  reasonText: { fontFamily: Fonts.bold, fontSize: 17, color: Colors.onSignal },
+  reasonText: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.onSignal },
   cancel: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.l },
   toast: { paddingVertical: Spacing.m },
-  toastText: { fontFamily: Fonts.semibold, fontSize: 17 },
+  toastText: { fontFamily: Fonts.semibold, fontSize: Type.title },
   pressed: { opacity: 0.75 },
 });

@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Motion, Shadow, Spacing, Type } from '@/constants/theme';
 import { useRide, type RideState } from '@/lib/group/ride';
 import { expandTabBar, tabBarCompact as compact } from '@/lib/tab-bar';
 
@@ -62,7 +62,7 @@ function Dock({ children }: { children?: ReactNode }) {
     <View pointerEvents="box-none" style={[styles.dock, { paddingBottom: Math.max(insets.bottom - 6, Spacing.s) }]}>
       {active && <RideAccessory ride={ride} />}
       <Animated.View style={[styles.barWrap, barStyle]}>
-        <GlassPanel style={styles.bar} fallback="rgba(22,22,24,0.97)" tint="rgba(11,11,12,0.5)">
+        <GlassPanel style={styles.bar} fallback={Colors.overlaySurface} tint="rgba(11,11,12,0.5)">
           {children}
         </GlassPanel>
       </Animated.View>
@@ -102,7 +102,7 @@ function RideAccessory({ ride }: { ride: RideState }) {
   const title = ride.status === 'verbinde' ? 'Gruppe verbindet' : `Gruppenfahrt, ${n} Fahrer`;
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${title}, Gruppe öffnen`} onPress={() => router.push('/gruppe')}>
-      <GlassPanel style={styles.accessory} fallback="rgba(22,22,24,0.97)">
+      <GlassPanel style={styles.accessory} fallback={Colors.overlaySurface}>
         <View style={styles.dot} />
         <View style={styles.flex}>
           <AppText style={styles.title} numberOfLines={1}>
@@ -120,13 +120,13 @@ function RideAccessory({ ride }: { ride: RideState }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   dock: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: Spacing.l, gap: Spacing.s },
-  barWrap: { borderRadius: BAR_H / 2, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' },
-  bar: { height: BAR_H, borderRadius: BAR_H / 2, padding: 4, flexDirection: 'row' },
+  barWrap: { borderRadius: BAR_H / 2, boxShadow: Shadow.float },
+  bar: { height: BAR_H, borderRadius: BAR_H / 2, padding: Spacing.xs, flexDirection: 'row' },
   tab: { flex: 1, height: BAR_H - 8, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: (BAR_H - 8) / 2 },
-  pill: { backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: (BAR_H - 8) / 2 },
+  pill: { backgroundColor: Colors.pressTint, borderRadius: (BAR_H - 8) / 2 },
   label: { fontFamily: Fonts.medium, fontSize: 11, color: Colors.muted },
   labelOn: { fontFamily: Fonts.semibold, color: Colors.text },
   accessory: { height: 52, borderRadius: 26, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingHorizontal: Spacing.l },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.good },
-  title: { fontFamily: Fonts.semibold, fontSize: 14 },
+  title: { fontFamily: Fonts.semibold, fontSize: Type.small },
 });

@@ -11,7 +11,7 @@ import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
@@ -308,15 +308,15 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
-  name: { fontFamily: Fonts.semibold, fontSize: 17 },
-  stat: { fontFamily: Fonts.semibold, fontSize: 15, fontVariant: ['tabular-nums'] },
-  badge: { backgroundColor: Colors.goodTint, borderRadius: 999, paddingHorizontal: Spacing.s, paddingVertical: 2 },
+  name: { fontFamily: Fonts.semibold, fontSize: Type.title },
+  stat: { fontFamily: Fonts.semibold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
+  badge: { backgroundColor: Colors.goodTint, borderRadius: Radius.pill, paddingHorizontal: Spacing.s, paddingVertical: 2 },
   badgeText: { color: Colors.good, fontFamily: Fonts.semibold },
-  input: { height: 50, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
+  input: { height: 50, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   primary: { height: 50, borderRadius: 25, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 16 },
+  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
   secondary: { height: 48, borderRadius: 24, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  secondaryText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   disabled: { opacity: 0.4 },
   padH: { paddingHorizontal: Spacing.l },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },

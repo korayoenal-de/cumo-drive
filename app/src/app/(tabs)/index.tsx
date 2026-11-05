@@ -1,3 +1,6 @@
+/**
+ * Tab Planen: zeigt den Planer (components/planner/planner.tsx).
+ */
 import { Redirect } from 'expo-router';
 import { Platform } from 'react-native';
 

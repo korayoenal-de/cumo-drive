@@ -9,7 +9,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { CONTACT_EMAIL, PRICES, type PlanId, type Price } from '@/lib/entitlement';
 import { purchase, restorePurchases } from '@/lib/purchase';
 
@@ -167,37 +167,37 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.ground },
   topBar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: Spacing.xl, paddingTop: Spacing.s },
   close: { height: 36, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, justifyContent: 'center' },
-  closeText: { fontFamily: Fonts.semibold, fontSize: 14 },
+  closeText: { fontFamily: Fonts.semibold, fontSize: Type.small },
   content: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.xxxl, gap: Spacing.xxl },
   flex: { flex: 1 },
   gapS: { gap: Spacing.s },
   gapM: { gap: Spacing.m },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   kicker: { color: Colors.signal },
-  headline: { fontSize: 34, lineHeight: 36 },
+  headline: { fontSize: Type.display, lineHeight: 36 },
   benefits: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   benefit: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.signal },
-  benefitText: { fontFamily: Fonts.medium, fontSize: 15, flex: 1 },
+  benefitText: { fontFamily: Fonts.medium, fontSize: Type.body, flex: 1 },
   card: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, paddingHorizontal: Spacing.l, paddingVertical: Spacing.l },
   cardHighlight: { backgroundColor: Colors.surface2 },
   cardSelected: { backgroundColor: Colors.signalTint },
   radio: { width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   radioOn: { backgroundColor: Colors.signal },
   radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.onSignal },
-  planName: { fontFamily: Fonts.displayBold, fontSize: 18 },
+  planName: { fontFamily: Fonts.displayBold, fontSize: Type.button },
   pill: { backgroundColor: Colors.signal, borderRadius: Radius.pill, paddingHorizontal: Spacing.s, paddingVertical: 2 },
   pillText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase' },
   priceCol: { alignItems: 'flex-end' },
-  price: { fontFamily: Fonts.displayBold, fontSize: 18, fontVariant: ['tabular-nums'] },
+  price: { fontFamily: Fonts.displayBold, fontSize: Type.button, fontVariant: ['tabular-nums'] },
   primary: { height: 54, borderRadius: 27, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 16 },
+  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
   secondary: { height: 48, borderRadius: 24, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
-  secondaryText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   disabled: { opacity: 0.5 },
-  note: { color: Colors.warn, fontFamily: Fonts.medium, fontSize: 14, textAlign: 'center' },
+  note: { color: Colors.warn, fontFamily: Fonts.medium, fontSize: Type.small, textAlign: 'center' },
   noteGood: { color: Colors.good },
   clubBox: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.xs },
-  clubTitle: { fontFamily: Fonts.semibold, fontSize: 15, marginBottom: Spacing.xs },
-  mail: { fontFamily: Fonts.semibold, fontSize: 16, color: Colors.text },
+  clubTitle: { fontFamily: Fonts.semibold, fontSize: Type.body, marginBottom: Spacing.xs },
+  mail: { fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.text },
 });

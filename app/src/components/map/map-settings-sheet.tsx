@@ -19,7 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import {
   MAP_STYLES,
   setMapSettings,
@@ -179,7 +179,7 @@ function MapSettingsBody({ onClose }: { onClose: () => void }) {
 /** Kleine Vorschau je Darstellung: dunkle Karte, Satellit grün, 3D mit Relief. */
 function StylePreview({ id }: { id: MapSettings['style'] }) {
   const bg =
-    id === 'standard' ? '#2A2A2E' : id === 'satellit' ? '#2F4A33' : '#3A4F3A';
+    id === 'standard' ? Colors.line : id === 'satellit' ? '#2F4A33' : '#3A4F3A';
   return (
     <View style={[styles.preview, { backgroundColor: bg }]}>
       <View
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(22,22,24,0.94)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.shadow,
     shadowOpacity: 0.35,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: 30,
+    fontSize: Type.h1,
     lineHeight: 34,
     textTransform: 'uppercase',
     color: Colors.text,
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     gap: Spacing.xxl,
   },
   group: { gap: Spacing.m },
-  label: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.muted },
+  label: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   styles: { flexDirection: 'row', gap: Spacing.s },
   styleTile: {
     flex: 1,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   styleTileOn: { backgroundColor: Colors.signalTint },
-  styleText: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.muted },
+  styleText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   styleTextOn: { fontFamily: Fonts.bold, color: Colors.text },
   preview: {
     alignSelf: 'stretch',
@@ -292,11 +292,11 @@ const styles = StyleSheet.create({
   rowIcon: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: Radius.l,
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowTitle: { fontFamily: Fonts.bold, fontSize: 17, color: Colors.text },
-  rowNote: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.muted },
+  rowTitle: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
+  rowNote: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
 });

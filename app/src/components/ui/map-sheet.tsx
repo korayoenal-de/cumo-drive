@@ -31,7 +31,7 @@ import { ScrollViewMarker } from 'react-native-screens/experimental';
 
 import { TAB_BAR_SPACE } from '@/components/ui/screen';
 import { reportScroll } from '@/lib/tab-bar';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Radius, Shadow, Spacing } from '@/constants/theme';
 
 /** 0 klein (nur der Kopf), 1 halb, 2 groß */
 export type Detent = 0 | 1 | 2;
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.ground,
     borderTopLeftRadius: Radius.l,
     borderTopRightRadius: Radius.l,
-    boxShadow: '0 -6px 24px rgba(0,0,0,0.45)',
+    boxShadow: Shadow.sheet,
   },
   head: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xs, paddingBottom: Spacing.m, gap: Spacing.s, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'transparent' },
   headLine: { borderBottomColor: Colors.line },

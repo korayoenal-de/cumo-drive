@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View, type GestureResponderEvent, type LayoutCha
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
 import { DIRECTIONS, type Direction } from '@/lib/roundtrip';
 
 const SIZE = 260;
@@ -119,11 +119,11 @@ export function DirectionDial({ value, onChange }: { value: Direction; onChange:
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', gap: 4 },
+  wrap: { alignItems: 'center', gap: Spacing.xs },
   dial: { width: '100%', maxWidth: SIZE, alignItems: 'center', justifyContent: 'center' },
   center: { position: 'absolute', backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   centerOn: { backgroundColor: Colors.signal },
-  centerText: { fontFamily: Fonts.displayBold, fontSize: 15 },
+  centerText: { fontFamily: Fonts.displayBold, fontSize: Type.body },
   centerTextOn: { color: Colors.onSignal },
   caption: { textAlign: 'center' },
 });

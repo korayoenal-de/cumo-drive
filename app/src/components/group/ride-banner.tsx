@@ -8,7 +8,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useRide, type RideMsg } from '@/lib/group/ride';
 
 export function RideBanner() {
@@ -54,5 +54,5 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   from: { color: Colors.onSignal },
-  text: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 20 },
+  text: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.h3 },
 });

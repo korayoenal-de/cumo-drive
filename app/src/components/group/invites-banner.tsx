@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TAB_BAR_SPACE } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { myInvites, respondInvite, type MyInvite } from '@/lib/group/invites';
 import { useRide } from '@/lib/group/ride';
@@ -132,15 +132,15 @@ function Btn({ label, primary, busy, disabled, onPress }: { label: string; prima
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: Spacing.l, right: Spacing.l, gap: Spacing.s, zIndex: 90 },
-  card: { padding: Spacing.l, borderRadius: Radius.l, backgroundColor: Colors.surface2, gap: Spacing.s, shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8 },
+  card: { padding: Spacing.l, borderRadius: Radius.l, backgroundColor: Colors.surface2, gap: Spacing.s, shadowColor: Colors.shadow, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8 },
   kicker: { color: Colors.signal },
-  title: { fontFamily: Fonts.bold, fontSize: 17 },
+  title: { fontFamily: Fonts.bold, fontSize: Type.title },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
   row: { flexDirection: 'row', gap: Spacing.s },
   btn: { flex: 1, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.m },
   btnPrimary: { backgroundColor: Colors.signal },
   btnSecondary: { backgroundColor: Colors.surface },
-  btnPrimaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 15 },
-  btnText: { color: Colors.text, fontFamily: Fonts.semibold, fontSize: 15 },
+  btnPrimaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.body },
+  btnText: { color: Colors.text, fontFamily: Fonts.semibold, fontSize: Type.body },
   dim: { opacity: 0.6 },
 });

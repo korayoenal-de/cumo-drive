@@ -13,7 +13,7 @@ import { RouteMap } from '@/components/map/route-map';
 import type { OtherDriver } from '@/components/map/route-map-shared';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { setActiveTour, useActiveTour } from '@/lib/active-tour';
 import { setRideStatus } from '@/lib/group/invites';
 import { endRideForAll, leaveRide, QUICK_MESSAGES, sendMessage, setRole, shareTour, useRide, type Member, type Role } from '@/lib/group/ride';
@@ -239,27 +239,27 @@ function MemberRow({ m, me, myPos, now, canAssign }: { m: Member; me: boolean; m
 
 const styles = StyleSheet.create({
   back: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
-  backText: { fontFamily: Fonts.semibold, fontSize: 16, color: Colors.muted },
+  backText: { fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.muted },
   flex: { flex: 1 },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   primary: { height: 54, borderRadius: 27, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
-  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 17 },
+  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   secondary: { minHeight: 50, borderRadius: 25, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   secondaryOnSurface: { backgroundColor: Colors.surface2 },
-  secondaryText: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.text },
+  secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
   gapXs: { gap: Spacing.xs },
-  title: { fontFamily: Fonts.display, fontSize: 30, lineHeight: 34, textTransform: 'uppercase' },
+  title: { fontFamily: Fonts.display, fontSize: Type.h1, lineHeight: 34, textTransform: 'uppercase' },
   mapBox: { height: 340, borderRadius: Radius.l, overflow: 'hidden', backgroundColor: Colors.surface },
   mapHint: { position: 'absolute', left: Spacing.m, right: Spacing.m, bottom: Spacing.m, padding: Spacing.s, borderRadius: Radius.s, backgroundColor: 'rgba(11,11,12,0.85)', alignItems: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   msgChip: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: 22, backgroundColor: Colors.surface2, justifyContent: 'center' },
-  msgChipText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  msgChipText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   pressed: { opacity: 0.7 },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingVertical: Spacing.xs },
   dot: { width: 12, height: 12, borderRadius: 6 },
-  memberName: { fontFamily: Fonts.semibold, fontSize: 16 },
-  roleBtn: { paddingHorizontal: Spacing.m, height: 32, borderRadius: 16, backgroundColor: Colors.surface2, justifyContent: 'center' },
+  memberName: { fontFamily: Fonts.semibold, fontSize: Type.input },
+  roleBtn: { paddingHorizontal: Spacing.m, height: 32, borderRadius: Radius.l, backgroundColor: Colors.surface2, justifyContent: 'center' },
   leave: { alignSelf: 'center', paddingVertical: Spacing.m },
   leaveText: { color: Colors.muted, fontFamily: Fonts.semibold },
 });

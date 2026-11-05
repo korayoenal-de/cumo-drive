@@ -4,6 +4,7 @@
  * eine native Karte.
  */
 import type { LatLon, Tour } from '@/lib/tour';
+import { Colors } from '@/constants/theme';
 
 const VERSION = '5.7.3';
 export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
@@ -64,7 +65,7 @@ export function addTourLayers(map: MapInstance) {
     type: 'line',
     source: 'tour',
     layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: { 'line-color': '#0B0B0C', 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 5, 14, 11] },
+    paint: { 'line-color': Colors.ground, 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 5, 14, 11] },
   });
   map.addLayer({
     id: 'tour-line',
@@ -72,7 +73,7 @@ export function addTourLayers(map: MapInstance) {
     source: 'tour',
     layout: { 'line-join': 'round', 'line-cap': 'round' },
     paint: {
-      'line-color': ['match', ['get', 'c'], 'raus', '#E2461C', 'pruefen', '#E8B03A', '#F4F4F2'],
+      'line-color': ['match', ['get', 'c'], 'raus', Colors.signal, 'pruefen', Colors.warn, Colors.text],
       'line-width': ['interpolate', ['linear'], ['zoom'], 6, ['match', ['get', 'c'], 'ok', 2.5, 4], 14, ['match', ['get', 'c'], 'ok', 6, 8]],
     },
   });
@@ -81,7 +82,7 @@ export function addTourLayers(map: MapInstance) {
     id: 'hover-dot',
     type: 'circle',
     source: 'hover',
-    paint: { 'circle-radius': 7, 'circle-color': '#E2461C', 'circle-stroke-color': '#F4F4F2', 'circle-stroke-width': 3 },
+    paint: { 'circle-radius': 7, 'circle-color': Colors.signal, 'circle-stroke-color': Colors.text, 'circle-stroke-width': 3 },
   });
   map.addLayer({
     id: 'wp-circle',
@@ -89,8 +90,8 @@ export function addTourLayers(map: MapInstance) {
     source: 'wp',
     paint: {
       'circle-radius': 11,
-      'circle-color': ['match', ['get', 'kind'], 'via', '#F4F4F2', '#E2461C'],
-      'circle-stroke-color': '#0B0B0C',
+      'circle-color': ['match', ['get', 'kind'], 'via', Colors.text, Colors.signal],
+      'circle-stroke-color': Colors.ground,
       'circle-stroke-width': 2.5,
     },
   });
@@ -99,7 +100,7 @@ export function addTourLayers(map: MapInstance) {
     type: 'symbol',
     source: 'wp',
     layout: { 'text-field': ['get', 'label'], 'text-size': 11, 'text-font': ['Noto Sans Bold'], 'text-allow-overlap': true },
-    paint: { 'text-color': ['match', ['get', 'kind'], 'via', '#0B0B0C', '#FFFFFF'] },
+    paint: { 'text-color': ['match', ['get', 'kind'], 'via', Colors.ground, '#FFFFFF'] },
   });
 }
 
@@ -135,8 +136,8 @@ export function addPassLayers(map: MapInstance, data: unknown) {
       filter: visible,
       paint: {
         'circle-radius': ['match', ['get', 'tier'], 'ikone', 7, 'bekannt', 5.5, 4.5],
-        'circle-color': ['case', ['get', 'closed'], '#5A5A60', ['match', ['get', 'tier'], 'ikone', '#E8B03A', 'bekannt', '#F4F4F2', '#9A9A9F']],
-        'circle-stroke-color': '#0B0B0C',
+        'circle-color': ['case', ['get', 'closed'], '#5A5A60', ['match', ['get', 'tier'], 'ikone', Colors.warn, 'bekannt', Colors.text, Colors.muted]],
+        'circle-stroke-color': Colors.ground,
         'circle-stroke-width': 2,
       },
     },
@@ -157,8 +158,8 @@ export function addPassLayers(map: MapInstance, data: unknown) {
         'text-optional': true,
       },
       paint: {
-        'text-color': ['case', ['get', 'closed'], '#7A7A80', ['match', ['get', 'tier'], 'ikone', '#E8B03A', '#F4F4F2']],
-        'text-halo-color': '#0B0B0C',
+        'text-color': ['case', ['get', 'closed'], '#7A7A80', ['match', ['get', 'tier'], 'ikone', Colors.warn, Colors.text]],
+        'text-halo-color': Colors.ground,
         'text-halo-width': 1.6,
       },
     },
@@ -197,9 +198,9 @@ export function addPhotoLayers(map: MapInstance) {
       source: 'photos',
       paint: {
         'circle-radius': 13,
-        'circle-color': '#161618',
+        'circle-color': Colors.surface,
         'circle-opacity': 0.95,
-        'circle-stroke-color': '#E2461C',
+        'circle-stroke-color': Colors.signal,
         'circle-stroke-width': 2.5,
       },
     },
@@ -225,9 +226,9 @@ export function addMemberLayers(map: MapInstance) {
     source: 'members',
     paint: {
       'circle-radius': 13,
-      'circle-color': '#161618',
+      'circle-color': Colors.surface,
       'circle-stroke-width': 3,
-      'circle-stroke-color': ['match', ['get', 'role'], 'lead', '#E2461C', 'schluss', '#E8B03A', '#F4F4F2'],
+      'circle-stroke-color': ['match', ['get', 'role'], 'lead', Colors.signal, 'schluss', Colors.warn, Colors.text],
       'circle-opacity': ['case', ['get', 'stale'], 0.5, 1],
     },
   });
@@ -241,13 +242,13 @@ export function addMemberLayers(map: MapInstance) {
       'text-font': ['Noto Sans Bold'],
       'text-allow-overlap': true,
     },
-    paint: { 'text-color': '#F4F4F2' },
+    paint: { 'text-color': Colors.text },
   });
   map.addLayer({
     id: 'member-name',
     type: 'symbol',
     source: 'members',
     layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-font': ['Noto Sans Bold'], 'text-offset': [0, 1.6], 'text-anchor': 'top' },
-    paint: { 'text-color': '#F4F4F2', 'text-halo-color': '#0B0B0C', 'text-halo-width': 1.6 },
+    paint: { 'text-color': Colors.text, 'text-halo-color': Colors.ground, 'text-halo-width': 1.6 },
   });
 }

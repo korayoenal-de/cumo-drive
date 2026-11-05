@@ -8,7 +8,7 @@ import { PanResponder, Pressable, StyleSheet, TextInput, View, type Accessibilit
 
 import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { BAD_REASONS, rateDrive, type DriveRating } from '@/lib/drives';
 
 /**
@@ -141,7 +141,7 @@ export function DriveRatingSlider({ value, onChange }: { value: DriveRating | nu
 
 const styles = StyleSheet.create({
   box: { gap: Spacing.s },
-  title: { fontFamily: Fonts.semibold, fontSize: 17 },
+  title: { fontFamily: Fonts.semibold, fontSize: Type.title },
   slider: { height: 44, justifyContent: 'center' },
   rail: { position: 'absolute', left: THUMB / 2, right: THUMB / 2, height: 6, borderRadius: 3, backgroundColor: Colors.surface2 },
   fill: { position: 'absolute', left: 0, height: 6, borderRadius: 3, backgroundColor: Colors.signal },
@@ -155,5 +155,5 @@ const styles = StyleSheet.create({
   label: { fontFamily: Fonts.medium, color: Colors.muted },
   labelOn: { color: Colors.text, fontFamily: Fonts.semibold },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
-  input: { minHeight: 48, maxHeight: 120, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 15 },
+  input: { minHeight: 48, maxHeight: 120, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.body },
 });

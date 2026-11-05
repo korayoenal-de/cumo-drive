@@ -11,7 +11,7 @@ import type { CheckClass, LatLon, Tour } from '@/lib/tour';
 
 export const CLASS_COLORS: Record<CheckClass, string> = {
   ok: Colors.text,
-  pruefen: '#E8B03A',
+  pruefen: Colors.warn,
   raus: Colors.signal,
 };
 

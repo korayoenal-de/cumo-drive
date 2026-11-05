@@ -1,3 +1,6 @@
+/**
+ * Platzhalter für Seiten, die noch nicht gebaut sind.
+ */
 import { StyleSheet, View } from 'react-native';
 
 import { Screen } from '@/components/ui/screen';

@@ -1,3 +1,6 @@
+/**
+ * Wurzel der App (Expo Router): lädt Schriften, startet Abgleich und Konto, legt die Stapel Navigation mit allen Vollbild Seiten fest.
+ */
 import { Archivo_800ExtraBold, Archivo_900Black } from '@expo-google-fonts/archivo';
 import {
   Inter_400Regular,

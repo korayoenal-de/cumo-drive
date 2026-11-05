@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
 import { signOut } from '@/lib/auth';
 import { setDisplayName } from '@/lib/profile';
 
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   gapM: { gap: Spacing.m },
   brand: { color: Colors.signal, fontFamily: Fonts.bold, letterSpacing: 2 },
   primary: { height: 54, borderRadius: 27, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 17 },
+  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   disabled: { opacity: 0.4 },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
   switch: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },

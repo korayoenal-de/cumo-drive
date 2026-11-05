@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Motion, Spacing, Type } from '@/constants/theme';
 import type { Pass } from '@/lib/passes';
 
 export type PassAction = 'via' | 'start' | 'ziel' | 'remove';
@@ -86,20 +86,20 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: Spacing.m,
     gap: Spacing.m,
-    backgroundColor: 'rgba(11,11,12,0.94)',
-    shadowColor: '#000',
+    backgroundColor: Colors.overlay,
+    shadowColor: Colors.shadow,
     shadowOpacity: 0.35,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.xs },
-  name: { fontFamily: Fonts.bold, fontSize: 17, color: Colors.text },
-  sub: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.muted },
+  name: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
+  sub: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   row: { flexDirection: 'row', gap: Spacing.s },
   btn: { height: 48, borderRadius: 24, paddingHorizontal: Spacing.l, alignItems: 'center', justifyContent: 'center' },
   btnMain: { backgroundColor: Colors.signal },
   btnQuiet: { backgroundColor: Colors.surface2 },
-  btnText: { fontFamily: Fonts.bold, fontSize: 16, color: Colors.text },
+  btnText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },
   onSignal: { color: Colors.onSignal },
   pressed: { opacity: 0.85, transform: [{ scale: Motion.pressScale }] },
 });

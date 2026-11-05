@@ -5,6 +5,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { Pass } from '@/lib/passes';
 import type { CheckClass, LatLon, Tour, Warning } from '@/lib/tour';
+import { Colors } from '@/constants/theme';
 
 export type RouteMapProps = {
   tour: Tour;
@@ -52,14 +53,14 @@ export type MapPin = { id: string; p: LatLon; label: string; title: string };
 export type OtherDriver = { id: string; p: LatLon; name: string; role: 'lead' | 'schluss' | 'mitfahrer'; stale: boolean; /** abseits der Tour */ off?: boolean };
 
 /** Farbe je Rolle: Lead im Signal Orange, Schlusslicht gelb, Mitfahrer hell. */
-export const ROLE_COLOR: Record<OtherDriver['role'], string> = { lead: '#E2461C', schluss: '#E8B03A', mitfahrer: '#F4F4F2' };
+export const ROLE_COLOR: Record<OtherDriver['role'], string> = { lead: Colors.signal, schluss: Colors.warn, mitfahrer: Colors.text };
 
-export const WARN_COLOR = '#E8B03A';
+export const WARN_COLOR = Colors.warn;
 
 export const CLASS_LINE: Record<CheckClass, { color: string; width: number; z: number }> = {
-  ok: { color: '#F4F4F2', width: 4, z: 1 },
+  ok: { color: Colors.text, width: 4, z: 1 },
   pruefen: { color: WARN_COLOR, width: 6, z: 3 },
-  raus: { color: '#E2461C', width: 7, z: 5 },
+  raus: { color: Colors.signal, width: 7, z: 5 },
 };
 
 /** Warnungen, die auf der Karte erscheinen, mit ihrem Index in tour.warnungen. */

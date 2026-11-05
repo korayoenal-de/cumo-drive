@@ -32,7 +32,7 @@ const FILLED: Record<FunLevel, number> = { 1: 1, 2: 3, 3: 4, 4: 6, 5: 7 };
 const RB = 11.2;
 const RT = 4.2;
 const HALF = RB * Math.sin(Math.PI / N) * 0.97;
-const OFF = '#3A3A3F';
+const OFF = Colors.empty;
 /** Kreis um 180 Grad gedreht (eine Zacke oben, zwei unten); Füllreihenfolge im Uhrzeigersinn ab unten links */
 const ROT = 180;
 const ORDER = [1, 2, 3, 4, 5, 6, 0];

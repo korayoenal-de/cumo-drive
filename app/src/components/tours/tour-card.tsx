@@ -16,7 +16,7 @@ import Svg, { Circle, Polyline } from 'react-native-svg';
 
 import { MorphButton, SOFT_LAYOUT, softEnter } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
@@ -263,26 +263,26 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 56 },
   text: { flex: 1, gap: 3 },
-  name: { fontFamily: Fonts.semibold, fontSize: 17, lineHeight: 21 },
+  name: { fontFamily: Fonts.semibold, fontSize: Type.title, lineHeight: 21 },
   meta: { fontVariant: ['tabular-nums'] },
-  badge: { alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: Colors.goodTint },
+  badge: { alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.goodTint },
   badgeText: { fontFamily: Fonts.semibold, fontSize: 12, color: Colors.good },
   thumb: { width: 56, height: 56, borderRadius: Radius.m, backgroundColor: Colors.ground, overflow: 'hidden' },
   tools: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   round: { minWidth: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   armed: { backgroundColor: Colors.signal, paddingHorizontal: Spacing.m },
   armedInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  armedText: { fontFamily: Fonts.bold, fontSize: 14, color: Colors.onSignal },
+  armedText: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.onSignal },
   menu: { gap: Spacing.xs },
   item: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
   itemPressed: { opacity: 0.7, transform: [{ scale: 0.985 }] },
-  itemIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
-  itemText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  itemIcon: { width: 32, height: 32, borderRadius: Radius.l, backgroundColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
+  itemText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   form: { gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
-  field: { minHeight: 48, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
+  field: { minHeight: 48, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   area: { minHeight: 88, textAlignVertical: 'top' },
   primary: { height: 48, borderRadius: 24, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 15 },
+  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.body },
   disabled: { opacity: 0.4 },
   note: { paddingHorizontal: Spacing.xs },
   danger: { color: Colors.signal },

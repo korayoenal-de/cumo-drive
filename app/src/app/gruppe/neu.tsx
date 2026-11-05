@@ -10,7 +10,7 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react
 
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import {
   createGroupRide,
@@ -337,16 +337,16 @@ function MemberLine({
 
 const styles = StyleSheet.create({
   back: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
-  backText: { fontFamily: Fonts.semibold, fontSize: 16, color: Colors.muted },
+  backText: { fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.muted },
   flex: { flex: 1, gap: 2 },
   gapS: { gap: Spacing.s },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  input: { height: 50, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
+  input: { height: 50, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   suggestion: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
-  memberName: { fontFamily: Fonts.semibold, fontSize: 16 },
-  badge: { paddingHorizontal: Spacing.m, height: 28, borderRadius: 14, justifyContent: 'center' },
+  memberName: { fontFamily: Fonts.semibold, fontSize: Type.input },
+  badge: { paddingHorizontal: Spacing.m, height: 28, borderRadius: Radius.m, justifyContent: 'center' },
   badgeLead: { backgroundColor: Colors.signal },
   badgeLeadText: { color: Colors.onSignal, fontFamily: Fonts.semibold },
   badgeGood: { backgroundColor: Colors.goodTint },
@@ -356,11 +356,11 @@ const styles = StyleSheet.create({
   badgeMuted: { backgroundColor: Colors.surface2 },
   mutedText: { color: Colors.muted, fontFamily: Fonts.semibold },
   removeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  removeText: { color: Colors.muted, fontFamily: Fonts.bold, fontSize: 14 },
+  removeText: { color: Colors.muted, fontFamily: Fonts.bold, fontSize: Type.small },
   smallBtn: { height: 40, minWidth: 96, borderRadius: 20, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
-  smallBtnText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 15 },
+  smallBtnText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.body },
   primary: { height: 54, borderRadius: 27, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
-  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 17 },
+  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   disabled: { opacity: 0.4 },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
 });

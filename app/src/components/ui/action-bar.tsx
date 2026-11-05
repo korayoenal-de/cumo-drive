@@ -10,7 +10,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 
 export const SOFT_LAYOUT = LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness);
 export const softEnter = (i: number) => FadeInDown.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness).delay(i * Motion.stagger);
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   wrap: { gap: Spacing.s },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   primary: { flex: 1, height: 56, borderRadius: 28, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { fontFamily: Fonts.bold, fontSize: 18, color: Colors.onSignal },
+  primaryText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
   pressed: { opacity: 0.8, transform: [{ scale: 0.985 }] },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   big: { width: 56, height: 56, borderRadius: 28 },
@@ -174,11 +174,11 @@ const styles = StyleSheet.create({
   savedBg: { backgroundColor: Colors.signalTint },
   armed: { width: undefined, paddingHorizontal: Spacing.l, backgroundColor: Colors.signal },
   armedInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  armedText: { fontFamily: Fonts.bold, fontSize: 15, color: Colors.onSignal },
+  armedText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
   menu: { gap: Spacing.xs },
   item: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface },
-  itemIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  itemIcon: { width: 32, height: 32, borderRadius: Radius.l, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   itemIconDanger: { backgroundColor: Colors.signalTint },
-  itemText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  itemText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   danger: { color: Colors.signal },
 });

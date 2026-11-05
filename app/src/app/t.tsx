@@ -8,7 +8,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import { Linking, Platform, Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/text";
-import { Colors, Fonts, Radius, Spacing } from "@/constants/theme";
+import { Colors, Fonts, Radius, Spacing, Type } from "@/constants/theme";
 import { PROFILES } from "@/lib/tour";
 import { decodeTour, expoGoLink, extractCode } from "@/lib/share-code";
 
@@ -100,8 +100,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.l,
     backgroundColor: Colors.surface,
   },
-  brand: { fontFamily: Fonts.display, fontSize: 15, letterSpacing: 2 },
-  title: { fontSize: 34, lineHeight: 38 },
+  brand: { fontFamily: Fonts.display, fontSize: Type.body, letterSpacing: 2 },
+  title: { fontSize: Type.display, lineHeight: 38 },
   primary: {
     height: 54,
     borderRadius: 27,
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 17 },
+  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   link: {
     color: Colors.text,
     fontFamily: Fonts.semibold,

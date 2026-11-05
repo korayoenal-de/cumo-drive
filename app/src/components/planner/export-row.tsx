@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
 import type { Tour } from '@/lib/tour';
 
@@ -46,6 +46,6 @@ const styles = StyleSheet.create({
   btn: { flex: 1, height: 44, borderRadius: 22, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   onSurface: { backgroundColor: Colors.surface2 },
   pressed: { opacity: 0.7 },
-  text: { fontFamily: Fonts.semibold, fontSize: 14 },
+  text: { fontFamily: Fonts.semibold, fontSize: Type.small },
   err: { color: Colors.signal },
 });

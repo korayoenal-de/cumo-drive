@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-native-maps';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { listDriveTracks } from '@/lib/drives';
 import { useLibrary } from '@/lib/library';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
@@ -389,9 +389,9 @@ const styles = StyleSheet.create({
   startHalo: { width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(226,70,28,0.3)', alignItems: 'center', justifyContent: 'center' },
   ziel: { width: 18, height: 18, borderRadius: 4, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
   zielInner: { width: 6, height: 6, backgroundColor: Colors.ground },
-  warn: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
+  warn: { width: 24, height: 24, borderRadius: Radius.s, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
   warnOn: { transform: [{ scale: 1.3 }], borderColor: Colors.text },
-  warnText: { fontFamily: Fonts.display, fontSize: 14, lineHeight: 16, color: Colors.ground },
+  warnText: { fontFamily: Fonts.display, fontSize: Type.small, lineHeight: 16, color: Colors.ground },
   meOverlay: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   me: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: Colors.signal },
   meArrow: {
@@ -407,21 +407,21 @@ const styles = StyleSheet.create({
   },
   passDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: Colors.ground },
   passPicked: { width: 18, height: 18, borderRadius: 9, borderWidth: 3, borderColor: Colors.signal },
-  pin: { paddingHorizontal: 8, height: 26, borderRadius: 13, backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.signal, justifyContent: 'center' },
+  pin: { paddingHorizontal: Spacing.s, height: 26, borderRadius: 13, backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.signal, justifyContent: 'center' },
   pinText: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.text },
   other: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.surface, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
   otherStale: { opacity: 0.45 },
   otherOff: { borderStyle: 'dashed' },
-  otherText: { fontFamily: Fonts.bold, fontSize: 13, color: Colors.text },
+  otherText: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
   recenter: {
     position: 'absolute',
     right: 16,
     top: '45%',
     height: 40,
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.l,
     borderRadius: Radius.pill,
     backgroundColor: Colors.surface,
     justifyContent: 'center',
   },
-  recenterText: { fontFamily: Fonts.semibold, fontSize: 14 },
+  recenterText: { fontFamily: Fonts.semibold, fontSize: Type.small },
 });

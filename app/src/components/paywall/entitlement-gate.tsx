@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { signOut, useSession } from '@/lib/auth';
 import { useEntitlement } from '@/lib/entitlement';
 
@@ -49,7 +49,7 @@ export function TrialBadge() {
 
 const styles = StyleSheet.create({
   signOut: { height: 44, alignItems: 'center', justifyContent: 'center' },
-  signOutText: { fontFamily: Fonts.semibold, fontSize: 15 },
+  signOutText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   pill: { alignSelf: 'flex-start', backgroundColor: Colors.warnTint, borderRadius: Radius.pill, paddingHorizontal: Spacing.s, paddingVertical: 2 },
   pillUrgent: { backgroundColor: Colors.signalTint },
   pillText: { color: Colors.warn, fontFamily: Fonts.semibold },
