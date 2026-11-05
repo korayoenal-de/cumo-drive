@@ -1,22 +1,31 @@
 /**
- * Highlights entlang der Route (zunächst Pässe): wo der Abschnitt beginnt, wie lang er ist und wie
- * viele Kehren er hat. Die Navigation kündigt sie kurz vorher mit Overlay und Ansage an.
+ * Highlights entlang der Route: Pässe und kuratierte Strecken (alte Rallyeprüfungen, Kurven und
+ * Panoramastraßen). Wo der Abschnitt beginnt, wie lang er ist und wie viele Kehren er hat.
+ * Die Navigation kündigt sie kurz vorher mit Overlay und Ansage an.
  *
  * Abschnitt eines Passes: vom Talpunkt vor der Passhöhe bis zum Talpunkt danach (Höhenprofil).
  * Ohne Höhendaten zählt die Kette von Kehren rund um die Passhöhe.
+ * Abschnitt einer Strecke: von der Projektion ihres ersten bis zu der ihres letzten Punkts auf die Route.
  */
+import { HIGHLIGHT_ROADS, type HighlightRoad } from '../highlight-roads';
 import { PASSES, passesAlong, type Pass } from '../passes';
 import { resample, type ElevationProfile } from '../stats';
 import { haversine, type LatLon } from '../tour';
 
+export type HighlightKind = 'pass' | HighlightRoad['kind'];
+
 export type Highlight = {
   id: string;
-  kind: 'pass';
+  kind: HighlightKind;
   name: string;
+  /** Unterzeile bei Strecken, zum Beispiel "alte Rallyestrecke" */
+  note?: string;
+  /** gesprochener Teil nach "beginnt" bei Strecken */
+  say?: string;
   /** km ab Routenstart, an dem der Abschnitt beginnt und endet */
   startKm: number;
   endKm: number;
-  /** km der Passhöhe */
+  /** km der Passhöhe, bei Strecken der höchste Punkt (ohne Höhendaten der Anfang) */
   topKm: number;
   hairpins: number;
   ele: number | null;
@@ -120,7 +129,13 @@ function hairpinBounds(pins: number[], topKm: number): { start: number; end: num
   return { start: Math.max(0, start - 1), end: end + 1 };
 }
 
-export function findHighlights(shape: LatLon[], cumKm: number[], elev: ElevationProfile | null, list: Pass[] = PASSES): Highlight[] {
+export function findHighlights(
+  shape: LatLon[],
+  cumKm: number[],
+  elev: ElevationProfile | null,
+  list: Pass[] = PASSES,
+  roads: HighlightRoad[] = HIGHLIGHT_ROADS,
+): Highlight[] {
   if (shape.length < 2) return [];
   const total = cumKm[cumKm.length - 1];
   const pins = hairpinKms(shape);
@@ -151,20 +166,137 @@ export function findHighlights(shape: LatLon[], cumKm: number[], elev: Elevation
     if (clash < 0) keep.push(h);
     else if ((h.ele ?? 0) > (keep[clash].ele ?? 0)) keep[clash] = h;
   }
-  return keep.sort((a, b) => a.startKm - b.startKm);
+  // Strecken: liegt eine Passhöhe auf der Strecke, gewinnt die Strecke (genauer benannt),
+  // außer der Pass ist eine Ikone. So gibt es pro Abschnitt nur eine Ankündigung.
+  const tier = new Map(list.map((p) => [p.id, p.tier]));
+  let passes = keep;
+  const found: Highlight[] = [];
+  for (const r of roadsAlong(shape, cumKm, roads, elev, pins)) {
+    const onRoad = (p: Highlight) => p.topKm >= r.startKm - 0.5 && p.topKm <= r.endKm + 0.5;
+    if (passes.some((p) => onRoad(p) && tier.get(p.id) === 'ikone')) continue;
+    passes = passes.filter((p) => !onRoad(p));
+    found.push(r);
+  }
+  return [...passes, ...found].sort((a, b) => a.startKm - b.startKm);
 }
 
-/** Text unter dem Namen: Länge, Kehren, Höhe. */
+/** Nächste Stellen der Route zu einem Punkt (höchstens maxM entfernt), je Durchfahrt eine. */
+function projections(shape: LatLon[], cumKm: number[], p: LatLon, maxM: number, from = 0, to = shape.length - 1): { km: number; i: number; d: number }[] {
+  const k = Math.cos((p[0] * Math.PI) / 180) * 111320;
+  const out: { km: number; i: number; d: number }[] = [];
+  let last = -10;
+  for (let i = Math.max(0, from); i < Math.min(to, shape.length - 1); i++) {
+    const ax = (shape[i][1] - p[1]) * k;
+    const ay = (shape[i][0] - p[0]) * 110540;
+    const bx = (shape[i + 1][1] - p[1]) * k;
+    const by = (shape[i + 1][0] - p[0]) * 110540;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+    const d = Math.hypot(ax + t * dx, ay + t * dy);
+    if (d > maxM) continue;
+    const km = cumKm[i] + t * (cumKm[i + 1] - cumKm[i]);
+    // direkt anschließende Segmente gehören zur selben Durchfahrt: nur die nächste Stelle behalten
+    if (i - last <= 2 && out.length) {
+      if (d < out[out.length - 1].d) out[out.length - 1] = { km, i, d };
+    } else out.push({ km, i, d });
+    last = i;
+  }
+  return out;
+}
+
+const ROAD_MAX_M = 120;
+const ROAD_MIN_SHARE = 0.7;
+
+/**
+ * Kuratierte Strecken, die die Route befährt: Anfang und Ende der Strecke liegen höchstens 120 m
+ * neben der Route (in beliebiger Richtung), und mindestens 70 % der Strecke liegen auf dem Stück dazwischen.
+ */
+export function roadsAlong(
+  shape: LatLon[],
+  cumKm: number[],
+  roads: HighlightRoad[] = HIGHLIGHT_ROADS,
+  elev: ElevationProfile | null = null,
+  pins: number[] = hairpinKms(shape),
+): Highlight[] {
+  if (shape.length < 2) return [];
+  let s = 90, w = 180, n = -90, e = -180;
+  for (const [la, lo] of shape) {
+    s = Math.min(s, la); n = Math.max(n, la); w = Math.min(w, lo); e = Math.max(e, lo);
+  }
+  const out: Highlight[] = [];
+  for (const road of roads) {
+    if (road.line.length < 2) continue;
+    if (!road.line.some(([la, lo]) => la > s - 0.01 && la < n + 0.01 && lo > w - 0.01 && lo < e + 0.01)) continue;
+    const L = lineKm(road.line);
+    const A = projections(shape, cumKm, road.line[0], ROAD_MAX_M);
+    const B = projections(shape, cumKm, road.line[road.line.length - 1], ROAD_MAX_M);
+    if (!A.length || !B.length) continue;
+    const probe = resample(road.line, 100);
+    const taken: [number, number][] = [];
+    for (const a of A) {
+      let best: { lo: number; hi: number; share: number } | null = null;
+      for (const b of B) {
+        const lo = Math.min(a.km, b.km);
+        const hi = Math.max(a.km, b.km);
+        const span = hi - lo;
+        if (span < ROAD_MIN_SHARE * L || span > 1.5 * L + 1) continue;
+        // Anteil der Strecke, der auf diesem Stück der Route liegt
+        const i0 = Math.min(a.i, b.i);
+        const i1 = Math.max(a.i, b.i) + 1;
+        let hit = 0;
+        for (const q of probe) if (projections(shape, cumKm, q, ROAD_MAX_M, i0, i1).length) hit++;
+        const share = hit / probe.length;
+        if (share < ROAD_MIN_SHARE) continue;
+        if (!best || share > best.share) best = { lo, hi, share };
+      }
+      if (!best || taken.some(([x, y]) => best!.lo < y && best!.hi > x)) continue;
+      taken.push([best.lo, best.hi]);
+      const top = elev ? highest(elev, best.lo, best.hi) : null;
+      out.push({
+        id: taken.length > 1 ? `road:${road.id}:${taken.length}` : `road:${road.id}`,
+        kind: road.kind,
+        name: road.name,
+        note: road.note,
+        say: road.say,
+        startKm: best.lo,
+        endKm: best.hi,
+        topKm: top?.km ?? best.lo,
+        hairpins: pins.filter((k) => k >= best!.lo && k <= best!.hi).length,
+        ele: null,
+        climbM: top?.climb ?? null,
+      });
+    }
+  }
+  return out.sort((a, b) => a.startKm - b.startKm);
+}
+
+/** Höchster Punkt und Höhenunterschied zwischen zwei Routen km. */
+function highest(e: ElevationProfile, a: number, b: number): { km: number; climb: number } | null {
+  let top = -1;
+  let low = Infinity;
+  for (let i = 0; i < e.km.length; i++) {
+    if (e.km[i] < a || e.km[i] > b) continue;
+    if (top < 0 || e.m[i] > e.m[top]) top = i;
+    low = Math.min(low, e.m[i]);
+  }
+  return top < 0 ? null : { km: e.km[top], climb: Math.round(e.m[top] - low) };
+}
+
+/** Text unter dem Namen: Länge, Kehren, Höhe; bei Strecken zuerst die Unterzeile. */
 export function highlightFacts(h: Highlight): string {
-  const len = Math.round(h.endKm - h.startKm);
+  const len = Math.max(1, Math.round(h.endKm - h.startKm));
+  if (h.kind !== 'pass') return [h.note ?? null, `${len} km`, h.hairpins >= 3 ? `${h.hairpins} Kehren` : null].filter(Boolean).join(', ');
   return [`${len} km`, h.hairpins >= 3 ? `${h.hairpins} Kehren` : null, h.ele ? `${h.ele.toLocaleString('de-DE')} m` : null].filter(Boolean).join(', ');
 }
 
 export function highlightSpeech(h: Highlight, distM: number): string {
-  const len = Math.round(h.endKm - h.startKm);
+  const len = Math.max(1, Math.round(h.endKm - h.startKm));
   const where = distM > 150 ? `In ${distM >= 950 ? 'einem Kilometer' : `${Math.round(distM / 100) * 100} Metern`} beginnt` : 'Jetzt beginnt';
   const pins = h.hairpins >= 3 ? `, ${h.hairpins} Kehren` : '';
-  return `${where} ${h.name}. ${len} Kilometer${pins}.`;
+  const what = h.kind === 'pass' ? h.name : (h.say ?? (h.note ? `die ${h.note} ${h.name}` : h.name));
+  return `${where} ${what}. ${len} Kilometer${pins}.`;
 }
 
 /** Nur für Tests: Länge der Linie in km. */
