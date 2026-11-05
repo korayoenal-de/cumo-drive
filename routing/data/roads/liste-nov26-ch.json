@@ -1,0 +1,818 @@
+[
+ {
+  "id": "ch-clos-du-doubs",
+  "name": "Clos du Doubs",
+  "country": "CH",
+  "region": "Jura",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Kurvenstrecke am Doubs",
+  "roads": [],
+  "from": {
+   "name": "Saint-Ursanne",
+   "lat": 47.3646,
+   "lon": 7.15395
+  },
+  "to": {
+   "name": "Soubey",
+   "lat": 47.30824,
+   "lon": 7.04865
+  },
+  "via": [
+   {
+    "name": "Ocourt",
+    "lat": 47.35139,
+    "lon": 7.0776
+   }
+  ],
+  "length_km": 15,
+  "quality": 4,
+  "caveats": "schmal",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-col-du-mollendruz",
+  "name": "Col du Mollendruz",
+  "country": "CH",
+  "region": "Waadt",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Flüssige Waldpassstraße",
+  "roads": [],
+  "from": {
+   "name": "L'Isle",
+   "lat": 46.61876,
+   "lon": 6.4117
+  },
+  "to": {
+   "name": "Le Pont",
+   "lat": 46.66869,
+   "lon": 6.32479
+  },
+  "via": [
+   {
+    "name": "Mont-la-Ville",
+    "lat": 46.64555,
+    "lon": 6.40779
+   }
+  ],
+  "length_km": 15,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-col-de-la-tourne",
+  "name": "Col de la Tourne",
+  "country": "CH",
+  "region": "Neuenburg",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvige Juraquerung",
+  "roads": [],
+  "from": {
+   "name": "Rochefort",
+   "lat": 46.97786,
+   "lon": 6.80848
+  },
+  "to": {
+   "name": "Le Locle",
+   "lat": 47.05559,
+   "lon": 6.74545
+  },
+  "via": [
+   {
+    "name": "Col de la Tourne",
+    "lat": 46.98398,
+    "lon": 6.77948
+   },
+   {
+    "name": "Les Ponts-de-Martel",
+    "lat": 46.99908,
+    "lon": 6.73171
+   }
+  ],
+  "length_km": 16,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-vue-des-alpes",
+  "name": "Vue des Alpes",
+  "country": "CH",
+  "region": "Neuenburg",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Alte Passstraße mit Alpenblick",
+  "roads": [],
+  "from": {
+   "name": "Les Hauts-Geneveys",
+   "lat": 47.04658,
+   "lon": 6.8726
+  },
+  "to": {
+   "name": "La Chaux-de-Fonds",
+   "lat": 47.10313,
+   "lon": 6.83258
+  },
+  "via": [
+   {
+    "name": "Vue des Alpes",
+    "lat": 47.07272,
+    "lon": 6.86982
+   }
+  ],
+  "length_km": 12,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-gorges-de-moutier",
+  "name": "Gorges de Moutier",
+  "country": "CH",
+  "region": "Jura",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Straße durch die Kalkschlucht",
+  "roads": [],
+  "from": {
+   "name": "Moutier",
+   "lat": 47.27961,
+   "lon": 7.37042
+  },
+  "to": {
+   "name": "Delémont",
+   "lat": 47.36159,
+   "lon": 7.35445
+  },
+  "via": [
+   {
+    "name": "Roches",
+    "lat": 47.30193,
+    "lon": 7.38205
+   }
+  ],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-sigriswil",
+  "name": "Sigriswil Hangstraße",
+  "country": "CH",
+  "region": "Thunersee",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Hangstraße über dem Thunersee",
+  "roads": [],
+  "from": {
+   "name": "Gunten",
+   "lat": 46.71347,
+   "lon": 7.70161
+  },
+  "to": {
+   "name": "Schwanden bei Sigriswil",
+   "lat": 46.73578,
+   "lon": 7.71661
+  },
+  "via": [
+   {
+    "name": "Sigriswil",
+    "lat": 46.71643,
+    "lon": 7.71607
+   }
+  ],
+  "length_km": 10,
+  "quality": 3,
+  "caveats": "schmal",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-diemtigtal",
+  "name": "Diemtigtal",
+  "country": "CH",
+  "region": "Berner Oberland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Talstraße im Naturpark",
+  "roads": [],
+  "from": {
+   "name": "Oey",
+   "lat": 46.65841,
+   "lon": 7.57798
+  },
+  "to": {
+   "name": "Schwenden im Diemtigtal",
+   "lat": 46.57511,
+   "lon": 7.48708
+  },
+  "via": [
+   {
+    "name": "Diemtigen",
+    "lat": 46.64969,
+    "lon": 7.56657
+   },
+   {
+    "name": "Zwischenflüh",
+    "lat": 46.60706,
+    "lon": 7.51544
+   }
+  ],
+  "length_km": 16,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-eriz",
+  "name": "Eriz",
+  "country": "CH",
+  "region": "Berner Oberland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Talstraße ins Eriz",
+  "roads": [],
+  "from": {
+   "name": "Steffisburg",
+   "lat": 46.77747,
+   "lon": 7.63542
+  },
+  "to": {
+   "name": "Innereriz",
+   "lat": 46.78739,
+   "lon": 7.81898
+  },
+  "via": [
+   {
+    "name": "Schwarzenegg",
+    "lat": 46.79667,
+    "lon": 7.71549
+   }
+  ],
+  "length_km": 16,
+  "quality": 3,
+  "caveats": "Sackgasse",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-luziensteig",
+  "name": "St. Luzisteig",
+  "country": "CH",
+  "region": "Graubünden",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Waldstraße am Festungspass",
+  "roads": [],
+  "from": {
+   "name": "Maienfeld",
+   "lat": 47.00773,
+   "lon": 9.53092
+  },
+  "to": {
+   "name": "Balzers",
+   "lat": 47.05408,
+   "lon": 9.49964
+  },
+  "via": [
+   {
+    "name": "St. Luzisteig",
+    "lat": 47.02977,
+    "lon": 9.52845
+   }
+  ],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-valsertal",
+  "name": "Valsertal",
+  "country": "CH",
+  "region": "Graubünden",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Schluchtstraße nach Vals",
+  "roads": [],
+  "from": {
+   "name": "Ilanz",
+   "lat": 46.76547,
+   "lon": 9.19942
+  },
+  "to": {
+   "name": "Vals",
+   "lat": 46.61659,
+   "lon": 9.18052
+  },
+  "via": [
+   {
+    "name": "Uors",
+    "lat": 46.70075,
+    "lon": 9.18245
+   }
+  ],
+  "length_km": 20,
+  "quality": 4,
+  "caveats": "Sackgasse",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-oberhalbstein",
+  "name": "Oberhalbstein",
+  "country": "CH",
+  "region": "Graubünden",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Bergkurven nach Savognin",
+  "roads": [],
+  "from": {
+   "name": "Tiefencastel",
+   "lat": 46.66156,
+   "lon": 9.57649
+  },
+  "to": {
+   "name": "Savognin",
+   "lat": 46.5969,
+   "lon": 9.59801
+  },
+  "via": [
+   {
+    "name": "Cunter",
+    "lat": 46.60758,
+    "lon": 9.5925
+   }
+  ],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-grabserberg",
+  "name": "Grabserberg",
+  "country": "CH",
+  "region": "St. Gallen",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kehrenstraße über dem Rheintal",
+  "roads": [],
+  "from": {
+   "name": "Grabs",
+   "lat": 47.18166,
+   "lon": 9.44463
+  },
+  "to": {
+   "name": "Wildhaus",
+   "lat": 47.20332,
+   "lon": 9.3507
+  },
+  "via": [
+   {
+    "name": "Grabserberg",
+    "lat": 47.18353,
+    "lon": 9.42399
+   }
+  ],
+  "length_km": 15,
+  "quality": 4,
+  "caveats": "schmal",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-valle-verzasca",
+  "name": "Valle Verzasca",
+  "country": "CH",
+  "region": "Tessin",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Schluchtstraße an der Verzasca",
+  "roads": [],
+  "from": {
+   "name": "Gordola",
+   "lat": 46.18139,
+   "lon": 8.86339
+  },
+  "to": {
+   "name": "Sonogno",
+   "lat": 46.35031,
+   "lon": 8.78633
+  },
+  "via": [
+   {
+    "name": "Vogorno",
+    "lat": 46.22265,
+    "lon": 8.85981
+   },
+   {
+    "name": "Lavertezzo",
+    "lat": 46.17857,
+    "lon": 8.88932
+   }
+  ],
+  "length_km": 24,
+  "quality": 4,
+  "caveats": "Sackgasse, Sommerverkehr",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-valle-maggia-fusio",
+  "name": "Val Lavizzara",
+  "country": "CH",
+  "region": "Tessin",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Enge Bergstraße nach Fusio",
+  "roads": [],
+  "from": {
+   "name": "Cevio",
+   "lat": 46.31696,
+   "lon": 8.60182
+  },
+  "to": {
+   "name": "Fusio",
+   "lat": 46.44403,
+   "lon": 8.66322
+  },
+  "via": [
+   {
+    "name": "Bignasco",
+    "lat": 46.33973,
+    "lon": 8.60856
+   },
+   {
+    "name": "Peccia",
+    "lat": 46.40719,
+    "lon": 8.64746
+   }
+  ],
+  "length_km": 25,
+  "quality": 4,
+  "caveats": "Sackgasse",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-malcantone",
+  "name": "Malcantone",
+  "country": "CH",
+  "region": "Tessin",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Hügelige Dorfstraßen",
+  "roads": [],
+  "from": {
+   "name": "Agno",
+   "lat": 45.99686,
+   "lon": 8.90022
+  },
+  "to": {
+   "name": "Novaggio",
+   "lat": 46.01955,
+   "lon": 8.84498
+  },
+  "via": [
+   {
+    "name": "Curio",
+    "lat": 45.99973,
+    "lon": 8.86271
+   }
+  ],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-onsernone",
+  "name": "Valle Onsernone",
+  "country": "CH",
+  "region": "Tessin",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Felswandstraße im Onsernone",
+  "roads": [],
+  "from": {
+   "name": "Loco",
+   "lat": 46.2022,
+   "lon": 8.67116
+  },
+  "to": {
+   "name": "Spruga",
+   "lat": 46.20081,
+   "lon": 8.56797
+  },
+  "via": [
+   {
+    "name": "Russo",
+    "lat": 46.2021,
+    "lon": 8.62241
+   }
+  ],
+  "length_km": 15,
+  "quality": 4,
+  "caveats": "sehr schmal, Sackgasse",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-val-colla",
+  "name": "Val Colla",
+  "country": "CH",
+  "region": "Tessin",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Ruhige Bergstraße",
+  "roads": [],
+  "from": {
+   "name": "Tesserete",
+   "lat": 46.06738,
+   "lon": 8.96645
+  },
+  "to": {
+   "name": "Certara",
+   "lat": 46.0848,
+   "lon": 9.05966
+  },
+  "via": [
+   {
+    "name": "Bidogno",
+    "lat": 46.07891,
+    "lon": 9.0001
+   }
+  ],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-val-bedretto",
+  "name": "Val Bedretto",
+  "country": "CH",
+  "region": "Tessin",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Zubringer zum Nufenen",
+  "roads": [],
+  "from": {
+   "name": "Airolo",
+   "lat": 46.52903,
+   "lon": 8.6086
+  },
+  "to": {
+   "name": "All'Acqua",
+   "lat": 46.48691,
+   "lon": 8.47574
+  },
+  "via": [
+   {
+    "name": "Villa",
+    "lat": 46.51016,
+    "lon": 8.52439
+   }
+  ],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "Wintersperre",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-val-d-herens",
+  "name": "Val d'Hérens",
+  "country": "CH",
+  "region": "Wallis",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Talstraße an den Erdpyramiden",
+  "roads": [],
+  "from": {
+   "name": "Sion",
+   "lat": 46.23117,
+   "lon": 7.35888
+  },
+  "to": {
+   "name": "Evolène",
+   "lat": 46.1129,
+   "lon": 7.4958
+  },
+  "via": [
+   {
+    "name": "Vex",
+    "lat": 46.21138,
+    "lon": 7.39836
+   },
+   {
+    "name": "Euseigne",
+    "lat": 46.17206,
+    "lon": 7.42359
+   }
+  ],
+  "length_km": 25,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-val-de-bagnes",
+  "name": "Val de Bagnes",
+  "country": "CH",
+  "region": "Wallis",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Talstraße zum Mauvoisin",
+  "roads": [],
+  "from": {
+   "name": "Sembrancher",
+   "lat": 46.07848,
+   "lon": 7.15172
+  },
+  "to": {
+   "name": "Fionnay",
+   "lat": 46.03292,
+   "lon": 7.30768
+  },
+  "via": [
+   {
+    "name": "Le Châble",
+    "lat": 46.08015,
+    "lon": 7.2125
+   }
+  ],
+  "length_km": 17,
+  "quality": 3,
+  "caveats": "Sackgasse",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-rigi-nordseite",
+  "name": "Rigi Nordseite",
+  "country": "CH",
+  "region": "Schwyz",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Nebenstraße am Fuß der Rigi",
+  "roads": [],
+  "from": {
+   "name": "Küssnacht am Rigi",
+   "lat": 47.08385,
+   "lon": 8.43863
+  },
+  "to": {
+   "name": "Lauerz",
+   "lat": 47.03232,
+   "lon": 8.58487
+  },
+  "via": [
+   {
+    "name": "Arth",
+    "lat": 47.06446,
+    "lon": 8.52387
+   },
+   {
+    "name": "Goldau",
+    "lat": 47.05122,
+    "lon": 8.55078
+   }
+  ],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-axenstrasse",
+  "name": "Axenstraße",
+  "country": "CH",
+  "region": "Uri",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Felsstraße am Urnersee",
+  "roads": [],
+  "from": {
+   "name": "Brunnen",
+   "lat": 46.99404,
+   "lon": 8.60541
+  },
+  "to": {
+   "name": "Flüelen",
+   "lat": 46.90272,
+   "lon": 8.62535
+  },
+  "via": [
+   {
+    "name": "Sisikon",
+    "lat": 46.94934,
+    "lon": 8.6211
+   }
+  ],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "Verkehr, Baustellen",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-val-d-anniviers",
+  "name": "Val d'Anniviers",
+  "country": "CH",
+  "region": "Wallis",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Serpentinen aus dem Rhonetal",
+  "roads": [],
+  "from": {
+   "name": "Sierre",
+   "lat": 46.29225,
+   "lon": 7.53232
+  },
+  "to": {
+   "name": "Vissoie",
+   "lat": 46.21532,
+   "lon": 7.58536
+  },
+  "via": [
+   {
+    "name": "Niouc",
+    "lat": 46.27079,
+    "lon": 7.55103
+   }
+  ],
+  "length_km": 16,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-binntal",
+  "name": "Binntal",
+  "country": "CH",
+  "region": "Wallis",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Tunnelstraße ins Binntal",
+  "roads": [],
+  "from": {
+   "name": "Ernen",
+   "lat": 46.39888,
+   "lon": 8.14601
+  },
+  "to": {
+   "name": "Binn",
+   "lat": 46.3656,
+   "lon": 8.1884
+  },
+  "via": [],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "Sackgasse",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ }
+]
