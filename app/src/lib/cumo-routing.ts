@@ -216,7 +216,7 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatL
   return {
     ...(features.length ? { areas: { type: 'FeatureCollection', features } } : {}),
     priority,
-    ...(profile === 'kurvig' || profile === 'paesse' ? { distance_influence: 15 } : {}),
+    ...(profile === 'kurvig' || profile === 'paesse' ? { distance_influence: 5 } : {}),
   };
 }
 
