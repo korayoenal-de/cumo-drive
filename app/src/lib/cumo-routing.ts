@@ -10,6 +10,7 @@
  */
 
 import type { PlannedTour } from './plan';
+import { HIGHLIGHT_ROADS } from './highlight-roads';
 import { countCurves } from './stats';
 import { doubledStretch } from './doubled';
 import { haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
@@ -140,11 +141,52 @@ async function post(body: Record<string, unknown>, signal?: AbortSignal): Promis
   return data.paths[0];
 }
 
-function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatLon[] = []) {
-  const ex = exclusionModel(exclude, penalize) as { areas?: unknown; priority?: { if: string; multiply_by: string }[] };
-  const priority = [...WIDTH_MODEL, ...profileModel(profile), ...avoidModel(avoid), ...(ex.priority ?? [])];
+/**
+ * Kuratierte Traumstrecken (Highlights: Rallye, Bergrennen, Kurven und Panoramastraßen) als Korridor:
+ * kleine Quadrate alle 120 m entlang der Linie, zusammen ein Gebiet "fav". Alles außerhalb wird etwas
+ * teurer, so zieht die Route auf diese Straßen, ohne große Umwege zu erzwingen.
+ * Nur Strecken in der Nähe der Anfrage, damit die Anfrage klein bleibt.
+ */
+function favoriteArea(near: LatLon[], radiusKm: number) {
+  if (!near.length) return null;
+  const roads = HIGHLIGHT_ROADS.filter((r) => r.line.some((q) => near.some((p) => haversine(p, q) < radiusKm * 1000)));
+  if (!roads.length) return null;
+  const d = 0.0006;
+  const r5 = (v: number) => Math.round(v * 1e5) / 1e5;
+  const polys: number[][][][] = [];
+  for (const road of roads) {
+    for (let i = 0; i < road.line.length - 1 && polys.length < 1500; i++) {
+      const a = road.line[i];
+      const b = road.line[i + 1];
+      const n = Math.max(1, Math.round(haversine(a, b) / 120));
+      for (let k = 0; k < n; k++) {
+        const la = a[0] + ((b[0] - a[0]) * k) / n;
+        const lo = a[1] + ((b[1] - a[1]) * k) / n;
+        polys.push([[[r5(lo - d), r5(la - d)], [r5(lo + d), r5(la - d)], [r5(lo + d), r5(la + d)], [r5(lo - d), r5(la + d)], [r5(lo - d), r5(la - d)]]]);
+      }
+    }
+  }
+  return { type: 'Feature', id: 'fav', properties: {}, geometry: { type: 'MultiPolygon', coordinates: polys } };
+}
+
+function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatLon[] = [], near: LatLon[] = [], radiusKm = 30) {
+  const ex = exclusionModel(exclude, penalize) as { areas?: { features: unknown[] }; priority?: { if: string; multiply_by: string }[] };
+  const fav = profile === 'kurvig' || profile === 'paesse' ? favoriteArea(near, radiusKm) : null;
+  const priority = [
+    ...WIDTH_MODEL,
+    ...profileModel(profile),
+    ...avoidModel(avoid),
+    ...(ex.priority ?? []),
+    // Traumstrecken bevorzugen: alles andere etwas teurer
+    ...(fav ? [{ if: '!in_fav', multiply_by: '0.7' }] : []),
+  ];
   if (!priority.length) return undefined;
-  return { ...(ex.areas ? { areas: ex.areas } : {}), priority, ...(profile === 'kurvig' || profile === 'paesse' ? { distance_influence: 15 } : {}) };
+  const features = [...(ex.areas?.features ?? []), ...(fav ? [fav] : [])];
+  return {
+    ...(features.length ? { areas: { type: 'FeatureCollection', features } } : {}),
+    priority,
+    ...(profile === 'kurvig' || profile === 'paesse' ? { distance_influence: 15 } : {}),
+  };
 }
 
 /* ---------- Etappen Check auf den Server Details ---------- */
@@ -274,7 +316,10 @@ export async function cumoPlan(
   signal?: AbortSignal,
 ): Promise<PlannedTour & { curves: number }> {
   const ask = async (exclude: LatLon[], penalize: LatLon[]) => {
-    const m = model(avoid, exclude, profile, penalize);
+    // Traumstrecken im Umkreis der Wegpunkte, bei langen Etappen entsprechend weiter
+    let leg = 0;
+    for (let i = 1; i < points.length; i++) leg = Math.max(leg, haversine(points[i - 1], points[i]) / 1000);
+    const m = model(avoid, exclude, profile, penalize, points, Math.min(80, Math.max(20, leg * 0.6)));
     const body = {
       points: points.map(([la, lo]) => [lo, la]),
       profile: profile === 'schnell' ? 'auto' : 'sportwagen',
@@ -337,6 +382,8 @@ export async function cumoRoundTrips(
   spread = false,
 ): Promise<(PlannedTour & { curves: number })[]> {
   // Varianten gleichzeitig anfragen (der Server hat 12 Kerne), statt nacheinander
+  // Traumstrecken im Radius der Runde bevorzugen
+  const rtModel = model(avoid, [], profile, [], [start], Math.max(15, km / 2.5));
   const results = await Promise.all(
     Array.from({ length: count }, async (_, i) => {
       try {
@@ -349,7 +396,7 @@ export async function cumoRoundTrips(
             'round_trip.distance': Math.round(km * 1000 * (profile === 'kurvig' || profile === 'paesse' ? 0.75 : 0.9)),
             'round_trip.seed': seed + i,
             heading: [spread ? (heading + (i * 360) / count) % 360 : heading],
-            ...(model(avoid, [], profile) ? { custom_model: model(avoid, [], profile) } : {}),
+            ...(rtModel ? { custom_model: rtModel } : {}),
           },
           signal,
         );

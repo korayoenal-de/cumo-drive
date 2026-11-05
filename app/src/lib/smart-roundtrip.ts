@@ -10,6 +10,7 @@
  * leistet erst ein eigener Routing Server mit Sportwagen Profil.
  */
 import { checkLine } from './check';
+import { HIGHLIGHT_ROADS, type HighlightRoad } from './highlight-roads';
 import { cumoAvailable, cumoPlan, cumoRoundTrips } from './cumo-routing';
 import { doubledStretch } from './doubled';
 import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from './graphhopper';
@@ -96,9 +97,14 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       onStep?.('route');
       // Ohne Richtung in sechs Richtungen suchen: so gewinnt das Hügelland mit Kurven statt der Weg durch die Ebene und Städte
       const free = req.direction === 'zufall' && req.bearing === undefined;
-      const own = await cumoRoundTrips(req.name, req.start, req.km, heading, req.profile, req.avoid, free ? 6 : 5, seed % 100000, signal, free);
+      // Runden über kuratierte Traumstrecken gleichzeitig mit den freien Varianten rechnen
+      const curvy = req.profile === 'kurvig' || req.profile === 'paesse';
+      const [own, loops] = await Promise.all([
+        cumoRoundTrips(req.name, req.start, req.km, heading, req.profile, req.avoid, free ? 6 : 5, seed % 100000, signal, free),
+        curvy ? favoriteLoops(req, free ? undefined : heading, seed, signal) : Promise.resolve([]),
+      ]);
       // Kurze Stichstraßen hin und zurück (Sackgasse ins Tal und wieder raus) sind nie schön: stark abwerten
-      for (const t of own) candidates.push({ ...t, engine: 'cumo', score: scoreTour(t, t.curves, 0, req.km) - spurKm(t) * 60 });
+      for (const t of [...own, ...loops]) candidates.push({ ...t, engine: 'cumo', score: scoreTour(t, t.curves, 0, req.km) - spurKm(t) * 60 + favKm(t) * 4 });
       const clean = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0);
       if (clean.length) {
         const best = clean.sort((a, b) => b.score - a.score)[0];
@@ -180,4 +186,71 @@ async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Pr
     if (signal?.aborted) throw e;
   }
   return t;
+}
+
+/** km der Tour auf kuratierten Traumstrecken */
+function favKm(t: PlannedTour): number {
+  const line = flatten(t);
+  const near = HIGHLIGHT_ROADS.filter((r) => r.line.some((q) => line.some((x, i) => i % 20 === 0 && haversine(q, x.p) < 3000)));
+  if (!near.length) return 0;
+  let km = 0;
+  for (let i = 1; i < line.length; i++) if (near.some((r) => r.line.some((q) => haversine(q, line[i].p) < 120))) km += line[i].km - line[i - 1].km;
+  return km;
+}
+
+function bearing(a: LatLon, b: LatLon) {
+  const k = Math.cos((a[0] * Math.PI) / 180);
+  return ((Math.atan2((b[1] - a[1]) * k, b[0] - a[0]) * 180) / Math.PI + 360) % 360;
+}
+
+/**
+ * Runden über Traumstrecken: bis zu drei kuratierte Strecken in Reichweite, je eine Runde
+ * Start, Anfang der Strecke, Ende der Strecke, zurück. Passt die Länge nicht, kommt eine zweite
+ * Strecke dazu. Mit Richtung nur Strecken grob in dieser Richtung.
+ */
+async function favoriteLoops(req: SmartRequest, heading: number | undefined, seed: number, signal?: AbortSignal) {
+  const dist = (r: HighlightRoad) => Math.min(...r.line.map((q) => haversine(req.start, q))) / 1000;
+  const inDir = (r: HighlightRoad) => {
+    if (heading === undefined) return true;
+    const mid = r.line[Math.floor(r.line.length / 2)];
+    const d = Math.abs(((bearing(req.start, mid) - heading + 540) % 360) - 180);
+    return d < 70;
+  };
+  const reach = req.km * 0.4;
+  const near = HIGHLIGHT_ROADS.filter((r) => r.line.length > 1 && dist(r) < reach && inDir(r)).sort((a, b) => dist(a) - dist(b)).slice(0, 6);
+  // Neu würfeln soll andere Strecken bringen: Reihenfolge je Seed verschieben
+  // jeder dritte Wurf ganz ohne feste Traumstrecke, dann entscheiden die freien Varianten
+  if (seed % 3 === 2) return [];
+  const shift = near.length ? Math.floor(seed / 2) % near.length : 0;
+  const roads = [...near.slice(shift), ...near.slice(0, shift)];
+  const plans: LatLon[][] = [];
+  for (const r of roads.slice(0, 2)) {
+    const a = r.line[0];
+    const b = r.line[r.line.length - 1];
+    // je Seed andersherum fahren, damit Neu würfeln auch hier Abwechslung bringt
+    const near1 = haversine(req.start, a) <= haversine(req.start, b);
+    const [p, q] = near1 !== (seed % 2 === 1) ? [a, b] : [b, a];
+    plans.push([req.start, p, q, req.start]);
+    // Zweite Strecke anhängen, falls eine weitere in der Nähe des Endes liegt
+    const next = roads.find((o) => o !== r && Math.min(...o.line.map((x) => haversine(q, x))) < reach * 500);
+    if (next) {
+      const c = next.line[0];
+      const d = next.line[next.line.length - 1];
+      const [m, n] = haversine(q, c) <= haversine(q, d) ? [c, d] : [d, c];
+      plans.push([req.start, p, q, m, n, req.start]);
+    }
+  }
+  const out = await Promise.all(
+    plans.slice(0, 3).map(async (pts) => {
+      try {
+        const t = await cumoPlan(req.name, pts, req.profile, req.avoid, signal);
+        const ratio = t.laenge_km / req.km;
+        return ratio > 0.6 && ratio < 1.5 && (t.km_je_klasse?.raus ?? 0) === 0 ? t : null;
+      } catch (e) {
+        if (signal?.aborted) throw e;
+        return null;
+      }
+    }),
+  );
+  return out.filter((t): t is NonNullable<typeof t> => t != null);
 }
