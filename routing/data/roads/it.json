@@ -1,0 +1,2312 @@
+[
+  {
+    "id": "it-sanremo-carpasio",
+    "name": "Rallye Sanremo Prüfung Carpasio",
+    "country": "IT",
+    "region": "Ligurien",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye Sanremo Prüfung",
+    "roads": [],
+    "from": {
+      "name": "Carpasio",
+      "lat": 43.95977,
+      "lon": 7.86648
+    },
+    "to": {
+      "name": "Ville San Pietro",
+      "lat": 43.9699,
+      "lon": 7.90891
+    },
+    "via": [],
+    "length_km": 14.72,
+    "facts": "Prüfung Carpasio bis Ville San Pietro, 14,72 km, Rallye Sanremo 2025",
+    "quality": 4,
+    "caveats": "Schmale ligurische Bergstraßen, teils einspurig",
+    "sources": [
+      "https://app-cdn.sportity.com/56aec860-f1c7-458c-8432-93c949a48270/aab970ad-c652-46f6-97af-2641a6ea409f_SRM25_ERT_RPG_FIA_Approved.pdf"
+    ]
+  },
+  {
+    "id": "it-sanremo-ghimbegna",
+    "name": "Rallye Sanremo Prüfung Ghimbegna San Romolo",
+    "country": "IT",
+    "region": "Ligurien",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye Sanremo Prüfung",
+    "roads": [
+      "SP56"
+    ],
+    "from": {
+      "name": "Passo Ghimbegna",
+      "lat": 43.901,
+      "lon": 7.72783
+    },
+    "to": {
+      "name": "San Romolo",
+      "lat": 43.85587,
+      "lon": 7.72636
+    },
+    "via": [],
+    "length_km": 10.51,
+    "facts": "Passo Ghimbegna bis San Romolo, 10,51 km, Rallye Sanremo 2025, Monte Ceppo Gebiet",
+    "quality": 4,
+    "caveats": "Schmale Bergstraße, Wochenende Radfahrer",
+    "sources": [
+      "https://app-cdn.sportity.com/56aec860-f1c7-458c-8432-93c949a48270/aab970ad-c652-46f6-97af-2641a6ea409f_SRM25_ERT_RPG_FIA_Approved.pdf"
+    ]
+  },
+  {
+    "id": "it-sanremo-san-romolo-perinaldo",
+    "name": "Rallye Sanremo Prüfung San Romolo Perinaldo",
+    "country": "IT",
+    "region": "Ligurien",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye Sanremo Prüfung",
+    "roads": [
+      "SP61"
+    ],
+    "from": {
+      "name": "San Romolo",
+      "lat": 43.85587,
+      "lon": 7.72636
+    },
+    "to": {
+      "name": "Perinaldo",
+      "lat": 43.86768,
+      "lon": 7.66846
+    },
+    "via": [],
+    "length_km": 6.16,
+    "facts": "San Romolo bis Perinaldo, 6,16 km, Rallye Sanremo 2025",
+    "quality": 4,
+    "caveats": "Schmal, teils einspurig",
+    "sources": [
+      "https://app-cdn.sportity.com/56aec860-f1c7-458c-8432-93c949a48270/aab970ad-c652-46f6-97af-2641a6ea409f_SRM25_ERT_RPG_FIA_Approved.pdf"
+    ]
+  },
+  {
+    "id": "it-targa-florio",
+    "name": "Targa Florio Piccolo Circuito delle Madonie",
+    "country": "IT",
+    "region": "Sizilien",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Historische Rennstrecke",
+    "roads": [
+      "SS120",
+      "SP9",
+      "SS113"
+    ],
+    "from": {
+      "name": "Cerda",
+      "lat": 37.9006,
+      "lon": 13.82457
+    },
+    "to": {
+      "name": "Cerda",
+      "lat": 37.9006,
+      "lon": 13.82457
+    },
+    "via": [
+      {
+        "name": "Caltavuturo",
+        "lat": 37.82107,
+        "lon": 13.89022
+      },
+      {
+        "name": "Collesano",
+        "lat": 37.92148,
+        "lon": 13.93749
+      },
+      {
+        "name": "Campofelice di Roccella",
+        "lat": 37.99236,
+        "lon": 13.88615
+      },
+      {
+        "name": "Buonfornello",
+        "lat": 37.97319,
+        "lon": 13.82366
+      }
+    ],
+    "length_km": 72,
+    "facts": "Targa Florio Rundkurs, 72 km, genutzt 1932 bis 1936 und 1951 bis 1977, gegen den Uhrzeigersinn ab Cerda",
+    "quality": 3,
+    "caveats": "Belag stellenweise schlecht, Ortsdurchfahrten, Tribünen bei Cerda",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Circuito_delle_Madonie"
+    ]
+  },
+  {
+    "id": "it-trento-bondone",
+    "name": "Trento Bondone Bergrennen",
+    "country": "IT",
+    "region": "Trentino",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [
+      "SP85dir",
+      "SP85"
+    ],
+    "from": {
+      "name": "Trento Montevideo",
+      "lat": 46.08075,
+      "lon": 11.09837
+    },
+    "to": {
+      "name": "Vason",
+      "lat": 46.03946,
+      "lon": 11.05748
+    },
+    "via": [
+      {
+        "name": "Candriai",
+        "lat": 46.06358,
+        "lon": 11.08257
+      },
+      {
+        "name": "Vaneze",
+        "lat": 46.05334,
+        "lon": 11.0718
+      }
+    ],
+    "length_km": 17.3,
+    "facts": "Seit 1925, 17,3 km, 1350 Hm, eines der längsten Bergrennen Europas",
+    "quality": 5,
+    "caveats": "Viele Radfahrer, im Winter Skibetrieb am Bondone",
+    "sources": [
+      "https://it.wikipedia.org/wiki/Trento-Bondone"
+    ]
+  },
+  {
+    "id": "it-bolzano-mendola",
+    "name": "Bozen Mendel Bergrennen",
+    "country": "IT",
+    "region": "Südtirol",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Historische Bergrennstrecke",
+    "roads": [
+      "SS42"
+    ],
+    "from": {
+      "name": "St. Michael Eppan",
+      "lat": 46.45527,
+      "lon": 11.25912
+    },
+    "to": {
+      "name": "Mendelpass",
+      "lat": 46.41676,
+      "lon": 11.20833
+    },
+    "via": [],
+    "length_km": 14.4,
+    "facts": "1930 bis 1988, ab 1956 St. Michael Eppan bis Mendelpass, 14,4 km, 43 Auflagen",
+    "quality": 4,
+    "caveats": "Am Wochenende viel Ausflugs und Motorradverkehr",
+    "sources": [
+      "https://it.wikipedia.org/wiki/Bolzano-Mendola"
+    ]
+  },
+  {
+    "id": "it-cividale-castelmonte",
+    "name": "Cividale Castelmonte Bergrennen",
+    "country": "IT",
+    "region": "Friaul",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [
+      "SP31"
+    ],
+    "from": {
+      "name": "Carraria",
+      "lat": 46.09188,
+      "lon": 13.44649
+    },
+    "to": {
+      "name": "Castelmonte",
+      "lat": 46.09354,
+      "lon": 13.52036
+    },
+    "via": [],
+    "length_km": 6.4,
+    "facts": "6,4 km, 408 Hm, 6,4 Prozent, 2025 die 48. Auflage",
+    "quality": 4,
+    "caveats": "Pilgerverkehr zum Wallfahrtsort Castelmonte",
+    "sources": [
+      "https://app-cdn.sportity.com/63621555-dd50-4b80-94da-0998fb852f28/fc062f52-67ea-421c-8151-fe47dc02c2dd_CC25%201°%20Comunicato%20Stampa.pdf"
+    ]
+  },
+  {
+    "id": "it-verzegnis-chianzutan",
+    "name": "Verzegnis Sella Chianzutan Bergrennen",
+    "country": "IT",
+    "region": "Friaul",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [
+      "SP1"
+    ],
+    "from": {
+      "name": "Verzegnis",
+      "lat": 46.38515,
+      "lon": 12.9872
+    },
+    "to": {
+      "name": "Sella Chianzutan",
+      "lat": 46.35931,
+      "lon": 12.94104
+    },
+    "via": [],
+    "length_km": 9.9,
+    "facts": "Lauf der italienischen Bergmeisterschaft CIVM, 2017 die 48. Auflage",
+    "quality": 4,
+    "caveats": "Schmale Bergstraße, wenig Verkehr",
+    "sources": [
+      "https://www.motorbox.com/auto/sport/news/alfa-romeo-4c-presente-alla-crono-scalata-verzegnis-sella-chianzutan"
+    ]
+  },
+  {
+    "id": "it-coppa-teodori",
+    "name": "Coppa Paolino Teodori Bergrennen",
+    "country": "IT",
+    "region": "Marken",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [
+      "SP76"
+    ],
+    "from": {
+      "name": "Colle San Marco",
+      "lat": 42.82941,
+      "lon": 13.58108
+    },
+    "to": {
+      "name": "San Giacomo",
+      "lat": 42.80006,
+      "lon": 13.57017
+    },
+    "via": [],
+    "length_km": 5.0,
+    "facts": "Colle San Marco bis San Giacomo, 5031 m, vier Kehren, Lauf der Berg EM",
+    "quality": 4,
+    "caveats": "Kurz, oben Skigebiet San Giacomo",
+    "sources": [
+      "https://formulaitalia.info/articolo.php?nid=14063",
+      "https://en.wikipedia.org/wiki/European_Hill_Climb_Championship"
+    ]
+  },
+  {
+    "id": "it-pedavena-croce-daune",
+    "name": "Pedavena Croce d'Aune Bergrennen",
+    "country": "IT",
+    "region": "Venetien",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [
+      "SP473"
+    ],
+    "from": {
+      "name": "Pedavena",
+      "lat": 46.04073,
+      "lon": 11.87179
+    },
+    "to": {
+      "name": "Passo Croce d'Aune",
+      "lat": 46.0618,
+      "lon": 11.83008
+    },
+    "via": [],
+    "length_km": 7.8,
+    "facts": "7,8 km, 608 Hm, 7,8 Prozent, CIVM Lauf, 2021 die 38. Auflage",
+    "quality": 4,
+    "caveats": "Beliebte Radstrecke",
+    "sources": [
+      "https://acisport.it/public/2021/pdf/CIVM/2021_5936XXXVIII_Pedavena-Croce_d_Aune//Report_dell_evento,_sabato_2021_civm_pedavena_prove.pdf"
+    ]
+  },
+  {
+    "id": "it-rieti-terminillo",
+    "name": "Rieti Terminillo Bergrennen",
+    "country": "IT",
+    "region": "Latium",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [
+      "SR4 bis"
+    ],
+    "from": {
+      "name": "Lisciano",
+      "lat": 42.44903,
+      "lon": 12.91846
+    },
+    "to": {
+      "name": "Campoforogna",
+      "lat": 42.45372,
+      "lon": 12.98696
+    },
+    "via": [],
+    "length_km": 15,
+    "facts": "Coppa Carotti, Lisciano bis Campoforogna auf der SS 4bis, 15 km, 1125 Hm, 8 Prozent",
+    "quality": 5,
+    "caveats": "Wochenende Ausflugsverkehr aus Rom",
+    "sources": [
+      "https://www.visitrieti.com/?p=4596"
+    ]
+  },
+  {
+    "id": "it-malegno-borno",
+    "name": "Malegno Ossimo Borno Bergrennen",
+    "country": "IT",
+    "region": "Lombardei",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [
+      "SP5"
+    ],
+    "from": {
+      "name": "Malegno",
+      "lat": 45.9516,
+      "lon": 10.27098
+    },
+    "to": {
+      "name": "Borno",
+      "lat": 45.94733,
+      "lon": 10.2064
+    },
+    "via": [
+      {
+        "name": "Ossimo",
+        "lat": 45.94339,
+        "lon": 10.23711
+      }
+    ],
+    "length_km": 8.8,
+    "facts": "Seit 1964, Trofeo Vallecamonica, 8,8 km auf der SP 5, 532 Hm",
+    "quality": 4,
+    "caveats": "Ortsdurchfahrt Ossimo",
+    "sources": [
+      "https://it.wikipedia.org/wiki/Cronoscalata_Malegno-Borno"
+    ]
+  },
+  {
+    "id": "it-svolte-di-popoli",
+    "name": "Svolte di Popoli Bergrennen",
+    "country": "IT",
+    "region": "Abruzzen",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [
+      "SR17"
+    ],
+    "from": {
+      "name": "Popoli, Beginn der SR 17",
+      "lat": 42.17822,
+      "lon": 13.82646
+    },
+    "to": {
+      "name": "Ziel unterhalb San Benedetto in Perillis",
+      "lat": 42.20145,
+      "lon": 13.78289
+    },
+    "via": [],
+    "length_km": 7.53,
+    "facts": "Eines der ältesten Bergrennen Italiens, Kehren der früheren SS 17, 7,53 km, 475 Hm",
+    "quality": 4,
+    "caveats": "Lkw Verkehr auf der SR 17",
+    "sources": [
+      "https://it.wikipedia.org/wiki/Cronoscalata_Svolte_di_Popoli"
+    ]
+  },
+  {
+    "id": "it-fasano-selva",
+    "name": "Fasano Selva Bergrennen",
+    "country": "IT",
+    "region": "Apulien",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [
+      "SP2"
+    ],
+    "from": {
+      "name": "Fasano",
+      "lat": 40.83443,
+      "lon": 17.3584
+    },
+    "to": {
+      "name": "Selva di Fasano",
+      "lat": 40.82946,
+      "lon": 17.31926
+    },
+    "via": [],
+    "length_km": 5.6,
+    "facts": "Coppa Selva di Fasano auf der SS 172, 5,6 km, 312 Hm, 2022 die 63. Auflage",
+    "quality": 3,
+    "caveats": "Kurz, Ortsnähe",
+    "sources": [
+      "https://www.acisport.it/public/2022/pdf/CIVM/2022_6110System.String[]//Pre-gara_2022_civm_fasano_pres.pdf"
+    ]
+  },
+  {
+    "id": "it-stelvio",
+    "name": "Stilfser Joch",
+    "country": "IT",
+    "region": "Südtirol, Lombardei",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS38"
+    ],
+    "from": {
+      "name": "Prad am Stilfserjoch",
+      "lat": 46.60377,
+      "lon": 10.58191
+    },
+    "to": {
+      "name": "Bormio",
+      "lat": 46.46767,
+      "lon": 10.37747
+    },
+    "via": [
+      {
+        "name": "Trafoi",
+        "lat": 46.55225,
+        "lon": 10.51029
+      },
+      {
+        "name": "Stilfser Joch",
+        "lat": 46.52862,
+        "lon": 10.45321
+      }
+    ],
+    "length_km": 50.2,
+    "facts": "2757 m, zweithöchster asphaltierter Pass der Alpen, 48 Kehren auf der Nordrampe ab Prad",
+    "quality": 5,
+    "caveats": "Wintersperre etwa Nov bis Ende Mai, im Sommer sehr viele Motorräder und Radfahrer, früh am Morgen fahren",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Stilfser_Joch"
+    ]
+  },
+  {
+    "id": "it-gavia",
+    "name": "Gaviapass",
+    "country": "IT",
+    "region": "Lombardei",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS300"
+    ],
+    "from": {
+      "name": "Bormio",
+      "lat": 46.46767,
+      "lon": 10.37747
+    },
+    "to": {
+      "name": "Ponte di Legno",
+      "lat": 46.2586,
+      "lon": 10.50866
+    },
+    "via": [
+      {
+        "name": "Santa Caterina Valfurva",
+        "lat": 46.41215,
+        "lon": 10.4952
+      },
+      {
+        "name": "Passo di Gavia",
+        "lat": 46.34348,
+        "lon": 10.48733
+      }
+    ],
+    "length_km": 45.6,
+    "facts": "2621 m, Verbindung Valfurva und Valcamonica, Giro d'Italia Klassiker",
+    "quality": 4,
+    "caveats": "Südrampe sehr schmal und teils ohne Leitplanke, Wintersperre Okt bis Juni",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Gaviapass"
+    ]
+  },
+  {
+    "id": "it-mortirolo",
+    "name": "Passo del Mortirolo",
+    "country": "IT",
+    "region": "Lombardei",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SS42 dir/A"
+    ],
+    "from": {
+      "name": "Mazzo di Valtellina",
+      "lat": 46.26139,
+      "lon": 10.27087
+    },
+    "to": {
+      "name": "Monno",
+      "lat": 46.21157,
+      "lon": 10.33988
+    },
+    "via": [
+      {
+        "name": "Passo del Mortirolo",
+        "lat": 46.24786,
+        "lon": 10.29831
+      }
+    ],
+    "length_km": 18.0,
+    "facts": "1852 m, berühmte Giro d'Italia Rampe ab Mazzo mit über 10 Prozent",
+    "quality": 2,
+    "caveats": "Sehr schmal und steil, für breite Sportwagen nur bedingt geeignet, viele Radfahrer",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Passo_del_Mortirolo"
+    ]
+  },
+  {
+    "id": "it-sella-ronda",
+    "name": "Sella Ronda",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Passrunde um die Sellagruppe",
+    "roads": [
+      "SS48",
+      "SS242",
+      "SS243",
+      "SS244",
+      "SP244",
+      "SR48"
+    ],
+    "from": {
+      "name": "Canazei",
+      "lat": 46.47688,
+      "lon": 11.77107
+    },
+    "to": {
+      "name": "Canazei",
+      "lat": 46.47688,
+      "lon": 11.77107
+    },
+    "via": [
+      {
+        "name": "Sellajoch",
+        "lat": 46.50807,
+        "lon": 11.76733
+      },
+      {
+        "name": "Plan de Gralba",
+        "lat": 46.53305,
+        "lon": 11.7722
+      },
+      {
+        "name": "Grödner Joch",
+        "lat": 46.54982,
+        "lon": 11.80839
+      },
+      {
+        "name": "Corvara",
+        "lat": 46.54957,
+        "lon": 11.87403
+      },
+      {
+        "name": "Campolongo",
+        "lat": 46.51386,
+        "lon": 11.87237
+      },
+      {
+        "name": "Arabba",
+        "lat": 46.49718,
+        "lon": 11.87409
+      },
+      {
+        "name": "Pordoijoch",
+        "lat": 46.48755,
+        "lon": 11.81219
+      }
+    ],
+    "length_km": 66.5,
+    "facts": "Vier Pässe Sella, Grödner Joch, Campolongo und Pordoi rund um die Sellagruppe",
+    "quality": 5,
+    "caveats": "Hochsommer sehr voll, an Dolomites Vives Tagen einzelne Pässe gesperrt, Wintersperre einzelner Pässe möglich",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Sellaronda"
+    ]
+  },
+  {
+    "id": "it-passo-sella",
+    "name": "Sellajoch",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS242"
+    ],
+    "from": {
+      "name": "Plan de Gralba",
+      "lat": 46.53305,
+      "lon": 11.7722
+    },
+    "to": {
+      "name": "Canazei",
+      "lat": 46.47688,
+      "lon": 11.77107
+    },
+    "via": [
+      {
+        "name": "Sellajoch",
+        "lat": 46.50807,
+        "lon": 11.76733
+      }
+    ],
+    "length_km": 17.9,
+    "facts": "2244 m, zwischen Gröden und Fassatal am Langkofel",
+    "quality": 5,
+    "caveats": "Hochsaison viel Verkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Sellajoch"
+    ]
+  },
+  {
+    "id": "it-passo-pordoi",
+    "name": "Pordoijoch",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS48",
+      "SR48"
+    ],
+    "from": {
+      "name": "Canazei",
+      "lat": 46.47688,
+      "lon": 11.77107
+    },
+    "to": {
+      "name": "Arabba",
+      "lat": 46.49718,
+      "lon": 11.87409
+    },
+    "via": [
+      {
+        "name": "Pordoijoch",
+        "lat": 46.48755,
+        "lon": 11.81219
+      }
+    ],
+    "length_km": 22.1,
+    "facts": "2239 m, Teil der Strada delle Dolomiti, Kehren auf beiden Seiten",
+    "quality": 5,
+    "caveats": "Hochsaison viel Verkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Pordoijoch"
+    ]
+  },
+  {
+    "id": "it-passo-gardena",
+    "name": "Grödner Joch",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS243"
+    ],
+    "from": {
+      "name": "Plan de Gralba",
+      "lat": 46.53305,
+      "lon": 11.7722
+    },
+    "to": {
+      "name": "Corvara",
+      "lat": 46.54957,
+      "lon": 11.87403
+    },
+    "via": [
+      {
+        "name": "Grödner Joch",
+        "lat": 46.54982,
+        "lon": 11.80839
+      },
+      {
+        "name": "Kolfuschg",
+        "lat": 46.55438,
+        "lon": 11.85485
+      }
+    ],
+    "length_km": 16.9,
+    "facts": "2121 m, zwischen Gröden und Gadertal unter der Sellagruppe",
+    "quality": 5,
+    "caveats": "Hochsaison viel Verkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Grödner_Joch"
+    ]
+  },
+  {
+    "id": "it-passo-campolongo",
+    "name": "Campolongopass",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS244",
+      "SP244"
+    ],
+    "from": {
+      "name": "Corvara",
+      "lat": 46.54957,
+      "lon": 11.87403
+    },
+    "to": {
+      "name": "Arabba",
+      "lat": 46.49718,
+      "lon": 11.87409
+    },
+    "via": [
+      {
+        "name": "Campolongo",
+        "lat": 46.51386,
+        "lon": 11.87237
+      }
+    ],
+    "length_km": 9.9,
+    "facts": "1875 m, kürzester Pass der Sella Ronda",
+    "quality": 4,
+    "caveats": "Kurz",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Campolongopass"
+    ]
+  },
+  {
+    "id": "it-passo-giau",
+    "name": "Passo Giau",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SP638"
+    ],
+    "from": {
+      "name": "Pocol",
+      "lat": 46.52463,
+      "lon": 12.11461
+    },
+    "to": {
+      "name": "Pescul",
+      "lat": 46.43741,
+      "lon": 12.07148
+    },
+    "via": [
+      {
+        "name": "Passo Giau",
+        "lat": 46.48252,
+        "lon": 12.05367
+      }
+    ],
+    "length_km": 24.7,
+    "facts": "2236 m, enge Kehrenfolge mit Blick auf Nuvolau und Civetta",
+    "quality": 5,
+    "caveats": "Schmal, im Sommer viele Motorräder und Radfahrer, Wintersperre möglich",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Passo_Giau"
+    ]
+  },
+  {
+    "id": "it-passo-falzarego",
+    "name": "Falzaregopass",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SR48"
+    ],
+    "from": {
+      "name": "Cortina d'Ampezzo",
+      "lat": 46.53765,
+      "lon": 12.13643
+    },
+    "to": {
+      "name": "Arabba",
+      "lat": 46.49718,
+      "lon": 11.87409
+    },
+    "via": [
+      {
+        "name": "Pocol",
+        "lat": 46.52463,
+        "lon": 12.11461
+      },
+      {
+        "name": "Falzaregopass",
+        "lat": 46.51875,
+        "lon": 12.00843
+      },
+      {
+        "name": "Cernadoi",
+        "lat": 46.48835,
+        "lon": 11.98807
+      }
+    ],
+    "length_km": 39.0,
+    "facts": "2105 m, Teil der Strada delle Dolomiti zwischen Cortina und Buchenstein",
+    "quality": 5,
+    "caveats": "Hochsaison viel Verkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Falzaregopass"
+    ]
+  },
+  {
+    "id": "it-passo-valparola",
+    "name": "Valparolapass",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SP24",
+      "LS/SP37"
+    ],
+    "from": {
+      "name": "Falzaregopass",
+      "lat": 46.51875,
+      "lon": 12.00843
+    },
+    "to": {
+      "name": "Stern",
+      "lat": 46.58175,
+      "lon": 11.89703
+    },
+    "via": [
+      {
+        "name": "Valparolapass",
+        "lat": 46.52511,
+        "lon": 11.99738
+      },
+      {
+        "name": "St. Kassian",
+        "lat": 46.57114,
+        "lon": 11.93209
+      }
+    ],
+    "length_km": 16.5,
+    "facts": "2192 m, Verbindung Falzarego und Gadertal",
+    "quality": 4,
+    "caveats": "Wintersperre möglich",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Valparolapass"
+    ]
+  },
+  {
+    "id": "it-strada-delle-dolomiti",
+    "name": "Große Dolomitenstraße",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Panoramastraße",
+    "roads": [
+      "SS241",
+      "SS48",
+      "SR48"
+    ],
+    "from": {
+      "name": "Kardaun",
+      "lat": 46.49372,
+      "lon": 11.39365
+    },
+    "to": {
+      "name": "Cortina d'Ampezzo",
+      "lat": 46.53765,
+      "lon": 12.13643
+    },
+    "via": [
+      {
+        "name": "Birchabruck",
+        "lat": 46.42606,
+        "lon": 11.47914
+      },
+      {
+        "name": "Welschnofen",
+        "lat": 46.42198,
+        "lon": 11.57118
+      },
+      {
+        "name": "Karerpass",
+        "lat": 46.40428,
+        "lon": 11.60899
+      },
+      {
+        "name": "Vigo di Fassa",
+        "lat": 46.4204,
+        "lon": 11.67261
+      },
+      {
+        "name": "Canazei",
+        "lat": 46.47688,
+        "lon": 11.77107
+      },
+      {
+        "name": "Pordoijoch",
+        "lat": 46.48755,
+        "lon": 11.81219
+      },
+      {
+        "name": "Arabba",
+        "lat": 46.49718,
+        "lon": 11.87409
+      },
+      {
+        "name": "Falzaregopass",
+        "lat": 46.51875,
+        "lon": 12.00843
+      }
+    ],
+    "length_km": 116.8,
+    "facts": "Historische Dolomitenstraße von Bozen nach Cortina über Karerpass, Pordoi und Falzarego, eröffnet 1909",
+    "quality": 5,
+    "caveats": "Hochsaison viel Verkehr, Eggental Schlucht mit Tunneln",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Große_Dolomitenstraße"
+    ]
+  },
+  {
+    "id": "it-tre-cime-mautstrasse",
+    "name": "Drei Zinnen Mautstraße",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "aussicht",
+    "tier": "highlight",
+    "note": "Mautstraße zu den Drei Zinnen",
+    "roads": [
+      "SP49"
+    ],
+    "from": {
+      "name": "Misurina",
+      "lat": 46.57853,
+      "lon": 12.25203
+    },
+    "to": {
+      "name": "Rifugio Auronzo",
+      "lat": 46.6122,
+      "lon": 12.2961
+    },
+    "via": [],
+    "length_km": 8.1,
+    "facts": "Mautstraße von Misurina zur Auronzohütte auf 2320 m direkt unter den Drei Zinnen",
+    "quality": 3,
+    "caveats": "Private Mautstraße mit hoher Pkw Gebühr, nur Sommer, Parkplatz oben oft voll, Kontingente prüfen",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Drei_Zinnen"
+    ]
+  },
+  {
+    "id": "it-passo-tre-croci",
+    "name": "Passo Tre Croci",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SR48"
+    ],
+    "from": {
+      "name": "Cortina d'Ampezzo",
+      "lat": 46.53765,
+      "lon": 12.13643
+    },
+    "to": {
+      "name": "Misurina",
+      "lat": 46.57853,
+      "lon": 12.25203
+    },
+    "via": [
+      {
+        "name": "Passo Tre Croci",
+        "lat": 46.55702,
+        "lon": 12.20185
+      }
+    ],
+    "length_km": 15.8,
+    "facts": "1805 m, Verbindung Cortina und Misurinasee",
+    "quality": 4,
+    "caveats": "Hochsaison viel Verkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Passo_Tre_Croci"
+    ]
+  },
+  {
+    "id": "it-passo-fedaia",
+    "name": "Fedaiapass",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße an der Marmolata",
+    "roads": [
+      "SS641",
+      "SP641"
+    ],
+    "from": {
+      "name": "Canazei",
+      "lat": 46.47688,
+      "lon": 11.77107
+    },
+    "to": {
+      "name": "Caprile",
+      "lat": 46.43782,
+      "lon": 11.99532
+    },
+    "via": [
+      {
+        "name": "Fedaiapass",
+        "lat": 46.46402,
+        "lon": 11.86259
+      },
+      {
+        "name": "Malga Ciapela",
+        "lat": 46.42767,
+        "lon": 11.91179
+      }
+    ],
+    "length_km": 28.2,
+    "facts": "2057 m, Stausee unter der Marmolata, steile Ostrampe",
+    "quality": 4,
+    "caveats": "Ostrampe steile Gerade, Wintersperre möglich",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Fedaiapass"
+    ]
+  },
+  {
+    "id": "it-passo-san-pellegrino",
+    "name": "Passo San Pellegrino",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SS346",
+      "SP346"
+    ],
+    "from": {
+      "name": "Moena",
+      "lat": 46.35734,
+      "lon": 11.68937
+    },
+    "to": {
+      "name": "Falcade",
+      "lat": 46.35813,
+      "lon": 11.8721
+    },
+    "via": [
+      {
+        "name": "Passo San Pellegrino",
+        "lat": 46.37836,
+        "lon": 11.79172
+      }
+    ],
+    "length_km": 22.5,
+    "facts": "1918 m, Verbindung Fassatal und Valle del Biois",
+    "quality": 4,
+    "caveats": "Ostseite steil",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Passo_San_Pellegrino"
+    ]
+  },
+  {
+    "id": "it-passo-rolle",
+    "name": "Passo Rolle",
+    "country": "IT",
+    "region": "Trentino",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS50"
+    ],
+    "from": {
+      "name": "Predazzo",
+      "lat": 46.31236,
+      "lon": 11.60269
+    },
+    "to": {
+      "name": "San Martino di Castrozza",
+      "lat": 46.26234,
+      "lon": 11.80283
+    },
+    "via": [
+      {
+        "name": "Paneveggio",
+        "lat": 46.30969,
+        "lon": 11.74824
+      },
+      {
+        "name": "Passo Rolle",
+        "lat": 46.2964,
+        "lon": 11.78506
+      }
+    ],
+    "length_km": 29.8,
+    "facts": "1984 m, unter den Pale di San Martino, Gebiet der Rallye San Martino",
+    "quality": 5,
+    "caveats": "Hochsaison viel Verkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Passo_Rolle"
+    ]
+  },
+  {
+    "id": "it-passo-manghen",
+    "name": "Passo Manghen",
+    "country": "IT",
+    "region": "Trentino",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße und Rallye Prüfung",
+    "roads": [
+      "SP31"
+    ],
+    "from": {
+      "name": "Telve",
+      "lat": 46.12092,
+      "lon": 11.47616
+    },
+    "to": {
+      "name": "Molina di Fiemme",
+      "lat": 46.27326,
+      "lon": 11.41648
+    },
+    "via": [
+      {
+        "name": "Passo Manghen",
+        "lat": 46.17325,
+        "lon": 11.44147
+      }
+    ],
+    "length_km": 28.4,
+    "facts": "2047 m, Valsugana nach Fleimstal, legendäre Prüfung Manghen der Rallye San Martino, 18,67 km in 2023",
+    "quality": 4,
+    "caveats": "Schmal, Wintersperre Nov bis Mai",
+    "sources": [
+      "https://acisport.it/public/2023/pdf/CIRA/2023_7312System.String[]//Preview_dell_evento_show_di_campioni_nel_terzo_round_del_campionato_italiano_rally_asfalto_al_rallye_san_martino_di_castrozza.pdf",
+      "https://de.wikipedia.org/wiki/Passo_Manghen"
+    ]
+  },
+  {
+    "id": "it-passo-gobbera",
+    "name": "Passo Gobbera",
+    "country": "IT",
+    "region": "Trentino",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye San Martino Prüfung",
+    "roads": [
+      "SP79"
+    ],
+    "from": {
+      "name": "Canal San Bovo",
+      "lat": 46.17972,
+      "lon": 11.70145
+    },
+    "to": {
+      "name": "Passo Gobbera",
+      "lat": 46.14761,
+      "lon": 11.75848
+    },
+    "via": [],
+    "length_km": 9.3,
+    "facts": "Klassische Prüfung Gobbera der Rallye San Martino, 10,74 km in 2023, kurz und intensiv",
+    "quality": 4,
+    "caveats": "Schmal, Wald, wenig Verkehr",
+    "sources": [
+      "https://acisport.it/public/2023/pdf/CIRA/2023_7312System.String[]//Preview_dell_evento_show_di_campioni_nel_terzo_round_del_campionato_italiano_rally_asfalto_al_rallye_san_martino_di_castrozza.pdf"
+    ]
+  },
+  {
+    "id": "it-passo-duran",
+    "name": "Passo Duran",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SP347"
+    ],
+    "from": {
+      "name": "Agordo",
+      "lat": 46.30862,
+      "lon": 12.0561
+    },
+    "to": {
+      "name": "Dont",
+      "lat": 46.355,
+      "lon": 12.14449
+    },
+    "via": [
+      {
+        "name": "Passo Duran",
+        "lat": 46.32491,
+        "lon": 12.09606
+      }
+    ],
+    "length_km": 27.4,
+    "facts": "1601 m, ruhige Verbindung Agordino und Val di Zoldo unter der Civetta",
+    "quality": 3,
+    "caveats": "Schmal und steil",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Passo_Duran"
+    ]
+  },
+  {
+    "id": "it-passo-staulanza",
+    "name": "Passo Staulanza",
+    "country": "IT",
+    "region": "Dolomiten",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SP251"
+    ],
+    "from": {
+      "name": "Pecol",
+      "lat": 46.39336,
+      "lon": 12.10031
+    },
+    "to": {
+      "name": "Pescul",
+      "lat": 46.43741,
+      "lon": 12.07148
+    },
+    "via": [
+      {
+        "name": "Passo Staulanza",
+        "lat": 46.4207,
+        "lon": 12.1045
+      }
+    ],
+    "length_km": 11.6,
+    "facts": "1766 m, zwischen Pelmo und Civetta",
+    "quality": 4,
+    "caveats": "Wenig Verkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Passo_Staulanza"
+    ]
+  },
+  {
+    "id": "it-wuerzjoch",
+    "name": "Würzjoch",
+    "country": "IT",
+    "region": "Südtirol",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße am Peitlerkofel",
+    "roads": [
+      "GS/SC11.6",
+      "LS/SP29"
+    ],
+    "from": {
+      "name": "Afers",
+      "lat": 46.69034,
+      "lon": 11.72378
+    },
+    "to": {
+      "name": "Untermoi",
+      "lat": 46.69071,
+      "lon": 11.85018
+    },
+    "via": [
+      {
+        "name": "Würzjoch",
+        "lat": 46.67511,
+        "lon": 11.81431
+      }
+    ],
+    "length_km": 25.8,
+    "facts": "2006 m, Verbindung Eisacktal und Gadertal am Peitlerkofel",
+    "quality": 3,
+    "caveats": "Schmal, Westseite teils einspurig",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Würzjoch"
+    ]
+  },
+  {
+    "id": "it-jaufenpass",
+    "name": "Jaufenpass",
+    "country": "IT",
+    "region": "Südtirol",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS44"
+    ],
+    "from": {
+      "name": "Sterzing",
+      "lat": 46.89632,
+      "lon": 11.43194
+    },
+    "to": {
+      "name": "Walten bei St. Leonhard",
+      "lat": 46.8247,
+      "lon": 11.28051
+    },
+    "via": [
+      {
+        "name": "Jaufenpass",
+        "lat": 46.8396,
+        "lon": 11.32147
+      }
+    ],
+    "length_km": 29.9,
+    "facts": "2094 m, rund 20 Kehren auf der Passeirer Seite, Verbindung Sterzing und Meran",
+    "quality": 5,
+    "caveats": "Sehr beliebt bei Motorradfahrern, Wintersperre Ostseite selten, Westseite Nov bis Mai",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Jaufenpass"
+    ]
+  },
+  {
+    "id": "it-penser-joch",
+    "name": "Penser Joch",
+    "country": "IT",
+    "region": "Südtirol",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS508"
+    ],
+    "from": {
+      "name": "Sterzing",
+      "lat": 46.89632,
+      "lon": 11.43194
+    },
+    "to": {
+      "name": "Sarnthein",
+      "lat": 46.69536,
+      "lon": 11.38739
+    },
+    "via": [
+      {
+        "name": "Penser Joch",
+        "lat": 46.81878,
+        "lon": 11.44125
+      },
+      {
+        "name": "Pens",
+        "lat": 46.78069,
+        "lon": 11.41509
+      }
+    ],
+    "length_km": 52.4,
+    "facts": "2211 m, durch das Sarntal nach Bozen, Sarner Schlucht mit Tunneln",
+    "quality": 4,
+    "caveats": "Wintersperre Nov bis Mai, Sarner Schlucht eng mit vielen Tunneln",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Penser_Joch"
+    ]
+  },
+  {
+    "id": "it-timmelsjoch",
+    "name": "Timmelsjoch Südrampe",
+    "country": "IT",
+    "region": "Südtirol",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS44bis"
+    ],
+    "from": {
+      "name": "Moos in Passeier",
+      "lat": 46.83183,
+      "lon": 11.16729
+    },
+    "to": {
+      "name": "Timmelsjoch",
+      "lat": 46.90517,
+      "lon": 11.09688
+    },
+    "via": [],
+    "length_km": 22.7,
+    "facts": "2474 m, Hochalpenstraße ins Ötztal, Südrampe mit vielen Kehren und Tunneln",
+    "quality": 5,
+    "caveats": "Maut auf österreichischer Seite, Nachtsperre, Wintersperre Okt bis Juni",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Timmelsjoch"
+    ]
+  },
+  {
+    "id": "it-gampenjoch",
+    "name": "Gampenjoch",
+    "country": "IT",
+    "region": "Südtirol",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SS238"
+    ],
+    "from": {
+      "name": "Lana",
+      "lat": 46.61602,
+      "lon": 11.14486
+    },
+    "to": {
+      "name": "Fondo",
+      "lat": 46.44006,
+      "lon": 11.1365
+    },
+    "via": [
+      {
+        "name": "Gampenjoch",
+        "lat": 46.52955,
+        "lon": 11.1118
+      }
+    ],
+    "length_km": 31.0,
+    "facts": "1518 m, ganzjährig offene Verbindung Meran und Nonstal",
+    "quality": 4,
+    "caveats": "Wochenende viel Motorradverkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Gampenjoch"
+    ]
+  },
+  {
+    "id": "it-passo-tonale",
+    "name": "Passo del Tonale",
+    "country": "IT",
+    "region": "Lombardei, Trentino",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SS42"
+    ],
+    "from": {
+      "name": "Ponte di Legno",
+      "lat": 46.2586,
+      "lon": 10.50866
+    },
+    "to": {
+      "name": "Vermiglio",
+      "lat": 46.29691,
+      "lon": 10.69136
+    },
+    "via": [
+      {
+        "name": "Passo del Tonale",
+        "lat": 46.25801,
+        "lon": 10.58185
+      }
+    ],
+    "length_km": 22.5,
+    "facts": "1883 m, breite ganzjährige Passstraße zwischen Valcamonica und Val di Sole",
+    "quality": 3,
+    "caveats": "Viel Lkw und Durchgangsverkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Tonalepass"
+    ]
+  },
+  {
+    "id": "it-strada-della-forra",
+    "name": "Strada della Forra",
+    "country": "IT",
+    "region": "Lombardei",
+    "kind": "aussicht",
+    "tier": "highlight",
+    "note": "Schluchtstraße am Gardasee",
+    "roads": [
+      "SP38"
+    ],
+    "from": {
+      "name": "Abzweig an der Gardesana",
+      "lat": 45.77817,
+      "lon": 10.77124
+    },
+    "to": {
+      "name": "Pieve di Tremosine",
+      "lat": 45.77123,
+      "lon": 10.75954
+    },
+    "via": [],
+    "length_km": 14.4,
+    "facts": "In den Fels gehauene Schluchtstraße von 1913, Kehren und Tunnel über dem Gardasee",
+    "quality": 3,
+    "caveats": "Sehr eng, Einbahn ähnliche Engstellen, Busse und Wohnmobile, langsam fahren",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Strada_della_Forra"
+    ]
+  },
+  {
+    "id": "it-gardesana-occidentale",
+    "name": "Gardesana Occidentale",
+    "country": "IT",
+    "region": "Lombardei, Trentino",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Uferstraße am Gardasee",
+    "roads": [
+      "SS45bis"
+    ],
+    "from": {
+      "name": "Salò",
+      "lat": 45.60568,
+      "lon": 10.52007
+    },
+    "to": {
+      "name": "Riva del Garda",
+      "lat": 45.88675,
+      "lon": 10.84577
+    },
+    "via": [
+      {
+        "name": "Gargnano",
+        "lat": 45.68814,
+        "lon": 10.6635
+      },
+      {
+        "name": "Limone sul Garda",
+        "lat": 45.81411,
+        "lon": 10.79153
+      }
+    ],
+    "length_km": 45.7,
+    "facts": "Westufer des Gardasees mit über 70 Tunneln und Galerien zwischen Gargnano und Riva",
+    "quality": 3,
+    "caveats": "Starker Verkehr im Sommer, Radar, kaum Überholmöglichkeiten",
+    "sources": [
+      "https://it.wikipedia.org/wiki/Strada_statale_45_bis_Gardesana_Occidentale"
+    ]
+  },
+  {
+    "id": "it-passo-spluga",
+    "name": "Splügenpass Südrampe",
+    "country": "IT",
+    "region": "Lombardei",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS36"
+    ],
+    "from": {
+      "name": "Chiavenna",
+      "lat": 46.32007,
+      "lon": 9.40074
+    },
+    "to": {
+      "name": "Splügenpass",
+      "lat": 46.50546,
+      "lon": 9.33029
+    },
+    "via": [
+      {
+        "name": "Campodolcino",
+        "lat": 46.40433,
+        "lon": 9.34974
+      },
+      {
+        "name": "Pianazzo",
+        "lat": 46.42815,
+        "lon": 9.34387
+      },
+      {
+        "name": "Montespluga",
+        "lat": 46.48924,
+        "lon": 9.33654
+      }
+    ],
+    "length_km": 31.8,
+    "facts": "2115 m, Südrampe mit dichter Kehrenfolge und Galerien oberhalb von Pianazzo",
+    "quality": 4,
+    "caveats": "Galerien eng und niedrig, Wintersperre Nov bis Mai",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Splügenpass"
+    ]
+  },
+  {
+    "id": "it-passo-san-marco",
+    "name": "Passo San Marco",
+    "country": "IT",
+    "region": "Lombardei",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SS470"
+    ],
+    "from": {
+      "name": "Morbegno",
+      "lat": 46.13131,
+      "lon": 9.56968
+    },
+    "to": {
+      "name": "Piazza Brembana",
+      "lat": 45.94779,
+      "lon": 9.67562
+    },
+    "via": [
+      {
+        "name": "Albaredo per San Marco",
+        "lat": 46.10273,
+        "lon": 9.59018
+      },
+      {
+        "name": "Passo San Marco",
+        "lat": 46.04719,
+        "lon": 9.62278
+      },
+      {
+        "name": "Mezzoldo",
+        "lat": 46.0124,
+        "lon": 9.66487
+      }
+    ],
+    "length_km": 49.8,
+    "facts": "1992 m, Verbindung Veltlin und Val Brembana, historische Via Priula",
+    "quality": 3,
+    "caveats": "Schmal, Wintersperre",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Passo_San_Marco"
+    ]
+  },
+  {
+    "id": "it-colle-del-nivolet",
+    "name": "Colle del Nivolet",
+    "country": "IT",
+    "region": "Piemont",
+    "kind": "aussicht",
+    "tier": "highlight",
+    "note": "Hochalpenstraße im Gran Paradiso",
+    "roads": [
+      "SP50"
+    ],
+    "from": {
+      "name": "Ceresole Reale",
+      "lat": 45.43248,
+      "lon": 7.2324
+    },
+    "to": {
+      "name": "Colle del Nivolet",
+      "lat": 45.47921,
+      "lon": 7.14232
+    },
+    "via": [],
+    "length_km": 18.0,
+    "facts": "2612 m, Sackgasse im Nationalpark Gran Paradiso an den Stauseen Serrù und Agnel",
+    "quality": 4,
+    "caveats": "Im Hochsommer an bestimmten Tagen für Autos gesperrt, Wintersperre Okt bis Juni, Sackgasse",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Colle_del_Nivolet"
+    ]
+  },
+  {
+    "id": "it-colle-dell-agnello",
+    "name": "Colle dell'Agnello",
+    "country": "IT",
+    "region": "Piemont",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Hochalpenpass",
+    "roads": [
+      "SP251"
+    ],
+    "from": {
+      "name": "Casteldelfino",
+      "lat": 44.58964,
+      "lon": 7.07032
+    },
+    "to": {
+      "name": "Colle dell'Agnello",
+      "lat": 44.68389,
+      "lon": 6.97959
+    },
+    "via": [
+      {
+        "name": "Chianale",
+        "lat": 44.64665,
+        "lon": 6.99869
+      }
+    ],
+    "length_km": 20.1,
+    "facts": "2744 m, einer der höchsten asphaltierten Pässe der Alpen, Übergang ins Queyras",
+    "quality": 4,
+    "caveats": "Wintersperre Okt bis Juni, oben schmal",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Colle_dell%27Agnello"
+    ]
+  },
+  {
+    "id": "it-colle-della-lombarda",
+    "name": "Colle della Lombarda",
+    "country": "IT",
+    "region": "Piemont",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SP255"
+    ],
+    "from": {
+      "name": "Pratolungo",
+      "lat": 44.30003,
+      "lon": 7.15648
+    },
+    "to": {
+      "name": "Colle della Lombarda",
+      "lat": 44.20267,
+      "lon": 7.1501
+    },
+    "via": [
+      {
+        "name": "Santuario di Sant'Anna di Vinadio",
+        "lat": 44.23173,
+        "lon": 7.10596
+      }
+    ],
+    "length_km": 25.4,
+    "facts": "2350 m, Übergang nach Isola 2000 in Frankreich",
+    "quality": 3,
+    "caveats": "Schmal, Wintersperre",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Col_de_la_Lombarde"
+    ]
+  },
+  {
+    "id": "it-colle-del-sestriere",
+    "name": "Colle del Sestriere",
+    "country": "IT",
+    "region": "Piemont",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SP23"
+    ],
+    "from": {
+      "name": "Cesana Torinese",
+      "lat": 44.95244,
+      "lon": 6.79067
+    },
+    "to": {
+      "name": "Pragelato",
+      "lat": 45.01577,
+      "lon": 6.94125
+    },
+    "via": [
+      {
+        "name": "Sestriere",
+        "lat": 44.95845,
+        "lon": 6.87869
+      }
+    ],
+    "length_km": 22.9,
+    "facts": "2035 m, breite ganzjährige Passstraße mit schnellen Kurven",
+    "quality": 4,
+    "caveats": "Skiortverkehr im Winter",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Colle_del_Sestriere"
+    ]
+  },
+  {
+    "id": "it-gran-san-bernardo",
+    "name": "Großer Sankt Bernhard Südrampe",
+    "country": "IT",
+    "region": "Aostatal",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "SS27"
+    ],
+    "from": {
+      "name": "Saint-Oyen",
+      "lat": 45.82471,
+      "lon": 7.21141
+    },
+    "to": {
+      "name": "Großer Sankt Bernhard",
+      "lat": 45.86905,
+      "lon": 7.17041
+    },
+    "via": [
+      {
+        "name": "Saint-Rhémy-en-Bosses",
+        "lat": 45.82374,
+        "lon": 7.18219
+      }
+    ],
+    "length_km": 25.5,
+    "facts": "2469 m, alte Passstraße über das Hospiz statt durch den Tunnel",
+    "quality": 4,
+    "caveats": "Wintersperre Okt bis Juni, bei Saint-Rhémy auf die alte Passstraße abbiegen",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Grosser_Sankt_Bernhard"
+    ]
+  },
+  {
+    "id": "it-piccolo-san-bernardo",
+    "name": "Kleiner Sankt Bernhard",
+    "country": "IT",
+    "region": "Aostatal",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "SS26"
+    ],
+    "from": {
+      "name": "Pré-Saint-Didier",
+      "lat": 45.76394,
+      "lon": 6.98535
+    },
+    "to": {
+      "name": "Kleiner Sankt Bernhard",
+      "lat": 45.67925,
+      "lon": 6.88294
+    },
+    "via": [],
+    "length_km": 22.8,
+    "facts": "2188 m, Kehren oberhalb Pré-Saint-Didier, Übergang nach La Rosière",
+    "quality": 4,
+    "caveats": "Wintersperre Nov bis Mai",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Kleiner_Sankt_Bernhard"
+    ]
+  },
+  {
+    "id": "it-futa-raticosa",
+    "name": "Futa und Raticosa",
+    "country": "IT",
+    "region": "Toskana, Emilia Romagna",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Mille Miglia Strecke",
+    "roads": [
+      "SS65"
+    ],
+    "from": {
+      "name": "Cafaggiolo",
+      "lat": 43.96567,
+      "lon": 11.29497
+    },
+    "to": {
+      "name": "Loiano",
+      "lat": 44.26833,
+      "lon": 11.32343
+    },
+    "via": [
+      {
+        "name": "Passo della Futa",
+        "lat": 44.09614,
+        "lon": 11.27531
+      },
+      {
+        "name": "Pietramala",
+        "lat": 44.1649,
+        "lon": 11.33632
+      },
+      {
+        "name": "Passo della Raticosa",
+        "lat": 44.17291,
+        "lon": 11.33842
+      },
+      {
+        "name": "Monghidoro",
+        "lat": 44.21986,
+        "lon": 11.31875
+      }
+    ],
+    "length_km": 46.0,
+    "facts": "Legendärer Apenninübergang der Mille Miglia zwischen Florenz und Bologna, Futa 903 m und Raticosa 968 m",
+    "quality": 5,
+    "caveats": "Wochenende sehr viele Motorräder, Polizeikontrollen",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Passo_della_Futa",
+      "https://it.wikipedia.org/wiki/Passo_della_Raticosa"
+    ]
+  },
+  {
+    "id": "it-muraglione",
+    "name": "Passo del Muraglione",
+    "country": "IT",
+    "region": "Toskana, Emilia Romagna",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Mille Miglia Pass",
+    "roads": [
+      "SS67"
+    ],
+    "from": {
+      "name": "Dicomano",
+      "lat": 43.89129,
+      "lon": 11.52371
+    },
+    "to": {
+      "name": "Portico di Romagna",
+      "lat": 44.02569,
+      "lon": 11.7823
+    },
+    "via": [
+      {
+        "name": "San Godenzo",
+        "lat": 43.92606,
+        "lon": 11.61804
+      },
+      {
+        "name": "Passo del Muraglione",
+        "lat": 43.93292,
+        "lon": 11.65481
+      },
+      {
+        "name": "San Benedetto in Alpe",
+        "lat": 43.98361,
+        "lon": 11.68656
+      }
+    ],
+    "length_km": 40.9,
+    "facts": "907 m, kurvenreicher Apenninpass zwischen Florenz und Forlì, oft Teil der Mille Miglia",
+    "quality": 5,
+    "caveats": "Wochenende sehr viele Motorräder",
+    "sources": [
+      "https://it.wikipedia.org/wiki/Passo_del_Muraglione"
+    ]
+  },
+  {
+    "id": "it-radicofani",
+    "name": "Via Cassia Radicofani",
+    "country": "IT",
+    "region": "Toskana",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Mille Miglia Strecke",
+    "roads": [
+      "SS2"
+    ],
+    "from": {
+      "name": "San Quirico d'Orcia",
+      "lat": 43.0604,
+      "lon": 11.60365
+    },
+    "to": {
+      "name": "Radicofani",
+      "lat": 42.89651,
+      "lon": 11.76971
+    },
+    "via": [
+      {
+        "name": "Gallina",
+        "lat": 43.00074,
+        "lon": 11.68328
+      }
+    ],
+    "length_km": 28.8,
+    "facts": "Klassischer Mille Miglia Abschnitt der SS 2 Cassia durch das Val d'Orcia hinauf nach Radicofani",
+    "quality": 4,
+    "caveats": "Lkw Verkehr",
+    "sources": [
+      "https://it.wikipedia.org/wiki/Strada_statale_2_Via_Cassia"
+    ]
+  },
+  {
+    "id": "it-val-dorcia",
+    "name": "Val d'Orcia Panoramastraße",
+    "country": "IT",
+    "region": "Toskana",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Panoramastraße",
+    "roads": [
+      "SS146"
+    ],
+    "from": {
+      "name": "San Quirico d'Orcia",
+      "lat": 43.0604,
+      "lon": 11.60365
+    },
+    "to": {
+      "name": "Montepulciano",
+      "lat": 43.09453,
+      "lon": 11.78268
+    },
+    "via": [
+      {
+        "name": "Pienza",
+        "lat": 43.07655,
+        "lon": 11.67891
+      }
+    ],
+    "length_km": 24.1,
+    "facts": "Hügelstraße durch das UNESCO Welterbe Val d'Orcia",
+    "quality": 4,
+    "caveats": "Touristenverkehr, Ortsdurchfahrten",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Val_d%E2%80%99Orcia"
+    ]
+  },
+  {
+    "id": "it-chiantigiana",
+    "name": "Chiantigiana",
+    "country": "IT",
+    "region": "Toskana",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Weinstraße durch das Chianti",
+    "roads": [
+      "SR222"
+    ],
+    "from": {
+      "name": "Strada in Chianti",
+      "lat": 43.65858,
+      "lon": 11.29807
+    },
+    "to": {
+      "name": "Quercegrossa",
+      "lat": 43.39468,
+      "lon": 11.30966
+    },
+    "via": [
+      {
+        "name": "Greve in Chianti",
+        "lat": 43.58233,
+        "lon": 11.31688
+      },
+      {
+        "name": "Panzano in Chianti",
+        "lat": 43.5449,
+        "lon": 11.31587
+      },
+      {
+        "name": "Castellina in Chianti",
+        "lat": 43.46918,
+        "lon": 11.28729
+      }
+    ],
+    "length_km": 42.9,
+    "facts": "SS 222 zwischen Florenz und Siena durch die Weinberge des Chianti Classico",
+    "quality": 4,
+    "caveats": "Wochenende Ausflugsverkehr, Radfahrer",
+    "sources": [
+      "https://it.wikipedia.org/wiki/Strada_statale_222_Chiantigiana"
+    ]
+  },
+  {
+    "id": "it-valle-cannobina",
+    "name": "Valle Cannobina",
+    "country": "IT",
+    "region": "Piemont",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Kurvenstraße",
+    "roads": [
+      "SS631"
+    ],
+    "from": {
+      "name": "Cannobio",
+      "lat": 46.06181,
+      "lon": 8.69764
+    },
+    "to": {
+      "name": "Malesco",
+      "lat": 46.12662,
+      "lon": 8.50092
+    },
+    "via": [
+      {
+        "name": "Falmenta",
+        "lat": 46.07288,
+        "lon": 8.5919
+      },
+      {
+        "name": "Finero",
+        "lat": 46.10654,
+        "lon": 8.53506
+      }
+    ],
+    "length_km": 34.9,
+    "facts": "Kurvenreiche Talstraße vom Lago Maggiore ins Vigezzotal, Prüfung Cannobina der Rallye Valli Ossolane",
+    "quality": 4,
+    "caveats": "Schmal mit vielen engen Kurven",
+    "sources": [
+      "https://www.verbanonews.it/aree-geografiche/lago-maggiore/2026/05/15/dieci-prove-speciali-tra-baveno-e-domodossola-per-il-rally-valli-ossolane/1024084/"
+    ]
+  },
+  {
+    "id": "it-passo-san-boldo",
+    "name": "Passo San Boldo",
+    "country": "IT",
+    "region": "Venetien",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Tunnelkehrenstraße",
+    "roads": [
+      "SP635"
+    ],
+    "from": {
+      "name": "Tovena",
+      "lat": 45.97927,
+      "lon": 12.17505
+    },
+    "to": {
+      "name": "Sant'Antonio Tortal",
+      "lat": 46.04228,
+      "lon": 12.15856
+    },
+    "via": [
+      {
+        "name": "Passo San Boldo",
+        "lat": 46.006,
+        "lon": 12.16968
+      }
+    ],
+    "length_km": 11.6,
+    "facts": "706 m, Kehren in Tunneln im Fels, gebaut 1918 in 100 Tagen",
+    "quality": 3,
+    "caveats": "Ampelgeregelt einspurig, Höhen und Längenbeschränkung",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Passo_San_Boldo"
+    ]
+  },
+  {
+    "id": "it-amalfitana",
+    "name": "Amalfitana",
+    "country": "IT",
+    "region": "Kampanien",
+    "kind": "aussicht",
+    "tier": "highlight",
+    "note": "Küstenstraße",
+    "roads": [
+      "SS163"
+    ],
+    "from": {
+      "name": "Positano",
+      "lat": 40.62866,
+      "lon": 14.4855
+    },
+    "to": {
+      "name": "Vietri sul Mare",
+      "lat": 40.67155,
+      "lon": 14.7286
+    },
+    "via": [
+      {
+        "name": "Praiano",
+        "lat": 40.61111,
+        "lon": 14.53134
+      },
+      {
+        "name": "Amalfi",
+        "lat": 40.63367,
+        "lon": 14.60261
+      },
+      {
+        "name": "Maiori",
+        "lat": 40.64891,
+        "lon": 14.64014
+      }
+    ],
+    "length_km": 38.6,
+    "facts": "SS 163 an der Amalfiküste, UNESCO Welterbe, spektakuläre Klippenstraße",
+    "quality": 3,
+    "caveats": "Extrem viel Verkehr und Busse, im Sommer Fahrverbot nach Kennzeichen gerade und ungerade für Nichtansässige möglich",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Amalfitana"
+    ]
+  },
+  {
+    "id": "it-campo-imperatore",
+    "name": "Campo Imperatore",
+    "country": "IT",
+    "region": "Abruzzen",
+    "kind": "aussicht",
+    "tier": "highlight",
+    "note": "Hochplateau Straße",
+    "roads": [
+      "SR17 bis"
+    ],
+    "from": {
+      "name": "Fonte Cerreto",
+      "lat": 42.42601,
+      "lon": 13.52911
+    },
+    "to": {
+      "name": "Campo Imperatore",
+      "lat": 42.44305,
+      "lon": 13.55872
+    },
+    "via": [],
+    "length_km": 26.2,
+    "facts": "Hochebene am Gran Sasso, das kleine Tibet Italiens",
+    "quality": 4,
+    "caveats": "Wintersperre, Weidevieh auf der Straße",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Campo_Imperatore"
+    ]
+  },
+  {
+    "id": "it-etna-sud",
+    "name": "Ätna Südstraße",
+    "country": "IT",
+    "region": "Sizilien",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Vulkanstraße",
+    "roads": [
+      "SP92"
+    ],
+    "from": {
+      "name": "Nicolosi",
+      "lat": 37.61471,
+      "lon": 15.02635
+    },
+    "to": {
+      "name": "Zafferana Etnea",
+      "lat": 37.69328,
+      "lon": 15.10646
+    },
+    "via": [
+      {
+        "name": "Rifugio Sapienza",
+        "lat": 37.70022,
+        "lon": 14.99825
+      }
+    ],
+    "length_km": 37.8,
+    "facts": "Durch Lavafelder hinauf zum Rifugio Sapienza auf rund 1900 m",
+    "quality": 4,
+    "caveats": "Vulkanasche kann rutschig sein, Touristenbusse",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Ätna"
+    ]
+  }
+]
