@@ -4,10 +4,9 @@ name: EAS Update (TestFlight)
 # also an die TestFlight Builds. Läuft bei jedem Push auf main, der die App
 # betrifft, oder per Hand unter Actions. Braucht das Repo Secret EXPO_TOKEN.
 
+# Automatisch bei Push erst wieder einschalten, wenn das Secret EXPO_TOKEN im Repo hinterlegt ist
+# (sonst schlägt jeder Lauf fehl und GitHub schickt eine Mail). Bis dahin nur per Hand.
 on:
-  push:
-    branches: [main]
-    paths: ['app/**']
   workflow_dispatch:
     inputs:
       message:
