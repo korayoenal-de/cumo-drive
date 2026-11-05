@@ -1,0 +1,3602 @@
+[
+  {
+    "id": "de-nibelungenstrasse-b47",
+    "name": "Nibelungenstraße",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Kurvige Ferienstraße durch den Odenwald",
+    "roads": [
+      "B 47"
+    ],
+    "from": {
+      "name": "Bensheim",
+      "lat": 49.68102,
+      "lon": 8.62276
+    },
+    "to": {
+      "name": "Amorbach",
+      "lat": 49.64467,
+      "lon": 9.21973
+    },
+    "via": [
+      {
+        "name": "Reichenbach",
+        "lat": 49.71297,
+        "lon": 8.69305
+      },
+      {
+        "name": "Lindenfels",
+        "lat": 49.68405,
+        "lon": 8.78059
+      },
+      {
+        "name": "Gumpener Kreuz",
+        "lat": 49.68223,
+        "lon": 8.80733
+      },
+      {
+        "name": "Michelstadt",
+        "lat": 49.68841,
+        "lon": 9.05647
+      },
+      {
+        "name": "Boxbrunn",
+        "lat": 49.659,
+        "lon": 9.125
+      }
+    ],
+    "length_km": 59.9,
+    "facts": "Ferienstraße Worms bis Wertheim, Scheitel 447 m an der Schönen Aussicht, kurvenreich hinab nach Lindenfels",
+    "quality": 4,
+    "caveats": "Wochenende viel Motorradverkehr, Ortsdurchfahrten Lindenfels und Michelstadt",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_47",
+      "https://de.wikipedia.org/wiki/Nibelungenstraße",
+      "https://www.motorradonline.de/reise/touren-tipps-odenwald-kraichgau-tour-1-nibelungen-race"
+    ]
+  },
+  {
+    "id": "de-juhoehe",
+    "name": "Juhöhe",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße von der Bergstraße in den Odenwald",
+    "roads": [
+      "L 3120"
+    ],
+    "from": {
+      "name": "Heppenheim",
+      "lat": 49.64999,
+      "lon": 8.66768
+    },
+    "to": {
+      "name": "Mörlenbach",
+      "lat": 49.601,
+      "lon": 8.724
+    },
+    "via": [
+      {
+        "name": "Erbach (Heppenheim)",
+        "lat": 49.632,
+        "lon": 8.679
+      },
+      {
+        "name": "Juhöhe",
+        "lat": 49.62312,
+        "lon": 8.69602
+      }
+    ],
+    "length_km": 9.0,
+    "facts": "Erster Pass der ADAC Odenwaldrunde ab Heppenheim",
+    "quality": 4,
+    "caveats": "Beliebter Ausflugspunkt, am Wochenende Radfahrer und Motorräder",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/"
+    ]
+  },
+  {
+    "id": "de-kreidacher-hoehe",
+    "name": "Kreidacher Höhe",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Wedelstrecke über die Kreidacher Höhe",
+    "roads": [
+      "L 3409"
+    ],
+    "from": {
+      "name": "Zotzenbach",
+      "lat": 49.6,
+      "lon": 8.758
+    },
+    "to": {
+      "name": "Kreidacher Höhe",
+      "lat": 49.56288,
+      "lon": 8.81237
+    },
+    "via": [
+      {
+        "name": "Weiher",
+        "lat": 49.587,
+        "lon": 8.775
+      },
+      {
+        "name": "Ober-Mengelbach",
+        "lat": 49.581,
+        "lon": 8.796
+      },
+      {
+        "name": "Kreidach",
+        "lat": 49.57,
+        "lon": 8.808
+      }
+    ],
+    "length_km": 7.7,
+    "facts": "Bikertreff Kreidacher Höhe, windungsreiche Strecke Zotzenbach bis Kreidach",
+    "quality": 4,
+    "caveats": "Am Wochenende für Motorräder gesperrt, Pkw frei; Radarkontrollen",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/"
+    ]
+  },
+  {
+    "id": "de-finkenbachtal",
+    "name": "Finkenbachtal",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Kurvensträßchen vom Neckar in den Odenwald",
+    "roads": [
+      "L 3410"
+    ],
+    "from": {
+      "name": "Hirschhorn",
+      "lat": 49.467,
+      "lon": 8.898
+    },
+    "to": {
+      "name": "Leonhardshof",
+      "lat": 49.544,
+      "lon": 8.938
+    },
+    "via": [
+      {
+        "name": "Unter-Hainbrunn",
+        "lat": 49.476,
+        "lon": 8.907
+      },
+      {
+        "name": "Finkenbach",
+        "lat": 49.527,
+        "lon": 8.939
+      }
+    ],
+    "length_km": 12.0,
+    "facts": "Tal vom Neckar bei Hirschhorn hinauf Richtung Beerfelden",
+    "quality": 4,
+    "caveats": "Schmal, Wildwechsel, Ortsdurchfahrten",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-odenwald-kraichgau-tour-1-nibelungen-race"
+    ]
+  },
+  {
+    "id": "de-gorxheimer-tal",
+    "name": "Gorxheimer Tal",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Kurvige Talstraße hinter Weinheim",
+    "roads": [
+      "L 3257"
+    ],
+    "from": {
+      "name": "Weinheim",
+      "lat": 49.54623,
+      "lon": 8.67175
+    },
+    "to": {
+      "name": "Trösel",
+      "lat": 49.528,
+      "lon": 8.745
+    },
+    "via": [
+      {
+        "name": "Unter-Flockenbach",
+        "lat": 49.536,
+        "lon": 8.72
+      }
+    ],
+    "length_km": 7.4,
+    "facts": "Kurvige Rückfahroption Richtung Heidelberg laut Motorrad Tourentipp",
+    "quality": 3,
+    "caveats": "Mehrere Ortsdurchfahrten, Tempo 30 Abschnitte",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-odenwald-kraichgau-tour-1-nibelungen-race"
+    ]
+  },
+  {
+    "id": "de-siegfriedstrasse-kailbach",
+    "name": "Siegfriedstraße Kailbach",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Waldstrecke durch den Hesseneck",
+    "roads": [
+      "L 3108"
+    ],
+    "from": {
+      "name": "Reußenkreuz",
+      "lat": 49.5777,
+      "lon": 9.02073
+    },
+    "to": {
+      "name": "Kailbach",
+      "lat": 49.53569,
+      "lon": 9.07731
+    },
+    "via": [
+      {
+        "name": "Schöllenbach",
+        "lat": 49.546,
+        "lon": 9.085
+      }
+    ],
+    "length_km": 9.2,
+    "facts": "Prächtige Motorradstrecke, ab Kailbach schmaler",
+    "quality": 4,
+    "caveats": "Teils enge Tempolimits, schmal ab Kailbach",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-odenwald-kraichgau-tour-1-nibelungen-race",
+      "https://de.wikipedia.org/wiki/Siegfriedstraße"
+    ]
+  },
+  {
+    "id": "de-neckartal-b37",
+    "name": "Neckartal",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Flussstraße entlang der Neckarschleifen",
+    "roads": [
+      "B 37",
+      "B 45"
+    ],
+    "from": {
+      "name": "Heidelberg",
+      "lat": 49.40936,
+      "lon": 8.69472
+    },
+    "to": {
+      "name": "Eberbach",
+      "lat": 49.47212,
+      "lon": 8.97964
+    },
+    "via": [
+      {
+        "name": "Neckargemünd",
+        "lat": 49.39248,
+        "lon": 8.83097
+      },
+      {
+        "name": "Hirschhorn",
+        "lat": 49.461,
+        "lon": 8.8974
+      }
+    ],
+    "length_km": 32.6,
+    "facts": "Schöne, gut zu fahrende Talstraße mit Burgen und Neckarschleife bei Hirschhorn",
+    "quality": 3,
+    "caveats": "Pendlerverkehr, Ortsdurchfahrten, wenig Überholmöglichkeiten",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-odenwald-kraichgau-tour-1-nibelungen-race",
+      "https://de.wikipedia.org/wiki/Bundesstraße_45"
+    ]
+  },
+  {
+    "id": "de-jagsttal",
+    "name": "Jagsttal",
+    "country": "DE",
+    "region": "Kraichgau Hohenlohe",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Enge Radien im Jagsttal",
+    "roads": [],
+    "from": {
+      "name": "Möckmühl",
+      "lat": 49.3233,
+      "lon": 9.36114
+    },
+    "to": {
+      "name": "Kloster Schöntal",
+      "lat": 49.32862,
+      "lon": 9.50491
+    },
+    "via": [
+      {
+        "name": "Widdern",
+        "lat": 49.31809,
+        "lon": 9.42172
+      },
+      {
+        "name": "Jagsthausen",
+        "lat": 49.30984,
+        "lon": 9.46937
+      }
+    ],
+    "length_km": 14.7,
+    "facts": "Enge Radien, Tal wird zum Kloster Schöntal hin schmaler",
+    "quality": 3,
+    "caveats": "Landwirtschaftsverkehr, Ortsdurchfahrten",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-odenwald-kraichgau-tour-1-nibelungen-race"
+    ]
+  },
+  {
+    "id": "de-b48-johanniskreuz-annweiler",
+    "name": "B 48 Johanniskreuz Annweiler",
+    "country": "DE",
+    "region": "Pfälzerwald",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Kurvenreiche Hauptachse durch den Pfälzerwald",
+    "roads": [
+      "B 48"
+    ],
+    "from": {
+      "name": "Johanniskreuz",
+      "lat": 49.33671,
+      "lon": 7.8254
+    },
+    "to": {
+      "name": "Annweiler",
+      "lat": 49.202,
+      "lon": 7.951
+    },
+    "via": [
+      {
+        "name": "Häusel",
+        "lat": 49.28412,
+        "lon": 7.86987
+      },
+      {
+        "name": "Fassendeich",
+        "lat": 49.28309,
+        "lon": 7.87469
+      },
+      {
+        "name": "Albersweiler",
+        "lat": 49.275,
+        "lon": 7.883
+      },
+      {
+        "name": "Rinnthal",
+        "lat": 49.241,
+        "lon": 7.898
+      }
+    ],
+    "length_km": 23.2,
+    "facts": "Bikertreff Johanniskreuz, kurvenreiche Waldstrecke ohne Ortschaften",
+    "quality": 5,
+    "caveats": "Am Wochenende viele Motorräder, Radarkontrollen, Wildwechsel",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Johanniskreuz",
+      "https://de.wikipedia.org/wiki/Bundesstraße_48"
+    ]
+  },
+  {
+    "id": "de-b48-hochspeyer-johanniskreuz",
+    "name": "B 48 Hochspeyer Johanniskreuz",
+    "country": "DE",
+    "region": "Pfälzerwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Nach Norden sehr kurvenreiche Waldstraße",
+    "roads": [
+      "B 48"
+    ],
+    "from": {
+      "name": "Hochspeyer",
+      "lat": 49.44401,
+      "lon": 7.89653
+    },
+    "to": {
+      "name": "Johanniskreuz",
+      "lat": 49.33671,
+      "lon": 7.8254
+    },
+    "via": [],
+    "length_km": 16.9,
+    "facts": "Laut Wikipedia nach Norden hin sehr kurvenreich, Anfahrt zum Bikertreff",
+    "quality": 4,
+    "caveats": "Wildwechsel, Wochenende Motorradverkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Johanniskreuz",
+      "https://www.motorradundreisen.de/motorrad-tour/pfaelzer-wald-kurvenparadies-nahe-rhein-weinstrasse/7410/"
+    ]
+  },
+  {
+    "id": "de-elmsteiner-tal",
+    "name": "Elmsteiner Tal",
+    "country": "DE",
+    "region": "Pfälzerwald",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Kurviges Tal entlang des Speyerbachs",
+    "roads": [
+      "L 499"
+    ],
+    "from": {
+      "name": "Frankeneck",
+      "lat": 49.37585,
+      "lon": 8.04874
+    },
+    "to": {
+      "name": "Johanniskreuz",
+      "lat": 49.33671,
+      "lon": 7.8254
+    },
+    "via": [
+      {
+        "name": "Elmstein",
+        "lat": 49.35063,
+        "lon": 7.93931
+      },
+      {
+        "name": "Iggelbach",
+        "lat": 49.33264,
+        "lon": 7.91624
+      }
+    ],
+    "length_km": 24,
+    "facts": "24 km Tal von Frankeneck bis Johanniskreuz, vier Burgen",
+    "quality": 4,
+    "caveats": "An Wochenenden im Sommerhalbjahr für Motorräder gesperrt, Pkw frei; Linienbus 517",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Elmsteiner_Tal",
+      "https://de.wikipedia.org/wiki/Johanniskreuz"
+    ]
+  },
+  {
+    "id": "de-totenkopfstrasse",
+    "name": "Totenkopfstraße",
+    "country": "DE",
+    "region": "Pfälzerwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Waldstraße vom Elmsteiner Tal zur Weinstraße",
+    "roads": [],
+    "from": {
+      "name": "Helmbach",
+      "lat": 49.334,
+      "lon": 8.02
+    },
+    "to": {
+      "name": "Richtung Sankt Martin",
+      "lat": 49.308,
+      "lon": 8.064
+    },
+    "via": [
+      {
+        "name": "Totenkopfhütte",
+        "lat": 49.32193,
+        "lon": 8.04964
+      },
+      {
+        "name": "Totenkopfstraße Ost",
+        "lat": 49.318,
+        "lon": 8.065
+      }
+    ],
+    "length_km": 6.3,
+    "facts": "Kurvige Waldstrecke zwischen Weinstraße und Pfälzerwald",
+    "quality": 4,
+    "caveats": "Schmal, Wanderparkplätze, Motorradverkehr",
+    "sources": [
+      "https://www.motorradundreisen.de/motorrad-tour/pfaelzer-wald-kurvenparadies-nahe-rhein-weinstrasse/7410/",
+      "https://de.wikipedia.org/wiki/Totenkopfstraße"
+    ]
+  },
+  {
+    "id": "de-kalmit",
+    "name": "Kalmit Höhenstraße",
+    "country": "DE",
+    "region": "Pfälzerwald",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Auffahrt zum höchsten Pfälzerwaldgipfel",
+    "roads": [],
+    "from": {
+      "name": "Maikammer",
+      "lat": 49.30522,
+      "lon": 8.13163
+    },
+    "to": {
+      "name": "Kalmit",
+      "lat": 49.31892,
+      "lon": 8.08262
+    },
+    "via": [
+      {
+        "name": "Kalmithöhenstraße",
+        "lat": 49.321,
+        "lon": 8.074
+      }
+    ],
+    "length_km": 6.8,
+    "facts": "Kalmit 673 m, Aussicht über die Rheinebene",
+    "quality": 3,
+    "caveats": "Stichstraße, schmal, Wochenende voll",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Kalmit"
+    ]
+  },
+  {
+    "id": "de-isenachtal-b37",
+    "name": "Isenachtal",
+    "country": "DE",
+    "region": "Pfälzerwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Talstraße von Bad Dürkheim in den Pfälzerwald",
+    "roads": [
+      "B 37"
+    ],
+    "from": {
+      "name": "Bad Dürkheim",
+      "lat": 49.46329,
+      "lon": 8.17051
+    },
+    "to": {
+      "name": "Frankenstein",
+      "lat": 49.43891,
+      "lon": 7.97022
+    },
+    "via": [
+      {
+        "name": "Hardenburg",
+        "lat": 49.458,
+        "lon": 8.096
+      },
+      {
+        "name": "Jägerthal",
+        "lat": 49.452,
+        "lon": 8.022
+      }
+    ],
+    "length_km": 19.3,
+    "facts": "Durch das Isenachtal vorbei an der Hardenburg",
+    "quality": 3,
+    "caveats": "Lkw Verkehr möglich, Ortsdurchfahrt Frankenstein",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_37"
+    ]
+  },
+  {
+    "id": "de-deutsche-weinstrasse",
+    "name": "Deutsche Weinstraße",
+    "country": "DE",
+    "region": "Pfalz",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Genießerstrecke durch die Weinorte",
+    "roads": [],
+    "from": {
+      "name": "Bockenheim",
+      "lat": 49.61003,
+      "lon": 8.19506
+    },
+    "to": {
+      "name": "Schweigen-Rechtenbach",
+      "lat": 49.05456,
+      "lon": 7.95603
+    },
+    "via": [
+      {
+        "name": "Bad Dürkheim",
+        "lat": 49.46329,
+        "lon": 8.17051
+      },
+      {
+        "name": "Neustadt",
+        "lat": 49.35361,
+        "lon": 8.13602
+      },
+      {
+        "name": "Maikammer",
+        "lat": 49.30522,
+        "lon": 8.13163
+      },
+      {
+        "name": "Landau",
+        "lat": 49.19828,
+        "lon": 8.11234
+      }
+    ],
+    "length_km": 85,
+    "facts": "Rund 85 km, älteste Ferienstraße Deutschlands seit 1935",
+    "quality": 2,
+    "caveats": "Viele Ortsdurchfahrten, Weinfeste, eher Cruisen als Kurvenstrecke",
+    "sources": [
+      "https://www.mietedeinsportauto.de/magazin/die-besten-sportwagenrouten-in-deutschland-atemberaubende-strecken-fuer-den-perfekten-fahrspass/",
+      "https://de.wikipedia.org/wiki/Deutsche_Weinstraße"
+    ]
+  },
+  {
+    "id": "de-dahner-felsenland",
+    "name": "Dahner Felsenland",
+    "country": "DE",
+    "region": "Pfälzerwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Felsenkulisse im Wasgau",
+    "roads": [
+      "B 427"
+    ],
+    "from": {
+      "name": "Neudahner Weiher",
+      "lat": 49.172,
+      "lon": 7.749
+    },
+    "to": {
+      "name": "Schönau",
+      "lat": 49.06041,
+      "lon": 7.74769
+    },
+    "via": [
+      {
+        "name": "Dahn",
+        "lat": 49.15067,
+        "lon": 7.77876
+      },
+      {
+        "name": "Fischbach bei Dahn",
+        "lat": 49.08726,
+        "lon": 7.71115
+      }
+    ],
+    "length_km": 20.6,
+    "facts": "Buntsandsteinfelsen, kleine Straßen im Wasgau",
+    "quality": 3,
+    "caveats": "Touristenverkehr, Ortsdurchfahrten",
+    "sources": [
+      "https://www.motorradundreisen.de/motorrad-tour/pfaelzer-wald-kurvenparadies-nahe-rhein-weinstrasse/7410/"
+    ]
+  },
+  {
+    "id": "de-donnersberg",
+    "name": "Donnersberg",
+    "country": "DE",
+    "region": "Nordpfalz",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Auffahrt zum höchsten Berg der Pfalz",
+    "roads": [],
+    "from": {
+      "name": "Dannenfels",
+      "lat": 49.62771,
+      "lon": 7.94315
+    },
+    "to": {
+      "name": "Donnersberg",
+      "lat": 49.62529,
+      "lon": 7.91468
+    },
+    "via": [],
+    "length_km": 2.7,
+    "facts": "Donnersberg 687 m",
+    "quality": 3,
+    "caveats": "Stichstraße, schmal",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Donnersberg"
+    ]
+  },
+  {
+    "id": "de-schwarzwaldhochstrasse",
+    "name": "Schwarzwaldhochstraße",
+    "country": "DE",
+    "region": "Nordschwarzwald",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Panoramastraße über den Nordschwarzwald",
+    "roads": [
+      "B 500"
+    ],
+    "from": {
+      "name": "Baden-Baden",
+      "lat": 48.75745,
+      "lon": 8.24374
+    },
+    "to": {
+      "name": "Freudenstadt",
+      "lat": 48.46377,
+      "lon": 8.41117
+    },
+    "via": [
+      {
+        "name": "Plättig",
+        "lat": 48.67024,
+        "lon": 8.23295
+      },
+      {
+        "name": "Sand",
+        "lat": 48.65829,
+        "lon": 8.23982
+      },
+      {
+        "name": "Mummelsee",
+        "lat": 48.59786,
+        "lon": 8.20097
+      },
+      {
+        "name": "Ruhestein",
+        "lat": 48.56126,
+        "lon": 8.22173
+      },
+      {
+        "name": "Alexanderschanze",
+        "lat": 48.48006,
+        "lon": 8.27614
+      },
+      {
+        "name": "Kniebis",
+        "lat": 48.47208,
+        "lon": 8.31063
+      }
+    ],
+    "length_km": 60,
+    "facts": "Rund 60 km, Mischung aus Kurven und langen Geraden, Mummelsee und Hornisgrinde",
+    "quality": 4,
+    "caveats": "Häufig Blitzer, am Wochenende Ausflugsverkehr und Zuschauer an der Schwarzenbach Kurvenkombination",
+    "sources": [
+      "https://www.mietedeinsportauto.de/magazin/die-besten-sportwagenrouten-in-deutschland-atemberaubende-strecken-fuer-den-perfekten-fahrspass/",
+      "https://de.wikipedia.org/wiki/Bundesstraße_500",
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/",
+      "https://www.motorradonline.de/reise/die-besten-applauskurven-im-deutschsprachigen-raum-auf-der-suche-nach-dem-kurvenrausch/"
+    ]
+  },
+  {
+    "id": "de-rote-lache",
+    "name": "Rote Lache",
+    "country": "DE",
+    "region": "Nordschwarzwald",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Waldpass zwischen Baden-Baden und Murgtal",
+    "roads": [
+      "L 79"
+    ],
+    "from": {
+      "name": "Baden-Baden",
+      "lat": 48.75745,
+      "lon": 8.24374
+    },
+    "to": {
+      "name": "Forbach",
+      "lat": 48.65361,
+      "lon": 8.33822
+    },
+    "via": [
+      {
+        "name": "Rote Lache",
+        "lat": 48.7074,
+        "lon": 8.3201
+      }
+    ],
+    "length_km": 18.2,
+    "facts": "Teil der Motorrad Rundtour ab Baden-Baden",
+    "quality": 4,
+    "caveats": "Häufige Kontrollen, Wochenende Motorradverkehr",
+    "sources": [
+      "https://www.motorradonline.de/reise/motorrad-tourentipps-fuer-sueddeutschland-die-10-besten-strecken-im-sueden/"
+    ]
+  },
+  {
+    "id": "de-murgtal",
+    "name": "Murgtal",
+    "country": "DE",
+    "region": "Nordschwarzwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Talstraße entlang der Murg",
+    "roads": [
+      "B 462"
+    ],
+    "from": {
+      "name": "Gernsbach",
+      "lat": 48.76364,
+      "lon": 8.33799
+    },
+    "to": {
+      "name": "Baiersbronn",
+      "lat": 48.50695,
+      "lon": 8.37201
+    },
+    "via": [
+      {
+        "name": "Forbach",
+        "lat": 48.65361,
+        "lon": 8.33822
+      },
+      {
+        "name": "Schönmünzach",
+        "lat": 48.6075,
+        "lon": 8.36583
+      },
+      {
+        "name": "Huzenbach",
+        "lat": 48.58,
+        "lon": 8.392
+      }
+    ],
+    "length_km": 38.5,
+    "facts": "Schwungvolle Talstraße mit Schwarzenbachtalsperre in der Nähe",
+    "quality": 3,
+    "caveats": "Pendler und Lkw, Ortsdurchfahrten",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  },
+  {
+    "id": "de-allerheiligen",
+    "name": "Allerheiligen",
+    "country": "DE",
+    "region": "Nordschwarzwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Schmales Kurvensträßchen zur Klosterruine",
+    "roads": [
+      "L 92"
+    ],
+    "from": {
+      "name": "Oppenau",
+      "lat": 48.47517,
+      "lon": 8.16467
+    },
+    "to": {
+      "name": "Ruhestein",
+      "lat": 48.56126,
+      "lon": 8.22173
+    },
+    "via": [
+      {
+        "name": "Lierbach",
+        "lat": 48.491,
+        "lon": 8.22
+      },
+      {
+        "name": "Allerheiligen",
+        "lat": 48.53723,
+        "lon": 8.19385
+      }
+    ],
+    "length_km": 17.3,
+    "facts": "Klosterruine Allerheiligen, Anschluss an die B 500",
+    "quality": 4,
+    "caveats": "Meist auf 60 km/h begrenzt, schmal",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  },
+  {
+    "id": "de-loecherberg",
+    "name": "Löcherberg",
+    "country": "DE",
+    "region": "Nordschwarzwald",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Bergstrecke zwischen Harmersbach und Renchtal",
+    "roads": [],
+    "from": {
+      "name": "Oberharmersbach",
+      "lat": 48.37277,
+      "lon": 8.12678
+    },
+    "to": {
+      "name": "Bad Peterstal-Griesbach",
+      "lat": 48.43409,
+      "lon": 8.22479
+    },
+    "via": [
+      {
+        "name": "Löcherberg",
+        "lat": 48.43295,
+        "lon": 8.17588
+      }
+    ],
+    "length_km": 14.6,
+    "facts": "Bergstrecke mit Imbiss am Löcherberg",
+    "quality": 4,
+    "caveats": "Schmal, Holzverkehr",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  },
+  {
+    "id": "de-b28-kniebis",
+    "name": "Kniebis Kehren",
+    "country": "DE",
+    "region": "Nordschwarzwald",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Gut ausgebaute Kehren zum Kniebis",
+    "roads": [
+      "B 28"
+    ],
+    "from": {
+      "name": "Bad Peterstal-Griesbach",
+      "lat": 48.43409,
+      "lon": 8.22479
+    },
+    "to": {
+      "name": "Kniebis",
+      "lat": 48.47208,
+      "lon": 8.31063
+    },
+    "via": [
+      {
+        "name": "Alexanderschanze",
+        "lat": 48.48006,
+        "lon": 8.27614
+      }
+    ],
+    "length_km": 11.8,
+    "facts": "Kehren hinauf zum Bergkamm, Anschluss an die Schwarzwaldhochstraße",
+    "quality": 4,
+    "caveats": "Lkw Verkehr möglich",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  },
+  {
+    "id": "de-kniebis-rippoldsau",
+    "name": "Kniebis Bad Rippoldsau",
+    "country": "DE",
+    "region": "Nordschwarzwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Bergstrecke ins Wolftal",
+    "roads": [
+      "L 96"
+    ],
+    "from": {
+      "name": "Kniebis",
+      "lat": 48.467,
+      "lon": 8.298
+    },
+    "to": {
+      "name": "Bad Rippoldsau Ort",
+      "lat": 48.42854,
+      "lon": 8.32859
+    },
+    "via": [
+      {
+        "name": "Bad Rippoldsau",
+        "lat": 48.464,
+        "lon": 8.299
+      }
+    ],
+    "length_km": 6.3,
+    "facts": "Bergstrecke rund 14 km Richtung Zwieselberg",
+    "quality": 3,
+    "caveats": "Schmal, Kurorttempo im Ort",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  },
+  {
+    "id": "de-schauinsland",
+    "name": "Schauinslandstraße",
+    "country": "DE",
+    "region": "Südschwarzwald",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Ehemalige Bergrennstrecke auf den Schauinsland",
+    "roads": [
+      "L 124"
+    ],
+    "from": {
+      "name": "Günterstal",
+      "lat": 47.96589,
+      "lon": 7.85591
+    },
+    "to": {
+      "name": "Notschrei",
+      "lat": 47.87626,
+      "lon": 7.90965
+    },
+    "via": [
+      {
+        "name": "Horben",
+        "lat": 47.9353,
+        "lon": 7.85847
+      },
+      {
+        "name": "Schauinsland",
+        "lat": 47.91188,
+        "lon": 7.89866
+      }
+    ],
+    "length_km": 14.8,
+    "facts": "Über 800 Hm, ADAC Schauinsland Rennen 1925 bis 1984",
+    "quality": 5,
+    "caveats": "Wochenende und Feiertage für Motorräder gesperrt, Pkw frei; freitags häufig Kontrollen",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Schauinslandstraße",
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  },
+  {
+    "id": "de-notschrei-todtnau",
+    "name": "Notschrei Todtnau",
+    "country": "DE",
+    "region": "Südschwarzwald",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passabfahrt ins Wiesental",
+    "roads": [],
+    "from": {
+      "name": "Notschrei",
+      "lat": 47.87626,
+      "lon": 7.90965
+    },
+    "to": {
+      "name": "Todtnau",
+      "lat": 47.83034,
+      "lon": 7.94524
+    },
+    "via": [],
+    "length_km": 7.5,
+    "facts": "Verbindung vom Schauinsland ins Wiesental",
+    "quality": 4,
+    "caveats": "Wintersport und Ausflugsverkehr",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  },
+  {
+    "id": "de-feldberg-b317",
+    "name": "Feldbergstraße",
+    "country": "DE",
+    "region": "Südschwarzwald",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Höchste Bundesstraßenpasshöhe im Schwarzwald",
+    "roads": [
+      "B 317"
+    ],
+    "from": {
+      "name": "Titisee",
+      "lat": 47.89321,
+      "lon": 8.14624
+    },
+    "to": {
+      "name": "Todtnau",
+      "lat": 47.83034,
+      "lon": 7.94524
+    },
+    "via": [
+      {
+        "name": "Bärental",
+        "lat": 47.86987,
+        "lon": 8.09548
+      },
+      {
+        "name": "Feldberg",
+        "lat": 47.8621,
+        "lon": 8.10194
+      }
+    ],
+    "length_km": 23.1,
+    "facts": "Über die Feldberg Passhöhe nach Todtnau",
+    "quality": 4,
+    "caveats": "Viel Tourismus, Wintersport",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/",
+      "https://de.wikipedia.org/wiki/Bundesstraße_317"
+    ]
+  },
+  {
+    "id": "de-kandel",
+    "name": "Kandel",
+    "country": "DE",
+    "region": "Südschwarzwald",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Bergstraße über den Kandel",
+    "roads": [
+      "L 186"
+    ],
+    "from": {
+      "name": "Waldkirch",
+      "lat": 48.079,
+      "lon": 7.991
+    },
+    "to": {
+      "name": "St. Peter",
+      "lat": 48.01774,
+      "lon": 8.03585
+    },
+    "via": [
+      {
+        "name": "Kandel",
+        "lat": 48.06255,
+        "lon": 8.01132
+      }
+    ],
+    "length_km": 10.0,
+    "facts": "Gipfelüberfahrt mit Aussicht, Abfahrt als enge Serpentinenstraße",
+    "quality": 3,
+    "caveats": "Belag teils schlecht, schmal",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/",
+      "https://de.wikipedia.org/wiki/Kandel_(Berg)"
+    ]
+  },
+  {
+    "id": "de-simonswaelder-tal",
+    "name": "Simonswälder Tal",
+    "country": "DE",
+    "region": "Südschwarzwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Talstrecke mit schnellem Bergteil",
+    "roads": [],
+    "from": {
+      "name": "Simonswald",
+      "lat": 48.10016,
+      "lon": 8.05547
+    },
+    "to": {
+      "name": "Furtwangen",
+      "lat": 48.05122,
+      "lon": 8.20738
+    },
+    "via": [
+      {
+        "name": "Altsimonswald",
+        "lat": 48.089,
+        "lon": 8.081
+      },
+      {
+        "name": "Obersimonswald",
+        "lat": 48.046,
+        "lon": 8.115
+      }
+    ],
+    "length_km": 18.9,
+    "facts": "Flacher Talabschnitt, dann schnelle Bergstrecke nach Furtwangen",
+    "quality": 4,
+    "caveats": "Ortsdurchfahrten",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  },
+  {
+    "id": "de-wehratal",
+    "name": "Wehratal",
+    "country": "DE",
+    "region": "Südschwarzwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Schlucht der Wehra",
+    "roads": [
+      "B 518"
+    ],
+    "from": {
+      "name": "Wehr",
+      "lat": 47.641,
+      "lon": 7.894
+    },
+    "to": {
+      "name": "Todtmoos",
+      "lat": 47.73874,
+      "lon": 8.00136
+    },
+    "via": [],
+    "length_km": 17.6,
+    "facts": "Bis 400 m tiefe Schlucht zwischen Wehr und Todtmoos",
+    "quality": 4,
+    "caveats": "Tunnel und enge Felspassagen",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/",
+      "https://de.wikipedia.org/wiki/Wehratal"
+    ]
+  },
+  {
+    "id": "de-albtal",
+    "name": "Albtal",
+    "country": "DE",
+    "region": "Südschwarzwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Schluchtstraße mit Felstunneln",
+    "roads": [
+      "L 154"
+    ],
+    "from": {
+      "name": "Albbruck",
+      "lat": 47.614,
+      "lon": 8.096
+    },
+    "to": {
+      "name": "St. Blasien",
+      "lat": 47.76021,
+      "lon": 8.13143
+    },
+    "via": [
+      {
+        "name": "Tiefenstein",
+        "lat": 47.625,
+        "lon": 8.094
+      },
+      {
+        "name": "Immeneich",
+        "lat": 47.679,
+        "lon": 8.121
+      },
+      {
+        "name": "Schlageten",
+        "lat": 47.727,
+        "lon": 8.143
+      }
+    ],
+    "length_km": 22.0,
+    "facts": "Tallandschaft zwischen Hochrhein und St. Blasien",
+    "quality": 4,
+    "caveats": "Enge einspurige Tunnel, zeitweise Sperrungen wegen Steinschlag möglich",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  },
+  {
+    "id": "de-lochenpass",
+    "name": "Lochenpass",
+    "country": "DE",
+    "region": "Schwäbische Alb",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Albaufstieg mit Applauskurve",
+    "roads": [
+      "L 440"
+    ],
+    "from": {
+      "name": "Weilstetten",
+      "lat": 48.23859,
+      "lon": 8.8604
+    },
+    "to": {
+      "name": "Tieringen",
+      "lat": 48.199,
+      "lon": 8.87706
+    },
+    "via": [
+      {
+        "name": "Lochenpass",
+        "lat": 48.21813,
+        "lon": 8.85277
+      }
+    ],
+    "length_km": 7.5,
+    "facts": "888 m, 7,5 km Passstraße, knapp 300 Hm auf 5 km",
+    "quality": 4,
+    "caveats": "Zufahrt aus Weilstetten am Wochenende für Motorräder gesperrt, Pkw frei",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Lochenpass",
+      "https://www.motorradonline.de/reise/die-besten-applauskurven-im-deutschsprachigen-raum-auf-der-suche-nach-dem-kurvenrausch/"
+    ]
+  },
+  {
+    "id": "de-donautal-beuron",
+    "name": "Oberes Donautal",
+    "country": "DE",
+    "region": "Schwäbische Alb",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Felsentäler des Donaudurchbruchs",
+    "roads": [],
+    "from": {
+      "name": "Fridingen",
+      "lat": 48.02026,
+      "lon": 8.93134
+    },
+    "to": {
+      "name": "Sigmaringen",
+      "lat": 48.08691,
+      "lon": 9.2165
+    },
+    "via": [
+      {
+        "name": "Beuron",
+        "lat": 48.06888,
+        "lon": 9.00911
+      },
+      {
+        "name": "Hausen im Tal",
+        "lat": 48.08528,
+        "lon": 9.04
+      }
+    ],
+    "length_km": 31.1,
+    "facts": "Kalkfelsen und Burgen am Donaudurchbruch",
+    "quality": 3,
+    "caveats": "Ausflugsverkehr, Radfahrer",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Donaudurchbruch_bei_Beuron"
+    ]
+  },
+  {
+    "id": "de-feldberg-sandplacken",
+    "name": "Feldberg Sandplacken",
+    "country": "DE",
+    "region": "Taunus",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Taunuspass mit Applauskurve am Feldberg",
+    "roads": [],
+    "from": {
+      "name": "Hohemark",
+      "lat": 50.217,
+      "lon": 8.533
+    },
+    "to": {
+      "name": "Schmitten",
+      "lat": 50.27026,
+      "lon": 8.44259
+    },
+    "via": [
+      {
+        "name": "Kanonenstraße",
+        "lat": 50.228,
+        "lon": 8.485
+      },
+      {
+        "name": "Sandplacken",
+        "lat": 50.24506,
+        "lon": 8.48845
+      }
+    ],
+    "length_km": 12.8,
+    "facts": "Sandplacken 669 m, Großer Feldberg 881 m, große 180 Grad Kurve an der Auffahrt",
+    "quality": 4,
+    "caveats": "Tempo 50 und Rüttelstreifen, am Wochenende sehr voll, Kontrollen",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/",
+      "https://www.motorradonline.de/reise/die-besten-applauskurven-im-deutschsprachigen-raum-auf-der-suche-nach-dem-kurvenrausch/",
+      "https://de.wikipedia.org/wiki/Großer_Feldberg"
+    ]
+  },
+  {
+    "id": "de-wispertal",
+    "name": "Wispertal",
+    "country": "DE",
+    "region": "Taunus",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Kurvenjagd durch das einsame Wispertal",
+    "roads": [],
+    "from": {
+      "name": "Lorch",
+      "lat": 50.0827,
+      "lon": 7.8524
+    },
+    "to": {
+      "name": "Kemel",
+      "lat": 50.16531,
+      "lon": 8.0168
+    },
+    "via": [
+      {
+        "name": "Laukenmühle",
+        "lat": 50.09907,
+        "lon": 7.91114
+      },
+      {
+        "name": "Geroldstein",
+        "lat": 50.10681,
+        "lon": 7.9382
+      }
+    ],
+    "length_km": 19.8,
+    "facts": "Waldtal ohne Ortschaften zwischen Rhein und Taunushöhe",
+    "quality": 4,
+    "caveats": "Wildwechsel, schmal in Abschnitten",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/",
+      "https://de.wikipedia.org/wiki/Wispertal"
+    ]
+  },
+  {
+    "id": "de-aartal-b54",
+    "name": "Aartal",
+    "country": "DE",
+    "region": "Taunus",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Kurvenreiche Talstraße an der Aar",
+    "roads": [
+      "B 54"
+    ],
+    "from": {
+      "name": "Taunusstein",
+      "lat": 50.1391,
+      "lon": 8.15033
+    },
+    "to": {
+      "name": "Diez",
+      "lat": 50.36942,
+      "lon": 8.01745
+    },
+    "via": [
+      {
+        "name": "Adolfseck",
+        "lat": 50.161,
+        "lon": 8.078
+      },
+      {
+        "name": "Hohenstein",
+        "lat": 50.19116,
+        "lon": 8.09805
+      },
+      {
+        "name": "Michelbach",
+        "lat": 50.235,
+        "lon": 8.06
+      }
+    ],
+    "length_km": 39.2,
+    "facts": "Laut ADAC wunderbare Motorradstrecke mit hoher Kurvendichte bei Burg Hohenstein",
+    "quality": 4,
+    "caveats": "Pendlerverkehr, Ortsdurchfahrten",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/"
+    ]
+  },
+  {
+    "id": "de-weiltal",
+    "name": "Weiltal",
+    "country": "DE",
+    "region": "Taunus",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Kurvige Strecke entlang der Weil",
+    "roads": [
+      "L 3025"
+    ],
+    "from": {
+      "name": "Altweilnau",
+      "lat": 50.306,
+      "lon": 8.435
+    },
+    "to": {
+      "name": "Weilmünster",
+      "lat": 50.42235,
+      "lon": 8.37614
+    },
+    "via": [
+      {
+        "name": "Neuweilnau",
+        "lat": 50.323,
+        "lon": 8.41
+      },
+      {
+        "name": "Rod an der Weil",
+        "lat": 50.335,
+        "lon": 8.4
+      }
+    ],
+    "length_km": 18.2,
+    "facts": "Kurvenreiche Talstraße im Hintertaunus",
+    "quality": 3,
+    "caveats": "Motorradtreffpunkte, Ortsdurchfahrten",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/"
+    ]
+  },
+  {
+    "id": "de-b276-laubach-schotten",
+    "name": "B 276 Laubach Schotten",
+    "country": "DE",
+    "region": "Vogelsberg",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Enge Kurven durch einsame Wälder",
+    "roads": [
+      "B 276"
+    ],
+    "from": {
+      "name": "Laubach",
+      "lat": 50.5431,
+      "lon": 9.0349
+    },
+    "to": {
+      "name": "Schotten",
+      "lat": 50.48726,
+      "lon": 9.16192
+    },
+    "via": [],
+    "length_km": 14.2,
+    "facts": "Mit Applauskurve und Bikertreff Falltorhaus; Abschnitt Schotten Gedern weit geschwungen",
+    "quality": 4,
+    "caveats": "Rüttelstreifen, beliebte Motorradstrecke mit Kontrollen",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_276",
+      "https://www.motorradonline.de/reise/die-besten-applauskurven-im-deutschsprachigen-raum-auf-der-suche-nach-dem-kurvenrausch/"
+    ]
+  },
+  {
+    "id": "de-b276-schotten-gedern",
+    "name": "B 276 Schotten Gedern",
+    "country": "DE",
+    "region": "Vogelsberg",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Weit geschwungene Vogelsbergstraße",
+    "roads": [
+      "B 276"
+    ],
+    "from": {
+      "name": "Schotten",
+      "lat": 50.48726,
+      "lon": 9.16192
+    },
+    "to": {
+      "name": "Gedern",
+      "lat": 50.4051,
+      "lon": 9.2135
+    },
+    "via": [],
+    "length_km": 12.8,
+    "facts": "Weit geschwungen, sehr beliebte Motorradstrecke",
+    "quality": 3,
+    "caveats": "Motorradverkehr am Wochenende",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_276"
+    ]
+  },
+  {
+    "id": "de-schottenring",
+    "name": "Schottenring",
+    "country": "DE",
+    "region": "Vogelsberg",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Historische Motorrad Grand Prix Strecke",
+    "roads": [
+      "L 3291",
+      "L 3139"
+    ],
+    "from": {
+      "name": "Schotten",
+      "lat": 50.48726,
+      "lon": 9.16192
+    },
+    "to": {
+      "name": "Schotten",
+      "lat": 50.48726,
+      "lon": 9.16192
+    },
+    "via": [
+      {
+        "name": "Götzen",
+        "lat": 50.5192,
+        "lon": 9.14118
+      },
+      {
+        "name": "Rudingshain",
+        "lat": 50.52405,
+        "lon": 9.17461
+      }
+    ],
+    "length_km": 16.1,
+    "facts": "16,08 km Rundkurs auf Landstraßen, 1925 bis 1955, WM Lauf 1953",
+    "quality": 3,
+    "caveats": "Ein 200 m Stück zwischen L 3291 und L 3139 gesperrt, einige Altabschnitte existieren nicht mehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Schottenring"
+    ]
+  },
+  {
+    "id": "de-hoherodskopf",
+    "name": "Hoherodskopf",
+    "country": "DE",
+    "region": "Vogelsberg",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Auffahrt zum Vogelsberggipfel",
+    "roads": [],
+    "from": {
+      "name": "Schotten",
+      "lat": 50.48726,
+      "lon": 9.16192
+    },
+    "to": {
+      "name": "Hoherodskopf",
+      "lat": 50.51115,
+      "lon": 9.22725
+    },
+    "via": [
+      {
+        "name": "Breungeshain",
+        "lat": 50.50766,
+        "lon": 9.20626
+      }
+    ],
+    "length_km": 7.0,
+    "facts": "Rallyeland der Hessen Rallye Vogelsberg rund um Schotten und Ulrichstein",
+    "quality": 3,
+    "caveats": "Ausflugsziel, Wochenende voll",
+    "sources": [
+      "https://www.rally-maps.com/Rallye-Vogelsberg-2008/Schotten"
+    ]
+  },
+  {
+    "id": "de-b276-spessart",
+    "name": "B 276 Spessart",
+    "country": "DE",
+    "region": "Spessart",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Waldstraße durch den Hessischen Spessart",
+    "roads": [
+      "B 276"
+    ],
+    "from": {
+      "name": "Bieber",
+      "lat": 50.143,
+      "lon": 9.394
+    },
+    "to": {
+      "name": "Frammersbach",
+      "lat": 50.0636,
+      "lon": 9.44652
+    },
+    "via": [
+      {
+        "name": "Flörsbach",
+        "lat": 50.136,
+        "lon": 9.404
+      },
+      {
+        "name": "Kempfenbrunn",
+        "lat": 50.103,
+        "lon": 9.454
+      }
+    ],
+    "length_km": 13.8,
+    "facts": "Wiesener und Frammersbacher Forst mit dichten Kurvenfolgen",
+    "quality": 3,
+    "caveats": "Ortsdurchfahrten",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/",
+      "https://de.wikipedia.org/wiki/Bundesstraße_276"
+    ]
+  },
+  {
+    "id": "de-jossa-strecke",
+    "name": "Jossa Strecke",
+    "country": "DE",
+    "region": "Spessart",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Verkehrsarme Waldstraßen im Spessart",
+    "roads": [],
+    "from": {
+      "name": "Frammersbach",
+      "lat": 50.0636,
+      "lon": 9.44652
+    },
+    "to": {
+      "name": "Mittelsinn",
+      "lat": 50.18879,
+      "lon": 9.61962
+    },
+    "via": [
+      {
+        "name": "Lohrhaupten",
+        "lat": 50.12659,
+        "lon": 9.47774
+      },
+      {
+        "name": "Mernes",
+        "lat": 50.23788,
+        "lon": 9.478
+      },
+      {
+        "name": "Marjoß",
+        "lat": 50.25786,
+        "lon": 9.51367
+      }
+    ],
+    "length_km": 44.0,
+    "facts": "Laut ADAC dichte Kurvenfolgen auf verkehrsarmen Waldstraßen",
+    "quality": 3,
+    "caveats": "Schmal, Landwirtschaft",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/"
+    ]
+  },
+  {
+    "id": "de-hafenlohrtal",
+    "name": "Hafenlohrtal",
+    "country": "DE",
+    "region": "Spessart",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Unverbautes Wiesental im Spessart",
+    "roads": [],
+    "from": {
+      "name": "Hafenlohr",
+      "lat": 49.86799,
+      "lon": 9.59811
+    },
+    "to": {
+      "name": "Rothenbuch",
+      "lat": 49.95426,
+      "lon": 9.391
+    },
+    "via": [
+      {
+        "name": "Windheim",
+        "lat": 49.8818,
+        "lon": 9.58188
+      },
+      {
+        "name": "Lichtenau",
+        "lat": 49.94795,
+        "lon": 9.45142
+      }
+    ],
+    "length_km": 23.7,
+    "facts": "Einsames Wiesental zwischen Main und Rothenbuch",
+    "quality": 3,
+    "caveats": "Schmal, Wildwechsel",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Hafenlohr_(Fluss)"
+    ]
+  },
+  {
+    "id": "de-hochrhoenstrasse",
+    "name": "Hochrhönstraße",
+    "country": "DE",
+    "region": "Rhön",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Panoramastraße über die Lange Rhön",
+    "roads": [
+      "St 2288"
+    ],
+    "from": {
+      "name": "Bischofsheim",
+      "lat": 50.40116,
+      "lon": 9.99342
+    },
+    "to": {
+      "name": "Fladungen",
+      "lat": 50.52,
+      "lon": 10.073
+    },
+    "via": [
+      {
+        "name": "Bauersberg",
+        "lat": 50.431,
+        "lon": 10.015
+      },
+      {
+        "name": "Schwarzes Moor",
+        "lat": 50.51428,
+        "lon": 10.06549
+      }
+    ],
+    "length_km": 25,
+    "facts": "25 km, bis rund 840 m, eröffnet 1958",
+    "quality": 4,
+    "caveats": "Im Winter oft gesperrt, kein Salz; Parken nur auf Parkplätzen",
+    "sources": [
+      "https://en.wikipedia.org/wiki/High_Rh%C3%B6n_Road",
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/"
+    ]
+  },
+  {
+    "id": "de-wasserkuppe",
+    "name": "Wasserkuppe",
+    "country": "DE",
+    "region": "Rhön",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Auffahrt zum höchsten Rhöngipfel",
+    "roads": [
+      "L 3068"
+    ],
+    "from": {
+      "name": "Gersfeld",
+      "lat": 50.44977,
+      "lon": 9.89437
+    },
+    "to": {
+      "name": "Poppenhausen",
+      "lat": 50.50123,
+      "lon": 9.88925
+    },
+    "via": [
+      {
+        "name": "Obernhausen",
+        "lat": 50.497,
+        "lon": 9.948
+      },
+      {
+        "name": "Abtsroda",
+        "lat": 50.514,
+        "lon": 9.931
+      }
+    ],
+    "length_km": 15.6,
+    "facts": "Wasserkuppe 950 m, Segelflug Geschichte",
+    "quality": 3,
+    "caveats": "Ausflugsverkehr, Parkplatzsuchverkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Wasserkuppe"
+    ]
+  },
+  {
+    "id": "de-hunsrueckhoehenstrasse",
+    "name": "Hunsrückhöhenstraße",
+    "country": "DE",
+    "region": "Hunsrück",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Straße der weiten Aussicht",
+    "roads": [
+      "B 407",
+      "B 327",
+      "L 182",
+      "L 193",
+      "L 214"
+    ],
+    "from": {
+      "name": "Saarburg",
+      "lat": 49.60825,
+      "lon": 6.54875
+    },
+    "to": {
+      "name": "Koblenz",
+      "lat": 50.35333,
+      "lon": 7.5944
+    },
+    "via": [
+      {
+        "name": "Hermeskeil",
+        "lat": 49.65545,
+        "lon": 6.94819
+      },
+      {
+        "name": "Thalfang",
+        "lat": 49.75399,
+        "lon": 6.9971
+      },
+      {
+        "name": "Morbach",
+        "lat": 49.81051,
+        "lon": 7.12298
+      },
+      {
+        "name": "Büchenbeuren",
+        "lat": 49.91992,
+        "lon": 7.27576
+      },
+      {
+        "name": "Kappel",
+        "lat": 49.99985,
+        "lon": 7.35966
+      },
+      {
+        "name": "Kastellaun",
+        "lat": 50.07134,
+        "lon": 7.44223
+      },
+      {
+        "name": "Emmelshausen",
+        "lat": 50.15576,
+        "lon": 7.55578
+      }
+    ],
+    "length_km": 157,
+    "facts": "157 km quer über den Hunsrück, gebaut 1938 bis 1939",
+    "quality": 3,
+    "caveats": "Eher schnell und gestreckt, Abschnitte mit Verkehr um Hahn und Koblenz",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Hunsrückhöhenstraße"
+    ]
+  },
+  {
+    "id": "de-moselstrasse",
+    "name": "Moselstraße",
+    "country": "DE",
+    "region": "Mosel",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Weinstraße entlang der Moselschleifen",
+    "roads": [
+      "B 53",
+      "B 49"
+    ],
+    "from": {
+      "name": "Trier",
+      "lat": 49.75962,
+      "lon": 6.64419
+    },
+    "to": {
+      "name": "Koblenz",
+      "lat": 50.35333,
+      "lon": 7.5944
+    },
+    "via": [
+      {
+        "name": "Neumagen-Dhron",
+        "lat": 49.86261,
+        "lon": 6.90221
+      },
+      {
+        "name": "Bernkastel-Kues",
+        "lat": 49.91574,
+        "lon": 7.07082
+      },
+      {
+        "name": "Traben-Trarbach",
+        "lat": 49.95304,
+        "lon": 7.12332
+      },
+      {
+        "name": "Zell",
+        "lat": 50.02757,
+        "lon": 7.18132
+      },
+      {
+        "name": "Cochem",
+        "lat": 50.14839,
+        "lon": 7.16632
+      },
+      {
+        "name": "Treis-Karden",
+        "lat": 50.17543,
+        "lon": 7.30087
+      },
+      {
+        "name": "Hatzenport",
+        "lat": 50.22799,
+        "lon": 7.41763
+      }
+    ],
+    "length_km": 133.3,
+    "facts": "Weinorte, Burgen und Moselschleifen zwischen Trier und Koblenz",
+    "quality": 3,
+    "caveats": "Viele Ortsdurchfahrten und Touristen, eher zum Cruisen",
+    "sources": [
+      "https://www.mietedeinsportauto.de/magazin/die-besten-sportwagenrouten-in-deutschland-atemberaubende-strecken-fuer-den-perfekten-fahrspass/"
+    ]
+  },
+  {
+    "id": "de-rallye-wadern-weiskirchen",
+    "name": "WP Wadern Weiskirchen",
+    "country": "DE",
+    "region": "Saarland",
+    "kind": "rallye",
+    "tier": "prefer",
+    "note": "Wertungsprüfung der ADAC Rallye Deutschland",
+    "roads": [],
+    "from": {
+      "name": "Wadern",
+      "lat": 49.54102,
+      "lon": 6.88893
+    },
+    "to": {
+      "name": "Weiskirchen",
+      "lat": 49.5561,
+      "lon": 6.81814
+    },
+    "via": [],
+    "length_km": 9.3,
+    "facts": "WM Rallye Deutschland 2019, Rundkurs 9,27 km, schmale Landstraßen mit vielen rechtwinkligen Kurven",
+    "quality": 3,
+    "caveats": "Genauer WP Verlauf nicht als Koordinaten verfügbar, Anker nur Ortslagen",
+    "sources": [
+      "https://www.rally-maps.com/Rallye-Deutschland-2019/Wadern-Weiskirchen",
+      "https://itgetsfasternow.wordpress.com/2019/08/07/route-preview-rally-deutschland-2019/"
+    ]
+  },
+  {
+    "id": "de-b258-nuerburgring",
+    "name": "B 258 am Nürburgring",
+    "country": "DE",
+    "region": "Eifel",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Kurvige Bundesstraße entlang der Nordschleife",
+    "roads": [
+      "B 258"
+    ],
+    "from": {
+      "name": "Kirmutscheid",
+      "lat": 50.376,
+      "lon": 6.834
+    },
+    "to": {
+      "name": "Baar",
+      "lat": 50.343,
+      "lon": 7.043
+    },
+    "via": [
+      {
+        "name": "Hoffeld",
+        "lat": 50.372,
+        "lon": 6.838
+      },
+      {
+        "name": "Barweiler",
+        "lat": 50.35,
+        "lon": 6.881
+      },
+      {
+        "name": "Wiesemscheid",
+        "lat": 50.339,
+        "lon": 6.907
+      },
+      {
+        "name": "Nürburg",
+        "lat": 50.335,
+        "lon": 6.924
+      },
+      {
+        "name": "Müllenbach",
+        "lat": 50.33,
+        "lon": 6.942
+      },
+      {
+        "name": "Döttinger Höhe",
+        "lat": 50.344,
+        "lon": 6.962
+      }
+    ],
+    "length_km": 22.3,
+    "facts": "Klassiker der Ring Besucher, Döttinger Höhe am Rande der Nordschleife",
+    "quality": 4,
+    "caveats": "Am Wochenende und bei Touristenfahrten sehr voll, viele Kontrollen",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_258",
+      "https://www.motorradundreisen.de/motorrad-tour/eifel-entlang-nuerburgrings/5070/"
+    ]
+  },
+  {
+    "id": "de-ahrtal",
+    "name": "Ahrtal",
+    "country": "DE",
+    "region": "Eifel",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Weinbautal mit Felsen und Tunnel",
+    "roads": [
+      "B 267"
+    ],
+    "from": {
+      "name": "Kreuzberg",
+      "lat": 50.511,
+      "lon": 6.98
+    },
+    "to": {
+      "name": "Bad Neuenahr-Ahrweiler",
+      "lat": 50.54446,
+      "lon": 7.11867
+    },
+    "via": [
+      {
+        "name": "Altenahr",
+        "lat": 50.51695,
+        "lon": 6.99205
+      },
+      {
+        "name": "Laach",
+        "lat": 50.519,
+        "lon": 7.008
+      },
+      {
+        "name": "Mayschoß",
+        "lat": 50.521,
+        "lon": 7.026
+      },
+      {
+        "name": "Rech",
+        "lat": 50.517,
+        "lon": 7.029
+      },
+      {
+        "name": "Walporzheim",
+        "lat": 50.533,
+        "lon": 7.079
+      }
+    ],
+    "length_km": 14.4,
+    "facts": "Rotweintal zwischen Altenahr und Ahrweiler",
+    "quality": 3,
+    "caveats": "Nach der Flut 2021 teils Baustellen, Wochenende Weintourismus",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_267"
+    ]
+  },
+  {
+    "id": "de-b257-ahr-adenau",
+    "name": "B 257 Altenahr Adenau",
+    "country": "DE",
+    "region": "Eifel",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Kurvige Verbindung von der Ahr zum Ring",
+    "roads": [
+      "B 257"
+    ],
+    "from": {
+      "name": "Altenahr",
+      "lat": 50.51695,
+      "lon": 6.99205
+    },
+    "to": {
+      "name": "Adenau",
+      "lat": 50.38233,
+      "lon": 6.9304
+    },
+    "via": [
+      {
+        "name": "Kreuzberg",
+        "lat": 50.509,
+        "lon": 6.98
+      },
+      {
+        "name": "Pützfeld",
+        "lat": 50.501,
+        "lon": 6.981
+      },
+      {
+        "name": "Dümpelfeld",
+        "lat": 50.44212,
+        "lon": 6.93329
+      }
+    ],
+    "length_km": 21.0,
+    "facts": "Anfahrt zum Nürburgring durch das obere Ahrtal",
+    "quality": 3,
+    "caveats": "Ring Verkehr am Wochenende",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_257"
+    ]
+  },
+  {
+    "id": "de-rursee",
+    "name": "Rursee",
+    "country": "DE",
+    "region": "Eifel",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Seenlandschaft der Nordeifel",
+    "roads": [],
+    "from": {
+      "name": "Heimbach",
+      "lat": 50.63663,
+      "lon": 6.47355
+    },
+    "to": {
+      "name": "Schmidt",
+      "lat": 50.66162,
+      "lon": 6.40794
+    },
+    "via": [],
+    "length_km": 7.0,
+    "facts": "Kurvenparadies zwischen Rursee und Nürburgring laut Tourentipp",
+    "quality": 3,
+    "caveats": "Ausflugsverkehr am See",
+    "sources": [
+      "https://www.motorradundreisen.de/motorrad-tour/tourentipp-eifel-kurvenparadies-rursee-nuerburgring/8091/",
+      "https://de.wikipedia.org/wiki/Rursee"
+    ]
+  },
+  {
+    "id": "de-wiedtal",
+    "name": "Wiedtal",
+    "country": "DE",
+    "region": "Westerwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Kurvige Talstraße an der Wied",
+    "roads": [
+      "L 255"
+    ],
+    "from": {
+      "name": "Neustadt (Wied)",
+      "lat": 50.608,
+      "lon": 7.396
+    },
+    "to": {
+      "name": "Neuwied",
+      "lat": 50.43024,
+      "lon": 7.4663
+    },
+    "via": [
+      {
+        "name": "Niederhoppen",
+        "lat": 50.592,
+        "lon": 7.385
+      },
+      {
+        "name": "Waldbreitbach",
+        "lat": 50.55205,
+        "lon": 7.41776
+      },
+      {
+        "name": "Niederbreitbach",
+        "lat": 50.53002,
+        "lon": 7.4176
+      },
+      {
+        "name": "Altwied",
+        "lat": 50.496,
+        "lon": 7.47
+      }
+    ],
+    "length_km": 28.6,
+    "facts": "Bekanntes Motorradtal zwischen Neustadt und Neuwied",
+    "quality": 4,
+    "caveats": "Am Wochenende viele Motorräder, Ortsdurchfahrten",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Wied_(Fluss)"
+    ]
+  },
+  {
+    "id": "de-rhein-weser-turm",
+    "name": "Rhein Weser Turm",
+    "country": "DE",
+    "region": "Sauerland",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Bikertreff auf der Wasserscheide",
+    "roads": [
+      "L 553"
+    ],
+    "from": {
+      "name": "Oberhundem",
+      "lat": 51.08661,
+      "lon": 8.17387
+    },
+    "to": {
+      "name": "Rhein-Weser-Turm",
+      "lat": 51.07117,
+      "lon": 8.19756
+    },
+    "via": [],
+    "length_km": 3.1,
+    "facts": "Turm an der Wasserscheide Rhein Weser, beliebter Treffpunkt",
+    "quality": 3,
+    "caveats": "Wochenende Treffpunktverkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Rhein-Weser-Turm",
+      "https://www.myrouteapp.com/motor-and-car-routes/de/Noordrijn-Westfalen/1639035/Sauerland-Wasserscheide-Rhein-Weser"
+    ]
+  },
+  {
+    "id": "de-albrechtsplatz",
+    "name": "Albrechtsplatz Kahler Asten",
+    "country": "DE",
+    "region": "Sauerland",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Großartige Höhenstraße am Kahlen Asten",
+    "roads": [
+      "L 721"
+    ],
+    "from": {
+      "name": "Girkhausen",
+      "lat": 51.126,
+      "lon": 8.46
+    },
+    "to": {
+      "name": "Mollseifen",
+      "lat": 51.16,
+      "lon": 8.504
+    },
+    "via": [
+      {
+        "name": "Langewiese",
+        "lat": 51.146,
+        "lon": 8.471
+      },
+      {
+        "name": "Neuastenberg",
+        "lat": 51.151,
+        "lon": 8.485
+      }
+    ],
+    "length_km": 6.7,
+    "facts": "Von Motorrad als großartige Straße gelobt, Höhenlage am Rothaarkamm",
+    "quality": 4,
+    "caveats": "Am Wochenende für Motorräder in einer Richtung gesperrt, Pkw frei; Wintersport",
+    "sources": [
+      "https://www.motorradonline.de/reise/motorrad-tourentipp-sauerland-tour-300-kilometer-3-ampeln/"
+    ]
+  },
+  {
+    "id": "de-ramsbeck-siedlinghausen",
+    "name": "Ramsbeck Siedlinghausen",
+    "country": "DE",
+    "region": "Sauerland",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Berg rauf, Berg runter im Hochsauerland",
+    "roads": [],
+    "from": {
+      "name": "Ramsbeck",
+      "lat": 51.31358,
+      "lon": 8.40323
+    },
+    "to": {
+      "name": "Siedlinghausen",
+      "lat": 51.25241,
+      "lon": 8.46895
+    },
+    "via": [
+      {
+        "name": "Elpe",
+        "lat": 51.27579,
+        "lon": 8.4477
+      },
+      {
+        "name": "Brunskappel",
+        "lat": 51.27859,
+        "lon": 8.47798
+      }
+    ],
+    "length_km": 13.4,
+    "facts": "Rund 20 km Einsamkeit mit anständigem Tempo",
+    "quality": 3,
+    "caveats": "Schmal, Landwirtschaft",
+    "sources": [
+      "https://www.motorradonline.de/reise/motorrad-tourentipp-sauerland-tour-300-kilometer-3-ampeln/"
+    ]
+  },
+  {
+    "id": "de-kyffhaeuser",
+    "name": "Kyffhäuserstraße",
+    "country": "DE",
+    "region": "Kyffhäuser",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Unzählige Kehren auf den Kyffhäuser",
+    "roads": [
+      "B 85"
+    ],
+    "from": {
+      "name": "Kelbra",
+      "lat": 51.43582,
+      "lon": 11.04144
+    },
+    "to": {
+      "name": "Bad Frankenhausen",
+      "lat": 51.366,
+      "lon": 11.093
+    },
+    "via": [],
+    "length_km": 11.1,
+    "facts": "Nordrampe ab Kelbra 5,3 km mit zahllosen Kehren und rund 300 Hm, bekannt als Motorradstrecke",
+    "quality": 5,
+    "caveats": "Unfallschwerpunkt, zeitweise Motorradsperren und Kontrollen; Pkw frei",
+    "sources": [
+      "https://www.harzinfo.de/en/tour/the-kyffhaeuser-eight",
+      "https://de.wikipedia.org/wiki/Bundesstraße_85",
+      "https://www.motorradonline.de/reise/die-besten-applauskurven-im-deutschsprachigen-raum-auf-der-suche-nach-dem-kurvenrausch/"
+    ]
+  },
+  {
+    "id": "de-okertal",
+    "name": "Okertal",
+    "country": "DE",
+    "region": "Harz",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Felsiges Tal an der Okertalsperre",
+    "roads": [
+      "B 498"
+    ],
+    "from": {
+      "name": "Oker",
+      "lat": 51.90303,
+      "lon": 10.48352
+    },
+    "to": {
+      "name": "Altenau",
+      "lat": 51.80347,
+      "lon": 10.44728
+    },
+    "via": [
+      {
+        "name": "Okertal",
+        "lat": 51.887,
+        "lon": 10.476
+      },
+      {
+        "name": "Okertalsperre",
+        "lat": 51.85109,
+        "lon": 10.45792
+      }
+    ],
+    "length_km": 14.8,
+    "facts": "Granitfelsen im Okertal, Staumauer der Okertalsperre",
+    "quality": 4,
+    "caveats": "Ausflugsverkehr, Kontrollen",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_498",
+      "https://de.wikipedia.org/wiki/Okertalsperre"
+    ]
+  },
+  {
+    "id": "de-b4-torfhaus",
+    "name": "Torfhaus",
+    "country": "DE",
+    "region": "Harz",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Hochharzstraße mit Brockenblick",
+    "roads": [
+      "B 4"
+    ],
+    "from": {
+      "name": "Bad Harzburg",
+      "lat": 51.87972,
+      "lon": 10.58753
+    },
+    "to": {
+      "name": "Braunlage",
+      "lat": 51.731,
+      "lon": 10.592
+    },
+    "via": [
+      {
+        "name": "B 4 Harzburger Forst",
+        "lat": 51.832,
+        "lon": 10.524
+      },
+      {
+        "name": "Torfhaus",
+        "lat": 51.80216,
+        "lon": 10.53695
+      }
+    ],
+    "length_km": 24.8,
+    "facts": "Schnelle Bergstrecke über den Hochharz, Torfhaus 800 m mit Brockenblick",
+    "quality": 3,
+    "caveats": "Viel Verkehr, Geschwindigkeitskontrollen",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_4",
+      "https://de.wikipedia.org/wiki/Torfhaus"
+    ]
+  },
+  {
+    "id": "de-harzhochstrasse",
+    "name": "Harzhochstraße",
+    "country": "DE",
+    "region": "Harz",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Quer über den Harz",
+    "roads": [
+      "B 242"
+    ],
+    "from": {
+      "name": "Clausthal-Zellerfeld",
+      "lat": 51.80704,
+      "lon": 10.33645
+    },
+    "to": {
+      "name": "Harzgerode",
+      "lat": 51.63812,
+      "lon": 11.14657
+    },
+    "via": [
+      {
+        "name": "Braunlage",
+        "lat": 51.731,
+        "lon": 10.592
+      },
+      {
+        "name": "Tanne",
+        "lat": 51.68,
+        "lon": 10.771
+      },
+      {
+        "name": "Trautenstein",
+        "lat": 51.684,
+        "lon": 10.793
+      },
+      {
+        "name": "Hasselfelde",
+        "lat": 51.686,
+        "lon": 10.838
+      }
+    ],
+    "length_km": 77.6,
+    "facts": "B 242 führt komplett über den Harz, teils gemeinsam mit der B 4",
+    "quality": 3,
+    "caveats": "Gestreckte Abschnitte, Ortsdurchfahrten",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_242"
+    ]
+  },
+  {
+    "id": "de-rappbode-b81",
+    "name": "Rappbodetalsperre",
+    "country": "DE",
+    "region": "Harz",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Talsperrenstraße am Bodetal",
+    "roads": [
+      "B 81"
+    ],
+    "from": {
+      "name": "Hasselfelde",
+      "lat": 51.69103,
+      "lon": 10.85525
+    },
+    "to": {
+      "name": "Blankenburg",
+      "lat": 51.79027,
+      "lon": 10.9552
+    },
+    "via": [
+      {
+        "name": "Rappbodetalsperre",
+        "lat": 51.73997,
+        "lon": 10.89382
+      },
+      {
+        "name": "Wendefurth",
+        "lat": 51.738,
+        "lon": 10.916
+      },
+      {
+        "name": "Wienrode",
+        "lat": 51.749,
+        "lon": 10.936
+      }
+    ],
+    "length_km": 18.5,
+    "facts": "Höchste Talsperre Deutschlands, Hängebrücke Titan RT",
+    "quality": 3,
+    "caveats": "Touristenverkehr an der Staumauer",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Bundesstraße_81",
+      "https://de.wikipedia.org/wiki/Rappbodetalsperre",
+      "https://www.mietedeinsportauto.de/magazin/die-besten-sportwagenrouten-in-deutschland-atemberaubende-strecken-fuer-den-perfekten-fahrspass/"
+    ]
+  },
+  {
+    "id": "de-schleizer-dreieck",
+    "name": "Schleizer Dreieck",
+    "country": "DE",
+    "region": "Thüringen",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Älteste Naturrennstrecke Deutschlands",
+    "roads": [],
+    "from": {
+      "name": "Schleiz",
+      "lat": 50.55905,
+      "lon": 11.804
+    },
+    "to": {
+      "name": "Möschlitz",
+      "lat": 50.56549,
+      "lon": 11.75097
+    },
+    "via": [
+      {
+        "name": "Oberböhmsdorf",
+        "lat": 50.56064,
+        "lon": 11.83163
+      }
+    ],
+    "length_km": 10.0,
+    "facts": "Naturrennstrecke seit 1923, Abschnitt Buchhübel auch im Alltagsverkehr befahrbar",
+    "quality": 3,
+    "caveats": "Heute teils als Rennstrecke abgetrennt, öffentlicher Teil mit Ortsverkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Schleizer_Dreieck",
+      "https://www.motorradonline.de/reise/die-besten-applauskurven-im-deutschsprachigen-raum-auf-der-suche-nach-dem-kurvenrausch/"
+    ]
+  },
+  {
+    "id": "de-schwarzatal",
+    "name": "Schwarzatal",
+    "country": "DE",
+    "region": "Thüringer Wald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Enges Waldtal im Thüringer Wald",
+    "roads": [],
+    "from": {
+      "name": "Bad Blankenburg",
+      "lat": 50.68299,
+      "lon": 11.27263
+    },
+    "to": {
+      "name": "Katzhütte",
+      "lat": 50.55222,
+      "lon": 11.05437
+    },
+    "via": [
+      {
+        "name": "Schwarzburg",
+        "lat": 50.64208,
+        "lon": 11.19566
+      },
+      {
+        "name": "Sitzendorf",
+        "lat": 50.63176,
+        "lon": 11.16855
+      }
+    ],
+    "length_km": 27.7,
+    "facts": "Tief eingeschnittenes Tal mit Schloss Schwarzburg",
+    "quality": 3,
+    "caveats": "Ortsdurchfahrten, Ausflugsverkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Schwarzatal"
+    ]
+  },
+  {
+    "id": "de-wartenbergstrasse",
+    "name": "Wartenbergstraße",
+    "country": "DE",
+    "region": "Sächsische Schweiz",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Applauskurven bei Hohnstein",
+    "roads": [],
+    "from": {
+      "name": "Rathewalde",
+      "lat": 50.98345,
+      "lon": 14.07572
+    },
+    "to": {
+      "name": "Hohnstein",
+      "lat": 50.97978,
+      "lon": 14.11112
+    },
+    "via": [
+      {
+        "name": "Wartenbergstraße",
+        "lat": 50.98889,
+        "lon": 14.0855
+      }
+    ],
+    "length_km": 3.9,
+    "facts": "Kurve zehn der Wartenbergstraße zählt zu den Applauskurven",
+    "quality": 4,
+    "caveats": "Tempolimit 60 bis 80, schmal",
+    "sources": [
+      "https://www.motorradonline.de/reise/die-besten-applauskurven-im-deutschsprachigen-raum-auf-der-suche-nach-dem-kurvenrausch/"
+    ]
+  },
+  {
+    "id": "de-bastei",
+    "name": "Bastei",
+    "country": "DE",
+    "region": "Sächsische Schweiz",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Zufahrt zur Basteibrücke",
+    "roads": [],
+    "from": {
+      "name": "Lohmen",
+      "lat": 50.98863,
+      "lon": 13.99809
+    },
+    "to": {
+      "name": "Bastei",
+      "lat": 50.96175,
+      "lon": 14.07196
+    },
+    "via": [],
+    "length_km": 7.8,
+    "facts": "Elbsandsteingebirge mit Basteibrücke",
+    "quality": 2,
+    "caveats": "Sehr touristisch, Parkgebühren",
+    "sources": [
+      "https://www.mietedeinsportauto.de/magazin/die-besten-sportwagenrouten-in-deutschland-atemberaubende-strecken-fuer-den-perfekten-fahrspass/"
+    ]
+  },
+  {
+    "id": "de-fichtelberg",
+    "name": "Fichtelberg",
+    "country": "DE",
+    "region": "Erzgebirge",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Auffahrt auf den höchsten Berg Sachsens",
+    "roads": [],
+    "from": {
+      "name": "Oberwiesenthal",
+      "lat": 50.43555,
+      "lon": 12.94859
+    },
+    "to": {
+      "name": "Fichtelberg",
+      "lat": 50.42914,
+      "lon": 12.95473
+    },
+    "via": [],
+    "length_km": 1.1,
+    "facts": "Fichtelberg 1215 m",
+    "quality": 3,
+    "caveats": "Stichstraße, Ausflugsverkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Fichtelberg"
+    ]
+  },
+  {
+    "id": "de-wiesenttal",
+    "name": "Wiesenttal",
+    "country": "DE",
+    "region": "Fränkische Schweiz",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Felsental der Fränkischen Schweiz",
+    "roads": [
+      "B 470"
+    ],
+    "from": {
+      "name": "Ebermannstadt",
+      "lat": 49.78021,
+      "lon": 11.18751
+    },
+    "to": {
+      "name": "Pottenstein",
+      "lat": 49.77108,
+      "lon": 11.40928
+    },
+    "via": [
+      {
+        "name": "Streitberg",
+        "lat": 49.8105,
+        "lon": 11.21944
+      },
+      {
+        "name": "Wöhr",
+        "lat": 49.805,
+        "lon": 11.245
+      },
+      {
+        "name": "Muggendorf",
+        "lat": 49.80358,
+        "lon": 11.26259
+      },
+      {
+        "name": "Sachsenmühle",
+        "lat": 49.777,
+        "lon": 11.296
+      },
+      {
+        "name": "Behringersmühle",
+        "lat": 49.771,
+        "lon": 11.324
+      }
+    ],
+    "length_km": 25.1,
+    "facts": "Kurviges Tal mit Burgen, Klassiker der Motorradrunde ab Lauf",
+    "quality": 3,
+    "caveats": "Viel Ausflugsverkehr am Wochenende",
+    "sources": [
+      "https://www.motorradonline.de/reise/motorrad-tourentipps-fuer-sueddeutschland-die-10-besten-strecken-im-sueden/",
+      "https://de.wikipedia.org/wiki/Bundesstraße_470"
+    ]
+  },
+  {
+    "id": "de-kleinziegenfelder-tal",
+    "name": "Kleinziegenfelder Tal",
+    "country": "DE",
+    "region": "Fränkische Schweiz",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Stilles Juratal bei Weismain",
+    "roads": [],
+    "from": {
+      "name": "Weismain",
+      "lat": 50.085,
+      "lon": 11.24004
+    },
+    "to": {
+      "name": "Kleinziegenfeld",
+      "lat": 50.02004,
+      "lon": 11.20158
+    },
+    "via": [],
+    "length_km": 10.0,
+    "facts": "Laut Motorrad Tourentipp Teil der Fränkische Schweiz Runde",
+    "quality": 3,
+    "caveats": "Schmal, Landwirtschaft",
+    "sources": [
+      "https://www.motorradonline.de/reise/motorrad-tourentipps-fuer-sueddeutschland-die-10-besten-strecken-im-sueden/",
+      "https://de.wikipedia.org/wiki/Kleinziegenfelder_Tal"
+    ]
+  },
+  {
+    "id": "de-arber",
+    "name": "Arberstraße",
+    "country": "DE",
+    "region": "Bayerischer Wald",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Bergstraße am Großen Arber",
+    "roads": [
+      "St 2132"
+    ],
+    "from": {
+      "name": "Bodenmais",
+      "lat": 49.055,
+      "lon": 13.103
+    },
+    "to": {
+      "name": "Bayerisch Eisenstein",
+      "lat": 49.12228,
+      "lon": 13.20319
+    },
+    "via": [
+      {
+        "name": "Großer Arbersee",
+        "lat": 49.09846,
+        "lon": 13.15523
+      },
+      {
+        "name": "Brennes",
+        "lat": 49.1341,
+        "lon": 13.14465
+      }
+    ],
+    "length_km": 19.0,
+    "facts": "Über den Brennes Sattel am Arber, höchster Berg des Bayerischen Waldes",
+    "quality": 4,
+    "caveats": "Ausflugsverkehr, Wintersport",
+    "sources": [
+      "https://www.motorradonline.de/reise/motorrad-tourentipps-fuer-sueddeutschland-die-10-besten-strecken-im-sueden/",
+      "https://de.wikipedia.org/wiki/Großer_Arber"
+    ]
+  },
+  {
+    "id": "de-dreisessel",
+    "name": "Dreisessel",
+    "country": "DE",
+    "region": "Bayerischer Wald",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Auffahrt im Dreiländereck",
+    "roads": [],
+    "from": {
+      "name": "Neureichenau",
+      "lat": 48.75564,
+      "lon": 13.7494
+    },
+    "to": {
+      "name": "Dreisessel",
+      "lat": 48.78068,
+      "lon": 13.80318
+    },
+    "via": [],
+    "length_km": 6.3,
+    "facts": "Dreisessel 1333 m an der Grenze zu Tschechien",
+    "quality": 3,
+    "caveats": "Stichstraße, schmal",
+    "sources": [
+      "https://www.motorradonline.de/reise/motorrad-tourentipps-fuer-sueddeutschland-die-10-besten-strecken-im-sueden/"
+    ]
+  },
+  {
+    "id": "de-kesselbergstrasse",
+    "name": "Kesselbergstraße",
+    "country": "DE",
+    "region": "Oberbayern",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Kehrenreiche Passstraße zwischen Kochelsee und Walchensee",
+    "roads": [
+      "B 11"
+    ],
+    "from": {
+      "name": "Kochel am See",
+      "lat": 47.65311,
+      "lon": 11.36319
+    },
+    "to": {
+      "name": "Urfeld",
+      "lat": 47.61794,
+      "lon": 11.34618
+    },
+    "via": [
+      {
+        "name": "Kesselberg",
+        "lat": 47.62157,
+        "lon": 11.3492
+      }
+    ],
+    "length_km": 8,
+    "facts": "Rund 8 km, Passhöhe 858 m, erste Kesselbergstraße 1492",
+    "quality": 5,
+    "caveats": "Dauerhaftes Motorradfahrverbot an Wochenenden, Pkw frei; häufige Kontrollen",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Kesselbergstraße",
+      "https://www.motorradonline.de/ratgeber/streckensperrung-kesselberg-fahrverbot-motorraeder-bleibt/"
+    ]
+  },
+  {
+    "id": "de-walchensee-wallgau",
+    "name": "Walchensee Wallgau",
+    "country": "DE",
+    "region": "Oberbayern",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Uferstraße am Walchensee",
+    "roads": [
+      "B 11"
+    ],
+    "from": {
+      "name": "Urfeld",
+      "lat": 47.61794,
+      "lon": 11.34618
+    },
+    "to": {
+      "name": "Wallgau",
+      "lat": 47.54313,
+      "lon": 11.27354
+    },
+    "via": [
+      {
+        "name": "Walchensee",
+        "lat": 47.59344,
+        "lon": 11.34646
+      }
+    ],
+    "length_km": 13.7,
+    "facts": "Fortsetzung nach dem Kesselberg mit Seeblick",
+    "quality": 3,
+    "caveats": "Ausflugsverkehr, Strecke Kochel Wallgau laut Motorrad zeitweise gesperrt",
+    "sources": [
+      "https://www.motorradonline.de/reise/motorrad-tourentipps-fuer-sueddeutschland-die-10-besten-strecken-im-sueden/"
+    ]
+  },
+  {
+    "id": "de-rossfeld",
+    "name": "Roßfeld Panoramastraße",
+    "country": "DE",
+    "region": "Berchtesgadener Land",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Höchste Panoramastraße Deutschlands",
+    "roads": [],
+    "from": {
+      "name": "Oberau",
+      "lat": 47.65188,
+      "lon": 13.0645
+    },
+    "to": {
+      "name": "Obersalzberg",
+      "lat": 47.6307,
+      "lon": 13.04177
+    },
+    "via": [
+      {
+        "name": "Roßfeldstraße",
+        "lat": 47.648,
+        "lon": 13.079
+      },
+      {
+        "name": "Roßfeld",
+        "lat": 47.62797,
+        "lon": 13.09558
+      },
+      {
+        "name": "Ofnerboden",
+        "lat": 47.62068,
+        "lon": 13.06301
+      }
+    ],
+    "length_km": 10.7,
+    "facts": "Bis rund 1600 m, Regerkurve, Bau ab 1938 als Schleife der Deutschen Alpenstraße",
+    "quality": 5,
+    "caveats": "Mautstraße, Pkw 9,50 Euro; ganzjährig offen",
+    "sources": [
+      "https://www.berchtesgaden.de/rossfeld-panoramastrasse",
+      "https://de.wikipedia.org/wiki/Roßfeld-Panoramastraße"
+    ]
+  },
+  {
+    "id": "de-sudelfeld",
+    "name": "Sudelfeldstraße",
+    "country": "DE",
+    "region": "Oberbayern",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Kurvige Alpenstraße übers Sudelfeld",
+    "roads": [
+      "B 307"
+    ],
+    "from": {
+      "name": "Bayrischzell",
+      "lat": 47.6595,
+      "lon": 11.97818
+    },
+    "to": {
+      "name": "Tatzelwurm",
+      "lat": 47.672,
+      "lon": 12.075
+    },
+    "via": [
+      {
+        "name": "Hochkreuth",
+        "lat": 47.682,
+        "lon": 12.02
+      },
+      {
+        "name": "Sudelfeldpass",
+        "lat": 47.67881,
+        "lon": 12.03555
+      }
+    ],
+    "length_km": 12,
+    "facts": "Eine der beliebtesten Motorradstrecken Bayerns, Teil der Deutschen Alpenstraße",
+    "quality": 4,
+    "caveats": "Unfallschwerpunkt, Kontrollen; Abzweig nach Brannenburg mautpflichtig",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Sudelfeld",
+      "https://www.motorradonline.de/reise/motorrad-tourentipps-fuer-sueddeutschland-die-10-besten-strecken-im-sueden/"
+    ]
+  },
+  {
+    "id": "de-achenpass",
+    "name": "Achenpass",
+    "country": "DE",
+    "region": "Oberbayern",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Grenzpass hinter dem Tegernsee",
+    "roads": [
+      "B 307"
+    ],
+    "from": {
+      "name": "Rottach-Egern",
+      "lat": 47.694,
+      "lon": 11.771
+    },
+    "to": {
+      "name": "Achenpass",
+      "lat": 47.598,
+      "lon": 11.636
+    },
+    "via": [
+      {
+        "name": "Kreuth",
+        "lat": 47.64446,
+        "lon": 11.74493
+      }
+    ],
+    "length_km": 20.2,
+    "facts": "Vom Tegernsee über Kreuth zum Achenpass an der Grenze",
+    "quality": 3,
+    "caveats": "Ausflugsverkehr am Tegernsee",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Achenpass",
+      "https://de.wikipedia.org/wiki/Bundesstraße_307"
+    ]
+  },
+  {
+    "id": "de-spitzingsattel",
+    "name": "Spitzingsattel",
+    "country": "DE",
+    "region": "Oberbayern",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Kleine Passstraße zum Spitzingsee",
+    "roads": [],
+    "from": {
+      "name": "Schliersee",
+      "lat": 47.73459,
+      "lon": 11.86203
+    },
+    "to": {
+      "name": "Spitzingsee",
+      "lat": 47.66512,
+      "lon": 11.88527
+    },
+    "via": [
+      {
+        "name": "Spitzingsattel",
+        "lat": 47.67263,
+        "lon": 11.8867
+      }
+    ],
+    "length_km": 10.4,
+    "facts": "1129 m, bis 14 % Steigung",
+    "quality": 4,
+    "caveats": "Sackgasse am See, Valepptal für Kfz gesperrt",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Spitzingsattel"
+    ]
+  },
+  {
+    "id": "de-oberjochpass",
+    "name": "Oberjochpass",
+    "country": "DE",
+    "region": "Allgäu",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Jochstraße mit 106 Kurven",
+    "roads": [
+      "B 308"
+    ],
+    "from": {
+      "name": "Bad Hindelang",
+      "lat": 47.505,
+      "lon": 10.372
+    },
+    "to": {
+      "name": "Oberjochpass",
+      "lat": 47.52684,
+      "lon": 10.43293
+    },
+    "via": [
+      {
+        "name": "Jochstraße",
+        "lat": 47.508,
+        "lon": 10.387
+      },
+      {
+        "name": "Oberjoch",
+        "lat": 47.516,
+        "lon": 10.406
+      }
+    ],
+    "length_km": 12,
+    "facts": "Rund 12 km, 106 Kurven, Teil der Deutschen Alpenstraße",
+    "quality": 5,
+    "caveats": "Wochenende viel Motorradverkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Oberjochpass",
+      "https://de.wikipedia.org/wiki/Bundesstraße_308",
+      "https://www.motorradonline.de/reise/motorrad-tourentipps-fuer-sueddeutschland-die-10-besten-strecken-im-sueden/"
+    ]
+  },
+  {
+    "id": "de-riedbergpass",
+    "name": "Riedbergpass",
+    "country": "DE",
+    "region": "Allgäu",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Höchste Passstraße Deutschlands",
+    "roads": [],
+    "from": {
+      "name": "Obermaiselstein",
+      "lat": 47.43448,
+      "lon": 10.1929
+    },
+    "to": {
+      "name": "Balderschwang",
+      "lat": 47.43545,
+      "lon": 10.12075
+    },
+    "via": [
+      {
+        "name": "Riedbergpass",
+        "lat": 47.43728,
+        "lon": 10.17691
+      }
+    ],
+    "length_km": 7.1,
+    "facts": "Passhöhe 1420 m, Steigungen bis 16 %",
+    "quality": 4,
+    "caveats": "Im Winter Kettenpflicht möglich, schmal",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Riedbergpass",
+      "https://www.motorradonline.de/reise/motorrad-tourentipps-fuer-sueddeutschland-die-10-besten-strecken-im-sueden/"
+    ]
+  },
+  {
+    "id": "de-schwarzbachwacht",
+    "name": "Schwarzbachwacht",
+    "country": "DE",
+    "region": "Berchtesgadener Land",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Alpenstraße zwischen Ramsau und Saalachtal",
+    "roads": [
+      "B 305"
+    ],
+    "from": {
+      "name": "Ramsau",
+      "lat": 47.606,
+      "lon": 12.91
+    },
+    "to": {
+      "name": "Unterjettenberg",
+      "lat": 47.67767,
+      "lon": 12.82467
+    },
+    "via": [
+      {
+        "name": "Hintersee",
+        "lat": 47.60653,
+        "lon": 12.85375
+      },
+      {
+        "name": "Schwarzbachwacht",
+        "lat": 47.63572,
+        "lon": 12.85822
+      }
+    ],
+    "length_km": 16.6,
+    "facts": "Pass 868 m, Teilstück der Deutschen Alpenstraße",
+    "quality": 4,
+    "caveats": "Ausflugsverkehr am Hintersee",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Schwarzbachwacht",
+      "https://de.wikipedia.org/wiki/Bundesstraße_305"
+    ]
+  },
+  {
+    "id": "de-deutsche-alpenstrasse",
+    "name": "Deutsche Alpenstraße",
+    "country": "DE",
+    "region": "Bayerische Alpen",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Ferienstraße vom Bodensee zum Königssee",
+    "roads": [
+      "B 308",
+      "B 307",
+      "B 305"
+    ],
+    "from": {
+      "name": "Lindau",
+      "lat": 47.57287,
+      "lon": 9.69619
+    },
+    "to": {
+      "name": "Berchtesgaden Oberau",
+      "lat": 47.65188,
+      "lon": 13.0645
+    },
+    "via": [
+      {
+        "name": "Oberstaufen",
+        "lat": 47.52455,
+        "lon": 10.06187
+      },
+      {
+        "name": "Immenstadt",
+        "lat": 47.57134,
+        "lon": 10.1888
+      },
+      {
+        "name": "Sonthofen",
+        "lat": 47.50561,
+        "lon": 10.29941
+      },
+      {
+        "name": "Bad Hindelang",
+        "lat": 47.46576,
+        "lon": 10.40077
+      },
+      {
+        "name": "Oberjoch",
+        "lat": 47.51636,
+        "lon": 10.40638
+      },
+      {
+        "name": "Pfronten",
+        "lat": 47.58138,
+        "lon": 10.55797
+      },
+      {
+        "name": "Füssen",
+        "lat": 47.5676,
+        "lon": 10.69932
+      },
+      {
+        "name": "Schwangau",
+        "lat": 47.57968,
+        "lon": 10.75891
+      },
+      {
+        "name": "Oberammergau",
+        "lat": 47.59734,
+        "lon": 11.06407
+      },
+      {
+        "name": "Garmisch-Partenkirchen",
+        "lat": 47.49237,
+        "lon": 11.09628
+      },
+      {
+        "name": "Wallgau",
+        "lat": 47.54313,
+        "lon": 11.27354
+      },
+      {
+        "name": "Kochel am See",
+        "lat": 47.65311,
+        "lon": 11.36319
+      },
+      {
+        "name": "Tegernsee",
+        "lat": 47.70992,
+        "lon": 11.75433
+      },
+      {
+        "name": "Schliersee",
+        "lat": 47.73459,
+        "lon": 11.86203
+      },
+      {
+        "name": "Bayrischzell",
+        "lat": 47.6595,
+        "lon": 11.97818
+      },
+      {
+        "name": "Sudelfeldpass",
+        "lat": 47.67881,
+        "lon": 12.03555
+      },
+      {
+        "name": "Oberaudorf",
+        "lat": 47.6631,
+        "lon": 12.11186
+      },
+      {
+        "name": "Reit im Winkl",
+        "lat": 47.66724,
+        "lon": 12.52565
+      },
+      {
+        "name": "Ruhpolding",
+        "lat": 47.76201,
+        "lon": 12.64599
+      },
+      {
+        "name": "Inzell",
+        "lat": 47.76335,
+        "lon": 12.74924
+      },
+      {
+        "name": "Weißbach an der Alpenstraße",
+        "lat": 47.72084,
+        "lon": 12.76892
+      },
+      {
+        "name": "Bad Reichenhall",
+        "lat": 47.72227,
+        "lon": 12.87609
+      }
+    ],
+    "length_km": 450,
+    "facts": "Rund 450 km, eine der ältesten Ferienstraßen Deutschlands",
+    "quality": 3,
+    "caveats": "Lang, viele Ortsdurchfahrten; als Planungshilfe gedacht, Einzelpässe sind eigene Einträge",
+    "sources": [
+      "https://www.mietedeinsportauto.de/magazin/die-besten-sportwagenrouten-in-deutschland-atemberaubende-strecken-fuer-den-perfekten-fahrspass/",
+      "https://de.wikipedia.org/wiki/Deutsche_Alpenstraße"
+    ]
+  },
+  {
+    "id": "de-morretal-schneeberg",
+    "name": "Morretal Schneeberg",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Enge Serpentinen mit 22 Prozent",
+    "roads": [],
+    "from": {
+      "name": "Hettigenbeuern",
+      "lat": 49.57958,
+      "lon": 9.26405
+    },
+    "to": {
+      "name": "Amorbach",
+      "lat": 49.64467,
+      "lon": 9.21973
+    },
+    "via": [
+      {
+        "name": "Hornbach",
+        "lat": 49.59271,
+        "lon": 9.29025
+      },
+      {
+        "name": "Schneeberg",
+        "lat": 49.63896,
+        "lon": 9.24812
+      }
+    ],
+    "length_km": 13.6,
+    "facts": "Enge Serpentinen bis 22 % Steigung zwischen Hettigenbeuern und Amorbach",
+    "quality": 3,
+    "caveats": "Knifflig und steil, schmal; Umfahrung über Walldürn oder Mudau",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-odenwald-kraichgau-tour-1-nibelungen-race"
+    ]
+  },
+  {
+    "id": "de-guldenklinger-hoehe",
+    "name": "Guldenklinger Höhe",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Kleiner Pass über Heppenheim",
+    "roads": [],
+    "from": {
+      "name": "Heppenheim",
+      "lat": 49.64999,
+      "lon": 8.66768
+    },
+    "to": {
+      "name": "Guldenklinger Höhe",
+      "lat": 49.64986,
+      "lon": 8.71344
+    },
+    "via": [
+      {
+        "name": "Kirschhausen",
+        "lat": 49.6465,
+        "lon": 8.68788
+      }
+    ],
+    "length_km": 4.4,
+    "facts": "Pass der ADAC Odenwaldrunde auf der letzten Etappe nach Heppenheim",
+    "quality": 3,
+    "caveats": "Kurz, Ortsdurchfahrt Kirschhausen",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/"
+    ]
+  },
+  {
+    "id": "de-weiher-abtsteinach",
+    "name": "Weiher Ober-Abtsteinach",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Kurvenintensiver Abschnitt im Überwald",
+    "roads": [],
+    "from": {
+      "name": "Mörlenbach",
+      "lat": 49.5929,
+      "lon": 8.7435
+    },
+    "to": {
+      "name": "Ober-Abtsteinach",
+      "lat": 49.54389,
+      "lon": 8.78395
+    },
+    "via": [
+      {
+        "name": "Weiher",
+        "lat": 49.58708,
+        "lon": 8.76536
+      }
+    ],
+    "length_km": 8.7,
+    "facts": "Laut ADAC kurvenintensiver Abschnitt",
+    "quality": 3,
+    "caveats": "Ortsdurchfahrten",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/"
+    ]
+  },
+  {
+    "id": "de-dehnbuche",
+    "name": "Dehnbuche",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Pass im Gersprenztal",
+    "roads": [],
+    "from": {
+      "name": "Reichelsheim",
+      "lat": 49.6985,
+      "lon": 8.8495
+    },
+    "to": {
+      "name": "Dehnbuche",
+      "lat": 49.67843,
+      "lon": 8.89975
+    },
+    "via": [],
+    "length_km": 5.5,
+    "facts": "Pass der ADAC Odenwaldrunde",
+    "quality": 3,
+    "caveats": "Kurz",
+    "sources": [
+      "https://www.adac.de/reise-freizeit/reisen-mit-motorrad/motorradtouren/motorradtouren-taunus-odenwald-spessart-rhoen/"
+    ]
+  },
+  {
+    "id": "de-triberg-hornberg",
+    "name": "Schonach Elztal Hornberg",
+    "country": "DE",
+    "region": "Mittlerer Schwarzwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Kurvenreiche Alternative zur B 33",
+    "roads": [],
+    "from": {
+      "name": "Triberg",
+      "lat": 48.1298,
+      "lon": 8.23227
+    },
+    "to": {
+      "name": "Hornberg",
+      "lat": 48.21284,
+      "lon": 8.23164
+    },
+    "via": [
+      {
+        "name": "Schonach",
+        "lat": 48.14271,
+        "lon": 8.19749
+      },
+      {
+        "name": "Oberprechtal",
+        "lat": 48.21429,
+        "lon": 8.14193
+      }
+    ],
+    "length_km": 24.1,
+    "facts": "Kurvenreiche Alternative zur stark befahrenen B 33",
+    "quality": 4,
+    "caveats": "Schmal im Elztal",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  },
+  {
+    "id": "de-voehrenbach-neustadt",
+    "name": "Vöhrenbach Neustadt",
+    "country": "DE",
+    "region": "Südschwarzwald",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Schnelle, gut ausgebaute Kurvenstrecke",
+    "roads": [],
+    "from": {
+      "name": "Vöhrenbach",
+      "lat": 48.04582,
+      "lon": 8.30392
+    },
+    "to": {
+      "name": "Titisee-Neustadt",
+      "lat": 47.91734,
+      "lon": 8.17352
+    },
+    "via": [],
+    "length_km": 22.5,
+    "facts": "Gut ausgebaute, schnelle Kurvenstrecke",
+    "quality": 4,
+    "caveats": "Kontrollen möglich",
+    "sources": [
+      "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
+    ]
+  }
+]

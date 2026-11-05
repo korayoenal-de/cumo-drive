@@ -1,0 +1,2621 @@
+[
+  {
+    "id": "at-grossglockner-hochalpenstrasse",
+    "name": "Großglockner Hochalpenstraße",
+    "country": "AT",
+    "region": "Salzburg / Kärnten",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Hochalpenstraße",
+    "roads": [
+      "B 107"
+    ],
+    "from": {
+      "name": "Bruck",
+      "lat": 47.28669,
+      "lon": 12.82413
+    },
+    "to": {
+      "name": "Heiligenblut",
+      "lat": 47.03854,
+      "lon": 12.84082
+    },
+    "via": [
+      {
+        "name": "Fusch",
+        "lat": 47.22565,
+        "lon": 12.82562
+      },
+      {
+        "name": "Ferleiten",
+        "lat": 47.16856,
+        "lon": 12.81281
+      },
+      {
+        "name": "Fuscher Törl",
+        "lat": 47.11679,
+        "lon": 12.82391
+      },
+      {
+        "name": "Hochtor",
+        "lat": 47.08119,
+        "lon": 12.84259
+      }
+    ],
+    "length_km": 47.8,
+    "facts": "47,8 km über den Alpenhauptkamm, Hochtor 2504 m, Abzweig Edelweißspitze 2571 m",
+    "quality": 5,
+    "caveats": "Mautstraße ab Ferleiten, Wintersperre etwa November bis Anfang Mai, Nachtsperre, an Sommerwochenenden viel Verkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Gro%C3%9Fglockner-Hochalpenstra%C3%9Fe",
+      "https://www.indenbergen.de/weblog/oesterreichs-schoenste-alpenstrassen/"
+    ]
+  },
+  {
+    "id": "at-nockalmstrasse",
+    "name": "Nockalmstraße",
+    "country": "AT",
+    "region": "Kärnten",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Panoramastraße",
+    "roads": [],
+    "from": {
+      "name": "Innerkrems",
+      "lat": 46.96811,
+      "lon": 13.72638
+    },
+    "to": {
+      "name": "Ebene Reichenau",
+      "lat": 46.85505,
+      "lon": 13.89414
+    },
+    "via": [
+      {
+        "name": "Eisentalhöhe",
+        "lat": 46.94262,
+        "lon": 13.76065
+      },
+      {
+        "name": "Schiestelscharte",
+        "lat": 46.89006,
+        "lon": 13.79351
+      }
+    ],
+    "length_km": 35,
+    "facts": "35 km, 52 Kehren, max. 12 % Steigung, höchster Punkt Eisentalhöhe 2042 m, seit 1981",
+    "quality": 5,
+    "caveats": "Mautstraße, Wintersperre etwa November bis Anfang Mai",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Nockalmstra%C3%9Fe",
+      "https://blog.kurviger.com/en/nockalm-road-carinthia-and-its-panoramic-roads-part-1/"
+    ]
+  },
+  {
+    "id": "at-villacher-alpenstrasse",
+    "name": "Villacher Alpenstraße",
+    "country": "AT",
+    "region": "Kärnten",
+    "kind": "aussicht",
+    "tier": "highlight",
+    "note": "Panoramastraße",
+    "roads": [],
+    "from": {
+      "name": "Villach Möltschach",
+      "lat": 46.60364,
+      "lon": 13.81551
+    },
+    "to": {
+      "name": "Rosstratte",
+      "lat": 46.59395,
+      "lon": 13.71032
+    },
+    "via": [],
+    "length_km": 16.5,
+    "facts": "16,5 km von Villach bis unter den Dobratsch, Endpunkt Rosstratte 1732 m, eröffnet 1965",
+    "quality": 4,
+    "caveats": "Mautstraße, Sackgasse (gleicher Weg zurück), ganzjährig tagsüber geöffnet",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Villacher_Alpenstra%C3%9Fe",
+      "https://www.kaernten.at/motorrad/sehenswertes/panoramastrassen/"
+    ]
+  },
+  {
+    "id": "at-malta-hochalmstrasse",
+    "name": "Malta Hochalmstraße",
+    "country": "AT",
+    "region": "Kärnten",
+    "kind": "aussicht",
+    "tier": "highlight",
+    "note": "Hochalmstraße",
+    "roads": [],
+    "from": {
+      "name": "Mautstelle Falleralm",
+      "lat": 47.01029,
+      "lon": 13.43724
+    },
+    "to": {
+      "name": "Kölnbreinsperre",
+      "lat": 47.07865,
+      "lon": 13.33789
+    },
+    "via": [],
+    "length_km": 14.4,
+    "facts": "14,4 km Mautstrecke, sechs Natursteintunnel, Kehren, endet an der Kölnbreinsperre",
+    "quality": 4,
+    "caveats": "Mautstraße, Sackgasse, geöffnet etwa Anfang Mai bis Ende Oktober 7 bis 18 Uhr, einspurige Tunnel mit Ampel",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Malta-Hochalmstra%C3%9Fe",
+      "https://blog.kurviger.com/en/malta-hochalmstrasse-carinthia-and-its-panoramic-roads-part-2/"
+    ]
+  },
+  {
+    "id": "at-kaunertaler-gletscherstrasse",
+    "name": "Kaunertaler Gletscherstraße",
+    "country": "AT",
+    "region": "Tirol",
+    "kind": "aussicht",
+    "tier": "highlight",
+    "note": "Gletscherstraße",
+    "roads": [],
+    "from": {
+      "name": "Feichten",
+      "lat": 47.02899,
+      "lon": 10.74605
+    },
+    "to": {
+      "name": "Weißsee",
+      "lat": 46.87133,
+      "lon": 10.71263
+    },
+    "via": [
+      {
+        "name": "Gepatschhaus",
+        "lat": 46.90157,
+        "lon": 10.73775
+      }
+    ],
+    "length_km": null,
+    "facts": "29 Kehren von 1287 m in Feichten bis auf 2750 m, vorbei am Gepatschspeicher",
+    "quality": 4,
+    "caveats": "Mautstraße, Sackgasse, Wintersperre der oberen Abschnitte möglich, Radfahrer",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Kaunertaler_Gletscherstra%C3%9Fe",
+      "https://www.motorradundreisen.de/alpenpaesse/47_kaunertaler-gletscherstrasse.html"
+    ]
+  },
+  {
+    "id": "at-silvretta-hochalpenstrasse",
+    "name": "Silvretta Hochalpenstraße",
+    "country": "AT",
+    "region": "Vorarlberg / Tirol",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Hochalpenstraße",
+    "roads": [
+      "B 188"
+    ],
+    "from": {
+      "name": "Partenen",
+      "lat": 46.96898,
+      "lon": 10.06066
+    },
+    "to": {
+      "name": "Galtür",
+      "lat": 46.91946,
+      "lon": 10.17059
+    },
+    "via": [
+      {
+        "name": "Vermuntsee",
+        "lat": 46.93927,
+        "lon": 10.13688
+      },
+      {
+        "name": "Bielerhöhe",
+        "lat": 46.91804,
+        "lon": 10.09561
+      }
+    ],
+    "length_km": 22.3,
+    "facts": "22,3 km, 32 Kehren auf der Montafoner Seite, Bielerhöhe 2032 m",
+    "quality": 4,
+    "caveats": "Mautstraße; 2025 und 2026 zwischen Mautstelle Partenen und Vermuntsee nach Murenabgängen gesperrt, vor Planung prüfen; Wintersperre",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Silvretta-Hochalpenstra%C3%9Fe",
+      "https://www.tirol.at/reisefuehrer/ausflugstipps/ausflugsziele/a-silvretta-hochalpenstrasse"
+    ]
+  },
+  {
+    "id": "at-timmelsjoch",
+    "name": "Timmelsjoch Hochalpenstraße",
+    "country": "AT",
+    "region": "Tirol",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Hochalpenstraße",
+    "roads": [
+      "B 186"
+    ],
+    "from": {
+      "name": "Zwieselstein",
+      "lat": 46.93965,
+      "lon": 11.02752
+    },
+    "to": {
+      "name": "Timmelsjoch",
+      "lat": 46.90535,
+      "lon": 11.09732
+    },
+    "via": [
+      {
+        "name": "Hochgurgl",
+        "lat": 46.89993,
+        "lon": 11.05143
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2474 m an der Grenze zu Südtirol, weiter nach Moos in Passeier",
+    "quality": 4,
+    "caveats": "Mautstraße, Nachtsperre, Wintersperre etwa Oktober bis Juni, Südseite eng mit unbeleuchteten Tunneln",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Timmelsjoch",
+      "https://www.tirol.at/reisefuehrer/ausflugstipps/ausflugsziele/a-timmelsjoch-hochalpenstrasse-die-erfahrung"
+    ]
+  },
+  {
+    "id": "at-hahntennjoch",
+    "name": "Hahntennjoch",
+    "country": "AT",
+    "region": "Tirol",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Imst",
+      "lat": 47.23815,
+      "lon": 10.7407
+    },
+    "to": {
+      "name": "Elmen",
+      "lat": 47.33962,
+      "lon": 10.54297
+    },
+    "via": [
+      {
+        "name": "Hahntennjoch",
+        "lat": 47.28735,
+        "lon": 10.65547
+      },
+      {
+        "name": "Bschlabs",
+        "lat": 47.30929,
+        "lon": 10.58559
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1894 m zwischen Inntal und Lechtal, rund 28 km",
+    "quality": 4,
+    "caveats": "Fahrverbot für laute Motorräder, Wintersperre, Steinschlaggefahr",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Hahntennjoch",
+      "https://www.motorradundreisen.de/alpenpaesse/44_hahntennjoch.html"
+    ]
+  },
+  {
+    "id": "at-gerlos",
+    "name": "Gerlos Alpenstraße",
+    "country": "AT",
+    "region": "Tirol / Salzburg",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "B 165"
+    ],
+    "from": {
+      "name": "Zell am Ziller",
+      "lat": 47.2336,
+      "lon": 11.88199
+    },
+    "to": {
+      "name": "Krimml",
+      "lat": 47.22191,
+      "lon": 12.17546
+    },
+    "via": [
+      {
+        "name": "Gerlos",
+        "lat": 47.22562,
+        "lon": 12.03456
+      },
+      {
+        "name": "Gerlospass",
+        "lat": 47.24286,
+        "lon": 12.10939
+      },
+      {
+        "name": "Gerlosplatte",
+        "lat": 47.23689,
+        "lon": 12.13792
+      }
+    ],
+    "length_km": null,
+    "facts": "Gerlospass 1531 m, Gerlosplatte, Blick auf die Krimmler Wasserfälle",
+    "quality": 4,
+    "caveats": "Abschnitt Gerlosplatte bis Krimml mautpflichtig, Reisebusse im Sommer",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Gerlos_Pass"
+    ]
+  },
+  {
+    "id": "at-turracher-hoehe",
+    "name": "Turracher Höhe",
+    "country": "AT",
+    "region": "Steiermark / Kärnten",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "B 95"
+    ],
+    "from": {
+      "name": "Predlitz",
+      "lat": 47.07059,
+      "lon": 13.91135
+    },
+    "to": {
+      "name": "Ebene Reichenau",
+      "lat": 46.85505,
+      "lon": 13.89414
+    },
+    "via": [
+      {
+        "name": "Turracher Höhe",
+        "lat": 46.91317,
+        "lon": 13.87645
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe rund 1780 m in den Nockbergen, sehr steile Rampen",
+    "quality": 3,
+    "caveats": "sehr steil, im Winter Ketten möglich",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Turracher_H%C3%B6he"
+    ]
+  },
+  {
+    "id": "at-soelkpass",
+    "name": "Sölkpass",
+    "country": "AT",
+    "region": "Steiermark",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Stein an der Enns",
+      "lat": 47.43454,
+      "lon": 13.94074
+    },
+    "to": {
+      "name": "Schöder",
+      "lat": 47.18234,
+      "lon": 14.11194
+    },
+    "via": [
+      {
+        "name": "St. Nikolai im Sölktal",
+        "lat": 47.31931,
+        "lon": 14.04679
+      },
+      {
+        "name": "Sölkpass",
+        "lat": 47.27169,
+        "lon": 14.07967
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1788 m durch den Naturpark Sölktäler",
+    "quality": 4,
+    "caveats": "Wintersperre, schmal, wenig Verkehr",
+    "sources": [
+      "https://en.wikipedia.org/wiki/S%C3%B6lk_Pass"
+    ]
+  },
+  {
+    "id": "at-gaberl",
+    "name": "Gaberl Straße",
+    "country": "AT",
+    "region": "Steiermark",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "B 77"
+    ],
+    "from": {
+      "name": "Köflach",
+      "lat": 47.06449,
+      "lon": 15.085
+    },
+    "to": {
+      "name": "Weißkirchen",
+      "lat": 47.15332,
+      "lon": 14.73664
+    },
+    "via": [
+      {
+        "name": "Salla",
+        "lat": 47.1086,
+        "lon": 14.97297
+      },
+      {
+        "name": "Gaberl",
+        "lat": 47.10586,
+        "lon": 14.92408
+      }
+    ],
+    "length_km": 41,
+    "facts": "Gaberl 1547 m zwischen Stubalpe und Gleinalpe, rund 41 km",
+    "quality": 3,
+    "caveats": "am Wochenende viel Motorradverkehr",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Gaberl",
+      "https://www.motorradundreisen.de/alpenpaesse/161_gaberl.html"
+    ]
+  },
+  {
+    "id": "at-packsattel",
+    "name": "Packsattel",
+    "country": "AT",
+    "region": "Steiermark / Kärnten",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "B 70"
+    ],
+    "from": {
+      "name": "Mooskirchen",
+      "lat": 46.98504,
+      "lon": 15.28223
+    },
+    "to": {
+      "name": "Twimberg",
+      "lat": 46.91554,
+      "lon": 14.8431
+    },
+    "via": [
+      {
+        "name": "Packsattel",
+        "lat": 46.96546,
+        "lon": 14.97793
+      }
+    ],
+    "length_km": null,
+    "facts": "Packsattel 1166 m, alte Verbindung Graz Klagenfurt",
+    "quality": 3,
+    "caveats": "Lkw-Verkehr möglich, Wintersperre nicht üblich",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Pack_Saddle"
+    ]
+  },
+  {
+    "id": "at-weinebene",
+    "name": "Weinebene",
+    "country": "AT",
+    "region": "Steiermark / Kärnten",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Deutschlandsberg",
+      "lat": 46.81463,
+      "lon": 15.21378
+    },
+    "to": {
+      "name": "St. Gertraud",
+      "lat": 46.86976,
+      "lon": 14.87769
+    },
+    "via": [
+      {
+        "name": "Weinebene",
+        "lat": 46.83991,
+        "lon": 15.01648
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1668 m über die Koralpe",
+    "quality": 3,
+    "caveats": "schmal, im Winter Skibetrieb an der Passhöhe",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Weinebene"
+    ]
+  },
+  {
+    "id": "at-suedsteirische-weinstrasse",
+    "name": "Südsteirische Weinstraße",
+    "country": "AT",
+    "region": "Steiermark",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Weinstraße",
+    "roads": [],
+    "from": {
+      "name": "Ehrenhausen",
+      "lat": 46.72549,
+      "lon": 15.58478
+    },
+    "to": {
+      "name": "Leutschach",
+      "lat": 46.66735,
+      "lon": 15.46819
+    },
+    "via": [
+      {
+        "name": "Ratsch",
+        "lat": 46.68695,
+        "lon": 15.57004
+      },
+      {
+        "name": "Glanz",
+        "lat": 46.66326,
+        "lon": 15.53321
+      }
+    ],
+    "length_km": null,
+    "facts": "Hügelland an der slowenischen Grenze, Gebiet der Rebenland Rallye (WP Glanz rund 11 km)",
+    "quality": 3,
+    "caveats": "schmal und kurvig, viele Ausflügler zu Buschenschänken, Weinlese im Herbst",
+    "sources": [
+      "https://de.wikipedia.org/wiki/S%C3%BCdsteirische_Weinstra%C3%9Fe",
+      "https://www.rally-maps.com/Rebenland-Rallye-2023/Glanz"
+    ]
+  },
+  {
+    "id": "at-flexenpass",
+    "name": "Flexenpass",
+    "country": "AT",
+    "region": "Vorarlberg",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "L 198"
+    ],
+    "from": {
+      "name": "Stuben",
+      "lat": 47.13831,
+      "lon": 10.15874
+    },
+    "to": {
+      "name": "Zürs",
+      "lat": 47.17122,
+      "lon": 10.16317
+    },
+    "via": [
+      {
+        "name": "Flexenpass",
+        "lat": 47.15835,
+        "lon": 10.16486
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1773 m, Galerien an der Flexenstraße",
+    "quality": 3,
+    "caveats": "Galerien und Lawinenverbauung, im Winter zeitweise gesperrt",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Flexen_Pass"
+    ]
+  },
+  {
+    "id": "at-hochtannberg",
+    "name": "Hochtannbergpass",
+    "country": "AT",
+    "region": "Vorarlberg",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "B 200"
+    ],
+    "from": {
+      "name": "Warth",
+      "lat": 47.2606,
+      "lon": 10.15322
+    },
+    "to": {
+      "name": "Au",
+      "lat": 47.32246,
+      "lon": 9.97748
+    },
+    "via": [
+      {
+        "name": "Hochtannbergpass",
+        "lat": 47.26947,
+        "lon": 10.13045
+      },
+      {
+        "name": "Schröcken",
+        "lat": 47.25428,
+        "lon": 10.08335
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe rund 1680 m zwischen Lechtal und Bregenzerwald",
+    "quality": 4,
+    "caveats": "Wintersperre möglich, viele Motorräder",
+    "sources": [
+      "https://www.motorradundreisen.de/alpenpaesse/"
+    ]
+  },
+  {
+    "id": "at-furkajoch",
+    "name": "Furkajoch",
+    "country": "AT",
+    "region": "Vorarlberg",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Laterns",
+      "lat": 47.27044,
+      "lon": 9.76588
+    },
+    "to": {
+      "name": "Damüls",
+      "lat": 47.28045,
+      "lon": 9.89096
+    },
+    "via": [
+      {
+        "name": "Furkajoch",
+        "lat": 47.26663,
+        "lon": 9.8329
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1761 m, enge Kehren durch das Laternsertal",
+    "quality": 4,
+    "caveats": "schmal, Wintersperre",
+    "sources": [
+      "https://www.motorradundreisen.de/alpenpaesse/"
+    ]
+  },
+  {
+    "id": "at-faschinajoch",
+    "name": "Faschinajoch",
+    "country": "AT",
+    "region": "Vorarlberg",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Damüls",
+      "lat": 47.28045,
+      "lon": 9.89096
+    },
+    "to": {
+      "name": "Sonntag",
+      "lat": 47.23779,
+      "lon": 9.89587
+    },
+    "via": [
+      {
+        "name": "Faschinajoch",
+        "lat": 47.27173,
+        "lon": 9.90726
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1486 m ins Große Walsertal",
+    "quality": 3,
+    "caveats": "schmal im Großen Walsertal",
+    "sources": [
+      "https://www.motorradundreisen.de/alpenpaesse/"
+    ]
+  },
+  {
+    "id": "at-loiblpass",
+    "name": "Loiblpass",
+    "country": "AT",
+    "region": "Kärnten",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "B 91"
+    ],
+    "from": {
+      "name": "Unterloibl",
+      "lat": 46.50703,
+      "lon": 14.28835
+    },
+    "to": {
+      "name": "Loibltunnel",
+      "lat": 46.44116,
+      "lon": 14.25433
+    },
+    "via": [],
+    "length_km": null,
+    "facts": "Rampe zum Loibltunnel an der Grenze zu Slowenien, ehemaliger Pass 1367 m",
+    "quality": 3,
+    "caveats": "Grenzstrecke, Lkw",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Loibl_Pass"
+    ]
+  },
+  {
+    "id": "at-seebergsattel",
+    "name": "Seebergsattel",
+    "country": "AT",
+    "region": "Kärnten",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "B 82"
+    ],
+    "from": {
+      "name": "Bad Eisenkappel",
+      "lat": 46.4868,
+      "lon": 14.59323
+    },
+    "to": {
+      "name": "Seebergsattel",
+      "lat": 46.37311,
+      "lon": 14.56222
+    },
+    "via": [],
+    "length_km": null,
+    "facts": "Passhöhe 1218 m an der Grenze zu Slowenien",
+    "quality": 3,
+    "caveats": "Grenzstrecke",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Seeberg_Saddle"
+    ]
+  },
+  {
+    "id": "at-wurzenpass",
+    "name": "Wurzenpass",
+    "country": "AT",
+    "region": "Kärnten",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "B 109"
+    ],
+    "from": {
+      "name": "Riegersdorf",
+      "lat": 46.54913,
+      "lon": 13.78065
+    },
+    "to": {
+      "name": "Wurzenpass",
+      "lat": 46.52332,
+      "lon": 13.75156
+    },
+    "via": [],
+    "length_km": null,
+    "facts": "Passhöhe 1073 m, bis 18 % Steigung, Grenze zu Slowenien",
+    "quality": 3,
+    "caveats": "sehr steil, Grenzstrecke",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Wurzen_Pass"
+    ]
+  },
+  {
+    "id": "at-zillertaler-hoehenstrasse",
+    "name": "Zillertaler Höhenstraße",
+    "country": "AT",
+    "region": "Tirol",
+    "kind": "aussicht",
+    "tier": "prefer",
+    "note": "Höhenstraße",
+    "roads": [],
+    "from": {
+      "name": "Hippach",
+      "lat": 47.20454,
+      "lon": 11.86459
+    },
+    "to": {
+      "name": "Kaltenbach",
+      "lat": 47.29081,
+      "lon": 11.87439
+    },
+    "via": [
+      {
+        "name": "Melchboden",
+        "lat": 47.21904,
+        "lon": 11.82327
+      },
+      {
+        "name": "Zillertaler Höhenstraße",
+        "lat": 47.2812,
+        "lon": 11.83954
+      }
+    ],
+    "length_km": null,
+    "facts": "Panoramastraße über dem Zillertal bis rund 2020 m",
+    "quality": 3,
+    "caveats": "Mautstraße, schmal und teils steil, Wintersperre",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Zillertaler_H%C3%B6henstra%C3%9Fe",
+      "https://www.motorradundreisen.de/alpenpaesse/69_zillertaler-hoehenstrasse.html"
+    ]
+  },
+  {
+    "id": "at-kuehtai",
+    "name": "Kühtaisattel",
+    "country": "AT",
+    "region": "Tirol",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Oetz",
+      "lat": 47.20333,
+      "lon": 10.89661
+    },
+    "to": {
+      "name": "Gries im Sellrain",
+      "lat": 47.19551,
+      "lon": 11.15623
+    },
+    "via": [
+      {
+        "name": "Kühtaisattel",
+        "lat": 47.2138,
+        "lon": 11.02437
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe rund 2017 m zwischen Ötztal und Sellraintal",
+    "quality": 4,
+    "caveats": "Wintersperre der Ötztaler Seite möglich, Skibetrieb im Winter",
+    "sources": [
+      "https://www.motorradundreisen.de/alpenpaesse/"
+    ]
+  },
+  {
+    "id": "at-gesaeuse",
+    "name": "Gesäuse Straße",
+    "country": "AT",
+    "region": "Steiermark",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Talstraße",
+    "roads": [
+      "B 146"
+    ],
+    "from": {
+      "name": "Gesäuseeingang",
+      "lat": 47.5833,
+      "lon": 14.5247
+    },
+    "to": {
+      "name": "Hieflau",
+      "lat": 47.6071,
+      "lon": 14.74438
+    },
+    "via": [
+      {
+        "name": "Gstatterboden",
+        "lat": 47.59233,
+        "lon": 14.63695
+      }
+    ],
+    "length_km": null,
+    "facts": "Durch die Ennsschlucht im Nationalpark Gesäuse",
+    "quality": 4,
+    "caveats": "beliebte Motorradstrecke, Kontrollen",
+    "sources": [
+      "https://www.motorradundreisen.de/alpenpaesse/"
+    ]
+  },
+  {
+    "id": "at-annaberg-josefsberg",
+    "name": "Mariazeller Straße über Annaberg und Josefsberg",
+    "country": "AT",
+    "region": "Niederösterreich",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Bergstraße",
+    "roads": [
+      "B 20"
+    ],
+    "from": {
+      "name": "Türnitz",
+      "lat": 47.92989,
+      "lon": 15.48979
+    },
+    "to": {
+      "name": "Mariazell",
+      "lat": 47.72512,
+      "lon": 15.25479
+    },
+    "via": [
+      {
+        "name": "Annaberg",
+        "lat": 47.87174,
+        "lon": 15.37561
+      },
+      {
+        "name": "Wienerbruck",
+        "lat": 47.85529,
+        "lon": 15.30979
+      },
+      {
+        "name": "Josefsberg",
+        "lat": 47.84531,
+        "lon": 15.31423
+      }
+    ],
+    "length_km": null,
+    "facts": "Kurvenreiche Bundesstraße über Annaberg und Josefsberg nach Mariazell",
+    "quality": 4,
+    "caveats": "sehr beliebte Motorradstrecke, häufige Kontrollen, Wallfahrtsverkehr",
+    "sources": [
+      "https://www.motorradundreisen.de/alpenpaesse/"
+    ]
+  },
+  {
+    "id": "at-hochkoenigstrasse",
+    "name": "Hochkönigstraße",
+    "country": "AT",
+    "region": "Salzburg",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "B 164"
+    ],
+    "from": {
+      "name": "Maria Alm",
+      "lat": 47.40533,
+      "lon": 12.90271
+    },
+    "to": {
+      "name": "Bischofshofen",
+      "lat": 47.40921,
+      "lon": 13.21844
+    },
+    "via": [
+      {
+        "name": "Filzensattel",
+        "lat": 47.39725,
+        "lon": 13.00097
+      },
+      {
+        "name": "Dienten",
+        "lat": 47.38189,
+        "lon": 13.00226
+      },
+      {
+        "name": "Dientner Sattel",
+        "lat": 47.39121,
+        "lon": 13.05634
+      },
+      {
+        "name": "Mühlbach",
+        "lat": 47.37615,
+        "lon": 13.12494
+      }
+    ],
+    "length_km": null,
+    "facts": "Filzensattel und Dientner Sattel am Fuß des Hochkönigs",
+    "quality": 4,
+    "caveats": "Skiverkehr im Winter",
+    "sources": [
+      "https://www.motorradundreisen.de/alpenpaesse/"
+    ]
+  },
+  {
+    "id": "at-rechberg",
+    "name": "Rechbergrennen",
+    "country": "AT",
+    "region": "Steiermark",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [
+      "B 64"
+    ],
+    "from": {
+      "name": "Tulwitz",
+      "lat": 47.26961,
+      "lon": 15.46003
+    },
+    "to": {
+      "name": "Rechberg",
+      "lat": 47.26898,
+      "lon": 15.41667
+    },
+    "via": [],
+    "length_km": 4.44,
+    "facts": "seit 1972, Lauf zur Berg-EM, 4440 m seit 2024 (davor 5050 m), Rechberg 929 m",
+    "quality": 4,
+    "caveats": "öffentliche Bundesstraße, am Rennwochenende Ende April gesperrt",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Rechbergrennen",
+      "https://www.rechbergrennen.co.at/wp-content/uploads/2023/04/Presse-Programmheft-Rechbergrennen-2023.pdf"
+    ]
+  },
+  {
+    "id": "at-st-agatha",
+    "name": "Bergrennen Esthofen St. Agatha",
+    "country": "AT",
+    "region": "Oberösterreich",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [],
+    "from": {
+      "name": "Esthofen",
+      "lat": 48.35887,
+      "lon": 13.86246
+    },
+    "to": {
+      "name": "St. Agatha",
+      "lat": 48.38459,
+      "lon": 13.87668
+    },
+    "via": [],
+    "length_km": 2.73,
+    "facts": "2734 m, Lauf zur Österreichischen Bergmeisterschaft, Rekord 55,2 s (Merli 2024)",
+    "quality": 3,
+    "caveats": "kurze Landesstraße, Ziel liegt vor dem Ortskern (Anker ist St. Agatha Ort), am Rennwochenende im September gesperrt",
+    "sources": [
+      "https://www.tips.at/nachrichten/grieskirchen/sport/735148-38-bergrennen-von-esthofen-nach-st-agatha"
+    ]
+  },
+  {
+    "id": "at-gaisberg",
+    "name": "Gaisbergrennen",
+    "country": "AT",
+    "region": "Salzburg",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "historische Bergrennstrecke",
+    "roads": [],
+    "from": {
+      "name": "Guggenthal",
+      "lat": 47.81603,
+      "lon": 13.10019
+    },
+    "to": {
+      "name": "Gaisbergspitze",
+      "lat": 47.80356,
+      "lon": 13.11128
+    },
+    "via": [
+      {
+        "name": "Zistelalm",
+        "lat": 47.79581,
+        "lon": 13.11439
+      }
+    ],
+    "length_km": 8.65,
+    "facts": "1929 bis 1969, ab 1957 8,65 km mit 672 Hm, Lauf zur Berg-EM (Mitter, Porsche 909, 1968)",
+    "quality": 4,
+    "caveats": "genauer historischer Start nicht belegt, Anker folgen der Gaisbergstraße; viele Radfahrer, Sackgasse",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Gaisbergrennen"
+    ]
+  },
+  {
+    "id": "at-jaennerrallye-st-oswald-sandl",
+    "name": "Jännerrallye WP St. Oswald Sandl",
+    "country": "AT",
+    "region": "Oberösterreich",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye-Prüfung",
+    "roads": [],
+    "from": {
+      "name": "St. Oswald bei Freistadt",
+      "lat": 48.50056,
+      "lon": 14.58773
+    },
+    "to": {
+      "name": "Sandl",
+      "lat": 48.56036,
+      "lon": 14.6444
+    },
+    "via": [],
+    "length_km": 8.3,
+    "facts": "Jännerrallye Wertungsprüfung, 8,3 km (2019 und 2020)",
+    "quality": 3,
+    "caveats": "schmale Mühlviertler Nebenstraßen, im Winter Schnee und Eis",
+    "sources": [
+      "https://www.rally-maps.com/J%C3%A4nnerrallye-2020",
+      "https://www.rally-maps.com/J%C3%A4nnerrallye-2019"
+    ]
+  },
+  {
+    "id": "at-jaennerrallye-schoenau-st-leonhard",
+    "name": "Jännerrallye WP Schönau St. Leonhard",
+    "country": "AT",
+    "region": "Oberösterreich",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye-Prüfung",
+    "roads": [],
+    "from": {
+      "name": "Schönau",
+      "lat": 48.39421,
+      "lon": 14.72911
+    },
+    "to": {
+      "name": "St. Leonhard bei Freistadt",
+      "lat": 48.44356,
+      "lon": 14.6776
+    },
+    "via": [],
+    "length_km": 18.84,
+    "facts": "Jännerrallye Wertungsprüfung, 18,84 km (2019 und 2020)",
+    "quality": 3,
+    "caveats": "WP verläuft über Umwege, genaue Führung nicht belegt; schmale Nebenstraßen, im Winter Schnee und Eis",
+    "sources": [
+      "https://www.rally-maps.com/J%C3%A4nnerrallye-2020",
+      "https://www.rally-maps.com/J%C3%A4nnerrallye-2019"
+    ]
+  },
+  {
+    "id": "at-lavanttal-prebl-st-gertraud",
+    "name": "Lavanttal Rallye WP Prebl St. Gertraud",
+    "country": "AT",
+    "region": "Kärnten",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye-Prüfung",
+    "roads": [],
+    "from": {
+      "name": "Prebl",
+      "lat": 46.91359,
+      "lon": 14.79758
+    },
+    "to": {
+      "name": "St. Gertraud",
+      "lat": 46.86976,
+      "lon": 14.87769
+    },
+    "via": [],
+    "length_km": 14.38,
+    "facts": "Lavanttal Rallye Wertungsprüfung 14,38 km (2012); 2010 bis 2024 als Hammer Prebl gefahren",
+    "quality": 3,
+    "caveats": "schmale Bergstraßen",
+    "sources": [
+      "https://www.rally-maps.com/Rallye-im-Lavanttal-2012/Prebl-St-Gertraud",
+      "https://de.wikipedia.org/wiki/Lavanttal-Rallye"
+    ]
+  },
+  {
+    "id": "ch-furkapass",
+    "name": "Furkapass",
+    "country": "CH",
+    "region": "Wallis / Uri",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "19"
+    ],
+    "from": {
+      "name": "Gletsch",
+      "lat": 46.56132,
+      "lon": 8.3615
+    },
+    "to": {
+      "name": "Realp",
+      "lat": 46.59885,
+      "lon": 8.50205
+    },
+    "via": [
+      {
+        "name": "Furkapass",
+        "lat": 46.57269,
+        "lon": 8.41518
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2429 m, Kehren über dem Rhonegletscher, Goldfinger-Drehort",
+    "quality": 5,
+    "caveats": "Wintersperre etwa Oktober bis Juni, Reisebusse und Radfahrer",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Furka_Pass",
+      "https://www.motorradundreisen.de/alpenpaesse/266_furkapass.html"
+    ]
+  },
+  {
+    "id": "ch-grimselpass",
+    "name": "Grimselpass",
+    "country": "CH",
+    "region": "Bern / Wallis",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "6"
+    ],
+    "from": {
+      "name": "Innertkirchen",
+      "lat": 46.70538,
+      "lon": 8.22863
+    },
+    "to": {
+      "name": "Gletsch",
+      "lat": 46.56132,
+      "lon": 8.3615
+    },
+    "via": [
+      {
+        "name": "Guttannen",
+        "lat": 46.60823,
+        "lon": 8.30476
+      },
+      {
+        "name": "Grimselpass",
+        "lat": 46.56152,
+        "lon": 8.3377
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2164 m, Stauseen und Granitplatten",
+    "quality": 5,
+    "caveats": "Wintersperre etwa Oktober bis Juni",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Grimsel_Pass",
+      "https://www.motorradundreisen.de/alpenpaesse/264_grimselpass.html"
+    ]
+  },
+  {
+    "id": "ch-sustenpass",
+    "name": "Sustenpass",
+    "country": "CH",
+    "region": "Bern / Uri",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "11"
+    ],
+    "from": {
+      "name": "Innertkirchen",
+      "lat": 46.70538,
+      "lon": 8.22863
+    },
+    "to": {
+      "name": "Wassen",
+      "lat": 46.70685,
+      "lon": 8.59958
+    },
+    "via": [
+      {
+        "name": "Gadmen",
+        "lat": 46.70358,
+        "lon": 8.38013
+      },
+      {
+        "name": "Sustenpass",
+        "lat": 46.72912,
+        "lon": 8.44652
+      }
+    ],
+    "length_km": 45.5,
+    "facts": "Passhöhe 2224 m, 45,5 km, Steingletscher, Tunnel am Scheitel",
+    "quality": 5,
+    "caveats": "Wintersperre etwa Oktober bis Juni",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Susten_Pass",
+      "https://www.motorradundreisen.de/alpenpaesse/261_sustenpass.html"
+    ]
+  },
+  {
+    "id": "ch-klausenpass",
+    "name": "Klausenpass",
+    "country": "CH",
+    "region": "Uri / Glarus",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Altdorf",
+      "lat": 46.88207,
+      "lon": 8.64139
+    },
+    "to": {
+      "name": "Linthal",
+      "lat": 46.91899,
+      "lon": 8.99714
+    },
+    "via": [
+      {
+        "name": "Unterschächen",
+        "lat": 46.86311,
+        "lon": 8.77035
+      },
+      {
+        "name": "Klausenpass",
+        "lat": 46.86819,
+        "lon": 8.85544
+      },
+      {
+        "name": "Urnerboden",
+        "lat": 46.88949,
+        "lon": 8.90176
+      }
+    ],
+    "length_km": 61,
+    "facts": "Passhöhe 1948 m, 61 km, Urnerboden, Strecke des historischen Klausenrennens",
+    "quality": 5,
+    "caveats": "teils schmal, Wintersperre, viele Radfahrer und Kühe auf dem Urnerboden",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Klausen_Pass",
+      "https://www.motorradundreisen.de/alpenpaesse/254_klausenpass.html"
+    ]
+  },
+  {
+    "id": "ch-glaubenbergpass",
+    "name": "Glaubenbergpass",
+    "country": "CH",
+    "region": "Obwalden / Luzern",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Sarnen",
+      "lat": 46.89567,
+      "lon": 8.24615
+    },
+    "to": {
+      "name": "Entlebuch",
+      "lat": 46.99224,
+      "lon": 8.06456
+    },
+    "via": [
+      {
+        "name": "Glaubenbergpass",
+        "lat": 46.89246,
+        "lon": 8.10767
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1543 m, stille Voralpenstrecke",
+    "quality": 3,
+    "caveats": "schmal, Weidevieh, Wintersperre",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Glaubenberg_Pass"
+    ]
+  },
+  {
+    "id": "ch-glaubenbuelenpass",
+    "name": "Glaubenbüelenpass",
+    "country": "CH",
+    "region": "Obwalden / Luzern",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Giswil",
+      "lat": 46.83817,
+      "lon": 8.188
+    },
+    "to": {
+      "name": "Schüpfheim",
+      "lat": 46.95172,
+      "lon": 8.01795
+    },
+    "via": [
+      {
+        "name": "Glaubenbüelen",
+        "lat": 46.81881,
+        "lon": 8.09317
+      },
+      {
+        "name": "Sörenberg",
+        "lat": 46.82217,
+        "lon": 8.03493
+      }
+    ],
+    "length_km": 38,
+    "facts": "Passhöhe 1611 m, 38 km, Blick auf Brienzer Rothorn",
+    "quality": 4,
+    "caveats": "Wintersperre",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Glaubenb%C3%BCelenpass",
+      "https://www.motorradundreisen.de/alpenpaesse/257_glaubenbueelenpass.html"
+    ]
+  },
+  {
+    "id": "ch-jaunpass",
+    "name": "Jaunpass",
+    "country": "CH",
+    "region": "Freiburg / Bern",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Bulle",
+      "lat": 46.6191,
+      "lon": 7.05812
+    },
+    "to": {
+      "name": "Boltigen",
+      "lat": 46.62954,
+      "lon": 7.39084
+    },
+    "via": [
+      {
+        "name": "Charmey",
+        "lat": 46.59624,
+        "lon": 7.17926
+      },
+      {
+        "name": "Jaun",
+        "lat": 46.6114,
+        "lon": 7.27613
+      },
+      {
+        "name": "Jaunpass",
+        "lat": 46.59216,
+        "lon": 7.33908
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1509 m vom Greyerzerland ins Simmental",
+    "quality": 4,
+    "caveats": "ganzjährig geöffnet, im Winter Schneefahrbahn",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Jaun_Pass",
+      "https://www.motorradundreisen.de/alpenpaesse/603_jaunpass.html"
+    ]
+  },
+  {
+    "id": "ch-col-du-pillon",
+    "name": "Col du Pillon",
+    "country": "CH",
+    "region": "Waadt / Bern",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Aigle",
+      "lat": 46.3179,
+      "lon": 6.96889
+    },
+    "to": {
+      "name": "Gsteig",
+      "lat": 46.38558,
+      "lon": 7.26733
+    },
+    "via": [
+      {
+        "name": "Le Sépey",
+        "lat": 46.36139,
+        "lon": 7.05212
+      },
+      {
+        "name": "Les Diablerets",
+        "lat": 46.3511,
+        "lon": 7.15664
+      },
+      {
+        "name": "Col du Pillon",
+        "lat": 46.35343,
+        "lon": 7.2046
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1546 m unter dem Glacier 3000",
+    "quality": 4,
+    "caveats": "ganzjährig geöffnet",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Col_du_Pillon"
+    ]
+  },
+  {
+    "id": "ch-col-des-mosses",
+    "name": "Col des Mosses",
+    "country": "CH",
+    "region": "Waadt",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Le Sépey",
+      "lat": 46.36139,
+      "lon": 7.05212
+    },
+    "to": {
+      "name": "Château-d'Oex",
+      "lat": 46.47384,
+      "lon": 7.1303
+    },
+    "via": [
+      {
+        "name": "Col des Mosses",
+        "lat": 46.39898,
+        "lon": 7.10263
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1445 m, weite Kurven",
+    "quality": 3,
+    "caveats": "ganzjährig geöffnet",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Col_des_Mosses"
+    ]
+  },
+  {
+    "id": "ch-col-de-la-croix",
+    "name": "Col de la Croix",
+    "country": "CH",
+    "region": "Waadt",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Villars-sur-Ollon",
+      "lat": 46.29776,
+      "lon": 7.05533
+    },
+    "to": {
+      "name": "Les Diablerets",
+      "lat": 46.3511,
+      "lon": 7.15664
+    },
+    "via": [
+      {
+        "name": "Col de la Croix",
+        "lat": 46.3247,
+        "lon": 7.12672
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1778 m, kleine Bergstraße",
+    "quality": 4,
+    "caveats": "schmal, Wintersperre",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Col_de_la_Croix"
+    ]
+  },
+  {
+    "id": "ch-nufenenpass",
+    "name": "Nufenenpass",
+    "country": "CH",
+    "region": "Wallis / Tessin",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Ulrichen",
+      "lat": 46.50656,
+      "lon": 8.30497
+    },
+    "to": {
+      "name": "Airolo",
+      "lat": 46.52903,
+      "lon": 8.6086
+    },
+    "via": [
+      {
+        "name": "Nufenenpass",
+        "lat": 46.47712,
+        "lon": 8.38783
+      },
+      {
+        "name": "All'Acqua",
+        "lat": 46.48691,
+        "lon": 8.47574
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2478 m, höchster Strassenpass ganz in der Schweiz",
+    "quality": 5,
+    "caveats": "Wintersperre etwa Oktober bis Juni",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Nufenen_Pass"
+    ]
+  },
+  {
+    "id": "ch-gotthard-tremola",
+    "name": "Gotthardpass Tremola",
+    "country": "CH",
+    "region": "Tessin / Uri",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Pflasterstraße",
+    "roads": [],
+    "from": {
+      "name": "Airolo",
+      "lat": 46.52903,
+      "lon": 8.6086
+    },
+    "to": {
+      "name": "Gotthardpass",
+      "lat": 46.55931,
+      "lon": 8.56115
+    },
+    "via": [
+      {
+        "name": "Tremola",
+        "lat": 46.54934,
+        "lon": 8.56845
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2106 m, Tremola als historische Kopfsteinpflasterstraße mit dichter Kehrenfolge",
+    "quality": 5,
+    "caveats": "Kopfsteinpflaster, bei Nässe rutschig; Wintersperre; Alternative ist die neue Passstraße",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Gotthard_Pass",
+      "https://de.wikipedia.org/wiki/Tremola"
+    ]
+  },
+  {
+    "id": "ch-oberalppass",
+    "name": "Oberalppass",
+    "country": "CH",
+    "region": "Uri / Graubünden",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "19"
+    ],
+    "from": {
+      "name": "Andermatt",
+      "lat": 46.63405,
+      "lon": 8.59481
+    },
+    "to": {
+      "name": "Disentis",
+      "lat": 46.70511,
+      "lon": 8.85521
+    },
+    "via": [
+      {
+        "name": "Oberalppass",
+        "lat": 46.65874,
+        "lon": 8.67117
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2044 m, Rheinquelle",
+    "quality": 4,
+    "caveats": "Wintersperre",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Oberalp_Pass"
+    ]
+  },
+  {
+    "id": "ch-lukmanierpass",
+    "name": "Lukmanierpass",
+    "country": "CH",
+    "region": "Graubünden / Tessin",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Disentis",
+      "lat": 46.70511,
+      "lon": 8.85521
+    },
+    "to": {
+      "name": "Olivone",
+      "lat": 46.5304,
+      "lon": 8.93845
+    },
+    "via": [
+      {
+        "name": "Lukmanierpass",
+        "lat": 46.57431,
+        "lon": 8.80118
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1915 m, weite Hochebene",
+    "quality": 3,
+    "caveats": "im Winter zeitweise gesperrt",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Lukmanier_Pass"
+    ]
+  },
+  {
+    "id": "ch-albulapass",
+    "name": "Albulapass",
+    "country": "CH",
+    "region": "Graubünden",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Bergün",
+      "lat": 46.62904,
+      "lon": 9.74528
+    },
+    "to": {
+      "name": "La Punt",
+      "lat": 46.57658,
+      "lon": 9.93082
+    },
+    "via": [
+      {
+        "name": "Albulapass",
+        "lat": 46.58225,
+        "lon": 9.83768
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2312 m, entlang der Albulabahn",
+    "quality": 4,
+    "caveats": "schmal, Wintersperre",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Albula_Pass"
+    ]
+  },
+  {
+    "id": "ch-fluelapass",
+    "name": "Flüelapass",
+    "country": "CH",
+    "region": "Graubünden",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "28"
+    ],
+    "from": {
+      "name": "Davos",
+      "lat": 46.7962,
+      "lon": 9.82369
+    },
+    "to": {
+      "name": "Susch",
+      "lat": 46.74938,
+      "lon": 10.07974
+    },
+    "via": [
+      {
+        "name": "Flüelapass",
+        "lat": 46.7475,
+        "lon": 9.95028
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2383 m",
+    "quality": 4,
+    "caveats": "im Winter zeitweise gesperrt",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Fl%C3%BCela_Pass"
+    ]
+  },
+  {
+    "id": "ch-julierpass",
+    "name": "Julierpass",
+    "country": "CH",
+    "region": "Graubünden",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "3"
+    ],
+    "from": {
+      "name": "Tiefencastel",
+      "lat": 46.66156,
+      "lon": 9.57649
+    },
+    "to": {
+      "name": "Silvaplana",
+      "lat": 46.45993,
+      "lon": 9.79592
+    },
+    "via": [
+      {
+        "name": "Bivio",
+        "lat": 46.46875,
+        "lon": 9.64969
+      },
+      {
+        "name": "Julierpass",
+        "lat": 46.47221,
+        "lon": 9.72815
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2284 m, ganzjährig befahrbar",
+    "quality": 4,
+    "caveats": "Verkehr Richtung Engadin",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Julier_Pass"
+    ]
+  },
+  {
+    "id": "ch-berninapass",
+    "name": "Berninapass",
+    "country": "CH",
+    "region": "Graubünden",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "29"
+    ],
+    "from": {
+      "name": "Pontresina",
+      "lat": 46.48999,
+      "lon": 9.9043
+    },
+    "to": {
+      "name": "Poschiavo",
+      "lat": 46.32641,
+      "lon": 10.05814
+    },
+    "via": [
+      {
+        "name": "Berninapass",
+        "lat": 46.41578,
+        "lon": 10.01148
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2328 m, Gletscherblick und Kehren ins Puschlav",
+    "quality": 4,
+    "caveats": "Verkehr Richtung Italien",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Bernina_Pass"
+    ]
+  },
+  {
+    "id": "ch-spluegenpass",
+    "name": "Splügenpass",
+    "country": "CH",
+    "region": "Graubünden",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Splügen",
+      "lat": 46.54172,
+      "lon": 9.32262
+    },
+    "to": {
+      "name": "Splügenpass",
+      "lat": 46.50562,
+      "lon": 9.33034
+    },
+    "via": [],
+    "length_km": null,
+    "facts": "Passhöhe 2113 m, weiter nach Chiavenna",
+    "quality": 4,
+    "caveats": "Italienische Südseite sehr eng mit Kehren und Tunneln, Wintersperre",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Spl%C3%BCgen_Pass"
+    ]
+  },
+  {
+    "id": "ch-ofenpass",
+    "name": "Ofenpass",
+    "country": "CH",
+    "region": "Graubünden",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [
+      "28"
+    ],
+    "from": {
+      "name": "Zernez",
+      "lat": 46.69798,
+      "lon": 10.09433
+    },
+    "to": {
+      "name": "Santa Maria",
+      "lat": 46.60127,
+      "lon": 10.42328
+    },
+    "via": [
+      {
+        "name": "Ofenpass",
+        "lat": 46.63977,
+        "lon": 10.29217
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 2149 m durch den Schweizerischen Nationalpark",
+    "quality": 4,
+    "caveats": "Halteverbot im Nationalpark, Geschwindigkeitskontrollen",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Ofen_Pass"
+    ]
+  },
+  {
+    "id": "ch-umbrailpass",
+    "name": "Umbrailpass",
+    "country": "CH",
+    "region": "Graubünden",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Santa Maria",
+      "lat": 46.60127,
+      "lon": 10.42328
+    },
+    "to": {
+      "name": "Umbrailpass",
+      "lat": 46.54165,
+      "lon": 10.43318
+    },
+    "via": [],
+    "length_km": null,
+    "facts": "Passhöhe 2501 m, höchster Strassenpass der Schweiz, Anschluss ans Stilfser Joch",
+    "quality": 4,
+    "caveats": "schmal, Wintersperre",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Umbrail_Pass"
+    ]
+  },
+  {
+    "id": "ch-pragelpass",
+    "name": "Pragelpass",
+    "country": "CH",
+    "region": "Schwyz / Glarus",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Muotathal",
+      "lat": 46.97467,
+      "lon": 8.7658
+    },
+    "to": {
+      "name": "Netstal",
+      "lat": 47.06113,
+      "lon": 9.05297
+    },
+    "via": [
+      {
+        "name": "Pragelpass",
+        "lat": 46.99937,
+        "lon": 8.8695
+      },
+      {
+        "name": "Richisau",
+        "lat": 47.0235,
+        "lon": 8.91177
+      },
+      {
+        "name": "Klöntal",
+        "lat": 47.02269,
+        "lon": 8.95241
+      }
+    ],
+    "length_km": 48,
+    "facts": "Passhöhe 1550 m, Klöntalersee",
+    "quality": 3,
+    "caveats": "sehr schmal, an Sommerwochenenden Fahrverbot für privaten Motorverkehr, vor Planung prüfen",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Pragel_Pass",
+      "https://www.motorradundreisen.de/alpenpaesse/253_pragelpass.html"
+    ]
+  },
+  {
+    "id": "ch-ibergeregg",
+    "name": "Ibergeregg",
+    "country": "CH",
+    "region": "Schwyz",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Rickenbach",
+      "lat": 47.01481,
+      "lon": 8.66934
+    },
+    "to": {
+      "name": "Oberiberg",
+      "lat": 47.03202,
+      "lon": 8.76999
+    },
+    "via": [
+      {
+        "name": "Ibergeregg",
+        "lat": 47.01743,
+        "lon": 8.73321
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1406 m mit Blick auf die Mythen",
+    "quality": 3,
+    "caveats": "im Winter Skiverkehr",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Ibergeregg_Pass"
+    ]
+  },
+  {
+    "id": "ch-schwaegalp",
+    "name": "Schwägalppass",
+    "country": "CH",
+    "region": "Appenzell / St. Gallen",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Urnäsch",
+      "lat": 47.31786,
+      "lon": 9.28345
+    },
+    "to": {
+      "name": "Neu St. Johann",
+      "lat": 47.23141,
+      "lon": 9.19357
+    },
+    "via": [
+      {
+        "name": "Schwägalp",
+        "lat": 47.25613,
+        "lon": 9.31925
+      }
+    ],
+    "length_km": 22,
+    "facts": "rund 1300 m am Fuß des Säntis, 22 km",
+    "quality": 4,
+    "caveats": "Ausflugsverkehr zur Säntisbahn",
+    "sources": [
+      "https://www.motorradundreisen.de/alpenpaesse/248_schwaegalppass.html"
+    ]
+  },
+  {
+    "id": "ch-col-du-marchairuz",
+    "name": "Col du Marchairuz",
+    "country": "CH",
+    "region": "Waadt",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Saint-George",
+      "lat": 46.51383,
+      "lon": 6.26027
+    },
+    "to": {
+      "name": "Le Brassus",
+      "lat": 46.58396,
+      "lon": 6.21234
+    },
+    "via": [
+      {
+        "name": "Col du Marchairuz",
+        "lat": 46.55279,
+        "lon": 6.25029
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1447 m im Waadtländer Jura",
+    "quality": 4,
+    "caveats": "ganzjährig geöffnet, Wildwechsel",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Col_du_Marchairuz"
+    ]
+  },
+  {
+    "id": "ch-gurnigelpass",
+    "name": "Gurnigelpass",
+    "country": "CH",
+    "region": "Bern / Freiburg",
+    "kind": "pass",
+    "tier": "prefer",
+    "note": "Passstraße",
+    "roads": [],
+    "from": {
+      "name": "Rüti bei Riggisberg",
+      "lat": 46.78277,
+      "lon": 7.45051
+    },
+    "to": {
+      "name": "Zollhaus",
+      "lat": 46.71182,
+      "lon": 7.31035
+    },
+    "via": [
+      {
+        "name": "Gurnigelbad",
+        "lat": 46.76139,
+        "lon": 7.44358
+      },
+      {
+        "name": "Gurnigelpass",
+        "lat": 46.73203,
+        "lon": 7.44788
+      }
+    ],
+    "length_km": null,
+    "facts": "Passhöhe 1608 m im Naturpark Gantrisch",
+    "quality": 4,
+    "caveats": "schmal, Wintersperre der Passhöhe möglich",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Gurnigel_Pass"
+    ]
+  },
+  {
+    "id": "ch-gurnigel",
+    "name": "Bergrennen Gurnigel",
+    "country": "CH",
+    "region": "Bern",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [],
+    "from": {
+      "name": "Rüti bei Riggisberg",
+      "lat": 46.78277,
+      "lon": 7.45051
+    },
+    "to": {
+      "name": "Gurnigelbad",
+      "lat": 46.76139,
+      "lon": 7.44358
+    },
+    "via": [],
+    "length_km": 3.73,
+    "facts": "3734 m, mittelschnell und kurvig, Finale der Schweizer Bergmeisterschaft",
+    "quality": 4,
+    "caveats": "am Rennwochenende im September gesperrt",
+    "sources": [
+      "https://www.plattformj.ch/artikel/213442/",
+      "https://www.myswitzerland.com/en/experiences/events/bergrennen-gurnigel/"
+    ]
+  },
+  {
+    "id": "ch-st-ursanne-les-rangiers",
+    "name": "Bergrennen St-Ursanne Les Rangiers",
+    "country": "CH",
+    "region": "Jura",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [],
+    "from": {
+      "name": "St-Ursanne",
+      "lat": 47.3646,
+      "lon": 7.15395
+    },
+    "to": {
+      "name": "La Caquerelle",
+      "lat": 47.37872,
+      "lon": 7.21119
+    },
+    "via": [],
+    "length_km": 5.2,
+    "facts": "seit 1926, gut 5 km, rund 350 Hm, Lauf zur Berg-EM, Les Grippons als schnellste EM-Kurve",
+    "quality": 5,
+    "caveats": "am Rennwochenende im August gesperrt",
+    "sources": [
+      "https://fr.wikipedia.org/wiki/Course_de_c%C3%B4te_Saint-Ursanne_-_Les_Rangiers",
+      "https://de.wikipedia.org/wiki/Bergrennen"
+    ]
+  },
+  {
+    "id": "ch-hemberg",
+    "name": "Bergrennen Hemberg",
+    "country": "CH",
+    "region": "St. Gallen",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [],
+    "from": {
+      "name": "Bächli",
+      "lat": 47.30584,
+      "lon": 9.19503
+    },
+    "to": {
+      "name": "Hemberg",
+      "lat": 47.30047,
+      "lon": 9.17566
+    },
+    "via": [],
+    "length_km": 1.76,
+    "facts": "1758 m, 157 Hm, 1968 bis 1990 ab St. Peterzell, seit 2012 wieder",
+    "quality": 3,
+    "caveats": "sehr kurz, am Rennwochenende im Juni gesperrt",
+    "sources": [
+      "https://www.autosprint.ch/en/?p=86165",
+      "https://de.wikipedia.org/wiki/Hemberg_SG"
+    ]
+  },
+  {
+    "id": "ch-oberhallau",
+    "name": "Bergrennen Oberhallau",
+    "country": "CH",
+    "region": "Schaffhausen",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [],
+    "from": {
+      "name": "Oberhallau",
+      "lat": 47.7051,
+      "lon": 8.47834
+    },
+    "to": {
+      "name": "Vorderer Berghof",
+      "lat": 47.715,
+      "lon": 8.46643
+    },
+    "via": [],
+    "length_km": 3.0,
+    "facts": "3,0 km, 157 Hm, erstmals 1923, durch die Rebberge",
+    "quality": 3,
+    "caveats": "Nebenstraße, am Rennwochenende Ende August gesperrt",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Oberhallau"
+    ]
+  },
+  {
+    "id": "ch-ollon-villars",
+    "name": "Bergrennen Ollon Villars",
+    "country": "CH",
+    "region": "Waadt",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "historische Bergrennstrecke",
+    "roads": [],
+    "from": {
+      "name": "Ollon",
+      "lat": 46.29724,
+      "lon": 6.99503
+    },
+    "to": {
+      "name": "Villars",
+      "lat": 46.29776,
+      "lon": 7.05533
+    },
+    "via": [
+      {
+        "name": "Huémoz",
+        "lat": 46.29117,
+        "lon": 7.02497
+      }
+    ],
+    "length_km": 8,
+    "facts": "rund 8 km, 1953 bis 1971 Lauf zur Berg-EM, heute Historic Hillclimb",
+    "quality": 4,
+    "caveats": "Ortsdurchfahrten, Ausflugsverkehr nach Villars",
+    "sources": [
+      "https://www.zwischengas.com/en/articles/events/Bergrennen-Ollon-Villars-2017.html",
+      "https://www.motorsportmagazine.com/archive/article/march-2010/88/ollon-villars/"
+    ]
+  },
+  {
+    "id": "ch-ayent-anzere",
+    "name": "Bergrennen Ayent Anzère",
+    "country": "CH",
+    "region": "Wallis",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [],
+    "from": {
+      "name": "Ayent",
+      "lat": 46.31903,
+      "lon": 7.4166
+    },
+    "to": {
+      "name": "Anzère",
+      "lat": 46.29707,
+      "lon": 7.39895
+    },
+    "via": [],
+    "length_km": 3.5,
+    "facts": "3500 m, Lauf zur Schweizer Bergmeisterschaft",
+    "quality": 3,
+    "caveats": "am Rennwochenende gesperrt",
+    "sources": [
+      "https://motorsport.ch/dokumente/dateien/Ayent-Anzere_NAT_2023.pdf",
+      "https://www.myswitzerland.com/en/experiences/events/ayent-anzere-hillclimb/"
+    ]
+  },
+  {
+    "id": "ch-arosa-classiccar",
+    "name": "Arosa ClassicCar Bergrennen",
+    "country": "CH",
+    "region": "Graubünden",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "Bergrennstrecke",
+    "roads": [],
+    "from": {
+      "name": "Langwies",
+      "lat": 46.82056,
+      "lon": 9.71264
+    },
+    "to": {
+      "name": "Arosa",
+      "lat": 46.77972,
+      "lon": 9.67814
+    },
+    "via": [
+      {
+        "name": "Litzirüti",
+        "lat": 46.79872,
+        "lon": 9.70278
+      }
+    ],
+    "length_km": 7.3,
+    "facts": "7,3 km, 422 Hm, 76 Kurven davon drei Haarnadeln, seit 2005",
+    "quality": 4,
+    "caveats": "Sackgasse nach Arosa, am Rennwochenende gesperrt",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Arosa_ClassicCar"
+    ]
+  },
+  {
+    "id": "ch-klausenrennen",
+    "name": "Klausenrennen",
+    "country": "CH",
+    "region": "Glarus / Uri",
+    "kind": "bergrennen",
+    "tier": "highlight",
+    "note": "historische Bergrennstrecke",
+    "roads": [],
+    "from": {
+      "name": "Linthal",
+      "lat": 46.91899,
+      "lon": 8.99714
+    },
+    "to": {
+      "name": "Klausenpass",
+      "lat": 46.86819,
+      "lon": 8.85544
+    },
+    "via": [
+      {
+        "name": "Urnerboden",
+        "lat": 46.88949,
+        "lon": 8.90176
+      }
+    ],
+    "length_km": 21.5,
+    "facts": "1922 bis 1934, 21,5 km, 136 Kurven, 1237 Hm, Rekord Caracciola 1934",
+    "quality": 5,
+    "caveats": "Wintersperre, Kühe auf dem Urnerboden",
+    "sources": [
+      "https://de.wikipedia.org/wiki/Klausenrennen"
+    ]
+  },
+  {
+    "id": "ch-valais-champex",
+    "name": "Rallye du Valais WP Champex",
+    "country": "CH",
+    "region": "Wallis",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye-Prüfung",
+    "roads": [],
+    "from": {
+      "name": "Les Valettes",
+      "lat": 46.07857,
+      "lon": 7.08225
+    },
+    "to": {
+      "name": "Champex-Lac",
+      "lat": 46.03058,
+      "lon": 7.11682
+    },
+    "via": [],
+    "length_km": 9.8,
+    "facts": "Rallye International du Valais, seit 1991 regelmäßig, rund 9,5 bis 9,8 km",
+    "quality": 4,
+    "caveats": "enge Kehren, Ausflugsverkehr zum Lac de Champex",
+    "sources": [
+      "https://www.rally-maps.com/Rallye-International-du-Valais-2018/Champex-Lac"
+    ]
+  },
+  {
+    "id": "ch-valais-chalais-vercorin",
+    "name": "Rallye du Valais WP Chalais Vercorin",
+    "country": "CH",
+    "region": "Wallis",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye-Prüfung",
+    "roads": [],
+    "from": {
+      "name": "Chalais",
+      "lat": 46.26544,
+      "lon": 7.50854
+    },
+    "to": {
+      "name": "Vercorin",
+      "lat": 46.25717,
+      "lon": 7.5307
+    },
+    "via": [],
+    "length_km": 8.68,
+    "facts": "Rallye International du Valais, 8,68 km (1991), Teil der längeren WPs Vercorin und Nax Région",
+    "quality": 4,
+    "caveats": "enge Bergstraße",
+    "sources": [
+      "https://www.rally-maps.com/Rallye-International-du-Valais-2018/Chalais-Nax"
+    ]
+  },
+  {
+    "id": "ch-valais-col-des-planches",
+    "name": "Rallye du Valais WP Col des Planches",
+    "country": "CH",
+    "region": "Wallis",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye-Prüfung",
+    "roads": [],
+    "from": {
+      "name": "Martigny-Croix",
+      "lat": 46.08669,
+      "lon": 7.05849
+    },
+    "to": {
+      "name": "Vollèges",
+      "lat": 46.08801,
+      "lon": 7.16973
+    },
+    "via": [
+      {
+        "name": "Chemin-Dessus",
+        "lat": 46.08975,
+        "lon": 7.09541
+      },
+      {
+        "name": "Col des Planches",
+        "lat": 46.09699,
+        "lon": 7.12418
+      }
+    ],
+    "length_km": 9.02,
+    "facts": "Rallye International du Valais, 9,02 km (2021)",
+    "quality": 4,
+    "caveats": "schmale Bergstraße",
+    "sources": [
+      "https://www.rally-maps.com/Rallye-Du-Valais-2021"
+    ]
+  },
+  {
+    "id": "ch-jurassien-saulcy-saint-brais",
+    "name": "Critérium Jurassien WP Saulcy Saint-Brais",
+    "country": "CH",
+    "region": "Jura",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye-Prüfung",
+    "roads": [],
+    "from": {
+      "name": "Saulcy",
+      "lat": 47.30161,
+      "lon": 7.15402
+    },
+    "to": {
+      "name": "Saint-Brais",
+      "lat": 47.3053,
+      "lon": 7.11259
+    },
+    "via": [],
+    "length_km": null,
+    "facts": "Critérium Jurassien Wertungsprüfung (2024)",
+    "quality": 3,
+    "caveats": "Juraweiden, Weidevieh",
+    "sources": [
+      "https://ewrc-results.com/eventstats/86453-criterium-jurassien-2024/"
+    ]
+  },
+  {
+    "id": "ch-jurassien-villars-reclere",
+    "name": "Critérium Jurassien WP Villars Réclère",
+    "country": "CH",
+    "region": "Jura",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye-Prüfung",
+    "roads": [],
+    "from": {
+      "name": "Villars-sur-Fontenais",
+      "lat": 47.38773,
+      "lon": 7.07988
+    },
+    "to": {
+      "name": "Réclère",
+      "lat": 47.37563,
+      "lon": 6.922
+    },
+    "via": [],
+    "length_km": null,
+    "facts": "Critérium Jurassien Wertungsprüfung (2024)",
+    "quality": 3,
+    "caveats": "WP-Verlauf in der Ajoie nicht genau belegt",
+    "sources": [
+      "https://ewrc-results.com/eventstats/86453-criterium-jurassien-2024/"
+    ]
+  },
+  {
+    "id": "ch-jurassien-epauvillers-les-enfers",
+    "name": "Critérium Jurassien WP Epauvillers Les Enfers",
+    "country": "CH",
+    "region": "Jura",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye-Prüfung",
+    "roads": [],
+    "from": {
+      "name": "Epauvillers",
+      "lat": 47.33525,
+      "lon": 7.116
+    },
+    "to": {
+      "name": "Les Enfers",
+      "lat": 47.28857,
+      "lon": 7.04736
+    },
+    "via": [],
+    "length_km": null,
+    "facts": "Critérium Jurassien Wertungsprüfung (2024)",
+    "quality": 3,
+    "caveats": "schmal, Steigung aus dem Doubstal",
+    "sources": [
+      "https://ewrc-results.com/eventstats/86453-criterium-jurassien-2024/"
+    ]
+  },
+  {
+    "id": "ch-ticino-valcolla",
+    "name": "Rally del Ticino WP Valcolla",
+    "country": "CH",
+    "region": "Tessin",
+    "kind": "rallye",
+    "tier": "highlight",
+    "note": "Rallye-Prüfung",
+    "roads": [],
+    "from": {
+      "name": "Sonvico",
+      "lat": 46.05845,
+      "lon": 8.99053
+    },
+    "to": {
+      "name": "Bogno",
+      "lat": 46.08994,
+      "lon": 9.06283
+    },
+    "via": [],
+    "length_km": null,
+    "facts": "Rally del Ticino Wertungsprüfung Valcolla, 14,47 km (2021 bis 2023)",
+    "quality": 3,
+    "caveats": "genauer WP-Verlauf nicht belegt, Anker folgen der Straße durch das Val Colla; sehr schmal",
+    "sources": [
+      "https://www.rally-maps.com/Rally-del-Ticino-2022/Valcolla"
+    ]
+  }
+]

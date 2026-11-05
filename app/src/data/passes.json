@@ -2692,7 +2692,9 @@
     "name": "Nockalmstraße (Schiestelscharte)",
     "names": [
       "Schiestelscharte",
-      "Nockalmstraße"
+      "Nockalmstraße",
+      "Nockalmstrasse",
+      "Eisentalhöhe"
     ],
     "country": [
       "AT"
@@ -7120,5 +7122,834 @@
     "toll": false,
     "car_note": null,
     "source": "https://fr.wikipedia.org/wiki/Col_d%27Agnes"
+  },
+  {
+    "id": "sella-chiampon",
+    "name": "Sella Chiampon",
+    "names": [
+      "Chiampon",
+      "Sella Chiampón"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul",
+    "lat": 46.3553,
+    "lon": 12.87856,
+    "ele": 790,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.openstreetmap.org/node/3043182028"
+  },
+  {
+    "id": "sella-chianzutan",
+    "name": "Sella Chianzutan",
+    "names": [
+      "Chianzutan",
+      "Sella Chianzután"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul",
+    "lat": 46.35931,
+    "lon": 12.94104,
+    "ele": 954,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.openstreetmap.org/node/3043191884"
+  },
+  {
+    "id": "forcella-monte-rest",
+    "name": "Forcella di Monte Rest",
+    "names": [
+      "Passo Rest",
+      "Monte Rest",
+      "Forcella Monte Rest"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul",
+    "lat": 46.35593,
+    "lon": 12.78278,
+    "ele": 1052,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://it.wikipedia.org/wiki/Forcella_di_Monte_Rest"
+  },
+  {
+    "id": "forcella-pala-barzana",
+    "name": "Forcella di Pala Barzana",
+    "names": [
+      "Pala Barzana",
+      "Passo di Pala Barzana"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul",
+    "lat": 46.19601,
+    "lon": 12.65908,
+    "ele": 840,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.openstreetmap.org/node/1444385382"
+  },
+  {
+    "id": "passo-del-pura",
+    "name": "Passo del Pura",
+    "names": [
+      "Pura",
+      "Passo Pura"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul",
+    "lat": 46.42309,
+    "lon": 12.74354,
+    "ele": 1425,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Schmale Bergstraße, im Winter nicht durchgehend geräumt",
+    "source": "https://www.openstreetmap.org/node/1479426938"
+  },
+  {
+    "id": "sella-di-razzo",
+    "name": "Sella di Razzo",
+    "names": [
+      "Razzo",
+      "Passo di Razzo"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul und Venetien",
+    "lat": 46.47848,
+    "lon": 12.60815,
+    "ele": 1760,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.openstreetmap.org/node/860233179"
+  },
+  {
+    "id": "passo-cason-di-lanza",
+    "name": "Passo del Cason di Lanza",
+    "names": [
+      "Cason di Lanza",
+      "Lanza"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul",
+    "lat": 46.56598,
+    "lon": 13.17097,
+    "ele": 1555,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": "Schmal, teils einspurig mit Ausweichstellen",
+    "source": "https://it.wikipedia.org/wiki/Passo_del_Cason_di_Lanza"
+  },
+  {
+    "id": "sella-cereschiatis",
+    "name": "Sella di Cereschiatis",
+    "names": [
+      "Sella Cereschiatis",
+      "Cereschiatis",
+      "Sella di Cereschiátis"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul",
+    "lat": 46.50402,
+    "lon": 13.24515,
+    "ele": 1072,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.openstreetmap.org/node/292225934"
+  },
+  {
+    "id": "vrsic",
+    "name": "Vršič",
+    "names": [
+      "Vršičpass",
+      "Vrsic",
+      "Vrsic Pass",
+      "Prelaz Vršič",
+      "Passo della Moistrocca",
+      "Werschetzpass"
+    ],
+    "country": [
+      "SI"
+    ],
+    "region": "Julische Alpen",
+    "lat": 46.43478,
+    "lon": 13.74371,
+    "ele": 1611,
+    "tier": "bekannt",
+    "hairpins": 50,
+    "winter_closed": true,
+    "closed_months": "Nov bis Apr",
+    "toll": false,
+    "car_note": "Kehren der Nordrampe teils mit Kopfsteinpflaster",
+    "source": "https://de.wikipedia.org/wiki/Vr%C5%A1i%C4%8Dpass"
+  },
+  {
+    "id": "colle-di-zambla",
+    "name": "Colle di Zambla",
+    "names": [
+      "Zambla",
+      "Passo di Zambla"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 45.8871,
+    "lon": 9.79774,
+    "ele": 1264,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://it.wikipedia.org/wiki/Colle_di_Zambla"
+  },
+  {
+    "id": "passo-di-guspessa",
+    "name": "Passo di Guspessa",
+    "names": [
+      "Guspessa"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 46.2044,
+    "lon": 10.24064,
+    "ele": 1830,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Sehr schmale Bergstraße nahe dem Mortirolo",
+    "source": "https://www.openstreetmap.org/node/565219218"
+  },
+  {
+    "id": "passo-d-eira",
+    "name": "Passo d'Eira",
+    "names": [
+      "Passo Eira",
+      "Eira",
+      "Eirapass",
+      "Passo dell'Eira"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Lombardei",
+    "lat": 46.53832,
+    "lon": 10.16642,
+    "ele": 2208,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://it.wikipedia.org/wiki/Passo_dell%27Eira"
+  },
+  {
+    "id": "colle-di-tenda",
+    "name": "Colle di Tenda",
+    "names": [
+      "Col de Tende",
+      "Tendapass",
+      "Tenda"
+    ],
+    "country": [
+      "IT",
+      "FR"
+    ],
+    "region": "Piemont und Alpes-Maritimes",
+    "lat": 44.14968,
+    "lon": 7.56188,
+    "ele": 1871,
+    "tier": "bekannt",
+    "hairpins": 46,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Passstraße über die Scheitelhöhe nur teils asphaltiert, Schotter; Südrampe zeitweise gesperrt, für Sportwagen ungeeignet",
+    "source": "https://it.wikipedia.org/wiki/Colle_di_Tenda"
+  },
+  {
+    "id": "colle-dei-signori",
+    "name": "Colle dei Signori (Ligurische Grenzkammstraße)",
+    "names": [
+      "Ligurische Grenzkammstraße",
+      "Ligurische Grenzkammstrasse",
+      "Via del Sale",
+      "Col des Seigneurs",
+      "Colle dei Signori"
+    ],
+    "country": [
+      "IT",
+      "FR"
+    ],
+    "region": "Ligurien und Piemont",
+    "lat": 44.15832,
+    "lon": 7.67149,
+    "ele": 2111,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": true,
+    "car_note": "Schotterpiste auf rund 30 km, Maut, Di und Do für Kfz gesperrt; für Sportwagen ungeeignet",
+    "source": "https://de.wikipedia.org/wiki/Ligurische_Grenzkammstra%C3%9Fe"
+  },
+  {
+    "id": "colle-dell-assietta",
+    "name": "Colle dell'Assietta",
+    "names": [
+      "Assietta",
+      "Assiettastraße",
+      "Strada dell'Assietta"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Piemont",
+    "lat": 45.07038,
+    "lon": 6.95714,
+    "ele": 2472,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Schotterpiste auf rund 35 km, im Juli und August Mi und Sa 9 bis 17 Uhr für Kfz gesperrt; für Sportwagen ungeeignet",
+    "source": "https://de.wikipedia.org/wiki/Colle_dell%E2%80%99Assietta"
+  },
+  {
+    "id": "colle-delle-finestre",
+    "name": "Colle delle Finestre",
+    "names": [
+      "Finestre",
+      "Colle di Finestre"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Piemont",
+    "lat": 45.07203,
+    "lon": 7.05334,
+    "ele": 2176,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": "Schotter auf 8 km (Nordrampe ab Il Colletto), für Sportwagen ungeeignet",
+    "source": "https://de.wikipedia.org/wiki/Colle_delle_Finestre"
+  },
+  {
+    "id": "pas-de-la-graille",
+    "name": "Pas de la Graille",
+    "names": [
+      "Col du Pas de la Graille",
+      "Graille"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Alpes-de-Haute-Provence",
+    "lat": 44.11527,
+    "lon": 5.83317,
+    "ele": 1597,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.openstreetmap.org/node/1470834142"
+  },
+  {
+    "id": "col-du-lein",
+    "name": "Col du Lein",
+    "names": [
+      "Lein"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Wallis",
+    "lat": 46.11007,
+    "lon": 7.15914,
+    "ele": 1658,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Schmale Bergstraße zwischen Saxon und Vollèges",
+    "source": "https://www.openstreetmap.org/node/3308396762"
+  },
+  {
+    "id": "forcella-lavardet",
+    "name": "Forcella Lavardet",
+    "names": [
+      "Lavardet",
+      "Forcella di Lavardet",
+      "Passo Lavardet"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Friaul und Venetien",
+    "lat": 46.49978,
+    "lon": 12.62857,
+    "ele": 1542,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://it.wikipedia.org/wiki/Forcella_Lavardet"
+  },
+  {
+    "id": "forcella-aurine",
+    "name": "Forcella Aurine",
+    "names": [
+      "Passo Aurine",
+      "Aurine",
+      "Forcola Aurine"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Venetien",
+    "lat": 46.23657,
+    "lon": 11.97605,
+    "ele": 1299,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://it.wikipedia.org/wiki/Forcella_Aurine"
+  },
+  {
+    "id": "passo-di-tremalzo",
+    "name": "Passo di Tremalzo",
+    "names": [
+      "Tremalzo",
+      "Passo del Tremalzo",
+      "Tremalzopass"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino und Lombardei",
+    "lat": 45.83669,
+    "lon": 10.69026,
+    "ele": 1664,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Nur von Norden (Ledrotal) asphaltiert, Stichstraße; Südrampe ab Passo Nota Schotter und seit 2015 Fahrverbot für Kfz",
+    "source": "https://it.wikipedia.org/wiki/Passo_del_Tremalzo"
+  },
+  {
+    "id": "bocca-di-navene",
+    "name": "Bocca di Navene",
+    "names": [
+      "Monte Baldo Kammstraße",
+      "Monte-Baldo-Höhenstraße",
+      "Navene",
+      "Strada Graziani"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino und Venetien",
+    "lat": 45.78796,
+    "lon": 10.87259,
+    "ele": 1425,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Höchster Punkt der Monte-Baldo-Höhenstraße, teils schmal",
+    "source": "https://it.wikipedia.org/wiki/Bocca_di_Navene"
+  },
+  {
+    "id": "passo-bordala",
+    "name": "Passo Bordala",
+    "names": [
+      "Bordala"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino",
+    "lat": 45.90714,
+    "lon": 10.97714,
+    "ele": 1250,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://it.wikipedia.org/wiki/Passo_Bordala"
+  },
+  {
+    "id": "passo-della-borcola",
+    "name": "Passo della Borcola",
+    "names": [
+      "Borcola",
+      "Borcolapass"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Trentino und Venetien",
+    "lat": 45.82916,
+    "lon": 11.20563,
+    "ele": 1207,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Schmale Bergstraße",
+    "source": "https://it.wikipedia.org/wiki/Passo_della_Borcola"
+  },
+  {
+    "id": "norbertshoehe",
+    "name": "Norbertshöhe",
+    "names": [
+      "Norberthöhe",
+      "Norbertshoehe"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol",
+    "lat": 46.8951,
+    "lon": 10.48499,
+    "ele": 1405,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Norbertsh%C3%B6he"
+  },
+  {
+    "id": "finstermuenzpass",
+    "name": "Finstermünzpass",
+    "names": [
+      "Finstermünz",
+      "Finstermünz Pass",
+      "Hochfinstermünz"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol",
+    "lat": 46.91334,
+    "lon": 10.49335,
+    "ele": 1186,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Finsterm%C3%BCnzpass"
+  },
+  {
+    "id": "silzer-sattel",
+    "name": "Silzer Sattel",
+    "names": [
+      "Sattele",
+      "Haiminger Sattel"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Tirol",
+    "lat": 47.23134,
+    "lon": 10.92771,
+    "ele": 1690,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Schmale Bergstraße von Haiming nach Ochsengarten",
+    "source": "https://de.wikipedia.org/wiki/Silzer_Sattel"
+  },
+  {
+    "id": "loiblpass",
+    "name": "Loiblpass",
+    "names": [
+      "Ljubelj",
+      "Loibl",
+      "Loibltunnel"
+    ],
+    "country": [
+      "AT",
+      "SI"
+    ],
+    "region": "Kärnten und Oberkrain",
+    "lat": 46.43917,
+    "lon": 14.26671,
+    "ele": 1367,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Straße unterquert die Passhöhe im Loibltunnel (1067 m), Südrampe mit engen Kehren",
+    "source": "https://en.wikipedia.org/wiki/Loibl_Pass"
+  },
+  {
+    "id": "koppenpass",
+    "name": "Koppenpass",
+    "names": [
+      "Koppen",
+      "Koppenstraße"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Salzkammergut",
+    "lat": 47.5735,
+    "lon": 13.72049,
+    "ele": 690,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Steile Westrampe teils gepflastert, im Winter oft wegen Lawinengefahr gesperrt",
+    "source": "https://de.wikipedia.org/wiki/Koppenpass"
+  },
+  {
+    "id": "sommertoerl",
+    "name": "Sommertörl",
+    "names": [
+      "Sommertoerl"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark",
+    "lat": 47.28771,
+    "lon": 14.55,
+    "ele": 1644,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Teils nicht ausgebaute Privatstraße (öffentlich befahrbar), im Winter nicht geräumt",
+    "source": "https://de.wikipedia.org/wiki/Sommert%C3%B6rl"
+  },
+  {
+    "id": "buchauer-sattel",
+    "name": "Buchauer Sattel",
+    "names": [
+      "Buchau"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark",
+    "lat": 47.6105,
+    "lon": 14.5178,
+    "ele": 861,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Buchauer_Sattel"
+  },
+  {
+    "id": "hirschegger-sattel",
+    "name": "Hirschegger Sattel",
+    "names": [
+      "Salzstiegel",
+      "Hirschegg"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark",
+    "lat": 47.06854,
+    "lon": 14.87183,
+    "ele": 1543,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Straße nicht ausgebaut, teils geschottert; für Sportwagen nur bedingt geeignet",
+    "source": "https://de.wikipedia.org/wiki/Hirschegger_Sattel"
+  },
+  {
+    "id": "pfaffensattel",
+    "name": "Pfaffensattel",
+    "names": [
+      "Pfaffen"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Steiermark",
+    "lat": 47.5701,
+    "lon": 15.81399,
+    "ele": 1372,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Pfaffensattel"
+  },
+  {
+    "id": "feistritzsattel",
+    "name": "Feistritzsattel",
+    "names": [
+      "Feistritz"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Niederösterreich und Steiermark",
+    "lat": 47.56747,
+    "lon": 15.86548,
+    "ele": 1287,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Feistritzsattel_(Fischbacher_Alpen,_Wechsel)"
+  },
+  {
+    "id": "ochsattel",
+    "name": "Ochsattel",
+    "names": [
+      "Ochsensattel"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Niederösterreich",
+    "lat": 47.8823,
+    "lon": 15.63947,
+    "ele": 820,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Ochsattel"
+  },
+  {
+    "id": "rohrer-sattel",
+    "name": "Rohrer Sattel",
+    "names": [
+      "Rohr"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Niederösterreich",
+    "lat": 47.87055,
+    "lon": 15.7987,
+    "ele": 864,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Rohrer_Sattel"
+  },
+  {
+    "id": "hals-pernitz",
+    "name": "Hals",
+    "names": [
+      "Auf dem Hals",
+      "Auf dem Hals Pass",
+      "Halspass"
+    ],
+    "country": [
+      "AT"
+    ],
+    "region": "Niederösterreich",
+    "lat": 47.92703,
+    "lon": 15.98864,
+    "ele": 662,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Hals_(Gebirgspass)"
   }
 ]
