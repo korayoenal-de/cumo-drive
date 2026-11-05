@@ -1,0 +1,503 @@
+[
+  {
+    "id": "at-grossglockner-hochalpenstrasse",
+    "name": "Großglockner Hochalpenstraße",
+    "country": "AT",
+    "region": "Salzburg / Kärnten",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Hochalpenstraße",
+    "roads": [],
+    "from": {
+      "name": "Bruck an der Großglocknerstraße",
+      "lat": 47.2867,
+      "lon": 12.8241
+    },
+    "to": {
+      "name": "Heiligenblut am Großglockner",
+      "lat": 47.0385,
+      "lon": 12.8408
+    },
+    "via": [
+      {
+        "name": "Schupfer Grundalm",
+        "lat": 47.1469,
+        "lon": 12.8048
+      },
+      {
+        "name": "Fuscher Törl",
+        "lat": 47.1168,
+        "lon": 12.8239
+      },
+      {
+        "name": "Hochtor",
+        "lat": 47.0812,
+        "lon": 12.8426
+      }
+    ],
+    "length_km": 47.7,
+    "facts": "Hochtor 2504 m, Fuscher Törl 2428 m, in OSM als route=road mit scenic=yes",
+    "quality": 5,
+    "caveats": "Mautstraße, Wintersperre etwa November bis Anfang Mai, an Sommerwochenenden viel Verkehr",
+    "sources": [
+      "https://www.openstreetmap.org/relation/4205967",
+      "https://www.wikidata.org/wiki/Q694270"
+    ]
+  },
+  {
+    "id": "at-nockalmstrasse",
+    "name": "Nockalmstraße",
+    "country": "AT",
+    "region": "Kärnten",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Panoramastraße",
+    "roads": [],
+    "from": {
+      "name": "Innerkrems",
+      "lat": 46.9681,
+      "lon": 13.7264
+    },
+    "to": {
+      "name": "Ebene Reichenau",
+      "lat": 46.855,
+      "lon": 13.8941
+    },
+    "via": [
+      {
+        "name": "Winkl",
+        "lat": 46.9301,
+        "lon": 13.769
+      },
+      {
+        "name": "Schiestelscharte",
+        "lat": 46.8901,
+        "lon": 13.7935
+      }
+    ],
+    "length_km": 33.4,
+    "facts": "Schiestelscharte 2024 m, in OSM als route=road mit scenic=yes",
+    "quality": 4,
+    "caveats": "Mautstraße, Wintersperre, im Sommer Weidevieh auf der Fahrbahn",
+    "sources": [
+      "https://www.openstreetmap.org/relation/9344306"
+    ]
+  },
+  {
+    "id": "at-silvretta-hochalpenstrasse",
+    "name": "Silvretta Hochalpenstraße",
+    "country": "AT",
+    "region": "Vorarlberg / Tirol",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Hochalpenstraße",
+    "roads": [
+      "B188"
+    ],
+    "from": {
+      "name": "Partenen",
+      "lat": 46.969,
+      "lon": 10.0607
+    },
+    "to": {
+      "name": "Galtür",
+      "lat": 46.9682,
+      "lon": 10.1865
+    },
+    "via": [
+      {
+        "name": "Bielerhöhe",
+        "lat": 46.918,
+        "lon": 10.0956
+      }
+    ],
+    "length_km": 20.3,
+    "facts": "Bielerhöhe 2037 m, Kehren auf der Montafoner Seite, in OSM als route=road mit scenic=yes",
+    "quality": 5,
+    "caveats": "Mautstraße, Wintersperre etwa November bis Juni",
+    "sources": [
+      "https://www.openstreetmap.org/relation/1761296"
+    ]
+  },
+  {
+    "id": "at-gerlos-alpenstrasse",
+    "name": "Gerlos Alpenstraße",
+    "country": "AT",
+    "region": "Salzburg",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "Alpenstraße",
+    "roads": [],
+    "from": {
+      "name": "Krimml",
+      "lat": 47.2219,
+      "lon": 12.1755
+    },
+    "to": {
+      "name": "Gerlospass",
+      "lat": 47.2429,
+      "lon": 12.1094
+    },
+    "via": [],
+    "length_km": 10.2,
+    "facts": "Verbindung Krimml zum Gerlospass, in OSM als route=road mit scenic=yes",
+    "quality": 3,
+    "caveats": "Mautstraße, die alte Gerlosstraße B165 ist mautfrei",
+    "sources": [
+      "https://www.openstreetmap.org/relation/6904124"
+    ]
+  },
+  {
+    "id": "ch-furkastrasse",
+    "name": "Furkastraße",
+    "country": "CH",
+    "region": "Uri / Wallis",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "19"
+    ],
+    "from": {
+      "name": "Hospental",
+      "lat": 46.6189,
+      "lon": 8.5686
+    },
+    "to": {
+      "name": "Oberwald",
+      "lat": 46.5329,
+      "lon": 8.3521
+    },
+    "via": [
+      {
+        "name": "Realp",
+        "lat": 46.5988,
+        "lon": 8.5021
+      },
+      {
+        "name": "Furkapass",
+        "lat": 46.5727,
+        "lon": 8.4152
+      }
+    ],
+    "length_km": 33.3,
+    "facts": "Furkapass 2429 m, in OSM als route=road mit scenic=yes",
+    "quality": 5,
+    "caveats": "Wintersperre etwa Oktober bis Juni, viel Motorradverkehr",
+    "sources": [
+      "https://www.openstreetmap.org/relation/15658971"
+    ]
+  },
+  {
+    "id": "ch-grimselstrasse",
+    "name": "Grimselstraße",
+    "country": "CH",
+    "region": "Bern / Wallis",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "6"
+    ],
+    "from": {
+      "name": "Innertkirchen",
+      "lat": 46.7054,
+      "lon": 8.2286
+    },
+    "to": {
+      "name": "Gletsch",
+      "lat": 46.5621,
+      "lon": 8.3615
+    },
+    "via": [
+      {
+        "name": "Grimselpass",
+        "lat": 46.5615,
+        "lon": 8.3377
+      }
+    ],
+    "length_km": 32.3,
+    "facts": "Grimselpass 2164 m, in OSM als route=road mit scenic=yes",
+    "quality": 5,
+    "caveats": "Wintersperre etwa Oktober bis Juni",
+    "sources": [
+      "https://www.openstreetmap.org/relation/15598839"
+    ]
+  },
+  {
+    "id": "ch-sustenstrasse",
+    "name": "Sustenstraße",
+    "country": "CH",
+    "region": "Uri / Bern",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "11"
+    ],
+    "from": {
+      "name": "Wassen",
+      "lat": 46.7068,
+      "lon": 8.5996
+    },
+    "to": {
+      "name": "Innertkirchen",
+      "lat": 46.7054,
+      "lon": 8.2286
+    },
+    "via": [
+      {
+        "name": "Sustenpass",
+        "lat": 46.7291,
+        "lon": 8.4465
+      },
+      {
+        "name": "Nessental",
+        "lat": 46.721,
+        "lon": 8.2949
+      }
+    ],
+    "length_km": 45.2,
+    "facts": "Sustenpass 2224 m, in OSM als route=road mit scenic=yes",
+    "quality": 5,
+    "caveats": "Wintersperre etwa Oktober bis Juni",
+    "sources": [
+      "https://www.openstreetmap.org/relation/15581558"
+    ]
+  },
+  {
+    "id": "ch-tremola",
+    "name": "Tremola",
+    "country": "CH",
+    "region": "Tessin",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "alte Gotthardstraße",
+    "roads": [],
+    "from": {
+      "name": "oberhalb Airolo",
+      "lat": 46.5354,
+      "lon": 8.585
+    },
+    "to": {
+      "name": "Passo del San Gottardo",
+      "lat": 46.5593,
+      "lon": 8.5612
+    },
+    "via": [],
+    "length_km": 7.3,
+    "facts": "Kopfsteinpflaster mit dicht gestapelten Kehren, in OSM als route=road mit scenic=yes",
+    "quality": 3,
+    "caveats": "Kopfsteinpflaster (das Profil wertet COBBLESTONE ab), Wintersperre",
+    "sources": [
+      "https://www.openstreetmap.org/relation/15581233"
+    ]
+  },
+  {
+    "id": "ch-grosser-st-bernhard",
+    "name": "Grosser St. Bernhard",
+    "country": "CH",
+    "region": "Wallis / Aostatal",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "21",
+      "SS27"
+    ],
+    "from": {
+      "name": "Liddes",
+      "lat": 45.9917,
+      "lon": 7.1865
+    },
+    "to": {
+      "name": "Fontintes",
+      "lat": 45.8615,
+      "lon": 7.1601
+    },
+    "via": [
+      {
+        "name": "Col du Grand Saint-Bernard",
+        "lat": 45.8691,
+        "lon": 7.1704
+      }
+    ],
+    "length_km": 24.2,
+    "facts": "Col du Grand Saint-Bernard 2469 m, Grenze CH/IT, in OSM als route=road mit scenic=yes",
+    "quality": 4,
+    "caveats": "Passhöhe nur etwa Juni bis Oktober offen, ganzjährig über den Tunnel (Maut)",
+    "sources": [
+      "https://www.openstreetmap.org/relation/15598395"
+    ]
+  },
+  {
+    "id": "at-faschinastrasse",
+    "name": "Faschinastraße",
+    "country": "AT",
+    "region": "Vorarlberg",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "kurvige Landesstraße",
+    "roads": [
+      "L193"
+    ],
+    "from": {
+      "name": "Nüziders",
+      "lat": 47.1718,
+      "lon": 9.8004
+    },
+    "to": {
+      "name": "Au",
+      "lat": 47.3225,
+      "lon": 9.9775
+    },
+    "via": [
+      {
+        "name": "Blons",
+        "lat": 47.2227,
+        "lon": 9.8343
+      },
+      {
+        "name": "Faschinajoch",
+        "lat": 47.2717,
+        "lon": 9.9073
+      }
+    ],
+    "length_km": 38.31,
+    "facts": "Faschinajoch 1486 m, Curvature-Wert 24382 (Rang 3 in Österreich)",
+    "quality": 4,
+    "caveats": "Großes Walsertal eng und kurvig, Ortsdurchfahrten",
+    "sources": [
+      "https://kml.roadcurvature.com/europe/austria.html",
+      "https://www.openstreetmap.org/way/1309107694"
+    ]
+  },
+  {
+    "id": "at-soelkpass",
+    "name": "Sölkpass",
+    "country": "AT",
+    "region": "Steiermark",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "L704"
+    ],
+    "from": {
+      "name": "Schöder",
+      "lat": 47.1823,
+      "lon": 14.1119
+    },
+    "to": {
+      "name": "Stein an der Enns",
+      "lat": 47.4345,
+      "lon": 13.9407
+    },
+    "via": [
+      {
+        "name": "Sölkpass",
+        "lat": 47.2717,
+        "lon": 14.0797
+      },
+      {
+        "name": "Mößna",
+        "lat": 47.3439,
+        "lon": 14.0326
+      },
+      {
+        "name": "Gatschberg",
+        "lat": 47.4313,
+        "lon": 13.9543
+      }
+    ],
+    "length_km": 39.59,
+    "facts": "Sölkpass 1790 m, Curvature-Wert 16533",
+    "quality": 4,
+    "caveats": "Wintersperre, schmal im Scheitelbereich",
+    "sources": [
+      "https://kml.roadcurvature.com/europe/austria.html"
+    ]
+  },
+  {
+    "id": "at-furkajoch",
+    "name": "Furkajoch",
+    "country": "AT",
+    "region": "Vorarlberg",
+    "kind": "pass",
+    "tier": "highlight",
+    "note": "Passstraße",
+    "roads": [
+      "L51"
+    ],
+    "from": {
+      "name": "Rankweil",
+      "lat": 47.2704,
+      "lon": 9.6427
+    },
+    "to": {
+      "name": "Damüls",
+      "lat": 47.2804,
+      "lon": 9.891
+    },
+    "via": [
+      {
+        "name": "Oberdamüls",
+        "lat": 47.2811,
+        "lon": 9.8825
+      }
+    ],
+    "length_km": 28.95,
+    "facts": "Furkajoch 1758 m, Curvature-Wert 17442",
+    "quality": 4,
+    "caveats": "Wintersperre, schmale Abschnitte im Laternsertal",
+    "sources": [
+      "https://kml.roadcurvature.com/europe/austria.html"
+    ]
+  },
+  {
+    "id": "at-packer-strasse",
+    "name": "Packer Straße",
+    "country": "AT",
+    "region": "Kärnten / Steiermark",
+    "kind": "strecke",
+    "tier": "prefer",
+    "note": "kurvige Bundesstraße",
+    "roads": [
+      "B70"
+    ],
+    "from": {
+      "name": "Zellach",
+      "lat": 46.8613,
+      "lon": 14.8542
+    },
+    "to": {
+      "name": "Köflach",
+      "lat": 47.0645,
+      "lon": 15.085
+    },
+    "via": [
+      {
+        "name": "Unterpreitenegg",
+        "lat": 46.9403,
+        "lon": 14.9061
+      },
+      {
+        "name": "Packsattel",
+        "lat": 46.9655,
+        "lon": 14.9779
+      },
+      {
+        "name": "Edelschrott",
+        "lat": 47.0223,
+        "lon": 15.0504
+      }
+    ],
+    "length_km": 49.81,
+    "facts": "über den Packsattel, Curvature-Wert 23365 (Rang 5 in Österreich)",
+    "quality": 4,
+    "caveats": "Parallel zur A2, wenig Durchgangsverkehr, am Wochenende Motorräder",
+    "sources": [
+      "https://kml.roadcurvature.com/europe/austria.html"
+    ]
+  }
+]
