@@ -79,6 +79,8 @@ export const Spacing = {
   xl: 20,
   xxl: 28,
   xxxl: 48,
+  /** Abstand zwischen Abschnitten im Blatt (Kennzahlen, Highlights, Höhenprofil, Stopps) */
+  section: 40,
 } as const;
 
 export const Radius = {

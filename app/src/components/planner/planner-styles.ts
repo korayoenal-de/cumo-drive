@@ -20,6 +20,8 @@ export const styles = StyleSheet.create({
   gapS: { gap: Spacing.s },
   gapM: { gap: Spacing.m },
   gapL: { gap: Spacing.l },
+  /** Abschnitte im Ergebnis, gleicher Abstand wie im Blatt */
+  sections: { gap: Spacing.section },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   headerBlock: { gap: Spacing.m },
   mutedText: { color: Colors.muted },

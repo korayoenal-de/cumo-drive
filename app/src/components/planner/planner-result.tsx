@@ -51,11 +51,13 @@ export function Result({
     router.push('/navigation');
   };
   return (
-    <View style={styles.gapL}>
+    <View style={styles.sections}>
       {/* Überschrift steht im Kopf des Blatts, hier zuerst die Kennzahlen und Details */}
-      <Stats km={total} minutes={tour.minutes} curves={curves} />
-      {warnings.length === 0 && tour.geprueft !== false && <TrustLine />}
-      {req.note && <AppText variant="caption" style={styles.winterText}>{req.note}</AppText>}
+      <View style={styles.gapL}>
+        <Stats km={total} minutes={tour.minutes} curves={curves} />
+        {warnings.length === 0 && tour.geprueft !== false && <TrustLine />}
+        {req.note && <AppText variant="caption" style={styles.winterText}>{req.note}</AppText>}
+      </View>
 
       {hint && (
         <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PASS_STATUS_URL)} style={styles.winter}>
