@@ -4,8 +4,8 @@
  * Fünf Stufen füllen 1, 3, 4, 6 und 7 Dreiecke im Uhrzeigersinn. Unter 20 pt nur die orangen Dreiecke.
  *
  * Legende (animate): Dreiecke füllen sich nacheinander, springen auseinander und verschwinden, aus der
- * Negativform erscheint der orange Stern, pulsiert auf 125 % und zurück, blendet aus. Erst danach gleiten die
- * Dreiecke sanft von 106 % auf 100 % zurück.
+ * Negativform erscheint der orange Stern, pulsiert auf 125 % und zurück, blendet aus. Erst danach bauen sich die
+ * Dreiecke im Uhrzeigersinn wieder auf.
  */
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -93,15 +93,12 @@ function LegendGauge({ size, label }: { size: number; label: string }) {
     t.set(withRepeat(withTiming(1, { duration: CYCLE_MS, easing: Easing.linear }), -1, false));
     return () => cancelAnimation(t);
   }, [t]);
-  // Dreiecke springen auseinander (22 bis 29 %); erst nach dem Stern gleiten sie sanft zurück (76 bis 97 %)
+  // Dreiecke springen auseinander (22 bis 29 %); die Gruppe ist ab 61 % wieder da, jedes Dreieck baut sich danach einzeln auf
   const group = useAnimatedStyle(() => {
     const p = t.get();
-    if (p < 0.5) {
-      const k = EASE_IN(interpolate(p, [0.22, 0.29], [0, 1], 'clamp'));
-      return { opacity: 1 - k, transform: [{ scale: 1 + 0.6 * k }] };
-    }
-    const k = EASE_OUT(interpolate(p, [0.76, 0.97], [0, 1], 'clamp'));
-    return { opacity: k, transform: [{ scale: 1.06 - 0.06 * k }] };
+    if (p >= 0.61) return { opacity: 1, transform: [{ scale: 1 }] };
+    const k = EASE_IN(interpolate(p, [0.22, 0.29], [0, 1], 'clamp'));
+    return { opacity: 1 - k, transform: [{ scale: 1 + 0.6 * k }] };
   });
   // Stern: erscheint, pulsiert auf 125 % und zurück, blendet aus
   const star = useAnimatedStyle(() => {
@@ -129,13 +126,18 @@ function LegendGauge({ size, label }: { size: number; label: string }) {
   );
 }
 
-/** Ein Dreieck, das sich zu seinem Zeitpunkt orange färbt (80 ms Versatz je Dreieck). */
+/**
+ * Ein Dreieck im Ablauf, um seinen Platz im Uhrzeigersinn versetzt (80 ms je Dreieck): färbt sich orange,
+ * ist ab 41 % ausgeblendet (die Gruppe ist dann ohnehin weg) und baut sich nach dem Stern ab 74 % grau wieder auf.
+ */
 function FillingTri({ pts, step, t }: { pts: string; step: number; t: SharedValue<number> }) {
-  const at = (step * 80) / CYCLE_MS;
+  const shift = (step * 80) / CYCLE_MS;
   const props = useAnimatedProps(() => {
-    const p = t.get();
-    const k = p < 0.75 ? interpolate(p, [at, at + 0.04], [0, 1], 'clamp') : 0;
-    return { fill: interpolateColor(k, [0, 1], [OFF, Colors.signal]) };
+    const p = (t.get() - shift + 1) % 1;
+    const orange = p < 0.41 ? interpolate(p, [0, 0.03], [0, 1], 'clamp') : 0;
+    const back = EASE_OUT(interpolate(p, [0.74, 0.84], [0, 1], 'clamp'));
+    const opacity = p < 0.41 ? 1 : back;
+    return { fill: interpolateColor(orange, [0, 1], [OFF, Colors.signal]), fillOpacity: opacity };
   });
   return <AnimatedPolygon points={pts} animatedProps={props} />;
 }

@@ -31,7 +31,7 @@ Ziel: die schönste, modernste und einfachste App für Genussfahrer. Jede Ansich
 * Jede Strecke und jedes Highlight trägt einen Pegel in fünf Stufen: Nett, Lohnend, Stark, Traumstraße, Legende.
 * Form: sieben Dreiecke auf einem geschlossenen Kreis, Spitzen zur Mitte, aus dem CDC Keyvisual. Sie stoßen an der Basis aneinander, in der Negativform bleibt ein siebenzackiger Stern frei.
 * Eine Zacke des Sterns zeigt nach oben, zwei nach unten. Stufen füllen 1, 3, 4, 6, 7 Dreiecke im Uhrzeigersinn ab unten links, gefüllt in Signal Orange, leer als dunkle Fläche. Unter 20 pt nur die orangen Dreiecke ohne graue Flächen.
-* Legende animiert (Ansage in der Navigation): Dreiecke füllen sich nacheinander, springen auseinander und verschwinden, aus der Negativform erscheint der orange Stern, pulsiert auf 125 % und zurück, blendet aus. Erst danach gleiten die Dreiecke sanft von 106 % auf 100 % zurück. Bei reduzierter Bewegung statisch.
+* Legende animiert (Ansage in der Navigation): Dreiecke füllen sich nacheinander, springen auseinander und verschwinden, aus der Negativform erscheint der orange Stern, pulsiert auf 125 % und zurück, blendet aus. Erst danach bauen sich die Dreiecke im Uhrzeigersinn einzeln wieder auf. Der Stern wird beim Pulsieren nie angeschnitten. Bei reduzierter Bewegung statisch.
 * Größen: Liste 28 pt, Karte 30 pt, Ansage 44 pt. Startwert ist die kuratierte Qualität 1 bis 5, Bewertungen nach der Fahrt verschieben ihn.
 
 ## 6. Ruhe
