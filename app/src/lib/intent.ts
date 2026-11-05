@@ -81,7 +81,8 @@ export function parseWish(text: string): TourWish {
   if (!wish.direction) {
     const toward = t.match(/\b(?:in den|in die|ins|nach|richtung|zum|zur)\s+([A-ZÄÖÜ][\wäöüß.\- ]{1,40}?)(?=[,.]|\s(?:mit|und|über|zurück|ab|\d)|\s*$)/i);
     if (toward && !/^(osten|westen|norden|süden)/i.test(toward[1])) {
-      wish.towardName = toward[1].trim();
+      // Verben am Ende gehören nicht zum Ziel ("in den Schwarzwald fahren")
+      wish.towardName = toward[1].replace(/\s+(fahren|gehen|cruisen|touren|düsen|duesen|rollen|machen|kurven|fliegen|starten)\b.*$/i, '').trim();
       wish.understood.push(`Richtung ${wish.towardName}`);
     }
   }

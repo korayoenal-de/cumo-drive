@@ -37,7 +37,7 @@ import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { doubledStretch } from '@/lib/doubled';
 import { insertVia, movePoint, passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
 import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
-import { flatten, formatKm, legs, PROFILES, PROFILE_CHOICES, type CheckClass, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { flatten, formatKm, haversine, legs, PROFILES, PROFILE_CHOICES, type CheckClass, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { selectVehicle, useVehicles } from '@/lib/vehicle';
 
@@ -248,13 +248,23 @@ export default function Planner() {
         ? await findPlace(e.startName, here?.p, 'Den Startort', signal).then((p) => ({ p: p.p, name: p.name }))
         : here ?? (await locate(signal));
       let bearing: number | undefined;
+      let km = targetKm(e, e.profile);
+      let note: string | undefined;
       if (!e.direction && e.towardName) {
         const target = await findPlace(e.towardName, start.p, 'Die Region', signal);
         bearing = bearingTo(start.p, target.p);
+        // Eine Runde kommt etwa 40 % ihrer Länge weit. Liegt die Region weiter weg, wird die Runde länger,
+        // sonst führt sie nur in die Richtung und kommt nie an.
+        const distKm = haversine(start.p, target.p) / 1000;
+        const needKm = Math.min(600, Math.round((distKm * 2.6) / 10) * 10);
+        if (needKm > km) {
+          note = `${target.name ?? e.towardName} liegt etwa ${Math.round(distKm)} km entfernt, die Runde ist deshalb länger als gewünscht.`;
+          km = needKm;
+        }
       }
       return {
-        start, km: targetKm(e, e.profile), direction: e.direction ?? 'zufall', bearing,
-        towardName: e.towardName, profile: e.profile, avoid: DEFAULT_AVOID,
+        start, km, direction: e.direction ?? 'zufall', bearing,
+        towardName: e.towardName, note, profile: e.profile, avoid: DEFAULT_AVOID,
       };
     }, e.stops);
   }
@@ -1801,7 +1811,7 @@ function ErrorCard({
         <PrimaryButton label={error.kind === 'routing' ? 'Neu würfeln' : 'Nochmal versuchen'} onPress={onRetry} />
       )}
       {needsPlace && <SecondaryButton label="Startort von Hand wählen" onPress={onUsePlace} />}
-      <SecondaryButton label="Zurück zum Formular" onPress={onBack} />
+      <SecondaryButton label="Tour verwerfen" onPress={onBack} />
     </View>
   );
 }
@@ -1882,6 +1892,7 @@ function Result({
         <AppText variant="caption" muted>
           {PROFILE_WORD[req.profile]}, {req.towardName ? `Richtung ${req.towardName}` : dirPhrase(req.direction)}
         </AppText>
+        {req.note && <AppText variant="caption" style={styles.winterText}>{req.note}</AppText>}
       </View>
       <View style={styles.legend}>
         {(['ok', 'pruefen', 'raus'] as CheckClass[]).map((c) => (
@@ -1983,7 +1994,7 @@ function Result({
       <View style={styles.gapS}>
         <SecondaryButton label={savedId ? 'Gespeichert unter Meine Touren' : 'Speichern'} onPress={saveResult} />
         <PrimaryButton label="Neu würfeln" onPress={onReroll} />
-        <SecondaryButton label="Zurück zum Formular" onPress={onBack} />
+        <SecondaryButton label="Tour verwerfen" onPress={onBack} />
       </View>
     </View>
   );
