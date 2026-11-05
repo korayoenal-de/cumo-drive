@@ -73,44 +73,6 @@
   ]
  },
  {
-  "id": "de-mueritz",
-  "name": "Müritz Nationalpark",
-  "country": "DE",
-  "region": "Mecklenburg",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Wellige Seenstrecke",
-  "roads": [],
-  "from": {
-   "name": "Neustrelitz",
-   "lat": 53.36172,
-   "lon": 13.063
-  },
-  "to": {
-   "name": "Rechlin",
-   "lat": 53.33042,
-   "lon": 12.72233
-  },
-  "via": [
-   {
-    "name": "Wesenberg",
-    "lat": 53.28191,
-    "lon": 12.96948
-   },
-   {
-    "name": "Mirow",
-    "lat": 53.28516,
-    "lon": 12.84768
-   }
-  ],
-  "length_km": 28,
-  "quality": 2,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "de-ilmenau-neustadt",
   "name": "Rennsteig bei Ilmenau",
   "country": "DE",
@@ -645,44 +607,6 @@
   ]
  },
  {
-  "id": "de-hunsrueck-schiefer",
-  "name": "Hunsrück Schieferland",
-  "country": "DE",
-  "region": "Hunsrück",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Waldstrecke ins Edelsteinland",
-  "roads": [],
-  "from": {
-   "name": "Morbach",
-   "lat": 49.81051,
-   "lon": 7.12298
-  },
-  "to": {
-   "name": "Idar-Oberstein",
-   "lat": 49.71071,
-   "lon": 7.31366
-  },
-  "via": [
-   {
-    "name": "Rhaunen",
-    "lat": 49.86425,
-    "lon": 7.34427
-   },
-   {
-    "name": "Kirschweiler",
-    "lat": 49.75471,
-    "lon": 7.24269
-   }
-  ],
-  "length_km": 32,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "de-saar-hochwald",
   "name": "Saar Hochwald",
   "country": "DE",
@@ -723,44 +647,6 @@
   ]
  },
  {
-  "id": "de-kleinziegenfelder-tal",
-  "name": "Kleinziegenfelder Tal",
-  "country": "DE",
-  "region": "Fränkische Schweiz",
-  "kind": "strecke",
-  "tier": "highlight",
-  "note": "Juratal mit Dolomitfelsen",
-  "roads": [],
-  "from": {
-   "name": "Weismain",
-   "lat": 50.085,
-   "lon": 11.24004
-  },
-  "to": {
-   "name": "Hollfeld",
-   "lat": 49.93899,
-   "lon": 11.29189
-  },
-  "via": [
-   {
-    "name": "Kleinziegenfeld",
-    "lat": 50.02004,
-    "lon": 11.20158
-   },
-   {
-    "name": "Wüstenstein",
-    "lat": 49.85235,
-    "lon": 11.25223
-   }
-  ],
-  "length_km": 22,
-  "quality": 4,
-  "caveats": "schmal",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "de-ulfenbachtal",
   "name": "Ulfenbachtal",
   "country": "DE",
@@ -792,77 +678,6 @@
    }
   ],
   "length_km": 18,
-  "quality": 4,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "de-spessart-lohr-rohrbrunn",
-  "name": "Hochspessart Nord",
-  "country": "DE",
-  "region": "Spessart",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Waldstrecke durch den Spessart",
-  "roads": [],
-  "from": {
-   "name": "Lohr am Main",
-   "lat": 49.99605,
-   "lon": 9.55669
-  },
-  "to": {
-   "name": "Rohrbrunn",
-   "lat": 49.89684,
-   "lon": 9.3919
-  },
-  "via": [
-   {
-    "name": "Ruppertshütten",
-    "lat": 50.08547,
-    "lon": 9.54163
-   }
-  ],
-  "length_km": 25,
-  "quality": 4,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "de-wiesenttal",
-  "name": "Wiesenttal",
-  "country": "DE",
-  "region": "Fränkische Schweiz",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Felsdurchbrüche im Wiesenttal",
-  "roads": [],
-  "from": {
-   "name": "Bayreuth",
-   "lat": 49.94463,
-   "lon": 11.57435
-  },
-  "to": {
-   "name": "Gößweinstein",
-   "lat": 49.76821,
-   "lon": 11.33614
-  },
-  "via": [
-   {
-    "name": "Pottenstein",
-    "lat": 49.77108,
-    "lon": 11.40928
-   },
-   {
-    "name": "Tüchersfeld",
-    "lat": 49.78488,
-    "lon": 11.36011
-   }
-  ],
-  "length_km": 32,
   "quality": 4,
   "caveats": "",
   "sources": [
@@ -922,82 +737,6 @@
    "lon": 10.5702
   },
   "via": [],
-  "length_km": 15,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "de-ueberwald",
-  "name": "Überwald",
-  "country": "DE",
-  "region": "Odenwald",
-  "kind": "strecke",
-  "tier": "highlight",
-  "note": "Kurvenkombinationen in den Odenwald",
-  "roads": [],
-  "from": {
-   "name": "Weinheim",
-   "lat": 49.54623,
-   "lon": 8.67175
-  },
-  "to": {
-   "name": "Erbach (Odenwald)",
-   "lat": 49.6376,
-   "lon": 9.013
-  },
-  "via": [
-   {
-    "name": "Gorxheim",
-    "lat": 49.54013,
-    "lon": 8.70886
-   },
-   {
-    "name": "Wald-Michelbach",
-    "lat": 49.5497,
-    "lon": 8.843
-   },
-   {
-    "name": "Hammelbach",
-    "lat": 49.63602,
-    "lon": 8.83155
-   }
-  ],
-  "length_km": 35,
-  "quality": 4,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "de-pegnitztal",
-  "name": "Pegnitztal",
-  "country": "DE",
-  "region": "Frankenjura",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Felstore an der Pegnitz",
-  "roads": [],
-  "from": {
-   "name": "Neuhaus an der Pegnitz",
-   "lat": 49.66053,
-   "lon": 11.56073
-  },
-  "to": {
-   "name": "Pegnitz",
-   "lat": 49.75649,
-   "lon": 11.54094
-  },
-  "via": [
-   {
-    "name": "Rinnenbrunn",
-    "lat": 49.59827,
-    "lon": 11.56925
-   }
-  ],
   "length_km": 15,
   "quality": 3,
   "caveats": "",
@@ -1073,41 +812,6 @@
   ],
   "length_km": 28,
   "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "de-rusel",
-  "name": "Rusel",
-  "country": "DE",
-  "region": "Bayerischer Wald",
-  "kind": "strecke",
-  "tier": "highlight",
-  "note": "Bergstrecke in weiten Radien",
-  "roads": [
-   "B 11"
-  ],
-  "from": {
-   "name": "Deggendorf",
-   "lat": 48.78141,
-   "lon": 13.00064
-  },
-  "to": {
-   "name": "Regen",
-   "lat": 49.18442,
-   "lon": 12.42518
-  },
-  "via": [
-   {
-    "name": "Schaufling",
-    "lat": 48.85039,
-    "lon": 13.05795
-   }
-  ],
-  "length_km": 22,
-  "quality": 5,
   "caveats": "",
   "sources": [
    "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
@@ -1299,46 +1003,6 @@
   "length_km": 20,
   "quality": 3,
   "caveats": "schmal",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "it-passo-mauria",
-  "name": "Passo della Mauria",
-  "country": "IT",
-  "region": "Friaul",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Flüssige Waldpassstraße",
-  "roads": [
-   "SS 52"
-  ],
-  "from": {
-   "name": "Ampezzo",
-   "lat": 46.41709,
-   "lon": 12.79027
-  },
-  "to": {
-   "name": "Lozzo di Cadore",
-   "lat": 46.505,
-   "lon": 12.42208
-  },
-  "via": [
-   {
-    "name": "Forni di Sopra",
-    "lat": 46.42023,
-    "lon": 12.5856
-   },
-   {
-    "name": "Passo della Mauria",
-    "lat": 46.45442,
-    "lon": 12.51334
-   }
-  ],
-  "length_km": 30,
-  "quality": 4,
-  "caveats": "",
   "sources": [
    "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
   ]
@@ -1726,46 +1390,6 @@
   ]
  },
  {
-  "id": "it-val-formazza",
-  "name": "Val Formazza",
-  "country": "IT",
-  "region": "Piemont",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Talstraße in die Gletscherwelt",
-  "roads": [
-   "SS 659"
-  ],
-  "from": {
-   "name": "Crodo",
-   "lat": 46.2233,
-   "lon": 8.32394
-  },
-  "to": {
-   "name": "Formazza",
-   "lat": 46.39192,
-   "lon": 8.39047
-  },
-  "via": [
-   {
-    "name": "Baceno",
-    "lat": 46.31632,
-    "lon": 8.25794
-   },
-   {
-    "name": "Premia",
-    "lat": 46.26814,
-    "lon": 8.339
-   }
-  ],
-  "length_km": 32,
-  "quality": 3,
-  "caveats": "Sackgasse",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "it-monte-san-bartolo",
   "name": "Panoramica San Bartolo",
   "country": "IT",
@@ -2072,49 +1696,6 @@
   ]
  },
  {
-  "id": "it-scanno-opi",
-  "name": "Abruzzen Nationalpark",
-  "country": "IT",
-  "region": "Abruzzen",
-  "kind": "strecke",
-  "tier": "highlight",
-  "note": "Strecke durch den Nationalpark",
-  "roads": [],
-  "from": {
-   "name": "Villalago",
-   "lat": 41.9349,
-   "lon": 13.82784
-  },
-  "to": {
-   "name": "Opi",
-   "lat": 41.77081,
-   "lon": 13.8556
-  },
-  "via": [
-   {
-    "name": "Scanno",
-    "lat": 41.88684,
-    "lon": 13.89562
-   },
-   {
-    "name": "Passo Godi",
-    "lat": 41.84391,
-    "lon": 13.931
-   },
-   {
-    "name": "Villetta Barrea",
-    "lat": 41.80136,
-    "lon": 13.93595
-   }
-  ],
-  "length_km": 25,
-  "quality": 4,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "it-madonie-cerami-nicosia",
   "name": "Nordkamm Sizilien",
   "country": "IT",
@@ -2268,39 +1849,6 @@
   ]
  },
  {
-  "id": "si-volce-tolmin",
-  "name": "Tolmin Hinterland",
-  "country": "SI",
-  "region": "Soča Tal",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Bergstraße über dem Soča Tal",
-  "roads": [],
-  "from": {
-   "name": "Tolmin",
-   "lat": 46.14373,
-   "lon": 13.78928
-  },
-  "to": {
-   "name": "Most na Soči",
-   "lat": 46.15209,
-   "lon": 13.74402
-  },
-  "via": [
-   {
-    "name": "Volče",
-    "lat": 46.176,
-    "lon": 13.70834
-   }
-  ],
-  "length_km": 11,
-  "quality": 3,
-  "caveats": "schmal",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "si-nadiza-robidisce",
   "name": "Nadiža Tal",
   "country": "SI",
@@ -2329,39 +1877,6 @@
   "length_km": 15,
   "quality": 3,
   "caveats": "schmal",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "si-predil-log",
-  "name": "Predil Südrampe",
-  "country": "SI",
-  "region": "Julische Alpen",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Abfahrt vom Predilpass",
-  "roads": [],
-  "from": {
-   "name": "Passo del Predil",
-   "lat": 46.41855,
-   "lon": 13.57817
-  },
-  "to": {
-   "name": "Log pod Mangartom",
-   "lat": 46.40669,
-   "lon": 13.60361
-  },
-  "via": [
-   {
-    "name": "Strmec na Predelu",
-    "lat": 46.41613,
-    "lon": 13.61
-   }
-  ],
-  "length_km": 11,
-  "quality": 4,
-  "caveats": "",
   "sources": [
    "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
   ]
@@ -2504,77 +2019,6 @@
   ]
  },
  {
-  "id": "si-sorica",
-  "name": "Soriška Planina",
-  "country": "SI",
-  "region": "Julische Alpen",
-  "kind": "strecke",
-  "tier": "highlight",
-  "note": "Passstraße über Sorica",
-  "roads": [],
-  "from": {
-   "name": "Bohinjska Bistrica",
-   "lat": 46.27427,
-   "lon": 13.95916
-  },
-  "to": {
-   "name": "Podbrdo",
-   "lat": 46.2093,
-   "lon": 13.96706
-  },
-  "via": [
-   {
-    "name": "Soriška planina",
-    "lat": 46.23579,
-    "lon": 14.00788
-   },
-   {
-    "name": "Sorica",
-    "lat": 46.23579,
-    "lon": 14.00788
-   }
-  ],
-  "length_km": 22,
-  "quality": 4,
-  "caveats": "Wintersperre",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "si-jelovica",
-  "name": "Jelovica",
-  "country": "SI",
-  "region": "Gorenjska",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Kurvenreiche Waldstrecke",
-  "roads": [],
-  "from": {
-   "name": "Lancovo",
-   "lat": 46.33946,
-   "lon": 14.1634
-  },
-  "to": {
-   "name": "Lipnica",
-   "lat": 46.29972,
-   "lon": 14.22419
-  },
-  "via": [
-   {
-    "name": "Kropa",
-    "lat": 46.29109,
-    "lon": 14.2047
-   }
-  ],
-  "length_km": 15,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "si-davca",
   "name": "Davča",
   "country": "SI",
@@ -2646,33 +2090,6 @@
   ]
  },
  {
-  "id": "si-dovzanova-soteska",
-  "name": "Dovžan Schlucht",
-  "country": "SI",
-  "region": "Gorenjska",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Schluchtstraße bei Tržič",
-  "roads": [],
-  "from": {
-   "name": "Tržič",
-   "lat": 46.37975,
-   "lon": 14.33251
-  },
-  "to": {
-   "name": "Jelendol",
-   "lat": 46.39906,
-   "lon": 14.34648
-  },
-  "via": [],
-  "length_km": 9,
-  "quality": 3,
-  "caveats": "schmal",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "si-pavlicevo-sedlo",
   "name": "Paulitschsattel",
   "country": "SI",
@@ -2695,39 +2112,6 @@
   "length_km": 14,
   "quality": 3,
   "caveats": "schmal",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "si-golnik-preddvor",
-  "name": "Karawanken Fuß",
-  "country": "SI",
-  "region": "Gorenjska",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Panoramastrecke am Karawankenfuß",
-  "roads": [],
-  "from": {
-   "name": "Golnik",
-   "lat": 46.32731,
-   "lon": 14.33309
-  },
-  "to": {
-   "name": "Preddvor",
-   "lat": 46.30214,
-   "lon": 14.42166
-  },
-  "via": [
-   {
-    "name": "Tupaliče",
-    "lat": 46.29043,
-    "lon": 14.42777
-   }
-  ],
-  "length_km": 11,
-  "quality": 3,
-  "caveats": "",
   "sources": [
    "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
   ]
@@ -2858,104 +2242,6 @@
   ]
  },
  {
-  "id": "si-gorjanci",
-  "name": "Gorjanci",
-  "country": "SI",
-  "region": "Dolenjska",
-  "kind": "strecke",
-  "tier": "highlight",
-  "note": "Flüssige Bergstraße über die Gorjanci",
-  "roads": [],
-  "from": {
-   "name": "Novo mesto",
-   "lat": 45.80405,
-   "lon": 15.16967
-  },
-  "to": {
-   "name": "Metlika",
-   "lat": 45.6501,
-   "lon": 15.31745
-  },
-  "via": [
-   {
-    "name": "Gabrje",
-    "lat": 45.77802,
-    "lon": 15.27204
-   }
-  ],
-  "length_km": 25,
-  "quality": 4,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "si-sneznik",
-  "name": "Snežnik",
-  "country": "SI",
-  "region": "Notranjska",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Raue Waldstraße",
-  "roads": [],
-  "from": {
-   "name": "Ilirska Bistrica",
-   "lat": 45.57722,
-   "lon": 14.29703
-  },
-  "to": {
-   "name": "Kozarišče",
-   "lat": 45.6867,
-   "lon": 14.47502
-  },
-  "via": [
-   {
-    "name": "Sviščaki",
-    "lat": 45.57308,
-    "lon": 14.40148
-   },
-   {
-    "name": "Leskova dolina",
-    "lat": 45.62249,
-    "lon": 14.46126
-   }
-  ],
-  "length_km": 28,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "si-osilnica-serpentine",
-  "name": "Osilnica Serpentinen",
-  "country": "SI",
-  "region": "Kostel",
-  "kind": "strecke",
-  "tier": "highlight",
-  "note": "Serpentinen über der Kolpa",
-  "roads": [],
-  "from": {
-   "name": "Osilnica",
-   "lat": 45.55079,
-   "lon": 14.72026
-  },
-  "to": {
-   "name": "Strma Reber",
-   "lat": 45.55681,
-   "lon": 14.72724
-  },
-  "via": [],
-  "length_km": 6,
-  "quality": 4,
-  "caveats": "schmal",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "si-jeruzalem",
   "name": "Jeruzalem Weinstraße",
   "country": "SI",
@@ -3054,39 +2340,6 @@
   "length_km": 18,
   "quality": 3,
   "caveats": "schmal",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "si-pohorje",
-  "name": "Pohorje",
-  "country": "SI",
-  "region": "Štajerska",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Aufstieg ins Pohorje",
-  "roads": [],
-  "from": {
-   "name": "Ruše",
-   "lat": 46.51942,
-   "lon": 15.49213
-  },
-  "to": {
-   "name": "Areh",
-   "lat": 46.47768,
-   "lon": 15.80513
-  },
-  "via": [
-   {
-    "name": "Bezena",
-    "lat": 46.54837,
-    "lon": 15.53633
-   }
-  ],
-  "length_km": 15,
-  "quality": 4,
-  "caveats": "",
   "sources": [
    "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
   ]

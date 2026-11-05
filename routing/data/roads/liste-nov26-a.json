@@ -295,41 +295,6 @@
   ]
  },
  {
-  "id": "de-kleines-wiesental",
-  "name": "Kleines Wiesental",
-  "country": "DE",
-  "region": "Südschwarzwald",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Einsame Talstraße",
-  "roads": [
-   "L 139"
-  ],
-  "from": {
-   "name": "Tegernau",
-   "lat": 47.71939,
-   "lon": 7.79503
-  },
-  "to": {
-   "name": "Neuenweg",
-   "lat": 47.79582,
-   "lon": 7.82683
-  },
-  "via": [
-   {
-    "name": "Wieslet",
-    "lat": 47.68868,
-    "lon": 7.79809
-   }
-  ],
-  "length_km": 18,
-  "quality": 4,
-  "caveats": "schmal",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "de-grosses-lautertal",
   "name": "Großes Lautertal",
   "country": "DE",
@@ -768,39 +733,6 @@
   ]
  },
  {
-  "id": "de-bodetal-ruebeland",
-  "name": "Bodetal bei Rübeland",
-  "country": "DE",
-  "region": "Harz",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Felsige Harzstrecke",
-  "roads": [],
-  "from": {
-   "name": "Rübeland",
-   "lat": 51.73754,
-   "lon": 10.85007
-  },
-  "to": {
-   "name": "Treseburg",
-   "lat": 51.72276,
-   "lon": 10.95944
-  },
-  "via": [
-   {
-    "name": "Hasselfelde",
-    "lat": 51.69103,
-    "lon": 10.85525
-   }
-  ],
-  "length_km": 14,
-  "quality": 4,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "de-saalfelder-hoehe",
   "name": "Saalfelder Höhe",
   "country": "DE",
@@ -863,49 +795,6 @@
   ],
   "length_km": 12,
   "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "de-hochspessart",
-  "name": "Hochspessart",
-  "country": "DE",
-  "region": "Spessart",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Einsame Waldstrecke",
-  "roads": [],
-  "from": {
-   "name": "Rohrbrunn",
-   "lat": 49.89684,
-   "lon": 9.3919
-  },
-  "to": {
-   "name": "Amorbach",
-   "lat": 49.64467,
-   "lon": 9.21973
-  },
-  "via": [
-   {
-    "name": "Weibersbrunn",
-    "lat": 49.93231,
-    "lon": 9.3635
-   },
-   {
-    "name": "Heimbuchenthal",
-    "lat": 49.88353,
-    "lon": 9.29159
-   },
-   {
-    "name": "Mönchberg",
-    "lat": 49.79221,
-    "lon": 9.26691
-   }
-  ],
-  "length_km": 40,
-  "quality": 4,
   "caveats": "",
   "sources": [
    "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
@@ -1142,33 +1031,6 @@
   ]
  },
  {
-  "id": "at-berwang-bichlbach",
-  "name": "Berwanger Straße",
-  "country": "AT",
-  "region": "Tirol",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Kehrenstrecke nach Berwang",
-  "roads": [],
-  "from": {
-   "name": "Bichlbach",
-   "lat": 47.4205,
-   "lon": 10.78916
-  },
-  "to": {
-   "name": "Berwang",
-   "lat": 47.39091,
-   "lon": 10.75509
-  },
-  "via": [],
-  "length_km": 10,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "at-kaunertal-tal",
   "name": "Kaunertal Talstraße",
   "country": "AT",
@@ -1268,103 +1130,6 @@
   ]
  },
  {
-  "id": "at-gerlos-alt",
-  "name": "Gerlos Bundesstraße",
-  "country": "AT",
-  "region": "Salzburg",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Kurvenstrecke nach Krimml",
-  "roads": [
-   "B 165"
-  ],
-  "from": {
-   "name": "Wald im Pinzgau",
-   "lat": 47.24615,
-   "lon": 12.22819
-  },
-  "to": {
-   "name": "Krimml",
-   "lat": 47.22191,
-   "lon": 12.17546
-  },
-  "via": [],
-  "length_km": 12,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "at-klobenstein",
-  "name": "Klobensteinpass",
-  "country": "AT",
-  "region": "Tirol",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Schluchtstraße an der Großache",
-  "roads": [],
-  "from": {
-   "name": "Erpfendorf",
-   "lat": 47.5761,
-   "lon": 12.4781
-  },
-  "to": {
-   "name": "Schleching",
-   "lat": 47.71929,
-   "lon": 12.37679
-  },
-  "via": [
-   {
-    "name": "Kössen",
-    "lat": 47.6703,
-    "lon": 12.40552
-   }
-  ],
-  "length_km": 11,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "at-achensee-rampe",
-  "name": "Achenseestraße",
-  "country": "AT",
-  "region": "Tirol",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Kehren hinab ins Inntal",
-  "roads": [
-   "B 181"
-  ],
-  "from": {
-   "name": "Maurach",
-   "lat": 47.4239,
-   "lon": 11.74981
-  },
-  "to": {
-   "name": "Jenbach",
-   "lat": 47.39154,
-   "lon": 11.77174
-  },
-  "via": [
-   {
-    "name": "Wiesing",
-    "lat": 47.40463,
-    "lon": 11.79856
-   }
-  ],
-  "length_km": 11,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "at-furkajoch",
   "name": "Furkajoch",
   "country": "AT",
@@ -1431,41 +1196,6 @@
    }
   ],
   "length_km": 15,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "at-pass-lueg",
-  "name": "Pass Lueg",
-  "country": "AT",
-  "region": "Salzburg",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Talstraße an der Salzachöfen",
-  "roads": [
-   "B 159"
-  ],
-  "from": {
-   "name": "Golling an der Salzach",
-   "lat": 47.59672,
-   "lon": 13.16745
-  },
-  "to": {
-   "name": "Werfen",
-   "lat": 47.48593,
-   "lon": 13.10636
-  },
-  "via": [
-   {
-    "name": "Pass Lueg",
-    "lat": 47.57561,
-    "lon": 13.19469
-   }
-  ],
-  "length_km": 16,
   "quality": 3,
   "caveats": "",
   "sources": [
@@ -1579,106 +1309,6 @@
   ]
  },
  {
-  "id": "at-grossarltal",
-  "name": "Großarltal",
-  "country": "AT",
-  "region": "Salzburg",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Talstraße durch die Schlucht",
-  "roads": [],
-  "from": {
-   "name": "St. Johann im Pongau",
-   "lat": 47.3,
-   "lon": 13.3
-  },
-  "to": {
-   "name": "Hüttschlag",
-   "lat": 47.14496,
-   "lon": 13.25792
-  },
-  "via": [
-   {
-    "name": "Großarl",
-    "lat": 47.2374,
-    "lon": 13.2014
-   }
-  ],
-  "length_km": 20,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "at-grenzlandstrasse-soboth",
-  "name": "Grenzlandstraße zur Soboth",
-  "country": "AT",
-  "region": "Kärnten / Steiermark",
-  "kind": "strecke",
-  "tier": "highlight",
-  "note": "Kurvenstrecke mit Traumbelag",
-  "roads": [
-   "L 619"
-  ],
-  "from": {
-   "name": "Lavamünd",
-   "lat": 46.64158,
-   "lon": 14.94205
-  },
-  "to": {
-   "name": "Soboth",
-   "lat": 46.66835,
-   "lon": 15.00998
-  },
-  "via": [],
-  "length_km": 28,
-  "quality": 5,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "at-schilcher-weinstrasse",
-  "name": "Schilcher Weinstraße",
-  "country": "AT",
-  "region": "Steiermark",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Weinstraße mit steilen Rampen",
-  "roads": [],
-  "from": {
-   "name": "Deutschlandsberg",
-   "lat": 46.81463,
-   "lon": 15.21378
-  },
-  "to": {
-   "name": "Stainz",
-   "lat": 46.89361,
-   "lon": 15.26438
-  },
-  "via": [
-   {
-    "name": "Bad Gams",
-    "lat": 46.86993,
-    "lon": 15.22301
-   },
-   {
-    "name": "Greisdorf",
-    "lat": 46.92653,
-    "lon": 15.21713
-   }
-  ],
-  "length_km": 25,
-  "quality": 4,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "at-turracher-suedrampe",
   "name": "Turracher Straße",
   "country": "AT",
@@ -1708,46 +1338,6 @@
   ],
   "length_km": 22,
   "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "at-gaberl-b77",
-  "name": "Gaberlstraße",
-  "country": "AT",
-  "region": "Steiermark",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Bergstraße über die Stubalpe",
-  "roads": [
-   "B 77"
-  ],
-  "from": {
-   "name": "Judenburg",
-   "lat": 47.16941,
-   "lon": 14.66011
-  },
-  "to": {
-   "name": "Köflach",
-   "lat": 47.06449,
-   "lon": 15.085
-  },
-  "via": [
-   {
-    "name": "Weißkirchen in Steiermark",
-    "lat": 47.15332,
-    "lon": 14.73664
-   },
-   {
-    "name": "Gaberl",
-    "lat": 47.10586,
-    "lon": 14.92408
-   }
-  ],
-  "length_km": 35,
-  "quality": 4,
   "caveats": "",
   "sources": [
    "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
@@ -1856,46 +1446,6 @@
   ],
   "length_km": 25,
   "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "at-puchenstuben",
-  "name": "Puchenstuben",
-  "country": "AT",
-  "region": "Niederösterreich",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Kurvenreiche Bergstraße",
-  "roads": [
-   "B 28"
-  ],
-  "from": {
-   "name": "Scheibbs",
-   "lat": 48.00539,
-   "lon": 15.16749
-  },
-  "to": {
-   "name": "Wienerbruck",
-   "lat": 47.85529,
-   "lon": 15.30979
-  },
-  "via": [
-   {
-    "name": "Gaming",
-    "lat": 47.92869,
-    "lon": 15.08766
-   },
-   {
-    "name": "Puchenstuben",
-    "lat": 47.92809,
-    "lon": 15.28722
-   }
-  ],
-  "length_km": 28,
-  "quality": 4,
   "caveats": "",
   "sources": [
    "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
@@ -2067,74 +1617,6 @@
   ]
  },
  {
-  "id": "at-weitra-karlstift",
-  "name": "Waldviertler Grenzkamm",
-  "country": "AT",
-  "region": "Waldviertel",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Einsame Waldstrecke",
-  "roads": [],
-  "from": {
-   "name": "Weitra",
-   "lat": 48.70079,
-   "lon": 14.89414
-  },
-  "to": {
-   "name": "Karlstift",
-   "lat": 48.59169,
-   "lon": 14.74997
-  },
-  "via": [
-   {
-    "name": "Moorbad Harbach",
-    "lat": 48.70841,
-    "lon": 14.79247
-   }
-  ],
-  "length_km": 18,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "at-strudengau-grein",
-  "name": "Strudengau",
-  "country": "AT",
-  "region": "Oberösterreich",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Aufstieg von der Donau",
-  "roads": [
-   "B 119"
-  ],
-  "from": {
-   "name": "Grein",
-   "lat": 48.22718,
-   "lon": 14.85519
-  },
-  "to": {
-   "name": "Königswiesen",
-   "lat": 48.40718,
-   "lon": 14.84033
-  },
-  "via": [
-   {
-    "name": "Bad Kreuzen",
-    "lat": 48.26672,
-    "lon": 14.80705
-   }
-  ],
-  "length_km": 20,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "at-doiberstrasse",
   "name": "Hügelland bei Jennersdorf",
   "country": "AT",
@@ -2193,39 +1675,6 @@
    }
   ],
   "length_km": 18,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "at-helenental",
-  "name": "Helenental",
-  "country": "AT",
-  "region": "Wienerwald",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Talstraße an der Schwechat",
-  "roads": [],
-  "from": {
-   "name": "Baden bei Wien",
-   "lat": 48.00767,
-   "lon": 16.23437
-  },
-  "to": {
-   "name": "Alland",
-   "lat": 48.05852,
-   "lon": 16.07864
-  },
-  "via": [
-   {
-    "name": "Mayerling",
-    "lat": 48.04259,
-    "lon": 16.09747
-   }
-  ],
-  "length_km": 12,
   "quality": 3,
   "caveats": "",
   "sources": [
@@ -2583,35 +2032,6 @@
   ],
   "length_km": 11,
   "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "fr-vallee-de-campan",
-  "name": "Vallée de Campan",
-  "country": "FR",
-  "region": "Hautes-Pyrénées",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Waldstrecke zum Tourmalet",
-  "roads": [
-   "D 918"
-  ],
-  "from": {
-   "name": "Sainte-Marie-de-Campan",
-   "lat": 42.98481,
-   "lon": 0.22762
-  },
-  "to": {
-   "name": "Payolle",
-   "lat": 42.94253,
-   "lon": 0.28512
-  },
-  "via": [],
-  "length_km": 13,
-  "quality": 4,
   "caveats": "",
   "sources": [
    "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
@@ -3075,70 +2495,6 @@
   ]
  },
  {
-  "id": "it-molise-sepino",
-  "name": "Molise Höhenstraße",
-  "country": "IT",
-  "region": "Molise",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Einsame Hügelstraße",
-  "roads": [
-   "SS 87"
-  ],
-  "from": {
-   "name": "Campobasso",
-   "lat": 41.71726,
-   "lon": 14.82623
-  },
-  "to": {
-   "name": "Sepino",
-   "lat": 41.40802,
-   "lon": 14.61833
-  },
-  "via": [],
-  "length_km": 25,
-  "quality": 3,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "it-gargano-litoranea",
-  "name": "Gargano Küstenstraße",
-  "country": "IT",
-  "region": "Apulien",
-  "kind": "strecke",
-  "tier": "highlight",
-  "note": "Küstenstraße über den Kalkklippen",
-  "roads": [
-   "SP 53"
-  ],
-  "from": {
-   "name": "Vieste",
-   "lat": 41.88276,
-   "lon": 16.17918
-  },
-  "to": {
-   "name": "Mattinata",
-   "lat": 41.71014,
-   "lon": 16.05156
-  },
-  "via": [
-   {
-    "name": "Pugnochiuso",
-    "lat": 41.78584,
-    "lon": 16.1841
-   }
-  ],
-  "length_km": 40,
-  "quality": 4,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "it-villasimius-solanas",
   "name": "Costa Rei Küstenstraße",
   "country": "IT",
@@ -3359,39 +2715,6 @@
   ]
  },
  {
-  "id": "si-pokljuka",
-  "name": "Pokljuka",
-  "country": "SI",
-  "region": "Triglav Nationalpark",
-  "kind": "strecke",
-  "tier": "prefer",
-  "note": "Aufstieg auf die Hochebene",
-  "roads": [],
-  "from": {
-   "name": "Bled",
-   "lat": 46.36842,
-   "lon": 14.11006
-  },
-  "to": {
-   "name": "Mrzli Studenec",
-   "lat": 46.41278,
-   "lon": 14.3241
-  },
-  "via": [
-   {
-    "name": "Gorje",
-    "lat": 46.37399,
-    "lon": 14.07107
-   }
-  ],
-  "length_km": 18,
-  "quality": 4,
-  "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
   "id": "si-kokra",
   "name": "Kokratal",
   "country": "SI",
@@ -3454,39 +2777,6 @@
   "length_km": 15,
   "quality": 3,
   "caveats": "",
-  "sources": [
-   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
-  ]
- },
- {
-  "id": "si-kolpa",
-  "name": "Kolpa Tal",
-  "country": "SI",
-  "region": "Bela krajina",
-  "kind": "strecke",
-  "tier": "highlight",
-  "note": "Kurvenstrecke am Grenzfluss",
-  "roads": [],
-  "from": {
-   "name": "Osilnica",
-   "lat": 45.55079,
-   "lon": 14.72026
-  },
-  "to": {
-   "name": "Vinica",
-   "lat": 45.46014,
-   "lon": 15.25395
-  },
-  "via": [
-   {
-    "name": "Fara",
-    "lat": 45.47714,
-    "lon": 14.88299
-   }
-  ],
-  "length_km": 50,
-  "quality": 4,
-  "caveats": "schmal",
   "sources": [
    "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
   ]
