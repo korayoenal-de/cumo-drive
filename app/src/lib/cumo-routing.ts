@@ -10,7 +10,7 @@
  */
 
 import type { PlannedTour } from './plan';
-import { HIGHLIGHT_ROADS } from './highlight-roads';
+import { HIGHLIGHT_ROADS, PREFER_ROADS } from './highlight-roads';
 import { countCurves } from './stats';
 import { doubledStretch } from './doubled';
 import { haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
@@ -156,21 +156,41 @@ async function post(body: Record<string, unknown>, signal?: AbortSignal): Promis
  * Kuratierte Traumstrecken (Highlights: Rallye, Bergrennen, Kurven und Panoramastraßen) als Korridor:
  * kleine Quadrate alle 120 m entlang der Linie, zusammen ein Gebiet "fav". Alles außerhalb wird etwas
  * teurer, so zieht die Route auf diese Straßen, ohne große Umwege zu erzwingen.
- * Nur Strecken in der Nähe der Anfrage, damit die Anfrage klein bleibt.
+ * Dazu die Strecken, die nur bei der Planung zählen (PREFER_ROADS).
+ * Nur Strecken in der Nähe der Anfrage, die nächstgelegenen zuerst, höchstens FAV_MAX Quadrate,
+ * damit die Anfrage klein bleibt.
  */
+const FAV_MAX = 1500;
+
 function favoriteArea(near: LatLon[], radiusKm: number) {
   if (!near.length) return null;
-  const roads = HIGHLIGHT_ROADS.filter((r) => r.line.some((q) => near.some((p) => haversine(p, q) < radiusKm * 1000)));
+  const reach = radiusKm * 1000;
+  // Grob vorsortieren (etwa radiusKm um die Punkte), dann den kleinsten Abstand bestimmen
+  const dLat = radiusKm / 111 + 0.01;
+  const inBox = (q: LatLon) => near.some((p) => Math.abs(p[0] - q[0]) < dLat && Math.abs(p[1] - q[1]) < dLat / Math.max(0.2, Math.cos((p[0] * Math.PI) / 180)));
+  const roads = [...HIGHLIGHT_ROADS, ...PREFER_ROADS]
+    .map((r) => {
+      let dist = Infinity;
+      for (const q of r.line) {
+        if (!inBox(q)) continue;
+        for (const p of near) dist = Math.min(dist, haversine(p, q));
+      }
+      return { r, dist };
+    })
+    .filter((x) => x.dist < reach)
+    .sort((a, b) => a.dist - b.dist)
+    .map((x) => x.r);
   if (!roads.length) return null;
   const d = 0.0006;
   const r5 = (v: number) => Math.round(v * 1e5) / 1e5;
   const polys: number[][][][] = [];
   for (const road of roads) {
-    for (let i = 0; i < road.line.length - 1 && polys.length < 1500; i++) {
+    if (polys.length >= FAV_MAX) break;
+    for (let i = 0; i < road.line.length - 1 && polys.length < FAV_MAX; i++) {
       const a = road.line[i];
       const b = road.line[i + 1];
       const n = Math.max(1, Math.round(haversine(a, b) / 120));
-      for (let k = 0; k < n; k++) {
+      for (let k = 0; k < n && polys.length < FAV_MAX; k++) {
         const la = a[0] + ((b[0] - a[0]) * k) / n;
         const lo = a[1] + ((b[1] - a[1]) * k) / n;
         polys.push([[[r5(lo - d), r5(la - d)], [r5(lo + d), r5(la - d)], [r5(lo + d), r5(la + d)], [r5(lo - d), r5(la + d)], [r5(lo - d), r5(la - d)]]]);

@@ -10,6 +10,8 @@
  * Ansage: `say` ist der gesprochene Teil (in beiden Fahrtrichtungen passend) nach "beginnt" (In 500 Metern beginnt die alte Rallyestrecke Zotzenbach).
  * Ohne `say` wird "die {note} {name}" gesprochen, deshalb sind alle Notizen weiblich (Strecke, Straße).
  */
+import curatedData from '@/data/curated-roads.json';
+
 import type { LatLon } from './tour';
 
 export type HighlightRoadKind = 'rallye' | 'strecke' | 'aussicht' | 'bergrennen';
@@ -487,3 +489,63 @@ export const HIGHLIGHT_ROADS: HighlightRoad[] = [
   // Weggelassen (unsicher oder doppelt): Wolsfeld, Eckental, Hemberg, Roßfeld, Alpl, Kesselberg und Exelberg
   // (Start oder Ziel nicht belegt), Großglockner (Ikone Hochtor deckt die Nordrampe ab), Mont Ventoux (Ikone).
 ];
+
+/**
+ * Kuratierte Streckendatenbank (routing/data/roads, DE AT CH IT FR) als fertige Linien in
+ * src/data/curated-roads.json: mit Valhalla (valhalla1.openstreetmap.de) vom Start über alle Zwischenorte
+ * zum Ziel geroutet, auf Länge, Stichstraßen und Schleifen geprüft, doppelte zusammengeführt und auf etwa
+ * alle 400 m ausgedünnt (kehrenreiche Strecken dichter). Stand: November 2026. Nur Daten, kein Netz zur Laufzeit.
+ * tier highlight wird angekündigt, tier prefer zieht nur die Routenplanung auf diese Straßen.
+ * Pässe mit eigener Strecke stehen dort als prefer, die Ansage übernimmt die Passdatenbank.
+ */
+type CuratedRoad = {
+  id: string;
+  name: string;
+  kind: HighlightRoadKind;
+  tier: 'highlight' | 'prefer';
+  note: string;
+  country: string;
+  line: LatLon[];
+};
+
+const CURATED = curatedData as unknown as CuratedRoad[];
+
+const toRoad = ({ id, name, kind, note, line }: CuratedRoad): HighlightRoad => ({ id, name, kind, note, line });
+
+/** Abstand eines Punkts zur Strecke a b in Metern (flache Näherung, reicht für 150 m). */
+function segmentDistance(p: LatLon, a: LatLon, b: LatLon) {
+  const k = Math.cos((p[0] * Math.PI) / 180) * 111320;
+  const ax = (a[1] - p[1]) * k;
+  const ay = (a[0] - p[0]) * 110540;
+  const bx = (b[1] - p[1]) * k;
+  const by = (b[0] - p[0]) * 110540;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+  return Math.hypot(ax + t * dx, ay + t * dy);
+}
+
+/** Liegt mehr als die Hälfte der Punkte höchstens 150 m neben einer der Linien? */
+function coveredBy(road: CuratedRoad, others: HighlightRoad[]) {
+  const near = others.filter((o) =>
+    o.line.some(([la, lo]) => road.line.some((q) => Math.abs(q[0] - la) < 0.03 && Math.abs(q[1] - lo) < 0.045)),
+  );
+  if (!near.length) return false;
+  let hit = 0;
+  for (const p of road.line) {
+    if (near.some((o) => o.line.some((a, i) => i > 0 && segmentDistance(p, o.line[i - 1], a) <= 150))) hit++;
+  }
+  return hit > road.line.length * 0.5;
+}
+
+// Handgepflegte Strecken bleiben vorne, kuratierte Highlights nur dort, wo noch keine handgepflegte liegt
+const MANUAL_COUNT = HIGHLIGHT_ROADS.length;
+for (const r of CURATED) {
+  if (r.tier === 'highlight' && r.line.length > 1 && !coveredBy(r, HIGHLIGHT_ROADS.slice(0, MANUAL_COUNT))) {
+    HIGHLIGHT_ROADS.push(toRoad(r));
+  }
+}
+
+/** Strecken, die die Routenplanung bevorzugt, ohne sie anzukündigen (tier prefer). */
+export const PREFER_ROADS: HighlightRoad[] = CURATED.filter((r) => r.tier === 'prefer' && r.line.length > 1).map(toRoad);
