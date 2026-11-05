@@ -27,7 +27,7 @@ export function HighlightList({ line }: { line: LatLon[] }) {
         {list.map((h, i) => {
           const lv = toFunLevel(h.level);
           return (
-            <Animated.View key={h.id} entering={softEnter(i)} style={[styles.row, i > 0 && styles.line]}>
+            <Animated.View key={h.id} entering={softEnter(i)} style={styles.row}>
               <View style={styles.flex}>
                 <AppText style={styles.name} numberOfLines={1}>
                   {h.name}
@@ -53,7 +53,6 @@ const styles = StyleSheet.create({
   wrap: { gap: Spacing.m },
   card: { borderRadius: Radius.l, backgroundColor: Colors.surface, paddingHorizontal: Spacing.m },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64, paddingVertical: Spacing.s },
-  line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
   name: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   sub: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   gauge: { alignItems: 'center', gap: 2, minWidth: 72 },
