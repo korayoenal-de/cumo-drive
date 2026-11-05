@@ -15,6 +15,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { MapLayersButton } from '@/components/map/map-settings-sheet';
 import { HighlightList } from '@/components/planner/highlight-list';
+import { MapPassActions, type PassAction } from '@/components/planner/map-pass-actions';
 import { RouteMap } from '@/components/map/route-map';
 import { closedHint, passState, usePassLive } from '@/lib/pass-live';
 import { PASS_STATUS_URL, PASSES, passesAlong, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
@@ -352,12 +353,29 @@ export default function Planner() {
     [inTour, tourPts],
   );
 
-  /** Tipp auf einen Pass der Karte: Karte im Blatt mit Hinzufügen oder Entfernen. */
+  /** Tipp auf einen Pass der Karte: Aktionen schweben über der Karte, ein Tipp daneben blendet sie aus. */
   function onMapPassPress(pass: Pass) {
     setPending({ p: passPoint(pass), name: pass.name, pass });
-    if (detent === 0) setDetent(1);
-    toTop();
   }
+
+  /** Aktion für den angetippten Pass, direkt auf die Route */
+  function onPassAction(a: PassAction) {
+    if (!pending?.pass) return;
+    const pts = tourPlan.pts;
+    if (a === 'remove') {
+      const i = passIndex(pts, pending.pass);
+      if (tourPlan.start && i === 0) tourPlan.removeStart(profile, avoid);
+      else if (tourPlan.ziel && i === pts.length - 1) tourPlan.removeZiel(profile, avoid);
+      else if (i >= 0) tourPlan.removeVia(i - (tourPlan.start ? 1 : 0), profile, avoid);
+    } else tourPlan.add(a, pending.p, profile, avoid, pending.name ?? undefined);
+    setPending(null);
+  }
+
+  const live = usePassLive();
+  const passOverlay = inTour && pending?.pass ? pending.pass : null;
+  const passRoleIdx = passOverlay ? passIndex(tourPts, passOverlay) : -1;
+  const passRole =
+    passRoleIdx < 0 ? null : passRoleIdx === 0 ? 'Start' : passRoleIdx === tourPts.length - 1 && tourPlan.complete ? 'Ziel' : `Zwischenziel ${passRoleIdx}`;
 
   function onMapLongPress(p: LatLon) {
     if (!tourPts.length) {
@@ -758,6 +776,7 @@ export default function Planner() {
           focus={focus}
           onLongPress={inTour ? onMapLongPress : undefined}
           onPressPass={inTour ? onMapPassPress : undefined}
+          onPressMap={passOverlay ? () => setPending(null) : undefined}
           pickedPassIds={inTour ? pickedPassIds : undefined}
           // MapKit rechnet die Safe Area selbst dazu; ohne Abzug schwebt der Hinweis Apple Karten über dem Blatt
           mapPadding={{ top: 0, right: 0, bottom: Math.max(0, covered - insets.bottom), left: 0 }}
@@ -765,6 +784,18 @@ export default function Planner() {
           style={StyleSheet.absoluteFill}
         />
           <MapLayersButton style={[styles.layersBtn, { top: insets.top + Spacing.s }]} />
+          {passOverlay && (
+            <MapPassActions
+              pass={passOverlay}
+              note={passSummary(passOverlay, undefined, passState(passOverlay, live).note)}
+              role={passRole}
+              complete={tourPlan.complete}
+              empty={tourPts.length === 0}
+              detourKm={tourPlan.complete ? roughDetourKm(tourPts, passPoint(passOverlay)) : null}
+              bottom={covered + Spacing.m}
+              onAction={onPassAction}
+            />
+          )}
         </>
       )}>
       {body}
@@ -1468,24 +1499,7 @@ function TourMode({
 
   return (
     <>
-      {pending?.pass && (
-        <PassCard
-          pass={pending.pass}
-          note={passSummary(pending.pass, undefined, passState(pending.pass, live).note)}
-          index={passIndex(pts, pending.pass)}
-          count={pts.length}
-          complete={plan.complete}
-          detourKm={plan.complete ? roughDetourKm(pts, pending.p) : null}
-          onAdd={addPending}
-          onRemove={(i) => {
-            if (plan.start && i === 0) plan.removeStart(profile, avoid);
-            else if (plan.ziel && i === pts.length - 1) plan.removeZiel(profile, avoid);
-            else plan.removeVia(i - (plan.start ? 1 : 0), profile, avoid);
-            setPending(null);
-          }}
-          onClose={() => setPending(null)}
-        />
-      )}
+
       {pending && !pending.pass && (
         <View style={[styles.card, styles.pendingCard]}>
           <View style={styles.flex}>
@@ -1692,54 +1706,6 @@ function LocationIcon() {
     <Svg width={20} height={20} viewBox="0 0 24 24">
       <Path d="M21 3 L3 10.6 L11.2 12.8 L13.4 21 Z" fill={Colors.signal} stroke={Colors.signal} strokeWidth={1.5} strokeLinejoin="round" />
     </Svg>
-  );
-}
-
-/**
- * Angetippter Pass aus der Karte. Steht die Route, ist Hinzufügen die Hauptaktion: der Pass landet
- * als Zwischenziel dort, wo er den kleinsten Umweg macht. Ist er schon drin, lässt er sich entfernen.
- */
-function PassCard({
-  pass, note, index, count, complete, detourKm, onAdd, onRemove, onClose,
-}: {
-  pass: Pass;
-  note: string;
-  /** Stelle in der Punktliste, -1 wenn noch nicht in der Route */
-  index: number;
-  count: number;
-  complete: boolean;
-  detourKm: number | null;
-  onAdd: (kind: PointKind) => void;
-  onRemove: (index: number) => void;
-  onClose: () => void;
-}) {
-  const inRoute = index >= 0;
-  const role = !inRoute ? null : index === 0 ? 'Start' : index === count - 1 && complete ? 'Ziel' : `Zwischenziel ${index}`;
-  return (
-    <View style={[styles.card, styles.pendingCard]}>
-      <View style={styles.flex}>
-        <AppText variant="label">{inRoute ? `Pass, in deiner Route als ${role}` : 'Pass'}</AppText>
-        <AppText variant="title">{pass.name}</AppText>
-        <AppText variant="caption" muted>{note}</AppText>
-        {!inRoute && detourKm != null && <AppText variant="caption" muted>{`Umweg grob ${detourKm} km`}</AppText>}
-      </View>
-      <View style={styles.wrap}>
-        {inRoute ? (
-          <SmallButton label="Aus der Route entfernen" onPress={() => onRemove(index)} strong />
-        ) : complete ? (
-          <>
-            <SmallButton label="Zur Route hinzufügen" onPress={() => onAdd('via')} strong />
-            <SmallButton label="Als Ziel" onPress={() => onAdd('ziel')} />
-          </>
-        ) : (
-          <>
-            <SmallButton label="Als Start" onPress={() => onAdd('start')} strong={count === 0} />
-            <SmallButton label="Als Ziel" onPress={() => onAdd('ziel')} strong={count > 0} />
-          </>
-        )}
-        <SmallButton label="Schließen" onPress={onClose} />
-      </View>
-    </View>
   );
 }
 

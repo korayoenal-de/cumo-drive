@@ -49,6 +49,7 @@ export function RouteMap({
   dashed,
   layers = false,
   onPressPass,
+  onPressMap,
   pickedPassIds,
 }: RouteMapProps) {
   const settings = useMapSettings();
@@ -219,6 +220,7 @@ export function RouteMap({
         zoomEnabled={interactive}
         onMapReady={() => setReady(true)}
         onPanDrag={followUser && position ? () => setPaused((n) => n + 1) : undefined}
+        onPress={onPressMap ? (e) => e.nativeEvent.action !== 'marker-press' && onPressMap() : undefined}
         onLongPress={
           onLongPress
             ? (e) => onLongPress([e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude])

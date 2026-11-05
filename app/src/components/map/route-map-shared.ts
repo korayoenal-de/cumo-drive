@@ -41,6 +41,8 @@ export type RouteMapProps = {
   layers?: boolean;
   /** Tipp auf einen Pass der Pässe Ebene (zum Beispiel zur Route hinzufügen) */
   onPressPass?: (pass: Pass) => void;
+  /** Tipp auf eine freie Stelle der Karte (nicht auf einen Marker) */
+  onPressMap?: () => void;
   /** Pässe, die schon als Punkt in der Planung stehen: sie erscheinen markiert */
   pickedPassIds?: ReadonlySet<string>;
 };
