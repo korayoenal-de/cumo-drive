@@ -115,7 +115,7 @@ export async function checkLine(
   onProgress?: (done: number, total: number) => void,
   signal?: AbortSignal,
   lenient = false,
-): Promise<Pick<Tour, 'linie' | 'warnungen' | 'km_je_klasse' | 'laenge_km'>> {
+): Promise<Pick<Tour, 'linie' | 'warnungen' | 'km_je_klasse' | 'laenge_km' | 'km_klein'>> {
   const pts = thin(line, 40);
   const CHUNK = 600;
   // Stücke nach Punktzahl und Länge: der öffentliche Server nimmt höchstens 200 km pro Abgleich
@@ -149,11 +149,13 @@ export async function checkLine(
   const warnungen: Warning[] = [];
   const kmBy: Record<CheckClass, number> = { ok: 0, pruefen: 0, raus: 0 };
   let km = 0;
+  let small = 0;
   let open: Warning | null = null;
   edges.forEach((e, idx) => {
     const { c, why } = rated[idx];
     const len = e.length ?? 0;
     kmBy[c] += len;
+    if (isSmallRoad(e)) small += len;
     const shape = shapes[idx];
     const last = linie[linie.length - 1];
     if (last && last.c === c) last.p.push(...shape.slice(1));
@@ -180,5 +182,16 @@ export async function checkLine(
     warnungen: filtered,
     laenge_km: +km.toFixed(1),
     km_je_klasse: { ok: +kmBy.ok.toFixed(1), pruefen: +kmBy.pruefen.toFixed(1), raus: +kmBy.raus.toFixed(1) },
+    km_klein: +small.toFixed(1),
   };
+}
+
+/**
+ * Kleine Straße: Gemeindeverbindung, Wohn oder Erschließungsstraße ohne Nummer. Oft unter 4,5 m
+ * breit, ohne dass die Breite eingetragen ist. Nicht gesperrt, aber bei der Auswahl von Rundtouren
+ * abgewertet (Schlenker bei Zotzenbach am 5.11.).
+ */
+function isSmallRoad(e: Edge): boolean {
+  if (!['unclassified', 'residential', 'service_other'].includes(e.road_class ?? '')) return false;
+  return !(e.names ?? []).some((n) => NUMBERED.test(n));
 }

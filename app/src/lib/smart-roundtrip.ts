@@ -35,12 +35,16 @@ export type SmartRequest = {
 export type Engine = 'cumo' | 'graphhopper' | 'valhalla';
 export type SmartTour = PlannedTour & { engine: Engine; score: number; curves: number; passes?: string[] };
 
-/** Gleiche Bewertung für alle Kandidaten; gesperrte km wiegen schwer. */
+/**
+ * Gleiche Bewertung für alle Kandidaten; gesperrte km wiegen schwer. Prüfstellen (Zufahrten,
+ * Spielstraßen) und kleine Straßen ohne Nummer kosten ebenfalls, damit der Ersatzweg keine
+ * schmalen Schlenker wählt.
+ */
 function scoreTour(t: PlannedTour, curves: number, fastKm: number, targetKm: number): number {
   const ghLike: GhRoute = {
     shape: [], km: t.laenge_km, minutes: t.minutes, curvyShare: 0, curves, narrowKm: 0, unpavedKm: 0, fastKm, seed: 0,
   };
-  return scoreRoute(ghLike, targetKm) - (t.km_je_klasse?.raus ?? 0) * 40;
+  return scoreRoute(ghLike, targetKm) - (t.km_je_klasse?.raus ?? 0) * 40 - (t.km_je_klasse?.pruefen ?? 0) * 20 - (t.km_klein ?? 0) * 12;
 }
 
 export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<SmartTour> {
@@ -116,19 +120,25 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
     }
   }
 
-  // 1. Valhalla: ohne Autobahn, Via Punkte im Hügelland, geprüft und umgeplant
-  onStep?.('route');
-  try {
-    const r = await roundTrip(
-      { start: req.start, km: req.km, direction: req.direction, bearing: heading, profile: req.profile, avoid: req.avoid, seed },
-      signal,
-    );
-    const t = await despurVias(req, r.via, onStep, signal);
-    const curves = countCurves(flatten(t).map((x) => x.p));
-    candidates.push({ ...t, engine: 'valhalla', curves, score: scoreTour(t, curves, 0, req.km) - spurKm(t) * 100 });
-  } catch (e) {
-    if (signal?.aborted) throw e;
-    lastError = e;
+  // 1. Valhalla: ohne Autobahn, Via Punkte im Hügelland, geprüft und umgeplant. Bleibt eine
+  // Stichstraße über 1 km, die nicht an einem Via Punkt hängt, eine zweite Runde mit anderem Seed.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    onStep?.('route');
+    try {
+      const r = await roundTrip(
+        { start: req.start, km: req.km, direction: req.direction, bearing: heading, profile: req.profile, avoid: req.avoid, seed: seed + attempt * 7919 },
+        signal,
+      );
+      const t = await despurVias(req, r.via, onStep, signal);
+      const curves = countCurves(flatten(t).map((x) => x.p));
+      const spur = spurKm(t);
+      candidates.push({ ...t, engine: 'valhalla', curves, score: scoreTour(t, curves, 0, req.km) - spur * 100 });
+      if (spur < 1) break;
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      lastError = e;
+      break;
+    }
   }
 
   // 2. GraphHopper Varianten, nur für kurvige Profile und mit Schlüssel
@@ -172,38 +182,74 @@ function spurKm(t: PlannedTour): number {
   return spurOf(t).km;
 }
 
+/** Stützpunkte einer Stichstraße in Gruppen teilen: je Stichstraße eine Gruppe, in Fahrtrichtung. */
+function spurGroups(points: LatLon[]): LatLon[][] {
+  const groups: LatLon[][] = [];
+  for (const p of points) {
+    const g = groups[groups.length - 1];
+    if (g && haversine(g[g.length - 1], p) < 1000) g.push(p);
+    else groups.push([p]);
+  }
+  return groups;
+}
+
 /**
  * Ersatzweg ohne eigenen Server: Liegt ein Via Punkt in einer Seitenstraße, fährt die Route dort
- * hinein und wieder heraus (Stichstraße) oder dreht eine kleine Schleife durch den Ort. Den Via Punkt
- * an dieser Stelle weglassen und neu rechnen, höchstens dreimal, solange es besser wird.
+ * hinein und auf demselben Weg wieder heraus (Stichstraße). Die doppelten Stützpunkte liegen auf
+ * dem Rückweg, der letzte jeder Gruppe also an der Abzweigung. Den Via Punkt, der die Stichstraße
+ * erzeugt, dorthin verschieben: die Runde behält ihre Form, fährt aber nicht mehr hinein.
+ * Parallel wird der Punkt ganz weggelassen; genommen wird, was weniger doppelt fährt und
+ * nicht unter 60 % der Länge fällt (Bensheim 5.11.: Weglassen allein machte 63 zu 21 km).
+ * Höchstens dreimal, solange es besser wird.
  */
 async function despurVias(req: SmartRequest, via: LatLon[], onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<PlannedTour> {
   let v = [...via];
   let t = await planChecked(req.name, [req.start, ...v, req.start], req.profile, req.avoid, onStep, signal, true);
-  for (let round = 0; round < 3 && v.length > 1; round++) {
+  for (let round = 0; round < 3; round++) {
     const spur = spurOf(t);
     if (spur.km < 0.2) break;
-    const at = spur.points[Math.floor(spur.points.length / 2)];
-    let k = -1;
-    let best = 3000;
-    v.forEach((q, i) => {
-      const d = haversine(q, at);
-      if (d < best) {
-        best = d;
-        k = i;
+    const moved = [...v];
+    const hit = new Set<number>();
+    for (const g of spurGroups(spur.points)) {
+      // Via Punkt mit dem kleinsten Abstand zur Stichstraße, höchstens 3 km
+      let k = -1;
+      let best = 3000;
+      v.forEach((q, i) => {
+        const d = Math.min(...g.map((p) => haversine(q, p)));
+        if (d < best) {
+          best = d;
+          k = i;
+        }
+      });
+      if (k < 0) continue;
+      moved[k] = g[g.length - 1];
+      hit.add(k);
+    }
+    if (!hit.size) break;
+    // Zwei Wege probieren: Punkt an die Abzweigung schieben, oder ganz weglassen. Liegt der Punkt
+    // schon an der Abzweigung, wendet die Route trotzdem dahinter; dann hilft nur Weglassen.
+    const dropped = v.filter((_, i) => !hit.has(i));
+    const tries = dropped.length ? [moved, dropped] : [moved];
+    const results = await Promise.all(
+      tries.map((w) => planChecked(req.name, [req.start, ...w, req.start], req.profile, req.avoid, onStep, signal, true).catch((e) => {
+        if (signal?.aborted) throw e;
+        return null;
+      })),
+    );
+    // Weniger doppelt ist besser, aber eine Runde, die viel zu kurz wird, auch nicht
+    const cost = (r: PlannedTour) => spurKm(r) * 4 + (Math.abs(r.laenge_km - req.km) / req.km) * 10;
+    let pick = -1;
+    let pickCost = Infinity;
+    results.forEach((r, i) => {
+      if (!r || r.laenge_km < t.laenge_km * 0.6 || spurKm(r) >= spur.km - 0.1) return;
+      if (cost(r) < pickCost) {
+        pickCost = cost(r);
+        pick = i;
       }
     });
-    if (k < 0) break;
-    const next = v.filter((_, i) => i !== k);
-    try {
-      const r = await planChecked(req.name, [req.start, ...next, req.start], req.profile, req.avoid, onStep, signal, true);
-      if (spurKm(r) >= spur.km - 0.1) break;
-      t = r;
-      v = next;
-    } catch (e) {
-      if (signal?.aborted) throw e;
-      break;
-    }
+    if (pick < 0) break;
+    t = results[pick]!;
+    v = tries[pick];
   }
   return t;
 }

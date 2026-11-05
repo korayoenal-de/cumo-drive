@@ -200,7 +200,11 @@ export function findHighlights(
     passes = passes.filter((p) => !onRoad(p));
     found.push(r);
   }
-  return [...passes, ...found].sort((a, b) => a.startKm - b.startKm);
+  // Fährt die Route ein Highlight zweimal (hin und zurück), nur die erste Durchfahrt ankündigen
+  const seen = new Set<string>();
+  return [...passes, ...found]
+    .sort((a, b) => a.startKm - b.startKm)
+    .filter((h) => !seen.has(h.id) && !!seen.add(h.id));
 }
 
 /** Nächste Stellen der Route zu einem Punkt (höchstens maxM entfernt), je Durchfahrt eine. */

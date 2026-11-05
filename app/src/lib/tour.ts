@@ -23,6 +23,8 @@ export type Tour = {
   wegpunkte: LatLon[];
   linie: { c: CheckClass; p: LatLon[] }[];
   warnungen: Warning[];
+  /** km auf kleinen Straßen ohne Nummer (nur aus dem Check über Valhalla), für die Auswahl von Rundtouren */
+  km_klein?: number;
   /** true, wenn die Tour durch den Etappen Check gelaufen ist */
   geprueft?: boolean;
 };

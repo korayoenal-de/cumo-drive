@@ -32,6 +32,8 @@ export function costingFor(profile: Profile, avoid: Avoid) {
         use_living_streets: 0,
         exclude_unpaved: true,
         service_penalty: 600,
+        // Anliegerstraßen und Zufahrten (Mossauer Weg am 5.11.) nur, wenn es nicht anders geht
+        destination_only_penalty: 1800,
         ignore_closures: !avoid.closures,
         shortest: false,
       },
