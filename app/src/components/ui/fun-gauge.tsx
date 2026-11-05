@@ -4,7 +4,8 @@
  * Fünf Stufen füllen 1, 3, 4, 6 und 7 Dreiecke im Uhrzeigersinn. Unter 20 pt nur die orangen Dreiecke.
  *
  * Legende (animate): Dreiecke füllen sich nacheinander, springen auseinander und verschwinden, aus der
- * Negativform erscheint der orange Stern, pulsiert auf 125 % und zurück, blendet aus, die Dreiecke kehren zurück.
+ * Negativform erscheint der orange Stern, pulsiert auf 125 % und zurück, blendet aus. Erst danach gleiten die
+ * Dreiecke sanft von 106 % auf 100 % zurück.
  */
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -35,12 +36,13 @@ const RB = 11.2;
 const RT = 4.2;
 const HALF = RB * Math.sin(Math.PI / N) * 0.97;
 const OFF = '#3A3A3F';
-/** Füllreihenfolge im Uhrzeigersinn ab oben links */
-const ORDER = [5, 6, 0, 1, 2, 3, 4];
+/** Kreis um 180 Grad gedreht (eine Zacke oben, zwei unten); Füllreihenfolge im Uhrzeigersinn ab unten links */
+const ROT = 180;
+const ORDER = [1, 2, 3, 4, 5, 6, 0];
 const f = (v: number) => v.toFixed(2);
 
 const TRIS = Array.from({ length: N }, (_, i) => {
-  const a = ((i * 360) / N) * (Math.PI / 180);
+  const a = ((i * 360) / N + ROT) * (Math.PI / 180);
   const ux = Math.sin(a);
   const uy = -Math.cos(a);
   const px = Math.cos(a);
@@ -55,14 +57,16 @@ const STAR = (() => {
   const ro = Math.hypot(RB * Math.cos(Math.PI / N), HALF);
   const out: string[] = [];
   for (let i = 0; i < N; i++) {
-    const a = ((i * 360) / N) * (Math.PI / 180);
-    const b = (((i + 0.5) * 360) / N) * (Math.PI / 180);
+    const a = ((i * 360) / N + ROT) * (Math.PI / 180);
+    const b = (((i + 0.5) * 360) / N + ROT) * (Math.PI / 180);
     out.push(`${f(12 + Math.sin(a) * RT)},${f(12 - Math.cos(a) * RT)}`, `${f(12 + Math.sin(b) * ro)},${f(12 - Math.cos(b) * ro)}`);
   }
   return out.join(' ');
 })();
 
 const CYCLE_MS = 3200;
+const EASE_IN = Easing.in(Easing.quad);
+const EASE_OUT = Easing.out(Easing.cubic);
 const AnimatedPolygon = Animated.createAnimatedComponent(Polygon);
 
 export function FunGauge({ level, size = 20, animate = false }: { level: FunLevel; size?: number; animate?: boolean }) {
@@ -89,12 +93,15 @@ function LegendGauge({ size, label }: { size: number; label: string }) {
     t.set(withRepeat(withTiming(1, { duration: CYCLE_MS, easing: Easing.linear }), -1, false));
     return () => cancelAnimation(t);
   }, [t]);
-  // Dreiecke springen auseinander (22 bis 29 %) und kehren zurück (82 bis 92 %)
+  // Dreiecke springen auseinander (22 bis 29 %); erst nach dem Stern gleiten sie sanft zurück (76 bis 97 %)
   const group = useAnimatedStyle(() => {
     const p = t.get();
-    const scale = interpolate(p, [0, 0.22, 0.29, 0.82, 0.92, 1], [1, 1, 1.6, 0.85, 1, 1], 'clamp');
-    const opacity = interpolate(p, [0, 0.22, 0.29, 0.82, 0.92, 1], [1, 1, 0, 0, 1, 1], 'clamp');
-    return { opacity, transform: [{ scale }] };
+    if (p < 0.5) {
+      const k = EASE_IN(interpolate(p, [0.22, 0.29], [0, 1], 'clamp'));
+      return { opacity: 1 - k, transform: [{ scale: 1 + 0.6 * k }] };
+    }
+    const k = EASE_OUT(interpolate(p, [0.76, 0.97], [0, 1], 'clamp'));
+    return { opacity: k, transform: [{ scale: 1.06 - 0.06 * k }] };
   });
   // Stern: erscheint, pulsiert auf 125 % und zurück, blendet aus
   const star = useAnimatedStyle(() => {
@@ -127,7 +134,7 @@ function FillingTri({ pts, step, t }: { pts: string; step: number; t: SharedValu
   const at = (step * 80) / CYCLE_MS;
   const props = useAnimatedProps(() => {
     const p = t.get();
-    const k = p < 0.81 ? interpolate(p, [at, at + 0.04], [0, 1], 'clamp') : 0;
+    const k = p < 0.75 ? interpolate(p, [at, at + 0.04], [0, 1], 'clamp') : 0;
     return { fill: interpolateColor(k, [0, 1], [OFF, Colors.signal]) };
   });
   return <AnimatedPolygon points={pts} animatedProps={props} />;
