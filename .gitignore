@@ -10,3 +10,6 @@ routing/server/bin/
 .fotos-web.zip
 app/public/fotos/
 !routing/data/roads/
+routing/scripts/.cache/
+routing/scripts/.geocache.json
+routing/scripts/report.json
