@@ -123,9 +123,9 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       { start: req.start, km: req.km, direction: req.direction, bearing: heading, profile: req.profile, avoid: req.avoid, seed },
       signal,
     );
-    const t = await planChecked(req.name, [req.start, ...r.via, req.start], req.profile, req.avoid, onStep, signal, true);
+    const t = await despurVias(req, r.via, onStep, signal);
     const curves = countCurves(flatten(t).map((x) => x.p));
-    candidates.push({ ...t, engine: 'valhalla', curves, score: scoreTour(t, curves, 0, req.km) });
+    candidates.push({ ...t, engine: 'valhalla', curves, score: scoreTour(t, curves, 0, req.km) - spurKm(t) * 100 });
   } catch (e) {
     if (signal?.aborted) throw e;
     lastError = e;
@@ -142,7 +142,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         const t: PlannedTour = {
           name: req.name, wegpunkte: [req.start, req.start], ...chk, laenge_km: +c.km.toFixed(1), minutes: c.minutes, geprueft: true, fixes: 0,
         };
-        candidates.push({ ...t, engine: 'graphhopper', curves: c.curves, score: scoreTour(t, c.curves, c.fastKm, req.km) });
+        candidates.push({ ...t, engine: 'graphhopper', curves: c.curves, score: scoreTour(t, c.curves, c.fastKm, req.km) - spurKm(t) * 100 });
       }
     } catch (e) {
       if (signal?.aborted) throw e;
@@ -168,6 +168,42 @@ function spurOf(t: PlannedTour) {
 }
 function spurKm(t: PlannedTour): number {
   return spurOf(t).km;
+}
+
+/**
+ * Ersatzweg ohne eigenen Server: Liegt ein Via Punkt in einer Seitenstraße, fährt die Route dort
+ * hinein und wieder heraus (Stichstraße) oder dreht eine kleine Schleife durch den Ort. Den Via Punkt
+ * an dieser Stelle weglassen und neu rechnen, höchstens dreimal, solange es besser wird.
+ */
+async function despurVias(req: SmartRequest, via: LatLon[], onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<PlannedTour> {
+  let v = [...via];
+  let t = await planChecked(req.name, [req.start, ...v, req.start], req.profile, req.avoid, onStep, signal, true);
+  for (let round = 0; round < 3 && v.length > 1; round++) {
+    const spur = spurOf(t);
+    if (spur.km < 0.2) break;
+    const at = spur.points[Math.floor(spur.points.length / 2)];
+    let k = -1;
+    let best = 3000;
+    v.forEach((q, i) => {
+      const d = haversine(q, at);
+      if (d < best) {
+        best = d;
+        k = i;
+      }
+    });
+    if (k < 0) break;
+    const next = v.filter((_, i) => i !== k);
+    try {
+      const r = await planChecked(req.name, [req.start, ...next, req.start], req.profile, req.avoid, onStep, signal, true);
+      if (spurKm(r) >= spur.km - 0.1) break;
+      t = r;
+      v = next;
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      break;
+    }
+  }
+  return t;
 }
 
 /**
