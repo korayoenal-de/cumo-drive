@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteMap } from '@/components/map/route-map';
 import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM } from '@/components/navigation/maneuver-geometry';
+import { DriveRatingCard } from '@/components/navigation/drive-rating';
 import { HighlightCard, LeadStopButton, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { Chip } from '@/components/ui/chip';
@@ -224,6 +225,7 @@ export default function NavigationScreen() {
   const session = useSession();
   const [saved, setSaved] = useState<'nein' | 'ok' | 'fehler' | 'simulation' | 'ohne_konto' | null>(null);
   const savedFor = useRef<RideStats | null>(null);
+  const [driveId, setDriveId] = useState<string | null>(null);
   useEffect(() => {
     if (!shownStats || savedFor.current === shownStats || !active) return;
     savedFor.current = shownStats;
@@ -233,7 +235,10 @@ export default function NavigationScreen() {
       return () => clearTimeout(t);
     }
     saveDrive(active.tour.name, shownStats, samples.current, currentVehicle())
-      .then(() => setSaved('ok'))
+      .then((id) => {
+        setDriveId(id);
+        setSaved('ok');
+      })
       .catch(() => setSaved('fehler'));
   }, [shownStats, session, active]);
   const pins = useMemo(() => {
@@ -512,6 +517,7 @@ export default function NavigationScreen() {
                 {active.tour.name}
               </AppText>
               <StatsGrid st={summary} />
+              {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} />}
               <SavedNote saved={saved} />
               <BigButton label="Fertig" onPress={exit} />
             </InfoCard>
@@ -527,6 +533,7 @@ export default function NavigationScreen() {
                 {formatKm(drivenKm || route?.km || active.tour.laenge_km)} km gefahren auf {active.tour.name}.
               </AppText>
               {arrivedStats && <StatsGrid st={arrivedStats} />}
+              {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} />}
               <SavedNote saved={saved} />
               <BigButton label="Fertig" onPress={exit} />
             </InfoCard>

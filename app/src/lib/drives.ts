@@ -90,3 +90,23 @@ export async function deleteDrive(id: string) {
   const { error } = await supabase.from('drives').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
+
+/** Bewertung nach der Fahrt: 1 nicht gut, 2 gut, 3 sensationell */
+export type DriveRating = 1 | 2 | 3;
+
+/** Gründe bei "nicht gut", gespeichert als Kennung */
+export const BAD_REASONS = [
+  { id: 'verkehr', label: 'Viel Verkehr' },
+  { id: 'orte', label: 'Zu viele Orte' },
+  { id: 'belag', label: 'Schlechter Belag' },
+  { id: 'langweilig', label: 'Zu wenig Kurven' },
+  { id: 'eng', label: 'Zu eng' },
+  { id: 'sperrung', label: 'Baustelle oder Sperrung' },
+  { id: 'navigation', label: 'Navigation' },
+  { id: 'anderes', label: 'Anderes' },
+] as const;
+
+export async function rateDrive(id: string, rating: DriveRating, reasons?: string[], note?: string) {
+  const { error } = await supabase.rpc('rate_drive', { p_id: id, p_rating: rating, p_reasons: rating === 1 && reasons?.length ? reasons : null, p_note: rating === 1 ? (note ?? null) : null });
+  if (error) throw new Error(error.message);
+}
