@@ -31,6 +31,8 @@ export type Highlight = {
   hairpins: number;
   ele: number | null;
   climbM: number | null;
+  /** Bei Pässen: Bergrennstrecke auf diesem Anstieg, wird im Overlay und in der Ansage mitgenannt */
+  race?: { name: string; note: string };
 };
 
 function heading(a: LatLon, b: LatLon) {
@@ -173,6 +175,19 @@ export function findHighlights(
   let passes = keep;
   const found: Highlight[] = [];
   for (const r of roadsAlong(shape, cumKm, roads, elev, pins)) {
+    // Bergrennen über einen Pass: der Pass bleibt die Ansage, die Rennstrecke wird mitgenannt
+    if (r.kind === 'bergrennen') {
+      // Passabschnitt und Rennstrecke überschneiden sich oder schließen direkt aneinander an
+      // (Les Rangiers: Ziel am Col, der Passabschnitt beginnt dahinter; Gurnigel: gleicher Anstieg)
+      const near = (p: Highlight) => p.startKm <= r.endKm + 1.5 && p.endKm >= r.startKm - 1.5;
+      const hit = passes.find(near);
+      if (hit) {
+        // Der Abschnitt umfasst die Rennstrecke, damit die Ansage vor ihrem Start kommt
+        const merged = { ...hit, startKm: Math.min(hit.startKm, r.startKm), endKm: Math.max(hit.endKm, r.endKm), race: { name: r.name, note: r.note ?? 'Bergrennstrecke' } };
+        passes = passes.map((p) => (p === hit ? merged : p));
+        continue;
+      }
+    }
     // Pass auf der Strecke, oder Passanstieg beginnt fast gleichzeitig (Gurnigel: Ziel 3 km vor der Passhöhe)
     const onRoad = (p: Highlight) => (p.topKm >= r.startKm - 0.5 && p.topKm <= r.endKm + 0.5) || Math.abs(p.startKm - r.startKm) < 1;
     if (passes.some((p) => onRoad(p) && tier.get(p.id) === 'ikone')) continue;
@@ -300,10 +315,18 @@ function highest(e: ElevationProfile, a: number, b: number): { km: number; climb
 }
 
 /** Text unter dem Namen: Länge, Kehren, Höhe; bei Strecken zuerst die Unterzeile. */
+/** Bergrennstrecke zum Pass; heißt sie wie der Pass (Klausenpass, Gurnigel), ohne Namen */
+function raceLabel(h: Highlight): string | null {
+  if (!h.race) return null;
+  const a = h.race.name.toLowerCase();
+  const b = h.name.toLowerCase();
+  return b.includes(a) || a.includes(b) ? h.race.note : `${h.race.note} ${h.race.name}`;
+}
+
 export function highlightFacts(h: Highlight): string {
   const len = Math.max(1, Math.round(h.endKm - h.startKm));
   if (h.kind !== 'pass') return [h.note ?? null, `${len} km`, h.hairpins >= 3 ? `${h.hairpins} Kehren` : null].filter(Boolean).join(', ');
-  return [`${len} km`, h.hairpins >= 3 ? `${h.hairpins} Kehren` : null, h.ele ? `${h.ele.toLocaleString('de-DE')} m` : null].filter(Boolean).join(', ');
+  return [raceLabel(h), `${len} km`, h.hairpins >= 3 ? `${h.hairpins} Kehren` : null, h.ele ? `${h.ele.toLocaleString('de-DE')} m` : null].filter(Boolean).join(', ');
 }
 
 export function highlightSpeech(h: Highlight, distM: number): string {
@@ -311,7 +334,9 @@ export function highlightSpeech(h: Highlight, distM: number): string {
   const where = distM > 150 ? `In ${distM >= 950 ? 'einem Kilometer' : `${Math.round(distM / 100) * 100} Metern`} beginnt` : 'Jetzt beginnt';
   const pins = h.hairpins >= 3 ? `, ${h.hairpins} Kehren` : '';
   const what = h.kind === 'pass' ? h.name : (h.say ?? (h.note ? `die ${h.note} ${h.name}` : h.name));
-  return `${where} ${what}. ${len} Kilometer${pins}.`;
+  const race = raceLabel(h);
+  const extra = race ? ` Auf diesem Anstieg liegt die ${race}.` : '';
+  return `${where} ${what}. ${len} Kilometer${pins}.${extra}`;
 }
 
 /** Nur für Tests: Länge der Linie in km. */
