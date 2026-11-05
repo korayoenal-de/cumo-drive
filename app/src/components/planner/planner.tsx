@@ -743,8 +743,9 @@ export default function Planner() {
           showUser
           focus={focus}
           onLongPress={inTour ? onMapLongPress : undefined}
-          mapPadding={{ top: 0, right: 0, bottom: covered, left: 0 }}
-          edgePadding={{ top: insets.top + Spacing.xxxl, right: Spacing.xxxl, bottom: Spacing.xl, left: Spacing.xxxl }}
+          // MapKit rechnet die Safe Area selbst dazu; ohne Abzug schwebt der Hinweis Apple Karten über dem Blatt
+          mapPadding={{ top: 0, right: 0, bottom: Math.max(0, covered - insets.bottom), left: 0 }}
+          edgePadding={{ top: insets.top + Spacing.xxxl, right: Spacing.xxxl, bottom: Spacing.xl + insets.bottom, left: Spacing.xxxl }}
           style={StyleSheet.absoluteFill}
         />
       )}>
