@@ -526,17 +526,22 @@ function segmentDistance(p: LatLon, a: LatLon, b: LatLon) {
   return Math.hypot(ax + t * dx, ay + t * dy);
 }
 
-/** Liegt mehr als die Hälfte der Punkte höchstens 150 m neben einer der Linien? */
+/** Liegt mehr als die Hälfte der Punkte von a höchstens 150 m neben der Linie b? */
+function mostlyOn(a: LatLon[], b: LatLon[]) {
+  let hit = 0;
+  for (const p of a) if (b.some((q, i) => i > 0 && segmentDistance(p, b[i - 1], q) <= 150)) hit++;
+  return hit > a.length * 0.5;
+}
+
+/**
+ * Deckt sich die Strecke mit einer handgepflegten? In beide Richtungen geprüft: die handgepflegten Linien
+ * sind grob (etwa alle 700 m), in Kehren liegen die Punkte der neuen Linie sonst neben den Sehnen.
+ */
 function coveredBy(road: CuratedRoad, others: HighlightRoad[]) {
   const near = others.filter((o) =>
     o.line.some(([la, lo]) => road.line.some((q) => Math.abs(q[0] - la) < 0.03 && Math.abs(q[1] - lo) < 0.045)),
   );
-  if (!near.length) return false;
-  let hit = 0;
-  for (const p of road.line) {
-    if (near.some((o) => o.line.some((a, i) => i > 0 && segmentDistance(p, o.line[i - 1], a) <= 150))) hit++;
-  }
-  return hit > road.line.length * 0.5;
+  return near.some((o) => mostlyOn(road.line, o.line) || mostlyOn(o.line, road.line));
 }
 
 // Handgepflegte Strecken bleiben vorne, kuratierte Highlights nur dort, wo noch keine handgepflegte liegt
