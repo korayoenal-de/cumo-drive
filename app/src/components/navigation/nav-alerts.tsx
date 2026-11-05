@@ -1,7 +1,8 @@
 /**
  * Overlays in der Navigation:
  * HighlightCard kündigt einen Pass oder eine kuratierte Strecke kurz vorher an
- * (In 500 m, Stilfser Joch, 40 km, 76 Kehren; In 500 m, Zotzenbach, alte Rallyestrecke, 7 km).
+ * (In 500 m, Stilfser Joch, 40 km, 76 Kehren; In 500 m, Zotzenbach, alte Rallyestrecke, 7 km;
+ * In 500 m, Schauinsland, ehemalige Bergrennstrecke, 11 km).
  * StopAlert zeigt allen in der Gruppe groß, dass die Lead gleich anhält.
  * LeadStopButton ist der schnelle Knopf der Lead, um den Halt anzusagen.
  * MessageToast zeigt Kurznachrichten der anderen für ein paar Sekunden.
@@ -19,7 +20,7 @@ import { formatDistance } from './format';
 import type { NavSymbol } from './maneuver-geometry';
 import { NavSymbolIcon } from './maneuver-icon';
 
-const HIGHLIGHT_SYMBOL: Record<Highlight['kind'], NavSymbol> = { pass: 'passhoehe', rallye: 'kehre', strecke: 'kehre', aussicht: 'aussicht' };
+const HIGHLIGHT_SYMBOL: Record<Highlight['kind'], NavSymbol> = { pass: 'passhoehe', rallye: 'kehre', strecke: 'kehre', aussicht: 'aussicht', bergrennen: 'kehre' };
 
 export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
   const d = formatDistance(Math.max(0, distM));

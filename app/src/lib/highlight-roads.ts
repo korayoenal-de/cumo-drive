@@ -1,6 +1,6 @@
 /**
- * Kuratierte Highlight Strecken unterhalb der Pässe: alte Rallyeprüfungen, bekannte Kurvenstrecken
- * und Panoramastraßen. Die Navigation kündigt sie wie einen Pass an (In 500 m, Zotzenbach, alte Rallyestrecke, 7 km).
+ * Kuratierte Highlight Strecken unterhalb der Pässe: alte Rallyeprüfungen, Bergrennstrecken, bekannte
+ * Kurvenstrecken und Panoramastraßen. Die Navigation kündigt sie wie einen Pass an (In 500 m, Zotzenbach, alte Rallyestrecke, 7 km).
  *
  * Linien: Straßenverlauf aus OpenStreetMap, ermittelt mit dem öffentlichen Valhalla Server
  * (valhalla1.openstreetmap.de) zwischen Orten aus Nominatim und nur auf den Abschnitten mit der
@@ -12,13 +12,13 @@
  */
 import type { LatLon } from './tour';
 
-export type HighlightRoadKind = 'rallye' | 'strecke' | 'aussicht';
+export type HighlightRoadKind = 'rallye' | 'strecke' | 'aussicht' | 'bergrennen';
 
 export type HighlightRoad = {
   id: string;
   name: string;
   kind: HighlightRoadKind;
-  /** kurze Unterzeile, zum Beispiel "alte Rallyestrecke" oder "Kurvenstrecke" */
+  /** kurze Unterzeile, zum Beispiel "alte Rallyestrecke", "Bergrennstrecke" oder "Kurvenstrecke" */
   note: string;
   /** gesprochen nach "beginnt", ohne Punkt */
   say?: string;
@@ -143,4 +143,316 @@ export const HIGHLIGHT_ROADS: HighlightRoad[] = [
     ],
   },
   // Weggelassen: Kreidacher Höhe als eigene Strecke, sie deckt sich mit der Zotzenbach Prüfung.
+  // Bergrennstrecken: Strecken aktueller und früherer Bergrennen auf öffentlichen Straßen (für das Rennen gesperrt,
+  // sonst frei befahrbar). Quelle der Auswahl: Wikipedia Liste der Bergrennen, Länge und Verlauf aus dem Artikel der
+  // jeweiligen Strecke. Start und Ziel aus Nominatim, dazwischen mit Valhalla geroutet und nur übernommen, wenn die
+  // Länge höchstens etwa 20 % von der veröffentlichten abweicht. "ehemalige" heißt: dort wird kein Rennen mehr
+  // gefahren oder nur noch eine historische Gleichmäßigkeitsfahrt. Zotzenbach steht oben als Rallyestrecke.
+  {
+    // Bergrennen Unterfranken (MSC Erftal), St 507 von Eichenbühl nach Umpfenbach. Wikipedia: 3050 m, 171 bis 323 m. Start
+    // und Ziel aus der Streckenkarte im Wikipedia Artikel.
+    // Linie 3,0 km, Höhe laut Valhalla 168 bis 320 m.
+    id: 'berg-eichenbuehl',
+    name: 'Eichenbühl',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [49.69986, 9.33824], [49.69933, 9.34177], [49.69527, 9.34899], [49.69047, 9.35507], [49.68933, 9.36155],
+    ],
+  },
+  {
+    // Bergrennen Mickhausen, Kreisstraße A 16 von Münster Richtung Birkach. Wikipedia: 2200 m, 519 bis 599 m, Start am
+    // Ortsausgang von Münster.
+    // Linie 2,2 km, Höhe laut Valhalla 525 bis 613 m.
+    id: 'berg-mickhausen',
+    name: 'Mickhausen',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [48.23051, 10.64135], [48.22921, 10.64815], [48.22683, 10.64996], [48.22569, 10.65678], [48.22281, 10.66225],
+    ],
+  },
+  {
+    // Osnabrücker Bergrennen am Uphöfer Berg, K 330 Holter Straße von Hilter Uphöfen Richtung Holte. Wikipedia: 2,03 km.
+    // Verlauf aus der OSM Relation Bergrennstrecke Uphöfen.
+    // Linie 2,0 km, Höhe laut Valhalla 92 bis 167 m.
+    id: 'berg-osnabrueck',
+    name: 'Uphöfen',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [52.19998, 8.20433], [52.20349, 8.20191], [52.20522, 8.19642], [52.20681, 8.19182], [52.20971, 8.18748],
+    ],
+  },
+  {
+    // Ibergrennen Heilbad Heiligenstadt, L 2022 hinauf zum Iberg. Wikipedia: 2,05 km, 200 Höhenmeter. Enden aus dem
+    // Höhenprofil, auf etwa 200 m genau.
+    // Linie 2,0 km, Höhe laut Valhalla 270 bis 402 m.
+    id: 'berg-iberg',
+    name: 'Iberg',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [51.37553, 10.13033], [51.37101, 10.12761], [51.36685, 10.12497], [51.36296, 10.12231], [51.36077, 10.12035],
+    ],
+  },
+  {
+    // Glasbachrennen Bad Liebenstein, L 1027 von Steinbach (380 m) bis 215 m vor die Einmündung der L 2119 (630 m).
+    // Wikipedia: 5500 m, 35 Kurven.
+    // Linie 5,5 km, Höhe laut Valhalla 362 bis 616 m.
+    id: 'berg-glasbach',
+    name: 'Glasbach',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [50.82403, 10.35103], [50.82888, 10.3545], [50.83211, 10.36053], [50.83778, 10.36005], [50.84348, 10.36101], [50.84647, 10.36912],
+      [50.85097, 10.37141], [50.85463, 10.37647], [50.85551, 10.38078],
+    ],
+  },
+  {
+    // Homburger ADAC Bergrennen, L 120 und L 462 von Homburg hinauf Richtung Käshofen. Ausschreibung 2025: 2,6 km. Enden auf
+    // etwa 200 m genau.
+    // Linie 2,5 km, Höhe laut Valhalla 272 bis 350 m.
+    id: 'berg-homburg',
+    name: 'Homburg Käshofen',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [49.32069, 7.38054], [49.31994, 7.38889], [49.31871, 7.39499], [49.31802, 7.40097], [49.32215, 7.40183],
+    ],
+  },
+  {
+    // Ratisbona Bergrennen, St 2233 von Kelheim hinauf nach Ihrlerstein. Wikipedia: 3,7 km, bis 2026 saniert und entschärft.
+    // Linie 3,7 km, Höhe laut Valhalla 348 bis 467 m.
+    id: 'berg-ratisbona',
+    name: 'Ratisbona',
+    kind: 'bergrennen',
+    note: 'ehemalige Bergrennstrecke',
+    line: [
+      [48.92276, 11.88277], [48.929, 11.88331], [48.93532, 11.88177], [48.94051, 11.8806], [48.94087, 11.87009], [48.94036, 11.86173],
+    ],
+  },
+  {
+    // Rhön Bergrennen (1963 bis 1983), L 3330 und L 3379 von Schackau zum Parkplatz Danzwiesen unter der Milseburg.
+    // Wikipedia: 3,4 km.
+    // Linie 3,2 km, Höhe laut Valhalla 422 bis 646 m.
+    id: 'berg-rhoen',
+    name: 'Milseburg',
+    kind: 'bergrennen',
+    note: 'ehemalige Bergrennstrecke',
+    line: [
+      [50.56593, 9.87026], [50.56042, 9.87288], [50.55503, 9.87442], [50.55265, 9.88218], [50.55076, 9.88908], [50.55334, 9.89589],
+    ],
+  },
+  {
+    // Trierer Bergrennen (1971 bis 2011), K 82 von Fell nach Thomm, Steinbruchkehre. Wikipedia: 3715 m, 233 Höhenmeter, fünf
+    // Serpentinen. Enden aus dem Höhenprofil, auf etwa 300 m genau.
+    // Linie 3,7 km, Höhe laut Valhalla 207 bis 431 m.
+    id: 'berg-trier',
+    name: 'Fell Thomm',
+    kind: 'bergrennen',
+    note: 'ehemalige Bergrennstrecke',
+    line: [
+      [49.76669, 6.78527], [49.7614, 6.7902], [49.75544, 6.7931], [49.75669, 6.78985], [49.75202, 6.7927], [49.74734, 6.7918],
+    ],
+  },
+  {
+    // Gabelbachrennen Ilmenau, Waldstraße (K 56) vom Lessingpark durch das Gabelbachtal bis zum Berghotel Gabelbach.
+    // Wikipedia: zuletzt 4 km.
+    // Linie 3,9 km, Höhe laut Valhalla 489 bis 769 m.
+    id: 'berg-gabelbach',
+    name: 'Gabelbach',
+    kind: 'bergrennen',
+    note: 'ehemalige Bergrennstrecke',
+    line: [
+      [50.68086, 10.90893], [50.67586, 10.90476], [50.67092, 10.89982], [50.66534, 10.89835], [50.65998, 10.89576], [50.65751, 10.88863],
+      [50.65664, 10.88489],
+    ],
+  },
+  {
+    // Lückendorfer Bergrennen, Gabler Straße (S 132) von Eichgraben zum Forsthaus Lückendorf. Wikipedia: 4 km, 209 m Steigung.
+    // Linie 4,1 km, Höhe laut Valhalla 294 bis 500 m.
+    id: 'berg-lueckendorf',
+    name: 'Lückendorf',
+    kind: 'bergrennen',
+    note: 'ehemalige Bergrennstrecke',
+    line: [
+      [50.85664, 14.79328], [50.84997, 14.794], [50.8444, 14.79422], [50.83997, 14.79901], [50.8379, 14.79277], [50.83335, 14.78745],
+      [50.82851, 14.78462],
+    ],
+  },
+  {
+    // ADAC Schauinsland Rennen (1925 bis 1984), L 124 Schauinslandstraße vom Friedrichshof an der Abzweigung nach Horben bis
+    // zur Passhöhe. Wikipedia: Strecke 1961 bis 1983 etwa 11 km, 173 Kurven.
+    // Linie 10,9 km, Höhe laut Valhalla 451 bis 1177 m.
+    id: 'berg-schauinsland',
+    name: 'Schauinsland',
+    kind: 'bergrennen',
+    note: 'ehemalige Bergrennstrecke',
+    line: [
+      [47.93997, 7.86833], [47.93988, 7.87718], [47.93663, 7.87293], [47.93268, 7.87591], [47.93044, 7.88167], [47.92629, 7.87784],
+      [47.92516, 7.87224], [47.92146, 7.87897], [47.91865, 7.87874], [47.91742, 7.87116], [47.91475, 7.8814], [47.91097, 7.88212],
+      [47.9115, 7.88308], [47.91182, 7.88945], [47.91622, 7.89168], [47.91635, 7.89263], [47.91153, 7.89426],
+    ],
+  },
+  {
+    // Jochrennen, B 308 Jochstraße vom Ortsausgang Bad Hindelang über Oberjoch bis zur Passhöhe. Wikipedia: heute 7,9 km mit
+    // 105 Kurven (Jochpass Memorial), früher 5,72 km bis Oberjoch.
+    // Linie 7,9 km, Höhe laut Valhalla 877 bis 1171 m.
+    id: 'berg-jochpass',
+    name: 'Oberjoch',
+    kind: 'bergrennen',
+    note: 'ehemalige Bergrennstrecke',
+    line: [
+      [47.50587, 10.38671], [47.50697, 10.3882], [47.51038, 10.3838], [47.51141, 10.38547], [47.51194, 10.38631], [47.51101, 10.39266],
+      [47.51208, 10.39269], [47.51447, 10.40108], [47.51663, 10.40927], [47.51637, 10.41788], [47.52, 10.42532], [47.52386, 10.4321],
+    ],
+  },
+  {
+    // Gaisbergrennen Salzburg, L 108 Gaisbergstraße von Guggenthal über die Zistelalm zur Gaisbergspitze. Wikipedia: 8,652
+    // km, 672 Höhenmeter.
+    // Linie 8,6 km, Höhe laut Valhalla 626 bis 1273 m.
+    id: 'berg-gaisberg',
+    name: 'Gaisberg',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [47.81648, 13.10031], [47.81358, 13.09822], [47.80925, 13.09727], [47.80369, 13.09382], [47.79925, 13.10034], [47.79445, 13.10645],
+      [47.78972, 13.11168], [47.78715, 13.11238], [47.79285, 13.11404], [47.79884, 13.11498], [47.80262, 13.12258], [47.80309, 13.11613],
+      [47.80352, 13.1113],
+    ],
+  },
+  {
+    // Rechbergrennen, B 64 von Tulwitz hinauf über den Rechberg (929 m), Ziel nach der Passhöhe. Wikipedia: 5050 m, seit
+    // 2024 4440 m.
+    // Linie 5,0 km, Höhe laut Valhalla 655 bis 929 m.
+    id: 'berg-rechberg',
+    name: 'Rechberg',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [47.27008, 15.46022], [47.26958, 15.45163], [47.2694, 15.44306], [47.26656, 15.43872], [47.26846, 15.43001], [47.26926, 15.42499],
+      [47.26971, 15.42204], [47.26821, 15.41521],
+    ],
+  },
+  {
+    // Bergrennen Landshaag St. Martin, L 1507 von Landshaag Richtung St. Martin im Mühlkreis. Wikipedia: 3620 m, 230 Höhenmeter.
+    // Linie 3,6 km, Höhe laut Valhalla 277 bis 509 m.
+    id: 'berg-landshaag',
+    name: 'Landshaag St. Martin',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [48.36242, 14.03247], [48.36752, 14.0364], [48.37138, 14.04354], [48.37765, 14.04377], [48.38406, 14.04087], [48.38978, 14.04324],
+    ],
+  },
+  {
+    // Bergrennen Esthofen St. Agatha, L 525 Michaelnbach Stauff Straße. Tips.at: 2734 m. Enden auf etwa 300 m genau.
+    // Linie 2,7 km, Höhe laut Valhalla 356 bis 517 m.
+    id: 'berg-st-agatha',
+    name: 'Esthofen St. Agatha',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [48.36022, 13.86456], [48.36242, 13.87191], [48.36814, 13.87011], [48.36974, 13.87593], [48.37471, 13.87848],
+    ],
+  },
+  {
+    // Bergrennen Gurnigel, Strasse 230.1 von Dürrbach bis Gurnigelbad. Wikipedia: 3734 m, 314 Höhenmeter, Start und Ziel als
+    // Koordinaten im Artikel.
+    // Linie 3,7 km, Höhe laut Valhalla 838 bis 1137 m.
+    id: 'berg-gurnigel',
+    name: 'Gurnigel',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [46.7787, 7.44413], [46.7777, 7.4392], [46.77244, 7.44094], [46.76989, 7.44541], [46.76595, 7.43966], [46.76204, 7.4429],
+    ],
+  },
+  {
+    // Bergrennen Oberhallau, Dorfstrasse und Oberhallauer Bergrennstrecke von Oberhallau zum Vorderen Berghof. Wikipedia:
+    // 3,0 km, 157 Höhenmeter.
+    // Linie 3,0 km, Höhe laut Valhalla 441 bis 574 m.
+    id: 'berg-oberhallau',
+    name: 'Oberhallau',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [47.70858, 8.47471], [47.71521, 8.47508], [47.71833, 8.4757], [47.71821, 8.4713], [47.71546, 8.46672],
+    ],
+  },
+  {
+    // Bergrennen St. Ursanne Les Rangiers, Route des Rangiers und Hauptstrasse 249 unter dem Viadukt Combe Maran hindurch,
+    // Ziel 300 m vor der Einmündung in die Hauptstrasse 6. Wikipedia: 5169 m, 430 bis 780 m. Linie beginnt erst an der
+    // Hauptstrasse 249, die ersten 600 m im Ort fehlen, damit auch Routen aus Richtung Porrentruy treffen.
+    // Linie 4,6 km, Höhe laut Valhalla 443 bis 776 m.
+    id: 'berg-st-ursanne',
+    name: 'St. Ursanne Les Rangiers',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [47.36618, 7.1673], [47.3695, 7.17442], [47.37405, 7.17931], [47.37627, 7.18678], [47.37863, 7.19406], [47.38202, 7.20076],
+      [47.38562, 7.19843], [47.38651, 7.1977],
+    ],
+  },
+  {
+    // Klausenrennen (1922 bis 1934, heute Memorial), Hauptstrasse 17 von Linthal über den Urnerboden zur Passhöhe.
+    // Wikipedia: 21,5 km, 136 Kurven, 57 Kehren.
+    // Linie 22,2 km, Höhe laut Valhalla 660 bis 1957 m.
+    id: 'berg-klausen',
+    name: 'Klausenpass',
+    kind: 'bergrennen',
+    note: 'ehemalige Bergrennstrecke',
+    line: [
+      [46.91882, 8.99703], [46.91944, 8.9903], [46.91368, 8.98536], [46.90875, 8.98235], [46.91002, 8.98126], [46.90923, 8.97842],
+      [46.91556, 8.98211], [46.91394, 8.97899], [46.91239, 8.97599], [46.91385, 8.97506], [46.91056, 8.96691], [46.90891, 8.95877],
+      [46.90751, 8.94909], [46.90508, 8.94038], [46.90216, 8.93041], [46.89782, 8.9238], [46.89482, 8.9147], [46.89221, 8.90617],
+      [46.88844, 8.89729], [46.88466, 8.89019], [46.87942, 8.88429], [46.87633, 8.88058], [46.87649, 8.87793], [46.87649, 8.87636],
+      [46.8701, 8.87418], [46.87115, 8.87244], [46.87244, 8.87122], [46.87197, 8.86422], [46.87283, 8.8624], [46.8682, 8.85548],
+    ],
+  },
+  {
+    // Course de côte Turckheim Trois Épis, Route des Trois Épis (D 10) von Turckheim hinauf Richtung Trois Épis. Autosprint:
+    // 5950 m. Ziel auf etwa 300 m genau.
+    // Linie 5,9 km, Höhe laut Valhalla 238 bis 513 m.
+    id: 'berg-turckheim',
+    name: 'Turckheim Trois Épis',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [48.08566, 7.27422], [48.08492, 7.26355], [48.08379, 7.25492], [48.08417, 7.2438], [48.08792, 7.23817], [48.09238, 7.2385],
+      [48.08877, 7.24064], [48.09425, 7.24069], [48.09428, 7.23671],
+    ],
+  },
+  {
+    // Course de côte du Mont Dore, D 36 von Moneaux zum Col de la Croix Saint Robert. Wikipedia (fr): etwas über 5 km, rund
+    // 40 Kurven.
+    // Linie 5,5 km, Höhe laut Valhalla 1116 bis 1449 m.
+    id: 'berg-mont-dore',
+    name: 'Mont Dore',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [45.55577, 2.86982], [45.56001, 2.87292], [45.56355, 2.86568], [45.56056, 2.86265], [45.56221, 2.85577], [45.55998, 2.85021],
+      [45.55736, 2.8487], [45.56055, 2.84078], [45.5641, 2.83597],
+    ],
+  },
+  {
+    // Trento Bondone, SP 85 von Montevideo (Trento) über Sardagna, Candriai und Vaneze nach Vason. Wikipedia (it): 17300 m,
+    // 308 bis 1658 m, über 40 Kehren.
+    // Linie 16,9 km, Höhe laut Valhalla 277 bis 1648 m.
+    id: 'berg-bondone',
+    name: 'Trento Bondone',
+    kind: 'bergrennen',
+    note: 'Bergrennstrecke',
+    line: [
+      [46.08039, 11.09824], [46.07425, 11.09775], [46.07103, 11.09604], [46.07092, 11.09505], [46.0657, 11.09886], [46.0678, 11.09358],
+      [46.07318, 11.08894], [46.07244, 11.08759], [46.06833, 11.08827], [46.06317, 11.08862], [46.06584, 11.08746], [46.065, 11.08323],
+      [46.06259, 11.08042], [46.05825, 11.08038], [46.05949, 11.07849], [46.05564, 11.07645], [46.05486, 11.07368], [46.05211, 11.07308],
+      [46.05183, 11.07086], [46.04987, 11.06879], [46.04891, 11.06651], [46.04571, 11.06554], [46.04315, 11.06387], [46.04215, 11.06122],
+      [46.0396, 11.05747],
+    ],
+  },
+  // Weggelassen (unsicher oder doppelt): Wolsfeld, Eckental, Hemberg, Roßfeld, Alpl, Kesselberg und Exelberg
+  // (Start oder Ziel nicht belegt), Großglockner (Ikone Hochtor deckt die Nordrampe ab), Mont Ventoux (Ikone).
 ];

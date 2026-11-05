@@ -1,6 +1,6 @@
 /**
- * Highlights entlang der Route: Pässe und kuratierte Strecken (alte Rallyeprüfungen, Kurven und
- * Panoramastraßen). Wo der Abschnitt beginnt, wie lang er ist und wie viele Kehren er hat.
+ * Highlights entlang der Route: Pässe und kuratierte Strecken (alte Rallyeprüfungen, Bergrennstrecken,
+ * Kurven und Panoramastraßen). Wo der Abschnitt beginnt, wie lang er ist und wie viele Kehren er hat.
  * Die Navigation kündigt sie kurz vorher mit Overlay und Ansage an.
  *
  * Abschnitt eines Passes: vom Talpunkt vor der Passhöhe bis zum Talpunkt danach (Höhenprofil).
@@ -12,13 +12,14 @@ import { PASSES, passesAlong, type Pass } from '../passes';
 import { resample, type ElevationProfile } from '../stats';
 import { haversine, type LatLon } from '../tour';
 
+/** pass oder die Art der kuratierten Strecke: rallye, strecke, aussicht, bergrennen */
 export type HighlightKind = 'pass' | HighlightRoad['kind'];
 
 export type Highlight = {
   id: string;
   kind: HighlightKind;
   name: string;
-  /** Unterzeile bei Strecken, zum Beispiel "alte Rallyestrecke" */
+  /** Unterzeile bei Strecken, zum Beispiel "alte Rallyestrecke" oder "ehemalige Bergrennstrecke" */
   note?: string;
   /** gesprochener Teil nach "beginnt" bei Strecken */
   say?: string;
