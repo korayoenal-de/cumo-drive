@@ -16,7 +16,7 @@ import { doubledStretch } from './doubled';
 import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from './graphhopper';
 import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
 import { planChecked, type PlannedTour, type PlanStep } from './plan';
-import { DIRECTIONS, roundTrip, type Direction } from './roundtrip';
+import { DIRECTIONS, hillyVia, loopPoints, roundTrip, type Direction } from './roundtrip';
 import { countCurves } from './stats';
 import { flatten, haversine, type LatLon, type Profile } from './tour';
 import type { Avoid } from './valhalla';
@@ -42,7 +42,7 @@ export type SmartTour = PlannedTour & { engine: Engine; score: number; curves: n
  */
 function scoreTour(t: PlannedTour, curves: number, fastKm: number, targetKm: number): number {
   const ghLike: GhRoute = {
-    shape: [], km: t.laenge_km, minutes: t.minutes, curvyShare: 0, curves, narrowKm: 0, unpavedKm: 0, fastKm, seed: 0,
+    shape: [], km: t.laenge_km, minutes: t.minutes, curvyShare: curvyShare(t), curves, narrowKm: 0, unpavedKm: 0, fastKm, seed: 0,
   };
   return scoreRoute(ghLike, targetKm) - (t.km_je_klasse?.raus ?? 0) * 40 - (t.km_je_klasse?.pruefen ?? 0) * 20 - (t.km_klein ?? 0) * 12;
 }
@@ -103,17 +103,25 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       const free = req.direction === 'zufall' && req.bearing === undefined;
       // Runden über kuratierte Traumstrecken gleichzeitig mit den freien Varianten rechnen
       const curvy = req.profile === 'kurvig' || req.profile === 'paesse';
-      const [own, loops] = await Promise.all([
-        cumoRoundTrips(req.name, req.start, req.km, heading, req.profile, req.avoid, free ? 6 : 5, seed % 100000, signal, free),
+      const [own, loops, circles] = await Promise.all([
+        // Seeds weit auseinander, sonst überschneiden sich die Varianten zweier Würfe (seed + i) und
+        // Neu würfeln bringt dieselbe Runde
+        cumoRoundTrips(req.name, req.start, req.km, heading, req.profile, req.avoid, free ? 6 : 5, (seed * 11) % 100000, signal, free),
         curvy ? favoriteLoops(req, free ? undefined : heading, seed, signal) : Promise.resolve([]),
+        circleLoops(req, heading, free, seed, signal),
       ]);
-      // Kurze Stichstraßen hin und zurück (Sackgasse ins Tal und wieder raus) sind nie schön: stark abwerten
-      for (const t of [...own, ...loops]) candidates.push({ ...t, engine: 'cumo', score: scoreTour(t, t.curves, 0, req.km) - spurKm(t) * 100 + favKm(t) * 4 });
-      const clean = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0);
-      if (clean.length) {
-        const best = clean.sort((a, b) => b.score - a.score)[0];
-        return await despur(best, req, signal);
-      }
+      // Erst ohne Stichstraßen bewerten: Kurven, Länge, Traumstrecken, Richtung. Die drei besten
+      // bekommen die Stichstraße herausgeplant, danach zählt jeder übrige km doppelt mit 100 Punkten.
+      // (Heppenheim 5.11.: eine Runde mit 11 Kurven durch Mannheim gewann gegen Runden mit 30 Kurven,
+      // weil diese 0,8 km Stichstraße hatten, die sich leicht herausplanen ließ.)
+      const base = (t: PlannedTour & { curves: number }) => scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 - offCourse(t, req.start, free ? undefined : heading);
+      const ranked = [...own, ...loops, ...circles]
+        .filter((t) => (t.km_je_klasse?.raus ?? 0) === 0)
+        .map((t) => ({ ...t, engine: 'cumo' as const, score: base(t) }))
+        .sort((a, b) => b.score - a.score);
+      const top = await Promise.all(ranked.slice(0, 3).map((t) => despur(t, req, signal)));
+      for (const t of top) candidates.push({ ...t, score: base(t) - spurKm(t) * 100 });
+      if (candidates.length) return candidates.sort((a, b) => b.score - a.score)[0];
     } catch (e) {
       if (signal?.aborted) throw e;
       lastError = e;
@@ -259,6 +267,77 @@ async function despurVias(req: SmartRequest, via: LatLon[], onStep?: (s: PlanSte
  * entlang der Strecke, aber keiner in der Nähe der Stichstraße. Übernommen, wenn die Stichstraße
  * weg ist und die Tour nicht viel länger wird.
  */
+/**
+ * Anteil der Strecke, der sich windet: je Kilometer die Summe der Richtungswechsel, ab 45 Grad zählt
+ * der Kilometer als kurvig. Lange gerade Stücke durch die Ebene (Heppenheim 5.11.: 44 km durch die
+ * Rheinebene) drücken den Anteil und damit die Bewertung (scoreRoute: Anteil mal 40).
+ */
+function curvyShare(t: PlannedTour): number {
+  const f = flatten(t);
+  let chunks = 0;
+  let curvy = 0;
+  let turn = 0;
+  let from = 0;
+  let prev: number | null = null;
+  let last = f[0];
+  for (const x of f) {
+    if (haversine(last.p, x.p) < 60) continue;
+    const b = bearing(last.p, x.p);
+    if (prev !== null) turn += Math.abs(((b - prev + 540) % 360) - 180);
+    prev = b;
+    last = x;
+    if (x.km - from >= 1) {
+      chunks++;
+      if (turn >= 45) curvy++;
+      turn = 0;
+      from = x.km;
+    }
+  }
+  return chunks ? curvy / chunks : 0;
+}
+
+/**
+ * Abzug, wenn die Runde nicht in die gewählte Richtung fährt: Schwerpunkt der Strecke mehr als
+ * 40 Grad neben der Richtung kostet 3 Punkte je Grad (Osten gewählt, Runde durch Mannheim im Westen).
+ */
+function offCourse(t: PlannedTour, start: LatLon, heading: number | undefined): number {
+  if (heading === undefined) return 0;
+  const line = flatten(t).map((x) => x.p);
+  const c: LatLon = [line.reduce((a, q) => a + q[0], 0) / line.length, line.reduce((a, q) => a + q[1], 0) / line.length];
+  if (haversine(start, c) < 2000) return 0;
+  const d = Math.abs(((bearing(start, c) - heading + 540) % 360) - 180);
+  return Math.max(0, d - 40) * 3;
+}
+
+/**
+ * Runden über einen Kreis in die gewählte Richtung, wie beim Ersatzweg: Via Punkte auf dem Kreis,
+ * ins Hügelland geschoben, dann über den eigenen Server. Die Rundtouren von GraphHopper kennen nur
+ * die Richtung des ersten Stücks und laufen sonst oft in die Ebene (Heppenheim 5.11.: Osten
+ * gewählt, Runde durch Mannheim). Ohne Richtung zwei gegenüberliegende Kreise.
+ */
+async function circleLoops(req: SmartRequest, heading: number, free: boolean, seed: number, signal?: AbortSignal) {
+  // Kurvige Straßen sind etwa 1,45 mal so lang wie der Kreis
+  const circ = req.km / 1.45;
+  const out = await Promise.all(
+    [0, 1].map(async (k) => {
+      try {
+        const base = loopPoints(req.start, circ, free ? (heading + k * 180) % 360 : heading, seed * 13 + k);
+        const via = await hillyVia(base, Math.max(2, (circ / (2 * Math.PI)) * 0.35), req.profile, signal).catch((e) => {
+          if (signal?.aborted) throw e;
+          return base;
+        });
+        const t = await cumoPlan(req.name, [req.start, ...via, req.start], req.profile, req.avoid, signal);
+        const ratio = t.laenge_km / req.km;
+        return ratio > 0.6 && ratio < 1.5 && (t.km_je_klasse?.raus ?? 0) === 0 ? t : null;
+      } catch (e) {
+        if (signal?.aborted) throw e;
+        return null;
+      }
+    }),
+  );
+  return out.filter((t): t is NonNullable<typeof t> => t != null);
+}
+
 async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Promise<SmartTour> {
   const line = flatten(t);
   const spur = spurOf(t);
@@ -273,7 +352,7 @@ async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Pr
   }
   try {
     const r = await cumoPlan(req.name, [req.start, ...via, req.start], req.profile, req.avoid, signal);
-    if (spurKm(r) < spur.km - 0.1 && r.laenge_km <= t.laenge_km * 1.15 + 3 && (r.km_je_klasse?.raus ?? 0) === 0) {
+    if (spurKm(r) < spur.km - 0.1 && r.laenge_km <= t.laenge_km * 1.25 + 3 && (r.km_je_klasse?.raus ?? 0) === 0) {
       return { ...t, ...r, engine: 'cumo', curves: r.curves, score: t.score };
     }
   } catch (e) {
