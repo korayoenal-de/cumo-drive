@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { MapLayersButton } from '@/components/map/map-settings-sheet';
+import { HighlightList } from '@/components/planner/highlight-list';
 import { RouteMap } from '@/components/map/route-map';
 import { closedHint, passState, usePassLive } from '@/lib/pass-live';
 import { PASS_STATUS_URL, PASSES, passesAlong, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
@@ -1585,21 +1586,7 @@ function TourMode({
             </Pressable>
           )}
 
-          {along.length > 0 && (
-            <Section label={`Highlights auf der Strecke (${along.length})`}>
-              <View style={styles.card}>
-                {along.map(({ pass, km }, i) => (
-                  <View key={pass.id} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
-                    <View style={styles.flex}>
-                      <AppText variant="title">{pass.name}</AppText>
-                      <AppText variant="caption" muted>{passSummary(pass, undefined, passState(pass, live).note)}</AppText>
-                    </View>
-                    <AppText variant="caption" muted>km {Math.round(km)}</AppText>
-                  </View>
-                ))}
-              </View>
-            </Section>
-          )}
+          <HighlightList line={line} />
 
           {warnings.length > 0 && <Warnings warnings={warnings} checked={routeTour.geprueft !== false} />}
 
@@ -2060,25 +2047,7 @@ function Result({
         </Pressable>
       )}
 
-      {passes.length > 0 && (
-        <Section label={`Highlights auf der Strecke (${passes.length})`}>
-          <View style={styles.card}>
-            {passes.map(({ pass, km }, i) => (
-              <View key={pass.id} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
-                <View style={styles.flex}>
-                  <AppText variant="title">{pass.name}</AppText>
-                  <AppText variant="caption" muted>
-                    {passSummary(pass, undefined, passState(pass, live).note)}
-                  </AppText>
-                </View>
-                <AppText variant="caption" muted>
-                  km {Math.round(km)}
-                </AppText>
-              </View>
-            ))}
-          </View>
-        </Section>
-      )}
+      <HighlightList line={line} />
 
       {warnings.length > 0 && <Warnings warnings={warnings} checked={tour.geprueft !== false} />}
 

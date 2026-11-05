@@ -27,6 +27,13 @@ Ziel: die schönste, modernste und einfachste App für Genussfahrer. Jede Ansich
 * Labels und Nebenzeilen in Inter Semibold grau, über dem Wert, nicht kleiner als 15 pt.
 * Vorbild für die Ruhe: Trade Republic. Hierarchie über Gewicht und Grau, kaum über Größe.
 
+## 5b. Fahrspaß Pegel (entschieden am 5.11.2026)
+* Jede Strecke und jedes Highlight trägt einen Pegel in fünf Stufen: Nett, Lohnend, Stark, Traumstraße, Legende.
+* Form: sechs Dreiecke auf einem offenen Kreis (270 Grad, Lücke unten), Spitzen zur Mitte, aus dem CDC Keyvisual. Gefüllt in Signal Orange, leer als dunkle Fläche.
+* Stufen füllen 1, 2, 4, 5, 6 Dreiecke. Lücken zwischen den Dreiecken knapp (25 % kleiner als der erste Entwurf).
+* Größen: Liste 20 pt, Karte 30 pt, Ansage 45 pt. Auf Satellit mit dunkler Plakette.
+* Startwert ist die kuratierte Qualität 1 bis 5, Bewertungen nach der Fahrt verschieben ihn.
+
 ## 6. Ruhe
 * Dunkler Grund, wenige Flächen (`surface`, `surface2`), Signalfarbe nur für die Hauptaktion und Strecken.
 * Keine Rahmen für Zustände, sondern getönte Flächen (`signalTint`, `goodTint`, `warnTint`).

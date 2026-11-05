@@ -134,7 +134,7 @@ export function thinLine(pts: LatLon[]): LatLon[] {
   return out;
 }
 
-function cumulativeKm(shape: LatLon[]): number[] {
+export function cumulativeKm(shape: LatLon[]): number[] {
   const out = new Array<number>(shape.length);
   let km = 0;
   for (let i = 0; i < shape.length; i++) {

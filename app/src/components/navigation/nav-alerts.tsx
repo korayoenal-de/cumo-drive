@@ -19,6 +19,7 @@ import { highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { formatDistance } from './format';
 import type { NavSymbol } from './maneuver-geometry';
 import { NavSymbolIcon } from './maneuver-icon';
+import { FUN_NAMES, FunGauge, toFunLevel } from '@/components/ui/fun-gauge';
 
 const HIGHLIGHT_SYMBOL: Record<Highlight['kind'], NavSymbol> = { pass: 'passhoehe', rallye: 'kehre', strecke: 'kehre', aussicht: 'aussicht', bergrennen: 'kehre' };
 
@@ -30,7 +31,7 @@ export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
         <NavSymbolIcon symbol={HIGHLIGHT_SYMBOL[h.kind]} size={44} soon />
         <View style={styles.flex}>
           <AppText variant="caption" style={styles.kicker}>
-            {distM > 50 ? `In ${d.value} ${d.unit}` : 'Jetzt'}
+            {`${distM > 50 ? `In ${d.value} ${d.unit}` : 'Jetzt'} · ${FUN_NAMES[toFunLevel(h.level)]}`}
           </AppText>
           <AppText style={styles.title} numberOfLines={1}>
             {h.name}
@@ -39,6 +40,7 @@ export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
             {highlightFacts(h)}
           </AppText>
         </View>
+        <FunGauge level={toFunLevel(h.level)} size={44} />
       </View>
     </GlassPanel>
   );

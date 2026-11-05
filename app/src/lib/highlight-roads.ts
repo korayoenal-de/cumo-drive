@@ -26,7 +26,12 @@ export type HighlightRoad = {
   say?: string;
   /** Verlauf in Fahrtrichtung der Quelle; der Abgleich akzeptiert beide Richtungen */
   line: LatLon[];
+  /** Fahrspaß Pegel 1 bis 5 (Nett bis Legende); ohne Angabe gilt der Standard der Art */
+  level?: number;
 };
+
+/** Pegel ohne eigene Angabe: Rallye und Bergrennen Traumstraße, sonst Stark */
+export const defaultLevel = (kind: HighlightRoadKind) => (kind === 'rallye' || kind === 'bergrennen' ? 4 : 3);
 
 export const HIGHLIGHT_ROADS: HighlightRoad[] = [
   {
@@ -36,6 +41,7 @@ export const HIGHLIGHT_ROADS: HighlightRoad[] = [
     // über den eigenen Routing Server, Stützpunkte auf den Durchgangsstraßen (nicht durch die Ortskerne).
     id: 'hirschhorn-rothenberg',
     name: 'Hirschhorn Rothenberg',
+    level: 5,
     kind: 'strecke',
     note: 'Kurvenstrecke',
     say: 'die Kurvenstrecke zwischen Hirschhorn und Rothenberg',
@@ -506,11 +512,12 @@ type CuratedRoad = {
   note: string;
   country: string;
   line: LatLon[];
+  level?: number;
 };
 
 const CURATED = curatedData as unknown as CuratedRoad[];
 
-const toRoad = ({ id, name, kind, note, line }: CuratedRoad): HighlightRoad => ({ id, name, kind, note, line });
+const toRoad = ({ id, name, kind, note, line, level }: CuratedRoad): HighlightRoad => ({ id, name, kind, note, line, level });
 
 /** Abstand eines Punkts zur Strecke a b in Metern (flache Näherung, reicht für 150 m). */
 function segmentDistance(p: LatLon, a: LatLon, b: LatLon) {

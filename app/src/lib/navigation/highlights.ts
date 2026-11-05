@@ -7,7 +7,7 @@
  * Ohne Höhendaten zählt die Kette von Kehren rund um die Passhöhe.
  * Abschnitt einer Strecke: von der Projektion ihres ersten bis zu der ihres letzten Punkts auf die Route.
  */
-import { HIGHLIGHT_ROADS, type HighlightRoad } from '../highlight-roads';
+import { defaultLevel, HIGHLIGHT_ROADS, type HighlightRoad } from '../highlight-roads';
 import { PASSES, passesAlong, type Pass } from '../passes';
 import { resample, type ElevationProfile } from '../stats';
 import { haversine, type LatLon } from '../tour';
@@ -31,6 +31,8 @@ export type Highlight = {
   hairpins: number;
   ele: number | null;
   climbM: number | null;
+  /** Fahrspaß Pegel 1 bis 5 (Nett bis Legende) */
+  level: number;
   /** Bei Pässen: Bergrennstrecke auf diesem Anstieg, wird im Overlay und in der Ansage mitgenannt */
   race?: { name: string; note: string };
 };
@@ -41,6 +43,9 @@ function heading(a: LatLon, b: LatLon) {
 }
 
 const STEP = 15;
+
+/** Pegel der Pässe nach Stufe: Ikone Legende, bekannt Traumstraße, Geheimtipp Stark */
+const PASS_LEVEL: Record<Pass['tier'], number> = { ikone: 5, bekannt: 4, mittel: 3 };
 
 /** Kehren: Richtungswechsel von mindestens 150 Grad in dieselbe Richtung auf höchstens 200 m. Liefert die km jeder Kehre. */
 export function hairpinKms(line: LatLon[], offsetKm = 0): number[] {
@@ -160,6 +165,7 @@ export function findHighlights(
       hairpins: n || 0,
       ele: pass.ele || null,
       climbM: v?.climb ?? null,
+      level: PASS_LEVEL[pass.tier],
     });
   }
   // Zwei Passhöhen auf einer Bergstraße (Stilfser Joch und Umbrail): nur die höhere ankündigen
@@ -283,6 +289,7 @@ export function roadsAlong(
         hairpins: pins.filter((k) => k >= best!.lo && k <= best!.hi).length,
         ele: null,
         climbM: top?.climb ?? null,
+        level: road.level ?? defaultLevel(road.kind),
       });
     }
   }
@@ -336,7 +343,8 @@ export function highlightSpeech(h: Highlight, distM: number): string {
   const what = h.kind === 'pass' ? h.name : (h.say ?? (h.note ? `die ${h.note} ${h.name}` : h.name));
   const race = raceLabel(h);
   const extra = race ? ` Auf diesem Anstieg liegt die ${race}.` : '';
-  return `${where} ${what}. ${len} Kilometer${pins}.${extra}`;
+  const legend = h.level >= 5 ? ' Eine Legende, viel Spaß.' : '';
+  return `${where} ${what}. ${len} Kilometer${pins}.${extra}${legend}`;
 }
 
 /** Nur für Tests: Länge der Linie in km. */
