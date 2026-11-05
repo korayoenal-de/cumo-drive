@@ -41,7 +41,7 @@ const LARGE = 0.92;
 const HEAD_GUESS = 132;
 /** Höhe der festen Griff Zone */
 const GRAB_H = 28;
-const SPRING = { damping: 32, stiffness: 320, mass: 1 };
+const SPRING = { damping: 38, stiffness: 320, mass: 1 };
 /** So weit in Millisekunden wird die Wurfbewegung beim Loslassen fortgeschrieben */
 const PROJECT_MS = 180;
 

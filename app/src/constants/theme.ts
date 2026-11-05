@@ -54,8 +54,8 @@ export const Radius = {
  * press: Antippen (Karte gibt leicht nach), snap: Auf und Zuklappen, Symbolwechsel.
  */
 export const Motion = {
-  press: { damping: 28, stiffness: 340, mass: 0.8 },
-  snap: { damping: 30, stiffness: 260, mass: 1 },
+  press: { damping: 33, stiffness: 340, mass: 0.8 },
+  snap: { damping: 36, stiffness: 260, mass: 1 },
   /** Versatz je Element, wenn mehrere nacheinander hereingleiten (ms) */
   stagger: 45,
   pressScale: 0.985,

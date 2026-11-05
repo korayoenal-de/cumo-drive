@@ -7,7 +7,7 @@
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing } from '@/constants/theme';
@@ -38,7 +38,8 @@ export function ActionBar({
           <AppText style={styles.primaryText}>{primary.label}</AppText>
         </Pressable>
         {save && <SaveButton {...save} />}
-        {more && more.length > 0 && <MorphButton open={open} icon="ellipsis" label={open ? 'Weitere Aktionen schließen' : 'Weitere Aktionen'} onPress={() => setOpen((o) => !o)} big />}
+        {more && more.length === 1 && <SingleAction item={more[0]} />}
+        {more && more.length > 1 && <MorphButton open={open} icon="ellipsis" label={open ? 'Weitere Aktionen schließen' : 'Weitere Aktionen'} onPress={() => setOpen((o) => !o)} big />}
       </View>
       {children}
       {open && more && (
@@ -71,6 +72,43 @@ export function ActionBar({
         </View>
       )}
     </Animated.View>
+  );
+}
+
+/** Nur eine weitere Aktion: direkt als Symbol. Gefährliches (verwerfen) zieht beim ersten Tippen
+ *  zur roten Taste auf, das zweite Tippen bestätigt, nach drei Sekunden klappt es zurück. */
+function SingleAction({ item }: { item: MoreItem }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const id = setTimeout(() => setArmed(false), 3000);
+    return () => clearTimeout(id);
+  }, [armed]);
+  const confirm = item.danger;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={armed ? `${item.label} bestätigen` : item.label}
+      accessibilityHint={armed ? item.hint : confirm ? 'Danach noch einmal tippen zum Bestätigen' : item.hint}
+      onPress={() => {
+        if (confirm && !armed) return setArmed(true);
+        setArmed(false);
+        item.onPress();
+      }}
+      hitSlop={4}>
+      <Animated.View layout={SOFT_LAYOUT} style={[styles.round, styles.big, armed && styles.armed]}>
+        {armed ? (
+          <Animated.View key="txt" entering={FadeIn.duration(140)} style={styles.armedInner}>
+            <SymbolView name={item.icon} size={16} tintColor={Colors.onSignal} weight="semibold" />
+            <AppText style={styles.armedText}>{item.label.split(' ').pop()}</AppText>
+          </Animated.View>
+        ) : (
+          <Animated.View key="ico" entering={FadeIn.duration(140)}>
+            <SymbolView name={item.icon} size={20} tintColor={confirm ? Colors.muted : Colors.text} weight="medium" />
+          </Animated.View>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -134,6 +172,9 @@ const styles = StyleSheet.create({
   big: { width: 56, height: 56, borderRadius: 28 },
   roundOpen: { backgroundColor: Colors.line },
   savedBg: { backgroundColor: Colors.signalTint },
+  armed: { width: undefined, paddingHorizontal: Spacing.l, backgroundColor: Colors.signal },
+  armedInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  armedText: { fontFamily: Fonts.bold, fontSize: 15, color: Colors.onSignal },
   menu: { gap: Spacing.xs },
   item: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface },
   itemIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
