@@ -199,3 +199,16 @@ main < /dev/null
 (HERE / "poi-update.sh").write_text(upd)
 (HERE / "poi-update.sh").chmod(0o755)
 print(f"poi-update.sh geschrieben ({len(upd)} Zeichen)")
+
+# Neue Einstellungen für den Graphen (config.yml, Sportwagen Profil) auf den laufenden Server bringen und
+# den Graphen im Hintergrund neu bauen. Aufruf vom Mac: ssh root@IP 'bash -s' < routing-rebuild.sh
+reb = "#!/bin/bash\n# CUMO DRIVE: Routing Profil aktualisieren und Graph neu bauen, erzeugt aus build_cloud_init.py.\nset -euo pipefail\n"
+reb += heredoc("/opt/cumo-routing/config.yml", cfg)
+reb += heredoc("/opt/cumo-routing/custom_models/sportwagen.json", model)
+reb += heredoc("/opt/cumo-routing/setup-server.sh", setup, "0755")
+reb += "chown -R cumo:cumo /opt/cumo-routing/config.yml /opt/cumo-routing/custom_models\n"
+reb += "nohup /opt/cumo-routing/setup-server.sh > /opt/cumo-routing/rebuild.log 2>&1 &\n"
+reb += "echo 'Neuaufbau läuft im Hintergrund (etwa zwei Stunden). Der Server bleibt dabei erreichbar, Fortschritt: tail -f /opt/cumo-routing/rebuild.log'\n"
+(HERE / "routing-rebuild.sh").write_text(reb)
+(HERE / "routing-rebuild.sh").chmod(0o755)
+print(f"routing-rebuild.sh geschrieben ({len(reb)} Zeichen)")

@@ -5,7 +5,7 @@ graphhopper:
   graph.location: data/graph-cache
 
   # Merkmale, die das Sportwagen Profil braucht
-  graph.encoded_values: car_access, car_average_speed, road_class, road_environment, road_access, surface, track_type, max_width, curvature, toll
+  graph.encoded_values: car_access, car_average_speed, road_class, road_environment, road_access, surface, track_type, max_width, curvature, toll, urban_density
 
   # Wege, die für Autos nie in Frage kommen, gar nicht erst einlesen
   import.osm.ignored_highways: footway,cycleway,path,pedestrian,steps,bridleway,construction,proposed,platform,corridor,via_ferrata

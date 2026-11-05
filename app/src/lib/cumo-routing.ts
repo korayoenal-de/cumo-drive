@@ -333,6 +333,8 @@ export async function cumoRoundTrips(
   count = 5,
   seed = 1,
   signal?: AbortSignal,
+  /** Ohne feste Richtung: Varianten in verschiedene Richtungen, die kurvigste gewinnt (statt alle in eine Richtung) */
+  spread = false,
 ): Promise<(PlannedTour & { curves: number })[]> {
   // Varianten gleichzeitig anfragen (der Server hat 12 Kerne), statt nacheinander
   const results = await Promise.all(
@@ -346,7 +348,7 @@ export async function cumoRoundTrips(
             // GraphHopper Rundtouren werden auf kurvigen Profilen etwa 30 % länger als angefragt
             'round_trip.distance': Math.round(km * 1000 * (profile === 'kurvig' || profile === 'paesse' ? 0.75 : 0.9)),
             'round_trip.seed': seed + i,
-            heading: [heading],
+            heading: [spread ? (heading + (i * 360) / count) % 360 : heading],
             ...(model(avoid, [], profile) ? { custom_model: model(avoid, [], profile) } : {}),
           },
           signal,

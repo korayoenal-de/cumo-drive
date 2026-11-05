@@ -93,7 +93,9 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
   if (await cumoAvailable()) {
     try {
       onStep?.('route');
-      const own = await cumoRoundTrips(req.name, req.start, req.km, heading, req.profile, req.avoid, 5, seed % 100000, signal);
+      // Ohne Richtung in sechs Richtungen suchen: so gewinnt das Hügelland mit Kurven statt der Weg durch die Ebene und Städte
+      const free = req.direction === 'zufall' && req.bearing === undefined;
+      const own = await cumoRoundTrips(req.name, req.start, req.km, heading, req.profile, req.avoid, free ? 6 : 5, seed % 100000, signal, free);
       for (const t of own) candidates.push({ ...t, engine: 'cumo', score: scoreTour(t, t.curves, 0, req.km) });
       const clean = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0);
       if (clean.length) return clean.sort((a, b) => b.score - a.score)[0];
