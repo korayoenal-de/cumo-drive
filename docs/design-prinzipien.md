@@ -21,16 +21,22 @@ Ziel: die schönste, modernste und einfachste App für Genussfahrer. Jede Ansich
 * Touren mit Mini Streckenbild, Zahlen in Tabellenziffern, Status als getönte Plakette statt Text im Fließtext.
 * Zahlen gleich groß und auf einer Zeile, Einheiten klein daneben.
 
-## 5. Ruhe
+## 5. Typografie: Mittelweg (entschieden am 5.11.2026)
+* Versalien in Archivo Black nur für Tournamen und Überschriften der Ansicht sowie Kennzahlen (109 KM, 2:15 H, 47).
+* Buttons, Highlight Ansagen, Wegbeschreibung, Listen und Abschnittstitel normal geschrieben in Inter Bold.
+* Labels und Nebenzeilen in Inter Semibold grau, über dem Wert, nicht kleiner als 15 pt.
+* Vorbild für die Ruhe: Trade Republic. Hierarchie über Gewicht und Grau, kaum über Größe.
+
+## 6. Ruhe
 * Dunkler Grund, wenige Flächen (`surface`, `surface2`), Signalfarbe nur für die Hauptaktion und Strecken.
 * Keine Rahmen für Zustände, sondern getönte Flächen (`signalTint`, `goodTint`, `warnTint`).
 * Kein Weichzeichner, der Inhalt verdeckt.
 
-## 6. Bedienbar für alle
+## 7. Bedienbar für alle
 * Treffer mindestens 44 pt, Symbole mit Beschriftung für VoiceOver, Zustände über `accessibilityState`.
 * Texte in Du Form, kurz, ohne Fachbegriffe, ohne Gedankenstriche.
 
-## 7. Schnell
+## 8. Schnell
 * Erst zeigen, dann laden: Gespeicherte Touren erscheinen sofort, so wie sie gespeichert sind, ohne Neuplanung.
 * Speichern nur anbieten, wenn sich wirklich etwas geändert hat.
 

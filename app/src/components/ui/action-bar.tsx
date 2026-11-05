@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   wrap: { gap: Spacing.s },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   primary: { flex: 1, height: 56, borderRadius: 28, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { fontFamily: Fonts.display, fontSize: 18, letterSpacing: 1, textTransform: 'uppercase', color: Colors.onSignal },
+  primaryText: { fontFamily: Fonts.bold, fontSize: 18, color: Colors.onSignal },
   pressed: { opacity: 0.8, transform: [{ scale: 0.985 }] },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   big: { width: 56, height: 56, borderRadius: 28 },

@@ -18,14 +18,9 @@ const styles = StyleSheet.create({
   display: { fontFamily: Fonts.display, fontSize: 38, lineHeight: 38, textTransform: 'uppercase' },
   title: { fontFamily: Fonts.semibold, fontSize: 16 },
   body: { fontFamily: Fonts.regular, fontSize: 16 },
-  label: {
-    fontFamily: Fonts.semibold,
-    fontSize: 13,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: Colors.muted,
-  },
+  // Abschnittstitel: normal geschrieben, fett (Mittelweg: Versalien nur für Tournamen und Kennzahlen)
+  label: { fontFamily: Fonts.bold, fontSize: 18, letterSpacing: -0.2, color: Colors.text },
   caption: { fontFamily: Fonts.regular, fontSize: 13 },
-  number: { fontFamily: Fonts.displayBold, fontSize: 17, fontVariant: ['tabular-nums'] },
+  number: { fontFamily: Fonts.display, fontSize: 17, textTransform: 'uppercase', fontVariant: ['tabular-nums'] },
   muted: { color: Colors.muted },
 });

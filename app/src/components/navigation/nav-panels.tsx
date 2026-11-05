@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   sim: { alignSelf: 'flex-start', height: 30, paddingHorizontal: Spacing.m, borderRadius: Radius.pill, backgroundColor: Colors.surface, justifyContent: 'center' },
 
   big: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  bigText: { fontFamily: Fonts.display, fontSize: 20, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
+  bigText: { fontFamily: Fonts.bold, fontSize: 18, color: Colors.onSignal },
   ghost: { height: 52, borderRadius: Radius.m, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   ghostText: { fontFamily: Fonts.semibold, fontSize: 16 },
 });

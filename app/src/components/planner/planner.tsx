@@ -1924,16 +1924,16 @@ function Result({
 /** Kennzahlen der Tour. Alle großen Werte haben dieselbe Größe, nichts wird automatisch verkleinert. */
 function Stats({ km, minutes, curves }: { km: number; minutes: number; curves: number }) {
   const items = [
-    { id: 'km', value: formatKm(km, 0), label: 'km' },
+    { id: 'km', value: `${formatKm(km, 0)} km`, label: 'Strecke' },
     { id: 'zeit', value: bigDuration(minutes), label: 'Fahrzeit' },
-    { id: 'kurven', value: String(curves), label: `Kurven${km > 0 ? `, ${Math.round((curves / km) * 100)} je 100 km` : ''}` },
+    { id: 'kurven', value: String(curves), label: 'Kurven' },
   ];
   return (
     <View style={styles.stats}>
       {items.map((x) => (
         <View key={x.id} style={styles.flex}>
-          <AppText style={styles.statBig} numberOfLines={1}>{x.value}</AppText>
-          <AppText variant="caption" muted>{x.label}</AppText>
+          <AppText style={styles.statLabel}>{x.label}</AppText>
+          <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{x.value}</AppText>
         </View>
       ))}
     </View>
@@ -2090,7 +2090,7 @@ const styles = StyleSheet.create({
   summary: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
   summaryHint: { minHeight: 36 },
   go: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  goText: { fontFamily: Fonts.display, fontSize: 20, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
+  goText: { fontFamily: Fonts.bold, fontSize: 18, color: Colors.onSignal },
 
   headline: { fontSize: 28, lineHeight: 30 },
   actions: { gap: Spacing.s, marginTop: Spacing.s },
@@ -2102,7 +2102,8 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', gap: Spacing.m },
   linkBtn: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
   linkText: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.signal },
-  statBig: { fontFamily: Fonts.display, fontSize: 30, lineHeight: 34, fontVariant: ['tabular-nums'] },
+  statBig: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 34, textTransform: 'uppercase', fontVariant: ['tabular-nums'] },
+  statLabel: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.muted },
   checkCard: { flexDirection: 'row', alignItems: 'flex-start' },
 
   warnRow: { flexDirection: 'row', gap: Spacing.m, paddingTop: Spacing.s },

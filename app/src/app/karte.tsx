@@ -117,6 +117,6 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: Fonts.medium, fontSize: 14, color: Colors.muted },
   chipTextOn: { color: Colors.text, fontFamily: Fonts.semibold },
   go: { marginHorizontal: Spacing.l, height: 58, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  goText: { fontFamily: Fonts.display, fontSize: 20, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
+  goText: { fontFamily: Fonts.bold, fontSize: 18, color: Colors.onSignal },
   pressed: { opacity: 0.8 },
 });
