@@ -1,5 +1,5 @@
 /**
- * Pässe: eigene, geprüfte Datenbank (DE, AT, CH, IT) mit Stufe, Höhe, Kehren, Wintersperre.
+ * Pässe: eigene, geprüfte Datenbank (DE, AT, CH, IT, FR, SI) mit Stufe, Höhe, Kehren, Wintersperre.
  * calimoto findet Pässe nicht in der Suche und zeigt nur die Höhe; hier sind sie Kern der Planung.
  */
 import passData from '@/data/passes.json';

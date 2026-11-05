@@ -1,6 +1,13 @@
 /**
- * Planer für das Handy: Tour beschreiben (Freitext plus Chips), Rundtour einstellen oder
- * eine Tour von Hand aus Start, Via Punkten und Ziel bauen. Danach prüfen und als Vorschau zeigen.
+ * Planer für das Handy mit zwei Modi: Schnelle Runde (Rundtour aus Länge, Richtung und Profil) und
+ * Route (Start, Zwischenziele, Ziel, jede Etappe mit eigenem Profil). Danach prüfen und als Ergebnis zeigen.
+ *
+ * Aufbau dieser Datei (von oben nach unten):
+ * - Planner: Zustand des Planers, Karte mit Blatt, Kopf, Wechsel zwischen Formular und Ergebnis
+ * - useTourPlan: Zustand und Aktionen der Route (Punkte setzen, verschieben, planen)
+ * - TourMode: Oberfläche der Route (Punktliste mit Suchfeld, Etappen, Pass Vorschläge, Ergebnis)
+ * - Result: Ergebnis einer Rundtour mit Kennzahlen, Highlights, Höhenprofil und Aktionsleiste
+ * - kleine Bausteine (Section, Toggle, Pill, Stats, Warnings, DragHandle) und die Styles am Ende
  * Aufbau wie Apple Maps: Die Karte füllt den Screen, der Planer liegt als Blatt mit drei Höhen darauf.
  * Die Web Version liegt in planner.web.tsx.
  */

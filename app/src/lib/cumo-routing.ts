@@ -1,12 +1,12 @@
 /**
- * Eigener Routing Server (GraphHopper auf Korays Mac, Ordner routing/server).
+ * Eigener Routing Server (GraphHopper 11 auf Contabo, Konfiguration und Skripte in routing/server).
  *
  * Mit Sportwagen Profil: Kurven bevorzugt, Feldwege, Schotter, Pfade und Engstellen unter
  * 2,5 m praktisch ausgeschlossen, Autobahn abgewertet. Der Etappen Check läuft hier ohne
  * fremden Dienst direkt auf den Straßendaten, die der Server mitliefert.
  *
  * Adresse: EXPO_PUBLIC_ROUTING_URL, sonst der eigene Server (CUMO_ROUTING_URL); im Browser auf
- * localhost oder im lokalen Netz der Server auf dem Mac (Port 8989).
+ * localhost oder im lokalen Netz ein Server auf dem Rechner (Port 8989), zum Entwickeln.
  */
 
 import type { PlannedTour } from './plan';
