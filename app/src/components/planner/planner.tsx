@@ -1294,10 +1294,14 @@ function TourMode({
           <SymbolView name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
         </Pressable>
       </View>
-      {locMsg && <AppText variant="caption" style={styles.signalText}>{locMsg}</AppText>}
-      {hits && hits.length === 0 && <AppText variant="caption" muted>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
+      {locMsg && <AppText variant="caption" style={[styles.signalText, styles.hitPad]}>{locMsg}</AppText>}
+      {hits && hits.length === 0 && <AppText variant="caption" muted style={styles.hitPad}>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
       {hits?.map((h, i) => (
-        <Pressable key={`${h.p[0]},${h.p[1]},${i}`} accessibilityRole="button" onPress={() => pick(h.p, h.name)} style={styles.hitRow}>
+        <Pressable
+          key={`${h.p[0]},${h.p[1]},${i}`}
+          accessibilityRole="button"
+          onPress={() => pick(h.p, h.name)}
+          style={({ pressed }) => [styles.hitRow, styles.hitPad, styles.hitLine, pressed && styles.hitPressed]}>
           <View style={styles.hitMain}>
             <AppText variant="title">{h.name}</AppText>
             {!!h.detail && <AppText variant="caption" muted>{h.detail}</AppText>}
@@ -2291,7 +2295,11 @@ const styles = StyleSheet.create({
   dotStop: { backgroundColor: Colors.signal },
   statusRow: { flexDirection: 'row', alignItems: 'center' },
   pendingCard: { backgroundColor: Colors.signalTint },
-  editor: { gap: Spacing.s, paddingBottom: Spacing.s },
+  // Suchfeld und Vorschläge in einer gemeinsamen Fläche, damit die Vorschläge sichtbar zum Feld gehören
+  editor: { borderRadius: Radius.m, backgroundColor: Colors.surface, overflow: 'hidden', marginBottom: Spacing.s },
+  hitPad: { paddingHorizontal: Spacing.m, paddingBottom: Spacing.m },
+  hitLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
+  hitPressed: { backgroundColor: Colors.surface2 },
   slotPlaceholder: { color: Colors.muted },
   stopRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.s },
   stopKm: { width: 52, fontVariant: ['tabular-nums'] },
