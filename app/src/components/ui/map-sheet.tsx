@@ -21,8 +21,9 @@ import {
   type NativeSyntheticEvent,
   type ScrollViewInstance,
 } from 'react-native';
-import Animated, { cancelAnimation, Extrapolation, interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollViewMarker } from 'react-native-screens/experimental';
 
 import { TAB_BAR_SPACE } from '@/components/ui/screen';
 import { Colors, Radius, Spacing } from '@/constants/theme';
@@ -79,7 +80,6 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   const target = snaps[detent];
 
   const y = useSharedValue(snaps[0]);
-  const smallY = useSharedValue(snaps[0]);
   // Für die Zieh Geste, die außerhalb des Renderns läuft, als Shared Values statt Refs
   const snapsNow = useSharedValue(snaps);
   const detentNow = useSharedValue<number>(detent);
@@ -97,15 +97,12 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   // Zur gewählten Höhe federn; beim ersten Messen ohne Animation hinsetzen
   const measured = boxH > 0 && headH > 0;
   useEffect(() => {
-    smallY.set(snaps[0]);
     const v = fling.get();
     fling.set(0);
     if (placed.current) y.set(withSpring(target, { ...SPRING, velocity: v }));
     else y.set(target);
     if (measured) placed.current = true;
-    // snaps[0] reicht, die anderen Werte hängen an target
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, snaps[0], measured, y, smallY, fling]);
+  }, [target, measured, y, fling]);
 
   const pan = useMemo(() => {
     function settle(vy: number) {
@@ -153,10 +150,6 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   }, [onDetentChange, y, snapsNow, detentNow, fling, startY]);
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
-  // In der kleinen Höhe blendet der Inhalt unter dem Kopf aus, er läge sonst hinter der Tab Leiste
-  const contentStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(y.get(), [smallY.get() - 80, smallY.get()], [1, 0], Extrapolation.CLAMP),
-  }));
 
   const step = (d: number) => onDetentChange(Math.max(0, Math.min(2, detent + d)) as Detent);
   function onAction(e: AccessibilityActionEvent) {
@@ -203,6 +196,9 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
           style={styles.grabberZone}>
           <View style={styles.grabber} />
         </View>
+        {/* Ab iOS 26 legt das System unten unter die schwebende Tab Leiste einen Weichzeichner über
+            den Inhalt (Scroll Edge Effect). Im Blatt verdeckt das die letzten Zeilen, deshalb aus. */}
+        <ScrollViewMarker style={styles.flex} scrollEdgeEffects={{ bottom: 'hidden' }}>
         <ScrollView
           ref={scrollRef}
           style={styles.flex}
@@ -221,8 +217,9 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
             style={styles.head}>
             {header}
           </View>
-          <Animated.View style={[styles.body, contentStyle]}>{children}</Animated.View>
+          <View style={styles.body}>{children}</View>
         </ScrollView>
+        </ScrollViewMarker>
       </Animated.View>
     </View>
   );
