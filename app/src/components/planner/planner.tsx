@@ -980,12 +980,13 @@ function useTourPlan(onPlanned?: () => void) {
     setLegProfiles(lp);
     setNames({});
     setName(t.name);
-    setCloudId(t.id);
+    // Ohne id (Community Tour): als ungespeicherte Kopie öffnen, Speichern legt sie in Meine Touren
+    setCloudId(t.id || null);
     setFolder(t.folder);
     setError(null);
     setSaveMsg(null);
     setStep(null);
-    setBase(sigOf(w, t.name, lp));
+    setBase(t.id ? sigOf(w, t.name, lp) : null);
     // Namen für Start und Ziel nachschlagen, bei wenigen Punkten auch für die Zwischenziele
     for (const p of v.length <= 8 ? w : [s, z]) if (p) rememberName(p);
     // Gespeicherte Strecke so zeigen, wie sie ist (importierte und Club Touren nicht neu planen).

@@ -1,21 +1,22 @@
 /**
- * Community: Touren, die andere Fahrer veröffentlicht haben. Ansehen, auf der Karte zeigen,
- * losfahren oder als Kopie in Meine Touren übernehmen. Veröffentlichen geht unter Meine Touren.
+ * Community: Touren, die andere Fahrer veröffentlicht haben. Tippen öffnet die Tour im Planer
+ * (losfahren, speichern), das Lesezeichen übernimmt sie direkt in Meine Touren.
  */
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { SymbolView } from 'expo-symbols';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-import { ElevationChart } from '@/components/planner/elevation-chart';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
-import { setActiveTour } from '@/lib/active-tour';
+import { Colors, Fonts, Motion, Radius, Spacing } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { copyCommunityTour, listCommunity, loadCommunityTour, type CommunityTour } from '@/lib/community';
 import { formatMinutes } from '@/lib/intent';
-import { flatten, formatKm, PROFILES, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { setEditTour } from '@/lib/edit-tour';
+import { formatKm } from '@/lib/tour';
 
 type Sort = 'neu' | 'kurven' | 'kurz' | 'lang';
 const SORTS: { id: Sort; label: string }[] = [
@@ -31,7 +32,6 @@ export default function Community() {
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<Sort>('neu');
-  const [open, setOpen] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -80,107 +80,113 @@ export default function Community() {
 
       <View style={styles.list}>
         {shown.map((t) => (
-          <CommunityCard key={t.id} t={t} mine={!!session && session.user.id === t.owner} open={open === t.id} onToggle={() => setOpen(open === t.id ? null : t.id)} />
+          <CommunityCard key={t.id} t={t} mine={!!session && session.user.id === t.owner} />
         ))}
       </View>
     </Screen>
   );
 }
 
-function CommunityCard({ t, mine, open, onToggle }: { t: CommunityTour; mine: boolean; open: boolean; onToggle: () => void }) {
-  const km = Number(t.km);
-  const meta = [
-    `${formatKm(km, 0)} km`,
-    t.minutes ? formatMinutes(t.minutes) : null,
-    t.curves ? `${t.curves} Kurven` : null,
-    PROFILES.find((p) => p.id === t.profile)?.label,
-  ]
-    .filter(Boolean)
-    .join(', ');
-  return (
-    <View style={styles.card}>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={onToggle} style={styles.rowMain}>
-        <AppText style={styles.name} numberOfLines={2}>
-          {t.name}
-        </AppText>
-        <AppText variant="caption" muted>
-          {meta}
-        </AppText>
-        <AppText variant="caption" muted>
-          {mine ? 'Von dir' : `Von ${t.author || 'einem Fahrer'}`}, {new Date(t.published_at).toLocaleDateString('de-DE')}
-        </AppText>
-      </Pressable>
-      {open && <CommunityDetails t={t} />}
-    </View>
-  );
-}
-
-function CommunityDetails({ t }: { t: CommunityTour }) {
-  const [full, setFull] = useState<{ tour: Tour; profile: Profile } | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+/**
+ * Karte einer Community Tour nach dem Muster von Meine Touren: Tippen öffnet die Tour im Planer
+ * (dort Losfahren und Speichern), daneben nur das Lesezeichen zum direkten Übernehmen.
+ */
+function CommunityCard({ t, mine }: { t: CommunityTour; mine: boolean }) {
+  const [busy, setBusy] = useState<'open' | 'save' | null>(null);
   const [saved, setSaved] = useState(false);
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    loadCommunityTour(t.id)
-      .then((x) => alive && setFull({ tour: { ...x.tour, name: t.name }, profile: x.profile }))
-      .catch((e: Error) => alive && setErr(e.message));
-    return () => {
-      alive = false;
-    };
-  }, [t.id, t.name]);
-  const line = useMemo<LatLon[]>(() => (full ? flatten(full.tour).map((x) => x.p) : []), [full]);
+  const [err, setErr] = useState<string | null>(null);
+  const scale = useSharedValue(1);
+  const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
+  const km = Number(t.km);
+  const meta = [`${formatKm(km, 0)} km`, t.minutes ? formatMinutes(t.minutes) : null, t.curves ? `${t.curves} Kurven` : null].filter(Boolean).join('  ·  ');
 
-  const drive = () => {
-    if (!full) return;
-    setActiveTour(full.tour, full.profile);
-    router.push('/navigation');
-  };
-  const show = () => {
-    if (!full) return;
-    setActiveTour(full.tour, full.profile);
-    router.push('/karte');
+  const open = async () => {
+    if (busy) return;
+    setBusy('open');
+    setErr(null);
+    try {
+      const full = await loadCommunityTour(t.id);
+      const now = new Date().toISOString();
+      // ungespeicherte Kopie: ohne id, Speichern im Planer legt sie unter Community in Meine Touren
+      setEditTour({ ...full.tour, name: t.name, id: '', folder: 'Community', createdAt: now, updatedAt: now, curves: t.curves ?? undefined, profile: full.profile });
+      router.navigate('/');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
   };
   const keep = async () => {
-    setBusy(true);
+    if (busy || saved) return;
+    setBusy('save');
+    setErr(null);
     try {
       await copyCommunityTour(t);
       setSaved(true);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
 
   return (
-    <View style={styles.gapM}>
-      {t.description ? <AppText>{t.description}</AppText> : null}
-      {err && <AppText style={styles.error}>{err}</AppText>}
-      {!full && !err && <ActivityIndicator color={Colors.muted} />}
-      {full && <ElevationChart line={line} onSurface />}
-      <Pressable accessibilityRole="button" disabled={!full} onPress={drive} style={[styles.primary, !full && styles.disabled]}>
-        <AppText style={styles.primaryText}>Losfahren</AppText>
-      </Pressable>
+    <Animated.View style={[styles.card, cardStyle]}>
       <View style={styles.row}>
-        <Pressable accessibilityRole="button" disabled={!full} onPress={show} style={[styles.secondary, styles.flex, !full && styles.disabled]}>
-          <AppText style={styles.secondaryText}>Auf der Karte</AppText>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${t.name}, ${meta}`}
+          accessibilityHint="Öffnet die Tour auf der Karte, dort startest du die Fahrt"
+          onPress={() => void open()}
+          onPressIn={() => scale.set(withSpring(Motion.pressScale, Motion.press))}
+          onPressOut={() => scale.set(withSpring(1, Motion.press))}
+          style={styles.main}>
+          <AppText style={styles.name} numberOfLines={2}>
+            {t.name}
+          </AppText>
+          <AppText variant="caption" muted numberOfLines={1} style={styles.num}>
+            {meta}
+          </AppText>
+          <AppText variant="caption" muted numberOfLines={1}>
+            {mine ? 'Von dir' : `Von ${t.author || 'einem Fahrer'}`}
+          </AppText>
+          {t.description ? (
+            <AppText variant="caption" style={styles.desc} numberOfLines={2}>
+              {t.description}
+            </AppText>
+          ) : null}
         </Pressable>
-        <Pressable accessibilityRole="button" disabled={saved || busy} onPress={() => void keep()} style={[styles.secondary, styles.flex]}>
-          {busy ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>{saved ? 'In Meine Touren' : 'Speichern'}</AppText>}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={saved ? 'In Meine Touren gespeichert' : 'In Meine Touren speichern'}
+          accessibilityState={{ disabled: saved, busy: busy === 'save' }}
+          onPress={() => void keep()}
+          hitSlop={4}
+          style={[styles.round, saved && styles.roundSaved]}>
+          {busy ? (
+            <ActivityIndicator color={Colors.muted} />
+          ) : (
+            <SymbolView name={saved ? 'bookmark.fill' : 'bookmark'} size={19} tintColor={saved ? Colors.signal : Colors.text} weight="semibold" />
+          )}
         </Pressable>
       </View>
-    </View>
+      {err && <AppText variant="caption" style={styles.error}>{err}</AppText>}
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   gapM: { gap: Spacing.m },
-  row: { flexDirection: 'row', gap: Spacing.s },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   list: { gap: Spacing.s },
-  card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
+  card: { backgroundColor: Colors.surface, borderRadius: Radius.l + 4, padding: Spacing.m, paddingLeft: Spacing.l, gap: Spacing.s },
+  main: { flex: 1, gap: 3, minHeight: 56, justifyContent: 'center' },
+  num: { fontVariant: ['tabular-nums'] },
+  desc: { color: Colors.text, opacity: 0.8, marginTop: 2 },
+  round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  roundSaved: { backgroundColor: Colors.signalTint },
   rowMain: { gap: 2, minHeight: 44, justifyContent: 'center' },
   name: { fontFamily: Fonts.semibold, fontSize: 17 },
   search: { height: 48, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: 16 },
