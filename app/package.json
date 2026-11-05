@@ -50,6 +50,7 @@
     "@types/react": "~19.3.0",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~58.0.4",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -58,7 +59,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "sync:functions": "cp src/data/passes.json ../supabase/functions/pass-status/passes.json"
+    "sync:functions": "cp src/data/passes.json ../supabase/functions/pass-status/passes.json",
+    "test": "tsx --test src/lib/__tests__/*.test.ts"
   },
   "private": true
 }
