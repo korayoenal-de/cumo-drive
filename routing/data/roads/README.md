@@ -30,3 +30,15 @@ Regeln
 - Koordinaten auf etwa 100 m genau, aus Nominatim, OSM, Wikipedia oder der Quelle. Nie raten; lieber Ort weglassen.
 - Lieber weniger Einträge mit sauberen Ankern als viele vage.
 - Doppelte Strecken über Dateien hinweg sind ok, die werden beim Zusammenführen bereinigt.
+
+## Was eine Traumstrecke ausmacht (Maßstab für quality 5 und für die Routenplanung)
+
+Aus Korays Fahrten (Referenz: Hirschhorn, Kortelshütte, Rothenberg, Beerfelder Straße im Odenwald):
+
+* lang: etwa 20 Minuten am Stück
+* wenig Unterbrechungen: keine Ampeln, kaum Kreuzungen und Abbiegungen
+* schön kurvig, flüssig fahrbar (B Roads, Landstraßen), keine engen Wirtschaftswege
+* sehr guter Belag
+* kein Verkehr, keine Ortsdurchfahrten
+
+Daraus für das Routing: zusammenhängende kurvige Abschnitte belohnen, Ortsdurchfahrten, Kreuzungsdichte, Stichstraßen und kleine Schleifen durch Orte bestrafen.

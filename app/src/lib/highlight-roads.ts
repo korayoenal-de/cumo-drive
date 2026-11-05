@@ -28,6 +28,20 @@ export type HighlightRoad = {
 
 export const HIGHLIGHT_ROADS: HighlightRoad[] = [
   {
+    // Insider Tipp von Koray (CUMO DRIVERS CLUB): Hirschhorn, L 3119 hoch nach Kortelshütte, durchs
+    // Ulfenbachtal über Hainbrunn nach Rothenberg und die Beerfelder Straße (L 3410) Richtung Beerfelden.
+    // Lang, kaum Unterbrechungen, kurvig, guter Belag, rund 20 Minuten ohne Verkehr. Linie 19,9 km
+    // über den eigenen Routing Server, Stützpunkte auf den Durchgangsstraßen (nicht durch die Ortskerne).
+    id: 'hirschhorn-rothenberg',
+    name: 'Hirschhorn Rothenberg',
+    kind: 'strecke',
+    note: 'Kurvenstrecke',
+    say: 'die Kurvenstrecke zwischen Hirschhorn und Rothenberg',
+    line: [
+      [49.46610, 8.89675], [49.46914, 8.89927], [49.47258, 8.90199], [49.47364, 8.90585], [49.47654, 8.90686], [49.47819, 8.91234], [49.48034, 8.91658], [49.47974, 8.91982], [49.47944, 8.91452], [49.47748, 8.90949], [49.47545, 8.90490], [49.47309, 8.90400], [49.47015, 8.90103], [49.46696, 8.89789], [49.46894, 8.89663], [49.47303, 8.89879], [49.47653, 8.89931], [49.48012, 8.90217], [49.48409, 8.90172], [49.48791, 8.90282], [49.49158, 8.90243], [49.49493, 8.90077], [49.49851, 8.89979], [49.50214, 8.90173], [49.50586, 8.90250], [49.50927, 8.90410], [49.51385, 8.90703], [49.51738, 8.90846], [49.52174, 8.91256], [49.52513, 8.91502], [49.52869, 8.91673], [49.53298, 8.91719], [49.53558, 8.92068], [49.53952, 8.92169], [49.54271, 8.92413], [49.54579, 8.92745], [49.54859, 8.93006], [49.55071, 8.93397], [49.54875, 8.93861], [49.55054, 8.94347], [49.55313, 8.94089], [49.55618, 8.94358], [49.55642, 8.94884], [49.55758, 8.95418], [49.55773, 8.95656], [49.55598, 8.95264],
+    ],
+  },
+  {
     // WP "Zotzenbach" der Nibelungenring Rallye 2009 und 2010 (rally-maps.com: 7,8 km, 214 bis 433 m),
     // auf der Strecke des früheren DMV Bergpreises Zotzenbach (1984: 3,79 km bis Ober Mengelbach).
     // Verlauf: Zotzenbach, K 21 über Unter und Ober Mengelbach, L 3409 bis zur Kreidacher Höhe.
