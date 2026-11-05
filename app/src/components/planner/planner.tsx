@@ -19,7 +19,6 @@ import {
   buildTour, findPlace, locate, newSeed, PHASES, toPlanError,
   type PlanError, type PlanPhase, type Spot, type TourRequest,
 } from '@/components/planner/create-tour';
-import { CLASS_COLORS } from '@/components/planner/route-preview';
 import { ElevationChart } from '@/components/planner/elevation-chart';
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
@@ -37,7 +36,7 @@ import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { doubledStretch } from '@/lib/doubled';
 import { insertVia, movePoint, passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
 import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
-import { flatten, formatKm, haversine, legs, PROFILES, PROFILE_CHOICES, type CheckClass, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { flatten, formatKm, haversine, legs, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour, type Warning } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { selectVehicle, useVehicles } from '@/lib/vehicle';
 
@@ -58,8 +57,6 @@ const PROFILE_WORD: Record<Profile, string> = { kurvig: 'kurvig', paesse: 'mit P
 
 const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
 const MIN_STEPS = [60, 90, 120, 180, 240, 300, 420];
-
-const CLASS_LABEL: Record<CheckClass, string> = { ok: 'Sauber', pruefen: 'Prüfen', raus: 'Gesperrt' };
 
 /** Fahrzeit kompakt für große Zahlen, damit sie in eine Zeile passt: 2:11 h oder 45 min. */
 function bigDuration(min: number): string {
@@ -367,10 +364,12 @@ export default function Planner() {
           ]}
           onChange={(v) => switchMode(v === 'route' ? 'tour' : lastRunde.current)}
         />
-      ) : (
-        <AppText variant="label">
-          {view.kind === 'result' ? view.tour.name : view.kind === 'working' ? 'Tour wird erstellt' : 'Das hat nicht geklappt'}
+      ) : view.kind === 'result' ? (
+        <AppText variant="display" style={styles.headline} numberOfLines={2} accessibilityRole="header">
+          {view.tour.name}
         </AppText>
+      ) : (
+        <AppText variant="label">{view.kind === 'working' ? 'Tour wird erstellt' : 'Das hat nicht geklappt'}</AppText>
       )}
       {view.kind === 'working' || (inTour && tourPlan.step) ? (
         <View style={styles.summary}>
@@ -383,7 +382,9 @@ export default function Planner() {
         <AppText variant="caption" muted numberOfLines={2} style={styles.summaryHint}>
           {view.kind === 'error'
             ? view.error.message
-            : mode === 'tour'
+            : view.kind === 'result'
+              ? `${PROFILE_WORD[view.req.profile]}, ${view.req.towardName ? `Richtung ${view.req.towardName}` : dirPhrase(view.req.direction)}`
+              : mode === 'tour'
               ? tourPts.length
                 ? 'Lange auf die Karte drücken setzt einen weiteren Punkt.'
                 : 'Gib Start und Ziel ein oder drück lange auf die Karte.'
@@ -1177,10 +1178,7 @@ function TourMode({
     setPending(null);
   }
 
-  const k = routeTour?.km_je_klasse;
-  const sauber = k?.ok ?? 0;
   const total = routeTour?.laenge_km ?? 0;
-  const share = total > 0 ? Math.round((sauber / total) * 100) : 0;
   const warnings = routeTour ? routeTour.warnungen.filter((w) => w.klasse !== 'ok') : [];
   // Für Navigation und Speichern: Profil der ersten Etappe (sonst das allgemeine)
   const firstProfile = plan.legProfile(plan.start ? 0 : 1, profile);
@@ -1415,44 +1413,8 @@ function TourMode({
 
       {routeTour && (
         <>
-          <View style={styles.legend}>
-            {(['ok', 'pruefen', 'raus'] as CheckClass[]).map((c) => (
-              <View key={c} style={styles.legendItem}>
-                <View style={[styles.legendSwatch, { backgroundColor: CLASS_COLORS[c] }]} />
-                <AppText variant="caption" muted>{CLASS_LABEL[c]}</AppText>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.stats}>
-            <View style={styles.flex}>
-              <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{formatKm(total, 0)}</AppText>
-              <AppText variant="caption" muted>km</AppText>
-            </View>
-            <View style={styles.flex}>
-              <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{bigDuration(routeTour.minutes)}</AppText>
-              <AppText variant="caption" muted>Fahrzeit</AppText>
-            </View>
-            <View style={styles.flex}>
-              <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{curves}</AppText>
-              <AppText variant="caption" muted>
-                Kurven{total > 0 ? `, ${Math.round((curves / total) * 100)} je 100 km` : ''}
-              </AppText>
-            </View>
-          </View>
-
-          <View style={[styles.card, styles.checkCard]}>
-            <View style={[styles.dot, (k?.raus ?? 0) > 0 ? styles.dotStop : warnings.length ? styles.dotWarn : null]} />
-            <View style={styles.flex}>
-              <AppText variant="title">
-                {(k?.raus ?? 0) > 0 ? `Etappen Check: ${formatKm(k!.raus)} km ungeeignet` : `Etappen Check: ${formatKm(sauber)} km sauber`}
-              </AppText>
-              <AppText variant="caption" muted>
-                {share} % der Strecke ohne Auffälligkeiten
-                {routeTour.fixes > 0 ? `, ${routeTour.fixes} mal um gesperrte Stellen umgeplant` : ''}.
-              </AppText>
-            </View>
-          </View>
+          <Stats km={total} minutes={routeTour.minutes} curves={curves} />
+          {warnings.length === 0 && routeTour.geprueft !== false && <TrustLine />}
 
           {twiceKm >= 1 && (
             <View style={[styles.card, styles.checkCard]}>
@@ -1464,27 +1426,6 @@ function TourMode({
                 </AppText>
               </View>
             </View>
-          )}
-
-          {warnings.length > 0 && (
-            <Section label={`Warnungen (${warnings.length})`}>
-              <View style={styles.card}>
-                {warnings.map((w, i) => (
-                  <View key={i} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
-                    <View style={[styles.badge, { borderColor: CLASS_COLORS[w.klasse] }]}>
-                      <AppText style={[styles.badgeText, { color: CLASS_COLORS[w.klasse] }]}>{CLASS_LABEL[w.klasse]}</AppText>
-                    </View>
-                    <View style={styles.flex}>
-                      <AppText variant="title">{w.name || 'Unbenannter Abschnitt'}</AppText>
-                      <AppText variant="caption" muted>
-                        bei km {formatKm(w.start_km)}, {formatKm(w.laenge_km)} km lang
-                      </AppText>
-                      {w.gruende.length > 0 && <AppText variant="caption">{w.gruende.join(', ')}</AppText>}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </Section>
           )}
 
           {hint && (
@@ -1511,10 +1452,14 @@ function TourMode({
               </View>
             </Section>
           )}
+
+          {warnings.length > 0 && <Warnings warnings={warnings} checked={routeTour.geprueft !== false} />}
+
+          <ElevationChart line={line} />
+
+          <StopsSection line={line} busy={busy} onAdd={(p) => add('via', p)} />
         </>
       )}
-
-      {routeTour && <StopsSection line={line} busy={busy} onAdd={(p) => add('via', p)} />}
 
       <Section label="Vermeiden">
         <View style={styles.card}>
@@ -1550,25 +1495,23 @@ function TourMode({
         />
       )}
 
-      {routeTour && (
-        <View style={styles.gapM}>
-          <Pressable accessibilityRole="button" onPress={drive} style={({ pressed }) => [styles.go, pressed && styles.pressed]}>
-            <AppText style={styles.goText}>Losfahren</AppText>
-          </Pressable>
-          <SecondaryButton
-            label={plan.saving ? 'Wird gespeichert' : plan.cloudId ? 'Änderungen speichern' : 'Speichern'}
-            onPress={() => !plan.saving && void plan.save(curves, firstProfile, avoid)}
-          />
-          {plan.saveMsg && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
-          {!session && !plan.saveMsg && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
-        </View>
-      )}
-
-      {routeTour && <ElevationChart line={line} />}
-
       {group && routeTour && <GroupBlock savedId={plan.cloudId} />}
 
-      {pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
+      {/* Aktionen am Ende: Losfahren als Hauptaktion, darunter die übrigen */}
+      <View style={styles.actions}>
+        {routeTour && (
+          <>
+            <GoButton onPress={drive} />
+            <SecondaryButton
+              label={plan.saving ? 'Wird gespeichert' : plan.cloudId ? 'Änderungen speichern' : 'Speichern'}
+              onPress={() => !plan.saving && void plan.save(curves, firstProfile, avoid)}
+            />
+            {plan.saveMsg && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
+            {!session && !plan.saveMsg && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
+          </>
+        )}
+        {pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
+      </View>
     </>
   );
 }
