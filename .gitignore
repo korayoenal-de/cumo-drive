@@ -2,10 +2,11 @@
 node_modules/
 .env
 .env.*
-routing/data/
+routing/data/*
 __pycache__/
 .cumo.bundle
 routing/server/data/
 routing/server/bin/
 .fotos-web.zip
 app/public/fotos/
+!routing/data/roads/
