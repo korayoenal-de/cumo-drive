@@ -3598,5 +3598,48 @@
     "sources": [
       "https://www.motorradonline.de/reise/touren-tipps-motorradfahren-im-schwarzwald-motorradtouren-auf-hoechstem-niveau/"
     ]
+  },
+  {
+    "id": "de-hirschhorn-rothenberg",
+    "name": "Hirschhorn Rothenberg",
+    "country": "DE",
+    "region": "Odenwald",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Kurvenstrecke",
+    "roads": [
+      "L 3119",
+      "L 3410"
+    ],
+    "from": {
+      "name": "Hirschhorn (Neckar)",
+      "lat": 49.461,
+      "lon": 8.8974
+    },
+    "to": {
+      "name": "Beerfelden, Beerfelder Straße",
+      "lat": 49.5559,
+      "lon": 8.9527
+    },
+    "via": [
+      {
+        "name": "Kortelshütte",
+        "lat": 49.4816,
+        "lon": 8.9229
+      },
+      {
+        "name": "Rothenberg",
+        "lat": 49.5282,
+        "lon": 8.9202
+      }
+    ],
+    "length_km": 23.2,
+    "facts": "Vom Neckartal über Kortelshütte und Rothenberg hoch in den Odenwald, schmal genug für Spaß, breit genug für Sportwagen",
+    "quality": 5,
+    "caveats": "",
+    "sources": [
+      "Koray Önal, eigene Fahrt (CUMO DRIVERS CLUB), November 2026"
+    ],
+    "insider": true
   }
 ]
