@@ -3,9 +3,7 @@
  * CDC Keyvisual. Sie stoßen an der Basis aneinander, dazwischen bleibt ein siebenzackiger Stern frei.
  * Fünf Stufen füllen 1, 3, 4, 6 und 7 Dreiecke im Uhrzeigersinn. Unter 20 pt nur die orangen Dreiecke.
  *
- * Legende (animate): Dreiecke füllen sich nacheinander, springen auseinander und verschwinden, aus der
- * Negativform erscheint der orange Stern, pulsiert auf 125 % und zurück, blendet aus. Erst danach bauen sich die
- * Dreiecke im Uhrzeigersinn wieder auf.
+ * Legende (animate): subtiler Austausch zwischen Dreiecken und Stern, nie beides zugleich (siehe LegendGauge).
  */
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -13,7 +11,6 @@ import Animated, {
   cancelAnimation,
   Easing,
   interpolate,
-  interpolateColor,
   useAnimatedProps,
   useAnimatedStyle,
   useReducedMotion,
@@ -64,9 +61,10 @@ const STAR = (() => {
   return out.join(' ');
 })();
 
-const CYCLE_MS = 3200;
+const CYCLE_MS = 4000;
 const EASE_IN = Easing.in(Easing.quad);
 const EASE_OUT = Easing.out(Easing.cubic);
+const EASE_IN_OUT = Easing.inOut(Easing.quad);
 const AnimatedPolygon = Animated.createAnimatedComponent(Polygon);
 
 export function FunGauge({ level, size = 20, animate = false }: { level: FunLevel; size?: number; animate?: boolean }) {
@@ -86,26 +84,36 @@ export function FunGauge({ level, size = 20, animate = false }: { level: FunLeve
   );
 }
 
-/** Legende mit Stern Animation, läuft in Schleife, solange sie zu sehen ist. */
+/**
+ * Legende mit Stern Animation, läuft in Schleife, solange sie zu sehen ist. Subtiler Austausch, nie beides zugleich,
+ * ohne graue Flächen: Dreiecke weiten sich auf 112 % und blenden aus, danach erscheint der Stern, pulsiert auf 125 %
+ * und zurück und blendet aus, danach bauen sich die Dreiecke im Uhrzeigersinn wieder auf.
+ */
 function LegendGauge({ size, label }: { size: number; label: string }) {
   const t = useSharedValue(0);
   useEffect(() => {
     t.set(withRepeat(withTiming(1, { duration: CYCLE_MS, easing: Easing.linear }), -1, false));
     return () => cancelAnimation(t);
   }, [t]);
-  // Dreiecke springen auseinander (22 bis 29 %); die Gruppe ist ab 61 % wieder da, jedes Dreieck baut sich danach einzeln auf
   const group = useAnimatedStyle(() => {
     const p = t.get();
-    if (p >= 0.61) return { opacity: 1, transform: [{ scale: 1 }] };
-    const k = EASE_IN(interpolate(p, [0.22, 0.29], [0, 1], 'clamp'));
-    return { opacity: 1 - k, transform: [{ scale: 1 + 0.6 * k }] };
+    if (p < 0.3 || p >= 0.67) return { opacity: 1, transform: [{ scale: 1 }] };
+    const k = EASE_IN_OUT(interpolate(p, [0.3, 0.36], [0, 1], 'clamp'));
+    return { opacity: 1 - k, transform: [{ scale: 1 + 0.12 * k }] };
   });
-  // Stern: erscheint, pulsiert auf 125 % und zurück, blendet aus
   const star = useAnimatedStyle(() => {
     const p = t.get();
-    const scale = interpolate(p, [0, 0.29, 0.47, 0.64, 1], [1, 1, 1.25, 1, 1], 'clamp');
-    const opacity = interpolate(p, [0, 0.25, 0.29, 0.64, 0.7, 1], [0, 0, 1, 1, 0, 0], 'clamp');
-    return { opacity, transform: [{ scale }] };
+    if (p < 0.37 || p >= 0.66) return { opacity: 0, transform: [{ scale: 0.92 }] };
+    if (p < 0.42) {
+      const k = EASE_OUT(interpolate(p, [0.37, 0.42], [0, 1]));
+      return { opacity: k, transform: [{ scale: 0.92 + 0.08 * k }] };
+    }
+    if (p < 0.6) {
+      const k = EASE_IN_OUT(p < 0.51 ? interpolate(p, [0.42, 0.51], [0, 1]) : interpolate(p, [0.51, 0.6], [1, 0]));
+      return { opacity: 1, transform: [{ scale: 1 + 0.25 * k }] };
+    }
+    const k = EASE_IN(interpolate(p, [0.6, 0.66], [0, 1]));
+    return { opacity: 1 - k, transform: [{ scale: 1 - 0.04 * k }] };
   });
   const box = { width: size, height: size };
   return (
@@ -118,7 +126,7 @@ function LegendGauge({ size, label }: { size: number; label: string }) {
       <Animated.View style={[StyleSheet.absoluteFill, group]}>
         <Svg width={size} height={size} viewBox="0 0 24 24">
           {TRIS.map((pts, i) => (
-            <FillingTri key={i} pts={pts} step={ORDER.indexOf(i)} t={t} />
+            <RebuildTri key={i} pts={pts} step={ORDER.indexOf(i)} t={t} />
           ))}
         </Svg>
       </Animated.View>
@@ -126,20 +134,15 @@ function LegendGauge({ size, label }: { size: number; label: string }) {
   );
 }
 
-/**
- * Ein Dreieck im Ablauf, um seinen Platz im Uhrzeigersinn versetzt (80 ms je Dreieck): färbt sich orange,
- * ist ab 41 % ausgeblendet (die Gruppe ist dann ohnehin weg) und baut sich nach dem Stern ab 74 % grau wieder auf.
- */
-function FillingTri({ pts, step, t }: { pts: string; step: number; t: SharedValue<number> }) {
+/** Ein oranges Dreieck: ausgeblendet, solange der Stern dran ist, danach im Uhrzeigersinn versetzt (80 ms) wieder da. */
+function RebuildTri({ pts, step, t }: { pts: string; step: number; t: SharedValue<number> }) {
   const shift = (step * 80) / CYCLE_MS;
   const props = useAnimatedProps(() => {
-    const p = (t.get() - shift + 1) % 1;
-    const orange = p < 0.41 ? interpolate(p, [0, 0.03], [0, 1], 'clamp') : 0;
-    const back = EASE_OUT(interpolate(p, [0.74, 0.84], [0, 1], 'clamp'));
-    const opacity = p < 0.41 ? 1 : back;
-    return { fill: interpolateColor(orange, [0, 1], [OFF, Colors.signal]), fillOpacity: opacity };
+    const p = t.get();
+    if (p < 0.36) return { fillOpacity: 1 };
+    return { fillOpacity: EASE_OUT(interpolate(p, [0.66 + shift, 0.74 + shift], [0, 1], 'clamp')) };
   });
-  return <AnimatedPolygon points={pts} animatedProps={props} />;
+  return <AnimatedPolygon points={pts} fill={Colors.signal} animatedProps={props} />;
 }
 
 export const toFunLevel = (v: number | null | undefined): FunLevel => Math.max(1, Math.min(5, Math.round(v ?? 3))) as FunLevel;
