@@ -94,6 +94,8 @@ export type NavState = {
   remainingKm: number | null;
   /** Ankunftszeit als Date, falls berechenbar */
   eta: Date | null;
+  /** Tempo gegenüber der Planung: 1 wie geplant, 1,2 heißt 20 % langsamer. Fließt in Ankunft und Restzeiten ein. */
+  pace: number;
   /** Abstand zur Route in Metern */
   offRouteM: number | null;
   voice: boolean;

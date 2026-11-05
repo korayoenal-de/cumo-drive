@@ -34,6 +34,7 @@ const INITIAL: NavState = {
   next: 0,
   distToNextM: null,
   remainingKm: null,
+  pace: 1,
   eta: null,
   offRouteM: null,
   voice: true,
@@ -67,6 +68,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const reroutingRef = useRef(false);
   const activeRef = useRef(false);
   const arrivedRef = useRef(false);
+  /** Tatsächliches Tempo: geplante und gefahrene Minuten der jüngsten Kilometer (ältere zählen immer weniger) */
+  const paceRef = useRef<{ at: number; km: number; plan: number; real: number } | null>(null);
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const simRef = useRef<{ timer: ReturnType<typeof setInterval>; km: number; speedKmh: number } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -165,8 +168,23 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const covered = route.km < 2 || route.cumKm[Math.min(doneIndexRef.current, route.cumKm.length - 1)] > route.km * 0.6;
       const arrived = toEndM < ARRIVE_M && pr.remainingKm < 0.3 && covered;
 
-      // Ankunftszeit: Restzeit anteilig aus der geplanten Fahrzeit
-      const restMin = route.km > 0 ? route.minutes * (pr.remainingKm / route.km) : 0;
+      // Ankunftszeit: geplante Restzeit mal dem bisherigen Tempo. Gezählt wird nur fahrend auf der Route,
+      // Pausen und Umwege verfälschen es nicht; ältere Kilometer verlieren an Gewicht (etwa 20 km Halbwertszeit),
+      // so passt sich die Ankunft laufend an Autobahn, Pässe oder Kolonne an.
+      const p = paceRef.current;
+      if (p && snap.offM <= OFF_ROUTE_M) {
+        const dkm = snap.km - p.km;
+        const dt = fix.at - p.at;
+        if (dkm > 0 && dkm < 1 && dt > 0 && dt < 30000 && (fix.speedKmh ?? 0) > 3) {
+          const decay = Math.exp(-dkm / 30);
+          p.plan = p.plan * decay + (route.km > 0 ? (route.minutes * dkm) / route.km : 0);
+          p.real = p.real * decay + dt / 60000;
+        }
+      }
+      paceRef.current = { at: fix.at, km: snap.km, plan: p?.plan ?? 0, real: p?.real ?? 0 };
+      const pp = paceRef.current;
+      const pace = pp.plan > 4 ? Math.min(1.8, Math.max(0.6, pp.real / pp.plan)) : 1;
+      const restMin = route.km > 0 ? route.minutes * (pr.remainingKm / route.km) * pace : 0;
       const eta = new Date(fix.at + restMin * 60000);
 
       if (arrived) {
@@ -201,6 +219,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         distToNextM: arrived ? 0 : pr.distToNextM,
         remainingKm: arrived ? 0 : pr.remainingKm,
         eta: arrived ? new Date(fix.at) : eta,
+        pace,
         offRouteM: snap.offM,
       }));
     },
@@ -215,6 +234,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     }
     cleanup();
     arrivedRef.current = false;
+    paceRef.current = null;
     activeRef.current = true;
     setState((s) => ({ ...INITIAL, voice: s.voice, status: 'neuberechnung' }));
 

@@ -394,7 +394,7 @@ export default function NavigationScreen() {
                   donePct: route.km > 0 ? Math.round((at / route.km) * 100) : 0,
                   nextLabel: nextVia != null ? 'Nächstes Zwischenziel' : 'Ziel',
                   nextKm: toKm,
-                  nextMin: route.km > 0 ? (toKm / route.km) * route.minutes : 0,
+                  nextMin: route.km > 0 ? (toKm / route.km) * route.minutes * state.pace : 0,
                   drivenKm,
                   startedAt,
                 };
