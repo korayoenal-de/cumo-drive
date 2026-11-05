@@ -1072,7 +1072,7 @@ function TourMode({
   /** Mitte jeder Punktzeile in der Liste, für das Ziel beim Ziehen */
   const centers = useRef<number[]>([]);
   const dragStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: dragY.get() }, { scale: 1.02 }],
+    transform: [{ translateY: dragY.get() }, { scale: 1.03 }],
     boxShadow: '0 10px 28px rgba(0,0,0,0.55)',
     backgroundColor: Colors.surface2,
   }));
@@ -1188,9 +1188,17 @@ function TourMode({
             {locating ? <ActivityIndicator color={Colors.signal} /> : <LocationIcon />}
           </Pressable>
         )}
-      </View>
-      <View style={styles.wrap}>
-        <Pill label="Abbrechen" onPress={() => setEdit(null)} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Suche schließen"
+          onPress={() => {
+            setQuery('');
+            setEdit(null);
+          }}
+          hitSlop={6}
+          style={({ pressed }) => [styles.fieldIcon, pressed && styles.pressed]}>
+          <SymbolView name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
+        </Pressable>
       </View>
       {locMsg && <AppText variant="caption" style={styles.signalText}>{locMsg}</AppText>}
       {hits && hits.length === 0 && <AppText variant="caption" muted>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
@@ -1246,7 +1254,7 @@ function TourMode({
       <View key={id} style={styles.gapS}>
         {/* Beim Bearbeiten ersetzt das Suchfeld die Zeile, sonst stünden Platzhalter und Feld doppelt da */}
         {!isEditing && (
-        <Animated.View style={[styles.pointRow, drag?.from === slot && dragStyle, drag && drag.from !== slot && drag.to === slot && styles.dropTarget]}>
+        <Animated.View style={[styles.pointRow, drag?.from === slot && dragStyle]}>
           <PointSymbol kind={kind} label={String(viaNo)} />
           <Pressable
             accessibilityRole="button"
@@ -1332,7 +1340,7 @@ function TourMode({
     const inserting = !!edit?.insert && edit.index === i;
     const choosing = legMenu === i;
     return (
-      <View key={`leg${i}`} style={styles.legBlock}>
+      <View key={`leg${i}`} style={[styles.legBlock, !!drag && styles.dimmed]}>
         <View style={styles.connector}>
           {Array.from({ length: 5 }, (_, d) => (
             <View key={d} style={styles.connectorDot} />
@@ -1458,6 +1466,13 @@ function TourMode({
                 }}>
                 {pointRow(kind === 'via' ? `via${i - 1}` : kind, kind, p, kind === 'via' ? i - 1 : undefined, i)}
                 {i < slots.length - 1 && legRow(i, p, slots[i + 1])}
+                {/* Beim Ziehen: Linie zeigt, wo der Punkt landet (über oder unter dieser Zeile) */}
+                {drag && drag.from !== i && drag.to === i && (
+                  <View pointerEvents="none" style={[styles.dropLine, drag.to < drag.from ? styles.dropLineTop : styles.dropLineBottom]}>
+                    <View style={styles.dropDot} />
+                    <View style={styles.dropBar} />
+                  </View>
+                )}
               </View>
             );
           })}
@@ -2062,31 +2077,67 @@ function Warnings({ warnings, checked }: { warnings: Warning[]; checked: boolean
  * Anfasser zum Verschieben eines Punkts: drei Striche rechts in der Zeile. Ziehen beginnt sofort
  * beim Berühren des Anfassers, ohne Bibliothek (PanResponder), die Zeile folgt dem Finger.
  */
+/** Erst nach kurzem Halten wird gezogen, damit ein Wisch über den Anfasser nicht gleich verschiebt. */
+const HOLD_MS = 280;
+/** Bewegt sich der Finger vorher weiter als das, war es kein Halten. */
+const HOLD_SLOP = 10;
+
 function DragHandle({ label, onStart, onMove, onEnd }: { label: string; onStart: () => void; onMove: (dy: number) => void; onEnd: () => void }) {
   const cb = useRef({ onStart, onMove, onEnd });
   useEffect(() => {
     cb.current = { onStart, onMove, onEnd };
   });
+  const [holding, setHolding] = useState(false);
+  const st = useRef({ active: false, cancelled: false, base: 0, dy: 0, timer: null as ReturnType<typeof setTimeout> | null });
+  useEffect(() => () => {
+    if (st.current.timer) clearTimeout(st.current.timer);
+  }, []);
   // Die Handler lesen die jeweils neuesten Callbacks aus der Ref, erst beim Ziehen, nie beim Rendern
   /* eslint-disable react-hooks/refs */
-  const pan = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderTerminationRequest: () => false,
-        onShouldBlockNativeResponder: () => true,
-        onPanResponderGrant: () => cb.current.onStart(),
-        onPanResponderMove: (_, g) => cb.current.onMove(g.dy),
-        onPanResponderRelease: () => cb.current.onEnd(),
-        onPanResponderTerminate: () => cb.current.onEnd(),
-      }),
-    [],
-  );
+  const pan = useMemo(() => {
+    const s = st.current;
+    const finish = () => {
+      if (s.timer) clearTimeout(s.timer);
+      s.timer = null;
+      setHolding(false);
+      if (s.active) cb.current.onEnd();
+      s.active = false;
+    };
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      // Solange nicht gezogen wird, darf das Sheet die Geste übernehmen (scrollen)
+      onPanResponderTerminationRequest: () => !s.active,
+      onShouldBlockNativeResponder: () => true,
+      onPanResponderGrant: () => {
+        s.active = false;
+        s.cancelled = false;
+        s.dy = 0;
+        setHolding(true);
+        s.timer = setTimeout(() => {
+          s.timer = null;
+          if (s.cancelled) return;
+          s.active = true;
+          s.base = s.dy;
+          cb.current.onStart();
+        }, HOLD_MS);
+      },
+      onPanResponderMove: (_, g) => {
+        s.dy = g.dy;
+        if (s.active) cb.current.onMove(g.dy - s.base);
+        else if (!s.cancelled && Math.abs(g.dy) > HOLD_SLOP) {
+          s.cancelled = true;
+          setHolding(false);
+        }
+      },
+      onPanResponderRelease: finish,
+      onPanResponderTerminate: finish,
+    });
+  }, []);
   /* eslint-enable react-hooks/refs */
   return (
-    <View {...pan.panHandlers} accessible accessibilityLabel={label} accessibilityHint="Halten und nach oben oder unten ziehen" style={styles.handle}>
-      <SymbolView name="line.3.horizontal" size={17} tintColor={Colors.muted} weight="semibold" />
+    <View {...pan.panHandlers} accessible accessibilityLabel={label} accessibilityHint="Kurz halten, dann nach oben oder unten ziehen" style={styles.handle}>
+      <SymbolView name="line.3.horizontal" size={17} tintColor={holding ? Colors.signal : Colors.muted} weight="semibold" />
     </View>
   );
 }
@@ -2111,7 +2162,12 @@ function GroupBlock({ savedId }: { savedId: string | null }) {
 const styles = StyleSheet.create({
   dragging: { zIndex: 10 },
   handle: { width: 40, height: 52, alignItems: 'center', justifyContent: 'center' },
-  dropTarget: { backgroundColor: Colors.signalTint },
+  dimmed: { opacity: 0.3 },
+  dropLine: { position: 'absolute', left: -6, right: 0, height: 12, flexDirection: 'row', alignItems: 'center', zIndex: 5 },
+  dropLineTop: { top: -9 },
+  dropLineBottom: { top: 47 },
+  dropDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.signal },
+  dropBar: { flex: 1, height: 3, borderRadius: 2, backgroundColor: Colors.signal },
   changed: { color: Colors.warn },
   winter: { gap: 4, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: 'rgba(232,176,58,0.12)' },
   winterTitle: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.warn },
