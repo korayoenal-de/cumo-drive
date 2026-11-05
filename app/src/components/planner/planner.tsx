@@ -23,6 +23,7 @@ import { ElevationChart } from '@/components/planner/elevation-chart';
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
 import { ActionBar } from '@/components/ui/action-bar';
+import { ReorderPoints } from '@/components/planner/reorder-points';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
@@ -1014,6 +1015,14 @@ function useTourPlan(onPlanned?: () => void) {
     removeVia: (i: number, profile: Profile, avoid: Avoid) =>
       apply(start, vias.filter((_, k) => k !== i), ziel, fitLegs(legProfiles, vias.length).filter((_, k) => k !== i + 1), profile, avoid),
     moveVia: (i: number, dir: -1 | 1, profile: Profile, avoid: Avoid) => apply(start, movePoint(vias, i, dir), ziel, legProfiles, profile, avoid),
+    /** Neue Reihenfolge aller Punkte (Drag and Drop): erster ist der Start, letzter das Ziel */
+    reorder: (order: number[], profile: Profile, avoid: Avoid) => {
+      const all = [start, ...vias, ziel].filter((p): p is LatLon => !!p);
+      if (order.length !== all.length) return;
+      const next = order.map((i) => all[i]);
+      const mid = next.slice(1, -1);
+      apply(next[0], mid, next[next.length - 1], fitLegs([null], mid.length), profile, avoid);
+    },
     swap: (profile: Profile, avoid: Avoid) => apply(ziel, [...vias].reverse(), start, [...fitLegs(legProfiles, vias.length)].reverse(), profile, avoid),
   };
 }
@@ -1051,6 +1060,8 @@ function TourMode({
   const [locMsg, setLocMsg] = useState<string | null>(null);
   /** Punkt, dessen Aktionen (Ändern, Verschieben, Entfernen) gerade offen sind */
   const [menu, setMenu] = useState<string | null>(null);
+  /** Drag and Drop Modus für die Reihenfolge der Punkte */
+  const [reordering, setReordering] = useState(false);
   /** Etappe, deren Profilauswahl gerade offen ist */
   const [legMenu, setLegMenu] = useState<number | null>(null);
 
@@ -1227,6 +1238,14 @@ function TourMode({
             accessibilityRole="button"
             accessibilityLabel={`${role} ${p ? `ändern, jetzt ${nameOf(p)}` : 'wählen'}`}
             onPress={() => openEdit({ kind, index })}
+            onLongPress={() => {
+              if (!plan.complete) return;
+              setMenu(null);
+              setLegMenu(null);
+              setReordering(true);
+            }}
+            delayLongPress={350}
+            accessibilityHint="Gedrückt halten, um die Reihenfolge zu ändern"
             style={styles.pointMain}>
             <AppText variant="title" numberOfLines={1} style={!p && styles.slotPlaceholder}>
               {p ? nameOf(p) : kind === 'start' ? 'Start wählen' : 'Ziel wählen'}
@@ -1387,6 +1406,20 @@ function TourMode({
       </View>
 
       <Section label="Route">
+        {reordering && plan.complete ? (
+          <View style={styles.gapM}>
+            <ReorderPoints
+              items={slots.filter((p): p is LatLon => !!p).map((p, i) => ({ key: `${i}-${keyOf(p)}`, label: nameOf(p) }))}
+              onReorder={(order) => plan.reorder(order, profile, avoid)}
+            />
+            <View style={styles.reorderBar}>
+              <AppText variant="caption" muted style={styles.flex}>
+                Gedrückt halten und ziehen. Oben ist der Start, unten das Ziel.
+              </AppText>
+              <SmallButton label="Fertig" onPress={() => setReordering(false)} strong />
+            </View>
+          </View>
+        ) : (
         <View>
           {slots.map((p, i) => {
             const kind: PointKind = i === 0 ? 'start' : i === slots.length - 1 ? 'ziel' : 'via';
@@ -1398,11 +1431,12 @@ function TourMode({
             );
           })}
           {plan.complete && (
-            <Pressable accessibilityRole="button" onPress={() => plan.swap(profile, avoid)} style={styles.linkBtn}>
-              <AppText style={styles.linkText}>Start und Ziel tauschen</AppText>
+            <Pressable accessibilityRole="button" onPress={() => setReordering(true)} style={styles.linkBtn}>
+              <AppText style={styles.linkText}>Reihenfolge ändern</AppText>
             </Pressable>
           )}
         </View>
+        )}
       </Section>
 
       {plan.step && (
@@ -2012,6 +2046,7 @@ function GroupBlock({ savedId }: { savedId: string | null }) {
 }
 
 const styles = StyleSheet.create({
+  reorderBar: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   changed: { color: Colors.warn },
   winter: { gap: 4, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: 'rgba(232,176,58,0.12)' },
   winterTitle: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.warn },

@@ -11,6 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { EntitlementGate } from '@/components/paywall/entitlement-gate';
@@ -87,6 +88,7 @@ export default function RootLayout() {
   }
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <ThemeProvider value={theme}>
       <StatusBar style="light" />
       <EntitlementGate>
@@ -106,5 +108,6 @@ export default function RootLayout() {
       <RideBanner />
       <AppIntentHandler />
     </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
