@@ -152,10 +152,15 @@ export function useSyncState(): SyncState {
 
 /** Lokale Touren und Konto abgleichen (nur angemeldet). */
 export async function syncLibrary(): Promise<void> {
+  // Sofort als laufend markieren: zwei Aufrufe kurz hintereinander (Tab Fokus, Anmeldung, Speichern)
+  // haben sonst dieselbe Tour doppelt hochgeladen und die Kopie danach wieder heruntergeladen.
   if (sync.running) return;
-  const { data } = await supabase.auth.getSession();
-  if (!data.session) return;
   setSync({ running: true, error: null });
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) {
+    setSync({ running: false });
+    return;
+  }
   try {
     // 1. lokal neue oder geänderte Touren hochladen
     for (const t of read()) {
@@ -183,6 +188,18 @@ export async function syncLibrary(): Promise<void> {
       };
       write([saved, ...read()]);
     }
+    // 3. Doppelte aus dem alten Fehler aufräumen: gleicher Name, gleiche Länge, gleiche Strecke,
+    //    innerhalb von 10 Minuten angelegt. Die älteste bleibt, die Kopien gehen auch im Konto.
+    const seen = new Map<string, SavedTour>();
+    const dupes: SavedTour[] = [];
+    for (const t of [...read()].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
+      const pts = t.linie.reduce((n, r) => n + r.p.length, 0);
+      const key = `${t.name}|${t.laenge_km}|${pts}|${t.folder}`;
+      const first = seen.get(key);
+      if (first && Math.abs(Date.parse(t.createdAt) - Date.parse(first.createdAt)) < 10 * 60 * 1000 && !t.published) dupes.push(t);
+      else if (!first) seen.set(key, t);
+    }
+    for (const d of dupes) deleteTour(d.id);
     setSync({ running: false, last: new Date().toISOString() });
   } catch (e) {
     setSync({ running: false, error: (e as Error).message });

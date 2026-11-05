@@ -48,3 +48,15 @@ export const Radius = {
   l: 16,
   pill: 999,
 } as const;
+
+/**
+ * Bewegung: alle Mikroanimationen nutzen diese Federn, damit sich die App überall gleich anfühlt.
+ * press: Antippen (Karte gibt leicht nach), snap: Auf und Zuklappen, Symbolwechsel.
+ */
+export const Motion = {
+  press: { damping: 18, stiffness: 260, mass: 0.8 },
+  snap: { damping: 20, stiffness: 220, mass: 1 },
+  /** Versatz je Element, wenn mehrere nacheinander hereingleiten (ms) */
+  stagger: 45,
+  pressScale: 0.975,
+} as const;

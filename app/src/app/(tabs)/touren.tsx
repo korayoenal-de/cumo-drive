@@ -1,26 +1,24 @@
 /**
  * Meine Touren: gespeicherte Touren aus App und Web Planer (ohne Konto auf dem Gerät, angemeldet
  * zusätzlich im Konto) und gefahrene Touren mit Fahrtstatistik je Fahrzeug.
- * Jede gespeicherte Tour ist eine kompakte Karte: losfahren (allein oder als Gruppe), auf der Karte
- * zeigen, im Planer ändern; Export, Community und Löschen liegen im Menü der Karte.
+ * Jede gespeicherte Tour ist eine Karte mit Mini Streckenbild: Tippen öffnet sie im Planer (dort
+ * losfahren, als Gruppe fahren, ändern und speichern), daneben nur Teilen und Löschen.
  */
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { TourCard } from '@/components/tours/tour-card';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
-import { setActiveTour } from '@/lib/active-tour';
 import { useSession } from '@/lib/auth';
 import { setEditTour } from '@/lib/edit-tour';
-import { deleteTour, filterTours, folders, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
-import { publishTour, unpublishTour } from '@/lib/community';
+import { filterTours, folders, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
 import { listDrives, type Drive } from '@/lib/drives';
-import { loadProfile } from '@/lib/group/ride';
 import { fmtG } from '@/lib/ride-stats';
-import { exportTour, importTourFile, type RouteFormat } from '@/lib/route-file';
+import { importTourFile } from '@/lib/route-file';
 import { countCurves } from '@/lib/stats';
 import { flatten, formatKm } from '@/lib/tour';
 
@@ -29,6 +27,12 @@ const SORTS: { id: SortKey; label: string }[] = [
   { id: 'name', label: 'Name' },
   { id: 'laenge', label: 'Länge' },
 ];
+
+/** Tour im Planer öffnen: dort steht sie auf der Karte, mit Losfahren und Gruppe. */
+function openTour(t: SavedTour) {
+  setEditTour(t);
+  router.navigate('/');
+}
 
 export default function Touren() {
   const list = useLibrary();
@@ -143,7 +147,7 @@ export default function Touren() {
           <View style={styles.list}>
             {shown.length === 0 && <AppText muted>Keine Tour passt zur Suche.</AppText>}
             {shown.map((t) => (
-              <TourCard key={t.id} tour={t} />
+              <TourCard key={t.id} tour={t} onOpen={openTour} />
             ))}
           </View>
         </>
@@ -151,231 +155,6 @@ export default function Touren() {
         </>
       )}
     </Screen>
-  );
-}
-
-/**
- * Kompakte Karte einer gespeicherten Tour: Name, Länge und Datum, darunter die Aktionen.
- * Losfahren fragt nach allein oder als Gruppe, das Menü hinter "⋯" bietet Export, Community und Löschen.
- */
-function TourCard({ tour: t }: { tour: SavedTour }) {
-  const [panel, setPanel] = useState<'start' | 'more' | null>(null);
-  const toggle = (p: 'start' | 'more') => setPanel((cur) => (cur === p ? null : p));
-
-  const alone = () => {
-    setActiveTour(t, t.profile ?? 'kurvig');
-    router.push('/navigation');
-  };
-  const group = () => {
-    setActiveTour(t, t.profile ?? 'kurvig');
-    router.push({ pathname: '/gruppe/neu', params: { tour: t.id } });
-  };
-  const show = () => {
-    setActiveTour(t, t.profile ?? 'kurvig');
-    router.push('/karte');
-  };
-  // Im Planer unter "Route" mit allen Punkten öffnen; Speichern ersetzt dann diese Tour
-  const edit = () => {
-    setEditTour(t);
-    router.navigate('/');
-  };
-
-  const meta = [`${formatKm(t.laenge_km, 0)} km`, new Date(t.updatedAt).toLocaleDateString('de-DE'), t.published ? 'in der Community' : null]
-    .filter(Boolean)
-    .join(', ');
-
-  return (
-    <View style={styles.tourCard}>
-      <View style={styles.head}>
-        <AppText style={styles.name} numberOfLines={2}>
-          {t.name}
-        </AppText>
-        <AppText variant="caption" muted numberOfLines={1}>
-          {meta}
-        </AppText>
-      </View>
-
-      <View style={styles.actions}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded: panel === 'start' }}
-          accessibilityHint="Wählt, ob du allein oder als Gruppe fährst"
-          onPress={() => toggle('start')}
-          style={({ pressed }) => [styles.pillPrimary, pressed && styles.pressed]}>
-          <AppText style={styles.pillPrimaryText} numberOfLines={1}>
-            Losfahren
-          </AppText>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Auf Karte anzeigen" onPress={show} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
-          <AppText style={styles.pillText}>Karte</AppText>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Im Planer ändern" onPress={edit} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
-          <AppText style={styles.pillText}>Ändern</AppText>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Weitere Aktionen"
-          accessibilityState={{ expanded: panel === 'more' }}
-          onPress={() => toggle('more')}
-          style={({ pressed }) => [styles.round, panel === 'more' && styles.roundOn, pressed && styles.pressed]}>
-          <AppText style={styles.roundText}>⋯</AppText>
-        </Pressable>
-      </View>
-
-      {panel === 'start' && (
-        <View style={styles.row}>
-          <Pressable accessibilityRole="button" onPress={alone} style={({ pressed }) => [styles.choice, pressed && styles.pressed]}>
-            <AppText style={styles.pillText}>Allein fahren</AppText>
-          </Pressable>
-          <Pressable accessibilityRole="button" onPress={group} style={({ pressed }) => [styles.choice, pressed && styles.pressed]}>
-            <AppText style={styles.pillText}>Als Gruppe fahren</AppText>
-          </Pressable>
-        </View>
-      )}
-
-      {panel === 'more' && <MoreMenu tour={t} />}
-    </View>
-  );
-}
-
-/** Weitere Aktionen einer Tour: Export, Community und Löschen (mit Rückfrage auf der Karte). */
-function MoreMenu({ tour }: { tour: SavedTour }) {
-  const [busy, setBusy] = useState<RouteFormat | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState(false);
-  const exp = async (f: RouteFormat) => {
-    if (busy) return;
-    setBusy(f);
-    setErr(null);
-    try {
-      await exportTour(tour, f);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Export hat nicht geklappt.');
-    } finally {
-      setBusy(null);
-    }
-  };
-  return (
-    <View style={styles.menu} accessibilityRole="menu">
-      {(['gpx', 'kml'] as const).map((f) => (
-        <Pressable key={f} accessibilityRole="menuitem" onPress={() => void exp(f)} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
-          <AppText style={styles.itemText}>Als {f.toUpperCase()} exportieren</AppText>
-          {busy === f && <ActivityIndicator color={Colors.muted} />}
-        </Pressable>
-      ))}
-      {err && <AppText variant="caption" style={styles.dangerText}>{err}</AppText>}
-      <PublishBlock tour={tour} />
-      {confirm ? (
-        <View style={styles.confirm}>
-          <AppText variant="caption" muted>
-            Die Tour wird vom Gerät und aus deinem Konto gelöscht.
-          </AppText>
-          <View style={styles.row}>
-            <Pressable accessibilityRole="button" onPress={() => deleteTour(tour.id)} style={({ pressed }) => [styles.choice, styles.dangerSolid, pressed && styles.pressed]}>
-              <AppText style={[styles.pillText, styles.onSignal]}>Endgültig löschen</AppText>
-            </Pressable>
-            <Pressable accessibilityRole="button" onPress={() => setConfirm(false)} style={({ pressed }) => [styles.choice, pressed && styles.pressed]}>
-              <AppText style={styles.pillText}>Abbrechen</AppText>
-            </Pressable>
-          </View>
-        </View>
-      ) : (
-        <Pressable accessibilityRole="menuitem" onPress={() => setConfirm(true)} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
-          <AppText style={[styles.itemText, styles.dangerText]}>Löschen</AppText>
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
-/** Tour in der Community veröffentlichen oder zurückziehen. */
-function PublishBlock({ tour }: { tour: SavedTour }) {
-  const session = useSession();
-  const [form, setForm] = useState(false);
-  const [author, setAuthor] = useState('');
-  const [desc, setDesc] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  useEffect(() => {
-    if (!form) return;
-    void loadProfile().then((p) => {
-      if (p?.name) setAuthor((a) => a || p.name);
-    });
-  }, [form]);
-  const run = async (fn: () => Promise<unknown>, ok: string) => {
-    setBusy(true);
-    setMsg(null);
-    try {
-      await fn();
-      setMsg(ok);
-      setForm(false);
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-  if (!session)
-    return (
-      <AppText variant="caption" muted style={styles.itemNote}>
-        Zum Veröffentlichen in der Community meldest du dich unter Einstellungen an.
-      </AppText>
-    );
-  if (tour.published)
-    return (
-      <View style={styles.gapS}>
-        <Pressable
-          accessibilityRole="menuitem"
-          disabled={busy}
-          onPress={() => void run(() => unpublishTour(tour), 'Aus der Community zurückgezogen.')}
-          style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
-          <AppText style={styles.itemText}>Aus der Community zurückziehen</AppText>
-          {busy && <ActivityIndicator color={Colors.muted} />}
-        </Pressable>
-        {msg && <AppText variant="caption" muted>{msg}</AppText>}
-      </View>
-    );
-  if (!form)
-    return (
-      <View style={styles.gapS}>
-        <Pressable accessibilityRole="menuitem" onPress={() => setForm(true)} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
-          <AppText style={styles.itemText}>In der Community veröffentlichen</AppText>
-        </Pressable>
-        {msg && <AppText variant="caption" muted>{msg}</AppText>}
-      </View>
-    );
-  const can = !busy && !!author.trim();
-  return (
-    <View style={styles.gapS}>
-      <AppText variant="label">Veröffentlichen</AppText>
-      <TextInput value={author} onChangeText={setAuthor} placeholder="Dein Name in der Community" placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel="Name in der Community" maxLength={60} />
-      <TextInput
-        value={desc}
-        onChangeText={setDesc}
-        placeholder="Was macht die Tour aus? Beste Abschnitte, Stopps, Tageszeit"
-        placeholderTextColor={Colors.muted}
-        style={[styles.field, styles.area]}
-        multiline
-        maxLength={500}
-        accessibilityLabel="Beschreibung"
-      />
-      <AppText variant="caption" muted>
-        Alle sehen die Strecke, den Namen der Tour und deinen Namen. Du kannst sie jederzeit zurückziehen.
-      </AppText>
-      <View style={styles.row}>
-        <Pressable
-          accessibilityRole="button"
-          disabled={!can}
-          onPress={() => void run(() => publishTour(tour, author, desc), 'Veröffentlicht, die Tour steht jetzt in der Community.')}
-          style={[styles.primary, styles.flex, !can && styles.disabled]}>
-          {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Veröffentlichen</AppText>}
-        </Pressable>
-        <Pressable accessibilityRole="button" onPress={() => setForm(false)} style={[styles.secondary, styles.flex]}>
-          <AppText style={styles.secondaryText}>Abbrechen</AppText>
-        </Pressable>
-      </View>
-      {msg && <AppText variant="caption" muted>{msg}</AppText>}
-    </View>
   );
 }
 

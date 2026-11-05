@@ -831,11 +831,16 @@ function useTourPlan(onPlanned?: () => void) {
   const [folder, setFolder] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  /** Stand beim Laden oder letzten Speichern: weicht er ab, gibt es Änderungen zu speichern */
+  const [base, setBase] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
 
   const complete = !!start && !!ziel;
   /** Alle gesetzten Punkte in Reihenfolge; vollständig, sobald Start und Ziel da sind. */
   const pts: LatLon[] = [...(start ? [start] : []), ...vias, ...(ziel ? [ziel] : [])];
+  const sigOf = (p: LatLon[], n: string, lp: LegProfile[]) => JSON.stringify([p, n.trim(), lp]);
+  /** Neue Tour oder gespeicherte Tour mit Änderungen */
+  const dirty = !cloudId || base !== sigOf(pts, name, legProfiles);
 
   /** Profil der Etappe i (von Feld i zu Feld i+1), ohne eigenes Profil das allgemeine. */
   const legProfile = (i: number, global: Profile): Profile => legProfiles[i] ?? global;
@@ -943,6 +948,7 @@ function useTourPlan(onPlanned?: () => void) {
       // auf dem Gerät speichern (Meine Touren), angemeldet auch ins Konto
       const saved = saveTour({ ...planned, name: name.trim() || planned.name, curves, profile }, folder, cloudId ?? undefined);
       setCloudId(saved.id);
+      setBase(sigOf(pts, name, legProfiles));
       void syncLibrary();
       setSaveMsg('Gespeichert, du findest die Tour unter Meine Touren.');
     } catch (e) {
@@ -962,6 +968,7 @@ function useTourPlan(onPlanned?: () => void) {
     setStep(null);
     setError(null);
     setCloudId(null);
+    setBase(null);
     setFolder('');
     setSaveMsg(null);
     setName('Neue Tour');
@@ -983,16 +990,23 @@ function useTourPlan(onPlanned?: () => void) {
     setName(t.name);
     setCloudId(t.id);
     setFolder(t.folder);
-    setPlanned(null);
     setError(null);
     setSaveMsg(null);
+    setStep(null);
+    setBase(sigOf(w, t.name, lp));
     // Namen für Start und Ziel nachschlagen, bei wenigen Punkten auch für die Zwischenziele
     for (const p of v.length <= 8 ? w : [s, z]) if (p) rememberName(p);
-    if (s && z) void plan([s, ...v, z], lp.map((x) => x ?? profile), avoid, t.name);
+    // Gespeicherte Strecke so zeigen, wie sie ist (importierte und Club Touren nicht neu planen).
+    // Neu geplant wird erst, wenn ein Punkt verschoben oder hinzugefügt wird.
+    if (t.linie.length) {
+      setPlanned({ ...t, minutes: t.minutes ?? Math.round((t.laenge_km / 55) * 60), fixes: 0 });
+      onPlanned?.();
+    } else if (s && z) void plan([s, ...v, z], lp.map((x) => x ?? profile), avoid, t.name);
+    else setPlanned(null);
   }
 
   return {
-    start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg,
+    start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg, dirty,
     legProfile, setSlot, add, insertAt, save, reset, load,
     /** Mit den gesetzten Punkten und den Profilen je Etappe neu planen. */
     planNow: (profile: Profile, avoid: Avoid) => pts.length >= 2 && void plan(pts, profilesFor(legProfiles, start, pts.length, profile), avoid),
@@ -1504,10 +1518,15 @@ function TourMode({
         {routeTour && (
           <>
             <GoButton onPress={drive} />
-            <SecondaryButton
-              label={plan.saving ? 'Wird gespeichert' : plan.cloudId ? 'Änderungen speichern' : 'Speichern'}
-              onPress={() => !plan.saving && void plan.save(curves, firstProfile, avoid)}
-            />
+            {plan.cloudId && !plan.dirty && (
+              <SecondaryButton label="Als Gruppe fahren" onPress={() => router.push({ pathname: '/gruppe/neu', params: { tour: plan.cloudId! } })} />
+            )}
+            {plan.dirty && (
+              <SecondaryButton
+                label={plan.saving ? 'Wird gespeichert' : plan.cloudId ? 'Änderungen speichern' : 'Speichern'}
+                onPress={() => !plan.saving && void plan.save(curves, firstProfile, avoid)}
+              />
+            )}
             {plan.saveMsg && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
             {!session && !plan.saveMsg && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
           </>
