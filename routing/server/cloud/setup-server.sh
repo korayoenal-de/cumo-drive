@@ -48,3 +48,8 @@ mv data/region.new.osm.pbf data/region.osm.pbf
 chown -R cumo:cumo "$BASE"
 systemctl start cumo-routing
 log "Fertig, Server läuft"
+# POI Kacheln für "Stopps an der Strecke" aus denselben Kartendaten. Ein Fehler hier stoppt das Routing nicht,
+# die App nutzt dann weiter den alten Stand oder Overpass.
+if [ -x "$BASE/poi-tiles.sh" ]; then
+  "$BASE/poi-tiles.sh" || log "POI Kacheln fehlgeschlagen, alter Stand bleibt"
+fi

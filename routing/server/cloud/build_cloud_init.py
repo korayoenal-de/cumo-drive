@@ -56,10 +56,29 @@ Persistent=true
 [Install]
 WantedBy=timers.target"""
 
+poi_sh = (HERE / "poi-tiles.sh").read_text()
+poi_py = (HERE / "poi_tiles.py").read_text()
+
+# Caddy: /poi/* als statische Dateien (POI Kacheln, fehlende Kachel = leere Liste), alles andere an GraphHopper.
+# SSLIP_HOST wird beim Einrichten durch die öffentliche IP mit Bindestrichen ersetzt.
+caddyfile = """routing.rallycumo.de, SSLIP_HOST.sslip.io {
+\tencode gzip
+\thandle /poi/* {
+\t\troot * /opt/cumo-routing
+\t\theader Access-Control-Allow-Origin *
+\t\theader Cache-Control "public, max-age=86400"
+\t\ttry_files {path} /poi/empty.json
+\t\tfile_server
+\t}
+\thandle {
+\t\treverse_proxy 127.0.0.1:8989
+\t}
+}"""
+CADDY_TPL = "/opt/cumo-routing/Caddyfile.template"
+
 caddy_cmd = (
-    "IP=$(curl -4 -s https://ifconfig.me || hostname -I | cut -d\\  -f1); "
-    "printf 'routing.rallycumo.de, %s.sslip.io {\\n  encode gzip\\n  reverse_proxy 127.0.0.1:8989\\n}\\n' "
-    '\\"${IP//./-}\\" > /etc/caddy/Caddyfile && systemctl restart caddy'
+    "IP=$(curl -4 -s https://ifconfig.me || hostname -I | awk '{print $1}'); "
+    f'sed \\"s/SSLIP_HOST/${{IP//./-}}/\\" {CADDY_TPL} > /etc/caddy/Caddyfile && systemctl restart caddy'
 )
 
 ci = f"""#cloud-config
@@ -88,6 +107,16 @@ write_files:
     permissions: '0755'
     content: |
 {block(setup)}
+  - path: /opt/cumo-routing/poi-tiles.sh
+    permissions: '0755'
+    content: |
+{block(poi_sh)}
+  - path: /opt/cumo-routing/poi_tiles.py
+    content: |
+{block(poi_py)}
+  - path: {CADDY_TPL}
+    content: |
+{block(caddyfile)}
   - path: /etc/systemd/system/cumo-routing.service
     content: |
 {block(unit)}
@@ -122,6 +151,9 @@ inst += "id cumo >/dev/null 2>&1 || useradd --system --shell /usr/sbin/nologin c
 inst += heredoc("/opt/cumo-routing/config.yml", cfg)
 inst += heredoc("/opt/cumo-routing/custom_models/sportwagen.json", model)
 inst += heredoc("/opt/cumo-routing/setup-server.sh", setup, "0755")
+inst += heredoc("/opt/cumo-routing/poi-tiles.sh", poi_sh, "0755")
+inst += heredoc("/opt/cumo-routing/poi_tiles.py", poi_py)
+inst += heredoc(CADDY_TPL, caddyfile)
 inst += heredoc("/etc/systemd/system/cumo-routing.service", unit)
 inst += heredoc("/etc/systemd/system/cumo-routing-update.service", upd_service)
 inst += heredoc("/etc/systemd/system/cumo-routing-update.timer", upd_timer)
@@ -134,3 +166,36 @@ inst += "nohup /opt/cumo-routing/setup-server.sh > /opt/cumo-routing/first-run.l
 (HERE / "install.sh").write_text(inst)
 (HERE / "install.sh").chmod(0o755)
 print(f"install.sh geschrieben ({len(inst)} Zeichen)")
+
+# Einmalige Aktualisierung des laufenden Servers für die POI Kacheln, vom Mac aus:
+# ssh root@13.140.213.164 'bash -s' < routing/server/cloud/poi-update.sh
+# Alles steckt in main(), damit bash das ganze Skript liest, bevor etwas läuft (stdin ist das Skript).
+upd = "#!/bin/bash\n# CUMO DRIVE: POI Kacheln auf dem laufenden Server einrichten, erzeugt aus build_cloud_init.py.\n"
+upd += "# Aufruf vom Mac: ssh root@13.140.213.164 'bash -s' < poi-update.sh\n"
+upd += "# Schreibt poi-tiles.sh, poi_tiles.py, setup-server.sh und die Caddy Konfiguration, lädt Caddy neu\n"
+upd += "# und baut die Kacheln einmal im Vordergrund (etwa 10 bis 20 Minuten).\nset -euo pipefail\nmain() {\n"
+upd += heredoc("/opt/cumo-routing/poi-tiles.sh", poi_sh, "0755")
+upd += heredoc("/opt/cumo-routing/poi_tiles.py", poi_py)
+upd += heredoc("/opt/cumo-routing/setup-server.sh", setup, "0755")
+upd += heredoc(CADDY_TPL, caddyfile)
+upd += """IP=$(curl -4 -s --max-time 10 https://ifconfig.me || true)
+[ -n "$IP" ] || IP=$(hostname -I | awk '{print $1}')
+HOST="${IP//./-}.sslip.io"
+echo "Caddy: routing.rallycumo.de und $HOST"
+mkdir -p /opt/cumo-routing/poi
+[ -f /opt/cumo-routing/poi/empty.json ] || echo '[]' > /opt/cumo-routing/poi/empty.json
+sed "s/SSLIP_HOST/${IP//./-}/" /opt/cumo-routing/Caddyfile.template > /etc/caddy/Caddyfile.new
+caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile.new
+[ -f /etc/caddy/Caddyfile ] && cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak
+mv /etc/caddy/Caddyfile.new /etc/caddy/Caddyfile
+systemctl reload caddy || systemctl restart caddy
+echo "Caddy neu geladen, POI Kacheln bauen"
+/opt/cumo-routing/poi-tiles.sh
+echo "Prüfen: https://$HOST/poi/v1/meta.json"
+curl -fsS "https://$HOST/poi/v1/meta.json" && echo || echo "meta.json noch nicht erreichbar, Caddy prüfen: journalctl -u caddy"
+}
+main < /dev/null
+"""
+(HERE / "poi-update.sh").write_text(upd)
+(HERE / "poi-update.sh").chmod(0o755)
+print(f"poi-update.sh geschrieben ({len(upd)} Zeichen)")
