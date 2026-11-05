@@ -173,7 +173,8 @@ export function findHighlights(
   let passes = keep;
   const found: Highlight[] = [];
   for (const r of roadsAlong(shape, cumKm, roads, elev, pins)) {
-    const onRoad = (p: Highlight) => p.topKm >= r.startKm - 0.5 && p.topKm <= r.endKm + 0.5;
+    // Pass auf der Strecke, oder Passanstieg beginnt fast gleichzeitig (Gurnigel: Ziel 3 km vor der Passhöhe)
+    const onRoad = (p: Highlight) => (p.topKm >= r.startKm - 0.5 && p.topKm <= r.endKm + 0.5) || Math.abs(p.startKm - r.startKm) < 1;
     if (passes.some((p) => onRoad(p) && tier.get(p.id) === 'ikone')) continue;
     passes = passes.filter((p) => !onRoad(p));
     found.push(r);
