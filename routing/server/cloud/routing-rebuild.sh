@@ -10,6 +10,8 @@ graphhopper:
 
   # Merkmale, die das Sportwagen Profil braucht
   graph.encoded_values: car_access, car_average_speed, road_class, road_environment, road_access, surface, track_type, max_width, curvature, toll, urban_density
+  # Ohne Thread Zahl bricht der Import bei der Berechnung der Ortsdichte ab (ForkJoinPool mit 0 Threads)
+  graph.urban_density.threads: 4
 
   # Wege, die für Autos nie in Frage kommen, gar nicht erst einlesen
   import.osm.ignored_highways: footway,cycleway,path,pedestrian,steps,bridleway,construction,proposed,platform,corridor,via_ferrata
