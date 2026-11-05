@@ -15,9 +15,9 @@ Stand: 5. November 2026. Ziel: maschinenlesbare Quellen, mit denen der eigene Gr
 |---|---|---|---|---|---|
 | Curvature selbst berechnen (OSM) | alle gleich gut | ODbL, ja (Namensnennung) | Way IDs plus Wert je Abschnitt | 2 bis 3 Tage plus Einbindung | **Hauptquelle** |
 | roadcurvature.com KML | alle (weltweit) | ODbL laut KML Kopf, ja | KMZ mit Way IDs in der Beschreibung | 0,5 Tage zum Parsen | zum Testen, Stand 11/2024 |
-| OSM `route=road` + `scenic=yes` | DE 18, AT 19, CH 6, IT 13, FR siehe unten | ODbL, ja | Relation mit Way Mitgliedern | 0,5 Tage | **Highlights**, klein aber sauber |
+| OSM `route=road` + `scenic=yes` | DE 18, AT 19, CH 6, IT 13, FR 7 | ODbL, ja | Relation mit Way Mitgliedern | 0,5 Tage | **Highlights**, klein aber sauber |
 | OSM `route=road` + `tourism=yes` (Ferienstraßen) | fast nur DE (67) | ODbL, ja | Relationen | 0,5 Tage | nur Auswahl, viele thematisch statt fahrerisch |
-| OSM `mountain_pass=yes` auf Autostraßen | AT 259, CH 177 (Extrakt), Gesamtzahl siehe unten | ODbL, ja | Knoten mit `ele`, oft `wikidata` | 0,5 Tage | **gut**, für Ansagen und als Anker |
+| OSM `mountain_pass=yes` auf Autostraßen | AT 259, CH 177 (Extrakt), Knoten gesamt DE 565 bis IT 4.565 | ODbL, ja | Knoten mit `ele`, oft `wikidata` | 0,5 Tage | **gut**, für Ansagen und als Anker |
 | OSM `scenic=yes` an Wegen | sehr dünn (AT 40, CH 13 Ways) | ODbL | Way Tag | gering | kaum Nutzen |
 | OSM `tourism=viewpoint` | dicht (DE 31.825, IT 15.635, FR 18.922) | ODbL | Punkte | gering | als POI, nicht für Routing |
 | OSM `motorroad=yes` | dicht | ODbL | Way Tag | keiner | **Gegenteil**: Kraftfahrstraße, eher abwerten |
@@ -43,12 +43,12 @@ Getestet: Die Overpass API (overpass-api.de, kumi.systems, private.coffee, mail.
 | | DE | AT | CH | IT | FR |
 |---|---|---|---|---|---|
 | route=road gesamt (taginfo) | 15.868 | 2.433 | 541 | 8.405 | 7.561 |
-| davon mit `name`, ohne `ref` (osmium) | 719 | 176 | 41 | 636 | FR_NAMED |
-| davon `scenic=yes` | 18 | 19 | 6 | 13 | FR_SCENIC |
-| davon `tourism=*` | 67 | 5 | 0 | 1 | FR_TOURISM |
+| davon mit `name`, ohne `ref` (osmium) | 719 | 176 | 41 | 636 | 320 |
+| davon `scenic=yes` | 18 | 19 | 6 | 13 | 7 |
+| davon `tourism=*` | 67 | 5 | 0 | 1 | 14 |
 
 - Fast alle `route=road` Relationen sind normale nummerierte Straßen (B, L, SS, D). Die Namen ohne `ref` sind überwiegend Stadtstraßen, Umfahrungen und Planungen, also kein Signal.
-- **`route=road` + `scenic=yes` ist das sauberste Signal.** Es sind fast ausschließlich bekannte Alpen- und Panoramastraßen, etwa Großglockner Hochalpenstraße, Silvretta Hochalpenstraße, Nockalmstraße, Timmelsjoch, Kaunertaler Gletscherstraße, Gerlos Alpenstraße, Villacher Alpenstraße, Furka, Grimsel, Susten, Tremola, Grosser St. Bernhard, Stilfser Joch, Strada della Forra, Amalfitana, Maira-Stura-Kammstraße, Route des Grandes Alpes, Schwarzwaldhochstraße, Deutsche Alpenstraße. Viele davon wurden 2023 und 2024 systematisch angelegt (Relation IDs ab 15.5 Mio.). Die Menge ist klein, die Linienführung aber exakt.
+- **`route=road` + `scenic=yes` ist das sauberste Signal.** Es sind fast ausschließlich bekannte Alpen- und Panoramastraßen, etwa Großglockner Hochalpenstraße, Silvretta Hochalpenstraße, Nockalmstraße, Timmelsjoch, Kaunertaler Gletscherstraße, Gerlos Alpenstraße, Villacher Alpenstraße, Furka, Grimsel, Susten, Tremola, Grosser St. Bernhard, Stilfser Joch, Strada della Forra, Amalfitana, Maira-Stura-Kammstraße, Route des Grandes Alpes, Route Napoléon, Route des Crêtes (Vogesen), Schwarzwaldhochstraße, Deutsche Alpenstraße. Viele davon wurden 2023 und 2024 systematisch angelegt (Relation IDs ab 15.5 Mio.). Die Menge ist klein, die Linienführung aber exakt.
 - **`tourism=yes` an route=road** markiert in Deutschland die Ferienstraßen (Deutsche Weinstraße, Romantische Straße, Burgenstraße, Deutsche Alleenstraße …). Fahrerisch gemischt: Spargelstraße oder Straße der Megalithkultur bringen für Sportwagen nichts. Nur handverlesen nutzen.
 - Abfrage zum Nachstellen (Overpass, sobald erreichbar):
 
