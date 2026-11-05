@@ -385,12 +385,12 @@ export default function Planner() {
             : view.kind === 'result'
               ? `${PROFILE_WORD[view.req.profile]}, ${view.req.towardName ? `Richtung ${view.req.towardName}` : dirPhrase(view.req.direction)}`
               : mode === 'tour'
-              ? tourPts.length
-                ? 'Lange auf die Karte drücken setzt einen weiteren Punkt.'
-                : 'Gib Start und Ziel ein oder drück lange auf die Karte.'
-              : mode === 'beschreiben'
-                ? 'Beschreib deine Runde in einem Satz, wir planen sie.'
-                : `Rundtour ab ${picked?.name ?? here?.name ?? 'deinem Standort'}, etwa ${roundKm} km`}
+                ? tourPts.length
+                  ? 'Lange auf die Karte drücken setzt einen weiteren Punkt.'
+                  : 'Gib Start und Ziel ein oder drück lange auf die Karte.'
+                : mode === 'beschreiben'
+                  ? 'Beschreib deine Runde in einem Satz, wir planen sie.'
+                  : `Rundtour ab ${picked?.name ?? here?.name ?? 'deinem Standort'}, etwa ${roundKm} km`}
         </AppText>
       )}
     </>
@@ -1498,6 +1498,7 @@ function TourMode({
       {group && routeTour && <GroupBlock savedId={plan.cloudId} />}
 
       {/* Aktionen am Ende: Losfahren als Hauptaktion, darunter die übrigen */}
+      {(routeTour || pts.length > 0) && (
       <View style={styles.actions}>
         {routeTour && (
           <>
@@ -1512,6 +1513,7 @@ function TourMode({
         )}
         {pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
       </View>
+      )}
     </>
   );
 }
@@ -1839,9 +1841,7 @@ function Result({
   tour: PlannedTour; req: TourRequest; stops: Stop[]; group: boolean; onReroll: () => void; onBack: () => void;
   onAddStop: (p: LatLon) => void; adding: boolean;
 }) {
-  const sauber = tour.km_je_klasse?.ok ?? 0;
   const total = tour.laenge_km;
-  const share = total > 0 ? Math.round((sauber / total) * 100) : 0;
   const warnings = tour.warnungen.filter((w) => w.klasse !== 'ok');
   const line = useMemo(() => flatten(tour).map((x) => x.p), [tour]);
   const passes = passesAlong(PASSES, line);
@@ -1862,20 +1862,10 @@ function Result({
   };
   return (
     <View style={styles.gapL}>
-      <View style={styles.gapS}>
-        <AppText variant="caption" muted>
-          {PROFILE_WORD[req.profile]}, {req.towardName ? `Richtung ${req.towardName}` : dirPhrase(req.direction)}
-        </AppText>
-        {req.note && <AppText variant="caption" style={styles.winterText}>{req.note}</AppText>}
-      </View>
-      <View style={styles.legend}>
-        {(['ok', 'pruefen', 'raus'] as CheckClass[]).map((c) => (
-          <View key={c} style={styles.legendItem}>
-            <View style={[styles.legendSwatch, { backgroundColor: CLASS_COLORS[c] }]} />
-            <AppText variant="caption" muted>{CLASS_LABEL[c]}</AppText>
-          </View>
-        ))}
-      </View>
+      {/* Überschrift steht im Kopf des Blatts, hier zuerst die Kennzahlen und Details */}
+      <Stats km={total} minutes={tour.minutes} curves={curves} />
+      {warnings.length === 0 && tour.geprueft !== false && <TrustLine />}
+      {req.note && <AppText variant="caption" style={styles.winterText}>{req.note}</AppText>}
 
       {hint && (
         <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PASS_STATUS_URL)} style={styles.winter}>
@@ -1885,40 +1875,6 @@ function Result({
           </AppText>
         </Pressable>
       )}
-
-      <Pressable accessibilityRole="button" onPress={drive} style={({ pressed }) => [styles.go, pressed && styles.pressed]}>
-        <AppText style={styles.goText}>Losfahren</AppText>
-      </Pressable>
-
-      <View style={styles.stats}>
-        <View style={styles.flex}>
-          <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{formatKm(total, 0)}</AppText>
-          <AppText variant="caption" muted>km</AppText>
-        </View>
-        <View style={styles.flex}>
-          <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{bigDuration(tour.minutes)}</AppText>
-          <AppText variant="caption" muted>Fahrzeit</AppText>
-        </View>
-        <View style={styles.flex}>
-          <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit>{curves}</AppText>
-          <AppText variant="caption" muted>
-            Kurven{total > 0 ? `, ${Math.round((curves / total) * 100)} je 100 km` : ''}
-          </AppText>
-        </View>
-      </View>
-
-      <ElevationChart line={line} />
-
-      <View style={[styles.card, styles.checkCard]}>
-        <View style={[styles.dot, warnings.length ? styles.dotWarn : null]} />
-        <View style={styles.flex}>
-          <AppText variant="title">geprüft: {formatKm(sauber)} km sauber</AppText>
-          <AppText variant="caption" muted>
-            {share} % der Strecke ohne Auffälligkeiten
-            {tour.fixes > 0 ? `, ${tour.fixes} mal um gesperrte Stellen umgeplant` : ''}.
-          </AppText>
-        </View>
-      </View>
 
       {passes.length > 0 && (
         <Section label={`Highlights auf der Strecke (${passes.length})`}>
@@ -1940,37 +1896,104 @@ function Result({
         </Section>
       )}
 
-      {warnings.length > 0 && (
-        <Section label={`Warnungen (${warnings.length})`}>
-          <View style={styles.card}>
-            {warnings.map((w, i) => (
-              <View key={i} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
-                <View style={[styles.badge, { borderColor: CLASS_COLORS[w.klasse] }]}>
-                  <AppText style={[styles.badgeText, { color: CLASS_COLORS[w.klasse] }]}>{CLASS_LABEL[w.klasse]}</AppText>
-                </View>
-                <View style={styles.flex}>
-                  <AppText variant="title">{w.name || 'Unbenannter Abschnitt'}</AppText>
-                  <AppText variant="caption" muted>
-                    bei km {formatKm(w.start_km)}, {formatKm(w.laenge_km)} km lang
-                  </AppText>
-                  {w.gruende.length > 0 && <AppText variant="caption">{w.gruende.join(', ')}</AppText>}
-                </View>
-              </View>
-            ))}
-          </View>
-        </Section>
-      )}
+      {warnings.length > 0 && <Warnings warnings={warnings} checked={tour.geprueft !== false} />}
+
+      <ElevationChart line={line} />
 
       <StopsSection line={line} initial={(stops.find((x) => x !== 'foto') as StopKind | undefined) ?? null} busy={adding} onAdd={onAddStop} />
 
       {group && <GroupBlock savedId={savedId} />}
 
-      <View style={styles.gapS}>
+      {/* Aktionen am Ende: Losfahren als Hauptaktion, darunter die übrigen */}
+      <View style={styles.actions}>
+        <GoButton onPress={drive} />
         <SecondaryButton label={savedId ? 'Gespeichert unter Meine Touren' : 'Speichern'} onPress={saveResult} />
-        <PrimaryButton label="Neu würfeln" onPress={onReroll} />
+        <SecondaryButton label="Neu würfeln" onPress={onReroll} />
         <SecondaryButton label="Tour verwerfen" onPress={onBack} />
       </View>
     </View>
+  );
+}
+
+/** Kennzahlen der Tour. Alle großen Werte haben dieselbe Größe, nichts wird automatisch verkleinert. */
+function Stats({ km, minutes, curves }: { km: number; minutes: number; curves: number }) {
+  const items = [
+    { id: 'km', value: formatKm(km, 0), label: 'km' },
+    { id: 'zeit', value: bigDuration(minutes), label: 'Fahrzeit' },
+    { id: 'kurven', value: String(curves), label: `Kurven${km > 0 ? `, ${Math.round((curves / km) * 100)} je 100 km` : ''}` },
+  ];
+  return (
+    <View style={styles.stats}>
+      {items.map((x) => (
+        <View key={x.id} style={styles.flex}>
+          <AppText style={styles.statBig} numberOfLines={1}>{x.value}</AppText>
+          <AppText variant="caption" muted>{x.label}</AppText>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const TRUST_CLEAN = 'Für Sportwagen geprüft, keine Engstellen oder Sperrungen.';
+const TRUST_WITH_WARNINGS = 'Für Sportwagen geprüft. Diese Stellen solltest du kennen.';
+
+/** Eine kurze Zeile, dass die Strecke geprüft ist, statt der internen Check Darstellung. */
+function TrustLine({ text = TRUST_CLEAN }: { text?: string }) {
+  return (
+    <View style={styles.trust}>
+      <View style={styles.trustDot} />
+      <AppText variant="caption" muted style={styles.flex}>{text}</AppText>
+    </View>
+  );
+}
+
+/** Grund aus dem Check in Alltagssprache, passend hinter "Engstelle bei km …". */
+function reasonText(r: string): string {
+  const narrow = /^Engstelle (.+) m$/.exec(r);
+  if (narrow) return `${narrow[1]} m breit`;
+  const slim = /^schmal, (.+) m, (.+)$/.exec(r);
+  if (slim) return `${slim[1]} m breit, ${slim[2]}`;
+  return r;
+}
+
+/** Warnung als eigenständiger Satz: Art, Kilometer, Straße und Grund. */
+function warningText(w: Warning): string {
+  const narrow = w.gruende.some((r) => r.startsWith('Engstelle') || r.startsWith('schmal') || /m breit$/.test(r));
+  const kind = w.klasse === 'raus' ? 'Gesperrt' : narrow ? 'Engstelle' : 'Achtung';
+  const parts = [`${kind} bei km ${Math.round(w.start_km)}`];
+  if (w.name) parts.push(w.name);
+  parts.push(...w.gruende.map(reasonText));
+  return parts.join(', ');
+}
+
+/** Warnungen der Strecke: Punkt in Warn oder Signalfarbe, daneben ein Satz, der für sich steht. */
+function Warnings({ warnings, checked }: { warnings: Warning[]; checked: boolean }) {
+  return (
+    <Section label={`Warnungen (${warnings.length})`}>
+      {checked && <TrustLine text={TRUST_WITH_WARNINGS} />}
+      <View style={styles.card}>
+        {warnings.map((w, i) => (
+          <View key={i} style={[styles.warnRow, i > 0 && styles.rowSpaced]}>
+            <View
+              accessible
+              accessibilityRole="image"
+              accessibilityLabel={w.klasse === 'raus' ? 'Sperrung' : 'Warnung'}
+              style={[styles.warnDot, w.klasse === 'raus' && styles.dotStop]}
+            />
+            <AppText style={styles.flex}>{warningText(w)}</AppText>
+          </View>
+        ))}
+      </View>
+    </Section>
+  );
+}
+
+/** Hauptaktion am Ende der Ergebnisse */
+function GoButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.go, pressed && styles.pressed]}>
+      <AppText style={styles.goText}>Losfahren</AppText>
+    </Pressable>
   );
 }
 
@@ -2071,20 +2094,21 @@ const styles = StyleSheet.create({
   go: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   goText: { fontFamily: Fonts.display, fontSize: 20, color: Colors.onSignal, textTransform: 'uppercase', letterSpacing: 1 },
 
-  legend: { flexDirection: 'row', gap: Spacing.l },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  legendSwatch: { width: 14, height: 4, borderRadius: 2 },
+  headline: { fontSize: 28, lineHeight: 30 },
+  actions: { gap: Spacing.s, marginTop: Spacing.s },
+  trust: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s },
+  trustDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.good, marginTop: 4 },
+  warnDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.warn, marginTop: 6 },
 
-  stats: { flexDirection: 'row', gap: Spacing.l },
+  // Drei Kennzahlen nebeneinander: 30 pt passt "3:15 h" in ein Drittel eines 375 pt breiten Blatts
+  stats: { flexDirection: 'row', gap: Spacing.m },
   linkBtn: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
   linkText: { fontFamily: Fonts.semibold, fontSize: 15, color: Colors.signal },
-  statBig: { fontFamily: Fonts.display, fontSize: 44, lineHeight: 48, fontVariant: ['tabular-nums'] },
+  statBig: { fontFamily: Fonts.display, fontSize: 30, lineHeight: 34, fontVariant: ['tabular-nums'] },
   checkCard: { flexDirection: 'row', alignItems: 'flex-start' },
 
   warnRow: { flexDirection: 'row', gap: Spacing.m, paddingTop: Spacing.s },
   rowSpaced: { paddingTop: Spacing.m },
-  badge: { borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: Spacing.s, height: 24, justifyContent: 'center', alignSelf: 'flex-start' },
-  badgeText: { fontFamily: Fonts.semibold, fontSize: 12 },
 
   dotStop: { backgroundColor: Colors.signal },
   statusRow: { flexDirection: 'row', alignItems: 'center' },

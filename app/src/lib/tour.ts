@@ -167,11 +167,20 @@ export function parseKml(text: string, fallbackName: string): Tour {
   });
   if (gx.length > 1) lines.push(gx);
   // mehrere Abschnitte (zum Beispiel Etappen) hintereinander zu einer Linie verbinden
-  const line = lines.filter((l) => l.length > 1).flat();
+  let line = lines.filter((l) => l.length > 1).flat();
   const points: LatLon[] = [];
   for (const m of text.matchAll(/<Point\b[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/g)) points.push(...coords(m[1]).slice(0, 1));
+  // Manche Planer (zum Beispiel calimoto) exportieren die Strecke nur als Folge einzelner Punkte
+  if (line.length < 2 && points.length > 20) {
+    line = points;
+    return finish(nameOf(text, fallbackName), line, [line[0], line[line.length - 1]]);
+  }
+  return finish(nameOf(text, fallbackName), line, points.length >= 2 ? points : []);
+}
+
+function nameOf(text: string, fallback: string): string {
   const name = /<Document\b[\s\S]*?<name>([\s\S]*?)<\/name>/.exec(text) ?? /<name>([\s\S]*?)<\/name>/.exec(text);
-  return finish((name && decode(name[1])) || fallbackName, line, points.length >= 2 ? points : []);
+  return (name && decode(name[1])) || fallback;
 }
 
 /** Erkennt GPX oder KML am Inhalt. */
