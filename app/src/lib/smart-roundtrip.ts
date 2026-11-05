@@ -11,6 +11,8 @@
  */
 import { checkLine } from './check';
 import { HIGHLIGHT_ROADS, type HighlightRoad } from './highlight-roads';
+import { findHighlights } from './navigation/highlights';
+import { cumulativeKm } from './navigation/route';
 import { cumoAvailable, cumoPlan, cumoRoundTrips } from './cumo-routing';
 import { doubledStretch } from './doubled';
 import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from './graphhopper';
@@ -114,7 +116,8 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       // bekommen die Stichstraße herausgeplant, danach zählt jeder übrige km doppelt mit 100 Punkten.
       // (Heppenheim 5.11.: eine Runde mit 11 Kurven durch Mannheim gewann gegen Runden mit 30 Kurven,
       // weil diese 0,8 km Stichstraße hatten, die sich leicht herausplanen ließ.)
-      const base = (t: PlannedTour & { curves: number }) => scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 - offCourse(t, req.start, free ? undefined : heading);
+      const base = (t: PlannedTour & { curves: number }) =>
+        scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading);
       const ranked = [...own, ...loops, ...circles]
         .filter((t) => (t.km_je_klasse?.raus ?? 0) === 0)
         .map((t) => ({ ...t, engine: 'cumo' as const, score: base(t) }))
@@ -322,10 +325,11 @@ async function circleLoops(req: SmartRequest, heading: number, free: boolean, se
     [0, 1].map(async (k) => {
       try {
         const base = loopPoints(req.start, circ, free ? (heading + k * 180) % 360 : heading, seed * 13 + k);
-        const via = await hillyVia(base, Math.max(2, (circ / (2 * Math.PI)) * 0.35), req.profile, signal).catch((e) => {
+        const hilly = await hillyVia(base, Math.max(2, (circ / (2 * Math.PI)) * 0.35), req.profile, signal).catch((e) => {
           if (signal?.aborted) throw e;
           return base;
         });
+        const via = k === 0 ? snapToHighlights(hilly, req.start) : hilly;
         const t = await cumoPlan(req.name, [req.start, ...via, req.start], req.profile, req.avoid, signal);
         const ratio = t.laenge_km / req.km;
         return ratio > 0.6 && ratio < 1.5 && (t.km_je_klasse?.raus ?? 0) === 0 ? t : null;
@@ -336,6 +340,51 @@ async function circleLoops(req: SmartRequest, heading: number, free: boolean, se
     }),
   );
   return out.filter((t): t is NonNullable<typeof t> => t != null);
+}
+
+/**
+ * Bonus für Highlights, die ganz gefahren werden (wie in der Liste unter der Route): Pegel mal 6,
+ * eine Legende also 30 Punkte. Teilstücke zählen nur über favKm.
+ */
+function highlightBonus(t: PlannedTour): number {
+  const line = flatten(t).map((x) => x.p);
+  if (line.length < 2) return 0;
+  return findHighlights(line, cumulativeKm(line), null).reduce((sum, h) => sum + h.level * 6, 0);
+}
+
+/**
+ * Via Punkte auf Traumstrecken legen: Liegt eine bis 5 km neben dem Punkt, wird er durch zwei
+ * Punkte auf ihr ersetzt (bei einem und drei Vierteln, in Fahrtrichtung der Runde), jede Strecke
+ * höchstens einmal. Ein Punkt in der Mitte reicht nicht, dann biegt die Route oft vorher ab, und der
+ * Bereich um die Traumstrecken allein zieht zu schwach (Heppenheim 5.11.: Weschnitztal statt
+ * Zotzenbach). Stichstraßen an den Enden plant despur heraus.
+ */
+function snapToHighlights(via: LatLon[], start: LatLon): LatLon[] {
+  const used = new Set<string>();
+  const out: LatLon[] = [];
+  let prev = start;
+  for (const v of via) {
+    let best: { r: HighlightRoad; d: number } | null = null;
+    for (const r of HIGHLIGHT_ROADS) {
+      if (used.has(r.id) || r.line.length < 4) continue;
+      const d = Math.min(...r.line.map((q) => haversine(v, q)));
+      if (d < 5000 && (!best || d < best.d)) best = { r, d };
+    }
+    const line = best?.r.line;
+    if (!best || !line || Math.min(...line.map((q) => haversine(q, start))) < 2000) {
+      out.push(v);
+      prev = v;
+      continue;
+    }
+    used.add(best.r.id);
+    const a = line[Math.round((line.length - 1) * 0.25)];
+    const b = line[Math.round((line.length - 1) * 0.75)];
+    // das Ende zuerst, das näher am vorigen Punkt liegt
+    const pair = haversine(prev, a) <= haversine(prev, b) ? [a, b] : [b, a];
+    out.push(...pair);
+    prev = pair[1];
+  }
+  return out;
 }
 
 async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Promise<SmartTour> {

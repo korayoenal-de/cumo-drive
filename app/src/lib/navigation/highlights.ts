@@ -204,7 +204,13 @@ export function findHighlights(
   const seen = new Set<string>();
   return [...passes, ...found]
     .sort((a, b) => a.startKm - b.startKm)
-    .filter((h) => !seen.has(h.id) && !!seen.add(h.id));
+    .filter((h) => {
+      // je Durchfahrt hängt an der id ein Zähler (road:x:2), verglichen wird die Strecke selbst
+      const key = h.id.replace(/:\d+$/, '');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 /** Nächste Stellen der Route zu einem Punkt (höchstens maxM entfernt), je Durchfahrt eine. */
