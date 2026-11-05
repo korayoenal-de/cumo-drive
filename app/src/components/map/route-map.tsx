@@ -8,6 +8,7 @@ import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-na
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { arrowsAlong, offsetRight, splitDoubled } from '@/lib/doubled';
 import { listDriveTracks } from '@/lib/drives';
 import { useLibrary } from '@/lib/library';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
@@ -82,17 +83,42 @@ export function RouteMap({
   const [paused, setPaused] = useState(0);
   const following = followUser && !!position && paused === 0;
 
+  // Doppelt gefahrene Stücke (Hin und Rückweg auf derselben Straße) zeigt die Karte als zwei versetzte
+  // Linien mit Richtungspfeilen, damit man sieht, dass die Straße zweimal gefahren wird. Nicht beim Mitfahren.
+  const parts = useMemo(
+    () => (followUser ? tour.linie.map((r) => [{ p: r.p, doubled: false }]) : splitDoubled(tour.linie.map((r) => r.p))),
+    [tour, followUser],
+  );
+  /** Meter je Bildpunkt, aus dem sichtbaren Ausschnitt; daraus Versatz und Pfeilabstand */
+  const [mpp, setMpp] = useState(0);
+  const [boxH, setBoxH] = useState(0);
+  const offM = mpp ? Math.max(3, mpp * 4) : 0;
+  const offKey = offM ? Math.round(Math.log2(offM) * 4) : 0;
+
   const runs = useMemo(() => {
     // ok zuerst, damit Warnstellen oben liegen
     const order: CheckClass[] = ['ok', 'pruefen', 'raus'];
+    // Schlüssel aus dem Inhalt: Apple Maps verliert beim Ändern der Punkte einer bestehenden Linie
+    // manchmal die Farbe (Linie wird schwarz). Mit neuem Schlüssel wird sie neu angelegt.
+    const k = (c: CheckClass, p: LatLon[], extra: string) => `${c}-${extra}-${p.length}-${p[0][0].toFixed(5)}-${p[p.length - 1][1].toFixed(5)}`;
     return order.flatMap((c) =>
-      tour.linie
-        .filter((r) => r.c === c && r.p.length > 1)
-        // Schlüssel aus dem Inhalt: Apple Maps verliert beim Ändern der Punkte einer bestehenden Linie
-        // manchmal die Farbe (Linie wird schwarz). Mit neuem Schlüssel wird sie neu angelegt.
-        .map((r) => ({ c, coords: r.p.map(ll), key: `${c}-${r.p.length}-${r.p[0][0].toFixed(5)}-${r.p[r.p.length - 1][1].toFixed(5)}` })),
+      tour.linie.flatMap((r, ri) =>
+        r.c !== c
+          ? []
+          : parts[ri].map((part) => {
+              const p = part.doubled && offM ? offsetRight(part.p, offM) : part.p;
+              return { c, coords: p.map(ll), key: k(c, part.p, part.doubled ? `d${offKey}` : 'e'), doubled: part.doubled };
+            }),
+      ),
     );
-  }, [tour]);
+    // offKey fasst offM in Stufen zusammen, damit nicht jede kleine Zoomänderung neu zeichnet
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tour, parts, offKey]);
+  const arrows = useMemo(
+    () => (offM ? runs.filter((r) => r.doubled).flatMap((r) => arrowsAlong(r.coords.map((x) => [x.latitude, x.longitude] as LatLon), mpp * 90, 12)) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [runs, offKey],
+  );
 
   const fitCoords = useMemo(() => sampleLine(tour, 300).map(ll), [tour]);
   const allWarnings = useMemo(() => tourWarnings(tour), [tour]);
@@ -199,7 +225,7 @@ export function RouteMap({
   }, [paused]);
 
   return (
-    <View style={[styles.box, style, !interactive && styles.noTouch]}>
+    <View style={[styles.box, style, !interactive && styles.noTouch]} onLayout={(e) => setBoxH(e.nativeEvent.layout.height)}>
       <MapView
         ref={map}
         mapPadding={mapPadding}
@@ -220,6 +246,7 @@ export function RouteMap({
         zoomEnabled={interactive}
         onMapReady={() => setReady(true)}
         onPanDrag={followUser && position ? () => setPaused((n) => n + 1) : undefined}
+        onRegionChangeComplete={(r) => boxH > 0 && setMpp((r.latitudeDelta * 111320) / boxH)}
         onPress={onPressMap ? (e) => e.nativeEvent.action !== 'marker-press' && onPressMap() : undefined}
         onLongPress={
           onLongPress
@@ -272,6 +299,12 @@ export function RouteMap({
             lineJoin="round"
             zIndex={CLASS_LINE[r.c].z + 1}
           />
+        ))}
+
+        {arrows.map((a, i) => (
+          <Marker key={`pfeil-${offKey}-${i}-${a.p[0].toFixed(5)}`} coordinate={ll(a.p)} anchor={{ x: 0.5, y: 0.5 }} flat rotation={a.deg} zIndex={8} tracksViewChanges={false}>
+            <View style={styles.arrow} />
+          </Marker>
         ))}
 
         {dashed && dashed.length > 1 && (
@@ -405,6 +438,8 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.signal,
     marginTop: -3,
   },
+  // kleiner Pfeil (Dreieck nach oben, die Drehung gibt die Fahrtrichtung)
+  arrow: { width: 0, height: 0, borderLeftWidth: 4, borderRightWidth: 4, borderBottomWidth: 7, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: Colors.ground },
   passDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: Colors.ground },
   passPicked: { width: 18, height: 18, borderRadius: 9, borderWidth: 3, borderColor: Colors.signal },
   pin: { paddingHorizontal: Spacing.s, height: 26, borderRadius: 13, backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.signal, justifyContent: 'center' },

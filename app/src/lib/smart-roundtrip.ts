@@ -161,7 +161,9 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
  */
 function spurOf(t: PlannedTour) {
   const line = flatten(t).map((x) => x.p);
-  const d = doubledStretch(line, 300, 20);
+  // 40 m Toleranz: Bundesstraßen mit getrennten Fahrbahnen liegen hin und zurück 20 bis 30 m auseinander
+  // (Stichstraße bei Traisa am 5.11. wurde mit 20 m nicht erkannt)
+  const d = doubledStretch(line, 300, 40);
   const home = line[0];
   const points = d.points.filter((q) => haversine(q, home) > 1500);
   return { km: d.points.length ? (d.km * points.length) / d.points.length : 0, points };
