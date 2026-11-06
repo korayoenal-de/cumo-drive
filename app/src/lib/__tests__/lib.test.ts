@@ -130,4 +130,19 @@ describe('sharpCurves', () => {
     assert.equal(curveAhead(pin, 0.1), null);
     assert.ok(curveAhead(pin, 0.2));
   });
+
+  it('Bremshinweis: einzelne Kurve zählt herunter, Kehrenkette wird zusammengefasst', async () => {
+    const { curveCue } = await import('../navigation/curves');
+    const one = [{ startKm: 1, apexKm: 1.03, dir: 'rechts' as const, kind: 'scharf' as const }];
+    assert.equal(curveCue(one, 0.8), null);
+    assert.equal(curveCue(one, 0.87)?.big, '130 M');
+    assert.equal(curveCue(one, 1.01)?.big, 'JETZT');
+    assert.equal(curveCue(one, 1.04), null);
+    const pins = [1, 1.2, 1.4].map((k, i) => ({ startKm: k, apexKm: k + 0.04, dir: (i % 2 ? 'links' : 'rechts') as 'links' | 'rechts', kind: 'kehre' as const }));
+    assert.equal(curveCue(pins, 0.88)?.big, '3 KEHREN');
+    assert.equal(curveCue(pins, 0.88)?.icon, 'serp');
+    const second = curveCue(pins, 1.1);
+    assert.equal(second?.big, '2 VON 3');
+    assert.equal(second?.label, 'Kehre links in 100 m');
+  });
 });

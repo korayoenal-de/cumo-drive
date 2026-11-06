@@ -5,7 +5,6 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
-import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,7 +27,7 @@ import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } f
 import { useSession } from '@/lib/auth';
 import { saveDrive } from '@/lib/drives';
 import { useNavigation } from '@/lib/navigation';
-import { curveAhead, curveLabel, sharpCurves } from '@/lib/navigation/curves';
+import { curveCue, sharpCurves } from '@/lib/navigation/curves';
 import { limitAt, loadSpeedZones, type SpeedZones } from '@/lib/navigation/speed-zones';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
 import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
@@ -392,10 +391,11 @@ export default function NavigationScreen() {
   const maneuver = route?.maneuvers[state.next];
   // Scharfe Kurve voraus: nur in Zonen ab 70 km/h und nicht, solange das Label "Abseits der Tour" steht.
   // Sind die Tempolimits (noch) nicht geladen, zählt das eigene Tempo ab 60 km/h.
-  const ahead = status === 'laeuft' && !offTour && atKm != null ? curveAhead(curves, atKm) : null;
+  const ahead = status === 'laeuft' && !offTour && atKm != null ? curveCue(curves, atKm) : null;
   const zoneLimit = ahead && zones?.route === route ? limitAt(zones.z, ahead.startKm) : null;
-  const curve = ahead && (zoneLimit != null ? zoneLimit >= 70 : (state.speedKmh ?? 0) >= 60) ? ahead : null;
-  const curveM = curve && atKm != null ? Math.max(0, Math.round(((curve.startKm - atKm) * 1000) / 10) * 10) : 0;
+  // Bremshinweis in der Tempo Plakette: nur in Zonen ab 70 km/h; ohne Tempolimits zählt das eigene Tempo ab 60
+  const cue = ahead && (zoneLimit != null ? zoneLimit >= 70 : (state.speedKmh ?? 0) >= 60) ? ahead : null;
+  const brakeHint = cue ? { big: cue.big, label: cue.label, icon: cue.icon, a11y: cue.a11y } : null;
   const then = route?.maneuvers[state.next + 1];
   // Tempo unten links: Limit an der aktuellen Stelle der Route, sobald die Zonen geladen sind
   const limitHere = atKm != null && zones?.route === route ? limitAt(zones.z, atKm) : null;
@@ -465,19 +465,6 @@ export default function NavigationScreen() {
             </AppText>
           </View>
         )}
-        {curve && (
-          <View style={styles.curve} accessibilityRole="alert" accessibilityLabel={`${curveLabel(curve)}${curveM > 0 ? ` in ${curveM} Metern` : ''}`}>
-            <SymbolView
-              name={curve.kind === 'kehre' ? (curve.dir === 'links' ? 'arrow.uturn.left' : 'arrow.uturn.right') : curve.dir === 'links' ? 'arrow.turn.up.left' : 'arrow.turn.up.right'}
-              size={16}
-              weight="bold"
-              tintColor={Colors.warn}
-            />
-            <AppText style={styles.offText} numberOfLines={1}>
-              {curveM > 0 ? `${curveLabel(curve)} · ${curveM} m` : curveLabel(curve)}
-            </AppText>
-          </View>
-        )}
         {running && stop && (
           <StopAlert stop={stop} distM={stopDistM} mine={myStop} onDismiss={() => clearStop(false)} onCancel={() => clearStop(true)} />
         )}
@@ -487,9 +474,9 @@ export default function NavigationScreen() {
       <View style={[styles.bottom, !running && { paddingBottom: insets.bottom + Spacing.m }]} pointerEvents="box-none">
         {running && (
           <>
-            {driveSettings.speed && (
+            {(driveSettings.speed || brakeHint) && (
               <View style={styles.leadWrap}>
-                <SpeedBadge speedKmh={state.speedKmh} limit={limitHere} />
+                <SpeedBadge speedKmh={state.speedKmh} limit={limitHere} hint={brakeHint} showSpeed={driveSettings.speed} />
               </View>
             )}
             {inRide && ride.myRole === 'lead' && !msgOpen && (

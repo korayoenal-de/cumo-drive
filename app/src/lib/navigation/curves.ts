@@ -91,3 +91,56 @@ export function curveLabel(c: SharpCurve): string {
   if (c.kind === 'kehre') return c.dir === 'links' ? 'Kehre links' : 'Kehre rechts';
   return c.dir === 'links' ? 'Scharfe Linkskurve' : 'Scharfe Rechtskurve';
 }
+
+/** Abstand, unter dem Kurven als Kette zählen, und Mindestzahl an Kehren für die Zusammenfassung */
+export const CHAIN_GAP_KM = 0.3;
+export const CHAIN_MIN = 3;
+
+export type CurveCue = {
+  /** groß in der Plakette, etwa "150 M", "JETZT", "3 KEHREN", "2 VON 3" */
+  big: string;
+  label: string;
+  icon: 'right' | 'left' | 'hairR' | 'hairL' | 'serp';
+  /** für VoiceOver */
+  a11y: string;
+  /** Beginn der Kurve, zu der der Hinweis gehört (für "2 s nach Kurvenbeginn zurück") */
+  startKm: number;
+};
+
+const up10 = (m: number) => Math.max(10, Math.ceil(m / 10) * 10);
+
+/**
+ * Bremshinweis für die Tempo Plakette (Variante A, 6.11.2026): ab 150 m vor der Kurve bis zum Scheitel.
+ * Liegen mindestens drei Kehren mit weniger als 300 m Abstand hintereinander, wird zusammengefasst:
+ * erst "3 KEHREN, folgen, erste in 120 m", dann "2 VON 3, Kehre rechts in 80 m".
+ */
+export function curveCue(curves: SharpCurve[], atKm: number): CurveCue | null {
+  const i = curves.findIndex((c) => c.apexKm >= atKm);
+  if (i < 0) return null;
+  // Kette um die aktuelle Kurve herum
+  let s = i;
+  while (s > 0 && curves[s].startKm - curves[s - 1].startKm < CHAIN_GAP_KM) s--;
+  let e = i;
+  while (e < curves.length - 1 && curves[e + 1].startKm - curves[e].startKm < CHAIN_GAP_KM) e++;
+  const chain = curves.slice(s, e + 1);
+  const kehren = chain.filter((c) => c.kind === 'kehre').length;
+  const c = curves[i];
+  const dKm = c.startKm - atKm;
+  // außerhalb einer Kette erst 150 m vorher; in der Kette bleibt der Hinweis bis zur letzten Kurve stehen
+  const inChain = kehren >= CHAIN_MIN;
+  if (dKm > CURVE_WARN_KM && !(inChain && i > s)) return null;
+  const m = Math.round(dKm * 1000);
+  const dir = c.dir === 'links' ? 'links' : 'rechts';
+  if (inChain) {
+    const n = chain.length;
+    const k = i - s;
+    if (k === 0 && m > 0) {
+      return { big: `${n} KEHREN`, label: `folgen, erste in ${up10(m)} m`, icon: 'serp', a11y: `${n} Kehren folgen, erste in ${up10(m)} Metern`, startKm: c.startKm };
+    }
+    const where = m > 0 ? `in ${up10(m)} m` : 'jetzt';
+    return { big: `${k + 1} VON ${n}`, label: `Kehre ${dir} ${where}`, icon: c.dir === 'links' ? 'hairL' : 'hairR', a11y: `Kehre ${k + 1} von ${n}, ${dir} ${where}`, startKm: c.startKm };
+  }
+  const label = curveLabel(c);
+  const icon = c.kind === 'kehre' ? (c.dir === 'links' ? 'hairL' : 'hairR') : c.dir === 'links' ? 'left' : 'right';
+  return { big: m > 0 ? `${up10(m)} M` : 'JETZT', label, icon, a11y: m > 0 ? `${label} in ${up10(m)} Metern` : `${label}, jetzt`, startKm: c.startKm };
+}
