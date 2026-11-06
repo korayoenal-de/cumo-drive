@@ -7,7 +7,7 @@
  */
 
 export type LegalBlock = { h: string; p?: string[]; list?: string[] };
-export type LegalDoc = { title: string; lead: string; blocks: LegalBlock[]; stand: string };
+export type LegalDoc = { title: string; headTitle?: string; lead: string; blocks: LegalBlock[]; stand: string };
 
 const KONTAKT = 'kontakt@rallycumo.de';
 const IMPRESSUM = 'https://rallycumo.de/impressum/';
@@ -107,9 +107,10 @@ export const DATENSCHUTZ: LegalDoc = {
 };
 
 export const AGB: LegalDoc = {
-  title: 'Nutzungsbedingungen',
+  title: 'AGB',
+  headTitle: 'Nutzungsbedingungen (AGB)',
   lead:
-    'Diese Bedingungen gelten für die App Cumo Drive auf dem iPhone und in CarPlay sowie für den Web Planer. Ergänzend gilt für Käufe über den App Store die Standard Lizenzvereinbarung von Apple.',
+    'Allgemeine Geschäftsbedingungen und Nutzungsbedingungen. Diese Bedingungen gelten für die App Cumo Drive auf dem iPhone und in CarPlay sowie für den Web Planer. Ergänzend gilt für Käufe über den App Store die Standard Lizenzvereinbarung von Apple.',
   stand: STAND,
   blocks: [
     {

@@ -5,7 +5,7 @@
  */
 import { router } from 'expo-router';
 import Head from 'expo-router/head';
-import { Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
 
@@ -25,15 +25,12 @@ const MARK = [
 
 export function LegalPage({ doc, description, other }: { doc: LegalDoc; description: string; other: { href: '/agb' | '/datenschutz'; label: string } }) {
   const insets = useSafeAreaInsets();
-  // Langes Wort wie NUTZUNGSBEDINGUNGEN passt auf schmalen Bildschirmen in eine Zeile
-  const { width } = useWindowDimensions();
-  const titleSize = Math.min(40, Math.floor((Math.min(width, 680 + 48) - 48) / (doc.title.length * 0.74)));
   const web = Platform.OS === 'web';
   const home = () => (web ? router.navigate('/') : router.canGoBack() ? router.back() : router.replace('/'));
   return (
     <View style={styles.root}>
       <Head>
-        <title>{`${doc.title} | Cumo Drive`}</title>
+        <title>{`${doc.headTitle ?? doc.title} | Cumo Drive`}</title>
         <meta name="description" content={description} />
       </Head>
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + Spacing.l, paddingBottom: insets.bottom + Spacing.xxxl }]}>
@@ -54,7 +51,7 @@ export function LegalPage({ doc, description, other }: { doc: LegalDoc; descript
             )}
           </View>
 
-          <AppText accessibilityRole="header" style={[styles.title, { fontSize: titleSize, lineHeight: titleSize + 4 }]}>
+          <AppText accessibilityRole="header" style={styles.title}>
             {doc.title}
           </AppText>
           <AppText style={styles.lead}>{doc.lead}</AppText>
