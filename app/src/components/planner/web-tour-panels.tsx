@@ -11,7 +11,7 @@ import { type ElevationProfile } from '@/lib/stats';
 import { folders, useLibrary } from '@/lib/library';
 import { type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
-import { encodeTour, expoGoLink } from '@/lib/share-code';
+import { encodeTour, shareUrl } from '@/lib/share-code';
 import { closedHint, passState, type LiveRow } from '@/lib/pass-live';
 import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
 import { photoDate, photoUrl, thumbUrl, type PhotoGroup } from '@/lib/photos';
@@ -275,7 +275,7 @@ export function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid })
         code = encodeTour(tour, profile);
         short = false;
       }
-      const url = await QRCode.toDataURL(expoGoLink(code), { errorCorrectionLevel: 'M', margin: 3, width: 720, color: { dark: Colors.ground, light: '#FFFFFF' } });
+      const url = await QRCode.toDataURL(shareUrl(code), { errorCorrectionLevel: 'M', margin: 3, width: 720, color: { dark: Colors.ground, light: '#FFFFFF' } });
       if (alive) setQr({ tour, url, short });
     })().catch(() => undefined);
     return () => {
