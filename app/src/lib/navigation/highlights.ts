@@ -149,11 +149,20 @@ export function findHighlights(
   const pins = hairpinKms(shape);
   // km der Kehren auf die Routen km umrechnen (resample nutzt dieselbe Haversine Länge)
   const out: Highlight[] = [];
-  for (const { pass, km } of passesAlong(list, shape)) {
+  const along = passesAlong(list, shape);
+  const tops = along.map((x) => x.km).sort((a, b) => a - b);
+  for (const { pass, km } of along) {
     const v = elev ? valleyBounds(elev, km) : null;
     const b = v ?? hairpinBounds(pins, km);
-    const startKm = Math.max(0, Math.min(b.start, km - 0.5));
-    const endKm = Math.min(total, Math.max(b.end, km + 0.5));
+    // Mehrere Pässe hintereinander (Sellaronda): ein Abschnitt reicht höchstens bis zur Mitte zum
+    // nächsten Pass, sonst schluckt eine durchgehende Kehrenkette alle anderen. Liegen zwei Passhöhen
+    // näher als 4 km beieinander (Stilfser Joch und Umbrail), ist es dieselbe Bergstraße.
+    const prev = tops.filter((t) => t < km - 4).pop();
+    const next = tops.find((t) => t > km + 4);
+    const lo = prev != null ? (prev + km) / 2 : 0;
+    const hi = next != null ? (km + next) / 2 : total;
+    const startKm = Math.max(0, lo, Math.min(b.start, km - 0.5));
+    const endKm = Math.min(total, hi, Math.max(b.end, km + 0.5));
     const n = pins.filter((k) => k >= startKm && k <= endKm).length;
     out.push({
       id: pass.id,
