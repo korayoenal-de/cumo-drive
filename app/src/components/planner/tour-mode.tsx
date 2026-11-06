@@ -558,15 +558,13 @@ export function TourMode({
             mode={{ group: asGroup, onChange: setAsGroup }}
             // Neue Planung: Merken. Geöffnete Tour: nur bei echter Änderung, sonst steht dort Löschen.
             save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) } : undefined}
+            float={asGroup ? <GroupOptions onInvite={() => void drive()} /> : undefined}
             top={
-              <>
-                {asGroup && <GroupOptions onInvite={() => void drive()} />}
-                {!!plan.cloudId && (
-                  <Pressable accessibilityRole="button" onPress={() => setAskDelete(true)} hitSlop={8} style={styles.deleteLink}>
-                    <AppText style={styles.deleteLinkText}>Route löschen</AppText>
-                  </Pressable>
-                )}
-              </>
+              plan.cloudId ? (
+                <Pressable accessibilityRole="button" onPress={() => setAskDelete(true)} hitSlop={8} style={styles.deleteLink}>
+                  <AppText style={styles.deleteLinkText}>Route löschen</AppText>
+                </Pressable>
+              ) : undefined
             }>
             {plan.cloudId && plan.dirty && !plan.saving && (
               <AppText variant="caption" style={styles.changed}>

@@ -26,6 +26,7 @@ import { syncVehicles } from '@/lib/vehicle';
 import { AppIntentHandler } from '@/live/intents';
 import { Colors } from '@/constants/theme';
 import { ToastHost } from '@/components/ui/toast';
+import { endAllNavActivities } from '@/live/nav-live';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -61,6 +62,11 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsDone && (!needAuth || authReady)) SplashScreen.hideAsync();
   }, [fontsDone, needAuth, authReady]);
+
+  // Verwaiste Live Activity aus einem früheren Start aufräumen (läuft eine Navigation, startet sie neu)
+  useEffect(() => {
+    endAllNavActivities();
+  }, []);
 
   // nach der Anmeldung Touren und Fahrzeuge mit dem Konto abgleichen
   const userId = session?.user.id;

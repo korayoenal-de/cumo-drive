@@ -20,7 +20,7 @@ import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
-import { endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
+import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
 import { useSession } from '@/lib/auth';
 import { saveDrive } from '@/lib/drives';
 import { useNavigation } from '@/lib/navigation';
@@ -290,7 +290,8 @@ export default function NavigationScreen() {
     const running = st === 'laeuft' || st === 'pausiert' || st === 'neuberechnung';
     const m = state.route?.maneuvers[state.next];
     if (!running || !m || !active) {
-      if (st === 'angekommen' || st === 'fehler') endNavActivity();
+      // keine Fahrt: nichts in der Dynamic Island stehen lassen (beim Laden der Route fehlt nur das Manöver)
+      if (!running) endAllNavActivities();
       return;
     }
     const d = formatDistance(state.distToNextM);

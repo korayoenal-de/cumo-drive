@@ -95,7 +95,7 @@ export function Result({
         sheetTitle={tour.name}
         primary={{ label: 'Losfahren', onPress: drive }}
         mode={{ group: asGroup, onChange: setAsGroup }}
-        top={asGroup ? <GroupOptions onInvite={drive} /> : undefined}
+        float={asGroup ? <GroupOptions onInvite={drive} /> : undefined}
         save={{ saved: !!savedId, onPress: () => void saveResult() }}
         more={[
           { key: 'adjust', icon: 'pencil', label: 'Anpassen', hint: 'Start, Zwischenziele und Ziel ändern', onPress: onAdjust },

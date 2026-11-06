@@ -5,11 +5,11 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeOutDown } from 'react-native-reanimated';
 
 import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { useMyProfile } from '@/lib/profile';
 
@@ -23,7 +23,7 @@ export function GroupOptions({ onInvite }: { onInvite: () => void }) {
   const session = useSession();
   const me = useMyProfile(session?.user.id);
   return (
-    <Animated.View entering={softEnter()} style={styles.card}>
+    <Animated.View entering={softEnter()} exiting={FadeOutDown.duration(160)} style={styles.card}>
       <View style={styles.head}>
         <AppText style={styles.title}>Mitfahrer</AppText>
         <AppText style={styles.muted}>bis zu 6 Autos</AppText>
@@ -56,7 +56,8 @@ export function GroupOptions({ onInvite }: { onInvite: () => void }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
+  // schwebt über der Leiste, deshalb mit Schatten und etwas heller als die Karten darunter
+  card: { backgroundColor: Colors.surface2, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m, boxShadow: Shadow.sheet },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   title: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   muted: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },

@@ -95,6 +95,23 @@ export function showNavActivity(p: NavActivityProps) {
   }
 }
 
+/**
+ * Alle Live Activities der Navigation beenden, auch verwaiste: Nach einem Neuladen der App (Update,
+ * Absturz) kennt JavaScript die laufende Activity nicht mehr, und sie bliebe in der Dynamic Island
+ * stehen (6.11.). Beim Start der App und immer, wenn keine Navigation läuft.
+ */
+export function endAllNavActivities() {
+  const f = getFactory();
+  current = null;
+  last = '';
+  if (!f) return;
+  try {
+    for (const old of f.getInstances()) void old.end('immediate').catch(() => undefined);
+  } catch {
+    // ohne Live Activities (Simulator, ältere Builds) gibt es nichts zu beenden
+  }
+}
+
 /** Live Activity beenden, zum Beispiel bei Ankunft oder Beenden. */
 export function endNavActivity(final?: NavActivityProps) {
   const c = current;
