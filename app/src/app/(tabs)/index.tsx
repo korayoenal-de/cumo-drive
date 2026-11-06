@@ -1,13 +1,13 @@
 /**
  * Tab Planen: zeigt den Planer (components/planner/planner.tsx).
  */
-import { Redirect } from 'expo-router';
 import { Platform } from 'react-native';
 
+import Landing from '@/components/landing/landing';
 import Planner from '@/components/planner/planner';
 
 export default function Planen() {
-  // Im Browser gibt es den großen Planer mit Karte und Seitenleiste unter /planer
-  if (Platform.OS === 'web') return <Redirect href="/planer" />;
+  // Im Browser steht hier die Landingpage; der große Planer liegt hinter Login unter /planer
+  if (Platform.OS === 'web') return <Landing />;
   return <Planner />;
 }

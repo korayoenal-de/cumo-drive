@@ -12,9 +12,12 @@ import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { signIn } from '@/lib/auth';
 import { signUpWithName } from '@/lib/profile';
 
-export function AuthScreen() {
+/** Im Browser (/login, /registrieren) schmal und mittig, mit Logo zurück zur Startseite. */
+const WEB = Platform.OS === 'web';
+
+export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'login' | 'register'; onHome?: () => void } = {}) {
   const insets = useSafeAreaInsets();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
@@ -39,11 +42,13 @@ export function AuthScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.xxxl, paddingBottom: insets.bottom + Spacing.xl }]} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, WEB && styles.contentWeb, { paddingTop: insets.top + Spacing.xxxl, paddingBottom: insets.bottom + Spacing.xl }]} keyboardShouldPersistTaps="handled">
         <View style={styles.gapS}>
-          <AppText variant="caption" style={styles.brand}>
-            CUMO DRIVE
-          </AppText>
+          <Pressable accessibilityRole={onHome ? 'link' : undefined} disabled={!onHome} onPress={onHome} style={styles.brandRow}>
+            <AppText variant="caption" style={styles.brand}>
+              CUMO DRIVE
+            </AppText>
+          </Pressable>
           <AppText variant="display">{mode === 'login' ? 'Willkommen\nzurück' : 'Konto\nanlegen'}</AppText>
           <AppText muted>Kurvige Touren planen, in der Gruppe fahren und jede Fahrt festhalten. Deine Touren liegen in deinem Konto, in der App und im Web Planer.</AppText>
         </View>
@@ -101,6 +106,8 @@ export function AuthScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
   content: { flexGrow: 1, justifyContent: 'space-between', paddingHorizontal: Spacing.xl, gap: Spacing.xxl },
+  contentWeb: { justifyContent: 'center', alignSelf: 'center', width: '100%', maxWidth: 460 },
+  brandRow: { alignSelf: 'flex-start' },
   gapS: { gap: Spacing.m },
   gapM: { gap: Spacing.m },
   brand: { color: Colors.signal, fontFamily: Fonts.bold, letterSpacing: 2 },

@@ -57,7 +57,8 @@ export default function RootLayout() {
   const session = useSession();
   const authReady = useAuthReady();
   const needAuth = Platform.OS !== 'web';
-  const fontsDone = loaded || !!error;
+  // Im Browser nicht auf die Schriften warten: so steht die Landingpage schon im statischen HTML (Suchmaschinen)
+  const fontsDone = loaded || !!error || Platform.OS === 'web';
 
   useEffect(() => {
     if (fontsDone && (!needAuth || authReady)) SplashScreen.hideAsync();
@@ -103,6 +104,8 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.ground } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="planer" options={{ title: 'CUMO DRIVE Planer' }} />
+        <Stack.Screen name="login" options={{ title: 'Login' }} />
+        <Stack.Screen name="registrieren" options={{ title: 'Registrieren' }} />
         <Stack.Screen name="t" options={{ title: 'CUMO DRIVE Tour' }} />
         <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', title: 'Tour holen' }} />
         <Stack.Screen name="karte" options={{ presentation: 'fullScreenModal', title: 'Karte' }} />
