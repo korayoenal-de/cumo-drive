@@ -49,6 +49,28 @@ function scoreTour(t: PlannedTour, curves: number, fastKm: number, targetKm: num
   return scoreRoute(ghLike, targetKm) - (t.km_je_klasse?.raus ?? 0) * 40 - (t.km_je_klasse?.pruefen ?? 0) * 20 - (t.km_klein ?? 0) * 12;
 }
 
+/** Erlaubte Abweichung von der Wunschlänge (Koray 6.11.: höchstens 15 %) */
+const BAND = 0.15;
+const devOf = (t: PlannedTour, km: number) => Math.abs(t.laenge_km - km) / km;
+const inBand = (t: PlannedTour, km: number) => t.laenge_km > 0 && devOf(t, km) <= BAND;
+
+/**
+ * Sieger wählen: zuerst nur Runden in der Wunschlänge (plus oder minus 15 %), unter ihnen die beste
+ * Bewertung. Passt keine, gewinnt die mit der kleinsten Abweichung (Bewertung als Gleichstand).
+ */
+function pick<T extends PlannedTour & { score: number }>(list: T[], km: number): T | undefined {
+  const usable = list.filter((t) => t.laenge_km > 0);
+  const fit = usable.filter((t) => inBand(t, km));
+  if (fit.length) return fit.sort((a, b) => b.score - a.score)[0];
+  return usable.sort((a, b) => devOf(a, km) - devOf(b, km) || b.score - a.score)[0];
+}
+
+/** Median der Längen, um eine zweite Runde nachzuskalieren */
+function medianKm(list: PlannedTour[]): number {
+  const v = list.map((t) => t.laenge_km).filter((x) => x > 0).sort((a, b) => a - b);
+  return v.length ? v[Math.floor(v.length / 2)] : 0;
+}
+
 export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<SmartTour> {
   const seed = req.seed ?? Math.floor(Math.random() * 1e6);
   const heading =
@@ -65,12 +87,19 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
     const own = await cumoAvailable();
     let reachKm = req.km;
     const tried = new Set<string>();
+    // Bei einem Pass führt der Rückweg über einen Punkt seitlich; liefert die Reichweite wieder
+    // denselben Pass, wird dieser Punkt näher heran oder weiter weg gelegt (Meran 6.11.: 59 statt 50 km)
+    let side = 1;
     for (let attempt = 0; attempt < 3; attempt++) {
       const loop = passLoopVia(PASSES, req.start, reachKm, dir, month);
       if (!loop) break;
       const key = loop.passes.map((p) => p.id).join('+');
-      if (tried.has(key)) break;
+      if (tried.has(key) && loop.passes.length !== 1) break;
       tried.add(key);
+      if (loop.passes.length === 1 && side !== 1) {
+        const q = loop.via[loop.via.length - 1];
+        loop.via[loop.via.length - 1] = [req.start[0] + (q[0] - req.start[0]) * side, req.start[1] + (q[1] - req.start[1]) * side];
+      }
       try {
         onStep?.('route');
         const t = await planChecked(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, onStep, signal, true);
@@ -80,21 +109,23 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
           ...t,
           engine: own ? 'cumo' : 'valhalla',
           curves,
-          score: scoreTour(t, curves, 0, req.km) + bonus,
+          // Pässe als Via Punkt erzeugen leicht ein Stück hin und auf demselben Weg zurück
+          // (Brixen 6.11.: 37 km doppelt über den Pass). Das kostet wie bei den anderen Runden.
+          score: scoreTour(t, curves, 0, req.km) + bonus - spurKm(t) * 100,
           passes: loop.passes.map((p) => p.name),
         };
         candidates.push(cand);
         const ratio = t.laenge_km / req.km;
-        if ((t.km_je_klasse?.raus ?? 0) === 0 && ratio > 0.7 && ratio < 1.3) return cand;
+        if ((t.km_je_klasse?.raus ?? 0) === 0 && inBand(t, req.km) && spurKm(t) < 0.5) return cand;
         reachKm = reachKm / Math.max(0.5, Math.min(2.5, ratio));
+        side = side / Math.max(0.6, Math.min(1.6, ratio));
       } catch (e) {
         if (signal?.aborted) throw e;
         lastError = e;
         break;
       }
     }
-    const fit = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0 && c.laenge_km < req.km * 1.5);
-    if (fit.length) return fit.sort((a, b) => b.score - a.score)[0];
+    // Sonst zählen die Pass Runden unten mit den freien Varianten zusammen
   }
 
   // 0. Eigener Routing Server: Sportwagen Profil mit Kurven, mehrere Varianten, alles lokal
@@ -118,13 +149,38 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       // weil diese 0,8 km Stichstraße hatten, die sich leicht herausplanen ließ.)
       const base = (t: PlannedTour & { curves: number }) =>
         scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading);
-      const ranked = [...own, ...loops, ...circles]
-        .filter((t) => (t.km_je_klasse?.raus ?? 0) === 0)
-        .map((t) => ({ ...t, engine: 'cumo' as const, score: base(t) }))
-        .sort((a, b) => b.score - a.score);
-      const top = await Promise.all(ranked.slice(0, 3).map((t) => despur(t, req, signal)));
+      const usable = (t: PlannedTour) => (t.km_je_klasse?.raus ?? 0) === 0 && t.laenge_km > 0;
+      // Stichstraßen schon vor dem Herausplanen mitbewerten, sonst gewinnt eine passende Länge mit
+      // 40 km hin und zurück über einen Pass (Judenburg 6.11.)
+      const rate = (t: PlannedTour & { curves: number }) => ({ ...t, engine: 'cumo' as const, spur: spurKm(t), score: base(t) - spurKm(t) * 100 });
+      let pool = [...own, ...loops, ...circles].filter(usable).map(rate);
+      const good = () =>
+        pool.filter((t) => inBand(t, req.km) && t.spur < 0.5).length + candidates.filter((t) => inBand(t, req.km) && spurKm(t) < 0.5).length;
+      // Kaum eine saubere Variante in der Wunschlänge (kurvige Straßen im Gebirge sind viel länger als
+      // der Kreis, in der Ebene kürzer): einmal mit nachgeregelter Länge neu rechnen
+      if (good() < 2) {
+        // Schätzung aus den Rundtouren des Servers; deren Länge streut stark (Judenburg 6.11.: 80 bis
+        // 206 km für 100 km), darum zwei Längen um die Schätzung herum
+        const med = medianKm(own.length ? own : pool.length ? pool : candidates);
+        if (med > 0) {
+          const est = Math.min(req.km * 2, Math.max(req.km * 0.5, (req.km * req.km) / med));
+          const scaled = { ...req, km: est };
+          const [lo, hi, circles2] = await Promise.all([
+            cumoRoundTrips(req.name, req.start, est * 0.88, heading, req.profile, req.avoid, 4, (seed * 17 + 7) % 100000, signal, free),
+            cumoRoundTrips(req.name, req.start, est * 1.12, heading, req.profile, req.avoid, 4, (seed * 19 + 3) % 100000, signal, free),
+            circleLoops(scaled, heading, free, seed + 1, signal, req.km),
+          ]);
+          pool = [...pool, ...[...lo, ...hi, ...circles2].filter(usable).map(rate)];
+        }
+      }
+      // Die drei besten in der Wunschlänge bekommen die Stichstraße herausgeplant; fehlen solche,
+      // die nächstliegenden
+      const fit = pool.filter((t) => inBand(t, req.km)).sort((a, b) => b.score - a.score);
+      const rest = pool.filter((t) => !inBand(t, req.km)).sort((a, b) => devOf(a, req.km) - devOf(b, req.km));
+      const top = await Promise.all([...fit, ...rest].slice(0, 3).map((t) => despur(t, req, signal)));
       for (const t of top) candidates.push({ ...t, score: base(t) - spurKm(t) * 100 });
-      if (candidates.length) return candidates.sort((a, b) => b.score - a.score)[0];
+      const best = pick(candidates, req.km);
+      if (best) return best;
     } catch (e) {
       if (signal?.aborted) throw e;
       lastError = e;
@@ -171,9 +227,9 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
     }
   }
 
-  if (!candidates.length) throw lastError ?? new Error('Keine Rundtour gefunden.');
-  candidates.sort((a, b) => b.score - a.score);
-  return candidates[0];
+  const best = pick(candidates, req.km);
+  if (!best) throw lastError ?? new Error('Keine Rundtour gefunden.');
+  return best;
 }
 
 /**
@@ -318,7 +374,7 @@ function offCourse(t: PlannedTour, start: LatLon, heading: number | undefined): 
  * die Richtung des ersten Stücks und laufen sonst oft in die Ebene (Heppenheim 5.11.: Osten
  * gewählt, Runde durch Mannheim). Ohne Richtung zwei gegenüberliegende Kreise.
  */
-async function circleLoops(req: SmartRequest, heading: number, free: boolean, seed: number, signal?: AbortSignal) {
+async function circleLoops(req: SmartRequest, heading: number, free: boolean, seed: number, signal?: AbortSignal, targetKm = req.km) {
   // Kurvige Straßen sind etwa 1,45 mal so lang wie der Kreis
   const circ = req.km / 1.45;
   const out = await Promise.all(
@@ -331,7 +387,7 @@ async function circleLoops(req: SmartRequest, heading: number, free: boolean, se
         });
         const via = k === 0 ? snapToHighlights(hilly, req.start) : hilly;
         const t = await cumoPlan(req.name, [req.start, ...via, req.start], req.profile, req.avoid, signal);
-        const ratio = t.laenge_km / req.km;
+        const ratio = t.laenge_km / targetKm;
         return ratio > 0.6 && ratio < 1.5 && (t.km_je_klasse?.raus ?? 0) === 0 ? t : null;
       } catch (e) {
         if (signal?.aborted) throw e;
@@ -401,7 +457,9 @@ async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Pr
   }
   try {
     const r = await cumoPlan(req.name, [req.start, ...via, req.start], req.profile, req.avoid, signal);
-    if (spurKm(r) < spur.km - 0.1 && r.laenge_km <= t.laenge_km * 1.25 + 3 && (r.km_je_klasse?.raus ?? 0) === 0) {
+    // die Länge darf dabei nicht aus der Wunschlänge laufen (oder sich weiter entfernen)
+    const lenOk = devOf(r, req.km) <= Math.max(BAND, devOf(t, req.km));
+    if (spurKm(r) < spur.km - 0.1 && lenOk && (r.km_je_klasse?.raus ?? 0) === 0) {
       return { ...t, ...r, engine: 'cumo', curves: r.curves, score: t.score };
     }
   } catch (e) {
