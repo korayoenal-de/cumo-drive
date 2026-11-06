@@ -1,14 +1,14 @@
 /**
  * Wurzel der App (Expo Router): lädt Schriften, startet Abgleich und Konto, legt die Stapel Navigation mit allen Vollbild Seiten fest.
  */
-import { Archivo_800ExtraBold, Archivo_900Black } from '@expo-google-fonts/archivo';
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from '@expo-google-fonts/inter';
+// Schnitte einzeln importieren: der Sammelimport zieht alle 36 Inter und Archivo Dateien (etwa 8 MB) ins Paket
+import { Archivo_800ExtraBold } from '@expo-google-fonts/archivo/800ExtraBold';
+import { Archivo_900Black } from '@expo-google-fonts/archivo/900Black';
+import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
+import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
+import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
+import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
+import { useFonts } from 'expo-font';
 import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';

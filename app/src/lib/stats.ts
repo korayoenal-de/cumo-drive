@@ -27,12 +27,25 @@ export function resample(line: LatLon[], stepM: number): LatLon[] {
 
 export type ElevationProfile = { km: number[]; m: number[]; up: number; down: number; min: number; max: number };
 
+/** Schlüssel einer Linie für Zwischenspeicher: Punkte auf etwa 10 m gerundet */
+export function lineKey(pts: LatLon[]): string {
+  let h = 0;
+  for (const [a, b] of pts) h = (Math.imul(h, 31) + Math.round(a * 1e4) * 7 + Math.round(b * 1e4)) | 0;
+  return `${pts.length}:${h}`;
+}
+
+/** Zuletzt geladene Höhenprofile: dieselbe Tour im Planer, beim erneuten Öffnen oder Losfahren kostet kein Netz */
+const elevationCache = new Map<string, ElevationProfile>();
+
 /** Höhenprofil mit höchstens etwa 800 Punkten. */
 export async function elevationProfile(line: LatLon[], signal?: AbortSignal): Promise<ElevationProfile> {
   let total = 0;
   for (let i = 1; i < line.length; i++) total += haversine(line[i - 1], line[i]);
   const step = Math.max(100, total / 800);
   const pts = resample(line, step);
+  const key = lineKey(pts);
+  const hit = elevationCache.get(key);
+  if (hit) return hit;
   const res = await fetch(`${VALHALLA_URL}/height`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -61,7 +74,10 @@ export async function elevationProfile(line: LatLon[], signal?: AbortSignal): Pr
       ref = h;
     }
   }
-  return { km, m, up: Math.round(up), down: Math.round(down), min: Math.min(...m), max: Math.max(...m) };
+  const profile = { km, m, up: Math.round(up), down: Math.round(down), min: Math.min(...m), max: Math.max(...m) };
+  elevationCache.set(key, profile);
+  if (elevationCache.size > 12) elevationCache.delete(elevationCache.keys().next().value!);
+  return profile;
 }
 
 function heading(a: LatLon, b: LatLon) {

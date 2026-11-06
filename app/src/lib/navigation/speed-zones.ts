@@ -7,7 +7,7 @@
  * Wird stückweise geladen (etwa 40 km je Anfrage); onPart meldet jeden fertigen Teil.
  */
 import { VALHALLA_URL } from '../valhalla';
-import { resample } from '../stats';
+import { lineKey, resample } from '../stats';
 import type { LatLon } from '../tour';
 
 export type SpeedZones = {
@@ -43,8 +43,17 @@ function edgeLimits(edges: Edge[], carry: number | null): number[] {
   });
 }
 
+/** Fertig geladene Zonen je Route (Neustart der Navigation, gleiche Tour) */
+const zoneCache = new Map<string, SpeedZones>();
+
 export async function loadSpeedZones(shape: LatLon[], onPart: (z: SpeedZones) => void, signal?: AbortSignal): Promise<SpeedZones> {
   const pts = resample(shape, STEP_M);
+  const key = lineKey(pts);
+  const hit = zoneCache.get(key);
+  if (hit) {
+    onPart(hit);
+    return hit;
+  }
   const zones: SpeedZones = { endKm: [], limit: [], loadedKm: 0 };
   for (let a = 0; a < pts.length - 1; a += CHUNK_PTS - 1) {
     const part = pts.slice(a, Math.min(pts.length, a + CHUNK_PTS));
@@ -80,6 +89,8 @@ export async function loadSpeedZones(shape: LatLon[], onPart: (z: SpeedZones) =>
     zones.loadedKm = startKm + partKm;
     onPart({ ...zones, endKm: [...zones.endKm], limit: [...zones.limit] });
   }
+  zoneCache.set(key, zones);
+  if (zoneCache.size > 6) zoneCache.delete(zoneCache.keys().next().value!);
   return zones;
 }
 
