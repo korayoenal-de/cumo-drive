@@ -49,8 +49,15 @@ export function Result({
     setSaved({ tour, id: t.id });
     void syncLibrary();
     showToast('Gespeichert unter Meine Touren');
+    return t.id;
   };
+  // Solo oder Gruppe im Schalter der Hauptaktion; als Gruppe erst speichern, dann Mitfahrer einladen
+  const [asGroup, setAsGroup] = useState(false);
   const drive = () => {
+    if (asGroup) {
+      router.push({ pathname: '/gruppe/neu', params: { tour: savedId ?? saveResult() } });
+      return;
+    }
     setActiveTour(tour, req.profile, req.avoid);
     router.push('/navigation');
   };
@@ -86,13 +93,11 @@ export function Result({
       <ActionBar
         sheetTitle={tour.name}
         primary={{ label: 'Losfahren', onPress: drive }}
-        save={{ saved: !!savedId, onPress: saveResult }}
+        mode={{ group: asGroup, onChange: setAsGroup }}
+        save={{ saved: !!savedId, onPress: () => void saveResult() }}
         more={[
           { key: 'adjust', icon: 'pencil', label: 'Anpassen', hint: 'Start, Zwischenziele und Ziel ändern', onPress: onAdjust },
           { key: 'reroll', icon: 'dice', label: 'Neu würfeln', hint: 'Gleiche Länge und Richtung, andere Strecke', onPress: onReroll },
-          ...(savedId
-            ? [{ key: 'group', icon: 'person.2' as const, label: 'Als Gruppe fahren', hint: 'Mitfahrer mit ihrem Namen einladen', onPress: () => router.push({ pathname: '/gruppe/neu', params: { tour: savedId } }) }]
-            : []),
           { key: 'back', icon: 'trash', label: 'Tour verwerfen', hint: 'Zurück zur Auswahl', danger: true, confirm: 'Möchtest du diese Runde wirklich verwerfen?', onPress: onBack },
         ]}>
       </ActionBar>

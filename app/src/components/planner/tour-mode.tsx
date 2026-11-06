@@ -224,8 +224,16 @@ export function TourMode({
   // Für Navigation und Speichern: Profil der ersten Etappe (sonst das allgemeine)
   const firstProfile = plan.legProfile(plan.start ? 0 : 1, profile);
 
-  const drive = () => {
+  // Solo oder Gruppe, im Schalter der Hauptaktion. Als Gruppe wird die Tour vorher gespeichert,
+  // denn Mitfahrer lädt man zu einer Tour aus Meine Touren ein.
+  const [asGroup, setAsGroup] = useState(false);
+  const drive = async () => {
     if (!routeTour) return;
+    if (asGroup) {
+      const id = plan.cloudId && !plan.dirty ? plan.cloudId : await plan.save(curves, firstProfile, avoid);
+      if (id) router.push({ pathname: '/gruppe/neu', params: { tour: id } });
+      return;
+    }
     setActiveTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, firstProfile, avoid);
     router.push('/navigation');
   };
@@ -524,12 +532,10 @@ export function TourMode({
         {routeTour ? (
           <ActionBar
             sheetTitle={plan.name.trim() || 'Neue Tour'}
-            primary={{ label: 'Losfahren', onPress: drive }}
+            primary={{ label: 'Losfahren', onPress: () => void drive() }}
+            mode={{ group: asGroup, onChange: setAsGroup }}
             save={{ saved: !plan.dirty, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) }}
             more={[
-              ...(plan.cloudId && !plan.dirty
-                ? [{ key: 'group', icon: 'person.2' as const, label: 'Als Gruppe fahren', hint: 'Mitfahrer mit ihrem Namen einladen', onPress: () => router.push({ pathname: '/gruppe/neu', params: { tour: plan.cloudId! } }) }]
-                : []),
               { key: 'new', icon: plan.cloudId ? 'xmark' : 'trash', label: plan.cloudId ? 'Schließen' : 'Tour verwerfen', hint: plan.cloudId ? 'Gespeicherte Tour bleibt in Meine Touren' : 'Alle Punkte entfernen', danger: !plan.cloudId, confirm: 'Möchtest du diese Tour wirklich verwerfen?', onPress: plan.reset },
             ]}>
             {plan.cloudId && plan.dirty && !plan.saving && (

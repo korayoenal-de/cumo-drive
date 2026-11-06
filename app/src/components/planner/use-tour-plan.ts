@@ -147,8 +147,9 @@ export function useTourPlan(onPlanned?: () => void) {
     insertAt(full.indexOf(p) - 1, p, profile, avoid, known);
   }
 
-  async function save(curves: number, profile: Profile, avoid: Avoid) {
-    if (!planned) return;
+  /** Speichert und liefert die ID in Meine Touren, null wenn es nicht geklappt hat */
+  async function save(curves: number, profile: Profile, avoid: Avoid): Promise<string | null> {
+    if (!planned) return null;
     setSaving(true);
     setSaveMsg(null);
     try {
@@ -159,9 +160,11 @@ export function useTourPlan(onPlanned?: () => void) {
       void syncLibrary();
       setSaveMsg(null);
       showToast('Gespeichert unter Meine Touren');
+      return saved.id;
     } catch (e) {
       setSaveMsg(null);
       showToast(`Speichern hat nicht geklappt: ${e instanceof Error ? e.message : String(e)}`, { tone: 'error' });
+      return null;
     } finally {
       setSaving(false);
     }
