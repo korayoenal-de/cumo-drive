@@ -92,11 +92,11 @@ function RoundButton({ icon, label, hint, muted, onPress }: { icon: SFSymbol; la
   );
 }
 
-/** Lesezeichen: füllt sich beim Speichern mit einem kurzen, sanften Puls. */
+/** Lesezeichen: füllt sich beim Speichern mit einem kurzen, sanften Puls (Motion.pop). */
 function SaveButton({ saved, busy, onPress }: { saved: boolean; busy?: boolean; onPress: () => void }) {
   const s = useSharedValue(1);
   useEffect(() => {
-    if (saved) s.set(withSequence(withSpring(1.12, Motion.press), withSpring(1, Motion.snap)));
+    if (saved) s.set(withSequence(withSpring(1 + Motion.pop, Motion.press), withSpring(1, Motion.snap)));
   }, [saved, s]);
   const st = useAnimatedStyle(() => ({ transform: [{ scale: s.get() }] }));
   return (

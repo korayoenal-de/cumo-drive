@@ -30,10 +30,14 @@ Regeln:
 * Ein Objekt hat genau einen Einstieg für Optionen: das Symbol ⋯ rechts. Die Fläche selbst öffnet das Objekt.
 * Optionen gleiten nicht mehr inline herein; die Federn aus 3 gelten für Sheets und Ebenen.
 
-## 3. Bewegung mit Federn
-* Alle Animationen nutzen `Motion` aus `theme.ts` (press, snap). Keine linearen Übergänge.
-* Antippen gibt sichtbar nach (`Motion.pressScale`), Listen schließen Lücken weich (Layout Animation).
-* Animationen laufen auf dem UI Thread (Reanimated), nie über React State pro Frame.
+## 3. Bewegung mit Federn (Bounce geregelt am 6.11.2026)
+* Alle Animationen nutzen `Motion` aus `theme.ts`. Keine linearen Übergänge.
+* Federn `press` (Drücken) und `snap` (Hereingleiten, Blatt, Tab Leiste, Sheets, Toast) schwingen nicht über. Kein Federn ohne diese Werte, keine Standard Feder von Reanimated.
+* Bounce gibt es nur als Puls `Motion.pop` (2 Prozent, einmal hin und zurück), und nur für zwei Anlässe: eine Aktion ist erledigt (Lesezeichen beim Speichern) und Aufmerksamkeit kurz vor einem Manöver (Navigationssymbol). Sonst nirgends.
+* Drücken verkleinert auf `Motion.pressScale` (98,5 Prozent).
+* Ausnahme: der Stern der Legende im Fahrspaß Pegel (125 Prozent), eine eigene Gestaltung.
+* Pfeil kurz vor dem Manöver: die Linie baut sich bis zur Basis der Spitze auf, dann füllt sich die ganze Spitze auf einmal, danach der Puls. Umgebung und schwacher Pfeil liegen in einer Ebene, so ist im Kreisverkehr nur ein Weg zu sehen.
+* Bei „Bewegung reduzieren“ nur Deckkraft, kein Aufbau, kein Puls.
 
 ## 4. Inhalt zeigt sich selbst
 * Touren mit Mini Streckenbild, Zahlen in Tabellenziffern, Status als getönte Plakette statt Text im Fließtext.

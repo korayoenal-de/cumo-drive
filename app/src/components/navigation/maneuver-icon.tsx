@@ -2,7 +2,9 @@
  * Navigationssymbole aus maneuver-geometry.ts (gleiche Formen wie im Design System).
  *
  * Mit soon (Manöver steht kurz bevor) baut sich der Pfeil von unten bis zur Spitze auf, wie mit einer Maske
- * aufgedeckt, darunter bleibt er schwach sichtbar. Ist die Spitze erreicht, pulsiert das Symbol kurz.
+ * aufgedeckt, darunter bleibt er schwach sichtbar. Erreicht die Linie die Basis der Spitze, füllt sich die
+ * ganze Spitze auf einmal, die Linie läuft darunter weiter. Danach ein Puls
+ * mit Motion.pop.
  * Symbole ohne Pfeil pulsieren nur. Bei „Bewegung reduzieren“ bleibt ein sanftes Pulsieren der Deckkraft.
  */
 import { useEffect } from 'react';
@@ -23,10 +25,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { G, Path, Rect, Text as SvgText } from 'react-native-svg';
 
-import { Colors } from '@/constants/theme';
+import { Colors, Motion } from '@/constants/theme';
 import type { ManeuverKind } from '@/lib/navigation/types';
 
-import { symbolFor, symbolGeometry, type NavSymbol, type Paint, type Shape } from './maneuver-geometry';
+import { SHAFT_INSIDE_HEAD, symbolFor, symbolGeometry, type NavSymbol, type Paint, type Shape } from './maneuver-geometry';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -89,16 +91,29 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
   const lens = g.shapes.map((s) => (s.t === 'stroke' && s.len ? s.len : 0));
   const total = lens.reduce((n, l) => n + l, 0);
   const starts = lens.map((_, i) => lens.slice(0, i).reduce((n, l) => n + l, 0));
+  // Fortschritt, bei dem die Linie (mit runder Kappe) die Basis der Spitze erreicht
+  const headAt = total > 0 ? Math.max(0.5, (total - SHAFT_INSIDE_HEAD - 3) / total) : 0.9;
   const isInk = (s: Shape) => (s.t === 'stroke' && !!s.len) || (s.t === 'fill' && !!s.round);
-  // Schwache Ebene: der ganze Pfeil als eine Gruppe, die als Ganzes transparent wird, damit Linie und Spitze nicht doppelt durchscheinen
+  // Schwache Ebene: Umgebung (Ring, Straße) und der ganze Pfeil in EINER Gruppe, die als Ganzes
+  // transparent wird. So liegen Ring und schwacher Pfeil nicht übereinander und es ist nur ein Pfad
+  // zu sehen (vorher zwei verschieden helle Wege im Kreisverkehr). 0,86 mal 0,35 ergibt wieder 0,3.
   const ghost = draw ? (
-    <G opacity={GHOST}>
-      {g.shapes.map((s, i) => (isInk(s) ? <StaticShape key={i} shape={s} color={paint[s.paint]} /> : null))}
+    <G opacity={0.35}>
+      {g.shapes.map((s, i) =>
+        isInk(s) ? <G key={i} opacity={GHOST / 0.35}><StaticShape shape={s} color={paint[s.paint]} solid /></G> : s.paint === 'faint' ? <StaticShape key={i} shape={s} color={paint[s.paint]} solid /> : null,
+      )}
     </G>
   ) : null;
   const body = g.shapes.map((s, i) => {
-    if (s.t === 'stroke' && s.len && draw) return <DrawnStroke key={i} shape={s} color={paint[s.paint]} from={starts[i]} total={total} p={p} />;
-    if (s.t === 'fill' && s.round && draw) return <DrawnHead key={i} d={s.d} color={paint[s.paint]} p={p} />;
+    if (s.t === 'stroke' && s.len && draw) {
+      // Schaft unter einer Spitze: hält an der Basis (samt runder Kappe), bis die Spitze voll ist
+      const next = g.shapes[i + 1];
+      const intoHead = next?.t === 'fill' && !!next.round;
+      return <DrawnStroke key={i} shape={s} color={paint[s.paint]} from={starts[i]} total={total} p={p} stopBefore={intoHead ? SHAFT_INSIDE_HEAD + s.w / 2 : 0} release={headAt + 0.025} />;
+    }
+    if (s.t === 'fill' && s.round && draw) return <DrawnHead key={i} d={s.d} color={paint[s.paint]} p={p} at={headAt} />;
+    // Umgebung liegt beim Aufbau schon in der schwachen Ebene
+    if (draw && s.paint === 'faint') return null;
     return <StaticShape key={i} shape={s} color={paint[s.paint]} />;
   });
   const all = (
@@ -110,7 +125,7 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
 
   const style = useAnimatedStyle(() => {
     if (reduce) return { opacity: 1 - pulse.value * 0.35 };
-    return { transform: [{ scale: 1 + pulse.value * (draw ? 0.06 : 0.1) }] };
+    return { transform: [{ scale: 1 + pulse.value * Motion.pop }] };
   });
 
   return (
@@ -127,15 +142,16 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
   );
 }
 
-function StaticShape({ shape: s, color }: { shape: Shape; color: string }) {
+function StaticShape({ shape: s, color, solid }: { shape: Shape; color: string; solid?: boolean }) {
+  const faint = s.paint === 'faint' && !solid ? 0.35 : 1;
   if (s.t === 'stroke') {
-    return <Path d={s.d} stroke={color} strokeOpacity={s.paint === 'faint' ? 0.35 : 1} strokeWidth={s.w} strokeLinecap="round" strokeLinejoin="round" fill="none" />;
+    return <Path d={s.d} stroke={color} strokeOpacity={faint} strokeWidth={s.w} strokeLinecap="round" strokeLinejoin="round" fill="none" />;
   }
   return (
     <Path
       d={s.d}
       fill={color}
-      fillOpacity={s.paint === 'faint' ? 0.35 : 1}
+      fillOpacity={faint}
       fillRule={s.evenodd ? 'evenodd' : 'nonzero'}
       {...(s.round ? { stroke: color, strokeWidth: 2, strokeLinejoin: 'round' as const } : {})}
     />
@@ -143,19 +159,39 @@ function StaticShape({ shape: s, color }: { shape: Shape; color: string }) {
 }
 
 /** Linie, die sich über die Länge aufbaut (die schwache Fassung liegt in der Gruppe darunter). */
-function DrawnStroke({ shape: s, color, from, total, p }: { shape: Extract<Shape, { t: 'stroke' }>; color: string; from: number; total: number; p: SharedValue<number> }) {
+function DrawnStroke({
+  shape: s,
+  color,
+  from,
+  total,
+  p,
+  stopBefore,
+  release,
+}: {
+  shape: Extract<Shape, { t: 'stroke' }>;
+  color: string;
+  from: number;
+  total: number;
+  p: SharedValue<number>;
+  /** so viele Einheiten vor dem Ende anhalten, bis p den Wert release erreicht */
+  stopBefore: number;
+  release: number;
+}) {
   const len = s.len ?? 1;
   const props = useAnimatedProps(() => {
-    const local = Math.min(1, Math.max(0, (p.value * total - from) / len));
-    return { strokeDashoffset: len * (1 - local), strokeOpacity: local > 0 ? 1 : 0 };
+    let shown = Math.min(len, Math.max(0, p.value * total - from));
+    if (stopBefore > 0 && p.value < release) shown = Math.min(shown, Math.max(0, len - stopBefore));
+    return { strokeDashoffset: len + 2 - shown, strokeOpacity: shown > 0 ? 1 : 0 };
   });
-  return <AnimatedPath d={s.d} stroke={color} strokeWidth={s.w} strokeLinecap="round" strokeLinejoin="round" fill="none" strokeDasharray={[len, len]} animatedProps={props} />;
+  // Lücke weit länger als der Pfad: ist die echte Länge größer als die gerechnete (Bögen),
+  // erscheint sonst ein zweites Stück Linie (zwei Pfade im Kreisverkehr)
+  return <AnimatedPath d={s.d} stroke={color} strokeWidth={s.w} strokeLinecap="round" strokeLinejoin="round" fill="none" strokeDasharray={[len + 2, 1000]} animatedProps={props} />;
 }
 
-/** Spitze: erscheint, sobald die Linie sie erreicht. */
-function DrawnHead({ d, color, p }: { d: string; color: string; p: SharedValue<number> }) {
+/** Spitze: füllt sich ganz und auf einmal, sobald die Linie ihre Basis erreicht (kein dünner Strich in der Spitze). */
+function DrawnHead({ d, color, p, at }: { d: string; color: string; p: SharedValue<number>; at: number }) {
   const props = useAnimatedProps(() => {
-    const o = interpolate(p.value, [0.85, 0.97], [0, 1], 'clamp');
+    const o = interpolate(p.value, [at - 0.015, at + 0.025], [0, 1], 'clamp');
     return { fillOpacity: o, strokeOpacity: o };
   });
   return <AnimatedPath d={d} fill={color} stroke={color} strokeWidth={2} strokeLinejoin="round" animatedProps={props} />;

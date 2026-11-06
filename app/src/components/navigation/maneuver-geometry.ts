@@ -108,6 +108,8 @@ export const STROKE = 6;
 const HEAD_LEN = 16;
 const HEAD_HALF = 10;
 const UNDER = HEAD_LEN * 0.6;
+/** So weit läuft der Schaft in die Spitze hinein (ab ihrer Basis); die Animation füllt die Spitze, sobald die Linie die Basis erreicht. */
+export const SHAFT_INSIDE_HEAD = HEAD_LEN - UNDER;
 const SIZE = 64;
 
 type Pt = { x: number; y: number };
