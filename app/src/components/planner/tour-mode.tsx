@@ -28,6 +28,8 @@ import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, t
 import { type Avoid } from '@/lib/valhalla';
 
 import { PlaceSearch, type Cat, type Slot } from './place-search';
+import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
+import { allowTurnAt } from '@/lib/cumo-routing';
 import { DragHandle, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, TrustLine, Warnings } from './planner-parts';
 import { keyOf, type PendingPoint, type PointKind, profileWord, samePts, STEP_TEXT } from './planner-shared';
 import { styles } from './planner-styles';
@@ -166,7 +168,11 @@ export function TourMode({
       return at;
     };
     const index = plan.vias.filter((v) => kmOf(v) < km).length;
-    plan.insertAt(index, p, profile, avoid, name);
+    // Nah an der Route: auf der Linie halten, die Strecke bleibt. Weiter weg: hin und zurück, ohne Schleife.
+    const near = flat.length ? nearestOnLine(flat.map((x) => x.p), p) : null;
+    const at = near && near.d <= STOP_SNAP_M ? flat[near.i].p : p;
+    if (at === p) allowTurnAt(p);
+    plan.insertAt(index, at, profile, avoid, name);
     setEdit(null);
   }
 

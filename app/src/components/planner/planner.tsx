@@ -31,9 +31,9 @@ import { Colors, Spacing } from '@/constants/theme';
 import { onEditTour, takeEditTour } from '@/lib/edit-tour';
 import { reverseName } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
-import { planChecked, type PlannedTour } from '@/lib/plan';
+import { type PlannedTour } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
-import { insertVia } from '@/lib/route-edit';
+import { spliceStop } from '@/lib/stop-splice';
 import { flatten, haversine, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
@@ -257,6 +257,7 @@ export default function Planner() {
     abort.current = ctrl;
     lastStops.current = stops;
     setRoundStops([]);
+    roundBase.current = null;
     const done: PlanPhase[] = [];
     const step = (phase: PlanPhase) => {
       setView((v) => {
@@ -323,13 +324,16 @@ export default function Planner() {
   // Die Runde bleibt eine Runde, die Stopps stehen im Abschnitt Unterwegs einplanen.
   const [adding, setAdding] = useState(false);
   const [roundStops, setRoundStops] = useState<(PlannedStop & { p: LatLon })[]>([]);
+  /** Runde ohne Stopps, Ausgangspunkt fürs Entfernen */
+  const roundBase = useRef<PlannedTour | null>(null);
   async function addStop(p: LatLon, name: string, km: number, cat: PlannedStop['cat']) {
     if (view.kind !== 'result') return;
     const cur = view;
     const before = roundStops;
     setAdding(true);
     try {
-      const t = await planChecked(cur.tour.name, insertVia(cur.tour.wegpunkte, p), cur.req.profile, cur.req.avoid, () => undefined);
+      const t = await spliceStop(cur.tour, p, cur.req.profile, cur.req.avoid);
+      if (!roundBase.current) roundBase.current = cur.tour;
       setView({ ...cur, tour: t });
       const kmTxt = `bei km ${Math.round(km)}`;
       const next = [...before, { key: `${p[0]},${p[1]}`, name, detail: kmTxt, cat, p }];
@@ -340,6 +344,7 @@ export default function Planner() {
           onPress: () => {
             setView(cur);
             setRoundStops(before);
+            if (!before.length) roundBase.current = null;
           },
         },
       });
@@ -350,27 +355,17 @@ export default function Planner() {
     }
   }
   async function removeStop(key: string) {
-    if (view.kind !== 'result') return;
+    if (view.kind !== 'result' || !roundBase.current) return;
     const cur = view;
-    const st = roundStops.find((x) => x.key === key);
-    if (!st) return;
-    const w = cur.tour.wegpunkte;
-    // Zwischenpunkt der Runde, der dem Stopp am nächsten liegt (nie Start oder Ziel)
-    let idx = -1;
-    let best = Infinity;
-    for (let i = 1; i < w.length - 1; i++) {
-      const d = haversine(w[i], st.p);
-      if (d < best) {
-        best = d;
-        idx = i;
-      }
-    }
-    if (idx < 0) return;
+    const rest = roundStops.filter((x) => x.key !== key);
     setAdding(true);
     try {
-      const t = await planChecked(cur.tour.name, w.filter((_, i) => i !== idx), cur.req.profile, cur.req.avoid, () => undefined);
+      // Von der Runde ohne Stopps aus die übrigen Stopps wieder einsetzen
+      let t = roundBase.current;
+      for (const st of rest) t = await spliceStop(t, st.p, cur.req.profile, cur.req.avoid);
       setView({ ...cur, tour: t });
-      setRoundStops(roundStops.filter((x) => x.key !== key));
+      setRoundStops(rest);
+      if (!rest.length) roundBase.current = null;
     } catch {
       showToast('Der Stopp ließ sich nicht entfernen', { tone: 'error' });
     } finally {

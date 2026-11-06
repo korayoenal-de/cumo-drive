@@ -72,6 +72,17 @@ const DOUBLE_MAX_KM = 2;
 /** Wird false, sobald der Server pass_through ablehnt. */
 let passThroughOk = true;
 
+/**
+ * Punkte, an denen Wenden erlaubt ist: Stopps abseits der Route (Café, Tankstelle in einer Seitenstraße).
+ * Dort fährt man hin und auf demselben Weg zurück; mit pass_through suchte der Server sonst eine
+ * Schleife durch das Wohngebiet (6.11., Rundtour Bensheim mit zwei Stopps).
+ */
+const turnAt = new Set<string>();
+const pkey = (p: LatLon) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`;
+export function allowTurnAt(p: LatLon) {
+  turnAt.add(pkey(p));
+}
+
 const DETAILS = ['road_class', 'surface', 'track_type', 'max_width', 'street_name', 'street_ref', 'curvature'];
 
 /** Kleine Quadrate (etwa 120 m) um gesperrte Stellen, für den Ausschluss per custom_model. */
@@ -384,7 +395,7 @@ export async function cumoPlan(
       profile: ghProfile(profile).name,
       ...(m ? { custom_model: m } : {}),
     };
-    if (points.length > 2 && passThroughOk) {
+    if (points.length > 2 && passThroughOk && !points.some((q) => turnAt.has(pkey(q)))) {
       try {
         return await post({ ...body, pass_through: true }, signal);
       } catch (e) {
@@ -411,7 +422,8 @@ export async function cumoPlan(
   const dup = doubledStretch(first.linie.flatMap((r) => r.p));
   // Lange Routen nicht ein zweites Mal rechnen: die Anfrage mit Strafzonen dauerte bei 700 km über
   // eine Minute, und doppelte Stücke fallen dort kaum ins Gewicht
-  if (dup.km <= DOUBLE_MAX_KM || long) return first;
+  // Zu einem Stopp abseits hin und zurück ist gewollt, dort nicht gegen doppelte Stücke neu rechnen
+  if (dup.km <= DOUBLE_MAX_KM || long || points.some((q) => turnAt.has(pkey(q)))) return first;
   // Die doppelten Stücke nicht in die Nähe der Wegpunkte legen, dort muss die Route hin
   const penalize = dup.points.filter((q) => !points.some((w) => haversine(w, q) < 600));
   if (!penalize.length) return first;
