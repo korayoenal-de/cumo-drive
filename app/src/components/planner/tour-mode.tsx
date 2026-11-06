@@ -21,6 +21,7 @@ import { ActionBar } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { Colors, Motion, Shadow } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
+import { shareTourLink } from '@/lib/share-link';
 import { useSession } from '@/lib/auth';
 import { doubledStretch } from '@/lib/doubled';
 import { passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
@@ -585,12 +586,23 @@ export function TourMode({
             // Neue Planung: Merken. Geöffnete Tour: nur bei echter Änderung, sonst steht dort Löschen.
             save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) } : undefined}
             float={asGroup ? <GroupOptions onInvite={() => void drive()} /> : undefined}
+            // Leise Links über dem Knopf: Teilen immer, Löschen nur bei einer gespeicherten Tour
             top={
-              plan.cloudId ? (
-                <Pressable accessibilityRole="button" onPress={() => setAskDelete(true)} hitSlop={8} style={styles.deleteLink}>
-                  <AppText style={styles.deleteLinkText}>Route löschen</AppText>
+              <View style={styles.linkRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityHint="Andere öffnen die Route direkt in CUMO DRIVE"
+                  onPress={() => void shareTourLink({ ...routeTour, name: plan.name.trim() || routeTour.name }, firstProfile).catch(() => undefined)}
+                  hitSlop={8}
+                  style={styles.deleteLink}>
+                  <AppText style={styles.deleteLinkText}>Link teilen</AppText>
                 </Pressable>
-              ) : undefined
+                {plan.cloudId && (
+                  <Pressable accessibilityRole="button" onPress={() => setAskDelete(true)} hitSlop={8} style={styles.deleteLink}>
+                    <AppText style={styles.deleteLinkText}>Route löschen</AppText>
+                  </Pressable>
+                )}
+              </View>
             }>
             {plan.cloudId && plan.dirty && !plan.saving && (
               <AppText variant="caption" style={styles.changed}>

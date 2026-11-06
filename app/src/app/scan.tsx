@@ -13,6 +13,7 @@ import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { planChecked, type PlanStep } from '@/lib/plan';
 import { fetchHandoff, isHandoffCode } from '@/lib/handoff';
+import { setEditTour } from '@/lib/edit-tour';
 import { decodeTour, extractCode } from '@/lib/share-code';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 
@@ -68,8 +69,10 @@ export default function ScanScreen() {
         (s) => setStatus({ kind: 'busy', text: STEP_TEXT[s] ?? 'Einen Moment', name: shared.name }),
         ctrl.signal,
       );
-      setActiveTour(tour, shared.profile, DEFAULT_AVOID);
-      router.replace('/karte');
+      // wie bei der Community: ungespeicherte Kopie im Planer, das Lesezeichen legt sie unter Geteilt ab
+      const now = new Date().toISOString();
+      setEditTour({ ...tour, id: '', folder: 'Geteilt', createdAt: now, updatedAt: now, profile: shared.profile });
+      router.dismissTo('/');
     } catch (e) {
       if (ctrl.signal.aborted) return;
       handled.current = false;

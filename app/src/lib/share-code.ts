@@ -109,6 +109,11 @@ export function shareUrl(code: string): string {
   return `${SHARE_BASE}#${code}`;
 }
 
+/** Öffnet die installierte App (TestFlight) und übernimmt die Tour in den Planer. */
+export function appLink(code: string): string {
+  return `cumodrive://scan?code=${encodeURIComponent(code)}`;
+}
+
 /** Link, der die App in Expo Go öffnet und die Tour direkt übernimmt (bis es eine eigene App gibt). */
 export function expoGoLink(code: string): string {
   return `exp://u.expo.dev/44e0d073-6f59-455d-8a50-0f11f6fef4b7/--/scan?runtime-version=exposdk%3A58.0.0&channel-name=preview&code=${encodeURIComponent(code)}`;

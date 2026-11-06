@@ -10,7 +10,7 @@ import { Linking, Platform, Pressable, StyleSheet, View } from "react-native";
 import { AppText } from "@/components/ui/text";
 import { Colors, Fonts, Radius, Spacing, Type } from "@/constants/theme";
 import { PROFILES } from "@/lib/tour";
-import { decodeTour, expoGoLink, extractCode } from "@/lib/share-code";
+import { appLink, decodeTour, extractCode } from "@/lib/share-code";
 
 const subscribe = (cb: () => void) => {
   if (typeof window === "undefined") return () => undefined;
@@ -35,7 +35,7 @@ export default function SharedTour() {
           <>
             <View style={{ gap: 6 }}>
               <AppText variant="caption" muted>
-                Tour vom Planer
+                Geteilte Tour
               </AppText>
               <AppText variant="display" style={styles.title}>
                 {tour.name}
@@ -51,16 +51,13 @@ export default function SharedTour() {
               accessibilityRole="link"
               style={styles.primary}
               onPress={() => {
-                window.location.href = expoGoLink(code);
+                window.location.href = appLink(code);
               }}
             >
               <AppText style={styles.primaryText}>In CUMO DRIVE öffnen</AppText>
             </Pressable>
             <AppText variant="caption" muted>
-              Öffnet die App in Expo Go. Sie plant die Strecke neu, prüft sie
-              mit dem Etappen Check und zeigt sie auf der Karte. Klappt das
-              nicht, in der App unter Entdecken „Tour vom Planer holen“ wählen
-              und den Code am Rechner scannen.
+              Öffnet die Route in deiner CUMO DRIVE App. Sie plant die Strecke neu, prüft sie mit dem Etappen Check und legt sie in den Planer. Dort speicherst du sie mit dem Lesezeichen.
             </AppText>
           </>
         ) : (

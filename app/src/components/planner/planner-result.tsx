@@ -8,6 +8,7 @@ import { Linking, Pressable, View } from 'react-native';
 
 import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
+import { shareTourLink } from '@/lib/share-link';
 import { PASS_STATUS_URL, PASSES, passesAlong } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import { type TourRequest } from '@/components/planner/create-tour';
@@ -120,6 +121,7 @@ export function Result({
         float={asGroup ? <GroupOptions onInvite={drive} /> : undefined}
         save={{ saved: !!savedId, onPress: () => void saveResult() }}
         more={[
+          { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Route direkt in CUMO DRIVE', onPress: () => void shareTourLink({ ...tour, name: tour.name }, req.profile).catch(() => undefined) },
           { key: 'adjust', icon: 'pencil', label: 'Anpassen', hint: 'Start, Zwischenziele und Ziel ändern', onPress: onAdjust },
           { key: 'reroll', icon: 'dice', label: 'Neu würfeln', hint: 'Gleiche Länge und Richtung, andere Strecke', onPress: onReroll },
           { key: 'back', icon: 'trash', label: 'Tour verwerfen', hint: 'Zurück zur Auswahl', danger: true, confirm: 'Möchtest du diese Runde wirklich verwerfen?', onPress: onBack },

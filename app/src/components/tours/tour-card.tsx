@@ -22,6 +22,7 @@ import { publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
 import { deleteTour, type SavedTour } from '@/lib/library';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
+import { shareTourLink } from '@/lib/share-link';
 import { showToast } from '@/lib/toast';
 import { flatten, formatKm } from '@/lib/tour';
 
@@ -44,6 +45,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
     }
   };
   const items: SheetItem[] = [
+    { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Route direkt in CUMO DRIVE', onPress: () => void shareTourLink(t, t.profile ?? 'kurvig').catch(() => undefined) },
     { key: 'gpx', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Als GPX teilen', hint: 'Für Garmin, TomTom und andere Navis', onPress: () => void exp('gpx') },
     { key: 'kml', icon: 'map', label: 'Als KML teilen', hint: 'Für Google Earth und My Maps', onPress: () => void exp('kml') },
     {

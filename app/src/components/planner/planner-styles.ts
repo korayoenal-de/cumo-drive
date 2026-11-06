@@ -18,6 +18,7 @@ export const styles = StyleSheet.create({
   stopIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.signalTint },
   stopRemove: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   pressedSoft: { opacity: 0.8, transform: [{ scale: Motion.pressScale }] },
+  linkRow: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.l },
   deleteLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.m },
   deleteLinkText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   winter: { gap: Spacing.xs, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: Colors.warnTint },
