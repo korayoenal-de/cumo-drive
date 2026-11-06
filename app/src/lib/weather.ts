@@ -5,6 +5,7 @@
  * Ergebnisse werden je Pass und Stunde zwischengespeichert, damit das Neuzeichnen nichts kostet.
  */
 import { requireOptionalNativeModule } from 'expo';
+import { useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 
 import type { Pass } from './passes';
@@ -25,7 +26,7 @@ export type PassWeather = {
   at: number;
 };
 
-type Raw = Omit<PassWeather, 'at'> & { ok: boolean; time?: number };
+type Raw = Omit<PassWeather, 'at'> & { ok: boolean; time?: number; error?: string };
 type Mod = {
   forecast(points: number[][]): Promise<Raw[]>;
   attribution(): Promise<{ legalUrl: string; markDark?: string; markLight?: string; name: string }>;
@@ -34,6 +35,29 @@ type Mod = {
 const native: Mod | null = Platform.OS === 'ios' ? requireOptionalNativeModule<Mod>('CumoWeather') : null;
 
 export const weatherAvailable = !!native;
+
+/**
+ * Zustand für die Karteneinstellungen: Schlägt WeatherKit fehl, steht dort der Grund statt still
+ * nichts zu zeigen (Build 7 am 6.11.: keine Plaketten, Ursache unklar).
+ */
+export type WeatherStatus = { state: 'unbekannt' | 'ok' | 'fehler' | 'fehlt'; msg?: string };
+let status: WeatherStatus = native ? { state: 'unbekannt' } : { state: 'fehlt' };
+const listeners = new Set<() => void>();
+function setStatus(next: WeatherStatus) {
+  if (next.state === status.state && next.msg === status.msg) return;
+  status = next;
+  for (const l of listeners) l();
+}
+export function useWeatherStatus(): WeatherStatus {
+  return useSyncExternalStore(
+    (l) => {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
+    () => status,
+    () => status,
+  );
+}
 
 const cache = new Map<string, PassWeather | null>();
 const keyOf = (id: string, at: number) => `${id}@${Math.floor(at / 3600000)}`;
@@ -46,11 +70,16 @@ export async function passWeather(list: { pass: Pass; at: number }[]): Promise<M
   if (todo.length) {
     try {
       const res = await native.forecast(todo.map((x) => [x.pass.lat, x.pass.lon, x.pass.ele, x.at / 1000]));
+      const okCount = res.filter((r) => r?.ok).length;
       todo.forEach((x, i) => {
         const r = res[i];
-        cache.set(keyOf(x.pass.id, x.at), r?.ok ? { ...r, at: (r.time ?? x.at / 1000) * 1000 } : null);
+        // Fehlschläge nicht merken, sonst bleibt das Wetter eine Stunde lang leer
+        if (r?.ok) cache.set(keyOf(x.pass.id, x.at), { ...r, at: (r.time ?? x.at / 1000) * 1000 });
       });
-    } catch {
+      if (okCount) setStatus({ state: 'ok' });
+      else setStatus({ state: 'fehler', msg: res.find((r) => r?.error)?.error ?? 'keine Vorhersage erhalten' });
+    } catch (e) {
+      setStatus({ state: 'fehler', msg: (e as Error).message });
       return out;
     }
   }

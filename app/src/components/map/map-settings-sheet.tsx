@@ -18,6 +18,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import { useWeatherStatus, type WeatherStatus } from '@/lib/weather';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import {
@@ -65,6 +66,13 @@ export function MapLayersButton({ style }: { style?: object }) {
 
 type LayerKey = Exclude<keyof MapSettings, 'style'>;
 
+/** Hinweis unter Wetter, wenn WeatherKit nicht liefert (Text vom System, gekürzt) */
+function weatherNote(note: string, w: WeatherStatus): string {
+  if (w.state === 'fehlt') return 'In dieser App Version noch nicht enthalten';
+  if (w.state === 'fehler') return `Gerade nicht verfügbar: ${(w.msg ?? '').slice(0, 120)}`;
+  return note;
+}
+
 const LAYERS: { key: LayerKey; icon: SFSymbol; label: string; note: string }[] =
   [
     {
@@ -101,6 +109,7 @@ const LAYERS: { key: LayerKey; icon: SFSymbol; label: string; note: string }[] =
 
 function MapSettingsBody({ onClose }: { onClose: () => void }) {
   const st = useMapSettings();
+  const weather = useWeatherStatus();
   return (
     <View style={styles.sheet}>
       <View style={styles.head}>
@@ -163,7 +172,7 @@ function MapSettingsBody({ onClose }: { onClose: () => void }) {
                 </View>
                 <View style={styles.flex}>
                   <AppText style={styles.rowTitle}>{l.label}</AppText>
-                  <AppText style={styles.rowNote}>{l.note}</AppText>
+                  <AppText style={styles.rowNote}>{l.key === 'weather' ? weatherNote(l.note, weather) : l.note}</AppText>
                 </View>
                 <Switch
                   value={st[l.key]}
