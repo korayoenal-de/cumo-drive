@@ -11,6 +11,7 @@
 import * as Speech from 'expo-speech';
 
 import type { Maneuver, NavRoute } from './types';
+import { chosenVoiceId } from '../voice-settings';
 
 type Stage = 'weit' | 'nah' | 'jetzt';
 
@@ -202,7 +203,7 @@ function defaultSpeak(text: string) {
       speaking = Math.max(0, speaking - 1);
       if (!speaking) audioOff();
     };
-    Speech.speak(text, { language: 'de-DE', rate: 1.0, onDone: done, onStopped: done, onError: done });
+    Speech.speak(text, { language: 'de-DE', voice: chosenVoiceId(), rate: 1.0, onDone: done, onStopped: done, onError: done });
   } catch {
     // Sprachausgabe ist nicht wichtig genug, um die Navigation zu stören
   }

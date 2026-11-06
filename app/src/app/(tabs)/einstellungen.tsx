@@ -1,5 +1,5 @@
 /**
- * Einstellungen: Konto und Garage. In der Garage legt man seine Fahrzeuge an; pro Fahrzeug
+ * Einstellungen: Garage, Ansagen (Stimme) und Konto. In der Garage legt man seine Fahrzeuge an; pro Fahrzeug
  * stehen die gefahrenen Kilometer und Touren aus dem Konto.
  */
 import { SymbolView } from 'expo-symbols';
@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { MembershipSection } from '@/components/paywall/membership-section';
+import { VoiceSection } from '@/components/settings/voice-section';
 import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
@@ -45,6 +46,7 @@ export default function Einstellungen() {
         Einstellungen
       </AppText>
       <Garage drives={session ? drives : null} />
+      <VoiceSection />
       {session && <MembershipSection />}
       <View style={styles.gapM}>
         <AppText variant="label">Konto</AppText>
