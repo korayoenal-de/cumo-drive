@@ -14,6 +14,8 @@ import { useLibrary } from '@/lib/library';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { passPoint, PASSES } from '@/lib/passes';
 import type { CheckClass, LatLon } from '@/lib/tour';
+import { CarTopView, carSymbolFor } from '@/components/map/car-marker';
+import { useVehicles } from '@/lib/vehicle';
 
 import { CLASS_LINE, ROLE_COLOR, sampleLine, tourWarnings, type RouteMapProps } from './route-map-shared';
 
@@ -55,6 +57,8 @@ export function RouteMap({
   pickedPassIds,
 }: RouteMapProps) {
   const settings = useMapSettings();
+  // Eigenes Auto statt Pfeil, wenn in der Garage eingeschaltet
+  const carSymbol = carSymbolFor(useVehicles().current);
   const library = useLibrary();
   const showTours = layers && settings.myTours;
   const tourLines = useMemo(
@@ -389,9 +393,13 @@ export function RouteMap({
 
         {position && !following && (
           <MeMarker coordinate={me as unknown as LatLng} anchor={{ x: 0.5, y: 0.5 }} flat rotation={heading ?? 0} zIndex={40} tracksViewChanges={false}>
-            <View style={styles.me}>
-              <View style={styles.meArrow} />
-            </View>
+            {carSymbol ? (
+              <CarTopView symbol={carSymbol} width={CAR_W} />
+            ) : (
+              <View style={styles.me}>
+                <View style={styles.meArrow} />
+              </View>
+            )}
           </MeMarker>
         )}
       </MapView>
@@ -410,9 +418,13 @@ export function RouteMap({
               right: mapPadding?.right ?? 0,
             },
           ]}>
-          <View style={styles.me}>
-            <View style={styles.meArrow} />
-          </View>
+          {carSymbol ? (
+            <CarTopView symbol={carSymbol} width={CAR_W} />
+          ) : (
+            <View style={styles.me}>
+              <View style={styles.meArrow} />
+            </View>
+          )}
         </View>
       )}
 
@@ -428,6 +440,9 @@ export function RouteMap({
 type MapMarker = InstanceType<typeof Marker>;
 /** Marker mit animierter Position (Typen von react-native-maps kennen die Kinder nicht). */
 const MeMarker = Marker.Animated as unknown as ComponentType<ComponentProps<typeof Marker>>;
+
+/** Breite der Draufsicht in pt, etwa so groß wie der bisherige Punkt (34) */
+const CAR_W = 24;
 
 const styles = StyleSheet.create({
   box: { backgroundColor: Colors.surface, overflow: 'hidden' },

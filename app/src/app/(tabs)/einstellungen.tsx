@@ -18,6 +18,7 @@ import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { formatKm } from '@/lib/tour';
 import { deleteVehicle, FUELS, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleSummary, type Vehicle } from '@/lib/vehicle';
+import { CarTopView } from '@/components/map/car-marker';
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
 
@@ -205,6 +206,11 @@ function Garage({ drives }: { drives: Drive[] | null }) {
           <View key={v.id} style={styles.card}>
             <Pressable accessibilityRole="button" accessibilityHint="Fahrzeug bearbeiten" onPress={() => setEdit(v)} style={styles.gapS}>
               <View style={styles.row}>
+                {v.mapSymbol === 'gts997' && (
+                  <View style={styles.carIcon} accessibilityLabel="Fährt als eigenes Symbol auf der Karte">
+                    <CarTopView width={14} />
+                  </View>
+                )}
                 <AppText style={[styles.name, styles.flex]} numberOfLines={1}>
                   {v.model.trim() || 'Fahrzeug ohne Namen'}
                 </AppText>
@@ -243,6 +249,9 @@ function Garage({ drives }: { drives: Drive[] | null }) {
             ? [
                 ...(current?.id !== menu.id ? [{ key: 'cur', icon: 'checkmark.circle' as const, label: 'Als aktuell wählen', hint: 'Damit fährst du ab jetzt', onPress: () => void selectVehicle(menu.id) }] : []),
                 { key: 'edit', icon: 'pencil' as const, label: 'Bearbeiten', hint: 'Breite, Bodenfreiheit, Reichweite', onPress: () => setEdit(menu) },
+                menu.mapSymbol === 'gts997'
+                  ? { key: 'sym', icon: 'location.north.fill' as const, label: 'Pfeil auf der Karte', hint: 'Statt deines Autos wieder den Pfeil zeigen', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'pfeil' }) }
+                  : { key: 'sym', icon: 'car.fill' as const, label: 'Als Symbol auf der Karte', hint: 'Draufsicht 997.2 Carrera GTS statt des Pfeils (Test)', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'gts997' }).then(() => showToast('Dein Auto fährt jetzt auf der Karte mit')) },
                 { key: 'del', icon: 'trash' as const, label: 'Fahrzeug löschen', danger: true, onPress: () => setAsk(menu) },
               ]
             : []
@@ -318,6 +327,7 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
 }
 
 const styles = StyleSheet.create({
+  carIcon: { transform: [{ rotate: '90deg' }], width: 30, alignItems: 'center' },
   more: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   flex: { flex: 1 },
   gapS: { gap: Spacing.xs },
