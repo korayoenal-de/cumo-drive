@@ -10,9 +10,10 @@
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { type ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { SlideInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { sheetEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 
@@ -28,7 +29,7 @@ export function OptionsSheet({ visible, title, subtitle, onClose, children }: { 
       <KeyboardAvoidingView behavior="padding" style={styles.flex}>
         <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={onClose} style={styles.backdrop} />
         <Animated.View
-          entering={SlideInDown.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)}
+          entering={sheetEnter}
           style={[styles.card, { marginBottom: Math.max(insets.bottom, Spacing.l) }]}
           accessibilityViewIsModal>
           <View style={styles.grabber} />

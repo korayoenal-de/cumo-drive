@@ -4,12 +4,13 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
+import Animated, { FadeOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { softEnter } from '@/components/ui/motion';
 import { TAB_BAR_SPACE } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 import { hideToast, useToast } from '@/lib/toast';
 
 export function ToastHost() {
@@ -21,7 +22,7 @@ export function ToastHost() {
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: insets.bottom + TAB_BAR_SPACE }]}>
       <Animated.View
         key={t.id}
-        entering={FadeInDown.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)}
+        entering={softEnter()}
         exiting={FadeOutDown.duration(160)}
         accessibilityLiveRegion="polite"
         accessibilityRole="alert"

@@ -28,11 +28,12 @@ Regeln:
 * Gefährliches steht im Sheet unten, rot, und fragt immer nach. Die Frage ist ein ganzer Satz: "Möchtest du diese Tour wirklich löschen?". Die rote Taste nennt das Verb: "Löschen".
 * Toasts nur für Erfolg und für Fehler ohne festen Ort (Export, Netz). Fehler mit Ort stehen am Ort.
 * Ein Objekt hat genau einen Einstieg für Optionen: das Symbol ⋯ rechts. Die Fläche selbst öffnet das Objekt.
-* Optionen gleiten nicht mehr inline herein; die Federn aus 3 gelten für Sheets und Ebenen.
+* Optionen gleiten nicht mehr inline herein; Sheets und Ebenen erscheinen wie in 3 beschrieben.
 
 ## 3. Bewegung mit Federn (Bounce geregelt am 6.11.2026)
 * Alle Animationen nutzen `Motion` aus `theme.ts`. Keine linearen Übergänge.
-* Federn `press` (Drücken) und `snap` (Hereingleiten, Blatt, Tab Leiste, Sheets, Toast) schwingen nicht über. Keine Standard Feder von Reanimated.
+* Ebenen und Optionen (Bottom Sheets, schwebende Aktionen, Toasts, Listen) erscheinen ohne Feder: Auslaufkurve EASE_OUT, Sheets 300 ms, Optionen 260 ms, gestaffelt 45 ms (components/ui/motion.ts). Seit 6.11. nachmittags, weil die Federn dort noch nachwippten.
+* Federn `press` (Drücken) und `snap` nur noch für Gesten und Druck (Blatt ziehen, Tab Leiste, Drücken), ohne Überschwingen. Keine Standard Feder von Reanimated.
 * Bedienelemente ändern ihre Größe höchstens um `Motion.pop` (2 Prozent): Puls beim Speichern, aktiver Tab in der Tab Leiste, Punkt beim Ziehen (die Hälfte). Gedrückt immer `Motion.pressScale` (98,5 Prozent), überall gleich. Das sind 20 Prozent der früheren Ausschläge (3 bis 15 Prozent).
 * Eigene Werte haben nur die Navigationssymbole (Puls 6 Prozent nach dem Aufbau, 10 Prozent bei Symbolen ohne Pfeil) und der Stern der Legende im Fahrspaß Pegel (125 Prozent).
 * Pfeil kurz vor dem Manöver: die Linie baut sich bis zur Basis der Spitze auf, dann füllt sich die ganze Spitze auf einmal, danach der Puls. Umgebung und schwacher Pfeil liegen in einer Ebene, so ist im Kreisverkehr nur ein Weg zu sehen.

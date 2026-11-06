@@ -99,6 +99,10 @@ export const Motion = {
   snap: { damping: 36, stiffness: 260, mass: 1 },
   /** Versatz je Element, wenn mehrere nacheinander hereingleiten (ms) */
   stagger: 45,
+  /** Dauer, mit der Optionen und Karten erscheinen (ms), ohne Überschwingen (components/ui/motion.ts) */
+  enter: 260,
+  /** Dauer, mit der ein Bottom Sheet hereinfährt (ms) */
+  sheet: 300,
   pressScale: 0.985,
   /**
    * Größenänderung von Bedienelementen (Puls beim Speichern, aktiver Tab, Anheben beim Ziehen):

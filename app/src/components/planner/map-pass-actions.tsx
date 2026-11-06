@@ -4,8 +4,9 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeOut } from 'react-native-reanimated';
 
+import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Spacing, Type } from '@/constants/theme';
 import type { Pass } from '@/lib/passes';
@@ -45,7 +46,7 @@ export function MapPassActions({
   return (
     <Animated.View
       key={pass.id}
-      entering={FadeInDown.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)}
+      entering={softEnter()}
       exiting={FadeOut.duration(120)}
       style={[styles.wrap, { bottom }]}
       pointerEvents="box-none">

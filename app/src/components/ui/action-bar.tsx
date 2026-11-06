@@ -7,14 +7,15 @@
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Spacing, Type } from '@/constants/theme';
 
-export const SOFT_LAYOUT = LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness);
-export const softEnter = (i: number) => FadeInDown.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness).delay(i * Motion.stagger);
+import { SOFT_LAYOUT } from '@/components/ui/motion';
+
+export { SOFT_LAYOUT, softEnter } from '@/components/ui/motion';
 
 export type MoreItem = {
   key: string;
