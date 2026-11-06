@@ -93,7 +93,8 @@
       "inlineModules": {
         "watchedDirectories": [
           "app-intents",
-          "carplay"
+          "carplay",
+          "weather"
         ]
       }
     },

@@ -17,6 +17,8 @@ export type MapSettings = {
   myTours: boolean;
   /** Eigene gefahrene Strecken aus Fahrten */
   drives: boolean;
+  /** Wetter an den Pässen der Route zur Ankunft (WeatherKit) */
+  weather: boolean;
 };
 
 export const MAP_STYLES: { id: MapStyle; label: string }[] = [
@@ -32,6 +34,7 @@ const DEFAULTS: MapSettings = {
   passes: false,
   myTours: false,
   drives: false,
+  weather: true,
 };
 
 let state: MapSettings = DEFAULTS;

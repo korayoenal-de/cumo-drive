@@ -74,6 +74,12 @@ const LAYERS: { key: LayerKey; icon: SFSymbol; label: string; note: string }[] =
       note: 'Gesperrte und zu prüfende Stellen auf der Route',
     },
     {
+      key: 'weather',
+      icon: 'cloud.sun',
+      label: 'Wetter',
+      note: 'An den Pässen der Route, zur Ankunft',
+    },
+    {
       key: 'passes',
       icon: 'mountain.2',
       label: 'Pässe',

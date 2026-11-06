@@ -16,6 +16,7 @@ import { passPoint, PASSES } from '@/lib/passes';
 import type { CheckClass, LatLon } from '@/lib/tour';
 import { CarTopView, carSymbolFor } from '@/components/map/car-marker';
 import { useVehicles } from '@/lib/vehicle';
+import { useRouteWeather, WeatherMarkers, WeatherSheet } from '@/components/map/weather-layer';
 
 import { CLASS_LINE, ROLE_COLOR, sampleLine, tourWarnings, type RouteMapProps } from './route-map-shared';
 
@@ -60,6 +61,9 @@ export function RouteMap({
   // Eigenes Auto statt Pfeil, wenn in der Garage eingeschaltet
   const carSymbol = carSymbolFor(useVehicles().current);
   const library = useLibrary();
+  // Wetter an den Pässen der Route (Ebene Wetter, nur im Planer)
+  const weatherItems = useRouteWeather(tour, layers && settings.weather && tour.linie.length > 0);
+  const [weatherOpen, setWeatherOpen] = useState<(typeof weatherItems)[number] | null>(null);
   const showTours = layers && settings.myTours;
   const tourLines = useMemo(
     () => (showTours ? library.map((t) => ({ id: t.id, p: sampleLine(t, 250).map(ll) })).filter((t) => t.p.length > 1) : []),
@@ -283,6 +287,7 @@ export function RouteMap({
               />
             </Marker>
           ))}
+        {weatherItems.length > 0 && <WeatherMarkers items={weatherItems} onPress={setWeatherOpen} />}
         {runs.map((r, i) => (
           <Polyline
             key={`rand-${r.key}-${i}`}
@@ -427,6 +432,8 @@ export function RouteMap({
           )}
         </View>
       )}
+
+      <WeatherSheet item={weatherOpen} onClose={() => setWeatherOpen(null)} />
 
       {followUser && position && !following && (
         <Pressable accessibilityRole="button" onPress={() => setPaused(0)} style={styles.recenter}>

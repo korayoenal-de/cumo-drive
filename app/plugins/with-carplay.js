@@ -10,6 +10,8 @@ const ROLE = 'CPTemplateApplicationSceneSessionRoleApplication';
 module.exports = function withCarPlay(config) {
   config = withEntitlementsPlist(config, (c) => {
     c.modResults['com.apple.developer.carplay-maps'] = true;
+    // Wetter an den Pässen (Apple WeatherKit, freigeschaltet am 6.11.2026)
+    c.modResults['com.apple.developer.weatherkit'] = true;
     return c;
   });
   config = withInfoPlist(config, (c) => {
