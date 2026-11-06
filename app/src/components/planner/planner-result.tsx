@@ -12,6 +12,7 @@ import { PASS_STATUS_URL, PASSES, passesAlong } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import { type TourRequest } from '@/components/planner/create-tour';
 import { ElevationChart } from '@/components/planner/elevation-chart';
+import { GroupOptions } from '@/components/planner/group-options';
 import { ActionBar } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { setActiveTour } from '@/lib/active-tour';
@@ -94,6 +95,7 @@ export function Result({
         sheetTitle={tour.name}
         primary={{ label: 'Losfahren', onPress: drive }}
         mode={{ group: asGroup, onChange: setAsGroup }}
+        top={asGroup ? <GroupOptions onInvite={drive} /> : undefined}
         save={{ saved: !!savedId, onPress: () => void saveResult() }}
         more={[
           { key: 'adjust', icon: 'pencil', label: 'Anpassen', hint: 'Start, Zwischenziele und Ziel ändern', onPress: onAdjust },

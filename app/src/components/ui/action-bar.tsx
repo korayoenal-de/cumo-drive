@@ -33,14 +33,17 @@ export type MoreItem = {
 export function ActionBar({
   primary,
   mode,
+  top,
   save,
-  more,
+  more: moreIn,
   sheetTitle,
   children,
 }: {
   primary: { label: string; onPress: () => void };
   /** Solo oder Gruppe als Schalter rechts in der Hauptaktion (Entwurf E2, 6.11.) */
   mode?: { group: boolean; onChange: (group: boolean) => void };
+  /** Inhalt über der Leiste, etwa die Optionen der Gruppenfahrt */
+  top?: ReactNode;
   /** Speichern als Symbol: Lesezeichen, gefüllt sobald gespeichert */
   save?: { saved: boolean; busy?: boolean; onPress: () => void };
   more?: MoreItem[];
@@ -50,12 +53,28 @@ export function ActionBar({
   children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  // Mit Schalter in der Hauptaktion wird es eng: gibt es ohnehin ein Menü, wandert Speichern dort hinein
+  const foldSave = !!mode && !!save && !!moreIn?.length;
+  const more: MoreItem[] | undefined =
+    foldSave && save
+      ? [
+          {
+            key: 'save',
+            icon: save.saved ? 'bookmark.fill' : 'bookmark',
+            label: save.saved ? 'Gespeichert' : 'Speichern',
+            hint: save.saved ? 'Liegt in Meine Touren' : 'Unter Meine Touren ablegen',
+            onPress: () => !save.saved && save.onPress(),
+          },
+          ...moreIn!,
+        ]
+      : moreIn;
   const [ask, setAsk] = useState<MoreItem | null>(null);
   // Gefährliches erst nach Rückfrage ausführen
   const run = (it: MoreItem) => (it.danger ? setAsk(it) : it.onPress());
   const single = more && more.length === 1 ? more[0] : null;
   return (
     <Animated.View layout={SOFT_LAYOUT} style={styles.wrap}>
+      {top}
       <View style={styles.row}>
         {mode ? (
           <View style={styles.primarySplit}>
@@ -75,7 +94,7 @@ export function ActionBar({
             <AppText style={styles.primaryText}>{primary.label}</AppText>
           </Pressable>
         )}
-        {save && <SaveButton {...save} />}
+        {save && !foldSave && <SaveButton {...save} />}
         {single && <RoundButton icon={single.icon} label={single.label} hint={single.hint} muted={single.danger} onPress={() => run(single)} />}
         {more && more.length > 1 && <RoundButton icon="ellipsis" label="Weitere Aktionen" onPress={() => setOpen(true)} />}
       </View>

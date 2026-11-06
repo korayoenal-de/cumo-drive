@@ -13,6 +13,7 @@ import { PASS_STATUS_URL, PASSES, passPoint } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import { locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 import { ElevationChart } from '@/components/planner/elevation-chart';
+import { GroupOptions } from '@/components/planner/group-options';
 import { ActionBar } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { Colors, Motion, Shadow } from '@/constants/theme';
@@ -535,9 +536,7 @@ export function TourMode({
             primary={{ label: 'Losfahren', onPress: () => void drive() }}
             mode={{ group: asGroup, onChange: setAsGroup }}
             save={{ saved: !plan.dirty, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) }}
-            more={[
-              { key: 'new', icon: plan.cloudId ? 'xmark' : 'trash', label: plan.cloudId ? 'Schließen' : 'Tour verwerfen', hint: plan.cloudId ? 'Gespeicherte Tour bleibt in Meine Touren' : 'Alle Punkte entfernen', danger: !plan.cloudId, confirm: 'Möchtest du diese Tour wirklich verwerfen?', onPress: plan.reset },
-            ]}>
+            top={asGroup ? <GroupOptions onInvite={() => void drive()} /> : undefined}>
             {plan.cloudId && plan.dirty && !plan.saving && (
               <AppText variant="caption" style={styles.changed}>
                 Geändert. Tippe auf das Lesezeichen, um die Änderungen zu speichern.
