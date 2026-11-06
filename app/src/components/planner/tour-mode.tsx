@@ -20,7 +20,7 @@ import { setActiveTour } from '@/lib/active-tour';
 import { useSession } from '@/lib/auth';
 import { doubledStretch } from '@/lib/doubled';
 import { passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
-import { flatten, formatKm, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
+import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
 
 import { PlaceSearch } from './place-search';
@@ -148,6 +148,28 @@ export function TourMode({
     else setEdit(null);
   }
 
+  /** Stopp aus einer Kategorie der Suche: als Zwischenziel an der Stelle der Route, an der er liegt */
+  function pickStop(p: LatLon, name: string, km: number) {
+    onListEdit();
+    setPlanChanged(false);
+    // km der vorhandenen Zwischenziele entlang der Route
+    const kmOf = (q: LatLon) => {
+      let best = Infinity;
+      let at = 0;
+      for (const x of flat) {
+        const d = haversine(x.p, q);
+        if (d < best) {
+          best = d;
+          at = x.km;
+        }
+      }
+      return at;
+    };
+    const index = plan.vias.filter((v) => kmOf(v) < km).length;
+    plan.insertAt(index, p, profile, avoid, name);
+    setEdit(null);
+  }
+
   async function takeHere() {
     if (!edit) return;
     setLocMsg(null);
@@ -178,6 +200,8 @@ export function TourMode({
       onHere={() => void takeHere()}
       onRemove={editPoint ? removeEdited : undefined}
       onClose={() => setEdit(null)}
+      route={line.length > 1 ? line : undefined}
+      onPickStop={pickStop}
     />
   );
 

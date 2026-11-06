@@ -227,8 +227,8 @@ async function pool<T, R>(items: T[], n: number, fn: (t: T) => Promise<R>, signa
   return out;
 }
 
-async function fromTiles(base: string, kind: StopKind, line: LatLon[], signal?: AbortSignal): Promise<Cand[]> {
-  const r = RADIUS[kind];
+async function fromTiles(base: string, kind: StopKind, line: LatLon[], signal?: AbortSignal, scale = 1): Promise<Cand[]> {
+  const r = RADIUS[kind] * scale;
   const c = corridor(line);
   // Kacheln (0,1 Grad), die ein Segment samt Radius berührt, mit den Segmenten je Kachel
   const segsByTile = new Map<string, number[]>();
@@ -301,10 +301,10 @@ function probe(line: LatLon[], stepM = 1500): LatLon[] {
 
 const f5 = (v: number) => v.toFixed(5);
 
-function query(kind: StopKind, pts: LatLon[]): string {
+function query(kind: StopKind, pts: LatLon[], scale = 1): string {
   const path = pts.map(([a, b]) => `${f5(a)},${f5(b)}`).join(',');
   const near = (r: number) => `(around:${r},${path})`;
-  const r = RADIUS[kind];
+  const r = Math.round(RADIUS[kind] * scale);
   switch (kind) {
     case 'tank':
       return `[out:json][timeout:10];(
@@ -378,8 +378,8 @@ function overpass(q: string, signal?: AbortSignal): Promise<OsmEl[]> {
   });
 }
 
-async function fromOverpass(kind: StopKind, line: LatLon[], signal?: AbortSignal): Promise<Cand[]> {
-  const els = await overpass(query(kind, probe(line)), signal);
+async function fromOverpass(kind: StopKind, line: LatLon[], signal?: AbortSignal, scale = 1): Promise<Cand[]> {
+  const els = await overpass(query(kind, probe(line), scale), signal);
   const c = corridor(line);
   const out: Cand[] = [];
   for (const e of els) {
@@ -393,18 +393,21 @@ async function fromOverpass(kind: StopKind, line: LatLon[], signal?: AbortSignal
   return out;
 }
 
-/** Stopps einer Art entlang der Route, nach Kilometer sortiert, höchstens limit Stück. */
-export async function stopsAlong(kind: StopKind, line: LatLon[], signal?: AbortSignal, limit = 12): Promise<StopHit[]> {
+/**
+ * Stopps einer Art entlang der Route, nach Kilometer sortiert, höchstens limit Stück.
+ * scale weitet den Korridor um die Route (Korridor erweitern in der Ortssuche: 3).
+ */
+export async function stopsAlong(kind: StopKind, line: LatLon[], signal?: AbortSignal, limit = 12, scale = 1): Promise<StopHit[]> {
   if (line.length < 2) return [];
   const base = await poiBase();
   if (signal?.aborted) throw new Error('Abgebrochen');
   if (base) {
     try {
-      return finish(kind, await fromTiles(base, kind, line, signal), limit);
+      return finish(kind, await fromTiles(base, kind, line, signal, scale), limit);
     } catch (e) {
       if (signal?.aborted) throw e;
       // Kacheln gestört: wie früher über Overpass
     }
   }
-  return finish(kind, await fromOverpass(kind, line, signal), limit);
+  return finish(kind, await fromOverpass(kind, line, signal, scale), limit);
 }
