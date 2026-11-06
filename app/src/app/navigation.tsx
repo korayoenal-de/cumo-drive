@@ -480,12 +480,12 @@ export default function NavigationScreen() {
                     {
                       id: 'einsteigen',
                       label: 'Einsteigen',
-                      hint: 'An der nächsten Stelle in die Tour',
+                      hint: 'Schnell auf die Tour, möglichst nah am Anfang',
                     },
                     {
                       id: 'start',
                       label: 'Über den Startpunkt fahren',
-                      hint: far ? 'Anreise schnell, dann die ganze Tour' : 'Die ganze Tour von Anfang an',
+                      hint: 'Schnellster Weg zum Start, dann die ganze Tour',
                     },
                   ] as { id: NavEntry; label: string; hint: string }[]
                 ).map((o) => (

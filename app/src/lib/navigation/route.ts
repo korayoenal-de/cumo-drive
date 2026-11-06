@@ -171,18 +171,25 @@ function nearestIndex(shape: LatLon[], p: LatLon, from = 0, to = shape.length - 
  * Teil der Tour übersprungen. Bei Rundtouren zählt der letzte Kilometer nicht, sonst stünde
  * man am Start sofort im Ziel.
  */
+/**
+ * Einstieg in die Tour (Entscheidung Koray, 6.11.): schnell auf die Tour, aber möglichst nah am Anfang,
+ * nie kurz vor dem Ende. Kosten je Punkt: Luftlinie dorthin plus 0,4 km für jeden übersprungenen
+ * Tourkilometer. Bei Rundtouren zählt der letzte Kilometer nicht, dort liegt wieder der Start.
+ */
+const SKIP_WEIGHT = 0.4;
+
 function joinIndex(line: LatLon[], cum: number[], p: LatLon, roundTrip: boolean): number {
   const total = cum[cum.length - 1];
   const limit = roundTrip ? Math.max(0, total - 1) : total;
-  const dist = line.map((q) => haversine(q, p));
-  let dmin = Infinity;
-  for (let i = 0; i < line.length && cum[i] <= limit; i++) dmin = Math.min(dmin, dist[i]);
-  const tol = dmin + Math.max(300, dmin * 0.5);
-  let i = 0;
-  while (i < line.length - 1 && cum[i] <= limit && dist[i] > tol) i++;
-  // im ersten passenden Bereich bis zum örtlichen Minimum weitergehen
-  let best = i;
-  for (let j = i; j < line.length && cum[j] <= limit && dist[j] <= tol; j++) if (dist[j] < dist[best]) best = j;
+  let best = 0;
+  let bestCost = Infinity;
+  for (let i = 0; i < line.length && cum[i] <= limit; i++) {
+    const cost = haversine(line[i], p) / 1000 + SKIP_WEIGHT * cum[i];
+    if (cost < bestCost) {
+      bestCost = cost;
+      best = i;
+    }
+  }
   return best;
 }
 
@@ -339,7 +346,7 @@ async function traceLine(line: LatLon[], signal?: AbortSignal): Promise<Piece> {
   return acc;
 }
 
-async function approach(from: LatLon, to: LatLon, toHeading: number, req: NavRequest, signal?: AbortSignal, fromHeading?: number | null): Promise<Piece> {
+async function approach(from: LatLon, to: LatLon, toHeading: number, req: NavRequest, signal?: AbortSignal, fromHeading?: number | null, fast = false): Promise<Piece> {
   const body = {
     locations: [
       // mit Fahrtrichtung: weiterfahren statt wenden, wenn es vorne einen Weg zurück gibt
@@ -347,8 +354,8 @@ async function approach(from: LatLon, to: LatLon, toHeading: number, req: NavReq
       // Ankunft in Fahrtrichtung der Tour, damit man nicht falsch herum einsteigt
       { lat: to[0], lon: to[1], type: 'break', heading: Math.round(toHeading), heading_tolerance: 60, minimum_reachability: 300 },
     ],
-    // Weite Anreise: schnellste Route mit Autobahn, das Tourprofil gilt erst auf der Tour
-    ...costingFor(haversine(from, to) > LONG_APPROACH_M ? 'schnell' : req.profile, req.avoid),
+    // Weg auf die Tour (Zum Start, Einsteigen) und weite Anreise: schnellste Route, das Tourprofil gilt erst auf der Tour
+    ...costingFor(fast || haversine(from, to) > LONG_APPROACH_M ? 'schnell' : req.profile, req.avoid),
     directions_options: DIRECTIONS,
   };
   return piece(await post('route', body, signal));
@@ -373,20 +380,6 @@ function toManeuver(m: VManeuver & { idx: number }, cumKm: number[]): Maneuver {
   };
 }
 
-/**
- * Runde ab Index j bis zurück zu j. Liegt der Start der Runde abseits (hin und zurück auf derselben
- * Straße), fällt dieser Stich an der Nahtstelle weg, sonst käme mitten in der Fahrt ein Wenden.
- */
-function rotateLoop(line: LatLon[], j: number): LatLon[] {
-  let a = line.length - 1;
-  let b = 0;
-  while (a - 1 > j && b + 1 < j && haversine(line[a - 1], line[b + 1]) < 30) {
-    a--;
-    b++;
-  }
-  return [...line.slice(j, a + 1), ...line.slice(b + 1, j + 1)];
-}
-
 function isRoundTrip(line: LatLon[]): boolean {
   return line.length > 2 && haversine(line[0], line[line.length - 1]) < 300;
 }
@@ -404,7 +397,7 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
   // Nur zum Startpunkt navigieren (weite Anreise)
   if (req.entry === 'anfahrt' && from) {
     const h = bearing(line[0], line[Math.min(1, line.length - 1)]);
-    const lead = await approach(from, line[0], h, req, signal);
+    const lead = await approach(from, line[0], h, req, signal, undefined, true);
     const cumKm = cumulativeKm(lead.shape);
     const maneuvers = lead.maneuvers.map((m) => {
       const out = toManeuver(m, cumKm);
@@ -422,11 +415,9 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
     const j = req.entry === 'start' ? 0 : joinIndex(line, lineCum, from, isRoundTrip(line));
     if (haversine(from, line[j]) > APPROACH_M) {
       const h = bearing(line[Math.max(0, Math.min(j, line.length - 2))], line[Math.min(j + 1, line.length - 1)]);
-      lead = await approach(from, line[j], h, req, signal);
+      lead = await approach(from, line[j], h, req, signal, undefined, true);
     }
-    // Rundtour: ab dem Einstieg die ganze Runde fahren, zurück bis zum Einstieg. Sonst endete die
-    // Navigation nach wenigen km, wenn der nächste Punkt kurz vor dem Ende der Runde lag (Bensheim, 6.11.).
-    tourLine = isRoundTrip(line) && j > 0 ? rotateLoop(line, j) : line.slice(j);
+    tourLine = line.slice(j);
     if (tourLine.length < 2) tourLine = line.slice(-2);
   }
 
