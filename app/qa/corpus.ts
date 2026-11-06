@@ -23,7 +23,7 @@ const defs: Def[] = [
   { name: 'Grossglockner', pts: [[47.2860, 12.8170], 'Hochtor', [47.0420, 12.8430]] },
   { name: 'Silvretta', pts: [[46.9680, 10.0800], 'Bielerhöhe', [46.9790, 10.2560]] },
   { name: 'Schwarzwald', pts: [[48.7600, 8.2400], [48.5500, 8.2000], [48.4600, 8.1100], [47.9900, 8.0800]] },
-  { name: 'Anfahrt schnell dann kurvig', pts: [[48.1370, 11.5750], [47.4920, 11.0960], [47.2370, 10.7390]], prof: ['schnell' as Profile, 'sehr_kurvig' as Profile] },
+  { name: 'Anfahrt schnell dann kurvig', pts: [[48.1370, 11.5750], [47.4920, 11.0960], [47.2370, 10.7390]], prof: ['schnell' as Profile, 'paesse' as Profile] },
   { name: 'Würzjoch Furkel', pts: [[46.7160, 11.6570], 'Würzjoch', [46.6900, 11.9300]] },
   { name: 'Penser Joch', pts: [[46.4980, 11.3540], 'Penser Joch', [46.8930, 11.4300]] },
   { name: 'Mendel Gampen', pts: [[46.4600, 11.2200], 'Mendelpass', [46.4000, 11.0600], 'Gampen', [46.6700, 11.1600]] },

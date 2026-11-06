@@ -139,7 +139,7 @@ export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, hea
     // Weit nach vorne oder zurück springen nur, wenn man wirklich nicht mehr in der Nähe ist. Sonst
     // springt man bei Runden (Ende liegt am Start) ans Ende und meldet Ziel erreicht, oder kurz vor dem
     // Ziel zurück an den Start und kommt nie an (QS 6.11.: GPS Ausreißer am Ende der Sellaronda).
-    if (local && local.offM < JUMP_KEEP_M && (all.km - local.km > WINDOW_AHEAD_KM || local.km - all.km > 1)) return strip(local);
+    if (local && local.offM < JUMP_KEEP_M && Math.abs(all.km - local.km) > 1) return strip(local);
     return strip(all);
   }
   return strip(searchRange(route, pos, 0, n - 1, undefined, heading)!);
