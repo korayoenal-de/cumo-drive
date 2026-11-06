@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   leadWrap: { paddingHorizontal: Spacing.m, paddingBottom: Spacing.s },
   offTour: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: 'rgba(11,11,12,0.92)', borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
-  offDash: { width: 22, height: 0, borderTopWidth: 3, borderStyle: 'dashed', borderColor: Colors.warn },
+  offDash: { width: 22, height: 4, borderRadius: 2, backgroundColor: Colors.warn },
   offText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
   tourName: {
     fontFamily: Fonts.display,

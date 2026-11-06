@@ -308,14 +308,27 @@ export function RouteMap({
           </Marker>
         ))}
 
+        {/* Weg zurück zur Tour: durchgezogen in Gelb, gleich breit wie die Route (gestrichelt sah auf
+            Apple Karten zerrissen aus, Entscheidung 6.11.), mit demselben dunklen Rand */}
+        {dashed && dashed.length > 1 && (
+          <Polyline
+            key={`zurueck-rand-${dashed.length}-${dashed[0][0].toFixed(5)}`}
+            coordinates={dashed.map(ll)}
+            strokeColor={Colors.ground}
+            strokeWidth={CLASS_LINE.ok.width + 3}
+            lineCap="round"
+            lineJoin="round"
+            zIndex={29}
+          />
+        )}
         {dashed && dashed.length > 1 && (
           <Polyline
             key={`zurueck-${dashed.length}-${dashed[0][0].toFixed(5)}`}
             coordinates={dashed.map(ll)}
             strokeColor={Colors.warn}
-            strokeWidth={3}
-            lineDashPattern={[6, 7]}
-            lineCap="butt"
+            strokeWidth={CLASS_LINE.ok.width}
+            lineCap="round"
+            lineJoin="round"
             zIndex={30}
           />
         )}
