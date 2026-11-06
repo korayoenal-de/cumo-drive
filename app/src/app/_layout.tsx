@@ -23,6 +23,7 @@ import { useAuthReady, useSession } from '@/lib/auth';
 import { syncLibrary } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { syncVehicles } from '@/lib/vehicle';
+import { CarPlaySync } from '@/live/carplay-sync';
 import { AppIntentHandler } from '@/live/intents';
 import { Colors } from '@/constants/theme';
 import { ToastHost } from '@/components/ui/toast';
@@ -119,6 +120,7 @@ export default function RootLayout() {
       <RideBanner />
       <ToastHost />
       <AppIntentHandler />
+      <CarPlaySync />
     </ThemeProvider>
   );
 }

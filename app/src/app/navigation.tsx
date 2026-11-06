@@ -20,6 +20,7 @@ import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
+import { carPlayAlert, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
 import { useSession } from '@/lib/auth';
 import { saveDrive } from '@/lib/drives';
@@ -127,6 +128,9 @@ export default function NavigationScreen() {
     if (!nextHl || state.status !== 'laeuft' || hlDistM > 650 || saidHl.current.has(nextHl.id)) return;
     saidHl.current.add(nextHl.id);
     controls.say(highlightSpeech(nextHl, hlDistM));
+    const len = Math.max(1, Math.round(nextHl.endKm - nextHl.startKm));
+    const where = hlDistM > 150 ? `In ${Math.round(hlDistM / 100) * 100} m` : 'Jetzt';
+    carPlayAlert(nextHl.name, `${where}, ${len} km${nextHl.hairpins >= 3 ? `, ${nextHl.hairpins} Kehren` : ''}`);
   }, [nextHl, hlDistM, state.status, controls]);
 
   // Halt Ansage der Lead: großes Overlay und Ansage für alle anderen
@@ -309,6 +313,43 @@ export default function NavigationScreen() {
     });
   }, [state.status, state.route, state.next, state.distToNextM, state.eta, state.remainingKm, state.speedKmh, active]);
   useEffect(() => () => endNavActivity(), []);
+
+  // CarPlay: Führung auf dem Autodisplay spiegeln (Manöver, Restweg, Ankunft)
+  const cpRunning = state.status === 'laeuft' || state.status === 'pausiert' || state.status === 'neuberechnung';
+  const cpWas = useRef(false);
+  useEffect(() => {
+    if (cpRunning && !cpWas.current) carPlayStart();
+    if (!cpRunning && cpWas.current) carPlayStop(state.status === 'angekommen');
+    cpWas.current = cpRunning;
+  }, [cpRunning, state.status]);
+  useEffect(() => () => carPlayStop(false), []);
+  useEffect(() => {
+    const r = state.route;
+    const m = r?.maneuvers[state.next];
+    if (!cpRunning || !r || !m || state.distToNextM == null) return;
+    const v = Math.max(8, (state.speedKmh ?? 50) / 3.6);
+    carPlayUpdate({
+      key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}`,
+      text: m.text,
+      symbol: symbolForKind(m.kind, m.exit),
+      distM: state.distToNextM,
+      secs: state.distToNextM / v,
+      restKm: state.remainingKm ?? 0,
+      restSecs: state.eta ? Math.max(0, (state.eta.getTime() - Date.now()) / 1000) : 0,
+    });
+  }, [cpRunning, state.route, state.next, state.distToNextM, state.remainingKm, state.eta, state.speedKmh]);
+  // "Los" auf dem Autodisplay: sofort starten, sobald die Navigation bereit ist
+  useEffect(() => {
+    if ((state.status === 'bereit' || state.status === 'angekommen') && takeCarPlayStart()) void controls.start();
+  }, [state.status, controls]);
+  useCarPlayEvent('onStart', () => {
+    if ((state.status === 'bereit' || state.status === 'angekommen') && takeCarPlayStart()) void controls.start();
+  });
+  useCarPlayEvent('onEnd', close);
+  // Auto erst während der Fahrt verbunden: Führung dort gleich aufnehmen
+  useCarPlayEvent('onConnect', () => {
+    if (cpRunning) carPlayStart();
+  });
 
   if (!active || !mapTour) {
     return (

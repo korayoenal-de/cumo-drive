@@ -84,14 +84,16 @@
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
-      ]
+      ],
+      "./plugins/with-carplay"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true,
       "inlineModules": {
         "watchedDirectories": [
-          "app-intents"
+          "app-intents",
+          "carplay"
         ]
       }
     },
