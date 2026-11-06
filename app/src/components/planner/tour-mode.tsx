@@ -59,7 +59,6 @@ export function TourMode({
   const fits = !!planned && samePts(planned.wegpunkte, pts);
   const routeTour = fits ? planned : null;
 
-  const [planChanged, setPlanChanged] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locMsg, setLocMsg] = useState<string | null>(null);
   /** Punkt, dessen Aktionen (Ändern, Verschieben, Entfernen) gerade offen sind */
@@ -101,7 +100,6 @@ export function TourMode({
   }, [pStart, pVias, pZiel, complete, parts, flat, along]);
 
   const add = (kind: PointKind, p: LatLon, known?: string) => {
-    setPlanChanged(false);
     plan.add(kind, p, profile, avoid, known);
   };
 
@@ -140,7 +138,6 @@ export function TourMode({
   function pick(p: LatLon, name: string | undefined) {
     if (!edit) return;
     onListEdit();
-    setPlanChanged(false);
     if (edit.insert) plan.insertAt(edit.index ?? plan.vias.length, p, profile, avoid, name);
     else plan.setSlot(edit.kind, p, profile, avoid, name, edit.index);
     // Nach dem Start gleich das Ziel abfragen
@@ -151,7 +148,6 @@ export function TourMode({
   /** Stopp aus einer Kategorie der Suche: als Zwischenziel an der Stelle der Route, an der er liegt */
   function pickStop(p: LatLon, name: string, km: number) {
     onListEdit();
-    setPlanChanged(false);
     // km der vorhandenen Zwischenziele entlang der Route
     const kmOf = (q: LatLon) => {
       let best = Infinity;
@@ -343,7 +339,6 @@ export function TourMode({
                     active={lp === c.id}
                     onPress={() => {
                       setLegMenu(null);
-                      setPlanChanged(false);
                       if (c.id !== lp) plan.setLegProfile(i, c.id, profile, avoid);
                     }}
                   />
@@ -358,7 +353,6 @@ export function TourMode({
                     accessibilityRole="button"
                     accessibilityLabel={`${pass.name} einbauen, etwa ${Math.max(1, Math.round(detourKm))} km Umweg`}
                     onPress={() => {
-                      setPlanChanged(false);
                       plan.insertAt(i, passPoint(pass), profile, avoid, pass.name);
                     }}
                     style={({ pressed }) => [styles.suggestChip, pressed && styles.pressed]}>
@@ -510,23 +504,17 @@ export function TourMode({
               note={note}
               value={avoid[key]}
               onChange={(v) => {
-                setAvoid({ ...avoid, [key]: v });
-                if (pts.length >= 2) setPlanChanged(true);
+                const next = { ...avoid, [key]: v };
+                setAvoid(next);
+                // gleich neu planen, ohne extra Knopf (Koray, 6.11.)
+                if (pts.length >= 2) plan.planNow(profile, next);
               }}
             />
           ))}
         </View>
       </Section>
 
-      {pts.length >= 2 && (planChanged || !routeTour) && !busy && (
-        <PrimaryButton
-          label={planChanged ? 'Mit neuen Einstellungen planen' : 'Route planen'}
-          onPress={() => {
-            setPlanChanged(false);
-            plan.planNow(profile, avoid);
-          }}
-        />
-      )}
+      {pts.length >= 2 && !routeTour && !busy && <PrimaryButton label="Route planen" onPress={() => plan.planNow(profile, avoid)} />}
 
       {group && routeTour && <GroupBlock savedId={plan.cloudId} />}
 
