@@ -41,3 +41,6 @@ Stand: 5. November 2026, 20:00. Ausführlich: Cumo Drive Dokumentation https://c
 ## Offen
 * Koray: Gerätetests (Blatt, Rundtouren mit Server), Restaurant Quelle, DNS routing.cumodrive.de, Vertrauenszeile, Apple Bezahlvertrag und RevenueCat, AGB zum Anwalt, echte Fahrzeiten.
 * Claude: Pegel aus Bewertungen, Aktionsmuster für Fahrten und Garage, Haptik im nächsten Build, Walkie Talkie. Vorschlag offen: teilweise befahrene Highlights als "teilweise" listen.
+
+## Ideen (geparkt)
+* Eigenes Auto als Positionssymbol (Koray, 6.11.): In der Garage Fotos des eigenen Autos hinzufügen, eine KI rechnet daraus eine Draufsicht, die ungefähr passt, und die Karte zeigt sie statt des Pfeils, mit der Fahrtrichtung gedreht. Bis dahin: eigenes, neutrales Sportwagen Symbol im Stil der Navigationssymbole denkbar. Fremde Pressefotos (etwa Porsche) nur mit geklärten Rechten.
