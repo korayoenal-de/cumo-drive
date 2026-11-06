@@ -154,7 +154,10 @@ export function useTourPlan(onPlanned?: () => void) {
     setSaveMsg(null);
     try {
       // auf dem Gerät speichern (Meine Touren), angemeldet auch ins Konto
-      const saved = saveTour({ ...planned, name: name.trim() || planned.name, curves, profile }, folder, cloudId ?? undefined);
+      // Namen der Punkte und Profile der Etappen mitspeichern, sonst kommen beim Öffnen nur Ortsnamen
+      // aus der Rückwärtssuche zurück (aus "Sellajoch" wurde "Kanzenei", 6.11.)
+      const namen = pts.map((p) => names[keyOf(p)] ?? '');
+      const saved = saveTour({ ...planned, name: name.trim() || planned.name, curves, profile, namen, etappen: legProfiles }, folder, cloudId ?? undefined);
       setCloudId(saved.id);
       setBase(sigOf(pts, name, legProfiles));
       void syncLibrary();
@@ -213,12 +216,18 @@ export function useTourPlan(onPlanned?: () => void) {
     const s = w[0] ?? null;
     const z = w.length > 1 ? w[w.length - 1] : null;
     const v = w.slice(1, -1);
-    const lp = fitLegs([null], v.length);
+    const lp = t.etappen && t.etappen.length === Math.max(1, w.length - 1) ? t.etappen : fitLegs([null], v.length);
     setStart(s);
     setVias(v);
     setZiel(z);
     setLegProfiles(lp);
-    setNames({});
+    // gespeicherte Namen übernehmen; nur fehlende per Rückwärtssuche nachschlagen
+    const known: Record<string, string> = {};
+    w.forEach((p, i) => {
+      const n = t.namen?.[i];
+      if (n) known[keyOf(p)] = n;
+    });
+    setNames(known);
     setName(t.name);
     // Ohne id (Community Tour): als ungespeicherte Kopie öffnen, Speichern legt sie in Meine Touren
     setCloudId(t.id || null);
@@ -228,7 +237,7 @@ export function useTourPlan(onPlanned?: () => void) {
     setStep(null);
     setBase(t.id ? sigOf(w, t.name, lp) : null);
     // Namen für Start und Ziel nachschlagen, bei wenigen Punkten auch für die Zwischenziele
-    for (const p of v.length <= 8 ? w : [s, z]) if (p) rememberName(p);
+    for (const p of v.length <= 8 ? w : [s, z]) if (p && !known[keyOf(p)]) rememberName(p);
     // Gespeicherte Strecke so zeigen, wie sie ist (importierte und Club Touren nicht neu planen).
     // Neu geplant wird erst, wenn ein Punkt verschoben oder hinzugefügt wird.
     if (t.linie.length) {

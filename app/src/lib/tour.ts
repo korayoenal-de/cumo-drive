@@ -27,6 +27,10 @@ export type Tour = {
   km_klein?: number;
   /** true, wenn die Tour durch den Etappen Check gelaufen ist */
   geprueft?: boolean;
+  /** Namen der Wegpunkte (gleiche Reihenfolge wie wegpunkte), etwa "Sellajoch"; fehlt bei alten Touren */
+  namen?: string[];
+  /** Profil je Etappe aus dem Planer (null = Profil der Tour); fehlt bei alten Touren */
+  etappen?: (Profile | null)[];
 };
 
 export type Profile = 'kurvig' | 'paesse' | 'entspannt' | 'schnell';
