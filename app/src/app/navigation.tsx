@@ -25,6 +25,7 @@ import { useSession } from '@/lib/auth';
 import { saveDrive } from '@/lib/drives';
 import { useNavigation } from '@/lib/navigation';
 import { curveAhead, curveLabel, sharpCurves } from '@/lib/navigation/curves';
+import { limitAt, loadSpeedZones, type SpeedZones } from '@/lib/navigation/speed-zones';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
 import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
 import { elevationProfile } from '@/lib/stats';
@@ -157,6 +158,16 @@ export default function NavigationScreen() {
     const id = setTimeout(() => setStartedAt(Date.now()), 0);
     return () => clearTimeout(id);
   }, [state.status, startedAt]);
+
+  // Tempolimits entlang der Route: die Kurvenwarnung gilt nur in Zonen ab 70 km/h
+  const [zones, setZones] = useState<{ route: NavRoute; z: SpeedZones } | null>(null);
+  useEffect(() => {
+    const r = state.route;
+    if (!r) return;
+    const ctrl = new AbortController();
+    loadSpeedZones(r.shape, (z) => !ctrl.signal.aborted && setZones({ route: r, z }), ctrl.signal).catch(() => {});
+    return () => ctrl.abort();
+  }, [state.route]);
 
   // Kurven, die man stark anbremsen muss (ohne Abbiegungen, die sind Manöver), für das Label 150 m vorher
   const curves = useMemo(() => (state.route ? sharpCurves(state.route.shape, state.route.maneuvers.map((m) => m.km)) : []), [state.route]);
@@ -317,9 +328,11 @@ export default function NavigationScreen() {
     route?.rejoinIndex != null && state.remainingKm != null ? (route.cumKm[route.rejoinIndex] - (route.km - state.remainingKm)) * 1000 : null;
   const offTour = running && ((rejoinM != null && rejoinM > 20) || (state.offRouteM != null && state.offRouteM > 60));
   const maneuver = route?.maneuvers[state.next];
-  // Scharfe Kurve voraus: nur in Fahrt (ab 30 km/h) und nicht, solange das Label "Abseits der Tour" steht
-  const curve =
-    status === 'laeuft' && !offTour && atKm != null && (state.speedKmh == null || state.speedKmh >= 30) ? curveAhead(curves, atKm) : null;
+  // Scharfe Kurve voraus: nur in Zonen ab 70 km/h und nicht, solange das Label "Abseits der Tour" steht.
+  // Sind die Tempolimits (noch) nicht geladen, zählt das eigene Tempo ab 60 km/h.
+  const ahead = status === 'laeuft' && !offTour && atKm != null ? curveAhead(curves, atKm) : null;
+  const zoneLimit = ahead && zones?.route === route ? limitAt(zones.z, ahead.startKm) : null;
+  const curve = ahead && (zoneLimit != null ? zoneLimit >= 70 : (state.speedKmh ?? 0) >= 60) ? ahead : null;
   const curveM = curve && atKm != null ? Math.max(0, Math.round(((curve.startKm - atKm) * 1000) / 10) * 10) : 0;
   const then = route?.maneuvers[state.next + 1];
   const drivenKm = route ? Math.max(0, (startKm ?? route.km) - (state.remainingKm ?? 0)) : 0;
