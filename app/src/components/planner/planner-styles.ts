@@ -13,6 +13,8 @@ export const styles = StyleSheet.create({
   dropDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.signal },
   dropBar: { flex: 1, height: 3, borderRadius: 2, backgroundColor: Colors.signal },
   changed: { color: Colors.warn },
+  deleteLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.m },
+  deleteLinkText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   winter: { gap: Spacing.xs, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: Colors.warnTint },
   winterTitle: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
   winterText: { color: Colors.warn },

@@ -14,6 +14,7 @@ import { countCurves } from '@/lib/stats';
 import { locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 import { ElevationChart } from '@/components/planner/elevation-chart';
 import { GroupOptions } from '@/components/planner/group-options';
+import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { ActionBar } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { Colors, Motion, Shadow } from '@/constants/theme';
@@ -228,6 +229,7 @@ export function TourMode({
   // Solo oder Gruppe, im Schalter der Hauptaktion. Als Gruppe wird die Tour vorher gespeichert,
   // denn Mitfahrer lädt man zu einer Tour aus Meine Touren ein.
   const [asGroup, setAsGroup] = useState(false);
+  const [askDelete, setAskDelete] = useState(false);
   const drive = async () => {
     if (!routeTour) return;
     if (asGroup) {
@@ -536,7 +538,14 @@ export function TourMode({
             primary={{ label: 'Losfahren', onPress: () => void drive() }}
             mode={{ group: asGroup, onChange: setAsGroup }}
             save={{ saved: !plan.dirty, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) }}
-            top={asGroup ? <GroupOptions onInvite={() => void drive()} /> : undefined}>
+            top={
+              <>
+                {asGroup && <GroupOptions onInvite={() => void drive()} />}
+                <Pressable accessibilityRole="button" onPress={() => setAskDelete(true)} hitSlop={8} style={styles.deleteLink}>
+                  <AppText style={styles.deleteLinkText}>Route löschen</AppText>
+                </Pressable>
+              </>
+            }>
             {plan.cloudId && plan.dirty && !plan.saving && (
               <AppText variant="caption" style={styles.changed}>
                 Geändert. Tippe auf das Lesezeichen, um die Änderungen zu speichern.
@@ -544,9 +553,18 @@ export function TourMode({
             )}
             {!session && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
           </ActionBar>
-        ) : (
-          pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />
+        ) : null}
+        {routeTour && (
+          <ConfirmSheet
+            visible={askDelete}
+            title="Möchtest du diese Route wirklich löschen?"
+            text={plan.cloudId ? 'Die gespeicherte Tour bleibt in Meine Touren.' : 'Alle Punkte werden entfernt.'}
+            confirmLabel="Löschen"
+            onConfirm={plan.reset}
+            onClose={() => setAskDelete(false)}
+          />
         )}
+        {!routeTour && pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
       </View>
       )}
     </>
