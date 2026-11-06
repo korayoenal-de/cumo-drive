@@ -109,10 +109,17 @@ export function Pill({ label, onPress, active }: { label: string; onPress: () =>
 
 /* Bausteine */
 
-export function Section({ label, children }: { label: string; children: ReactNode }) {
+export function Section({ label, action, children }: { label: string; action?: { label: string; onPress: () => void }; children: ReactNode }) {
   return (
     <View style={styles.gapM}>
-      <AppText variant="label">{label}</AppText>
+      <View style={styles.sectionHead}>
+        <AppText variant="label">{label}</AppText>
+        {action && (
+          <Pressable accessibilityRole="button" onPress={action.onPress} hitSlop={10}>
+            <AppText style={styles.sectionAction}>{action.label}</AppText>
+          </Pressable>
+        )}
+      </View>
       {children}
     </View>
   );

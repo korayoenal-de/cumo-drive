@@ -21,6 +21,8 @@ export const styles = StyleSheet.create({
   flex: { flex: 1, gap: 2 },
   gapS: { gap: Spacing.s },
   gapM: { gap: Spacing.m },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sectionAction: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.signal },
   hit: { paddingVertical: Spacing.m },
   gapL: { gap: Spacing.l },
   /** Abschnitte im Ergebnis, gleicher Abstand wie im Blatt */

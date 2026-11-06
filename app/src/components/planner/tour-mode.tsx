@@ -15,6 +15,8 @@ import { locate, toPlanError, type Spot } from '@/components/planner/create-tour
 import { ElevationChart } from '@/components/planner/elevation-chart';
 import { GroupOptions } from '@/components/planner/group-options';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { showToast } from '@/lib/toast';
+import { deleteTour } from '@/lib/library';
 import { ActionBar } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { Colors, Motion, Shadow } from '@/constants/theme';
@@ -230,6 +232,23 @@ export function TourMode({
   // denn Mitfahrer lädt man zu einer Tour aus Meine Touren ein.
   const [asGroup, setAsGroup] = useState(false);
   const [askDelete, setAskDelete] = useState(false);
+  // Zurücksetzen leert nur das Formular; ohne Rückfrage, aber mit Rückgängig im Toast
+  const resetForm = () => {
+    const snap = plan.snapshot();
+    const wasSaved = !!plan.cloudId;
+    plan.reset();
+    setAsGroup(false);
+    showToast(wasSaved ? 'Planer geleert, die Tour bleibt in Meine Touren' : 'Planung zurückgesetzt', {
+      action: { label: 'Rückgängig', onPress: () => plan.restore(snap) },
+    });
+  };
+  // Löschen entfernt die geöffnete, gespeicherte Tour aus Meine Touren (mit Rückfrage)
+  const deleteSaved = () => {
+    if (plan.cloudId) deleteTour(plan.cloudId);
+    plan.reset();
+    setAsGroup(false);
+    showToast('Tour gelöscht');
+  };
   const drive = async () => {
     if (!routeTour) return;
     if (asGroup) {
@@ -416,7 +435,7 @@ export function TourMode({
         />
       </View>
 
-      <Section label="Route">
+      <Section label="Route" action={pts.length ? { label: 'Zurücksetzen', onPress: resetForm } : undefined}>
         <View>
           {slots.map((p, i) => {
             const kind: PointKind = i === 0 ? 'start' : i === slots.length - 1 ? 'ziel' : 'via';
@@ -537,13 +556,16 @@ export function TourMode({
             sheetTitle={plan.name.trim() || 'Neue Tour'}
             primary={{ label: 'Losfahren', onPress: () => void drive() }}
             mode={{ group: asGroup, onChange: setAsGroup }}
-            save={{ saved: !plan.dirty, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) }}
+            // Neue Planung: Merken. Geöffnete Tour: nur bei echter Änderung, sonst steht dort Löschen.
+            save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) } : undefined}
             top={
               <>
                 {asGroup && <GroupOptions onInvite={() => void drive()} />}
-                <Pressable accessibilityRole="button" onPress={() => setAskDelete(true)} hitSlop={8} style={styles.deleteLink}>
-                  <AppText style={styles.deleteLinkText}>Route löschen</AppText>
-                </Pressable>
+                {!!plan.cloudId && (
+                  <Pressable accessibilityRole="button" onPress={() => setAskDelete(true)} hitSlop={8} style={styles.deleteLink}>
+                    <AppText style={styles.deleteLinkText}>Route löschen</AppText>
+                  </Pressable>
+                )}
               </>
             }>
             {plan.cloudId && plan.dirty && !plan.saving && (
@@ -557,10 +579,10 @@ export function TourMode({
         {routeTour && (
           <ConfirmSheet
             visible={askDelete}
-            title="Möchtest du diese Route wirklich löschen?"
-            text={plan.cloudId ? 'Die gespeicherte Tour bleibt in Meine Touren.' : 'Alle Punkte werden entfernt.'}
+            title="Möchtest du diese Tour wirklich löschen?"
+            text="Sie verschwindet aus Meine Touren, auf dem Gerät und in deinem Konto."
             confirmLabel="Löschen"
-            onConfirm={plan.reset}
+            onConfirm={deleteSaved}
             onClose={() => setAskDelete(false)}
           />
         )}

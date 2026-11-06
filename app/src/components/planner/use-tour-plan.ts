@@ -186,6 +186,26 @@ export function useTourPlan(onPlanned?: () => void) {
     setName('Neue Tour');
   }
 
+  /** Stand des Planers, um Zurücksetzen rückgängig zu machen */
+  function snapshot() {
+    return { start, vias, ziel, legProfiles, names, name, planned, cloudId, folder, base };
+  }
+  function restore(s: ReturnType<typeof snapshot>) {
+    abort.current?.abort();
+    setStart(s.start);
+    setVias(s.vias);
+    setZiel(s.ziel);
+    setLegProfiles(s.legProfiles);
+    setNames(s.names);
+    setName(s.name);
+    setPlanned(s.planned);
+    setCloudId(s.cloudId);
+    setFolder(s.folder);
+    setBase(s.base);
+    setStep(null);
+    setError(null);
+  }
+
   /** Gespeicherte Tour zum Ändern laden: erster Wegpunkt Start, letzter Ziel, dazwischen Zwischenziele. Speichern ersetzt dieselbe Tour. */
   function load(t: SavedTour, profile: Profile, avoid: Avoid) {
     abort.current?.abort();
@@ -220,7 +240,7 @@ export function useTourPlan(onPlanned?: () => void) {
 
   return {
     start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg, dirty,
-    legProfile, setSlot, add, insertAt, save, reset, load,
+    legProfile, setSlot, add, insertAt, save, reset, load, snapshot, restore,
     /** Mit den gesetzten Punkten und den Profilen je Etappe neu planen. */
     planNow: (profile: Profile, avoid: Avoid) => pts.length >= 2 && void plan(pts, profilesFor(legProfiles, start, pts.length, profile), avoid),
     setLegProfile: (leg: number, p: Profile, profile: Profile, avoid: Avoid) => {
