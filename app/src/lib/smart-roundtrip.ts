@@ -81,52 +81,59 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
   // Pässe Profil: gezielt über bekannte Pässe in Reichweite, die jetzt offen sind.
   // Bergstraßen sind viel länger als die Luftlinie; passt die Länge nicht, wird die Reichweite
   // nachgeregelt und neu gewählt (höchstens drei Versuche).
-  if (req.profile === 'paesse') {
-    const month = new Date().getMonth() + 1;
-    const dir = req.direction === 'zufall' && req.bearing === undefined ? null : heading;
-    const own = await cumoAvailable();
-    let reachKm = req.km;
-    const tried = new Set<string>();
-    // Bei einem Pass führt der Rückweg über einen Punkt seitlich; liefert die Reichweite wieder
-    // denselben Pass, wird dieser Punkt näher heran oder weiter weg gelegt (Meran 6.11.: 59 statt 50 km)
-    let side = 1;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const loop = passLoopVia(PASSES, req.start, reachKm, dir, month);
-      if (!loop) break;
-      const key = loop.passes.map((p) => p.id).join('+');
-      if (tried.has(key) && loop.passes.length !== 1) break;
-      tried.add(key);
-      if (loop.passes.length === 1 && side !== 1) {
-        const q = loop.via[loop.via.length - 1];
-        loop.via[loop.via.length - 1] = [req.start[0] + (q[0] - req.start[0]) * side, req.start[1] + (q[1] - req.start[1]) * side];
-      }
-      try {
-        onStep?.('route');
-        const t = await planChecked(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, onStep, signal, true);
-        const curves = countCurves(flatten(t).map((x) => x.p));
-        const bonus = loop.passes.reduce((sum, p) => sum + TIER_WEIGHT[p.tier] * 15, 0);
-        const cand: SmartTour = {
-          ...t,
-          engine: own ? 'cumo' : 'valhalla',
-          curves,
-          // Pässe als Via Punkt erzeugen leicht ein Stück hin und auf demselben Weg zurück
-          // (Brixen 6.11.: 37 km doppelt über den Pass). Das kostet wie bei den anderen Runden.
-          score: scoreTour(t, curves, 0, req.km) + bonus - spurKm(t) * 100,
-          passes: loop.passes.map((p) => p.name),
-        };
-        candidates.push(cand);
-        const ratio = t.laenge_km / req.km;
-        if ((t.km_je_klasse?.raus ?? 0) === 0 && inBand(t, req.km) && spurKm(t) < 0.5) return cand;
-        reachKm = reachKm / Math.max(0.5, Math.min(2.5, ratio));
-        side = side / Math.max(0.6, Math.min(1.6, ratio));
-      } catch (e) {
-        if (signal?.aborted) throw e;
-        lastError = e;
-        break;
-      }
-    }
-    // Sonst zählen die Pass Runden unten mit den freien Varianten zusammen
-  }
+  // läuft parallel zu den Varianten des eigenen Servers (vorher nacheinander, QS 6.11.: doppelte Wartezeit)
+  const passChain: Promise<SmartTour | null> =
+    req.profile === 'paesse'
+      ? (async (): Promise<SmartTour | null> => {
+        const month = new Date().getMonth() + 1;
+        const dir = req.direction === 'zufall' && req.bearing === undefined ? null : heading;
+        const own = await cumoAvailable();
+        let reachKm = req.km;
+        const tried = new Set<string>();
+        // Bei einem Pass führt der Rückweg über einen Punkt seitlich; liefert die Reichweite wieder
+        // denselben Pass, wird dieser Punkt näher heran oder weiter weg gelegt (Meran 6.11.: 59 statt 50 km)
+        let side = 1;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const loop = passLoopVia(PASSES, req.start, reachKm, dir, month);
+          if (!loop) break;
+          const key = loop.passes.map((p) => p.id).join('+');
+          if (tried.has(key) && loop.passes.length !== 1) break;
+          tried.add(key);
+          if (loop.passes.length === 1 && side !== 1) {
+            const q = loop.via[loop.via.length - 1];
+            loop.via[loop.via.length - 1] = [req.start[0] + (q[0] - req.start[0]) * side, req.start[1] + (q[1] - req.start[1]) * side];
+          }
+          try {
+            onStep?.('route');
+            const t = await planChecked(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, onStep, signal, true);
+            const curves = countCurves(flatten(t).map((x) => x.p));
+            const bonus = loop.passes.reduce((sum, p) => sum + TIER_WEIGHT[p.tier] * 15, 0);
+            const cand: SmartTour = {
+              ...t,
+              engine: own ? 'cumo' : 'valhalla',
+              curves,
+              // Pässe als Via Punkt erzeugen leicht ein Stück hin und auf demselben Weg zurück
+              // (Brixen 6.11.: 37 km doppelt über den Pass). Das kostet wie bei den anderen Runden.
+              score: scoreTour(t, curves, 0, req.km) + bonus - spurKm(t) * 100,
+              passes: loop.passes.map((p) => p.name),
+            };
+            candidates.push(cand);
+            const ratio = t.laenge_km / req.km;
+            if ((t.km_je_klasse?.raus ?? 0) === 0 && inBand(t, req.km) && spurKm(t) < 0.5) return cand;
+            reachKm = reachKm / Math.max(0.5, Math.min(2.5, ratio));
+            side = side / Math.max(0.6, Math.min(1.6, ratio));
+          } catch (e) {
+            if (signal?.aborted) throw e;
+            lastError = e;
+            break;
+          }
+        }
+        // Sonst zählen die Pass Runden unten mit den freien Varianten zusammen
+        return null;
+      })()
+      : Promise.resolve(null);
+  // Abbruch wird unten beim Warten gemeldet, hier nur als behandelt markieren
+  passChain.catch(() => undefined);
 
   // 0. Eigener Routing Server: Sportwagen Profil mit Kurven, mehrere Varianten, alles lokal
   if (await cumoAvailable()) {
@@ -156,9 +163,9 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       let pool = [...own, ...loops, ...circles].filter(usable).map(rate);
       const good = () =>
         pool.filter((t) => inBand(t, req.km) && t.spur < 0.5).length + candidates.filter((t) => inBand(t, req.km) && spurKm(t) < 0.5).length;
-      // Kaum eine saubere Variante in der Wunschlänge (kurvige Straßen im Gebirge sind viel länger als
+      // Keine saubere Variante in der Wunschlänge (kurvige Straßen im Gebirge sind viel länger als
       // der Kreis, in der Ebene kürzer): einmal mit nachgeregelter Länge neu rechnen
-      if (good() < 2) {
+      if (good() < 1) {
         // Schätzung aus den Rundtouren des Servers; deren Länge streut stark (Judenburg 6.11.: 80 bis
         // 206 km für 100 km), darum zwei Längen um die Schätzung herum
         const med = medianKm(own.length ? own : pool.length ? pool : candidates);
@@ -179,12 +186,19 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       const rest = pool.filter((t) => !inBand(t, req.km)).sort((a, b) => devOf(a, req.km) - devOf(b, req.km));
       const top = await Promise.all([...fit, ...rest].slice(0, 3).map((t) => despur(t, req, signal)));
       for (const t of top) candidates.push({ ...t, score: base(t) - spurKm(t) * 100 });
+      const early = await passChain;
+      if (early) return early;
       const best = pick(candidates, req.km);
       if (best) return best;
     } catch (e) {
       if (signal?.aborted) throw e;
       lastError = e;
     }
+  }
+
+  {
+    const early = await passChain.catch(() => null);
+    if (early) return early;
   }
 
   // 1. Valhalla: ohne Autobahn, Via Punkte im Hügelland, geprüft und umgeplant. Bleibt eine
