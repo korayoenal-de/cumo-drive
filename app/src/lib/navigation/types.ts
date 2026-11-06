@@ -111,4 +111,13 @@ export type NavControls = {
   say: (text: string) => void;
   /** Für Tests ohne Fahrt: Position entlang der Route simulieren (km pro Sekunde Faktor) */
   simulate: (on: boolean, speedKmh?: number) => void;
+  /**
+   * Zwischenziel überspringen: vom Standort direkt zurück auf die Route ab Index index (dem Zwischenziel
+   * danach oder dem Ziel). Gibt den alten Stand zurück, damit Rückgängig möglich ist; null, wenn es nicht ging.
+   */
+  skipTo: (index: number) => Promise<SkipUndo | null>;
+  /** Stand vor dem Überspringen wiederherstellen */
+  restore: (u: SkipUndo) => void;
 };
+
+export type SkipUndo = { route: NavRoute; done: number; hint: number };

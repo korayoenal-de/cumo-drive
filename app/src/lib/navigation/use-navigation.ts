@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { haversine, type LatLon } from '../tour';
 import { fetchNavRouteDetail, rejoinNavRoute } from './route';
 import { pointAtKm, progress, snapToRoute } from './tracker';
-import type { NavControls, NavRequest, NavRoute, NavState } from './types';
+import type { NavControls, NavRequest, NavRoute, NavState, SkipUndo } from './types';
 import { createVoiceGuide, type VoiceGuide } from './voice';
 
 const KEEP_AWAKE_TAG = 'cumo-navigation';
@@ -77,6 +77,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const keepAwakeRef = useRef(false);
   /** Pause: Positionen werden nicht verarbeitet, keine Ansagen, die Simulation steht */
   const pausedRef = useRef(false);
+  /** letzte Position (GPS oder Simulation), für Überspringen */
+  const posRef = useRef<{ p: LatLon; h: number | null } | null>(null);
 
   useEffect(() => {
     reqRef.current = req;
@@ -160,6 +162,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     (fix: Fix) => {
       const route = routeRef.current;
       if (!activeRef.current || !route || arrivedRef.current) return;
+      posRef.current = { p: fix.pos, h: fix.heading };
       const snap = snapToRoute(route, fix.pos, hintRef.current);
       hintRef.current = snap.index;
       if (snap.offM <= OFF_ROUTE_M) doneIndexRef.current = Math.max(doneIndexRef.current, snap.index);
@@ -386,6 +389,52 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     [cleanup, keepAwake, onFix, setRoute, stopSim, voice],
   );
 
+  /** Zwischenziel überspringen: wie eine Neuberechnung, aber zurück auf die Route erst ab index */
+  const skipTo = useCallback(
+    async (index: number): Promise<SkipUndo | null> => {
+      const r = reqRef.current;
+      const current = routeRef.current;
+      const pos = posRef.current;
+      if (!r || !current || !pos || !activeRef.current || arrivedRef.current || reroutingRef.current) return null;
+      const undo: SkipUndo = { route: current, done: doneIndexRef.current, hint: hintRef.current };
+      reroutingRef.current = true;
+      lastRerouteRef.current = Date.now();
+      setState((s) => ({ ...s, status: 'neuberechnung' }));
+      voice().say('Das nächste Zwischenziel wird übersprungen.', true);
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      try {
+        const { route } = await rejoinNavRoute(r, current, index, pos.p, ctrl.signal, pos.h);
+        if (!activeRef.current) return null;
+        setRoute(route);
+        // die Simulation fährt auf der neuen Route am Standort weiter
+        if (simRef.current) simRef.current.km = 0;
+        setState((s) => ({ ...s, status: pausedRef.current ? 'pausiert' : 'laeuft', route, error: undefined }));
+        return undo;
+      } catch (e) {
+        if (!isAbort(e) && activeRef.current) setState((s) => ({ ...s, status: 'laeuft', error: friendly(e) }));
+        return null;
+      } finally {
+        reroutingRef.current = false;
+        offSinceRef.current = null;
+      }
+    },
+    [setRoute, voice],
+  );
+
+  const restore = useCallback(
+    (u: SkipUndo) => {
+      if (!activeRef.current) return;
+      setRoute(u.route);
+      doneIndexRef.current = u.done;
+      hintRef.current = u.hint;
+      if (simRef.current) simRef.current.km = u.route.cumKm[Math.max(0, u.hint)] ?? 0;
+      lastRerouteRef.current = Date.now();
+      setState((s) => ({ ...s, route: u.route }));
+    },
+    [setRoute],
+  );
+
   // beim Verlassen des Screens alles aufräumen
   useEffect(() => cleanup, [cleanup]);
 
@@ -397,5 +446,5 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     setState((s) => ({ ...INITIAL, voice: s.voice }));
   }, [req?.tour, cleanup]);
 
-  return [state, { start, stop, pause, setVoice, say, simulate }];
+  return [state, { start, stop, pause, setVoice, say, simulate, skipTo, restore }];
 }

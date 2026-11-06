@@ -14,12 +14,15 @@ import { RouteMap } from '@/components/map/route-map';
 import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM } from '@/components/navigation/maneuver-geometry';
 import { DriveRatingCard } from '@/components/navigation/drive-rating';
+import { SpeedBadge } from '@/components/navigation/speed-badge';
 import { HighlightCard, LeadStopButton, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
+import { useDriveSettings } from '@/lib/drive-settings';
+import { showToast } from '@/lib/toast';
 import { carPlayAlert, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
 import { useSession } from '@/lib/auth';
@@ -29,6 +32,8 @@ import { curveAhead, curveLabel, sharpCurves } from '@/lib/navigation/curves';
 import { limitAt, loadSpeedZones, type SpeedZones } from '@/lib/navigation/speed-zones';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
 import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
+import Animated, { FadeOut } from 'react-native-reanimated';
+import { softEnter } from '@/components/ui/motion';
 import { elevationProfile } from '@/lib/stats';
 import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, STOP_REASONS, useRide } from '@/lib/group/ride';
 import { currentVehicle, selectVehicle, useVehicles } from '@/lib/vehicle';
@@ -85,6 +90,14 @@ export default function NavigationScreen() {
   const vehicles = useVehicles();
   const inRide = ride.status === 'aktiv';
   const [msgOpen, setMsgOpen] = useState(false);
+  const driveSettings = useDriveSettings();
+  // Karte "Zwischenziel überspringen" nach langem Druck auf das Manöver, schließt nach 6 s von selbst
+  const [skipOpen, setSkipOpen] = useState(false);
+  useEffect(() => {
+    if (!skipOpen) return;
+    const t = setTimeout(() => setSkipOpen(false), 6000);
+    return () => clearTimeout(t);
+  }, [skipOpen]);
   // Position der Navigation (auch simuliert) an die Gruppe geben
   useEffect(() => {
     if (!inRide || !state.position) return;
@@ -288,6 +301,13 @@ export default function NavigationScreen() {
     exit();
   };
 
+  const skip = async (index: number) => {
+    setSkipOpen(false);
+    const undo = await controls.skipTo(index);
+    if (undo) showToast('Zwischenziel übersprungen', { action: { label: 'Rückgängig', onPress: () => controls.restore(undo) } });
+    else showToast('Überspringen hat gerade nicht geklappt.', { tone: 'error' });
+  };
+
   // Live Activity: nächstes Manöver auf Sperrbildschirm, Dynamic Island und CarPlay Dashboard
   useEffect(() => {
     const st = state.status;
@@ -377,6 +397,17 @@ export default function NavigationScreen() {
   const curve = ahead && (zoneLimit != null ? zoneLimit >= 70 : (state.speedKmh ?? 0) >= 60) ? ahead : null;
   const curveM = curve && atKm != null ? Math.max(0, Math.round(((curve.startKm - atKm) * 1000) / 10) * 10) : 0;
   const then = route?.maneuvers[state.next + 1];
+  // Tempo unten links: Limit an der aktuellen Stelle der Route, sobald die Zonen geladen sind
+  const limitHere = atKm != null && zones?.route === route ? limitAt(zones.z, atKm) : null;
+  // Nächstes Zwischenziel überspringen: Ziel ist das Zwischenziel danach, sonst das Ende der Route
+  const nextVia = atKm != null ? viaKms.findIndex((k) => k > atKm + 0.1) : -1;
+  const skipTarget = (() => {
+    if (!route || nextVia < 0) return null;
+    const afterKm = viaKms[nextVia + 1];
+    if (afterKm == null) return { index: route.shape.length - 1, toZiel: true };
+    const i = route.cumKm.findIndex((k) => k >= afterKm - 0.05);
+    return { index: Math.max(0, i), toZiel: false };
+  })();
   const drivenKm = route ? Math.max(0, (startKm ?? route.km) - (state.remainingKm ?? 0)) : 0;
 
   return (
@@ -400,7 +431,29 @@ export default function NavigationScreen() {
       />
 
       <View style={[styles.top, { paddingTop: insets.top + Spacing.s }]} pointerEvents="box-none">
-        {running && maneuver && <ManeuverCard maneuver={maneuver} distM={state.distToNextM} then={then} soon={state.distToNextM != null && state.distToNextM <= soonThresholdM(state.speedKmh)} />}
+        {running && maneuver && (
+          <Pressable
+            onLongPress={() => skipTarget && !inRide && setSkipOpen(true)}
+            delayLongPress={400}
+            accessibilityHint={skipTarget && !inRide ? 'Lange drücken, um das nächste Zwischenziel zu überspringen' : undefined}
+            accessibilityActions={skipTarget && !inRide ? [{ name: 'skip', label: 'Nächstes Zwischenziel überspringen' }] : undefined}
+            onAccessibilityAction={() => skipTarget && void skip(skipTarget.index)}>
+            <ManeuverCard maneuver={maneuver} distM={state.distToNextM} then={then} soon={state.distToNextM != null && state.distToNextM <= soonThresholdM(state.speedKmh)} />
+          </Pressable>
+        )}
+        {running && skipOpen && skipTarget && atKm != null && (
+          <Animated.View entering={softEnter()} exiting={FadeOut.duration(160)} style={styles.skipCard}>
+            <View style={styles.flex}>
+              <AppText style={styles.skipTitle}>Nächstes Zwischenziel überspringen</AppText>
+              <AppText style={styles.skipText} numberOfLines={1}>
+                {`Noch ${formatKm(Math.max(0, viaKms[nextVia] - atKm), 0)} km, danach direkt ${skipTarget.toZiel ? 'zum Ziel' : 'zum nächsten Zwischenziel'}`}
+              </AppText>
+            </View>
+            <Pressable accessibilityRole="button" onPress={() => void skip(skipTarget.index)} style={({ pressed }) => [styles.skipBtn, pressed && { opacity: 0.85 }]}>
+              <AppText style={styles.skipBtnText}>Überspringen</AppText>
+            </Pressable>
+          </Animated.View>
+        )}
         {status === 'neuberechnung' && <Recalculating first={!route} />}
         {offTour && (
           <View style={styles.offTour} accessibilityRole="alert">
@@ -434,6 +487,11 @@ export default function NavigationScreen() {
       <View style={[styles.bottom, !running && { paddingBottom: insets.bottom + Spacing.m }]} pointerEvents="box-none">
         {running && (
           <>
+            {driveSettings.speed && (
+              <View style={styles.leadWrap}>
+                <SpeedBadge speedKmh={state.speedKmh} limit={limitHere} />
+              </View>
+            )}
             {inRide && ride.myRole === 'lead' && !msgOpen && (
               <View style={styles.leadWrap}>
                 <LeadStopButton onAnnounce={announceStop} />
@@ -740,6 +798,11 @@ const styles = StyleSheet.create({
   },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   leadWrap: { paddingHorizontal: Spacing.m, paddingBottom: Spacing.s },
+  skipCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.m, paddingLeft: Spacing.l },
+  skipTitle: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
+  skipText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
+  skipBtn: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  skipBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
   offTour: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: 'rgba(11,11,12,0.92)', borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
   curve: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: 'rgba(11,11,12,0.92)', borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
   offDash: { width: 22, height: 4, borderRadius: 2, backgroundColor: Colors.warn },

@@ -6,15 +6,17 @@
 import { SymbolView } from 'expo-symbols';
 import * as Speech from 'expo-speech';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { setDriveSetting, useDriveSettings } from '@/lib/drive-settings';
 import { germanVoices, playSample, setVoiceChoice, useVoiceChoice, type VoiceOption } from '@/lib/voice-settings';
 
 export function VoiceSection() {
   const choice = useVoiceChoice();
+  const drive = useDriveSettings();
   const [open, setOpen] = useState(false);
   const [voices, setVoices] = useState<VoiceOption[] | null>(null);
 
@@ -50,6 +52,21 @@ export function VoiceSection() {
         </View>
         <SymbolView name="chevron.right" size={14} weight="semibold" tintColor={Colors.muted} />
       </Pressable>
+
+      <View style={styles.card}>
+        <View style={styles.flex}>
+          <AppText style={styles.label}>Tempo in der Navigation</AppText>
+          <AppText style={styles.value}>Dein Tempo und das erlaubte Tempo</AppText>
+        </View>
+        <Switch
+          value={drive.speed}
+          onValueChange={(v) => setDriveSetting('speed', v)}
+          trackColor={{ false: Colors.line, true: Colors.signal }}
+          thumbColor={Colors.text}
+          ios_backgroundColor={Colors.line}
+          accessibilityLabel="Tempo in der Navigation zeigen"
+        />
+      </View>
 
       <OptionsSheet visible={open} title="Stimme der Ansagen" subtitle="Antippen zum Wählen und Probehören." onClose={close}>
         {!voices ? (
