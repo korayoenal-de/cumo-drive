@@ -19,21 +19,24 @@ import { setActiveTour } from '@/lib/active-tour';
 import { saveTour, syncLibrary } from '@/lib/library';
 import { type Stop } from '@/lib/intent';
 import { type PlannedTour } from '@/lib/plan';
-import { type StopKind } from '@/lib/stops-along';
 import { flatten, type LatLon } from '@/lib/tour';
 import { showToast } from '@/lib/toast';
 
-import { GroupBlock, Stats, StopsSection, TrustLine, Warnings } from './planner-parts';
+import { GroupBlock, Stats, StopsPlanner, TrustLine, Warnings, type PlannedStop } from './planner-parts';
+import { PlaceSearch, type Cat } from './place-search';
 import { styles } from './planner-styles';
 
 
 export function Result({
-  tour, req, stops, group, onReroll, onBack, onAdjust, onAddStop, adding,
+  tour, req, group, onReroll, onBack, onAdjust, onAddStop, onRemoveStop, planned, adding,
 }: {
   tour: PlannedTour; req: TourRequest; stops: Stop[]; group: boolean; onReroll: () => void; onBack: () => void;
   /** Runde als Route mit Start, Zwischenzielen und Ziel öffnen */
   onAdjust: () => void;
-  onAddStop: (p: LatLon) => void; adding: boolean;
+  onAddStop: (p: LatLon, name: string, km: number, cat: Exclude<Cat, 'alle'>) => void;
+  onRemoveStop: (key: string) => void;
+  planned: PlannedStop[];
+  adding: boolean;
 }) {
   const total = tour.laenge_km;
   const warnings = tour.warnungen.filter((w) => w.klasse !== 'ok');
@@ -54,6 +57,7 @@ export function Result({
   };
   // Solo oder Gruppe im Schalter der Hauptaktion; als Gruppe erst speichern, dann Mitfahrer einladen
   const [asGroup, setAsGroup] = useState(false);
+  const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);
   const drive = () => {
     if (asGroup) {
       router.push({ pathname: '/gruppe/neu', params: { tour: savedId ?? saveResult() } });
@@ -86,7 +90,25 @@ export function Result({
 
       <ElevationChart line={line} />
 
-      <StopsSection line={line} initial={(stops.find((x) => x !== 'foto') as StopKind | undefined) ?? null} busy={adding} onAdd={onAddStop} />
+      <StopsPlanner planned={planned} busy={adding} onOpen={setStopCat} onRemove={onRemoveStop} />
+      <PlaceSearch
+        visible={!!stopCat}
+        role="Stopp"
+        placeholder=""
+        current=""
+        locating={false}
+        message={null}
+        onPick={() => undefined}
+        onHere={() => undefined}
+        onClose={() => setStopCat(null)}
+        route={line}
+        stopsOnly={stopCat ? { title: 'Unterwegs einplanen', subtitle: `${tour.name} · ${Math.round(total)} km`, cat: stopCat } : undefined}
+        onPickStop={(p, name, km) => {
+          const c = stopCat!;
+          setStopCat(null);
+          onAddStop(p, name, km, c);
+        }}
+      />
 
       {group && <GroupBlock savedId={savedId} />}
 

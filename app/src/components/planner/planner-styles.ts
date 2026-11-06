@@ -1,7 +1,7 @@
 /** Styles des Planers, gemeinsam für alle Planer Dateien. Alle Werte aus den Design Tokens. */
 import { StyleSheet } from 'react-native';
 
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   dragging: { zIndex: 10 },
@@ -13,6 +13,11 @@ export const styles = StyleSheet.create({
   dropDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.signal },
   dropBar: { flex: 1, height: 3, borderRadius: 2, backgroundColor: Colors.signal },
   changed: { color: Colors.warn },
+  stopChip: { height: 44, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingLeft: Spacing.m, paddingRight: Spacing.l, borderRadius: 22, backgroundColor: Colors.surface2 },
+  stopChipText: { fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.text },
+  stopIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.signalTint },
+  stopRemove: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
+  pressedSoft: { opacity: 0.8, transform: [{ scale: Motion.pressScale }] },
   deleteLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.m },
   deleteLinkText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   winter: { gap: Spacing.xs, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: Colors.warnTint },

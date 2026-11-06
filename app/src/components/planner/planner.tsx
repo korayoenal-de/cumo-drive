@@ -37,6 +37,8 @@ import { insertVia } from '@/lib/route-edit';
 import { flatten, haversine, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
+import { type PlannedStop } from './planner-parts';
+import { showToast } from '@/lib/toast';
 import { ErrorCard, MicIcon, PrimaryButton, Progress, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
 import { Result } from './planner-result';
 import { EMPTY_TOUR, keyOf, type Mode, passIndex, type PendingPoint, roughDetourKm, samePts, STEP_TEXT } from './planner-shared';
@@ -44,6 +46,9 @@ import { PlaceSearch } from './place-search';
 import { styles } from './planner-styles';
 import { useTourPlan } from './use-tour-plan';
 import { TourMode } from './tour-mode';
+
+/** Wort für den Toast nach dem Einplanen */
+const STOP_WORD: Record<PlannedStop['cat'], string> = { tank: 'Tankstopp', kaffee: 'Kaffeepause', mittag: 'Mittagspause', aussicht: 'Aussichtspunkt', pass: 'Pass' };
 
 
 
@@ -251,6 +256,7 @@ export default function Planner() {
     const ctrl = new AbortController();
     abort.current = ctrl;
     lastStops.current = stops;
+    setRoundStops([]);
     const done: PlanPhase[] = [];
     const step = (phase: PlanPhase) => {
       setView((v) => {
@@ -313,17 +319,60 @@ export default function Planner() {
     }, []);
   }
 
-  // Stopp in eine fertige Runde einplanen: Via Punkt mit kleinstem Umweg, dann neu planen
+  // Stopp in eine fertige Runde einplanen: Via Punkt mit kleinstem Umweg, dann neu planen.
+  // Die Runde bleibt eine Runde, die Stopps stehen im Abschnitt Unterwegs einplanen.
   const [adding, setAdding] = useState(false);
-  async function addStop(p: LatLon) {
+  const [roundStops, setRoundStops] = useState<(PlannedStop & { p: LatLon })[]>([]);
+  async function addStop(p: LatLon, name: string, km: number, cat: PlannedStop['cat']) {
     if (view.kind !== 'result') return;
     const cur = view;
+    const before = roundStops;
     setAdding(true);
     try {
       const t = await planChecked(cur.tour.name, insertVia(cur.tour.wegpunkte, p), cur.req.profile, cur.req.avoid, () => undefined);
       setView({ ...cur, tour: t });
+      const kmTxt = `bei km ${Math.round(km)}`;
+      const next = [...before, { key: `${p[0]},${p[1]}`, name, detail: kmTxt, cat, p }];
+      setRoundStops(next);
+      showToast(`${STOP_WORD[cat]} ${kmTxt} eingeplant`, {
+        action: {
+          label: 'Rückgängig',
+          onPress: () => {
+            setView(cur);
+            setRoundStops(before);
+          },
+        },
+      });
     } catch {
-      // bleibt bei der bisherigen Runde
+      showToast('Der Stopp ließ sich nicht einplanen', { tone: 'error' });
+    } finally {
+      setAdding(false);
+    }
+  }
+  async function removeStop(key: string) {
+    if (view.kind !== 'result') return;
+    const cur = view;
+    const st = roundStops.find((x) => x.key === key);
+    if (!st) return;
+    const w = cur.tour.wegpunkte;
+    // Zwischenpunkt der Runde, der dem Stopp am nächsten liegt (nie Start oder Ziel)
+    let idx = -1;
+    let best = Infinity;
+    for (let i = 1; i < w.length - 1; i++) {
+      const d = haversine(w[i], st.p);
+      if (d < best) {
+        best = d;
+        idx = i;
+      }
+    }
+    if (idx < 0) return;
+    setAdding(true);
+    try {
+      const t = await planChecked(cur.tour.name, w.filter((_, i) => i !== idx), cur.req.profile, cur.req.avoid, () => undefined);
+      setView({ ...cur, tour: t });
+      setRoundStops(roundStops.filter((x) => x.key !== key));
+    } catch {
+      showToast('Der Stopp ließ sich nicht entfernen', { tone: 'error' });
     } finally {
       setAdding(false);
     }
@@ -435,7 +484,7 @@ export default function Planner() {
           {view.kind === 'error'
             ? view.error.message
             : view.kind === 'result'
-              ? `${PROFILE_WORD[view.req.profile]}, ${view.req.towardName ? `Richtung ${view.req.towardName}` : dirPhrase(view.req.direction)}`
+              ? `${PROFILE_WORD[view.req.profile]}, ${view.req.towardName ? `Richtung ${view.req.towardName}` : dirPhrase(view.req.direction)}${roundStops.length ? `, mit ${roundStops.length} ${roundStops.length === 1 ? 'Stopp' : 'Stopps'}` : ''}`
               : mode === 'tour'
                 ? tourPts.length
                   ? 'Lange auf die Karte drücken setzt einen weiteren Punkt.'
@@ -482,7 +531,9 @@ export default function Planner() {
           onBack={() => setView({ kind: 'form' })}
           onAdjust={() => adjustRound(view.tour, view.req.profile)}
           adding={adding}
-          onAddStop={(p) => void addStop(p)}
+          planned={roundStops}
+          onAddStop={(p, name, km, cat) => void addStop(p, name, km, cat)}
+          onRemoveStop={(key) => void removeStop(key)}
         />
       </>
     );

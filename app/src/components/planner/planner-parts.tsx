@@ -9,11 +9,11 @@ import { SymbolView } from 'expo-symbols';
 import Svg, { Path } from 'react-native-svg';
 
 import { PHASES, type PlanError, type PlanPhase } from '@/components/planner/create-tour';
+import { CAT_ICON, type Cat } from '@/components/planner/place-search';
 import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors } from '@/constants/theme';
-import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
-import { formatKm, type LatLon, type Warning } from '@/lib/tour';
+import { formatKm, type Warning } from '@/lib/tour';
 import { selectVehicle, useVehicles } from '@/lib/vehicle';
 
 import { bigDuration, type Mode, type PointKind } from './planner-shared';
@@ -281,44 +281,57 @@ export function ErrorCard({
 }
 
 /** Stopps an der Strecke (OpenStreetMap): Super Plus, Aussicht mit Parkplatz, Mittag, Kaffee, mit Einplanen. */
-export function StopsSection({ line, initial, busy, onAdd }: { line: LatLon[]; initial?: StopKind | null; busy: boolean; onAdd: (p: LatLon) => void }) {
-  const [kind, setKind] = useState<StopKind | null>(initial ?? null);
-  const [res, setRes] = useState<{ key: string; hits: StopHit[] | null; error: string | null } | null>(null);
-  const key = `${kind}|${line.length}|${line[0]?.join()}|${line[line.length - 1]?.join()}`;
-  useEffect(() => {
-    if (!kind || line.length < 2) return;
-    const ctrl = new AbortController();
-    stopsAlong(kind, line, ctrl.signal)
-      .then((hits) => setRes({ key, hits, error: null }))
-      .catch((e: Error) => !ctrl.signal.aborted && setRes({ key, hits: null, error: e.message }));
-    return () => ctrl.abort();
-  }, [kind, line, key]);
-  const cur = res?.key === key ? res : null;
+export type PlannedStop = { key: string; name: string; detail: string; cat: Exclude<Cat, 'alle'> };
+
+const STOP_CHIPS: { id: Exclude<Cat, 'alle'>; label: string }[] = [
+  { id: 'tank', label: 'Tanken' },
+  { id: 'kaffee', label: 'Café' },
+  { id: 'mittag', label: 'Essen' },
+  { id: 'aussicht', label: 'Aussicht' },
+  { id: 'pass', label: 'Pässe' },
+];
+
+/**
+ * Unterwegs einplanen (6.11.): Chips als Einstieg in die Ebene der Ortssuche, dort nach Umweg sortiert.
+ * Eingeplante Stopps stehen darüber als Zeile mit X.
+ */
+export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned?: PlannedStop[]; busy?: boolean; onOpen: (cat: Exclude<Cat, 'alle'>) => void; onRemove?: (key: string) => void }) {
   return (
-    <Section label="Stopps an der Strecke">
-      <View style={styles.card}>
-        <View style={styles.wrap}>
-          {STOP_KINDS.map((k) => (
-            <Chip key={k.id} label={k.label} active={kind === k.id} onSurface onPress={() => setKind(kind === k.id ? null : k.id)} />
+    <Section label="Unterwegs einplanen">
+      {planned.length > 0 && (
+        <View style={styles.card}>
+          {planned.map((st) => (
+            <View key={st.key} style={styles.stopRow}>
+              <View style={styles.stopIcon}>
+                <SymbolView name={CAT_ICON[st.cat]} size={16} tintColor={Colors.signal} />
+              </View>
+              <View style={styles.flex}>
+                <AppText variant="title" numberOfLines={1}>{st.name}</AppText>
+                <AppText variant="caption" muted numberOfLines={1}>{st.detail}</AppText>
+              </View>
+              {onRemove && (
+                <Pressable accessibilityRole="button" accessibilityLabel={`${st.name} entfernen`} onPress={() => !busy && onRemove(st.key)} hitSlop={6} style={styles.stopRemove}>
+                  <SymbolView name="xmark" size={13} weight="bold" tintColor={Colors.muted} />
+                </Pressable>
+              )}
+            </View>
           ))}
         </View>
-        {kind && <AppText variant="caption" muted>{STOP_KINDS.find((k) => k.id === kind)?.hint}</AppText>}
-        {kind && !cur && <ActivityIndicator color={Colors.muted} />}
-        {cur?.error && <AppText variant="caption" muted>Gerade nicht erreichbar. Versuch es gleich noch mal.</AppText>}
-        {cur?.hits && cur.hits.length === 0 && <AppText variant="caption" muted>Nichts direkt an der Strecke gefunden.</AppText>}
-        {cur?.hits?.map((h) => (
-          <View key={h.id} style={styles.stopRow}>
-            <AppText variant="caption" muted style={styles.stopKm}>km {Math.round(h.km)}</AppText>
-            <View style={styles.flex}>
-              <AppText variant="title" numberOfLines={1}>{h.name}</AppText>
-              <AppText variant="caption" muted numberOfLines={1}>
-                {[h.detail, h.offM > 150 ? `${formatKm(h.offM / 1000, 1)} km neben der Route` : 'direkt an der Route'].filter(Boolean).join(', ')}
-              </AppText>
-            </View>
-            <SmallButton label={busy ? 'Plant' : 'Einplanen'} onPress={() => !busy && onAdd(h.p)} />
-          </View>
+      )}
+      <View style={styles.wrap}>
+        {STOP_CHIPS.map((c) => (
+          <Pressable
+            key={c.id}
+            accessibilityRole="button"
+            accessibilityLabel={`${c.label} unterwegs einplanen`}
+            onPress={() => onOpen(c.id)}
+            style={({ pressed }) => [styles.stopChip, pressed && styles.pressedSoft]}>
+            <SymbolView name={CAT_ICON[c.id]} size={15} tintColor={Colors.signal} />
+            <AppText style={styles.stopChipText}>{c.label}</AppText>
+          </Pressable>
         ))}
       </View>
+      {busy ? <ActivityIndicator color={Colors.muted} /> : planned.length === 0 && <AppText variant="caption" muted>Sortiert nach Umweg, ein Tipp plant den Stopp an der richtigen Stelle ein.</AppText>}
     </Section>
   );
 }

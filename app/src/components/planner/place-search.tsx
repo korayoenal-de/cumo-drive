@@ -58,11 +58,13 @@ type Props = {
   slots?: Slot[];
   /** Tipp auf eine andere Zeile im Routenkopf */
   onSwitch?: (slot: Slot) => void;
+  /** Nur Stopps einplanen (aus dem Ergebnis, Abschnitt Unterwegs einplanen): Titel, Kategorien ohne Alle */
+  stopsOnly?: { title: string; subtitle: string; cat: Exclude<Cat, 'alle'> };
 };
 
 export type Slot = { key: string; kind: PointKind; index?: number; insert?: boolean; label: string; value: string | null; active: boolean };
 
-type Cat = 'alle' | StopKind | 'pass';
+export type Cat = 'alle' | StopKind | 'pass';
 const CATS: { id: Cat; label: string; placeholder: string }[] = [
   { id: 'alle', label: 'Alle', placeholder: '' },
   { id: 'tank', label: 'Tanken', placeholder: 'Marke, etwa Shell' },
@@ -71,7 +73,7 @@ const CATS: { id: Cat; label: string; placeholder: string }[] = [
   { id: 'aussicht', label: 'Aussicht', placeholder: 'Aussichtspunkt suchen' },
   { id: 'pass', label: 'Pässe', placeholder: 'Pass suchen, etwa Stilfser Joch' },
 ];
-const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.saucer.fill' | 'fork.knife' | 'binoculars.fill' | 'mountain.2.fill'> = {
+export const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.saucer.fill' | 'fork.knife' | 'binoculars.fill' | 'mountain.2.fill'> = {
   tank: 'fuelpump.fill',
   kaffee: 'cup.and.saucer.fill',
   mittag: 'fork.knife',
@@ -113,7 +115,7 @@ export function PlaceSearch(props: Props) {
   return (
     <Modal visible={props.visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={props.onClose}>
       {/* Neuer Schlüssel je Punkt: das Feld startet mit dessen Namen (etwa Ziel nach dem Start) */}
-      <SearchBody key={`${props.role}|${props.current}`} {...props} />
+      <SearchBody key={`${props.role}|${props.current}|${props.stopsOnly?.cat ?? ''}`} {...props} />
     </Modal>
   );
 }
@@ -134,12 +136,13 @@ function SearchBody({
   onPickStop,
   slots,
   onSwitch,
+  stopsOnly,
 }: Props) {
   const [query, setQuery] = useState(current);
   const live = usePassLive();
   const recent = useRecentPlaces();
   const hasRoute = !!route && route.length > 1;
-  const [cat, setCat] = useState<Cat>('alle');
+  const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? 'alle');
   const [scale, setScale] = useState(1);
   // Solange der Name des Punkts unverändert im Feld steht, keine Suche
   const q = query === current ? '' : query.trim();
@@ -229,7 +232,41 @@ function SearchBody({
   return (
       <View style={styles.screen}>
         <View style={styles.head}>
-          {slots && slots.length > 1 ? (
+          {stopsOnly ? (
+            <>
+              <View style={styles.titleRow}>
+                <View style={styles.rowMain}>
+                  <AppText style={styles.title}>{stopsOnly.title}</AppText>
+                  <AppText style={styles.role} numberOfLines={1}>{stopsOnly.subtitle}</AppText>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Schließen"
+                  onPress={onClose}
+                  style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
+                  <SymbolView name="xmark" size={18} weight="semibold" tintColor={Colors.text} />
+                </Pressable>
+              </View>
+              <View style={styles.field}>
+                <SymbolView name="magnifyingglass" size={18} tintColor={Colors.muted} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder={CATS.find((c) => c.id === cat)?.placeholder}
+                  placeholderTextColor={Colors.muted}
+                  returnKeyType="search"
+                  autoCorrect={false}
+                  style={styles.input}
+                  accessibilityLabel="In dieser Kategorie suchen"
+                />
+                {query.length > 0 && (
+                  <Pressable accessibilityRole="button" accessibilityLabel="Eingabe löschen" onPress={() => setQuery('')} hitSlop={8}>
+                    <SymbolView name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
+                  </Pressable>
+                )}
+              </View>
+            </>
+          ) : slots && slots.length > 1 ? (
             <View style={styles.routeHead}>
               <View style={styles.slots}>
                 {slots.map((sl, i) => (
@@ -320,7 +357,7 @@ function SearchBody({
           )}
           {hasRoute && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.tabs} style={styles.tabsBox}>
-              {CATS.map((c) => {
+              {CATS.filter((c) => !stopsOnly || c.id !== 'alle').map((c) => {
                 const on = c.id === cat;
                 return (
                   <Pressable
@@ -364,37 +401,54 @@ function SearchBody({
                 )}
               </View>
             ) : (
-              <View style={styles.group}>
-                {(catRows ?? []).slice(0, 30).map((r) => {
-                  const near0 = r.offM < 150;
-                  const main = near0 ? 'direkt an der Strecke' : `+${detourMin(r.offM)} min Umweg`;
-                  return (
-                    <Pressable
-                      key={r.key}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${r.name}, ${main}, bei km ${Math.round(r.km)}`}
-                      onPress={() => {
-                        rememberPlace({ name: r.name, detail: r.detail, p: r.p });
-                        if (onPickStop) onPickStop(r.p, r.name, r.km);
-                        else onPick(r.p, r.name);
-                      }}
-                      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
-                      <View style={styles.icon}>
-                        <SymbolView name={CAT_ICON[cat]} size={16} tintColor={cat === 'pass' ? Colors.signal : Colors.text} />
+              <>
+                {[
+                  { label: 'Direkt an der Strecke', rows: (catRows ?? []).filter((r) => r.offM < 150) },
+                  { label: 'Mit kleinem Umweg', rows: (catRows ?? []).filter((r) => r.offM >= 150) },
+                ]
+                  .filter((g) => g.rows.length)
+                  .map((g) => (
+                    <View key={g.label} style={styles.section}>
+                      <AppText style={styles.groupLabel}>{g.label}</AppText>
+                      <View style={styles.group}>
+                        {g.rows.slice(0, 20).map((r) => {
+                          const near0 = r.offM < 150;
+                          const min = near0 ? 0 : detourMin(r.offM);
+                          return (
+                            <Pressable
+                              key={r.key}
+                              accessibilityRole="button"
+                              accessibilityLabel={`${r.name}, ${near0 ? 'kein Umweg' : `${min} Minuten Umweg`}, bei km ${Math.round(r.km)}`}
+                              onPress={() => {
+                                rememberPlace({ name: r.name, detail: r.detail, p: r.p });
+                                if (onPickStop) onPickStop(r.p, r.name, r.km);
+                                else onPick(r.p, r.name);
+                              }}
+                              style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
+                              <View style={[styles.icon, styles.iconTint]}>
+                                <SymbolView name={CAT_ICON[cat as Exclude<Cat, 'alle'>]} size={16} tintColor={Colors.signal} />
+                              </View>
+                              <View style={styles.rowMain}>
+                                <AppText style={styles.name} numberOfLines={1}>
+                                  {r.name}
+                                </AppText>
+                                <AppText style={styles.sub} numberOfLines={1}>
+                                  {`bei km ${Math.round(r.km)}${r.detail ? ` · ${r.detail}` : ''}`}
+                                </AppText>
+                              </View>
+                              <AppText style={[styles.detour, near0 && styles.detourZero]}>{near0 ? '0 min' : `+${min} min`}</AppText>
+                            </Pressable>
+                          );
+                        })}
                       </View>
-                      <View style={styles.rowMain}>
-                        <AppText style={styles.name} numberOfLines={1}>
-                          {r.name}
-                        </AppText>
-                        <AppText style={styles.sub} numberOfLines={1}>
-                          <AppText style={styles.detour}>{main}</AppText>
-                          {` · bei km ${Math.round(r.km)}${r.detail ? ` · ${r.detail}` : ''}`}
-                        </AppText>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
+                    </View>
+                  ))}
+                {scale < 3 && (
+                  <Pressable accessibilityRole="button" onPress={() => setScale(3)} style={({ pressed }) => [styles.widenLink, pressed && styles.pressed]}>
+                    <AppText style={styles.widenLinkText}>Korridor erweitern</AppText>
+                  </Pressable>
+                )}
+              </>
             )
           ) : hits ? (
             hits.length === 0 && !suggest.searching ? (
@@ -497,7 +551,14 @@ const styles = StyleSheet.create({
   tabOn: { backgroundColor: Colors.text },
   tabText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   tabTextOn: { color: Colors.ground },
-  detour: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
+  detour: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
+  detourZero: { color: Colors.good },
+  groupLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, paddingHorizontal: Spacing.xs },
+  iconTint: { backgroundColor: Colors.signalTint },
+  widenLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.l },
+  widenLinkText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.signal },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m },
+  title: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 28, color: Colors.text, textTransform: 'uppercase' },
   loading: { marginTop: Spacing.xl },
   widen: { alignSelf: 'flex-start', height: 48, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, justifyContent: 'center', backgroundColor: Colors.surface2 },
   widenText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },

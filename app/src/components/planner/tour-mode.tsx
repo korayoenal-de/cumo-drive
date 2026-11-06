@@ -27,8 +27,8 @@ import { passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
 import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
 
-import { PlaceSearch, type Slot } from './place-search';
-import { DragHandle, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsSection, Toggle, TrustLine, Warnings } from './planner-parts';
+import { PlaceSearch, type Cat, type Slot } from './place-search';
+import { DragHandle, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, TrustLine, Warnings } from './planner-parts';
 import { keyOf, type PendingPoint, type PointKind, profileWord, samePts, STEP_TEXT } from './planner-shared';
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
@@ -232,6 +232,7 @@ export function TourMode({
   // denn Mitfahrer lädt man zu einer Tour aus Meine Touren ein.
   const [asGroup, setAsGroup] = useState(false);
   const [askDelete, setAskDelete] = useState(false);
+  const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);
   // Zurücksetzen leert nur das Formular; ohne Rückfrage, aber mit Rückgängig im Toast
   const resetForm = () => {
     const snap = plan.snapshot();
@@ -514,7 +515,26 @@ export function TourMode({
 
           <ElevationChart line={line} />
 
-          <StopsSection line={line} busy={busy} onAdd={(p) => add('via', p)} />
+          <StopsPlanner busy={busy} onOpen={setStopCat} />
+          <PlaceSearch
+            visible={!!stopCat}
+            role="Stopp"
+            placeholder=""
+            current=""
+            locating={false}
+            message={null}
+            onPick={() => undefined}
+            onHere={() => undefined}
+            onClose={() => setStopCat(null)}
+            route={line}
+            stopsOnly={stopCat ? { title: 'Unterwegs einplanen', subtitle: `${plan.name.trim() || 'Neue Tour'} · ${Math.round(total)} km`, cat: stopCat } : undefined}
+            onPickStop={(p, name, km) => {
+              const snap = plan.snapshot();
+              setStopCat(null);
+              pickStop(p, name, km);
+              showToast(`${name} bei km ${Math.round(km)} eingeplant`, { action: { label: 'Rückgängig', onPress: () => plan.restore(snap) } });
+            }}
+          />
         </>
       )}
 
