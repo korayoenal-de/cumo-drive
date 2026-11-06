@@ -5,7 +5,7 @@
  * dort ein freundlicher Hinweis zurück.
  */
 import { useState, type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
@@ -117,10 +117,16 @@ export function Paywall({
           <AppText variant="caption" muted>
             Woche, Monat und Jahr verlängern sich automatisch, wenn du nicht spätestens 24 Stunden vor Ablauf in den Einstellungen deiner Apple ID kündigst. Der Saison Pass gilt 6 Monate und endet von selbst.
           </AppText>
-          {/* TODO: AGB und Datenschutz verlinken, sobald die Seiten auf rallycumo.de stehen */}
-          <AppText variant="caption" muted>
-            AGB und Datenschutz folgen.
-          </AppText>
+          {/* Pflicht bei Abos (App Store Regel 3.1.2): Nutzungsbedingungen, Apple EULA und Datenschutz */}
+          <View style={styles.legal}>
+            {LEGAL_LINKS.map((l) => (
+              <Pressable key={l.url} accessibilityRole="link" onPress={() => void Linking.openURL(l.url)} hitSlop={6}>
+                <AppText variant="caption" style={styles.legalLink}>
+                  {l.label}
+                </AppText>
+              </Pressable>
+            ))}
+          </View>
         </View>
 
         {footer}
@@ -128,6 +134,12 @@ export function Paywall({
     </SafeAreaView>
   );
 }
+
+const LEGAL_LINKS = [
+  { label: 'Nutzungsbedingungen', url: 'https://drive.rallycumo.de/agb' },
+  { label: 'Apple Lizenzvertrag', url: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/' },
+  { label: 'Datenschutz', url: 'https://drive.rallycumo.de/datenschutz' },
+];
 
 function PlanCard({ price, selected, onPress }: { price: Price; selected: boolean; onPress: () => void }) {
   return (
@@ -164,6 +176,8 @@ function PlanCard({ price, selected, onPress }: { price: Price; selected: boolea
 }
 
 const styles = StyleSheet.create({
+  legal: { flexDirection: 'row', flexWrap: 'wrap', columnGap: Spacing.l, rowGap: Spacing.s },
+  legalLink: { color: Colors.text, textDecorationLine: 'underline', minHeight: 24 },
   safe: { flex: 1, backgroundColor: Colors.ground },
   topBar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: Spacing.xl, paddingTop: Spacing.s },
   close: { height: 36, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, justifyContent: 'center' },
