@@ -27,7 +27,16 @@ function wedge(deg: number, r: number, spread = 32) {
   return `M ${C} ${C} L ${a.x} ${a.y} A ${r} ${r} 0 0 1 ${b.x} ${b.y} Z`;
 }
 
-export function DirectionDial({ value, onChange }: { value: Direction; onChange: (d: Direction) => void }) {
+export function DirectionDial({
+  value,
+  onChange,
+  onDragChange,
+}: {
+  value: Direction;
+  onChange: (d: Direction) => void;
+  /** Ring wird gezogen: Blatt und Inhalt dürfen solange nicht scrollen (sonst kämpfen beide um den Finger) */
+  onDragChange?: (on: boolean) => void;
+}) {
   const [w, setW] = useState(SIZE);
   const [drag, setDrag] = useState<number | null>(null);
   const cur = DIRECTIONS.find((d) => d.id === value);
@@ -75,10 +84,19 @@ export function DirectionDial({ value, onChange }: { value: Direction; onChange:
         onStartShouldSetResponder={(e) => fromTouch(e, true).r > 55}
         onMoveShouldSetResponder={() => false}
         onResponderTerminationRequest={() => false}
-        onResponderGrant={(e) => move(e, true)}
+        onResponderGrant={(e) => {
+          onDragChange?.(true);
+          move(e, true);
+        }}
         onResponderMove={(e) => move(e)}
-        onResponderRelease={() => setDrag(null)}
-        onResponderTerminate={() => setDrag(null)}>
+        onResponderRelease={() => {
+          setDrag(null);
+          onDragChange?.(false);
+        }}
+        onResponderTerminate={() => {
+          setDrag(null);
+          onDragChange?.(false);
+        }}>
         <Svg width={w} height={w} viewBox={`0 0 ${SIZE} ${SIZE}`}>
           <Circle cx={C} cy={C} r={R} stroke={Colors.surface2} strokeWidth={30} fill="none" />
           {deg != null && <Path d={wedge(deg, R - 15)} fill={Colors.signal} opacity={0.22} />}

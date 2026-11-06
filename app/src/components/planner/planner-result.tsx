@@ -26,9 +26,11 @@ import { styles } from './planner-styles';
 
 
 export function Result({
-  tour, req, stops, group, onReroll, onBack, onAddStop, adding,
+  tour, req, stops, group, onReroll, onBack, onAdjust, onAddStop, adding,
 }: {
   tour: PlannedTour; req: TourRequest; stops: Stop[]; group: boolean; onReroll: () => void; onBack: () => void;
+  /** Runde als Route mit Start, Zwischenzielen und Ziel öffnen */
+  onAdjust: () => void;
   onAddStop: (p: LatLon) => void; adding: boolean;
 }) {
   const total = tour.laenge_km;
@@ -83,6 +85,7 @@ export function Result({
         primary={{ label: 'Losfahren', onPress: drive }}
         save={{ saved: !!savedId, onPress: saveResult }}
         more={[
+          { key: 'adjust', icon: 'pencil', label: 'Anpassen', hint: 'Start, Zwischenziele und Ziel ändern', onPress: onAdjust },
           { key: 'reroll', icon: 'dice', label: 'Neu würfeln', hint: 'Gleiche Länge und Richtung, andere Strecke', onPress: onReroll },
           ...(savedId
             ? [{ key: 'group', icon: 'person.2' as const, label: 'Als Gruppe fahren', hint: 'Mitfahrer mit ihrem Namen einladen', onPress: () => router.push({ pathname: '/gruppe/neu', params: { tour: savedId } }) }]

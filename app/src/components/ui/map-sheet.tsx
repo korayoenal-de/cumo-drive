@@ -219,6 +219,7 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
           style={styles.flex}
           contentContainerStyle={[styles.content, { paddingBottom: bottomSpace + Spacing.xl }]}
           scrollEnabled={detent === 2 && !lockScroll}
+          canCancelContentTouches={!lockScroll}
           onScroll={onScroll}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"

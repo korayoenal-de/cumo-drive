@@ -34,7 +34,7 @@ import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } f
 import { planChecked, type PlannedTour } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { insertVia } from '@/lib/route-edit';
-import { haversine, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { flatten, haversine, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
 import { ErrorCard, MicIcon, PrimaryButton, Progress, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
@@ -188,6 +188,26 @@ export default function Planner() {
       off();
     };
   }, [loadTour, profile, avoid]);
+
+  /**
+   * Runde anpassen (wie calimoto): als Route mit Start, Zwischenzielen und Ziel öffnen, die Strecke
+   * bleibt wie sie ist, bis ein Punkt geändert wird. Hat die Runde keine eigenen Zwischenpunkte
+   * (Rundtour des Servers), setzen wir drei auf die Strecke, bei einem, zwei und drei Vierteln.
+   */
+  function adjustRound(t: PlannedTour, p: Profile) {
+    const line = flatten(t).map((x) => x.p);
+    const w = t.wegpunkte;
+    const s = w[0] ?? line[0];
+    const inner = w.slice(1, -1);
+    const vias = inner.length ? inner : line.length > 8 ? [0.25, 0.5, 0.75].map((f) => line[Math.round((line.length - 1) * f)]) : [];
+    const now = new Date().toISOString();
+    abort.current?.abort();
+    setProfile(p);
+    setMode('tour');
+    setView({ kind: 'form' });
+    setPending(null);
+    loadTour({ ...t, wegpunkte: [s, ...vias, s], id: '', folder: '', createdAt: now, updatedAt: now, profile: p }, p, avoid);
+  }
 
   // Ist der Standort schon freigegeben, zeigt die Karte gleich die Umgebung (ohne neue Abfrage)
   useEffect(() => {
@@ -460,6 +480,7 @@ export default function Planner() {
           group={false}
           onReroll={() => reroll(view.req)}
           onBack={() => setView({ kind: 'form' })}
+          onAdjust={() => adjustRound(view.tour, view.req.profile)}
           adding={adding}
           onAddStop={(p) => void addStop(p)}
         />
@@ -695,7 +716,7 @@ export default function Planner() {
           </Section>
 
           <Section label="Richtung">
-            <DirectionDial value={direction} onChange={setDirection} />
+            <DirectionDial value={direction} onChange={setDirection} onDragChange={setDragging} />
           </Section>
 
           <Section label="Profil">
