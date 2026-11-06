@@ -1,5 +1,12 @@
 #!/bin/bash
-# CUMO DRIVE: Routing Profil aktualisieren und Graph neu bauen, erzeugt aus build_cloud_init.py.
+# CUMO DRIVE: Routing Profile aktualisieren und Graph neu bauen, erzeugt aus build_cloud_init.py.
+# Sofort: ssh root@IP 'bash -s' < routing-rebuild.sh
+# Geplant: ssh root@IP 'AT="2026-11-06 18:00:00 Europe/Berlin" bash -s' < routing-rebuild.sh
+set -euo pipefail
+main() {
+cat > /opt/cumo-routing/rebuild-now.sh <<'CUMO_OUTER'
+#!/bin/bash
+# CUMO DRIVE: Dateien für den Neuaufbau schreiben und den Graphen neu bauen (aus routing-rebuild.sh).
 set -euo pipefail
 mkdir -p /opt/cumo-routing
 cat > /opt/cumo-routing/config.yml <<'CUMO_EOF'
@@ -252,5 +259,19 @@ CUMO_EOF
 chmod 0644 /etc/systemd/system/cumo-routing.service
 systemctl daemon-reload
 chown -R cumo:cumo /opt/cumo-routing/config.yml /opt/cumo-routing/custom_models
-nohup /opt/cumo-routing/setup-server.sh > /opt/cumo-routing/rebuild.log 2>&1 &
-echo 'Neuaufbau läuft im Hintergrund (etwa zwei Stunden). Der Server bleibt dabei erreichbar, Fortschritt: tail -f /opt/cumo-routing/rebuild.log'
+/opt/cumo-routing/setup-server.sh
+CUMO_OUTER
+chmod 0755 /opt/cumo-routing/rebuild-now.sh
+if [ -n "${AT:-}" ]; then
+  systemctl stop cumo-rebuild-once.timer 2>/dev/null || true
+  systemctl reset-failed cumo-rebuild-once.service cumo-rebuild-once.timer 2>/dev/null || true
+  systemd-run --unit=cumo-rebuild-once --on-calendar="$AT" --timer-property=AccuracySec=1min \
+    /bin/bash -c '/opt/cumo-routing/rebuild-now.sh > /opt/cumo-routing/rebuild.log 2>&1'
+  echo "Neuaufbau geplant für $AT. Der Server läuft bis dahin unverändert weiter."
+  systemctl list-timers cumo-rebuild-once.timer --no-pager || true
+else
+  nohup /opt/cumo-routing/rebuild-now.sh > /opt/cumo-routing/rebuild.log 2>&1 &
+  echo "Neuaufbau läuft im Hintergrund (etwa zwei Stunden). Fortschritt: tail -f /opt/cumo-routing/rebuild.log"
+fi
+}
+main < /dev/null

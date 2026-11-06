@@ -201,16 +201,38 @@ print(f"poi-update.sh geschrieben ({len(upd)} Zeichen)")
 
 # Neue Einstellungen für den Graphen (config.yml, Sportwagen Profil) auf den laufenden Server bringen und
 # den Graphen im Hintergrund neu bauen. Aufruf vom Mac: ssh root@IP 'bash -s' < routing-rebuild.sh
-reb = "#!/bin/bash\n# CUMO DRIVE: Routing Profil aktualisieren und Graph neu bauen, erzeugt aus build_cloud_init.py.\nset -euo pipefail\n"
-reb += heredoc("/opt/cumo-routing/config.yml", cfg)
-reb += model_docs
-reb += heredoc("/opt/cumo-routing/setup-server.sh", setup, "0755")
+# Alles, was der Neuaufbau braucht, steht in rebuild-now.sh auf dem Server. Sofort starten oder zu einer Zeit planen:
+#   ssh root@IP 'bash -s' < routing-rebuild.sh
+#   ssh root@IP 'AT="2026-11-06 18:00:00 Europe/Berlin" bash -s' < routing-rebuild.sh
+# Geplant werden die neuen Dateien erst zur Startzeit geschrieben, der laufende Server bleibt bis dahin unberührt.
+body = "#!/bin/bash\n# CUMO DRIVE: Dateien für den Neuaufbau schreiben und den Graphen neu bauen (aus routing-rebuild.sh).\nset -euo pipefail\n"
+body += heredoc("/opt/cumo-routing/config.yml", cfg)
+body += model_docs
+body += heredoc("/opt/cumo-routing/setup-server.sh", setup, "0755")
 # Dienst mit dem Heap für die zusätzlichen Landmarken; setup-server.sh startet ihn nach dem Import neu
-reb += heredoc("/etc/systemd/system/cumo-routing.service", unit)
-reb += "systemctl daemon-reload\n"
-reb += "chown -R cumo:cumo /opt/cumo-routing/config.yml /opt/cumo-routing/custom_models\n"
-reb += "nohup /opt/cumo-routing/setup-server.sh > /opt/cumo-routing/rebuild.log 2>&1 &\n"
-reb += "echo 'Neuaufbau läuft im Hintergrund (etwa zwei Stunden). Der Server bleibt dabei erreichbar, Fortschritt: tail -f /opt/cumo-routing/rebuild.log'\n"
+body += heredoc("/etc/systemd/system/cumo-routing.service", unit)
+body += "systemctl daemon-reload\n"
+body += "chown -R cumo:cumo /opt/cumo-routing/config.yml /opt/cumo-routing/custom_models\n"
+body += "/opt/cumo-routing/setup-server.sh\n"
+reb = "#!/bin/bash\n# CUMO DRIVE: Routing Profile aktualisieren und Graph neu bauen, erzeugt aus build_cloud_init.py.\n"
+reb += "# Sofort: ssh root@IP 'bash -s' < routing-rebuild.sh\n"
+reb += "# Geplant: ssh root@IP 'AT=\"2026-11-06 18:00:00 Europe/Berlin\" bash -s' < routing-rebuild.sh\n"
+reb += "set -euo pipefail\nmain() {\n"
+reb += "cat > /opt/cumo-routing/rebuild-now.sh <<'CUMO_OUTER'\n" + body + "CUMO_OUTER\nchmod 0755 /opt/cumo-routing/rebuild-now.sh\n"
+reb += """if [ -n "${AT:-}" ]; then
+  systemctl stop cumo-rebuild-once.timer 2>/dev/null || true
+  systemctl reset-failed cumo-rebuild-once.service cumo-rebuild-once.timer 2>/dev/null || true
+  systemd-run --unit=cumo-rebuild-once --on-calendar="$AT" --timer-property=AccuracySec=1min \\
+    /bin/bash -c '/opt/cumo-routing/rebuild-now.sh > /opt/cumo-routing/rebuild.log 2>&1'
+  echo "Neuaufbau geplant für $AT. Der Server läuft bis dahin unverändert weiter."
+  systemctl list-timers cumo-rebuild-once.timer --no-pager || true
+else
+  nohup /opt/cumo-routing/rebuild-now.sh > /opt/cumo-routing/rebuild.log 2>&1 &
+  echo "Neuaufbau läuft im Hintergrund (etwa zwei Stunden). Fortschritt: tail -f /opt/cumo-routing/rebuild.log"
+fi
+}
+main < /dev/null
+"""
 (HERE / "routing-rebuild.sh").write_text(reb)
 (HERE / "routing-rebuild.sh").chmod(0o755)
 print(f"routing-rebuild.sh geschrieben ({len(reb)} Zeichen)")
