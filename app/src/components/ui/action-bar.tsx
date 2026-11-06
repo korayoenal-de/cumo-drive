@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   primary: { flex: 1, height: 56, borderRadius: 28, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.985 }] },
+  pressed: { opacity: 0.8, transform: [{ scale: Motion.pressScale }] },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   big: { width: 56, height: 56, borderRadius: 28 },
   savedBg: { backgroundColor: Colors.signalTint },

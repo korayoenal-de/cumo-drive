@@ -32,10 +32,9 @@ Regeln:
 
 ## 3. Bewegung mit Federn (Bounce geregelt am 6.11.2026)
 * Alle Animationen nutzen `Motion` aus `theme.ts`. Keine linearen Übergänge.
-* Federn `press` (Drücken) und `snap` (Hereingleiten, Blatt, Tab Leiste, Sheets, Toast) schwingen nicht über. Kein Federn ohne diese Werte, keine Standard Feder von Reanimated.
-* Bounce gibt es nur als Puls `Motion.pop` (2 Prozent, einmal hin und zurück), und nur für zwei Anlässe: eine Aktion ist erledigt (Lesezeichen beim Speichern) und Aufmerksamkeit kurz vor einem Manöver (Navigationssymbol). Sonst nirgends.
-* Drücken verkleinert auf `Motion.pressScale` (98,5 Prozent).
-* Ausnahme: der Stern der Legende im Fahrspaß Pegel (125 Prozent), eine eigene Gestaltung.
+* Federn `press` (Drücken) und `snap` (Hereingleiten, Blatt, Tab Leiste, Sheets, Toast) schwingen nicht über. Keine Standard Feder von Reanimated.
+* Bedienelemente ändern ihre Größe höchstens um `Motion.pop` (2 Prozent): Puls beim Speichern, aktiver Tab in der Tab Leiste, Punkt beim Ziehen (die Hälfte). Gedrückt immer `Motion.pressScale` (98,5 Prozent), überall gleich. Das sind 20 Prozent der früheren Ausschläge (3 bis 15 Prozent).
+* Eigene Werte haben nur die Navigationssymbole (Puls 6 Prozent nach dem Aufbau, 10 Prozent bei Symbolen ohne Pfeil) und der Stern der Legende im Fahrspaß Pegel (125 Prozent).
 * Pfeil kurz vor dem Manöver: die Linie baut sich bis zur Basis der Spitze auf, dann füllt sich die ganze Spitze auf einmal, danach der Puls. Umgebung und schwacher Pfeil liegen in einer Ebene, so ist im Kreisverkehr nur ein Weg zu sehen.
 * Bei „Bewegung reduzieren“ nur Deckkraft, kein Aufbau, kein Puls.
 

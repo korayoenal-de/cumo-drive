@@ -3,8 +3,7 @@
  *
  * Mit soon (Manöver steht kurz bevor) baut sich der Pfeil von unten bis zur Spitze auf, wie mit einer Maske
  * aufgedeckt, darunter bleibt er schwach sichtbar. Erreicht die Linie die Basis der Spitze, füllt sich die
- * ganze Spitze auf einmal, die Linie läuft darunter weiter. Danach ein Puls
- * mit Motion.pop.
+ * ganze Spitze auf einmal, die Linie läuft darunter weiter. Danach ein kurzer Puls (6 Prozent).
  * Symbole ohne Pfeil pulsieren nur. Bei „Bewegung reduzieren“ bleibt ein sanftes Pulsieren der Deckkraft.
  */
 import { useEffect } from 'react';
@@ -25,7 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { G, Path, Rect, Text as SvgText } from 'react-native-svg';
 
-import { Colors, Motion } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import type { ManeuverKind } from '@/lib/navigation/types';
 
 import { SHAFT_INSIDE_HEAD, symbolFor, symbolGeometry, type NavSymbol, type Paint, type Shape } from './maneuver-geometry';
@@ -125,7 +124,7 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
 
   const style = useAnimatedStyle(() => {
     if (reduce) return { opacity: 1 - pulse.value * 0.35 };
-    return { transform: [{ scale: 1 + pulse.value * Motion.pop }] };
+    return { transform: [{ scale: 1 + pulse.value * (draw ? 0.06 : 0.1) }] };
   });
 
   return (

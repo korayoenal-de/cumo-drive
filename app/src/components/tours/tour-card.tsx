@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   thumb: { width: 56, height: 56, borderRadius: Radius.m, backgroundColor: Colors.ground, overflow: 'hidden' },
   round: { minWidth: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   item: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
-  itemPressed: { opacity: 0.7, transform: [{ scale: 0.985 }] },
+  itemPressed: { opacity: 0.7, transform: [{ scale: Motion.pressScale }] },
   form: { gap: Spacing.s },
   field: { minHeight: 48, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   area: { minHeight: 88, textAlignVertical: 'top' },

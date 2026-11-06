@@ -78,7 +78,7 @@ function TabButton({ tab, isFocused, ref: _ref, ...rest }: TabProps) {
     on.set(withSpring(isFocused ? 1 : 0, Motion.snap));
     if (isFocused) expandTabBar();
   }, [isFocused, on]);
-  const pill = useAnimatedStyle(() => ({ opacity: on.get(), transform: [{ scale: 0.85 + on.get() * 0.15 }] }));
+  const pill = useAnimatedStyle(() => ({ opacity: on.get(), transform: [{ scale: 1 - Motion.pop + on.get() * Motion.pop }] }));
   return (
     <Pressable
       {...rest}

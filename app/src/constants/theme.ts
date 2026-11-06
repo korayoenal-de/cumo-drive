@@ -101,9 +101,9 @@ export const Motion = {
   stagger: 45,
   pressScale: 0.985,
   /**
-   * Puls als Rückmeldung (Speichern, Manöver kurz bevor): einmal auf 1 + pop und zurück, nie mehr.
-   * Am 6.11. auf 20 % der früheren Ausschläge gesenkt (vorher 6 bis 12 %). Federn press und snap
-   * schwingen nicht über. Ausnahme ist der Stern der Legende im Fahrspaß Pegel (eigene Gestaltung).
+   * Größenänderung von Bedienelementen (Puls beim Speichern, aktiver Tab, Anheben beim Ziehen):
+   * höchstens 2 Prozent. Am 6.11. auf 20 % der früheren Ausschläge gesenkt (vorher 3 bis 15 %).
+   * Gedrückt immer pressScale. Navigationssymbole und der Fahrspaß Pegel haben eigene Werte.
    */
   pop: 0.02,
 } as const;

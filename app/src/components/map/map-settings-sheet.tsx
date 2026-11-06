@@ -36,7 +36,7 @@ export function MapLayersButton({ style }: { style?: object }) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Karteneinstellungen"
-        onPressIn={() => s.set(withSpring(0.92, Motion.press))}
+        onPressIn={() => s.set(withSpring(Motion.pressScale, Motion.press))}
         onPressOut={() => s.set(withSpring(1, Motion.snap))}
         onPress={() => setOpen(true)}
         hitSlop={6}

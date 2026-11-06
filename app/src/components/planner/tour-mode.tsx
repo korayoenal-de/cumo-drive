@@ -15,7 +15,7 @@ import { locate, toPlanError, type Spot } from '@/components/planner/create-tour
 import { ElevationChart } from '@/components/planner/elevation-chart';
 import { ActionBar } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
-import { Colors, Shadow } from '@/constants/theme';
+import { Colors, Motion, Shadow } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { useSession } from '@/lib/auth';
 import { doubledStretch } from '@/lib/doubled';
@@ -70,7 +70,7 @@ export function TourMode({
   /** Mitte jeder Punktzeile in der Liste, für das Ziel beim Ziehen */
   const centers = useRef<number[]>([]);
   const dragStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: dragY.get() }, { scale: 1.03 }],
+    transform: [{ translateY: dragY.get() }, { scale: 1 + Motion.pop / 2 }],
     boxShadow: Shadow.lift,
     backgroundColor: Colors.surface2,
   }));
