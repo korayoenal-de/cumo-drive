@@ -128,9 +128,10 @@ const styles = StyleSheet.create({
   gapS: { gap: Spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   card: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
-  kicker: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.signal },
-  title: { fontFamily: Fonts.bold, fontSize: 22, lineHeight: 26, letterSpacing: -0.3 },
-  num: { fontFamily: Fonts.semibold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
+  kicker: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.signal },
+  // Highlight Namen wie Tournamen: Versalien in Archivo Black (Typografie Mittelweg)
+  title: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 28, textTransform: 'uppercase' },
+  num: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
   stop: { padding: Spacing.xl },
   stopKicker: { fontFamily: Fonts.semibold, color: 'rgba(255,255,255,0.8)' },
   stopTitle: { fontFamily: Fonts.display, fontSize: 32, lineHeight: 36, color: Colors.onSignal },

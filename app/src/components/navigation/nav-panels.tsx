@@ -2,10 +2,13 @@
  * Bausteine des Navigationsscreens: Manöver Karte oben, Leiste unten, Zustands Karten.
  */
 import { useEffect, useState, type ReactNode } from 'react';
+import { SymbolView } from 'expo-symbols';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
+import { softEnter } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 import type { Maneuver } from '@/lib/navigation/types';
 
 import { formatClock, formatDistance, formatRemaining } from './format';
@@ -63,19 +66,6 @@ export function InfoCard({ children, tone = 'neutral' }: { children: ReactNode; 
   );
 }
 
-function Extra({ value, label }: { value: string; label: string }) {
-  return (
-    <View style={styles.extra}>
-      <AppText style={styles.extraValue} numberOfLines={1} adjustsFontSizeToFit>
-        {value}
-      </AppText>
-      <AppText variant="caption" muted numberOfLines={1}>
-        {label}
-      </AppText>
-    </View>
-  );
-}
-
 export function Recalculating({ first = false }: { first?: boolean }) {
   return (
     <InfoCard>
@@ -103,27 +93,30 @@ function useNow(): number {
 }
 
 export type NavExtra = {
-  /** Anteil der Route, der schon gefahren ist */
+  /** Anteil der Route, der schon gefahren ist, 0 bis 100 */
   donePct: number;
-  nextLabel: string;
-  nextKm: number;
-  nextMin: number;
-  drivenKm: number;
-  startedAt: number | null;
+  /** Lage der Zwischenziele auf der Route, 0 bis 100 */
+  viaPct: number[];
 };
 
+/**
+ * Leiste unten (Entwurf B, 6.11.): Ankunft in Titelgröße, daneben Restzeit und Strecke, darunter
+ * der Fortschritt als Balken mit dezenten Marken für die Zwischenziele. Rechts Ton und ein runder Knopf,
+ * der Pausieren und Beenden aufklappt (Aufklappen statt Wechseln).
+ */
 export function BottomBar({
-  eta, remainingKm, extra, voice, group, showSim, bottomInset, onEnd, onVoice, onSecret, onSimulate, onFunk,
+  eta, remainingKm, extra, voice, group, paused, showSim, bottomInset, onEnd, onPause, onVoice, onSecret, onSimulate, onFunk,
 }: {
   eta: Date | null;
   remainingKm: number | null;
-  /** Zusätzliche Werte über der Ankunftszeit */
   extra?: NavExtra;
   voice: boolean;
   group: boolean;
+  paused: boolean;
   showSim: boolean;
   bottomInset: number;
   onEnd: () => void;
+  onPause: (on: boolean) => void;
   onVoice: () => void;
   onSecret: () => void;
   onSimulate: () => void;
@@ -132,73 +125,111 @@ export function BottomBar({
 }) {
   const now = useNow();
   const [funkHint, setFunkHint] = useState(false);
+  const [menu, setMenu] = useState(false);
   useEffect(() => {
     if (!funkHint) return;
     const t = setTimeout(() => setFunkHint(false), 2500);
     return () => clearTimeout(t);
   }, [funkHint]);
+  // Aufgeklappte Aktionen klappen nach 4 Sekunden von selbst zu
+  useEffect(() => {
+    if (!menu) return;
+    const t = setTimeout(() => setMenu(false), 4000);
+    return () => clearTimeout(t);
+  }, [menu]);
+
+  const km = remainingKm != null ? `${remainingKm.toFixed(remainingKm < 10 ? 1 : 0).replace('.', ',')} km` : '';
+  const rest = paused ? 'Pausiert' : [formatRemaining(eta, now), km].filter(Boolean).join(' · ');
+  const done = extra ? Math.max(0, Math.min(100, extra.donePct)) : null;
+  const actions = [
+    paused
+      ? { key: 'weiter', label: 'Fortsetzen', icon: 'play.fill' as const, signal: false, run: () => onPause(false) }
+      : { key: 'pause', label: 'Pausieren', icon: 'pause.fill' as const, signal: false, run: () => onPause(true) },
+    { key: 'ende', label: 'Fahrt beenden', icon: 'stop.fill' as const, signal: true, run: onEnd },
+  ];
 
   return (
-    <GlassPanel style={[styles.bar, { paddingBottom: bottomInset }]} fallback="rgba(11,11,12,0.96)">
-      {funkHint && (
-        <View style={styles.funkHint}>
-          <AppText variant="caption">Funk folgt bald.</AppText>
+    <View>
+      {menu && (
+        <View style={[styles.menu, { bottom: '100%' }]} pointerEvents="box-none">
+          {actions.map((a, i) => (
+            <Animated.View key={a.key} entering={softEnter(i)}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  setMenu(false);
+                  a.run();
+                }}
+                style={({ pressed }) => [styles.pill, a.signal && styles.pillSignal, pressed && styles.pressed]}>
+                <SymbolView name={a.icon} size={16} tintColor={a.signal ? Colors.onSignal : Colors.text} />
+                <AppText style={[styles.pillText, a.signal && { color: Colors.onSignal }]}>{a.label}</AppText>
+              </Pressable>
+            </Animated.View>
+          ))}
         </View>
       )}
-      {extra && (
-        <View style={styles.extraRow}>
-          <Extra value={`${Math.max(0, Math.min(100, extra.donePct))} %`} label="gefahren" />
-          <Extra
-            value={`${extra.nextKm.toFixed(extra.nextKm < 10 ? 1 : 0).replace('.', ',')} km`}
-            label={`${extra.nextLabel}, ${extra.nextMin < 60 ? `${Math.max(1, Math.round(extra.nextMin))} min` : `${Math.floor(extra.nextMin / 60)}:${String(Math.round(extra.nextMin % 60)).padStart(2, '0')} h`}`}
-          />
-          <Extra
-            value={(() => {
-              const h = extra.startedAt ? (now - extra.startedAt) / 3600000 : 0;
-              return h > 0.02 && extra.drivenKm > 0.3 ? `${Math.round(extra.drivenKm / h)} km/h` : '--';
-            })()}
-            label="Schnitt"
-          />
-        </View>
-      )}
-      <View style={styles.barRow}>
-        <Pressable onLongPress={onSecret} delayLongPress={800} style={styles.flex} accessibilityLabel="Ankunftszeit">
-          <AppText style={styles.eta}>{formatClock(eta) || '--:--'}</AppText>
-          <AppText variant="caption" muted>
-            {remainingKm != null ? `${remainingKm.toFixed(remainingKm < 10 ? 1 : 0).replace('.', ',')} km` : ''}
-            {remainingKm != null && eta ? '  ·  ' : ''}
-            {formatRemaining(eta, now)}
-          </AppText>
-        </Pressable>
+      <GlassPanel style={[styles.bar, { paddingBottom: bottomInset }]} fallback="rgba(11,11,12,0.96)">
+        {funkHint && (
+          <View style={styles.funkHint}>
+            <AppText variant="caption">Funk folgt bald.</AppText>
+          </View>
+        )}
+        <View style={styles.barRow}>
+          <Pressable onLongPress={onSecret} delayLongPress={800} style={styles.etaBox} accessibilityLabel={`Ankunft ${formatClock(eta)}, ${rest}`}>
+            <View style={styles.etaLine}>
+              <AppText style={styles.eta}>{formatClock(eta) || '--:--'}</AppText>
+              <AppText style={[styles.rest, paused && { color: Colors.warn }]} numberOfLines={1}>
+                {rest}
+              </AppText>
+            </View>
+            {done != null && (
+              <View style={styles.track} accessibilityLabel={`${done} Prozent gefahren`}>
+                <View style={[styles.fill, { width: `${done}%` }]} />
+                {extra!.viaPct.map((v) => (
+                  <View key={v} style={[styles.via, { left: `${v}%` }, v <= done && styles.viaDone]} />
+                ))}
+              </View>
+            )}
+          </Pressable>
 
-        {group && (
+          {group && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Funk"
+              onPress={() => (onFunk ? onFunk() : setFunkHint(true))}
+              style={({ pressed }) => [styles.funk, pressed && styles.pressed]}>
+              <MicIcon />
+            </Pressable>
+          )}
+
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Funk"
-            onPress={() => (onFunk ? onFunk() : setFunkHint(true))}
-            style={({ pressed }) => [styles.funk, pressed && styles.pressed]}>
-            <MicIcon />
+            accessibilityLabel={voice ? 'Ansagen aus' : 'Ansagen an'}
+            onPress={onVoice}
+            style={({ pressed }) => [styles.round, pressed && styles.pressed]}>
+            <SpeakerIcon on={voice} color={voice ? Colors.text : Colors.muted} />
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={menu ? 'Schließen' : 'Fahrt pausieren oder beenden'}
+            onPress={() => setMenu(!menu)}
+            style={({ pressed }) => [styles.round, menu ? styles.roundOpen : styles.roundSignal, pressed && styles.pressed]}>
+            <SymbolView
+              name={menu ? 'xmark' : paused ? 'play.fill' : 'stop.fill'}
+              size={menu ? 18 : 17}
+              weight="bold"
+              tintColor={menu ? Colors.ground : Colors.onSignal}
+            />
+          </Pressable>
+        </View>
+        {showSim && (
+          <Pressable accessibilityRole="button" onPress={onSimulate} style={styles.sim}>
+            <AppText variant="caption" muted>Simulieren</AppText>
           </Pressable>
         )}
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={voice ? 'Ansagen aus' : 'Ansagen an'}
-          onPress={onVoice}
-          style={({ pressed }) => [styles.round, pressed && styles.pressed]}>
-          <SpeakerIcon on={voice} color={voice ? Colors.text : Colors.muted} />
-        </Pressable>
-
-        <Pressable accessibilityRole="button" onPress={onEnd} style={({ pressed }) => [styles.end, pressed && styles.pressed]}>
-          <AppText style={styles.endText}>Beenden</AppText>
-        </Pressable>
-      </View>
-      {showSim && (
-        <Pressable accessibilityRole="button" onPress={onSimulate} style={styles.sim}>
-          <AppText variant="caption" muted>Simulieren</AppText>
-        </Pressable>
-      )}
-    </GlassPanel>
+      </GlassPanel>
+    </View>
   );
 }
 
@@ -223,24 +254,32 @@ const styles = StyleSheet.create({
   arrowBox: { width: 84, height: 84, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   exit: { position: 'absolute', bottom: 2, fontFamily: Fonts.bold, fontSize: 10, color: Colors.onSignal },
   dist: { fontFamily: Fonts.display, fontSize: 46, lineHeight: 50, fontVariant: ['tabular-nums'] },
-  distUnit: { fontFamily: Fonts.displayBold, fontSize: Type.h2, color: Colors.muted },
-  instruction: { fontFamily: Fonts.semibold, fontSize: Type.button, lineHeight: 23 },
-  street: { fontFamily: Fonts.regular, fontSize: Type.body, color: Colors.muted, marginTop: 2 },
+  distUnit: { fontFamily: Fonts.display, fontSize: Type.h2, color: Colors.muted, textTransform: 'uppercase' },
+  instruction: { fontFamily: Fonts.bold, fontSize: Type.button, lineHeight: 23 },
+  street: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, marginTop: 2 },
   then: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingTop: Spacing.m },
 
   info: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
 
   bar: { borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l, paddingHorizontal: Spacing.xl, paddingTop: Spacing.l, gap: Spacing.s },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
-  eta: { fontFamily: Fonts.display, fontSize: 40, lineHeight: 44, fontVariant: ['tabular-nums'] },
-  extraRow: { flexDirection: 'row', gap: Spacing.s, paddingBottom: Spacing.m },
-  extra: { flex: 1, minWidth: 0, gap: 2 },
-  extraValue: { fontFamily: Fonts.displayBold, fontSize: Type.button, fontVariant: ['tabular-nums'] },
+  etaBox: { flex: 1, minWidth: 0, gap: Spacing.s, paddingVertical: Spacing.xs },
+  etaLine: { flexDirection: 'row', alignItems: 'baseline', gap: Spacing.s },
+  eta: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 28, fontVariant: ['tabular-nums'] },
+  rest: { flexShrink: 1, fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
+  track: { height: 6, borderRadius: 3, backgroundColor: Colors.surface2, justifyContent: 'center' },
+  fill: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 3, backgroundColor: Colors.signal },
+  via: { position: 'absolute', width: 2, height: 6, marginLeft: -1, backgroundColor: Colors.muted, opacity: 0.7 },
+  viaDone: { backgroundColor: Colors.onSignal, opacity: 0.6 },
   round: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  roundSignal: { backgroundColor: Colors.signal },
+  roundOpen: { backgroundColor: Colors.text },
+  menu: { position: 'absolute', right: Spacing.xl, paddingBottom: Spacing.m, alignItems: 'flex-end', gap: Spacing.s },
+  pill: { height: 52, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingLeft: Spacing.l, paddingRight: Spacing.xl, borderRadius: 26, backgroundColor: Colors.surface2, boxShadow: Shadow.sheet },
+  pillSignal: { backgroundColor: Colors.signal },
+  pillText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },
   funk: { width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.surface2, borderWidth: 2, borderColor: Colors.good, alignItems: 'center', justifyContent: 'center' },
   funkHint: { position: 'absolute', top: -44, alignSelf: 'center', backgroundColor: Colors.surface2, borderRadius: Radius.pill, paddingHorizontal: Spacing.l, height: 34, justifyContent: 'center' },
-  end: { height: 52, paddingHorizontal: Spacing.l, borderRadius: Radius.m, backgroundColor: Colors.signal, justifyContent: 'center' },
-  endText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.onSignal },
   sim: { alignSelf: 'flex-start', height: 30, paddingHorizontal: Spacing.m, borderRadius: Radius.pill, backgroundColor: Colors.surface, justifyContent: 'center' },
 
   big: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },

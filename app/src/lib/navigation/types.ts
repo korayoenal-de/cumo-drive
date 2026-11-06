@@ -104,6 +104,8 @@ export type NavState = {
 export type NavControls = {
   start: () => Promise<void>;
   stop: () => void;
+  /** Fahrt anhalten (true) oder fortsetzen (false) */
+  pause: (on: boolean) => void;
   setVoice: (on: boolean) => void;
   /** Freie Ansage (zum Beispiel Highlights), respektiert Stumm */
   say: (text: string) => void;

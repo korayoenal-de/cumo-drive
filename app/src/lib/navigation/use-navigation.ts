@@ -75,6 +75,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const abortRef = useRef<AbortController | null>(null);
   const voiceRef = useRef<VoiceGuide | null>(null);
   const keepAwakeRef = useRef(false);
+  /** Pause: Positionen werden nicht verarbeitet, keine Ansagen, die Simulation steht */
+  const pausedRef = useRef(false);
 
   useEffect(() => {
     reqRef.current = req;
@@ -275,7 +277,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       subRef.current = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 10 },
         (loc) => {
-          if (simRef.current) return; // Simulation hat Vorrang
+          if (simRef.current || pausedRef.current) return; // Simulation hat Vorrang, Pause hält an
           const { latitude, longitude, heading, speed } = loc.coords;
           onFix({
             pos: [latitude, longitude],
@@ -299,7 +301,19 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     }
   }, [cleanup, keepAwake, onFix, setRoute, voice]);
 
+  /** Fahrt anhalten oder fortsetzen. In der Pause kommen keine Ansagen, Restzeit und Tempo stehen. */
+  const pause = useCallback(
+    (on: boolean) => {
+      if (!activeRef.current || arrivedRef.current) return;
+      pausedRef.current = on;
+      voiceRef.current?.stop();
+      setState((s) => (s.status === 'laeuft' || s.status === 'pausiert' ? { ...s, status: on ? 'pausiert' : 'laeuft' } : s));
+    },
+    [],
+  );
+
   const stop = useCallback(() => {
+    pausedRef.current = false;
     cleanup();
     arrivedRef.current = false;
     routeRef.current = null;
@@ -331,7 +345,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         keepAwake(true);
         const tick = () => {
           const r = routeRef.current;
-          if (!r || simRef.current !== sim) return;
+          if (!r || simRef.current !== sim || pausedRef.current) return;
           sim.km = Math.min(r.km, sim.km + (sim.speedKmh / 3600) * (SIM_TICK_MS / 1000));
           const p = pointAtKm(r, sim.km);
           onFix({ pos: p.point, heading: p.heading, speedKmh: sim.speedKmh, at: Date.now() });
@@ -383,5 +397,5 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     setState((s) => ({ ...INITIAL, voice: s.voice }));
   }, [req?.tour, cleanup]);
 
-  return [state, { start, stop, setVoice, say, simulate }];
+  return [state, { start, stop, pause, setVoice, say, simulate }];
 }

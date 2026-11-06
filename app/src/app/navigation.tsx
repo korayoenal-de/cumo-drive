@@ -257,7 +257,7 @@ export default function NavigationScreen() {
   };
   // Beenden mitten in der Fahrt: erst die Statistik zeigen, wenn es genug Punkte gibt
   const close = () => {
-    if (!summary && state.status === 'laeuft') {
+    if (!summary && (state.status === 'laeuft' || state.status === 'pausiert')) {
       const st = rideStats(samples.current);
       if (st && st.km > 1) {
         controls.stop();
@@ -386,19 +386,15 @@ export default function NavigationScreen() {
               eta={state.eta}
               remainingKm={state.remainingKm}
               extra={(() => {
-                if (!route || state.remainingKm == null) return undefined;
+                if (!route || state.remainingKm == null || route.km <= 0) return undefined;
                 const at = route.km - state.remainingKm;
-                const nextVia = viaKms.find((k) => k > at + 0.05);
-                const toKm = (nextVia ?? route.km) - at;
                 return {
-                  donePct: route.km > 0 ? Math.round((at / route.km) * 100) : 0,
-                  nextLabel: nextVia != null ? 'Nächstes Zwischenziel' : 'Ziel',
-                  nextKm: toKm,
-                  nextMin: route.km > 0 ? (toKm / route.km) * route.minutes * state.pace : 0,
-                  drivenKm,
-                  startedAt,
+                  donePct: Math.round((at / route.km) * 100),
+                  viaPct: viaKms.map((k) => Math.round((k / route.km) * 1000) / 10).filter((v) => v > 0 && v < 100),
                 };
               })()}
+              paused={state.status === 'pausiert'}
+              onPause={controls.pause}
               voice={state.voice}
               group={inRide}
               onFunk={inRide ? () => setMsgOpen(!msgOpen) : undefined}
