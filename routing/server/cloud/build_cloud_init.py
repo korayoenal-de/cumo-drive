@@ -1,4 +1,4 @@
-"""Erzeugt cloud-init.yaml aus ../config.yml, ../custom_models/sportwagen.json und setup-server.sh.
+"""Erzeugt cloud-init.yaml aus ../config.yml, ../custom_models/*.json und setup-server.sh.
 
 Aufruf: python3 routing/server/cloud/build_cloud_init.py
 Die Datei cloud-init.yaml fügt man beim Anlegen des Servers bei Hetzner unter "Cloud config" ein.
@@ -22,8 +22,9 @@ cfg = cfg.replace(
     "      # 0.0.0.0, damit das iPhone im selben WLAN den Server erreicht\n      bind_host: 0.0.0.0",
     "      # nur lokal, nach außen geht es über Caddy mit HTTPS\n      bind_host: 127.0.0.1",
 )
-model = (SERVER / "custom_models" / "sportwagen.json").read_text()
+models = {f.name: f.read_text() for f in sorted((SERVER / "custom_models").glob("*.json"))}
 setup = (HERE / "setup-server.sh").read_text()
+model_files = "".join(f"  - path: /opt/cumo-routing/custom_models/{n}\n    content: |\n{block(b)}\n" for n, b in models.items())
 
 unit = """[Unit]
 Description=CUMO DRIVE Routing (GraphHopper)
@@ -32,7 +33,7 @@ After=network-online.target
 [Service]
 User=cumo
 WorkingDirectory=/opt/cumo-routing
-ExecStart=/usr/bin/java -Xmx18g -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
+ExecStart=/usr/bin/java -Xmx22g -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
 Restart=always
 RestartSec=10
 
@@ -100,10 +101,7 @@ write_files:
   - path: /opt/cumo-routing/config.yml
     content: |
 {block(cfg)}
-  - path: /opt/cumo-routing/custom_models/sportwagen.json
-    content: |
-{block(model)}
-  - path: /opt/cumo-routing/setup-server.sh
+{model_files}  - path: /opt/cumo-routing/setup-server.sh
     permissions: '0755'
     content: |
 {block(setup)}
@@ -143,13 +141,14 @@ def heredoc(path: str, body: str, mode: str = "0644") -> str:
     d = path.rsplit("/", 1)[0]
     return f"mkdir -p {d}\ncat > {path} <<'CUMO_EOF'\n{body}\nCUMO_EOF\nchmod {mode} {path}\n"
 
+model_docs = "".join(heredoc(f"/opt/cumo-routing/custom_models/{n}", b) for n, b in models.items())
 caddy_sh = caddy_cmd.replace('\\"', '"')
 inst = "#!/bin/bash\n# CUMO DRIVE Routing Server einrichten (Ubuntu 24.04), erzeugt aus build_cloud_init.py.\n"
 inst += "# Aufruf vom Mac: ssh root@IP 'bash -s' < install.sh\nset -euo pipefail\nexport DEBIAN_FRONTEND=noninteractive\n"
 inst += "apt-get update && apt-get -y upgrade\napt-get install -y openjdk-21-jre-headless osmium-tool caddy curl ufw\n"
 inst += "id cumo >/dev/null 2>&1 || useradd --system --shell /usr/sbin/nologin cumo\n"
 inst += heredoc("/opt/cumo-routing/config.yml", cfg)
-inst += heredoc("/opt/cumo-routing/custom_models/sportwagen.json", model)
+inst += model_docs
 inst += heredoc("/opt/cumo-routing/setup-server.sh", setup, "0755")
 inst += heredoc("/opt/cumo-routing/poi-tiles.sh", poi_sh, "0755")
 inst += heredoc("/opt/cumo-routing/poi_tiles.py", poi_py)
@@ -204,8 +203,11 @@ print(f"poi-update.sh geschrieben ({len(upd)} Zeichen)")
 # den Graphen im Hintergrund neu bauen. Aufruf vom Mac: ssh root@IP 'bash -s' < routing-rebuild.sh
 reb = "#!/bin/bash\n# CUMO DRIVE: Routing Profil aktualisieren und Graph neu bauen, erzeugt aus build_cloud_init.py.\nset -euo pipefail\n"
 reb += heredoc("/opt/cumo-routing/config.yml", cfg)
-reb += heredoc("/opt/cumo-routing/custom_models/sportwagen.json", model)
+reb += model_docs
 reb += heredoc("/opt/cumo-routing/setup-server.sh", setup, "0755")
+# Dienst mit dem Heap für die zusätzlichen Landmarken; setup-server.sh startet ihn nach dem Import neu
+reb += heredoc("/etc/systemd/system/cumo-routing.service", unit)
+reb += "systemctl daemon-reload\n"
 reb += "chown -R cumo:cumo /opt/cumo-routing/config.yml /opt/cumo-routing/custom_models\n"
 reb += "nohup /opt/cumo-routing/setup-server.sh > /opt/cumo-routing/rebuild.log 2>&1 &\n"
 reb += "echo 'Neuaufbau läuft im Hintergrund (etwa zwei Stunden). Der Server bleibt dabei erreichbar, Fortschritt: tail -f /opt/cumo-routing/rebuild.log'\n"

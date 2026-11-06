@@ -32,6 +32,8 @@ export function routingServerUrl(): string | null {
 }
 
 let availability: { at: number; ok: boolean } | null = null;
+/** Profile, die der Server kennt (aus /info); kurvig und sehr_kurvig gibt es seit dem Neuaufbau mit festen Profilen */
+let serverProfiles = new Set<string>();
 
 /** Ist der eigene Server erreichbar? Ergebnis wird 30 Sekunden gemerkt. */
 export async function cumoAvailable(): Promise<boolean> {
@@ -44,6 +46,10 @@ export async function cumoAvailable(): Promise<boolean> {
   try {
     const res = await fetch(`${url}/info`, { signal: ctrl.signal });
     ok = res.ok;
+    if (ok) {
+      const info = (await res.json().catch(() => null)) as { profiles?: { name: string }[] } | null;
+      serverProfiles = new Set((info?.profiles ?? []).map((p) => p.name));
+    }
   } catch {
     ok = false;
   } finally {
@@ -131,6 +137,18 @@ function profileModel(profile: Profile): { if?: string; else_if?: string; multip
   return [];
 }
 
+/**
+ * Profil auf dem Server. Kurvig und Sehr kurvig sind dort fest eingebaut, samt Breite und Kurven Regeln,
+ * mit vorberechneten Landmarken; das ist um ein Vielfaches schneller als dieselben Regeln pro Anfrage.
+ * Kennt der Server sie (noch) nicht, gehen die Regeln wie bisher mit der Anfrage an sportwagen.
+ */
+function ghProfile(profile: Profile): { name: string; builtIn: boolean } {
+  if (profile === 'schnell') return { name: 'auto', builtIn: false };
+  if (profile === 'kurvig' && serverProfiles.has('kurvig')) return { name: 'kurvig', builtIn: true };
+  if (profile === 'paesse' && serverProfiles.has('sehr_kurvig')) return { name: 'sehr_kurvig', builtIn: true };
+  return { name: 'sportwagen', builtIn: false };
+}
+
 function avoidModel(avoid: Avoid) {
   const priority: { if: string; multiply_by: string }[] = [];
   if (avoid.tolls) priority.push({ if: 'toll != NO', multiply_by: '0.05' });
@@ -201,11 +219,12 @@ function favoriteArea(near: LatLon[], radiusKm: number) {
 }
 
 function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatLon[] = [], near: LatLon[] = [], radiusKm = 30) {
+  const builtIn = ghProfile(profile).builtIn;
   const ex = exclusionModel(exclude, penalize) as { areas?: { features: unknown[] }; priority?: { if: string; multiply_by: string }[] };
   const fav = profile === 'kurvig' || profile === 'paesse' ? favoriteArea(near, radiusKm) : null;
   const priority = [
-    ...WIDTH_MODEL,
-    ...profileModel(profile),
+    // Bei festen Server Profilen stecken Breite und Kurven Regeln schon im Profil
+    ...(builtIn ? [] : [...WIDTH_MODEL, ...profileModel(profile)]),
     ...avoidModel(avoid),
     ...(ex.priority ?? []),
     // Traumstrecken bevorzugen: alles andere etwas teurer
@@ -216,7 +235,7 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatL
   return {
     ...(features.length ? { areas: { type: 'FeatureCollection', features } } : {}),
     priority,
-    ...(profile === 'kurvig' || profile === 'paesse' ? { distance_influence: 5 } : {}),
+    ...(!builtIn && (profile === 'kurvig' || profile === 'paesse') ? { distance_influence: 5 } : {}),
   };
 }
 
@@ -362,7 +381,7 @@ export async function cumoPlan(
     const m = model(avoid, exclude, profile, penalize, long ? [] : points, Math.min(80, Math.max(20, leg * 0.6)));
     const body = {
       points: points.map(([la, lo]) => [lo, la]),
-      profile: profile === 'schnell' ? 'auto' : 'sportwagen',
+      profile: ghProfile(profile).name,
       ...(m ? { custom_model: m } : {}),
     };
     if (points.length > 2 && passThroughOk) {
@@ -432,7 +451,7 @@ export async function cumoRoundTrips(
         const p = await post(
           {
             points: [[start[1], start[0]]],
-            profile: profile === 'schnell' ? 'auto' : 'sportwagen',
+            profile: ghProfile(profile).name,
             algorithm: 'round_trip',
             // GraphHopper Rundtouren werden auf kurvigen Profilen etwa 30 % länger als angefragt
             'round_trip.distance': Math.round(km * 1000 * (profile === 'kurvig' || profile === 'paesse' ? 0.75 : 0.9)),

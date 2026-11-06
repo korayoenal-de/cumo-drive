@@ -21,6 +21,7 @@ Stand: 5. November 2026, 20:00. Ausführlich: Cumo Drive Dokumentation https://c
 
 ## Routing
 * Eigener GraphHopper 11 auf Contabo (13.140.213.164, /opt/cumo-routing), Sportwagen Gewichtung, Ortsdichte, Traumstrecken Bereich (Priorität mal 0,7 außerhalb), distance_influence 5. Ersatz: Valhalla, GraphHopper Free.
+* Feste Server Profile kurvig und sehr_kurvig (6.11., mit Landmarken, Breite und Kurven Regeln im Server, Heap 22 GB). Die App nutzt sie, sobald /info sie meldet, sonst wie bisher sportwagen plus Regeln pro Anfrage. Lange Routen über 200 km ohne Traumstrecken Bereich und ohne zweite Rechnung (133 s auf 14 s).
 * Rundtour: Varianten parallel, Abzug 100 je km Stichstraße, Bonus 4 je km Traumstrecke, despur.
 * Ersatzweg ohne Server: Via Punkt an einer Stichstraße an die Abzweigung schieben oder weglassen, zweiter Versuch bei Stich über 1 km, Abzug für Prüfstellen (20 je km) und kleine Straßen ohne Nummer (12 je km), Zufahrten in Valhalla stark bestraft.
 * Highlights: bei Hin und Rückweg nur einmal angezeigt und angesagt.

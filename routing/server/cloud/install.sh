@@ -28,11 +28,19 @@ graphhopper:
       custom_model_files: [sportwagen.json]
     - name: auto
       custom_model_files: [car.json]
+    # Fest eingebaute Profile für Kurvig und Sehr kurvig (6.11.): Breite und Kurven Regeln liegen im Server,
+    # die Landmarken sind dafür vorberechnet. Als Zusatz pro Anfrage dauerte eine Route mit 700 km 16 statt 2 Sekunden.
+    - name: kurvig
+      custom_model_files: [sportwagen.json, kurvig.json]
+    - name: sehr_kurvig
+      custom_model_files: [sportwagen.json, sehr_kurvig.json]
 
   # Landmarken beschleunigen flexible Anfragen (Rundtouren, Änderungen zur Laufzeit)
   profiles_lm:
     - profile: sportwagen
     - profile: auto
+    - profile: kurvig
+    - profile: sehr_kurvig
   profiles_ch: []
 
   prepare.min_network_size: 200
@@ -56,6 +64,43 @@ server:
 
 CUMO_EOF
 chmod 0644 /opt/cumo-routing/config.yml
+mkdir -p /opt/cumo-routing/custom_models
+cat > /opt/cumo-routing/custom_models/kurvig.json <<'CUMO_EOF'
+{
+  "distance_influence": 5,
+  "priority": [
+    { "if": "max_width < 1.9", "multiply_by": "0" },
+    { "else_if": "max_width >= 2.5 && max_width < 3", "multiply_by": "0.1" },
+    { "else_if": "max_width >= 3 && max_width < 4.5", "multiply_by": "0.6" },
+    { "if": "road_class == PRIMARY", "multiply_by": "0.35" },
+    { "if": "road_class == SECONDARY", "multiply_by": "0.7" },
+    { "if": "road_class == RESIDENTIAL", "multiply_by": "0.5" },
+    { "if": "curvature > 0.95", "multiply_by": "0.3" },
+    { "else_if": "curvature > 0.85", "multiply_by": "0.6" }
+  ]
+}
+
+CUMO_EOF
+chmod 0644 /opt/cumo-routing/custom_models/kurvig.json
+mkdir -p /opt/cumo-routing/custom_models
+cat > /opt/cumo-routing/custom_models/sehr_kurvig.json <<'CUMO_EOF'
+{
+  "distance_influence": 5,
+  "priority": [
+    { "if": "max_width < 1.9", "multiply_by": "0" },
+    { "else_if": "max_width >= 2.5 && max_width < 3", "multiply_by": "0.1" },
+    { "else_if": "max_width >= 3 && max_width < 4.5", "multiply_by": "0.6" },
+    { "if": "road_class == PRIMARY", "multiply_by": "0.2" },
+    { "if": "road_class == SECONDARY", "multiply_by": "0.55" },
+    { "if": "road_class == RESIDENTIAL", "multiply_by": "0.4" },
+    { "if": "curvature > 0.95", "multiply_by": "0.15" },
+    { "else_if": "curvature > 0.85", "multiply_by": "0.4" },
+    { "else_if": "curvature > 0.75", "multiply_by": "0.8" }
+  ]
+}
+
+CUMO_EOF
+chmod 0644 /opt/cumo-routing/custom_models/sehr_kurvig.json
 mkdir -p /opt/cumo-routing/custom_models
 cat > /opt/cumo-routing/custom_models/sportwagen.json <<'CUMO_EOF'
 {
@@ -470,7 +515,7 @@ After=network-online.target
 [Service]
 User=cumo
 WorkingDirectory=/opt/cumo-routing
-ExecStart=/usr/bin/java -Xmx18g -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
+ExecStart=/usr/bin/java -Xmx22g -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
 Restart=always
 RestartSec=10
 
