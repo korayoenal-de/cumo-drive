@@ -20,6 +20,7 @@ import { type Stop } from '@/lib/intent';
 import { type PlannedTour } from '@/lib/plan';
 import { type StopKind } from '@/lib/stops-along';
 import { flatten, type LatLon } from '@/lib/tour';
+import { showToast } from '@/lib/toast';
 
 import { GroupBlock, Stats, StopsSection, TrustLine, Warnings } from './planner-parts';
 import { styles } from './planner-styles';
@@ -47,6 +48,7 @@ export function Result({
     const t = saveTour({ ...tour, curves, profile: req.profile }, '', savedId ?? undefined);
     setSaved({ tour, id: t.id });
     void syncLibrary();
+    showToast('Gespeichert unter Meine Touren');
   };
   const drive = () => {
     setActiveTour(tour, req.profile, req.avoid);
@@ -82,6 +84,7 @@ export function Result({
 
       {/* Aktionen am Ende: Losfahren, Speichern als Symbol, Seltenes im Menü */}
       <ActionBar
+        sheetTitle={tour.name}
         primary={{ label: 'Losfahren', onPress: drive }}
         save={{ saved: !!savedId, onPress: saveResult }}
         more={[
@@ -90,13 +93,8 @@ export function Result({
           ...(savedId
             ? [{ key: 'group', icon: 'person.2' as const, label: 'Als Gruppe fahren', hint: 'Mitfahrer mit ihrem Namen einladen', onPress: () => router.push({ pathname: '/gruppe/neu', params: { tour: savedId } }) }]
             : []),
-          { key: 'back', icon: 'trash', label: 'Tour verwerfen', hint: 'Zurück zur Auswahl', danger: true, onPress: onBack },
+          { key: 'back', icon: 'trash', label: 'Tour verwerfen', hint: 'Zurück zur Auswahl', danger: true, confirm: 'Möchtest du diese Runde wirklich verwerfen?', onPress: onBack },
         ]}>
-        {savedId && (
-          <AppText variant="caption" muted>
-            Gespeichert unter Meine Touren.
-          </AppText>
-        )}
       </ActionBar>
     </View>
   );

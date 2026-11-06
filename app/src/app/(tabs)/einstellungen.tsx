@@ -2,6 +2,7 @@
  * Einstellungen: Konto und Garage. In der Garage legt man seine Fahrzeuge an; pro Fahrzeug
  * stehen die gefahrenen Kilometer und Touren aus dem Konto.
  */
+import { SymbolView } from 'expo-symbols';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -17,6 +18,8 @@ import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { formatKm } from '@/lib/tour';
 import { deleteVehicle, FUELS, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleSummary, type Vehicle } from '@/lib/vehicle';
+import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
+import { showToast } from '@/lib/toast';
 
 export default function Einstellungen() {
   const session = useSession();
@@ -177,7 +180,9 @@ function Login() {
 function Garage({ drives }: { drives: Drive[] | null }) {
   const { list, current } = useVehicles();
   const [edit, setEdit] = useState<Vehicle | null>(null);
-  const [confirm, setConfirm] = useState<string | null>(null);
+  // Optionen im Bottom Sheet, Löschen mit Rückfrage (Muster: docs/design-prinzipien.md)
+  const [menu, setMenu] = useState<Vehicle | null>(null);
+  const [ask, setAsk] = useState<Vehicle | null>(null);
 
   const statsFor = (v: Vehicle) => {
     const mine = (drives ?? []).filter((d) => d.vehicle_id === v.id);
@@ -210,6 +215,9 @@ function Garage({ drives }: { drives: Drive[] | null }) {
                     </AppText>
                   </View>
                 )}
+                <Pressable accessibilityRole="button" accessibilityLabel={`Optionen für ${v.model.trim() || 'Fahrzeug'}`} onPress={() => setMenu(v)} hitSlop={6} style={styles.more}>
+                  <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="medium" />
+                </Pressable>
               </View>
               <AppText variant="caption" muted>
                 {vehicleSummary(v, false)}
@@ -223,27 +231,35 @@ function Garage({ drives }: { drives: Drive[] | null }) {
                 </AppText>
               )}
             </Pressable>
-            <View style={styles.row}>
-              {current?.id !== v.id && (
-                <Pressable accessibilityRole="button" onPress={() => void selectVehicle(v.id)} style={[styles.secondary, styles.flex]}>
-                  <AppText style={styles.secondaryText}>Als aktuell wählen</AppText>
-                </Pressable>
-              )}
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => {
-                  if (confirm === v.id) {
-                    void deleteVehicle(v.id);
-                    setConfirm(null);
-                  } else setConfirm(v.id);
-                }}
-                style={[styles.secondary, styles.flex, confirm === v.id && styles.danger]}>
-                <AppText style={[styles.secondaryText, confirm === v.id && styles.dangerText]}>{confirm === v.id ? 'Wirklich löschen' : 'Löschen'}</AppText>
-              </Pressable>
-            </View>
           </View>
         ),
       )}
+      <ActionSheet
+        visible={!!menu}
+        title={menu?.model.trim() || 'Fahrzeug'}
+        subtitle={menu ? vehicleSummary(menu, false) : undefined}
+        items={
+          menu
+            ? [
+                ...(current?.id !== menu.id ? [{ key: 'cur', icon: 'checkmark.circle' as const, label: 'Als aktuell wählen', hint: 'Damit fährst du ab jetzt', onPress: () => void selectVehicle(menu.id) }] : []),
+                { key: 'edit', icon: 'pencil' as const, label: 'Bearbeiten', hint: 'Breite, Bodenfreiheit, Reichweite', onPress: () => setEdit(menu) },
+                { key: 'del', icon: 'trash' as const, label: 'Fahrzeug löschen', danger: true, onPress: () => setAsk(menu) },
+              ]
+            : []
+        }
+        onClose={() => setMenu(null)}
+      />
+      <ConfirmSheet
+        visible={!!ask}
+        title="Möchtest du dieses Fahrzeug wirklich löschen?"
+        text="Gefahrene Touren bleiben erhalten."
+        confirmLabel="Löschen"
+        onConfirm={() => {
+          if (ask) void deleteVehicle(ask.id);
+          showToast('Fahrzeug gelöscht');
+        }}
+        onClose={() => setAsk(null)}
+      />
       {edit && !list.some((v) => v.id === edit.id) && <VehicleForm value={edit} onChange={setEdit} onDone={() => setEdit(null)} />}
       {!edit && (
         <Pressable accessibilityRole="button" onPress={() => setEdit(newVehicle())} style={styles.primary}>
@@ -302,6 +318,7 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
 }
 
 const styles = StyleSheet.create({
+  more: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   flex: { flex: 1 },
   gapS: { gap: Spacing.xs },
   gapM: { gap: Spacing.m },

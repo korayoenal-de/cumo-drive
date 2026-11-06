@@ -11,6 +11,7 @@ import { planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
 import { insertVia, movePoint } from '@/lib/route-edit';
 import { type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
+import { showToast } from '@/lib/toast';
 
 import { fitLegs, keyOf, type LegProfile, type PointKind } from './planner-shared';
 
@@ -156,9 +157,11 @@ export function useTourPlan(onPlanned?: () => void) {
       setCloudId(saved.id);
       setBase(sigOf(pts, name, legProfiles));
       void syncLibrary();
-      setSaveMsg('Gespeichert, du findest die Tour unter Meine Touren.');
+      setSaveMsg(null);
+      showToast('Gespeichert unter Meine Touren');
     } catch (e) {
-      setSaveMsg(`Speichern hat nicht geklappt: ${e instanceof Error ? e.message : String(e)}`);
+      setSaveMsg(null);
+      showToast(`Speichern hat nicht geklappt: ${e instanceof Error ? e.message : String(e)}`, { tone: 'error' });
     } finally {
       setSaving(false);
     }

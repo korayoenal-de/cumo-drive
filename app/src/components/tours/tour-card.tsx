@@ -2,19 +2,19 @@
  * Karte einer gespeicherten Tour in Meine Touren.
  *
  * Bewusst reduziert: Die ganze Karte öffnet die Tour im Planer (dort Losfahren, als Gruppe fahren,
- * auf der Karte ändern und speichern). Rechts nur zwei Symbole: Teilen und Löschen.
- * Teilen klappt wie ein Aktionsmenü auf: das Symbol dreht sich und wird zum X, die Optionen
- * gleiten nacheinander herein (Export als GPX oder KML, in der Community veröffentlichen).
- * Löschen fragt ohne Dialog nach: Das Symbol wird zur roten Taste "Löschen", ein zweites Tippen
- * löscht, nach drei Sekunden ohne Tippen klappt es zurück.
+ * auf der Karte ändern und speichern). Rechts nur ein Symbol für die Optionen. Es öffnet ein
+ * Bottom Sheet (Teilen als GPX oder KML, Community, Löschen). Veröffentlichen öffnet das Formular
+ * im selben Sheet, Löschen fragt in einem ConfirmSheet nach, Erfolg meldet ein Toast.
+ * Muster: docs/design-prinzipien.md, Abschnitt Ebenen und Rückmeldungen.
  */
-import { SymbolView, type SFSymbol } from 'expo-symbols';
+import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 
-import { MorphButton, SOFT_LAYOUT, softEnter } from '@/components/ui/action-bar';
+import { SOFT_LAYOUT } from '@/components/ui/action-bar';
+import { ActionSheet, ConfirmSheet, OptionsSheet, type SheetItem } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -22,26 +22,39 @@ import { publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
 import { deleteTour, type SavedTour } from '@/lib/library';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
+import { showToast } from '@/lib/toast';
 import { flatten, formatKm } from '@/lib/tour';
 
 const SPRING = Motion.press;
 const LAYOUT = SOFT_LAYOUT;
 
 export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: SavedTour) => void }) {
-  const [share, setShare] = useState(false);
-  const [armed, setArmed] = useState(false);
+  const [sheet, setSheet] = useState<'menu' | 'publish' | 'delete' | null>(null);
   const scale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 
-  // Löschen ist nur kurz scharf
-  useEffect(() => {
-    if (!armed) return;
-    const id = setTimeout(() => setArmed(false), 3000);
-    return () => clearTimeout(id);
-  }, [armed]);
-
   const date = new Date(t.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
   const meta = [`${formatKm(t.laenge_km, 0)} km`, t.curves ? `${t.curves} Kurven` : null, date].filter(Boolean).join('  ·  ');
+
+  const exp = async (f: RouteFormat) => {
+    try {
+      await exportTour(t, f);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Export hat nicht geklappt.', { tone: 'error' });
+    }
+  };
+  const items: SheetItem[] = [
+    { key: 'gpx', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Als GPX teilen', hint: 'Für Garmin, TomTom und andere Navis', onPress: () => void exp('gpx') },
+    { key: 'kml', icon: 'map', label: 'Als KML teilen', hint: 'Für Google Earth und My Maps', onPress: () => void exp('kml') },
+    {
+      key: 'pub',
+      icon: t.published ? 'person.2.slash' : 'person.2',
+      label: t.published ? 'Aus der Community nehmen' : 'In der Community veröffentlichen',
+      hint: t.published ? 'Andere sehen die Tour dann nicht mehr' : 'Andere können die Tour finden und fahren',
+      onPress: () => setSheet('publish'),
+    },
+    { key: 'del', icon: 'trash', label: 'Tour löschen', hint: 'Vom Gerät und aus deinem Konto', danger: true, onPress: () => setSheet('delete') },
+  ];
 
   return (
     <Animated.View layout={LAYOUT} entering={FadeIn.duration(220)} exiting={FadeOut.duration(160)} style={[styles.card, cardStyle]}>
@@ -69,14 +82,36 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
             )}
           </View>
         </Pressable>
-
-        <View style={styles.tools}>
-          <MorphButton open={share} icon="square.and.arrow.up" label={share ? 'Teilen schließen' : 'Teilen'} onPress={() => { setArmed(false); setShare((s) => !s); }} />
-          <DeleteButton armed={armed} onArm={() => { setShare(false); setArmed(true); }} onDelete={() => deleteTour(t.id)} />
-        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Optionen für ${t.name}`} onPress={() => setSheet('menu')} hitSlop={4} style={({ pressed }) => [styles.round, pressed && styles.itemPressed]}>
+          <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="medium" />
+        </Pressable>
       </View>
 
-      {share && <ShareMenu tour={t} />}
+      <ActionSheet visible={sheet === 'menu'} title={t.name} subtitle={meta} items={items} onClose={() => setSheet((s) => (s === 'menu' ? null : s))} />
+      <OptionsSheet
+        visible={sheet === 'publish'}
+        title={t.published ? 'Aus der Community nehmen?' : 'In der Community veröffentlichen'}
+        subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
+        onClose={() => setSheet(null)}>
+        <PublishForm
+          tour={t}
+          onDone={(text) => {
+            setSheet(null);
+            showToast(text);
+          }}
+        />
+      </OptionsSheet>
+      <ConfirmSheet
+        visible={sheet === 'delete'}
+        title="Möchtest du diese Tour wirklich löschen?"
+        text={`${t.name} verschwindet vom Gerät und aus deinem Konto.`}
+        confirmLabel="Löschen"
+        onConfirm={() => {
+          deleteTour(t.id);
+          showToast('Tour gelöscht');
+        }}
+        onClose={() => setSheet(null)}
+      />
     </Animated.View>
   );
 }
@@ -114,85 +149,8 @@ function RouteThumb({ tour }: { tour: SavedTour }) {
   );
 }
 
-/** Papierkorb, der beim ersten Tippen zur roten Taste "Löschen" aufzieht. */
-function DeleteButton({ armed, onArm, onDelete }: { armed: boolean; onArm: () => void; onDelete: () => void }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={armed ? 'Löschen bestätigen' : 'Tour löschen'}
-      accessibilityHint={armed ? 'Löscht die Tour vom Gerät und aus deinem Konto' : 'Danach noch einmal tippen zum Bestätigen'}
-      onPress={armed ? onDelete : onArm}
-      hitSlop={4}>
-      <Animated.View layout={LAYOUT} style={[styles.round, armed && styles.armed]}>
-        {armed ? (
-          <Animated.View key="txt" entering={FadeIn.duration(140)} style={styles.armedInner}>
-            <SymbolView name="trash.fill" size={15} tintColor={Colors.onSignal} weight="semibold" />
-            <AppText style={styles.armedText}>Löschen</AppText>
-          </Animated.View>
-        ) : (
-          <Animated.View key="ico" entering={FadeIn.duration(140)}>
-            <SymbolView name="trash" size={18} tintColor={Colors.muted} weight="medium" />
-          </Animated.View>
-        )}
-      </Animated.View>
-    </Pressable>
-  );
-}
-
-/** Optionen beim Teilen, gleiten nacheinander herein. */
-function ShareMenu({ tour }: { tour: SavedTour }) {
-  const [busy, setBusy] = useState<RouteFormat | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [publish, setPublish] = useState(false);
-  const exp = async (f: RouteFormat) => {
-    if (busy) return;
-    setBusy(f);
-    setMsg(null);
-    try {
-      await exportTour(tour, f);
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Export hat nicht geklappt.');
-    } finally {
-      setBusy(null);
-    }
-  };
-  const items: { key: string; icon: SFSymbol; label: string; hint: string; onPress: () => void; busy?: boolean }[] = [
-    { key: 'gpx', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Als GPX teilen', hint: 'Für Garmin, TomTom und andere Navis', onPress: () => void exp('gpx'), busy: busy === 'gpx' },
-    { key: 'kml', icon: 'map', label: 'Als KML teilen', hint: 'Für Google Earth und My Maps', onPress: () => void exp('kml'), busy: busy === 'kml' },
-    {
-      key: 'pub',
-      icon: tour.published ? 'person.2.slash' : 'person.2',
-      label: tour.published ? 'Aus der Community nehmen' : 'In der Community veröffentlichen',
-      hint: tour.published ? 'Andere sehen die Tour dann nicht mehr' : 'Andere können die Tour finden und fahren',
-      onPress: () => setPublish((x) => !x),
-    },
-  ];
-  return (
-    <Animated.View layout={LAYOUT} style={styles.menu} accessibilityRole="menu">
-      {items.map((it, i) => (
-        <Animated.View key={it.key} entering={softEnter(i)} exiting={FadeOut.duration(100)}>
-          <Pressable accessibilityRole="menuitem" accessibilityHint={it.hint} onPress={it.onPress} style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}>
-            <View style={styles.itemIcon}>
-              <SymbolView name={it.icon} size={17} tintColor={Colors.text} weight="medium" />
-            </View>
-            <View style={styles.flex}>
-              <AppText style={styles.itemText}>{it.label}</AppText>
-              <AppText variant="caption" muted numberOfLines={1}>
-                {it.hint}
-              </AppText>
-            </View>
-            {it.busy && <ActivityIndicator color={Colors.muted} />}
-          </Pressable>
-        </Animated.View>
-      ))}
-      {publish && <PublishForm tour={tour} onDone={() => setPublish(false)} />}
-      {msg && <AppText variant="caption" style={styles.danger}>{msg}</AppText>}
-    </Animated.View>
-  );
-}
-
 /** Veröffentlichen mit Name und kurzer Beschreibung, oder zurückziehen. */
-function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: () => void }) {
+function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string) => void }) {
   const session = useSession();
   const [author, setAuthor] = useState('');
   const [desc, setDesc] = useState('');
@@ -203,12 +161,12 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: () => void }) 
       if (p?.name) setAuthor((a) => a || p.name);
     });
   }, []);
-  const run = async (fn: () => Promise<unknown>) => {
+  const run = async (fn: () => Promise<unknown>, done: string) => {
     setBusy(true);
     setMsg(null);
     try {
       await fn();
-      onDone();
+      onDone(done);
     } catch (e) {
       setMsg(e instanceof Error ? e.message : String(e));
     } finally {
@@ -223,17 +181,16 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: () => void }) 
     );
   if (tour.published)
     return (
-      <Animated.View entering={softEnter(0)} style={styles.form}>
-        <AppText muted>Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.</AppText>
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => unpublishTour(tour))} style={({ pressed }) => [styles.primary, pressed && styles.itemPressed]}>
+      <View style={styles.form}>
+        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => unpublishTour(tour), 'Aus der Community genommen')} style={({ pressed }) => [styles.primary, pressed && styles.itemPressed]}>
           {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Aus der Community nehmen</AppText>}
         </Pressable>
         {msg && <AppText variant="caption" style={styles.danger}>{msg}</AppText>}
-      </Animated.View>
+      </View>
     );
   const can = !busy && !!author.trim();
   return (
-    <Animated.View entering={softEnter(0)} style={styles.form}>
+    <View style={styles.form}>
       <TextInput value={author} onChangeText={setAuthor} placeholder="Dein Name in der Community" placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel="Name in der Community" maxLength={60} />
       <TextInput
         value={desc}
@@ -245,20 +202,15 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: () => void }) 
         maxLength={500}
         accessibilityLabel="Beschreibung"
       />
-      <AppText variant="caption" muted>
-        Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.
-      </AppText>
-      <Pressable accessibilityRole="button" disabled={!can} onPress={() => void run(() => publishTour(tour, author, desc))} style={({ pressed }) => [styles.primary, !can && styles.disabled, pressed && styles.itemPressed]}>
+      <Pressable accessibilityRole="button" disabled={!can} onPress={() => void run(() => publishTour(tour, author, desc), 'In der Community veröffentlicht')} style={({ pressed }) => [styles.primary, !can && styles.disabled, pressed && styles.itemPressed]}>
         {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Veröffentlichen</AppText>}
       </Pressable>
       {msg && <AppText variant="caption" style={styles.danger}>{msg}</AppText>}
-    </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  center: { alignItems: 'center', justifyContent: 'center' },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l + 4, padding: Spacing.m, gap: Spacing.m, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 56 },
@@ -268,20 +220,13 @@ const styles = StyleSheet.create({
   badge: { alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.goodTint },
   badgeText: { fontFamily: Fonts.semibold, fontSize: 12, color: Colors.good },
   thumb: { width: 56, height: 56, borderRadius: Radius.m, backgroundColor: Colors.ground, overflow: 'hidden' },
-  tools: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   round: { minWidth: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  armed: { backgroundColor: Colors.signal, paddingHorizontal: Spacing.m },
-  armedInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  armedText: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.onSignal },
-  menu: { gap: Spacing.xs },
   item: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
   itemPressed: { opacity: 0.7, transform: [{ scale: 0.985 }] },
-  itemIcon: { width: 32, height: 32, borderRadius: Radius.l, backgroundColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
-  itemText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  form: { gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
-  field: { minHeight: 48, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
+  form: { gap: Spacing.s },
+  field: { minHeight: 48, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   area: { minHeight: 88, textAlignVertical: 'top' },
-  primary: { height: 48, borderRadius: 24, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  primary: { height: 56, borderRadius: Radius.l, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.body },
   disabled: { opacity: 0.4 },
   note: { paddingHorizontal: Spacing.xs },

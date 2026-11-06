@@ -499,21 +499,21 @@ export function TourMode({
       <View style={styles.actions}>
         {routeTour ? (
           <ActionBar
+            sheetTitle={plan.name.trim() || 'Neue Tour'}
             primary={{ label: 'Losfahren', onPress: drive }}
             save={{ saved: !plan.dirty, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) }}
             more={[
               ...(plan.cloudId && !plan.dirty
                 ? [{ key: 'group', icon: 'person.2' as const, label: 'Als Gruppe fahren', hint: 'Mitfahrer mit ihrem Namen einladen', onPress: () => router.push({ pathname: '/gruppe/neu', params: { tour: plan.cloudId! } }) }]
                 : []),
-              { key: 'new', icon: 'trash', label: plan.cloudId ? 'Schließen' : 'Tour verwerfen', hint: plan.cloudId ? 'Gespeicherte Tour bleibt in Meine Touren' : 'Alle Punkte entfernen', danger: !plan.cloudId, onPress: plan.reset },
+              { key: 'new', icon: plan.cloudId ? 'xmark' : 'trash', label: plan.cloudId ? 'Schließen' : 'Tour verwerfen', hint: plan.cloudId ? 'Gespeicherte Tour bleibt in Meine Touren' : 'Alle Punkte entfernen', danger: !plan.cloudId, confirm: 'Möchtest du diese Tour wirklich verwerfen?', onPress: plan.reset },
             ]}>
             {plan.cloudId && plan.dirty && !plan.saving && (
               <AppText variant="caption" style={styles.changed}>
                 Geändert. Tippe auf das Lesezeichen, um die Änderungen zu speichern.
               </AppText>
             )}
-            {plan.saveMsg && !plan.dirty && <AppText variant="caption" muted>{plan.saveMsg}</AppText>}
-            {!session && !plan.saveMsg && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
+            {!session && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
           </ActionBar>
         ) : (
           pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />

@@ -25,6 +25,7 @@ import { useMyProfile } from '@/lib/profile';
 import { syncVehicles } from '@/lib/vehicle';
 import { AppIntentHandler } from '@/live/intents';
 import { Colors } from '@/constants/theme';
+import { ToastHost } from '@/components/ui/toast';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -107,6 +108,7 @@ export default function RootLayout() {
       </Stack>
       </EntitlementGate>
       <RideBanner />
+      <ToastHost />
       <AppIntentHandler />
     </ThemeProvider>
   );

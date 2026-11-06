@@ -7,10 +7,28 @@ Ziel: die schönste, modernste und einfachste App für Genussfahrer. Jede Ansich
 * Keine Knopfreihen. Nebenaktionen als Symbol, das bei Bedarf aufklappt.
 * Was auf der Karte erledigt werden kann (ändern, starten), braucht keinen eigenen Knopf in Listen.
 
-## 2. Aufklappen statt Wechseln
-* Optionen erscheinen dort, wo getippt wurde, und gleiten nacheinander herein (Versatz `Motion.stagger`).
-* Das auslösende Symbol zeigt den Zustand: dreht sich und wird zum X.
-* Keine Systemdialoge. Bestätigen inline: Papierkorb wird zur roten Taste "Löschen", klappt nach 3 s zurück.
+## 2. Ebenen und Rückmeldungen (entschieden am 6.11.2026)
+Jede Rückfrage, jedes Menü und jede Meldung nutzt genau eines dieser Muster. Bauteile in Klammern.
+
+| Muster | Wofür | Beispiele | Schließen |
+|---|---|---|---|
+| **Aufklappen an Ort und Stelle** | eine Wahl, die zum Inhalt gehört und klein bleibt | Profil einer Etappe, Vermeiden, Länge in km oder Dauer | Tippen auf dieselbe Stelle |
+| **Bottom Sheet mit Optionen** (`ActionSheet`) | Optionen zu einem Objekt, 2 bis 6 Zeilen, je Symbol, Name, Hinweis | Optionen einer Tour in Meine Touren, Weiteres im Planer (Anpassen, Neu würfeln, Verwerfen), Optionen eines Fahrzeugs | Tipp daneben, Zeile wählen |
+| **Rückfrage** (`ConfirmSheet`) | vor allem, was sich nicht rückgängig machen lässt | Tour löschen, Runde verwerfen, Fahrzeug löschen | Abbrechen oder Bestätigen |
+| **Bottom Sheet mit Inhalt** (`OptionsSheet`) | kurze Eingabe zu einem Objekt, höchstens zwei Felder | In der Community veröffentlichen | Tipp daneben, Fertig |
+| **Ebene** (Modal als Page Sheet) | eigene Aufgabe mit viel Inhalt oder Tastatur, Wischen nach unten schließt | Ortssuche, Highlight Details, Karteneinstellungen | Wischen, X oben |
+| **Schwebende Karte über der Karte** | Aktionen zu etwas auf der Karte, die Karte bleibt sichtbar | angetippter Pass, neuer Punkt durch langen Druck | Tipp auf die Karte |
+| **Toast** | Bestätigung einer erledigten Aktion, nichts mehr zu tun | Gespeichert unter Meine Touren, Tour gelöscht, In der Community veröffentlicht | verschwindet nach 2,6 s, mit Folgeaktion nach 5 s |
+| **Hinweis im Inhalt** | Zustand oder Fehler, der zu einer Stelle gehört | Feld leer, Route geändert und nicht gespeichert, Standort nicht freigegeben | verschwindet, wenn der Grund weg ist |
+| **Vollbild** | Modus, der alles andere ersetzt | Navigation, QR Scan, Mitgliedschaft | eigener Knopf |
+
+Regeln:
+* Keine Systemdialoge (Alert). Ausnahme: Berechtigungen, die nur iOS fragen kann.
+* Höchstens eine Ebene über der anderen (wie Spotify: Liste, darüber eine Ebene). Öffnet eine Zeile im Sheet etwas Neues, schließt das Sheet zuerst (`SHEET_GONE_MS`).
+* Gefährliches steht im Sheet unten, rot, und fragt immer nach. Die Frage ist ein ganzer Satz: "Möchtest du diese Tour wirklich löschen?". Die rote Taste nennt das Verb: "Löschen".
+* Toasts nur für Erfolg und für Fehler ohne festen Ort (Export, Netz). Fehler mit Ort stehen am Ort.
+* Ein Objekt hat genau einen Einstieg für Optionen: das Symbol ⋯ rechts. Die Fläche selbst öffnet das Objekt.
+* Optionen gleiten nicht mehr inline herein; die Federn aus 3 gelten für Sheets und Ebenen.
 
 ## 3. Bewegung mit Federn
 * Alle Animationen nutzen `Motion` aus `theme.ts` (press, snap). Keine linearen Übergänge.
