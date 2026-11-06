@@ -47,6 +47,7 @@ export function RouteMap({
   pins,
   onLongPress,
   focus,
+  autoFit = true,
   dashed,
   layers = false,
   onPressPass,
@@ -131,22 +132,22 @@ export function RouteMap({
 
   // Ausschnitt an die Tour anpassen, solange keine Warnung gewählt ist und die Kamera nicht folgt
   useEffect(() => {
-    if (!ready || followUser || highlightIndex != null || fitCoords.length < 2) return;
+    if (!ready || !autoFit || followUser || highlightIndex != null || fitCoords.length < 2) return;
     map.current?.fitToCoordinates(fitCoords, { edgePadding: pad, animated: true });
     // pad ist ein Objekt, die Werte reichen als Abhängigkeit
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, followUser, highlightIndex, fitCoords, pad.top, pad.right, pad.bottom, pad.left]);
+  }, [ready, autoFit, followUser, highlightIndex, fitCoords, pad.top, pad.right, pad.bottom, pad.left]);
 
   // Ohne Linie: auf den Fokus Punkt springen (zum Beispiel erster Wegpunkt im Planer)
   const focusLat = focus?.[0];
   const focusLon = focus?.[1];
   useEffect(() => {
-    if (!ready || followUser || fitCoords.length >= 2 || focusLat == null || focusLon == null) return;
+    if (!ready || !autoFit || followUser || fitCoords.length >= 2 || focusLat == null || focusLon == null) return;
     map.current?.animateCamera(
       { center: { latitude: focusLat, longitude: focusLon }, zoom: 10, altitude: 60000, pitch: 0, heading: 0 },
       { duration: 600 },
     );
-  }, [ready, followUser, fitCoords.length, focusLat, focusLon]);
+  }, [ready, autoFit, followUser, fitCoords.length, focusLat, focusLon]);
 
   // Ohne Tour: auf die Gruppe einpassen (sobald Positionen da sind, einmal pro neuer Teilnehmerzahl)
   const groupPts = (others ?? []).map((o) => o.p);

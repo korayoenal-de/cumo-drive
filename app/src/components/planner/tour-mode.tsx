@@ -6,11 +6,10 @@ import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, TextInput, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import { SymbolView } from 'expo-symbols';
 
 import { HighlightList } from '@/components/planner/highlight-list';
-import { closedHint, passState, usePassLive } from '@/lib/pass-live';
-import { PASS_STATUS_URL, PASSES, passPoint, passSummary, searchPasses } from '@/lib/passes';
+import { closedHint, usePassLive } from '@/lib/pass-live';
+import { PASS_STATUS_URL, PASSES, passPoint } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import { locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 import { ElevationChart } from '@/components/planner/elevation-chart';
@@ -19,14 +18,14 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Shadow } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { useSession } from '@/lib/auth';
-import { type Place } from '@/lib/geocode';
 import { doubledStretch } from '@/lib/doubled';
 import { passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
 import { flatten, formatKm, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
 
-import { DragHandle, GroupBlock, LocationIcon, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsSection, Toggle, TrustLine, Warnings } from './planner-parts';
-import { keyOf, type PendingPoint, type PointKind, profileWord, samePts, STEP_TEXT, usePlaceSuggest } from './planner-shared';
+import { PlaceSearch } from './place-search';
+import { DragHandle, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsSection, Toggle, TrustLine, Warnings } from './planner-parts';
+import { keyOf, type PendingPoint, type PointKind, profileWord, samePts, STEP_TEXT } from './planner-shared';
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
 
@@ -34,7 +33,7 @@ import { type TourPlan } from './use-tour-plan';
 export type EditTarget = { kind: PointKind; index?: number; insert?: boolean };
 
 export function TourMode({
-  plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onSearchFocus, onDragChange,
+  plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onDragChange, onListEdit,
 }: {
   plan: TourPlan;
   here: Spot | null;
@@ -47,10 +46,10 @@ export function TourMode({
   /** Punkt aus dem langen Druck auf die große Karte, wartet auf die Rolle */
   pending: PendingPoint | null;
   setPending: (p: PendingPoint | null) => void;
-  /** Suchfeld bekommt den Fokus: das Blatt geht auf volle Höhe */
-  onSearchFocus: () => void;
   /** Ziehen am Anfasser läuft: das Blatt darf solange nicht scrollen */
   onDragChange: (on: boolean) => void;
+  /** Punkt über die Liste geändert: die Karte darf den Ausschnitt wieder an die Route anpassen */
+  onListEdit: () => void;
 }) {
   const session = useSession();
   const live = usePassLive();
@@ -60,7 +59,6 @@ export function TourMode({
   const fits = !!planned && samePts(planned.wegpunkte, pts);
   const routeTour = fits ? planned : null;
 
-  const [query, setQuery] = useState('');
   const [planChanged, setPlanChanged] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locMsg, setLocMsg] = useState<string | null>(null);
@@ -107,8 +105,10 @@ export function TourMode({
     plan.add(kind, p, profile, avoid, known);
   };
 
-  /** Feld, das gerade bearbeitet wird; dort öffnet sich die Suche. Ohne Start beginnt es mit dem Start. */
-  const [edit, setEdit] = useState<EditTarget | null>(() => (plan.start ? null : { kind: 'start' }));
+  const nameOf = (p: LatLon) => plan.names[keyOf(p)] ?? `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`;
+
+  /** Punkt, für den die Suche (PlaceSearch) offen ist */
+  const [edit, setEdit] = useState<EditTarget | null>(null);
   /** Punkt, der gerade bearbeitet wird (null bei neuem Punkt oder leerem Feld) */
   const pointOf = (e: EditTarget | null): LatLon | null =>
     !e || e.insert ? null : e.kind === 'start' ? plan.start : e.kind === 'ziel' ? plan.ziel : (plan.vias[e.index ?? -1] ?? null);
@@ -116,20 +116,20 @@ export function TourMode({
     setEdit(e);
     setMenu(null);
     setLegMenu(null);
-    // Gesetzter Punkt: sein Name steht im Feld (markiert, Tippen ersetzt ihn), das X entfernt den Punkt
+    // Gesetzter Punkt: sein Name steht im Feld (markiert, Tippen ersetzt ihn)
     const cur = pointOf(e);
-    const name = cur ? nameOf(cur) : '';
-    setQuery(name);
-    setEditName(name);
+    setEditName(cur ? nameOf(cur) : '');
     setLocMsg(null);
   }
   const [editName, setEditName] = useState('');
   const editPoint = pointOf(edit);
   function removeEdited() {
     if (!edit) return;
+    onListEdit();
     if (edit.kind === 'start') plan.removeStart(profile, avoid);
     else if (edit.kind === 'ziel') plan.removeZiel(profile, avoid);
     else plan.removeVia(edit.index!, profile, avoid);
+    setEdit(null);
   }
 
   // Vorschläge schon beim Tippen: passende Pässe zuerst, dann Orte in der Nähe des letzten Punkts
@@ -137,31 +137,15 @@ export function TourMode({
   const nearLat = lastPt?.[0];
   const nearLon = lastPt?.[1];
   const near = useMemo<LatLon | undefined>(() => (nearLat != null && nearLon != null ? [nearLat, nearLon] : undefined), [nearLat, nearLon]);
-  // Solange der Name des Punkts unverändert im Feld steht, keine Vorschläge
-  const suggest = usePlaceSuggest(query === editName ? '' : query, near);
-  const passHits = useMemo<Place[]>(
-    () =>
-      query.trim().length >= 2
-        ? searchPasses(PASSES, query.trim(), 3).map((x) => ({
-            name: x.name,
-            detail: `Pass, ${passSummary(x, undefined, passState(x, live).note)}, ${x.region}`,
-            p: passPoint(x),
-          }))
-        : [],
-    [query, live],
-  );
-  const hits: Place[] | null =
-    query.trim().length < 2 ? null : [...passHits, ...(suggest.hits ?? []).filter((x) => !passHits.some((y) => y.name === x.name)).slice(0, 7)];
-  const searching = suggest.searching;
-
   function pick(p: LatLon, name: string | undefined) {
     if (!edit) return;
+    onListEdit();
     setPlanChanged(false);
     if (edit.insert) plan.insertAt(edit.index ?? plan.vias.length, p, profile, avoid, name);
     else plan.setSlot(edit.kind, p, profile, avoid, name, edit.index);
-    setQuery('');
     // Nach dem Start gleich das Ziel abfragen
-    setEdit(edit.kind === 'start' && !plan.ziel ? { kind: 'ziel' } : null);
+    if (edit.kind === 'start' && !plan.ziel) openEdit({ kind: 'ziel' });
+    else setEdit(null);
   }
 
   async function takeHere() {
@@ -179,61 +163,22 @@ export function TourMode({
     }
   }
 
-  const editor = (
-    <View style={styles.editor}>
-      <View style={styles.field}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder={edit?.kind === 'start' ? 'Wo geht es los?' : edit?.kind === 'ziel' ? 'Wohin soll es gehen?' : 'Ort oder Pass für das Zwischenziel'}
-          placeholderTextColor={Colors.muted}
-          returnKeyType="search"
-          autoFocus
-          selectTextOnFocus
-          onSubmitEditing={() => query === editName && setEdit(null)}
-          onFocus={onSearchFocus}
-          style={styles.fieldInput}
-          accessibilityLabel="Ort oder Pass suchen"
-        />
-        {searching && <ActivityIndicator color={Colors.muted} />}
-        {edit?.kind !== 'via' && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={locating ? 'Standort wird bestimmt' : 'Mein Standort'}
-            onPress={() => !locating && void takeHere()}
-            hitSlop={6}
-            style={({ pressed }) => [styles.fieldIcon, pressed && styles.pressed]}>
-            {locating ? <ActivityIndicator color={Colors.signal} /> : <LocationIcon />}
-          </Pressable>
-        )}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={editPoint ? 'Punkt entfernen' : 'Suche schließen'}
-          onPress={() => {
-            if (editPoint) removeEdited();
-            setQuery('');
-            setEdit(null);
-          }}
-          hitSlop={6}
-          style={({ pressed }) => [styles.fieldIcon, pressed && styles.pressed]}>
-          <SymbolView name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
-        </Pressable>
-      </View>
-      {locMsg && <AppText variant="caption" style={[styles.signalText, styles.hitPad]}>{locMsg}</AppText>}
-      {hits && hits.length === 0 && <AppText variant="caption" muted style={styles.hitPad}>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
-      {hits?.map((h, i) => (
-        <Pressable
-          key={`${h.p[0]},${h.p[1]},${i}`}
-          accessibilityRole="button"
-          onPress={() => pick(h.p, h.name)}
-          style={({ pressed }) => [styles.hitRow, styles.hitPad, styles.hitLine, pressed && styles.hitPressed]}>
-          <View style={styles.hitMain}>
-            <AppText variant="title">{h.name}</AppText>
-            {!!h.detail && <AppText variant="caption" muted>{h.detail}</AppText>}
-          </View>
-        </Pressable>
-      ))}
-    </View>
+  const editRole = !edit ? '' : edit.kind === 'start' ? 'Start' : edit.kind === 'ziel' ? 'Ziel' : `Zwischenziel ${(edit.index ?? plan.vias.length) + 1}`;
+  const search = (
+    <PlaceSearch
+      visible={!!edit}
+      role={editRole}
+      placeholder={edit?.kind === 'start' ? 'Wo geht es los?' : edit?.kind === 'ziel' ? 'Wohin soll es gehen?' : 'Ort oder Pass für das Zwischenziel'}
+      current={editName}
+      near={near}
+      here={here?.p}
+      locating={locating}
+      message={locMsg}
+      onPick={pick}
+      onHere={() => void takeHere()}
+      onRemove={editPoint ? removeEdited : undefined}
+      onClose={() => setEdit(null)}
+    />
   );
 
   function addPending(kind: PointKind) {
@@ -253,17 +198,14 @@ export function TourMode({
     router.push('/navigation');
   };
 
-  const nameOf = (p: LatLon) => plan.names[keyOf(p)] ?? `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`;
 
   /** Eine Zeile der Punktliste mit Aktionen und, falls offen, dem Suchfeld darunter. */
   function pointRow(id: string, kind: PointKind, p: LatLon | null, index: number | undefined, slot: number) {
     const viaNo = (index ?? 0) + 1;
     const role = kind === 'start' ? 'Start' : kind === 'ziel' ? 'Ziel' : `Zwischenziel ${viaNo}`;
-    const isEditing = !!edit && !edit.insert && edit.kind === kind && (kind !== 'via' || edit.index === index);
     return (
       <View key={id} style={styles.gapS}>
-        {/* Beim Bearbeiten ersetzt das Suchfeld die Zeile, sonst stünden Platzhalter und Feld doppelt da */}
-        {!isEditing && (
+        {(
         <Animated.View style={[styles.pointRow, drag?.from === slot && dragStyle]}>
           <PointSymbol kind={kind} label={String(viaNo)} />
           <Pressable
@@ -309,7 +251,6 @@ export function TourMode({
           )}
         </Animated.View>
         )}
-        {isEditing && editor}
       </View>
     );
   }
@@ -394,7 +335,6 @@ export function TourMode({
                 ))}
               </ScrollView>
             )}
-            {inserting && editor}
           </View>
         ) : (
           <View style={styles.legGap} />
@@ -407,7 +347,7 @@ export function TourMode({
 
   return (
     <>
-
+      {search}
       {pending && !pending.pass && (
         <View style={[styles.card, styles.pendingCard]}>
           <View style={styles.flex}>

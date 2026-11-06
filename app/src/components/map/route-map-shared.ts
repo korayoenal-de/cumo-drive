@@ -38,6 +38,8 @@ export type RouteMapProps = {
   dashed?: LatLon[] | null;
   /** Punkt, auf den die Karte springt, solange keine Tour Linie da ist */
   focus?: LatLon | null;
+  /** false: Ausschnitt nicht an Tour oder Fokus anpassen (Punkt wurde gerade auf der Karte gesetzt) */
+  autoFit?: boolean;
   /** Zusätzliche Ebenen aus den Karteneinstellungen zeigen (Pässe, Meine Touren, Fahrten) */
   layers?: boolean;
   /** Tipp auf einen Pass der Pässe Ebene (zum Beispiel zur Route hinzufügen) */

@@ -39,7 +39,8 @@ import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
 import { ErrorCard, MicIcon, PrimaryButton, Progress, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
 import { Result } from './planner-result';
-import { EMPTY_TOUR, keyOf, type Mode, passIndex, type PendingPoint, roughDetourKm, samePts, STEP_TEXT, usePlaceSuggest } from './planner-shared';
+import { EMPTY_TOUR, keyOf, type Mode, passIndex, type PendingPoint, roughDetourKm, samePts, STEP_TEXT } from './planner-shared';
+import { PlaceSearch } from './place-search';
 import { styles } from './planner-styles';
 import { useTourPlan } from './use-tour-plan';
 import { TourMode } from './tour-mode';
@@ -150,7 +151,6 @@ export default function Planner() {
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState<PlanError | null>(null);
   const [picked, setPicked] = useState<Spot | null>(null);
-  const [query, setQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [lengthBy, setLengthBy] = useState<'km' | 'dauer'>('km');
   const [kmIdx, setKmIdx] = useState(3);
@@ -225,8 +225,6 @@ export default function Planner() {
   }
 
   // Startort Vorschläge schon beim Tippen
-  const startSuggest = usePlaceSuggest(showSearch ? query : '', here?.p);
-  const hits = startSuggest.hits;
 
   async function run(prepare: (signal: AbortSignal) => Promise<TourRequest>, stops: Stop[], seed = newSeed()) {
     abort.current?.abort();
@@ -334,6 +332,8 @@ export default function Planner() {
   const pins = inTour
     ? tourPts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: tourPlan.names[keyOf(p)] ?? `Zwischenziel ${i + 1}` }))
     : undefined;
+  /** Letzte Änderung kam von der Karte (langer Druck, Pass Aktion): Ausschnitt nicht anpassen */
+  const [mapEdit, setMapEdit] = useState(false);
   const focus = inTour
     ? (pending?.p ?? (tourPts.length ? tourPts[tourPts.length - 1] : here?.p ?? null))
     : (picked?.p ?? here?.p ?? null);
@@ -351,6 +351,7 @@ export default function Planner() {
 
   /** Aktion für den angetippten Pass, direkt auf die Route */
   function onPassAction(a: PassAction) {
+    setMapEdit(true);
     if (!pending?.pass) return;
     const pts = tourPlan.pts;
     if (a === 'remove') {
@@ -369,6 +370,8 @@ export default function Planner() {
     passRoleIdx < 0 ? null : passRoleIdx === 0 ? 'Start' : passRoleIdx === tourPts.length - 1 && tourPlan.complete ? 'Ziel' : `Zwischenziel ${passRoleIdx}`;
 
   function onMapLongPress(p: LatLon) {
+    // Punkt auf der Karte: der Ausschnitt bleibt, wo du gerade bist (nicht zum Ziel springen)
+    setMapEdit(true);
     if (!tourPts.length) {
       tourPlan.add('start', p, profile, avoid);
       return;
@@ -477,8 +480,8 @@ export default function Planner() {
           group={false}
           pending={pending}
           setPending={setPending}
-          onSearchFocus={expand}
           onDragChange={setDragging}
+          onListEdit={() => setMapEdit(false)}
         />
       ) : mode === 'beschreiben' ? (
         <>
@@ -632,49 +635,29 @@ export default function Planner() {
                   </View>
                 </View>
               )}
-              {!showSearch ? (
-                <Pressable accessibilityRole="button" onPress={() => setShowSearch(true)} style={styles.linkBtn}>
-                  <AppText style={styles.linkText}>Anderen Startort wählen</AppText>
-                </Pressable>
-              ) : (
-                <View style={styles.searchRow}>
-                  <TextInput
-                    autoFocus
-                    value={query}
-                    onChangeText={setQuery}
-                    placeholder="Anderen Startort suchen"
-                    placeholderTextColor={Colors.muted}
-                    returnKeyType="search"
-                    onFocus={expand}
-                    style={styles.search}
-                    accessibilityLabel="Anderen Startort suchen"
-                  />
-                  {startSuggest.searching && (
-                    <View style={styles.searchSpinner}>
-                      <ActivityIndicator color={Colors.muted} />
-                    </View>
-                  )}
-                </View>
-              )}
-              {hits && (
-                <View>
-                  {hits.length === 0 && !startSuggest.searching && <AppText variant="caption" muted>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>}
-                  {hits.map((h, i) => (
-                    <Pressable
-                      key={`${h.p[0]},${h.p[1]},${i}`}
-                      accessibilityRole="button"
-                      onPress={() => {
-                        setPicked({ p: h.p, name: h.name });
-                        setQuery('');
-                        setShowSearch(false);
-                      }}
-                      style={styles.hit}>
-                      <AppText variant="title">{h.name}</AppText>
-                      {!!h.detail && <AppText variant="caption" muted>{h.detail}</AppText>}
-                    </Pressable>
-                  ))}
-                </View>
-              )}
+              <Pressable accessibilityRole="button" onPress={() => setShowSearch(true)} style={styles.linkBtn}>
+                <AppText style={styles.linkText}>Anderen Startort wählen</AppText>
+              </Pressable>
+              <PlaceSearch
+                visible={showSearch}
+                role="Start der Runde"
+                placeholder="Wo geht es los?"
+                current={picked?.name ?? ''}
+                near={here?.p}
+                here={here?.p}
+                locating={locating}
+                message={null}
+                onPick={(p, name) => {
+                  setPicked({ p, name });
+                  setShowSearch(false);
+                }}
+                onHere={() => {
+                  setPicked(null);
+                  setShowSearch(false);
+                  if (!here && !locating) void findHere();
+                }}
+                onClose={() => setShowSearch(false)}
+              />
             </View>
           </Section>
 
@@ -765,6 +748,7 @@ export default function Planner() {
           pins={pins}
           showUser
           focus={focus}
+          autoFit={!(inTour && mapEdit)}
           onLongPress={inTour ? onMapLongPress : undefined}
           onPressPass={inTour ? onMapPassPress : undefined}
           onPressMap={passOverlay ? () => setPending(null) : undefined}

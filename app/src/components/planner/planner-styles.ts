@@ -19,6 +19,7 @@ export const styles = StyleSheet.create({
   flex: { flex: 1, gap: 2 },
   gapS: { gap: Spacing.s },
   gapM: { gap: Spacing.m },
+  hit: { paddingVertical: Spacing.m },
   gapL: { gap: Spacing.l },
   /** Abschnitte im Ergebnis, gleicher Abstand wie im Blatt */
   sections: { gap: Spacing.section },
@@ -69,7 +70,6 @@ export const styles = StyleSheet.create({
   search: { flex: 1, height: 44, borderRadius: Radius.s, backgroundColor: Colors.surface2, color: Colors.text, paddingHorizontal: Spacing.m, fontFamily: Fonts.regular, fontSize: Type.body },
   searchBtn: { height: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   searchBtnText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  hit: { paddingVertical: Spacing.m },
   searchSpinner: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -115,24 +115,15 @@ export const styles = StyleSheet.create({
   statusRow: { flexDirection: 'row', alignItems: 'center' },
   pendingCard: { backgroundColor: Colors.signalTint },
   // Suchfeld und Vorschläge in einer gemeinsamen Fläche, damit die Vorschläge sichtbar zum Feld gehören
-  editor: { borderRadius: Radius.m, backgroundColor: Colors.surface, overflow: 'hidden', marginBottom: Spacing.s },
-  hitPad: { paddingHorizontal: Spacing.m, paddingBottom: Spacing.m },
-  hitLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
-  hitPressed: { backgroundColor: Colors.surface2 },
   slotPlaceholder: { color: Colors.muted },
   stopRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.s },
   stopKm: { width: 52, fontVariant: ['tabular-nums'] },
   small: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   smallStrong: { backgroundColor: Colors.signal },
   smallText: { fontFamily: Fonts.semibold, fontSize: Type.small },
-  hitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.m },
-  hitMain: { flex: 1, minHeight: 44, justifyContent: 'center' },
 
   // Route planen: Punktliste und Etappen im calimoto Stil, Flächen statt Linien
   searchOnGround: { backgroundColor: Colors.surface },
-  field: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 48, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.m },
-  fieldInput: { flex: 1, height: 48, color: Colors.text, fontFamily: Fonts.regular, fontSize: Type.input },
-  fieldIcon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   layersBtn: { position: 'absolute', right: Spacing.l },
   pointRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.s },
   pointMain: { flex: 1, minHeight: 52, justifyContent: 'center', paddingHorizontal: Spacing.s },
