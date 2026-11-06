@@ -73,18 +73,35 @@ export function passesAlong(list: Pass[], line: LatLon[], maxM = 250): { pass: P
   if (!cand.length) return [];
   const kms: number[] = [0];
   for (let i = 1; i < line.length; i++) kms.push(kms[i - 1] + haversine(line[i - 1], line[i]) / 1000);
+  // Raster der Linienpunkte (Zellen größer als maxM): je Pass nur die Nachbarzellen prüfen statt der
+  // ganzen Linie. Vorher 4,7 s für 4.000 km im Stresstest vom 6.11., jetzt wenige Millisekunden.
+  const cell = Math.max(0.007, (maxM / 111320) * 2);
+  const grid = new Map<string, number[]>();
+  const key = (la: number, lo: number) => `${Math.floor(la / cell)}:${Math.floor(lo / cell)}`;
+  for (let i = 0; i < line.length; i++) {
+    const k = key(line[i][0], line[i][1]);
+    const b = grid.get(k);
+    if (b) b.push(i);
+    else grid.set(k, [i]);
+  }
   const out: { pass: Pass; km: number }[] = [];
   for (const p of cand) {
+    const gy = Math.floor(p.lat / cell);
+    const gx = Math.floor(p.lon / cell);
     let bd = Infinity;
-    let bk = 0;
-    for (let i = 0; i < line.length; i++) {
-      const d = haversine(passPoint(p), line[i]);
-      if (d < bd) {
-        bd = d;
-        bk = kms[i];
+    let bi = -1;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        for (const i of grid.get(`${gy + dy}:${gx + dx}`) ?? []) {
+          const d = haversine(passPoint(p), line[i]);
+          if (d < bd || (d === bd && i < bi)) {
+            bd = d;
+            bi = i;
+          }
+        }
       }
     }
-    if (bd <= maxM) out.push({ pass: p, km: bk });
+    if (bi >= 0 && bd <= maxM) out.push({ pass: p, km: kms[bi] });
   }
   return out.sort((a, b) => a.km - b.km);
 }

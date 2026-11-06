@@ -42,8 +42,9 @@ export function Result({
   const total = tour.laenge_km;
   const warnings = tour.warnungen.filter((w) => w.klasse !== 'ok');
   const line = useMemo(() => flatten(tour).map((x) => x.p), [tour]);
-  const passes = passesAlong(PASSES, line);
-  const curves = countCurves(line);
+  // nur neu rechnen, wenn sich die Linie ändert (das Ergebnis rendert bei jeder Bewegung des Blatts)
+  const passes = useMemo(() => passesAlong(PASSES, line), [line]);
+  const curves = useMemo(() => countCurves(line), [line]);
   const live = usePassLive();
   const hint = closedHint(passes.map((x) => x.pass), live);
   // fertige Runde unter Meine Touren speichern (bei neuer Runde wieder frei)

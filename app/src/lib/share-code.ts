@@ -80,7 +80,9 @@ export function supportPoints(tour: Tour, stepKm = 6, maxPoints = 26): LatLon[] 
   const pts = flatten(tour);
   if (pts.length < 2) return tour.wegpunkte;
   const total = pts[pts.length - 1].km;
-  const step = Math.max(stepKm, total / maxPoints);
+  // kurze Runden (Start gleich Ziel) brauchen trotzdem Stützpunkte, sonst bleibt nur ein Punkt übrig
+  // und der Link ist nicht lesbar (Stresstest 6.11.)
+  const step = Math.min(Math.max(stepKm, total / maxPoints), Math.max(total / 3, 0.05));
   const out: LatLon[] = [pts[0].p];
   let next = step;
   for (const x of pts) {
@@ -90,7 +92,7 @@ export function supportPoints(tour: Tour, stepKm = 6, maxPoints = 26): LatLon[] 
     }
   }
   const end = pts[pts.length - 1].p;
-  if (haversine(out[out.length - 1], end) > 50) out.push(end);
+  if (haversine(out[out.length - 1], end) > 50 || out.length < 2) out.push(end);
   else out[out.length - 1] = end;
   return out;
 }

@@ -4,10 +4,16 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { readFileSync } from 'node:fs';
 
 import { arrowsAlong, doubledStretch, offsetRight, splitDoubled } from '../doubled';
 import { decodeTour, encodeTour, extractCode } from '../share-code';
 import { flatten, haversine, type LatLon, type Tour } from '../tour';
+import { findHighlights } from '../navigation/highlights';
+import { cumulativeKm, tourFromLine } from '../navigation/route';
+import { pointAtKm, snapToRoute } from '../navigation/tracker';
+import type { NavRoute } from '../navigation/types';
+import { PASSES, passesAlong } from '../passes';
 
 /** Gerade Linie nach Osten ab Heppenheim, n Punkte im Abstand von etwa stepM Metern */
 function eastLine(n: number, stepM = 50, start: LatLon = [49.64, 8.63]): LatLon[] {
@@ -144,5 +150,58 @@ describe('sharpCurves', () => {
     const second = curveCue(pins, 1.1);
     assert.equal(second?.big, '2 VON 3');
     assert.equal(second?.label, 'Kehre links in 100 m');
+  });
+});
+
+// Regressionen aus der QS vom 6.11.2026 (echte Touren aus qa/corpus.json)
+describe('QS Regressionen', () => {
+  const corpus = JSON.parse(readFileSync(new URL('../../../qa/corpus.json', import.meta.url), 'utf8')) as Record<string, Tour>;
+  const lineOf = (n: string) => flatten(corpus[n]).map((x) => x.p);
+
+  it('Sellaronda zeigt alle vier Pässe einzeln', () => {
+    const line = lineOf('Sellaronda');
+    const names = findHighlights(line, cumulativeKm(line), null).map((h) => h.name);
+    for (const p of ['Sellajoch', 'Pordoijoch', 'Campolongo', 'Grödner Joch']) assert.ok(names.some((n) => n.includes(p)), `${p} fehlt in ${names}`);
+  });
+
+  it('Position springt am Ende einer Runde nicht an den Start', () => {
+    const line = lineOf('Grimsel Furka Susten');
+    const cum = cumulativeKm(line);
+    const route: NavRoute = { shape: line, cumKm: cum, maneuvers: [], km: cum[cum.length - 1], minutes: 0, source: 'valhalla' };
+    // kurz vor dem Ziel, mit 120 m GPS Fehler quer zur Straße
+    const at = pointAtKm(route, route.km - 23);
+    const p: LatLon = [at.point[0] + 0.0011, at.point[1]];
+    const s = snapToRoute(route, p, pointAtKm(route, route.km - 23.6).index, at.heading);
+    assert.ok(s.km > route.km - 30, `gesprungen auf km ${s.km.toFixed(1)}`);
+  });
+
+  it('Stichstraße: auf dem Rückweg zählt der Rückweg', () => {
+    const line: LatLon[] = [[46.5, 11.0], [46.5, 11.01], [46.5, 11.02], [46.5, 11.01], [46.5, 11.0], [46.49, 11.0]];
+    const cum = cumulativeKm(line);
+    const route: NavRoute = { shape: line, cumKm: cum, maneuvers: [], km: cum[cum.length - 1], minutes: 0, source: 'valhalla' };
+    let hint = 0;
+    let km = 0;
+    for (let k = 0; k <= route.km; k += 0.03) {
+      const at = pointAtKm(route, k);
+      const s = snapToRoute(route, at.point, hint, at.heading);
+      hint = s.index;
+      km = s.km;
+      assert.ok(Math.abs(s.km - k) < 0.1, `bei km ${k.toFixed(2)} auf ${s.km.toFixed(2)}`);
+    }
+    assert.ok(route.km - km < 0.1);
+  });
+
+  it('kurze Runde lässt sich als Link teilen', () => {
+    const t = tourFromLine('Runde', [[46.5, 11.0], [46.505, 11.0], [46.505, 11.006], [46.5, 11.006], [46.5, 11.0]]);
+    const back = decodeTour(encodeTour(t, 'kurvig'));
+    assert.ok(back && back.points.length >= 3);
+  });
+
+  it('Pässe entlang einer langen Tour sind schnell', () => {
+    const big: LatLon[] = [];
+    for (const n of Object.keys(corpus)) big.push(...lineOf(n));
+    const t0 = performance.now();
+    passesAlong(PASSES, big);
+    assert.ok(performance.now() - t0 < 500);
   });
 });
