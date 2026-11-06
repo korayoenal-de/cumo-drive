@@ -5,6 +5,7 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
+import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +24,7 @@ import { endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live'
 import { useSession } from '@/lib/auth';
 import { saveDrive } from '@/lib/drives';
 import { useNavigation } from '@/lib/navigation';
+import { curveAhead, curveLabel, sharpCurves } from '@/lib/navigation/curves';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
 import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
 import { elevationProfile } from '@/lib/stats';
@@ -155,6 +157,9 @@ export default function NavigationScreen() {
     const id = setTimeout(() => setStartedAt(Date.now()), 0);
     return () => clearTimeout(id);
   }, [state.status, startedAt]);
+
+  // Kurven, die man stark anbremsen muss (ohne Abbiegungen, die sind Manöver), für das Label 150 m vorher
+  const curves = useMemo(() => (state.route ? sharpCurves(state.route.shape, state.route.maneuvers.map((m) => m.km)) : []), [state.route]);
 
   // Zwischenziele der Tour als km auf der Route, für "bis zum nächsten Punkt"
   const viaKms = useMemo(() => {
@@ -312,6 +317,10 @@ export default function NavigationScreen() {
     route?.rejoinIndex != null && state.remainingKm != null ? (route.cumKm[route.rejoinIndex] - (route.km - state.remainingKm)) * 1000 : null;
   const offTour = running && ((rejoinM != null && rejoinM > 20) || (state.offRouteM != null && state.offRouteM > 60));
   const maneuver = route?.maneuvers[state.next];
+  // Scharfe Kurve voraus: nur in Fahrt (ab 30 km/h) und nicht, solange das Label "Abseits der Tour" steht
+  const curve =
+    status === 'laeuft' && !offTour && atKm != null && (state.speedKmh == null || state.speedKmh >= 30) ? curveAhead(curves, atKm) : null;
+  const curveM = curve && atKm != null ? Math.max(0, Math.round(((curve.startKm - atKm) * 1000) / 10) * 10) : 0;
   const then = route?.maneuvers[state.next + 1];
   const drivenKm = route ? Math.max(0, (startKm ?? route.km) - (state.remainingKm ?? 0)) : 0;
 
@@ -345,6 +354,19 @@ export default function NavigationScreen() {
               {rejoinM != null && rejoinM > 20 && status !== 'neuberechnung'
                 ? `Abseits der Tour, zurück in ${formatDistance(rejoinM).value} ${formatDistance(rejoinM).unit}`
                 : 'Abseits der Tour'}
+            </AppText>
+          </View>
+        )}
+        {curve && (
+          <View style={styles.curve} accessibilityRole="alert" accessibilityLabel={`${curveLabel(curve)}${curveM > 0 ? ` in ${curveM} Metern` : ''}`}>
+            <SymbolView
+              name={curve.kind === 'kehre' ? (curve.dir === 'links' ? 'arrow.uturn.left' : 'arrow.uturn.right') : curve.dir === 'links' ? 'arrow.turn.up.left' : 'arrow.turn.up.right'}
+              size={16}
+              weight="bold"
+              tintColor={Colors.warn}
+            />
+            <AppText style={styles.offText} numberOfLines={1}>
+              {curveM > 0 ? `${curveLabel(curve)} · ${curveM} m` : curveLabel(curve)}
             </AppText>
           </View>
         )}
@@ -664,6 +686,7 @@ const styles = StyleSheet.create({
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   leadWrap: { paddingHorizontal: Spacing.m, paddingBottom: Spacing.s },
   offTour: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: 'rgba(11,11,12,0.92)', borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
+  curve: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: 'rgba(11,11,12,0.92)', borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
   offDash: { width: 22, height: 4, borderRadius: 2, backgroundColor: Colors.warn },
   offText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
   tourName: {

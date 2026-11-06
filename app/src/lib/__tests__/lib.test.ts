@@ -89,3 +89,45 @@ describe('share-code', () => {
     assert.equal(decodeTour('cumo1:%%%'), null);
   });
 });
+
+describe('sharpCurves', () => {
+  /** Gerade nach Osten, dann ein Bogen mit Radius r und Winkel deg, dann gerade weiter */
+  function bend(r: number, deg: number, left: boolean): LatLon[] {
+    const s: LatLon = [49.64, 8.63];
+    const mLat = 1 / 111320;
+    const mLon = 1 / (111320 * Math.cos((s[0] * Math.PI) / 180));
+    const pts: [number, number][] = [];
+    for (let x = 0; x <= 300; x += 10) pts.push([x, 0]);
+    const sign = left ? 1 : -1;
+    for (let a = 5; a <= deg; a += 5) {
+      const t = (a * Math.PI) / 180;
+      pts.push([300 + r * Math.sin(t), sign * r * (1 - Math.cos(t))]);
+    }
+    const t = (deg * Math.PI) / 180;
+    const [ex, ey] = pts[pts.length - 1];
+    for (let d = 10; d <= 300; d += 10) pts.push([ex + d * Math.cos(t), ey + sign * d * Math.sin(t)]);
+    return pts.map(([x, y]) => [s[0] + y * mLat, s[1] + x * mLon] as LatLon);
+  }
+
+  it('meldet eine enge Rechtskurve und keine weite', async () => {
+    const { sharpCurves } = await import('../navigation/curves');
+    const tight = sharpCurves(bend(25, 90, false));
+    assert.equal(tight.length, 1);
+    assert.equal(tight[0].kind, 'scharf');
+    assert.equal(tight[0].dir, 'rechts');
+    assert.ok(Math.abs(tight[0].startKm - 0.3) < 0.05);
+    assert.equal(sharpCurves(bend(150, 90, false)).length, 0);
+    assert.equal(sharpCurves(eastLine(20)).length, 0);
+  });
+
+  it('erkennt Kehren und lässt Manöver aus', async () => {
+    const { sharpCurves, curveAhead } = await import('../navigation/curves');
+    const pin = sharpCurves(bend(15, 180, true));
+    assert.equal(pin.length, 1);
+    assert.equal(pin[0].kind, 'kehre');
+    assert.equal(pin[0].dir, 'links');
+    assert.equal(sharpCurves(bend(25, 90, false), [0.32]).length, 0);
+    assert.equal(curveAhead(pin, 0.1), null);
+    assert.ok(curveAhead(pin, 0.2));
+  });
+});
