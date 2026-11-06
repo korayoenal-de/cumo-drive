@@ -53,7 +53,14 @@ type VManeuver = {
   length: number;
   time: number;
 };
-type VTrip = { trip: { legs: { shape: string; maneuvers: VManeuver[] }[]; summary: { length: number; time: number } } };
+type VTrip = {
+  trip: {
+    legs: { shape: string; maneuvers: VManeuver[] }[];
+    summary: { length: number; time: number };
+    /** bei trace_route: Anfang, Ende und Unterbrechungen, mit Index in der eingereichten Linie */
+    locations?: { type?: string; original_index?: number }[];
+  };
+};
 
 /** Zusammengesetztes Stück: Punkte und Manöver mit Indizes in genau diesen Punkten. */
 type Piece = { shape: LatLon[]; maneuvers: (VManeuver & { idx: number })[]; seconds: number };
@@ -253,14 +260,39 @@ export function kindFor(type: number): ManeuverKind {
 
 const DIRECTIONS = { language: 'de-DE', units: 'kilometers' };
 
-async function traceChunk(points: LatLon[], signal?: AbortSignal): Promise<Piece> {
-  const body = {
-    shape: points.map(([lat, lon]) => ({ lat, lon })),
-    costing: 'auto',
-    shape_match: 'map_snap',
-    directions_options: DIRECTIONS,
+/** Zwei Stücke, die am selben Punkt enden und beginnen, zu einem verbinden */
+function joinPieces(a: Piece, b: Piece): Piece {
+  const shift = a.shape.length - 1;
+  return {
+    shape: [...a.shape, ...b.shape.slice(1)],
+    maneuvers: [...a.maneuvers.filter((m) => !isDestination(m.type)), ...b.maneuvers.filter((m) => !isStart(m.type)).map((m) => ({ ...m, idx: m.idx + shift }))],
+    seconds: a.seconds + b.seconds,
   };
-  return piece(await post('trace_route', body, signal));
+}
+
+/**
+ * Ein Stück der Linie abgleichen. Valhalla hört an einer Stelle, die es nicht zuordnen kann (etwa eine
+ * Wende auf einer Nebenfahrbahn), mit einem "via" auf und liefert nur den Teil davor. Dann geht es ab
+ * dieser Stelle weiter, bis die ganze Linie abgedeckt ist (Rundtour ab Bensheim, 6.11.: nur 1,2 von 54 km).
+ */
+async function traceChunk(points: LatLon[], signal?: AbortSignal): Promise<Piece> {
+  let from = 0;
+  let acc: Piece | null = null;
+  for (let guard = 0; guard < 25 && from < points.length - 1; guard++) {
+    const part = points.slice(from);
+    const r = await post(
+      'trace_route',
+      { shape: part.map(([lat, lon]) => ({ lat, lon })), costing: 'auto', shape_match: 'map_snap', directions_options: DIRECTIONS },
+      signal,
+    );
+    const p = piece(r);
+    acc = acc ? joinPieces(acc, p) : p;
+    const locs = r.trip.locations ?? [];
+    const last = locs.length ? (locs[locs.length - 1].original_index ?? part.length - 1) : part.length - 1;
+    if (last >= part.length - 1) break;
+    from += last + 1;
+  }
+  return acc!;
 }
 
 /** Tourlinie abgleichen, lange Linien in Stücken mit Überlappung. */
@@ -341,6 +373,20 @@ function toManeuver(m: VManeuver & { idx: number }, cumKm: number[]): Maneuver {
   };
 }
 
+/**
+ * Runde ab Index j bis zurück zu j. Liegt der Start der Runde abseits (hin und zurück auf derselben
+ * Straße), fällt dieser Stich an der Nahtstelle weg, sonst käme mitten in der Fahrt ein Wenden.
+ */
+function rotateLoop(line: LatLon[], j: number): LatLon[] {
+  let a = line.length - 1;
+  let b = 0;
+  while (a - 1 > j && b + 1 < j && haversine(line[a - 1], line[b + 1]) < 30) {
+    a--;
+    b++;
+  }
+  return [...line.slice(j, a + 1), ...line.slice(b + 1, j + 1)];
+}
+
 function isRoundTrip(line: LatLon[]): boolean {
   return line.length > 2 && haversine(line[0], line[line.length - 1]) < 300;
 }
@@ -378,7 +424,9 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
       const h = bearing(line[Math.max(0, Math.min(j, line.length - 2))], line[Math.min(j + 1, line.length - 1)]);
       lead = await approach(from, line[j], h, req, signal);
     }
-    tourLine = line.slice(j);
+    // Rundtour: ab dem Einstieg die ganze Runde fahren, zurück bis zum Einstieg. Sonst endete die
+    // Navigation nach wenigen km, wenn der nächste Punkt kurz vor dem Ende der Runde lag (Bensheim, 6.11.).
+    tourLine = isRoundTrip(line) && j > 0 ? rotateLoop(line, j) : line.slice(j);
     if (tourLine.length < 2) tourLine = line.slice(-2);
   }
 
