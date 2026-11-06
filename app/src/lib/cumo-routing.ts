@@ -346,11 +346,20 @@ export async function cumoPlan(
   avoid: Avoid,
   signal?: AbortSignal,
 ): Promise<PlannedTour & { curves: number }> {
+  let leg = 0;
+  let sum = 0;
+  for (let i = 1; i < points.length; i++) {
+    const d = haversine(points[i - 1], points[i]) / 1000;
+    leg = Math.max(leg, d);
+    sum += d;
+  }
+  const long = sum > 200;
   const ask = async (exclude: LatLon[], penalize: LatLon[]) => {
     // Traumstrecken im Umkreis der Wegpunkte, bei langen Etappen entsprechend weiter
-    let leg = 0;
-    for (let i = 1; i < points.length; i++) leg = Math.max(leg, haversine(points[i - 1], points[i]) / 1000);
-    const m = model(avoid, exclude, profile, penalize, points, Math.min(80, Math.max(20, leg * 0.6)));
+    // Lange Routen (Summe der Luftlinien über 200 km) ohne Traumstrecken Bereich: den prüft der
+    // Server für jede besuchte Straße, bei 700 km dauerte das 35 statt 16 Sekunden (Messung 6.11.).
+    // Schneller wird es erst mit einem eigenen Profil Kurvig auf dem Server (Landmarken vorberechnet).
+    const m = model(avoid, exclude, profile, penalize, long ? [] : points, Math.min(80, Math.max(20, leg * 0.6)));
     const body = {
       points: points.map(([la, lo]) => [lo, la]),
       profile: profile === 'schnell' ? 'auto' : 'sportwagen',
@@ -381,7 +390,9 @@ export async function cumoPlan(
   }
   const first = best!;
   const dup = doubledStretch(first.linie.flatMap((r) => r.p));
-  if (dup.km <= DOUBLE_MAX_KM) return first;
+  // Lange Routen nicht ein zweites Mal rechnen: die Anfrage mit Strafzonen dauerte bei 700 km über
+  // eine Minute, und doppelte Stücke fallen dort kaum ins Gewicht
+  if (dup.km <= DOUBLE_MAX_KM || long) return first;
   // Die doppelten Stücke nicht in die Nähe der Wegpunkte legen, dort muss die Route hin
   const penalize = dup.points.filter((q) => !points.some((w) => haversine(w, q) < 600));
   if (!penalize.length) return first;
