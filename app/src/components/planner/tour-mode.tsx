@@ -23,7 +23,7 @@ import { passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
 import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
 
-import { PlaceSearch } from './place-search';
+import { PlaceSearch, type Slot } from './place-search';
 import { DragHandle, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsSection, Toggle, TrustLine, Warnings } from './planner-parts';
 import { keyOf, type PendingPoint, type PointKind, profileWord, samePts, STEP_TEXT } from './planner-shared';
 import { styles } from './planner-styles';
@@ -186,6 +186,16 @@ export function TourMode({
   }
 
   const editRole = !edit ? '' : edit.kind === 'start' ? 'Start' : edit.kind === 'ziel' ? 'Ziel' : `Zwischenziel ${(edit.index ?? plan.vias.length) + 1}`;
+  // Routenkopf der Suche: Start, das bearbeitete Zwischenziel, Ziel (Variante B)
+  const headSlots: Slot[] = !edit
+    ? []
+    : [
+        { key: 'start', kind: 'start', label: 'Start', value: plan.start ? nameOf(plan.start) : null, active: edit.kind === 'start' },
+        ...(edit.kind === 'via'
+          ? [{ key: 'via', kind: 'via' as const, index: edit.index, insert: edit.insert, label: editRole, value: editPoint ? nameOf(editPoint) : null, active: true }]
+          : []),
+        { key: 'ziel', kind: 'ziel', label: 'Ziel', value: plan.ziel ? nameOf(plan.ziel) : null, active: edit.kind === 'ziel' },
+      ];
   const search = (
     <PlaceSearch
       visible={!!edit}
@@ -202,6 +212,8 @@ export function TourMode({
       onClose={() => setEdit(null)}
       route={line.length > 1 ? line : undefined}
       onPickStop={pickStop}
+      slots={headSlots}
+      onSwitch={(sl) => openEdit({ kind: sl.kind, index: sl.index, insert: sl.insert })}
     />
   );
 

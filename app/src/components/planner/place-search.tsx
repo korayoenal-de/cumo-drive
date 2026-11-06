@@ -7,10 +7,17 @@
  * Steht schon eine Route, gibt es unter dem Feld Kategorien (Tanken, Café, Essen, Aussicht, Pässe).
  * Eine Kategorie zeigt sofort Treffer im Korridor um die Route, nach Umweg sortiert, mit dem km der
  * Route; ein Suchbegriff filtert innerhalb. Gewählt landet der Stopp an seiner Stelle als Zwischenziel.
+ *
+ * Routenkopf (Variante B, entschieden am 6.11.2026, Muster aus Apple und Google Karten): Start, das
+ * bearbeitete Zwischenziel und Ziel stehen oben untereinander, verbunden wie im Planer. Das aktive Feld
+ * ist orange umrandet und ist das Suchfeld; nach dem Start springt der Fokus sichtbar zum Ziel. Ein Tipp
+ * auf eine andere Zeile wechselt dorthin. Ohne slots (Start der Runde) bleibt das einzelne Feld.
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
@@ -21,7 +28,8 @@ import { rememberPlace, useRecentPlaces } from '@/lib/recent-places';
 import { stopsAlong, type StopKind } from '@/lib/stops-along';
 import { formatKm, haversine, type LatLon } from '@/lib/tour';
 
-import { LocationIcon } from './planner-parts';
+import { LocationIcon, PointSymbol } from './planner-parts';
+import type { PointKind } from './planner-shared';
 import { usePlaceSuggest } from './planner-shared';
 
 type Props = {
@@ -46,7 +54,13 @@ type Props = {
   route?: LatLon[];
   /** Stopp aus einer Kategorie gewählt (km entlang der Route), wird an seiner Stelle eingefügt */
   onPickStop?: (p: LatLon, name: string, km: number) => void;
+  /** Routenkopf: Zeilen von oben nach unten, genau eine aktiv */
+  slots?: Slot[];
+  /** Tipp auf eine andere Zeile im Routenkopf */
+  onSwitch?: (slot: Slot) => void;
 };
+
+export type Slot = { key: string; kind: PointKind; index?: number; insert?: boolean; label: string; value: string | null; active: boolean };
 
 type Cat = 'alle' | StopKind | 'pass';
 const CATS: { id: Cat; label: string; placeholder: string }[] = [
@@ -118,6 +132,8 @@ function SearchBody({
   onClose,
   route,
   onPickStop,
+  slots,
+  onSwitch,
 }: Props) {
   const [query, setQuery] = useState(current);
   const live = usePassLive();
@@ -213,10 +229,16 @@ function SearchBody({
   return (
       <View style={styles.screen}>
         <View style={styles.head}>
-          <AppText style={styles.role}>{role}</AppText>
-          <View style={styles.searchRow}>
-            <View style={styles.field}>
-              <SymbolView name="magnifyingglass" size={18} tintColor={Colors.muted} />
+          {slots && slots.length > 1 ? (
+            <View style={styles.routeHead}>
+              <View style={styles.slots}>
+                {slots.map((sl, i) => (
+                  <View key={sl.key}>
+                    {i > 0 && <View style={styles.slotLine} />}
+                    <View style={styles.slotRow}>
+                      <PointSymbol kind={sl.kind} label={String((sl.index ?? 0) + 1)} />
+                      {sl.active ? (
+                        <Animated.View entering={FadeIn.duration(180)} style={[styles.field, styles.fieldOn]}>
               <TextInput
                 value={query}
                 onChangeText={setQuery}
@@ -236,7 +258,22 @@ function SearchBody({
                   <SymbolView name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
                 </Pressable>
               )}
-            </View>
+                        </Animated.View>
+                      ) : (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`${sl.label} ${sl.value ? `ändern, jetzt ${sl.value}` : 'wählen'}`}
+                          onPress={() => onSwitch?.(sl)}
+                          style={({ pressed }) => [styles.field, pressed && styles.pressed]}>
+                          <AppText style={[styles.slotText, !sl.value && styles.slotEmpty]} numberOfLines={1}>
+                            {sl.value ?? (sl.kind === 'ziel' ? 'Ziel wählen' : sl.kind === 'start' ? 'Start wählen' : sl.label)}
+                          </AppText>
+                        </Pressable>
+                      )}
+                    </View>
+                  </View>
+                ))}
+              </View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Suche schließen"
@@ -244,7 +281,43 @@ function SearchBody({
               style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
               <SymbolView name="xmark" size={18} weight="semibold" tintColor={Colors.text} />
             </Pressable>
-          </View>
+            </View>
+          ) : (
+            <>
+              <AppText style={styles.role}>{role}</AppText>
+              <View style={styles.searchRow}>
+                <View style={styles.field}>
+                  <SymbolView name="magnifyingglass" size={18} tintColor={Colors.muted} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder={CATS.find((c) => c.id === cat)?.placeholder || placeholder}
+                placeholderTextColor={Colors.muted}
+                returnKeyType="search"
+                autoFocus
+                selectTextOnFocus
+                autoCorrect={false}
+                onSubmitEditing={() => (hits?.[0] ? pick(hits[0]) : cat === 'alle' && query === current && onClose())}
+                style={styles.input}
+                accessibilityLabel={`${role}: Ort oder Pass suchen`}
+              />
+              {suggest.searching && <ActivityIndicator color={Colors.muted} />}
+              {query.length > 0 && (
+                <Pressable accessibilityRole="button" accessibilityLabel="Eingabe löschen" onPress={() => setQuery('')} hitSlop={8}>
+                  <SymbolView name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
+                </Pressable>
+              )}
+                </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Suche schließen"
+              onPress={onClose}
+              style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
+              <SymbolView name="xmark" size={18} weight="semibold" tintColor={Colors.text} />
+            </Pressable>
+              </View>
+            </>
+          )}
           {hasRoute && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.tabs} style={styles.tabsBox}>
               {CATS.map((c) => {
@@ -331,6 +404,29 @@ function SearchBody({
             )
           ) : (
             <>
+              {/* Beim Ziel will man selten zum eigenen Standort: dort stehen die zuletzt gewählten Orte oben */}
+              {role === 'Ziel' ? (
+                <>
+              {recent.length > 0 && (
+                <View style={styles.section}>
+                  <AppText style={styles.label}>Zuletzt gewählt</AppText>
+                  <View style={styles.group}>{recent.map((r, i) => row(r, i, 'recent'))}</View>
+                </View>
+              )}
+              <View style={styles.group}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={locating ? 'Standort wird bestimmt' : 'Mein Standort'}
+                  onPress={() => !locating && onHere()}
+                  style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
+                  <View style={styles.icon}>{locating ? <ActivityIndicator color={Colors.signal} /> : <LocationIcon />}</View>
+                  <AppText style={[styles.name, styles.rowMain]}>Mein Standort</AppText>
+                </Pressable>
+              </View>
+              {!!message && <AppText style={styles.message}>{message}</AppText>}
+                </>
+              ) : (
+                <>
               <View style={styles.group}>
                 <Pressable
                   accessibilityRole="button"
@@ -347,6 +443,8 @@ function SearchBody({
                   <AppText style={styles.label}>Zuletzt gewählt</AppText>
                   <View style={styles.group}>{recent.map((r, i) => row(r, i, 'recent'))}</View>
                 </View>
+              )}
+                </>
               )}
               {onRemove && (
                 <Pressable
@@ -403,6 +501,13 @@ const styles = StyleSheet.create({
   loading: { marginTop: Spacing.xl },
   widen: { alignSelf: 'flex-start', height: 48, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, justifyContent: 'center', backgroundColor: Colors.surface2 },
   widenText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },
+  routeHead: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s },
+  slots: { flex: 1, minWidth: 0 },
+  slotRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
+  slotLine: { marginLeft: 13, width: 2, height: 10, borderLeftWidth: 2, borderColor: Colors.empty, borderStyle: 'dotted' },
+  fieldOn: { borderWidth: 2, borderColor: Colors.signal },
+  slotText: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
+  slotEmpty: { color: Colors.muted },
   remove: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.l },
   removeText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.signal },
   pressed: { opacity: 0.85, transform: [{ scale: Motion.pressScale }] },
