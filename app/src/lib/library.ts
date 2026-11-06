@@ -124,6 +124,11 @@ export function patchTour(id: string, patch: Partial<SavedTour>) {
   write(read().map((x) => (x.id === id ? { ...x, ...patch } : x)));
 }
 
+/** Alle Touren nur auf diesem Gerät entfernen (nach dem Löschen des Kontos) */
+export function clearLocalTours() {
+  write([]);
+}
+
 export function deleteTour(id: string) {
   const t = read().find((x) => x.id === id);
   write(read().filter((x) => x.id !== id));

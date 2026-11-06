@@ -14,7 +14,8 @@ import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
-import { signIn, signOut, signUp, useSession } from '@/lib/auth';
+import { deleteAccount, signIn, signOut, signUp, useSession } from '@/lib/auth';
+import { clearLocalTours } from '@/lib/library';
 import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { formatKm } from '@/lib/tour';
@@ -57,6 +58,20 @@ export default function Einstellungen() {
 }
 
 function Account({ email }: { email: string }) {
+  const [ask, setAsk] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const remove = async () => {
+    setBusy(true);
+    try {
+      await deleteAccount();
+      clearLocalTours();
+      showToast('Dein Konto ist gelöscht.');
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Löschen hat nicht geklappt.', { tone: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <View style={styles.card}>
       <DisplayName />
@@ -64,6 +79,17 @@ function Account({ email }: { email: string }) {
       <Pressable accessibilityRole="button" onPress={() => void signOut()} style={styles.secondary}>
         <AppText style={styles.secondaryText}>Abmelden</AppText>
       </Pressable>
+      <Pressable accessibilityRole="button" disabled={busy} onPress={() => setAsk(true)} hitSlop={8} style={styles.deleteLink}>
+        <AppText style={styles.deleteText}>{busy ? 'Konto wird gelöscht' : 'Konto löschen'}</AppText>
+      </Pressable>
+      <ConfirmSheet
+        visible={ask}
+        title="Möchtest du dein Konto wirklich löschen?"
+        text="Touren, Fahrten, Fahrzeuge, Bewertungen und dein Name werden endgültig gelöscht, auch in der Community. Das lässt sich nicht rückgängig machen. Ein Abo kündigst du separat in den Einstellungen deiner Apple ID."
+        confirmLabel="Löschen"
+        onConfirm={() => void remove()}
+        onClose={() => setAsk(false)}
+      />
     </View>
   );
 }
@@ -329,6 +355,8 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
 }
 
 const styles = StyleSheet.create({
+  deleteLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.m },
+  deleteText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   carIcon: { transform: [{ rotate: '90deg' }], width: 30, alignItems: 'center' },
   more: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   flex: { flex: 1 },

@@ -71,6 +71,16 @@ export async function signUp(email: string, password: string) {
   if (!data.session) throw new Error('Registriert. Bitte die Bestätigungsmail öffnen und dann anmelden.');
 }
 
+/**
+ * Konto endgültig löschen (Apple Regel 5.1.1 v): Funktion delete_my_account in der Datenbank,
+ * die Daten im Konto fallen per Kaskade mit. Danach abmelden; lokale Touren räumt der Aufrufer auf.
+ */
+export async function deleteAccount() {
+  const { error } = await supabase.rpc('delete_my_account');
+  if (error) throw new Error(german(error.message));
+  await supabase.auth.signOut();
+}
+
 export async function signOut() {
   await supabase.auth.signOut();
 }
