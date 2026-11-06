@@ -71,7 +71,8 @@ export default function NavigationScreen() {
   }, [here, active]);
   const far = toStartKm != null && toStartKm > 30;
   const [entryTouched, setEntryTouched] = useState(false);
-  const effEntry: NavEntry = entryTouched ? entry : far ? 'anfahrt' : entry;
+  // weit weg: über den Startpunkt in die ganze Tour (nur zum Start navigieren ist kein Anwendungsfall, Koray 6.11.)
+  const effEntry: NavEntry = entryTouched ? entry : far ? 'start' : entry;
   const req = useMemo<NavRequest | null>(
     () =>
       active
@@ -548,22 +549,13 @@ export default function NavigationScreen() {
               </Pressable>
               {far && (
                 <AppText style={styles.farNote}>
-                  Der Start ist {Math.round(toStartKm!).toLocaleString('de-DE')} km entfernt. Lieber erst zum Start fahren oder unterwegs
+                  Der Start ist {Math.round(toStartKm!).toLocaleString('de-DE')} km entfernt. Erst zum Start fahren oder unterwegs
                   einsteigen?
                 </AppText>
               )}
               <View style={styles.entry} accessibilityRole="radiogroup">
                 {(
                   [
-                    ...(far
-                      ? [
-                          {
-                            id: 'anfahrt',
-                            label: 'Zum Start navigieren',
-                            hint: 'Schnellste Route mit Autobahn, die Tour startest du dort',
-                          },
-                        ]
-                      : []),
                     {
                       id: 'einsteigen',
                       label: 'Einsteigen',
