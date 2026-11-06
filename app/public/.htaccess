@@ -1,0 +1,16 @@
+# CUMO DRIVE Web (drive.rallycumo.de): Startseite ist die Landingpage, der Planer liegt unter /planer
+DirectoryIndex index.html
+Options -MultiViews
+RewriteEngine On
+
+# immer https
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# saubere Adressen: /login liefert login.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+?)/?$ $1.html [L]
+
+ErrorDocument 404 /+not-found.html
