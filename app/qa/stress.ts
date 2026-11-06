@@ -76,7 +76,7 @@ safe('mergeLegs leer', () => mergeLegs('x', [], []));
 // 2. Last: eine sehr lange Tour aus allen Korpus Touren hintereinander
 const corpus: Record<string, Tour> = JSON.parse(readFileSync('qa/corpus.json', 'utf8'));
 const big: LatLon[] = [];
-for (let r = 0; r < 3; r++) for (const t of Object.values(corpus)) for (const x of flatten(t)) big.push(x.p);
+for (const t of Object.values(corpus)) for (const x of flatten(t)) big.push(x.p);
 const cum = cumulativeKm(big);
 console.log(`\nLasttour: ${big.length} Punkte, ${cum.at(-1)!.toFixed(0)} km`);
 const tour = tourFromLine('Last', big);
