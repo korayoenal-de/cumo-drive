@@ -163,7 +163,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const route = routeRef.current;
       if (!activeRef.current || !route || arrivedRef.current) return;
       posRef.current = { p: fix.pos, h: fix.heading };
-      const snap = snapToRoute(route, fix.pos, hintRef.current);
+      // Fahrtrichtung nur bei Fahrt, im Stand ist der GPS Kurs Zufall
+      const snap = snapToRoute(route, fix.pos, hintRef.current, (fix.speedKmh ?? 0) >= 12 ? fix.heading : null);
       hintRef.current = snap.index;
       if (snap.offM <= OFF_ROUTE_M) doneIndexRef.current = Math.max(doneIndexRef.current, snap.index);
       const pr = progress(route, snap.km);

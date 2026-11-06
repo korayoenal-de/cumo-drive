@@ -26,7 +26,7 @@ export type Progress = {
 };
 
 /** Suchfenster um den Hinweis Index in km vor und zurück */
-const WINDOW_BACK_KM = 0.3;
+const WINDOW_BACK_KM = 1;
 const WINDOW_AHEAD_KM = 3;
 /** Liegt der Treffer im Fenster weiter weg, wird die ganze Route durchsucht */
 const LOCAL_OK_M = 80;
@@ -53,13 +53,50 @@ function project(a: LatLon, b: LatLon, p: LatLon): { t: number; point: LatLon; d
   return { t, point, dist: haversine(point, p) };
 }
 
-function searchRange(route: NavRoute, p: LatLon, from: number, to: number): Snap | null {
+/**
+ * Fortschritt bevorzugen: Liegen zwei Stellen der Route fast gleich nah (Hin und Rückweg einer
+ * Stichstraße, Kehren übereinander, Kreuzungen), gewinnt die, die zum bisherigen Fortschritt passt.
+ * Zurück kostet viel (0,5 m je Meter ab 60 m), voraus 0,15 m je Meter ab 80 m (schneller fährt
+ * keiner zwischen zwei GPS Punkten; kleine Schleifen um Zwischenziele). Gedeckelt bei 60 und 150 m.
+ * Gefunden mit der QS Fahrt vom 6.11.: ohne das lief die Position auf Stichstraßen rückwärts.
+ */
+const BACK_FREE_M = 60;
+const BACK_COST = 0.5;
+const AHEAD_FREE_M = 80;
+const AHEAD_COST = 0.15;
+/** Deckel: passt der bisherige Abschnitt gar nicht mehr, findet die Position zurück oder springt vor */
+const BACK_CAP_M = 60;
+const AHEAD_CAP_M = 150;
+/** Fahrtrichtung vom GPS: Abschnitte, die mehr als 50 Grad anders laufen, kosten 0,6 m je Grad */
+const HEADING_FREE_DEG = 50;
+const HEADING_COST = 0.6;
+
+function segBearing(a: LatLon, b: LatLon): number {
+  const k = Math.cos((a[0] * Math.PI) / 180);
+  return ((Math.atan2((b[1] - a[1]) * k, b[0] - a[0]) * 180) / Math.PI + 360) % 360;
+}
+
+type Scored = Snap & { score: number };
+
+function searchRange(route: NavRoute, p: LatLon, from: number, to: number, refKm?: number, heading?: number | null): Scored | null {
   const { shape, cumKm } = route;
-  let best: Snap | null = null;
+  let best: Scored | null = null;
+  let bestScore = Infinity;
   for (let i = Math.max(0, from); i < Math.min(to, shape.length - 1); i++) {
     const pr = project(shape[i], shape[i + 1], p);
-    if (!best || pr.dist < best.offM) {
-      best = { index: i, km: cumKm[i] + (cumKm[i + 1] - cumKm[i]) * pr.t, offM: pr.dist, point: pr.point };
+    const km = cumKm[i] + (cumKm[i + 1] - cumKm[i]) * pr.t;
+    let score = pr.dist;
+    if (refKm != null) {
+      const d = (km - refKm) * 1000;
+      score += d < 0 ? Math.min(BACK_CAP_M, BACK_COST * Math.max(0, -d - BACK_FREE_M)) : Math.min(AHEAD_CAP_M, AHEAD_COST * Math.max(0, d - AHEAD_FREE_M));
+    }
+    if (heading != null && pr.dist < bestScore) {
+      const diff = Math.abs(((segBearing(shape[i], shape[i + 1]) - heading + 540) % 360) - 180);
+      score += HEADING_COST * Math.max(0, diff - HEADING_FREE_DEG);
+    }
+    if (score < bestScore) {
+      bestScore = score;
+      best = { index: i, km, offM: pr.dist, point: pr.point, score };
     }
   }
   return best;
@@ -84,7 +121,7 @@ export function indexAtKm(route: NavRoute, km: number): number {
  * richtige Durchgang gewählt wird. Nur wenn dort nichts Nahes liegt, wird die ganze Route
  * durchsucht. Ohne Hinweis (hintIndex kleiner 0) wird immer die ganze Route durchsucht.
  */
-export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number): Snap {
+export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, heading?: number | null): Snap {
   const n = route.shape.length;
   if (n === 0) return { index: 0, km: 0, offM: Infinity, point: pos };
   if (n === 1) return { index: 0, km: 0, offM: haversine(route.shape[0], pos), point: route.shape[0] };
@@ -93,16 +130,23 @@ export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number): Sn
     const h = Math.min(hintIndex, n - 1);
     const from = indexAtKm(route, route.cumKm[h] - WINDOW_BACK_KM);
     const to = indexAtKm(route, route.cumKm[h] + WINDOW_AHEAD_KM) + 1;
-    const local = searchRange(route, pos, Math.max(0, from - 1), to);
-    if (local && local.offM <= LOCAL_OK_M) return local;
-    const all = searchRange(route, pos, 0, n - 1)!;
-    if (local && all.offM > local.offM - GLOBAL_MARGIN_M) return local;
-    // Weit nach vorne springen nur, wenn man wirklich nicht mehr in der Nähe ist. Sonst springt man
-    // bei Runden (Ende liegt am Start) sofort ans Ende und die Navigation meldet Ziel erreicht.
-    if (local && local.offM < JUMP_KEEP_M && all.km - local.km > WINDOW_AHEAD_KM) return local;
-    return all;
+    const local = searchRange(route, pos, Math.max(0, from - 1), to, route.cumKm[h], heading);
+    // Bewertet wird mit Abstand plus Kosten für Richtung und Rücksprung, nicht nur mit dem Abstand:
+    // sonst gewinnt auf Hin und Rückweg derselben Straße der falsche Durchgang.
+    if (local && local.score <= LOCAL_OK_M) return strip(local);
+    const all = searchRange(route, pos, 0, n - 1, undefined, heading)!;
+    if (local && all.score > local.score - GLOBAL_MARGIN_M) return strip(local);
+    // Weit nach vorne oder zurück springen nur, wenn man wirklich nicht mehr in der Nähe ist. Sonst
+    // springt man bei Runden (Ende liegt am Start) ans Ende und meldet Ziel erreicht, oder kurz vor dem
+    // Ziel zurück an den Start und kommt nie an (QS 6.11.: GPS Ausreißer am Ende der Sellaronda).
+    if (local && local.offM < JUMP_KEEP_M && (all.km - local.km > WINDOW_AHEAD_KM || local.km - all.km > 1)) return strip(local);
+    return strip(all);
   }
-  return searchRange(route, pos, 0, n - 1)!;
+  return strip(searchRange(route, pos, 0, n - 1, undefined, heading)!);
+}
+
+function strip(s: Scored): Snap {
+  return { index: s.index, km: s.km, offM: s.offM, point: s.point };
 }
 
 /** Nächstes Manöver und Abstände für eine Position km auf der Route. */
