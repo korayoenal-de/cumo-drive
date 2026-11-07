@@ -1,9 +1,9 @@
 /**
- * Fahrspaß Pegel (Variante E): sieben Dreiecke auf einem geschlossenen Kreis, Spitzen zur Mitte, wie das
- * CDC Keyvisual. Sie stoßen an der Basis aneinander, dazwischen bleibt ein siebenzackiger Stern frei.
- * Fünf Stufen füllen 1, 3, 4, 6 und 7 Dreiecke im Uhrzeigersinn. Unter 20 pt nur die orangen Dreiecke.
+ * Fahrspaß Pegel (Variante S3, entschieden am 7.11.2026, löst E ab): acht Segmente mit rundem Rücken um
+ * einen schlanken achtzackigen Stern, der als Negativform frei bleibt. Fünf Stufen füllen 1, 3, 5, 7 und 8
+ * Segmente ab 6 Uhr im Uhrzeigersinn. Unter 20 pt nur die orangen Segmente.
  *
- * Legende (animate): subtiler Austausch zwischen Dreiecken und Stern, nie beides zugleich (siehe LegendGauge).
+ * Legende (animate): subtiler Austausch zwischen Segmenten und Stern, nie beides zugleich (siehe LegendGauge).
  */
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -19,7 +19,7 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Polygon } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
 
@@ -27,45 +27,55 @@ export type FunLevel = 1 | 2 | 3 | 4 | 5;
 
 export const FUN_NAMES: Record<FunLevel, string> = { 1: 'Nett', 2: 'Lohnend', 3: 'Stark', 4: 'Traumstraße', 5: 'Legende' };
 
-const N = 7;
-const FILLED: Record<FunLevel, number> = { 1: 1, 2: 3, 3: 4, 4: 6, 5: 7 };
-const RB = 11.2;
-const RT = 4.2;
-const HALF = RB * Math.sin(Math.PI / N) * 0.97;
+const N = 8;
+/** Stufen: 1, 3, 5, 7 und 8 von 8 Segmenten, Legende ist der volle Kreis */
+const FILLED: Record<FunLevel, number> = { 1: 1, 2: 3, 3: 5, 4: 7, 5: 8 };
+/**
+ * Variante S3 (7.11.2026): Ausgangspunkt ist ein schlanker achtzackiger Stern, eine Zacke oben. Spitzen
+ * außen bei RO, Innenecken bei RI, über ROUND der Kante gerundet. Acht Segmente mit rundem Rücken füllen
+ * genau den Raum zwischen den Zacken und schließen den Kreis, der Stern bleibt als Negativform frei.
+ */
+const RO = 11.4;
+const RI = 4.2;
+const ROUND = 0.22;
 const OFF = Colors.empty;
-/** Kreis um 180 Grad gedreht (eine Zacke oben, zwei unten); Füllung beginnt immer unten bei 6 Uhr und läuft im Uhrzeigersinn (Koray 7.11.) */
-const ROT = 180;
-const ORDER = [0, 1, 2, 3, 4, 5, 6];
+const STEP = 360 / N;
 const f = (v: number) => v.toFixed(2);
+const at = (r: number, deg: number): [number, number] => {
+  const a = (deg * Math.PI) / 180;
+  return [12 + r * Math.sin(a), 12 - r * Math.cos(a)];
+};
+const lerp = (a: [number, number], b: [number, number], t: number): [number, number] => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+const pt = (p: [number, number]) => `${f(p[0])},${f(p[1])}`;
 
-const TRIS = Array.from({ length: N }, (_, i) => {
-  const a = ((i * 360) / N + ROT) * (Math.PI / 180);
-  const ux = Math.sin(a);
-  const uy = -Math.cos(a);
-  const px = Math.cos(a);
-  const py = Math.sin(a);
-  const bx = 12 + ux * RB * Math.cos(Math.PI / N);
-  const by = 12 + uy * RB * Math.cos(Math.PI / N);
-  return `${f(12 + ux * RT)},${f(12 + uy * RT)} ${f(bx + px * HALF)},${f(by + py * HALF)} ${f(bx - px * HALF)},${f(by - py * HALF)}`;
+/** Segmente in Füllreihenfolge: das erste direkt links neben 6 Uhr, dann im Uhrzeigersinn (Koray 7.11.) */
+const SEGS = Array.from({ length: N }, (_, k) => {
+  const c = 180 + STEP / 2 + k * STEP;
+  const apex = at(RI, c);
+  const l = at(RO, c - STEP / 2);
+  const r = at(RO, c + STEP / 2);
+  const a1 = lerp(apex, l, ROUND);
+  const a2 = lerp(apex, r, ROUND);
+  return `M${pt(a2)} L${pt(r)} A${RO},${RO} 0 0 0 ${pt(l)} L${pt(a1)} Q${pt(apex)} ${pt(a2)} Z`;
 });
 
-/** Negativform: Zacken an den Stoßstellen der Basen, Innenecken an den Spitzen */
+/** Der Stern selbst (Legende) */
 const STAR = (() => {
-  const ro = Math.hypot(RB * Math.cos(Math.PI / N), HALF);
-  const out: string[] = [];
-  for (let i = 0; i < N; i++) {
-    const a = ((i * 360) / N + ROT) * (Math.PI / 180);
-    const b = (((i + 0.5) * 360) / N + ROT) * (Math.PI / 180);
-    out.push(`${f(12 + Math.sin(a) * RT)},${f(12 - Math.cos(a) * RT)}`, `${f(12 + Math.sin(b) * ro)},${f(12 - Math.cos(b) * ro)}`);
+  let d = '';
+  for (let k = 0; k < N; k++) {
+    const tip = at(RO, k * STEP);
+    const next = at(RO, (k + 1) * STEP);
+    const inner = at(RI, k * STEP + STEP / 2);
+    d += `${k === 0 ? 'M' : 'L'}${pt(tip)} L${pt(lerp(inner, tip, ROUND))} Q${pt(inner)} ${pt(lerp(inner, next, ROUND))} `;
   }
-  return out.join(' ');
+  return `${d}Z`;
 })();
 
 const CYCLE_MS = 4000;
 const EASE_IN = Easing.in(Easing.quad);
 const EASE_OUT = Easing.out(Easing.cubic);
 const EASE_IN_OUT = Easing.inOut(Easing.quad);
-const AnimatedPolygon = Animated.createAnimatedComponent(Polygon);
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export function FunGauge({ level, size = 20, animate = false }: { level: FunLevel; size?: number; animate?: boolean }) {
   const reduced = useReducedMotion();
@@ -75,10 +85,10 @@ export function FunGauge({ level, size = 20, animate = false }: { level: FunLeve
   const small = size < 20;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityRole="image" accessibilityLabel={label}>
-      {TRIS.map((pts, i) => {
-        const on = ORDER.indexOf(i) < n;
+      {SEGS.map((d, i) => {
+        const on = i < n;
         if (!on && small) return null;
-        return <Polygon key={i} points={pts} fill={on ? Colors.signal : OFF} />;
+        return <Path key={i} d={d} fill={on ? Colors.signal : OFF} />;
       })}
     </Svg>
   );
@@ -120,13 +130,13 @@ function LegendGauge({ size, label }: { size: number; label: string }) {
     <View style={box} accessible accessibilityRole="image" accessibilityLabel={label}>
       <Animated.View style={[StyleSheet.absoluteFill, star]}>
         <Svg width={size} height={size} viewBox="0 0 24 24">
-          <Polygon points={STAR} fill={Colors.signal} />
+          <Path d={STAR} fill={Colors.signal} />
         </Svg>
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, group]}>
         <Svg width={size} height={size} viewBox="0 0 24 24">
-          {TRIS.map((pts, i) => (
-            <RebuildTri key={i} pts={pts} step={ORDER.indexOf(i)} t={t} />
+          {SEGS.map((d, i) => (
+            <RebuildTri key={i} d={d} step={i} t={t} />
           ))}
         </Svg>
       </Animated.View>
@@ -134,15 +144,15 @@ function LegendGauge({ size, label }: { size: number; label: string }) {
   );
 }
 
-/** Ein oranges Dreieck: ausgeblendet, solange der Stern dran ist, danach im Uhrzeigersinn versetzt (80 ms) wieder da. */
-function RebuildTri({ pts, step, t }: { pts: string; step: number; t: SharedValue<number> }) {
+/** Ein oranges Segment: ausgeblendet, solange der Stern dran ist, danach ab 6 Uhr im Uhrzeigersinn versetzt (80 ms) wieder da. */
+function RebuildTri({ d, step, t }: { d: string; step: number; t: SharedValue<number> }) {
   const shift = (step * 80) / CYCLE_MS;
   const props = useAnimatedProps(() => {
     const p = t.get();
     if (p < 0.36) return { fillOpacity: 1 };
     return { fillOpacity: EASE_OUT(interpolate(p, [0.66 + shift, 0.74 + shift], [0, 1], 'clamp')) };
   });
-  return <AnimatedPolygon points={pts} fill={Colors.signal} animatedProps={props} />;
+  return <AnimatedPath d={d} fill={Colors.signal} animatedProps={props} />;
 }
 
 export const toFunLevel = (v: number | null | undefined): FunLevel => Math.max(1, Math.min(5, Math.round(v ?? 3))) as FunLevel;
