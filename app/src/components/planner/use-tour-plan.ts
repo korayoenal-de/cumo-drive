@@ -271,6 +271,23 @@ export function useTourPlan(onPlanned?: () => void) {
       const mid = next.slice(1, -1);
       apply(next[0], mid, next[next.length - 1], fitLegs([null], mid.length), profile, avoid);
     },
+    /**
+     * Punkt an Stelle idx (0 = Start, dann Zwischenziele, zuletzt Ziel) entfernen. Fällt der Start
+     * weg, wird Zwischenziel 1 zum Start; fällt das Ziel weg, das letzte Zwischenziel zum Ziel.
+     */
+    removeAt: (idx: number, profile: Profile, avoid: Avoid) => {
+      const lp = fitLegs(legProfiles, vias.length);
+      if (idx === 0) {
+        if (!vias.length) return apply(null, vias, ziel, legProfiles, profile, avoid);
+        return apply(vias[0], vias.slice(1), ziel, lp.slice(1), profile, avoid);
+      }
+      if (idx === vias.length + 1) {
+        if (!vias.length) return apply(start, vias, null, legProfiles, profile, avoid);
+        return apply(start, vias.slice(0, -1), vias[vias.length - 1], lp.slice(0, -1), profile, avoid);
+      }
+      const i = idx - 1;
+      apply(start, vias.filter((_, k) => k !== i), ziel, lp.filter((_, k) => k !== i + 1), profile, avoid);
+    },
     swap: (profile: Profile, avoid: Avoid) => apply(ziel, [...vias].reverse(), start, [...fitLegs(legProfiles, vias.length)].reverse(), profile, avoid),
   };
 }

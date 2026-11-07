@@ -478,6 +478,92 @@ export function DragHandle({ label, onStart, onMove, onEnd }: { label: string; o
   );
 }
 
+/**
+ * Ganze Punktzeile als Fläche (Koray 7.11.): kurz tippen öffnet den Punkt zum Ändern, kurz halten
+ * (0,28 s) und ziehen verschiebt ihn. Wischt der Finger vorher, scrollt das Blatt wie gewohnt.
+ */
+export function DragArea({
+  label,
+  hint,
+  onTap,
+  onStart,
+  onMove,
+  onEnd,
+  style,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  onTap: () => void;
+  onStart: () => void;
+  onMove: (dy: number) => void;
+  onEnd: () => void;
+  style?: object;
+  children: ReactNode;
+}) {
+  const cb = useRef({ onTap, onStart, onMove, onEnd });
+  useEffect(() => {
+    cb.current = { onTap, onStart, onMove, onEnd };
+  });
+  const [holding, setHolding] = useState(false);
+  const st = useRef({ active: false, cancelled: false, base: 0, dy: 0, timer: null as ReturnType<typeof setTimeout> | null });
+  useEffect(() => () => {
+    if (st.current.timer) clearTimeout(st.current.timer);
+  }, []);
+  /* eslint-disable react-hooks/refs */
+  const pan = useMemo(() => {
+    const s = st.current;
+    const finish = (tapAllowed: boolean) => {
+      const wasTap = tapAllowed && !s.active && !s.cancelled && s.timer != null;
+      if (s.timer) clearTimeout(s.timer);
+      s.timer = null;
+      setHolding(false);
+      if (s.active) cb.current.onEnd();
+      s.active = false;
+      if (wasTap) cb.current.onTap();
+    };
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => !s.active,
+      onShouldBlockNativeResponder: () => true,
+      onPanResponderGrant: () => {
+        s.active = false;
+        s.cancelled = false;
+        s.dy = 0;
+        s.timer = setTimeout(() => {
+          s.timer = null;
+          if (s.cancelled) return;
+          s.active = true;
+          s.base = s.dy;
+          setHolding(true);
+          cb.current.onStart();
+        }, HOLD_MS);
+      },
+      onPanResponderMove: (_, g) => {
+        s.dy = g.dy;
+        if (s.active) cb.current.onMove(g.dy - s.base);
+        else if (!s.cancelled && (Math.abs(g.dy) > HOLD_SLOP || Math.abs(g.dx) > HOLD_SLOP)) s.cancelled = true;
+      },
+      onPanResponderRelease: () => finish(true),
+      onPanResponderTerminate: () => finish(false),
+    });
+  }, []);
+  /* eslint-enable react-hooks/refs */
+  return (
+    <View
+      {...pan.panHandlers}
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={hint ?? 'Tippen zum Ändern, halten und ziehen zum Verschieben'}
+      onAccessibilityTap={() => cb.current.onTap()}
+      style={[style, holding && { opacity: 0.96 }]}>
+      {children}
+    </View>
+  );
+}
+
 /** Gruppe: Mitfahrer lädt man mit Namen zu einer gespeicherten Tour ein (Meine Touren, Als Gruppe fahren). */
 export function GroupBlock({ savedId }: { savedId: string | null }) {
   return (

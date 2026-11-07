@@ -398,6 +398,8 @@ export default function Planner() {
     : undefined;
   /** Letzte Änderung kam von der Karte (langer Druck, Pass Aktion): Ausschnitt nicht anpassen */
   const [mapEdit, setMapEdit] = useState(false);
+  /** Punkt Aktion Auf der Karte zeigen */
+  const [flyTo, setFlyTo] = useState<{ p: LatLon; n: number } | null>(null);
   const focus = inTour
     ? (pending?.p ?? (tourPts.length ? tourPts[tourPts.length - 1] : here?.p ?? null))
     : (picked?.p ?? here?.p ?? null);
@@ -549,6 +551,11 @@ export default function Planner() {
           setPending={setPending}
           onDragChange={setDragging}
           onListEdit={() => setMapEdit(false)}
+          onShowPoint={(p) => {
+            setMapEdit(true);
+            setDetent(0);
+            setFlyTo((f) => ({ p, n: (f?.n ?? 0) + 1 }));
+          }}
         />
       ) : mode === 'beschreiben' ? (
         <>
@@ -820,6 +827,7 @@ export default function Planner() {
           onPressPass={inTour ? onMapPassPress : undefined}
           onPressMap={passOverlay ? () => setPending(null) : undefined}
           pickedPassIds={inTour ? pickedPassIds : undefined}
+          flyTo={inTour ? flyTo : null}
           // MapKit rechnet die Safe Area selbst dazu; ohne Abzug schwebt der Hinweis Apple Karten über dem Blatt
           mapPadding={{ top: 0, right: 0, bottom: Math.max(0, covered - insets.bottom), left: 0 }}
           edgePadding={{ top: insets.top + Spacing.xxxl, right: Spacing.xxxl, bottom: Spacing.xl + insets.bottom, left: Spacing.xxxl }}

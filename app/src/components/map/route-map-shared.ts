@@ -48,6 +48,8 @@ export type RouteMapProps = {
   onPressMap?: () => void;
   /** Pässe, die schon als Punkt in der Planung stehen: sie erscheinen markiert */
   pickedPassIds?: ReadonlySet<string>;
+  /** Zu diesem Punkt fliegen; n wechselt bei jedem Aufruf */
+  flyTo?: { p: LatLon; n: number } | null;
 };
 
 export type MapPin = { id: string; p: LatLon; label: string; title: string };

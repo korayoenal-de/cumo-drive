@@ -56,6 +56,7 @@ export function RouteMap({
   onPressPass,
   onPressMap,
   pickedPassIds,
+  flyTo,
 }: RouteMapProps) {
   const settings = useMapSettings();
   // Eigenes Auto statt Pfeil, wenn in der Garage eingeschaltet
@@ -156,6 +157,15 @@ export function RouteMap({
       { duration: 600 },
     );
   }, [ready, autoFit, followUser, fitCoords.length, focusLat, focusLon]);
+
+  // Auf der Karte zeigen (Punkt Aktionen im Planer): zum Punkt fliegen, n wechselt je Aufruf
+  const flyN = flyTo?.n;
+  useEffect(() => {
+    if (!ready || !flyTo) return;
+    map.current?.animateCamera({ center: { latitude: flyTo.p[0], longitude: flyTo.p[1] }, zoom: 13, altitude: 9000, pitch: 0 }, { duration: 700 });
+    // nur bei einem neuen Aufruf
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, flyN]);
 
   // Ohne Tour: auf die Gruppe einpassen (sobald Positionen da sind, einmal pro neuer Teilnehmerzahl)
   const groupPts = (others ?? []).map((o) => o.p);

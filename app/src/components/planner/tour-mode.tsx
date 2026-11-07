@@ -3,7 +3,8 @@
  * Pass Vorschlägen, Vermeiden, Ergebnis der Route. Der Zustand kommt aus use-tour-plan.ts.
  */
 import { router } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { SymbolView } from 'expo-symbols';
+import { useMemo, useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, TextInput, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
@@ -29,9 +30,10 @@ import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, t
 import { type Avoid } from '@/lib/valhalla';
 
 import { PlaceSearch, type Cat, type Slot } from './place-search';
+import { PointMenu, type PointAction, type PointMenuState } from './point-menu';
 import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
-import { DragHandle, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, TrustLine, Warnings } from './planner-parts';
+import { DragArea, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, TrustLine, Warnings } from './planner-parts';
 import { keyOf, type PendingPoint, type PointKind, profileWord, samePts, STEP_TEXT } from './planner-shared';
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
@@ -40,7 +42,7 @@ import { type TourPlan } from './use-tour-plan';
 export type EditTarget = { kind: PointKind; index?: number; insert?: boolean };
 
 export function TourMode({
-  plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onDragChange, onListEdit,
+  plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onDragChange, onListEdit, onShowPoint,
 }: {
   plan: TourPlan;
   here: Spot | null;
@@ -57,6 +59,8 @@ export function TourMode({
   onDragChange: (on: boolean) => void;
   /** Punkt über die Liste geändert: die Karte darf den Ausschnitt wieder an die Route anpassen */
   onListEdit: () => void;
+  /** Auf der Karte zeigen: Blatt klein, Karte fliegt zum Punkt */
+  onShowPoint?: (p: LatLon) => void;
 }) {
   const session = useSession();
   const live = usePassLive();
@@ -68,8 +72,8 @@ export function TourMode({
 
   const [locating, setLocating] = useState(false);
   const [locMsg, setLocMsg] = useState<string | null>(null);
-  /** Punkt, dessen Aktionen (Ändern, Verschieben, Entfernen) gerade offen sind */
-  const [, setMenu] = useState<string | null>(null);
+  /** Schwebendes Menü eines Punkts (Variante A, 7.11.) */
+  const [menu, setMenu] = useState<PointMenuState | null>(null);
   /** Drag and Drop am Anfasser: welcher Punkt gezogen wird und wohin er fallen würde */
   const [drag, setDrag] = useState<{ from: number; to: number } | null>(null);
   const dragY = useSharedValue(0);
@@ -269,27 +273,69 @@ export function TourMode({
   };
 
 
-  /** Eine Zeile der Punktliste mit Aktionen und, falls offen, dem Suchfeld darunter. */
+  /** Alle gesetzten Punkte in Reihenfolge: Start, Zwischenziele, Ziel */
+  const allPts = [plan.start, ...plan.vias, plan.ziel].filter((x): x is LatLon => !!x);
+  const isLoop = !!plan.start && !!plan.ziel && keyOf(plan.start) === keyOf(plan.ziel);
+
+  function openMenu(kind: PointKind, index: number | undefined, p: LatLon, anchor: ViewRef | null) {
+    const idx = kind === 'start' ? 0 : kind === 'ziel' ? allPts.length - 1 : (index ?? 0) + 1;
+    const actions: PointAction[] =
+      kind === 'via' ? ['start', 'ziel', 'karte', 'entfernen'] : kind === 'start' ? [...(isLoop || !plan.ziel ? [] : (['ziel'] as PointAction[])), 'karte', 'entfernen'] : [...(isLoop || !plan.start ? [] : (['start'] as PointAction[])), 'karte', 'entfernen'];
+    setLegMenu(null);
+    anchor?.measureInWindow((_x: number, y: number, _w: number, h: number) => setMenu({ idx, top: y, bottom: y + h, actions, name: nameOf(p) }));
+  }
+
+  function onMenu(a: PointAction) {
+    const m = menu;
+    setMenu(null);
+    if (!m) return;
+    const p = allPts[m.idx];
+    if (!p) return;
+    if (a === 'karte') {
+      onShowPoint?.(p);
+      return;
+    }
+    onListEdit();
+    const snap = plan.snapshot();
+    const n = allPts.length;
+    const kindAt = m.idx === 0 ? 'start' : m.idx === n - 1 ? 'ziel' : 'via';
+    if (a === 'entfernen') {
+      plan.removeAt(m.idx, profile, avoid);
+      showToast(`${m.name} entfernt`, { action: { label: 'Rückgängig', onPress: () => plan.restore(snap) } });
+      return;
+    }
+    // Start und Ziel tauschen, Zwischenziel an den Anfang oder ans Ende (nichts geht verloren)
+    if ((a === 'ziel' && kindAt === 'start') || (a === 'start' && kindAt === 'ziel')) {
+      plan.swap(profile, avoid);
+      return;
+    }
+    const rest = allPts.map((_, k) => k).filter((k) => k !== m.idx);
+    plan.reorder(a === 'start' ? [m.idx, ...rest] : [...rest, m.idx], profile, avoid);
+  }
+
+  /** Eine Zeile der Punktliste: die ganze Fläche tippen (ändern) oder halten und ziehen (verschieben), ⋯ für Aktionen. */
   function pointRow(id: string, kind: PointKind, p: LatLon | null, index: number | undefined, slot: number) {
     const viaNo = (index ?? 0) + 1;
     const role = kind === 'start' ? 'Start' : kind === 'ziel' ? 'Ziel' : `Zwischenziel ${viaNo}`;
+    const canDrag = !!p && plan.complete;
+    const body = (
+      <>
+        <PointSymbol kind={kind} label={String(viaNo)} />
+        <View style={styles.pointMain}>
+          <AppText variant="title" numberOfLines={1} style={!p && styles.slotPlaceholder}>
+            {p ? nameOf(p) : kind === 'start' ? 'Start wählen' : 'Ziel wählen'}
+          </AppText>
+        </View>
+      </>
+    );
     return (
       <View key={id} style={styles.gapS}>
-        {(
         <Animated.View style={[styles.pointRow, drag?.from === slot && dragStyle]}>
-          <PointSymbol kind={kind} label={String(viaNo)} />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${role} ${p ? `ändern, jetzt ${nameOf(p)}` : 'wählen'}`}
-            onPress={() => openEdit({ kind, index })}
-            style={styles.pointMain}>
-            <AppText variant="title" numberOfLines={1} style={!p && styles.slotPlaceholder}>
-              {p ? nameOf(p) : kind === 'start' ? 'Start wählen' : 'Ziel wählen'}
-            </AppText>
-          </Pressable>
-          {p && plan.complete && (
-            <DragHandle
-              label={`${role} verschieben`}
+          {canDrag ? (
+            <DragArea
+              label={`${role} ${nameOf(p)}`}
+              style={styles.pointArea}
+              onTap={() => openEdit({ kind, index })}
               onStart={() => {
                 setMenu(null);
                 setLegMenu(null);
@@ -316,11 +362,20 @@ export function TourMode({
                 });
                 dragY.set(0);
                 onDragChange(false);
-              }}
-            />
+              }}>
+              {body}
+            </DragArea>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${role} ${p ? `ändern, jetzt ${nameOf(p)}` : 'wählen'}`}
+              onPress={() => openEdit({ kind, index })}
+              style={styles.pointArea}>
+              {body}
+            </Pressable>
           )}
+          {p && <MoreButton label={`Aktionen für ${role} ${nameOf(p)}`} onPress={(v) => openMenu(kind, index, p, v)} />}
         </Animated.View>
-        )}
       </View>
     );
   }
@@ -416,6 +471,7 @@ export function TourMode({
   return (
     <>
       {search}
+      <PointMenu menu={menu} onPick={onMenu} onClose={() => setMenu(null)} />
       {pending && !pending.pass && (
         <View style={[styles.card, styles.pendingCard]}>
           <View style={styles.flex}>
@@ -626,5 +682,23 @@ export function TourMode({
       </View>
       )}
     </>
+  );
+}
+
+/** ⋯ rechts in der Punktzeile: misst sich selbst, damit das Menü daneben schweben kann */
+type ViewRef = ComponentRef<typeof View>;
+
+function MoreButton({ label, onPress }: { label: string; onPress: (v: ViewRef | null) => void }) {
+  const ref = useRef<ViewRef>(null);
+  return (
+    <Pressable
+      ref={ref}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={4}
+      onPress={() => onPress(ref.current)}
+      style={({ pressed }) => [styles.more, pressed && { backgroundColor: Colors.line }]}>
+      <SymbolView name="ellipsis" size={18} tintColor={Colors.muted} weight="bold" />
+    </Pressable>
   );
 }
