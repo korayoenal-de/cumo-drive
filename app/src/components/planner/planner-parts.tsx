@@ -6,6 +6,9 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, PanResponder, Pressable, Switch, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+
+import { SOFT_LAYOUT } from '@/components/ui/action-bar';
 import Svg, { Path } from 'react-native-svg';
 
 import { PHASES, type PlanError, type PlanPhase } from '@/components/planner/create-tour';
@@ -14,7 +17,7 @@ import { Chip } from '@/components/ui/chip';
 import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
-import { Colors } from '@/constants/theme';
+import { Colors, Motion } from '@/constants/theme';
 import { formatKm, type Warning } from '@/lib/tour';
 import { selectVehicle, useVehicles } from '@/lib/vehicle';
 
@@ -127,6 +130,50 @@ export function Section({ label, action, children }: { label: string; action?: {
   );
 }
 
+/**
+ * Aufklappbarer Abschnitt (Koray 7.11.: Vermeiden und Unterwegs einplanen sparen so Platz).
+ * Zu zeigt die Kopfzeile, was eingestellt ist; der Pfeil dreht sich beim Aufklappen.
+ */
+export function Accordion({ label, summary, defaultOpen = false, children }: { label: string; summary?: string; defaultOpen?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const turn = useSharedValue(defaultOpen ? 1 : 0);
+  const chevron = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get() * 180}deg` }] }));
+  const toggle = () => {
+    turn.set(withSpring(open ? 0 : 1, Motion.snap));
+    setOpen(!open);
+  };
+  return (
+    <Animated.View layout={SOFT_LAYOUT} style={styles.gapM}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={summary ? `${label}, ${summary}` : label}
+        onPress={toggle}
+        style={styles.accHead}>
+        <AppText variant="label">{label}</AppText>
+        {!!summary && !open && (
+          <AppText variant="caption" muted numberOfLines={1} style={styles.accSummary}>
+            {summary}
+          </AppText>
+        )}
+        <Animated.View style={[styles.accChevron, chevron]}>
+          <SymbolView name="chevron.down" size={15} weight="semibold" tintColor={Colors.muted} />
+        </Animated.View>
+      </Pressable>
+      {open && (
+        <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
+          {children}
+        </Animated.View>
+      )}
+    </Animated.View>
+  );
+}
+
+/** Kurzfassung der Vermeiden Schalter für die zugeklappte Kopfzeile */
+export function avoidSummary(a: { closures: boolean; ferries: boolean; tolls: boolean; rough: boolean }): string {
+  const on = [a.closures && 'Sperrungen', a.ferries && 'Fähren', a.tolls && 'Maut', a.rough && 'rauer Belag'].filter(Boolean) as string[];
+  return on.length ? on.join(', ') : 'nichts';
+}
 
 /** Tabs als große Schrift im Stil von Trade Republic: aktiv in text, inaktiv in faint, ohne Fläche. */
 export function TypoTabs<T extends string>({
@@ -299,7 +346,10 @@ const STOP_CHIPS: { id: Exclude<Cat, 'alle'>; label: string }[] = [
  */
 export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned?: PlannedStop[]; busy?: boolean; onOpen: (cat: Exclude<Cat, 'alle'>) => void; onRemove?: (key: string) => void }) {
   return (
-    <Section label="Unterwegs einplanen">
+    <Accordion
+      label="Unterwegs einplanen"
+      summary={planned.length ? (planned.length === 1 ? '1 Stopp' : `${planned.length} Stopps`) : 'Tanken, Essen, Aussicht'}
+      defaultOpen={planned.length > 0}>
       {planned.length > 0 && (
         <View style={styles.card}>
           {planned.map((st) => (
@@ -334,7 +384,7 @@ export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned
         ))}
       </View>
       {busy ? <ActivityIndicator color={Colors.muted} /> : planned.length === 0 && <AppText variant="caption" muted>Sortiert nach Umweg, ein Tipp plant den Stopp an der richtigen Stelle ein.</AppText>}
-    </Section>
+    </Accordion>
   );
 }
 

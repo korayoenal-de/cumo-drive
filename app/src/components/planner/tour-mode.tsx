@@ -36,7 +36,7 @@ import { PlaceSearch, type Cat, type Slot } from './place-search';
 import { PointMenu, type PointAction, type PointMenuState } from './point-menu';
 import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
-import { DragArea, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, Warnings } from './planner-parts';
+import { Accordion, avoidSummary, DragArea, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, Warnings } from './planner-parts';
 import { keyOf, type PendingPoint, type PointKind, profileWord, samePts, STEP_TEXT } from './planner-shared';
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
@@ -596,7 +596,7 @@ export function TourMode({
         </>
       )}
 
-      <Section label="Vermeiden">
+      <Accordion label="Vermeiden" summary={avoidSummary(avoid)}>
         <View style={styles.card}>
           {(
             [
@@ -620,7 +620,7 @@ export function TourMode({
             />
           ))}
         </View>
-      </Section>
+      </Accordion>
 
       {pts.length >= 2 && !routeTour && !busy && <PrimaryButton label="Route planen" onPress={() => plan.planNow(profile, avoid)} />}
 

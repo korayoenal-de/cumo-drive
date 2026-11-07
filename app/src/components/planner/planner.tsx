@@ -41,7 +41,7 @@ import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
 import { type PlannedStop } from './planner-parts';
 import { showToast } from '@/lib/toast';
-import { ErrorCard, MicIcon, PrimaryButton, Progress, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
+import { Accordion, avoidSummary, ErrorCard, MicIcon, PrimaryButton, Progress, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
 import { Result } from './planner-result';
 import { EMPTY_TOUR, keyOf, type Mode, passIndex, type PendingPoint, roughDetourKm, samePts, STEP_TEXT } from './planner-shared';
 import { PlaceSearch } from './place-search';
@@ -807,7 +807,7 @@ export default function Planner() {
             </View>
           </Section>
 
-          <Section label="Vermeiden">
+          <Accordion label="Vermeiden" summary={avoidSummary(avoid)}>
             <View style={styles.card}>
               <Toggle
                 label="Gesperrte Straßen"
@@ -824,7 +824,7 @@ export default function Planner() {
                 onChange={(v) => setAvoid((a) => ({ ...a, rough: v }))}
               />
             </View>
-          </Section>
+          </Accordion>
 
           <PrimaryButton label="Tour erstellen" onPress={createRoundTrip} />
         </>
