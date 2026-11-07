@@ -118,6 +118,10 @@ export const styles = StyleSheet.create({
   linkBtn: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
   linkText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.signal },
   statBig: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 34, textTransform: 'uppercase', fontVariant: ['tabular-nums'] },
+  funLabelRow: { flexDirection: 'row', alignItems: 'baseline', gap: Spacing.s },
+  funValueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  funDelta: { fontFamily: Fonts.bold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
+  pressedDim: { opacity: 0.6 },
   statLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   checkCard: { flexDirection: 'row', alignItems: 'flex-start' },
 

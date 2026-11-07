@@ -31,8 +31,11 @@ import { styles } from './planner-styles';
 
 
 export function Result({
-  tour, req, group, onReroll, onBack, onAdjust, onAddStop, onRemoveStop, planned, adding, rolls = [], rollIdx = -1, onPickRoll,
+  tour, req, group, onReroll, onBack, onAdjust, onAddStop, onRemoveStop, planned, adding, rolls = [], rollIdx = -1, onPickRoll, fun, funDelta, onFun,
 }: {
+  fun?: TourFun | null;
+  funDelta?: number | null;
+  onFun?: () => void;
   tour: PlannedTour; req: TourRequest; stops: Stop[]; group: boolean; onReroll: () => void; onBack: () => void;
   /** Fahrspaß der bisher gewürfelten Runden (leer bei nur einer) und welche gerade gezeigt wird */
   rolls?: (TourFun | null)[];
@@ -78,7 +81,7 @@ export function Result({
     <View style={styles.sections}>
       {/* Überschrift steht im Kopf des Blatts, hier zuerst die Kennzahlen und Details */}
       <View style={styles.gapL}>
-        <Stats km={total} minutes={tour.minutes} curves={curves} />
+        <Stats km={total} minutes={tour.minutes} curves={curves} fun={fun} delta={funDelta} onFun={onFun} />
         {warnings.length === 0 && tour.geprueft !== false && <TrustLine />}
         {req.note && <AppText variant="caption" style={styles.winterText}>{req.note}</AppText>}
       </View>

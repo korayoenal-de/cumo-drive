@@ -25,7 +25,7 @@ import { PASSES, passPoint, passSummary, type Pass } from '@/lib/passes';
 import { buildTour, findPlace, locate, newSeed, PHASES, toPlanError, type PlanError, type PlanPhase, type Spot, type TourRequest } from '@/components/planner/create-tour';
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
-import { FunDelta, FunPill, FunSheet } from '@/components/ui/fun-pill';
+import { FunSheet } from '@/components/ui/fun-pill';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
@@ -481,13 +481,9 @@ export default function Planner() {
           onChange={(v) => switchMode(v === 'route' ? 'tour' : lastRunde.current)}
         />
       ) : view.kind === 'result' ? (
-        <View style={styles.headRow}>
-          <AppText variant="display" style={[styles.headline, styles.flex]} numberOfLines={2} accessibilityRole="header">
-            {view.tour.name}
-          </AppText>
-          {funDelta !== null && <FunDelta delta={funDelta} />}
-          {resultFun && <FunPill fun={resultFun} onPress={() => setFunOpen(true)} />}
-        </View>
+        <AppText variant="display" style={styles.headline} numberOfLines={2} accessibilityRole="header">
+          {view.tour.name}
+        </AppText>
       ) : (
         <AppText variant="label">{view.kind === 'working' ? 'Tour wird erstellt' : 'Das hat nicht geklappt'}</AppText>
       )}
@@ -547,6 +543,9 @@ export default function Planner() {
           stops={view.stops}
           group={false}
           onReroll={() => reroll(view.req)}
+          fun={resultFun}
+          funDelta={funDelta}
+          onFun={() => setFunOpen(true)}
           rolls={rolls.length > 1 ? rolls.map((r) => r.fun) : []}
           rollIdx={rollIdx}
           onPickRoll={(i) => {

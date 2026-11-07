@@ -12,7 +12,7 @@ import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
 import { PASS_STATUS_URL, PASSES, passPoint } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
-import { FunPill, FunSheet } from '@/components/ui/fun-pill';
+import { FunSheet } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
 import { locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 import { ElevationChart } from '@/components/planner/elevation-chart';
@@ -554,13 +554,7 @@ export function TourMode({
 
       {routeTour && (
         <>
-          {fun && (
-            <View style={styles.funRow}>
-              <AppText variant="caption" muted style={styles.flex}>Fahrspaß</AppText>
-              <FunPill fun={fun} onPress={() => setFunOpen(true)} />
-            </View>
-          )}
-          <Stats km={total} minutes={routeTour.minutes} curves={curves} />
+          <Stats km={total} minutes={routeTour.minutes} curves={curves} fun={fun} onFun={() => setFunOpen(true)} />
           <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} />
           {warnings.length === 0 && routeTour.geprueft !== false && <TrustLine />}
 

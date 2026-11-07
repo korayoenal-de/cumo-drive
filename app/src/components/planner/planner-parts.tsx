@@ -11,7 +11,9 @@ import Svg, { Path } from 'react-native-svg';
 import { PHASES, type PlanError, type PlanPhase } from '@/components/planner/create-tour';
 import { CAT_ICON, type Cat } from '@/components/planner/place-search';
 import { Chip } from '@/components/ui/chip';
+import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
+import { TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
 import { Colors } from '@/constants/theme';
 import { formatKm, type Warning } from '@/lib/tour';
 import { selectVehicle, useVehicles } from '@/lib/vehicle';
@@ -336,12 +338,14 @@ export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned
   );
 }
 
-/** Kennzahlen der Tour. Alle großen Werte haben dieselbe Größe, nichts wird automatisch verkleinert. */
-export function Stats({ km, minutes, curves }: { km: number; minutes: number; curves: number }) {
+/**
+ * Kennzahlen der Tour. Alle großen Werte haben dieselbe Größe, nichts wird automatisch verkleinert.
+ * Statt der Kurvenzahl steht dort der Fahrspaß mit Logo (Koray 7.11.); ein Tipp darauf erklärt den Wert.
+ */
+export function Stats({ km, minutes, curves, fun, onFun, delta }: { km: number; minutes: number; curves: number; fun?: TourFun | null; onFun?: () => void; delta?: number | null }) {
   const items = [
     { id: 'km', value: `${formatKm(km, 0)} km`, label: 'Strecke' },
     { id: 'zeit', value: bigDuration(minutes), label: 'Fahrzeit' },
-    { id: 'kurven', value: String(curves), label: 'Kurven' },
   ];
   return (
     <View style={styles.stats}>
@@ -351,6 +355,30 @@ export function Stats({ km, minutes, curves }: { km: number; minutes: number; cu
           <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{x.value}</AppText>
         </View>
       ))}
+      {fun ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Fahrspaß ${fun.score} von 100, ${TOUR_FUN_NAMES[fun.level]}${delta != null ? `, ${delta >= 0 ? 'besser' : 'schlechter'} als die vorige Runde um ${Math.abs(delta)}` : ''}`}
+          accessibilityHint="Zeigt, wie der Wert entsteht"
+          onPress={onFun}
+          style={({ pressed }) => [styles.flex, pressed && styles.pressedDim]}>
+          <View style={styles.funLabelRow}>
+            <AppText style={styles.statLabel}>Fahrspaß</AppText>
+            {delta != null && (
+              <AppText style={[styles.funDelta, { color: delta >= 0 ? Colors.good : Colors.muted }]}>{delta >= 0 ? `+${delta}` : `−${Math.abs(delta)}`}</AppText>
+            )}
+          </View>
+          <View style={styles.funValueRow}>
+            <FunGauge level={fun.level} size={22} />
+            <AppText style={styles.statBig} numberOfLines={1}>{fun.score}</AppText>
+          </View>
+        </Pressable>
+      ) : (
+        <View style={styles.flex}>
+          <AppText style={styles.statLabel}>Kurven</AppText>
+          <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{String(curves)}</AppText>
+        </View>
+      )}
     </View>
   );
 }
