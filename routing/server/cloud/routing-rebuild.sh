@@ -186,6 +186,9 @@ cat > /opt/cumo-routing/setup-server.sh <<'CUMO_EOF'
 # Läuft beim ersten Start über cloud init und danach wöchentlich (cumo-routing-update.timer).
 # Lädt die Kartendaten, fügt sie zusammen, baut den Graphen und startet GraphHopper neu.
 set -euo pipefail
+# nie zwei Imports gleichzeitig (6.11.: beide brachen ab, danach fehlte der Graph)
+exec 9>/run/cumo-setup.lock
+flock -n 9 || { echo "$(date -Is) Neuaufbau läuft schon, Abbruch" >> /opt/cumo-routing/setup.log; exit 0; }
 BASE=/opt/cumo-routing
 GH_VERSION=11.0
 HEAP=24g
@@ -225,7 +228,7 @@ chown -R cumo:cumo "$BASE"
 # Der Server pausiert dann während des Imports (sonntags nachts), die App nutzt solange Valhalla.
 MEM_GB=$(free -g | awk '/^Mem:/{print $2}')
 if [ "$MEM_GB" -lt 64 ]; then systemctl stop cumo-routing || true; fi
-sudo -u cumo java -Xmx$HEAP -jar "bin/graphhopper-web-$GH_VERSION.jar" import config.import.yml >> "$BASE/import.log" 2>&1
+sudo -u cumo java -Xmx$HEAP -XX:+ExitOnOutOfMemoryError -jar "bin/graphhopper-web-$GH_VERSION.jar" import config.import.yml >> "$BASE/import.log" 2>&1
 rm -rf data/graph-cache data/region.osm.pbf
 mv data/graph-cache.new data/graph-cache
 mv data/region.new.osm.pbf data/region.osm.pbf
@@ -249,7 +252,7 @@ After=network-online.target
 [Service]
 User=cumo
 WorkingDirectory=/opt/cumo-routing
-ExecStart=/usr/bin/java -Xmx22g -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
+ExecStart=/usr/bin/java -Xmx22g -XX:+ExitOnOutOfMemoryError -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
 Restart=always
 RestartSec=10
 
