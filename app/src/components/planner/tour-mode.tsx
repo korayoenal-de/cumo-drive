@@ -15,7 +15,6 @@ import { countCurves } from '@/lib/stats';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
 import { locate, toPlanError, type Spot } from '@/components/planner/create-tour';
-import { ElevationChart } from '@/components/planner/elevation-chart';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
 import { deleteTour } from '@/lib/library';
@@ -553,7 +552,7 @@ export function TourMode({
       {routeTour && (
         <>
           <Stats km={total} minutes={routeTour.minutes} curves={curves} fun={fun} onFun={() => setFunOpen(true)} />
-          <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} check={routeCheck(warnings.length, routeTour.geprueft !== false)} twiceKm={twiceKm} />
+          <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} check={routeCheck(warnings.length, routeTour.geprueft !== false)} twiceKm={twiceKm} line={line} />
 
 
           {hint && (
@@ -569,7 +568,6 @@ export function TourMode({
 
           {warnings.length > 0 && <Warnings warnings={warnings} checked={routeTour.geprueft !== false} />}
 
-          <ElevationChart line={line} />
 
           <StopsPlanner busy={busy} onOpen={setStopCat} />
           <PlaceSearch

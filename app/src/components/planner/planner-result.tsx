@@ -14,7 +14,6 @@ import { countCurves } from '@/lib/stats';
 import { FunPill } from '@/components/ui/fun-pill';
 import { type TourFun } from '@/lib/fun-score';
 import { type TourRequest } from '@/components/planner/create-tour';
-import { ElevationChart } from '@/components/planner/elevation-chart';
 import { ActionBar } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { setActiveTour } from '@/lib/active-tour';
@@ -97,8 +96,6 @@ export function Result({
       <HighlightList line={line} />
 
       {warnings.length > 0 && <Warnings warnings={warnings} checked={tour.geprueft !== false} />}
-
-      <ElevationChart line={line} />
 
       <StopsPlanner planned={planned} busy={adding} onOpen={setStopCat} onRemove={onRemoveStop} />
       <PlaceSearch

@@ -4,11 +4,13 @@
  */
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ElevationChart } from '@/components/planner/elevation-chart';
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { TOUR_FUN_NAMES, type TourFun, type TourFunLevel } from '@/lib/fun-score';
+import type { LatLon } from '@/lib/tour';
 
 export function FunPill({ fun, onPress, active, best, hint = 'Zeigt, wie der Wert entsteht' }: { fun: TourFun; onPress: () => void; active?: boolean; best?: boolean; hint?: string }) {
   return (
@@ -50,9 +52,10 @@ export function routeCheck(warnings: number, checked: boolean): RouteCheck {
 }
 
 /** twiceKm: km, die auf derselben Straße zurück gefahren werden (Route); ab 1 km ein Hinweis */
-export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0 }: { fun: TourFun | null; name: string; visible: boolean; onClose: () => void; check?: RouteCheck | null; twiceKm?: number }) {
+/** line: Linie der Tour für das Höhenprofil (Koray 7.11.: gehört in die Bewertung) */
+export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0, line }: { fun: TourFun | null; name: string; visible: boolean; onClose: () => void; check?: RouteCheck | null; twiceKm?: number; line?: LatLon[] }) {
   return (
-    <OptionsSheet visible={visible && !!fun} onClose={onClose}>
+    <OptionsSheet visible={visible && !!fun} onClose={onClose} scroll>
       {fun && (
         <View style={styles.sheet}>
           <View style={styles.head}>
@@ -65,6 +68,7 @@ export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0 }: { 
               <AppText style={styles.muted} numberOfLines={1}>{name}</AppText>
             </View>
           </View>
+          {line && line.length > 1 && <ElevationChart line={line} onSurface />}
           <View style={styles.facets}>
             {fun.facets.map((f) => (
               <View key={f.id} style={styles.facet} accessible accessibilityLabel={`${f.label}, ${f.value}, Anteil ${Math.round(f.weight * 100)} Prozent`}>

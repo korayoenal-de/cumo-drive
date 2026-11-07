@@ -465,6 +465,7 @@ export default function Planner() {
     () => (resultTour ? (rolls.find((r) => r.tour === resultTour)?.fun ?? tourFun(flatten(resultTour).map((x) => x.p))) : null),
     [resultTour, rolls],
   );
+  const resultLine = useMemo(() => (resultTour ? flatten(resultTour).map((x) => x.p) : undefined), [resultTour]);
   const prevFun = rollIdx > 0 ? rolls[rollIdx - 1].fun : null;
   const funDelta = resultFun && prevFun ? resultFun.score - prevFun.score : null;
 
@@ -883,6 +884,7 @@ export default function Planner() {
       name={resultTour?.name ?? ''}
       visible={funOpen}
       onClose={() => setFunOpen(false)}
+      line={resultLine}
       check={resultTour ? routeCheck(resultTour.warnungen.filter((w) => w.klasse !== 'ok').length, resultTour.geprueft !== false) : null}
     />
     </>
