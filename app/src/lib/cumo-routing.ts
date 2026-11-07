@@ -361,7 +361,23 @@ function toTour(name: string, wegpunkte: LatLon[], p: GhPath): PlannedTour & { c
   return {
     name, wegpunkte, ...chk, laenge_km: +(p.distance / 1000).toFixed(1), minutes: p.time / 60000, geprueft: true, fixes: 0,
     curves: countCurves(shape),
+    kurvenKm: windingKm(p, shape),
   };
+}
+
+/**
+ * km auf wirklich kurvigen Kanten (curvature unter 0.9). Abbiegen an Kreuzungen zählt hier nicht,
+ * jede Kante für sich ist dort gerade (Testfahrt 7.11.: Zickzack durch die Stadt galt sonst als kurvig).
+ */
+function windingKm(p: GhPath, shape: LatLon[]): number | undefined {
+  const det = p.details.curvature;
+  if (!det) return undefined;
+  let km = 0;
+  for (const [a, b, v] of det) {
+    if (typeof v !== 'number' || v >= 0.9) continue;
+    for (let i = a + 1; i <= b && i < shape.length; i++) km += haversine(shape[i - 1], shape[i]) / 1000;
+  }
+  return +km.toFixed(2);
 }
 
 /**

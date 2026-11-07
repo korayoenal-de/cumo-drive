@@ -12,7 +12,7 @@ import { flatten, haversine, type CheckClass, type LatLon, type Profile, type To
 export type PlanStep = 'route' | 'check' | 'fix';
 
 /** direkt: Etappen, auf denen die kurvige Variante nichts brachte und der direkte Weg gewählt wurde */
-export type PlannedTour = Tour & { minutes: number; fixes: number; direkt?: number };
+export type PlannedTour = Tour & { minutes: number; fixes: number; direkt?: number; kurvenKm?: number };
 
 /** Hinweis für die Route, wenn kurvig nichts Besseres fand (Koray 7.11.: dann ist der direkte Weg okay) */
 export function directNote(n: number | undefined, legs: number): string | null {
@@ -27,6 +27,11 @@ export function directNote(n: number | undefined, legs: number): string | null {
  */
 function curvyWorthIt(curvy: PlannedTour, direct: PlannedTour): boolean {
   if (curvy.laenge_km <= direct.laenge_km * 1.05) return true;
+  // vom eigenen Server: km auf wirklich kurvigen Kanten; der Umweg muss sich in Kurven auszahlen
+  if (curvy.kurvenKm != null && direct.kurvenKm != null) {
+    const extra = curvy.laenge_km - direct.laenge_km;
+    return curvy.kurvenKm >= direct.kurvenKm + Math.max(1, 0.2 * extra);
+  }
   const a = tourFun(flatten(curvy).map((x) => x.p))?.score ?? 0;
   const b = tourFun(flatten(direct).map((x) => x.p))?.score ?? 0;
   return a >= b + 6;
