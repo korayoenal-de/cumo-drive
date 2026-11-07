@@ -5,12 +5,32 @@
  */
 import { checkLine } from './check';
 import { cumoAvailable, cumoPlan } from './cumo-routing';
+import { tourFun } from './fun-score';
 import { route, VALHALLA_URL, type Avoid } from './valhalla';
-import { haversine, type CheckClass, type LatLon, type Profile, type Tour } from './tour';
+import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour } from './tour';
 
 export type PlanStep = 'route' | 'check' | 'fix';
 
-export type PlannedTour = Tour & { minutes: number; fixes: number };
+/** direkt: Etappen, auf denen die kurvige Variante nichts brachte und der direkte Weg gewählt wurde */
+export type PlannedTour = Tour & { minutes: number; fixes: number; direkt?: number };
+
+/** Hinweis für die Route, wenn kurvig nichts Besseres fand (Koray 7.11.: dann ist der direkte Weg okay) */
+export function directNote(n: number | undefined, legs: number): string | null {
+  if (!n) return null;
+  if (n >= legs) return 'Hier gibt es keine kurvigere Strecke. Du fährst den direkten Weg.';
+  return n === 1 ? 'Auf einer Etappe gibt es keine kurvigere Strecke, dort fährst du den direkten Weg.' : `Auf ${n} Etappen gibt es keine kurvigere Strecke, dort fährst du den direkten Weg.`;
+}
+
+/**
+ * Lohnt die kurvige Variante? Sie muss beim Fahrspaß klar vorn liegen, sonst ist sie nur ein Umweg
+ * durch Orte (Testfahrt 7.11.: sehr kurvig ab Heppenheim führte im Zickzack durch die Stadt).
+ */
+function curvyWorthIt(curvy: PlannedTour, direct: PlannedTour): boolean {
+  if (curvy.laenge_km <= direct.laenge_km * 1.05) return true;
+  const a = tourFun(flatten(curvy).map((x) => x.p))?.score ?? 0;
+  const b = tourFun(flatten(direct).map((x) => x.p))?.score ?? 0;
+  return a >= b + 6;
+}
 
 /** Punkte entlang gesperrter Abschnitte, mit Abstand zu den Wegpunkten. */
 function excludePoints(tour: Pick<Tour, 'linie'>, keepAway: LatLon[]): LatLon[] {
@@ -114,7 +134,13 @@ export async function planChecked(
     // Dann den Punkt auf die nächste Straße setzen und nochmal, statt auf den langsamen Weg zu fallen.
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
-        return await cumoPlan(name, pts, profile, avoid, signal);
+        const curvy = profile === 'kurvig' || profile === 'paesse';
+        const [main, direct] = await Promise.all([
+          cumoPlan(name, pts, profile, avoid, signal),
+          curvy ? cumoPlan(name, pts, 'schnell', avoid, signal).catch(() => null) : Promise.resolve(null),
+        ]);
+        if (direct && !curvyWorthIt(main, direct)) return { ...direct, direkt: 1 };
+        return main;
       } catch (e) {
         if (signal?.aborted) throw e;
         const m = /Cannot find point (\d+)/.exec((e as Error).message);
@@ -177,6 +203,7 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
   let km = 0;
   let minutes = 0;
   let fixes = 0;
+  let direkt = 0;
   let geprueft = true;
   parts.forEach((t, i) => {
     t.linie.forEach((run, j) => {
@@ -191,6 +218,7 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
     km += t.laenge_km;
     minutes += t.minutes;
     fixes += t.fixes;
+    direkt += t.direkt ?? 0;
     geprueft = geprueft && !!t.geprueft;
   });
   return {
@@ -203,6 +231,7 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
     minutes,
     fixes,
     geprueft,
+    ...(direkt ? { direkt } : {}),
   };
 }
 
@@ -221,7 +250,9 @@ export async function planLegs(
 ): Promise<PlannedTour> {
   const first = profiles[0] ?? 'kurvig';
   if (points.length < 3 || profiles.every((p) => p === first)) {
-    return planChecked(name, points, first, avoid, onStep, signal);
+    const t = await planChecked(name, points, first, avoid, onStep, signal);
+    // in einem Stück geplant: gilt für alle Etappen
+    return t.direkt ? { ...t, direkt: points.length - 1 } : t;
   }
   const parts: PlannedTour[] = [];
   for (let i = 0; i < points.length - 1; i++) {

@@ -14,6 +14,7 @@ import { PASS_STATUS_URL, PASSES, passPoint } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
+import { directNote } from '@/lib/plan';
 import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
@@ -556,6 +557,9 @@ export function TourMode({
       {routeTour && (
         <>
           <Stats km={total} minutes={routeTour.minutes} curves={curves} fun={fun} onFun={() => setFunOpen(true)} />
+          {!!directNote(routeTour.direkt, Math.max(1, pts.length - 1)) && (
+            <AppText variant="caption" muted>{directNote(routeTour.direkt, Math.max(1, pts.length - 1))}</AppText>
+          )}
           <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} check={routeCheck(warnings.length, routeTour.geprueft !== false)} twiceKm={twiceKm} line={line} />
 
 
