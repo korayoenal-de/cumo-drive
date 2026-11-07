@@ -484,7 +484,8 @@ export default function NavigationScreen() {
   const brakeHint = cue ? { big: cue.big, label: cue.label, icon: cue.icon, a11y: cue.a11y } : null;
   const then = route?.maneuvers[state.next + 1];
   // Tempo unten links: Limit an der aktuellen Stelle der Route, sobald die Zonen geladen sind
-  const limitHere = atKm != null && zones?.route === route ? limitAt(zones.z, atKm) : null;
+  // Angezeigt wird nur ein bekanntes Schild, geschätzte Limits zählen nur für die Kurvenwarnung
+  const limitHere = atKm != null && zones?.route === route ? limitAt(zones.z, atKm, true) : null;
   // Nächstes Zwischenziel überspringen: Ziel ist das Zwischenziel danach, sonst das Ende der Route
   const nextVia = atKm != null ? viaKms.findIndex((k) => k > atKm + 0.1) : -1;
   const skipTarget = (() => {
