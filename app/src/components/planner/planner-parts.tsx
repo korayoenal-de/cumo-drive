@@ -150,12 +150,15 @@ export function Accordion({ label, summary, defaultOpen = false, children }: { l
         accessibilityLabel={summary ? `${label}, ${summary}` : label}
         onPress={toggle}
         style={styles.accHead}>
-        <AppText variant="label">{label}</AppText>
-        {!!summary && !open && (
-          <AppText variant="caption" muted numberOfLines={1} style={styles.accSummary}>
-            {summary}
-          </AppText>
-        )}
+        <View style={styles.accText}>
+          <AppText variant="label">{label}</AppText>
+          {/* Kurzfassung unter dem Titel, nicht rechtsbündig (Koray 7.11.) */}
+          {!!summary && !open && (
+            <AppText variant="caption" muted numberOfLines={1}>
+              {summary}
+            </AppText>
+          )}
+        </View>
         <Animated.View style={[styles.accChevron, chevron]}>
           <SymbolView name="chevron.down" size={15} weight="semibold" tintColor={Colors.muted} />
         </Animated.View>

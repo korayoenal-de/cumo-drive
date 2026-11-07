@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
   gapS: { gap: Spacing.s },
   gapM: { gap: Spacing.m },
   accHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 44 },
-  accSummary: { flex: 1, textAlign: 'right' },
+  accText: { flex: 1, minWidth: 0, gap: 2 },
   accChevron: { width: 20, alignItems: 'center', marginLeft: 'auto' },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sectionAction: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.signal },
