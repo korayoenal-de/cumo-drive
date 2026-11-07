@@ -54,7 +54,7 @@ export function Result({
     const t = saveTour({ ...tour, curves, profile: req.profile }, '', savedId ?? undefined);
     setSaved({ tour, id: t.id });
     void syncLibrary();
-    showToast('Gespeichert unter Meine Touren');
+    showToast('In Meine Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
     return t.id;
   };
   // Solo oder Gruppe im Schalter der Hauptaktion; als Gruppe erst speichern, dann Mitfahrer einladen

@@ -2,6 +2,7 @@
  * Zustand und Aktionen der Route im Planer: Start, Zwischenziele, Ziel, Profil je Etappe, Namen,
  * Planen mit Prüfung und Speichern. Ohne Oberfläche; die Oberfläche steht in tour-mode.tsx.
  */
+import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 
 import { toPlanError } from '@/components/planner/create-tour';
@@ -162,7 +163,7 @@ export function useTourPlan(onPlanned?: () => void) {
       setBase(sigOf(pts, name, legProfiles));
       void syncLibrary();
       setSaveMsg(null);
-      showToast('Gespeichert unter Meine Touren');
+      showToast('In Meine Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
       return saved.id;
     } catch (e) {
       setSaveMsg(null);

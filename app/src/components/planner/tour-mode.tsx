@@ -23,6 +23,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Motion, Shadow } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { shareTourLink } from '@/lib/share-link';
+import { exportTour } from '@/lib/route-file';
 import { useSession } from '@/lib/auth';
 import { doubledStretch } from '@/lib/doubled';
 import { passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
@@ -639,32 +640,27 @@ export function TourMode({
             sheetTitle={plan.name.trim() || 'Neue Tour'}
             primary={{ label: 'Losfahren', onPress: () => void drive() }}
             mode={{ group: asGroup, onChange: setAsGroup }}
-            // Neue Planung: Merken. Geöffnete Tour: nur bei echter Änderung, sonst steht dort Löschen.
+            // Speichern als sekundärer Knopf, solange die Tour neu oder geändert ist (Konzept 7.11.)
             save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) } : undefined}
             float={asGroup ? <GroupOptions onInvite={() => void drive()} /> : undefined}
-            // Leise Links über dem Knopf: Teilen immer, Löschen nur bei einer gespeicherten Tour
-            top={
-              <View style={styles.linkRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityHint="Andere öffnen die Route direkt in CUMO DRIVE"
-                  onPress={() => void shareTourLink({ ...routeTour, name: plan.name.trim() || routeTour.name }, firstProfile).catch(() => undefined)}
-                  hitSlop={8}
-                  style={styles.deleteLink}>
-                  <AppText style={styles.deleteLinkText}>Link teilen</AppText>
-                </Pressable>
-                {plan.cloudId && (
-                  <Pressable accessibilityRole="button" onPress={() => setAskDelete(true)} hitSlop={8} style={styles.deleteLink}>
-                    <AppText style={styles.deleteLinkText}>Route löschen</AppText>
-                  </Pressable>
-                )}
-              </View>
-            }>
-            {plan.cloudId && plan.dirty && !plan.saving && (
-              <AppText variant="caption" style={styles.changed}>
-                Geändert. Tippe auf das Lesezeichen, um die Änderungen zu speichern.
-              </AppText>
-            )}
+            more={[
+              {
+                key: 'link',
+                icon: 'square.and.arrow.up',
+                label: 'Link teilen',
+                hint: 'Andere öffnen die Route direkt in CUMO DRIVE',
+                onPress: () => void shareTourLink({ ...routeTour, name: plan.name.trim() || routeTour.name }, firstProfile).catch(() => undefined),
+              },
+              {
+                key: 'gpx',
+                icon: 'doc.text',
+                label: 'Als GPX teilen',
+                onPress: () => void exportTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, 'gpx').catch(() => undefined),
+              },
+              plan.cloudId
+                ? { key: 'delete', icon: 'trash', label: 'Route löschen', danger: true, onPress: () => setAskDelete(true) }
+                : { key: 'reset', icon: 'arrow.counterclockwise', label: 'Planung verwerfen', danger: true, onPress: resetForm },
+            ]}>
             {!session && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
           </ActionBar>
         ) : null}

@@ -1,15 +1,17 @@
 /**
- * Aktionsleiste: eine Hauptaktion als große Taste, daneben Speichern als Symbol und ein Symbol für
- * alles Weitere. Weiteres öffnet ein Bottom Sheet (ActionSheet), Gefährliches (verwerfen) fragt
- * vorher in einem ConfirmSheet nach. Selten Gebrauchtes steht so nicht als Knopfreihe im Weg.
+ * Aktionsleiste (Konzept Aktionsleiste im Planer, 7.11.2026): eine Hauptaktion als große Taste, daneben
+ * ein runder Knopf ⋯ für alles Weitere als schwebendes Menü. Noch nicht gespeichert: darüber eine Zeile
+ * mit Speichern (sekundär, breit) und ⋯, die Hauptaktion bleibt in voller Breite. Kein Lesezeichen.
+ * Gefährliches mit confirm fragt vorher in einem ConfirmSheet nach.
  * Muster und Regeln: docs/design-prinzipien.md, Abschnitt Ebenen und Rückmeldungen.
  */
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
+import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { FloatMenu, type Anchor } from '@/components/ui/float-menu';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Spacing, Type } from '@/constants/theme';
 
@@ -60,30 +62,33 @@ export function ActionBar({
   /** Zusätzlicher Inhalt unter der Leiste */
   children?: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
-  // Mit Schalter in der Hauptaktion wird es eng: gibt es ohnehin ein Menü, wandert Speichern dort hinein
-  const foldSave = !!mode && !!save && !!moreIn?.length;
-  const more: MoreItem[] | undefined =
-    foldSave && save
-      ? [
-          {
-            key: 'save',
-            icon: save.saved ? 'bookmark.fill' : 'bookmark',
-            label: save.saved ? 'Gespeichert' : 'Speichern',
-            hint: save.saved ? 'Liegt in Meine Touren' : 'Unter Meine Touren ablegen',
-            onPress: () => !save.saved && save.onPress(),
-          },
-          ...moreIn!,
-        ]
-      : moreIn;
+  const [anchor, setAnchor] = useState<Anchor | null>(null);
+  const more = moreIn ?? [];
   const [ask, setAsk] = useState<MoreItem | null>(null);
-  // Gefährliches erst nach Rückfrage ausführen
-  const run = (it: MoreItem) => (it.danger ? setAsk(it) : it.onPress());
-  const single = more && more.length === 1 ? more[0] : null;
+  // Gefährliches mit Frage erst nach Rückfrage ausführen
+  const run = (it: MoreItem) => (it.danger && it.confirm ? setAsk(it) : it.onPress());
+  const unsaved = !!save && !save.saved;
+  const moreBtn = more.length > 0 && <MoreButton open={!!anchor} onOpen={setAnchor} />;
+  void sheetTitle;
   return (
     <View style={styles.wrap}>
       {float && <View style={styles.float} pointerEvents="box-none">{float}</View>}
       {top}
+      {unsaved && (
+        <View style={styles.row}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Speichern"
+            accessibilityHint="Unter Meine Touren ablegen"
+            accessibilityState={{ busy: save.busy }}
+            disabled={save.busy}
+            onPress={save.onPress}
+            style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
+            {save.busy ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>Speichern</AppText>}
+          </Pressable>
+          {moreBtn}
+        </View>
+      )}
       <View style={styles.row}>
         {mode ? (
           <View style={styles.primarySplit}>
@@ -103,19 +108,20 @@ export function ActionBar({
             <AppText style={styles.primaryText}>{primary.label}</AppText>
           </Pressable>
         )}
-        {save && !foldSave && <SaveButton {...save} />}
-        {single && <RoundButton icon={single.icon} label={single.label} hint={single.hint} muted={single.danger} onPress={() => run(single)} />}
-        {more && more.length > 1 && <RoundButton icon="ellipsis" label="Weitere Aktionen" onPress={() => setOpen(true)} />}
+        {!unsaved && moreBtn}
       </View>
       {children}
-      {more && more.length > 1 && (
-        <ActionSheet
-          visible={open}
-          title={sheetTitle}
-          items={more.map((it) => ({ ...it, onPress: () => run(it) }))}
-          onClose={() => setOpen(false)}
-        />
-      )}
+      <FloatMenu
+        anchor={anchor}
+        label="Weitere Aktionen"
+        items={more.map((it) => ({ key: it.key, label: it.label, icon: it.icon, danger: it.danger }))}
+        onPick={(key) => {
+          setAnchor(null);
+          const it = more.find((x) => x.key === key);
+          if (it) run(it);
+        }}
+        onClose={() => setAnchor(null)}
+      />
       <ConfirmSheet
         visible={!!ask}
         title={ask?.confirm ?? `${ask?.label ?? ''}?`}
@@ -125,6 +131,26 @@ export function ActionBar({
         onClose={() => setAsk(null)}
       />
     </View>
+  );
+}
+
+type ViewRef = ComponentRef<typeof View>;
+
+/** Runder Knopf ⋯: misst sich, damit das Menü daneben schweben kann; offen zeigt er ein X */
+function MoreButton({ open, onOpen }: { open: boolean; onOpen: (a: Anchor) => void }) {
+  const ref = useRef<ViewRef>(null);
+  return (
+    <Pressable
+      ref={ref}
+      accessibilityRole="button"
+      accessibilityLabel={open ? 'Weitere Aktionen schließen' : 'Weitere Aktionen'}
+      hitSlop={4}
+      onPress={() =>
+        ref.current?.measureInWindow((x: number, y: number, w: number, h: number) => onOpen({ top: y, bottom: y + h, right: x + w }))
+      }
+      style={({ pressed }) => [styles.round, styles.big, open && styles.roundOpen, pressed && styles.pressed]}>
+      <SymbolView name={open ? 'xmark' : 'ellipsis'} size={20} tintColor={Colors.text} weight="bold" />
+    </Pressable>
   );
 }
 
@@ -179,43 +205,6 @@ function ModeToggle({ group, onChange }: { group: boolean; onChange: (group: boo
 }
 
 /** Rundes Symbol neben der Hauptaktion */
-function RoundButton({ icon, label, hint, muted, onPress }: { icon: SFSymbol; label: string; hint?: string; muted?: boolean; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityHint={hint} onPress={onPress} hitSlop={4} style={({ pressed }) => pressed && styles.pressed}>
-      <View style={[styles.round, styles.big]}>
-        <SymbolView name={icon} size={20} tintColor={muted ? Colors.muted : Colors.text} weight="medium" />
-      </View>
-    </Pressable>
-  );
-}
-
-/** Lesezeichen: füllt sich beim Speichern mit einem kurzen, sanften Puls (Motion.pop). */
-function SaveButton({ saved, busy, onPress }: { saved: boolean; busy?: boolean; onPress: () => void }) {
-  const s = useSharedValue(1);
-  useEffect(() => {
-    if (saved) s.set(withSequence(withSpring(1 + Motion.pop, Motion.press), withSpring(1, Motion.snap)));
-  }, [saved, s]);
-  const st = useAnimatedStyle(() => ({ transform: [{ scale: s.get() }] }));
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={saved ? 'Gespeichert unter Meine Touren' : 'Speichern'}
-      accessibilityState={{ disabled: saved || busy, busy }}
-      disabled={saved || busy}
-      onPress={onPress}
-      hitSlop={4}>
-      <Animated.View style={[styles.round, styles.big, saved && styles.savedBg, st]}>
-        {busy ? (
-          <ActivityIndicator color={Colors.muted} />
-        ) : (
-          <SymbolView name={saved ? 'bookmark.fill' : 'bookmark'} size={20} tintColor={saved ? Colors.signal : Colors.text} weight="semibold" />
-        )}
-      </Animated.View>
-    </Pressable>
-  );
-}
-
-
 const styles = StyleSheet.create({
   wrap: { gap: Spacing.s },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
@@ -235,5 +224,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.8, transform: [{ scale: Motion.pressScale }] },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   big: { width: 56, height: 56, borderRadius: 28 },
-  savedBg: { backgroundColor: Colors.signalTint },
+  roundOpen: { backgroundColor: Colors.line },
+  secondary: { flex: 1, height: 56, borderRadius: 28, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  secondaryText: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
 });
