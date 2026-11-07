@@ -421,6 +421,8 @@ export function Stats({ km, minutes, curves, fun, onFun, delta }: { km: number; 
           <View style={styles.funValueRow}>
             <FunGauge level={fun.level} size={22} />
             <AppText style={styles.statBig} numberOfLines={1}>{fun.score}</AppText>
+            {/* zeigt, dass der Wert antippbar ist (Koray 7.11.) */}
+            <SymbolView name="info.circle" size={16} weight="semibold" tintColor={Colors.muted} />
           </View>
         </Pressable>
       ) : (
