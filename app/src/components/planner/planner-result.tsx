@@ -25,7 +25,7 @@ import { type PlannedTour } from '@/lib/plan';
 import { flatten, type LatLon } from '@/lib/tour';
 import { showToast } from '@/lib/toast';
 
-import { GroupBlock, Stats, StopsPlanner, TrustLine, Warnings, type PlannedStop } from './planner-parts';
+import { GroupBlock, Stats, StopsPlanner, Warnings, type PlannedStop } from './planner-parts';
 import { PlaceSearch, type Cat } from './place-search';
 import { styles } from './planner-styles';
 
@@ -82,7 +82,6 @@ export function Result({
       {/* Überschrift steht im Kopf des Blatts, hier zuerst die Kennzahlen und Details */}
       <View style={styles.gapL}>
         <Stats km={total} minutes={tour.minutes} curves={curves} fun={fun} delta={funDelta} onFun={onFun} />
-        {warnings.length === 0 && tour.geprueft !== false && <TrustLine />}
         {req.note && <AppText variant="caption" style={styles.winterText}>{req.note}</AppText>}
       </View>
 

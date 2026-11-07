@@ -12,7 +12,7 @@ import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
 import { PASS_STATUS_URL, PASSES, passPoint } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
-import { FunSheet } from '@/components/ui/fun-pill';
+import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
 import { locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 import { ElevationChart } from '@/components/planner/elevation-chart';
@@ -36,7 +36,7 @@ import { PlaceSearch, type Cat, type Slot } from './place-search';
 import { PointMenu, type PointAction, type PointMenuState } from './point-menu';
 import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
-import { DragArea, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, TrustLine, Warnings } from './planner-parts';
+import { DragArea, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, Warnings } from './planner-parts';
 import { keyOf, type PendingPoint, type PointKind, profileWord, samePts, STEP_TEXT } from './planner-shared';
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
@@ -555,20 +555,8 @@ export function TourMode({
       {routeTour && (
         <>
           <Stats km={total} minutes={routeTour.minutes} curves={curves} fun={fun} onFun={() => setFunOpen(true)} />
-          <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} />
-          {warnings.length === 0 && routeTour.geprueft !== false && <TrustLine />}
+          <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} check={routeCheck(warnings.length, routeTour.geprueft !== false)} twiceKm={twiceKm} />
 
-          {twiceKm >= 1 && (
-            <View style={[styles.card, styles.checkCard]}>
-              <View style={[styles.dot, styles.dotWarn]} />
-              <View style={styles.flex}>
-                <AppText variant="title">{formatKm(twiceKm, 0)} km fährst du zweimal</AppText>
-                <AppText variant="caption" muted>
-                  Ein Stück geht auf derselben Straße zurück. Ein anderes Zwischenziel oder eine andere Reihenfolge ändert das oft.
-                </AppText>
-              </View>
-            </View>
-          )}
 
           {hint && (
             <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PASS_STATUS_URL)} style={styles.winter}>

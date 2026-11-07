@@ -8,9 +8,11 @@
  * Wann welches Muster: docs/design-prinzipien.md, Abschnitt Ebenen und Rückmeldungen.
  */
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Pressable, StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { sheetEnter } from '@/components/ui/motion';
@@ -24,24 +26,52 @@ export const SHEET_GONE_MS = 320;
 
 export function OptionsSheet({ visible, title, subtitle, onClose, children }: { visible: boolean; title?: string; subtitle?: string; onClose: () => void; children: ReactNode }) {
   const insets = useSafeAreaInsets();
+  // nach unten ziehen schließt (Koray 7.11.: im Fahrspaß Blatt ging das nicht)
+  const drag = useSharedValue(0);
+  useEffect(() => {
+    if (visible) drag.set(0);
+  }, [visible, drag]);
+  const pan = Gesture.Pan()
+    .activeOffsetY(10)
+    .failOffsetX([-20, 20])
+    .onUpdate((e) => {
+      drag.set(Math.max(0, e.translationY));
+    })
+    .onEnd((e) => {
+      if (e.translationY > 110 || e.velocityY > 900) {
+        drag.set(withTiming(800, { duration: 220 }, (done) => {
+          if (done) scheduleOnRN(onClose);
+        }));
+      } else {
+        drag.set(withSpring(0, Motion.snap));
+      }
+    });
+  const dragStyle = useAnimatedStyle(() => ({ transform: [{ translateY: drag.get() }] }));
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <KeyboardAvoidingView behavior="padding" style={styles.flex}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={onClose} style={styles.backdrop} />
-        <Animated.View
-          entering={sheetEnter}
-          style={[styles.card, { marginBottom: Math.max(insets.bottom, Spacing.l) }]}
-          accessibilityViewIsModal>
-          <View style={styles.grabber} />
-          {(title || subtitle) && (
-            <View style={styles.head}>
-              {!!title && <AppText style={styles.title}>{title}</AppText>}
-              {!!subtitle && <AppText style={styles.subtitle}>{subtitle}</AppText>}
-            </View>
-          )}
-          {children}
-        </Animated.View>
-      </KeyboardAvoidingView>
+      <GestureHandlerRootView style={styles.flex}>
+        <KeyboardAvoidingView behavior="padding" style={styles.flex}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={onClose} style={styles.backdrop} />
+          <GestureDetector gesture={pan}>
+            {/* außen das Ziehen, innen das Hereinfahren: beide nutzen transform */}
+            <Animated.View style={[styles.dragWrap, dragStyle]}>
+            <Animated.View
+              entering={sheetEnter}
+              style={[styles.card, { marginBottom: Math.max(insets.bottom, Spacing.l) }]}
+              accessibilityViewIsModal>
+              <View style={styles.grabber} />
+              {(title || subtitle) && (
+                <View style={styles.head}>
+                  {!!title && <AppText style={styles.title}>{title}</AppText>}
+                  {!!subtitle && <AppText style={styles.subtitle}>{subtitle}</AppText>}
+                </View>
+              )}
+              {children}
+            </Animated.View>
+            </Animated.View>
+          </GestureDetector>
+        </KeyboardAvoidingView>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
@@ -120,8 +150,8 @@ export function ConfirmSheet({
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.6)' },
+  dragWrap: { marginTop: 'auto' },
   card: {
-    marginTop: 'auto',
     marginHorizontal: Spacing.m,
     paddingHorizontal: Spacing.l,
     paddingTop: Spacing.s,

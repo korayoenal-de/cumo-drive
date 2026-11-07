@@ -39,7 +39,18 @@ export function FunDelta({ delta }: { delta: number }) {
 /** Texte zu TOUR_FUN_STEPS in fun-score */
 const RANGES = ['bis 34', '35 bis 54', '55 bis 69', '70 bis 84', 'ab 85'];
 
-export function FunSheet({ fun, name, visible, onClose }: { fun: TourFun | null; name: string; visible: boolean; onClose: () => void }) {
+/** Prüfung der Strecke für Sportwagen, gehört zur Bewertung (Koray 7.11.) */
+export type RouteCheck = { tone: 'good' | 'warn' | 'none'; text: string };
+
+/** Zusammenfassung der Prüfung aus den Warnungen einer Tour */
+export function routeCheck(warnings: number, checked: boolean): RouteCheck {
+  if (!checked) return { tone: 'none', text: 'Diese Strecke ist noch nicht für Sportwagen geprüft.' };
+  if (!warnings) return { tone: 'good', text: 'Für Sportwagen geprüft, keine Engstellen oder Sperrungen.' };
+  return { tone: 'warn', text: `Für Sportwagen geprüft. ${warnings === 1 ? 'Eine Stelle solltest' : `${warnings} Stellen solltest`} du kennen, sie stehen unter der Route.` };
+}
+
+/** twiceKm: km, die auf derselben Straße zurück gefahren werden (Route); ab 1 km ein Hinweis */
+export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0 }: { fun: TourFun | null; name: string; visible: boolean; onClose: () => void; check?: RouteCheck | null; twiceKm?: number }) {
   return (
     <OptionsSheet visible={visible && !!fun} onClose={onClose}>
       {fun && (
@@ -70,6 +81,20 @@ export function FunSheet({ fun, name, visible, onClose }: { fun: TourFun | null;
               </View>
             ))}
           </View>
+          {check && (
+            <View style={styles.check}>
+              <View style={[styles.checkDot, { backgroundColor: check.tone === 'good' ? Colors.good : check.tone === 'warn' ? Colors.warn : Colors.muted }]} />
+              <AppText style={[styles.muted, styles.flex]}>{check.text}</AppText>
+            </View>
+          )}
+          {twiceKm >= 1 && (
+            <View style={styles.check}>
+              <View style={[styles.checkDot, { backgroundColor: Colors.warn }]} />
+              <AppText style={[styles.muted, styles.flex]}>
+                {Math.round(twiceKm)} km fährst du zweimal, auf derselben Straße zurück. Ein anderes Zwischenziel oder eine andere Reihenfolge ändert das oft.
+              </AppText>
+            </View>
+          )}
           <View style={styles.scale}>
             <AppText style={styles.muted}>Skala</AppText>
             {([1, 2, 3, 4, 5] as TourFunLevel[]).map((l) => (
@@ -120,6 +145,8 @@ const styles = StyleSheet.create({
   facetLabel: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   track: { height: 6, borderRadius: 3, backgroundColor: Colors.line, overflow: 'hidden' },
   bar: { height: 6, borderRadius: 3, backgroundColor: Colors.signal },
+  check: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m },
+  checkDot: { width: 10, height: 10, borderRadius: 5, marginTop: 6 },
   scale: { gap: 2 },
   scaleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, height: 36, paddingHorizontal: 10, borderRadius: Radius.s },
   scaleOn: { backgroundColor: Colors.line },

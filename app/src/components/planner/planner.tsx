@@ -25,7 +25,7 @@ import { PASSES, passPoint, passSummary, type Pass } from '@/lib/passes';
 import { buildTour, findPlace, locate, newSeed, PHASES, toPlanError, type PlanError, type PlanPhase, type Spot, type TourRequest } from '@/components/planner/create-tour';
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
-import { FunSheet } from '@/components/ui/fun-pill';
+import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
@@ -878,7 +878,13 @@ export default function Planner() {
       )}>
       {body}
     </MapSheet>
-    <FunSheet fun={resultFun} name={resultTour?.name ?? ''} visible={funOpen} onClose={() => setFunOpen(false)} />
+    <FunSheet
+      fun={resultFun}
+      name={resultTour?.name ?? ''}
+      visible={funOpen}
+      onClose={() => setFunOpen(false)}
+      check={resultTour ? routeCheck(resultTour.warnungen.filter((w) => w.klasse !== 'ok').length, resultTour.geprueft !== false) : null}
+    />
     </>
   );
 }
