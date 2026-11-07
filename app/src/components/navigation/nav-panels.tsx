@@ -23,7 +23,7 @@ const SIGNAL_OVERLAY = 'rgba(41,19,14,0.96)';
 const GOOD_OVERLAY = 'rgba(19,33,27,0.96)';
 
 /** soon: das Manöver steht kurz bevor (etwa 150 m), dann stupst der Pfeil an. */
-export function ManeuverCard({ maneuver, distM, then, soon = false }: { maneuver: Maneuver; distM: number | null; then?: Maneuver; soon?: boolean }) {
+export function ManeuverCard({ maneuver, distM, then, soon = false, footer }: { maneuver: Maneuver; distM: number | null; then?: Maneuver; soon?: boolean; footer?: ReactNode }) {
   const d = formatDistance(distM);
   return (
     <GlassPanel style={styles.maneuver} fallback={Colors.overlay}>
@@ -51,6 +51,7 @@ export function ManeuverCard({ maneuver, distM, then, soon = false }: { maneuver
           <AppText variant="caption" muted numberOfLines={1} style={styles.flex}>{then.text}</AppText>
         </View>
       )}
+      {footer}
     </GlassPanel>
   );
 }

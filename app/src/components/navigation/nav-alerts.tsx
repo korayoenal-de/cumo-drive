@@ -15,6 +15,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { STOP_REASONS, type RideMsg, type RideStop, type StopReason } from '@/lib/group/ride';
 import { highlightFacts, type Highlight } from '@/lib/navigation/highlights';
+import { formatKm } from '@/lib/tour';
 
 import { formatDistance } from './format';
 import type { NavSymbol } from './maneuver-geometry';
@@ -43,6 +44,35 @@ export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
         <FunGauge level={toFunLevel(h.level)} size={44} animate />
       </View>
     </GlassPanel>
+  );
+}
+
+/**
+ * Hinweis während der Fahrt auf einem Highlight (Konzept Highlight Ansage, Variante A, 7.11.2026):
+ * schmale Zeile unten in der Routenführung mit Logo, Name, Restlänge und Fortschritt in Orange.
+ * Antippen zeigt die Ankündigung noch einmal für 5 s.
+ */
+export function HighlightStrip({ h, atKm, onPress }: { h: Highlight; atKm: number; onPress?: () => void }) {
+  const len = Math.max(0.01, h.endKm - h.startKm);
+  const done = Math.min(1, Math.max(0, (atKm - h.startKm) / len));
+  const rest = Math.max(0, h.endKm - atKm);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Auf ${h.name}, noch ${formatKm(rest, 1)} Kilometer. Antippen zeigt die Ansage`}
+      onPress={onPress}
+      style={styles.strip}>
+      <View style={styles.stripRow}>
+        <FunGauge level={toFunLevel(h.level)} size={20} />
+        <AppText style={styles.stripName} numberOfLines={1}>
+          {h.name}
+        </AppText>
+        <AppText style={styles.stripRest}>noch {formatKm(rest, rest < 10 ? 1 : 0)} km</AppText>
+      </View>
+      <View style={styles.track}>
+        <View style={[styles.fill, { width: `${Math.round(done * 100)}%` }]} />
+      </View>
+    </Pressable>
   );
 }
 
@@ -147,4 +177,10 @@ const styles = StyleSheet.create({
   toast: { paddingVertical: Spacing.m },
   toastText: { fontFamily: Fonts.semibold, fontSize: Type.title },
   pressed: { opacity: 0.75 },
+  strip: { gap: Spacing.s, paddingTop: Spacing.m },
+  stripRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  stripName: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.text },
+  stripRest: { fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.muted, fontVariant: ['tabular-nums'] },
+  track: { height: 3, borderRadius: 2, backgroundColor: Colors.line, overflow: 'hidden' },
+  fill: { height: 3, backgroundColor: Colors.signal },
 });

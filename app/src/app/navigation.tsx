@@ -14,7 +14,7 @@ import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM, symbolFor } from '@/components/navigation/maneuver-geometry';
 import { DriveRatingCard } from '@/components/navigation/drive-rating';
 import { SpeedBadge } from '@/components/navigation/speed-badge';
-import { HighlightCard, LeadStopButton, StopAlert } from '@/components/navigation/nav-alerts';
+import { HighlightCard, HighlightStrip, LeadStopButton, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
@@ -38,6 +38,9 @@ import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, STO
 import { currentVehicle, selectVehicle, useVehicles } from '@/lib/vehicle';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
+
+/** So lange ersetzt die Highlight Ansage die Routenführung */
+const HL_SHOW_MS = 5000;
 
 export default function NavigationScreen() {
   useKeepAwake();
@@ -137,9 +140,19 @@ export default function NavigationScreen() {
     hl && hl.route === state.route && atKm != null ? (hl.list.find((h) => atKm >= h.startKm - 1 && atKm <= h.startKm + 0.3) ?? null) : null;
   const hlDistM = nextHl && atKm != null ? (nextHl.startKm - atKm) * 1000 : 0;
   const saidHl = useRef(new Set<string>());
+  // Ankündigung tauscht für 5 s den Platz der Routenführung (Konzept Highlight Ansage, 7.11.)
+  const [hlShow, setHlShow] = useState<{ id: string; until: number } | null>(null);
+  useEffect(() => {
+    if (!hlShow) return;
+    const t = setTimeout(() => setHlShow(null), Math.max(0, hlShow.until - Date.now()));
+    return () => clearTimeout(t);
+  }, [hlShow]);
+  // Highlight, auf dem du gerade fährst: Hinweiszeile in der Routenführung
+  const onHl = hl && hl.route === state.route && atKm != null ? (hl.list.find((h) => atKm >= h.startKm && atKm <= h.endKm) ?? null) : null;
   useEffect(() => {
     if (!nextHl || state.status !== 'laeuft' || hlDistM > 650 || saidHl.current.has(nextHl.id)) return;
     saidHl.current.add(nextHl.id);
+    setHlShow({ id: nextHl.id, until: Date.now() + HL_SHOW_MS });
     controls.say(highlightSpeech(nextHl, hlDistM));
     const len = Math.max(1, Math.round(nextHl.endKm - nextHl.startKm));
     const where = hlDistM > 150 ? `In ${Math.round(hlDistM / 100) * 100} m` : 'Jetzt';
@@ -378,6 +391,11 @@ export default function NavigationScreen() {
     if (cpRunning) carPlayStart();
   });
 
+  // Das Manöver hat Vorrang: ist es nah, bleibt die Routenführung stehen
+  const maneuverSoon = state.distToNextM != null && state.distToNextM <= soonThresholdM(state.speedKmh);
+  const hlById = (id: string) => (hl && hl.route === state.route ? (hl.list.find((h) => h.id === id) ?? null) : null);
+  const showHlCard = hlShow && !maneuverSoon && !stop ? hlById(hlShow.id) : null;
+
   if (!active || !mapTour) {
     return (
       <View style={[styles.root, styles.pad, { paddingTop: insets.top + Spacing.xl }]}>
@@ -446,7 +464,23 @@ export default function NavigationScreen() {
             accessibilityHint={skipTarget && !inRide ? 'Lange drücken, um das nächste Zwischenziel zu überspringen' : undefined}
             accessibilityActions={skipTarget && !inRide ? [{ name: 'skip', label: 'Nächstes Zwischenziel überspringen' }] : undefined}
             onAccessibilityAction={() => skipTarget && void skip(skipTarget.index)}>
-            <ManeuverCard maneuver={maneuver} distM={state.distToNextM} then={then} soon={state.distToNextM != null && state.distToNextM <= soonThresholdM(state.speedKmh)} />
+            {showHlCard ? (
+              <Animated.View key={`hl-${showHlCard.id}`} entering={softEnter()} exiting={FadeOut.duration(160)}>
+                <Pressable accessibilityRole="button" accessibilityHint="Antippen schließt die Ansage" onPress={() => setHlShow(null)}>
+                  <HighlightCard h={showHlCard} distM={showHlCard === nextHl ? hlDistM : 0} />
+                </Pressable>
+              </Animated.View>
+            ) : (
+              <Animated.View key="man" entering={softEnter()}>
+                <ManeuverCard
+                  maneuver={maneuver}
+                  distM={state.distToNextM}
+                  then={then}
+                  soon={maneuverSoon}
+                  footer={onHl && atKm != null ? <HighlightStrip h={onHl} atKm={atKm} onPress={() => setHlShow({ id: onHl.id, until: Date.now() + HL_SHOW_MS })} /> : undefined}
+                />
+              </Animated.View>
+            )}
           </Pressable>
         )}
         {running && skipOpen && skipTarget && atKm != null && (
@@ -476,7 +510,6 @@ export default function NavigationScreen() {
         {running && stop && (
           <StopAlert stop={stop} distM={stopDistM} mine={myStop} onDismiss={() => clearStop(false)} onCancel={() => clearStop(true)} />
         )}
-        {running && !stop && nextHl && <HighlightCard h={nextHl} distM={hlDistM} />}
       </View>
 
       <View style={[styles.bottom, !running && { paddingBottom: insets.bottom + Spacing.m }]} pointerEvents="box-none">

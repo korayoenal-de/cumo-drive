@@ -1,7 +1,7 @@
 /**
  * Fahrspaß Pegel (Variante S3, entschieden am 7.11.2026, löst E ab): acht Segmente mit rundem Rücken um
  * einen schlanken achtzackigen Stern, der als Negativform frei bleibt. Fünf Stufen füllen 1, 3, 5, 7 und 8
- * Segmente ab 6 Uhr im Uhrzeigersinn. Unter 20 pt nur die orangen Segmente.
+ * Segmente ab 6 Uhr im Uhrzeigersinn. Unter 24 pt nur die orangen Segmente.
  *
  * Legende (animate): subtiler Austausch zwischen Segmenten und Stern, nie beides zugleich (siehe LegendGauge).
  */
@@ -82,7 +82,8 @@ export function FunGauge({ level, size = 20, animate = false }: { level: FunLeve
   const label = `Fahrspaß ${FUN_NAMES[level]}, ${level} von 5`;
   if (animate && level === 5 && !reduced) return <LegendGauge size={size} label={label} />;
   const n = FILLED[level];
-  const small = size < 20;
+  // Kleine Logos (unter 24 pt) ohne graue Flächen, nur die orangen Segmente (Koray 7.11.)
+  const small = size < 24;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityRole="image" accessibilityLabel={label}>
       {SEGS.map((d, i) => {
