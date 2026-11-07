@@ -22,7 +22,7 @@ import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
-import { carPlayAlert, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
+import { carPlayAlert, carPlaySetGuide, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
 import { useSession } from '@/lib/auth';
 import { saveDrive } from '@/lib/drives';
@@ -343,6 +343,12 @@ export default function NavigationScreen() {
     cpWas.current = cpRunning;
   }, [cpRunning, state.status]);
   useEffect(() => () => carPlayStop(false), []);
+  // Linie auf dem Autodisplay = die Route, nach der angesagt wird (auch nach Neuberechnung)
+  useEffect(() => {
+    const r = state.route;
+    carPlaySetGuide(cpRunning && r ? r.shape : null, r?.km ?? 0, r?.minutes ?? 0);
+  }, [cpRunning, state.route]);
+  useEffect(() => () => carPlaySetGuide(null), []);
   useEffect(() => {
     const r = state.route;
     const m = r?.maneuvers[state.next];

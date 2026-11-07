@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 
 import { useActiveTour } from '@/lib/active-tour';
-import { carPlayAvailable, carPlaySetTour, markCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
+import { carPlayAvailable, carPlayResend, carPlaySetTour, markCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 
 export function CarPlaySync() {
   const active = useActiveTour();
@@ -14,7 +14,7 @@ export function CarPlaySync() {
     if (carPlayAvailable) carPlaySetTour(active?.tour ?? null);
   }, [active]);
   // nach dem Einstecken die Tour erneut schicken (die Karte im Auto ist neu)
-  useCarPlayEvent('onConnect', () => carPlaySetTour(active?.tour ?? null));
+  useCarPlayEvent('onConnect', () => carPlayResend());
   useCarPlayEvent('onStart', () => {
     if (!active) return;
     markCarPlayStart();

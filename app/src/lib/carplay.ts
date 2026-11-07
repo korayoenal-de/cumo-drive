@@ -40,10 +40,44 @@ function linePoints(tour: Tour): number[][] {
   return out;
 }
 
-export function carPlaySetTour(tour: (Tour & { minutes?: number }) | null) {
+let lastTour: (Tour & { minutes?: number }) | null = null;
+/**
+ * Während der Führung zeigt das Autodisplay die Navigationsroute (mit Anfahrt und Weg zurück zur
+ * Tour), nicht die gespeicherte Tour. Sonst passen Linie und Ansagen nicht zusammen (Testfahrt 7.11.).
+ */
+let guide: { line: [number, number][]; km: number; minutes: number } | null = null;
+
+function thin(pts: readonly (readonly [number, number])[]): number[][] {
+  const step = Math.max(1, Math.ceil(pts.length / 1500));
+  const out: number[][] = [];
+  for (let i = 0; i < pts.length; i += step) out.push([pts[i][0], pts[i][1]]);
+  const last = pts[pts.length - 1];
+  if (last && (out.length === 0 || out[out.length - 1][0] !== last[0] || out[out.length - 1][1] !== last[1])) out.push([last[0], last[1]]);
+  return out;
+}
+
+function send() {
   if (!native) return;
+  const tour = lastTour;
   if (!tour) return quiet(native.clearTour());
+  if (guide) return quiet(native.setTour(tour.name, thin(guide.line), guide.km, guide.minutes));
   quiet(native.setTour(tour.name, linePoints(tour), tour.laenge_km, tour.minutes ?? (tour.laenge_km / 55) * 60));
+}
+
+export function carPlaySetTour(tour: (Tour & { minutes?: number }) | null) {
+  lastTour = tour;
+  send();
+}
+
+/** Linie der laufenden Führung; null zurück zur Tour */
+export function carPlaySetGuide(line: readonly (readonly [number, number])[] | null, km = 0, minutes = 0) {
+  guide = line && line.length > 1 ? { line: line.map((p) => [p[0], p[1]] as [number, number]), km, minutes } : null;
+  send();
+}
+
+/** nach dem Einstecken alles neu schicken */
+export function carPlayResend() {
+  send();
 }
 
 export function carPlayStart() {

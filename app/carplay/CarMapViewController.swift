@@ -4,10 +4,14 @@ import UIKit
 
 /// Karte auf dem Autodisplay: dunkle Apple Karte, Tour als orange Linie, eigene Position.
 /// In der Führung folgt sie der Fahrtrichtung, in der Vorschau zeigt sie die ganze Tour.
+/// Dunkler Rand unter der Linie, damit sie auf jeder Karte ruhig steht
+final class CasingPolyline: MKPolyline {}
+
 final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private let map = MKMapView()
   private let hint = UILabel()
   private var line: MKPolyline?
+  private var casing: CasingPolyline?
   private var following = false
 
   /// Signal Orange #E2461C
@@ -21,11 +25,14 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     map.frame = view.bounds
     map.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     map.delegate = self
+    // immer dunkel wie in der App, auch wenn das Auto Tag meldet (Testfahrt 7.11.: helle Karte)
+    map.overrideUserInterfaceStyle = .dark
+    map.tintColor = CarMapViewController.signal
     map.showsUserLocation = true
     map.showsCompass = false
     map.showsScale = false
     map.pointOfInterestFilter = .excludingAll
-    map.preferredConfiguration = MKStandardMapConfiguration(elevationStyle: .realistic, emphasisStyle: .muted)
+    map.preferredConfiguration = MKStandardMapConfiguration(elevationStyle: .flat, emphasisStyle: .muted)
     view.addSubview(map)
 
     hint.text = "Plane eine Tour auf dem iPhone und tippe auf Losfahren."
@@ -50,11 +57,16 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   func setRoute(_ coords: [CLLocationCoordinate2D]) {
     loadViewIfNeeded()
     if let l = line { map.removeOverlay(l) }
+    if let c = casing { map.removeOverlay(c) }
     line = nil
+    casing = nil
     hint.isHidden = coords.count >= 2
     guard coords.count >= 2 else { return }
+    let c = CasingPolyline(coordinates: coords, count: coords.count)
     let l = MKPolyline(coordinates: coords, count: coords.count)
+    casing = c
     line = l
+    map.addOverlay(c, level: .aboveRoads)
     map.addOverlay(l, level: .aboveRoads)
     if !following { showOverview() }
   }
@@ -103,8 +115,9 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
     guard let p = overlay as? MKPolyline else { return MKOverlayRenderer(overlay: overlay) }
     let r = MKPolylineRenderer(polyline: p)
-    r.strokeColor = CarMapViewController.signal
-    r.lineWidth = 7
+    let isCasing = p is CasingPolyline
+    r.strokeColor = isCasing ? UIColor(red: 11 / 255, green: 11 / 255, blue: 12 / 255, alpha: 0.85) : CarMapViewController.signal
+    r.lineWidth = isCasing ? 11 : 7
     r.lineCap = .round
     r.lineJoin = .round
     return r

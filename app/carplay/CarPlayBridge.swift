@@ -34,11 +34,15 @@ final class CarPlayBridge: NSObject {
   func connect(_ ic: CPInterfaceController, window: CPWindow) {
     interfaceController = ic
     let vc = CarMapViewController()
+    window.overrideUserInterfaceStyle = .dark
     window.rootViewController = vc
     mapVC = vc
 
     let t = CPMapTemplate()
     t.mapDelegate = self
+    // CUMO Look: dunkle Flächen statt Apple Rot und Hell (Testfahrt 7.11.)
+    t.guidanceBackgroundColor = UIColor(red: 22 / 255, green: 22 / 255, blue: 24 / 255, alpha: 1)
+    t.tripEstimateStyle = .dark
     mapTemplate = t
     updateButtons()
     ic.setRootTemplate(t, animated: false, completion: nil)
