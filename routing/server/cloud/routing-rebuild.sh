@@ -47,6 +47,8 @@ graphhopper:
 
   prepare.min_network_size: 200
   prepare.lm.landmarks: 16
+  # Landmarken je Profil parallel rechnen; mit einem Thread dauerte der Neuaufbau am 7.11. über zwei Stunden
+  prepare.lm.threads: 4
   routing.non_ch.max_waypoint_distance: 1000000
   routing.max_visited_nodes: 3000000
   graph.dataaccess.default_type: RAM_STORE
