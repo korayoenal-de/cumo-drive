@@ -31,8 +31,10 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
   const data = (await res.json()) as { features: F[] };
   return data.features.map((f) => {
     const pr = f.properties;
-    const name = pr.name ?? pr.street ?? pr.city ?? 'Ort';
-    const detail = [pr.city !== name ? pr.city : undefined, pr.state, pr.country].filter(Boolean).join(', ');
+    // Adresse mit Hausnummer: ohne eigenen Namen ist sie der Titel, sonst steht sie im Untertitel
+    const addr = pr.street && pr.housenumber ? `${pr.street} ${pr.housenumber}` : undefined;
+    const name = pr.name ?? addr ?? pr.street ?? pr.city ?? 'Ort';
+    const detail = [addr !== name ? addr : undefined, pr.city !== name ? pr.city : undefined, pr.state, pr.country].filter(Boolean).join(', ');
     return { name, detail, p: [f.geometry.coordinates[1], f.geometry.coordinates[0]] as LatLon };
   });
 }

@@ -45,8 +45,15 @@ export type TourRequest = {
   avoid: Avoid;
 };
 
-/** Aktueller Standort mit Ortsname. Fragt bei Bedarf nach der Berechtigung. */
-export async function locate(signal?: AbortSignal): Promise<Spot> {
+/** Höchstalter der Position, wenn ausdrücklich der aktuelle Standort gefragt ist */
+export const FRESH_MS = 30 * 1000;
+
+/**
+ * Aktueller Standort mit Ortsname. Fragt bei Bedarf nach der Berechtigung.
+ * maxAgeMs: wie alt eine gespeicherte Position höchstens sein darf (beim ausdrücklichen
+ * Tippen auf Mein Standort kurz, damit nach einer Fahrt nicht der alte Ort zurückkommt).
+ */
+export async function locate(signal?: AbortSignal, maxAgeMs = 5 * 60 * 1000): Promise<Spot> {
   let perm = await Location.getForegroundPermissionsAsync();
   if (perm.status !== Location.PermissionStatus.GRANTED && perm.canAskAgain) {
     perm = await Location.requestForegroundPermissionsAsync();
@@ -60,7 +67,7 @@ export async function locate(signal?: AbortSignal): Promise<Spot> {
   }
   let pos: Location.LocationObject | null = null;
   try {
-    pos = await Location.getLastKnownPositionAsync({ maxAge: 5 * 60 * 1000, requiredAccuracy: 1000 });
+    pos = await Location.getLastKnownPositionAsync({ maxAge: maxAgeMs, requiredAccuracy: 1000 });
     if (!pos) pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
   } catch {
     pos = null;

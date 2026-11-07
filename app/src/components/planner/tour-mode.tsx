@@ -14,7 +14,7 @@ import { PASS_STATUS_URL, PASSES, passPoint } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
-import { locate, toPlanError, type Spot } from '@/components/planner/create-tour';
+import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
 import { deleteTour } from '@/lib/library';
@@ -190,8 +190,12 @@ export function TourMode({
     setLocMsg(null);
     setLocating(true);
     try {
-      const spot = here ?? (await locate());
-      if (!here) onHere(spot);
+      // Immer neu orten: der beim Öffnen gemerkte Standort kann nach einer Fahrt veraltet sein
+      const spot = await locate(undefined, FRESH_MS).catch((e) => {
+        if (here) return here;
+        throw e;
+      });
+      onHere(spot);
       pick(spot.p, spot.name ?? 'Mein Standort');
     } catch (e) {
       setLocMsg(toPlanError(e).message);

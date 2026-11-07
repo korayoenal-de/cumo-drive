@@ -14,7 +14,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as Location from 'expo-location';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MapLayersButton } from '@/components/map/map-settings-sheet';
@@ -22,7 +22,7 @@ import { MapPassActions, type PassAction } from '@/components/planner/map-pass-a
 import { RouteMap } from '@/components/map/route-map';
 import { passState, usePassLive } from '@/lib/pass-live';
 import { PASSES, passPoint, passSummary, type Pass } from '@/lib/passes';
-import { buildTour, findPlace, locate, newSeed, PHASES, toPlanError, type PlanError, type PlanPhase, type Spot, type TourRequest } from '@/components/planner/create-tour';
+import { buildTour, findPlace, FRESH_MS, locate, newSeed, PHASES, toPlanError, type PlanError, type PlanPhase, type Spot, type TourRequest } from '@/components/planner/create-tour';
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
@@ -233,11 +233,23 @@ export default function Planner() {
     };
   }, []);
 
+  // Zurück in der App (etwa nach einer Fahrt): Standort still auffrischen, damit Suche und Mein Standort stimmen
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st !== 'active') return;
+      Location.getForegroundPermissionsAsync()
+        .then((perm) => (perm.granted ? locate(undefined, FRESH_MS) : null))
+        .then((spot) => spot && setHere(spot))
+        .catch(() => undefined);
+    });
+    return () => sub.remove();
+  }, []);
+
   async function findHere() {
     setLocating(true);
     setLocError(null);
     try {
-      setHere(await locate());
+      setHere(await locate(undefined, FRESH_MS));
     } catch (e) {
       setLocError(toPlanError(e));
     } finally {
@@ -322,8 +334,12 @@ export default function Planner() {
 
   function createRoundTrip() {
     void run(async (signal) => {
-      const start = picked ?? here ?? (await locate(signal));
-      if (!picked && !here) setHere(start);
+      // Ohne gewählten Ort neu orten, der gemerkte Standort kann nach einer Fahrt veraltet sein
+      const start = picked ?? (await locate(signal, FRESH_MS).catch((e) => {
+        if (here) return here;
+        throw e;
+      }));
+      if (!picked) setHere(start);
       return { start, km: roundKm, direction, profile, avoid };
     }, []);
   }
@@ -708,7 +724,7 @@ export default function Planner() {
                 accessibilityState={{ selected: !picked }}
                 onPress={() => {
                   setPicked(null);
-                  if (!here && !locating) void findHere();
+                  if (!locating) void findHere();
                 }}
                 style={styles.startRow}>
                 <Radio on={!picked} />
@@ -756,7 +772,7 @@ export default function Planner() {
                 onHere={() => {
                   setPicked(null);
                   setShowSearch(false);
-                  if (!here && !locating) void findHere();
+                  if (!locating) void findHere();
                 }}
                 onClose={() => setShowSearch(false)}
               />
