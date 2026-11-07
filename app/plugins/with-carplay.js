@@ -3,7 +3,9 @@
  * Entitlement com.apple.developer.carplay-maps und eine zweite Szene für das Autodisplay.
  * Die Szene selbst (CarPlaySceneDelegate) liegt in carplay/CarPlayBridge.swift.
  */
-const { withEntitlementsPlist, withInfoPlist } = require('expo/config-plugins');
+const fs = require('fs');
+const path = require('path');
+const { withDangerousMod, withEntitlementsPlist, withInfoPlist } = require('expo/config-plugins');
 
 const ROLE = 'CPTemplateApplicationSceneSessionRoleApplication';
 
@@ -28,5 +30,28 @@ module.exports = function withCarPlay(config) {
     c.modResults.UIApplicationSceneManifest = manifest;
     return c;
   });
+  // Eigene Navigationssymbole fürs Autodisplay (assets/carplay-icons, erzeugt von scripts/carplay-icons.sh)
+  config = withDangerousMod(config, [
+    'ios',
+    (c) => {
+      const src = path.join(c.modRequest.projectRoot, 'assets', 'carplay-icons');
+      const xcassets = path.join(c.modRequest.platformProjectRoot, c.modRequest.projectName, 'Images.xcassets');
+      if (!fs.existsSync(src) || !fs.existsSync(xcassets)) return c;
+      const names = new Set(fs.readdirSync(src).filter((f) => f.endsWith('.png')).map((f) => f.replace(/@[23]x\.png$/, '')));
+      for (const n of names) {
+        const dir = path.join(xcassets, `${n}.imageset`);
+        fs.mkdirSync(dir, { recursive: true });
+        const images = [];
+        for (const scale of ['2x', '3x']) {
+          const file = `${n}@${scale}.png`;
+          if (!fs.existsSync(path.join(src, file))) continue;
+          fs.copyFileSync(path.join(src, file), path.join(dir, file));
+          images.push({ idiom: 'universal', filename: file, scale });
+        }
+        fs.writeFileSync(path.join(dir, 'Contents.json'), JSON.stringify({ images, info: { version: 1, author: 'cumo' } }, null, 2));
+      }
+      return c;
+    },
+  ]);
   return config;
 };

@@ -10,7 +10,8 @@ import { Platform } from 'react-native';
 
 import { flatten, type Tour } from './tour';
 
-type Update = { key: string; text: string; symbol: string; distM: number; secs: number; restKm: number; restSecs: number };
+/** icon: eigenes Navigationssymbol (Bild im App Paket, etwa nav-links), symbol: SF Symbol als Ersatz */
+type Update = { key: string; text: string; symbol: string; icon?: string; distM: number; secs: number; restKm: number; restSecs: number };
 type Sub = { remove: () => void };
 type CarPlayModule = {
   isConnected(): Promise<boolean>;

@@ -37,6 +37,7 @@ final class CumoCarPlay: Module {
         key: p["key"] as? String ?? "",
         text: p["text"] as? String ?? "",
         symbol: p["symbol"] as? String ?? "arrow.up",
+        icon: p["icon"] as? String ?? "",
         distM: num("distM"),
         secs: num("secs"),
         restKm: num("restKm"),

@@ -134,13 +134,16 @@ final class CarPlayBridge: NSObject {
   }
 
   /// key wechselt mit dem nächsten Manöver; distM und secs gelten bis dorthin, restKm und restSecs bis zum Ziel
-  func update(key: String, text: String, symbol: String, distM: Double, secs: Double, restKm: Double, restSecs: Double) {
+  func update(key: String, text: String, symbol: String, icon: String, distM: Double, secs: Double, restKm: Double, restSecs: Double) {
     guard let s = session else { return }
     if key != maneuverKey {
       let m = CPManeuver()
       m.instructionVariants = [text]
+      // eigene CUMO Symbole (Images.xcassets, aus maneuver-geometry.ts), sonst SF Symbol
       let cfg = UIImage.SymbolConfiguration(pointSize: 44, weight: .bold)
-      if let img = UIImage(systemName: symbol, withConfiguration: cfg) ?? UIImage(systemName: "arrow.up", withConfiguration: cfg) {
+      if !icon.isEmpty, let own = UIImage(named: icon) {
+        m.symbolImage = own
+      } else if let img = UIImage(systemName: symbol, withConfiguration: cfg) ?? UIImage(systemName: "arrow.up", withConfiguration: cfg) {
         m.symbolImage = img
       }
       m.initialTravelEstimates = CPTravelEstimates(distanceRemaining: CarPlayBridge.distance(distM), timeRemaining: secs)

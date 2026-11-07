@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RouteMap } from '@/components/map/route-map';
 import { formatClock, formatDistance } from '@/components/navigation/format';
-import { soonThresholdM } from '@/components/navigation/maneuver-geometry';
+import { soonThresholdM, symbolFor } from '@/components/navigation/maneuver-geometry';
 import { DriveRatingCard } from '@/components/navigation/drive-rating';
 import { SpeedBadge } from '@/components/navigation/speed-badge';
 import { HighlightCard, LeadStopButton, StopAlert } from '@/components/navigation/nav-alerts';
@@ -358,6 +358,7 @@ export default function NavigationScreen() {
       key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}`,
       text: m.text,
       symbol: symbolForKind(m.kind, m.exit),
+      icon: `nav-${symbolFor(m.kind, m.exit).replaceAll('_', '-')}`,
       distM: state.distToNextM,
       secs: state.distToNextM / v,
       restKm: state.remainingKm ?? 0,
