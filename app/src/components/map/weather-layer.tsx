@@ -1,6 +1,8 @@
 /**
  * Ebene "Wetter" auf der Karte (Konzept Board 4, 6.11.2026): kleine Plaketten an den Pässen der Route
- * mit Temperatur und Symbol zur Ankunft. Gelb nur bei echtem Grund (weatherReason). Antippen öffnet ein
+ * mit Temperatur und Symbol zur Ankunft. Seit 7.11. subtiler (Koray): dunkle, halbdurchsichtige Plakette
+ * schräg rechts über dem Pass, damit Punkt und Nummer frei bleiben; ein Grund (weatherReason) färbt nur
+ * das Symbol gelb, der Text dazu steht im Bottom Sheet. Antippen öffnet ein
  * Bottom Sheet mit Regen, Wind und Böen, dazu Apples Pflichthinweis zu den Datenquellen.
  * Ankunft = jetzt plus geplante Fahrzeit bis zum Pass, weil die Tour noch kein Datum hat.
  */
@@ -58,16 +60,14 @@ export function WeatherMarkers({ items, onPress }: { items: Item[]; onPress: (it
             <Marker
               key={`wetter-${it.pass.id}-${Math.round(w.temp)}-${reason ?? ''}`}
               coordinate={{ latitude: it.pass.lat, longitude: it.pass.lon }}
-              anchor={{ x: 0.5, y: 1.25 }}
-              zIndex={14}
+              // schräg rechts oberhalb, so bleiben Passpunkt und Routennummer frei
+              anchor={{ x: -0.32, y: 1.35 }}
+              zIndex={9}
               onPress={() => onPress(it)}
               tracksViewChanges={false}>
-              <View style={[styles.plaque, reason && styles.plaqueWarn]} accessibilityLabel={`${it.pass.name}: ${Math.round(w.temp)} Grad${reason ? `, ${reason}` : ''}`}>
-                <SymbolView name={w.symbol as never} size={14} weight="semibold" type="monochrome" tintColor={reason ? Colors.ground : Colors.text} />
-                <AppText style={[styles.plaqueText, reason && styles.plaqueTextWarn]}>
-                  {fmtTemp(w.temp)}
-                  {reason && reason !== 'kalt' ? ` ${reason === 'Glätte möglich' ? 'Glätte' : reason}` : ''}
-                </AppText>
+              <View style={styles.plaque} accessibilityLabel={`${it.pass.name}: ${Math.round(w.temp)} Grad${reason ? `, ${reason}` : ''}`}>
+                <SymbolView name={w.symbol as never} size={12} weight="semibold" type="monochrome" tintColor={reason ? Colors.warn : Colors.muted} />
+                <AppText style={styles.plaqueText}>{fmtTemp(w.temp)}</AppText>
               </View>
             </Marker>
           );
@@ -138,17 +138,15 @@ const styles = StyleSheet.create({
   plaque: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    height: 28,
-    paddingLeft: 8,
-    paddingRight: 10,
-    borderRadius: 14,
-    backgroundColor: Colors.surface,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+    gap: 4,
+    height: 22,
+    paddingLeft: 6,
+    paddingRight: 8,
+    borderRadius: 11,
+    backgroundColor: 'rgba(22,22,24,0.82)',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
   },
-  plaqueWarn: { backgroundColor: Colors.warn },
-  plaqueText: { fontFamily: Fonts.bold, fontSize: 13, color: Colors.text, fontVariant: ['tabular-nums'] },
-  plaqueTextWarn: { color: Colors.ground },
+  plaqueText: { fontFamily: Fonts.semibold, fontSize: 12, color: Colors.text, fontVariant: ['tabular-nums'] },
   sheet: { gap: Spacing.l },
   big: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   temp: { fontFamily: Fonts.display, fontSize: 40, lineHeight: 44, color: Colors.text, fontVariant: ['tabular-nums'] },
