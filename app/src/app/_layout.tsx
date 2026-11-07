@@ -12,7 +12,7 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Platform } from 'react-native';
 
 import { AuthScreen } from '@/components/auth/auth-screen';
@@ -28,6 +28,8 @@ import { AppIntentHandler } from '@/live/intents';
 import { Colors } from '@/constants/theme';
 import { ToastHost } from '@/components/ui/toast';
 import { endAllNavActivities } from '@/live/nav-live';
+import { StartScreen } from '@/components/ui/start-screen';
+import { preloadOnStart } from '@/lib/preload';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -61,9 +63,16 @@ export default function RootLayout() {
   // Im Browser nicht auf die Schriften warten: so steht die Landingpage schon im statischen HTML (Suchmaschinen)
   const fontsDone = loaded || !!error || Platform.OS === 'web';
 
+  // Startanimation (nur in der App): sobald die Schriften da sind, löst sie den nativen Splash ab
+  const [intro, setIntro] = useState(Platform.OS !== 'web');
+  const introDone = useCallback(() => setIntro(false), []);
+  const appReady = fontsDone && (!needAuth || authReady);
   useEffect(() => {
-    if (fontsDone && (!needAuth || authReady)) SplashScreen.hideAsync();
-  }, [fontsDone, needAuth, authReady]);
+    if (intro ? fontsDone : appReady) SplashScreen.hideAsync();
+  }, [intro, fontsDone, appReady]);
+  useEffect(() => {
+    preloadOnStart();
+  }, []);
 
   // Verwaiste Live Activity aus einem früheren Start aufräumen (läuft eine Navigation, startet sie neu)
   useEffect(() => {
@@ -79,9 +88,16 @@ export default function RootLayout() {
     void syncVehicles();
   }, [userId]);
 
-  if (!fontsDone || (needAuth && !authReady)) return null;
+  if (!fontsDone) return null;
+  const withIntro = (content: ReactNode) => (
+    <>
+      {content}
+      {intro && <StartScreen ready={appReady} onDone={introDone} />}
+    </>
+  );
+  if (needAuth && !authReady) return withIntro(null);
   if (needAuth && !session) {
-    return (
+    return withIntro(
       <ThemeProvider value={theme}>
         <StatusBar style="light" />
         <AuthScreen />
@@ -90,7 +106,7 @@ export default function RootLayout() {
   }
   // einmalig nach dem Namen fragen, unter dem einen andere einladen
   if (needAuth && profile && !profile.displayName) {
-    return (
+    return withIntro(
       <ThemeProvider value={theme}>
         <StatusBar style="light" />
         <NameScreen />
@@ -98,7 +114,7 @@ export default function RootLayout() {
     );
   }
 
-  return (
+  return withIntro(
     <ThemeProvider value={theme}>
       <StatusBar style="light" />
       <EntitlementGate>

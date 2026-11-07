@@ -34,6 +34,11 @@ function ensure() {
     });
 }
 
+/** Schon beim Start laden, damit der Status bereit ist, wenn der Planer ihn braucht */
+export function prefetchPassLive() {
+  ensure();
+}
+
 function subscribe(l: () => void) {
   listeners.add(l);
   ensure();
