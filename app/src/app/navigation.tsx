@@ -43,6 +43,8 @@ import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour
 const HL_SHOW_MS = 5000;
 /** Ab dieser Entfernung zeigt CarPlay das Manöversymbol in Signal Orange */
 const CP_SOON_M = 200;
+/** Ab so viel Abstand zur Route gilt man auf dem Autodisplay als abseits (wie in der App) */
+const CP_OFF_M = 60;
 
 export default function NavigationScreen() {
   useKeepAwake();
@@ -372,17 +374,43 @@ export default function NavigationScreen() {
     // kurz vor dem Manöver wird das Symbol orange (CarPlay erlaubt dort keine Animation); neuer Schlüssel,
     // damit CarPlay das Bild austauscht
     const soon = state.distToNextM < CP_SOON_M;
+    const restSecs = state.eta ? Math.max(0, (state.eta.getTime() - Date.now()) / 1000) : 0;
+    // Abseits der Tour (Testfahrt 7.11.): ohne neue Route ein eigener Hinweis statt "0 m",
+    // mit Rückweg steht "Zurück zur Tour" vor jeder Anweisung, bis die Tour wieder erreicht ist
+    const rejoin = r.rejoinIndex != null && state.remainingKm != null ? (r.cumKm[r.rejoinIndex] - (r.km - state.remainingKm)) * 1000 : 0;
+    const lost = (state.offRouteM ?? 0) > CP_OFF_M;
+    if (lost) {
+      carPlayUpdate({
+        key: `abseits-${state.status}`,
+        text: state.status === 'neuberechnung' ? 'Abseits der Tour. Der Weg zurück wird berechnet.' : 'Abseits der Tour. Fahr zurück auf die orange Linie.',
+        symbol: 'arrow.uturn.backward',
+        icon: '',
+        distM: state.offRouteM ?? 0,
+        secs: 0,
+        restKm: state.remainingKm ?? 0,
+        restSecs,
+      });
+      return;
+    }
     carPlayUpdate({
-      key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}${soon ? '-on' : ''}`,
-      text: m.text,
+      key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}${soon ? '-on' : ''}${rejoin > 20 ? '-zurueck' : ''}`,
+      text: rejoin > 20 ? `Zurück zur Tour: ${m.text}` : m.text,
       symbol: symbolForKind(m.kind, m.exit),
       icon: `nav-${symbolFor(m.kind, m.exit).replaceAll('_', '-')}${soon ? '-on' : ''}`,
       distM: state.distToNextM,
       secs: state.distToNextM / v,
       restKm: state.remainingKm ?? 0,
-      restSecs: state.eta ? Math.max(0, (state.eta.getTime() - Date.now()) / 1000) : 0,
+      restSecs,
     });
-  }, [cpRunning, state.route, state.next, state.distToNextM, state.remainingKm, state.eta, state.speedKmh]);
+  }, [cpRunning, state.route, state.next, state.distToNextM, state.remainingKm, state.eta, state.speedKmh, state.offRouteM, state.status]);
+  // beim Verlassen der Tour einmal deutlich auf dem Autodisplay melden (höchstens einmal pro Minute)
+  const cpOffAt = useRef(0);
+  const cpOff = cpRunning && (state.offRouteM ?? 0) > CP_OFF_M;
+  useEffect(() => {
+    if (!cpOff || Date.now() - cpOffAt.current < 60000) return;
+    cpOffAt.current = Date.now();
+    carPlayAlert('Abseits der Tour', 'Wir führen dich zurück auf die Route.');
+  }, [cpOff]);
   // "Los" auf dem Autodisplay: sofort starten, sobald die Navigation bereit ist
   useEffect(() => {
     if ((state.status === 'bereit' || state.status === 'angekommen') && takeCarPlayStart()) void controls.start();
