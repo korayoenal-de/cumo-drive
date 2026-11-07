@@ -490,18 +490,6 @@ export function TourMode({
         </View>
       )}
 
-      <View style={styles.gapS}>
-        <AppText variant="label">Name</AppText>
-        <TextInput
-          value={plan.name}
-          onChangeText={plan.setName}
-          placeholder="Name der Tour"
-          placeholderTextColor={Colors.muted}
-          style={[styles.search, styles.searchOnGround]}
-          accessibilityLabel="Name der Tour"
-        />
-      </View>
-
       <Section label="Route" action={pts.length ? { label: 'Zurücksetzen', onPress: resetForm } : undefined}>
         <View>
           {slots.map((p, i) => {
@@ -534,6 +522,19 @@ export function TourMode({
           )}
         </View>
       </Section>
+
+      {/* Name unter den Etappen (Koray 7.11.): erst die Strecke, dann wie sie heißt */}
+      <View style={styles.gapS}>
+        <AppText variant="label">Name</AppText>
+        <TextInput
+          value={plan.name}
+          onChangeText={plan.setName}
+          placeholder="Name der Tour"
+          placeholderTextColor={Colors.muted}
+          style={[styles.search, styles.searchOnGround]}
+          accessibilityLabel="Name der Tour"
+        />
+      </View>
 
       {plan.step && (
         <View style={[styles.card, styles.statusRow]}>
