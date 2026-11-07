@@ -41,6 +41,8 @@ import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour
 
 /** So lange ersetzt die Highlight Ansage die Routenführung */
 const HL_SHOW_MS = 5000;
+/** Ab dieser Entfernung zeigt CarPlay das Manöversymbol in Signal Orange */
+const CP_SOON_M = 200;
 
 export default function NavigationScreen() {
   useKeepAwake();
@@ -367,11 +369,14 @@ export default function NavigationScreen() {
     const m = r?.maneuvers[state.next];
     if (!cpRunning || !r || !m || state.distToNextM == null) return;
     const v = Math.max(8, (state.speedKmh ?? 50) / 3.6);
+    // kurz vor dem Manöver wird das Symbol orange (CarPlay erlaubt dort keine Animation); neuer Schlüssel,
+    // damit CarPlay das Bild austauscht
+    const soon = state.distToNextM < CP_SOON_M;
     carPlayUpdate({
-      key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}`,
+      key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}${soon ? '-on' : ''}`,
       text: m.text,
       symbol: symbolForKind(m.kind, m.exit),
-      icon: `nav-${symbolFor(m.kind, m.exit).replaceAll('_', '-')}`,
+      icon: `nav-${symbolFor(m.kind, m.exit).replaceAll('_', '-')}${soon ? '-on' : ''}`,
       distM: state.distToNextM,
       secs: state.distToNextM / v,
       restKm: state.remainingKm ?? 0,

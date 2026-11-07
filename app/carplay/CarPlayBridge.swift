@@ -142,7 +142,8 @@ final class CarPlayBridge: NSObject {
       // eigene CUMO Symbole (Images.xcassets, aus maneuver-geometry.ts), sonst SF Symbol
       let cfg = UIImage.SymbolConfiguration(pointSize: 44, weight: .bold)
       if !icon.isEmpty, let own = UIImage(named: icon) {
-        m.symbolImage = own
+        // Originalfarben behalten, sonst färbt CarPlay das orange Symbol vor dem Manöver weiß
+        m.symbolImage = own.withRenderingMode(.alwaysOriginal)
       } else if let img = UIImage(systemName: symbol, withConfiguration: cfg) ?? UIImage(systemName: "arrow.up", withConfiguration: cfg) {
         m.symbolImage = img
       }
