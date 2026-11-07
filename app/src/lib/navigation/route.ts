@@ -346,13 +346,13 @@ async function traceLine(line: LatLon[], signal?: AbortSignal): Promise<Piece> {
   return acc;
 }
 
-async function approach(from: LatLon, to: LatLon, toHeading: number, req: NavRequest, signal?: AbortSignal, fromHeading?: number | null, fast = false): Promise<Piece> {
+async function approach(from: LatLon, to: LatLon, toHeading: number | null, req: NavRequest, signal?: AbortSignal, fromHeading?: number | null, fast = false): Promise<Piece> {
   const body = {
     locations: [
       // mit Fahrtrichtung: weiterfahren statt wenden, wenn es vorne einen Weg zurück gibt
       { lat: from[0], lon: from[1], type: 'break', radius: 50, ...(fromHeading != null ? { heading: Math.round(fromHeading), heading_tolerance: 45 } : {}) },
       // Ankunft in Fahrtrichtung der Tour, damit man nicht falsch herum einsteigt
-      { lat: to[0], lon: to[1], type: 'break', heading: Math.round(toHeading), heading_tolerance: 60, minimum_reachability: 300 },
+      { lat: to[0], lon: to[1], type: 'break', ...(toHeading != null ? { heading: Math.round(toHeading), heading_tolerance: 60 } : {}), minimum_reachability: 300 },
     ],
     // Weg auf die Tour (Zum Start, Einsteigen) und weite Anreise: schnellste Route, das Tourprofil gilt erst auf der Tour
     ...costingFor(fast || haversine(from, to) > LONG_APPROACH_M ? 'schnell' : req.profile, req.avoid),
@@ -536,6 +536,11 @@ async function bestRejoin(current: NavRoute, j0: number, from: LatLon, heading: 
   }
 }
 
+/** Ab hier geht es nach einer Abweichung direkt zum Ziel statt zurück auf die Tour */
+const NEAR_END_TOUR_KM = 3;
+const NEAR_END_AIR_KM = 1.5;
+const NEAR_END_MAX_KM = 10;
+
 export async function rejoinNavRoute(
   req: NavRequest,
   current: NavRoute,
@@ -547,10 +552,16 @@ export async function rejoinNavRoute(
   const { shape } = current;
   const start = Math.max(0, Math.min(doneIndex, shape.length - 2));
   const j0 = nearestIndex(shape, from, start);
-  const j = j0 < shape.length - 1 && current.km - current.cumKm[j0] >= 0.05 ? await bestRejoin(current, j0, from, heading, req, signal) : j0;
+  const end = shape[shape.length - 1];
+  // Kurz vor dem Ziel lohnt kein Umweg zurück auf die Tour: direkt zum Ziel (Wunsch Koray, 7.11.2026)
+  // Luftlinie nur zusammen mit wenig Rest Tour, sonst würde eine Rundtour gleich am Anfang abgekürzt
+  const remainKm = current.km - current.cumKm[j0];
+  const nearEnd = remainKm <= NEAR_END_TOUR_KM || (haversine(from, end) / 1000 <= NEAR_END_AIR_KM && remainKm <= NEAR_END_MAX_KM);
+  const j = nearEnd ? shape.length - 1 : j0 < shape.length - 1 && current.km - current.cumKm[j0] >= 0.05 ? await bestRejoin(current, j0, from, heading, req, signal) : j0;
   if (j >= shape.length - 1 || current.km - current.cumKm[j] < 0.05) {
     // praktisch am Ziel: direkt dorthin
-    const lead = await approach(from, shape[shape.length - 1], 0, req, signal);
+    // Am Ziel ist die Richtung egal, sonst erzwingt Valhalla eine Ankunft nach Norden
+    const lead = await approach(from, end, null, req, signal, heading);
     const cumKm = cumulativeKm(lead.shape);
     const maneuvers = lead.maneuvers.filter((m) => m.type !== 27).map((m) => toManeuver(m, cumKm));
     return {

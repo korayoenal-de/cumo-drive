@@ -8,6 +8,7 @@ import UIKit
 final class CasingPolyline: MKPolyline {}
 /// Weg zurück zur Tour nach einer Abweichung: gestrichelt wie in der App
 final class RejoinPolyline: MKPolyline {}
+final class RejoinCasingPolyline: MKPolyline {}
 
 final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private let map = MKMapView()
@@ -15,6 +16,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private var line: MKPolyline?
   private var casing: CasingPolyline?
   private var rejoin: RejoinPolyline?
+  private var rejoinCasing: RejoinCasingPolyline?
   private var following = false
   /// Kamera wie in der App: schräg von hinten, folgt der Position, die die App schickt
   private var followCenter: CLLocationCoordinate2D?
@@ -23,6 +25,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
 
   /// Signal Orange #E2461C
   private static let signal = UIColor(red: 226 / 255, green: 70 / 255, blue: 28 / 255, alpha: 1)
+  private static let warn = UIColor(red: 232 / 255, green: 176 / 255, blue: 58 / 255, alpha: 1)
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -86,10 +89,16 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   func setRejoin(_ coords: [CLLocationCoordinate2D]) {
     loadViewIfNeeded()
     if let r = rejoin { map.removeOverlay(r) }
+    if let c = rejoinCasing { map.removeOverlay(c) }
     rejoin = nil
+    rejoinCasing = nil
     guard coords.count >= 2 else { return }
+    // Wie in der App: durchgezogen in Gelb mit dunkler Kontur, über der Tour
+    let c = RejoinCasingPolyline(coordinates: coords, count: coords.count)
     let r = RejoinPolyline(coordinates: coords, count: coords.count)
+    rejoinCasing = c
     rejoin = r
+    map.addOverlay(c, level: .aboveRoads)
     map.addOverlay(r, level: .aboveRoads)
   }
 
@@ -157,11 +166,13 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
     guard let p = overlay as? MKPolyline else { return MKOverlayRenderer(overlay: overlay) }
     let r = MKPolylineRenderer(polyline: p)
-    if p is RejoinPolyline {
-      r.strokeColor = CarMapViewController.signal
-      r.lineWidth = 6
-      r.lineDashPattern = [1, 12]
+    if p is RejoinPolyline || p is RejoinCasingPolyline {
+      // Rückweg zur Tour: gelb durchgezogen wie in der App (Colors.warn #E8B03A)
+      let isCasing = p is RejoinCasingPolyline
+      r.strokeColor = isCasing ? UIColor(red: 11 / 255, green: 11 / 255, blue: 12 / 255, alpha: 0.85) : CarMapViewController.warn
+      r.lineWidth = isCasing ? 11 : 7
       r.lineCap = .round
+      r.lineJoin = .round
       return r
     }
     let isCasing = p is CasingPolyline
