@@ -33,9 +33,9 @@ const RB = 11.2;
 const RT = 4.2;
 const HALF = RB * Math.sin(Math.PI / N) * 0.97;
 const OFF = Colors.empty;
-/** Kreis um 180 Grad gedreht (eine Zacke oben, zwei unten); Füllreihenfolge im Uhrzeigersinn ab unten links */
+/** Kreis um 180 Grad gedreht (eine Zacke oben, zwei unten); Füllung beginnt immer unten bei 6 Uhr und läuft im Uhrzeigersinn (Koray 7.11.) */
 const ROT = 180;
-const ORDER = [1, 2, 3, 4, 5, 6, 0];
+const ORDER = [0, 1, 2, 3, 4, 5, 6];
 const f = (v: number) => v.toFixed(2);
 
 const TRIS = Array.from({ length: N }, (_, i) => {
