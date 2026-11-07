@@ -216,3 +216,27 @@ describe('Fahrspaß Wert einer Tour', () => {
     assert.deepEqual([0, 34, 35, 55, 70, 85, 100].map(tourFunLevel), [1, 1, 2, 3, 4, 5, 5]);
   });
 });
+
+describe('Kreisverkehr Richtung', () => {
+  it('Wenden über den Kreisverkehr zeigt zurück, nicht links', async () => {
+    const { roundaboutTurn } = await import('../navigation/roundabout');
+    const { symbolFor } = await import('../../components/navigation/maneuver-geometry');
+    const { cumulativeKm } = await import('../navigation/route');
+    // 300 m nach Norden, Ring (r 15 m) gegen den Uhrzeigersinn fast ganz herum, dann zurück nach Süden
+    const d = 0.0000090;
+    const shape: LatLon[] = [];
+    for (let i = 0; i <= 30; i++) shape.push([47 + i * 10 * d, 8]);
+    const c: LatLon = [47 + 315 * d, 8];
+    for (let a = 180; a >= -150; a -= 15) {
+      const r = (a * Math.PI) / 180;
+      shape.push([c[0] + 15 * d * Math.cos(r), c[1] + (15 * d * Math.sin(r)) / Math.cos((47 * Math.PI) / 180)]);
+    }
+    for (let i = 1; i <= 20; i++) shape.push([shape[shape.length - 1][0] - 10 * d, shape[shape.length - 1][1]]);
+    const cumKm = cumulativeKm(shape);
+    const route = { shape, cumKm, km: cumKm[cumKm.length - 1], minutes: 5, source: 'valhalla', maneuvers: [{ kind: 'kreisverkehr', text: '', speech: '', exit: 4, index: 30, km: cumKm[30] }] } as unknown as NavRoute;
+    const t = roundaboutTurn(route, 0)!;
+    assert.ok(Math.abs(t) > 130, `Winkel ${t}`);
+    assert.equal(symbolFor('kreisverkehr', 4, t), 'kreisverkehr_w_4');
+    assert.equal(symbolFor('kreisverkehr', 2, 85), 'kreisverkehr_r_2');
+  });
+});

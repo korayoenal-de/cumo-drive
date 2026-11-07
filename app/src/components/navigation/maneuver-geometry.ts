@@ -30,6 +30,7 @@ export type NavSymbol =
   | 'kreisverkehr_4'
   | 'kreisverkehr_5'
   | 'kreisverkehr_verlassen'
+  | RoundaboutSymbol
   | 'faehre_an_bord'
   | 'faehre_verlassen'
   | 'ziel_links'
@@ -43,7 +44,7 @@ export type NavSymbol =
   | 'sammelpunkt'
   | 'blitzer';
 
-export const SYMBOL_NAMES: Record<NavSymbol, string> = {
+export const SYMBOL_NAMES: Record<Exclude<NavSymbol, RoundaboutSymbol>, string> = {
   start: 'Start',
   ziel: 'Ziel',
   zwischenziel: 'Zwischenziel',
@@ -87,6 +88,33 @@ export const SYMBOL_NAMES: Record<NavSymbol, string> = {
   sammelpunkt: 'Sammelpunkt',
   blitzer: 'Blitzer',
 };
+
+/**
+ * Kreisverkehr nach gemessener Richtung (Testfahrt 7.11.: die 4. Ausfahrt war zurück, das Symbol zeigte links):
+ * r rechts, hr halbrechts, g geradeaus, hl halblinks, l links, w zurück; dazu die Ausfahrt Nummer (0 unbekannt).
+ */
+export type RoundDir = 'r' | 'hr' | 'g' | 'hl' | 'l' | 'w';
+export type RoundaboutSymbol = `kreisverkehr_${RoundDir}_${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7}`;
+export const ROUND_DIR_ANGLE: Record<RoundDir, number> = { r: 90, hr: 40, g: 0, hl: -40, l: -90, w: -140 };
+const ROUND_DIR_NAME: Record<RoundDir, string> = { r: 'rechts', hr: 'halbrechts', g: 'geradeaus', hl: 'halblinks', l: 'links', w: 'zurück' };
+
+/** Alle Symbole mit Namen, auch die Kreisverkehr Richtungen (für die Bilder in CarPlay) */
+export const ALL_SYMBOL_NAMES: Record<NavSymbol, string> = (() => {
+  const out: Record<string, string> = { ...SYMBOL_NAMES };
+  for (const d of Object.keys(ROUND_DIR_ANGLE) as RoundDir[]) {
+    for (let n = 0; n <= 7; n++) out[`kreisverkehr_${d}_${n}`] = `Kreisverkehr ${n ? `${n}. Ausfahrt ` : ''}${ROUND_DIR_NAME[d]}`;
+  }
+  return out as Record<NavSymbol, string>;
+})();
+
+export function roundDir(turn: number): RoundDir {
+  if (Math.abs(turn) > 150 || turn < -130) return 'w';
+  if (turn > 65) return 'r';
+  if (turn > 20) return 'hr';
+  if (turn >= -20) return 'g';
+  if (turn >= -65) return 'hl';
+  return 'l';
+}
 
 /** ink: Hauptfarbe, faint: Hauptfarbe schwach (Umgebung), ground: Untergrund, signal: Akzent */
 export type Paint = 'ink' | 'faint' | 'ground' | 'signal';
@@ -344,6 +372,12 @@ function sideDestination(): Shape[] {
 }
 
 export function symbolGeometry(sym: NavSymbol): IconGeometry {
+  // Kreisverkehr nach gemessener Richtung
+  const rd = /^kreisverkehr_(r|hr|g|hl|l|w)_\d$/.exec(sym);
+  if (rd) {
+    const exit = ROUND_DIR_ANGLE[rd[1] as RoundDir];
+    return { shapes: roundabout(exit), nudge: unit(exit), ring: ringCenter };
+  }
   switch (sym) {
     case 'geradeaus':
       return { shapes: turn(0), nudge: unit(0) };
@@ -387,6 +421,7 @@ export function symbolGeometry(sym: NavSymbol): IconGeometry {
     }
     case 'kreisverkehr_verlassen':
       return { shapes: roundabout(0, false), nudge: unit(0) };
+
     case 'kehre':
       return { shapes: hairpin(), nudge: unit(-62) };
     case 'faehre_an_bord':
@@ -485,7 +520,12 @@ export function symbolGeometry(sym: NavSymbol): IconGeometry {
 export const ROUNDABOUT_EXITS = [90, 30, -30, -90, -140];
 
 /** Symbol für ein Manöver, im Kreisverkehr mit Ausfahrt Nummer. */
-export function symbolFor(kind: ManeuverKind, exit?: number): NavSymbol {
+/** turn: gemessene Richtung beim Verlassen des Kreisverkehrs (roundaboutTurn), hat Vorrang vor der Nummer */
+export function symbolFor(kind: ManeuverKind, exit?: number, turn?: number | null): NavSymbol {
+  if (kind === 'kreisverkehr' && turn != null) {
+    const n = exit != null && exit >= 1 && exit <= 7 ? exit : 0;
+    return `kreisverkehr_${roundDir(turn)}_${n}` as NavSymbol;
+  }
   if (kind === 'kreisverkehr' && exit != null && exit >= 1 && exit <= 5) return `kreisverkehr_${exit}` as NavSymbol;
   return kind;
 }

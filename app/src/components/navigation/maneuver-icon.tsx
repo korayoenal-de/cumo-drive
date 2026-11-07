@@ -131,7 +131,7 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
     <Animated.View style={style}>
       <Svg width={size} height={size} viewBox="0 0 64 64">
         {g.mirror ? <G transform="matrix(-1 0 0 1 64 0)">{all}</G> : all}
-        {g.ring && /_(\d)$/.test(symbol) && (
+        {g.ring && /_([1-9])$/.test(symbol) && (
           <SvgText x={g.ring.x} y={g.ring.y + 5} fontSize={14} fontWeight="800" fill={color} textAnchor="middle">
             {symbol.slice(-1)}
           </SvgText>
@@ -197,8 +197,8 @@ function DrawnHead({ d, color, p, at }: { d: string; color: string; p: SharedVal
 }
 
 /** Manöver Symbol; im Kreisverkehr mit der Ausfahrt Nummer. */
-export function ManeuverIcon({ kind, exit, size = 64, color = Colors.text, soon = false }: { kind: ManeuverKind; exit?: number; size?: number; color?: string; soon?: boolean }) {
-  return <NavSymbolIcon symbol={symbolFor(kind, exit)} size={size} color={color} soon={soon} />;
+export function ManeuverIcon({ kind, exit, turn, size = 64, color = Colors.text, soon = false }: { kind: ManeuverKind; exit?: number; turn?: number | null; size?: number; color?: string; soon?: boolean }) {
+  return <NavSymbolIcon symbol={symbolFor(kind, exit, turn)} size={size} color={color} soon={soon} />;
 }
 
 /** Lautsprecher, an oder aus. */

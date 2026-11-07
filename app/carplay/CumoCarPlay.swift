@@ -6,7 +6,7 @@ final class CumoCarPlay: Module {
   public func definition() -> ExpoModulesCore.ModuleDefinition {
     Name("CumoCarPlay")
 
-    Events("onConnect", "onDisconnect", "onStart", "onEnd")
+    Events("onConnect", "onDisconnect", "onStart", "onEnd", "onVoice")
 
     OnCreate {
       CarPlayBridge.shared.emit = { [weak self] name, body in
@@ -41,7 +41,10 @@ final class CumoCarPlay: Module {
         distM: num("distM"),
         secs: num("secs"),
         restKm: num("restKm"),
-        restSecs: num("restSecs")
+        restSecs: num("restSecs"),
+        thenText: p["thenText"] as? String ?? "",
+        thenSymbol: p["thenSymbol"] as? String ?? "",
+        thenIcon: p["thenIcon"] as? String ?? ""
       )
     }.runOnQueue(.main)
 
@@ -51,6 +54,23 @@ final class CumoCarPlay: Module {
 
     AsyncFunction("alert") { (title: String, subtitle: String) in
       CarPlayBridge.shared.alert(title: title, subtitle: subtitle)
+    }.runOnQueue(.main)
+
+    // ab Build 10: Hinweis mit Bild (Logo als Pegel), Rückweg gestrichelt, Kamera wie in der App, Ton Knopf
+    AsyncFunction("alertImage") { (title: String, subtitle: String, image: String) in
+      CarPlayBridge.shared.alert(title: title, subtitle: subtitle, image: image)
+    }.runOnQueue(.main)
+
+    AsyncFunction("setRejoin") { (coords: [[Double]]) in
+      CarPlayBridge.shared.setRejoin(coords)
+    }.runOnQueue(.main)
+
+    AsyncFunction("camera") { (lat: Double, lon: Double, heading: Double) in
+      CarPlayBridge.shared.camera(lat: lat, lon: lon, heading: heading)
+    }.runOnQueue(.main)
+
+    AsyncFunction("setVoice") { (on: Bool) in
+      CarPlayBridge.shared.setVoice(on)
     }.runOnQueue(.main)
   }
 }

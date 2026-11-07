@@ -23,13 +23,14 @@ const SIGNAL_OVERLAY = 'rgba(41,19,14,0.96)';
 const GOOD_OVERLAY = 'rgba(19,33,27,0.96)';
 
 /** soon: das Manöver steht kurz bevor (etwa 150 m), dann stupst der Pfeil an. */
-export function ManeuverCard({ maneuver, distM, then, soon = false, footer }: { maneuver: Maneuver; distM: number | null; then?: Maneuver; soon?: boolean; footer?: ReactNode }) {
+/** turn und thenTurn: gemessene Richtung im Kreisverkehr (roundaboutTurn) */
+export function ManeuverCard({ maneuver, distM, then, soon = false, footer, turn, thenTurn }: { maneuver: Maneuver; distM: number | null; then?: Maneuver; soon?: boolean; footer?: ReactNode; turn?: number | null; thenTurn?: number | null }) {
   const d = formatDistance(distM);
   return (
     <GlassPanel style={styles.maneuver} fallback={Colors.overlay}>
       <View style={styles.maneuverRow}>
         <View style={styles.arrowBox}>
-          <ManeuverIcon kind={maneuver.kind} exit={maneuver.exit} size={72} soon={soon} />
+          <ManeuverIcon kind={maneuver.kind} exit={maneuver.exit} turn={turn} size={72} soon={soon} />
         </View>
         <View style={styles.flex}>
           {d.value !== '' && (
@@ -47,7 +48,7 @@ export function ManeuverCard({ maneuver, distM, then, soon = false, footer }: { 
       {then && (
         <View style={styles.then}>
           <AppText variant="caption" muted>Dann</AppText>
-          <ManeuverIcon kind={then.kind} exit={then.exit} size={22} color={Colors.muted} />
+          <ManeuverIcon kind={then.kind} exit={then.exit} turn={thenTurn} size={22} color={Colors.muted} />
           <AppText variant="caption" muted numberOfLines={1} style={styles.flex}>{then.text}</AppText>
         </View>
       )}

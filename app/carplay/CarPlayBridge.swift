@@ -21,6 +21,8 @@ final class CarPlayBridge: NSObject {
   private var maneuverKey: String?
   private var maneuver: CPManeuver?
   private var panning = false
+  /// Sprachansagen an (Knopf auf dem Autodisplay, Zustand kommt aus der App)
+  private var voiceOn = true
 
   private var tourName = ""
   private var tourCoords: [CLLocationCoordinate2D] = []
@@ -134,21 +136,33 @@ final class CarPlayBridge: NSObject {
   }
 
   /// key wechselt mit dem nächsten Manöver; distM und secs gelten bis dorthin, restKm und restSecs bis zum Ziel
-  func update(key: String, text: String, symbol: String, icon: String, distM: Double, secs: Double, restKm: Double, restSecs: Double) {
+  private static func maneuverImage(icon: String, symbol: String, size: CGFloat) -> UIImage? {
+    // eigene CUMO Symbole (Images.xcassets, aus maneuver-geometry.ts), sonst SF Symbol
+    if !icon.isEmpty, let own = UIImage(named: icon) {
+      // Originalfarben behalten, sonst färbt CarPlay das orange Symbol vor dem Manöver weiß
+      return own.withRenderingMode(.alwaysOriginal)
+    }
+    let cfg = UIImage.SymbolConfiguration(pointSize: size, weight: .bold)
+    return UIImage(systemName: symbol, withConfiguration: cfg) ?? UIImage(systemName: "arrow.up", withConfiguration: cfg)
+  }
+
+  /// then: das Manöver danach ("Dann" wie in der App), CarPlay zeigt es unter dem ersten, wenn Platz ist
+  func update(key: String, text: String, symbol: String, icon: String, distM: Double, secs: Double, restKm: Double, restSecs: Double,
+              thenText: String = "", thenSymbol: String = "", thenIcon: String = "") {
     guard let s = session else { return }
     if key != maneuverKey {
       let m = CPManeuver()
       m.instructionVariants = [text]
-      // eigene CUMO Symbole (Images.xcassets, aus maneuver-geometry.ts), sonst SF Symbol
-      let cfg = UIImage.SymbolConfiguration(pointSize: 44, weight: .bold)
-      if !icon.isEmpty, let own = UIImage(named: icon) {
-        // Originalfarben behalten, sonst färbt CarPlay das orange Symbol vor dem Manöver weiß
-        m.symbolImage = own.withRenderingMode(.alwaysOriginal)
-      } else if let img = UIImage(systemName: symbol, withConfiguration: cfg) ?? UIImage(systemName: "arrow.up", withConfiguration: cfg) {
-        m.symbolImage = img
-      }
+      m.symbolImage = CarPlayBridge.maneuverImage(icon: icon, symbol: symbol, size: 44)
       m.initialTravelEstimates = CPTravelEstimates(distanceRemaining: CarPlayBridge.distance(distM), timeRemaining: secs)
-      s.upcomingManeuvers = [m]
+      var list = [m]
+      if !thenText.isEmpty {
+        let n = CPManeuver()
+        n.instructionVariants = [thenText]
+        n.symbolImage = CarPlayBridge.maneuverImage(icon: thenIcon, symbol: thenSymbol, size: 28)
+        list.append(n)
+      }
+      s.upcomingManeuvers = list
       maneuverKey = key
       maneuver = m
     } else if let m = maneuver {
@@ -176,7 +190,7 @@ final class CarPlayBridge: NSObject {
   }
 
   /// Kurzer Hinweis über der Karte, etwa für einen Pass
-  func alert(title: String, subtitle: String) {
+  func alert(title: String, subtitle: String, image: String = "") {
     guard let t = mapTemplate else { return }
     let present = {
       let ok = CPAlertAction(title: "OK", style: .default) { [weak t] _ in
@@ -185,7 +199,8 @@ final class CarPlayBridge: NSObject {
       let a = CPNavigationAlert(
         titleVariants: [title],
         subtitleVariants: subtitle.isEmpty ? [] : [subtitle],
-        image: nil,
+        // Logo als Fahrspaß Pegel (fun-1 bis fun-5), wie in der Ansage auf dem iPhone
+        image: image.isEmpty ? nil : UIImage(named: image)?.withRenderingMode(.alwaysOriginal),
         primaryAction: ok,
         secondaryAction: nil,
         duration: 10
@@ -199,6 +214,21 @@ final class CarPlayBridge: NSObject {
     }
   }
 
+  // MARK: Karte und Ton
+
+  func setRejoin(_ coords: [[Double]]) {
+    mapVC?.setRejoin(coords.compactMap { $0.count >= 2 ? CLLocationCoordinate2D(latitude: $0[0], longitude: $0[1]) : nil })
+  }
+
+  func camera(lat: Double, lon: Double, heading: Double) {
+    mapVC?.followCamera(CLLocationCoordinate2D(latitude: lat, longitude: lon), heading: heading)
+  }
+
+  func setVoice(_ on: Bool) {
+    voiceOn = on
+    updateButtons()
+  }
+
   // MARK: Knöpfe
 
   private func updateButtons() {
@@ -209,7 +239,10 @@ final class CarPlayBridge: NSObject {
     zoomIn.image = UIImage(systemName: "plus.magnifyingglass")
     let zoomOut = CPMapButton { [weak self] _ in self?.mapVC?.zoom(2) }
     zoomOut.image = UIImage(systemName: "minus.magnifyingglass")
-    t.mapButtons = panning ? [] : [pan, zoomIn, zoomOut]
+    // Ton an und aus wie auf dem iPhone, nur während der Führung
+    let voice = CPMapButton { [weak self] _ in self?.emit?("onVoice", [:]) }
+    voice.image = UIImage(systemName: voiceOn ? "speaker.wave.2.fill" : "speaker.slash.fill")
+    t.mapButtons = panning ? [] : (session != nil ? [voice, zoomIn, zoomOut, pan] : [pan, zoomIn, zoomOut])
 
     if panning {
       t.leadingNavigationBarButtons = [CPBarButton(title: "Fertig") { [weak self] _ in self?.setPanning(false) }]

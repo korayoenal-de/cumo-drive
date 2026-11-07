@@ -22,7 +22,9 @@ import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
-import { carPlayAlert, carPlaySetGuide, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
+import { carPlayAlert, carPlayCamera, carPlayHasRejoin, carPlaySetGuide, carPlaySetRejoin, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
+import { roundaboutTurn } from '@/lib/navigation/roundabout';
+import { toFunLevel } from '@/components/ui/fun-gauge';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
 import { useSession } from '@/lib/auth';
 import { saveDrive } from '@/lib/drives';
@@ -160,7 +162,7 @@ export default function NavigationScreen() {
     controls.say(highlightSpeech(nextHl, hlDistM));
     const len = Math.max(1, Math.round(nextHl.endKm - nextHl.startKm));
     const where = hlDistM > 150 ? `In ${Math.round(hlDistM / 100) * 100} m` : 'Jetzt';
-    carPlayAlert(nextHl.name, `${where}, ${len} km${nextHl.hairpins >= 3 ? `, ${nextHl.hairpins} Kehren` : ''}`);
+    carPlayAlert(nextHl.name, `${where}, ${len} km${nextHl.hairpins >= 3 ? `, ${nextHl.hairpins} Kehren` : ''}`, `fun-${toFunLevel(nextHl.level)}`);
   }, [nextHl, hlDistM, state.status, controls]);
 
   // Halt Ansage der Lead: großes Overlay und Ansage für alle anderen
@@ -242,6 +244,11 @@ export default function NavigationScreen() {
       linie: [{ c: 'ok', p: state.route.shape.slice(from) }, ...active.tour.linie],
     };
   }, [active, state.route]);
+  // Richtung beim Verlassen jedes Kreisverkehrs (die Ausfahrt Nummer allein kann täuschen)
+  const turns = useMemo(() => {
+    const r = state.route;
+    return r ? r.maneuvers.map((_, i) => roundaboutTurn(r, i)) : [];
+  }, [state.route]);
   // nur den noch zu fahrenden Teil des Rückwegs zeigen (in 50 m Schritten, damit die Linie nicht bei jeder Position neu entsteht)
   const doneStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 20) : 0;
   const dashed = useMemo(() => {
@@ -361,10 +368,24 @@ export default function NavigationScreen() {
   }, [cpRunning, state.status]);
   useEffect(() => () => carPlayStop(false), []);
   // Linie auf dem Autodisplay = die Route, nach der angesagt wird (auch nach Neuberechnung)
+  // mit Rückweg: durchgezogen nur die Tour, der Weg zurück gestrichelt (wie in der App, ab Build 10)
   useEffect(() => {
     const r = state.route;
-    carPlaySetGuide(cpRunning && r ? r.shape : null, r?.km ?? 0, r?.minutes ?? 0);
+    const from = carPlayHasRejoin ? (r?.rejoinIndex ?? 0) : 0;
+    carPlaySetGuide(cpRunning && r ? r.shape.slice(from) : null, r?.km ?? 0, r?.minutes ?? 0);
   }, [cpRunning, state.route]);
+  useEffect(() => {
+    carPlaySetRejoin(cpRunning ? dashed : null);
+  }, [cpRunning, dashed]);
+  // Kamera auf dem Autodisplay folgt derselben Position wie auf dem iPhone
+  useEffect(() => {
+    if (cpRunning && state.position && state.heading != null) carPlayCamera(state.position, state.heading);
+  }, [cpRunning, state.position, state.heading]);
+  // Ton Knopf auf dem Autodisplay
+  useEffect(() => {
+    if (cpRunning) carPlaySetVoice(state.voice);
+  }, [cpRunning, state.voice]);
+  useCarPlayEvent('onVoice', () => controls.setVoice(!state.voice));
   useEffect(() => () => carPlaySetGuide(null), []);
   useEffect(() => {
     const r = state.route;
@@ -392,17 +413,23 @@ export default function NavigationScreen() {
       });
       return;
     }
+    const icon = (k: number) => {
+      const x = r.maneuvers[k];
+      return `nav-${symbolFor(x.kind, x.exit, turns[k]).replaceAll('_', '-')}`;
+    };
+    const t = r.maneuvers[state.next + 1];
     carPlayUpdate({
       key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}${soon ? '-on' : ''}${rejoin > 20 ? '-zurueck' : ''}`,
       text: rejoin > 20 ? `Zurück zur Tour: ${m.text}` : m.text,
       symbol: symbolForKind(m.kind, m.exit),
-      icon: `nav-${symbolFor(m.kind, m.exit).replaceAll('_', '-')}${soon ? '-on' : ''}`,
+      icon: `${icon(state.next)}${soon ? '-on' : ''}`,
+      ...(t ? { thenText: t.text, thenSymbol: symbolForKind(t.kind, t.exit), thenIcon: icon(state.next + 1) } : {}),
       distM: state.distToNextM,
       secs: state.distToNextM / v,
       restKm: state.remainingKm ?? 0,
       restSecs,
     });
-  }, [cpRunning, state.route, state.next, state.distToNextM, state.remainingKm, state.eta, state.speedKmh, state.offRouteM, state.status]);
+  }, [cpRunning, state.route, state.next, state.distToNextM, state.remainingKm, state.eta, state.speedKmh, state.offRouteM, state.status, turns]);
   // beim Verlassen der Tour einmal deutlich auf dem Autodisplay melden (höchstens einmal pro Minute)
   const cpOffAt = useRef(0);
   const cpOff = cpRunning && (state.offRouteM ?? 0) > CP_OFF_M;
@@ -509,6 +536,8 @@ export default function NavigationScreen() {
                   maneuver={maneuver}
                   distM={state.distToNextM}
                   then={then}
+                  turn={turns[state.next]}
+                  thenTurn={turns[state.next + 1]}
                   soon={maneuverSoon}
                   footer={onHl && atKm != null ? <HighlightStrip h={onHl} atKm={atKm} onPress={() => setHlShow({ id: onHl.id, until: Date.now() + HL_SHOW_MS })} /> : undefined}
                 />

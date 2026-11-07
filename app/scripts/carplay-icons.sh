@@ -16,5 +16,12 @@ for f in "$tmp"/*.svg; do
   rsvg-convert -w 128 -h 128 "$tmp/$n-on.tmp" -o "assets/carplay-icons/$n-on@2x.png"
   rsvg-convert -w 192 -h 192 "$tmp/$n-on.tmp" -o "assets/carplay-icons/$n-on@3x.png"
 done
+# Logo als Pegel für die Highlight Hinweise (fun-1 bis fun-5)
+node --experimental-strip-types scripts/fun-icons.mts "$tmp/fun" > /dev/null
+for f in "$tmp"/fun/*.svg; do
+  n=$(basename "$f" .svg)
+  rsvg-convert -w 128 -h 128 "$f" -o "assets/carplay-icons/$n@2x.png"
+  rsvg-convert -w 192 -h 192 "$f" -o "assets/carplay-icons/$n@3x.png"
+done
 rm -rf "$tmp"
 ls assets/carplay-icons | wc -l

@@ -11,7 +11,11 @@ import { Platform } from 'react-native';
 import { flatten, type Tour } from './tour';
 
 /** icon: eigenes Navigationssymbol (Bild im App Paket, etwa nav-links), symbol: SF Symbol als Ersatz */
-type Update = { key: string; text: string; symbol: string; icon?: string; distM: number; secs: number; restKm: number; restSecs: number };
+type Update = {
+  key: string; text: string; symbol: string; icon?: string; distM: number; secs: number; restKm: number; restSecs: number;
+  /** Manöver danach ("Dann"), ab Build 10 */
+  thenText?: string; thenSymbol?: string; thenIcon?: string;
+};
 type Sub = { remove: () => void };
 type CarPlayModule = {
   isConnected(): Promise<boolean>;
@@ -21,12 +25,20 @@ type CarPlayModule = {
   update(p: Update): Promise<void>;
   stopGuidance(arrived: boolean): Promise<void>;
   alert(title: string, subtitle: string): Promise<void>;
-  addListener(event: 'onConnect' | 'onDisconnect' | 'onStart' | 'onEnd', cb: () => void): Sub;
+  // ab Build 10, in älteren Builds fehlen sie (darum immer mit ?. aufrufen)
+  alertImage?(title: string, subtitle: string, image: string): Promise<void>;
+  setRejoin?(coords: number[][]): Promise<void>;
+  camera?(lat: number, lon: number, heading: number): Promise<void>;
+  setVoice?(on: boolean): Promise<void>;
+  addListener(event: CarPlayEvent, cb: () => void): Sub;
 };
+type CarPlayEvent = 'onConnect' | 'onDisconnect' | 'onStart' | 'onEnd' | 'onVoice';
 
 const native: CarPlayModule | null = Platform.OS === 'ios' ? requireOptionalNativeModule<CarPlayModule>('CumoCarPlay') : null;
 
 export const carPlayAvailable = !!native;
+/** Build mit gestricheltem Rückweg (ab Build 10) */
+export const carPlayHasRejoin = !!native?.setRejoin;
 
 const quiet = (p: Promise<unknown> | undefined) => void p?.catch(() => undefined);
 
@@ -93,8 +105,24 @@ export function carPlayStop(arrived: boolean) {
   quiet(native?.stopGuidance(arrived));
 }
 
-export function carPlayAlert(title: string, subtitle: string) {
+/** image: Bild im App Paket, etwa fun-4 für das Logo als Pegel; ältere Builds zeigen den Hinweis ohne Bild */
+export function carPlayAlert(title: string, subtitle: string, image?: string) {
+  if (image && native?.alertImage) return quiet(native.alertImage(title, subtitle, image));
   quiet(native?.alert(title, subtitle));
+}
+
+/** Rückweg zur Tour gestrichelt (leer: keiner) */
+export function carPlaySetRejoin(line: readonly (readonly [number, number])[] | null) {
+  quiet(native?.setRejoin?.(line && line.length > 1 ? thin(line) : []));
+}
+
+/** Kamera wie in der App: Position und Fahrtrichtung */
+export function carPlayCamera(p: readonly [number, number], heading: number) {
+  quiet(native?.camera?.(p[0], p[1], heading));
+}
+
+export function carPlaySetVoice(on: boolean) {
+  quiet(native?.setVoice?.(on));
 }
 
 // "Los" auf dem Autodisplay: merken, bis die Navigation bereit ist
@@ -106,7 +134,7 @@ export function takeCarPlayStart(): boolean {
 }
 
 /** Ereignisse von CarPlay; der Rückruf darf sich ändern, ohne neu zu abonnieren. */
-export function useCarPlayEvent(event: 'onConnect' | 'onDisconnect' | 'onStart' | 'onEnd', cb: () => void) {
+export function useCarPlayEvent(event: CarPlayEvent, cb: () => void) {
   const ref = useRef(cb);
   useEffect(() => {
     ref.current = cb;

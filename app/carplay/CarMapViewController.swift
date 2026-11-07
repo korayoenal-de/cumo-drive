@@ -6,13 +6,20 @@ import UIKit
 /// In der Führung folgt sie der Fahrtrichtung, in der Vorschau zeigt sie die ganze Tour.
 /// Dunkler Rand unter der Linie, damit sie auf jeder Karte ruhig steht
 final class CasingPolyline: MKPolyline {}
+/// Weg zurück zur Tour nach einer Abweichung: gestrichelt wie in der App
+final class RejoinPolyline: MKPolyline {}
 
 final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private let map = MKMapView()
   private let hint = UILabel()
   private var line: MKPolyline?
   private var casing: CasingPolyline?
+  private var rejoin: RejoinPolyline?
   private var following = false
+  /// Kamera wie in der App: schräg von hinten, folgt der Position, die die App schickt
+  private var followCenter: CLLocationCoordinate2D?
+  private var followHeading: CLLocationDirection = 0
+  private var zoomScale: Double = 1
 
   /// Signal Orange #E2461C
   private static let signal = UIColor(red: 226 / 255, green: 70 / 255, blue: 28 / 255, alpha: 1)
@@ -31,8 +38,12 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     map.showsUserLocation = true
     map.showsCompass = false
     map.showsScale = false
-    map.pointOfInterestFilter = .excludingAll
-    map.preferredConfiguration = MKStandardMapConfiguration(elevationStyle: .flat, emphasisStyle: .muted)
+    // ruhige Karte wie in der App: 3D Gebäude, gedämpfte Farben, keine Geschäfte und Restaurants
+    // (der Filter muss in der Konfiguration stehen, sonst gilt er nicht; Testfahrt 7.11.)
+    let cfg = MKStandardMapConfiguration(elevationStyle: .realistic, emphasisStyle: .muted)
+    cfg.pointOfInterestFilter = .excludingAll
+    map.preferredConfiguration = cfg
+    map.showsBuildings = true
     view.addSubview(map)
 
     hint.text = "Plane eine Tour auf dem iPhone und tippe auf Losfahren."
@@ -71,6 +82,27 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     if !following { showOverview() }
   }
 
+  /// Rückweg zur Tour (leer: keiner)
+  func setRejoin(_ coords: [CLLocationCoordinate2D]) {
+    loadViewIfNeeded()
+    if let r = rejoin { map.removeOverlay(r) }
+    rejoin = nil
+    guard coords.count >= 2 else { return }
+    let r = RejoinPolyline(coordinates: coords, count: coords.count)
+    rejoin = r
+    map.addOverlay(r, level: .aboveRoads)
+  }
+
+  /// Position und Fahrtrichtung aus der App: Kamera schräg von hinten wie auf dem iPhone (pitch 50)
+  func followCamera(_ c: CLLocationCoordinate2D, heading: CLLocationDirection) {
+    followCenter = c
+    followHeading = heading
+    guard following else { return }
+    map.setUserTrackingMode(.none, animated: false)
+    let cam = MKMapCamera(lookingAtCenter: c, fromDistance: 650 * zoomScale, pitch: 50, heading: heading)
+    map.setCamera(cam, animated: true)
+  }
+
   func showOverview() {
     loadViewIfNeeded()
     following = false
@@ -84,11 +116,21 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   func follow(_ on: Bool) {
     loadViewIfNeeded()
     following = on
-    map.setUserTrackingMode(on ? .followWithHeading : .none, animated: true)
+    if on, let c = followCenter {
+      followCamera(c, heading: followHeading)
+    } else {
+      // bis die App die erste Position schickt, folgt die Karte dem GPS
+      map.setUserTrackingMode(on ? .followWithHeading : .none, animated: true)
+    }
   }
 
   /// factor < 1 näher heran, > 1 weiter weg; in der Führung bleibt die Karte danach an der Position
   func zoom(_ factor: Double) {
+    if following, let c = followCenter {
+      zoomScale = min(20, max(0.3, zoomScale * factor))
+      followCamera(c, heading: followHeading)
+      return
+    }
     let cam = map.camera.copy() as! MKMapCamera
     cam.centerCoordinateDistance = min(3_000_000, max(250, cam.centerCoordinateDistance * factor))
     map.setCamera(cam, animated: true)
@@ -115,6 +157,13 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
     guard let p = overlay as? MKPolyline else { return MKOverlayRenderer(overlay: overlay) }
     let r = MKPolylineRenderer(polyline: p)
+    if p is RejoinPolyline {
+      r.strokeColor = CarMapViewController.signal
+      r.lineWidth = 6
+      r.lineDashPattern = [1, 12]
+      r.lineCap = .round
+      return r
+    }
     let isCasing = p is CasingPolyline
     r.strokeColor = isCasing ? UIColor(red: 11 / 255, green: 11 / 255, blue: 12 / 255, alpha: 0.85) : CarMapViewController.signal
     r.lineWidth = isCasing ? 11 : 7

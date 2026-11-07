@@ -3,14 +3,14 @@
  * Aufruf: node --experimental-strip-types scripts/nav-icons.ts <zielordner> [hintergrund]
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { symbolGeometry, SYMBOL_NAMES, type NavSymbol, type Paint } from '../src/components/navigation/maneuver-geometry.ts';
+import { symbolGeometry, ALL_SYMBOL_NAMES, type NavSymbol, type Paint } from '../src/components/navigation/maneuver-geometry.ts';
 
 const out = process.argv[2] ?? 'nav-icons';
 const bg = process.argv[3];
 mkdirSync(out, { recursive: true });
 const INK = '#FFFFFF';
 const color: Record<Paint, string> = { ink: INK, faint: INK, ground: bg ?? 'none', signal: '#E2461C' };
-for (const [kind, title] of Object.entries(SYMBOL_NAMES) as [NavSymbol, string][]) {
+for (const [kind, title] of Object.entries(ALL_SYMBOL_NAMES) as [NavSymbol, string][]) {
   const g = symbolGeometry(kind);
   const body = g.shapes
     .map((s) =>
@@ -19,7 +19,10 @@ for (const [kind, title] of Object.entries(SYMBOL_NAMES) as [NavSymbol, string][
         : `<path d="${s.d}" fill="${color[s.paint]}"${s.evenodd ? ' fill-rule="evenodd"' : ''}${s.paint === 'faint' ? ' fill-opacity="0.35"' : ''}${s.round ? ` stroke="${color[s.paint]}" stroke-width="2" stroke-linejoin="round"` : ''}/>`,
     )
     .join('');
+  // Ausfahrt Nummer im Ring wie in der App
+  const num = g.ring && /_([1-9])$/.exec(kind);
+  const badge = num ? `<text x="${g.ring!.x}" y="${g.ring!.y + 5}" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="800" fill="${INK}" text-anchor="middle">${num[1]}</text>` : '';
   const rect = bg ? `<rect width="64" height="64" fill="${bg}"/>` : '';
-  writeFileSync(`${out}/nav-${kind.replaceAll('_', '-')}.svg`, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><title>${title}</title>${rect}${g.mirror ? `<g transform="matrix(-1 0 0 1 64 0)">${body}</g>` : body}</svg>\n`);
+  writeFileSync(`${out}/nav-${kind.replaceAll('_', '-')}.svg`, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><title>${title}</title>${rect}${g.mirror ? `<g transform="matrix(-1 0 0 1 64 0)">${body}</g>` : body}${badge}</svg>\n`);
 }
 console.log('ok', out);
