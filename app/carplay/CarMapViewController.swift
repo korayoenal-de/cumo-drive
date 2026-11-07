@@ -25,6 +25,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
 
   /// Signal Orange #E2461C
   private static let signal = UIColor(red: 226 / 255, green: 70 / 255, blue: 28 / 255, alpha: 1)
+  private static let routeWhite = UIColor(red: 244 / 255, green: 244 / 255, blue: 242 / 255, alpha: 1)
   private static let warn = UIColor(red: 232 / 255, green: 176 / 255, blue: 58 / 255, alpha: 1)
 
   override func viewDidLoad() {
@@ -163,6 +164,21 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     map.setCenter(c, animated: true)
   }
 
+  // CarPlay schaltet bei Tag auf hell (Testfahrt 7.11., 16:43); die Karte bleibt dunkel wie in der App
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    map.overrideUserInterfaceStyle = .dark
+    view.window?.overrideUserInterfaceStyle = .dark
+  }
+
+  override func traitCollectionDidChange(_ previous: UITraitCollection?) {
+    super.traitCollectionDidChange(previous)
+    if traitCollection.userInterfaceStyle != .dark {
+      map.overrideUserInterfaceStyle = .dark
+      view.window?.overrideUserInterfaceStyle = .dark
+    }
+  }
+
   func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
     guard let p = overlay as? MKPolyline else { return MKOverlayRenderer(overlay: overlay) }
     let r = MKPolylineRenderer(polyline: p)
@@ -175,8 +191,9 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
       r.lineJoin = .round
       return r
     }
+    // Tour weiß mit dunkler Kante wie in der App (Testfahrt 7.11.)
     let isCasing = p is CasingPolyline
-    r.strokeColor = isCasing ? UIColor(red: 11 / 255, green: 11 / 255, blue: 12 / 255, alpha: 0.85) : CarMapViewController.signal
+    r.strokeColor = isCasing ? UIColor(red: 11 / 255, green: 11 / 255, blue: 12 / 255, alpha: 0.85) : CarMapViewController.routeWhite
     r.lineWidth = isCasing ? 11 : 7
     r.lineCap = .round
     r.lineJoin = .round
