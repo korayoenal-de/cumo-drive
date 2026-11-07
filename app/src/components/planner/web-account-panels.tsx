@@ -48,7 +48,7 @@ export function LibraryPanel(props: { currentId: string | null; onOpen: (t: Save
           <div style={S.chips}>
             {(['neu', 'name', 'laenge'] as SortKey[]).map((k) => (
               <Chip key={k} on={sort === k} onClick={() => setSort(k)}>
-                {{ neu: 'Zuletzt geändert', name: 'Name', laenge: 'Länge' }[k]}
+                {{ neu: 'Zuletzt geändert', name: 'Name', laenge: 'Länge', spass: 'Fahrspaß' }[k]}
               </Chip>
             ))}
           </div>

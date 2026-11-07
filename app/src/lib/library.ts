@@ -24,6 +24,8 @@ export type SavedTour = Tour & {
   syncedAt?: string;
   /** In der Community veröffentlicht */
   published?: boolean;
+  /** Fahrspaß Wert 0 bis 100, -1 wenn keiner berechenbar ist; fehlt er, rechnet die Liste ihn nach */
+  fun?: number;
 };
 
 const KEY = 'cumo.drive.touren.v1';
@@ -114,6 +116,8 @@ export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?
     updatedAt: now,
     cloudId: old?.cloudId,
     syncedAt: old?.syncedAt,
+    // Strecke kann sich geändert haben: Fahrspaß neu rechnen lassen
+    fun: undefined,
   };
   write([saved, ...list.filter((x) => x.id !== saved.id)]);
   return saved;
@@ -215,7 +219,7 @@ export function folders(list: SavedTour[]): string[] {
   return [...new Set(list.map((t) => t.folder).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'de'));
 }
 
-export type SortKey = 'neu' | 'name' | 'laenge';
+export type SortKey = 'neu' | 'name' | 'laenge' | 'spass';
 
 export function filterTours(list: SavedTour[], q: string, folder: string | null, sort: SortKey): SavedTour[] {
   const needle = q.trim().toLowerCase();
@@ -224,6 +228,7 @@ export function filterTours(list: SavedTour[], q: string, folder: string | null,
   );
   if (sort === 'name') out.sort((a, b) => a.name.localeCompare(b.name, 'de'));
   else if (sort === 'laenge') out.sort((a, b) => b.laenge_km - a.laenge_km);
+  else if (sort === 'spass') out.sort((a, b) => (b.fun ?? -1) - (a.fun ?? -1));
   else out.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   return out;
 }

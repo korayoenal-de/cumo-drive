@@ -24,6 +24,7 @@ import { flatten, formatKm } from '@/lib/tour';
 
 const SORTS: { id: SortKey; label: string }[] = [
   { id: 'neu', label: 'Neueste' },
+  { id: 'spass', label: 'Fahrspaß' },
   { id: 'name', label: 'Name' },
   { id: 'laenge', label: 'Länge' },
 ];

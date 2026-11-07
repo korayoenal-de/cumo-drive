@@ -11,6 +11,8 @@ import { closedHint, usePassLive } from '@/lib/pass-live';
 import { shareTourLink } from '@/lib/share-link';
 import { PASS_STATUS_URL, PASSES, passesAlong } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
+import { FunPill } from '@/components/ui/fun-pill';
+import { type TourFun } from '@/lib/fun-score';
 import { type TourRequest } from '@/components/planner/create-tour';
 import { ElevationChart } from '@/components/planner/elevation-chart';
 import { GroupOptions } from '@/components/planner/group-options';
@@ -29,9 +31,13 @@ import { styles } from './planner-styles';
 
 
 export function Result({
-  tour, req, group, onReroll, onBack, onAdjust, onAddStop, onRemoveStop, planned, adding,
+  tour, req, group, onReroll, onBack, onAdjust, onAddStop, onRemoveStop, planned, adding, rolls = [], rollIdx = -1, onPickRoll,
 }: {
   tour: PlannedTour; req: TourRequest; stops: Stop[]; group: boolean; onReroll: () => void; onBack: () => void;
+  /** Fahrspaß der bisher gewürfelten Runden (leer bei nur einer) und welche gerade gezeigt wird */
+  rolls?: (TourFun | null)[];
+  rollIdx?: number;
+  onPickRoll?: (i: number) => void;
   /** Runde als Route mit Start, Zwischenzielen und Ziel öffnen */
   onAdjust: () => void;
   onAddStop: (p: LatLon, name: string, km: number, cat: Exclude<Cat, 'alle'>) => void;
@@ -76,6 +82,8 @@ export function Result({
         {warnings.length === 0 && tour.geprueft !== false && <TrustLine />}
         {req.note && <AppText variant="caption" style={styles.winterText}>{req.note}</AppText>}
       </View>
+
+      {rolls.length > 1 && onPickRoll && <RollChips rolls={rolls} idx={rollIdx} onPick={onPickRoll} />}
 
       {hint && (
         <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PASS_STATUS_URL)} style={styles.winter}>
@@ -128,6 +136,24 @@ export function Result({
           { key: 'back', icon: 'trash', label: 'Tour verwerfen', hint: 'Zurück zur Auswahl', danger: true, confirm: 'Möchtest du diese Runde wirklich verwerfen?', onPress: onBack },
         ]}>
       </ActionBar>
+    </View>
+  );
+}
+
+/** Deine Runden: frühere Würfe mit Fahrspaß, die beste orange umrandet, ein Tipp kehrt zu ihr zurück */
+function RollChips({ rolls, idx, onPick }: { rolls: (TourFun | null)[]; idx: number; onPick: (i: number) => void }) {
+  let best = -1;
+  rolls.forEach((f, i) => {
+    if (f && (best < 0 || f.score > (rolls[best]?.score ?? -1))) best = i;
+  });
+  return (
+    <View style={styles.gapS}>
+      <AppText variant="caption" muted>Deine Runden</AppText>
+      <View style={styles.rollRow}>
+        {rolls.map((f, i) =>
+          f ? <FunPill key={i} fun={f} active={i === idx} best={i === best} hint={`Runde ${i + 1} anzeigen`} onPress={() => onPick(i)} /> : null,
+        )}
+      </View>
     </View>
   );
 }

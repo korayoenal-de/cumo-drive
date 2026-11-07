@@ -25,6 +25,8 @@ import { PASSES, passPoint, passSummary, type Pass } from '@/lib/passes';
 import { buildTour, findPlace, locate, newSeed, PHASES, toPlanError, type PlanError, type PlanPhase, type Spot, type TourRequest } from '@/components/planner/create-tour';
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
+import { FunDelta, FunPill, FunSheet } from '@/components/ui/fun-pill';
+import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Spacing } from '@/constants/theme';
@@ -134,6 +136,9 @@ export default function Planner() {
   const [view, setView] = useState<Stage>({ kind: 'form' });
   const abort = useRef<AbortController | null>(null);
   const lastStops = useRef<Stop[]>([]);
+  /** Gewürfelte Runden mit Fahrspaß Wert, damit man zu einer besseren zurückkehren kann (höchstens fünf) */
+  const [rolls, setRolls] = useState<{ tour: PlannedTour; req: TourRequest; stops: Stop[]; fun: TourFun | null }[]>([]);
+  const [funOpen, setFunOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
   // Blatt über der Karte: klein, halb oder groß
@@ -251,7 +256,7 @@ export default function Planner() {
 
   // Startort Vorschläge schon beim Tippen
 
-  async function run(prepare: (signal: AbortSignal) => Promise<TourRequest>, stops: Stop[], seed = newSeed()) {
+  async function run(prepare: (signal: AbortSignal) => Promise<TourRequest>, stops: Stop[], seed = newSeed(), keep = false) {
     abort.current?.abort();
     const ctrl = new AbortController();
     abort.current = ctrl;
@@ -273,6 +278,9 @@ export default function Planner() {
       req = await prepare(ctrl.signal);
       const tour = await buildTour(req, seed, step, ctrl.signal);
       if (!ctrl.signal.aborted) {
+        const fun = tourFun(flatten(tour).map((x) => x.p));
+        const item = { tour, req, stops, fun };
+        setRolls((r) => (keep ? [...r, item].slice(-5) : [item]));
         setView({ kind: 'result', tour, req, stops });
         setDetent(1);
         toTop();
@@ -374,7 +382,7 @@ export default function Planner() {
   }
 
   function reroll(req: TourRequest) {
-    void run(async () => req, lastStops.current);
+    void run(async () => req, lastStops.current, newSeed(), true);
   }
 
   function cancel() {
@@ -450,6 +458,16 @@ export default function Planner() {
       .catch(() => undefined);
   }
 
+  // Fahrspaß der angezeigten Runde (mit Stopps neu gerechnet) und der Abstand zur vorigen Runde
+  const resultTour = view.kind === 'result' ? view.tour : null;
+  const rollIdx = resultTour ? rolls.findIndex((r) => r.tour === resultTour) : -1;
+  const resultFun = useMemo(
+    () => (resultTour ? (rolls.find((r) => r.tour === resultTour)?.fun ?? tourFun(flatten(resultTour).map((x) => x.p))) : null),
+    [resultTour, rolls],
+  );
+  const prevFun = rollIdx > 0 ? rolls[rollIdx - 1].fun : null;
+  const funDelta = resultFun && prevFun ? resultFun.score - prevFun.score : null;
+
   // Kopf des Blatts: Modus oder Name der Tour, darunter Fortschritt oder Hinweis
   const header = (
     <>
@@ -463,9 +481,13 @@ export default function Planner() {
           onChange={(v) => switchMode(v === 'route' ? 'tour' : lastRunde.current)}
         />
       ) : view.kind === 'result' ? (
-        <AppText variant="display" style={styles.headline} numberOfLines={2} accessibilityRole="header">
-          {view.tour.name}
-        </AppText>
+        <View style={styles.headRow}>
+          <AppText variant="display" style={[styles.headline, styles.flex]} numberOfLines={2} accessibilityRole="header">
+            {view.tour.name}
+          </AppText>
+          {funDelta !== null && <FunDelta delta={funDelta} />}
+          {resultFun && <FunPill fun={resultFun} onPress={() => setFunOpen(true)} />}
+        </View>
       ) : (
         <AppText variant="label">{view.kind === 'working' ? 'Tour wird erstellt' : 'Das hat nicht geklappt'}</AppText>
       )}
@@ -525,6 +547,12 @@ export default function Planner() {
           stops={view.stops}
           group={false}
           onReroll={() => reroll(view.req)}
+          rolls={rolls.length > 1 ? rolls.map((r) => r.fun) : []}
+          rollIdx={rollIdx}
+          onPickRoll={(i) => {
+            const r = rolls[i];
+            if (r) setView({ kind: 'result', tour: r.tour, req: r.req, stops: r.stops });
+          }}
           onBack={() => setView({ kind: 'form' })}
           onAdjust={() => adjustRound(view.tour, view.req.profile)}
           adding={adding}
@@ -807,6 +835,7 @@ export default function Planner() {
   }
 
   return (
+    <>
     <MapSheet
       detent={detent}
       onDetentChange={setDetent}
@@ -850,5 +879,7 @@ export default function Planner() {
       )}>
       {body}
     </MapSheet>
+    <FunSheet fun={resultFun} name={resultTour?.name ?? ''} visible={funOpen} onClose={() => setFunOpen(false)} />
+    </>
   );
 }

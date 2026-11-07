@@ -12,6 +12,8 @@ import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
 import { PASS_STATUS_URL, PASSES, passPoint } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
+import { FunPill, FunSheet } from '@/components/ui/fun-pill';
+import { tourFun } from '@/lib/fun-score';
 import { locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 import { ElevationChart } from '@/components/planner/elevation-chart';
 import { GroupOptions } from '@/components/planner/group-options';
@@ -92,6 +94,9 @@ export function TourMode({
   const line = useMemo(() => flat.map((x) => x.p), [flat]);
   const along = useMemo(() => (line.length > 1 ? routePasses(PASSES, line).along : []), [line]);
   const curves = useMemo(() => (line.length > 1 ? countCurves(line) : 0), [line]);
+  // Fahrspaß der geplanten Route (Konzept Tour Fahrspaß Wert)
+  const fun = useMemo(() => (routeTour && line.length > 1 ? tourFun(line) : null), [routeTour, line]);
+  const [funOpen, setFunOpen] = useState(false);
   const twiceKm = useMemo(() => (line.length > 1 ? doubledStretch(line).km : 0), [line]);
   const parts = useMemo(() => (routeTour ? legs(routeTour) : []), [routeTour]);
   const hint = closedHint(along.map((x) => x.pass), live);
@@ -549,7 +554,14 @@ export function TourMode({
 
       {routeTour && (
         <>
+          {fun && (
+            <View style={styles.funRow}>
+              <AppText variant="caption" muted style={styles.flex}>Fahrspaß</AppText>
+              <FunPill fun={fun} onPress={() => setFunOpen(true)} />
+            </View>
+          )}
           <Stats km={total} minutes={routeTour.minutes} curves={curves} />
+          <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} />
           {warnings.length === 0 && routeTour.geprueft !== false && <TrustLine />}
 
           {twiceKm >= 1 && (

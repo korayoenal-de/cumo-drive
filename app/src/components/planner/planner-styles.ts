@@ -104,7 +104,10 @@ export const styles = StyleSheet.create({
   go: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   goText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
 
-  headline: { fontSize: 28, lineHeight: 30 },
+  headline: { fontSize: 22, lineHeight: 26 },
+  rollRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
+  funRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  headRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   actions: { gap: Spacing.s, marginTop: Spacing.s },
   trust: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s },
   trustDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.good, marginTop: Spacing.xs },

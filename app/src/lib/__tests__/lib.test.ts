@@ -205,3 +205,14 @@ describe('QS Regressionen', () => {
     assert.ok(performance.now() - t0 < 500);
   });
 });
+
+describe('Fahrspaß Wert einer Tour', () => {
+  it('Alpenpässe hoch, schnelle Anfahrt niedrig, Stufen passen zur Skala', async () => {
+    const { tourFun, tourFunLevel } = await import('../fun-score');
+    const corpus = (await import('../../../qa/corpus.json')).default as unknown as Record<string, Tour>;
+    const score = (n: string) => tourFun(flatten(corpus[n]).map((x) => x.p))!.score;
+    assert.ok(score('Sellaronda') >= 85);
+    assert.ok(score('Anfahrt schnell dann kurvig') < 35);
+    assert.deepEqual([0, 34, 35, 55, 70, 85, 100].map(tourFunLevel), [1, 1, 2, 3, 4, 5, 5]);
+  });
+});

@@ -15,12 +15,15 @@ import Svg, { Circle, Polyline } from 'react-native-svg';
 
 import { SOFT_LAYOUT } from '@/components/ui/action-bar';
 import { ActionSheet, ConfirmSheet, OptionsSheet, type SheetItem } from '@/components/ui/action-sheet';
+import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
+import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import { deleteTour, type SavedTour } from '@/lib/library';
+import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
 import { shareTourLink } from '@/lib/share-link';
 import { showToast } from '@/lib/toast';
@@ -34,6 +37,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
   const scale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 
+  useEffect(() => ensureTourFun(t), [t]);
   const date = new Date(t.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
   const meta = [`${formatKm(t.laenge_km, 0)} km`, t.curves ? `${t.curves} Kurven` : null, date].filter(Boolean).join('  ·  ');
 
@@ -84,6 +88,12 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
             )}
           </View>
         </Pressable>
+        {t.fun != null && t.fun >= 0 && (
+          <View style={styles.fun} accessible accessibilityLabel={`Fahrspaß ${t.fun} von 100, ${TOUR_FUN_NAMES[tourFunLevel(t.fun)]}`}>
+            <FunGauge level={tourFunLevel(t.fun)} size={20} />
+            <AppText style={styles.funText}>{t.fun}</AppText>
+          </View>
+        )}
         <Pressable accessibilityRole="button" accessibilityLabel={`Optionen für ${t.name}`} onPress={() => setSheet('menu')} hitSlop={4} style={({ pressed }) => [styles.round, pressed && styles.itemPressed]}>
           <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="medium" />
         </Pressable>
@@ -222,6 +232,8 @@ const styles = StyleSheet.create({
   badge: { alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.goodTint },
   badgeText: { fontFamily: Fonts.semibold, fontSize: 12, color: Colors.good },
   thumb: { width: 56, height: 56, borderRadius: Radius.m, backgroundColor: Colors.ground, overflow: 'hidden' },
+  fun: { alignItems: 'center', gap: 2, minWidth: 36 },
+  funText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
   round: { minWidth: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   item: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
   itemPressed: { opacity: 0.7, transform: [{ scale: Motion.pressScale }] },
