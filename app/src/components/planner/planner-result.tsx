@@ -15,7 +15,6 @@ import { FunPill } from '@/components/ui/fun-pill';
 import { type TourFun } from '@/lib/fun-score';
 import { type TourRequest } from '@/components/planner/create-tour';
 import { ElevationChart } from '@/components/planner/elevation-chart';
-import { GroupOptions } from '@/components/planner/group-options';
 import { ActionBar } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { setActiveTour } from '@/lib/active-tour';
@@ -66,10 +65,9 @@ export function Result({
     showToast('In Meine Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
     return t.id;
   };
-  // Solo oder Gruppe im Schalter der Hauptaktion; als Gruppe erst speichern, dann Mitfahrer einladen
-  const [asGroup, setAsGroup] = useState(false);
   const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);
-  const drive = () => {
+  // Allein oder als Gruppe: Abfrage beim Druck auf Losfahren (Koray 7.11.); als Gruppe erst speichern, dann einladen
+  const drive = (asGroup = false) => {
     if (asGroup) {
       router.push({ pathname: '/gruppe/neu', params: { tour: savedId ?? saveResult() } });
       return;
@@ -127,9 +125,14 @@ export function Result({
       {/* Aktionen am Ende: Losfahren, Speichern als Symbol, Seltenes im Menü */}
       <ActionBar
         sheetTitle={tour.name}
-        primary={{ label: 'Losfahren', onPress: drive }}
-        mode={{ group: asGroup, onChange: setAsGroup }}
-        float={asGroup ? <GroupOptions onInvite={drive} /> : undefined}
+        primary={{ label: 'Losfahren', onPress: () => drive(false) }}
+        choose={{
+          title: 'Wie fährst du?',
+          items: [
+            { key: 'solo', icon: 'car.fill', label: 'Allein losfahren', hint: 'Die Navigation startet sofort', onPress: () => drive(false) },
+            { key: 'gruppe', icon: 'person.2.fill', label: 'Als Gruppe fahren', hint: 'Bis zu 6 Autos, du lädst sie im nächsten Schritt ein', onPress: () => drive(true) },
+          ],
+        }}
         save={{ saved: !!savedId, onPress: () => void saveResult() }}
         more={[
           { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Route direkt in CUMO DRIVE', onPress: () => void shareTourLink({ ...tour, name: tour.name }, req.profile).catch(() => undefined) },

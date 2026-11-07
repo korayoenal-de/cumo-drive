@@ -16,7 +16,6 @@ import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
 import { locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 import { ElevationChart } from '@/components/planner/elevation-chart';
-import { GroupOptions } from '@/components/planner/group-options';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
 import { deleteTour } from '@/lib/library';
@@ -247,7 +246,6 @@ export function TourMode({
 
   // Solo oder Gruppe, im Schalter der Hauptaktion. Als Gruppe wird die Tour vorher gespeichert,
   // denn Mitfahrer lädt man zu einer Tour aus Meine Touren ein.
-  const [asGroup, setAsGroup] = useState(false);
   const [askDelete, setAskDelete] = useState(false);
   const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);
   // Zurücksetzen leert nur das Formular; ohne Rückfrage, aber mit Rückgängig im Toast
@@ -255,7 +253,6 @@ export function TourMode({
     const snap = plan.snapshot();
     const wasSaved = !!plan.cloudId;
     plan.reset();
-    setAsGroup(false);
     showToast(wasSaved ? 'Planer geleert, die Tour bleibt in Meine Touren' : 'Planung zurückgesetzt', {
       action: { label: 'Rückgängig', onPress: () => plan.restore(snap) },
     });
@@ -264,10 +261,10 @@ export function TourMode({
   const deleteSaved = () => {
     if (plan.cloudId) deleteTour(plan.cloudId);
     plan.reset();
-    setAsGroup(false);
     showToast('Tour gelöscht');
   };
-  const drive = async () => {
+  // Allein oder als Gruppe: Abfrage beim Druck auf Losfahren (Koray 7.11.)
+  const drive = async (asGroup = false) => {
     if (!routeTour) return;
     if (asGroup) {
       const id = plan.cloudId && !plan.dirty ? plan.cloudId : await plan.save(curves, firstProfile, avoid);
@@ -632,11 +629,16 @@ export function TourMode({
         {routeTour ? (
           <ActionBar
             sheetTitle={plan.name.trim() || 'Neue Tour'}
-            primary={{ label: 'Losfahren', onPress: () => void drive() }}
-            mode={{ group: asGroup, onChange: setAsGroup }}
+            primary={{ label: 'Losfahren', onPress: () => void drive(false) }}
+            choose={{
+              title: 'Wie fährst du?',
+              items: [
+                { key: 'solo', icon: 'car.fill', label: 'Allein losfahren', hint: 'Die Navigation startet sofort', onPress: () => void drive(false) },
+                { key: 'gruppe', icon: 'person.2.fill', label: 'Als Gruppe fahren', hint: 'Bis zu 6 Autos, du lädst sie im nächsten Schritt ein', onPress: () => void drive(true) },
+              ],
+            }}
             // Speichern als sekundärer Knopf, solange die Tour neu oder geändert ist (Konzept 7.11.)
             save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) } : undefined}
-            float={asGroup ? <GroupOptions onInvite={() => void drive()} /> : undefined}
             more={[
               {
                 key: 'link',
