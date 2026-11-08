@@ -14,3 +14,13 @@ RewriteCond %{REQUEST_FILENAME}.html -f
 RewriteRule ^(.+?)/?$ $1.html [L]
 
 ErrorDocument 404 /+not-found.html
+
+# Seiten immer frisch laden, damit ein neuer Upload sofort gilt; die Skripte haben Hashes im Namen und dürfen lange im Cache bleiben
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.(js|css|woff2?|ttf|png|jpg|svg)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
