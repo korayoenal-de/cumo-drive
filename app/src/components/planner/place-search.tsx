@@ -4,7 +4,7 @@
  * Öffnet sich beim Antippen eines Punkts oder des Plus zwischen zwei Punkten.
  * Gewählt wird mit einem Tipp; Schließen lässt die Route unverändert, Punkt entfernen steht unten.
  *
- * Steht schon eine Route, gibt es unter dem Feld Kategorien (Tanken, Café, Essen, Aussicht, Pässe).
+ * Steht schon eine Route, gibt es unter dem Feld Kategorien (Alle, Tanken, Café, Essen, Aussicht, Pässe; in Passnähe Pässe gleich nach Alle).
  * Eine Kategorie zeigt sofort Treffer im Korridor um die Route, nach Umweg sortiert, mit dem km der
  * Route; ein Suchbegriff filtert innerhalb. Gewählt landet der Stopp an seiner Stelle als Zwischenziel.
  *
@@ -142,19 +142,24 @@ function SearchBody({
   const live = usePassLive();
   const recent = useRecentPlaces();
   const hasRoute = !!route && route.length > 1;
-  const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? 'alle');
-  const [scale, setScale] = useState(1);
-  // Solange der Name des Punkts unverändert im Feld steht, keine Suche
-  const q = query === current ? '' : query.trim();
-  // In einer Kategorie filtert der Begriff nur, Orte werden nicht gesucht
-  const suggest = usePlaceSuggest(cat === 'alle' ? q : '', near);
-
   // Treffer je Kategorie und Korridorbreite, einmal geladen
   const cum = useMemo(() => {
     const c = [0];
     if (route) for (let i = 1; i < route.length; i++) c.push(c[i - 1] + haversine(route[i - 1], route[i]) / 1000);
     return c;
   }, [route]);
+  /** Zwischenziel: Mein Standort braucht es dort nicht, nur bei Start und Ziel (Koray 8.11.) */
+  const isVia = role.startsWith('Zwischenziel');
+  // Liegt die Route in Passnähe (bis 15 km), steht Pässe direkt hinter Alle und ist beim Zwischenziel vorausgewählt
+  const passNear = useMemo(() => hasRoute && passesNear(route!, cum, 15000).length > 0, [hasRoute, route, cum]);
+  const cats = useMemo(() => (passNear ? [CATS[0], CATS[CATS.length - 1], ...CATS.slice(1, -1)] : CATS), [passNear]);
+  const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? (passNear && isVia ? 'pass' : 'alle'));
+  const [scale, setScale] = useState(1);
+  // Solange der Name des Punkts unverändert im Feld steht, keine Suche
+  const q = query === current ? '' : query.trim();
+  // In einer Kategorie filtert der Begriff nur, Orte werden nicht gesucht
+  const suggest = usePlaceSuggest(cat === 'alle' ? q : '', near);
+
   const [found, setFound] = useState<Record<string, StopRow[] | 'fehler'>>({});
   const catKey = `${cat}|${scale}`;
   useEffect(() => {
@@ -357,7 +362,7 @@ function SearchBody({
           )}
           {hasRoute && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.tabs} style={styles.tabsBox}>
-              {CATS.filter((c) => !stopsOnly || c.id !== 'alle').map((c) => {
+              {cats.filter((c) => !stopsOnly || c.id !== 'alle').map((c) => {
                 const on = c.id === cat;
                 return (
                   <Pressable
@@ -481,6 +486,7 @@ function SearchBody({
                 </>
               ) : (
                 <>
+              {!isVia && (
               <View style={styles.group}>
                 <Pressable
                   accessibilityRole="button"
@@ -491,6 +497,7 @@ function SearchBody({
                   <AppText style={[styles.name, styles.rowMain]}>Mein Standort</AppText>
                 </Pressable>
               </View>
+              )}
               {!!message && <AppText style={styles.message}>{message}</AppText>}
               {recent.length > 0 && (
                 <View style={styles.section}>

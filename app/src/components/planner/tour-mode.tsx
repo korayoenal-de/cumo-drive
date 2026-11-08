@@ -5,12 +5,12 @@
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useMemo, useRef, useState, type ComponentRef } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
-import { PASS_STATUS_URL, PASSES, passPoint } from '@/lib/passes';
+import { PASS_STATUS_URL, PASSES } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
@@ -28,7 +28,7 @@ import { shareTourLink } from '@/lib/share-link';
 import { exportTour } from '@/lib/route-file';
 import { useSession } from '@/lib/auth';
 import { doubledStretch } from '@/lib/doubled';
-import { passesOnLegs, routePasses, straightLine } from '@/lib/route-edit';
+import { routePasses } from '@/lib/route-edit';
 import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
 
@@ -101,20 +101,6 @@ export function TourMode({
   const parts = useMemo(() => (routeTour ? legs(routeTour) : []), [routeTour]);
   const hint = closedHint(along.map((x) => x.pass), live);
 
-  // Pässe je Etappe, nur wenn sie auf dem Weg liegen (Umweg und Fortschritt), jeder nur einmal
-  const { start: pStart, vias: pVias, ziel: pZiel, complete } = plan;
-  const legSuggest = useMemo(() => {
-    const slots = [pStart, ...pVias, pZiel];
-    const skip = new Set(along.map((x) => x.pass.id));
-    const lines = slots.slice(0, -1).map((a, i) => {
-      const b = slots[i + 1];
-      if (!a || !b) return [];
-      const part = complete ? parts[i] : undefined;
-      const routed = part ? flat.filter((x) => x.km >= part.startKm && x.km <= part.endKm).map((x) => x.p) : [];
-      return routed.length > 1 ? routed : straightLine(a, b);
-    });
-    return passesOnLegs(PASSES, slots, lines, skip);
-  }, [pStart, pVias, pZiel, complete, parts, flat, along]);
 
   const add = (kind: PointKind, p: LatLon, known?: string) => {
     plan.add(kind, p, profile, avoid, known);
@@ -340,7 +326,8 @@ export function TourMode({
     );
     return (
       <View key={id} style={styles.gapS}>
-        <Animated.View style={[styles.pointRow, drag?.from === slot && dragStyle]}>
+        {/* Zwischenziele eingerückt, die Steuerung der Etappen bleibt auf der Achse von Start und Ziel (Koray 8.11.) */}
+        <Animated.View style={[styles.pointRow, kind === 'via' && styles.pointRowVia, drag?.from === slot && dragStyle]}>
           {canDrag ? (
             <DragArea
               label={`${role} ${nameOf(p)}`}
@@ -395,7 +382,6 @@ export function TourMode({
     const ready = !!a && !!b;
     const lp = plan.legProfile(i, profile);
     const part = plan.complete && routeTour ? parts[i] : undefined;
-    const suggestions = legSuggest[i] ?? [];
     const inserting = !!edit?.insert && edit.index === i;
     const choosing = legMenu === i;
     return (
@@ -447,26 +433,6 @@ export function TourMode({
                   />
                 ))}
               </View>
-            )}
-            {suggestions.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestRow}>
-                {suggestions.map(({ pass, detourKm }) => (
-                  <Pressable
-                    key={pass.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${pass.name} einbauen, etwa ${Math.max(1, Math.round(detourKm))} km Umweg`}
-                    onPress={() => {
-                      plan.insertAt(i, passPoint(pass), profile, avoid, pass.name);
-                    }}
-                    style={({ pressed }) => [styles.suggestChip, pressed && styles.pressed]}>
-                    {pass.tier === 'ikone' && <View style={styles.suggestDot} />}
-                    <AppText style={styles.suggestText} numberOfLines={1}>
-                      {pass.name}
-                    </AppText>
-                    <AppText style={styles.suggestDetour}>+{Math.max(1, Math.round(detourKm))} km</AppText>
-                  </Pressable>
-                ))}
-              </ScrollView>
             )}
           </View>
         ) : (

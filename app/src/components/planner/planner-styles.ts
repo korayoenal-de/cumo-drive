@@ -150,6 +150,7 @@ export const styles = StyleSheet.create({
   layersBtn: { position: 'absolute', right: Spacing.l },
   pointRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: Radius.m, backgroundColor: Colors.surface, paddingLeft: Spacing.s },
   pointMain: { flex: 1, minHeight: 52, justifyContent: 'center', paddingHorizontal: Spacing.s },
+  pointRowVia: { marginLeft: 28, minHeight: 48 },
   pointArea: { flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 52 },
   more: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: Spacing.xs },
   symbol: { width: 28, alignItems: 'center', justifyContent: 'center' },
