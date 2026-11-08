@@ -5,9 +5,11 @@
  * losfahren, als Gruppe fahren, ändern und speichern), daneben nur Teilen und Löschen.
  */
 import { router, useFocusEffect } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { TypoTabs } from '@/components/planner/planner-parts';
 import { TourCard } from '@/components/tours/tour-card';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
@@ -72,20 +74,29 @@ export default function Touren() {
 
   return (
     <Screen>
-      <AppText variant="display">{'Meine\nTouren'}</AppText>
-
-      <View style={styles.segment} accessibilityRole="tablist">
-        {(
-          [
-            ['gespeichert', 'Gespeichert'],
-            ['gefahren', 'Gefahren'],
-          ] as const
-        ).map(([id, label]) => (
-          <Pressable key={id} accessibilityRole="tab" accessibilityState={{ selected: tab === id }} onPress={() => setTab(id)} style={[styles.segItem, tab === id && styles.segOn]}>
-            <AppText style={[styles.segText, tab === id && styles.segTextOn]}>{label}</AppText>
-          </Pressable>
-        ))}
+      {/* Import als Symbol neben der Überschrift statt großem Knopf (Koray 8.11.) */}
+      <View style={styles.titleRow}>
+        <AppText variant="display" style={styles.flex}>{'Meine\nTouren'}</AppText>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="GPX oder KML importieren"
+          onPress={() => void importFile()}
+          hitSlop={6}
+          style={({ pressed }) => [styles.importBtn, pressed && { opacity: 0.75 }]}>
+          <SymbolView name="square.and.arrow.down" size={20} weight="semibold" tintColor={Colors.text} />
+        </Pressable>
       </View>
+      {importMsg && <AppText variant="caption" muted>{importMsg}</AppText>}
+
+      {/* Wie im Planer: Reiter als große Schrift, aktiv hell, inaktiv grau (Koray 8.11.) */}
+      <TypoTabs
+        value={tab}
+        options={[
+          { id: 'gespeichert', label: 'Gespeichert' },
+          { id: 'gefahren', label: 'Gefahren' },
+        ]}
+        onChange={setTab}
+      />
 
       {tab === 'gefahren' ? (
         <Drives loggedIn={!!session} />
@@ -101,14 +112,6 @@ export default function Touren() {
         </View>
       )}
 
-      <View style={styles.gapS}>
-        <View style={styles.row}>
-          <Pressable accessibilityRole="button" onPress={() => void importFile()} style={[styles.secondary, styles.flex]}>
-            <AppText style={styles.secondaryText}>GPX oder KML importieren</AppText>
-          </Pressable>
-        </View>
-        {importMsg && <AppText variant="caption" muted>{importMsg}</AppText>}
-      </View>
 
       {list.length === 0 ? (
         <View style={styles.card}>
@@ -244,6 +247,8 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
 
 
 const styles = StyleSheet.create({
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m },
+  importBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', marginTop: Spacing.s },
   flex: { flex: 1 },
   gapS: { gap: Spacing.s },
   gapM: { gap: Spacing.m },
