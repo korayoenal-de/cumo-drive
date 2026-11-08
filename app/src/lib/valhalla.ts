@@ -131,7 +131,9 @@ async function routeChunk(
         lon,
         type: i === 0 || i === points.length - 1 ? 'break' : 'through',
         minimum_reachability: 300,
-        radius: i === 0 || i === points.length - 1 ? 0 : 2000,
+        // Start und Ziel mit 300 m Umkreis: mit 0 rastet ein Ortsmittelpunkt auf einem Kiesweg ein, den
+        // exclude_unpaved sperrt, und es gibt gar keine Route (Tegernsee 8.11.: jede Rundtour scheiterte)
+        radius: i === 0 || i === points.length - 1 ? 300 : 2000,
         // Via Punkte nur an richtigen Straßen einrasten lassen, nie an Forst oder Feldwegen
         ...(i === 0 || i === points.length - 1 || !snapMajor ? {} : { search_filter: { min_road_class: 'tertiary', exclude_ramp: true } }),
       })),

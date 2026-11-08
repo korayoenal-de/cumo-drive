@@ -136,17 +136,24 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
 
   // 1. Valhalla: ohne Autobahn, Via Punkte im Hügelland, geprüft und umgeplant. Bleibt eine
   // Stichstraße über 1 km, die nicht an einem Via Punkt hängt, eine zweite Runde mit anderem Seed.
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // In den Alpen enden viele Täler als Sackgasse (Tegernsee 8.11.: 40 km Hin und Zurück): dann bis zu vier Würfe
+  let bestSpur = Infinity;
+  // Bei Zufall drehen die Würfe drei und vier die Richtung, raus aus dem Tal in eine andere Gegend
+  const anyDir = req.direction === 'zufall' && req.bearing === undefined;
+  const turn = (attempt: number) => (anyDir && attempt >= 2 ? (heading + (attempt === 2 ? 120 : 240)) % 360 : heading);
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt >= 2 && bestSpur < 3) break;
     onStep?.('route');
     try {
       const r = await roundTrip(
-        { start: req.start, km: req.km, direction: req.direction, bearing: heading, profile: req.profile, avoid: req.avoid, seed: seed + attempt * 7919 },
+        { start: req.start, km: req.km, direction: req.direction, bearing: turn(attempt), profile: req.profile, avoid: req.avoid, seed: seed + attempt * 7919 },
         signal,
       );
       const t = await despurVias(req, r.via, onStep, signal);
       const curves = countCurves(flatten(t).map((x) => x.p));
       const spur = spurKm(t);
       candidates.push({ ...t, engine: 'valhalla', curves, score: scoreTour(t, curves, 0, req.km) - spur * 100 });
+      bestSpur = Math.min(bestSpur, spur);
       if (spur < 1) break;
     } catch (e) {
       if (signal?.aborted) throw e;
