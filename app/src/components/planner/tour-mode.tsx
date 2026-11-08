@@ -406,7 +406,8 @@ export function TourMode({
               {body}
             </Pressable>
           )}
-          {p && (
+          {/* Am Start braucht es keine Orte in der Nähe (Koray 8.11.); bei einer Runde ist er zugleich das Ziel */}
+          {p && (kind !== 'start' || isLoop) && (
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ expanded: ortOpen === id }}
