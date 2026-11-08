@@ -22,6 +22,8 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private var followCenter: CLLocationCoordinate2D?
   private var followHeading: CLLocationDirection = 0
   private var zoomScale: Double = 1
+  /// Zeit der letzten Position: die Kamera gleitet über genau diesen Abstand zur nächsten (Testfahrt 8.11.: ruckelte im Takt)
+  private var lastFollowAt: CFTimeInterval = 0
 
   /// Signal Orange #E2461C
   private static let signal = UIColor(red: 226 / 255, green: 70 / 255, blue: 28 / 255, alpha: 1)
@@ -110,7 +112,34 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     guard following else { return }
     map.setUserTrackingMode(.none, animated: false)
     let cam = MKMapCamera(lookingAtCenter: c, fromDistance: 650 * zoomScale, pitch: 50, heading: heading)
-    map.setCamera(cam, animated: true)
+    // Mit animated: true springt MapKit in einer kurzen festen Animation und steht dann bis zur nächsten
+    // Position. Stattdessen linear über den Abstand der Positionen gleiten, so fließt die Karte durch.
+    let now = CACurrentMediaTime()
+    let gap = lastFollowAt > 0 ? now - lastFollowAt : 0
+    lastFollowAt = now
+    let duration = min(1.6, max(0.25, gap * 1.05))
+    UIView.animate(withDuration: duration, delay: 0, options: [.curveLinear, .beginFromCurrentState, .allowUserInteraction]) {
+      self.map.camera = cam
+    }
+  }
+
+  /// Darstellung wie in der App: standard (dunkel), satellit, 3d
+  func setStyle(_ style: String) {
+    loadViewIfNeeded()
+    switch style {
+    case "satellit":
+      let cfg = MKHybridMapConfiguration(elevationStyle: .flat)
+      cfg.pointOfInterestFilter = .excludingAll
+      map.preferredConfiguration = cfg
+    case "3d":
+      let cfg = MKHybridMapConfiguration(elevationStyle: .realistic)
+      cfg.pointOfInterestFilter = .excludingAll
+      map.preferredConfiguration = cfg
+    default:
+      let cfg = MKStandardMapConfiguration(elevationStyle: .realistic, emphasisStyle: .muted)
+      cfg.pointOfInterestFilter = .excludingAll
+      map.preferredConfiguration = cfg
+    }
   }
 
   func showOverview() {

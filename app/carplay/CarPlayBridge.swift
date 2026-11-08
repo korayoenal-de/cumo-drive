@@ -39,6 +39,7 @@ final class CarPlayBridge: NSObject {
     window.overrideUserInterfaceStyle = .dark
     window.rootViewController = vc
     mapVC = vc
+    vc.setStyle(mapStyle)
 
     let t = CPMapTemplate()
     t.mapDelegate = self
@@ -222,6 +223,13 @@ final class CarPlayBridge: NSObject {
 
   func camera(lat: Double, lon: Double, heading: Double) {
     mapVC?.followCamera(CLLocationCoordinate2D(latitude: lat, longitude: lon), heading: heading)
+  }
+
+  /// zuletzt gewählte Darstellung, auch für eine Karte, die erst nach dem Einstecken entsteht
+  private var mapStyle = "standard"
+  func setMapStyle(_ style: String) {
+    mapStyle = style
+    mapVC?.setStyle(style)
   }
 
   func setVoice(_ on: Bool) {

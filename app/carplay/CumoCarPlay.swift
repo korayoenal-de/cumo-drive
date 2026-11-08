@@ -69,6 +69,11 @@ final class CumoCarPlay: Module {
       CarPlayBridge.shared.camera(lat: lat, lon: lon, heading: heading)
     }.runOnQueue(.main)
 
+    // ab Build 11: Kartendarstellung aus den Karteneinstellungen der App
+    AsyncFunction("setMapStyle") { (style: String) in
+      CarPlayBridge.shared.setMapStyle(style)
+    }.runOnQueue(.main)
+
     AsyncFunction("setVoice") { (on: Bool) in
       CarPlayBridge.shared.setVoice(on)
     }.runOnQueue(.main)

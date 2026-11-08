@@ -30,6 +30,8 @@ type CarPlayModule = {
   setRejoin?(coords: number[][]): Promise<void>;
   camera?(lat: number, lon: number, heading: number): Promise<void>;
   setVoice?(on: boolean): Promise<void>;
+  // ab Build 11
+  setMapStyle?(style: string): Promise<void>;
   addListener(event: CarPlayEvent, cb: () => void): Sub;
 };
 type CarPlayEvent = 'onConnect' | 'onDisconnect' | 'onStart' | 'onEnd' | 'onVoice';
@@ -119,6 +121,11 @@ export function carPlaySetRejoin(line: readonly (readonly [number, number])[] | 
 /** Kamera wie in der App: Position und Fahrtrichtung */
 export function carPlayCamera(p: readonly [number, number], heading: number) {
   quiet(native?.camera?.(p[0], p[1], heading));
+}
+
+/** Kartendarstellung wie in der App (standard, satellit, 3d); ältere Builds bleiben dunkel standard */
+export function carPlaySetMapStyle(style: string) {
+  quiet(native?.setMapStyle?.(style));
 }
 
 export function carPlaySetVoice(on: boolean) {

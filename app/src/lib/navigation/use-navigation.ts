@@ -3,6 +3,7 @@
  * Läuft in Expo Go (expo-location, expo-speech, expo-keep-awake sind dort enthalten).
  * Standort nur im Vordergrund; Hintergrund Ortung bräuchte einen eigenen Build.
  */
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -39,6 +40,9 @@ const INITIAL: NavState = {
   offRouteM: null,
   voice: true,
 };
+
+/** Sprachansagen an oder aus, über Fahrten hinweg gemerkt (Testfahrer 8.11.: war bei jeder Fahrt wieder an) */
+const VOICE_KEY = 'cumo.drive.stimme.v1';
 
 type Fix = { pos: LatLon; heading: number | null; speedKmh: number | null; at: number };
 
@@ -88,6 +92,21 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     if (!voiceRef.current) voiceRef.current = createVoiceGuide();
     return voiceRef.current;
   }, []);
+
+  // gemerkte Wahl laden
+  useEffect(() => {
+    let alive = true;
+    AsyncStorage.getItem(VOICE_KEY)
+      .then((v) => {
+        if (!alive || v !== '0') return;
+        voice().setEnabled(false);
+        setState((s) => ({ ...s, voice: false }));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [voice]);
 
   const keepAwake = useCallback((on: boolean) => {
     if (on && !keepAwakeRef.current) {
@@ -328,6 +347,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     (on: boolean) => {
       voice().setEnabled(on);
       setState((s) => ({ ...s, voice: on }));
+      AsyncStorage.setItem(VOICE_KEY, on ? '1' : '0').catch(() => undefined);
     },
     [voice],
   );
