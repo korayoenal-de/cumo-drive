@@ -188,17 +188,31 @@ function SearchBody({
     return passNear ? [base[0], base[base.length - 1], ...base.slice(1, -1)] : base;
   }, [passNear]);
   const hotelMode = (isVia || role === 'Ziel') && !!current && !!currentP && query === current && !stopsOnly;
-  const [hotels, setHotels] = useState<StopRow[] | 'fehler' | null>(null);
+  // Rund um den Ort: Hotel, Café und Restaurant (Koray 8.11.)
+  const [nearKind, setNearKind] = useState<'hotel' | 'kaffee' | 'mittag'>('hotel');
+  const [nearFound, setNearFound] = useState<Record<string, StopRow[] | 'fehler'>>({});
+  const hotels = nearFound[nearKind] ?? null;
   useEffect(() => {
-    if (!hotelMode || !currentP) return;
+    if (!hotelMode || !currentP || nearFound[nearKind]) return;
     const ctrl = new AbortController();
-    // kleiner Kreis um den Ort (etwa 5 km) statt entlang der ganzen Route
+    // kleiner Kreis um den Ort (etwa 5 km bei Hotels, 1 km bei Café und Restaurant) statt entlang der Route
     const near: LatLon[] = [currentP, [currentP[0] + 0.0001, currentP[1]]];
-    stopsAlong('hotel', near, ctrl.signal, 25, 2)
-      .then((list) => setHotels(list.map((h) => ({ key: h.id, name: h.name, detail: h.detail, p: h.p, km: 0, offM: haversine(currentP, h.p) })).sort((a, b) => a.offM - b.offM)))
-      .catch(() => !ctrl.signal.aborted && setHotels('fehler'));
+    stopsAlong(nearKind, near, ctrl.signal, 25, nearKind === 'hotel' ? 2 : 2.5)
+      .then((list) =>
+        setNearFound((f) => ({
+          ...f,
+          [nearKind]: list.map((h) => ({ key: h.id, name: h.name, detail: h.detail, p: h.p, km: 0, offM: haversine(currentP, h.p) })).sort((a, b) => a.offM - b.offM),
+        })),
+      )
+      .catch(() => !ctrl.signal.aborted && setNearFound((f) => ({ ...f, [nearKind]: 'fehler' })));
     return () => ctrl.abort();
-  }, [hotelMode, currentP]);
+  }, [hotelMode, currentP, nearKind, nearFound]);
+  const NEAR_TABS = [
+    { id: 'hotel' as const, label: 'Hotel', plural: 'Hotels', icon: 'bed.double.fill' as const },
+    { id: 'kaffee' as const, label: 'Café', plural: 'Cafés', icon: 'cup.and.saucer.fill' as const },
+    { id: 'mittag' as const, label: 'Essen', plural: 'Restaurants', icon: 'fork.knife' as const },
+  ];
+  const nearTab = NEAR_TABS.find((t) => t.id === nearKind)!;
   // nur beim Einfügen (noch kein Name im Feld), nicht beim Ändern eines bestehenden Zwischenziels
   const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? (passNear && isVia && !current ? 'pass' : 'alle'));
   const [scale, setScale] = useState(1);
@@ -412,6 +426,26 @@ function SearchBody({
               </View>
             </>
           )}
+          {hotelMode && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.tabs} style={styles.tabsBox}>
+              {NEAR_TABS.map((t) => {
+                const on = t.id === nearKind;
+                return (
+                  <Pressable
+                    key={t.id}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: on }}
+                    onPress={() => {
+                      setNearKind(t.id);
+                      Keyboard.dismiss();
+                    }}
+                    style={({ pressed }) => [styles.tab, on && styles.tabOn, pressed && styles.pressed]}>
+                    <AppText style={[styles.tabText, on && styles.tabTextOn]}>{t.label}</AppText>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
           {hasRoute && !hotelMode && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.tabs} style={styles.tabsBox}>
               {cats.filter((c) => !stopsOnly || c.id !== 'alle').map((c) => {
@@ -447,12 +481,12 @@ function SearchBody({
             hotels === null ? (
               <ActivityIndicator color={Colors.muted} style={styles.loading} />
             ) : hotels === 'fehler' ? (
-              <AppText style={styles.empty}>Die Hotels lassen sich gerade nicht laden. Versuch es gleich noch einmal.</AppText>
+              <AppText style={styles.empty}>Die {nearTab.plural} lassen sich gerade nicht laden. Versuch es gleich noch einmal.</AppText>
             ) : hotels.length === 0 ? (
-              <AppText style={styles.empty}>Rund um {current} gibt es keine Hotels mit Namen in der Karte.</AppText>
+              <AppText style={styles.empty}>Rund um {current} gibt es keine {nearTab.plural} mit Namen in der Karte.</AppText>
             ) : (
               <View style={styles.section}>
-                <AppText style={styles.groupLabel}>Hotels in der Nähe von {current}</AppText>
+                <AppText style={styles.groupLabel}>{nearTab.plural} in der Nähe von {current}</AppText>
                 <View style={styles.group}>
                   {hotels.slice(0, 20).map((r) => (
                     <Pressable
@@ -465,7 +499,7 @@ function SearchBody({
                       }}
                       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
                       <View style={[styles.icon, styles.iconTint]}>
-                        <SymbolView name="bed.double.fill" size={16} tintColor={Colors.signal} />
+                        <SymbolView name={nearTab.icon} size={16} tintColor={Colors.signal} />
                       </View>
                       <View style={styles.rowMain}>
                         <AppText style={styles.name} numberOfLines={1}>
