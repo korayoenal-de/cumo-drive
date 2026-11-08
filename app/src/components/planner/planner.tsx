@@ -44,7 +44,7 @@ import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
 import { type PlannedStop } from './planner-parts';
 import { showToast } from '@/lib/toast';
-import { Accordion, avoidSummary, ErrorCard, MicIcon, PrimaryButton, Progress, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
+import { Accordion, avoidSummary, ErrorCard, MicIcon, PrimaryButton, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
 import { Result } from './planner-result';
 import { EMPTY_TOUR, keyOf, type Mode, passIndex, type PendingPoint, roughDetourKm, samePts, STEP_TEXT } from './planner-shared';
 import { PlaceSearch } from './place-search';
@@ -560,11 +560,8 @@ export default function Planner() {
 
   let body: ReactNode;
   if (view.kind === 'working') {
-    body = (
-      <>
-        <Progress phase={view.phase} done={view.done} onCancel={cancel} />
-      </>
-    );
+    // Schritte stehen im Kopf, die Karte zeigt das Radar; keine Liste mehr darunter (Koray 8.11.)
+    body = null;
   } else if (view.kind === 'error') {
     body = (
       <>

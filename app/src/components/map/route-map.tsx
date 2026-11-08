@@ -4,7 +4,8 @@
  */
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
-import MapView, { AnimatedRegion, Circle, Marker, Polyline, type LatLng } from 'react-native-maps';
+import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-native-maps';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
@@ -151,14 +152,15 @@ export function RouteMap({
 
   // Radar: Ausschnitt einmal auf den Umkreis um den Start
   const radarKey = radar ? `${radar.center[0].toFixed(4)}-${radar.center[1].toFixed(4)}-${Math.round(radar.radiusM)}` : '';
+  const [radarPt, setRadarPt] = useState<{ x: number; y: number; r: number; k: string } | null>(null);
+  /** gilt nur für das aktuelle Radar */
+  const ringAt = radarPt && radarPt.k === radarKey ? radarPt : null;
   useEffect(() => {
     if (!ready || !radar) return;
-    const dLat = (radar.radiusM / 111320) * 1.1;
-    const dLon = dLat / Math.max(0.2, Math.cos((radar.center[0] * Math.PI) / 180));
-    const [la, lo] = radar.center;
-    map.current?.fitToCoordinates(
-      [ll([la + dLat, lo]), ll([la - dLat, lo]), ll([la, lo + dLon]), ll([la, lo - dLon])],
-      { edgePadding: pad, animated: true },
+    // Kamera über den Start, so hoch, dass der ganze Umkreis zu sehen ist; der Ring startet, wenn sie steht
+    map.current?.animateCamera(
+      { center: ll(radar.center), altitude: radar.radiusM * 3.2, pitch: 0, heading: 0 },
+      { duration: 700 },
     );
     // radarKey fasst Mitte und Radius zusammen
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -294,7 +296,18 @@ export function RouteMap({
         zoomEnabled={interactive}
         onMapReady={() => setReady(true)}
         onPanDrag={followUser && position ? () => setPaused((n) => n + 1) : undefined}
-        onRegionChangeComplete={(r) => boxH > 0 && setMpp((r.latitudeDelta * 111320) / boxH)}
+        onRegionChangeComplete={(r) => {
+          if (boxH > 0) setMpp((r.latitudeDelta * 111320) / boxH);
+          // Radar: Startpunkt und Radius in Bildpunkten für den Ring über der Karte
+          if (radar && boxH > 0) {
+            const k = radarKey;
+            const rPx = radar.radiusM / ((r.latitudeDelta * 111320) / boxH);
+            void map.current
+              ?.pointForCoordinate(ll(radar.center))
+              .then((pt) => setRadarPt((cur) => (cur && cur.k === k && Math.abs(cur.x - pt.x) < 2 && Math.abs(cur.y - pt.y) < 2 && Math.abs(cur.r - rPx) < 2 ? cur : { x: pt.x, y: pt.y, r: rPx, k })))
+              .catch(() => undefined);
+          }
+        }}
         onPress={onPressMap ? (e) => e.nativeEvent.action !== 'marker-press' && onPressMap() : undefined}
         onLongPress={
           onLongPress
@@ -446,8 +459,9 @@ export function RouteMap({
             )}
           </MeMarker>
         )}
-        {radar && fitCoords.length < 2 && <RadarLayer key={radarKey} center={radar.center} radiusM={radar.radiusM} roads={radar.roads} />}
+        {radar && ringAt && fitCoords.length < 2 && <RadarRoads key={radarKey} radiusM={radar.radiusM} roads={radar.roads} />}
       </MapView>
+      {radar && ringAt && fitCoords.length < 2 && <RadarRing key={radarKey} x={ringAt.x} y={ringAt.y} r={ringAt.r} />}
 
       {/* Beim Mitfahren steht der eigene Punkt fest in der Kartenmitte; die Kamera bewegt sich bildweise darunter.
           So ruckelt er nicht wie ein Marker, dessen Position jede Sekunde neu gesetzt wird. */}
@@ -492,6 +506,7 @@ const MeMarker = Marker.Animated as unknown as ComponentType<ComponentProps<type
 const CAR_W = 24;
 
 const styles = StyleSheet.create({
+  radarRing: { position: 'absolute', borderWidth: 1.5, borderColor: 'rgba(226,70,28,0.8)', backgroundColor: 'rgba(226,70,28,0.07)' },
   box: { backgroundColor: Colors.surface, overflow: 'hidden' },
   noTouch: { pointerEvents: 'none' },
   start: { width: 14, height: 14, borderRadius: 7, backgroundColor: Colors.signal, borderWidth: 2, borderColor: Colors.ground },
@@ -538,40 +553,21 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Ring ab dem Start (Ladescreen Konzept C): der erste läuft in RADAR_MS bis an den Rand, danach leiser in Schleife.
- * Strecken leuchten auf, sobald der erste Ring sie erreicht. Etwa 30 Bilder je Sekunde, im Hintergrund angehalten.
+ * Strecken im Umkreis leuchten auf, sobald der erste Ring sie erreicht (Ladescreen Konzept C).
+ * Zehn Schritte je Sekunde, nur solange der erste Ring läuft.
  */
-function RadarLayer({ center, radiusM, roads }: { center: LatLon; radiusM: number; roads: RadarRoad[] }) {
+function RadarRoads({ radiusM, roads }: { radiusM: number; roads: RadarRoad[] }) {
   const [t, setT] = useState(0);
   useEffect(() => {
-    let raf = 0;
-    let last = 0;
     const t0 = Date.now();
-    let active = AppState.currentState === 'active';
-    const sub = AppState.addEventListener('change', (st) => {
-      active = st === 'active';
-    });
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
-      if (!active) return;
-      const now = Date.now();
-      if (now - last < 33) return;
-      last = now;
-      setT(now - t0);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      sub.remove();
-    };
+    const id = setInterval(() => {
+      const d = Date.now() - t0;
+      setT(d);
+      if (d > RADAR_MS) clearInterval(id);
+    }, 100);
+    return () => clearInterval(id);
   }, []);
-  const first = Math.min(1, t / RADAR_MS);
-  const out = (x: number) => 1 - Math.pow(1 - x, 3);
-  const reach = out(first) * radiusM;
-  const loop = t > RADAR_MS ? ((t - RADAR_MS) % RADAR_REPEAT_MS) / RADAR_REPEAT_MS : -1;
-  const ring = loop >= 0 ? out(loop) * radiusM : reach;
-  const fade = loop >= 0 ? (1 - loop) * 0.55 : 1 - first * 0.4;
-  const c = { latitude: center[0], longitude: center[1] };
+  const reach = (1 - Math.pow(1 - Math.min(1, t / RADAR_MS), 3)) * radiusM;
   return (
     <>
       {roads.map((r) => {
@@ -581,7 +577,7 @@ function RadarLayer({ center, radiusM, roads }: { center: LatLon; radiusM: numbe
           <Polyline
             key={`radar-${r.id}`}
             coordinates={r.line.map(ll)}
-            strokeColor={`rgba(226,70,28,${(0.85 * lit).toFixed(2)})`}
+            strokeColor={`rgba(226,70,28,${(0.9 * lit).toFixed(2)})`}
             strokeWidth={4}
             lineCap="round"
             lineJoin="round"
@@ -589,16 +585,40 @@ function RadarLayer({ center, radiusM, roads }: { center: LatLon; radiusM: numbe
           />
         );
       })}
-      {ring > 1 && (
-        <Circle
-          center={c}
-          radius={ring}
-          strokeColor={`rgba(226,70,28,${(0.7 * fade).toFixed(2)})`}
-          strokeWidth={1.5}
-          fillColor={`rgba(226,70,28,${(0.07 * fade).toFixed(3)})`}
-          zIndex={1}
-        />
-      )}
     </>
+  );
+}
+
+/** Ring über der Karte, auf dem UI Thread: der erste läuft kräftig bis an den Rand, danach leiser in Schleife */
+function RadarRing({ x, y, r }: { x: number; y: number; r: number }) {
+  const p = useSharedValue(0);
+  const loud = useSharedValue(1);
+  const reduced = useReducedMotion();
+  useEffect(() => {
+    if (reduced) {
+      p.set(1);
+      loud.set(0.5);
+      return;
+    }
+    const ease = Easing.out(Easing.cubic);
+    p.set(withSequence(
+      withTiming(1, { duration: RADAR_MS, easing: ease }),
+      withRepeat(withSequence(withTiming(0, { duration: 0 }), withTiming(1, { duration: RADAR_REPEAT_MS, easing: ease })), -1, false),
+    ));
+    loud.set(withDelay(RADAR_MS, withTiming(0.55, { duration: 0 })));
+    return () => {
+      cancelAnimation(p);
+      cancelAnimation(loud);
+    };
+  }, [p, loud, reduced]);
+  const style = useAnimatedStyle(() => {
+    const v = p.get();
+    return { opacity: loud.get() * (1 - v * 0.75), transform: [{ scale: Math.max(0.001, v) }] };
+  });
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.radarRing, { left: x - r, top: y - r, width: 2 * r, height: 2 * r, borderRadius: r }, style]}
+    />
   );
 }
