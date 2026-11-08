@@ -179,7 +179,12 @@ function SearchBody({
     () => (legRows ? legRows.length > 0 : hasRoute && passesNear(route!, cum, 8000).some((r) => !taken.has(r.name))),
     [legRows, hasRoute, route, cum, taken],
   );
-  const cats = useMemo(() => (passNear ? [CATS[0], CATS[CATS.length - 1], ...CATS.slice(1, -1)] : CATS), [passNear]);
+  // Hotels nur für Zwischenziele und das Ziel, am Start braucht es keine Übernachtung (Koray 8.11.)
+  const withHotel = isVia || role === 'Ziel';
+  const cats = useMemo(() => {
+    const base = withHotel ? CATS : CATS.filter((c) => c.id !== 'hotel');
+    return passNear ? [base[0], base[base.length - 1], ...base.slice(1, -1)] : base;
+  }, [passNear, withHotel]);
   // nur beim Einfügen (noch kein Name im Feld), nicht beim Ändern eines bestehenden Zwischenziels
   const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? (passNear && isVia && !current ? 'pass' : 'alle'));
   const [scale, setScale] = useState(1);
