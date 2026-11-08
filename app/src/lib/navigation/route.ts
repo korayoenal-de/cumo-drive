@@ -24,6 +24,7 @@
  * enge Kurven ab und Valhalla erfindet an Kreuzungen eine Kehrtwende. Darum bleiben Punkte an
  * deutlichen Richtungswechseln immer erhalten.
  */
+import { checkLine } from '../check';
 import { flatten, haversine, type LatLon, type Tour } from '../tour';
 import { VALHALLA_URL, costingFor, decodePolyline6 } from '../valhalla';
 import type { Maneuver, ManeuverKind, NavRequest, NavRoute } from './types';
@@ -282,16 +283,19 @@ function joinPieces(a: Piece, b: Piece): Piece {
  * Wende auf einer Nebenfahrbahn), mit einem "via" auf und liefert nur den Teil davor. Dann geht es ab
  * dieser Stelle weiter, bis die ganze Linie abgedeckt ist (Rundtour ab Bensheim, 6.11.: nur 1,2 von 54 km).
  */
-async function traceChunk(points: LatLon[], signal?: AbortSignal): Promise<Piece> {
+async function traceChunk(points: LatLon[], req: NavRequest, signal?: AbortSignal): Promise<Piece> {
   let from = 0;
   let acc: Piece | null = null;
   for (let guard = 0; guard < 25 && from < points.length - 1; guard++) {
     const part = points.slice(from);
-    const r = await post(
-      'trace_route',
-      { shape: part.map(([lat, lon]) => ({ lat, lon })), costing: 'auto', shape_match: 'map_snap', directions_options: DIRECTIONS },
-      signal,
-    );
+    const shape = part.map(([lat, lon]) => ({ lat, lon }));
+    // mit den Kosten der Planung (kein Schotter, Wirtschaftswege teuer): sonst legt der Abgleich die Tour
+    // zwischen zwei Punkten gern über einen parallelen Feldweg (Testfahrt 8.11.). Führt die Tour selbst
+    // über ein gesperrtes Stück, findet der Abgleich so keinen Weg: dann wie bisher ohne Kosten.
+    const r = await post('trace_route', { shape, ...costingFor('schnell', req.avoid), shape_match: 'map_snap', directions_options: DIRECTIONS }, signal).catch((e: unknown) => {
+      if (signal?.aborted) throw e;
+      return post('trace_route', { shape, costing: 'auto', shape_match: 'map_snap', directions_options: DIRECTIONS }, signal);
+    });
     const p = piece(r);
     acc = acc ? joinPieces(acc, p) : p;
     const locs = r.trip.locations ?? [];
@@ -303,7 +307,7 @@ async function traceChunk(points: LatLon[], signal?: AbortSignal): Promise<Piece
 }
 
 /** Tourlinie abgleichen, lange Linien in Stücken mit Überlappung. */
-async function traceLine(line: LatLon[], signal?: AbortSignal): Promise<Piece> {
+async function traceLine(line: LatLon[], req: NavRequest, signal?: AbortSignal): Promise<Piece> {
   const pts = thinLine(line);
   if (pts.length < 2) throw new Error('Die Tour ist zu kurz für eine Routenführung.');
   const ranges: [number, number][] = [];
@@ -314,7 +318,7 @@ async function traceLine(line: LatLon[], signal?: AbortSignal): Promise<Piece> {
   }
   // nacheinander, um den öffentlichen Server fair zu nutzen
   const pieces: Piece[] = [];
-  for (const [a, b] of ranges) pieces.push(await traceChunk(pts.slice(a, b), signal));
+  for (const [a, b] of ranges) pieces.push(await traceChunk(pts.slice(a, b), req, signal));
 
   let acc = pieces[0];
   for (let k = 1; k < pieces.length; k++) {
@@ -346,8 +350,18 @@ async function traceLine(line: LatLon[], signal?: AbortSignal): Promise<Piece> {
   return acc;
 }
 
-async function approach(from: LatLon, to: LatLon, toHeading: number | null, req: NavRequest, signal?: AbortSignal, fromHeading?: number | null, fast = false): Promise<Piece> {
+async function approachOnce(
+  from: LatLon,
+  to: LatLon,
+  toHeading: number | null,
+  req: NavRequest,
+  signal: AbortSignal | undefined,
+  fromHeading: number | null | undefined,
+  fast: boolean,
+  exclude: LatLon[],
+): Promise<Piece> {
   const body = {
+    ...(exclude.length ? { exclude_locations: exclude.map(([lat, lon]) => ({ lat, lon })) } : {}),
     locations: [
       // mit Fahrtrichtung: weiterfahren statt wenden, wenn es vorne einen Weg zurück gibt
       { lat: from[0], lon: from[1], type: 'break', radius: 50, ...(fromHeading != null ? { heading: Math.round(fromHeading), heading_tolerance: 45 } : {}) },
@@ -359,6 +373,57 @@ async function approach(from: LatLon, to: LatLon, toHeading: number | null, req:
     directions_options: DIRECTIONS,
   };
   return piece(await post('route', body, signal));
+}
+
+/**
+ * Anfahrt und Weg zurück auf die Tour, geprüft wie bei der Planung: führt das Stück über Wirtschafts
+ * oder Feldwege, Schotter oder Fußwege, wird es ohne diese Stellen neu gerechnet (Testfahrt 8.11.:
+ * mehrmals ein paar hundert Meter Feldweg). Höchstens zwei Runden, sonst das beste Ergebnis.
+ */
+async function approach(from: LatLon, to: LatLon, toHeading: number | null, req: NavRequest, signal?: AbortSignal, fromHeading?: number | null, fast = false): Promise<Piece> {
+  let exclude: LatLon[] = [];
+  let best: { p: Piece; raus: number } | null = null;
+  for (let round = 0; round < 3; round++) {
+    let p: Piece;
+    try {
+      p = await approachOnce(from, to, toHeading, req, signal, fromHeading, fast, exclude);
+    } catch (e) {
+      if (best && !signal?.aborted) break;
+      throw e;
+    }
+    if (p.shape.length < 2) return p;
+    let raus = 0;
+    let more: LatLon[] = [];
+    try {
+      const c = await checkLine(p.shape, undefined, signal);
+      raus = c.km_je_klasse?.raus ?? 0;
+      if (raus > 0) more = blockedPoints(c.linie, [from, to]);
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      // Prüfung nicht erreichbar: Route trotzdem nehmen
+      return best && best.raus === 0 ? best.p : p;
+    }
+    if (!best || raus < best.raus) best = { p, raus };
+    if (raus === 0 || !more.length) break;
+    exclude = [...exclude, ...more];
+  }
+  return best!.p;
+}
+
+/** Punkte auf gesperrten Stücken, nicht direkt an Start und Ziel (dort muss man hin) */
+function blockedPoints(linie: Tour['linie'], keepAway: LatLon[]): LatLon[] {
+  const out: LatLon[] = [];
+  for (const run of linie) {
+    if (run.c !== 'raus') continue;
+    let last: LatLon | null = null;
+    for (const p of run.p) {
+      if (last && haversine(last, p) < 150) continue;
+      if (keepAway.some((w) => haversine(w, p) < 120)) continue;
+      out.push(p);
+      last = p;
+    }
+  }
+  return out.slice(0, 20);
 }
 
 function cleanStreet(m: VManeuver): string | undefined {
@@ -421,7 +486,7 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
     if (tourLine.length < 2) tourLine = line.slice(-2);
   }
 
-  const tour = await traceLine(tourLine, signal);
+  const tour = await traceLine(tourLine, req, signal);
 
   let shape: LatLon[];
   let raw: Piece['maneuvers'];
