@@ -107,20 +107,24 @@ export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0, line
                   onPress={() => setOpen(isOpen ? null : f.id)}
                   style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
                   <View style={styles.rowMain}>
-                    <View style={[styles.swatch, { backgroundColor: TONES[i] }]} />
                     <AppText style={styles.pts}>+{pts[i]}</AppText>
-                    <View style={styles.flex}>
-                      <AppText style={styles.facetLabel}>{f.label}</AppText>
+                    <View style={styles.rowBody}>
+                      <View style={styles.rowHead}>
+                        <AppText style={[styles.facetLabel, styles.flex]}>{f.label}</AppText>
+                        <AppText style={styles.muted}>von {Math.round(f.weight * 100)}</AppText>
+                      </View>
                       <AppText style={styles.muted}>{f.value}</AppText>
+                      {/* Balken je Teil wie in Konzept 6 (Koray 8.11.) */}
+                      <View style={styles.track}>
+                        <View style={[styles.bar, { width: `${Math.round(f.share * 100)}%`, backgroundColor: TONES[i] }]} />
+                      </View>
                     </View>
-                    <AppText style={styles.muted}>von {Math.round(f.weight * 100)}</AppText>
                   </View>
                   {isOpen && <AppText style={[styles.muted, styles.rowText]}>{f.text}</AppText>}
                 </Pressable>
               );
             })}
             <View style={[styles.rowMain, styles.total]}>
-              <View style={styles.swatchSpace} />
               <AppText style={[styles.pts, styles.signal]}>{fun.score}</AppText>
               <AppText style={[styles.facetLabel, styles.flex]}>{TOUR_FUN_NAMES[fun.level]}</AppText>
               <AppText style={styles.muted}>von 100</AppText>
@@ -187,10 +191,12 @@ const styles = StyleSheet.create({
   tick: { position: 'absolute', top: 0, width: 32, marginLeft: -16, textAlign: 'center', fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
   tickOn: { color: Colors.text },
   row: { paddingVertical: 12, gap: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.line },
-  rowMain: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
-  rowText: { paddingLeft: 70 },
-  swatch: { width: 14, height: 14, borderRadius: 4 },
-  swatchSpace: { width: 14 },
+  rowMain: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m },
+  rowText: { paddingLeft: 56 },
+  rowBody: { flex: 1, gap: 4 },
+  rowHead: { flexDirection: 'row', alignItems: 'baseline', gap: Spacing.s },
+  track: { height: 6, borderRadius: 3, backgroundColor: Colors.line, overflow: 'hidden', marginTop: 4 },
+  bar: { height: 6, borderRadius: 3 },
   pts: { width: 44, fontFamily: Fonts.display, fontSize: 20, color: Colors.text, fontVariant: ['tabular-nums'] },
   signal: { color: Colors.signal },
   total: { paddingVertical: 12 },
