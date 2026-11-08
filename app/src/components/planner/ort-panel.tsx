@@ -176,3 +176,51 @@ const styles = StyleSheet.create({
   remove: { marginLeft: 'auto', backgroundColor: Colors.signalTint, paddingHorizontal: 0, width: 44, justifyContent: 'center' },
   pressed: { opacity: 0.75 },
 });
+
+/**
+ * Konzept B1 (Koray 8.11.): rechts in der Punktzeile statt Anfasser oder Pfeil die Symbole dessen, was es
+ * am Ort gibt. Am Ziel getönt mit der Zahl der Hotels, dort wird meist übernachtet. Offen: Pfeil nach oben.
+ */
+export function OrtBadge({ p, withHotel, highlight, open }: { p: LatLon; withHotel: boolean; highlight: boolean; open: boolean }) {
+  const [count, setCount] = useState<number | null>(() => cache.get(keyOf(p, 'hotel'))?.length ?? null);
+  useEffect(() => {
+    if (!highlight || !withHotel || cache.has(keyOf(p, 'hotel'))) return;
+    const ctrl = new AbortController();
+    placesNear('hotel', p, ctrl.signal)
+      .then((l) => {
+        cache.set(keyOf(p, 'hotel'), l);
+        setCount(l.length);
+      })
+      .catch(() => undefined);
+    return () => ctrl.abort();
+  }, [p, highlight, withHotel]);
+  const tint = highlight && withHotel;
+  const c = tint ? Colors.signal : Colors.muted;
+  if (open) {
+    return (
+      <View style={[badge.box, badge.open]}>
+        <SymbolView name="chevron.up" size={14} tintColor={Colors.text} weight="bold" />
+      </View>
+    );
+  }
+  return (
+    <View style={[badge.box, tint && badge.tint]}>
+      {withHotel && <SymbolView name="bed.double.fill" size={15} tintColor={c} />}
+      {tint ? (
+        count != null && count > 0 ? <AppText style={badge.count}>{count}</AppText> : null
+      ) : (
+        <>
+          <SymbolView name="cup.and.saucer.fill" size={14} tintColor={c} />
+          <SymbolView name="fork.knife" size={14} tintColor={c} />
+        </>
+      )}
+    </View>
+  );
+}
+
+const badge = StyleSheet.create({
+  box: { height: 36, minWidth: 36, paddingHorizontal: 10, borderRadius: 18, backgroundColor: Colors.surface2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  tint: { backgroundColor: Colors.signalTint },
+  open: { paddingHorizontal: 0 },
+  count: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.signal, fontVariant: ['tabular-nums'] },
+});

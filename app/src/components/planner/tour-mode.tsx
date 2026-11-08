@@ -3,7 +3,6 @@
  * Pass Vorschlägen, Vermeiden, Ergebnis der Route. Der Zustand kommt aus use-tour-plan.ts.
  */
 import { router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
@@ -33,7 +32,7 @@ import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, t
 import { type Avoid } from '@/lib/valhalla';
 
 import { PlaceSearch, type Cat, type Slot } from './place-search';
-import { OrtPanel, type NearKind } from './ort-panel';
+import { OrtBadge, OrtPanel, type NearKind } from './ort-panel';
 import { PointMenu, type PointAction, type PointMenuState } from './point-menu';
 import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
@@ -79,9 +78,8 @@ export function TourMode({
   /** Schwebendes Menü eines Punkts (Variante A, 7.11.) */
   const [menu, setMenu] = useState<PointMenuState | null>(null);
   /** Aufgeklappter Ort (Konzept B3): Hotel, Café, Essen und Aktionen unter der Zeile */
-  // Das Ziel steht anfangs aufgeklappt (Koray 8.11.): dort wird meist übernachtet oder gegessen
-  const [ortChoice, setOrtOpen] = useState<string | null | undefined>(undefined);
-  const ortOpen = ortChoice === undefined ? 'ziel' : ortChoice;
+  // B1 (Koray 8.11.): zu, die Symbole rechts zeigen, was es am Ort gibt; das Ziel zeigt die Zahl der Hotels
+  const [ortOpen, setOrtOpen] = useState<string | null>(null);
   /** "Alle Hotels" aus dem aufgeklappten Ort: Suche öffnet mit dieser Art */
   const [nearPreset, setNearPreset] = useState<NearKind | undefined>(undefined);
   /** Drag and Drop am Anfasser: welcher Punkt gezogen wird und wohin er fallen würde */
@@ -418,8 +416,8 @@ export function TourMode({
                 setLegMenu(null);
                 setOrtOpen(ortOpen === id ? null : id);
               }}
-              style={({ pressed }) => [styles.more, pressed && { backgroundColor: Colors.line }]}>
-              <SymbolView name={ortOpen === id ? 'chevron.up' : 'chevron.down'} size={15} tintColor={ortOpen === id ? Colors.text : Colors.muted} weight="bold" />
+              style={({ pressed }) => [styles.ortBadge, pressed && { opacity: 0.75 }]}>
+              <OrtBadge p={p} withHotel={kind !== 'start' || isLoop} highlight={kind === 'ziel'} open={ortOpen === id} />
             </Pressable>
           )}
         </Animated.View>
