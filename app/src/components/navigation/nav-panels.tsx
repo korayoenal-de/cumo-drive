@@ -107,7 +107,7 @@ export type NavExtra = {
  * der Pausieren und Beenden aufklappt (Aufklappen statt Wechseln).
  */
 export function BottomBar({
-  eta, remainingKm, extra, voice, group, paused, showSim, bottomInset, onEnd, onPause, onVoice, onSecret, onSimulate, onFunk,
+  eta, remainingKm, extra, voice, group, paused, showSim, bottomInset, onEnd, onPause, onVoice, onSecret, onSimulate, onFunk, onOverview, skipLabel, onSkip,
 }: {
   eta: Date | null;
   remainingKm: number | null;
@@ -124,6 +124,11 @@ export function BottomBar({
   onSimulate: () => void;
   /** Gruppenfahrt aktiv: Funk Knopf öffnet die Kurznachrichten */
   onFunk?: () => void;
+  /** Planung ansehen: ganze restliche Route mit allen Zielen (Koray 8.11.) */
+  onOverview?: () => void;
+  /** Nächstes Zwischenziel überspringen, schnellster Weg zum Ziel danach; Text etwa "Kolmbach überspringen" */
+  skipLabel?: string;
+  onSkip?: () => void;
 }) {
   const now = useNow();
   const [funkHint, setFunkHint] = useState(false);
@@ -144,6 +149,8 @@ export function BottomBar({
   const rest = paused ? 'Pausiert' : [formatRemaining(eta, now), km].filter(Boolean).join(' · ');
   const done = extra ? Math.max(0, Math.min(100, extra.donePct)) : null;
   const actions = [
+    ...(onOverview ? [{ key: 'plan', label: 'Planung ansehen', icon: 'map.fill' as const, signal: false, run: onOverview }] : []),
+    ...(onSkip && skipLabel ? [{ key: 'skip', label: skipLabel, icon: 'forward.end.fill' as const, signal: false, run: onSkip }] : []),
     paused
       ? { key: 'weiter', label: 'Fortsetzen', icon: 'play.fill' as const, signal: false, run: () => onPause(false) }
       : { key: 'pause', label: 'Pausieren', icon: 'pause.fill' as const, signal: false, run: () => onPause(true) },
@@ -214,11 +221,11 @@ export function BottomBar({
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={menu ? 'Schließen' : 'Fahrt pausieren oder beenden'}
+            accessibilityLabel={menu ? 'Schließen' : 'Route und Fahrt: Planung, Zwischenziel überspringen, Pause, Beenden'}
             onPress={() => setMenu(!menu)}
             style={({ pressed }) => [styles.round, menu ? styles.roundOpen : styles.roundSignal, pressed && styles.pressed]}>
             <SymbolView
-              name={menu ? 'xmark' : paused ? 'play.fill' : 'stop.fill'}
+              name={menu ? 'xmark' : paused ? 'play.fill' : 'point.topleft.down.to.point.bottomright.curvepath.fill'}
               size={menu ? 18 : 17}
               weight="bold"
               tintColor={menu ? Colors.ground : Colors.onSignal}

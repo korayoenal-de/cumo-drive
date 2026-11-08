@@ -25,7 +25,7 @@ import { type Place } from '@/lib/geocode';
 import { passState, usePassLive } from '@/lib/pass-live';
 import { PASSES, passPoint, passSummary, searchPasses } from '@/lib/passes';
 import { rememberPlace, useRecentPlaces } from '@/lib/recent-places';
-import { stopsAlong, type StopKind } from '@/lib/stops-along';
+import { placesNear, stopsAlong, type StopKind } from '@/lib/stops-along';
 import { formatKm, haversine, type LatLon } from '@/lib/tour';
 import { highlightsForLeg, type Leg } from '@/lib/highlight-candidates';
 
@@ -195,14 +195,10 @@ function SearchBody({
   useEffect(() => {
     if (!hotelMode || !currentP || nearFound[nearKind]) return;
     const ctrl = new AbortController();
-    // kleiner Kreis um den Ort (etwa 5 km bei Hotels, 1 km bei Café und Restaurant) statt entlang der Route
-    const near: LatLon[] = [currentP, [currentP[0] + 0.0001, currentP[1]]];
-    stopsAlong(nearKind, near, ctrl.signal, 25, nearKind === 'hotel' ? 2 : 2.5)
+    // kleiner Kreis um den Ort (etwa 5 km bei Hotels, 1,5 km bei Café und Restaurant) statt entlang der Route
+    placesNear(nearKind, currentP, ctrl.signal)
       .then((list) =>
-        setNearFound((f) => ({
-          ...f,
-          [nearKind]: list.map((h) => ({ key: h.id, name: h.name, detail: h.detail, p: h.p, km: 0, offM: haversine(currentP, h.p) })).sort((a, b) => a.offM - b.offM),
-        })),
+        setNearFound((f) => ({ ...f, [nearKind]: list.map((h) => ({ key: h.id, name: h.name, detail: h.detail, p: h.p, km: 0, offM: h.distM })) })),
       )
       .catch(() => !ctrl.signal.aborted && setNearFound((f) => ({ ...f, [nearKind]: 'fehler' })));
     return () => ctrl.abort();

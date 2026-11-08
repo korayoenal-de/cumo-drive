@@ -41,6 +41,10 @@ export type RouteMapProps = {
   focus?: LatLon | null;
   /** false: Ausschnitt nicht an Tour oder Fokus anpassen (Punkt wurde gerade auf der Karte gesetzt) */
   autoFit?: boolean;
+  /** Navigation: Wert ändern zeigt kurz die ganze restliche Route (Planung ansehen), danach folgt die Karte wieder */
+  overview?: number;
+  /** Zentrieren während der Übersicht beendet sie */
+  onOverviewEnd?: () => void;
   /** Zusätzliche Ebenen aus den Karteneinstellungen zeigen (Pässe, Meine Touren, Fahrten) */
   layers?: boolean;
   /** Tipp auf einen Pass der Pässe Ebene (zum Beispiel zur Route hinzufügen) */

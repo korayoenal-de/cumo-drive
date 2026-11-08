@@ -464,3 +464,55 @@ export async function stopsAlong(kind: StopKind, line: LatLon[], signal?: AbortS
   }
   return finish(kind, await fromOverpass(kind, line, signal, scale), limit);
 }
+
+/**
+ * Hotels, Cafés und Restaurants rund um einen Ort (Ziel oder Zwischenziel antippen, Koray 8.11.).
+ * Über Photon statt Overpass: kleine, schnelle Abfrage, die abends nicht an überlasteten Overpass
+ * Servern hängt (Testfahrt 8.11.: "Die Hotels lassen sich gerade nicht laden").
+ */
+const NEAR_QUERY: Record<'hotel' | 'kaffee' | 'mittag', { q: string[]; tags: string[]; radiusM: number }> = {
+  hotel: { q: ['hotel', 'gasthof', 'pension'], tags: ['tourism:hotel', 'tourism:guest_house', 'tourism:motel', 'tourism:chalet'], radiusM: 5000 },
+  kaffee: { q: ['cafe', 'konditorei'], tags: ['amenity:cafe'], radiusM: 1500 },
+  mittag: { q: ['restaurant', 'gasthaus', 'trattoria'], tags: ['amenity:restaurant'], radiusM: 1500 },
+};
+const NEAR_TYPE: Record<string, string> = { hotel: 'Hotel', guest_house: 'Pension', motel: 'Motel', chalet: 'Chalet', cafe: 'Café', restaurant: 'Restaurant' };
+
+export type NearPlace = { id: string; name: string; detail: string; p: LatLon; distM: number };
+
+export async function placesNear(kind: 'hotel' | 'kaffee' | 'mittag', at: LatLon, signal?: AbortSignal): Promise<NearPlace[]> {
+  const cfg = NEAR_QUERY[kind];
+  const lists = await Promise.all(
+    cfg.q.map(async (q) => {
+      const url = new URL('https://photon.komoot.io/api/');
+      url.searchParams.set('q', q);
+      url.searchParams.set('lat', String(at[0]));
+      url.searchParams.set('lon', String(at[1]));
+      url.searchParams.set('limit', '30');
+      url.searchParams.set('location_bias_scale', '0.1');
+      url.searchParams.set('zoom', '14');
+      url.searchParams.set('lang', 'de');
+      for (const t of cfg.tags) url.searchParams.append('osm_tag', t);
+      const r = await fetch(url.toString(), { signal });
+      if (!r.ok) throw new Error(`Suche ${r.status}`);
+      const j = (await r.json()) as { features?: { geometry: { coordinates: [number, number] }; properties: Record<string, string | number | undefined> }[] };
+      return j.features ?? [];
+    }),
+  );
+  const seen = new Set<string>();
+  const out: NearPlace[] = [];
+  for (const f of lists.flat()) {
+    const pr = f.properties;
+    const name = String(pr.name ?? '').trim();
+    if (!name) continue;
+    const p: LatLon = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
+    const distM = haversine(at, p);
+    if (distM > cfg.radiusM) continue;
+    const id = `${pr.osm_type ?? ''}${pr.osm_id ?? name}`;
+    if (seen.has(id) || out.some((o) => o.name === name && haversine(o.p, p) < 150)) continue;
+    seen.add(id);
+    const type = NEAR_TYPE[String(pr.osm_value ?? '')] ?? '';
+    const where = [pr.street, pr.city ?? pr.district].filter(Boolean).join(', ');
+    out.push({ id, name, detail: [type, where].filter(Boolean).join(', '), p, distM });
+  }
+  return out.sort((a, b) => a.distM - b.distM).slice(0, 25);
+}

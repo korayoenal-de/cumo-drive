@@ -644,6 +644,8 @@ export async function rejoinNavRoute(
   from: LatLon,
   signal?: AbortSignal,
   heading?: number | null,
+  /** schnellster Weg bis zum Wiedereinstieg (Zwischenziel überspringen, Koray 8.11.) */
+  fast = false,
 ): Promise<NavRouteDetail> {
   const { shape } = current;
   const start = Math.max(0, Math.min(doneIndex, shape.length - 2));
@@ -657,7 +659,7 @@ export async function rejoinNavRoute(
   if (j >= shape.length - 1 || current.km - current.cumKm[j] < 0.05) {
     // praktisch am Ziel: direkt dorthin
     // Am Ziel ist die Richtung egal, sonst erzwingt Valhalla eine Ankunft nach Norden
-    const lead = await approach(from, end, null, req, signal, heading);
+    const lead = await approach(from, end, null, req, signal, heading, fast);
     const cumKm = cumulativeKm(lead.shape);
     const maneuvers = lead.maneuvers.filter((m) => m.type !== 27).map((m) => toManeuver(m, cumKm));
     return {
@@ -666,7 +668,7 @@ export async function rejoinNavRoute(
     };
   }
   const h = bearing(shape[j], shape[j + 1]);
-  const lead = await approach(from, shape[j], h, req, signal, heading);
+  const lead = await approach(from, shape[j], h, req, signal, heading, fast);
   const join = lead.shape.length - 1;
   const newShape = [...lead.shape, ...shape.slice(j + 1)];
   const cumKm = cumulativeKm(newShape);

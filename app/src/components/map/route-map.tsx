@@ -56,6 +56,8 @@ export function RouteMap({
   onLongPress,
   focus,
   autoFit = true,
+  overview = 0,
+  onOverviewEnd,
   dashed,
   layers = false,
   onPressPass,
@@ -105,7 +107,8 @@ export function RouteMap({
   const [ready, setReady] = useState(false);
   // nach eigenem Verschieben folgt die Kamera eine Weile nicht
   const [paused, setPaused] = useState(0);
-  const following = followUser && !!position && paused === 0;
+  // während der Übersicht (Planung ansehen) nicht folgen; die Navigation setzt overview danach auf 0
+  const following = followUser && !!position && paused === 0 && !overview;
 
   // Doppelt gefahrene Stücke (Hin und Rückweg auf derselben Straße) zeigt die Karte als zwei versetzte
   // Linien mit Richtungspfeilen, damit man sieht, dass die Straße zweimal gefahren wird. Nicht beim Mitfahren.
@@ -306,6 +309,15 @@ export function RouteMap({
     // position nur als Schalter (an oder aus), die Werte kommen über motion
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, following, !!position, me, appActive, focused]);
+
+  // Planung ansehen: Folgen kurz aussetzen und die ganze Linie zeigen
+  useEffect(() => {
+    if (!overview || !ready) return;
+    const t = setTimeout(() => map.current?.fitToCoordinates(fitCoords, { edgePadding: pad, animated: true }), 60);
+    return () => clearTimeout(t);
+    // nur beim Auslösen, nicht bei jeder neuen Linie
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overview, ready]);
 
   // nach der Pause wieder folgen
   useEffect(() => {
@@ -552,7 +564,13 @@ export function RouteMap({
       <WeatherSheet item={weatherOpen} onClose={() => setWeatherOpen(null)} />
 
       {followUser && position && !following && (
-        <Pressable accessibilityRole="button" onPress={() => setPaused(0)} style={styles.recenter}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            setPaused(0);
+            onOverviewEnd?.();
+          }}
+          style={styles.recenter}>
           <AppText style={styles.recenterText}>Zentrieren</AppText>
         </Pressable>
       )}

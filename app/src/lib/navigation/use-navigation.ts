@@ -412,7 +412,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
 
   /** Zwischenziel überspringen: wie eine Neuberechnung, aber zurück auf die Route erst ab index */
   const skipTo = useCallback(
-    async (index: number): Promise<SkipUndo | null> => {
+    async (index: number, fast = false): Promise<SkipUndo | null> => {
       const r = reqRef.current;
       const current = routeRef.current;
       const pos = posRef.current;
@@ -425,7 +425,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       try {
-        const { route } = await rejoinNavRoute(r, current, index, pos.p, ctrl.signal, pos.h);
+        const { route } = await rejoinNavRoute(r, current, index, pos.p, ctrl.signal, pos.h, fast);
         if (!activeRef.current) return null;
         setRoute(route);
         // die Simulation fährt auf der neuen Route am Standort weiter

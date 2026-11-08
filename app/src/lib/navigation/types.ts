@@ -115,7 +115,7 @@ export type NavControls = {
    * Zwischenziel überspringen: vom Standort direkt zurück auf die Route ab Index index (dem Zwischenziel
    * danach oder dem Ziel). Gibt den alten Stand zurück, damit Rückgängig möglich ist; null, wenn es nicht ging.
    */
-  skipTo: (index: number) => Promise<SkipUndo | null>;
+  skipTo: (index: number, fast?: boolean) => Promise<SkipUndo | null>;
   /** Stand vor dem Überspringen wiederherstellen */
   restore: (u: SkipUndo) => void;
 };
