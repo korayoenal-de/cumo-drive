@@ -14,7 +14,7 @@ import { listDriveTracks } from '@/lib/drives';
 import { useLibrary } from '@/lib/library';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { passPoint, PASSES } from '@/lib/passes';
-import { RADAR_MS, RADAR_REPEAT_MS, type RadarRoad } from '@/lib/radar';
+import { RADAR_FAST_MS, RADAR_MS, RADAR_REPEAT_MS, REVEAL_MS, type RadarRoad } from '@/lib/radar';
 import type { CheckClass, LatLon } from '@/lib/tour';
 import { CarTopView, carSymbolFor } from '@/components/map/car-marker';
 import { useVehicles } from '@/lib/vehicle';
@@ -151,7 +151,9 @@ export function RouteMap({
   }, [ready, autoFit, followUser, highlightIndex, fitCoords, pad.top, pad.right, pad.bottom, pad.left]);
 
   // Radar: Ausschnitt einmal auf den Umkreis um den Start
+  /** Ort und Umkreis des Radars: gleich, solange sich Start und Radius nicht ändern; die Phase startet nur den Ring neu */
   const radarKey = radar ? `${radar.center[0].toFixed(4)}-${radar.center[1].toFixed(4)}-${Math.round(radar.radiusM)}` : '';
+  const ringKey = radar ? `${radarKey}-${radar.phase}` : '';
   const [radarPt, setRadarPt] = useState<{ x: number; y: number; r: number; k: string } | null>(null);
   /** gilt nur für das aktuelle Radar */
   const ringAt = radarPt && radarPt.k === radarKey ? radarPt : null;
@@ -470,9 +472,9 @@ export function RouteMap({
             )}
           </MeMarker>
         )}
-        {radar && ringAt && fitCoords.length < 2 && <RadarRoads key={radarKey} radiusM={radar.radiusM} roads={radar.roads} />}
+        {radar && ringAt && fitCoords.length < 2 && <RadarRoads key={ringKey} radiusM={radar.radiusM} roads={radar.roads} line={radar.line} fast={radar.phase === 'aufloesen'} />}
       </MapView>
-      {radar && ringAt && fitCoords.length < 2 && <RadarRing key={radarKey} x={ringAt.x} y={ringAt.y} r={ringAt.r} />}
+      {radar && ringAt && fitCoords.length < 2 && <RadarRing key={ringKey} x={ringAt.x} y={ringAt.y} r={ringAt.r} fast={radar.phase === 'aufloesen'} />}
 
       {/* Beim Mitfahren steht der eigene Punkt fest in der Kartenmitte; die Kamera bewegt sich bildweise darunter.
           So ruckelt er nicht wie ein Marker, dessen Position jede Sekunde neu gesetzt wird. */}
@@ -567,29 +569,41 @@ const styles = StyleSheet.create({
  * Strecken im Umkreis leuchten auf, sobald der erste Ring sie erreicht (Ladescreen Konzept C).
  * Zehn Schritte je Sekunde, nur solange der erste Ring läuft.
  */
-function RadarRoads({ radiusM, roads }: { radiusM: number; roads: RadarRoad[] }) {
+function RadarRoads({ radiusM, roads, line, fast }: { radiusM: number; roads: RadarRoad[]; line?: LatLon[]; fast: boolean }) {
   const [t, setT] = useState(0);
+  const ringMs = fast ? RADAR_FAST_MS : RADAR_MS;
+  // Linie der fertigen Route: zeichnet sich vom Start aus, sobald der Ring die meisten Stücke gefunden hat
+  const lineFrom = ringMs * 0.55;
+  const lineMs = REVEAL_MS - lineFrom - 200;
+  const endMs = line ? lineFrom + lineMs : ringMs;
   useEffect(() => {
     const t0 = Date.now();
     const id = setInterval(() => {
       const d = Date.now() - t0;
       setT(d);
-      if (d > RADAR_MS) clearInterval(id);
-    }, 100);
+      if (d > endMs) clearInterval(id);
+    }, line ? 40 : 100);
     return () => clearInterval(id);
-  }, []);
-  const reach = (1 - Math.pow(1 - Math.min(1, t / RADAR_MS), 3)) * radiusM;
+  }, [endMs, line]);
+  const reach = (1 - Math.pow(1 - Math.min(1, t / ringMs), 3)) * radiusM;
+  // beim Auflösen alle Stücke innerhalb des Rings finden, auch wenn die Route etwas über den Umkreis hinausgeht
+  const far = fast ? Math.max(radiusM, ...roads.map((r) => r.distM)) : radiusM;
+  const scale = radiusM / far;
+  const drawn = line ? Math.max(0, Math.min(1, (t - lineFrom) / lineMs)) : 0;
+  const shown = useMemo(() => (line ? line.filter((_, i) => i % Math.max(1, Math.round(line.length / 600)) === 0).map(ll) : []), [line]);
+  const part = drawn > 0 ? shown.slice(0, Math.max(2, Math.round(shown.length * (1 - Math.pow(1 - drawn, 2))))) : [];
   return (
     <>
+      {part.length > 1 && <Polyline key="radar-route" coordinates={part} strokeColor={Colors.text} strokeWidth={4} lineCap="round" lineJoin="round" zIndex={3} />}
       {roads.map((r) => {
-        const lit = Math.max(0, Math.min(1, (reach - r.distM) / (radiusM * 0.08)));
+        const lit = Math.max(0, Math.min(1, (reach - r.distM * scale) / (radiusM * 0.08)));
         if (lit <= 0) return null;
         return (
           <Polyline
             key={`radar-${r.id}`}
             coordinates={r.line.map(ll)}
             strokeColor={`rgba(226,70,28,${(0.9 * lit).toFixed(2)})`}
-            strokeWidth={4}
+            strokeWidth={drawn > 0 ? 7 : 4}
             lineCap="round"
             lineJoin="round"
             zIndex={2}
@@ -601,7 +615,7 @@ function RadarRoads({ radiusM, roads }: { radiusM: number; roads: RadarRoad[] })
 }
 
 /** Ring über der Karte, auf dem UI Thread: der erste läuft kräftig bis an den Rand, danach leiser in Schleife */
-function RadarRing({ x, y, r }: { x: number; y: number; r: number }) {
+function RadarRing({ x, y, r, fast }: { x: number; y: number; r: number; fast: boolean }) {
   const p = useSharedValue(0);
   const loud = useSharedValue(1);
   const reduced = useReducedMotion();
@@ -613,15 +627,15 @@ function RadarRing({ x, y, r }: { x: number; y: number; r: number }) {
     }
     const ease = Easing.out(Easing.cubic);
     p.set(withSequence(
-      withTiming(1, { duration: RADAR_MS, easing: ease }),
+      withTiming(1, { duration: fast ? RADAR_FAST_MS : RADAR_MS, easing: ease }),
       withRepeat(withSequence(withTiming(0, { duration: 0 }), withTiming(1, { duration: RADAR_REPEAT_MS, easing: ease })), -1, false),
     ));
-    loud.set(withDelay(RADAR_MS, withTiming(0.55, { duration: 0 })));
+    loud.set(withDelay(fast ? RADAR_FAST_MS : RADAR_MS, withTiming(0.55, { duration: 0 })));
     return () => {
       cancelAnimation(p);
       cancelAnimation(loud);
     };
-  }, [p, loud, reduced]);
+  }, [p, loud, reduced, fast]);
   const style = useAnimatedStyle(() => {
     const v = p.get();
     return { opacity: loud.get() * (1 - v * 0.75), transform: [{ scale: Math.max(0.001, v) }] };

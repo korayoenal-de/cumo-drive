@@ -15,6 +15,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as Location from 'expo-location';
 import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MapLayersButton } from '@/components/map/map-settings-sheet';
@@ -38,7 +39,7 @@ import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } f
 import { type PlannedTour } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { spliceStop } from '@/lib/stop-splice';
-import { radarRadiusM, radarRoads } from '@/lib/radar';
+import { curvyPieces, radarRadiusM, radarRoads, REVEAL_MS, type Radar } from '@/lib/radar';
 import { flatten, haversine, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
@@ -148,10 +149,13 @@ export default function Planner() {
   // Blatt über der Karte: klein, halb oder groß
   const [detent, setDetent] = useState<Detent>(1);
   /** Radar während eine Rundtour entsteht (Ladescreen Konzept C) */
-  const [radar, setRadar] = useState<{ center: LatLon; radiusM: number; roads: ReturnType<typeof radarRoads> } | null>(null);
+  const [radar, setRadar] = useState<Radar | null>(null);
+  const reduceMotion = useReducedMotion();
+  // Suchen: nur der Ring, die Zahl nennt die Traumstrecken im Umkreis. Die Strecken selbst zeigen wir erst beim
+  // Auflösen, und dann die kurvigen Stücke der fertigen Route, damit das Gefundene zur Strecke passt (Koray 8.11.)
   const startRadar = (center: LatLon, km: number) => {
     const radiusM = radarRadiusM(km);
-    setRadar((r) => (r && haversine(r.center, center) < 200 && r.radiusM === radiusM ? r : { center, radiusM, roads: radarRoads(center, radiusM) }));
+    setRadar((r) => (r && haversine(r.center, center) < 200 && r.radiusM === radiusM ? r : { center, radiusM, roads: [], count: radarRoads(center, radiusM).length, phase: 'suchen' }));
   };
   const scroll = useRef<ScrollViewInstance>(null);
   const toTop = () => scroll.current?.scrollTo({ y: 0, animated: false });
@@ -305,6 +309,20 @@ export default function Planner() {
       req = await prepare(ctrl.signal);
       if (!ctrl.signal.aborted) startRadar(req.start.p, req.km);
       const tour = await buildTour(req, seed, step, ctrl.signal);
+      // Auflösen: der Ring findet die kurvigen Stücke der Route, dann zeichnet sich die Linie, danach das Ergebnis
+      const line = flatten(tour).map((x) => x.p);
+      if (!ctrl.signal.aborted && line.length > 1 && !reduceMotion) {
+        const center = req.start.p;
+        setRadar((r) => ({
+          center,
+          radiusM: r?.radiusM ?? radarRadiusM(req!.km),
+          roads: curvyPieces(line, center),
+          count: r?.count ?? 0,
+          phase: 'aufloesen',
+          line,
+        }));
+        await new Promise((res) => setTimeout(res, REVEAL_MS));
+      }
       if (!ctrl.signal.aborted) {
         const fun = tourFun(flatten(tour).map((x) => x.p));
         const item = { tour, req, stops, fun };
@@ -906,7 +924,7 @@ export default function Planner() {
           style={StyleSheet.absoluteFill}
         />
           <MapLayersButton style={[styles.layersBtn, { top: insets.top + Spacing.s }]} />
-          {view.kind === 'working' && radar && <RadarChip key={`${radar.center[0]}-${radar.radiusM}`} count={radar.roads.length} top={insets.top + Spacing.s} />}
+          {view.kind === 'working' && radar && <RadarChip key={`${radar.center[0]}-${radar.radiusM}-${radar.phase}`} count={radar.count} found={radar.phase === 'aufloesen' ? radar.roads.length : undefined} top={insets.top + Spacing.s} />}
           {passOverlay && (
             <MapPassActions
               pass={passOverlay}

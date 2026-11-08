@@ -9,11 +9,12 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Type } from '@/constants/theme';
 import { RADAR_MS } from '@/lib/radar';
 
-export function RadarChip({ count, top }: { count: number; top: number }) {
-  const text = count === 0 ? 'Kurvige Straßen suchen' : count === 1 ? '1 Traumstrecke im Umkreis' : `${count} Traumstrecken im Umkreis`;
+export function RadarChip({ count, top, found }: { count: number; top: number; found?: number }) {
+  // beim Auflösen: was der Ring auf der fertigen Runde gefunden hat
+  const text = found != null ? `${found} kurvige ${found === 1 ? 'Abschnitt' : 'Abschnitte'} auf deiner Runde` : count === 0 ? 'Kurvige Straßen suchen' : count === 1 ? '1 Traumstrecke im Umkreis' : `${count} Traumstrecken im Umkreis`;
   return (
     <View pointerEvents="none" style={[styles.wrap, { top }]}>
-      <Animated.View entering={FadeIn.delay(RADAR_MS * 0.6).duration(300)} exiting={FadeOut.duration(200)} style={styles.chip} accessibilityLiveRegion="polite">
+      <Animated.View entering={FadeIn.delay(found != null ? 400 : RADAR_MS * 0.6).duration(300)} exiting={FadeOut.duration(200)} style={styles.chip} accessibilityLiveRegion="polite">
         <View style={styles.dot} />
         <AppText style={styles.text}>{text}</AppText>
       </Animated.View>
