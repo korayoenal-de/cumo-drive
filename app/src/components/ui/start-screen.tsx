@@ -1,6 +1,6 @@
 /**
- * Startscreen (Konzept "Startscreen Animation", Variante 5 Berge, entschieden am 7.11.2026):
- * Acht graue Berge liegen nach Korays Skizze verteilt, mit Anschnitt an den Rändern. Nacheinander heben sie
+ * Startscreen (Konzept "Startscreen Animation", Variante 5 Berge, entschieden am 7.11.2026, seit 8.11. als 5 V1):
+ * Acht graue Berge wachsen schnell und unabhängig aus ihrer Grundlinie, nach Korays Skizze verteilt, mit Anschnitt an den Rändern. Nacheinander heben sie
  * gegen den Uhrzeigersinn ab 6 Uhr ab, färben sich orange, bekommen ihre Rundungen und schließen das Logo.
  * Kurz vor dem Schluss rollt das Logo wie ein Rad eine Vierteldrehung nach vorne (im Uhrzeigersinn) und rastet mit einer Spitze auf 12 Uhr ein,
  * danach erscheint CUMO DRIVE. Ein Tipp überspringt. Währenddessen lädt die App im Hintergrund (lib/preload).
@@ -16,10 +16,11 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withRepeat,
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { Colors, Fonts } from '@/constants/theme';
@@ -37,7 +38,8 @@ const CY = 360;
 const TEXT_TOP = 436;
 const TEXT_SIZE = 40;
 
-const RISE = 0.7;
+/** Dauer, in der ein grauer Berg aus seiner Grundlinie wächst */
+const GROW = 0.34;
 const F0 = 1.5;
 const STAG = 0.08;
 const D = 1.25;
@@ -50,6 +52,10 @@ const rad = (d: number) => (d * Math.PI) / 180;
 const pt = (r: number, a: number): [number, number] => [r * Math.sin(rad(a)), -r * Math.cos(rad(a))];
 const lerp2 = (a: [number, number], b: [number, number], f: number): [number, number] => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
 const normDeg = (a: number) => ((((a % 360) + 540) % 360) - 180);
+const hash = (n: number) => {
+  const x = Math.sin(n * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+};
 
 /* Segmente gegen den Uhrzeigersinn ab 6 Uhr */
 const ORDER = Array.from({ length: N }, (_, k) => (157.5 - k * 45 + 360) % 360);
@@ -82,6 +88,8 @@ type Seg = {
   ms: number;
   sy: number;
   h: number;
+  /** Start des Wachsens aus der Grundlinie (V1, Koray 8.11.) */
+  gd: number;
   tk: number;
   c2x: number;
   c2y: number;
@@ -138,6 +146,8 @@ const SEGS: Seg[] = (() => {
       ms,
       sy: h / SEG_H / ms,
       h,
+      // unten zuerst, leicht zufällig versetzt, damit jeder Berg für sich wächst
+      gd: 0.05 + Math.max(0, Math.min(1, 1 - (ay + h) / VH)) * 0.45 + hash(k + 70) * 0.18,
       tk: F0 + k * STAG,
       c2x: CX + out[0],
       c2y: CY + out[1],
@@ -152,16 +162,18 @@ function segFrame(s: Seg, t: number, rot: number, gs: number) {
   'worklet';
   const clamp = (x: number) => Math.max(0, Math.min(1, x));
   const smooth = (x: number) => x * x * (3 - 2 * x);
-  const outCubic = (x: number) => 1 - Math.pow(1 - x, 3);
   const inOutCubic = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
   const bez = (a: number, b: number, c: number, d: number, u: number) => {
     const v = 1 - u;
     return v * v * v * a + 3 * v * v * u * b + 3 * v * u * u * c + u * u * u * d;
   };
 
-  const rise = outCubic(clamp((t - (s.ay / VH) * 0.3) / RISE));
+  // Variante 5 V1 (Koray 8.11.): jeder Berg wächst schnell aus seiner Grundlinie und federt kurz nach
+  const gq = clamp((t - s.gd) / GROW);
+  const grow = gq <= 0 ? 0 : 1 + 2.2 * Math.pow(gq - 1, 3) + 1.2 * Math.pow(gq - 1, 2);
+  const base = s.ay + s.h;
   const x0 = s.ax;
-  const y0 = s.ay + (s.h * 2) / 3 + (1 - rise) * 18;
+  const y0 = s.ay + (s.h * 2) / 3;
   const p = clamp((t - s.tk) / D);
   let x = x0;
   let y = y0;
@@ -169,7 +181,7 @@ function segFrame(s: Seg, t: number, rot: number, gs: number) {
   let sc = s.ms;
   let sy = s.sy;
   let col = 0;
-  let op = rise;
+  let op = gq > 0 ? 1 : 0;
   if (p > 0) {
     const e = inOutCubic(p);
     x = bez(x0, x0, s.c2x, s.gx, e);
@@ -192,7 +204,8 @@ function segFrame(s: Seg, t: number, rot: number, gs: number) {
     const u = lx * cr - ly * sr;
     const v = (lx * sr + ly * cr) * sy;
     const dx = x + u - CX;
-    const dy = y + v - CY;
+    // vor dem Abheben von der Grundlinie aus gestaucht
+    const dy = (p > 0 ? y + v : base + (y + v - base) * Math.max(0.001, grow)) - CY;
     P.push(`${(CX + dx * cg - dy * sg).toFixed(2)} ${(CY + dx * sg + dy * cg).toFixed(2)}`);
   }
   const d = `M${P[0]}L${P[1]}Q${P[2]} ${P[3]}L${P[4]}Q${P[5]} ${P[0]}Z`;
@@ -231,6 +244,37 @@ function Word({ text, color, at, t, size }: { text: string; color: string; at: n
     return { opacity: q, transform: [{ translateY: (1 - q) * 12 }], letterSpacing: (0.01 + (1 - q) * 0.2) * size };
   });
   return <Animated.Text style={[styles.word, { color, fontSize: size, lineHeight: size }, style]}>{text}</Animated.Text>;
+}
+
+/**
+ * Vollflächiger Verlauf statt Licht in der Mitte (Koray 8.11.): oben links etwas heller, unten rechts der Grund.
+ * Er dreht und wandert sehr langsam hin und her, kaum merklich. Eine übergroße Fläche, damit beim Drehen keine Ecke frei wird.
+ */
+function Sky({ width, height, still }: { width: number; height: number; still: boolean }) {
+  const a = useSharedValue(0.5);
+  useEffect(() => {
+    if (still) return;
+    a.set(withRepeat(withTiming(1, { duration: 7000, easing: Easing.inOut(Easing.sin) }), -1, true));
+    return () => cancelAnimation(a);
+  }, [a, still]);
+  const size = Math.hypot(width, height) * 1.25;
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateY: (a.get() - 0.5) * height * 0.08 }, { rotate: `${(a.get() - 0.5) * 24}deg` }],
+  }));
+  return (
+    <Animated.View pointerEvents="none" style={[styles.sky, { width: size, height: size, left: (width - size) / 2, top: (height - size) / 2 }, style]}>
+      <Svg width={size} height={size}>
+        <Defs>
+          <LinearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0.15" stopColor="#252528" />
+            <Stop offset="0.5" stopColor="#151517" />
+            <Stop offset="0.85" stopColor={Colors.ground} />
+          </LinearGradient>
+        </Defs>
+        <Rect x={0} y={0} width={size} height={size} fill="url(#sky)" />
+      </Svg>
+    </Animated.View>
+  );
 }
 
 /**
@@ -289,20 +333,15 @@ export function StartScreen({ ready, onDone }: { ready: boolean; onDone: () => v
 
   return (
     <Animated.View style={[StyleSheet.absoluteFill, styles.root, rootStyle]} accessibilityLabel="CUMO DRIVE wird geladen" accessibilityRole="image">
+      <Sky width={width} height={height} still={reduced} />
       <Pressable style={StyleSheet.absoluteFill} onPress={skip} accessibilityRole="button" accessibilityLabel="Startanimation überspringen">
         <Svg width={width} height={height} viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="xMidYMid slice">
           <Defs>
-            <RadialGradient id="sky" cx="50%" cy="42%" r="85%">
-              <Stop offset="0" stopColor="#202022" />
-              <Stop offset="0.6" stopColor="#151517" />
-              <Stop offset="1" stopColor={Colors.ground} />
-            </RadialGradient>
             <RadialGradient id="glow" cx="50%" cy="50%" r="50%">
               <Stop offset="0" stopColor={Colors.signal} stopOpacity={0.16} />
               <Stop offset="1" stopColor={Colors.signal} stopOpacity={0} />
             </RadialGradient>
           </Defs>
-          <Rect x={-200} y={-200} width={VW + 400} height={VH + 400} fill="url(#sky)" />
           <AnimatedCircle cx={CX} cy={CY} r={160} fill="url(#glow)" animatedProps={glow} />
           {SEGS.map((s, i) => (
             <Mountain key={i} seg={s} t={t} />
@@ -319,6 +358,7 @@ export function StartScreen({ ready, onDone }: { ready: boolean; onDone: () => v
 
 const styles = StyleSheet.create({
   root: { backgroundColor: Colors.ground, zIndex: 1000 },
+  sky: { position: 'absolute' },
   wordmark: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'center' },
   word: { fontFamily: Fonts.display, textTransform: 'uppercase', includeFontPadding: false },
 });
