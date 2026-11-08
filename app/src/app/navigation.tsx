@@ -22,7 +22,7 @@ import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
-import { carPlayAlert, carPlayCamera, carPlayHasRejoin, carPlaySetGuide, carPlaySetRejoin, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
+import { carPlayAlert, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
 import { toFunLevel } from '@/components/ui/fun-gauge';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
@@ -408,7 +408,7 @@ export default function NavigationScreen() {
   // Linie auf dem Autodisplay = die Route, nach der angesagt wird (auch nach Neuberechnung)
   // mit Rückweg: durchgezogen nur die Tour, der Weg zurück gestrichelt (wie in der App, ab Build 10)
   // Auch im Auto nur die Strecke vor einem; in 250 m Schritten, die ganze Linie geht jedes Mal über die Brücke
-  const cpStep = Math.floor(fineStep / 25);
+  const cpStep = carPlayTrims ? 0 : Math.floor(fineStep / 25);
   useEffect(() => {
     const r = state.route;
     if (!cpRunning || !r) return carPlaySetGuide(null);

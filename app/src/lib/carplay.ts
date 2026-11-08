@@ -41,6 +41,8 @@ const native: CarPlayModule | null = Platform.OS === 'ios' ? requireOptionalNati
 export const carPlayAvailable = !!native;
 /** Build mit gestricheltem Rückweg (ab Build 10) */
 export const carPlayHasRejoin = !!native?.setRejoin;
+/** ab Build 13: die Karte im Auto blendet das gefahrene Stück selbst aus, die Linie geht nur einmal hinüber */
+export const carPlayTrims = !!(native as { trimsRoute?: boolean } | null)?.trimsRoute;
 
 const quiet = (p: Promise<unknown> | undefined) => void p?.catch(() => undefined);
 

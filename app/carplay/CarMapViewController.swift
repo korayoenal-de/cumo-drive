@@ -24,6 +24,24 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private var zoomScale: Double = 1
   /// Zeit der letzten Position: die Kamera gleitet über genau diesen Abstand zur nächsten (Testfahrt 8.11.: ruckelte im Takt)
   private var lastFollowAt: CFTimeInterval = 0
+  /// Flüssige Kamera wie in der App (Build 13): ein Bildtakt schiebt die Kamera zwischen zwei Positionen,
+  /// statt einer MapKit Animation je Position. Von, nach, Start und Dauer der aktuellen Bewegung.
+  private var link: CADisplayLink?
+  private var shownCenter: CLLocationCoordinate2D?
+  private var shownHeading: CLLocationDirection = 0
+  private var moveFrom: CLLocationCoordinate2D?
+  private var moveTo: CLLocationCoordinate2D?
+  private var headFrom: CLLocationDirection = 0
+  private var headTo: CLLocationDirection = 0
+  private var moveStart: CFTimeInterval = 0
+  private var moveDur: CFTimeInterval = 1
+  private var parked = false
+  /// Gefahrenes Stück der Tour ausblenden, ohne die Linie neu anzulegen: Anteil über strokeStart
+  private var lineRenderer: MKPolylineRenderer?
+  private var casingRenderer: MKPolylineRenderer?
+  private var routeCoords: [CLLocationCoordinate2D] = []
+  private var routeCum: [Double] = []
+  private var routeIdx = 0
 
   /// Signal Orange #E2461C
   private static let signal = UIColor(red: 226 / 255, green: 70 / 255, blue: 28 / 255, alpha: 1)
@@ -79,6 +97,17 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     casing = nil
     hint.isHidden = coords.count >= 2
     guard coords.count >= 2 else { return }
+    routeCoords = coords
+    routeIdx = 0
+    var cum: [Double] = [0]
+    for i in 1..<coords.count {
+      let a = CLLocation(latitude: coords[i - 1].latitude, longitude: coords[i - 1].longitude)
+      let b = CLLocation(latitude: coords[i].latitude, longitude: coords[i].longitude)
+      cum.append(cum[i - 1] + a.distance(from: b))
+    }
+    routeCum = cum
+    lineRenderer = nil
+    casingRenderer = nil
     let c = CasingPolyline(coordinates: coords, count: coords.count)
     let l = MKPolyline(coordinates: coords, count: coords.count)
     casing = c
@@ -109,17 +138,83 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   func followCamera(_ c: CLLocationCoordinate2D, heading: CLLocationDirection) {
     followCenter = c
     followHeading = heading
+    trimRoute(at: c)
     guard following else { return }
     map.setUserTrackingMode(.none, animated: false)
-    let cam = MKMapCamera(lookingAtCenter: c, fromDistance: 650 * zoomScale, pitch: 50, heading: heading)
-    // Mit animated: true springt MapKit in einer kurzen festen Animation und steht dann bis zur nächsten
-    // Position. Stattdessen linear über den Abstand der Positionen gleiten, so fließt die Karte durch.
     let now = CACurrentMediaTime()
     let gap = lastFollowAt > 0 ? now - lastFollowAt : 0
     lastFollowAt = now
-    let duration = min(1.6, max(0.25, gap * 1.05))
-    UIView.animate(withDuration: duration, delay: 0, options: [.curveLinear, .beginFromCurrentState, .allowUserInteraction]) {
-      self.map.camera = cam
+    // Neue Bewegung: von dort, wo die Kamera gerade steht, zur neuen Position, über den Abstand der Positionen
+    moveFrom = shownCenter ?? c
+    headFrom = shownHeading
+    moveTo = c
+    headTo = heading
+    moveStart = now
+    moveDur = min(1.6, max(0.3, gap > 0 ? gap : 1))
+    if shownCenter == nil { place(c, heading: heading) }
+    startLink()
+  }
+
+  private func startLink() {
+    guard link == nil else { return }
+    let l = CADisplayLink(target: self, selector: #selector(tick))
+    l.preferredFrameRateRange = CAFrameRateRange(minimum: 20, maximum: 30, preferred: 30)
+    l.add(to: .main, forMode: .common)
+    link = l
+  }
+
+  private func stopLink() {
+    link?.invalidate()
+    link = nil
+    shownCenter = nil
+  }
+
+  @objc private func tick() {
+    guard following, let a = moveFrom, let b = moveTo else { return }
+    // bis 25 % über die letzte Position hinaus weiter, damit die Karte bis zur nächsten nicht stehen bleibt
+    let k = min(1.25, (CACurrentMediaTime() - moveStart) / moveDur)
+    // am Ende der Bewegung stehen bleiben, ohne jedes Bild die Kamera neu zu setzen (Akku)
+    if k >= 1.25 {
+      if parked { return }
+      parked = true
+    } else {
+      parked = false
+    }
+    let c = CLLocationCoordinate2D(latitude: a.latitude + (b.latitude - a.latitude) * k, longitude: a.longitude + (b.longitude - a.longitude) * k)
+    var d = (headTo - headFrom).truncatingRemainder(dividingBy: 360)
+    if d > 180 { d -= 360 }
+    if d < -180 { d += 360 }
+    place(c, heading: headFrom + d * min(1, k))
+  }
+
+  private func place(_ c: CLLocationCoordinate2D, heading: CLLocationDirection) {
+    shownCenter = c
+    shownHeading = heading
+    map.camera = MKMapCamera(lookingAtCenter: c, fromDistance: 650 * zoomScale, pitch: 50, heading: heading)
+  }
+
+  /// Gefahrenes Stück ausblenden: nächster Punkt der Route ab dem letzten (nur vorwärts, mit etwas Spielraum)
+  private func trimRoute(at c: CLLocationCoordinate2D) {
+    guard routeCoords.count >= 2, let total = routeCum.last, total > 0 else { return }
+    let here = CLLocation(latitude: c.latitude, longitude: c.longitude)
+    var best = routeIdx
+    var bestD = Double.greatestFiniteMagnitude
+    let lo = max(0, routeIdx - 5)
+    let hi = min(routeCoords.count - 1, routeIdx + 400)
+    for i in lo...hi {
+      let d = here.distance(from: CLLocation(latitude: routeCoords[i].latitude, longitude: routeCoords[i].longitude))
+      if d < bestD {
+        bestD = d
+        best = i
+      }
+    }
+    // weit weg von der Linie (Abweichung): nichts ändern
+    guard bestD < 80 else { return }
+    routeIdx = best
+    let f = CGFloat(routeCum[best] / total)
+    for r in [lineRenderer, casingRenderer].compactMap({ $0 }) {
+      r.strokeStart = f
+      r.setNeedsDisplay()
     }
   }
 
@@ -155,6 +250,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   func follow(_ on: Bool) {
     loadViewIfNeeded()
     following = on
+    if !on { stopLink() }
     if on, let c = followCenter {
       followCamera(c, heading: followHeading)
     } else {
@@ -165,9 +261,9 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
 
   /// factor < 1 näher heran, > 1 weiter weg; in der Führung bleibt die Karte danach an der Position
   func zoom(_ factor: Double) {
-    if following, let c = followCenter {
+    if following, followCenter != nil {
       zoomScale = min(20, max(0.3, zoomScale * factor))
-      followCamera(c, heading: followHeading)
+      if let s = shownCenter { place(s, heading: shownHeading) }
       return
     }
     let cam = map.camera.copy() as! MKMapCamera
@@ -183,6 +279,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
 
   func pan(_ direction: CPMapTemplate.PanDirection) {
     following = false
+    stopLink()
     map.setUserTrackingMode(.none, animated: false)
     var c = map.region.center
     let span = map.region.span
@@ -222,6 +319,9 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     }
     // Tour weiß mit dunkler Kante wie in der App (Testfahrt 7.11.)
     let isCasing = p is CasingPolyline
+    if p === line { lineRenderer = r }
+    if p === casing { casingRenderer = r }
+    if routeIdx > 0, let total = routeCum.last, total > 0 { r.strokeStart = CGFloat(routeCum[routeIdx] / total) }
     r.strokeColor = isCasing ? UIColor(red: 11 / 255, green: 11 / 255, blue: 12 / 255, alpha: 0.85) : CarMapViewController.routeWhite
     r.lineWidth = isCasing ? 11 : 7
     r.lineCap = .round
