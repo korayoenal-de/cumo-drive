@@ -233,17 +233,6 @@ export default function NavigationScreen() {
     return out;
   }, [state.route, active]);
 
-  // Tour für die Karte: geplante Linie mit Warnungen, darunter die gefahrene Route der Navigation
-  const mapTour = useMemo<Tour | null>(() => {
-    if (!active) return null;
-    if (!state.route) return active.tour;
-    // Nach einer Abweichung: der Weg zurück wird gestrichelt gezeichnet, durchgezogen nur die Tour
-    const from = state.route.rejoinIndex ?? 0;
-    return {
-      ...active.tour,
-      linie: [{ c: 'ok', p: state.route.shape.slice(from) }, ...active.tour.linie],
-    };
-  }, [active, state.route]);
   // Richtung beim Verlassen jedes Kreisverkehrs (die Ausfahrt Nummer allein kann täuschen)
   const turns = useMemo(() => {
     const r = state.route;
@@ -251,6 +240,18 @@ export default function NavigationScreen() {
   }, [state.route]);
   // nur den noch zu fahrenden Teil des Rückwegs zeigen (in 50 m Schritten, damit die Linie nicht bei jeder Position neu entsteht)
   const doneStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 20) : 0;
+  // Tour für die Karte: nur was noch vor einem liegt (Koray 8.11.: die schon gefahrene weiße Linie irritiert).
+  // Nach einer Abweichung wird der Weg zurück gestrichelt gezeichnet, durchgezogen nur die Tour danach.
+  const mapTour = useMemo<Tour | null>(() => {
+    if (!active) return null;
+    const r = state.route;
+    if (!r) return active.tour;
+    const at = doneStep / 20;
+    let i = 0;
+    while (i < r.shape.length - 2 && r.cumKm[i + 1] <= at) i++;
+    const from = Math.max(r.rejoinIndex ?? 0, i);
+    return { ...active.tour, linie: [{ c: 'ok', p: r.shape.slice(from) }] };
+  }, [active, state.route, doneStep]);
   const dashed = useMemo(() => {
     const r = state.route;
     if (!r?.rejoinIndex) return null;
