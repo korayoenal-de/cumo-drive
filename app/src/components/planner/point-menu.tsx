@@ -23,7 +23,7 @@ export type PointMenuState = {
   name: string;
 };
 
-const LABEL: Record<PointAction, { text: string; icon: SFSymbol }> = {
+export const LABEL: Record<PointAction, { text: string; icon: SFSymbol }> = {
   start: { text: 'Als Start setzen', icon: 'smallcircle.filled.circle' },
   ziel: { text: 'Als Ziel setzen', icon: 'flag' },
   karte: { text: 'Auf der Karte zeigen', icon: 'mappin.and.ellipse' },

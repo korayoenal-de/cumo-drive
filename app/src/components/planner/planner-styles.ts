@@ -153,6 +153,7 @@ export const styles = StyleSheet.create({
   pointRowVia: { marginLeft: 28, minHeight: 48 },
   pointArea: { flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 52 },
   more: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: Spacing.xs },
+  ortBox: { marginTop: -Spacing.s, borderRadius: Radius.m, backgroundColor: Colors.surface },
   symbol: { width: 28, alignItems: 'center', justifyContent: 'center' },
   startRing: { width: 16, height: 16, borderRadius: 8, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center' },
   startCore: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.surface },

@@ -4,7 +4,7 @@
  */
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
@@ -33,6 +33,7 @@ import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, t
 import { type Avoid } from '@/lib/valhalla';
 
 import { PlaceSearch, type Cat, type Slot } from './place-search';
+import { OrtPanel, type NearKind } from './ort-panel';
 import { PointMenu, type PointAction, type PointMenuState } from './point-menu';
 import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
@@ -77,6 +78,12 @@ export function TourMode({
   const [locMsg, setLocMsg] = useState<string | null>(null);
   /** Schwebendes Menü eines Punkts (Variante A, 7.11.) */
   const [menu, setMenu] = useState<PointMenuState | null>(null);
+  /** Aufgeklappter Ort (Konzept B3): Hotel, Café, Essen und Aktionen unter der Zeile */
+  // Das Ziel steht anfangs aufgeklappt (Koray 8.11.): dort wird meist übernachtet oder gegessen
+  const [ortChoice, setOrtOpen] = useState<string | null | undefined>(undefined);
+  const ortOpen = ortChoice === undefined ? 'ziel' : ortChoice;
+  /** "Alle Hotels" aus dem aufgeklappten Ort: Suche öffnet mit dieser Art */
+  const [nearPreset, setNearPreset] = useState<NearKind | undefined>(undefined);
   /** Drag and Drop am Anfasser: welcher Punkt gezogen wird und wohin er fallen würde */
   const [drag, setDrag] = useState<{ from: number; to: number } | null>(null);
   const dragY = useSharedValue(0);
@@ -220,6 +227,7 @@ export function TourMode({
       placeholder={edit?.kind === 'start' ? 'Wo geht es los?' : edit?.kind === 'ziel' ? 'Wohin soll es gehen?' : 'Ort oder Pass für das Zwischenziel'}
       current={editName}
       currentP={editPoint ?? undefined}
+      initialNear={nearPreset}
       near={near}
       here={here?.p}
       locating={locating}
@@ -229,6 +237,7 @@ export function TourMode({
       onRemove={editPoint ? removeEdited : undefined}
       onClose={() => setEdit(null)}
       route={line.length > 1 ? line : undefined}
+      routeMinutes={routeTour?.minutes}
       onPickStop={pickStop}
       routeLoading={busy}
       // Neues Zwischenziel über das Plus: Highlights nur, wenn sie auf dieser Etappe einen Bogen ergeben
@@ -293,18 +302,20 @@ export function TourMode({
   const allPts = [plan.start, ...plan.vias, plan.ziel].filter((x): x is LatLon => !!x);
   const isLoop = !!plan.start && !!plan.ziel && keyOf(plan.start) === keyOf(plan.ziel);
 
-  function openMenu(kind: PointKind, index: number | undefined, p: LatLon, anchor: ViewRef | null) {
-    const idx = kind === 'start' ? 0 : kind === 'ziel' ? allPts.length - 1 : (index ?? 0) + 1;
-    const actions: PointAction[] =
-      kind === 'via' ? ['start', 'ziel', 'karte', 'entfernen'] : kind === 'start' ? [...(isLoop || !plan.ziel ? [] : (['ziel'] as PointAction[])), 'karte', 'entfernen'] : [...(isLoop || !plan.start ? [] : (['start'] as PointAction[])), 'karte', 'entfernen'];
-    setLegMenu(null);
-    anchor?.measureInWindow((_x: number, y: number, _w: number, h: number) => setMenu({ idx, top: y, bottom: y + h, actions, name: nameOf(p) }));
+  function actionsFor(kind: PointKind): PointAction[] {
+    return kind === 'via' ? ['start', 'ziel', 'karte', 'entfernen'] : kind === 'start' ? [...(isLoop || !plan.ziel ? [] : (['ziel'] as PointAction[])), 'karte', 'entfernen'] : [...(isLoop || !plan.start ? [] : (['start'] as PointAction[])), 'karte', 'entfernen'];
   }
 
   function onMenu(a: PointAction) {
     const m = menu;
     setMenu(null);
     if (!m) return;
+    runAction(m, a);
+  }
+
+  /** Aktion für den Punkt an Stelle idx, aus dem Menü oder aus dem aufgeklappten Ort */
+  function runAction(m: { idx: number; name: string }, a: PointAction) {
+    setOrtOpen(null);
     const p = allPts[m.idx];
     if (!p) return;
     if (a === 'karte') {
@@ -352,7 +363,10 @@ export function TourMode({
             <DragArea
               label={`${role} ${nameOf(p)}`}
               style={styles.pointArea}
-              onTap={() => openEdit({ kind, index })}
+              onTap={() => {
+                setNearPreset(undefined);
+                openEdit({ kind, index });
+              }}
               onStart={() => {
                 setMenu(null);
                 setLegMenu(null);
@@ -386,13 +400,56 @@ export function TourMode({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`${role} ${p ? `ändern, jetzt ${nameOf(p)}` : 'wählen'}`}
-              onPress={() => openEdit({ kind, index })}
+              onPress={() => {
+                setNearPreset(undefined);
+                openEdit({ kind, index });
+              }}
               style={styles.pointArea}>
               {body}
             </Pressable>
           )}
-          {p && <MoreButton label={`Aktionen für ${role} ${nameOf(p)}`} onPress={(v) => openMenu(kind, index, p, v)} />}
+          {p && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: ortOpen === id }}
+              accessibilityLabel={`${role} ${nameOf(p)}: Hotel, Café, Essen und Aktionen`}
+              hitSlop={4}
+              onPress={() => {
+                setLegMenu(null);
+                setOrtOpen(ortOpen === id ? null : id);
+              }}
+              style={({ pressed }) => [styles.more, pressed && { backgroundColor: Colors.line }]}>
+              <SymbolView name={ortOpen === id ? 'chevron.up' : 'chevron.down'} size={15} tintColor={ortOpen === id ? Colors.text : Colors.muted} weight="bold" />
+            </Pressable>
+          )}
         </Animated.View>
+        {p && ortOpen === id && (
+          <View style={[styles.ortBox, kind === 'via' && styles.pointRowVia]}>
+            <OrtPanel
+              p={p}
+              withHotel={kind !== 'start' || isLoop}
+              actions={actionsFor(kind)}
+              onPick={(q, name) => {
+                onListEdit();
+                plan.setSlot(kind, q, profile, avoid, name, index);
+                setOrtOpen(null);
+              }}
+              onAll={(k) => {
+                setNearPreset(k);
+                setOrtOpen(null);
+                openEdit({ kind, index });
+              }}
+              onAction={(a) => {
+                if (a === 'karte') {
+                  setOrtOpen(null);
+                  onShowPoint?.(p);
+                  return;
+                }
+                runAction({ idx: kind === 'start' ? 0 : kind === 'ziel' ? allPts.length - 1 : (index ?? 0) + 1, name: nameOf(p) }, a);
+              }}
+            />
+          </View>
+        )}
       </View>
     );
   }
@@ -575,6 +632,7 @@ export function TourMode({
             onHere={() => undefined}
             onClose={() => setStopCat(null)}
             route={line}
+            routeMinutes={routeTour?.minutes}
             stopsOnly={stopCat ? { title: 'Unterwegs einplanen', subtitle: `${plan.name.trim() || 'Neue Tour'} · ${Math.round(total)} km`, cat: stopCat } : undefined}
             onPickStop={(p, name, km) => {
               const snap = plan.snapshot();
@@ -672,20 +730,3 @@ export function TourMode({
   );
 }
 
-/** ⋯ rechts in der Punktzeile: misst sich selbst, damit das Menü daneben schweben kann */
-type ViewRef = ComponentRef<typeof View>;
-
-function MoreButton({ label, onPress }: { label: string; onPress: (v: ViewRef | null) => void }) {
-  const ref = useRef<ViewRef>(null);
-  return (
-    <Pressable
-      ref={ref}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      hitSlop={4}
-      onPress={() => onPress(ref.current)}
-      style={({ pressed }) => [styles.more, pressed && { backgroundColor: Colors.line }]}>
-      <SymbolView name="ellipsis" size={18} tintColor={Colors.muted} weight="bold" />
-    </Pressable>
-  );
-}

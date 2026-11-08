@@ -42,6 +42,10 @@ type Props = {
   current: string;
   /** Punkt des Felds, das gerade bearbeitet wird (für Hotels in der Nähe des Ziels) */
   currentP?: LatLon;
+  /** Fahrzeit der ganzen Route, für die ungefähre Ankunft an Stopps */
+  routeMinutes?: number;
+  /** Art, mit der die Ortsliste öffnet ("Alle Hotels" aus dem aufgeklappten Ort) */
+  initialNear?: 'hotel' | 'kaffee' | 'mittag';
   /** Vorschläge in der Nähe dieser Stelle zuerst */
   near?: LatLon;
   /** eigener Standort, für Entfernungen */
@@ -148,6 +152,8 @@ function SearchBody({
   route,
   onPickStop,
   currentP,
+  routeMinutes,
+  initialNear,
   slots,
   onSwitch,
   stopsOnly,
@@ -187,9 +193,11 @@ function SearchBody({
     const base = CATS.filter((c) => c.id !== 'hotel');
     return passNear ? [base[0], base[base.length - 1], ...base.slice(1, -1)] : base;
   }, [passNear]);
-  const hotelMode = (isVia || role === 'Ziel') && !!current && !!currentP && query === current && !stopsOnly;
+  // Am Start ohne Hotel, dort braucht es keine Übernachtung
+  const nearHotel = role !== 'Start';
+  const hotelMode = !!current && !!currentP && query === current && !stopsOnly;
   // Rund um den Ort: Hotel, Café und Restaurant (Koray 8.11.)
-  const [nearKind, setNearKind] = useState<'hotel' | 'kaffee' | 'mittag'>('hotel');
+  const [nearKind, setNearKind] = useState<'hotel' | 'kaffee' | 'mittag'>(initialNear && (nearHotel || initialNear !== 'hotel') ? initialNear : nearHotel ? 'hotel' : 'kaffee');
   const [nearFound, setNearFound] = useState<Record<string, StopRow[] | 'fehler'>>({});
   const hotels = nearFound[nearKind] ?? null;
   useEffect(() => {
@@ -207,7 +215,7 @@ function SearchBody({
     { id: 'hotel' as const, label: 'Hotel', plural: 'Hotels', icon: 'bed.double.fill' as const },
     { id: 'kaffee' as const, label: 'Café', plural: 'Cafés', icon: 'cup.and.saucer.fill' as const },
     { id: 'mittag' as const, label: 'Essen', plural: 'Restaurants', icon: 'fork.knife' as const },
-  ];
+  ].filter((t) => nearHotel || t.id !== 'hotel');
   const nearTab = NEAR_TABS.find((t) => t.id === nearKind)!;
   // nur beim Einfügen (noch kein Name im Feld), nicht beim Ändern eines bestehenden Zwischenziels
   const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? (passNear && isVia && !current ? 'pass' : 'alle'));
@@ -219,6 +227,9 @@ function SearchBody({
 
   const [found, setFound] = useState<Record<string, StopRow[] | 'fehler'>>({});
   const catKey = `${cat}|${scale}`;
+  const totalKm = cum.length ? cum[cum.length - 1] : 0;
+  // Abfahrt gilt als jetzt: ungefähre Ankunft an den Stopps
+  const [openedAt] = useState(() => Date.now());
   useEffect(() => {
     if (!hasRoute || cat === 'alle' || cat === 'pass' || found[catKey]) return;
     const ctrl = new AbortController();
@@ -528,49 +539,56 @@ function SearchBody({
               </View>
             ) : (
               <>
-                {[
-                  { label: 'Direkt an der Strecke', rows: (catRows ?? []).filter((r) => (r.extraMin != null ? r.extraMin <= 2 : r.offM < 150)) },
-                  { label: 'Mit kleinem Umweg', rows: (catRows ?? []).filter((r) => (r.extraMin != null ? r.extraMin > 2 : r.offM >= 150)) },
-                ]
-                  .filter((g) => g.rows.length)
-                  .map((g) => (
-                    <View key={g.label} style={styles.section}>
-                      <AppText style={styles.groupLabel}>{g.label}</AppText>
-                      <View style={styles.group}>
-                        {g.rows.slice(0, 20).map((r) => {
-                          const near0 = r.extraMin != null ? r.extraMin <= 2 : r.offM < 150;
-                          const min = r.extraMin ?? (near0 ? 0 : detourMin(r.offM));
-                          return (
-                            <Pressable
-                              key={r.key}
-                              accessibilityRole="button"
-                              accessibilityLabel={`${r.name}, ${near0 ? 'kein Umweg' : `${min} Minuten Umweg`}, bei km ${Math.round(r.km)}`}
-                              onPress={() => {
-                                rememberPlace({ name: r.name, detail: r.detail, p: r.p });
-                                if (r.line && onPickRoad) onPickRoad(r.line, r.name);
-                                else if (r.extraMin != null) onPick(r.p, r.name);
-                                else if (onPickStop) onPickStop(r.p, r.name, r.km);
-                                else onPick(r.p, r.name);
-                              }}
-                              style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
-                              <View style={[styles.icon, styles.iconTint]}>
-                                <SymbolView name={CAT_ICON[cat as Exclude<Cat, 'alle'>]} size={16} tintColor={Colors.signal} />
-                              </View>
-                              <View style={styles.rowMain}>
-                                <AppText style={styles.name} numberOfLines={1}>
-                                  {r.name}
+                {/* Konzept A3 (Koray 8.11.): eine Liste nach Kilometern, rechts groß "in X km" und die ungefähre
+                    Ankunft; nur ein echter Umweg bekommt eine Plakette, "0 min" und "Direkt an der Strecke" entfallen */}
+                <View style={styles.group}>
+                  {[...(catRows ?? [])]
+                    .sort((a, b) => (a.extraMin != null || b.extraMin != null ? 0 : a.km - b.km))
+                    .slice(0, 25)
+                    .map((r) => {
+                      const near0 = r.extraMin != null ? r.extraMin <= 2 : r.offM < 150;
+                      const min = r.extraMin ?? (near0 ? 0 : detourMin(r.offM));
+                      const showKm = r.extraMin == null;
+                      const eta = showKm && routeMinutes && totalKm > 0 ? new Date(openedAt + (routeMinutes * (r.km / totalKm) + (near0 ? 0 : min)) * 60000) : null;
+                      return (
+                        <Pressable
+                          key={r.key}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${r.name}${showKm ? `, in ${Math.round(r.km)} Kilometern` : ''}${near0 ? '' : `, ${min} Minuten Umweg`}`}
+                          onPress={() => {
+                            rememberPlace({ name: r.name, detail: r.detail, p: r.p });
+                            if (r.line && onPickRoad) onPickRoad(r.line, r.name);
+                            else if (r.extraMin != null) onPick(r.p, r.name);
+                            else if (onPickStop) onPickStop(r.p, r.name, r.km);
+                            else onPick(r.p, r.name);
+                          }}
+                          style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
+                          <View style={[styles.icon, styles.iconTint]}>
+                            <SymbolView name={CAT_ICON[cat as Exclude<Cat, 'alle'>]} size={16} tintColor={Colors.signal} />
+                          </View>
+                          <View style={styles.rowMain}>
+                            <AppText style={styles.name} numberOfLines={1}>
+                              {r.name}
+                            </AppText>
+                            <View style={styles.subRow}>
+                              {!!r.detail && (
+                                <AppText style={[styles.sub, styles.subShrink]} numberOfLines={1}>
+                                  {r.detail}
                                 </AppText>
-                                <AppText style={styles.sub} numberOfLines={1}>
-                                  {r.extraMin != null ? r.detail : `bei km ${Math.round(r.km)}${r.detail ? ` · ${r.detail}` : ''}`}
-                                </AppText>
-                              </View>
-                              <AppText style={[styles.detour, near0 && styles.detourZero]}>{near0 ? (r.extraMin ? `+${min} min` : '0 min') : `+${min} min`}</AppText>
-                            </Pressable>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  ))}
+                              )}
+                              {!near0 && <AppText style={styles.detourTag}>{`Umweg +${min} min`}</AppText>}
+                            </View>
+                          </View>
+                          {showKm && (
+                            <View style={styles.kmBox}>
+                              <AppText style={styles.kmBig}>{`in ${Math.round(r.km)} km`}</AppText>
+                              {eta && <AppText style={styles.kmEta}>{`ca. ${eta.getHours()}:${String(eta.getMinutes()).padStart(2, '0')}`}</AppText>}
+                            </View>
+                          )}
+                        </Pressable>
+                      );
+                    })}
+                </View>
                 {scale < 3 && (
                   <Pressable accessibilityRole="button" onPress={() => setScale(3)} style={({ pressed }) => [styles.widenLink, pressed && styles.pressed]}>
                     <AppText style={styles.widenLinkText}>Korridor erweitern</AppText>
@@ -681,6 +699,12 @@ const styles = StyleSheet.create({
   tabOn: { backgroundColor: Colors.text },
   tabText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   tabTextOn: { color: Colors.ground },
+  subRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  subShrink: { flexShrink: 1 },
+  detourTag: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.warn, backgroundColor: 'rgba(232,176,58,0.16)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, overflow: 'hidden' },
+  kmBox: { alignItems: 'flex-end', marginLeft: Spacing.s },
+  kmBig: { fontFamily: Fonts.display, fontSize: Type.title, color: Colors.text, fontVariant: ['tabular-nums'] },
+  kmEta: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
   detour: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
   detourZero: { color: Colors.good },
   groupLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, paddingHorizontal: Spacing.xs },
