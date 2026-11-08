@@ -91,6 +91,9 @@ export function RouteMap({
 
   const map = useRef<MapView>(null);
   const markers = useRef<(MapMarker | null)[]>([]);
+  // Apple Maps meldet einen Tipp auf einen schon ausgewählten Marker nicht noch einmal: Pass Marker nach dem Tipp
+  // wieder abwählen, sonst lässt sich derselbe Pass nur einmal antippen (Koray 8.11.)
+  const passRefs = useRef(new Map<string, MapMarker | null>());
   const [ready, setReady] = useState(false);
   // nach eigenem Verschieben folgt die Kamera eine Weile nicht
   const [paused, setPaused] = useState(0);
@@ -345,7 +348,17 @@ export function RouteMap({
               title={ps.name}
               description={`${ps.ele.toLocaleString('de-DE')} m`}
               zIndex={pickedPassIds?.has(ps.id) ? 12 : 10}
-              onPress={onPressPass ? () => onPressPass(ps) : undefined}
+              ref={(m) => {
+                passRefs.current.set(ps.id, m);
+              }}
+              onPress={
+                onPressPass
+                  ? () => {
+                      onPressPass(ps);
+                      setTimeout(() => passRefs.current.get(ps.id)?.hideCallout(), 0);
+                    }
+                  : undefined
+              }
               tracksViewChanges={false}>
               <View
                 style={[styles.passDot, { backgroundColor: TIER_DOT[ps.tier] }, pickedPassIds?.has(ps.id) && styles.passPicked]}
