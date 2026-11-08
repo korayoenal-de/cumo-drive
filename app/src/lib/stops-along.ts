@@ -101,14 +101,17 @@ function nearest(c: Corridor, p: LatLon, segs?: number[]): { d: number; km: numb
 
 type Cand = { id: string; p: LatLon; t: Record<string, string>; d: number; km: number };
 
-function describe(kind: StopKind, t: Record<string, string>): string {
+function describe(kind: StopKind, t: Record<string, string>, name?: string): string {
   if (kind === 'tank') {
-    const parts = [t.brand ?? t.operator];
-    if (t['fuel:octane_100'] === 'yes') parts.push('100 Oktan');
-    else if (t['fuel:octane_98'] === 'yes') parts.push('Super Plus 98');
-    else parts.push('Super Plus wahrscheinlich');
-    if (t.opening_hours === '24/7') parts.push('rund um die Uhr');
-    return parts.filter(Boolean).join(', ');
+    // Kurz (Koray 8.11.): Marke nur, wenn sie nicht schon im Namen steht; Sorte als Oktanzahl
+    const brand = t.brand ?? t.operator;
+    const parts = [brand && !(name ?? '').toLowerCase().includes(brand.toLowerCase()) ? brand : null];
+    if (t['fuel:octane_102'] === 'yes') parts.push('102 Oktan');
+    else if (t['fuel:octane_100'] === 'yes') parts.push('100 Oktan');
+    else if (t['fuel:octane_98'] === 'yes') parts.push('98 Oktan');
+    else parts.push('98 vermutlich');
+    if (t.opening_hours === '24/7') parts.push('24 h');
+    return parts.filter(Boolean).join(' · ');
   }
   if (kind === 'aussicht') return [t.ele ? `${t.ele} m` : null, 'Parkplatz in der Nähe'].filter(Boolean).join(', ');
   if (kind === 'hotel') {
@@ -134,7 +137,7 @@ function finish(kind: StopKind, cands: Cand[], limit: number): StopHit[] {
     const key = `${name}|${Math.round(c.km)}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    hits.push({ id: c.id, kind, name, detail: describe(kind, c.t), p: c.p, km: c.km, offM: c.d });
+    hits.push({ id: c.id, kind, name, detail: describe(kind, c.t, name), p: c.p, km: c.km, offM: c.d });
   }
   hits.sort((a, b) => a.km - b.km);
   if (hits.length <= limit) return hits;
