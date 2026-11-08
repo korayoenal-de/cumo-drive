@@ -26,6 +26,8 @@ import { buildTour, findPlace, FRESH_MS, locate, newSeed, PHASES, toPlanError, t
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
+import { LogoProgress } from '@/components/ui/fun-gauge';
+import { RadarChip } from './radar-chip';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
@@ -36,6 +38,7 @@ import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } f
 import { type PlannedTour } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { spliceStop } from '@/lib/stop-splice';
+import { radarRadiusM, radarRoads } from '@/lib/radar';
 import { flatten, haversine, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
@@ -132,7 +135,8 @@ type Stage =
   | { kind: 'error'; error: PlanError; req?: TourRequest };
 
 export default function Planner() {
-  const [mode, setMode] = useState<Mode>('rundtour');
+  // Tour planen ist der erste Tab und beim Öffnen gewählt (Koray 8.11.)
+  const [mode, setMode] = useState<Mode>('tour');
   const [view, setView] = useState<Stage>({ kind: 'form' });
   const abort = useRef<AbortController | null>(null);
   const lastStops = useRef<Stop[]>([]);
@@ -143,6 +147,12 @@ export default function Planner() {
 
   // Blatt über der Karte: klein, halb oder groß
   const [detent, setDetent] = useState<Detent>(1);
+  /** Radar während eine Rundtour entsteht (Ladescreen Konzept C) */
+  const [radar, setRadar] = useState<{ center: LatLon; radiusM: number; roads: ReturnType<typeof radarRoads> } | null>(null);
+  const startRadar = (center: LatLon, km: number) => {
+    const radiusM = radarRadiusM(km);
+    setRadar((r) => (r && haversine(r.center, center) < 200 && r.radiusM === radiusM ? r : { center, radiusM, roads: radarRoads(center, radiusM) }));
+  };
   const scroll = useRef<ScrollViewInstance>(null);
   const toTop = () => scroll.current?.scrollTo({ y: 0, animated: false });
   /** Beim Tippen in ein Suchfeld groß, damit Tastatur und Treffer Platz haben */
@@ -285,9 +295,15 @@ export default function Planner() {
     };
     step('start');
     toTop();
+    // Karte frei für das Radar, das Blatt zeigt nur Schritt und Fortschritt
+    setDetent(0);
+    const guess = picked?.p ?? here?.p;
+    setRadar(null);
+    if (guess) startRadar(guess, roundKm);
     let req: TourRequest | undefined;
     try {
       req = await prepare(ctrl.signal);
+      if (!ctrl.signal.aborted) startRadar(req.start.p, req.km);
       const tour = await buildTour(req, seed, step, ctrl.signal);
       if (!ctrl.signal.aborted) {
         const fun = tourFun(flatten(tour).map((x) => x.p));
@@ -301,6 +317,7 @@ export default function Planner() {
       const error = toPlanError(e, ctrl.signal);
       if (error.kind === 'aborted') setView({ kind: 'form' });
       else setView({ kind: 'error', error, req });
+      setDetent(1);
     }
   }
 
@@ -404,6 +421,7 @@ export default function Planner() {
   function cancel() {
     abort.current?.abort();
     setView({ kind: 'form' });
+    setDetent(1);
   }
 
   // Was die große Karte zeigt: Ergebnis, geplante Route oder ohne Route den eigenen Standort
@@ -505,11 +523,21 @@ export default function Planner() {
       ) : (
         <AppText variant="label">{view.kind === 'working' ? 'Tour wird erstellt' : 'Das hat nicht geklappt'}</AppText>
       )}
-      {view.kind === 'working' || (inTour && tourPlan.step) ? (
+      {view.kind === 'working' ? (
+        <View style={styles.summary}>
+          <LogoProgress step={PHASES.findIndex((x) => x.id === view.phase)} />
+          <AppText variant="title" style={styles.flex} numberOfLines={1}>
+            {PHASES.find((x) => x.id === view.phase)?.label}
+          </AppText>
+          <Pressable accessibilityRole="button" onPress={cancel} hitSlop={4} style={({ pressed }) => [styles.cancelChip, pressed && styles.pressedDim]}>
+            <AppText style={styles.cancelText}>Abbrechen</AppText>
+          </Pressable>
+        </View>
+      ) : inTour && tourPlan.step ? (
         <View style={styles.summary}>
           <ActivityIndicator color={Colors.signal} />
           <AppText style={styles.flex} numberOfLines={1}>
-            {view.kind === 'working' ? PHASES.find((x) => x.id === view.phase)?.label : tourPlan.step ? STEP_TEXT[tourPlan.step] : ''}
+            {STEP_TEXT[tourPlan.step]}
           </AppText>
         </View>
       ) : (
@@ -874,12 +902,14 @@ export default function Planner() {
           onPressMap={passOverlay ? () => setPending(null) : undefined}
           pickedPassIds={inTour ? pickedPassIds : undefined}
           flyTo={inTour ? flyTo : null}
+          radar={view.kind === 'working' ? radar : null}
           // MapKit rechnet die Safe Area selbst dazu; ohne Abzug schwebt der Hinweis Apple Karten über dem Blatt
           mapPadding={{ top: 0, right: 0, bottom: Math.max(0, covered - insets.bottom), left: 0 }}
           edgePadding={{ top: insets.top + Spacing.xxxl, right: Spacing.xxxl, bottom: Spacing.xl + insets.bottom, left: Spacing.xxxl }}
           style={StyleSheet.absoluteFill}
         />
           <MapLayersButton style={[styles.layersBtn, { top: insets.top + Spacing.s }]} />
+          {view.kind === 'working' && radar && <RadarChip key={`${radar.center[0]}-${radar.radiusM}`} count={radar.roads.length} top={insets.top + Spacing.s} />}
           {passOverlay && (
             <MapPassActions
               pass={passOverlay}

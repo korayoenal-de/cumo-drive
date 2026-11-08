@@ -4,7 +4,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
-import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-native-maps';
+import MapView, { AnimatedRegion, Circle, Marker, Polyline, type LatLng } from 'react-native-maps';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
@@ -13,6 +13,7 @@ import { listDriveTracks } from '@/lib/drives';
 import { useLibrary } from '@/lib/library';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { passPoint, PASSES } from '@/lib/passes';
+import { RADAR_MS, RADAR_REPEAT_MS, type RadarRoad } from '@/lib/radar';
 import type { CheckClass, LatLon } from '@/lib/tour';
 import { CarTopView, carSymbolFor } from '@/components/map/car-marker';
 import { useVehicles } from '@/lib/vehicle';
@@ -57,6 +58,7 @@ export function RouteMap({
   onPressMap,
   pickedPassIds,
   flyTo,
+  radar,
 }: RouteMapProps) {
   const settings = useMapSettings();
   // Eigenes Auto statt Pfeil, wenn in der Garage eingeschaltet
@@ -146,6 +148,21 @@ export function RouteMap({
     // pad ist ein Objekt, die Werte reichen als Abhängigkeit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, autoFit, followUser, highlightIndex, fitCoords, pad.top, pad.right, pad.bottom, pad.left]);
+
+  // Radar: Ausschnitt einmal auf den Umkreis um den Start
+  const radarKey = radar ? `${radar.center[0].toFixed(4)}-${radar.center[1].toFixed(4)}-${Math.round(radar.radiusM)}` : '';
+  useEffect(() => {
+    if (!ready || !radar) return;
+    const dLat = (radar.radiusM / 111320) * 1.1;
+    const dLon = dLat / Math.max(0.2, Math.cos((radar.center[0] * Math.PI) / 180));
+    const [la, lo] = radar.center;
+    map.current?.fitToCoordinates(
+      [ll([la + dLat, lo]), ll([la - dLat, lo]), ll([la, lo + dLon]), ll([la, lo - dLon])],
+      { edgePadding: pad, animated: true },
+    );
+    // radarKey fasst Mitte und Radius zusammen
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, radarKey]);
 
   // Ohne Linie: auf den Fokus Punkt springen (zum Beispiel erster Wegpunkt im Planer)
   const focusLat = focus?.[0];
@@ -429,6 +446,7 @@ export function RouteMap({
             )}
           </MeMarker>
         )}
+        {radar && fitCoords.length < 2 && <RadarLayer key={radarKey} center={radar.center} radiusM={radar.radiusM} roads={radar.roads} />}
       </MapView>
 
       {/* Beim Mitfahren steht der eigene Punkt fest in der Kartenmitte; die Kamera bewegt sich bildweise darunter.
@@ -518,3 +536,69 @@ const styles = StyleSheet.create({
   },
   recenterText: { fontFamily: Fonts.semibold, fontSize: Type.small },
 });
+
+/**
+ * Ring ab dem Start (Ladescreen Konzept C): der erste läuft in RADAR_MS bis an den Rand, danach leiser in Schleife.
+ * Strecken leuchten auf, sobald der erste Ring sie erreicht. Etwa 30 Bilder je Sekunde, im Hintergrund angehalten.
+ */
+function RadarLayer({ center, radiusM, roads }: { center: LatLon; radiusM: number; roads: RadarRoad[] }) {
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    let last = 0;
+    const t0 = Date.now();
+    let active = AppState.currentState === 'active';
+    const sub = AppState.addEventListener('change', (st) => {
+      active = st === 'active';
+    });
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      if (!active) return;
+      const now = Date.now();
+      if (now - last < 33) return;
+      last = now;
+      setT(now - t0);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      sub.remove();
+    };
+  }, []);
+  const first = Math.min(1, t / RADAR_MS);
+  const out = (x: number) => 1 - Math.pow(1 - x, 3);
+  const reach = out(first) * radiusM;
+  const loop = t > RADAR_MS ? ((t - RADAR_MS) % RADAR_REPEAT_MS) / RADAR_REPEAT_MS : -1;
+  const ring = loop >= 0 ? out(loop) * radiusM : reach;
+  const fade = loop >= 0 ? (1 - loop) * 0.55 : 1 - first * 0.4;
+  const c = { latitude: center[0], longitude: center[1] };
+  return (
+    <>
+      {roads.map((r) => {
+        const lit = Math.max(0, Math.min(1, (reach - r.distM) / (radiusM * 0.08)));
+        if (lit <= 0) return null;
+        return (
+          <Polyline
+            key={`radar-${r.id}`}
+            coordinates={r.line.map(ll)}
+            strokeColor={`rgba(226,70,28,${(0.85 * lit).toFixed(2)})`}
+            strokeWidth={4}
+            lineCap="round"
+            lineJoin="round"
+            zIndex={2}
+          />
+        );
+      })}
+      {ring > 1 && (
+        <Circle
+          center={c}
+          radius={ring}
+          strokeColor={`rgba(226,70,28,${(0.7 * fade).toFixed(2)})`}
+          strokeWidth={1.5}
+          fillColor={`rgba(226,70,28,${(0.07 * fade).toFixed(3)})`}
+          zIndex={1}
+        />
+      )}
+    </>
+  );
+}

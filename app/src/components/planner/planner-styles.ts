@@ -125,6 +125,8 @@ export const styles = StyleSheet.create({
   funValueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   funDelta: { fontFamily: Fonts.bold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
   pressedDim: { opacity: 0.6 },
+  cancelChip: { height: 44, paddingHorizontal: Spacing.l, borderRadius: 22, justifyContent: 'center', backgroundColor: Colors.surface2 },
+  cancelText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   statLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   checkCard: { flexDirection: 'row', alignItems: 'flex-start' },
 
