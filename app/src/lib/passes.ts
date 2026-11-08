@@ -199,6 +199,8 @@ export function passLoopVia(
   km: number,
   bearing: number | null,
   month: number,
+  /** Neu würfeln: wählt unter den besten Pässen einen anderen als ersten (Koray 8.11.: kam immer dieselbe Runde) */
+  seed = 0,
 ): { via: LatLon[]; passes: Pass[] } | null {
   // Ein Pass in Luftlinie r erzeugt im Gebirge grob eine Runde von 3 bis 3,5 mal r Straßen km
   const reach = km / 3.3;
@@ -210,7 +212,9 @@ export function passLoopVia(
     const dirFit = bearing === null ? 1 : Math.cos(((bearingTo(start, passPoint(x.pass)) - bearing) * Math.PI) / 180) * 0.5 + 0.5;
     return TIER_WEIGHT[x.pass.tier] * 2 + dirFit * 3 + (x.km / reach) * 1.5 - (likelyClosed(x.pass, month) ? 0.5 : 0);
   };
-  const ranked = [...open].sort((a, b) => score(b) - score(a));
+  const sorted = [...open].sort((a, b) => score(b) - score(a));
+  const pick = Math.abs(seed) % Math.min(3, sorted.length);
+  const ranked = [sorted[pick], ...sorted.filter((_, i) => i !== pick)];
   const first = ranked[0];
   const chosen = [first];
   // zweiter Pass: nicht zu nah am ersten, passt mit in die Länge
@@ -224,6 +228,13 @@ export function passLoopVia(
   // Reihenfolge im Uhrzeigersinn ab Start, damit es eine Schleife wird
   chosen.sort((a, b) => bearingTo(start, passPoint(a.pass)) - bearingTo(start, passPoint(b.pass)));
   const via = chosen.map((x) => passPoint(x.pass));
+  // Liegen beide Pässe in fast derselben Richtung, fährt man hin und auf demselben Weg zurück:
+  // dann wie bei einem Pass einen Rückweg seitlich anhängen
+  const sameSide = chosen.length === 2 && Math.abs(((bearingTo(start, via[0]) - bearingTo(start, via[1]) + 540) % 360) - 180) < 35;
+  if (sameSide) {
+    const far = chosen[0].km > chosen[1].km ? chosen[0] : chosen[1];
+    via.push(destination(start, far.km * 0.6, bearingTo(start, via[1]) + 55));
+  }
   if (chosen.length === 1) {
     // Rückweg über einen Punkt seitlich, damit nicht derselbe Weg zurück
     const b = bearingTo(start, via[0]);

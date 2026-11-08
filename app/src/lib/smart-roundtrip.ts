@@ -66,7 +66,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
     let reachKm = req.km;
     const tried = new Set<string>();
     for (let attempt = 0; attempt < 3; attempt++) {
-      const loop = passLoopVia(PASSES, req.start, reachKm, dir, month);
+      const loop = passLoopVia(PASSES, req.start, reachKm, dir, month, seed + attempt);
       if (!loop) break;
       const key = loop.passes.map((p) => p.id).join('+');
       if (tried.has(key)) break;
@@ -76,16 +76,19 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         const t = await planChecked(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, onStep, signal, true);
         const curves = countCurves(flatten(t).map((x) => x.p));
         const bonus = loop.passes.reduce((sum, p) => sum + TIER_WEIGHT[p.tier] * 15, 0);
+        // Hin und zurück auf derselben Straße zählt hart dagegen (Tester 8.11.: Runde ab Gernsheim war fast
+        // ganz ein Hin und Zurück), und nur eine echte Runde darf sofort gewinnen
+        const spur = spurKm(t);
         const cand: SmartTour = {
           ...t,
           engine: own ? 'cumo' : 'valhalla',
           curves,
-          score: scoreTour(t, curves, 0, req.km) + bonus,
+          score: scoreTour(t, curves, 0, req.km) + bonus - spur * 100,
           passes: loop.passes.map((p) => p.name),
         };
         candidates.push(cand);
         const ratio = t.laenge_km / req.km;
-        if ((t.km_je_klasse?.raus ?? 0) === 0 && ratio > 0.7 && ratio < 1.3) return cand;
+        if ((t.km_je_klasse?.raus ?? 0) === 0 && ratio > 0.7 && ratio < 1.3 && spur < Math.max(2, t.laenge_km * 0.05)) return cand;
         reachKm = reachKm / Math.max(0.5, Math.min(2.5, ratio));
       } catch (e) {
         if (signal?.aborted) throw e;
@@ -93,7 +96,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         break;
       }
     }
-    const fit = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0 && c.laenge_km < req.km * 1.5);
+    const fit = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0 && c.laenge_km < req.km * 1.5 && spurKm(c) < Math.max(2, c.laenge_km * 0.05));
     if (fit.length) return fit.sort((a, b) => b.score - a.score)[0];
   }
 
@@ -189,7 +192,7 @@ function spurOf(t: PlannedTour) {
   const points = d.points.filter((q) => haversine(q, home) > 1500);
   return { km: d.points.length ? (d.km * points.length) / d.points.length : 0, points };
 }
-function spurKm(t: PlannedTour): number {
+export function spurKm(t: PlannedTour): number {
   return spurOf(t).km;
 }
 
