@@ -19,6 +19,8 @@ export type MapSettings = {
   drives: boolean;
   /** Wetter an den Pässen der Route zur Ankunft (WeatherKit) */
   weather: boolean;
+  /** true, sobald jemand die Darstellung selbst gewählt hat; bis dahin zeigt CarPlay 3D */
+  styleChosen?: boolean;
 };
 
 export const MAP_STYLES: { id: MapStyle; label: string }[] = [
@@ -55,9 +57,14 @@ function load() {
 }
 
 export function setMapSettings(patch: Partial<MapSettings>) {
-  state = { ...state, ...patch };
+  state = { ...state, ...patch, ...(patch.style ? { styleChosen: true } : {}) };
   emit();
   AsyncStorage.setItem(KEY, JSON.stringify(state)).catch(() => undefined);
+}
+
+/** Im Auto ist 3D Satellit voreingestellt (Koray 8.11.), eine eigene Wahl gilt auch dort */
+export function carPlayStyleOf(m: MapSettings): MapStyle {
+  return m.styleChosen ? m.style : '3d';
 }
 
 export function useMapSettings(): MapSettings {

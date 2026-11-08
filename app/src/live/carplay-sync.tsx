@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 
 import { useActiveTour } from '@/lib/active-tour';
 import { carPlayAvailable, carPlayResend, carPlaySetMapStyle, carPlaySetTour, markCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
-import { useMapSettings } from '@/lib/map-settings';
+import { carPlayStyleOf, useMapSettings } from '@/lib/map-settings';
 
 export function CarPlaySync() {
   const active = useActiveTour();
@@ -15,7 +15,7 @@ export function CarPlaySync() {
     if (carPlayAvailable) carPlaySetTour(active?.tour ?? null);
   }, [active]);
   // Darstellung aus den Karteneinstellungen auch im Auto (Testfahrer 8.11.)
-  const style = useMapSettings().style;
+  const style = carPlayStyleOf(useMapSettings());
   useEffect(() => {
     if (carPlayAvailable) carPlaySetMapStyle(style);
   }, [style]);

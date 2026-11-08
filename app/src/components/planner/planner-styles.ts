@@ -154,7 +154,10 @@ export const styles = StyleSheet.create({
   pointArea: { flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 52 },
   more: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: Spacing.xs },
   ortBadge: { minHeight: 44, justifyContent: 'center', marginRight: Spacing.s },
-  ortBox: { marginTop: -Spacing.s, borderRadius: Radius.m, backgroundColor: Colors.surface },
+  // Wischen zum Löschen: der Container trägt Rundung und Einzug, rechts erscheint die rote Taste
+  swipeBox: { borderRadius: Radius.m, overflow: 'hidden' },
+  swipeDelete: { width: 96, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', gap: 2 },
+  swipeDeleteText: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.onSignal },
   symbol: { width: 28, alignItems: 'center', justifyContent: 'center' },
   startRing: { width: 16, height: 16, borderRadius: 8, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center' },
   startCore: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.surface },

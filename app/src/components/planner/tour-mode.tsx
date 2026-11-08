@@ -6,6 +6,8 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import { SymbolView } from 'expo-symbols';
 
 import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
@@ -15,7 +17,7 @@ import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
 import { directNote } from '@/lib/plan';
 import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/create-tour';
-import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { ConfirmSheet, OptionsSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { NameDialog } from '@/components/planner/name-dialog';
 import { showToast } from '@/lib/toast';
 import { deleteTour } from '@/lib/library';
@@ -300,6 +302,11 @@ export function TourMode({
   const allPts = [plan.start, ...plan.vias, plan.ziel].filter((x): x is LatLon => !!x);
   const isLoop = !!plan.start && !!plan.ziel && keyOf(plan.start) === keyOf(plan.ziel);
 
+  /** Stelle eines Punkts in allPts */
+  function idxOf(kind: PointKind, index: number | undefined) {
+    return kind === 'start' ? 0 : kind === 'ziel' ? allPts.length - 1 : (index ?? 0) + 1;
+  }
+
   function actionsFor(kind: PointKind): PointAction[] {
     return kind === 'via' ? ['start', 'ziel', 'karte', 'entfernen'] : kind === 'start' ? [...(isLoop || !plan.ziel ? [] : (['ziel'] as PointAction[])), 'karte', 'entfernen'] : [...(isLoop || !plan.start ? [] : (['start'] as PointAction[])), 'karte', 'entfernen'];
   }
@@ -355,8 +362,29 @@ export function TourMode({
     );
     return (
       <View key={id} style={styles.gapS}>
-        {/* Zwischenziele eingerückt, die Steuerung der Etappen bleibt auf der Achse von Start und Ziel (Koray 8.11.) */}
-        <Animated.View style={[styles.pointRow, kind === 'via' && styles.pointRowVia, drag?.from === slot && dragStyle]}>
+        {/* Zwischenziele eingerückt, die Steuerung der Etappen bleibt auf der Achse von Start und Ziel (Koray 8.11.).
+            Von rechts nach links wischen zeigt Löschen (Koray 8.11.). */}
+        <Swipeable
+          key={p ? keyOf(p) : 'leer'}
+          enabled={!!p && !drag}
+          friction={1.6}
+          rightThreshold={36}
+          overshootRight={false}
+          containerStyle={[styles.swipeBox, kind === 'via' && styles.pointRowVia]}
+          renderRightActions={(_prog, _tr, m) => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${role} löschen`}
+              onPress={() => {
+                m.close();
+                if (p) runAction({ idx: idxOf(kind, index), name: nameOf(p) }, 'entfernen');
+              }}
+              style={({ pressed }) => [styles.swipeDelete, pressed && { opacity: 0.8 }]}>
+              <SymbolView name="trash.fill" size={18} tintColor={Colors.onSignal} weight="semibold" />
+              <AppText style={styles.swipeDeleteText}>Löschen</AppText>
+            </Pressable>
+          )}>
+        <Animated.View style={[styles.pointRow, drag?.from === slot && dragStyle]}>
           {canDrag ? (
             <DragArea
               label={`${role} ${nameOf(p)}`}
@@ -410,20 +438,21 @@ export function TourMode({
           {p && (kind !== 'start' || isLoop) && (
             <Pressable
               accessibilityRole="button"
-              accessibilityState={{ expanded: ortOpen === id }}
               accessibilityLabel={`${role} ${nameOf(p)}: Hotel, Café, Essen und Aktionen`}
               hitSlop={4}
               onPress={() => {
                 setLegMenu(null);
-                setOrtOpen(ortOpen === id ? null : id);
+                setOrtOpen(id);
               }}
               style={({ pressed }) => [styles.ortBadge, pressed && { opacity: 0.75 }]}>
-              <OrtBadge p={p} withHotel={kind !== 'start' || isLoop} highlight={kind === 'ziel'} open={ortOpen === id} />
+              <OrtBadge p={p} withHotel={kind !== 'start' || isLoop} highlight={kind === 'ziel'} open={false} />
             </Pressable>
           )}
         </Animated.View>
-        {p && ortOpen === id && (
-          <View style={[styles.ortBox, kind === 'via' && styles.pointRowVia]}>
+        </Swipeable>
+        {/* Ortsoptionen als Bottom Sheet statt Akkordeon (Koray 8.11.) */}
+        {p && (
+          <OptionsSheet visible={ortOpen === id} title={nameOf(p)} subtitle={role} onClose={() => setOrtOpen(null)}>
             <OrtPanel
               p={p}
               withHotel={kind !== 'start' || isLoop}
@@ -436,18 +465,19 @@ export function TourMode({
               onAll={(k) => {
                 setNearPreset(k);
                 setOrtOpen(null);
-                openEdit({ kind, index });
+                setTimeout(() => openEdit({ kind, index }), SHEET_GONE_MS);
               }}
               onAction={(a) => {
+                setOrtOpen(null);
                 if (a === 'karte') {
-                  setOrtOpen(null);
-                  onShowPoint?.(p);
+                  setTimeout(() => onShowPoint?.(p), SHEET_GONE_MS);
                   return;
                 }
-                runAction({ idx: kind === 'start' ? 0 : kind === 'ziel' ? allPts.length - 1 : (index ?? 0) + 1, name: nameOf(p) }, a);
+                // Löschen zeigt einen Toast, Tauschen plant neu: erst wenn das Blatt weg ist
+                setTimeout(() => runAction({ idx: idxOf(kind, index), name: nameOf(p) }, a), SHEET_GONE_MS);
               }}
             />
-          </View>
+          </OptionsSheet>
         )}
       </View>
     );
