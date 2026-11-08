@@ -513,6 +513,26 @@ async function bestRejoin(current: NavRoute, j0: number, from: LatLon, heading: 
     while (k < shape.length - 2 && cumKm[k] - base < d) k++;
     if (!cands.includes(k)) cands.push(k);
   }
+  // Dazu Stellen der Tour weiter hinten, die in Fahrtrichtung nah liegen: führt die eigene Straße
+  // gleich wieder auf die Tour, soll man nicht wenden müssen (Testfahrt 8.11.)
+  const ahead: { k: number; m: number }[] = [];
+  for (let k = j0 + 1; k < shape.length - 1; k++) {
+    if (cumKm[k] - base <= 2) continue;
+    const m = haversine(from, shape[k]);
+    if (m > 3000) continue;
+    if (heading != null) {
+      let diff = Math.abs(bearing(from, shape[k]) - heading) % 360;
+      if (diff > 180) diff = 360 - diff;
+      if (diff > 75) continue;
+    }
+    ahead.push({ k, m });
+  }
+  ahead.sort((a, b) => a.m - b.m);
+  for (const a of ahead) {
+    if (cands.length >= 13) break;
+    if (cands.some((k) => Math.abs(cumKm[k] - cumKm[a.k]) < 0.4)) continue;
+    cands.push(a.k);
+  }
   try {
     const times = await timesTo(from, heading, cands.map((k) => shape[k]), req, signal);
     const secPerKm = current.km > 0 ? (current.minutes * 60) / current.km : 60;
@@ -521,9 +541,10 @@ async function bestRejoin(current: NavRoute, j0: number, from: LatLon, heading: 
     cands.forEach((k, i) => {
       const t = times[i];
       if (t == null) return;
-      // Möglichst früh zurück auf die Tour: jeder ausgelassene Tour Kilometer zählt dreifach,
-      // ein Wendemanöver lohnt sich also nur, wenn es vorne keinen kurzen Weg zurück gibt.
-      const cost = t + (cumKm[k] - base) * secPerKm * 3;
+      // Möglichst früh zurück auf die Tour: ausgelassene Tour Kilometer kosten, aber nicht so viel,
+      // dass man wenden muss, wenn die eigene Straße bald wieder auf die Tour führt (Testfahrt 8.11.:
+      // dreifach war zu streng, die App bestand auf dem Zurückführen)
+      const cost = t + (cumKm[k] - base) * secPerKm * 1.2;
       if (cost < bestCost - 5) {
         bestCost = cost;
         best = k;
