@@ -150,10 +150,13 @@ function SearchBody({
   }, [route]);
   /** Zwischenziel: Mein Standort braucht es dort nicht, nur bei Start und Ziel (Koray 8.11.) */
   const isVia = role.startsWith('Zwischenziel');
-  // Liegt die Route in Passnähe (bis 15 km), steht Pässe direkt hinter Alle und ist beim Zwischenziel vorausgewählt
-  const passNear = useMemo(() => hasRoute && passesNear(route!, cum, 15000).length > 0, [hasRoute, route, cum]);
+  // Liegen Pässe auf dem Weg oder in der Nähe (dieselben 8 km wie die Liste), die noch kein Punkt der Route sind,
+  // steht Pässe direkt hinter Alle und ist beim neuen Zwischenziel vorausgewählt (Koray 8.11.)
+  const taken = useMemo(() => new Set((slots ?? []).map((sl) => sl.value).filter(Boolean)), [slots]);
+  const passNear = useMemo(() => hasRoute && passesNear(route!, cum, 8000).some((r) => !taken.has(r.name)), [hasRoute, route, cum, taken]);
   const cats = useMemo(() => (passNear ? [CATS[0], CATS[CATS.length - 1], ...CATS.slice(1, -1)] : CATS), [passNear]);
-  const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? (passNear && isVia ? 'pass' : 'alle'));
+  // nur beim Einfügen (noch kein Name im Feld), nicht beim Ändern eines bestehenden Zwischenziels
+  const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? (passNear && isVia && !current ? 'pass' : 'alle'));
   const [scale, setScale] = useState(1);
   // Solange der Name des Punkts unverändert im Feld steht, keine Suche
   const q = query === current ? '' : query.trim();
