@@ -37,20 +37,25 @@ export type Profile = 'kurvig' | 'paesse' | 'entspannt' | 'schnell';
 
 export const PROFILES: { id: Profile; label: string }[] = [
   { id: 'kurvig', label: 'Kurvig' },
-  { id: 'paesse', label: 'Sehr kurvig' },
+  { id: 'paesse', label: 'Kurvig' },
   { id: 'entspannt', label: 'Entspannt' },
   { id: 'schnell', label: 'Schnell' },
 ];
 
 /**
- * Auswahl in der Oberfläche: nur Kurvig und Sehr kurvig, darum geht es in der App.
- * Sehr kurvig nutzt intern das Profil "paesse" (stärker auf Kurven gewichtet, Runden auch über Pässe).
- * Entspannt und Schnell bleiben für ältere gespeicherte Touren und die Anfahrt bestehen.
+ * Auswahl in der Oberfläche (Koray 8.11.): nur noch Kurvig. Sehr kurvig ("paesse") unterschied sich kaum
+ * und war unverständlich; Pässe zieht Kurvig ohnehin an, Rundtouren planen Pass Varianten automatisch mit.
+ * Ältere Touren mit "paesse" laufen als Kurvig weiter (normProfile). Entspannt bleibt nur für Altbestand.
  */
-export const PROFILE_CHOICES = PROFILES.filter((p) => p.id === 'kurvig' || p.id === 'paesse');
+export const PROFILE_CHOICES = PROFILES.filter((p) => p.id === 'kurvig');
 
-/** Je Etappe einer Route zusätzlich Schnell: zügig zum Ziel, danach die Genussstrecke (bis München schnell, dann sehr kurvig bis Imst). */
-export const LEG_PROFILE_CHOICES = PROFILES.filter((p) => p.id === 'schnell' || p.id === 'kurvig' || p.id === 'paesse');
+/** Je Etappe einer Route zusätzlich Schnell: zügig zum Ziel, danach die Genussstrecke (bis München schnell, dann kurvig bis Imst). */
+export const LEG_PROFILE_CHOICES = PROFILES.filter((p) => p.id === 'schnell' || p.id === 'kurvig');
+
+/** Sehr kurvig gibt es nicht mehr: gespeicherte Touren und Etappen damit gelten als Kurvig */
+export function normProfile<T extends Profile | null | undefined>(p: T): T {
+  return (p === 'paesse' ? 'kurvig' : p) as T;
+}
 
 export function haversine(a: LatLon, b: LatLon): number {
   const r = 6371000;

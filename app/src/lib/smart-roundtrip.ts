@@ -59,7 +59,9 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
   // Pässe Profil: gezielt über bekannte Pässe in Reichweite, die jetzt offen sind.
   // Bergstraßen sind viel länger als die Luftlinie; passt die Länge nicht, wird die Reichweite
   // nachgeregelt und neu gewählt (höchstens drei Versuche).
-  if (req.profile === 'paesse') {
+  // Pass Varianten bei jeder kurvigen Runde (Koray 8.11.: Pässe werden ohnehin bevorzugt, kein eigenes Profil mehr);
+  // sie gewinnen nur als echte Runde, sonst treten sie gegen die normalen Runden an
+  if (req.profile === 'kurvig' || req.profile === 'paesse') {
     const month = new Date().getMonth() + 1;
     const dir = req.direction === 'zufall' && req.bearing === undefined ? null : heading;
     const own = await cumoAvailable();

@@ -88,7 +88,7 @@ export function parseWish(text: string): TourWish {
     }
   }
 
-  if (/pass|pässe|paesse|serpentin|kehre/i.test(t)) wish.profile = 'paesse';
+  if (/pass|pässe|paesse|serpentin|kehre/i.test(t)) wish.profile = 'kurvig';
   else if (/entspannt|gemütlich|gemuetlich|cruise|cruisen|ruhig/i.test(t)) wish.profile = 'entspannt';
   else if (/schnell|zügig|zuegig|autobahn/i.test(t)) wish.profile = 'schnell';
   else if (/kurv/i.test(t)) wish.profile = 'kurvig';

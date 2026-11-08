@@ -40,7 +40,7 @@ import { type PlannedTour } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { spliceStop } from '@/lib/stop-splice';
 import { curvyPieces, radarRadiusM, radarRoads, REVEAL_MS, type Radar } from '@/lib/radar';
-import { flatten, haversine, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { flatten, haversine, normProfile, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
 import { type PlannedStop } from './planner-parts';
@@ -197,7 +197,7 @@ export default function Planner() {
       const t = takeEditTour();
       if (!t) return;
       abort.current?.abort();
-      const p = t.profile ?? profile;
+      const p = normProfile(t.profile ?? profile);
       setView({ kind: 'form' });
       setMode('tour');
       setPending(null);
@@ -226,7 +226,7 @@ export default function Planner() {
     const vias = inner.length ? inner : line.length > 8 ? [0.25, 0.5, 0.75].map((f) => line[Math.round((line.length - 1) * f)]) : [];
     const now = new Date().toISOString();
     abort.current?.abort();
-    setProfile(p);
+    setProfile(normProfile(p));
     setMode('tour');
     setView({ kind: 'form' });
     setPending(null);
@@ -863,13 +863,15 @@ export default function Planner() {
             <DirectionDial value={direction} onChange={setDirection} onDragChange={setDragging} />
           </Section>
 
-          <Section label="Profil">
-            <View style={styles.wrap}>
-              {PROFILE_CHOICES.map((p) => (
-                <Chip key={p.id} label={p.label} active={profile === p.id} onPress={() => setProfile(p.id)} />
-              ))}
-            </View>
-          </Section>
+          {PROFILE_CHOICES.length > 1 && (
+            <Section label="Profil">
+              <View style={styles.wrap}>
+                {PROFILE_CHOICES.map((p) => (
+                  <Chip key={p.id} label={p.label} active={profile === p.id} onPress={() => setProfile(p.id)} />
+                ))}
+              </View>
+            </Section>
+          )}
 
           <Accordion label="Vermeiden" summary={avoidSummary(avoid)}>
             <View style={styles.card}>

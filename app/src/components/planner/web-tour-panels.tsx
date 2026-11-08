@@ -111,15 +111,17 @@ export function TourPanel(props: {
       ) : null}
       <PlaceSearch near={pts[pts.length - 1]} placeholder={pts.length ? 'Ziel oder Zwischenziel hinzufügen' : 'Wo geht es los?'} onPick={(p) => props.onAddPlace(p.p)} />
 
-      <Section title="Profil">
-        <div style={S.chips}>
-          {PROFILE_CHOICES.map((p) => (
-            <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
-              {p.label}
-            </Chip>
-          ))}
-        </div>
-      </Section>
+      {PROFILE_CHOICES.length > 1 && (
+        <Section title="Profil">
+          <div style={S.chips}>
+            {PROFILE_CHOICES.map((p) => (
+              <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
+                {p.label}
+              </Chip>
+            ))}
+          </div>
+        </Section>
+      )}
 
       {hint ? (
         <div style={S.winterNote}>

@@ -105,15 +105,17 @@ export function RoundTripPanel(props: {
           )}
         </div>
       </Section>
-      <Section title="Profil">
-        <div style={S.chips}>
-          {PROFILE_CHOICES.map((p) => (
-            <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
-              {p.label}
-            </Chip>
-          ))}
-        </div>
-      </Section>
+      {PROFILE_CHOICES.length > 1 && (
+        <Section title="Profil">
+          <div style={S.chips}>
+            {PROFILE_CHOICES.map((p) => (
+              <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
+                {p.label}
+              </Chip>
+            ))}
+          </div>
+        </Section>
+      )}
       <button
         style={S.primary}
         disabled={props.busy || !start}

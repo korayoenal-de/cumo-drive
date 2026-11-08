@@ -10,7 +10,7 @@ import { saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName } from '@/lib/geocode';
 import { planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
 import { insertVia, movePoint } from '@/lib/route-edit';
-import { flatten, haversine, type LatLon, type Profile } from '@/lib/tour';
+import { flatten, haversine, normProfile, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
 import { showToast } from '@/lib/toast';
 
@@ -78,7 +78,7 @@ export function useTourPlan(onPlanned?: () => void) {
   const dirty = !cloudId || base !== sigOf(pts, name, legProfiles);
 
   /** Profil der Etappe i (von Feld i zu Feld i+1), ohne eigenes Profil das allgemeine. */
-  const legProfile = (i: number, global: Profile): Profile => legProfiles[i] ?? global;
+  const legProfile = (i: number, global: Profile): Profile => normProfile(legProfiles[i] ?? global);
 
   /** Profile passend zu den gesetzten Punkten (fehlt der Start, beginnt es bei der zweiten Etappe). */
   function profilesFor(lp: LegProfile[], s: LatLon | null, count: number, global: Profile): Profile[] {
