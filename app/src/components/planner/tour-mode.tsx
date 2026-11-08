@@ -17,7 +17,7 @@ import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
 import { directNote } from '@/lib/plan';
 import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/create-tour';
-import { ConfirmSheet, OptionsSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
+import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { NameDialog } from '@/components/planner/name-dialog';
 import { showToast } from '@/lib/toast';
 import { deleteTour } from '@/lib/library';
@@ -34,7 +34,7 @@ import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, t
 import { type Avoid } from '@/lib/valhalla';
 
 import { PlaceSearch, type Cat, type Slot } from './place-search';
-import { OrtBadge, OrtPanel, type NearKind } from './ort-panel';
+import { OrtBadge, OrtSheet, type NearKind } from './ort-panel';
 import { PointMenu, type PointAction, type PointMenuState } from './point-menu';
 import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
@@ -43,6 +43,9 @@ import { keyOf, type PendingPoint, type PointKind, profileWord, samePts, STEP_TE
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
 
+
+/** Zeit, bis eine Vollfläche (pageSheet) nach unten weg ist */
+const PAGE_GONE_MS = 450;
 
 export type EditTarget = { kind: PointKind; index?: number; insert?: boolean };
 
@@ -450,34 +453,31 @@ export function TourMode({
           )}
         </Animated.View>
         </Swipeable>
-        {/* Ortsoptionen als Bottom Sheet statt Akkordeon (Koray 8.11.) */}
+        {/* Orte in der Nähe als Vollfläche wie die Suche (Koray 8.11.) */}
         {p && (
-          <OptionsSheet visible={ortOpen === id} title={nameOf(p)} subtitle={role} onClose={() => setOrtOpen(null)}>
-            <OrtPanel
-              p={p}
-              withHotel={kind !== 'start' || isLoop}
-              actions={actionsFor(kind)}
-              onPick={(q, name) => {
-                onListEdit();
-                plan.setSlot(kind, q, profile, avoid, name, index);
-                setOrtOpen(null);
-              }}
-              onAll={(k) => {
-                setNearPreset(k);
-                setOrtOpen(null);
-                setTimeout(() => openEdit({ kind, index }), SHEET_GONE_MS);
-              }}
-              onAction={(a) => {
-                setOrtOpen(null);
-                if (a === 'karte') {
-                  setTimeout(() => onShowPoint?.(p), SHEET_GONE_MS);
-                  return;
-                }
-                // Löschen zeigt einen Toast, Tauschen plant neu: erst wenn das Blatt weg ist
-                setTimeout(() => runAction({ idx: idxOf(kind, index), name: nameOf(p) }, a), SHEET_GONE_MS);
-              }}
-            />
-          </OptionsSheet>
+          <OrtSheet
+            visible={ortOpen === id}
+            p={p}
+            name={nameOf(p)}
+            role={role}
+            withHotel={kind !== 'start' || isLoop}
+            actions={actionsFor(kind)}
+            onClose={() => setOrtOpen(null)}
+            onPick={(q, name) => {
+              onListEdit();
+              plan.setSlot(kind, q, profile, avoid, name, index);
+              setOrtOpen(null);
+            }}
+            onAction={(a) => {
+              setOrtOpen(null);
+              // Karte, Löschen mit Toast und Tauschen erst, wenn die Fläche weg ist
+              if (a === 'karte') {
+                setTimeout(() => onShowPoint?.(p), PAGE_GONE_MS);
+                return;
+              }
+              setTimeout(() => runAction({ idx: idxOf(kind, index), name: nameOf(p) }, a), PAGE_GONE_MS);
+            }}
+          />
         )}
       </View>
     );

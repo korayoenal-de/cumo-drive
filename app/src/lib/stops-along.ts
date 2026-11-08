@@ -480,7 +480,8 @@ const NEAR_QUERY: Record<'hotel' | 'kaffee' | 'mittag', { q: string[]; tags: str
 };
 const NEAR_TYPE: Record<string, string> = { hotel: 'Hotel', guest_house: 'Pension', motel: 'Motel', chalet: 'Chalet', cafe: 'Café', restaurant: 'Restaurant' };
 
-export type NearPlace = { id: string; name: string; detail: string; p: LatLon; distM: number };
+/** type: Hotel, Pension, Café … (leer, wenn unbekannt) */
+export type NearPlace = { id: string; name: string; detail: string; type: string; p: LatLon; distM: number };
 
 export async function placesNear(kind: 'hotel' | 'kaffee' | 'mittag', at: LatLon, signal?: AbortSignal): Promise<NearPlace[]> {
   const cfg = NEAR_QUERY[kind];
@@ -515,7 +516,7 @@ export async function placesNear(kind: 'hotel' | 'kaffee' | 'mittag', at: LatLon
     seen.add(id);
     const type = NEAR_TYPE[String(pr.osm_value ?? '')] ?? '';
     const where = [pr.street, pr.city ?? pr.district].filter(Boolean).join(', ');
-    out.push({ id, name, detail: [type, where].filter(Boolean).join(', '), p, distM });
+    out.push({ id, name, detail: [type, where].filter(Boolean).join(', '), type, p, distM });
   }
   return out.sort((a, b) => a.distM - b.distM).slice(0, 25);
 }
