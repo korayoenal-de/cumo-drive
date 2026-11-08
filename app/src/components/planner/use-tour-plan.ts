@@ -198,6 +198,14 @@ export function useTourPlan(onPlanned?: () => void) {
       next.splice(at - 1, 1);
       at -= 1;
     }
+    // ebenso ein Zwischenziel direkt hinter dem Ausstieg: sonst fährt man über die Strecke und wieder zurück
+    const exit = line[line.length - 1];
+    const after = at < v.length ? v[at] : null;
+    if (after && haversine(after, exit) < 2000) {
+      replaced = replaced ?? names[keyOf(after)] ?? 'Zwischenziel';
+      v.splice(at, 1);
+      next.splice(at + 1, 1);
+    }
     v.splice(at, 0, entry);
     next.splice(at, 0, lp[at] ?? null);
     apply(start, v, ziel, next, profile, avoid);
