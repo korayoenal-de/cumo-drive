@@ -12,6 +12,7 @@ import Animated, {
   Easing,
   interpolate,
   useAnimatedProps,
+  useDerivedValue,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -231,4 +232,22 @@ function ChaseSeg({ d, index, t }: { d: string; index: number; t: SharedValue<nu
     return { fillOpacity: behind < 3.2 ? 1 - behind / 3.2 : 0 };
   });
   return <AnimatedPath d={d} fill={Colors.signal} animatedProps={props} />;
+}
+
+/**
+ * Logo als Füllstand (Bewertungsregler, 8.11.2026): progress 0 bis 1 füllt die acht Segmente im
+ * Uhrzeigersinn ab 6 Uhr, das gerade wachsende Segment blendet weich ein. Läuft auf dem UI Thread.
+ */
+export function LogoFill({ progress, size = 40 }: { progress: SharedValue<number>; size?: number }) {
+  const n = useDerivedValue(() => progress.get() * N);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      {SEGS.map((d, i) => (
+        <Path key={`b${i}`} d={d} fill={OFF} />
+      ))}
+      {SEGS.map((d, i) => (
+        <FillSeg key={i} d={d} index={i} n={n} />
+      ))}
+    </Svg>
+  );
 }

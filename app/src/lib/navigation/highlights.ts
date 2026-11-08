@@ -7,6 +7,7 @@
  * Ohne Höhendaten zählt die Kette von Kehren rund um die Passhöhe.
  * Abschnitt einer Strecke: von der Projektion ihres ersten bis zu der ihres letzten Punkts auf die Route.
  */
+import { learnedLevel } from '../highlight-feedback';
 import { defaultLevel, HIGHLIGHT_ROADS, type HighlightRoad } from '../highlight-roads';
 import { PASSES, passesAlong, type Pass } from '../passes';
 import { resample, type ElevationProfile } from '../stats';
@@ -174,7 +175,7 @@ export function findHighlights(
       hairpins: n || 0,
       ele: pass.ele || null,
       climbM: v?.climb ?? null,
-      level: PASS_LEVEL[pass.tier],
+      level: learnedLevel(pass.id, PASS_LEVEL[pass.tier]),
     });
   }
   // Zwei Passhöhen auf einer Bergstraße (Stilfser Joch und Umbrail): nur die höhere ankündigen
@@ -308,7 +309,7 @@ export function roadsAlong(
         hairpins: pins.filter((k) => k >= best!.lo && k <= best!.hi).length,
         ele: null,
         climbM: top?.climb ?? null,
-        level: road.level ?? defaultLevel(road.kind),
+        level: learnedLevel(`road:${road.id}`, road.level ?? defaultLevel(road.kind)),
       });
     }
   }

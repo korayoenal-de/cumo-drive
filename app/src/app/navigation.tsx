@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteMap } from '@/components/map/route-map';
 import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM, symbolFor } from '@/components/navigation/maneuver-geometry';
-import { DriveRatingCard } from '@/components/navigation/drive-rating';
+import { DriveRatingCard, type DrivenHighlight } from '@/components/navigation/drive-rating';
 import { SpeedBadge } from '@/components/navigation/speed-badge';
 import { HighlightCard, HighlightStrip, LeadStopButton, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
@@ -29,6 +29,7 @@ import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } f
 import { useSession } from '@/lib/auth';
 import { saveDrive } from '@/lib/drives';
 import { useNavigation } from '@/lib/navigation';
+import { feedbackKey } from '@/lib/highlight-feedback';
 import { curveCue, sharpCurves } from '@/lib/navigation/curves';
 import { limitAt, loadSpeedZones, type SpeedZones } from '@/lib/navigation/speed-zones';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
@@ -148,6 +149,25 @@ export default function NavigationScreen() {
   const saidHl = useRef(new Set<string>());
   // Ankündigung tauscht für 5 s den Platz der Routenführung (Konzept Highlight Ansage, 7.11.)
   const [hlShow, setHlShow] = useState<{ id: string; until: number } | null>(null);
+  // Gefahrene Highlights für die Bewertung nach der Fahrt: Anteil je Highlight, der wirklich gefahren wurde
+  // (kleinster und größter Anteil, an dem man drin war; Ids bleiben bei Neuberechnung gleich)
+  const hlSeen = useRef(new Map<string, { name: string; kind: Highlight['kind']; lo: number; hi: number }>());
+  useEffect(() => {
+    if (!hl || hl.route !== state.route || atKm == null || state.status !== 'laeuft') return;
+    for (const h of hl.list) {
+      const len = h.endKm - h.startKm;
+      if (len <= 0 || atKm < h.startKm || atKm > h.endKm) continue;
+      const f = (atKm - h.startKm) / len;
+      const key = feedbackKey(h.id);
+      const cur = hlSeen.current.get(key);
+      hlSeen.current.set(key, cur ? { ...cur, lo: Math.min(cur.lo, f), hi: Math.max(cur.hi, f) } : { name: h.name, kind: h.kind, lo: f, hi: f });
+    }
+  }, [hl, state.route, atKm, state.status]);
+  const [driven, setDriven] = useState<DrivenHighlight[]>([]);
+  const drivenHighlights = (): DrivenHighlight[] =>
+    [...hlSeen.current.entries()]
+      .filter(([, v]) => v.hi - v.lo >= 0.7)
+      .map(([key, v]) => ({ key, name: v.name, kind: v.kind === 'pass' ? ('pass' as const) : ('strecke' as const) }));
   useEffect(() => {
     if (!hlShow) return;
     const t = setTimeout(() => setHlShow(null), Math.max(0, hlShow.until - Date.now()));
@@ -286,7 +306,10 @@ export default function NavigationScreen() {
   const [arrivedStats, setArrivedStats] = useState<RideStats | null>(null);
   useEffect(() => {
     if (state.status !== 'angekommen') return;
-    const t = setTimeout(() => setArrivedStats(rideStats(samples.current)), 0);
+    const t = setTimeout(() => {
+      setDriven(drivenHighlights());
+      setArrivedStats(rideStats(samples.current));
+    }, 0);
     return () => clearTimeout(t);
   }, [state.status]);
   const shownStats = summary ?? arrivedStats;
@@ -332,6 +355,7 @@ export default function NavigationScreen() {
       const st = rideStats(samples.current);
       if (st && st.km > 1) {
         controls.stop();
+        setDriven(drivenHighlights());
         setSummary(st);
         return;
       }
@@ -750,7 +774,7 @@ export default function NavigationScreen() {
                 {active.tour.name}
               </AppText>
               <StatsGrid st={summary} />
-              {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} />}
+              {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} />}
               <SavedNote saved={saved} />
               <BigButton label="Fertig" onPress={exit} />
             </InfoCard>
@@ -766,7 +790,7 @@ export default function NavigationScreen() {
                 {formatKm(drivenKm || route?.km || active.tour.laenge_km)} km gefahren auf {active.tour.name}.
               </AppText>
               {arrivedStats && <StatsGrid st={arrivedStats} />}
-              {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} />}
+              {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} />}
               <SavedNote saved={saved} />
               <BigButton label="Fertig" onPress={exit} />
             </InfoCard>

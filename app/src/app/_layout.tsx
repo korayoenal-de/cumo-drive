@@ -9,6 +9,8 @@ import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { useFonts } from 'expo-font';
+
+import { loadHighlightFeedback } from '@/lib/highlight-feedback';
 import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -77,6 +79,8 @@ export default function RootLayout() {
   // Verwaiste Live Activity aus einem früheren Start aufräumen (läuft eine Navigation, startet sie neu)
   useEffect(() => {
     endAllNavActivities();
+    // Summen der Highlight Bewertungen für den lernenden Pegel
+    void loadHighlightFeedback();
   }, []);
 
   // nach der Anmeldung Touren und Fahrzeuge mit dem Konto abgleichen

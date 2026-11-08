@@ -111,6 +111,33 @@ export async function rateDrive(id: string, rating: DriveRating, reasons?: strin
   if (error) throw new Error(error.message);
 }
 
+/** Gesamtnote 0 bis 100 (stufenlos, Koray 8.11.): Wörter für den Regler, Gründe unter 40 */
+export const SCORE_WEAK = 40;
+export function scoreWord(v: number): string {
+  if (v < 15) return 'Enttäuschend';
+  if (v < SCORE_WEAK) return 'Nicht gut';
+  if (v < 60) return 'Okay';
+  if (v < 80) return 'Gut';
+  if (v < 95) return 'Richtig gut';
+  return 'Sensationell';
+}
+
+/** Daumen je gefahrenem Highlight: 1 hoch, −1 runter, null ohne Angabe */
+export type HighlightVote = { key: string; name: string; vote: 1 | -1 | null };
+
+export async function rateDriveScore(id: string, score: number, reasons: string[], note: string, highlights: HighlightVote[]) {
+  const s = Math.max(0, Math.min(100, Math.round(score)));
+  const weak = s < SCORE_WEAK;
+  const { error } = await supabase.rpc('rate_drive_v2', {
+    p_id: id,
+    p_score: s,
+    p_reasons: weak && reasons.length ? reasons : null,
+    p_note: weak ? note || null : null,
+    p_highlights: highlights.map((h) => ({ key: h.key, name: h.name, vote: h.vote })),
+  });
+  if (error) throw new Error(error.message);
+}
+
 function decode(str: string): LatLon[] {
   const out: LatLon[] = [];
   let i = 0;

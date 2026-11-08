@@ -1,44 +1,62 @@
 /**
- * "Wie fandest du die Tour?" nach der Fahrt: Schieberegler mit drei Stufen (nicht gut, gut, sensationell).
- * Tippen auf eine Stufe oder Ziehen am Regler, beim Loslassen rastet er auf der nächsten Stufe ein.
- * Zusammen mit der gefahrenen Spur zeigt die Bewertung später, welche Straßen wirklich begeistern.
+ * "Wie fandest du die Tour?" nach der Fahrt (Koray 8.11.2026): stufenloser Regler von 0 bis 100.
+ * Beim Ziehen füllt sich das Logo Segment für Segment, Zahl und Wort laufen mit, der Knopf wächst
+ * unter dem Finger (Federn aus Motion). Darunter Daumen hoch oder runter je gefahrenem Highlight:
+ * daraus lernt der Fahrspaß Pegel der Strecken (lib/highlight-feedback.ts).
  */
-import { useEffect, useMemo, useState } from 'react';
-import { PanResponder, Pressable, StyleSheet, TextInput, View, type AccessibilityActionEvent, type LayoutChangeEvent } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, TextInput, View, type AccessibilityActionEvent, type LayoutChangeEvent } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { Chip } from '@/components/ui/chip';
+import { LogoFill } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
-import { BAD_REASONS, rateDrive, type DriveRating } from '@/lib/drives';
+import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { BAD_REASONS, SCORE_WEAK, rateDriveScore, scoreWord, type HighlightVote } from '@/lib/drives';
+
+export type DrivenHighlight = { key: string; name: string; kind: 'pass' | 'strecke' };
 
 /**
- * Bewertung samt Nachfrage bei "nicht gut". Speichert, sobald die Fahrt im Konto liegt (driveId),
+ * Bewertung samt Nachfrage bei schwacher Note. Speichert, sobald die Fahrt im Konto liegt (driveId),
  * vorher gewählte Werte werden nachgereicht.
  */
-export function DriveRatingCard({ driveId }: { driveId: string | null }) {
-  const [value, setValue] = useState<DriveRating | null>(null);
+export function DriveRatingCard({ driveId, highlights = [] }: { driveId: string | null; highlights?: DrivenHighlight[] }) {
+  const [score, setScore] = useState<number | null>(null);
   const [reasons, setReasons] = useState<string[]>([]);
   const [note, setNote] = useState('');
+  const [votes, setVotes] = useState<Record<string, 1 | -1>>({});
   const [sent, setSent] = useState('');
-  const key = value ? JSON.stringify([value, reasons, value === 1 ? note.trim() : '']) : '';
+  const weak = score != null && score < SCORE_WEAK;
+  const list: HighlightVote[] = highlights.map((h) => ({ key: h.key, name: h.name, vote: votes[h.key] ?? null }));
+  const key = score != null ? JSON.stringify([score, weak ? reasons : [], weak ? note.trim() : '', list]) : '';
 
-  // Kurz warten, damit Tippen im Textfeld und schnelles Antippen nicht jedes Mal sendet
+  // Kurz warten, damit Ziehen, Tippen im Textfeld und schnelles Antippen nicht jedes Mal sendet
   useEffect(() => {
-    if (!driveId || !value || key === sent) return;
+    if (!driveId || score == null || key === sent) return;
     const t = setTimeout(() => {
-      rateDrive(driveId, value, reasons, note.trim())
+      rateDriveScore(driveId, score, reasons, note.trim(), list)
         .then(() => setSent(key))
         .catch(() => undefined);
-    }, 700);
+    }, 900);
     return () => clearTimeout(t);
-  }, [driveId, value, reasons, note, key, sent]);
+  }, [driveId, score, reasons, note, list, key, sent]);
 
   const toggle = (id: string) => setReasons((r) => (r.includes(id) ? r.filter((x) => x !== id) : [...r, id]));
+  const vote = (k: string, v: 1 | -1) =>
+    setVotes((cur) => {
+      const next = { ...cur };
+      if (next[k] === v) delete next[k];
+      else next[k] = v;
+      return next;
+    });
 
   return (
     <View style={styles.box}>
-      <DriveRatingSlider value={value} onChange={setValue} />
-      {value === 1 && (
+      <ScoreSlider value={score} onChange={setScore} />
+      {weak && (
         <View style={styles.box}>
           <AppText style={styles.title}>Was hat dir nicht gefallen?</AppText>
           <View style={styles.chips}>
@@ -49,7 +67,7 @@ export function DriveRatingCard({ driveId }: { driveId: string | null }) {
           <TextInput
             value={note}
             onChangeText={setNote}
-            placeholder="Wo genau? Zum Beispiel: Ortsdurchfahrt nach Mörlenbach"
+            placeholder="Wo genau? Zum Beispiel: Ortsdurchfahrt nach dem Pass"
             placeholderTextColor={Colors.muted}
             maxLength={500}
             multiline
@@ -58,102 +76,191 @@ export function DriveRatingCard({ driveId }: { driveId: string | null }) {
           />
         </View>
       )}
-      <AppText variant="caption" muted>
-        {value ? 'Danke! Das hilft uns, die besten Strecken für alle zu finden.' : 'Deine Bewertung hilft uns, die besten Strecken für alle zu finden.'}
+      {highlights.length > 0 && (
+        <View style={styles.hlBox}>
+          <AppText style={styles.title}>Deine Highlights</AppText>
+          {highlights.map((h) => (
+            <View key={h.key} style={styles.hlRow}>
+              <View style={styles.hlText}>
+                <AppText style={styles.hlName} numberOfLines={1}>
+                  {h.name}
+                </AppText>
+                <AppText style={styles.hlKind}>{h.kind === 'pass' ? 'Pass' : 'Strecke'}</AppText>
+              </View>
+              <Thumb up on={votes[h.key] === 1} name={h.name} onPress={() => vote(h.key, 1)} />
+              <Thumb up={false} on={votes[h.key] === -1} name={h.name} onPress={() => vote(h.key, -1)} />
+            </View>
+          ))}
+        </View>
+      )}
+      <AppText style={styles.foot}>
+        {score != null ? 'Danke! Damit lernt der Fahrspaß Pegel, welche Strecken wirklich begeistern.' : 'Deine Bewertung hilft, die besten Strecken für alle zu finden.'}
       </AppText>
     </View>
   );
 }
 
-const STOPS: { v: DriveRating; label: string }[] = [
-  { v: 1, label: 'Nicht gut' },
-  { v: 2, label: 'Gut' },
-  { v: 3, label: 'Sensationell' },
-];
-const THUMB = 28;
+/** Daumen mit Feder beim Drücken; gewählt: getönte Fläche in Grün oder Signal */
+function Thumb({ up, on, name, onPress }: { up: boolean; on: boolean; name: string; onPress: () => void }) {
+  const s = useSharedValue(1);
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.get() }] }));
+  const tone = up ? Colors.good : Colors.signal;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: on }}
+      accessibilityLabel={`${name}: ${up ? 'hat mir gefallen' : 'hat mir nicht gefallen'}`}
+      hitSlop={4}
+      onPressIn={() => s.set(withSpring(0.88, Motion.press))}
+      onPressOut={() => s.set(withSpring(1, Motion.press))}
+      onPress={onPress}>
+      <Animated.View style={[styles.thumbBtn, on && { backgroundColor: up ? 'rgba(76,195,138,0.18)' : 'rgba(226,70,28,0.18)' }, anim]}>
+        <SymbolView name={up ? (on ? 'hand.thumbsup.fill' : 'hand.thumbsup') : on ? 'hand.thumbsdown.fill' : 'hand.thumbsdown'} size={20} tintColor={on ? tone : Colors.muted} />
+      </Animated.View>
+    </Pressable>
+  );
+}
 
-export function DriveRatingSlider({ value, onChange }: { value: DriveRating | null; onChange: (v: DriveRating) => void }) {
+const KNOB = 32;
+
+/**
+ * Stufenloser Regler 0 bis 100. Vor der ersten Berührung steht der Knopf halb durchsichtig in der Mitte.
+ * Tippen springt mit Feder an die Stelle, Ziehen folgt dem Finger. VoiceOver: in Zehnerschritten.
+ */
+export function ScoreSlider({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
   const [w, setW] = useState(0);
-  /** Position beim Ziehen in px, sonst null */
-  const [drag, setDrag] = useState<number | null>(null);
+  const [live, setLive] = useState<number | null>(value);
+  const span = Math.max(1, w - KNOB);
+  /** 0 bis 1 */
+  const p = useSharedValue(value != null ? value / 100 : 0.5);
+  const touched = useSharedValue(value != null ? 1 : 0);
+  const press = useSharedValue(0);
+  const spanSv = useSharedValue(span);
+  useEffect(() => {
+    spanSv.set(span);
+  }, [span, spanSv]);
 
-  const pan = useMemo(() => {
-    const span = Math.max(0, w - THUMB);
-    const xOf = (x: number) => Math.max(0, Math.min(span, x));
-    const snap = (x: number) => (Math.round((xOf(x) / Math.max(1, span)) * 2) + 1) as DriveRating;
-    return PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 4,
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: (e) => setDrag(xOf(e.nativeEvent.locationX - THUMB / 2)),
-      onPanResponderMove: (e) => setDrag(xOf(e.nativeEvent.locationX - THUMB / 2)),
-      onPanResponderRelease: (e) => {
-        setDrag(null);
-        onChange(snap(e.nativeEvent.locationX - THUMB / 2));
-      },
-      onPanResponderTerminate: () => setDrag(null),
+  // Zahl und Wort laufen beim Ziehen mit (nur wenn sich die ganze Zahl ändert)
+  useAnimatedReaction(
+    () => (touched.get() ? Math.round(p.get() * 100) : -1),
+    (n, prev) => {
+      if (n !== prev && n >= 0) scheduleOnRN(setLive, n);
+    },
+  );
+
+  const commit = (n: number) => onChange(n);
+  const at = (x: number) => {
+    'worklet';
+    return Math.max(0, Math.min(1, (x - KNOB / 2) / spanSv.get()));
+  };
+  // Ziehen nur waagerecht, damit die Seite sich weiter senkrecht scrollen lässt
+  const pan = Gesture.Pan()
+    .activeOffsetX([-6, 6])
+    .failOffsetY([-12, 12])
+    .onStart((e) => {
+      touched.set(1);
+      press.set(withSpring(1, Motion.press));
+      p.set(at(e.x));
+    })
+    .onUpdate((e) => {
+      p.set(at(e.x));
+    })
+    .onEnd(() => {
+      scheduleOnRN(commit, Math.round(p.get() * 100));
+    })
+    .onFinalize(() => {
+      press.set(withSpring(0, Motion.press));
     });
-  }, [w, onChange]);
+  // Tippen springt mit Feder an die Stelle
+  const tap = Gesture.Tap().onEnd((e) => {
+    touched.set(1);
+    const t = at(e.x);
+    p.set(withSpring(t, Motion.snap));
+    scheduleOnRN(commit, Math.round(t * 100));
+  });
+  const gesture = Gesture.Race(pan, tap);
 
-  const track = Math.max(0, w - THUMB);
-  const x = drag ?? (value ? ((value - 1) / 2) * track : null);
+  const fill = useAnimatedStyle(() => ({ width: KNOB / 2 + p.get() * spanSv.get(), opacity: touched.get() ? 1 : 0 }));
+  const knob = useAnimatedStyle(() => ({
+    transform: [{ translateX: p.get() * spanSv.get() }, { scale: 1 + press.get() * 0.18 }],
+    opacity: touched.get() ? 1 : 0.45,
+  }));
+  const shown = live ?? value;
 
   function onAction(e: AccessibilityActionEvent) {
-    const cur = value ?? 2;
-    if (e.nativeEvent.actionName === 'increment') onChange(Math.min(3, cur + 1) as DriveRating);
-    if (e.nativeEvent.actionName === 'decrement') onChange(Math.max(1, cur - 1) as DriveRating);
+    const cur = value ?? 50;
+    const next = e.nativeEvent.actionName === 'increment' ? Math.min(100, cur + 10) : Math.max(0, cur - 10);
+    touched.set(1);
+    p.set(withSpring(next / 100, Motion.snap));
+    setLive(next);
+    onChange(next);
   }
 
   return (
     <View style={styles.box}>
       <AppText style={styles.title}>Wie fandest du die Tour?</AppText>
-      <View
-        accessible
-        accessibilityRole="adjustable"
-        accessibilityLabel="Wie fandest du die Tour?"
-        accessibilityValue={{ text: value ? STOPS[value - 1].label : 'Noch nicht bewertet' }}
-        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-        onAccessibilityAction={onAction}
-        onLayout={(e: LayoutChangeEvent) => {
-          setW(e.nativeEvent.layout.width);
-        }}
-        style={styles.slider}
-        {...pan.panHandlers}>
-        <View style={styles.rail} />
-        {x != null && <View style={[styles.fill, { width: x + THUMB / 2 }]} />}
-        {STOPS.map((s, i) => (
-          <View key={s.v} pointerEvents="none" style={[styles.tick, { left: THUMB / 2 + (i / 2) * track - 4 }, value != null && s.v <= value && drag == null && styles.tickOn]} />
-        ))}
-        {x != null && <View pointerEvents="none" style={[styles.thumb, { left: x }]} />}
+      <View style={styles.head}>
+        <LogoFill progress={p} size={44} />
+        <View style={styles.headText}>
+          <AppText style={[styles.big, shown == null && styles.bigOff]}>{shown != null ? shown : '–'}</AppText>
+          <AppText style={[styles.word, shown != null && styles.wordOn]}>{shown != null ? scoreWord(shown) : 'Zieh den Regler'}</AppText>
+        </View>
       </View>
-      <View style={styles.labels}>
-        {STOPS.map((s) => (
-          <Pressable key={s.v} accessibilityElementsHidden importantForAccessibility="no" onPress={() => onChange(s.v)} style={[styles.labelHit, s.v === 2 && styles.center, s.v === 3 && styles.end]}>
-            <AppText variant="caption" style={[styles.label, value === s.v && styles.labelOn]}>
-              {s.label}
-            </AppText>
-          </Pressable>
-        ))}
+      <GestureHandlerRootView>
+        <GestureDetector gesture={gesture}>
+          <View
+            accessible
+            accessibilityRole="adjustable"
+            accessibilityLabel="Wie fandest du die Tour, 0 bis 100"
+            accessibilityValue={{ text: value != null ? `${value}, ${scoreWord(value)}` : 'Noch nicht bewertet' }}
+            accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+            onAccessibilityAction={onAction}
+            onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)}
+            style={styles.slider}>
+            <View style={styles.rail} />
+            <Animated.View pointerEvents="none" style={[styles.fill, fill]} />
+            <Animated.View pointerEvents="none" style={[styles.knob, knob]} />
+          </View>
+        </GestureDetector>
+      </GestureHandlerRootView>
+      <View style={styles.ends}>
+        <AppText style={styles.end}>Enttäuschend</AppText>
+        <AppText style={styles.end}>Sensationell</AppText>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  box: { gap: Spacing.s },
+  box: { gap: Spacing.m },
   title: { fontFamily: Fonts.semibold, fontSize: Type.title },
-  slider: { height: 44, justifyContent: 'center' },
-  rail: { position: 'absolute', left: THUMB / 2, right: THUMB / 2, height: 6, borderRadius: 3, backgroundColor: Colors.surface2 },
-  fill: { position: 'absolute', left: 0, height: 6, borderRadius: 3, backgroundColor: Colors.signal },
-  tick: { position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.muted },
-  tickOn: { backgroundColor: Colors.signal },
-  thumb: { position: 'absolute', width: THUMB, height: THUMB, borderRadius: THUMB / 2, backgroundColor: Colors.text, boxShadow: '0 2px 6px rgba(0,0,0,0.4)' },
-  labels: { flexDirection: 'row' },
-  labelHit: { flex: 1, minHeight: 32, justifyContent: 'center' },
-  center: { alignItems: 'center' },
-  end: { alignItems: 'flex-end' },
-  label: { fontFamily: Fonts.medium, color: Colors.muted },
-  labelOn: { color: Colors.text, fontFamily: Fonts.semibold },
+  head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
+  headText: { gap: 2 },
+  big: { fontFamily: Fonts.display, fontSize: 34, lineHeight: 38, color: Colors.text, fontVariant: ['tabular-nums'] },
+  bigOff: { color: Colors.muted },
+  word: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.muted },
+  wordOn: { color: Colors.signal },
+  slider: { height: 48, justifyContent: 'center' },
+  rail: { position: 'absolute', left: KNOB / 2, right: KNOB / 2, height: 10, borderRadius: 5, backgroundColor: Colors.surface2 },
+  fill: { position: 'absolute', left: 0, height: 10, borderRadius: 5, backgroundColor: Colors.signal },
+  knob: {
+    position: 'absolute',
+    left: 0,
+    width: KNOB,
+    height: KNOB,
+    borderRadius: KNOB / 2,
+    backgroundColor: Colors.text,
+    boxShadow: '0 2px 10px rgba(0,0,0,0.45)',
+  },
+  ends: { flexDirection: 'row', justifyContent: 'space-between' },
+  end: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   input: { minHeight: 48, maxHeight: 120, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.body },
+  hlBox: { gap: Spacing.s },
+  hlRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 52 },
+  hlText: { flex: 1, minWidth: 0 },
+  hlName: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
+  hlKind: { fontSize: Type.body, color: Colors.muted },
+  thumbBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
+  foot: { fontSize: Type.body, color: Colors.muted },
 });
