@@ -8,6 +8,7 @@ import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, 
 import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-native-maps';
 
 import { SymbolView } from 'expo-symbols';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { arrowsAlong, offsetRight, splitDoubled } from '@/lib/doubled';
@@ -98,6 +99,7 @@ export function RouteMap({
   // Offener Warnhinweis als eigene Karte über der Karte: bleibt stehen, bis man daneben tippt
   // (Tester 8.11.: die Apple Blase verschwand sofort wieder)
   const [openWarn, setOpenWarn] = useState<number | null>(null);
+  const insets = useSafeAreaInsets();
   const [ready, setReady] = useState(false);
   // nach eigenem Verschieben folgt die Kamera eine Weile nicht
   const [paused, setPaused] = useState(0);
@@ -526,7 +528,8 @@ export function RouteMap({
       {openWarn != null && tour.warnungen[openWarn] && (
         <WarnCard
           key={openWarn}
-          top={(mapPadding?.top ?? 0) + Spacing.m}
+          // nie unter der Dynamic Island: mindestens der sichere Rand oben (Tester 8.11.)
+          top={Math.max(mapPadding?.top ?? 0, insets.top) + Spacing.m}
           klasse={tour.warnungen[openWarn].klasse}
           name={tour.warnungen[openWarn].name}
           reasons={tour.warnungen[openWarn].gruende}
