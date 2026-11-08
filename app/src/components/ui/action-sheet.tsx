@@ -119,9 +119,10 @@ export function ActionSheet({ visible, title, subtitle, items, onClose }: { visi
               // Öffnet die Aktion selbst eine Ebene (Rückfrage, Teilen), erst nach dem Schließen
               setTimeout(it.onPress, SHEET_GONE_MS);
             }}
-            style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}>
-            <View style={[styles.icon, it.danger && styles.iconDanger]}>
-              <SymbolView name={it.icon} size={17} tintColor={it.danger ? Colors.signal : Colors.text} weight="medium" />
+            // Wie das schwebende Menü (Koray 8.11.): Zeilen ohne eigene Fläche, Symbol ohne Kreis, Löschen getönt
+            style={({ pressed }) => [styles.item, it.danger && styles.itemDanger, pressed && styles.itemPressed]}>
+            <View style={styles.icon}>
+              <SymbolView name={it.icon} size={20} tintColor={it.danger ? Colors.stopText : Colors.text} weight="semibold" />
             </View>
             <View style={styles.flex}>
               <AppText style={[styles.label, it.danger && styles.danger]}>{it.label}</AppText>
@@ -196,13 +197,13 @@ const styles = StyleSheet.create({
   title: { fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30, color: Colors.text },
   subtitle: { fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: 21, color: Colors.muted },
   list: { gap: Spacing.xs },
-  item: { minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.l, backgroundColor: Colors.surface2 },
-  itemPressed: { opacity: 0.8, transform: [{ scale: Motion.pressScale }] },
-  icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.empty },
-  iconDanger: { backgroundColor: Colors.signalTint },
+  item: { minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m },
+  itemDanger: { marginTop: Spacing.s, backgroundColor: Colors.signalTint },
+  itemPressed: { backgroundColor: Colors.line },
+  icon: { width: 24, alignItems: 'center', justifyContent: 'center' },
   label: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   hint: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  danger: { color: Colors.signal },
+  danger: { color: Colors.stopText },
   confirmRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingTop: Spacing.s },
   cancel: { flex: 1, height: 56, alignItems: 'center', justifyContent: 'center' },
   cancelText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.text },
