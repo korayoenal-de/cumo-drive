@@ -131,7 +131,7 @@ export function RouteMap({
           ? []
           : parts[ri].map((part) => {
               const p = part.doubled && offM ? offsetRight(part.p, offM) : part.p;
-              return { c, coords: p.map(ll), key: k(c, part.p, part.doubled ? `d${offKey}` : 'e'), doubled: part.doubled };
+              return { c, coords: part.doubled && offM ? p.map(ll) : llCached(p), key: k(c, part.p, part.doubled ? `d${offKey}` : 'e'), doubled: part.doubled };
             }),
       ),
     );
@@ -583,6 +583,20 @@ function WarnCard({ top, klasse, name, reasons, onClose }: { top: number; klasse
       </Pressable>
     </Animated.View>
   );
+}
+
+/**
+ * Gleiche Linie, gleiches Koordinaten Array: dann schickt React Native die Punkte nicht erneut an die Karte
+ * (Akku in der Navigation, 8.11.)
+ */
+const llCache = new WeakMap<LatLon[], { latitude: number; longitude: number }[]>();
+function llCached(p: LatLon[]) {
+  let c = llCache.get(p);
+  if (!c) {
+    c = p.map(ll);
+    llCache.set(p, c);
+  }
+  return c;
 }
 
 type MapMarker = InstanceType<typeof Marker>;

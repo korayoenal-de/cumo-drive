@@ -244,12 +244,27 @@ export default function NavigationScreen() {
   // Nach einer Abweichung wird der Weg zurück gestrichelt gezeichnet, durchgezogen nur die Tour danach.
   // In 10 m Schritten und genau ab der gefahrenen Stelle, sonst zieht ein Schweif hinter dem Auto her (Koray 8.11.)
   const fineStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 100) : 0;
+  // Akku (8.11.): nur ein kurzes Stück bis zur nächsten 2 km Marke wird alle 10 m neu gezeichnet, der Rest
+  // bleibt dieselbe Linie und wird nur an jeder Marke getauscht. Vorher entstand alle 10 m die ganze Route neu.
+  const block = Math.floor(fineStep / 200);
+  const farLine = useMemo(() => {
+    const r = state.route;
+    if (!r) return null;
+    const startKm = Math.max((block + 1) * 2, r.cumKm[r.rejoinIndex ?? 0]);
+    const idx = r.cumKm.findIndex((k) => k >= startKm);
+    return idx < 0 || idx >= r.shape.length - 1 ? null : { idx, p: r.shape.slice(idx) };
+  }, [state.route, block]);
   const mapTour = useMemo<Tour | null>(() => {
     if (!active) return null;
     const r = state.route;
     if (!r) return active.tour;
-    return { ...active.tour, linie: [{ c: 'ok', p: aheadOf(r, fineStep / 100) }] };
-  }, [active, state.route, fineStep]);
+    const ahead = aheadOf(r, fineStep / 100);
+    if (!farLine) return { ...active.tour, linie: [{ c: 'ok', p: ahead }] };
+    // Nahes Stück: vom Auto bis zum Beginn der fernen Linie (inklusive, damit beide sich berühren)
+    const nearLen = ahead.length - (r.shape.length - farLine.idx) + 1;
+    const near = nearLen >= 2 ? ahead.slice(0, nearLen) : null;
+    return { ...active.tour, linie: near ? [{ c: 'ok', p: near }, { c: 'ok', p: farLine.p }] : [{ c: 'ok', p: farLine.p }] };
+  }, [active, state.route, fineStep, farLine]);
   const dashed = useMemo(() => {
     const r = state.route;
     if (!r?.rejoinIndex) return null;
@@ -368,12 +383,12 @@ export default function NavigationScreen() {
   useEffect(() => () => carPlayStop(false), []);
   // Linie auf dem Autodisplay = die Route, nach der angesagt wird (auch nach Neuberechnung)
   // mit Rückweg: durchgezogen nur die Tour, der Weg zurück gestrichelt (wie in der App, ab Build 10)
-  // Auch im Auto nur die Strecke vor einem; in 100 m Schritten, die Linie geht jedes Mal über die Brücke
-  const cpStep = Math.floor(fineStep / 10);
+  // Auch im Auto nur die Strecke vor einem; in 250 m Schritten, die ganze Linie geht jedes Mal über die Brücke
+  const cpStep = Math.floor(fineStep / 25);
   useEffect(() => {
     const r = state.route;
     if (!cpRunning || !r) return carPlaySetGuide(null);
-    const line = carPlayHasRejoin ? aheadOf(r, cpStep / 10) : r.shape.slice(nearIndexAt(r, cpStep / 10));
+    const line = carPlayHasRejoin ? aheadOf(r, cpStep / 4) : r.shape.slice(nearIndexAt(r, cpStep / 4));
     carPlaySetGuide(line, r.km, r.minutes);
   }, [cpRunning, state.route, cpStep]);
   useEffect(() => {
