@@ -21,7 +21,7 @@ mkdir -p "$WORK" "$BUILDS" "$BASE/poi"
 START=$(date +%s)
 log "Filtern aus $(du -h "$SRC" | cut -f1) Kartendaten (dauert einige Minuten)"
 osmium tags-filter --overwrite --progress -o "$WORK/poi.osm.pbf" "$SRC" \
-  nwr/amenity=fuel,parking,restaurant,cafe nwr/tourism=viewpoint
+  nwr/amenity=fuel,parking,restaurant,cafe nwr/tourism=viewpoint,hotel,guest_house,motel,chalet
 log "Auszug $(du -h "$WORK/poi.osm.pbf" | cut -f1), Export als GeoJSON"
 osmium export --overwrite --progress -f geojsonseq --add-unique-id=type_id \
   --geometry-types=point,linestring,polygon -o "$WORK/poi.geojsonseq" "$WORK/poi.osm.pbf"

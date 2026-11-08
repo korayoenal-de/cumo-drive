@@ -1,6 +1,6 @@
 /**
  * Stopps entlang einer Route aus OpenStreetMap: Super Plus Tankstellen, Aussichtspunkte mit
- * Parkplatz, Restaurants und Cafés. Liefert sie nach Streckenkilometer sortiert, damit man sie als
+ * Parkplatz, Restaurants, Cafés und Hotels. Liefert sie nach Streckenkilometer sortiert, damit man sie als
  * Via Punkt einplanen kann.
  *
  * Quelle zuerst die POI Kacheln vom eigenen Routing Server (statische Dateien unter /poi/v1, gebaut von
@@ -11,7 +11,7 @@ import { CUMO_ROUTING_URL, routingServerUrl } from './cumo-routing';
 import { haversine, type LatLon } from './tour';
 import type { Stop } from './intent';
 
-export type StopKind = Extract<Stop, 'tank' | 'aussicht' | 'mittag' | 'kaffee'>;
+export type StopKind = Extract<Stop, 'tank' | 'aussicht' | 'mittag' | 'kaffee' | 'hotel'>;
 
 export type StopHit = {
   id: string;
@@ -30,10 +30,12 @@ export const STOP_KINDS: { id: StopKind; label: string; hint: string }[] = [
   { id: 'aussicht', label: 'Aussicht', hint: 'Aussichtspunkte mit Parkplatz in der Nähe' },
   { id: 'mittag', label: 'Mittag', hint: 'Restaurants direkt an der Strecke' },
   { id: 'kaffee', label: 'Kaffee', hint: 'Cafés direkt an der Strecke' },
+  { id: 'hotel', label: 'Hotel', hint: 'Hotels, Gasthöfe und Pensionen nahe der Strecke' },
 ];
 
 /** Suchradius um die Route je Art, in Metern (gleich für Kacheln und Overpass). */
-const RADIUS: Record<StopKind, number> = { tank: 1200, aussicht: 1500, mittag: 400, kaffee: 400 };
+// Hotels dürfen etwas abseits liegen, für die Nacht fährt man gern ein Stück
+const RADIUS: Record<StopKind, number> = { tank: 1200, aussicht: 1500, mittag: 400, kaffee: 400, hotel: 2500 };
 
 const ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
 
@@ -109,10 +111,15 @@ function describe(kind: StopKind, t: Record<string, string>): string {
     return parts.filter(Boolean).join(', ');
   }
   if (kind === 'aussicht') return [t.ele ? `${t.ele} m` : null, 'Parkplatz in der Nähe'].filter(Boolean).join(', ');
+  if (kind === 'hotel') {
+    const type = { hotel: 'Hotel', guest_house: 'Pension', motel: 'Motel', chalet: 'Chalet' }[t.tourism ?? ''] ?? 'Unterkunft';
+    const stars = Number.parseInt(t.stars ?? '', 10);
+    return [type, stars > 0 && stars <= 5 ? `${stars} Sterne` : null].filter(Boolean).join(', ');
+  }
   return [t.cuisine?.split(';')[0]?.replace(/_/g, ' '), t.opening_hours === '24/7' ? 'immer offen' : null].filter(Boolean).join(', ');
 }
 
-const defaultName: Record<StopKind, string> = { tank: 'Tankstelle', aussicht: 'Aussichtspunkt', mittag: 'Restaurant', kaffee: 'Café' };
+const defaultName: Record<StopKind, string> = { tank: 'Tankstelle', aussicht: 'Aussichtspunkt', mittag: 'Restaurant', kaffee: 'Café', hotel: 'Hotel' };
 
 /** Kandidaten zu StopHits: Ketten an derselben Stelle nur einmal, nach Kilometer sortiert, gleichmäßig ausgewählt. */
 function finish(kind: StopKind, cands: Cand[], limit: number): StopHit[] {
@@ -145,7 +152,8 @@ type PoiRow = {
   lo: number;
   /** 1: Super Plus nur über die Marke vermutet */
   p?: number;
-  d?: { b?: string; op?: string; o?: number; h?: string; c?: string; e?: string };
+  /** s: Sterne, t: tourism Art (nur Hotels) */
+  d?: { b?: string; op?: string; o?: number; h?: string; c?: string; e?: string; s?: string; t?: string };
 };
 
 const OSM_TYPE: Record<string, string> = { n: 'node', w: 'way', r: 'relation' };
@@ -161,10 +169,14 @@ function rowTags(r: PoiRow): Record<string, string> {
   if (d.h) t.opening_hours = d.h;
   if (d.c) t.cuisine = d.c;
   if (d.e) t.ele = d.e;
+  if (d.s) t.stars = d.s;
+  if (d.t) t.tourism = d.t;
   return t;
 }
 
 let poiBaseCache: { base: string | null; at: number; pending?: Promise<string | null> } | null = null;
+/** Arten, für die der Server Kacheln hat (aus meta.json). Ältere Kacheln kennen noch keine Hotels. */
+let poiKinds: Set<string> | null = null;
 
 /** Server mit POI Kacheln (meta.json erreichbar), erfolgreich für die ganze Sitzung, Fehlschlag 60 s gemerkt. */
 async function poiBase(): Promise<string | null> {
@@ -177,8 +189,11 @@ async function poiBase(): Promise<string | null> {
       try {
         const r = await fetchWithTimeout(`${u}/poi/v1/meta.json`, 4000);
         if (!r.ok) continue;
-        const j = (await r.json()) as { version?: number } | null;
-        if (j && !Array.isArray(j) && j.version === 1) return u;
+        const j = (await r.json()) as { version?: number; counts?: Record<string, unknown> } | null;
+        if (j && !Array.isArray(j) && j.version === 1) {
+          poiKinds = new Set(Object.keys(j.counts ?? {}));
+          return u;
+        }
       } catch {
         // nächster Kandidat
       }
@@ -322,6 +337,8 @@ out center tags 60;`;
       return `[out:json][timeout:10];nwr[amenity=restaurant][name]${near(r)};out center tags 60;`;
     case 'kaffee':
       return `[out:json][timeout:10];nwr[amenity=cafe][name]${near(r)};out center tags 60;`;
+    case 'hotel':
+      return `[out:json][timeout:10];nwr[tourism~"^(hotel|guest_house|motel|chalet)$"][name]${near(r)};out center tags 60;`;
   }
 }
 
@@ -401,7 +418,8 @@ export async function stopsAlong(kind: StopKind, line: LatLon[], signal?: AbortS
   if (line.length < 2) return [];
   const base = await poiBase();
   if (signal?.aborted) throw new Error('Abgebrochen');
-  if (base) {
+  // Fehlt die Art in den Kacheln (Hotels bis zum nächsten Import), wäre jede Kachel leer: dann Overpass
+  if (base && (!poiKinds || poiKinds.has(kind))) {
     try {
       return finish(kind, await fromTiles(base, kind, line, signal, scale), limit);
     } catch (e) {

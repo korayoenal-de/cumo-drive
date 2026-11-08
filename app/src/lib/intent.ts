@@ -9,13 +9,14 @@
 import type { Direction } from './roundtrip';
 import type { Profile } from './tour';
 
-export type Stop = 'tank' | 'aussicht' | 'mittag' | 'kaffee' | 'foto';
+export type Stop = 'tank' | 'aussicht' | 'mittag' | 'kaffee' | 'hotel' | 'foto';
 
 export const STOPS: { id: Stop; label: string }[] = [
   { id: 'tank', label: 'Super Plus tanken' },
   { id: 'aussicht', label: 'Aussicht mit Parkplatz' },
   { id: 'mittag', label: 'Mittagessen' },
   { id: 'kaffee', label: 'Kaffee' },
+  { id: 'hotel', label: 'Hotel' },
   { id: 'foto', label: 'Fotospot' },
 ];
 
@@ -100,6 +101,7 @@ export function parseWish(text: string): TourWish {
   add('aussicht', /aussicht|ausblick|panorama|blick/i);
   add('mittag', /mittag|essen|lunch|restaurant/i);
   add('kaffee', /kaffee|café|cafe|kuchen/i);
+  add('hotel', /hotel|übernacht|unterkunft|pension|gasthof/i);
   add('foto', /foto|bild|insta/i);
   return wish;
 }

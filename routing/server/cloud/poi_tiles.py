@@ -78,7 +78,7 @@ def main():
     src, out = sys.argv[1], sys.argv[2]
     t0 = time.time()
     seen = set()
-    tank, view, food, cafe = [], [], [], []
+    tank, view, food, cafe, hotel = [], [], [], [], []
     parking = {}  # Rasterzelle -> Liste (lon, lat)
     n_lines = 0
     with open(src, 'r', encoding='utf-8') as f:
@@ -122,6 +122,8 @@ def main():
                 kind = 'mittag'
             elif amenity == 'cafe' and tags.get('name'):
                 kind = 'kaffee'
+            elif tags.get('tourism') in ('hotel', 'guest_house', 'motel', 'chalet') and tags.get('name'):
+                kind = 'hotel'
             if not kind:
                 continue
             rp = rep_point(geom)
@@ -150,6 +152,10 @@ def main():
             elif kind == 'aussicht':
                 if tags.get('ele'):
                     d['e'] = short(tags['ele'], 10)
+            elif kind == 'hotel':
+                d['t'] = tags['tourism']
+                if tags.get('stars'):
+                    d['s'] = short(tags['stars'], 6)
             else:
                 if tags.get('cuisine'):
                     d['c'] = short(tags['cuisine'], 40)
@@ -159,7 +165,7 @@ def main():
                 o['n'] = short(name, 80)
             if d:
                 o['d'] = d
-            {'tank': tank, 'aussicht': view, 'mittag': food, 'kaffee': cafe}[kind].append(o)
+            {'tank': tank, 'aussicht': view, 'mittag': food, 'kaffee': cafe, 'hotel': hotel}[kind].append(o)
     print(f'  {n_lines} Objekte gelesen, {len(parking)} Rasterzellen mit Parkplätzen', flush=True)
 
     def has_parking(o):
@@ -174,7 +180,7 @@ def main():
     view = [o for o in view if has_parking(o)]
     counts = {}
     tiles = 0
-    for kind, items in (('tank', tank), ('aussicht', view), ('mittag', food), ('kaffee', cafe)):
+    for kind, items in (('tank', tank), ('aussicht', view), ('mittag', food), ('kaffee', cafe), ('hotel', hotel)):
         buckets = {}
         for o in items:
             buckets.setdefault((math.floor(o['lo'] * 10), math.floor(o['la'] * 10)), []).append(o)

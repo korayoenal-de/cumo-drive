@@ -76,14 +76,16 @@ const CATS: { id: Cat; label: string; placeholder: string }[] = [
   { id: 'kaffee', label: 'Café', placeholder: 'Café suchen' },
   { id: 'mittag', label: 'Essen', placeholder: 'Restaurant suchen' },
   { id: 'aussicht', label: 'Aussicht', placeholder: 'Aussichtspunkt suchen' },
+  { id: 'hotel', label: 'Hotel', placeholder: 'Hotel suchen' },
   // Highlights statt Pässe (Koray 8.11.): Pässe und kuratierte Strecken wie die Juhöhe
   { id: 'pass', label: 'Highlights', placeholder: 'Highlight suchen, etwa Stilfser Joch' },
 ];
-export const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.saucer.fill' | 'fork.knife' | 'binoculars.fill' | 'mountain.2.fill'> = {
+export const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.saucer.fill' | 'fork.knife' | 'binoculars.fill' | 'bed.double.fill' | 'mountain.2.fill'> = {
   tank: 'fuelpump.fill',
   kaffee: 'cup.and.saucer.fill',
   mittag: 'fork.knife',
   aussicht: 'binoculars.fill',
+  hotel: 'bed.double.fill',
   pass: 'mountain.2.fill',
 };
 /** extraMin und exit nur bei Highlights für eine Etappe: Umweg in Minuten, Ausstieg einer Strecke */

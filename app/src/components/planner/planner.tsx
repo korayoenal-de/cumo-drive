@@ -54,7 +54,7 @@ import { useTourPlan } from './use-tour-plan';
 import { TourMode } from './tour-mode';
 
 /** Wort für den Toast nach dem Einplanen */
-const STOP_WORD: Record<PlannedStop['cat'], string> = { tank: 'Tankstopp', kaffee: 'Kaffeepause', mittag: 'Mittagspause', aussicht: 'Aussichtspunkt', pass: 'Pass' };
+const STOP_WORD: Record<PlannedStop['cat'], string> = { tank: 'Tankstopp', kaffee: 'Kaffeepause', mittag: 'Mittagspause', aussicht: 'Aussichtspunkt', hotel: 'Übernachtung', pass: 'Pass' };
 
 
 
