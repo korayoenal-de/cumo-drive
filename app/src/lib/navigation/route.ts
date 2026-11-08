@@ -473,7 +473,7 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
     const cumKm = cumulativeKm(lead.shape);
     const maneuvers = lead.maneuvers.map((m) => {
       const out = toManeuver(m, cumKm);
-      return isDestination(m.type) ? { ...out, text: 'Start der Tour erreicht.', speech: 'Sie haben den Start der Tour erreicht.' } : out;
+      return isDestination(m.type) ? { ...out, text: 'Start der Tour erreicht.', speech: 'Du bist am Start der Tour.' } : out;
     });
     return {
       route: { shape: lead.shape, cumKm, maneuvers, km: cumKm[cumKm.length - 1], minutes: lead.seconds / 60, source: 'valhalla' },
@@ -516,7 +516,7 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
       type: -1,
       idx: join,
       instruction: 'Tour erreicht. Der Tour folgen.',
-      verbal_pre_transition_instruction: 'Sie erreichen die Tour. Danach der Tour folgen.',
+      verbal_pre_transition_instruction: 'Du erreichst die Tour. Danach der Tour folgen.',
     });
     raw.sort((a, b) => a.idx - b.idx);
   } else {
@@ -678,7 +678,7 @@ export async function rejoinNavRoute(
   const back: Maneuver = {
     kind: 'zwischenziel',
     text: 'Zurück auf der Tour. Der Tour folgen.',
-    speech: 'Sie sind dann zurück auf der Tour.',
+    speech: 'Dann bist du zurück auf der Tour.',
     index: join,
     km: cumKm[join],
   };

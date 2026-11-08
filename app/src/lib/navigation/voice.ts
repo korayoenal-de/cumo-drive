@@ -97,9 +97,9 @@ export function nowPhrase(m: Maneuver): string {
     case 'ziel':
     case 'ziel_links':
     case 'ziel_rechts':
-      return 'Sie haben das Ziel erreicht.';
+      return 'Du bist am Ziel.';
     case 'zwischenziel':
-      return 'Sie sind jetzt auf der Tour.';
+      return 'Du bist jetzt auf der Tour.';
     default:
       return 'Jetzt geradeaus weiter.';
   }
@@ -107,7 +107,7 @@ export function nowPhrase(m: Maneuver): string {
 
 /** Vorankündigung mit Entfernung. */
 export function aheadPhrase(m: Maneuver, distM: number): string {
-  const base = m.kind === 'ziel' || m.kind === 'ziel_links' || m.kind === 'ziel_rechts' ? 'erreichen Sie das Ziel.' : lowerFirst(m.speech);
+  const base = m.kind === 'ziel' || m.kind === 'ziel_links' || m.kind === 'ziel_rechts' ? 'bist du am Ziel.' : lowerFirst(m.speech);
   return `In ${distanceWords(distM)} ${base}`;
 }
 

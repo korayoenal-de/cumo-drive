@@ -214,7 +214,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
 
       if (arrived) {
         arrivedRef.current = true;
-        voice().say('Sie haben das Ziel erreicht.', true);
+        voice().say('Du bist am Ziel.', true);
         subRef.current?.remove();
         subRef.current = null;
         stopSim();
