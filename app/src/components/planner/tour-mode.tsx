@@ -5,7 +5,7 @@
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useMemo, useRef, useState, type ComponentRef } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import { HighlightList } from '@/components/planner/highlight-list';
@@ -17,6 +17,7 @@ import { tourFun } from '@/lib/fun-score';
 import { directNote } from '@/lib/plan';
 import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { NameDialog } from '@/components/planner/name-dialog';
 import { showToast } from '@/lib/toast';
 import { deleteTour } from '@/lib/library';
 import { ActionBar } from '@/components/ui/action-bar';
@@ -136,6 +137,8 @@ export function TourMode({
     setLocMsg(null);
   }
   const [editName, setEditName] = useState('');
+  /** Dialog Name vergeben beim ersten Speichern (Koray 8.11.) */
+  const [naming, setNaming] = useState(false);
   const editPoint = pointOf(edit);
   function removeEdited() {
     if (!edit) return;
@@ -527,19 +530,6 @@ export function TourMode({
         </View>
       </Section>
 
-      {/* Name unter den Etappen (Koray 7.11.): erst die Strecke, dann wie sie heißt */}
-      <View style={styles.gapS}>
-        <AppText variant="label">Name</AppText>
-        <TextInput
-          value={plan.name}
-          onChangeText={plan.setName}
-          placeholder="Name der Tour"
-          placeholderTextColor={Colors.muted}
-          style={[styles.search, styles.searchOnGround]}
-          accessibilityLabel="Name der Tour"
-        />
-      </View>
-
       {plan.step && (
         <View style={[styles.card, styles.statusRow]}>
           <ActivityIndicator color={Colors.signal} />
@@ -560,6 +550,16 @@ export function TourMode({
           {!!directNote(routeTour.direkt, Math.max(1, pts.length - 1)) && (
             <AppText variant="caption" muted>{directNote(routeTour.direkt, Math.max(1, pts.length - 1))}</AppText>
           )}
+          <NameDialog
+            key={naming ? 'offen' : 'zu'}
+            visible={naming}
+            initial={plan.name.trim() && plan.name !== 'Neue Tour' ? plan.name.trim() : routeTour.name || 'Neue Tour'}
+            onCancel={() => setNaming(false)}
+            onSave={(n) => {
+              setNaming(false);
+              void plan.save(curves, firstProfile, avoid, n);
+            }}
+          />
           <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} check={routeCheck(warnings.length, routeTour.geprueft !== false)} twiceKm={twiceKm} line={line} />
 
 
@@ -645,7 +645,7 @@ export function TourMode({
               ],
             }}
             // Speichern als sekundärer Knopf, solange die Tour neu oder geändert ist (Konzept 7.11.)
-            save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => !plan.saving && void plan.save(curves, firstProfile, avoid) } : undefined}
+            save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => { if (plan.saving) return; if (!plan.cloudId) setNaming(true); else void plan.save(curves, firstProfile, avoid); } } : undefined}
             more={[
               {
                 key: 'link',

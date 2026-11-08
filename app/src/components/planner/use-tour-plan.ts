@@ -149,8 +149,10 @@ export function useTourPlan(onPlanned?: () => void) {
   }
 
   /** Speichert und liefert die ID in Meine Touren, null wenn es nicht geklappt hat */
-  async function save(curves: number, profile: Profile, avoid: Avoid): Promise<string | null> {
+  /** asName: Name aus dem Dialog beim ersten Speichern, gilt sofort (der Zustand kommt erst danach an) */
+  async function save(curves: number, profile: Profile, avoid: Avoid, asName?: string): Promise<string | null> {
     if (!planned) return null;
+    const nm = asName ?? name;
     setSaving(true);
     setSaveMsg(null);
     try {
@@ -158,9 +160,10 @@ export function useTourPlan(onPlanned?: () => void) {
       // Namen der Punkte und Profile der Etappen mitspeichern, sonst kommen beim Öffnen nur Ortsnamen
       // aus der Rückwärtssuche zurück (aus "Sellajoch" wurde "Kanzenei", 6.11.)
       const namen = pts.map((p) => names[keyOf(p)] ?? '');
-      const saved = saveTour({ ...planned, name: name.trim() || planned.name, curves, profile, namen, etappen: legProfiles }, folder, cloudId ?? undefined);
+      const saved = saveTour({ ...planned, name: nm.trim() || planned.name, curves, profile, namen, etappen: legProfiles }, folder, cloudId ?? undefined);
       setCloudId(saved.id);
-      setBase(sigOf(pts, name, legProfiles));
+      setBase(sigOf(pts, nm, legProfiles));
+      if (asName != null) setName(asName);
       void syncLibrary();
       setSaveMsg(null);
       showToast('In Meine Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
