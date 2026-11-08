@@ -229,6 +229,7 @@ export function TourMode({
       onClose={() => setEdit(null)}
       route={line.length > 1 ? line : undefined}
       onPickStop={pickStop}
+      routeLoading={busy}
       // Neues Zwischenziel über das Plus: Highlights nur, wenn sie auf dieser Etappe einen Bogen ergeben
       leg={editLeg}
       onPickRoad={(line, name) => {

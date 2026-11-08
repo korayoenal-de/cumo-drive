@@ -19,6 +19,7 @@ import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, 
 
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { LogoSpinner } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import { type Place } from '@/lib/geocode';
@@ -65,6 +66,8 @@ type Props = {
   leg?: Leg;
   /** Strecke als Highlight gewählt: Einstieg und Ausstieg werden zwei Zwischenziele */
   onPickRoad?: (line: LatLon[], name: string) => void;
+  /** Die Route wird gerade geplant: Kategorien zeigen bis dahin die Ladeanzeige statt einer leeren Liste */
+  routeLoading?: boolean;
 };
 
 export type Slot = { key: string; kind: PointKind; index?: number; insert?: boolean; label: string; value: string | null; active: boolean };
@@ -148,6 +151,7 @@ function SearchBody({
   stopsOnly,
   leg,
   onPickRoad,
+  routeLoading,
 }: Props) {
   const [query, setQuery] = useState(current);
   const live = usePassLive();
@@ -195,13 +199,18 @@ function SearchBody({
     return () => ctrl.abort();
   }, [hasRoute, cat, scale, catKey, found, route]);
   const catRows: StopRow[] | 'fehler' | null = useMemo(() => {
-    if (cat === 'alle' || !hasRoute) return null;
-    const raw = cat === 'pass' ? (legRows && scale === 1 ? legRows : passesNear(route!, cum, 8000 * scale)) : found[catKey];
+    if (cat === 'alle') return null;
+    // Highlights der Etappe stehen schon ohne fertige Route fest
+    const fromLeg = cat === 'pass' && legRows && scale === 1;
+    if (!hasRoute && !fromLeg) return null;
+    const raw = cat === 'pass' ? (fromLeg ? legRows : passesNear(route!, cum, 8000 * scale)) : found[catKey];
     if (!raw || raw === 'fehler') return raw ?? null;
     const f = q.toLowerCase();
     return raw.filter((r) => !f || `${r.name} ${r.detail}`.toLowerCase().includes(f)).sort((a, b) => (a.extraMin ?? 0) - (b.extraMin ?? 0) || a.offM - b.offM);
   }, [cat, hasRoute, route, cum, scale, found, catKey, q, legRows]);
-  const catLoading = cat !== 'alle' && catRows === null && hasRoute;
+  const catLoading = cat !== 'alle' && catRows === null && (hasRoute || !!routeLoading);
+  // Ohne Route und ohne Planung gibt es keine Strecke, an der man suchen könnte
+  const catNoRoute = cat !== 'alle' && catRows === null && !hasRoute && !routeLoading;
   const passHits = useMemo<Place[]>(
     () =>
       q.length >= 2
@@ -417,7 +426,12 @@ function SearchBody({
           automaticallyAdjustKeyboardInsets>
           {cat !== 'alle' ? (
             catLoading ? (
-              <ActivityIndicator color={Colors.muted} style={styles.loading} />
+              <View style={styles.loading}>
+                <LogoSpinner size={32} label={hasRoute ? 'Stopps an der Strecke laden' : 'Route wird geplant'} />
+                <AppText style={styles.loadingText}>{hasRoute ? 'Suche an der Strecke' : 'Route wird geplant'}</AppText>
+              </View>
+            ) : catNoRoute ? (
+              <AppText style={styles.empty}>Sobald die Route steht, siehst du hier Stopps an der Strecke.</AppText>
             ) : catRows === 'fehler' ? (
               <AppText style={styles.empty}>Die Stopps lassen sich gerade nicht laden. Versuch es gleich noch einmal.</AppText>
             ) : catRows && catRows.length === 0 ? (
@@ -592,7 +606,8 @@ const styles = StyleSheet.create({
   widenLinkText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.signal },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m },
   title: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 28, color: Colors.text, textTransform: 'uppercase' },
-  loading: { marginTop: Spacing.xl },
+  loading: { marginTop: Spacing.xxl, alignItems: 'center', gap: Spacing.m },
+  loadingText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   widen: { alignSelf: 'flex-start', height: 48, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, justifyContent: 'center', backgroundColor: Colors.surface2 },
   widenText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },
   routeHead: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s },

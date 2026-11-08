@@ -199,3 +199,36 @@ function FillSeg({ d, index, n }: { d: string; index: number; n: SharedValue<num
   const props = useAnimatedProps(() => ({ fillOpacity: Math.max(0, Math.min(1, n.get() - index)) }));
   return <AnimatedPath d={d} fill={Colors.signal} animatedProps={props} />;
 }
+
+/**
+ * Ladeanzeige im Stil der App (Koray 8.11.): das Logo mit grauen Segmenten, darüber läuft ein oranger
+ * Schweif im Uhrzeigersinn ab 6 Uhr. Ohne Bewegung (reduzierte Bewegung) drei feste orange Segmente.
+ */
+export function LogoSpinner({ size = 28, label = 'Lädt' }: { size?: number; label?: string }) {
+  const reduced = useReducedMotion();
+  const t = useSharedValue(0);
+  useEffect(() => {
+    if (reduced) return;
+    t.set(withRepeat(withTiming(N, { duration: 1100, easing: Easing.linear }), -1, false));
+    return () => cancelAnimation(t);
+  }, [reduced, t]);
+  return (
+    <View accessible accessibilityRole="progressbar" accessibilityLabel={label}>
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        {SEGS.map((d, i) => (
+          <Path key={`b${i}`} d={d} fill={OFF} />
+        ))}
+        {SEGS.map((d, i) => (reduced ? i < 3 && <Path key={i} d={d} fill={Colors.signal} /> : <ChaseSeg key={i} d={d} index={i} t={t} />))}
+      </Svg>
+    </View>
+  );
+}
+
+function ChaseSeg({ d, index, t }: { d: string; index: number; t: SharedValue<number> }) {
+  const props = useAnimatedProps(() => {
+    // Abstand hinter dem Kopf des Schweifs, 0 bis N
+    const behind = (((t.get() - index) % N) + N) % N;
+    return { fillOpacity: behind < 3.2 ? 1 - behind / 3.2 : 0 };
+  });
+  return <AnimatedPath d={d} fill={Colors.signal} animatedProps={props} />;
+}
