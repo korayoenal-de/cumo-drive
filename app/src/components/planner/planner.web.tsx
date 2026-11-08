@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { checkLine } from '@/lib/check';
+import { tourFun } from '@/lib/fun-score';
 import { reverseName } from '@/lib/geocode';
 import { planChecked, type PlanStep } from '@/lib/plan';
 import { smartRoundTrip } from '@/lib/smart-roundtrip';
@@ -16,7 +17,8 @@ import { flatten, parseRouteFile, reverseTour, type LatLon, type Profile, type T
 import { countCurves, elevationProfile, resample, type ElevationProfile } from '@/lib/stats';
 import { cumoAvailable } from '@/lib/cumo-routing';
 import { saveTour, syncLibrary } from '@/lib/library';
-import { RIDE_MODES, useRideMode } from '@/lib/ride-mode';
+import { useRideMode } from '@/lib/ride-mode';
+import { routeCheck } from '@/components/ui/fun-pill';
 import { distToProbe, insertVia, passesNearRoute, probeLine } from '@/lib/route-edit';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { useRide } from '@/lib/group/ride';
@@ -27,10 +29,11 @@ import { PASSES, passesAlong, passesGeoJson, passPoint, passSummary } from '@/li
 import { addMemberLayers, addPassLayers, addPhotoLayers, addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
 
 import { C, type MenuState, type Mode, type PlannedTour, SAMPLE, STEP_TEXT } from './web-shared';
-import { Gallery, TourPanel } from './web-tour-panels';
+import { Gallery, SendToApp, TourPanel } from './web-tour-panels';
 import { LibraryPanel } from './web-account-panels';
-import { DescribePanel, RoundTripPanel } from './web-create-panels';
-import { Status } from './web-parts';
+import { RoundTripPanel } from './web-create-panels';
+import { Brand, Status, TypoTabs } from './web-parts';
+import { FunDialog } from './web-fun';
 import { S } from './web-styles';
 
 
@@ -41,7 +44,7 @@ export default function Planner() {
   const [mapError, setMapError] = useState<string | null>(null);
 
   const [mode, setMode] = useState<Mode>('tour');
-  const [rideMode, setRideMode] = useRideMode();
+  const [rideMode] = useRideMode();
   const [menu, setMenu] = useState<MenuState>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [rtStart, setRtStart] = useState<{ p: LatLon; name: string } | null>(null);
@@ -71,6 +74,12 @@ export default function Planner() {
   const [elevFor, setElevFor] = useState<{ line: LatLon[]; data: ElevationProfile } | null>(null);
   const elev = elevFor && elevFor.line === line ? elevFor.data : null;
   const curves = useMemo(() => (line.length > 1 ? countCurves(line) : 0), [line]);
+  // Fahrspaß Wert wie in der App, Klick öffnet die Rechnung
+  const fun = useMemo(() => (tour.linie.length ? tourFun(line) : null), [tour.linie.length, line]);
+  const [funOpen, setFunOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  /** Profil oder Vermeiden geändert, seit zuletzt geplant wurde: Neu planen anbieten */
+  const [dirty, setDirty] = useState(false);
 
   // Höhenprofil nachladen, wenn sich die Linie ändert
   useEffect(() => {
@@ -155,6 +164,7 @@ export default function Planner() {
         const t = await job(ctrl.signal, (s) => setBusy(STEP_TEXT[s]));
         setTour(t);
         setIsSample(false);
+        setDirty(false);
         setMode('tour');
         // Rundtouren und Importe sind neue Touren; Umplanen einer gespeicherten Tour behält die Ablage
         if (!keepSaved) setSavedId(null);
@@ -393,29 +403,32 @@ export default function Planner() {
       </div>
       <aside style={S.side}>
         <div style={S.brandRow}>
-          <a href="/" style={{ ...S.brand, color: C.text, textDecoration: 'none' }}>
-            CUMO DRIVE
-          </a>
-          <div style={S.ride} role="radiogroup" aria-label="Fahrmodus">
-            {RIDE_MODES.map((r) => (
-              <button key={r.id} role="radio" aria-checked={rideMode === r.id} title={r.hint} onClick={() => setRideMode(r.id)} style={rideMode === r.id ? S.rideOn : S.rideOff}>
-                {r.label}
-              </button>
-            ))}
+          <Brand />
+          <div style={S.nav} role="tablist" aria-label="Bereich">
+            <button role="tab" aria-selected={mode !== 'touren'} style={mode !== 'touren' ? S.navOn : S.navOff} onClick={() => setMode('tour')}>
+              Planen
+            </button>
+            <button role="tab" aria-selected={mode === 'touren'} style={mode === 'touren' ? S.navOn : S.navOff} onClick={() => setMode('touren')}>
+              Meine Touren
+            </button>
           </div>
         </div>
-        <div style={S.tabs} role="tablist">
-          {(['tour', 'rundtour', 'beschreiben', 'touren'] as Mode[]).map((m) => (
-            <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} style={mode === m ? S.tabOn : S.tab}>
-              {{ tour: 'Tour', rundtour: 'Rundtour', beschreiben: 'Beschreiben', touren: 'Meine Touren' }[m]}
-            </button>
-          ))}
-        </div>
-
-        <div style={S.engine} title="Der eigene Server läuft auf deinem Mac (routing/server, bash start.sh)">
-          <span style={{ ...S.dot, background: ownServer ? C.good : C.muted }} />
-          {ownServer === null ? 'Routing wird gesucht' : ownServer ? 'Eigener Routing Server mit Sportwagen Profil' : 'Öffentliche Routing Dienste (eigener Server aus)'}
-        </div>
+        {mode !== 'touren' ? (
+          <>
+            {/* Wie in der App: Tour planen zuerst, Rundtour daneben (Koray 8.11.) */}
+            <TypoTabs
+              value={mode === 'rundtour' ? 'rundtour' : 'tour'}
+              options={[
+                { id: 'tour', label: 'Tour planen' },
+                { id: 'rundtour', label: 'Rundtour' },
+              ]}
+              onChange={(v) => setMode(v)}
+            />
+            <p style={S.tabHint}>
+              {mode === 'rundtour' ? 'Länge und Richtung wählen, zurück geht es zum Start.' : 'Start, Ziel und Zwischenziele frei setzen. Klick auf die Karte setzt einen Punkt.'}
+            </p>
+          </>
+        ) : null}
         {busy ? <Status text={busy} onCancel={() => abort.current?.abort()} /> : null}
         {error ? <div style={S.error}>{error}</div> : null}
 
@@ -424,9 +437,8 @@ export default function Planner() {
             <TourPanel
               tour={tour}
               group={rideMode === 'gruppe'}
-              curves={curves}
-              elev={elev}
-              onHoverKm={onHoverKm}
+              fun={fun}
+              onFun={() => setFunOpen(true)}
               isSample={isSample}
               names={names}
               passes={passesOnRoute}
@@ -435,11 +447,16 @@ export default function Planner() {
               onAddVia={(p) => void addPoint('via', p)}
               live={live}
               profile={profile}
-              setProfile={setProfile}
+              setProfile={(p) => {
+                setProfile(p);
+                setDirty(true);
+              }}
               avoid={avoid}
-              setAvoid={setAvoid}
+              setAvoid={(a) => {
+                setAvoid(a);
+                setDirty(true);
+              }}
               onFly={flyTo}
-              onReplan={() => replan(tour.wegpunkte)}
               onReverse={() => {
                 const r = reverseTour(tour);
                 setTour({ ...r, minutes: tour.minutes });
@@ -508,19 +525,56 @@ export default function Planner() {
               }
             />
           ) : null}
-          {mode === 'beschreiben' ? (
-            <DescribePanel
-              center={() => {
-                const c = map.current?.getCenter();
-                return c ? ([c.lat, c.lng] as LatLon) : null;
-              }}
-              busy={!!busy}
-              onCreate={(job) => run('Tour wird gebaut', job)}
-              avoid={avoid}
-            />
-          ) : null}
+        </div>
+        {/* Aktionsleiste wie in der App: eine Hauptaktion, Speichern als Lesezeichen, Neu planen nur nach Änderungen */}
+        {mode === 'tour' && tour.linie.length ? (
+          <div style={S.actionBar}>
+            {!isSample ? (
+              <button
+                style={S.iconAction}
+                aria-label={savedId ? 'In Meine Touren gespeichert' : 'In Meine Touren speichern'}
+                title={savedId ? 'Gespeichert' : 'Speichern'}
+                disabled={!!busy}
+                onClick={() => {
+                  try {
+                    const saved = saveTour({ ...tour, curves, profile }, '', savedId ?? undefined);
+                    setSavedId(saved.id);
+                    void syncLibrary();
+                  } catch (e) {
+                    setError((e as Error).message);
+                  }
+                }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill={savedId ? C.signal : 'none'} stroke={savedId ? C.signal : C.text} strokeWidth="2" strokeLinejoin="round" aria-hidden>
+                  <path d="M6 3h12v18l-6-4.5L6 21z" />
+                </svg>
+              </button>
+            ) : null}
+            {dirty || isSample ? (
+              <button style={{ ...S.secondary, height: 52, borderRadius: 16 }} disabled={!!busy || tour.wegpunkte.length < 2} onClick={() => replan(tour.wegpunkte)}>
+                Neu planen
+              </button>
+            ) : null}
+            <button style={S.primary} onClick={() => setSendOpen(true)}>
+              An die App senden
+            </button>
+          </div>
+        ) : null}
+        <div style={S.engine}>
+          <span style={{ ...S.dot, background: ownServer ? C.good : C.muted }} />
+          {ownServer === null ? 'Routing wird gesucht' : ownServer ? 'Eigener Routing Server' : 'Öffentliches Routing, eigener Server gerade nicht erreichbar'}
         </div>
       </aside>
+      {funOpen && fun ? (
+        <FunDialog
+          fun={fun}
+          name={tour.name}
+          elev={elev}
+          onHoverKm={onHoverKm}
+          check={routeCheck(tour.warnungen.filter((w) => w.klasse !== 'ok').length, tour.geprueft !== false)}
+          onClose={() => setFunOpen(false)}
+        />
+      ) : null}
+      {sendOpen ? <SendToApp tour={tour} profile={profile} avoid={avoid} onClose={() => setSendOpen(false)} /> : null}
     </div>
   );
 }

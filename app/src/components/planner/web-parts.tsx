@@ -180,3 +180,81 @@ export function Status(props: { text: string; onCancel: () => void }) {
     </div>
   );
 }
+
+/* ---------- Bausteine wie in der App (Stand 8.11.2026) ---------- */
+
+/** Logo als Pegel: acht Segmente ab 6 Uhr im Uhrzeigersinn; n gefüllt, Rest grau (groß) oder leer (klein) */
+const SEG_D = Array.from({ length: 8 }, (_, k) => {
+  const RO = 11.4, RI = 4.2, RD = 0.22;
+  const at = (r: number, a: number): [number, number] => [12 + r * Math.sin((a * Math.PI) / 180), 12 - r * Math.cos((a * Math.PI) / 180)];
+  const l = (p: [number, number], q: [number, number], t: number): [number, number] => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+  const P = (p: [number, number]) => `${p[0].toFixed(2)},${p[1].toFixed(2)}`;
+  const c = 202.5 + k * 45, A = at(RI, c), L = at(RO, c - 22.5), R = at(RO, c + 22.5);
+  const a1 = l(A, L, RD), a2 = l(A, R, RD);
+  return `M${P(a2)} L${P(R)} A${RO},${RO} 0 0 0 ${P(L)} L${P(a1)} Q${P(A)} ${P(a2)} Z`;
+});
+const FILLED = [0, 1, 3, 5, 7, 8];
+
+export function Gauge(props: { level: number; size?: number; label?: string }) {
+  const size = props.size ?? 20;
+  const n = FILLED[Math.max(0, Math.min(5, props.level))];
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" role={props.label ? 'img' : undefined} aria-label={props.label} aria-hidden={props.label ? undefined : true}>
+      {SEG_D.map((d, i) => (i < n ? <path key={i} d={d} fill={C.signal} /> : size >= 24 ? <path key={i} d={d} fill="#2A2A2E" /> : null))}
+    </svg>
+  );
+}
+
+/** Marke oben links: Logo und CUMO DRIVE wie im Startscreen */
+export function Brand() {
+  return (
+    <a href="/" style={S.brandLink} aria-label="CUMO DRIVE Startseite">
+      <Gauge level={5} size={26} />
+      <span style={S.brand}>
+        CUMO <span style={{ color: C.signal }}>DRIVE</span>
+      </span>
+    </a>
+  );
+}
+
+/** Große Typo Tabs wie im Planer der App (Tour planen, Rundtour) */
+export function TypoTabs<T extends string>(props: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void }) {
+  return (
+    <div role="tablist" style={S.typoTabs}>
+      {props.options.map((o) => (
+        <button key={o.id} role="tab" aria-selected={props.value === o.id} onClick={() => props.onChange(o.id)} style={props.value === o.id ? S.typoOn : S.typoOff}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Aufklappbarer Abschnitt mit Vorschau unter dem Titel (wie Vermeiden und Unterwegs einplanen in der App) */
+export function Accordion(props: { label: string; summary?: string; defaultOpen?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(!!props.defaultOpen);
+  return (
+    <section style={S.acc}>
+      <button style={S.accHead} aria-expanded={open} onClick={() => setOpen(!open)}>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+          <span style={S.accTitle}>{props.label}</span>
+          {props.summary ? <span style={S.accSummary}>{props.summary}</span> : null}
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 200ms' }}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open ? <div style={S.accBody}>{props.children}</div> : null}
+    </section>
+  );
+}
+
+/** Kennzahl wie in der App: Label grau über dem Wert, Wert in Archivo Versalien */
+export function Metric(props: { label: string; value: string; children?: ReactNode }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+      <span style={S.metricLabel}>{props.label}</span>
+      {props.children ?? <span style={S.metricValue}>{props.value}</span>}
+    </div>
+  );
+}

@@ -6,8 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { reverseName } from '@/lib/geocode';
 import { formatMinutes } from '@/lib/intent';
 import { type RouteFormat } from '@/lib/route-file';
-import { flatten, formatKm, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
-import { type ElevationProfile } from '@/lib/stats';
+import { flatten, formatKm, legs, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { type TourFun } from '@/lib/fun-score';
 import { folders, useLibrary } from '@/lib/library';
 import { type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
@@ -23,7 +23,8 @@ import { Colors, Spacing } from '@/constants/theme';
 
 import { type PlannedTour } from './web-shared';
 import { GroupPanel } from './web-account-panels';
-import { Chip, ElevationChart, PlaceSearch, Section, Stat, Toggle } from './web-parts';
+import { Accordion, Chip, Metric, PlaceSearch, Section, Toggle } from './web-parts';
+import { FunPillWeb } from './web-fun';
 import { S } from './web-styles';
 
 /* ---------- Tour ---------- */
@@ -31,9 +32,8 @@ import { S } from './web-styles';
 export function TourPanel(props: {
   tour: PlannedTour;
   group: boolean;
-  curves: number;
-  elev: ElevationProfile | null;
-  onHoverKm: (km: number | null) => void;
+  fun: TourFun | null;
+  onFun: () => void;
   isSample: boolean;
   names: Record<string, string>;
   passes: { pass: Pass; km: number }[];
@@ -46,7 +46,6 @@ export function TourPanel(props: {
   avoid: Avoid;
   setAvoid: (a: Avoid) => void;
   onFly: (p: LatLon) => void;
-  onReplan: () => void;
   onReverse: () => void;
   onRemove: (i: number) => void;
   onAddPlace: (p: LatLon) => void;
@@ -61,47 +60,29 @@ export function TourPanel(props: {
   const { tour } = props;
   const parts = useMemo(() => legs(tour), [tour]);
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const k = tour.km_je_klasse;
   const pts = tour.wegpunkte;
   const hint = closedHint(props.passes.map((x) => x.pass), props.live);
 
+  const avoidText = [props.avoid.closures && 'Sperrungen', props.avoid.rough && 'rauer Belag', props.avoid.ferries && 'Fähren', props.avoid.tolls && 'Maut'].filter(Boolean).join(', ') || 'Nichts';
+
   return (
     <div style={S.stack}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {/* Kopf wie in der App: Tourname, darunter Strecke, Fahrzeit und Fahrspaß */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {props.isSample ? <span style={S.sampleTag}>Beispiel: deine RCO Etappe mit Etappen Check</span> : null}
-        <input
-          id="tour-name"
-          aria-label="Tourname"
-          value={tour.name}
-          onChange={(e) => props.onRename(e.target.value)}
-          style={S.nameInput}
-        />
-        <div style={S.statsRow}>
-          <Stat big={formatKm(tour.laenge_km, 0)} unit="km" label="Strecke" />
-          {tour.minutes ? <Stat big={formatMinutes(Math.round(tour.minutes))} label="Fahrzeit" /> : null}
-          {k ? <Stat big={formatKm(k.raus)} unit="km" label="raus" tone={k.raus > 0 ? 'stop' : 'good'} /> : null}
-        </div>
-        <div style={S.statsRow}>
-          <Stat big={String(props.curves)} label={tour.laenge_km > 0 ? `Kurven, ${Math.round((props.curves / tour.laenge_km) * 100)} je 100 km` : 'Kurven'} small />
-          <Stat big={props.elev ? props.elev.up.toLocaleString('de-DE') : '…'} unit="m" label="bergauf" small />
-          <Stat big={props.elev ? props.elev.max.toLocaleString('de-DE') : '…'} unit="m" label="höchster Punkt" small />
-        </div>
-        {props.elev && props.elev.km.length > 2 ? <ElevationChart e={props.elev} onHoverKm={props.onHoverKm} /> : null}
-        {tour.geprueft ? (
-          <div style={k && k.raus > 0 ? S.checkBad : S.checkGood}>
-            {k && k.raus > 0
-              ? `Etappen Check: ${formatKm(k.raus)} km sind für Sportwagen ungeeignet.${tour.fixes ? '' : ' Neu planen umfährt sie.'}`
-              : `Etappen Check bestanden${tour.fixes ? `, ${tour.fixes} Mal umgeplant` : ''}.`}
+        <input id="tour-name" aria-label="Tourname" value={tour.name} onChange={(e) => props.onRename(e.target.value)} style={S.headline} />
+        {tour.linie.length ? (
+          <div style={S.metrics}>
+            <Metric label="Strecke" value={`${formatKm(tour.laenge_km, 0)} km`} />
+            <Metric label="Fahrzeit" value={tour.minutes ? `${formatMinutes(Math.round(tour.minutes))} h` : '…'} />
+            <Metric label="Fahrspaß" value="">
+              {props.fun ? <FunPillWeb fun={props.fun} onOpen={props.onFun} /> : <span style={S.metricValue}>…</span>}
+            </Metric>
           </div>
         ) : null}
       </div>
 
-      {!props.isSample && tour.linie.length ? <SaveBox savedId={props.savedId} onSave={props.onSave} busy={props.busy} /> : null}
-
-      {tour.linie.length ? <SendToApp tour={tour} profile={props.profile} avoid={props.avoid} /> : null}
-
-      <PlaceSearch near={pts[pts.length - 1]} placeholder={pts.length ? 'Ziel oder Via Punkt hinzufügen' : 'Wo geht es los?'} onPick={(p) => props.onAddPlace(p.p)} />
-
+      {/* Etappen */}
       {pts.length ? (
         <ol style={S.wpList}>
           {pts.map((p, i) => {
@@ -115,7 +96,7 @@ export function TourPanel(props: {
                     {props.names[p.join(',')] ?? `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`}
                   </button>
                   {!props.isSample ? (
-                    <button aria-label="Wegpunkt entfernen" style={S.iconBtn} onClick={() => props.onRemove(i)} disabled={props.busy}>
+                    <button aria-label="Punkt entfernen" style={S.iconBtn} onClick={() => props.onRemove(i)} disabled={props.busy}>
                       ×
                     </button>
                   ) : null}
@@ -135,9 +116,18 @@ export function TourPanel(props: {
             );
           })}
         </ol>
-      ) : (
-        <p style={S.muted}>Setze den Start per Suche oder Klick auf die Karte, dann das Ziel.</p>
-      )}
+      ) : null}
+      <PlaceSearch near={pts[pts.length - 1]} placeholder={pts.length ? 'Ziel oder Zwischenziel hinzufügen' : 'Wo geht es los?'} onPick={(p) => props.onAddPlace(p.p)} />
+
+      <Section title="Profil">
+        <div style={S.chips}>
+          {PROFILE_CHOICES.map((p) => (
+            <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
+              {p.label}
+            </Chip>
+          ))}
+        </div>
+      </Section>
 
       {hint ? (
         <div style={S.winterNote}>
@@ -150,7 +140,7 @@ export function TourPanel(props: {
       ) : null}
 
       {props.passes.length ? (
-        <Section title="Highlights auf der Strecke" aside={String(props.passes.length)}>
+        <Section title="Highlights" aside={String(props.passes.length)}>
           <ol style={S.passList}>
             {props.passes.map(({ pass, km }) => (
               <li key={pass.id} style={{ listStyle: 'none' }}>
@@ -168,70 +158,67 @@ export function TourPanel(props: {
         </Section>
       ) : null}
 
-      {pts.length >= 2 && !props.isSample ? <AddPass near={props.passesNear} live={props.live} busy={props.busy} onAdd={props.onAddPass} /> : null}
-      {pts.length >= 2 && !props.isSample ? <StopsPanel tour={props.tour} busy={props.busy} onAdd={props.onAddVia} /> : null}
-
-      <Section title="Profil">
-        <div style={S.chips}>
-          {LEG_PROFILE_CHOICES.map((p) => (
-            <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
-              {p.label}
-            </Chip>
-          ))}
-        </div>
-      </Section>
-
-      {props.group ? (
-        <Section title="Gruppenfahrt">
+      <div>
+        {pts.length >= 2 && !props.isSample ? (
+          <Accordion label="Pässe einbauen" summary={props.passesNear.length ? `${props.passesNear.length} in der Nähe` : 'Keine in der Nähe'}>
+            <AddPass near={props.passesNear} live={props.live} busy={props.busy} onAdd={props.onAddPass} />
+          </Accordion>
+        ) : null}
+        {pts.length >= 2 && !props.isSample ? (
+          <Accordion label="Unterwegs einplanen" summary="Tanken, Essen, Aussicht">
+            <StopsPanel tour={props.tour} busy={props.busy} onAdd={props.onAddVia} />
+          </Accordion>
+        ) : null}
+        <Accordion label="Vermeiden" summary={avoidText}>
+          <Toggle id="av-closures" on={props.avoid.closures} label="Gesperrte Straßen" note="calimoto warnt nur, wir umfahren" onChange={(v) => props.setAvoid({ ...props.avoid, closures: v })} />
+          <Toggle id="av-rough" on={props.avoid.rough} label="Rauer Belag und Kopfsteinpflaster" onChange={(v) => props.setAvoid({ ...props.avoid, rough: v })} />
+          <Toggle id="av-ferries" on={props.avoid.ferries} label="Fähren" onChange={(v) => props.setAvoid({ ...props.avoid, ferries: v })} />
+          <Toggle id="av-tolls" on={props.avoid.tolls} label="Mautstraßen" onChange={(v) => props.setAvoid({ ...props.avoid, tolls: v })} />
+        </Accordion>
+        <Accordion label="Gruppenfahrt" summary="Code für die Gruppe, Live Positionen" defaultOpen={props.group}>
           <GroupPanel tour={tour} profile={props.profile} avoid={props.avoid} isSample={props.isSample} />
-        </Section>
-      ) : null}
-
-      <Section title="Vermeiden">
-        <Toggle id="av-closures" on={props.avoid.closures} label="Gesperrte Straßen" note="calimoto warnt nur, wir umfahren" onChange={(v) => props.setAvoid({ ...props.avoid, closures: v })} />
-        <Toggle id="av-rough" on={props.avoid.rough} label="Rauer Belag und Kopfsteinpflaster" onChange={(v) => props.setAvoid({ ...props.avoid, rough: v })} />
-        <Toggle id="av-ferries" on={props.avoid.ferries} label="Fähren" onChange={(v) => props.setAvoid({ ...props.avoid, ferries: v })} />
-        <Toggle id="av-tolls" on={props.avoid.tolls} label="Mautstraßen" onChange={(v) => props.setAvoid({ ...props.avoid, tolls: v })} />
-      </Section>
-
-      <div style={S.btnRow}>
-        <button style={S.primary} disabled={props.busy || pts.length < 2} onClick={props.onReplan}>
-          {props.isSample ? 'Mit Sportwagen Profil neu planen' : 'Neu planen'}
-        </button>
-        <button style={S.secondary} disabled={props.busy || pts.length < 2} onClick={props.onReverse}>
-          Umkehren
-        </button>
+        </Accordion>
+        {!props.isSample && tour.linie.length ? (
+          <Accordion label="Ordner" summary={props.savedId ? 'Gespeichert in Meine Touren' : 'Noch nicht gespeichert'}>
+            <SaveBox savedId={props.savedId} onSave={props.onSave} busy={props.busy} />
+          </Accordion>
+        ) : null}
+        <Accordion label="Datei" summary="GPX und KML, Richtung umkehren">
+          <div style={S.btnRow}>
+            <button style={S.secondary} onClick={() => fileRef.current?.click()} disabled={props.busy}>
+              Importieren
+            </button>
+            <button style={S.secondary} disabled={props.busy || pts.length < 2} onClick={props.onReverse}>
+              Umkehren
+            </button>
+          </div>
+          <div style={S.btnRow}>
+            <button style={S.secondary} onClick={() => props.onExport('gpx')} disabled={tour.linie.length === 0}>
+              GPX exportieren
+            </button>
+            <button style={S.secondary} onClick={() => props.onExport('kml')} disabled={tour.linie.length === 0}>
+              KML exportieren
+            </button>
+          </div>
+          <input
+            ref={fileRef}
+            id="gpx-file"
+            type="file"
+            accept=".gpx,.kml,application/gpx+xml,application/vnd.google-earth.kml+xml"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) props.onImport(f);
+              e.target.value = '';
+            }}
+          />
+          {!props.isSample ? (
+            <button style={S.link} onClick={props.onSample}>
+              Beispiel RCO EAST 26 E3 laden
+            </button>
+          ) : null}
+        </Accordion>
       </div>
-      <div style={S.btnRow}>
-        <button style={S.secondary} onClick={() => fileRef.current?.click()} disabled={props.busy}>
-          GPX oder KML importieren
-        </button>
-      </div>
-      <div style={S.btnRow}>
-        <button style={S.secondary} onClick={() => props.onExport('gpx')} disabled={tour.linie.length === 0}>
-          GPX exportieren
-        </button>
-        <button style={S.secondary} onClick={() => props.onExport('kml')} disabled={tour.linie.length === 0}>
-          KML exportieren
-        </button>
-        <input
-          ref={fileRef}
-          id="gpx-file"
-          type="file"
-          accept=".gpx,.kml,application/gpx+xml,application/vnd.google-earth.kml+xml"
-          style={{ display: 'none' }}
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) props.onImport(f);
-            e.target.value = '';
-          }}
-        />
-      </div>
-      {!props.isSample ? (
-        <button style={S.link} onClick={props.onSample}>
-          Beispiel RCO EAST 26 E3 laden
-        </button>
-      ) : null}
     </div>
   );
 }
@@ -259,12 +246,10 @@ export function SaveBox(props: { savedId: string | null; onSave: (folder: string
  * QR Code für die App. Bevorzugt ein kurzer Übergabe Code über Supabase (die App bekommt die
  * exakt geplante Tour); ohne Verbindung fällt er auf Stützpunkte im Code zurück (App plant neu).
  */
-export function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid }) {
+export function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid; onClose: () => void }) {
   const { tour, profile, avoid } = props;
-  const [open, setOpen] = useState(false);
   const [qr, setQr] = useState<{ tour: Tour; url: string; short: boolean } | null>(null);
   useEffect(() => {
-    if (!open) return;
     let alive = true;
     (async () => {
       let code: string;
@@ -281,30 +266,25 @@ export function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid })
     return () => {
       alive = false;
     };
-  }, [open, tour, profile, avoid]);
+  }, [tour, profile, avoid]);
   const current = qr && qr.tour === tour ? qr : null;
-  if (!open)
-    return (
-      <button style={{ ...S.secondary, flex: 'none', minHeight: 42 }} onClick={() => setOpen(true)}>
-        An die App senden
-      </button>
-    );
   return (
-    <div style={S.qrBox}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <b>An die App senden</b>
-        <button aria-label="Schließen" style={S.iconBtn} onClick={() => setOpen(false)}>
-          ×
-        </button>
+    <div style={S.overlay} onClick={props.onClose}>
+      <div role="dialog" aria-modal="true" aria-label="An die App senden" style={{ ...S.dialog, width: 400 }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <span style={{ ...S.metricValue, fontSize: 22 }}>An die App senden</span>
+          <button aria-label="Schließen" style={S.closeBtn} onClick={props.onClose}>
+            ×
+          </button>
+        </div>
+        {current ? <img src={current.url} alt="QR Code der Tour" style={S.qrImg} /> : <div style={{ ...S.qrImg, background: '#fff' }} />}
+        <p style={{ ...S.muted, fontSize: 15 }}>
+          Mit der iPhone Kamera scannen, die Tour öffnet sich in Cumo Drive.{' '}
+          {current && !current.short
+            ? 'Ohne Verbindung zum Server enthält der Code nur Stützpunkte, die App plant die Strecke neu.'
+            : 'Die App übernimmt die Tour genau so, wie sie hier geplant ist.'}
+        </p>
       </div>
-      {current ? <img src={current.url} alt="QR Code der Tour" style={S.qrImg} /> : <div style={{ ...S.qrImg, background: '#fff' }} />}
-      <p style={S.small}>
-        Mit der iPhone Kamera scannen und auf „In Expo Go öffnen“ tippen.{' '}
-        {current && !current.short
-          ? 'Ohne Verbindung zum Server enthält der Code nur Stützpunkte, die App plant die Strecke neu.'
-          : 'Die App übernimmt die Tour genau so, wie sie hier geplant ist.'}{' '}
-        Alternativ in der App unter Entdecken „Tour vom Planer holen“ wählen.
-      </p>
     </div>
   );
 }

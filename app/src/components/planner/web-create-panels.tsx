@@ -53,10 +53,6 @@ export function RoundTripPanel(props: {
 
   return (
     <div style={S.stack}>
-      <div>
-        <h2 style={S.h2}>Rundtour</h2>
-        <p style={S.muted}>Start wählen, Länge und Richtung festlegen. Die Route wird gleich mit dem Etappen Check geprüft.</p>
-      </div>
       <Section title="Start">
         {start ? (
           <div style={S.startRow}>
