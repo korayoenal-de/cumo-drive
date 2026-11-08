@@ -19,7 +19,6 @@ import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, 
 
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { LogoSpinner } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import { type Place } from '@/lib/geocode';
@@ -431,10 +430,7 @@ function SearchBody({
           automaticallyAdjustKeyboardInsets>
           {cat !== 'alle' ? (
             catLoading ? (
-              <View style={styles.loading}>
-                <LogoSpinner size={32} label={hasRoute ? 'Stopps an der Strecke laden' : 'Route wird geplant'} />
-                <AppText style={styles.loadingText}>{hasRoute ? 'Suche an der Strecke' : 'Route wird geplant'}</AppText>
-              </View>
+              <ActivityIndicator color={Colors.muted} style={styles.loading} />
             ) : catNoRoute ? (
               <AppText style={styles.empty}>Sobald die Route steht, siehst du hier Stopps an der Strecke.</AppText>
             ) : catRows === 'fehler' ? (
@@ -611,8 +607,7 @@ const styles = StyleSheet.create({
   widenLinkText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.signal },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m },
   title: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 28, color: Colors.text, textTransform: 'uppercase' },
-  loading: { marginTop: Spacing.xxl, alignItems: 'center', gap: Spacing.m },
-  loadingText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
+  loading: { marginTop: Spacing.xl },
   widen: { alignSelf: 'flex-start', height: 48, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, justifyContent: 'center', backgroundColor: Colors.surface2 },
   widenText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },
   routeHead: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s },
