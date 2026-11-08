@@ -62,10 +62,27 @@ function trimEnds(line: LatLon[], m: number): LatLon[] {
   return cut([...cut(line)].reverse()).reverse();
 }
 
+function snapToRoad(p: LatLon): LatLon {
+  let best: LatLon = p;
+  let bd = 300;
+  for (const r of HIGHLIGHT_ROADS) {
+    for (const q of r.line) {
+      const d = haversine(p, q);
+      if (d < bd) {
+        bd = d;
+        best = q;
+      }
+    }
+  }
+  return best;
+}
+
 const minutes = (km: number) => Math.max(0, Math.round((km * ROAD * 60) / KMH));
 
-/** Mindestwinkel: darunter fährt man hin und auf demselben Weg zurück */
+/** Mindestwinkel am Pass: darunter fährt man hin und auf demselben Weg zurück */
 const MIN_ANGLE = 100;
+/** An Ein und Ausstieg einer Strecke reicht weniger: die Strecke selbst ist schon der Bogen, nur kehrtmachen darf man nicht */
+const ROAD_ANGLE = 60;
 
 export function highlightsForLeg(leg: Leg, corridorM: number): HighlightCandidate[] {
   const { a, b } = leg;
@@ -74,7 +91,9 @@ export function highlightsForLeg(leg: Leg, corridorM: number): HighlightCandidat
   const reach = Math.max(corridorM, direct * 0.35);
   const out: HighlightCandidate[] = [];
   for (const ps of PASSES) {
-    const p = passPoint(ps);
+    // Passpunkt auf unsere Strecke ziehen, wenn eine durch ihn führt: der Punkt aus der Passdatenbank liegt
+    // manchmal auf einem Waldweg daneben, dann umfährt die Prüfung ihn und man fährt zurück (Juhöhe, 8.11.)
+    const p = snapToRoad(passPoint(ps));
     if (offLeg(a, b, p) > reach) continue;
     if (angleAt(a, p, b) < MIN_ANGLE) continue;
     const extra = (haversine(a, p) + haversine(p, b) - direct) / 1000;
@@ -90,7 +109,7 @@ export function highlightsForLeg(leg: Leg, corridorM: number): HighlightCandidat
     const exit = fwd ? e2 : e1;
     if (offLeg(a, b, entry) > reach || offLeg(a, b, exit) > reach) continue;
     // keine Kehrtwende vor oder nach der Strecke
-    if (angleAt(a, entry, exit) < MIN_ANGLE || angleAt(entry, exit, b) < MIN_ANGLE) continue;
+    if (angleAt(a, entry, exit) < ROAD_ANGLE || angleAt(entry, exit, b) < ROAD_ANGLE) continue;
     let len = 0;
     for (let i = 1; i < r.line.length; i++) len += haversine(r.line[i - 1], r.line[i]);
     const extra = (haversine(a, entry) + len / ROAD + haversine(exit, b) - direct) / 1000;
