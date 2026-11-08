@@ -544,7 +544,10 @@ async function bestRejoin(current: NavRoute, j0: number, from: LatLon, heading: 
       // Möglichst früh zurück auf die Tour: ausgelassene Tour Kilometer kosten, aber nicht so viel,
       // dass man wenden muss, wenn die eigene Straße bald wieder auf die Tour führt (Testfahrt 8.11.:
       // dreifach war zu streng, die App bestand auf dem Zurückführen)
-      const cost = t + (cumKm[k] - base) * secPerKm * 1.2;
+      // Koray 8.11. nach der Testfahrt: das verpasste Stück muss man nicht nachfahren. Es zählt fast nur
+      // der schnellste Weg zurück auf die Tour, ein kleiner Abzug je ausgelassenem km verhindert nur,
+      // dass große Teile der Tour abgekürzt werden.
+      const cost = t + (cumKm[k] - base) * secPerKm * 0.25;
       if (cost < bestCost - 5) {
         bestCost = cost;
         best = k;
