@@ -2,7 +2,7 @@
  * Fahrspaß Wert für gespeicherte Touren nachrechnen: eine Tour nach der anderen mit kurzer Pause,
  * damit die Liste flüssig bleibt. Das Ergebnis landet in der Tour (patchTour), ohne sie als geändert zu markieren.
  */
-import { tourFun } from './fun-score';
+import { tourFun, TOUR_FUN_VERSION } from './fun-score';
 import { patchTour, type SavedTour } from './library';
 import { flatten } from './tour';
 
@@ -18,9 +18,9 @@ function pump() {
   setTimeout(() => {
     try {
       const f = tourFun(flatten(t).map((x) => x.p));
-      patchTour(t.id, { fun: f ? f.score : -1 });
+      patchTour(t.id, { fun: f ? f.score : -1, funV: TOUR_FUN_VERSION });
     } catch {
-      patchTour(t.id, { fun: -1 });
+      patchTour(t.id, { fun: -1, funV: TOUR_FUN_VERSION });
     } finally {
       queued.delete(t.id);
       busy = false;
@@ -30,7 +30,7 @@ function pump() {
 }
 
 export function ensureTourFun(t: SavedTour) {
-  if (t.fun != null || queued.has(t.id)) return;
+  if ((t.fun != null && t.funV === TOUR_FUN_VERSION) || queued.has(t.id)) return;
   queued.add(t.id);
   queue.push(t);
   pump();

@@ -155,16 +155,28 @@ export function RouteMap({
   const [radarPt, setRadarPt] = useState<{ x: number; y: number; r: number; k: string } | null>(null);
   /** gilt nur für das aktuelle Radar */
   const ringAt = radarPt && radarPt.k === radarKey ? radarPt : null;
+  /** Startpunkt und Radius in Bildpunkten messen; latDelta: sichtbare Höhe des Ausschnitts in Grad */
+  const measureRadar = (latDelta: number) => {
+    if (!radar || boxH <= 0) return;
+    const k = radarKey;
+    const rPx = radar.radiusM / ((latDelta * 111320) / boxH);
+    void map.current
+      ?.pointForCoordinate(ll(radar.center))
+      .then((pt) => setRadarPt((cur) => (cur && cur.k === k && Math.abs(cur.x - pt.x) < 2 && Math.abs(cur.y - pt.y) < 2 && Math.abs(cur.r - rPx) < 2 ? cur : { x: pt.x, y: pt.y, r: rPx, k })))
+      .catch(() => undefined);
+  };
   useEffect(() => {
-    if (!ready || !radar) return;
-    // Kamera über den Start, so hoch, dass der ganze Umkreis zu sehen ist; der Ring startet, wenn sie steht
-    map.current?.animateCamera(
-      { center: ll(radar.center), altitude: radar.radiusM * 3.2, pitch: 0, heading: 0 },
-      { duration: 700 },
-    );
+    if (!ready || !radar || boxH <= 0) return;
+    // Ausschnitt so weit heraus, dass der ganze Umkreis über dem Blatt Platz hat (Koray 8.11.: Karte runterskalieren)
+    const latDelta = ((radar.radiusM * 2.6) / 111320) * (boxH / Math.max(1, boxH - (mapPadding?.bottom ?? 0)));
+    const lonDelta = latDelta / Math.max(0.2, Math.cos((radar.center[0] * Math.PI) / 180));
+    map.current?.animateToRegion({ latitude: radar.center[0], longitude: radar.center[1], latitudeDelta: latDelta, longitudeDelta: lonDelta }, 650);
+    // Falls die Karte kein Ende meldet, den Ring trotzdem starten
+    const t = setTimeout(() => measureRadar(latDelta), 800);
+    return () => clearTimeout(t);
     // radarKey fasst Mitte und Radius zusammen
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, radarKey]);
+  }, [ready, radarKey, boxH > 0]);
 
   // Ohne Linie: auf den Fokus Punkt springen (zum Beispiel erster Wegpunkt im Planer)
   const focusLat = focus?.[0];
@@ -299,14 +311,7 @@ export function RouteMap({
         onRegionChangeComplete={(r) => {
           if (boxH > 0) setMpp((r.latitudeDelta * 111320) / boxH);
           // Radar: Startpunkt und Radius in Bildpunkten für den Ring über der Karte
-          if (radar && boxH > 0) {
-            const k = radarKey;
-            const rPx = radar.radiusM / ((r.latitudeDelta * 111320) / boxH);
-            void map.current
-              ?.pointForCoordinate(ll(radar.center))
-              .then((pt) => setRadarPt((cur) => (cur && cur.k === k && Math.abs(cur.x - pt.x) < 2 && Math.abs(cur.y - pt.y) < 2 && Math.abs(cur.r - rPx) < 2 ? cur : { x: pt.x, y: pt.y, r: rPx, k })))
-              .catch(() => undefined);
-          }
+          if (radar) measureRadar(r.latitudeDelta);
         }}
         onPress={onPressMap ? (e) => e.nativeEvent.action !== 'marker-press' && onPressMap() : undefined}
         onLongPress={

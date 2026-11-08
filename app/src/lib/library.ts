@@ -26,6 +26,8 @@ export type SavedTour = Tour & {
   published?: boolean;
   /** Fahrspaß Wert 0 bis 100, -1 wenn keiner berechenbar ist; fehlt er, rechnet die Liste ihn nach */
   fun?: number;
+  /** Stand der Rechnung zu fun (TOUR_FUN_VERSION) */
+  funV?: number;
 };
 
 const KEY = 'cumo.drive.touren.v1';
