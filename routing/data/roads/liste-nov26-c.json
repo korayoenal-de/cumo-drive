@@ -1,0 +1,1653 @@
+[
+ {
+  "id": "de-altenau-torfhaus",
+  "name": "Altenau Torfhaus",
+  "country": "DE",
+  "region": "Harz",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Anstieg durch den Nationalpark",
+  "roads": [],
+  "from": {
+   "name": "Altenau",
+   "lat": 51.80347,
+   "lon": 10.44728
+  },
+  "to": {
+   "name": "Torfhaus",
+   "lat": 51.8015,
+   "lon": 10.53706
+  },
+  "via": [],
+  "length_km": 9,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-schmallenberg-winterberg",
+  "name": "Schmallenberg Winterberg",
+  "country": "DE",
+  "region": "Sauerland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Lennetal",
+  "roads": [
+   "B 236"
+  ],
+  "from": {
+   "name": "Schmallenberg",
+   "lat": 51.15259,
+   "lon": 8.2836
+  },
+  "to": {
+   "name": "Winterberg",
+   "lat": 51.19334,
+   "lon": 8.53341
+  },
+  "via": [
+   {
+    "name": "Oberkirchen",
+    "lat": 51.15844,
+    "lon": 8.37438
+   }
+  ],
+  "length_km": 23,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-georgenthal-tambach",
+  "name": "Georgenthal Tambach-Dietharz",
+  "country": "DE",
+  "region": "Thüringer Wald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Talstraße im Thüringer Wald",
+  "roads": [],
+  "from": {
+   "name": "Georgenthal",
+   "lat": 50.83013,
+   "lon": 10.65659
+  },
+  "to": {
+   "name": "Tambach-Dietharz",
+   "lat": 50.79448,
+   "lon": 10.61681
+  },
+  "via": [],
+  "length_km": 7,
+  "quality": 3,
+  "caveats": "kurz",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-harzhochstrasse-b242",
+  "name": "Harz Hochstraße",
+  "country": "DE",
+  "region": "Harz",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke über den Harz",
+  "roads": [
+   "B 242"
+  ],
+  "from": {
+   "name": "Braunlage",
+   "lat": 51.72663,
+   "lon": 10.60954
+  },
+  "to": {
+   "name": "Mansfeld",
+   "lat": 51.59291,
+   "lon": 11.45291
+  },
+  "via": [
+   {
+    "name": "Hasselfelde",
+    "lat": 51.69103,
+    "lon": 10.85525
+   },
+   {
+    "name": "Harzgerode",
+    "lat": 51.63812,
+    "lon": 11.14657
+   }
+  ],
+  "length_km": 70,
+  "quality": 3,
+  "caveats": "mehrere Ortsdurchfahrten",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-neuffener-steige",
+  "name": "Neuffener Steige",
+  "country": "DE",
+  "region": "Schwäbische Alb",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Albaufstieg mit Kehren",
+  "roads": [],
+  "from": {
+   "name": "Neuffen",
+   "lat": 48.5546,
+   "lon": 9.37655
+  },
+  "to": {
+   "name": "Erkenbrechtsweiler",
+   "lat": 48.557,
+   "lon": 9.43173
+  },
+  "via": [],
+  "length_km": 6,
+  "quality": 4,
+  "caveats": "kurz, am Wochenende viele Motorräder",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-eisenstrasse-luetzel-hainchen",
+  "name": "Eisenstraße Lützel Hainchen",
+  "country": "DE",
+  "region": "Siegerland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kammstraße durch dichten Wald",
+  "roads": [],
+  "from": {
+   "name": "Lützel",
+   "lat": 50.96836,
+   "lon": 8.17194
+  },
+  "to": {
+   "name": "Hainchen",
+   "lat": 50.85533,
+   "lon": 8.21514
+  },
+  "via": [],
+  "length_km": 25,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-wolkenstein-dippoldiswalde",
+  "name": "Erzgebirge B 171",
+  "country": "DE",
+  "region": "Erzgebirge",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Erzgebirge",
+  "roads": [
+   "B 171"
+  ],
+  "from": {
+   "name": "Wolkenstein",
+   "lat": 50.65571,
+   "lon": 13.06646
+  },
+  "to": {
+   "name": "Dippoldiswalde",
+   "lat": 50.89505,
+   "lon": 13.66333
+  },
+  "via": [
+   {
+    "name": "Olbernhau",
+    "lat": 50.67423,
+    "lon": 13.32405
+   }
+  ],
+  "length_km": 60,
+  "quality": 3,
+  "caveats": "mehrere Ortsdurchfahrten",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-blankenheim-adenau",
+  "name": "Blankenheim Adenau",
+  "country": "DE",
+  "region": "Eifel",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke durch die Eifel",
+  "roads": [
+   "B 258"
+  ],
+  "from": {
+   "name": "Blankenheim",
+   "lat": 50.43679,
+   "lon": 6.65074
+  },
+  "to": {
+   "name": "Adenau",
+   "lat": 50.38233,
+   "lon": 6.9304
+  },
+  "via": [],
+  "length_km": 32,
+  "quality": 3,
+  "caveats": "bei Rennen am Nürburgring viel Verkehr",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-notschrei-oberried-todtnau",
+  "name": "Notschrei",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke über den Notschrei",
+  "roads": [
+   "L 126"
+  ],
+  "from": {
+   "name": "Oberried",
+   "lat": 47.93301,
+   "lon": 7.94987
+  },
+  "to": {
+   "name": "Todtnau",
+   "lat": 47.83034,
+   "lon": 7.94524
+  },
+  "via": [
+   {
+    "name": "Notschrei",
+    "lat": 47.87626,
+    "lon": 7.90965
+   }
+  ],
+  "length_km": 20,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-alken-pfaffenheck",
+  "name": "Alken Pfaffenheck",
+  "country": "DE",
+  "region": "Mosel",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Moselaufstieg mit Kehren",
+  "roads": [],
+  "from": {
+   "name": "Alken",
+   "lat": 50.24562,
+   "lon": 7.44828
+  },
+  "to": {
+   "name": "Pfaffenheck",
+   "lat": 50.23877,
+   "lon": 7.51064
+  },
+  "via": [],
+  "length_km": 8,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-urnaesch-herisau",
+  "name": "Urnäsch Herisau",
+  "country": "CH",
+  "region": "Appenzellerland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Hügelland",
+  "roads": [],
+  "from": {
+   "name": "Urnäsch",
+   "lat": 47.31786,
+   "lon": 9.28345
+  },
+  "to": {
+   "name": "Herisau",
+   "lat": 47.38555,
+   "lon": 9.27876
+  },
+  "via": [],
+  "length_km": 10,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-signau-eggiwil",
+  "name": "Signau Eggiwil",
+  "country": "CH",
+  "region": "Emmental",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Emmental",
+  "roads": [],
+  "from": {
+   "name": "Signau",
+   "lat": 46.9189,
+   "lon": 7.72559
+  },
+  "to": {
+   "name": "Eggiwil",
+   "lat": 46.87522,
+   "lon": 7.79749
+  },
+  "via": [],
+  "length_km": 9,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-centovalli-intragna-camedo",
+  "name": "Centovalli",
+  "country": "CH",
+  "region": "Tessin",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Talstraße im Centovalli",
+  "roads": [],
+  "from": {
+   "name": "Intragna",
+   "lat": 46.17751,
+   "lon": 8.70041
+  },
+  "to": {
+   "name": "Camedo",
+   "lat": 46.15479,
+   "lon": 8.61092
+  },
+  "via": [],
+  "length_km": 14,
+  "quality": 3,
+  "caveats": "schmal, Gegenverkehr",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-chatel-st-denis-bulle",
+  "name": "Châtel-Saint-Denis Bulle",
+  "country": "CH",
+  "region": "Freiburg",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Voralpenstraße mit weiten Radien",
+  "roads": [],
+  "from": {
+   "name": "Châtel-Saint-Denis",
+   "lat": 46.52653,
+   "lon": 6.89965
+  },
+  "to": {
+   "name": "Bulle",
+   "lat": 46.6191,
+   "lon": 7.05812
+  },
+  "via": [],
+  "length_km": 20,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-st-imier-tramelan",
+  "name": "Saint-Imier Tramelan",
+  "country": "CH",
+  "region": "Jura",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Jurastraße durch Wald",
+  "roads": [],
+  "from": {
+   "name": "Saint-Imier",
+   "lat": 47.15178,
+   "lon": 6.9972
+  },
+  "to": {
+   "name": "Tramelan",
+   "lat": 47.22368,
+   "lon": 7.10302
+  },
+  "via": [],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b38-kollerschlag-freistadt",
+  "name": "Böhmerwald Straße",
+  "country": "AT",
+  "region": "Mühlviertel",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke über das Mühlviertel",
+  "roads": [
+   "B 38"
+  ],
+  "from": {
+   "name": "Kollerschlag",
+   "lat": 48.60513,
+   "lon": 13.84152
+  },
+  "to": {
+   "name": "Freistadt",
+   "lat": 48.5113,
+   "lon": 14.50476
+  },
+  "via": [
+   {
+    "name": "Bad Leonfelden",
+    "lat": 48.52265,
+    "lon": 14.29307
+   }
+  ],
+  "length_km": 75,
+  "quality": 3,
+  "caveats": "mehrere Ortsdurchfahrten",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b124-freistadt-koenigswiesen",
+  "name": "Freistadt Königswiesen",
+  "country": "AT",
+  "region": "Mühlviertel",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke über das Hochplateau",
+  "roads": [
+   "B 124"
+  ],
+  "from": {
+   "name": "Freistadt",
+   "lat": 48.5113,
+   "lon": 14.50476
+  },
+  "to": {
+   "name": "Königswiesen",
+   "lat": 48.40718,
+   "lon": 14.84033
+  },
+  "via": [],
+  "length_km": 35,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-gramastetten-eferding",
+  "name": "Gramastetten Eferding",
+  "country": "AT",
+  "region": "Mühlviertel",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Talstraße im Mühlviertel",
+  "roads": [],
+  "from": {
+   "name": "Gramastetten",
+   "lat": 48.37916,
+   "lon": 14.19179
+  },
+  "to": {
+   "name": "Eferding",
+   "lat": 48.30826,
+   "lon": 14.0204
+  },
+  "via": [],
+  "length_km": 22,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b41-gmuend-schrems",
+  "name": "Gmünd Schrems",
+  "country": "AT",
+  "region": "Waldviertel",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke durch den Wald",
+  "roads": [
+   "B 41"
+  ],
+  "from": {
+   "name": "Gmünd",
+   "lat": 48.77293,
+   "lon": 14.98618
+  },
+  "to": {
+   "name": "Schrems",
+   "lat": 48.79338,
+   "lon": 15.06898
+  },
+  "via": [],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b36-zwettl-waidhofen",
+  "name": "Zwettl Waidhofen an der Thaya",
+  "country": "AT",
+  "region": "Waldviertel",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Hügelland",
+  "roads": [
+   "B 36"
+  ],
+  "from": {
+   "name": "Zwettl",
+   "lat": 48.60208,
+   "lon": 14.98516
+  },
+  "to": {
+   "name": "Waidhofen an der Thaya",
+   "lat": 48.81462,
+   "lon": 15.28452
+  },
+  "via": [],
+  "length_km": 33,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-weitra-arbesbach",
+  "name": "Weitra Arbesbach",
+  "country": "AT",
+  "region": "Waldviertel",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke durch Granitlandschaft",
+  "roads": [],
+  "from": {
+   "name": "Weitra",
+   "lat": 48.70079,
+   "lon": 14.89414
+  },
+  "to": {
+   "name": "Arbesbach",
+   "lat": 48.49398,
+   "lon": 14.9553
+  },
+  "via": [],
+  "length_km": 25,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b74-leibnitz-deutschlandsberg",
+  "name": "Sulmtal",
+  "country": "AT",
+  "region": "Steiermark",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Sulmtal",
+  "roads": [
+   "B 74"
+  ],
+  "from": {
+   "name": "Leibnitz",
+   "lat": 46.78048,
+   "lon": 15.5407
+  },
+  "to": {
+   "name": "Deutschlandsberg",
+   "lat": 46.81463,
+   "lon": 15.21378
+  },
+  "via": [
+   {
+    "name": "Gleinstätten",
+    "lat": 46.75305,
+    "lon": 15.36654
+   }
+  ],
+  "length_km": 30,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-gleinstaetten-wildon",
+  "name": "Gleinstätten Wildon",
+  "country": "AT",
+  "region": "Südsteiermark",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke durch Weinberge",
+  "roads": [],
+  "from": {
+   "name": "Gleinstätten",
+   "lat": 46.75305,
+   "lon": 15.36654
+  },
+  "to": {
+   "name": "Wildon",
+   "lat": 46.88735,
+   "lon": 15.51455
+  },
+  "via": [],
+  "length_km": 22,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b69-eibiswald-mureck",
+  "name": "Südsteirische Grenzstraße",
+  "country": "AT",
+  "region": "Südsteiermark",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Grenzlandstraße durch Wald",
+  "roads": [
+   "B 69"
+  ],
+  "from": {
+   "name": "Eibiswald",
+   "lat": 46.68626,
+   "lon": 15.24516
+  },
+  "to": {
+   "name": "Mureck",
+   "lat": 46.70765,
+   "lon": 15.76952
+  },
+  "via": [
+   {
+    "name": "Leutschach an der Weinstraße",
+    "lat": 46.66735,
+    "lon": 15.46819
+   }
+  ],
+  "length_km": 60,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-voitsberg-stallhofen",
+  "name": "Voitsberg Stallhofen",
+  "country": "AT",
+  "region": "Weststeiermark",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Voitsberg",
+   "lat": 47.05047,
+   "lon": 15.14748
+  },
+  "to": {
+   "name": "Stallhofen",
+   "lat": 47.04821,
+   "lon": 15.21981
+  },
+  "via": [],
+  "length_km": 9,
+  "quality": 3,
+  "caveats": "schmal",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b72-weiz-anger",
+  "name": "Weizklamm",
+  "country": "AT",
+  "region": "Steiermark",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke durch die Klamm",
+  "roads": [
+   "B 72"
+  ],
+  "from": {
+   "name": "Weiz",
+   "lat": 47.21742,
+   "lon": 15.62217
+  },
+  "to": {
+   "name": "Anger",
+   "lat": 47.27446,
+   "lon": 15.6901
+  },
+  "via": [],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-st-veit-brueckl",
+  "name": "Sankt Veit Brückl",
+  "country": "AT",
+  "region": "Kärnten",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke mit weiten Radien",
+  "roads": [],
+  "from": {
+   "name": "Sankt Veit an der Glan",
+   "lat": 46.76728,
+   "lon": 14.3577
+  },
+  "to": {
+   "name": "Brückl",
+   "lat": 46.74854,
+   "lon": 14.53197
+  },
+  "via": [],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-velden-keutschach",
+  "name": "Velden Keutschach",
+  "country": "AT",
+  "region": "Kärnten",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke an den Seen",
+  "roads": [],
+  "from": {
+   "name": "Velden am Wörthersee",
+   "lat": 46.61519,
+   "lon": 14.04506
+  },
+  "to": {
+   "name": "Keutschach am See",
+   "lat": 46.59346,
+   "lon": 14.18722
+  },
+  "via": [],
+  "length_km": 13,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b111-hermagor-koetschach",
+  "name": "Gailtal",
+  "country": "AT",
+  "region": "Kärnten",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Talstraße im Gailtal",
+  "roads": [
+   "B 111"
+  ],
+  "from": {
+   "name": "Hermagor",
+   "lat": 46.62681,
+   "lon": 13.37024
+  },
+  "to": {
+   "name": "Kötschach-Mauthen",
+   "lat": 46.66168,
+   "lon": 12.97117
+  },
+  "via": [],
+  "length_km": 30,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-eberndorf-sittersdorf",
+  "name": "Eberndorf Sittersdorf",
+  "country": "AT",
+  "region": "Kärnten",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Hügelland",
+  "roads": [],
+  "from": {
+   "name": "Eberndorf",
+   "lat": 46.60308,
+   "lon": 14.66852
+  },
+  "to": {
+   "name": "Sittersdorf",
+   "lat": 46.53972,
+   "lon": 14.61672
+  },
+  "via": [],
+  "length_km": 8,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b152-attersee-ost",
+  "name": "Attersee Ostufer",
+  "country": "AT",
+  "region": "Salzkammergut",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Uferstraße am Attersee",
+  "roads": [
+   "B 152"
+  ],
+  "from": {
+   "name": "Seewalchen am Attersee",
+   "lat": 47.95476,
+   "lon": 13.56752
+  },
+  "to": {
+   "name": "Unterach am Attersee",
+   "lat": 47.80431,
+   "lon": 13.48897
+  },
+  "via": [
+   {
+    "name": "Steinbach am Attersee",
+    "lat": 47.83009,
+    "lon": 13.54658
+   }
+  ],
+  "length_km": 20,
+  "quality": 3,
+  "caveats": "Sommer viel Verkehr",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b153-weissenbachtal",
+  "name": "Weißenbachtal",
+  "country": "AT",
+  "region": "Salzkammergut",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Talstraße durch den Wald",
+  "roads": [
+   "B 153"
+  ],
+  "from": {
+   "name": "Weißenbach am Attersee",
+   "lat": 47.79981,
+   "lon": 13.53614
+  },
+  "to": {
+   "name": "Mitterweißenbach",
+   "lat": 47.75979,
+   "lon": 13.65476
+  },
+  "via": [],
+  "length_km": 14,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-gmunden-scharnstein",
+  "name": "Gmunden Scharnstein",
+  "country": "AT",
+  "region": "Almtal",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Talstraße im Almtal",
+  "roads": [],
+  "from": {
+   "name": "Gmunden",
+   "lat": 47.91859,
+   "lon": 13.8003
+  },
+  "to": {
+   "name": "Scharnstein",
+   "lat": 47.90449,
+   "lon": 13.96098
+  },
+  "via": [],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b145-bad-aussee-traunkirchen",
+  "name": "Pötschenpass Traunsee",
+  "country": "AT",
+  "region": "Salzkammergut",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke über den Pötschen",
+  "roads": [
+   "B 145"
+  ],
+  "from": {
+   "name": "Bad Aussee",
+   "lat": 47.6095,
+   "lon": 13.78358
+  },
+  "to": {
+   "name": "Traunkirchen",
+   "lat": 47.84483,
+   "lon": 13.79028
+  },
+  "via": [
+   {
+    "name": "Bad Goisern",
+    "lat": 47.64089,
+    "lon": 13.61648
+   },
+   {
+    "name": "Bad Ischl",
+    "lat": 47.71153,
+    "lon": 13.62393
+   }
+  ],
+  "length_km": 45,
+  "quality": 3,
+  "caveats": "Ortsdurchfahrten, viel Verkehr",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b198-lechtal",
+  "name": "Lechtal",
+  "country": "AT",
+  "region": "Tirol",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Talstraße am Lech",
+  "roads": [
+   "B 198"
+  ],
+  "from": {
+   "name": "Reutte",
+   "lat": 47.48911,
+   "lon": 10.7188
+  },
+  "to": {
+   "name": "Steeg",
+   "lat": 47.24231,
+   "lon": 10.29267
+  },
+  "via": [
+   {
+    "name": "Elbigenalp",
+    "lat": 47.29102,
+    "lon": 10.43687
+   }
+  ],
+  "length_km": 45,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-kufstein-walchsee",
+  "name": "Kufstein Walchsee",
+  "country": "AT",
+  "region": "Tirol",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Kaiserwinkl",
+  "roads": [],
+  "from": {
+   "name": "Kufstein",
+   "lat": 47.583,
+   "lon": 12.16921
+  },
+  "to": {
+   "name": "Walchsee",
+   "lat": 47.65123,
+   "lon": 12.31864
+  },
+  "via": [],
+  "length_km": 17,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-egg-schoppernau",
+  "name": "Bregenzerwald",
+  "country": "AT",
+  "region": "Vorarlberg",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Bregenzerwald",
+  "roads": [],
+  "from": {
+   "name": "Egg",
+   "lat": 47.43145,
+   "lon": 9.89738
+  },
+  "to": {
+   "name": "Schoppernau",
+   "lat": 47.30002,
+   "lon": 10.04046
+  },
+  "via": [],
+  "length_km": 22,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-faschina-damuels-fontanella",
+  "name": "Faschina",
+  "country": "AT",
+  "region": "Vorarlberg",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Großen Walsertal",
+  "roads": [
+   "L 193"
+  ],
+  "from": {
+   "name": "Damüls",
+   "lat": 47.28045,
+   "lon": 9.89096
+  },
+  "to": {
+   "name": "Fontanella",
+   "lat": 47.24748,
+   "lon": 9.90884
+  },
+  "via": [],
+  "length_km": 8,
+  "quality": 4,
+  "caveats": "Wintersperre möglich",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-b50-eisenstadt-mattersburg",
+  "name": "Eisenstadt Mattersburg",
+  "country": "AT",
+  "region": "Burgenland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke am Rosaliengebirge",
+  "roads": [
+   "B 50"
+  ],
+  "from": {
+   "name": "Eisenstadt",
+   "lat": 47.84548,
+   "lon": 16.52493
+  },
+  "to": {
+   "name": "Mattersburg",
+   "lat": 47.73684,
+   "lon": 16.39805
+  },
+  "via": [],
+  "length_km": 20,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "at-lockenhaus-rechnitz",
+  "name": "Lockenhaus Rechnitz",
+  "country": "AT",
+  "region": "Burgenland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Waldstraße am Geschriebenstein",
+  "roads": [],
+  "from": {
+   "name": "Lockenhaus",
+   "lat": 47.40666,
+   "lon": 16.41819
+  },
+  "to": {
+   "name": "Rechnitz",
+   "lat": 47.30494,
+   "lon": 16.44088
+  },
+  "via": [],
+  "length_km": 22,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-schlucht-gerardmer-stosswihr",
+  "name": "Col de la Schlucht",
+  "country": "FR",
+  "region": "Vogesen",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke über die Schlucht",
+  "roads": [
+   "D 417"
+  ],
+  "from": {
+   "name": "Gérardmer",
+   "lat": 48.07058,
+   "lon": 6.8777
+  },
+  "to": {
+   "name": "Stosswihr",
+   "lat": 48.05226,
+   "lon": 7.10698
+  },
+  "via": [
+   {
+    "name": "Col de la Schlucht",
+    "lat": 48.06417,
+    "lon": 7.02266
+   }
+  ],
+  "length_km": 27,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-markstein-murbach",
+  "name": "Markstein Murbach",
+  "country": "FR",
+  "region": "Vogesen",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke durch einsame Täler",
+  "roads": [
+   "D 430"
+  ],
+  "from": {
+   "name": "Le Markstein",
+   "lat": 47.92333,
+   "lon": 7.03181
+  },
+  "to": {
+   "name": "Murbach",
+   "lat": 47.92332,
+   "lon": 7.15716
+  },
+  "via": [],
+  "length_km": 20,
+  "quality": 3,
+  "caveats": "rauer Belag möglich",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-gerardmer-cornimont",
+  "name": "Gérardmer Cornimont",
+  "country": "FR",
+  "region": "Vogesen",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke mit Kehren",
+  "roads": [
+   "D 486"
+  ],
+  "from": {
+   "name": "Gérardmer",
+   "lat": 48.07058,
+   "lon": 6.8777
+  },
+  "to": {
+   "name": "Cornimont",
+   "lat": 47.96393,
+   "lon": 6.83976
+  },
+  "via": [],
+  "length_km": 22,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-sainte-marie-ribeauville",
+  "name": "Col du Haut de Ribeauvillé",
+  "country": "FR",
+  "region": "Vogesen",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke mit Kehren",
+  "roads": [
+   "D 416"
+  ],
+  "from": {
+   "name": "Sainte-Marie-aux-Mines",
+   "lat": 48.24767,
+   "lon": 7.18512
+  },
+  "to": {
+   "name": "Ribeauvillé",
+   "lat": 48.19246,
+   "lon": 7.32489
+  },
+  "via": [],
+  "length_km": 25,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-saverne-petite-pierre",
+  "name": "Saverne La Petite-Pierre",
+  "country": "FR",
+  "region": "Nordvogesen",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke durch die Nordvogesen",
+  "roads": [],
+  "from": {
+   "name": "Saverne",
+   "lat": 48.74199,
+   "lon": 7.3626
+  },
+  "to": {
+   "name": "La Petite-Pierre",
+   "lat": 48.85793,
+   "lon": 7.32055
+  },
+  "via": [],
+  "length_km": 20,
+  "quality": 3,
+  "caveats": "schmal",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-saint-hippolyte-maiche",
+  "name": "Saint-Hippolyte Maîche",
+  "country": "FR",
+  "region": "Doubs",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Doubs",
+  "roads": [
+   "D 437"
+  ],
+  "from": {
+   "name": "Saint-Hippolyte",
+   "lat": 47.31753,
+   "lon": 6.81195
+  },
+  "to": {
+   "name": "Maîche",
+   "lat": 47.25206,
+   "lon": 6.80092
+  },
+  "via": [],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-morteau-orchamps-vennes",
+  "name": "Morteau Orchamps-Vennes",
+  "country": "FR",
+  "region": "Doubs",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke durch Wald",
+  "roads": [
+   "D 461"
+  ],
+  "from": {
+   "name": "Morteau",
+   "lat": 47.05694,
+   "lon": 6.60472
+  },
+  "to": {
+   "name": "Orchamps-Vennes",
+   "lat": 47.13042,
+   "lon": 6.52545
+  },
+  "via": [],
+  "length_km": 20,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-champagnole-frasne",
+  "name": "Champagnole Frasne",
+  "country": "FR",
+  "region": "Jura",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Jura",
+  "roads": [
+   "D 471"
+  ],
+  "from": {
+   "name": "Champagnole",
+   "lat": 46.7456,
+   "lon": 5.90836
+  },
+  "to": {
+   "name": "Frasne",
+   "lat": 46.85705,
+   "lon": 6.16177
+  },
+  "via": [],
+  "length_km": 30,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-lons-saint-laurent",
+  "name": "Lons-le-Saunier Saint-Laurent",
+  "country": "FR",
+  "region": "Jura",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke durch Schluchten",
+  "roads": [
+   "D 678"
+  ],
+  "from": {
+   "name": "Lons-le-Saunier",
+   "lat": 46.6727,
+   "lon": 5.559
+  },
+  "to": {
+   "name": "Saint-Laurent-en-Grandvaux",
+   "lat": 46.57547,
+   "lon": 5.95531
+  },
+  "via": [
+   {
+    "name": "Clairvaux-les-Lacs",
+    "lat": 46.57418,
+    "lon": 5.74741
+   }
+  ],
+  "length_km": 40,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-privas-aubenas",
+  "name": "Privas Aubenas",
+  "country": "FR",
+  "region": "Ardèche",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke in der Ardèche",
+  "roads": [
+   "D 104"
+  ],
+  "from": {
+   "name": "Privas",
+   "lat": 44.73527,
+   "lon": 4.59867
+  },
+  "to": {
+   "name": "Aubenas",
+   "lat": 44.62055,
+   "lon": 4.39024
+  },
+  "via": [],
+  "length_km": 30,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-gorges-ardeche",
+  "name": "Gorges de l'Ardèche",
+  "country": "FR",
+  "region": "Ardèche",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Panoramastraße über der Schlucht",
+  "roads": [
+   "D 290"
+  ],
+  "from": {
+   "name": "Vallon-Pont-d'Arc",
+   "lat": 44.4048,
+   "lon": 4.39289
+  },
+  "to": {
+   "name": "Saint-Martin-d'Ardèche",
+   "lat": 44.30119,
+   "lon": 4.56658
+  },
+  "via": [],
+  "length_km": 32,
+  "quality": 4,
+  "caveats": "Sommer viel Verkehr",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-col-de-braus",
+  "name": "Col de Braus",
+  "country": "FR",
+  "region": "Seealpen",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kehrenstrecke über den Col de Braus",
+  "roads": [
+   "D 2204"
+  ],
+  "from": {
+   "name": "Sospel",
+   "lat": 43.87856,
+   "lon": 7.44982
+  },
+  "to": {
+   "name": "L'Escarène",
+   "lat": 43.83421,
+   "lon": 7.3557
+  },
+  "via": [
+   {
+    "name": "Col de Braus",
+    "lat": 43.87263,
+    "lon": 7.39893
+   }
+  ],
+  "length_km": 20,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-col-de-castillon",
+  "name": "Col de Castillon",
+  "country": "FR",
+  "region": "Seealpen",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke über den Castillon",
+  "roads": [
+   "D 2566"
+  ],
+  "from": {
+   "name": "Menton",
+   "lat": 43.77535,
+   "lon": 7.50292
+  },
+  "to": {
+   "name": "Sospel",
+   "lat": 43.87856,
+   "lon": 7.44982
+  },
+  "via": [
+   {
+    "name": "Castillon",
+    "lat": 43.83318,
+    "lon": 7.47239
+   }
+  ],
+  "length_km": 20,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-vence-grasse",
+  "name": "Vence Grasse",
+  "country": "FR",
+  "region": "Seealpen",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke im Hinterland",
+  "roads": [
+   "D 2210"
+  ],
+  "from": {
+   "name": "Vence",
+   "lat": 43.72242,
+   "lon": 7.11168
+  },
+  "to": {
+   "name": "Grasse",
+   "lat": 43.6589,
+   "lon": 6.92391
+  },
+  "via": [],
+  "length_km": 25,
+  "quality": 3,
+  "caveats": "Ortsdurchfahrten",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "fr-castellane-moustiers",
+  "name": "Verdon Nordrand",
+  "country": "FR",
+  "region": "Provence",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Panoramastraße am Verdon",
+  "roads": [
+   "D 952"
+  ],
+  "from": {
+   "name": "Castellane",
+   "lat": 43.84646,
+   "lon": 6.51345
+  },
+  "to": {
+   "name": "Moustiers-Sainte-Marie",
+   "lat": 43.84601,
+   "lon": 6.22176
+  },
+  "via": [
+   {
+    "name": "La Palud-sur-Verdon",
+    "lat": 43.77969,
+    "lon": 6.34139
+   }
+  ],
+  "length_km": 45,
+  "quality": 4,
+  "caveats": "Sommer viel Verkehr",
+  "sources": [
+   "Liste von Koray, Nov 2026 (500 schönste Straßenabschnitte, auf eindeutige Strecken bereinigt); Orte über Nominatim"
+  ]
+ }
+]
