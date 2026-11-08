@@ -26,7 +26,7 @@ async function tile(key: string, x: number, y: number): Promise<Closure[]> {
   const bbox = [x * SIZE, y * SIZE, (x + 1) * SIZE, (y + 1) * SIZE].map((v) => v.toFixed(4)).join(',');
   const q = new URLSearchParams({ key, bbox, fields: FIELDS, language: 'de-DE', categoryFilter: '8', timeValidityFilter: 'present' });
   const r = await fetch(`https://api.tomtom.com/traffic/services/5/incidentDetails?${q}`);
-  if (!r.ok) throw new Error(`TomTom ${r.status}`);
+  if (!r.ok) throw new Error(`TomTom ${r.status} ${(await r.text()).slice(0, 160)}`);
   const list = ((await r.json()) as { incidents?: Incident[] }).incidents ?? [];
   const items: Closure[] = [];
   for (const i of list) {
@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
   const seen = new Set<string>();
   const out: Closure[] = [];
   const failed: string[] = [];
+  let why = '';
   await Promise.all(
     tiles.map(async ([x, y]) => {
       try {
@@ -72,10 +73,11 @@ Deno.serve(async (req) => {
           seen.add(c.id);
           out.push(c);
         }
-      } catch {
+      } catch (e) {
         failed.push(`${x},${y}`);
+        why = String((e as Error).message).replace(key, '***');
       }
     }),
   );
-  return Response.json({ closures: out, failed: failed.length }, { headers: cors });
+  return Response.json({ closures: out, failed: failed.length, ...(why ? { why } : {}) }, { headers: cors });
 });
