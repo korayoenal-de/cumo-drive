@@ -170,10 +170,15 @@ export function RouteMap({
     // Ausschnitt so weit heraus, dass der ganze Umkreis über dem Blatt Platz hat (Koray 8.11.: Karte runterskalieren)
     const latDelta = ((radar.radiusM * 2.6) / 111320) * (boxH / Math.max(1, boxH - (mapPadding?.bottom ?? 0)));
     const lonDelta = latDelta / Math.max(0.2, Math.cos((radar.center[0] * Math.PI) / 180));
-    map.current?.animateToRegion({ latitude: radar.center[0], longitude: radar.center[1], latitudeDelta: latDelta, longitudeDelta: lonDelta }, 650);
+    const go = () => map.current?.animateToRegion({ latitude: radar.center[0], longitude: radar.center[1], latitudeDelta: latDelta, longitudeDelta: lonDelta }, 650);
+    // Erst wenn das Blatt unten angekommen ist: ein neuer Kartenrand während der Fahrt bricht sie sonst ab
+    const t1 = setTimeout(go, 450);
     // Falls die Karte kein Ende meldet, den Ring trotzdem starten
-    const t = setTimeout(() => measureRadar(latDelta), 800);
-    return () => clearTimeout(t);
+    const t2 = setTimeout(() => measureRadar(latDelta), 1200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
     // radarKey fasst Mitte und Radius zusammen
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, radarKey, boxH > 0]);
@@ -182,12 +187,13 @@ export function RouteMap({
   const focusLat = focus?.[0];
   const focusLon = focus?.[1];
   useEffect(() => {
-    if (!ready || !autoFit || followUser || fitCoords.length >= 2 || focusLat == null || focusLon == null) return;
+    // Während das Radar läuft, gehört die Kamera ihm; sonst holte dieser Sprung die Karte wieder heran (Koray 8.11.)
+    if (!ready || !autoFit || followUser || radarKey || fitCoords.length >= 2 || focusLat == null || focusLon == null) return;
     map.current?.animateCamera(
       { center: { latitude: focusLat, longitude: focusLon }, zoom: 10, altitude: 60000, pitch: 0, heading: 0 },
       { duration: 600 },
     );
-  }, [ready, autoFit, followUser, fitCoords.length, focusLat, focusLon]);
+  }, [ready, autoFit, followUser, radarKey, fitCoords.length, focusLat, focusLon]);
 
   // Auf der Karte zeigen (Punkt Aktionen im Planer): zum Punkt fliegen, n wechselt je Aufruf
   const flyN = flyTo?.n;
@@ -511,7 +517,7 @@ const MeMarker = Marker.Animated as unknown as ComponentType<ComponentProps<type
 const CAR_W = 24;
 
 const styles = StyleSheet.create({
-  radarRing: { position: 'absolute', borderWidth: 1.5, borderColor: 'rgba(226,70,28,0.8)', backgroundColor: 'rgba(226,70,28,0.07)' },
+  radarRing: { position: 'absolute', borderWidth: 2, borderColor: 'rgba(226,70,28,0.9)', backgroundColor: 'rgba(226,70,28,0.1)' },
   box: { backgroundColor: Colors.surface, overflow: 'hidden' },
   noTouch: { pointerEvents: 'none' },
   start: { width: 14, height: 14, borderRadius: 7, backgroundColor: Colors.signal, borderWidth: 2, borderColor: Colors.ground },
