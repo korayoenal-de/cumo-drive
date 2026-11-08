@@ -7,6 +7,7 @@ import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-native-maps';
 
+import { SymbolView } from 'expo-symbols';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { arrowsAlong, offsetRight, splitDoubled } from '@/lib/doubled';
@@ -94,6 +95,9 @@ export function RouteMap({
   // Apple Maps meldet einen Tipp auf einen schon ausgewählten Marker nicht noch einmal: Pass Marker nach dem Tipp
   // wieder abwählen, sonst lässt sich derselbe Pass nur einmal antippen (Koray 8.11.)
   const passRefs = useRef(new Map<string, MapMarker | null>());
+  // Offener Warnhinweis als eigene Karte über der Karte: bleibt stehen, bis man daneben tippt
+  // (Tester 8.11.: die Apple Blase verschwand sofort wieder)
+  const [openWarn, setOpenWarn] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   // nach eigenem Verschieben folgt die Kamera eine Weile nicht
   const [paused, setPaused] = useState(0);
@@ -227,7 +231,7 @@ export function RouteMap({
     const w = tour.warnungen[highlightIndex];
     if (!w) return;
     map.current?.animateCamera({ center: ll(w.mitte), zoom: 14, altitude: 4000, pitch: 0, heading: 0 }, { duration: 600 });
-    const t = setTimeout(() => markers.current[highlightIndex]?.showCallout(), 650);
+    const t = setTimeout(() => setOpenWarn(highlightIndex), 650);
     return () => clearTimeout(t);
   }, [ready, highlightIndex, tour]);
 
@@ -324,7 +328,11 @@ export function RouteMap({
           // Radar: Startpunkt und Radius in Bildpunkten für den Ring über der Karte
           if (radar) measureRadar(r.latitudeDelta);
         }}
-        onPress={onPressMap ? (e) => e.nativeEvent.action !== 'marker-press' && onPressMap() : undefined}
+        onPress={(e) => {
+          if (e.nativeEvent.action === 'marker-press') return;
+          setOpenWarn(null);
+          onPressMap?.();
+        }}
         onLongPress={
           onLongPress
             ? (e) => onLongPress([e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude])
@@ -443,15 +451,17 @@ export function RouteMap({
             }}
             coordinate={ll(w.mitte)}
             anchor={{ x: 0.5, y: 0.5 }}
-            title={w.name || (w.klasse === 'raus' ? 'Gesperrt' : 'Prüfen')}
-            description={w.gruende.length ? w.gruende.join(', ') : undefined}
-            onPress={() => onPressWarning?.(index)}
+            accessibilityLabel={w.name || (w.klasse === 'raus' ? 'Gesperrt' : 'Prüfen')}
+            onPress={() => {
+              setOpenWarn(index);
+              onPressWarning?.(index);
+            }}
             zIndex={30}>
             <View
               style={[
                 styles.warn,
                 { backgroundColor: CLASS_LINE[w.klasse].color },
-                highlightIndex === index && styles.warnOn,
+                (highlightIndex === index || openWarn === index) && styles.warnOn,
               ]}>
               <AppText style={styles.warnText}>!</AppText>
             </View>
@@ -513,6 +523,17 @@ export function RouteMap({
         </View>
       )}
 
+      {openWarn != null && tour.warnungen[openWarn] && (
+        <WarnCard
+          key={openWarn}
+          top={(mapPadding?.top ?? 0) + Spacing.m}
+          klasse={tour.warnungen[openWarn].klasse}
+          name={tour.warnungen[openWarn].name}
+          reasons={tour.warnungen[openWarn].gruende}
+          onClose={() => setOpenWarn(null)}
+        />
+      )}
+
       <WeatherSheet item={weatherOpen} onClose={() => setWeatherOpen(null)} />
 
       {followUser && position && !following && (
@@ -521,6 +542,31 @@ export function RouteMap({
         </Pressable>
       )}
     </View>
+  );
+}
+
+/** Warnhinweis als ruhige Karte oben über der Karte, mit Feder eingeblendet */
+function WarnCard({ top, klasse, name, reasons, onClose }: { top: number; klasse: CheckClass; name?: string; reasons: string[]; onClose: () => void }) {
+  const reduced = useReducedMotion();
+  const v = useSharedValue(reduced ? 1 : 0);
+  useEffect(() => {
+    v.set(withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) }));
+  }, [v]);
+  const anim = useAnimatedStyle(() => ({ opacity: v.get(), transform: [{ translateY: (1 - v.get()) * -8 }] }));
+  const title = klasse === 'raus' ? 'Gesperrt' : 'Prüfen';
+  return (
+    <Animated.View style={[styles.warnCard, { top }, anim]} accessibilityLiveRegion="polite">
+      <View style={[styles.warnCardDot, { backgroundColor: CLASS_LINE[klasse].color }]}>
+        <AppText style={styles.warnText}>!</AppText>
+      </View>
+      <View style={styles.warnCardBody}>
+        <AppText style={styles.warnCardTitle}>{name ? `${title}: ${name}` : title}</AppText>
+        {reasons.length > 0 && <AppText style={styles.warnCardText}>{reasons.join(', ')}</AppText>}
+      </View>
+      <Pressable accessibilityRole="button" accessibilityLabel="Hinweis schließen" hitSlop={12} onPress={onClose} style={styles.warnCardClose}>
+        <SymbolView name="xmark" size={14} weight="semibold" tintColor={Colors.muted} />
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -541,6 +587,22 @@ const styles = StyleSheet.create({
   zielInner: { width: 6, height: 6, backgroundColor: Colors.ground },
   warn: { width: 24, height: 24, borderRadius: Radius.s, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
   warnOn: { transform: [{ scale: 1.3 }], borderColor: Colors.text },
+  warnCard: {
+    position: 'absolute',
+    left: Spacing.l,
+    right: Spacing.l + 64,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.m,
+    padding: Spacing.m,
+    borderRadius: Radius.l,
+    backgroundColor: 'rgba(22,22,24,0.94)',
+  },
+  warnCardDot: { width: 24, height: 24, borderRadius: Radius.s, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  warnCardBody: { flex: 1, gap: 2 },
+  warnCardTitle: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
+  warnCardText: { fontSize: Type.body, color: Colors.muted },
+  warnCardClose: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   warnText: { fontFamily: Fonts.display, fontSize: Type.small, lineHeight: 16, color: Colors.ground },
   meOverlay: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   me: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: Colors.signal },

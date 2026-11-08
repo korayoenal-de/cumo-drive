@@ -1,7 +1,7 @@
 /**
  * Ortssuche über Photon (Komoot, OSM Daten, ohne Schlüssel). Prototyp, später eigener Dienst.
  */
-import type { LatLon } from './tour';
+import { haversine, type LatLon } from './tour';
 
 export type Place = { name: string; detail: string; p: LatLon };
 
@@ -29,7 +29,7 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
   if (!res.ok) throw new Error(`Ortssuche: Fehler ${res.status}`);
   type F = { geometry: { coordinates: [number, number] }; properties: Record<string, string> };
   const data = (await res.json()) as { features: F[] };
-  return data.features.map((f) => {
+  const all = data.features.map((f) => {
     const pr = f.properties;
     // Adresse mit Hausnummer: ohne eigenen Namen ist sie der Titel, sonst steht sie im Untertitel
     const addr = pr.street && pr.housenumber ? `${pr.street} ${pr.housenumber}` : undefined;
@@ -37,6 +37,9 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
     const detail = [addr !== name ? addr : undefined, pr.city !== name ? pr.city : undefined, pr.state, pr.country].filter(Boolean).join(', ');
     return { name, detail, p: [f.geometry.coordinates[1], f.geometry.coordinates[0]] as LatLon };
   });
+  // Gleicher Name in wenigen km Abstand nur einmal (Tester 8.11.: sechsmal "Tegernsee" für Ort, See, Bahnhof
+  // und Bahnsteige). Photon sortiert den Ort zuerst, er bleibt stehen.
+  return all.filter((x, i) => !all.slice(0, i).some((y) => y.name === x.name && haversine(x.p, y.p) < 5000));
 }
 
 export async function reverseName(p: LatLon, signal?: AbortSignal): Promise<string> {
