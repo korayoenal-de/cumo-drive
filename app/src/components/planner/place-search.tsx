@@ -64,7 +64,7 @@ type Props = {
   /** Neues Zwischenziel auf dieser Etappe: Highlights nur, wenn sie einen Bogen ergeben */
   leg?: Leg;
   /** Strecke als Highlight gewählt: Einstieg und Ausstieg werden zwei Zwischenziele */
-  onPickRoad?: (entry: LatLon, exit: LatLon, name: string) => void;
+  onPickRoad?: (line: LatLon[], name: string) => void;
 };
 
 export type Slot = { key: string; kind: PointKind; index?: number; insert?: boolean; label: string; value: string | null; active: boolean };
@@ -87,7 +87,7 @@ export const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.s
   pass: 'mountain.2.fill',
 };
 /** extraMin und exit nur bei Highlights für eine Etappe: Umweg in Minuten, Ausstieg einer Strecke */
-type StopRow = { key: string; name: string; detail: string; p: LatLon; km: number; offM: number; extraMin?: number; exit?: LatLon };
+type StopRow = { key: string; name: string; detail: string; p: LatLon; km: number; offM: number; extraMin?: number; exit?: LatLon; line?: LatLon[] };
 
 /** Umweg hin und zurück zur Route, grob mit 35 km/h auf kleinen Straßen */
 const detourMin = (offM: number) => Math.max(1, Math.round(((2 * offM) / 1000 / 35) * 60));
@@ -165,7 +165,7 @@ function SearchBody({
   const legRows = useMemo<StopRow[] | null>(
     () =>
       leg
-        ? highlightsForLeg(leg, 8000).filter((c) => !taken.has(c.name)).map((c) => ({ key: c.key, name: c.name, detail: c.detail, p: c.p, km: 0, offM: 0, extraMin: c.extraMin, exit: c.exit }))
+        ? highlightsForLeg(leg, 8000).filter((c) => !taken.has(c.name)).map((c) => ({ key: c.key, name: c.name, detail: c.detail, p: c.p, km: 0, offM: 0, extraMin: c.extraMin, exit: c.exit, line: c.line }))
         : null,
     [leg, taken],
   );
@@ -448,7 +448,7 @@ function SearchBody({
                               accessibilityLabel={`${r.name}, ${near0 ? 'kein Umweg' : `${min} Minuten Umweg`}, bei km ${Math.round(r.km)}`}
                               onPress={() => {
                                 rememberPlace({ name: r.name, detail: r.detail, p: r.p });
-                                if (r.exit && onPickRoad) onPickRoad(r.p, r.exit, r.name);
+                                if (r.line && onPickRoad) onPickRoad(r.line, r.name);
                                 else if (r.extraMin != null) onPick(r.p, r.name);
                                 else if (onPickStop) onPickStop(r.p, r.name, r.km);
                                 else onPick(r.p, r.name);

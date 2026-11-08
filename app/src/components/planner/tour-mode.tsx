@@ -4,7 +4,7 @@
  */
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useMemo, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, Linking, Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
@@ -194,6 +194,10 @@ export function TourMode({
     }
   }
 
+  // Strecke nur zum Teil gefahren: einmal Bescheid geben (Koray 8.11.)
+  useEffect(() => {
+    if (plan.roadWarn) showToast(plan.roadWarn);
+  }, [plan.roadWarn]);
   const legSlots = [plan.start, ...plan.vias, plan.ziel];
   const legA = edit?.insert && edit.index != null ? legSlots[edit.index] : null;
   const legB = edit?.insert && edit.index != null ? legSlots[edit.index + 1] : null;
@@ -227,11 +231,13 @@ export function TourMode({
       onPickStop={pickStop}
       // Neues Zwischenziel über das Plus: Highlights nur, wenn sie auf dieser Etappe einen Bogen ergeben
       leg={editLeg}
-      onPickRoad={(entry, exit, name) => {
+      onPickRoad={(line, name) => {
         if (!edit) return;
         onListEdit();
-        plan.insertRoad(edit.index ?? plan.vias.length, entry, exit, profile, avoid, name);
+        const snap = plan.snapshot();
+        const replaced = plan.insertRoad(edit.index ?? plan.vias.length, line, profile, avoid, name);
         setEdit(null);
+        if (replaced) showToast(`${name} ersetzt ${replaced}, es lag nur 2 km davor`, { action: { label: 'Rückgängig', onPress: () => plan.restore(snap) } });
       }}
       slots={headSlots}
       onSwitch={(sl) => openEdit({ kind: sl.kind, index: sl.index, insert: sl.insert })}

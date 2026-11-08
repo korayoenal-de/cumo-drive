@@ -10,7 +10,7 @@ import { saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName } from '@/lib/geocode';
 import { planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
 import { insertVia, movePoint } from '@/lib/route-edit';
-import { type LatLon, type Profile } from '@/lib/tour';
+import { flatten, haversine, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
 import { showToast } from '@/lib/toast';
 
@@ -18,6 +18,26 @@ import { fitLegs, keyOf, type LegProfile, type PointKind } from './planner-share
 
 
 export type TourPlan = ReturnType<typeof useTourPlan>;
+
+/** Stützpunkte entlang einer Strecke: etwa alle 2,5 km und der Ausstieg, die ersten 1,5 km frei */
+function shapePoints(line: LatLon[]): LatLon[] {
+  const out: LatLon[] = [];
+  let since = 0;
+  let total = 0;
+  for (let i = 1; i < line.length; i++) {
+    const d = haversine(line[i - 1], line[i]);
+    since += d;
+    total += d;
+    if (since >= 2500 && total >= 1500) {
+      out.push(line[i]);
+      since = 0;
+    }
+  }
+  const end = line[line.length - 1];
+  if (!out.length || haversine(out[out.length - 1], end) > 600) out.push(end);
+  else out[out.length - 1] = end;
+  return out;
+}
 
 /**
  * Zustand und Aktionen der Route: feste Felder Start, Zwischenziele, Ziel (wie im Web Planer).
@@ -42,6 +62,13 @@ export function useTourPlan(onPlanned?: () => void) {
   /** Stand beim Laden oder letzten Speichern: weicht er ab, gibt es Änderungen zu speichern */
   const [base, setBase] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
+  /**
+   * Strecken als Zwischenziel (Koray 8.11.): in der Liste ein Punkt (Einstieg), beim Planen zusätzlich Stützpunkte
+   * entlang unserer Linie bis zum Ausstieg, damit der Router die Strecke wirklich fährt. Schlüssel: keyOf(Einstieg).
+   */
+  const roads = useRef<Record<string, { name: string; line: LatLon[] }>>({});
+  /** Hinweis, wenn eine gewählte Strecke nur zum Teil in der Route liegt */
+  const [roadWarn, setRoadWarn] = useState<string | null>(null);
 
   const complete = !!start && !!ziel;
   /** Alle gesetzten Punkte in Reihenfolge; vollständig, sobald Start und Ziel da sind. */
@@ -70,6 +97,19 @@ export function useTourPlan(onPlanned?: () => void) {
       .catch(() => undefined);
   }
 
+  /** Wie viel jeder gewählten Strecke die Route wirklich fährt; unter 70 % ein Hinweis */
+  function roadCoverage(points: LatLon[], t: PlannedTour): string | null {
+    const line = flatten(t).map((x) => x.p).filter((_, i, a) => i % Math.max(1, Math.round(a.length / 1500)) === 0);
+    for (const p of points) {
+      const r = roads.current[keyOf(p)];
+      if (!r) continue;
+      const probe = r.line.filter((_, i) => i % 2 === 0);
+      const hit = probe.filter((q) => line.some((x) => haversine(x, q) < 150)).length;
+      if (probe.length && hit / probe.length < 0.7) return `${r.name} liegt nur zum Teil auf deiner Route. Verschieb den Punkt davor oder danach etwas.`;
+    }
+    return null;
+  }
+
   async function plan(points: LatLon[], profiles: Profile[], avoid: Avoid, tourName = name) {
     abort.current?.abort();
     const ctrl = new AbortController();
@@ -78,9 +118,24 @@ export function useTourPlan(onPlanned?: () => void) {
     setSaveMsg(null);
     setStep('route');
     try {
-      const t = await planLegs(tourName.trim() || 'Neue Tour', points, profiles, avoid, (st) => !ctrl.signal.aborted && setStep(st), ctrl.signal);
+      // Strecken auffächern: nach ihrem Einstieg die Stützpunkte, mit dem Profil der folgenden Etappe
+      const xPts: LatLon[] = [];
+      const xProf: Profile[] = [];
+      points.forEach((p, i) => {
+        xPts.push(p);
+        if (i < profiles.length) xProf.push(profiles[i]);
+        const r = i > 0 && i < points.length - 1 ? roads.current[keyOf(p)] : undefined;
+        if (r) for (const q of shapePoints(r.line)) {
+          xPts.push(q);
+          xProf.push(profiles[i]);
+        }
+      });
+      const raw = await planLegs(tourName.trim() || 'Neue Tour', xPts, xProf, avoid, (st) => !ctrl.signal.aborted && setStep(st), ctrl.signal);
+      // In der Tour stehen nur die sichtbaren Punkte; die Etappen ordnen sich über die Linie wieder zu
+      const t = xPts.length === points.length ? raw : { ...raw, wegpunkte: points, direkt: raw.direkt ? Math.min(raw.direkt, points.length - 1) : raw.direkt };
       if (!ctrl.signal.aborted) {
         setPlanned(t);
+        setRoadWarn(roadCoverage(points, t));
         onPlanned?.();
       }
     } catch (e) {
@@ -122,17 +177,31 @@ export function useTourPlan(onPlanned?: () => void) {
     apply(start, v, ziel, next, profile, avoid);
   }
 
-  /** Strecke als Highlight: Einstieg und Ausstieg als zwei Zwischenziele hintereinander, gleiches Profil */
-  function insertRoad(leg: number, entry: LatLon, exit: LatLon, profile: Profile, avoid: Avoid, name: string) {
+  /**
+   * Strecke als Highlight: ein Zwischenziel am Einstieg, die Strecke selbst fährt der Router über Stützpunkte.
+   * line ist schon in Fahrtrichtung. Liegt das Zwischenziel davor näher als 2 km am Einstieg, ersetzt sie es
+   * (es war nur der Weg dorthin).
+   */
+  function insertRoad(leg: number, line: LatLon[], profile: Profile, avoid: Avoid, name: string): string | null {
+    const entry = line[0];
+    roads.current[keyOf(entry)] = { name, line };
     rememberName(entry, name);
-    rememberName(exit, `${name} Ende`);
-    const at = Math.max(0, Math.min(leg, vias.length));
+    let at = Math.max(0, Math.min(leg, vias.length));
     const v = [...vias];
-    v.splice(at, 0, entry, exit);
     const lp = fitLegs(legProfiles, vias.length);
     const next = [...lp];
-    next.splice(at, 0, lp[at] ?? null, lp[at] ?? null);
+    let replaced: string | null = null;
+    const prev = at > 0 ? v[at - 1] : null;
+    if (prev && haversine(prev, entry) < 2000) {
+      replaced = names[keyOf(prev)] ?? null;
+      v.splice(at - 1, 1);
+      next.splice(at - 1, 1);
+      at -= 1;
+    }
+    v.splice(at, 0, entry);
+    next.splice(at, 0, lp[at] ?? null);
     apply(start, v, ziel, next, profile, avoid);
+    return replaced ?? (prev && haversine(prev, entry) < 2000 ? 'Zwischenziel' : null);
   }
 
   /** Punkt in ein Feld setzen: Start, Ziel oder Zwischenziel an Stelle index (am Ende: neu). */
@@ -266,7 +335,7 @@ export function useTourPlan(onPlanned?: () => void) {
 
   return {
     start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg, dirty,
-    legProfile, setSlot, add, insertAt, insertRoad, save, reset, load, snapshot, restore,
+    legProfile, setSlot, add, insertAt, insertRoad, roadWarn, save, reset, load, snapshot, restore,
     /** Mit den gesetzten Punkten und den Profilen je Etappe neu planen. */
     planNow: (profile: Profile, avoid: Avoid) => pts.length >= 2 && void plan(pts, profilesFor(legProfiles, start, pts.length, profile), avoid),
     setLegProfile: (leg: number, p: Profile, profile: Profile, avoid: Avoid) => {

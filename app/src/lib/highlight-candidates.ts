@@ -16,6 +16,8 @@ export type HighlightCandidate = {
   p: LatLon;
   /** nur Strecken: Ausstieg */
   exit?: LatLon;
+  /** nur Strecken: Linie in Fahrtrichtung, an den Enden um 250 m gekürzt, damit Ein und Ausstieg nicht in einer Schlaufe liegen */
+  line?: LatLon[];
   /** grober Umweg in Minuten gegenüber der Etappe */
   extraMin: number;
   pass?: Pass;
@@ -44,6 +46,20 @@ function offLeg(a: LatLon, b: LatLon, p: LatLon): number {
   const l2 = bx * bx + by * by;
   const t = l2 ? Math.max(0, Math.min(1, (px * bx + py * by) / l2)) : 0;
   return Math.hypot(px - t * bx, py - t * by);
+}
+
+/** Linie an beiden Enden um m Meter kürzen (bleibt bei kurzen Linien unverändert) */
+function trimEnds(line: LatLon[], m: number): LatLon[] {
+  let len = 0;
+  for (let i = 1; i < line.length; i++) len += haversine(line[i - 1], line[i]);
+  if (len < m * 4) return line;
+  const cut = (l: LatLon[]) => {
+    let d = 0;
+    let i = 1;
+    while (i < l.length - 1 && d < m) d += haversine(l[i - 1], l[i++]);
+    return l.slice(i - 1);
+  };
+  return cut([...cut(line)].reverse()).reverse();
 }
 
 const minutes = (km: number) => Math.max(0, Math.round((km * ROAD * 60) / KMH));
@@ -78,7 +94,9 @@ export function highlightsForLeg(leg: Leg, corridorM: number): HighlightCandidat
     let len = 0;
     for (let i = 1; i < r.line.length; i++) len += haversine(r.line[i - 1], r.line[i]);
     const extra = (haversine(a, entry) + len / ROAD + haversine(exit, b) - direct) / 1000;
-    out.push({ key: r.id, name: r.name, detail: `${r.note}, ${Math.round(len / 1000)} km`, p: entry, exit, extraMin: minutes(extra), road: r });
+    const dir = fwd ? r.line : [...r.line].reverse();
+    const line = trimEnds(dir, 250);
+    out.push({ key: r.id, name: r.name, detail: `Strecke, ${Math.round(len / 1000)} km`, p: line[0], exit: line[line.length - 1], line, extraMin: minutes(extra), road: r });
   }
   // gleicher Name als Pass und als Strecke (etwa Juhöhe): die Strecke behalten
   const roads = new Set(out.filter((c) => c.road).map((c) => c.name));
