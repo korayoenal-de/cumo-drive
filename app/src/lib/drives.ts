@@ -135,6 +135,10 @@ export async function rateDriveScore(id: string, score: number, reasons: string[
     p_note: weak ? note || null : null,
     p_highlights: highlights.map((h) => ({ key: h.key, name: h.name, vote: h.vote })),
   });
+  // Datenbank noch ohne rate_drive_v2 (Migration läuft nach): wenigstens die alte Bewertung speichern
+  if (error && /rate_drive_v2|PGRST202/.test(`${error.code ?? ''} ${error.message}`)) {
+    return rateDrive(id, weak ? 1 : s < 80 ? 2 : 3, reasons, note);
+  }
   if (error) throw new Error(error.message);
 }
 
