@@ -345,7 +345,7 @@ out center tags 60;`;
 type OsmEl = { type: string; id: number; lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> };
 
 /** Beide Overpass Server gleichzeitig fragen, die erste gültige Antwort gewinnt, nach 8 s ist Schluss. */
-function overpass(q: string, signal?: AbortSignal): Promise<OsmEl[]> {
+function overpass(q: string, signal?: AbortSignal, timeoutMs = 8000): Promise<OsmEl[]> {
   return new Promise<OsmEl[]>((resolve, reject) => {
     const ctrls = ENDPOINTS.map(() => new AbortController());
     let pending = ENDPOINTS.length;
@@ -357,7 +357,7 @@ function overpass(q: string, signal?: AbortSignal): Promise<OsmEl[]> {
     const timer = setTimeout(() => {
       timedOut = true;
       stopAll();
-    }, 8000);
+    }, timeoutMs);
     signal?.addEventListener('abort', onAbort);
     const settle = (fn: () => void) => {
       if (done) return;
@@ -395,8 +395,43 @@ function overpass(q: string, signal?: AbortSignal): Promise<OsmEl[]> {
   });
 }
 
+/** Linie in Stücke von etwa maxKm teilen (mit einem gemeinsamen Punkt an jeder Naht). */
+function chunks(line: LatLon[], maxKm: number): LatLon[][] {
+  const out: LatLon[][] = [];
+  let cur: LatLon[] = [line[0]];
+  let km = 0;
+  for (let i = 1; i < line.length; i++) {
+    km += haversine(line[i - 1], line[i]) / 1000;
+    cur.push(line[i]);
+    if (km >= maxKm && i < line.length - 1) {
+      out.push(cur);
+      cur = [line[i]];
+      km = 0;
+    }
+  }
+  if (cur.length > 1) out.push(cur);
+  return out;
+}
+
 async function fromOverpass(kind: StopKind, line: LatLon[], signal?: AbortSignal, scale = 1): Promise<Cand[]> {
-  const els = await overpass(query(kind, probe(line), scale), signal);
+  // Lange Routen in Stücken fragen: eine Abfrage über 500 km mit breitem Korridor (Hotels) lief in den
+  // Zeitablauf und lieferte nichts (Heppenheim bis Gardasee, 8.11.). Je Stück eigene Höchstzahl, zwei parallel.
+  const parts = chunks(line, 80);
+  const lists = await pool(parts, 2, (part) => overpass(query(kind, probe(part), scale), signal, 15000).catch((e: unknown) => {
+    if (signal?.aborted || parts.length === 1) throw e;
+    return [] as OsmEl[];
+  }), signal);
+  const seenEl = new Set<string>();
+  const els = lists.flat().filter((e) => {
+    const k = `${e.type}/${e.id}`;
+    if (seenEl.has(k)) return false;
+    seenEl.add(k);
+    return true;
+  });
+  if (!els.length && lists.every((l) => !l.length) && parts.length > 1) {
+    // alle Stücke leer: könnte ein Ausfall sein, einmal ganz fragen, damit ein Fehler sichtbar wird
+    els.push(...(await overpass(query(kind, probe(line), scale), signal, 15000)));
+  }
   const c = corridor(line);
   const out: Cand[] = [];
   for (const e of els) {
