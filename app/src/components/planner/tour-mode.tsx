@@ -219,6 +219,7 @@ export function TourMode({
       role={editRole}
       placeholder={edit?.kind === 'start' ? 'Wo geht es los?' : edit?.kind === 'ziel' ? 'Wohin soll es gehen?' : 'Ort oder Pass für das Zwischenziel'}
       current={editName}
+      currentP={editPoint ?? undefined}
       near={near}
       here={here?.p}
       locating={locating}

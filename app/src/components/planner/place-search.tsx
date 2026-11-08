@@ -40,6 +40,8 @@ type Props = {
   placeholder: string;
   /** Name des Punkts, der bearbeitet wird (leer bei neuem Punkt) */
   current: string;
+  /** Punkt des Felds, das gerade bearbeitet wird (für Hotels in der Nähe des Ziels) */
+  currentP?: LatLon;
   /** Vorschläge in der Nähe dieser Stelle zuerst */
   near?: LatLon;
   /** eigener Standort, für Entfernungen */
@@ -145,6 +147,7 @@ function SearchBody({
   onClose,
   route,
   onPickStop,
+  currentP,
   slots,
   onSwitch,
   stopsOnly,
@@ -178,12 +181,24 @@ function SearchBody({
     () => (legRows ? legRows.length > 0 : hasRoute && passesNear(route!, cum, 8000).some((r) => !taken.has(r.name))),
     [legRows, hasRoute, route, cum, taken],
   );
-  // Hotels nur für Zwischenziele und das Ziel, am Start braucht es keine Übernachtung (Koray 8.11.)
-  const withHotel = isVia || role === 'Ziel';
+  // Hotels nicht als Reiter, sondern rund um ein schon gewähltes Ziel oder Zwischenziel: tippt man das Feld
+  // noch einmal an, stehen dort Hotels in der Nähe; erst nach dem Löschen kommen die Reiter wieder (Koray 8.11.)
   const cats = useMemo(() => {
-    const base = withHotel ? CATS : CATS.filter((c) => c.id !== 'hotel');
+    const base = CATS.filter((c) => c.id !== 'hotel');
     return passNear ? [base[0], base[base.length - 1], ...base.slice(1, -1)] : base;
-  }, [passNear, withHotel]);
+  }, [passNear]);
+  const hotelMode = (isVia || role === 'Ziel') && !!current && !!currentP && query === current && !stopsOnly;
+  const [hotels, setHotels] = useState<StopRow[] | 'fehler' | null>(null);
+  useEffect(() => {
+    if (!hotelMode || !currentP) return;
+    const ctrl = new AbortController();
+    // kleiner Kreis um den Ort (etwa 5 km) statt entlang der ganzen Route
+    const near: LatLon[] = [currentP, [currentP[0] + 0.0001, currentP[1]]];
+    stopsAlong('hotel', near, ctrl.signal, 25, 2)
+      .then((list) => setHotels(list.map((h) => ({ key: h.id, name: h.name, detail: h.detail, p: h.p, km: 0, offM: haversine(currentP, h.p) })).sort((a, b) => a.offM - b.offM)))
+      .catch(() => !ctrl.signal.aborted && setHotels('fehler'));
+    return () => ctrl.abort();
+  }, [hotelMode, currentP]);
   // nur beim Einfügen (noch kein Name im Feld), nicht beim Ändern eines bestehenden Zwischenziels
   const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? (passNear && isVia && !current ? 'pass' : 'alle'));
   const [scale, setScale] = useState(1);
@@ -397,7 +412,7 @@ function SearchBody({
               </View>
             </>
           )}
-          {hasRoute && (
+          {hasRoute && !hotelMode && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.tabs} style={styles.tabsBox}>
               {cats.filter((c) => !stopsOnly || c.id !== 'alle').map((c) => {
                 const on = c.id === cat;
@@ -428,7 +443,44 @@ function SearchBody({
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           automaticallyAdjustKeyboardInsets>
-          {cat !== 'alle' ? (
+          {hotelMode ? (
+            hotels === null ? (
+              <ActivityIndicator color={Colors.muted} style={styles.loading} />
+            ) : hotels === 'fehler' ? (
+              <AppText style={styles.empty}>Die Hotels lassen sich gerade nicht laden. Versuch es gleich noch einmal.</AppText>
+            ) : hotels.length === 0 ? (
+              <AppText style={styles.empty}>Rund um {current} gibt es keine Hotels mit Namen in der Karte.</AppText>
+            ) : (
+              <View style={styles.section}>
+                <AppText style={styles.groupLabel}>Hotels in der Nähe von {current}</AppText>
+                <View style={styles.group}>
+                  {hotels.slice(0, 20).map((r) => (
+                    <Pressable
+                      key={r.key}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${r.name}, ${r.detail}, ${formatKm(r.offM / 1000)} Kilometer entfernt`}
+                      onPress={() => {
+                        rememberPlace({ name: r.name, detail: r.detail, p: r.p });
+                        onPick(r.p, r.name);
+                      }}
+                      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
+                      <View style={[styles.icon, styles.iconTint]}>
+                        <SymbolView name="bed.double.fill" size={16} tintColor={Colors.signal} />
+                      </View>
+                      <View style={styles.rowMain}>
+                        <AppText style={styles.name} numberOfLines={1}>
+                          {r.name}
+                        </AppText>
+                        <AppText style={styles.sub} numberOfLines={1}>
+                          {formatKm(r.offM / 1000)} km · {r.detail}
+                        </AppText>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )
+          ) : cat !== 'alle' ? (
             catLoading ? (
               <ActivityIndicator color={Colors.muted} style={styles.loading} />
             ) : catNoRoute ? (

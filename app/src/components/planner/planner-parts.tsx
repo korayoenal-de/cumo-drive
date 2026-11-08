@@ -340,7 +340,6 @@ const STOP_CHIPS: { id: Exclude<Cat, 'alle'>; label: string }[] = [
   { id: 'kaffee', label: 'Café' },
   { id: 'mittag', label: 'Essen' },
   { id: 'aussicht', label: 'Aussicht' },
-  { id: 'hotel', label: 'Hotel' },
   { id: 'pass', label: 'Pässe' },
 ];
 
