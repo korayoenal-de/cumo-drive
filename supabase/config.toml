@@ -5,3 +5,7 @@ project_id = "cumo-drive"
 [functions.pass-status]
 # Öffentlich aufrufbar; die Funktion fragt TomTom höchstens alle 2 Stunden ab.
 verify_jwt = false
+
+[functions.road-closures]
+# Öffentlich aufrufbar wie pass-status; liefert nur Sperrungen, je Kachel höchstens alle 10 Minuten TomTom
+verify_jwt = false

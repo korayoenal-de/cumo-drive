@@ -25,6 +25,7 @@
  * deutlichen Richtungswechseln immer erhalten.
  */
 import { checkLine } from '../check';
+import { closureExclude, closuresNear, closuresOnRoute } from '../road-closures';
 import { flatten, haversine, type LatLon, type Tour } from '../tour';
 import { VALHALLA_URL, costingFor, decodePolyline6 } from '../valhalla';
 import type { Maneuver, ManeuverKind, NavRequest, NavRoute } from './types';
@@ -395,9 +396,15 @@ async function approach(from: LatLon, to: LatLon, toHeading: number | null, req:
     let raus = 0;
     let more: LatLon[] = [];
     try {
-      const c = await checkLine(p.shape, undefined, signal);
+      const [c, closures] = await Promise.all([checkLine(p.shape, undefined, signal), closuresNear(p.shape, signal)]);
       raus = c.km_je_klasse?.raus ?? 0;
       if (raus > 0) more = blockedPoints(c.linie, [from, to]);
+      // aktuelle Sperrungen aus Verkehrsmeldungen zählen wie gesperrte Stücke
+      const hits = closuresOnRoute(p.shape, closures);
+      if (hits.length) {
+        raus += hits.length;
+        more = [...more, ...closureExclude(hits, [from, to])];
+      }
     } catch (e) {
       if (signal?.aborted) throw e;
       // Prüfung nicht erreichbar: Route trotzdem nehmen

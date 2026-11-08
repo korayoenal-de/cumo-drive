@@ -31,6 +31,7 @@ import { saveDrive } from '@/lib/drives';
 import { useNavigation } from '@/lib/navigation';
 import { feedbackKey } from '@/lib/highlight-feedback';
 import { curveCue, sharpCurves } from '@/lib/navigation/curves';
+import { closureLabel, closuresNear, closuresOnRoute } from '@/lib/road-closures';
 import { limitAt, loadSpeedZones, type SpeedZones } from '@/lib/navigation/speed-zones';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
 import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
@@ -262,6 +263,48 @@ export default function NavigationScreen() {
   const doneStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 20) : 0;
   // Tour für die Karte: nur was noch vor einem liegt (Koray 8.11.: die schon gefahrene weiße Linie irritiert).
   // Nach einer Abweichung wird der Weg zurück gestrichelt gezeichnet, durchgezogen nur die Tour danach.
+  // Aktuelle Sperrungen vor einem (TomTom Verkehrsmeldungen, Koray 8.11.): beim Start, nach jeder
+  // Neuberechnung und alle 10 Minuten; jede Sperrung einmal melden, als Marker auf der Karte
+  const [closed, setClosed] = useState<{ id: string; label: string; km: number; mitte: LatLon }[]>([]);
+  const toldClosed = useRef(new Set<string>());
+  const remRef = useRef(state.remainingKm);
+  useEffect(() => {
+    remRef.current = state.remainingKm;
+  }, [state.remainingKm]);
+  const navRoute = state.route;
+  const navRunning = state.status === 'laeuft' || state.status === 'pausiert';
+  useEffect(() => {
+    if (!navRoute || !navRunning) return;
+    let alive = true;
+    const run = async () => {
+      const at = Math.max(0, navRoute.km - (remRef.current ?? navRoute.km));
+      const from = navRoute.cumKm.findIndex((k) => k >= at);
+      const to = navRoute.cumKm.findIndex((k) => k >= at + 80);
+      const ahead = navRoute.shape.slice(Math.max(0, from), to < 0 ? undefined : to + 1);
+      const hits = closuresOnRoute(ahead, await closuresNear(ahead));
+      if (!alive) return;
+      const list = hits.map((h) => ({
+        id: h.closure.id,
+        label: closureLabel(h.closure),
+        km: navRoute.cumKm[Math.max(0, from) + h.firstIndex] - at,
+        mitte: h.points[Math.floor(h.points.length / 2)],
+      }));
+      setClosed(list);
+      for (const c of list) {
+        if (toldClosed.current.has(c.id)) continue;
+        toldClosed.current.add(c.id);
+        const km = c.km < 1 ? 'gleich' : `in ${formatKm(c.km)}`;
+        showToast(`${c.label}, ${km}. Laut Verkehrsmeldung, bitte umfahren.`, { tone: 'error' });
+        carPlayAlert('Gesperrt laut Verkehrsmeldung', `${c.label.replace(/^Gesperrt:? ?/, '')} ${km}`.trim());
+      }
+    };
+    void run();
+    const t = setInterval(() => void run(), 10 * 60 * 1000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [navRoute, navRunning]);
   // In 10 m Schritten und genau ab der gefahrenen Stelle, sonst zieht ein Schweif hinter dem Auto her (Koray 8.11.)
   const fineStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 100) : 0;
   // Akku (8.11.): nur ein kurzes Stück bis zur nächsten 2 km Marke wird alle 10 m neu gezeichnet, der Rest
@@ -279,12 +322,18 @@ export default function NavigationScreen() {
     const r = state.route;
     if (!r) return active.tour;
     const ahead = aheadOf(r, fineStep / 100);
-    if (!farLine) return { ...active.tour, linie: [{ c: 'ok', p: ahead }] };
+    const warnungen = closed.length
+      ? [
+          ...active.tour.warnungen,
+          ...closed.map((c) => ({ klasse: 'raus' as const, start_km: 0, laenge_km: 0, name: c.label, ort: '', gruende: ['Gesperrt laut Verkehrsmeldung'], mitte: c.mitte })),
+        ]
+      : active.tour.warnungen;
+    if (!farLine) return { ...active.tour, warnungen, linie: [{ c: 'ok', p: ahead }] };
     // Nahes Stück: vom Auto bis zum Beginn der fernen Linie (inklusive, damit beide sich berühren)
     const nearLen = ahead.length - (r.shape.length - farLine.idx) + 1;
     const near = nearLen >= 2 ? ahead.slice(0, nearLen) : null;
-    return { ...active.tour, linie: near ? [{ c: 'ok', p: near }, { c: 'ok', p: farLine.p }] : [{ c: 'ok', p: farLine.p }] };
-  }, [active, state.route, fineStep, farLine]);
+    return { ...active.tour, warnungen, linie: near ? [{ c: 'ok', p: near }, { c: 'ok', p: farLine.p }] : [{ c: 'ok', p: farLine.p }] };
+  }, [active, state.route, fineStep, farLine, closed]);
   const dashed = useMemo(() => {
     const r = state.route;
     if (!r?.rejoinIndex) return null;

@@ -6,8 +6,9 @@
 import { checkLine } from './check';
 import { cumoAvailable, cumoPlan } from './cumo-routing';
 import { tourFun } from './fun-score';
+import { closureExclude, closureLabel, closuresNear, closuresOnRoute, type ClosureHit } from './road-closures';
+import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import { route, VALHALLA_URL, type Avoid } from './valhalla';
-import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour } from './tour';
 
 export type PlanStep = 'route' | 'check' | 'fix';
 
@@ -131,6 +132,58 @@ export async function planChecked(
   signal?: AbortSignal,
   snapMajor = false,
 ): Promise<PlannedTour> {
+  const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, []);
+  // Aktuelle Sperrungen aus Verkehrsmeldungen (Koray 8.11.): umplanen, was nicht geht als Warnung
+  const closures = await closuresNear(lineOf(first), signal);
+  if (!closures.length) return first;
+  let tour = first;
+  let hits = closuresOnRoute(lineOf(first), closures);
+  const ex = closureExclude(hits, points);
+  if (hits.length && ex.length) {
+    onStep?.('fix');
+    try {
+      const again = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, ex);
+      const h2 = closuresOnRoute(lineOf(again), closures);
+      if (h2.length < hits.length) {
+        tour = again;
+        hits = h2;
+      }
+    } catch (e) {
+      if (signal?.aborted) throw e;
+    }
+  }
+  return hits.length ? withClosureWarnings(tour, hits) : tour;
+}
+
+const lineOf = (t: Tour): LatLon[] => flatten(t).map((x) => x.p);
+
+/** Verbliebene Sperrungen als Warnung "Gesperrt" an der Stelle (Liste und Marker wie beim Etappen Check) */
+function withClosureWarnings(tour: PlannedTour, hits: ClosureHit[]): PlannedTour {
+  const line = lineOf(tour);
+  const cum = [0];
+  for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + haversine(line[i - 1], line[i]) / 1000);
+  const extra: Warning[] = hits.map((h) => ({
+    klasse: 'raus',
+    start_km: +(cum[Math.min(h.firstIndex, cum.length - 1)] ?? 0).toFixed(1),
+    laenge_km: +(h.points.length > 1 ? h.points.slice(1).reduce((a, p, i) => a + haversine(h.points[i], p), 0) / 1000 : 0.1).toFixed(1),
+    name: closureLabel(h.closure),
+    ort: h.closure.from ?? '',
+    gruende: ['Gesperrt laut Verkehrsmeldung', ...(h.closure.text ? [h.closure.text] : [])],
+    mitte: h.points[Math.floor(h.points.length / 2)],
+  }));
+  return { ...tour, warnungen: [...tour.warnungen, ...extra].sort((a, b) => a.start_km - b.start_km) };
+}
+
+async function planCore(
+  name: string,
+  points: LatLon[],
+  profile: Profile,
+  avoid: Avoid,
+  onStep: ((s: PlanStep) => void) | undefined,
+  signal: AbortSignal | undefined,
+  snapMajor: boolean,
+  extraExclude: LatLon[],
+): Promise<PlannedTour> {
   // Eigener Routing Server (Sportwagen Profil, Prüfung ohne fremde Dienste) hat Vorrang
   if (await cumoAvailable()) {
     onStep?.('route');
@@ -141,8 +194,8 @@ export async function planChecked(
       try {
         const curvy = profile === 'kurvig' || profile === 'paesse';
         const [main, direct] = await Promise.all([
-          cumoPlan(name, pts, profile, avoid, signal),
-          curvy ? cumoPlan(name, pts, 'schnell', avoid, signal).catch(() => null) : Promise.resolve(null),
+          cumoPlan(name, pts, profile, avoid, signal, extraExclude),
+          curvy ? cumoPlan(name, pts, 'schnell', avoid, signal, extraExclude).catch(() => null) : Promise.resolve(null),
         ]);
         if (direct && !curvyWorthIt(main, direct)) return { ...direct, direkt: 1 };
         return main;
@@ -157,7 +210,7 @@ export async function planChecked(
       }
     }
   }
-  let exclude: LatLon[] = [];
+  let exclude: LatLon[] = [...extraExclude];
   let best: PlannedTour | null = null;
   for (let round = 0; round < 3; round++) {
     onStep?.(round === 0 ? 'route' : 'fix');

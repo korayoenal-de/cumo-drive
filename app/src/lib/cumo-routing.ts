@@ -391,6 +391,8 @@ export async function cumoPlan(
   profile: Profile,
   avoid: Avoid,
   signal?: AbortSignal,
+  /** von vornherein ausschließen (zum Beispiel aktuelle Sperrungen aus Verkehrsmeldungen) */
+  extraExclude: LatLon[] = [],
 ): Promise<PlannedTour & { curves: number }> {
   let leg = 0;
   let sum = 0;
@@ -422,7 +424,7 @@ export async function cumoPlan(
     }
     return post(body, signal);
   };
-  let exclude: LatLon[] = [];
+  let exclude: LatLon[] = [...extraExclude];
   let best: (PlannedTour & { curves: number }) | null = null;
   for (let round = 0; round < 3; round++) {
     const p = await ask(exclude, []);
