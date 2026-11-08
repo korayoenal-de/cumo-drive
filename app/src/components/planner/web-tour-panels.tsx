@@ -51,7 +51,6 @@ export function TourPanel(props: {
   onAddPlace: (p: LatLon) => void;
   onImport: (f: File) => void;
   onExport: (f: RouteFormat) => void;
-  onSample: () => void;
   onRename: (n: string) => void;
   savedId: string | null;
   onSave: (folder: string) => void;
@@ -69,7 +68,6 @@ export function TourPanel(props: {
     <div style={S.stack}>
       {/* Kopf wie in der App: Tourname, darunter Strecke, Fahrzeit und Fahrspaß */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {props.isSample ? <span style={S.sampleTag}>Beispiel: deine RCO Etappe mit Etappen Check</span> : null}
         <input id="tour-name" aria-label="Tourname" value={tour.name} onChange={(e) => props.onRename(e.target.value)} style={S.headline} />
         {tour.linie.length ? (
           <div style={S.metrics}>
@@ -104,12 +102,6 @@ export function TourPanel(props: {
                 {leg ? (
                   <div style={S.leg}>
                     <span style={S.legKm}>{formatKm(leg.endKm - leg.startKm)} km</span>
-                    {leg.warnings.map((w, j) => (
-                      <button key={j} style={w.klasse === 'raus' ? S.warnStop : S.warnSoft} onClick={() => props.onFly(w.mitte)}>
-                        <b>{w.klasse === 'raus' ? 'Raus' : 'Prüfen'}</b> km {Math.round(w.start_km)}, {formatKm(w.laenge_km)} km{w.name ? `, ${w.name}` : ''}
-                        <span style={S.warnWhy}>{w.gruende.slice(0, 2).join('; ')}</span>
-                      </button>
-                    ))}
                   </div>
                 ) : null}
               </li>
@@ -212,11 +204,6 @@ export function TourPanel(props: {
               e.target.value = '';
             }}
           />
-          {!props.isSample ? (
-            <button style={S.link} onClick={props.onSample}>
-              Beispiel RCO EAST 26 E3 laden
-            </button>
-          ) : null}
         </Accordion>
       </div>
     </div>

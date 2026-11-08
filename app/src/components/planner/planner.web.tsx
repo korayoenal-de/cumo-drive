@@ -28,8 +28,8 @@ import { PASSES, passesAlong, passesGeoJson, passPoint, passSummary } from '@/li
 
 import { addMemberLayers, addPassLayers, addPhotoLayers, addTourLayers, boundsOf, hoverGeoJson, loadMapLibre, MAP_STYLE, pointsGeoJson, tourGeoJson, type MapInstance } from './map-web';
 
-import { C, type MenuState, type Mode, type PlannedTour, SAMPLE, STEP_TEXT } from './web-shared';
-import { Gallery, SendToApp, TourPanel } from './web-tour-panels';
+import { C, type MenuState, type Mode, type PlannedTour, STEP_TEXT } from './web-shared';
+import { Gallery, TourPanel } from './web-tour-panels';
 import { LibraryPanel } from './web-account-panels';
 import { RoundTripPanel } from './web-create-panels';
 import { Brand, Status, TypoTabs } from './web-parts';
@@ -61,8 +61,10 @@ export default function Planner() {
       clearInterval(t);
     };
   }, []);
-  const [tour, setTour] = useState<PlannedTour>(SAMPLE);
-  const [isSample, setIsSample] = useState(true);
+  // Start leer wie in der App, ohne Beispieltour (Koray 8.11.)
+  const [tour, setTour] = useState<PlannedTour>({ name: 'Neue Tour', laenge_km: 0, wegpunkte: [], linie: [], warnungen: [] });
+  /** Beispieltour gibt es nicht mehr; bleibt für die Seitenleisten, die zwischen Beispiel und eigener Tour unterscheiden */
+  const isSample = false;
   const [profile, setProfile] = useState<Profile>('kurvig');
   const [avoid, setAvoid] = useState<Avoid>(DEFAULT_AVOID);
   const [busy, setBusy] = useState<string | null>(null);
@@ -77,9 +79,31 @@ export default function Planner() {
   // Fahrspaß Wert wie in der App, Klick öffnet die Rechnung
   const fun = useMemo(() => (tour.linie.length ? tourFun(line) : null), [tour.linie.length, line]);
   const [funOpen, setFunOpen] = useState(false);
-  const [sendOpen, setSendOpen] = useState(false);
+  /** Stand des automatischen Speicherns: geplante Touren landen ohne Knopf in Meine Touren und damit in der App */
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   /** Profil oder Vermeiden geändert, seit zuletzt geplant wurde: Neu planen anbieten */
   const [dirty, setDirty] = useState(false);
+
+  // Automatisch speichern (Koray 8.11.: kein Knopf An die App senden). Jede geplante Tour landet in Meine Touren,
+  // angemeldet auch im Konto, und erscheint so in der App. Kurz warten, damit Tippen im Namen nicht jedes Mal speichert.
+  useEffect(() => {
+    if (!tour.linie.length || busy) return;
+    const t = setTimeout(() => {
+      try {
+        setSaveState('saving');
+        const saved = saveTour({ ...tour, curves, profile }, '', savedId ?? undefined);
+        setSavedId(saved.id);
+        syncLibrary()
+          .then(() => setSaveState('saved'))
+          .catch(() => setSaveState('error'));
+      } catch {
+        setSaveState('error');
+      }
+    }, 900);
+    return () => clearTimeout(t);
+    // curves, profile und savedId ändern sich nur mit der Tour
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tour, busy]);
 
   // Höhenprofil nachladen, wenn sich die Linie ändert
   useEffect(() => {
@@ -163,7 +187,6 @@ export default function Planner() {
       try {
         const t = await job(ctrl.signal, (s) => setBusy(STEP_TEXT[s]));
         setTour(t);
-        setIsSample(false);
         setDirty(false);
         setMode('tour');
         // Rundtouren und Importe sind neue Touren; Umplanen einer gespeicherten Tour behält die Ablage
@@ -234,7 +257,6 @@ export default function Planner() {
       const pts = isSample ? [p] : [...tour.wegpunkte, p];
       if (pts.length < 2) {
         setTour({ name: 'Neue Tour', laenge_km: 0, wegpunkte: pts, linie: [], warnungen: [] });
-        setIsSample(false);
         return;
       }
       replan(pts, isSample ? 'Neue Tour' : tour.name);
@@ -285,7 +307,6 @@ export default function Planner() {
     else pts = insertVia(base, p);
     if (pts.length < 2) {
       setTour({ name: 'Neue Tour', laenge_km: 0, wegpunkte: pts, linie: [], warnungen: [] });
-      setIsSample(false);
       setSavedId(null);
       return;
     }
@@ -340,7 +361,6 @@ export default function Planner() {
       return;
     }
     setTour(parsed);
-    setIsSample(false);
     fitTour(parsed);
     await run('Etappen Check läuft', async (signal) => {
       const line = flatten(parsed).map((x) => x.p);
@@ -471,17 +491,11 @@ export default function Planner() {
                 if (pts.length >= 2) replan(pts, isSample ? 'Neue Tour' : tour.name);
                 else {
                   setTour({ name: 'Neue Tour', laenge_km: 0, wegpunkte: pts, linie: [], warnungen: [] });
-                  setIsSample(false);
                   flyTo(p);
                 }
               }}
               onImport={importGpx}
               onExport={exportFile}
-              onSample={() => {
-                setTour(SAMPLE);
-                setIsSample(true);
-                fitTour(SAMPLE);
-              }}
               onRename={(n) => setTour({ ...tour, name: n })}
               savedId={isSample ? null : savedId}
               onSave={(folder) => {
@@ -502,7 +516,6 @@ export default function Planner() {
               currentId={savedId}
               onOpen={(t) => {
                 setTour(t);
-                setIsSample(false);
                 setSavedId(t.id);
                 setMode('tour');
                 fitTour(t);
@@ -526,37 +539,23 @@ export default function Planner() {
             />
           ) : null}
         </div>
-        {/* Aktionsleiste wie in der App: eine Hauptaktion, Speichern als Lesezeichen, Neu planen nur nach Änderungen */}
+        {/* Statt Knopf: Neu planen nur nach Änderungen, sonst der Hinweis, dass die Tour schon in der App ist */}
         {mode === 'tour' && tour.linie.length ? (
           <div style={S.actionBar}>
-            {!isSample ? (
-              <button
-                style={S.iconAction}
-                aria-label={savedId ? 'In Meine Touren gespeichert' : 'In Meine Touren speichern'}
-                title={savedId ? 'Gespeichert' : 'Speichern'}
-                disabled={!!busy}
-                onClick={() => {
-                  try {
-                    const saved = saveTour({ ...tour, curves, profile }, '', savedId ?? undefined);
-                    setSavedId(saved.id);
-                    void syncLibrary();
-                  } catch (e) {
-                    setError((e as Error).message);
-                  }
-                }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill={savedId ? C.signal : 'none'} stroke={savedId ? C.signal : C.text} strokeWidth="2" strokeLinejoin="round" aria-hidden>
-                  <path d="M6 3h12v18l-6-4.5L6 21z" />
-                </svg>
-              </button>
-            ) : null}
-            {dirty || isSample ? (
-              <button style={{ ...S.secondary, height: 52, borderRadius: 16 }} disabled={!!busy || tour.wegpunkte.length < 2} onClick={() => replan(tour.wegpunkte)}>
+            {dirty ? (
+              <button style={S.primary} disabled={!!busy || tour.wegpunkte.length < 2} onClick={() => replan(tour.wegpunkte)}>
                 Neu planen
               </button>
-            ) : null}
-            <button style={S.primary} onClick={() => setSendOpen(true)}>
-              An die App senden
-            </button>
+            ) : (
+              <span style={S.syncLine} role="status">
+                <span style={{ ...S.dot, background: saveState === 'error' ? C.warn : saveState === 'saved' ? C.good : C.muted }} />
+                {saveState === 'error'
+                  ? 'Speichern hat nicht geklappt, wir versuchen es bei der nächsten Änderung erneut.'
+                  : saveState === 'saved'
+                    ? 'Gespeichert, in der App unter Meine Touren.'
+                    : 'Wird gespeichert …'}
+              </span>
+            )}
           </div>
         ) : null}
         <div style={S.engine}>
@@ -574,7 +573,6 @@ export default function Planner() {
           onClose={() => setFunOpen(false)}
         />
       ) : null}
-      {sendOpen ? <SendToApp tour={tour} profile={profile} avoid={avoid} onClose={() => setSendOpen(false)} /> : null}
     </div>
   );
 }

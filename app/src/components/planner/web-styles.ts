@@ -38,6 +38,7 @@ export const S: Record<string, CSSProperties> = {
   funPill: { display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: C.text },
   headline: { background: 'transparent', border: 'none', color: C.text, fontFamily: DISPLAY, fontSize: 26, lineHeight: 1.1, textTransform: 'uppercase', padding: 0, outline: 'none', width: '100%' },
   actionBar: { display: 'flex', gap: 8, padding: '12px 24px 20px', borderTop: `1px solid ${C.surface}`, background: C.ground },
+  syncLine: { display: 'flex', alignItems: 'center', gap: 10, minHeight: 52, color: C.muted, font: `600 15px ${BODY}` },
   iconAction: { width: 52, height: 52, flex: 'none', borderRadius: 16, border: 'none', background: C.surface, color: C.text, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   overlay: { position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 },
   dialog: { width: 440, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', background: C.surface, borderRadius: 28, padding: 24, display: 'flex', flexDirection: 'column', gap: 20, color: C.text, fontFamily: BODY, boxShadow: '0 20px 60px rgba(0,0,0,0.6)' },
