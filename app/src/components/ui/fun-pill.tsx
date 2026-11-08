@@ -2,6 +2,7 @@
  * Fahrspaß Wert einer Tour (Konzept "Tour Fahrspaß Wert", 7.11.2026): kleine Plakette mit Logo und Zahl,
  * so leise wie die Runden Chips. Antippen öffnet die Erklärung mit den vier Teilen und der Skala.
  */
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ElevationChart } from '@/components/planner/elevation-chart';
@@ -9,7 +10,7 @@ import { OptionsSheet } from '@/components/ui/action-sheet';
 import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
-import { TOUR_FUN_NAMES, type TourFun, type TourFunLevel } from '@/lib/fun-score';
+import { TOUR_FUN_NAMES, TOUR_FUN_STEPS, type FunFacet, type TourFun } from '@/lib/fun-score';
 import type { LatLon } from '@/lib/tour';
 
 export function FunPill({ fun, onPress, active, best, hint = 'Zeigt, wie der Wert entsteht' }: { fun: TourFun; onPress: () => void; active?: boolean; best?: boolean; hint?: string }) {
@@ -38,8 +39,18 @@ export function FunDelta({ delta }: { delta: number }) {
   );
 }
 
-/** Texte zu TOUR_FUN_STEPS in fun-score */
-const RANGES = ['bis 34', '35 bis 54', '55 bis 69', '70 bis 84', 'ab 85'];
+/** Farben der vier Teile im gestapelten Balken, vom kräftigsten zum hellsten Orange */
+const TONES = ['#E2461C', '#EF6A43', '#F48D6C', '#F7B29A'];
+
+/** Punkte je Teil, so gerundet, dass die Summe genau den Wert ergibt (größter Rest) */
+function facetPoints(fun: TourFun): number[] {
+  const raw = fun.facets.map((f) => f.weight * f.share * 100);
+  const pts = raw.map(Math.floor);
+  let left = fun.score - pts.reduce((x, y) => x + y, 0);
+  const order = raw.map((r, i) => ({ i, rest: r - Math.floor(r) })).sort((x, y) => y.rest - x.rest);
+  for (let k = 0; left > 0 && k < order.length; k++, left--) pts[order[k].i]++;
+  return pts;
+}
 
 /** Prüfung der Strecke für Sportwagen, gehört zur Bewertung (Koray 7.11.) */
 export type RouteCheck = { tone: 'good' | 'warn' | 'none'; text: string };
@@ -54,6 +65,9 @@ export function routeCheck(warnings: number, checked: boolean): RouteCheck {
 /** twiceKm: km, die auf derselben Straße zurück gefahren werden (Route); ab 1 km ein Hinweis */
 /** line: Linie der Tour für das Höhenprofil (Koray 7.11.: gehört in die Bewertung) */
 export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0, line }: { fun: TourFun | null; name: string; visible: boolean; onClose: () => void; check?: RouteCheck | null; twiceKm?: number; line?: LatLon[] }) {
+  // Rechnung (Konzept 7, Koray 8.11.): Balken aus den vier Teilen, darunter Zeile für Zeile, Tippen klappt die Erklärung auf
+  const [open, setOpen] = useState<FunFacet['id'] | null>(null);
+  const pts = fun ? facetPoints(fun) : [];
   return (
     <OptionsSheet visible={visible && !!fun} onClose={onClose} scroll>
       {fun && (
@@ -68,46 +82,69 @@ export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0, line
               <AppText style={styles.muted} numberOfLines={1}>{name}</AppText>
             </View>
           </View>
-          {line && line.length > 1 && <ElevationChart line={line} onSurface />}
-          <View style={styles.facets}>
-            {fun.facets.map((f) => (
-              <View key={f.id} style={styles.facet} accessible accessibilityLabel={`${f.label}, ${f.value}, Anteil ${Math.round(f.weight * 100)} Prozent`}>
-                <View style={styles.facetHead}>
-                  <AppText style={styles.facetLabel}>{f.label}</AppText>
-                  <AppText style={styles.muted}>
-                    {f.value} · {Math.round(f.weight * 100)} %
-                  </AppText>
-                </View>
-                <View style={styles.track}>
-                  <View style={[styles.bar, { width: `${Math.round(f.share * 100)}%` }]} />
-                </View>
-                <AppText style={styles.muted}>{f.text}</AppText>
-              </View>
-            ))}
+          <View style={styles.stackWrap}>
+            <View style={styles.stack} accessible accessibilityLabel={`${fun.score} von 100 Punkten`}>
+              {pts.map((p, i) => (p > 0 ? <View key={i} style={{ width: `${p}%`, backgroundColor: TONES[i] }} /> : null))}
+            </View>
+            <View style={styles.ticks}>
+              {TOUR_FUN_STEPS.map((v, i) => (
+                <AppText key={v} style={[styles.tick, { left: `${v}%` }, i + 2 === fun.level && styles.tickOn]}>
+                  {v}
+                </AppText>
+              ))}
+            </View>
           </View>
-          {check && (
-            <View style={styles.check}>
-              <View style={[styles.checkDot, { backgroundColor: check.tone === 'good' ? Colors.good : check.tone === 'warn' ? Colors.warn : Colors.muted }]} />
-              <AppText style={[styles.muted, styles.flex]}>{check.text}</AppText>
+
+          <View>
+            {fun.facets.map((f, i) => {
+              const isOpen = open === f.id;
+              return (
+                <Pressable
+                  key={f.id}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: isOpen }}
+                  accessibilityLabel={`${f.label}, plus ${pts[i]} von ${Math.round(f.weight * 100)}, ${f.value}`}
+                  onPress={() => setOpen(isOpen ? null : f.id)}
+                  style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+                  <View style={styles.rowMain}>
+                    <View style={[styles.swatch, { backgroundColor: TONES[i] }]} />
+                    <AppText style={styles.pts}>+{pts[i]}</AppText>
+                    <View style={styles.flex}>
+                      <AppText style={styles.facetLabel}>{f.label}</AppText>
+                      <AppText style={styles.muted}>{f.value}</AppText>
+                    </View>
+                    <AppText style={styles.muted}>von {Math.round(f.weight * 100)}</AppText>
+                  </View>
+                  {isOpen && <AppText style={[styles.muted, styles.rowText]}>{f.text}</AppText>}
+                </Pressable>
+              );
+            })}
+            <View style={[styles.rowMain, styles.total]}>
+              <View style={styles.swatchSpace} />
+              <AppText style={[styles.pts, styles.signal]}>{fun.score}</AppText>
+              <AppText style={[styles.facetLabel, styles.flex]}>{TOUR_FUN_NAMES[fun.level]}</AppText>
+              <AppText style={styles.muted}>von 100</AppText>
             </View>
-          )}
-          {twiceKm >= 1 && (
-            <View style={styles.check}>
-              <View style={[styles.checkDot, { backgroundColor: Colors.warn }]} />
-              <AppText style={[styles.muted, styles.flex]}>
-                {Math.round(twiceKm)} km fährst du zweimal, auf derselben Straße zurück. Ein anderes Zwischenziel oder eine andere Reihenfolge ändert das oft.
-              </AppText>
-            </View>
-          )}
-          <View style={styles.scale}>
-            <AppText style={styles.muted}>Skala</AppText>
-            {([1, 2, 3, 4, 5] as TourFunLevel[]).map((l) => (
-              <View key={l} style={[styles.scaleRow, l === fun.level && styles.scaleOn]}>
-                <FunGauge level={l} size={22} />
-                <AppText style={styles.scaleName}>{TOUR_FUN_NAMES[l]}</AppText>
-                <AppText style={styles.muted}>{RANGES[l - 1]}</AppText>
+          </View>
+
+          {/* Unterwegs: Höhenprofil und Prüfung untereinander (Koray 8.11.) */}
+          <View style={styles.section}>
+            <AppText style={styles.muted}>Unterwegs</AppText>
+            {line && line.length > 1 && <ElevationChart line={line} onSurface />}
+            {check && (
+              <View style={[styles.check, { backgroundColor: check.tone === 'good' ? Colors.goodTint : check.tone === 'warn' ? Colors.warnTint : Colors.surface2 }]}>
+                <View style={[styles.checkDot, { backgroundColor: check.tone === 'good' ? Colors.good : check.tone === 'warn' ? Colors.warn : Colors.muted }]} />
+                <AppText style={[styles.checkText, styles.flex]}>{check.text}</AppText>
               </View>
-            ))}
+            )}
+            {twiceKm >= 1 && (
+              <View style={[styles.check, { backgroundColor: Colors.warnTint }]}>
+                <View style={[styles.checkDot, { backgroundColor: Colors.warn }]} />
+                <AppText style={[styles.checkText, styles.flex]}>
+                  {Math.round(twiceKm)} km fährst du zweimal, auf derselben Straße zurück. Ein anderes Zwischenziel oder eine andere Reihenfolge ändert das oft.
+                </AppText>
+              </View>
+            )}
           </View>
         </View>
       )}
@@ -143,16 +180,22 @@ const styles = StyleSheet.create({
   big: { fontFamily: Fonts.display, fontSize: 28, color: Colors.text, fontVariant: ['tabular-nums'] },
   levelName: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.signal },
   muted: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  facets: { gap: Spacing.m },
-  facet: { gap: 6 },
-  facetHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: Spacing.s },
   facetLabel: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
-  track: { height: 6, borderRadius: 3, backgroundColor: Colors.line, overflow: 'hidden' },
-  bar: { height: 6, borderRadius: 3, backgroundColor: Colors.signal },
-  check: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m },
+  stackWrap: { gap: 6 },
+  stack: { flexDirection: 'row', gap: 2, height: 12, borderRadius: 6, overflow: 'hidden', backgroundColor: Colors.line },
+  ticks: { height: 20 },
+  tick: { position: 'absolute', top: 0, width: 32, marginLeft: -16, textAlign: 'center', fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
+  tickOn: { color: Colors.text },
+  row: { paddingVertical: 12, gap: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.line },
+  rowMain: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
+  rowText: { paddingLeft: 70 },
+  swatch: { width: 14, height: 14, borderRadius: 4 },
+  swatchSpace: { width: 14 },
+  pts: { width: 44, fontFamily: Fonts.display, fontSize: 20, color: Colors.text, fontVariant: ['tabular-nums'] },
+  signal: { color: Colors.signal },
+  total: { paddingVertical: 12 },
+  section: { gap: Spacing.m },
+  check: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m, padding: 14, borderRadius: Radius.m },
   checkDot: { width: 10, height: 10, borderRadius: 5, marginTop: 6 },
-  scale: { gap: 2 },
-  scaleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, height: 36, paddingHorizontal: 10, borderRadius: Radius.s },
-  scaleOn: { backgroundColor: Colors.line },
-  scaleName: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
+  checkText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
 });
