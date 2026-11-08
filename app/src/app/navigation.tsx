@@ -242,16 +242,14 @@ export default function NavigationScreen() {
   const doneStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 20) : 0;
   // Tour für die Karte: nur was noch vor einem liegt (Koray 8.11.: die schon gefahrene weiße Linie irritiert).
   // Nach einer Abweichung wird der Weg zurück gestrichelt gezeichnet, durchgezogen nur die Tour danach.
+  // In 10 m Schritten und genau ab der gefahrenen Stelle, sonst zieht ein Schweif hinter dem Auto her (Koray 8.11.)
+  const fineStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 100) : 0;
   const mapTour = useMemo<Tour | null>(() => {
     if (!active) return null;
     const r = state.route;
     if (!r) return active.tour;
-    const at = doneStep / 20;
-    let i = 0;
-    while (i < r.shape.length - 2 && r.cumKm[i + 1] <= at) i++;
-    const from = Math.max(r.rejoinIndex ?? 0, i);
-    return { ...active.tour, linie: [{ c: 'ok', p: r.shape.slice(from) }] };
-  }, [active, state.route, doneStep]);
+    return { ...active.tour, linie: [{ c: 'ok', p: aheadOf(r, fineStep / 100) }] };
+  }, [active, state.route, fineStep]);
   const dashed = useMemo(() => {
     const r = state.route;
     if (!r?.rejoinIndex) return null;
@@ -370,11 +368,14 @@ export default function NavigationScreen() {
   useEffect(() => () => carPlayStop(false), []);
   // Linie auf dem Autodisplay = die Route, nach der angesagt wird (auch nach Neuberechnung)
   // mit Rückweg: durchgezogen nur die Tour, der Weg zurück gestrichelt (wie in der App, ab Build 10)
+  // Auch im Auto nur die Strecke vor einem; in 100 m Schritten, die Linie geht jedes Mal über die Brücke
+  const cpStep = Math.floor(fineStep / 10);
   useEffect(() => {
     const r = state.route;
-    const from = carPlayHasRejoin ? (r?.rejoinIndex ?? 0) : 0;
-    carPlaySetGuide(cpRunning && r ? r.shape.slice(from) : null, r?.km ?? 0, r?.minutes ?? 0);
-  }, [cpRunning, state.route]);
+    if (!cpRunning || !r) return carPlaySetGuide(null);
+    const line = carPlayHasRejoin ? aheadOf(r, cpStep / 10) : r.shape.slice(nearIndexAt(r, cpStep / 10));
+    carPlaySetGuide(line, r.km, r.minutes);
+  }, [cpRunning, state.route, cpStep]);
   useEffect(() => {
     carPlaySetRejoin(cpRunning ? dashed : null);
   }, [cpRunning, dashed]);
@@ -904,3 +905,23 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 });
+
+/** Index des letzten Punkts der Route vor der Stelle at km */
+function nearIndexAt(r: NavRoute, at: number): number {
+  let i = 0;
+  while (i < r.shape.length - 2 && r.cumKm[i + 1] <= at) i++;
+  return i;
+}
+
+/** Route ab der Stelle at km (genau dort beginnend), nie vor dem Wiedereinstieg in die Tour */
+function aheadOf(r: NavRoute, at: number): LatLon[] {
+  const i = nearIndexAt(r, at);
+  const join = r.rejoinIndex ?? 0;
+  if (i < join) return r.shape.slice(join);
+  const a = r.shape[i];
+  const b = r.shape[i + 1] ?? a;
+  const seg = (r.cumKm[i + 1] ?? r.cumKm[i]) - r.cumKm[i];
+  const k = seg > 0 ? Math.max(0, Math.min(1, (at - r.cumKm[i]) / seg)) : 0;
+  const p: LatLon = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  return [p, ...r.shape.slice(i + 1)];
+}
