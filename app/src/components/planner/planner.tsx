@@ -875,7 +875,7 @@ export default function Planner() {
             <View style={styles.card}>
               <Toggle
                 label="Gesperrte Straßen"
-                note="calimoto warnt nur, wir meiden."
+                note="Wir planen um gesperrte Straßen herum."
                 value={avoid.closures}
                 onChange={(v) => setAvoid((a) => ({ ...a, closures: v }))}
               />

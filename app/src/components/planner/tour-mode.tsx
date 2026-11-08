@@ -589,7 +589,7 @@ export function TourMode({
         <View style={styles.card}>
           {(
             [
-              ['closures', 'Gesperrte Straßen', 'calimoto warnt nur, wir meiden.'],
+              ['closures', 'Gesperrte Straßen', 'Wir planen um gesperrte Straßen herum.'],
               ['ferries', 'Fähren', undefined],
               ['tolls', 'Maut', undefined],
               ['rough', 'Rauer Belag', 'Kopfsteinpflaster und schlechter Asphalt.'],

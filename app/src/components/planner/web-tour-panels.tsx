@@ -162,7 +162,7 @@ export function TourPanel(props: {
           </Accordion>
         ) : null}
         <Accordion label="Vermeiden" summary={avoidText}>
-          <Toggle id="av-closures" on={props.avoid.closures} label="Gesperrte Straßen" note="calimoto warnt nur, wir umfahren" onChange={(v) => props.setAvoid({ ...props.avoid, closures: v })} />
+          <Toggle id="av-closures" on={props.avoid.closures} label="Gesperrte Straßen" note="Wir planen um gesperrte Straßen herum." onChange={(v) => props.setAvoid({ ...props.avoid, closures: v })} />
           <Toggle id="av-rough" on={props.avoid.rough} label="Rauer Belag und Kopfsteinpflaster" onChange={(v) => props.setAvoid({ ...props.avoid, rough: v })} />
           <Toggle id="av-ferries" on={props.avoid.ferries} label="Fähren" onChange={(v) => props.setAvoid({ ...props.avoid, ferries: v })} />
           <Toggle id="av-tolls" on={props.avoid.tolls} label="Mautstraßen" onChange={(v) => props.setAvoid({ ...props.avoid, tolls: v })} />
