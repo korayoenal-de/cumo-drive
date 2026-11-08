@@ -122,7 +122,12 @@ describe('sharpCurves', () => {
     assert.equal(tight[0].kind, 'scharf');
     assert.equal(tight[0].dir, 'rechts');
     assert.ok(Math.abs(tight[0].startKm - 0.3) < 0.05);
-    assert.equal(sharpCurves(bend(150, 90, false)).length, 0);
+    // weite Kurve: wird mit geschätztem Tempo gemeldet (r 150 m, etwa 85 km/h), sehr weite gar nicht
+    const wide = sharpCurves(bend(150, 90, false));
+    assert.equal(wide.length, 1);
+    assert.equal(wide[0].kind, 'kurve');
+    assert.ok(wide[0].vmax! >= 75 && wide[0].vmax! <= 90, String(wide[0].vmax));
+    assert.equal(sharpCurves(bend(400, 60, false)).length, 0);
     assert.equal(sharpCurves(eastLine(20)).length, 0);
   });
 

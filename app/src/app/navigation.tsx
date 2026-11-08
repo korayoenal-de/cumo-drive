@@ -481,8 +481,11 @@ export default function NavigationScreen() {
   // Sind die Tempolimits (noch) nicht geladen, zählt das eigene Tempo ab 60 km/h.
   const ahead = status === 'laeuft' && !offTour && atKm != null ? curveCue(curves, atKm) : null;
   const zoneLimit = ahead && zones?.route === route ? limitAt(zones.z, ahead.startKm) : null;
-  // Bremshinweis in der Tempo Plakette: nur in Zonen ab 70 km/h; ohne Tempolimits zählt das eigene Tempo ab 60
-  const cue = ahead && (zoneLimit != null ? zoneLimit >= 70 : (state.speedKmh ?? 0) >= 60) ? ahead : null;
+  // Bremshinweis in der Tempo Plakette ab Zonen mit 60 km/h (Koray 8.11.); ohne Tempolimits zählt das eigene
+  // Tempo ab 60. Weite Kurven nur, wenn sie deutlich langsamer sind als das, was man dort fährt.
+  const ref = zoneLimit ?? state.speedKmh ?? 0;
+  const relevant = ahead && (ahead.kind !== 'kurve' || (ahead.vmax ?? 999) < ref + 15);
+  const cue = ahead && relevant && (zoneLimit != null ? zoneLimit >= 60 : (state.speedKmh ?? 0) >= 60) ? ahead : null;
   const brakeHint = cue ? { big: cue.big, label: cue.label, icon: cue.icon, a11y: cue.a11y } : null;
   const then = route?.maneuvers[state.next + 1];
   // Tempo unten links: Limit an der aktuellen Stelle der Route, sobald die Zonen geladen sind
