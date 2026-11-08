@@ -3,7 +3,7 @@
  * Später mit eigenem App Build MapLibre: dann wird nur diese Datei ersetzt, die Props bleiben.
  */
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-native-maps';
 
 import { AppText } from '@/components/ui/text';
@@ -211,12 +211,24 @@ export function RouteMap({
     motion.current = { from: shown.current.p, to: position, hFrom: shown.current.h, hTo: h, t0: now, dur: Math.min(1500, Math.max(400, gap)) };
   }, [position, heading, me]);
 
+  // Im Hintergrund keine Kamera Befehle: requestAnimationFrame läuft in React Native dort weiter, und
+  // 30 setCamera pro Sekunde blockierten den Hauptthread, bis iOS die App beim Zurückkehren beendete
+  // (Absturz 8.11., Watchdog 0x8BADF00D an der Tankstelle)
+  const active = useRef(AppState.currentState === 'active');
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => {
+      active.current = st === 'active';
+    });
+    return () => sub.remove();
+  }, []);
+
   useEffect(() => {
     if (!ready || !position) return;
     let raf = 0;
     let frame = 0;
     const tick = () => {
       raf = requestAnimationFrame(tick);
+      if (!active.current) return;
       // 30 Bilder pro Sekunde reichen und sparen Akku
       if (++frame % 2) return;
       const m = motion.current;
