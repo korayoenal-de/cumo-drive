@@ -492,8 +492,9 @@ export default function Planner() {
         <TypoTabs
           value={mode === 'tour' ? 'route' : 'runde'}
           options={[
-            { id: 'runde', label: 'Schnelle Runde' },
-            { id: 'route', label: 'Route' },
+            // Namen wie bei calimoto (Koray 8.11.)
+            { id: 'runde', label: 'Rundtour' },
+            { id: 'route', label: 'Tour planen' },
           ]}
           onChange={(v) => switchMode(v === 'route' ? 'tour' : lastRunde.current)}
         />
@@ -519,11 +520,11 @@ export default function Planner() {
               ? `${PROFILE_WORD[view.req.profile]}, ${view.req.towardName ? `Richtung ${view.req.towardName}` : dirPhrase(view.req.direction)}${roundStops.length ? `, mit ${roundStops.length} ${roundStops.length === 1 ? 'Stopp' : 'Stopps'}` : ''}`
               : mode === 'tour'
                 ? tourPts.length
-                  ? 'Lange auf die Karte drücken setzt einen weiteren Punkt.'
-                  : 'Gib Start und Ziel ein oder drück lange auf die Karte.'
+                  ? 'Lange auf die Karte drücken setzt einen Punkt.'
+                  : 'Start, Ziel und Zwischenziele frei setzen.'
                 : mode === 'beschreiben'
                   ? 'Beschreib deine Runde in einem Satz, wir planen sie.'
-                  : `Rundtour ab ${picked?.name ?? here?.name ?? 'deinem Standort'}, etwa ${roundKm} km`}
+                  : `Länge und Richtung wählen, zurück geht es zum Start (${picked?.name ?? here?.name ?? 'dein Standort'}).`}
         </AppText>
       )}
     </>

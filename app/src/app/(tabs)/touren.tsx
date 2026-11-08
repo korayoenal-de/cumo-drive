@@ -113,7 +113,7 @@ export default function Touren() {
       {list.length === 0 ? (
         <View style={styles.card}>
           <AppText variant="title">Noch keine Tour gespeichert</AppText>
-          <AppText muted>Plan eine Route oder eine Schnelle Runde und tippe auf Speichern. Dann landet sie hier.</AppText>
+          <AppText muted>Plan eine Tour oder eine Rundtour und tippe auf Speichern. Dann landet sie hier.</AppText>
           <Pressable accessibilityRole="button" onPress={() => router.navigate('/')} style={styles.primary}>
             <AppText style={styles.primaryText}>Tour planen</AppText>
           </Pressable>
