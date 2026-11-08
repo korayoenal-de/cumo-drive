@@ -75,7 +75,7 @@ export type Slot = { key: string; kind: PointKind; index?: number; insert?: bool
 
 export type Cat = 'alle' | StopKind | 'pass';
 const CATS: { id: Cat; label: string; placeholder: string }[] = [
-  { id: 'alle', label: 'Alle', placeholder: '' },
+  { id: 'alle', label: 'Zuletzt', placeholder: '' },
   { id: 'tank', label: 'Tanken', placeholder: 'Marke, etwa Shell' },
   { id: 'kaffee', label: 'Café', placeholder: 'Café suchen' },
   { id: 'mittag', label: 'Essen', placeholder: 'Restaurant suchen' },
