@@ -7,6 +7,7 @@ import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-native-maps';
 
+import { useIsFocused } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/text';
@@ -96,6 +97,7 @@ export function RouteMap({
   // Apple Maps meldet einen Tipp auf einen schon ausgewählten Marker nicht noch einmal: Pass Marker nach dem Tipp
   // wieder abwählen, sonst lässt sich derselbe Pass nur einmal antippen (Koray 8.11.)
   const passRefs = useRef(new Map<string, MapMarker | null>());
+  const focused = useIsFocused();
   // Offener Warnhinweis als eigene Karte über der Karte: bleibt stehen, bis man daneben tippt
   // (Tester 8.11.: die Apple Blase verschwand sofort wieder)
   const [openWarn, setOpenWarn] = useState<number | null>(null);
@@ -263,26 +265,35 @@ export function RouteMap({
   // 30 setCamera pro Sekunde blockierten den Hauptthread, bis iOS die App beim Zurückkehren beendete
   // (Absturz 8.11., Watchdog 0x8BADF00D an der Tankstelle)
   const active = useRef(AppState.currentState === 'active');
+  const [appActive, setAppActive] = useState(AppState.currentState === 'active');
   useEffect(() => {
     const sub = AppState.addEventListener('change', (st) => {
       active.current = st === 'active';
+      setAppActive(st === 'active');
     });
     return () => sub.remove();
   }, []);
 
   useEffect(() => {
-    if (!ready || !position) return;
+    // Im Hintergrund oder auf einem anderen Tab läuft keine Schleife (Akku, Testfahrt 8.11.)
+    if (!ready || !position || !appActive || !focused) return;
     let raf = 0;
     let frame = 0;
+    let lastK = -1;
+    let lastM: typeof motion.current = null;
     const tick = () => {
       raf = requestAnimationFrame(tick);
       if (!active.current) return;
-      // 30 Bilder pro Sekunde reichen und sparen Akku
-      if (++frame % 2) return;
+      // 20 Bilder pro Sekunde reichen für ein Auto und sparen Akku
+      if (++frame % 3) return;
       const m = motion.current;
       if (!m) return;
       // bis 15 % über die letzte Position hinaus fortschreiben, damit es bis zur nächsten nicht stehen bleibt
       const k = Math.min(1.15, (Date.now() - m.t0) / m.dur);
+      // steht alles (Ende der Bewegung erreicht, keine neue Position): keine Kamera Befehle
+      if (m === lastM && k === lastK) return;
+      lastM = m;
+      lastK = k;
       const p: LatLon = [m.from[0] + (m.to[0] - m.from[0]) * k, m.from[1] + (m.to[1] - m.from[1]) * k];
       const dh = ((m.hTo - m.hFrom + 540) % 360) - 180;
       const h = (m.hFrom + dh * Math.min(1, k) + 360) % 360;
@@ -294,7 +305,7 @@ export function RouteMap({
     return () => cancelAnimationFrame(raf);
     // position nur als Schalter (an oder aus), die Werte kommen über motion
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, following, !!position, me]);
+  }, [ready, following, !!position, me, appActive, focused]);
 
   // nach der Pause wieder folgen
   useEffect(() => {
@@ -311,7 +322,8 @@ export function RouteMap({
         style={StyleSheet.absoluteFill}
         userInterfaceStyle="dark"
         mapType={MAP_TYPE[settings.style]}
-        showsUserLocation={(showUser || followUser) && !position}
+        // Apple Karten hält für den blauen Punkt das GPS an; auf anderen Tabs nicht nötig (Akku)
+        showsUserLocation={(showUser || followUser) && !position && focused && appActive}
         followsUserLocation={followUser && !position}
         showsMyLocationButton={false}
         showsCompass={interactive && !followUser}

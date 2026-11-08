@@ -76,12 +76,20 @@ let current: Instance | null = null;
 let last = '';
 
 /** Live Activity mit neuem Stand zeigen (startet sie beim ersten Aufruf). */
+let lastAt = 0;
+let lastStep = '';
 export function showNavActivity(p: NavActivityProps) {
   const f = getFactory();
   if (!f) return;
   const key = JSON.stringify(p);
   if (key === last) return;
+  // Höchstens alle 4 s, außer das Manöver oder der Kurz davor Zustand wechselt (Akku, 8.11.)
+  const now = Date.now();
+  const sameStep = lastStep === `${p.text}|${p.soon}`;
+  if (current && sameStep && now - lastAt < 4000) return;
   last = key;
+  lastAt = now;
+  lastStep = `${p.text}|${p.soon}`;
   try {
     if (!current) {
       // eine alte Activity aus einem früheren Start aufräumen
