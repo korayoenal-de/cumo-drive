@@ -27,7 +27,7 @@ import { buildTour, findPlace, FRESH_MS, locate, newSeed, PHASES, toPlanError, t
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
-import { LogoProgress } from '@/components/ui/fun-gauge';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { RadarChip } from './radar-chip';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
@@ -542,14 +542,17 @@ export default function Planner() {
         <AppText variant="label">{view.kind === 'working' ? 'Tour wird erstellt' : 'Das hat nicht geklappt'}</AppText>
       )}
       {view.kind === 'working' ? (
-        <View style={styles.summary}>
-          <LogoProgress step={PHASES.findIndex((x) => x.id === view.phase)} />
-          <AppText variant="title" style={styles.flex} numberOfLines={1}>
-            {PHASES.find((x) => x.id === view.phase)?.label}
-          </AppText>
-          <Pressable accessibilityRole="button" onPress={cancel} hitSlop={4} style={({ pressed }) => [styles.cancelChip, pressed && styles.pressedDim]}>
-            <AppText style={styles.cancelText}>Abbrechen</AppText>
-          </Pressable>
+        <View style={styles.workBox}>
+          <View style={styles.summary}>
+            <AppText variant="title" style={styles.flex} numberOfLines={1}>
+              {radar?.phase === 'aufloesen' ? 'Fertig' : PHASES.find((x) => x.id === view.phase)?.label}
+            </AppText>
+            <Pressable accessibilityRole="button" onPress={cancel} hitSlop={4} style={({ pressed }) => [styles.cancelChip, pressed && styles.pressedDim]}>
+              <AppText style={styles.cancelText}>Abbrechen</AppText>
+            </Pressable>
+          </View>
+          {/* Balken mit Prozent statt Logo (Koray 8.11.) */}
+          <ProgressBar step={PHASES.findIndex((x) => x.id === view.phase)} done={radar?.phase === 'aufloesen'} doneMs={REVEAL_MS - 300} />
         </View>
       ) : inTour && tourPlan.step ? (
         <View style={styles.summary}>
