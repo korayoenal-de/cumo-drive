@@ -492,9 +492,9 @@ export default function Planner() {
         <TypoTabs
           value={mode === 'tour' ? 'route' : 'runde'}
           options={[
-            // Namen wie bei calimoto (Koray 8.11.)
-            { id: 'runde', label: 'Rundtour' },
+            // Namen wie bei calimoto, Tour planen zuerst (Koray 8.11.)
             { id: 'route', label: 'Tour planen' },
+            { id: 'runde', label: 'Rundtour' },
           ]}
           onChange={(v) => switchMode(v === 'route' ? 'tour' : lastRunde.current)}
         />
