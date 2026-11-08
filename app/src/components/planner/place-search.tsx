@@ -82,7 +82,7 @@ const CATS: { id: Cat; label: string; placeholder: string }[] = [
   { id: 'aussicht', label: 'Aussicht', placeholder: 'Aussichtspunkt suchen' },
   { id: 'hotel', label: 'Hotel', placeholder: 'Hotel suchen' },
   // Highlights statt Pässe (Koray 8.11.): Pässe und kuratierte Strecken wie die Juhöhe
-  { id: 'pass', label: 'Highlights', placeholder: 'Highlight suchen, etwa Stilfser Joch' },
+  { id: 'pass', label: 'Highlights/Pässe', placeholder: 'Highlight suchen, etwa Stilfser Joch' },
 ];
 export const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.saucer.fill' | 'fork.knife' | 'binoculars.fill' | 'bed.double.fill' | 'mountain.2.fill'> = {
   tank: 'fuelpump.fill',
