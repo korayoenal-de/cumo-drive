@@ -27,6 +27,7 @@ import { PASSES, passPoint, passSummary, searchPasses } from '@/lib/passes';
 import { rememberPlace, useRecentPlaces } from '@/lib/recent-places';
 import { stopsAlong, type StopKind } from '@/lib/stops-along';
 import { formatKm, haversine, type LatLon } from '@/lib/tour';
+import { highlightsForLeg, type Leg } from '@/lib/highlight-candidates';
 
 import { LocationIcon, PointSymbol } from './planner-parts';
 import type { PointKind } from './planner-shared';
@@ -60,6 +61,10 @@ type Props = {
   onSwitch?: (slot: Slot) => void;
   /** Nur Stopps einplanen (aus dem Ergebnis, Abschnitt Unterwegs einplanen): Titel, Kategorien ohne Alle */
   stopsOnly?: { title: string; subtitle: string; cat: Exclude<Cat, 'alle'> };
+  /** Neues Zwischenziel auf dieser Etappe: Highlights nur, wenn sie einen Bogen ergeben */
+  leg?: Leg;
+  /** Strecke als Highlight gewählt: Einstieg und Ausstieg werden zwei Zwischenziele */
+  onPickRoad?: (entry: LatLon, exit: LatLon, name: string) => void;
 };
 
 export type Slot = { key: string; kind: PointKind; index?: number; insert?: boolean; label: string; value: string | null; active: boolean };
@@ -71,7 +76,8 @@ const CATS: { id: Cat; label: string; placeholder: string }[] = [
   { id: 'kaffee', label: 'Café', placeholder: 'Café suchen' },
   { id: 'mittag', label: 'Essen', placeholder: 'Restaurant suchen' },
   { id: 'aussicht', label: 'Aussicht', placeholder: 'Aussichtspunkt suchen' },
-  { id: 'pass', label: 'Pässe', placeholder: 'Pass suchen, etwa Stilfser Joch' },
+  // Highlights statt Pässe (Koray 8.11.): Pässe und kuratierte Strecken wie die Juhöhe
+  { id: 'pass', label: 'Highlights', placeholder: 'Highlight suchen, etwa Stilfser Joch' },
 ];
 export const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.saucer.fill' | 'fork.knife' | 'binoculars.fill' | 'mountain.2.fill'> = {
   tank: 'fuelpump.fill',
@@ -80,7 +86,8 @@ export const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.s
   aussicht: 'binoculars.fill',
   pass: 'mountain.2.fill',
 };
-type StopRow = { key: string; name: string; detail: string; p: LatLon; km: number; offM: number };
+/** extraMin und exit nur bei Highlights für eine Etappe: Umweg in Minuten, Ausstieg einer Strecke */
+type StopRow = { key: string; name: string; detail: string; p: LatLon; km: number; offM: number; extraMin?: number; exit?: LatLon };
 
 /** Umweg hin und zurück zur Route, grob mit 35 km/h auf kleinen Straßen */
 const detourMin = (offM: number) => Math.max(1, Math.round(((2 * offM) / 1000 / 35) * 60));
@@ -137,6 +144,8 @@ function SearchBody({
   slots,
   onSwitch,
   stopsOnly,
+  leg,
+  onPickRoad,
 }: Props) {
   const [query, setQuery] = useState(current);
   const live = usePassLive();
@@ -153,7 +162,17 @@ function SearchBody({
   // Liegen Pässe auf dem Weg oder in der Nähe (dieselben 8 km wie die Liste), die noch kein Punkt der Route sind,
   // steht Pässe direkt hinter Alle und ist beim neuen Zwischenziel vorausgewählt (Koray 8.11.)
   const taken = useMemo(() => new Set((slots ?? []).map((sl) => sl.value).filter(Boolean)), [slots]);
-  const passNear = useMemo(() => hasRoute && passesNear(route!, cum, 8000).some((r) => !taken.has(r.name)), [hasRoute, route, cum, taken]);
+  const legRows = useMemo<StopRow[] | null>(
+    () =>
+      leg
+        ? highlightsForLeg(leg, 8000).filter((c) => !taken.has(c.name)).map((c) => ({ key: c.key, name: c.name, detail: c.detail, p: c.p, km: 0, offM: 0, extraMin: c.extraMin, exit: c.exit }))
+        : null,
+    [leg, taken],
+  );
+  const passNear = useMemo(
+    () => (legRows ? legRows.length > 0 : hasRoute && passesNear(route!, cum, 8000).some((r) => !taken.has(r.name))),
+    [legRows, hasRoute, route, cum, taken],
+  );
   const cats = useMemo(() => (passNear ? [CATS[0], CATS[CATS.length - 1], ...CATS.slice(1, -1)] : CATS), [passNear]);
   // nur beim Einfügen (noch kein Name im Feld), nicht beim Ändern eines bestehenden Zwischenziels
   const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? (passNear && isVia && !current ? 'pass' : 'alle'));
@@ -175,11 +194,11 @@ function SearchBody({
   }, [hasRoute, cat, scale, catKey, found, route]);
   const catRows: StopRow[] | 'fehler' | null = useMemo(() => {
     if (cat === 'alle' || !hasRoute) return null;
-    const raw = cat === 'pass' ? passesNear(route!, cum, 8000 * scale) : found[catKey];
+    const raw = cat === 'pass' ? (legRows && scale === 1 ? legRows : passesNear(route!, cum, 8000 * scale)) : found[catKey];
     if (!raw || raw === 'fehler') return raw ?? null;
     const f = q.toLowerCase();
-    return raw.filter((r) => !f || `${r.name} ${r.detail}`.toLowerCase().includes(f)).sort((a, b) => a.offM - b.offM);
-  }, [cat, hasRoute, route, cum, scale, found, catKey, q]);
+    return raw.filter((r) => !f || `${r.name} ${r.detail}`.toLowerCase().includes(f)).sort((a, b) => (a.extraMin ?? 0) - (b.extraMin ?? 0) || a.offM - b.offM);
+  }, [cat, hasRoute, route, cum, scale, found, catKey, q, legRows]);
   const catLoading = cat !== 'alle' && catRows === null && hasRoute;
   const passHits = useMemo<Place[]>(
     () =>
@@ -411,8 +430,8 @@ function SearchBody({
             ) : (
               <>
                 {[
-                  { label: 'Direkt an der Strecke', rows: (catRows ?? []).filter((r) => r.offM < 150) },
-                  { label: 'Mit kleinem Umweg', rows: (catRows ?? []).filter((r) => r.offM >= 150) },
+                  { label: 'Direkt an der Strecke', rows: (catRows ?? []).filter((r) => (r.extraMin != null ? r.extraMin <= 2 : r.offM < 150)) },
+                  { label: 'Mit kleinem Umweg', rows: (catRows ?? []).filter((r) => (r.extraMin != null ? r.extraMin > 2 : r.offM >= 150)) },
                 ]
                   .filter((g) => g.rows.length)
                   .map((g) => (
@@ -420,8 +439,8 @@ function SearchBody({
                       <AppText style={styles.groupLabel}>{g.label}</AppText>
                       <View style={styles.group}>
                         {g.rows.slice(0, 20).map((r) => {
-                          const near0 = r.offM < 150;
-                          const min = near0 ? 0 : detourMin(r.offM);
+                          const near0 = r.extraMin != null ? r.extraMin <= 2 : r.offM < 150;
+                          const min = r.extraMin ?? (near0 ? 0 : detourMin(r.offM));
                           return (
                             <Pressable
                               key={r.key}
@@ -429,7 +448,9 @@ function SearchBody({
                               accessibilityLabel={`${r.name}, ${near0 ? 'kein Umweg' : `${min} Minuten Umweg`}, bei km ${Math.round(r.km)}`}
                               onPress={() => {
                                 rememberPlace({ name: r.name, detail: r.detail, p: r.p });
-                                if (onPickStop) onPickStop(r.p, r.name, r.km);
+                                if (r.exit && onPickRoad) onPickRoad(r.p, r.exit, r.name);
+                                else if (r.extraMin != null) onPick(r.p, r.name);
+                                else if (onPickStop) onPickStop(r.p, r.name, r.km);
                                 else onPick(r.p, r.name);
                               }}
                               style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
@@ -441,10 +462,10 @@ function SearchBody({
                                   {r.name}
                                 </AppText>
                                 <AppText style={styles.sub} numberOfLines={1}>
-                                  {`bei km ${Math.round(r.km)}${r.detail ? ` · ${r.detail}` : ''}`}
+                                  {r.extraMin != null ? r.detail : `bei km ${Math.round(r.km)}${r.detail ? ` · ${r.detail}` : ''}`}
                                 </AppText>
                               </View>
-                              <AppText style={[styles.detour, near0 && styles.detourZero]}>{near0 ? '0 min' : `+${min} min`}</AppText>
+                              <AppText style={[styles.detour, near0 && styles.detourZero]}>{near0 ? (r.extraMin ? `+${min} min` : '0 min') : `+${min} min`}</AppText>
                             </Pressable>
                           );
                         })}

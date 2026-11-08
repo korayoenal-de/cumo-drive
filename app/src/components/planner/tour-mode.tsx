@@ -194,6 +194,10 @@ export function TourMode({
     }
   }
 
+  const legSlots = [plan.start, ...plan.vias, plan.ziel];
+  const legA = edit?.insert && edit.index != null ? legSlots[edit.index] : null;
+  const legB = edit?.insert && edit.index != null ? legSlots[edit.index + 1] : null;
+  const editLeg = legA && legB ? { a: legA, b: legB } : undefined;
   const editRole = !edit ? '' : edit.kind === 'start' ? 'Start' : edit.kind === 'ziel' ? 'Ziel' : `Zwischenziel ${(edit.index ?? plan.vias.length) + 1}`;
   // Routenkopf der Suche: Start, das bearbeitete Zwischenziel, Ziel (Variante B)
   const headSlots: Slot[] = !edit
@@ -221,6 +225,14 @@ export function TourMode({
       onClose={() => setEdit(null)}
       route={line.length > 1 ? line : undefined}
       onPickStop={pickStop}
+      // Neues Zwischenziel über das Plus: Highlights nur, wenn sie auf dieser Etappe einen Bogen ergeben
+      leg={editLeg}
+      onPickRoad={(entry, exit, name) => {
+        if (!edit) return;
+        onListEdit();
+        plan.insertRoad(edit.index ?? plan.vias.length, entry, exit, profile, avoid, name);
+        setEdit(null);
+      }}
       slots={headSlots}
       onSwitch={(sl) => openEdit({ kind: sl.kind, index: sl.index, insert: sl.insert })}
     />

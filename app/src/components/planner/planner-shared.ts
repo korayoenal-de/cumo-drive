@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { passPoint, type Pass } from '@/lib/passes';
 import { Colors } from '@/constants/theme';
 import { searchPlaces, type Place } from '@/lib/geocode';
+import { searchAddress } from '@/lib/address-search';
 import { type PlanStep } from '@/lib/plan';
 import { haversine, PROFILES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 
@@ -23,8 +24,13 @@ export function usePlaceSuggest(query: string, near?: LatLon) {
     if (q.length < 2) return;
     const ctrl = new AbortController();
     const t = setTimeout(() => {
-      searchPlaces(q, near, ctrl.signal)
-        .then((hits) => !ctrl.signal.aborted && setRes({ q, hits }))
+      // Adresse mit Hausnummer: zusätzlich der Geocoder des Geräts, seine Treffer zuerst
+      Promise.all([searchAddress(q, near, ctrl.signal).catch(() => [] as Place[]), searchPlaces(q, near, ctrl.signal).catch(() => [] as Place[])])
+        .then(([addr, places]) => {
+          const near0 = (a: Place, b: Place) => Math.abs(a.p[0] - b.p[0]) + Math.abs(a.p[1] - b.p[1]) < 0.0005;
+          const hits = [...addr, ...places.filter((x) => !addr.some((y) => near0(x, y)))];
+          if (!ctrl.signal.aborted) setRes({ q, hits });
+        })
         .catch(() => !ctrl.signal.aborted && setRes({ q, hits: [] }));
     }, 300);
     return () => {

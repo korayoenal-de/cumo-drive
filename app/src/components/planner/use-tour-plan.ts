@@ -122,6 +122,19 @@ export function useTourPlan(onPlanned?: () => void) {
     apply(start, v, ziel, next, profile, avoid);
   }
 
+  /** Strecke als Highlight: Einstieg und Ausstieg als zwei Zwischenziele hintereinander, gleiches Profil */
+  function insertRoad(leg: number, entry: LatLon, exit: LatLon, profile: Profile, avoid: Avoid, name: string) {
+    rememberName(entry, name);
+    rememberName(exit, `${name} Ende`);
+    const at = Math.max(0, Math.min(leg, vias.length));
+    const v = [...vias];
+    v.splice(at, 0, entry, exit);
+    const lp = fitLegs(legProfiles, vias.length);
+    const next = [...lp];
+    next.splice(at, 0, lp[at] ?? null, lp[at] ?? null);
+    apply(start, v, ziel, next, profile, avoid);
+  }
+
   /** Punkt in ein Feld setzen: Start, Ziel oder Zwischenziel an Stelle index (am Ende: neu). */
   function setSlot(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string, index?: number) {
     if (kind === 'via' && (index == null || index >= vias.length)) {
@@ -253,7 +266,7 @@ export function useTourPlan(onPlanned?: () => void) {
 
   return {
     start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg, dirty,
-    legProfile, setSlot, add, insertAt, save, reset, load, snapshot, restore,
+    legProfile, setSlot, add, insertAt, insertRoad, save, reset, load, snapshot, restore,
     /** Mit den gesetzten Punkten und den Profilen je Etappe neu planen. */
     planNow: (profile: Profile, avoid: Avoid) => pts.length >= 2 && void plan(pts, profilesFor(legProfiles, start, pts.length, profile), avoid),
     setLegProfile: (leg: number, p: Profile, profile: Profile, avoid: Avoid) => {
