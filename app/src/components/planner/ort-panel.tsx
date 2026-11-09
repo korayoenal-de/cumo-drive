@@ -1,11 +1,11 @@
 /**
  * Orte in der Nähe als Vollfläche (Koray 8.11.2026, wie die Suche beim Zwischenziel): Kopf mit Ort und
- * Rolle, Reiter Hotel, Café und Essen mit Anzahl. Bei Hotels oben bis zu fünf Empfehlungen mit Bild zum
- * Wischen (zweieinhalb sichtbar), darunter alle weiteren. Unten die Aktionen zum Punkt.
+ * Rolle, Reiter Hotel, Café und Essen. Darunter schlicht die Liste mit der Zahl in der Überschrift
+ * („25 Hotels in Meran“, Koray 9.11.; Empfehlungen kommen später). Unten die Aktionen zum Punkt.
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
@@ -16,22 +16,15 @@ import { LABEL, type PointAction } from './point-menu';
 
 export type NearKind = 'hotel' | 'kaffee' | 'mittag';
 
-const KINDS: { id: NearKind; label: string; plural: string; icon: 'bed.double.fill' | 'cup.and.saucer.fill' | 'fork.knife' }[] = [
-  { id: 'hotel', label: 'Hotel', plural: 'Hotels', icon: 'bed.double.fill' },
-  { id: 'kaffee', label: 'Café', plural: 'Cafés', icon: 'cup.and.saucer.fill' },
-  { id: 'mittag', label: 'Essen', plural: 'Restaurants', icon: 'fork.knife' },
+const KINDS: { id: NearKind; label: string; one: string; plural: string; icon: 'bed.double.fill' | 'cup.and.saucer.fill' | 'fork.knife' }[] = [
+  { id: 'hotel', label: 'Hotel', one: 'Hotel', plural: 'Hotels', icon: 'bed.double.fill' },
+  { id: 'kaffee', label: 'Café', one: 'Café', plural: 'Cafés', icon: 'cup.and.saucer.fill' },
+  { id: 'mittag', label: 'Essen', one: 'Restaurant', plural: 'Restaurants', icon: 'fork.knife' },
 ];
 
 /** Treffer je Ort und Art, damit Öffnen und Schließen nicht neu lädt */
 const cache = new Map<string, NearPlace[]>();
 const keyOf = (p: LatLon, k: NearKind) => `${p[0].toFixed(4)},${p[1].toFixed(4)}|${k}`;
-
-/** Empfehlung: richtige Hotels vor Pension und Gasthof, sonst die nächsten. Später mit Bewertungen. */
-function recommend(l: NearPlace[]): NearPlace[] {
-  const hotels = l.filter((h) => h.type === 'Hotel');
-  const rest = l.filter((h) => h.type !== 'Hotel');
-  return [...hotels, ...rest].slice(0, 5);
-}
 
 type Props = {
   visible: boolean;
@@ -54,7 +47,6 @@ export function OrtSheet(props: Props) {
 }
 
 function OrtBody({ p, name, role, withHotel, actions, onClose, onPick, onAction }: Props) {
-  const win = useWindowDimensions();
   const kinds = withHotel ? KINDS : KINDS.filter((k) => k.id !== 'hotel');
   const [kind, setKind] = useState<NearKind>(kinds[0].id);
   const [lists, setLists] = useState<Record<string, NearPlace[] | 'fehler'>>(() => {
@@ -65,7 +57,7 @@ function OrtBody({ p, name, role, withHotel, actions, onClose, onPick, onAction 
     }
     return init;
   });
-  // Alle Arten gleich laden, damit die Reiter ihre Zahl zeigen
+  // Alle Arten gleich laden, damit der Wechsel der Reiter sofort zeigt
   useEffect(() => {
     const ctrl = new AbortController();
     for (const k of kinds) {
@@ -85,10 +77,6 @@ function OrtBody({ p, name, role, withHotel, actions, onClose, onPick, onAction 
   const list = lists[kind];
   const meta = kinds.find((k) => k.id === kind)!;
   const others = actions.filter((a) => a !== 'entfernen');
-  const top = kind === 'hotel' && Array.isArray(list) ? recommend(list) : [];
-  const rest = Array.isArray(list) ? list.filter((h) => !top.includes(h)) : [];
-  // zweieinhalb Karten sichtbar: zwei Abstände plus eine halbe Karte am Rand
-  const cardW = Math.round((win.width - Spacing.xl - 2 * Spacing.m) / 2.5);
 
   const row = (h: NearPlace) => (
     <Pressable
@@ -133,8 +121,6 @@ function OrtBody({ p, name, role, withHotel, actions, onClose, onPick, onAction 
         <View role="tablist" style={styles.tabs}>
           {kinds.map((k) => {
             const on = k.id === kind;
-            const l = lists[k.id];
-            const n = Array.isArray(l) ? l.length : null;
             return (
               <Pressable
                 key={k.id}
@@ -142,7 +128,7 @@ function OrtBody({ p, name, role, withHotel, actions, onClose, onPick, onAction 
                 accessibilityState={{ selected: on }}
                 onPress={() => setKind(k.id)}
                 style={({ pressed }) => [styles.tab, on && styles.tabOn, pressed && styles.pressed]}>
-                <AppText style={[styles.tabText, on && styles.tabTextOn]}>{n != null ? `${k.label} ${n}` : k.label}</AppText>
+                <AppText style={[styles.tabText, on && styles.tabTextOn]}>{k.label}</AppText>
               </Pressable>
             );
           })}
@@ -156,63 +142,11 @@ function OrtBody({ p, name, role, withHotel, actions, onClose, onPick, onAction 
         ) : list.length === 0 ? (
           <AppText style={[styles.muted, styles.pad]}>Keine {meta.plural} in der Nähe.</AppText>
         ) : (
-          <>
-            {top.length > 0 && (
-              <View style={styles.section}>
-                <AppText style={[styles.label, styles.pad]}>Unsere Empfehlung</AppText>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  decelerationRate="fast"
-                  snapToInterval={cardW + Spacing.m}
-                  snapToAlignment="start"
-                  contentContainerStyle={styles.cards}>
-                  {top.map((h) => (
-                    <Pressable
-                      key={h.id}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${h.name}, ${formatKm(h.distM / 1000)} Kilometer entfernt, als neuen Ort setzen`}
-                      onPress={() => onPick(h.p, h.name)}
-                      style={({ pressed }) => [styles.card, { width: cardW }, pressed && styles.pressed]}>
-                      {/* Konzept C2 (Koray 9.11.): Parken als Kopf der Karte, nur wenn bekannt */}
-                      {h.parking && (
-                        <View style={[styles.band, h.parking === 'bewacht' && styles.bandGood]}>
-                          <SymbolView
-                            name={h.parking === 'bewacht' ? 'shield.lefthalf.filled' : 'parkingsign.square'}
-                            size={16}
-                            tintColor={h.parking === 'bewacht' ? Colors.good : Colors.muted}
-                            weight="semibold"
-                          />
-                          <AppText style={[styles.bandText, h.parking === 'bewacht' && styles.bandTextGood]}>
-                            {h.parking === 'bewacht' ? 'Bewacht' : 'Parkplatz'}
-                          </AppText>
-                        </View>
-                      )}
-                      <View style={styles.cardBody}>
-                        <AppText style={styles.cardName} numberOfLines={2}>
-                          {h.name}
-                        </AppText>
-                        <AppText style={styles.cardMeta} numberOfLines={1}>
-                          {[h.stars ? `${h.stars} Sterne` : h.type, `${formatKm(h.distM / 1000)} km`].filter(Boolean).join(' · ')}
-                        </AppText>
-                        <View style={styles.extras}>
-                          {h.charge && <SymbolView name="bolt.fill" size={16} tintColor={Colors.muted} />}
-                          {h.food && <SymbolView name="fork.knife" size={16} tintColor={Colors.muted} />}
-                          {h.garage && <SymbolView name="door.garage.closed" size={16} tintColor={Colors.muted} />}
-                        </View>
-                      </View>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-            {rest.length > 0 && (
-              <View style={[styles.section, styles.pad]}>
-                {top.length > 0 && <AppText style={styles.label}>Weitere {meta.plural}</AppText>}
-                <View style={styles.group}>{rest.map(row)}</View>
-              </View>
-            )}
-          </>
+          // Schlicht aufgelistet, die Zahl steht in der Überschrift (Koray 9.11.)
+          <View style={[styles.section, styles.pad]}>
+            <AppText style={styles.label}>{`${list.length} ${list.length === 1 ? meta.one : meta.plural} in ${name}`}</AppText>
+            <View style={styles.group}>{list.map(row)}</View>
+          </View>
         )}
         <View style={[styles.actions, styles.pad]}>
           {others.map((a) => (
@@ -255,17 +189,6 @@ const styles = StyleSheet.create({
   loading: { marginVertical: Spacing.xxl },
   section: { gap: Spacing.m },
   label: { fontFamily: Fonts.bold, fontSize: Type.h3, color: Colors.text },
-  cards: { paddingHorizontal: Spacing.xl, gap: Spacing.m },
-  // hellere Box statt Bild (Koray 9.11.: Kartenbilder entsprechen nicht dem Anspruch)
-  card: { minHeight: 168, borderRadius: Radius.l, backgroundColor: Colors.surface2, overflow: 'hidden' },
-  band: { height: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: Spacing.m, backgroundColor: Colors.line },
-  bandGood: { backgroundColor: Colors.goodTint },
-  bandText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  bandTextGood: { fontFamily: Fonts.bold, color: Colors.good },
-  cardBody: { flex: 1, padding: Spacing.m, gap: 6 },
-  cardName: { fontFamily: Fonts.bold, fontSize: 17, lineHeight: 21, color: Colors.text },
-  extras: { marginTop: 'auto', flexDirection: 'row', gap: 10 },
-  cardMeta: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
   group: { borderRadius: Radius.l, backgroundColor: Colors.surface, paddingVertical: Spacing.xs, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64, paddingHorizontal: Spacing.l, paddingVertical: Spacing.s },
   rowPressed: { backgroundColor: Colors.pressTint },
