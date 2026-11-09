@@ -19,7 +19,7 @@ import { AppText } from '@/components/ui/text';
 import { TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
 import { Colors, Motion } from '@/constants/theme';
 import { formatKm, type Warning } from '@/lib/tour';
-import { selectVehicle, useVehicles } from '@/lib/vehicle';
+import { selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
 
 import { bigDuration, type Mode, type PointKind } from './planner-shared';
 import { styles } from './planner-styles';
@@ -41,7 +41,7 @@ export function VehiclePick() {
       ) : (
         <View style={styles.wrap}>
           {list.map((v) => (
-            <Chip key={v.id} label={v.model.trim() || 'Fahrzeug'} active={current?.id === v.id} onSurface onPress={() => void selectVehicle(v.id)} />
+            <Chip key={v.id} label={vehicleName(v) || 'Fahrzeug'} active={current?.id === v.id} onSurface onPress={() => void selectVehicle(v.id)} />
           ))}
         </View>
       )}

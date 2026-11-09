@@ -13,6 +13,8 @@ export type Fuel = 'super_plus' | 'super' | 'diesel' | 'elektro';
 
 export type Vehicle = {
   id: string;
+  /** Marke, etwa Porsche (seit 9.11. eigenes Feld) */
+  brand?: string;
   model: string;
   /** Breite ohne Spiegel in Metern */
   widthM: number | null;
@@ -146,13 +148,16 @@ export async function syncVehicles() {
 }
 
 /** Kurzbeschreibung für Listen, zum Beispiel "1,85 m breit, 10 cm Bodenfreiheit, Super Plus". */
+/** Marke und Modell zusammen, ohne doppelte Marke (ältere Einträge haben sie im Modell) */
+export function vehicleName(v: Vehicle): string {
+  const b = (v.brand ?? '').trim();
+  const m = v.model.trim();
+  return b && !m.toLowerCase().startsWith(b.toLowerCase()) ? `${b} ${m}`.trim() : m || b;
+}
+
 export function vehicleSummary(v: Vehicle, withModel = true): string {
-  const n = (x: number, d = 2) => x.toFixed(d).replace('.', ',').replace(/,?0+$/, '');
   return [
-    withModel ? v.model.trim() || null : null,
-    v.widthM ? `${n(v.widthM)} m breit` : null,
-    v.clearanceCm ? `${Math.round(v.clearanceCm)} cm Bodenfreiheit` : null,
-    v.rangeKm ? `${Math.round(v.rangeKm)} km Reichweite` : null,
+    withModel ? vehicleName(v) || null : null,
     FUELS.find((f) => f.id === v.fuel)?.label,
   ]
     .filter(Boolean)

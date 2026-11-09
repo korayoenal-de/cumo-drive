@@ -19,7 +19,7 @@ import { clearLocalTours } from '@/lib/library';
 import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { formatKm } from '@/lib/tour';
-import { deleteVehicle, FUELS, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleSummary, type Vehicle } from '@/lib/vehicle';
+import { deleteVehicle, FUELS, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleName, vehicleSummary, type Vehicle } from '@/lib/vehicle';
 import { CarTopView } from '@/components/map/car-marker';
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
@@ -224,7 +224,7 @@ function Garage({ drives }: { drives: Drive[] | null }) {
       <AppText variant="label">Garage</AppText>
       {list.length === 0 && !edit && (
         <View style={styles.card}>
-          <AppText muted>Leg deine Fahrzeuge an. Vor jeder Fahrt wählst du, womit du fährst, dann landen Kilometer und Touren beim richtigen Auto. Tankstopps passen zur Reichweite.</AppText>
+          <AppText muted>Leg deine Fahrzeuge an. Vor jeder Fahrt wählst du, womit du fährst, dann landen Kilometer und Touren beim richtigen Auto.</AppText>
         </View>
       )}
       {list.map((v) =>
@@ -240,7 +240,7 @@ function Garage({ drives }: { drives: Drive[] | null }) {
                   </View>
                 )}
                 <AppText style={[styles.name, styles.flex]} numberOfLines={1}>
-                  {v.model.trim() || 'Fahrzeug ohne Namen'}
+                  {vehicleName(v) || 'Fahrzeug ohne Namen'}
                 </AppText>
                 {current?.id === v.id && (
                   <View style={styles.badge}>
@@ -249,7 +249,7 @@ function Garage({ drives }: { drives: Drive[] | null }) {
                     </AppText>
                   </View>
                 )}
-                <Pressable accessibilityRole="button" accessibilityLabel={`Optionen für ${v.model.trim() || 'Fahrzeug'}`} onPress={() => setMenu(v)} hitSlop={6} style={styles.more}>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Optionen für ${vehicleName(v) || 'Fahrzeug'}`} onPress={() => setMenu(v)} hitSlop={6} style={styles.more}>
                   <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="medium" />
                 </Pressable>
               </View>
@@ -276,7 +276,7 @@ function Garage({ drives }: { drives: Drive[] | null }) {
           menu
             ? [
                 ...(current?.id !== menu.id ? [{ key: 'cur', icon: 'checkmark.circle' as const, label: 'Als aktuell wählen', hint: 'Damit fährst du ab jetzt', onPress: () => void selectVehicle(menu.id) }] : []),
-                { key: 'edit', icon: 'pencil' as const, label: 'Bearbeiten', hint: 'Breite, Bodenfreiheit, Reichweite', onPress: () => setEdit(menu) },
+                { key: 'edit', icon: 'pencil' as const, label: 'Bearbeiten', hint: 'Marke, Modell und Kraftstoff', onPress: () => setEdit(menu) },
                 menu.mapSymbol === 'gts997'
                   ? { key: 'sym', icon: 'location.north.fill' as const, label: 'Pfeil auf der Karte', hint: 'Statt deines Autos wieder den Pfeil zeigen', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'pfeil' }) }
                   : { key: 'sym', icon: 'car.fill' as const, label: 'Als Symbol auf der Karte', hint: 'Draufsicht 997.2 Carrera GTS statt des Pfeils (Test)', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'gts997' }).then(() => showToast('Dein Auto fährt jetzt auf der Karte mit')) },
@@ -317,20 +317,14 @@ function Garage({ drives }: { drives: Drive[] | null }) {
 }
 
 function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v: Vehicle) => void; onDone: () => void }) {
-  const num = (t: string) => {
-    const x = parseFloat(t.replace(',', '.'));
-    return Number.isFinite(x) && x > 0 ? x : null;
-  };
-  const str = (x: number | null) => (x == null ? '' : String(x).replace('.', ','));
   const set = (patch: Partial<Vehicle>) => onChange({ ...value, ...patch });
   return (
     <View style={styles.card}>
-      <TextInput value={value.model} onChangeText={(t) => set({ model: t })} placeholder="Modell, zum Beispiel Porsche 911 GT3" placeholderTextColor={Colors.muted} style={styles.input} accessibilityLabel="Modell" />
+      {/* Nur noch Marke und Modell (Koray 9.11.); Breite, Bodenfreiheit und Reichweite entfallen */}
       <View style={styles.row}>
-        <TextInput defaultValue={str(value.widthM)} onChangeText={(t) => set({ widthM: num(t) })} placeholder="Breite in m" placeholderTextColor={Colors.muted} keyboardType="decimal-pad" style={[styles.input, styles.flex]} accessibilityLabel="Breite in Metern" />
-        <TextInput defaultValue={str(value.clearanceCm)} onChangeText={(t) => set({ clearanceCm: num(t) })} placeholder="Bodenfreiheit cm" placeholderTextColor={Colors.muted} keyboardType="number-pad" style={[styles.input, styles.flex]} accessibilityLabel="Bodenfreiheit in Zentimetern" />
+        <TextInput value={value.brand ?? ''} onChangeText={(t) => set({ brand: t })} placeholder="Marke" placeholderTextColor={Colors.muted} style={[styles.input, styles.flex]} accessibilityLabel="Marke" />
+        <TextInput value={value.model} onChangeText={(t) => set({ model: t })} placeholder="Modell, etwa 911 GT3" placeholderTextColor={Colors.muted} style={[styles.input, styles.flex]} accessibilityLabel="Modell" />
       </View>
-      <TextInput defaultValue={str(value.rangeKm)} onChangeText={(t) => set({ rangeKm: num(t) })} placeholder="Reichweite mit vollem Tank in km" placeholderTextColor={Colors.muted} keyboardType="number-pad" style={styles.input} accessibilityLabel="Reichweite in Kilometern" />
       <View style={styles.wrap}>
         {FUELS.map((f) => (
           <Chip key={f.id} label={f.label} active={value.fuel === f.id} onSurface onPress={() => set({ fuel: f.id })} />

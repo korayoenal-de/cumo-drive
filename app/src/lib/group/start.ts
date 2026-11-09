@@ -5,13 +5,13 @@
 import { setActiveTour } from '../active-tour';
 import { myProfile } from '../profile';
 import { supabase } from '../supabase';
-import { currentVehicle } from '../vehicle';
+import { currentVehicle, vehicleName } from '../vehicle';
 import { DEFAULT_AVOID } from '../valhalla';
 import { loadRideTour, rideOverview } from './invites';
 import { startRide, type Role } from './ride';
 
 function myCar(): string {
-  return currentVehicle()?.model.trim() || myProfile()?.car || '';
+  return (() => { const v = currentVehicle(); return v ? vehicleName(v) : ''; })() || myProfile()?.car || '';
 }
 
 function myName(): string {

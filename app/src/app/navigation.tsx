@@ -39,7 +39,7 @@ import Animated, { FadeOut } from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
 import { elevationProfile } from '@/lib/stats';
 import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, STOP_REASONS, useRide } from '@/lib/group/ride';
-import { currentVehicle, selectVehicle, useVehicles } from '@/lib/vehicle';
+import { currentVehicle, selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
 
@@ -865,7 +865,7 @@ export default function NavigationScreen() {
               {vehicles.list.length > 0 && (
                 <View style={styles.vehicleRow} accessibilityRole="radiogroup" accessibilityLabel="Fahrzeug für diese Fahrt">
                   {vehicles.list.map((v) => (
-                    <Chip key={v.id} label={v.model.trim() || 'Fahrzeug'} active={vehicles.current?.id === v.id} onPress={() => void selectVehicle(v.id)} />
+                    <Chip key={v.id} label={vehicleName(v) || 'Fahrzeug'} active={vehicles.current?.id === v.id} onPress={() => void selectVehicle(v.id)} />
                   ))}
                 </View>
               )}
