@@ -266,8 +266,9 @@ export default function NavigationScreen() {
     const r = state.route;
     return r ? r.maneuvers.map((_, i) => roundaboutTurn(r, i)) : [];
   }, [state.route]);
-  // nur den noch zu fahrenden Teil des Rückwegs zeigen (in 50 m Schritten, damit die Linie nicht bei jeder Position neu entsteht)
-  const doneStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 20) : 0;
+  // nur den noch zu fahrenden Teil des Rückwegs zeigen, in 10 m Schritten und genau an der Stelle abgeschnitten
+  // (Koray 9.11.: die gelbe Linie hing hinter dem Auto nach, weil sie am vorigen Stützpunkt begann)
+  const doneStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 100) : 0;
   // Tour für die Karte: nur was noch vor einem liegt (Koray 8.11.: die schon gefahrene weiße Linie irritiert).
   // Nach einer Abweichung wird der Weg zurück gestrichelt gezeichnet, durchgezogen nur die Tour danach.
   // Aktuelle Sperrungen vor einem (TomTom Verkehrsmeldungen, Koray 8.11.): beim Start, nach jeder
@@ -344,10 +345,16 @@ export default function NavigationScreen() {
   const dashed = useMemo(() => {
     const r = state.route;
     if (!r?.rejoinIndex) return null;
-    const at = doneStep / 20;
+    const at = doneStep / 100;
     let i = 0;
     while (i < r.rejoinIndex && r.cumKm[i + 1] <= at) i++;
-    return r.shape.slice(i, r.rejoinIndex + 1);
+    // Anfang auf dem Stück zwischen Stützpunkt i und i + 1 einsetzen, genau bei der gefahrenen Strecke
+    const seg = r.cumKm[i + 1] - r.cumKm[i];
+    const k = i < r.rejoinIndex && seg > 0 ? Math.max(0, Math.min(1, (at - r.cumKm[i]) / seg)) : 0;
+    const a = r.shape[i];
+    const b = r.shape[Math.min(i + 1, r.shape.length - 1)];
+    const head: LatLon = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+    return [head, ...r.shape.slice(i + 1, r.rejoinIndex + 1)];
   }, [state.route, doneStep]);
 
   // Fahrtstatistik: GPS Punkte während der Fahrt sammeln
