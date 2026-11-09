@@ -364,6 +364,7 @@ function rideAction(r: Ausfahrt): string {
   if (r.isOwner) return r.openRequests ? (r.openRequests === 1 ? 'Anfrage ansehen' : `${r.openRequests} Anfragen ansehen`) : 'Ausfahrt ansehen';
   if (r.myStatus === 'zugesagt') return 'Zur Ausfahrt';
   if (r.myStatus === 'angefragt') return 'Anfrage ansehen';
+  if (r.myStatus === 'eingeladen') return 'Einladung ansehen';
   return freeSeats(r) > 0 ? 'Mitfahren anfragen' : 'Ausfahrt ansehen';
 }
 

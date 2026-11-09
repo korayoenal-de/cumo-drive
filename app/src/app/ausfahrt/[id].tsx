@@ -22,7 +22,8 @@ import {
 import { useSession } from '@/lib/auth';
 import { myVehicleLabel, rideAlong, startAsLead } from '@/lib/group/start';
 import { useRide } from '@/lib/group/ride';
-import { setRideStatus } from '@/lib/group/invites';
+import { inviteToRide, removeFromRide, respondInvite, rideOverview, setRideStatus, type RideMemberRow } from '@/lib/group/invites';
+import { findProfiles, type FoundProfile } from '@/lib/profile';
 import { formatKm, type Profile, type Tour } from '@/lib/tour';
 
 type Full = { tour: Tour & { minutes?: number }; profile: Profile };
@@ -35,6 +36,8 @@ export default function AusfahrtDetail() {
   const [a, setA] = useState<Ausfahrt | null | undefined>(undefined);
   const [full, setFull] = useState<Full | null>(null);
   const [members, setMembers] = useState<Teilnehmer[]>([]);
+  const [invited, setInvited] = useState<RideMemberRow[]>([]);
+  const [inviting, setInviting] = useState(false);
   const [requests, setRequests] = useState<Anfrage[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -51,7 +54,10 @@ export default function AusfahrtDetail() {
       setA(found);
       if (!found) return;
       setMembers(await ausfahrtTeilnehmer(id));
-      if (found.isOwner) setRequests(await listAnfragen(id));
+      if (found.isOwner) {
+        setRequests(await listAnfragen(id));
+        setInvited((await rideOverview(id)).filter((m) => m.status === 'eingeladen'));
+      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
       setA((x) => x ?? null);
@@ -83,15 +89,18 @@ export default function AusfahrtDetail() {
     return () => clearTimeout(t);
   }, [confirm]);
 
-  const run = async (key: string, fn: () => Promise<unknown>) => {
-    if (busy) return;
+  /** Führt eine Aktion aus, lädt danach neu; true bei Erfolg */
+  const run = async (key: string, fn: () => Promise<unknown>): Promise<boolean> => {
+    if (busy) return false;
     setBusy(key);
     setErr(null);
     try {
       await fn();
       await load();
+      return true;
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
+      return false;
     } finally {
       setBusy(null);
     }
@@ -148,6 +157,7 @@ export default function AusfahrtDetail() {
   else if (joined && (startsSoon || a.rideStatus === 'laeuft') && (a.isOwner || a.rideStatus === 'laeuft'))
     main = { label: a.isOwner ? 'Gruppenfahrt starten' : 'Jetzt mitfahren', onPress: () => void startGroup() };
   else if (joined) main = { label: 'Chat öffnen', onPress: () => router.push({ pathname: '/ausfahrt/chat', params: { id: a.id } }) };
+  else if (a.myStatus === 'eingeladen') main = { label: 'Zusagen', onPress: () => void run('yes', () => respondInvite(a.id, true, myVehicleLabel() || null)) };
   else if (!a.myStatus && free > 0 && !asking) main = { label: 'Mitfahren anfragen', onPress: () => setAsking(true) };
   else if (asking) main = { label: 'Anfrage senden', onPress: () => void run('ask', async () => { await requestAusfahrt(a.id, msg, myVehicleLabel() || null); setAsking(false); }) };
 
@@ -267,6 +277,36 @@ export default function AusfahrtDetail() {
               </View>
             </View>
           ))}
+          {a.isOwner &&
+            invited.map((m) => (
+              <Animated.View key={m.userId} entering={FadeIn.duration(Motion.enter)} exiting={FadeOut.duration(180)} style={styles.member}>
+                <Avatar name={m.name} />
+                <View style={styles.flex}>
+                  <AppText style={styles.name}>{m.name}</AppText>
+                  <AppText variant="caption" muted numberOfLines={1}>{m.vehicle ?? 'Fahrer'}</AppText>
+                </View>
+                <View style={[styles.tag, styles.tagWarn]}>
+                  <AppText style={[styles.tagText, { color: Colors.warn }]}>Eingeladen</AppText>
+                </View>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Einladung an ${m.name} zurücknehmen`} hitSlop={4} onPress={() => void run(`rm-${m.userId}`, () => removeFromRide(a.id, m.userId))} style={styles.smallRound}>
+                  {busy === `rm-${m.userId}` ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="xmark" size={13} weight="bold" tintColor={Colors.muted} />}
+                </Pressable>
+              </Animated.View>
+            ))}
+          {a.isOwner && free > 0 && !inviting && (
+            <Pressable accessibilityRole="button" onPress={() => setInviting(true)} style={styles.inviteBtn}>
+              <SymbolView name="person.badge.plus" size={18} weight="semibold" tintColor={Colors.text} />
+              <AppText style={styles.secondaryText}>Mitglieder einladen</AppText>
+            </Pressable>
+          )}
+          {a.isOwner && inviting && (
+            <InviteBox
+              exclude={new Set([...members.map((m) => m.userId), ...invited.map((m) => m.userId), ...requests.map((r) => r.userId)])}
+              onInvite={(p) => run(`inv-${p.id}`, () => inviteToRide(a.id, p.id))}
+              busyId={busy?.startsWith('inv-') ? busy.slice(4) : null}
+              onClose={() => setInviting(false)}
+            />
+          )}
         </View>
 
         {asking && (
@@ -286,6 +326,12 @@ export default function AusfahrtDetail() {
           </Animated.View>
         )}
 
+        {!a.isOwner && a.myStatus === 'eingeladen' && (
+          <View style={styles.info}>
+            <AppText variant="title">Du bist eingeladen</AppText>
+            <AppText muted>{a.ownerName} hat dich zu dieser Ausfahrt eingeladen. Sag zu, dann bist du im Chat und fährst am Tag mit.</AppText>
+          </View>
+        )}
         {!a.isOwner && a.myStatus === 'angefragt' && (
           <View style={styles.info}>
             <AppText variant="title">Anfrage gesendet</AppText>
@@ -304,7 +350,7 @@ export default function AusfahrtDetail() {
 
         {main && (
           <Pressable accessibilityRole="button" onPress={main.onPress} disabled={!!busy} style={styles.primary}>
-            {busy === 'ask' || busy === 'start' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{main.label}</AppText>}
+            {busy === 'ask' || busy === 'start' || busy === 'yes' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{main.label}</AppText>}
           </Pressable>
         )}
         {asking && (
@@ -313,7 +359,7 @@ export default function AusfahrtDetail() {
           </Pressable>
         )}
 
-        {(a.myStatus === 'angefragt' || (a.myStatus === 'zugesagt' && !a.isOwner) || a.isOwner) && !inThisRide && (
+        {(a.myStatus === 'angefragt' || a.myStatus === 'eingeladen' || (a.myStatus === 'zugesagt' && !a.isOwner) || a.isOwner) && !inThisRide && (
           <Pressable
             accessibilityRole="button"
             onPress={() => {
@@ -326,7 +372,8 @@ export default function AusfahrtDetail() {
                 if (a.isOwner) {
                   await cancelAusfahrt(a.id);
                   back();
-                } else await withdrawAusfahrt(a.id);
+                } else if (a.myStatus === 'eingeladen') await respondInvite(a.id, false);
+                else await withdrawAusfahrt(a.id);
               });
             }}
             style={[styles.textBtn, confirm && styles.confirm]}>
@@ -334,13 +381,73 @@ export default function AusfahrtDetail() {
               <ActivityIndicator color={Colors.stopText} />
             ) : (
               <AppText style={[styles.textBtnText, confirm && styles.confirmText]}>
-                {confirm ? 'Wirklich? Nochmal tippen' : a.isOwner ? 'Ausfahrt absagen' : a.myStatus === 'angefragt' ? 'Anfrage zurückziehen' : 'Doch nicht mitfahren'}
+                {confirm ? 'Wirklich? Nochmal tippen' : a.isOwner ? 'Ausfahrt absagen' : a.myStatus === 'angefragt' ? 'Anfrage zurückziehen' : a.myStatus === 'eingeladen' ? 'Absagen' : 'Doch nicht mitfahren'}
               </AppText>
             )}
           </Pressable>
         )}
       </ScrollView>
     </View>
+  );
+}
+
+/** Mitglieder per Name einladen: Suche klappt inline auf, Treffer antippen lädt ein */
+function InviteBox({ exclude, onInvite, busyId, onClose }: { exclude: Set<string>; onInvite: (p: FoundProfile) => Promise<boolean>; busyId: string | null; onClose: () => void }) {
+  const [q, setQ] = useState('');
+  const [found, setFound] = useState<FoundProfile[]>([]);
+  const [done, setDone] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    const t = setTimeout(() => {
+      findProfiles(q)
+        .then(setFound)
+        .catch(() => setFound([]));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [q]);
+  const shown = q.trim().length >= 2 ? found.filter((p) => !exclude.has(p.id) || done.has(p.id)) : [];
+  return (
+    <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.inviteBox}>
+      <View style={styles.row}>
+        <TextInput
+          value={q}
+          onChangeText={setQ}
+          placeholder="Name eines Fahrers"
+          placeholderTextColor={Colors.muted}
+          autoFocus
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={[styles.input, styles.inputOnSurface, styles.flex]}
+          accessibilityLabel="Fahrer zum Einladen suchen"
+        />
+        <Pressable accessibilityRole="button" accessibilityLabel="Einladen schließen" hitSlop={4} onPress={onClose} style={styles.roundBtn}>
+          <SymbolView name="xmark" size={14} weight="bold" tintColor={Colors.text} />
+        </Pressable>
+      </View>
+      {q.trim().length >= 2 && shown.length === 0 && <AppText variant="caption" muted>Kein Fahrer mit diesem Namen.</AppText>}
+      {shown.map((p) => {
+        const sent = done.has(p.id);
+        return (
+          <View key={p.id} style={styles.member}>
+            <Avatar name={p.displayName} size={36} />
+            <View style={styles.flex}>
+              <AppText style={styles.name}>{p.displayName}</AppText>
+              {p.car ? <AppText variant="caption" muted numberOfLines={1}>{p.car}</AppText> : null}
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={sent ? `${p.displayName} eingeladen` : `${p.displayName} einladen`}
+              disabled={sent || !!busyId}
+              onPress={() =>
+                void onInvite(p).then((ok) => ok && setDone((d) => new Set(d).add(p.id)))
+              }
+              style={[styles.invitePill, sent && styles.invitePillDone]}>
+              {busyId === p.id ? <ActivityIndicator color={Colors.ground} /> : <AppText style={[styles.invitePillText, sent && styles.invitePillTextDone]}>{sent ? 'Eingeladen' : 'Einladen'}</AppText>}
+            </Pressable>
+          </View>
+        );
+      })}
+      <AppText variant="caption" muted>Eingeladene sehen die Einladung in der App und sagen zu oder ab.</AppText>
+    </Animated.View>
   );
 }
 
@@ -374,6 +481,15 @@ const styles = StyleSheet.create({
   tag: { height: 28, paddingHorizontal: 10, borderRadius: 14, justifyContent: 'center' },
   tagGood: { backgroundColor: Colors.goodTint },
   tagMuted: { backgroundColor: Colors.surface2 },
+  tagWarn: { backgroundColor: Colors.warnTint },
+  smallRound: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  inviteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.s, height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
+  inputOnSurface: { backgroundColor: Colors.surface2 },
+  inviteBox: { gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l },
+  invitePill: { height: 44, minWidth: 96, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center' },
+  invitePillDone: { backgroundColor: Colors.goodTint },
+  invitePillText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.ground },
+  invitePillTextDone: { color: Colors.good },
   tagText: { fontFamily: Fonts.bold, fontSize: Type.caption },
   fields: { gap: Spacing.s },
   field: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.m },

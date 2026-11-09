@@ -17,6 +17,9 @@ export function RideStatus({ r }: { r: Ausfahrt }) {
   } else if (r.myStatus === 'zugesagt') {
     text = 'Du bist dabei';
     tone = 'good';
+  } else if (r.myStatus === 'eingeladen') {
+    text = 'Eingeladen';
+    tone = 'signal';
   } else if (r.myStatus === 'angefragt') text = 'Angefragt';
   else if (r.myStatus === 'abgelehnt') text = 'Abgelehnt';
   else if (freeSeats(r) === 0) text = 'Ausgebucht';
