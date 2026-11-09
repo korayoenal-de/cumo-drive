@@ -39,7 +39,7 @@ import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } f
 import { type PlannedTour } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { spliceStop } from '@/lib/stop-splice';
-import { curvyPieces, radarRadiusM, radarRoads, REVEAL_MS, type Radar } from '@/lib/radar';
+import { curvyPieces, radarRadiusM, radarRoads, radarSpots, REVEAL_MS, type Radar } from '@/lib/radar';
 import { flatten, haversine, normProfile, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
@@ -155,7 +155,7 @@ export default function Planner() {
   // Auflösen, und dann die kurvigen Stücke der fertigen Route, damit das Gefundene zur Strecke passt (Koray 8.11.)
   const startRadar = (center: LatLon, km: number) => {
     const radiusM = radarRadiusM(km);
-    setRadar((r) => (r && haversine(r.center, center) < 200 && r.radiusM === radiusM ? r : { center, radiusM, roads: [], count: radarRoads(center, radiusM).length, phase: 'suchen' }));
+    setRadar((r) => (r && haversine(r.center, center) < 200 && r.radiusM === radiusM ? r : { center, radiusM, roads: [], spots: radarSpots(center, radiusM), count: radarRoads(center, radiusM).length, phase: 'suchen' }));
   };
   const scroll = useRef<ScrollViewInstance>(null);
   const toTop = () => scroll.current?.scrollTo({ y: 0, animated: false });
@@ -318,6 +318,7 @@ export default function Planner() {
           radiusM: r?.radiusM ?? radarRadiusM(req!.km),
           roads: curvyPieces(line, center),
           count: r?.count ?? 0,
+          spots: r?.spots,
           phase: 'aufloesen',
           line,
         }));
@@ -539,7 +540,8 @@ export default function Planner() {
           {view.tour.name}
         </AppText>
       ) : (
-        <AppText variant="label">{view.kind === 'working' ? 'Tour wird erstellt' : 'Das hat nicht geklappt'}</AppText>
+        // Beim Erstellen steht nur der Schritt im Kopf, ohne Tour wird erstellt darüber (Koray 9.11.)
+        view.kind === 'error' ? <AppText variant="label">Das hat nicht geklappt</AppText> : null
       )}
       {view.kind === 'working' ? (
         <View style={styles.workBox}>

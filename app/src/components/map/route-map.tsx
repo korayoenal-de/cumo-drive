@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
-import MapView, { AnimatedRegion, Marker, Polyline, type LatLng } from 'react-native-maps';
+import MapView, { AnimatedRegion, Circle, Marker, Polyline, type LatLng } from 'react-native-maps';
 
 import { useIsFocused } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -17,7 +17,7 @@ import { listDriveTracks } from '@/lib/drives';
 import { useLibrary } from '@/lib/library';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { passPoint, PASSES } from '@/lib/passes';
-import { RADAR_FAST_MS, RADAR_MS, RADAR_REPEAT_MS, REVEAL_MS, type RadarRoad } from '@/lib/radar';
+import { RADAR_FAST_MS, RADAR_MS, RADAR_REPEAT_MS, REVEAL_MS, type RadarRoad, type RadarSpot } from '@/lib/radar';
 import type { CheckClass, LatLon } from '@/lib/tour';
 import { CarTopView, carSymbolFor } from '@/components/map/car-marker';
 import { useVehicles } from '@/lib/vehicle';
@@ -521,7 +521,7 @@ export function RouteMap({
             )}
           </MeMarker>
         )}
-        {radar && ringAt && fitCoords.length < 2 && <RadarRoads key={ringKey} radiusM={radar.radiusM} roads={radar.roads} line={radar.line} fast={radar.phase === 'aufloesen'} />}
+        {radar && ringAt && fitCoords.length < 2 && <RadarRoads key={ringKey} radiusM={radar.radiusM} roads={radar.roads} spots={radar.spots} line={radar.line} fast={radar.phase === 'aufloesen'} />}
       </MapView>
       {radar && ringAt && fitCoords.length < 2 && <RadarRing key={ringKey} x={ringAt.x} y={ringAt.y} r={ringAt.r} fast={radar.phase === 'aufloesen'} />}
 
@@ -691,13 +691,15 @@ const styles = StyleSheet.create({
  * Strecken im Umkreis leuchten auf, sobald der erste Ring sie erreicht (Ladescreen Konzept C).
  * Zehn Schritte je Sekunde, nur solange der erste Ring läuft.
  */
-function RadarRoads({ radiusM, roads, line, fast }: { radiusM: number; roads: RadarRoad[]; line?: LatLon[]; fast: boolean }) {
+function RadarRoads({ radiusM, roads, spots, line, fast }: { radiusM: number; roads: RadarRoad[]; spots?: RadarSpot[]; line?: LatLon[]; fast: boolean }) {
   const [t, setT] = useState(0);
   const ringMs = fast ? RADAR_FAST_MS : RADAR_MS;
   // Linie der fertigen Route: zeichnet sich vom Start aus, sobald der Ring die meisten Stücke gefunden hat
   const lineFrom = ringMs * 0.55;
   const lineMs = REVEAL_MS - lineFrom - 200;
-  const endMs = line ? lineFrom + lineMs : ringMs;
+  // Punkte der bevorzugten Strecken über zwei Ringe verteilt, damit sie nach und nach auftauchen
+  const spotMs = RADAR_MS + RADAR_REPEAT_MS;
+  const endMs = line ? lineFrom + lineMs : spots?.length ? spotMs : ringMs;
   useEffect(() => {
     const t0 = Date.now();
     const id = setInterval(() => {
@@ -716,6 +718,22 @@ function RadarRoads({ radiusM, roads, line, fast }: { radiusM: number; roads: Ra
   const part = drawn > 0 ? shown.slice(0, Math.max(2, Math.round(shown.length * (1 - Math.pow(1 - drawn, 2))))) : [];
   return (
     <>
+      {/* Bevorzugte Strecken als Punkte: tauchen auf, sobald der Ring sie erreicht; beim Auflösen treten sie zurück */}
+      {(spots ?? []).map((s) => {
+        const lit = fast ? 0.35 : Math.max(0, Math.min(1, ((t / spotMs) * radiusM - s.distM) / (radiusM * 0.06)));
+        if (lit <= 0) return null;
+        return (
+          <Circle
+            key={`spot-${s.id}`}
+            center={ll(s.p)}
+            radius={radiusM * (0.014 + 0.006 * lit)}
+            fillColor={`rgba(226,70,28,${(0.85 * lit).toFixed(2)})`}
+            strokeColor={`rgba(11,11,12,${(0.6 * lit).toFixed(2)})`}
+            strokeWidth={1}
+            zIndex={1}
+          />
+        );
+      })}
       {part.length > 1 && <Polyline key="radar-route" coordinates={part} strokeColor={Colors.text} strokeWidth={4} lineCap="round" lineJoin="round" zIndex={3} />}
       {roads.map((r) => {
         const lit = Math.max(0, Math.min(1, (reach - r.distM * scale) / (radiusM * 0.08)));

@@ -14,7 +14,27 @@ export const RADAR_FAST_MS = 1300;
 export type RadarRoad = { id: string; line: LatLon[]; distM: number };
 
 /** Radar in der Karte: suchen (Ring) oder auflösen (Ring findet die Stücke der fertigen Route, dann zeichnet sich die Linie) */
-export type Radar = { center: LatLon; radiusM: number; roads: RadarRoad[]; count: number; phase: 'suchen' | 'aufloesen'; line?: LatLon[] };
+export type Radar = { center: LatLon; radiusM: number; roads: RadarRoad[]; count: number; phase: 'suchen' | 'aufloesen'; line?: LatLon[]; spots?: RadarSpot[] };
+
+/** Bevorzugte Strecke als Punkt, den der Ring beim Suchen findet (Koray 9.11.) */
+export type RadarSpot = { id: string; p: LatLon; distM: number };
+
+/**
+ * Strecken mit Präferenz (tier prefer, keine Highlights) im Umkreis als Punkte: die Mitte der Strecke,
+ * nach Abstand sortiert. Der Ring "findet" sie nach und nach, während die Rundtour entsteht.
+ */
+export function radarSpots(center: LatLon, radiusM: number, max = 40): RadarSpot[] {
+  const dLat = radiusM / 111320;
+  const dLon = dLat / Math.max(0.2, Math.cos((center[0] * Math.PI) / 180));
+  const out: RadarSpot[] = [];
+  for (const r of PREFER_ROADS) {
+    const p = r.line[Math.floor(r.line.length / 2)];
+    if (Math.abs(p[0] - center[0]) > dLat || Math.abs(p[1] - center[1]) > dLon) continue;
+    const d = haversine(center, p);
+    if (d <= radiusM) out.push({ id: r.id, p, distM: d });
+  }
+  return out.sort((a, b) => a.distM - b.distM).slice(0, max);
+}
 
 /** Wie weit eine Runde dieser Länge vom Start weg führt, ungefähr */
 export const radarRadiusM = (km: number) => Math.max(8000, Math.min(60000, km * 1000 * 0.32));
