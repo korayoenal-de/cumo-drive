@@ -12,12 +12,13 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 
 import type { Vehicle } from '@/lib/vehicle';
 
-export type CarForm = 'coupe' | 'coupe-fluegel' | 'fastback' | 'limousine' | 'gelaende';
+export type CarForm = 'coupe' | 'coupe-fluegel' | 'cabrio' | 'fastback' | 'limousine' | 'gelaende';
 export type CarLook = { form: CarForm; color: string };
 
 export const CAR_FORMS: { id: CarForm; label: string }[] = [
   { id: 'coupe', label: 'Coupé' },
   { id: 'coupe-fluegel', label: 'Coupé mit Flügel' },
+  { id: 'cabrio', label: 'Cabrio' },
   { id: 'fastback', label: 'Fastback' },
   { id: 'limousine', label: 'Limousine' },
   { id: 'gelaende', label: 'Geländewagen' },
@@ -36,12 +37,15 @@ export const CAR_COLORS: { id: string; label: string }[] = [
 
 export const DEFAULT_LOOK: CarLook = { form: 'coupe', color: '#C4161C' };
 
-const SHEETS: Record<CarForm, { o: number; m: number }> = {
-  coupe: { o: require('@/assets/cars/coupe-o.png'), m: require('@/assets/cars/coupe-m.png') },
-  'coupe-fluegel': { o: require('@/assets/cars/sedan-sports-o.png'), m: require('@/assets/cars/sedan-sports-m.png') },
-  fastback: { o: require('@/assets/cars/hatchback-sports-o.png'), m: require('@/assets/cars/hatchback-sports-m.png') },
-  limousine: { o: require('@/assets/cars/sedan-o.png'), m: require('@/assets/cars/sedan-m.png') },
-  gelaende: { o: require('@/assets/cars/suv-o.png'), m: require('@/assets/cars/suv-m.png') },
+type Sheet = { o: number; m: number; ol: number; ml: number };
+/** Je Form ein Bogen für die Karte (144 px je Ansicht) und einer für die Vorschau in der Garage (288 px) */
+const SHEETS: Record<CarForm, Sheet> = {
+  coupe: { o: require('@/assets/cars/coupe-o.png'), m: require('@/assets/cars/coupe-m.png'), ol: require('@/assets/cars/coupe-o-l.png'), ml: require('@/assets/cars/coupe-m-l.png') },
+  'coupe-fluegel': { o: require('@/assets/cars/sedan-sports-o.png'), m: require('@/assets/cars/sedan-sports-m.png'), ol: require('@/assets/cars/sedan-sports-o-l.png'), ml: require('@/assets/cars/sedan-sports-m-l.png') },
+  cabrio: { o: require('@/assets/cars/cabrio-o.png'), m: require('@/assets/cars/cabrio-m.png'), ol: require('@/assets/cars/cabrio-o-l.png'), ml: require('@/assets/cars/cabrio-m-l.png') },
+  fastback: { o: require('@/assets/cars/hatchback-sports-o.png'), m: require('@/assets/cars/hatchback-sports-m.png'), ol: require('@/assets/cars/hatchback-sports-o-l.png'), ml: require('@/assets/cars/hatchback-sports-m-l.png') },
+  limousine: { o: require('@/assets/cars/sedan-o.png'), m: require('@/assets/cars/sedan-m.png'), ol: require('@/assets/cars/sedan-o-l.png'), ml: require('@/assets/cars/sedan-m-l.png') },
+  gelaende: { o: require('@/assets/cars/suv-o.png'), m: require('@/assets/cars/suv-m.png'), ol: require('@/assets/cars/suv-o-l.png'), ml: require('@/assets/cars/suv-m-l.png') },
 };
 
 /** Ansicht für die Fahrtrichtung relativ zur Kamera in Grad (0 = von hinten, Auto fährt nach oben) */
@@ -56,8 +60,9 @@ export function CarSprite({ look, frame, size, rotation }: { look: CarLook; fram
   const img = { position: 'absolute' as const, width: size * 8, height: size * 5, left: -col * size, top: -row * size };
   return (
     <View style={[styles.box, { width: size, height: size }, rotation ? { transform: [{ rotate: `${rotation}deg` }] } : null]} pointerEvents="none">
-      <Image source={sheet.m} style={[img, { tintColor: look.color }]} fadeDuration={0} />
-      <Image source={sheet.o} style={img} fadeDuration={0} />
+      {/* ab 80 pt der scharfe Bogen (Vorschau), auf der Karte der kleine */}
+      <Image source={size > 80 ? sheet.ml : sheet.m} style={[img, { tintColor: look.color }]} fadeDuration={0} />
+      <Image source={size > 80 ? sheet.ol : sheet.o} style={img} fadeDuration={0} />
     </View>
   );
 }

@@ -46,7 +46,7 @@ export const styles = StyleSheet.create({
 
   typoTabs: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 20 },
   // Reiter sind Bedienelemente: Inter Bold, normal geschrieben (Koray 9.11.)
-  typoTab: { fontFamily: Fonts.bold, fontSize: Type.tab, lineHeight: Leading.tab, color: Colors.faint },
+  typoTab: { fontFamily: Fonts.extrabold, fontSize: Type.tab, lineHeight: Leading.tab, letterSpacing: -0.3, color: Colors.tabOff },
   typoTabOn: { color: Colors.text },
   segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: Spacing.xs },
   segItem: { flex: 1, height: 38, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },

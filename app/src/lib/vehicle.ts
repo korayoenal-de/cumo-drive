@@ -26,7 +26,7 @@ export type Vehicle = {
   /** Symbol auf der Karte: Pfeil oder das eigene Auto (gts997 war der Test vom 6.11., gilt wie auto) */
   mapSymbol?: 'pfeil' | 'gts997' | 'auto';
   /** Form und Lackfarbe des Kartensymbols (components/map/car-sprite.tsx) */
-  look?: { form: 'coupe' | 'coupe-fluegel' | 'fastback' | 'limousine' | 'gelaende'; color: string };
+  look?: { form: 'coupe' | 'coupe-fluegel' | 'cabrio' | 'fastback' | 'limousine' | 'gelaende'; color: string };
 };
 
 export const FUELS: { id: Fuel; label: string }[] = [

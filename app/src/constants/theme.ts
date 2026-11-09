@@ -13,6 +13,8 @@ export const Colors = {
   muted: '#9A9A9F',
   /** Inaktive Typo Tabs: deutlich zurückgenommen, ab 24 px noch über 3 zu 1 auf ground. */
   faint: '#6E6E73',
+  /** Inaktive Haupt Reiter, deutlich zurück (Variante D, etwa 2,7 zu 1, bewusst gewählt) */
+  tabOff: '#57575C',
   signal: '#E2461C',
   good: '#4CC38A',
   warn: '#E8B03A',
@@ -97,6 +99,8 @@ export const Fonts = {
   medium: 'Inter_500Medium',
   semibold: 'Inter_600SemiBold',
   bold: 'Inter_700Bold',
+  /** Haupt Reiter (Tour planen, Rundtour; Gespeichert, Gefahren), Koray 9.11. Variante D */
+  extrabold: 'Inter_800ExtraBold',
 } as const;
 
 export const Spacing = {
