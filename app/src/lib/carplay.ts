@@ -32,9 +32,17 @@ type CarPlayModule = {
   setVoice?(on: boolean): Promise<void>;
   // ab Build 11
   setMapStyle?(style: string): Promise<void>;
-  addListener(event: CarPlayEvent, cb: () => void): Sub;
+  // ab Build 14
+  setMenu?(skipLabel: string, paused: boolean): Promise<void>;
+  setGroup?(list: GroupPin[]): Promise<void>;
+  hint?(title: string, subtitle: string): Promise<void>;
+  askRating?(): Promise<void>;
+  addListener(event: CarPlayEvent, cb: (e: CarPlayPayload) => void): Sub;
 };
-type CarPlayEvent = 'onConnect' | 'onDisconnect' | 'onStart' | 'onEnd' | 'onVoice';
+type CarPlayEvent = 'onConnect' | 'onDisconnect' | 'onStart' | 'onEnd' | 'onVoice' | 'onSkip' | 'onPause' | 'onMapStyle' | 'onRate';
+/** Nutzdaten der Ereignisse ab Build 14: onPause { on }, onMapStyle { style }, onRate { score } */
+export type CarPlayPayload = { on?: boolean; style?: string; score?: number };
+export type GroupPin = { id: string; name: string; lat: number; lon: number; detail?: string };
 
 const native: CarPlayModule | null = Platform.OS === 'ios' ? requireOptionalNativeModule<CarPlayModule>('CumoCarPlay') : null;
 
@@ -134,6 +142,26 @@ export function carPlaySetVoice(on: boolean) {
   quiet(native?.setVoice?.(on));
 }
 
+/** Menü Mehr im Auto: Zwischenziel überspringen (leer: keins) und Pause (ab Build 14) */
+export function carPlaySetMenu(skipLabel: string, paused: boolean) {
+  quiet(native?.setMenu?.(skipLabel, paused));
+}
+
+/** Andere Teilnehmer der Gruppenfahrt als Marker und Liste (ab Build 14) */
+export function carPlaySetGroup(list: GroupPin[]) {
+  quiet(native?.setGroup?.(list));
+}
+
+/** Bremshinweis als kurzer Hinweis (ab Build 14; ältere Builds zeigen nichts, die Ansage reicht) */
+export function carPlayHint(title: string, subtitle: string) {
+  quiet(native?.hint?.(title, subtitle));
+}
+
+/** Nach der Ankunft: Bewertung in drei Stufen auf dem Autodisplay (ab Build 14) */
+export function carPlayAskRating() {
+  quiet(native?.askRating?.());
+}
+
 // "Los" auf dem Autodisplay: merken, bis die Navigation bereit ist
 let pendingStart = false;
 export function takeCarPlayStart(): boolean {
@@ -143,14 +171,14 @@ export function takeCarPlayStart(): boolean {
 }
 
 /** Ereignisse von CarPlay; der Rückruf darf sich ändern, ohne neu zu abonnieren. */
-export function useCarPlayEvent(event: CarPlayEvent, cb: () => void) {
+export function useCarPlayEvent(event: CarPlayEvent, cb: (e: CarPlayPayload) => void) {
   const ref = useRef(cb);
   useEffect(() => {
     ref.current = cb;
   });
   useEffect(() => {
     if (!native) return;
-    const sub = native.addListener(event, () => ref.current());
+    const sub = native.addListener(event, (e) => ref.current(e ?? {}));
     return () => sub.remove();
   }, [event]);
 }

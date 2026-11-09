@@ -9,6 +9,10 @@ final class CasingPolyline: MKPolyline {}
 /// Weg zurück zur Tour nach einer Abweichung: gestrichelt wie in der App
 final class RejoinPolyline: MKPolyline {}
 final class RejoinCasingPolyline: MKPolyline {}
+/// Andere Teilnehmer der Gruppenfahrt (Build 14)
+final class GroupAnnotation: MKPointAnnotation {
+  var initial = ""
+}
 
 final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private let map = MKMapView()
@@ -42,6 +46,9 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private var routeCoords: [CLLocationCoordinate2D] = []
   private var routeCum: [Double] = []
   private var routeIdx = 0
+  /// Hinweis "Plane eine Tour" nur auf der Hauptkarte, nicht im Dashboard oder Kombiinstrument
+  var showsHint = true
+  private var groupPins: [String: GroupAnnotation] = [:]
 
   /// Signal Orange #E2461C
   private static let signal = UIColor(red: 226 / 255, green: 70 / 255, blue: 28 / 255, alpha: 1)
@@ -86,7 +93,47 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
       hint.widthAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -32),
       hint.heightAnchor.constraint(greaterThanOrEqualToConstant: 48),
     ])
-    hint.isHidden = line != nil
+    hint.isHidden = line != nil || !showsHint
+  }
+
+  /// Teilnehmer: id, name, lat, lon; vorhandene Marker gleiten an die neue Stelle
+  func setGroup(_ list: [[String: Any]]) {
+    loadViewIfNeeded()
+    var seen = Set<String>()
+    for m in list {
+      guard let id = m["id"] as? String,
+            let lat = (m["lat"] as? NSNumber)?.doubleValue,
+            let lon = (m["lon"] as? NSNumber)?.doubleValue else { continue }
+      seen.insert(id)
+      let c = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+      if let a = groupPins[id] {
+        UIView.animate(withDuration: 0.8) { a.coordinate = c }
+      } else {
+        let a = GroupAnnotation()
+        a.coordinate = c
+        let name = m["name"] as? String ?? ""
+        a.title = name
+        a.initial = String(name.prefix(1)).uppercased()
+        groupPins[id] = a
+        map.addAnnotation(a)
+      }
+    }
+    for (id, a) in groupPins where !seen.contains(id) {
+      map.removeAnnotation(a)
+      groupPins[id] = nil
+    }
+  }
+
+  func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+    guard let g = annotation as? GroupAnnotation else { return nil }
+    let v = (mapView.dequeueReusableAnnotationView(withIdentifier: "gruppe") as? MKMarkerAnnotationView)
+      ?? MKMarkerAnnotationView(annotation: g, reuseIdentifier: "gruppe")
+    v.annotation = g
+    v.markerTintColor = CarMapViewController.signal
+    v.glyphText = g.initial
+    v.titleVisibility = .visible
+    v.displayPriority = .required
+    return v
   }
 
   func setRoute(_ coords: [CLLocationCoordinate2D]) {
@@ -95,7 +142,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     if let c = casing { map.removeOverlay(c) }
     line = nil
     casing = nil
-    hint.isHidden = coords.count >= 2
+    hint.isHidden = coords.count >= 2 || !showsHint
     guard coords.count >= 2 else { return }
     routeCoords = coords
     routeIdx = 0

@@ -22,7 +22,7 @@ import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
-import { carPlayAlert, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
+import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
 import { toFunLevel } from '@/components/ui/fun-gauge';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
@@ -458,7 +458,11 @@ export default function NavigationScreen() {
   const cpWas = useRef(false);
   useEffect(() => {
     if (cpRunning && !cpWas.current) carPlayStart();
-    if (!cpRunning && cpWas.current) carPlayStop(state.status === 'angekommen');
+    if (!cpRunning && cpWas.current) {
+      carPlayStop(state.status === 'angekommen');
+      // Build 14: nach der Ankunft im Auto nach dem Fahrspaß fragen, Details später am iPhone
+      if (state.status === 'angekommen') setTimeout(carPlayAskRating, 1500);
+    }
     cpWas.current = cpRunning;
   }, [cpRunning, state.status]);
   useEffect(() => () => carPlayStop(false), []);
@@ -544,6 +548,11 @@ export default function NavigationScreen() {
     if ((state.status === 'bereit' || state.status === 'angekommen') && takeCarPlayStart()) void controls.start();
   });
   useCarPlayEvent('onEnd', close);
+  // Bewertung vom Autodisplay: geht in dieselbe Karte wie am iPhone und wird dort gespeichert
+  const [cpScore, setCpScore] = useState<number | null>(null);
+  useCarPlayEvent('onRate', (e) => {
+    if (typeof e.score === 'number') setCpScore(e.score);
+  });
   // Auto erst während der Fahrt verbunden: Führung dort gleich aufnehmen
   useCarPlayEvent('onConnect', () => {
     if (cpRunning) carPlayStart();
@@ -553,18 +562,6 @@ export default function NavigationScreen() {
   const maneuverSoon = state.distToNextM != null && state.distToNextM <= soonThresholdM(state.speedKmh);
   const hlById = (id: string) => (hl && hl.route === state.route ? (hl.list.find((h) => h.id === id) ?? null) : null);
   const showHlCard = hlShow && !maneuverSoon && !stop ? hlById(hlShow.id) : null;
-
-  if (!active || !mapTour) {
-    return (
-      <View style={[styles.root, styles.pad, { paddingTop: insets.top + Spacing.xl }]}>
-        <InfoCard>
-          <AppText variant="title">Keine Tour gewählt.</AppText>
-          <AppText muted>Erstelle zuerst eine Tour im Tab Planen und tippe auf Losfahren.</AppText>
-          <BigButton label="Schließen" kind="ghost" onPress={close} />
-        </InfoCard>
-      </View>
-    );
-  }
 
   const { status, route } = state;
   const running = status === 'laeuft' || status === 'pausiert' || status === 'neuberechnung';
@@ -597,6 +594,50 @@ export default function NavigationScreen() {
     return { index: Math.max(0, i), toZiel: false };
   })();
   const drivenKm = route ? Math.max(0, (startKm ?? route.km) - (state.remainingKm ?? 0)) : 0;
+
+  // CarPlay Build 14: Menü Mehr (Überspringen, Pause), Bremshinweis und Gruppe auf dem Autodisplay
+  const cpSkipLabel = skipTarget && !inRide ? `${active?.tour.namen?.[nextVia + 1] || 'Zwischenziel'} überspringen` : '';
+  useEffect(() => {
+    if (cpRunning) carPlaySetMenu(cpSkipLabel, state.status === 'pausiert');
+  }, [cpRunning, cpSkipLabel, state.status]);
+  useCarPlayEvent('onSkip', () => {
+    if (skipTarget && !inRide) void skip(skipTarget.index);
+  });
+  useCarPlayEvent('onPause', (e) => controls.pause(e.on ?? state.status !== 'pausiert'));
+  const cueKey = cue ? `${cue.startKm.toFixed(3)}|${cue.label}` : '';
+  const cueSent = useRef('');
+  useEffect(() => {
+    if (!cpRunning || !cue || cueKey === cueSent.current) return;
+    // nur einmal je Kurve oder Kette, nicht bei jedem Meter Countdown
+    const head = cueKey.split('|')[0];
+    if (cueSent.current.startsWith(head)) return;
+    cueSent.current = cueKey;
+    carPlayHint(cue.a11y, 'Co Pilot');
+  }, [cpRunning, cue, cueKey]);
+  useEffect(() => {
+    if (!cpRunning) return;
+    carPlaySetGroup(
+      others.map((o) => ({
+        id: o.id,
+        name: o.name,
+        lat: o.p[0],
+        lon: o.p[1],
+        detail: state.position ? `${formatKm(haversine(state.position, o.p) / 1000)} km entfernt${o.off ? ', abseits der Tour' : ''}` : undefined,
+      })),
+    );
+  }, [cpRunning, others, state.position]);
+
+  if (!active || !mapTour) {
+    return (
+      <View style={[styles.root, styles.pad, { paddingTop: insets.top + Spacing.xl }]}>
+        <InfoCard>
+          <AppText variant="title">Keine Tour gewählt.</AppText>
+          <AppText muted>Erstelle zuerst eine Tour im Tab Planen und tippe auf Losfahren.</AppText>
+          <BigButton label="Schließen" kind="ghost" onPress={close} />
+        </InfoCard>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -858,7 +899,7 @@ export default function NavigationScreen() {
                 {active.tour.name}
               </AppText>
               <StatsGrid st={summary} />
-              {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} />}
+              {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} preset={cpScore} />}
               <SavedNote saved={saved} />
               <BigButton label="Fertig" onPress={exit} />
             </InfoCard>
@@ -874,7 +915,7 @@ export default function NavigationScreen() {
                 {formatKm(drivenKm || route?.km || active.tour.laenge_km)} km gefahren auf {active.tour.name}.
               </AppText>
               {arrivedStats && <StatsGrid st={arrivedStats} />}
-              {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} />}
+              {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} preset={cpScore} />}
               <SavedNote saved={saved} />
               <BigButton label="Fertig" onPress={exit} />
             </InfoCard>

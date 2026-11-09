@@ -23,8 +23,14 @@ export type DrivenHighlight = { key: string; name: string; kind: 'pass' | 'strec
  * Bewertung samt Nachfrage bei schwacher Note. Speichert, sobald die Fahrt im Konto liegt (driveId),
  * vorher gewählte Werte werden nachgereicht.
  */
-export function DriveRatingCard({ driveId, highlights = [] }: { driveId: string | null; highlights?: DrivenHighlight[] }) {
-  const [score, setScore] = useState<number | null>(null);
+export function DriveRatingCard({ driveId, highlights = [], preset = null }: { driveId: string | null; highlights?: DrivenHighlight[]; /** Note vom Autodisplay (CarPlay, Build 14) */ preset?: number | null }) {
+  const [score, setScore] = useState<number | null>(preset);
+  // Bewertung kam im Auto: übernehmen, solange am iPhone noch nichts gewählt ist
+  const [lastPreset, setLastPreset] = useState(preset);
+  if (preset !== lastPreset) {
+    setLastPreset(preset);
+    if (preset != null && score == null) setScore(preset);
+  }
   const [reasons, setReasons] = useState<string[]>([]);
   const [note, setNote] = useState('');
   const [votes, setVotes] = useState<Record<string, 1 | -1>>({});

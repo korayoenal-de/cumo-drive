@@ -6,7 +6,7 @@ final class CumoCarPlay: Module {
   public func definition() -> ExpoModulesCore.ModuleDefinition {
     Name("CumoCarPlay")
 
-    Events("onConnect", "onDisconnect", "onStart", "onEnd", "onVoice")
+    Events("onConnect", "onDisconnect", "onStart", "onEnd", "onVoice", "onSkip", "onPause", "onMapStyle", "onRate")
 
     OnCreate {
       CarPlayBridge.shared.emit = { [weak self] name, body in
@@ -16,6 +16,8 @@ final class CumoCarPlay: Module {
 
     // ab Build 13: die Karte im Auto blendet das gefahrene Stück selbst aus und gleitet im Bildtakt
     Constant("trimsRoute") { true }
+    // ab Build 14: Menü Mehr, Gruppe, Bremshinweis, Bewertung, Dashboard und Kombiinstrument
+    Constant("build") { 14 }
 
     AsyncFunction("isConnected") { () -> Bool in
       CarPlayBridge.shared.connected
@@ -79,6 +81,22 @@ final class CumoCarPlay: Module {
 
     AsyncFunction("setVoice") { (on: Bool) in
       CarPlayBridge.shared.setVoice(on)
+    }.runOnQueue(.main)
+
+    AsyncFunction("setMenu") { (skipLabel: String, paused: Bool) in
+      CarPlayBridge.shared.setMenu(skipLabel: skipLabel, paused: paused)
+    }.runOnQueue(.main)
+
+    AsyncFunction("setGroup") { (list: [[String: Any]]) in
+      CarPlayBridge.shared.setGroup(list)
+    }.runOnQueue(.main)
+
+    AsyncFunction("hint") { (title: String, subtitle: String) in
+      CarPlayBridge.shared.hint(title: title, subtitle: subtitle)
+    }.runOnQueue(.main)
+
+    AsyncFunction("askRating") {
+      CarPlayBridge.shared.askRating()
     }.runOnQueue(.main)
   }
 }

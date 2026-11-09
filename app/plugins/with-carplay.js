@@ -26,8 +26,25 @@ module.exports = function withCarPlay(config) {
         UISceneDelegateClassName: '$(PRODUCT_MODULE_NAME).CarPlaySceneDelegate',
       },
     ];
+    // Build 14: Karte im Dashboard (geteilter Bildschirm) und im Kombiinstrument
+    configs.CPTemplateApplicationDashboardSceneSessionRoleApplication = [
+      {
+        UISceneClassName: 'CPTemplateApplicationDashboardScene',
+        UISceneConfigurationName: 'CarPlay Dashboard',
+        UISceneDelegateClassName: '$(PRODUCT_MODULE_NAME).CarPlayDashboardDelegate',
+      },
+    ];
+    configs.CPTemplateApplicationInstrumentClusterSceneSessionRoleApplication = [
+      {
+        UISceneClassName: 'CPTemplateApplicationInstrumentClusterScene',
+        UISceneConfigurationName: 'CarPlay Kombiinstrument',
+        UISceneDelegateClassName: '$(PRODUCT_MODULE_NAME).CarPlayClusterDelegate',
+      },
+    ];
     manifest.UISceneConfigurations = configs;
     c.modResults.UIApplicationSceneManifest = manifest;
+    c.modResults.CPSupportsDashboardNavigationScene = true;
+    c.modResults.CPSupportsInstrumentClusterNavigationScene = true;
     return c;
   });
   // Eigene Navigationssymbole fürs Autodisplay (assets/carplay-icons, erzeugt von scripts/carplay-icons.sh)
