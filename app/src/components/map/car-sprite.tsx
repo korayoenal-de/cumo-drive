@@ -6,9 +6,8 @@
  * tintColor gefärbt, darüber liegen Schatten, Scheiben, Lichter und Räder.
  * Erzeugt mit scratchpad/sprites (three.js), Quelle der Modelle: assets/cars/README.md.
  */
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Image, Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { interpolate, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Type } from '@/constants/theme';
@@ -93,66 +92,49 @@ export function CarPreview({ look, size }: { look: CarLook; size: number }) {
 }
 
 /**
- * Formwahl als dreidimensionaler Cover Swipe (Koray 9.11.): jedes Auto auf einer eigenen Karte, die Karten
- * stoßen ohne Abstand aneinander. Die gewählte steht groß und gerade in der Mitte, die Nachbarn kleiner,
- * zur Mitte gedreht und abgedunkelt. Wischen wählt; Tippen auf die Karte in der Mitte öffnet die 3D Ansicht.
+ * Formwahl als Bühne mit Leiste (Koray 9.11., Konzept B): oben das gewählte Auto groß auf einer Bühne mit
+ * Bodenschatten, Name und 360° in einer Zeile darunter (nie über dem Auto), unten sechs Kacheln ohne Abstand.
+ * Tippen auf die Bühne öffnet die 3D Ansicht.
  */
-const CARD = 190;
-const CARD_H = 210;
-const SIDE = 0.8;
-export function CarCoverFlow({ look, onForm }: { look: CarLook; onForm: (f: CarForm) => void }) {
+const STAGE_CAR = 230;
+export function CarStagePicker({ look, onForm }: { look: CarLook; onForm: (f: CarForm) => void }) {
   const win = useWindowDimensions();
-  const [w, setW] = useState(win.width - 72);
-  const x = useSharedValue(0);
-  const idx = Math.max(0, CAR_FORMS.findIndex((f) => f.id === look.form));
-  const [shown, setShown] = useState(idx);
   const [open, setOpen] = useState(false);
-  const ref = useAnimatedRef<Animated.ScrollView>();
-  const onScroll = useAnimatedScrollHandler((e) => {
-    x.value = e.contentOffset.x;
-  });
-  const pad = Math.max(0, (w - CARD) / 2);
-  const settle = (offset: number) => {
-    const i = Math.max(0, Math.min(CAR_FORMS.length - 1, Math.round(offset / CARD)));
-    setShown(i);
-    if (CAR_FORMS[i].id !== look.form) onForm(CAR_FORMS[i].id);
-  };
-  const go = (i: number) => {
-    ref.current?.scrollTo({ x: i * CARD, animated: true });
-    settle(i * CARD);
-  };
+  const label = CAR_FORMS.find((f) => f.id === look.form)?.label ?? '';
   return (
-    <View style={styles.cover} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-      <Animated.ScrollView
-        ref={ref}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={CARD}
-        decelerationRate="fast"
-        contentOffset={{ x: idx * CARD, y: 0 }}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        onMomentumScrollEnd={(e) => settle(e.nativeEvent.contentOffset.x)}
-        contentContainerStyle={{ paddingHorizontal: pad, paddingVertical: 6 }}
-        style={styles.coverScroll}
-        accessibilityRole="adjustable"
-        accessibilityLabel={`Form: ${CAR_FORMS[shown]?.label}. Doppeltippen öffnet die 3D Ansicht`}
-        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }, { name: 'activate' }]}
-        onAccessibilityAction={(e) => {
-          if (e.nativeEvent.actionName === 'activate') return setOpen(true);
-          go(Math.max(0, Math.min(CAR_FORMS.length - 1, shown + (e.nativeEvent.actionName === 'increment' ? 1 : -1))));
-        }}>
-        {CAR_FORMS.map((f, i) => (
-          <CoverItem key={f.id} i={i} x={x} onPress={() => (i === shown ? setOpen(true) : go(i))}>
-            <CarSprite look={{ ...look, form: f.id }} frame={frameFor(215)} size={CARD - 10} />
-          </CoverItem>
-        ))}
-      </Animated.ScrollView>
-      <AppText style={styles.coverLabel}>{CAR_FORMS[shown]?.label}</AppText>
+    <View style={styles.picker}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${label}, 3D Ansicht öffnen`} onPress={() => setOpen(true)} style={({ pressed }) => [styles.stage2, pressed && { opacity: 0.9 }]}>
+        <View style={styles.carArea}>
+          {/* Bodenschatten aus weichen Ellipsen */}
+          <View style={[styles.floor, { width: 220, height: 44, opacity: 0.18 }]} />
+          <View style={[styles.floor, { width: 170, height: 32, opacity: 0.22 }]} />
+          <View style={[styles.floor, { width: 120, height: 22, opacity: 0.25 }]} />
+          <CarSprite look={look} frame={frameFor(215)} size={STAGE_CAR} />
+        </View>
+        <View style={styles.stageFoot}>
+          <AppText style={styles.stageName} numberOfLines={1}>{label}</AppText>
+          <View style={styles.badge360}>
+            <AppText style={styles.badge360Text}>360°</AppText>
+          </View>
+        </View>
+      </Pressable>
+      <View style={styles.strip} accessibilityRole="radiogroup">
+        {CAR_FORMS.map((f) => {
+          const on = f.id === look.form;
+          return (
+            <Pressable key={f.id} accessibilityRole="radio" accessibilityLabel={f.label} accessibilityState={{ selected: on }} onPress={() => onForm(f.id)} style={[styles.thumb, on && styles.thumbOn]}>
+              <View style={{ opacity: on ? 1 : 0.5 }}>
+                <CarSprite look={{ ...look, form: f.id }} frame={frameFor(215)} size={52} />
+              </View>
+              {on && <View style={styles.thumbBar} />}
+            </Pressable>
+          );
+        })}
+      </View>
       <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
         <View style={styles.detail}>
           <View style={styles.detailHead}>
-            <AppText style={styles.detailTitle}>{CAR_FORMS[shown]?.label}</AppText>
+            <AppText style={styles.detailTitle}>{label}</AppText>
             <Pressable accessibilityRole="button" accessibilityLabel="Schließen" hitSlop={6} onPress={() => setOpen(false)} style={styles.detailClose}>
               <AppText style={styles.detailCloseText}>✕</AppText>
             </Pressable>
@@ -165,40 +147,20 @@ export function CarCoverFlow({ look, onForm }: { look: CarLook; onForm: (f: CarF
   );
 }
 
-function CoverItem({ i, x, onPress, children }: { i: number; x: SharedValue<number>; onPress: () => void; children: ReactNode }) {
-  const style = useAnimatedStyle(() => {
-    const r = [(i - 1) * CARD, i * CARD, (i + 1) * CARD];
-    // seitlich verkleinert und zur Mitte geschoben, damit die Karten ohne Lücke aneinanderstoßen
-    const shift = (CARD * (1 - SIDE)) / 2;
-    return {
-      zIndex: Math.round(100 - Math.abs(x.value - i * CARD) / 10),
-      transform: [
-        { perspective: 700 },
-        { translateX: interpolate(x.value, r, [-shift, 0, shift], 'clamp') },
-        { scale: interpolate(x.value, r, [SIDE, 1, SIDE], 'clamp') },
-        { rotateY: `${interpolate(x.value, r, [42, 0, -42], 'clamp')}deg` },
-      ],
-    };
-  });
-  const shade = useAnimatedStyle(() => ({
-    opacity: interpolate(Math.abs(x.value - i * CARD), [0, CARD], [0, 0.55], 'clamp'),
-  }));
-  return (
-    <Animated.View style={style}>
-      <Pressable onPress={onPress} accessible={false} style={styles.card}>
-        {children}
-        <Animated.View pointerEvents="none" style={[styles.cardShade, shade]} />
-      </Pressable>
-    </Animated.View>
-  );
-}
-
 const styles = StyleSheet.create({
   box: { overflow: 'hidden' },
-  cover: { gap: 8, alignItems: 'stretch' },
-  coverScroll: { overflow: 'visible' },
-  card: { width: CARD, height: CARD_H, borderRadius: 20, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  cardShade: { ...StyleSheet.absoluteFill, backgroundColor: '#000' },
+  picker: { gap: 10 },
+  stage2: { borderRadius: 20, backgroundColor: Colors.surface2, overflow: 'hidden' },
+  carArea: { height: 210, alignItems: 'center', justifyContent: 'center' },
+  floor: { position: 'absolute', top: 150, alignSelf: 'center', borderRadius: 200, backgroundColor: '#000' },
+  stageFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: 16, paddingBottom: 14 },
+  stageName: { flex: 1, fontFamily: Fonts.display, fontSize: 20, lineHeight: 24, color: Colors.text, textTransform: 'uppercase' },
+  badge360: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: 'rgba(11,11,12,0.6)', justifyContent: 'center' },
+  badge360Text: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
+  strip: { flexDirection: 'row', borderRadius: 14, overflow: 'hidden' },
+  thumb: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1A1A1D', borderRightWidth: 1, borderRightColor: Colors.ground },
+  thumbOn: { backgroundColor: '#2A2A2E' },
+  thumbBar: { position: 'absolute', left: 10, right: 10, bottom: 4, height: 3, borderRadius: 2, backgroundColor: Colors.text },
   detail: { flex: 1, backgroundColor: Colors.ground, padding: 20, gap: 16, alignItems: 'center' },
   detailHead: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   detailTitle: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 30, color: Colors.text, textTransform: 'uppercase' },

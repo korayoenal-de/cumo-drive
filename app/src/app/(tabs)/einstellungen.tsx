@@ -20,7 +20,7 @@ import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { formatKm } from '@/lib/tour';
 import { deleteVehicle, FUELS, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleName, vehicleSummary, type Vehicle } from '@/lib/vehicle';
-import { CAR_COLORS, CarCoverFlow, CarSprite, carLookFor, DEFAULT_LOOK, frameFor } from '@/components/map/car-sprite';
+import { CAR_COLORS, CarStagePicker, CarSprite, carLookFor, DEFAULT_LOOK, frameFor } from '@/components/map/car-sprite';
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
 
@@ -333,7 +333,7 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
       </View>
       {/* Kartensymbol: Form und Lack, Vorschau zum Drehen (Koray 9.11., Platzhalter Modelle) */}
       <AppText variant="title">Auf der Karte</AppText>
-      <CarCoverFlow look={value.look ?? DEFAULT_LOOK} onForm={(form) => set({ look: { ...(value.look ?? DEFAULT_LOOK), form }, mapSymbol: 'auto' })} />
+      <CarStagePicker look={value.look ?? DEFAULT_LOOK} onForm={(form) => set({ look: { ...(value.look ?? DEFAULT_LOOK), form }, mapSymbol: 'auto' })} />
       <View style={styles.dots}>
         {CAR_COLORS.map((c) => {
           const on = (value.look ?? DEFAULT_LOOK).color === c.id;
