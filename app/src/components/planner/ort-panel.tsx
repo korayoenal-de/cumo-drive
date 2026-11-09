@@ -7,7 +7,6 @@ import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { AerialThumb } from '@/components/map/aerial-thumb';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { placesNear, type NearPlace } from '@/lib/stops-along';
@@ -175,14 +174,32 @@ function OrtBody({ p, name, role, withHotel, actions, onClose, onPick, onAction 
                       accessibilityLabel={`${h.name}, ${formatKm(h.distM / 1000)} Kilometer entfernt, als neuen Ort setzen`}
                       onPress={() => onPick(h.p, h.name)}
                       style={({ pressed }) => [styles.card, { width: cardW }, pressed && styles.pressed]}>
-                      <AerialThumb p={h.p} height={Math.round(cardW * 0.8)} />
+                      {/* Konzept C2 (Koray 9.11.): Parken als Kopf der Karte, nur wenn bekannt */}
+                      {h.parking && (
+                        <View style={[styles.band, h.parking === 'bewacht' && styles.bandGood]}>
+                          <SymbolView
+                            name={h.parking === 'bewacht' ? 'shield.lefthalf.filled' : 'parkingsign.square'}
+                            size={16}
+                            tintColor={h.parking === 'bewacht' ? Colors.good : Colors.muted}
+                            weight="semibold"
+                          />
+                          <AppText style={[styles.bandText, h.parking === 'bewacht' && styles.bandTextGood]}>
+                            {h.parking === 'bewacht' ? 'Bewacht' : 'Parkplatz'}
+                          </AppText>
+                        </View>
+                      )}
                       <View style={styles.cardBody}>
                         <AppText style={styles.cardName} numberOfLines={2}>
                           {h.name}
                         </AppText>
                         <AppText style={styles.cardMeta} numberOfLines={1}>
-                          {[h.type, `${formatKm(h.distM / 1000)} km`].filter(Boolean).join(' · ')}
+                          {[h.stars ? `${h.stars} Sterne` : h.type, `${formatKm(h.distM / 1000)} km`].filter(Boolean).join(' · ')}
                         </AppText>
+                        <View style={styles.extras}>
+                          {h.charge && <SymbolView name="bolt.fill" size={16} tintColor={Colors.muted} />}
+                          {h.food && <SymbolView name="fork.knife" size={16} tintColor={Colors.muted} />}
+                          {h.garage && <SymbolView name="door.garage.closed" size={16} tintColor={Colors.muted} />}
+                        </View>
                       </View>
                     </Pressable>
                   ))}
@@ -239,9 +256,15 @@ const styles = StyleSheet.create({
   section: { gap: Spacing.m },
   label: { fontFamily: Fonts.bold, fontSize: Type.h3, color: Colors.text },
   cards: { paddingHorizontal: Spacing.xl, gap: Spacing.m },
-  card: { borderRadius: Radius.l, backgroundColor: Colors.surface, overflow: 'hidden' },
-  cardBody: { padding: Spacing.m, gap: 2 },
-  cardName: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
+  // hellere Box statt Bild (Koray 9.11.: Kartenbilder entsprechen nicht dem Anspruch)
+  card: { minHeight: 168, borderRadius: Radius.l, backgroundColor: Colors.surface2, overflow: 'hidden' },
+  band: { height: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: Spacing.m, backgroundColor: Colors.line },
+  bandGood: { backgroundColor: Colors.goodTint },
+  bandText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
+  bandTextGood: { fontFamily: Fonts.bold, color: Colors.good },
+  cardBody: { flex: 1, padding: Spacing.m, gap: 6 },
+  cardName: { fontFamily: Fonts.bold, fontSize: 17, lineHeight: 21, color: Colors.text },
+  extras: { marginTop: 'auto', flexDirection: 'row', gap: 10 },
   cardMeta: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
   group: { borderRadius: Radius.l, backgroundColor: Colors.surface, paddingVertical: Spacing.xs, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64, paddingHorizontal: Spacing.l, paddingVertical: Spacing.s },

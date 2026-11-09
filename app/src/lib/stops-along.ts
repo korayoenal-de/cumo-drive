@@ -481,7 +481,20 @@ const NEAR_QUERY: Record<'hotel' | 'kaffee' | 'mittag', { q: string[]; tags: str
 const NEAR_TYPE: Record<string, string> = { hotel: 'Hotel', guest_house: 'Pension', motel: 'Motel', chalet: 'Chalet', cafe: 'Café', restaurant: 'Restaurant' };
 
 /** type: Hotel, Pension, Café … (leer, wenn unbekannt) */
-export type NearPlace = { id: string; name: string; detail: string; type: string; p: LatLon; distM: number };
+export type NearPlace = {
+  id: string;
+  name: string;
+  detail: string;
+  type: string;
+  p: LatLon;
+  distM: number;
+  /** Nur gesetzt, wenn bekannt (Partnerhotel, Club Tipp, OSM); unbekannt heißt nie Nein */
+  parking?: 'bewacht' | 'parkplatz';
+  stars?: number;
+  charge?: boolean;
+  food?: boolean;
+  garage?: boolean;
+};
 
 export async function placesNear(kind: 'hotel' | 'kaffee' | 'mittag', at: LatLon, signal?: AbortSignal): Promise<NearPlace[]> {
   const cfg = NEAR_QUERY[kind];
