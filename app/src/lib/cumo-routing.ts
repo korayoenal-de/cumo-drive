@@ -275,12 +275,18 @@ export function checkFromDetails(path: GhPath): Pick<Tour, 'linie' | 'warnungen'
   }
   const idx = [...cuts].sort((x, y) => x - y);
   const segs: Seg[] = [];
+  // Gesamtlänge und Lage je Stück, für Start und Ziel (Parkplatz, Hofeinfahrt)
+  let totalKm = 0;
+  for (let i = 1; i < shape.length; i++) totalKm += haversine(shape[i - 1], shape[i]) / 1000;
+  let atKm = 0;
   for (let k = 0; k < idx.length - 1; k++) {
     const a = idx[k];
     const b = idx[k + 1];
     if (b <= a) continue;
     let km = 0;
     for (let i = a + 1; i <= b; i++) km += haversine(shape[i - 1], shape[i]) / 1000;
+    const fromKm = atKm;
+    atKm += km;
     const rc = String(valueAt(path.details.road_class, a) ?? '').toLowerCase();
     const sf = String(valueAt(path.details.surface, a) ?? '').toLowerCase();
     const tt = String(valueAt(path.details.track_type, a) ?? '').toLowerCase();
@@ -300,7 +306,10 @@ export function checkFromDetails(path: GhPath): Pick<Tour, 'linie' | 'warnungen'
     if (c === 'ok') {
       if (typeof mw === 'number' && mw < 2.5) why.push(`Engstelle ${mwText} m`);
       else if (typeof mw === 'number' && mw < 4.5) why.push(`schmal, ${mwText} m, Gegenverkehr wird eng`);
-      if (sf === 'cobblestone' || sf === 'paving_stones') why.push('Pflaster');
+      // Pflaster nur bei echtem Kopfstein ab 300 m und nicht in den ersten und letzten 500 m: Pflastersteine
+      // (paving_stones) fahren sich wie Asphalt, am Start oder Ziel liegt oft nur ein Parkplatz (Koray 9.11.)
+      const nearEnds = fromKm < 0.5 || atKm > totalKm - 0.5;
+      if ((sf === 'cobblestone' || sf === 'sett' || sf === 'unhewn_cobblestone') && km >= 0.3 && !nearEnds) why.push('Kopfsteinpflaster');
       if (why.length) c = 'pruefen';
     }
     segs.push({ a, b, km, c, why, minor: !MAJOR.has(rc) && !ref, name });

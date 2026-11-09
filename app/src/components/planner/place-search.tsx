@@ -79,7 +79,7 @@ export type Slot = { key: string; kind: PointKind; index?: number; insert?: bool
 
 export type Cat = 'alle' | StopKind | 'pass';
 const CATS: { id: Cat; label: string; placeholder: string }[] = [
-  { id: 'alle', label: 'Zuletzt', placeholder: '' },
+  { id: 'alle', label: 'Alle', placeholder: '' },
   { id: 'tank', label: 'Tanken', placeholder: 'Marke, etwa Shell' },
   { id: 'kaffee', label: 'Café', placeholder: 'Café suchen' },
   { id: 'mittag', label: 'Essen', placeholder: 'Restaurant suchen' },
@@ -218,7 +218,8 @@ function SearchBody({
   ].filter((t) => nearHotel || t.id !== 'hotel');
   const nearTab = NEAR_TABS.find((t) => t.id === nearKind)!;
   // nur beim Einfügen (noch kein Name im Feld), nicht beim Ändern eines bestehenden Zwischenziels
-  const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? (passNear && isVia && !current ? 'pass' : 'alle'));
+  // Immer mit Alle beginnen: zuletzt gewählt und Vorschläge beim Tippen (Koray 9.11.)
+  const [cat, setCat] = useState<Cat>(stopsOnly?.cat ?? 'alle');
   const [scale, setScale] = useState(1);
   // Solange der Name des Punkts unverändert im Feld steht, keine Suche
   const q = query === current ? '' : query.trim();
