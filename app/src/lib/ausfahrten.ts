@@ -130,9 +130,15 @@ export async function ausfahrtTeilnehmer(id: string): Promise<Teilnehmer[]> {
 export async function publishAusfahrt(t: SavedTour, opts: { startsAt: Date; meeting: MeetingPoint | null; note: string; seats: number }): Promise<string> {
   const { data: s } = await supabase.auth.getSession();
   if (!s.session) throw new Error('Zum Veröffentlichen brauchst du ein Konto (Einstellungen).');
-  let cloudId = t.cloudId;
-  if (!cloudId || !t.syncedAt || t.syncedAt < t.updatedAt) {
-    cloudId = await saveCloudTour(t, { id: t.cloudId, folder: t.folder, profile: t.profile });
+  // Die gemerkte Konto ID kann fremd oder gelöscht sein (anderes Konto, Kopie aus der Community).
+  // Ein Update auf eine fremde Zeile schlägt still fehl, deshalb erst prüfen, ob sie uns gehört.
+  let cloudId: string | undefined = t.cloudId;
+  if (cloudId) {
+    const { data: own } = await supabase.from('tours').select('id').eq('id', cloudId).eq('owner', s.session.user.id).maybeSingle();
+    if (!own) cloudId = undefined;
+  }
+  if (!cloudId || cloudId !== t.cloudId || !t.syncedAt || t.syncedAt < t.updatedAt) {
+    cloudId = await saveCloudTour(t, { id: cloudId, folder: t.folder, profile: t.profile });
     patchTour(t.id, { cloudId, syncedAt: new Date().toISOString() });
   }
   const { data, error } = await supabase.rpc('publish_ride', {

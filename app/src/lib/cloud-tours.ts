@@ -53,8 +53,9 @@ export async function saveCloudTour(
     data: packTour(t, opts.profile ?? 'kurvig', opts.avoid),
   };
   if (opts.id) {
-    const { error } = await supabase.from('tours').update(row).eq('id', opts.id);
-    if (!error) return opts.id;
+    // Ohne Treffer (fremde oder gelöschte Tour) meldet Supabase keinen Fehler, dann neu anlegen
+    const { data, error } = await supabase.from('tours').update(row).eq('id', opts.id).select('id');
+    if (!error && data && data.length > 0) return opts.id;
   }
   const { data, error } = await supabase.from('tours').insert(row).select('id').single();
   if (error) throw new Error(error.message);
