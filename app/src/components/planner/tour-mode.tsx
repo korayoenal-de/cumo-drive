@@ -3,7 +3,7 @@
  * Pass Vorschlägen, Vermeiden, Ergebnis der Route. Der Zustand kommt aus use-tour-plan.ts.
  */
 import { router } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ComponentRef, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -34,7 +34,7 @@ import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, t
 import { type Avoid } from '@/lib/valhalla';
 
 import { PlaceSearch, type Cat, type Slot } from './place-search';
-import { OrtBadge, OrtSheet, type NearKind } from './ort-panel';
+import { OrtSheet, type NearKind } from './ort-panel';
 import { PointMenu, type PointAction, type PointMenuState } from './point-menu';
 import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
@@ -44,8 +44,6 @@ import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
 
 
-/** Zeit, bis eine Vollfläche (pageSheet) nach unten weg ist */
-const PAGE_GONE_MS = 450;
 
 export type EditTarget = { kind: PointKind; index?: number; insert?: boolean };
 
@@ -314,6 +312,13 @@ export function TourMode({
     return kind === 'via' ? ['start', 'ziel', 'karte', 'entfernen'] : kind === 'start' ? [...(isLoop || !plan.ziel ? [] : (['ziel'] as PointAction[])), 'karte', 'entfernen'] : [...(isLoop || !plan.start ? [] : (['start'] as PointAction[])), 'karte', 'entfernen'];
   }
 
+  function openMenu(kind: PointKind, index: number | undefined, p: LatLon, anchor: ViewRef | null) {
+    setLegMenu(null);
+    const idx = idxOf(kind, index);
+    const actions = actionsFor(kind);
+    anchor?.measureInWindow((_x: number, y: number, _w: number, h: number) => setMenu({ idx, top: y, bottom: y + h, actions, name: nameOf(p) }));
+  }
+
   function onMenu(a: PointAction) {
     const m = menu;
     setMenu(null);
@@ -367,13 +372,14 @@ export function TourMode({
       <View key={id} style={styles.gapS}>
         {/* Zwischenziele eingerückt, die Steuerung der Etappen bleibt auf der Achse von Start und Ziel (Koray 8.11.).
             Von rechts nach links wischen zeigt Löschen (Koray 8.11.). */}
+        <View style={[styles.pointCard, kind === 'via' && styles.pointRowVia]}>
         <Swipeable
           key={p ? keyOf(p) : 'leer'}
           enabled={!!p && !drag}
           friction={1.6}
           rightThreshold={36}
           overshootRight={false}
-          containerStyle={[styles.swipeBox, kind === 'via' && styles.pointRowVia]}
+          containerStyle={styles.swipeBox}
           renderRightActions={(_prog, _tr, m) => (
             <Pressable
               accessibilityRole="button"
@@ -437,22 +443,27 @@ export function TourMode({
               {body}
             </Pressable>
           )}
-          {/* Am Start braucht es keine Orte in der Nähe (Koray 8.11.); bei einer Runde ist er zugleich das Ziel */}
-          {p && (kind !== 'start' || isLoop) && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`${role} ${nameOf(p)}: Hotel, Café, Essen und Aktionen`}
-              hitSlop={4}
-              onPress={() => {
-                setLegMenu(null);
-                setOrtOpen(id);
-              }}
-              style={({ pressed }) => [styles.ortBadge, pressed && { opacity: 0.75 }]}>
-              <OrtBadge p={p} withHotel={kind !== 'start' || isLoop} highlight={kind === 'ziel'} open={false} />
-            </Pressable>
-          )}
+          {/* Aktionen zum Punkt hinter ⋯, getrennt von den Orten in der Nähe (Konzept D4, Koray 9.11.) */}
+          {p && <MoreButton label={`Aktionen für ${role} ${nameOf(p)}`} onPress={(v) => openMenu(kind, index, p, v)} />}
         </Animated.View>
         </Swipeable>
+        {/* Orte in der Nähe als eigene, beschriftete Zeile unter dem Punkt; am Start nicht, bei einer Runde ist er zugleich das Ziel */}
+        {p && (kind !== 'start' || isLoop) && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setLegMenu(null);
+              setOrtOpen(id);
+            }}
+            style={({ pressed }) => [styles.ortRow, pressed && { backgroundColor: Colors.pressTint }]}>
+            <SymbolView name={kind === 'via' ? 'cup.and.saucer.fill' : 'bed.double.fill'} size={16} tintColor={kind === 'via' ? Colors.muted : Colors.signal} />
+            <AppText style={styles.ortRowText} numberOfLines={1}>
+              {kind === 'via' ? `Pause oder Übernachten in ${nameOf(p)}` : `Übernachten in ${nameOf(p)}`}
+            </AppText>
+            <SymbolView name="chevron.right" size={13} tintColor={Colors.muted} weight="bold" />
+          </Pressable>
+        )}
+        </View>
         {/* Orte in der Nähe als Vollfläche wie die Suche (Koray 8.11.) */}
         {p && (
           <OrtSheet
@@ -461,21 +472,12 @@ export function TourMode({
             name={nameOf(p)}
             role={role}
             withHotel={kind !== 'start' || isLoop}
-            actions={actionsFor(kind)}
+            initialKind={kind === 'via' ? 'kaffee' : 'hotel'}
             onClose={() => setOrtOpen(null)}
             onPick={(q, name) => {
               onListEdit();
               plan.setSlot(kind, q, profile, avoid, name, index);
               setOrtOpen(null);
-            }}
-            onAction={(a) => {
-              setOrtOpen(null);
-              // Karte, Löschen mit Toast und Tauschen erst, wenn die Fläche weg ist
-              if (a === 'karte') {
-                setTimeout(() => onShowPoint?.(p), PAGE_GONE_MS);
-                return;
-              }
-              setTimeout(() => runAction({ idx: idxOf(kind, index), name: nameOf(p) }, a), PAGE_GONE_MS);
             }}
           />
         )}
@@ -759,3 +761,20 @@ export function TourMode({
   );
 }
 
+type ViewRef = ComponentRef<typeof View>;
+
+/** ⋯ in der Punktzeile: öffnet die Aktionen zum Punkt als schwebendes Menü */
+function MoreButton({ label, onPress }: { label: string; onPress: (v: ViewRef | null) => void }) {
+  const ref = useRef<ViewRef>(null);
+  return (
+    <Pressable
+      ref={ref}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={4}
+      onPress={() => onPress(ref.current)}
+      style={({ pressed }) => [styles.more, pressed && { backgroundColor: Colors.line }]}>
+      <SymbolView name="ellipsis" size={18} tintColor={Colors.muted} weight="bold" />
+    </Pressable>
+  );
+}

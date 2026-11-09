@@ -1,7 +1,7 @@
 /**
  * Orte in der Nähe als Vollfläche (Koray 8.11.2026, wie die Suche beim Zwischenziel): Kopf mit Ort und
  * Rolle, Reiter Hotel, Café und Essen. Darunter schlicht die Liste mit der Zahl in der Überschrift
- * („25 Hotels in Meran“, Koray 9.11.; Empfehlungen kommen später). Unten die Aktionen zum Punkt.
+ * („25 Hotels in Meran“, Koray 9.11.; Empfehlungen kommen später). Die Aktionen zum Punkt liegen getrennt hinter ⋯ in der Punktzeile (D4).
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
@@ -12,7 +12,6 @@ import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { placesNear, type NearPlace } from '@/lib/stops-along';
 import { formatKm, type LatLon } from '@/lib/tour';
 
-import { LABEL, type PointAction } from './point-menu';
 
 export type NearKind = 'hotel' | 'kaffee' | 'mittag';
 
@@ -32,10 +31,10 @@ type Props = {
   name: string;
   role: string;
   withHotel: boolean;
-  actions: PointAction[];
+  /** Reiter beim Öffnen: am Ziel Hotel, am Zwischenziel Café */
+  initialKind?: NearKind;
   onClose: () => void;
   onPick: (q: LatLon, name: string) => void;
-  onAction: (a: PointAction) => void;
 };
 
 export function OrtSheet(props: Props) {
@@ -46,9 +45,9 @@ export function OrtSheet(props: Props) {
   );
 }
 
-function OrtBody({ p, name, role, withHotel, actions, onClose, onPick, onAction }: Props) {
+function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Props) {
   const kinds = withHotel ? KINDS : KINDS.filter((k) => k.id !== 'hotel');
-  const [kind, setKind] = useState<NearKind>(kinds[0].id);
+  const [kind, setKind] = useState<NearKind>(kinds.some((k) => k.id === initialKind) ? initialKind! : kinds[0].id);
   const [lists, setLists] = useState<Record<string, NearPlace[] | 'fehler'>>(() => {
     const init: Record<string, NearPlace[]> = {};
     for (const k of kinds) {
@@ -76,7 +75,6 @@ function OrtBody({ p, name, role, withHotel, actions, onClose, onPick, onAction 
 
   const list = lists[kind];
   const meta = kinds.find((k) => k.id === kind)!;
-  const others = actions.filter((a) => a !== 'entfernen');
 
   const row = (h: NearPlace) => (
     <Pressable
@@ -148,25 +146,6 @@ function OrtBody({ p, name, role, withHotel, actions, onClose, onPick, onAction 
             <View style={styles.group}>{list.map(row)}</View>
           </View>
         )}
-        <View style={[styles.actions, styles.pad]}>
-          {others.map((a) => (
-            <Pressable key={a} accessibilityRole="button" onPress={() => onAction(a)} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-              <SymbolView name={LABEL[a].icon} size={16} tintColor={Colors.text} weight="semibold" />
-              <AppText style={styles.actionText} numberOfLines={1}>
-                {LABEL[a].text.replace(' setzen', '').replace(' zeigen', '')}
-              </AppText>
-            </Pressable>
-          ))}
-          {actions.includes('entfernen') && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Entfernen"
-              onPress={() => onAction('entfernen')}
-              style={({ pressed }) => [styles.action, styles.remove, pressed && styles.pressed]}>
-              <SymbolView name={LABEL.entfernen.icon} size={16} tintColor={Colors.stopText} weight="semibold" />
-            </Pressable>
-          )}
-        </View>
       </ScrollView>
     </View>
   );
@@ -197,10 +176,6 @@ const styles = StyleSheet.create({
   name: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   muted: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted },
   dist: { fontFamily: Fonts.display, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
-  actions: { flexDirection: 'row', gap: Spacing.xs },
-  action: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: 14, borderRadius: 22, backgroundColor: Colors.surface, flexShrink: 1 },
-  actionText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
-  remove: { marginLeft: 'auto', backgroundColor: Colors.signalTint, paddingHorizontal: 0, width: 44, justifyContent: 'center' },
   pressed: { opacity: 0.75 },
 });
 

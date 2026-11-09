@@ -156,6 +156,10 @@ export const styles = StyleSheet.create({
   ortBadge: { minHeight: 44, justifyContent: 'center', marginRight: Spacing.s },
   // Wischen zum Löschen: der Container trägt Rundung und Einzug, rechts erscheint die rote Taste
   swipeBox: { borderRadius: Radius.m, overflow: 'hidden' },
+  // Punkt und seine Ortszeile als eine Karte (Konzept D4)
+  pointCard: { borderRadius: Radius.m, overflow: 'hidden', backgroundColor: Colors.surface },
+  ortRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 48, paddingLeft: Spacing.l, paddingRight: Spacing.l, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
+  ortRowText: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
   swipeDelete: { width: 96, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', gap: 2 },
   swipeDeleteText: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.onSignal },
   symbol: { width: 28, alignItems: 'center', justifyContent: 'center' },
