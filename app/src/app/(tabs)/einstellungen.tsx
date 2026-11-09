@@ -19,6 +19,7 @@ import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { formatKm } from '@/lib/tour';
 import { deleteVehicle, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleName, type Vehicle } from '@/lib/vehicle';
+import { CustomColorButton } from '@/components/garage/custom-color';
 import { CAR_COLORS, CarStagePicker, CarSprite, carLookFor, DEFAULT_LOOK, frameFor } from '@/components/map/car-sprite';
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
@@ -344,6 +345,11 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
             </Pressable>
           );
         })}
+        <CustomColorButton
+          value={(value.look ?? DEFAULT_LOOK).color}
+          custom={!CAR_COLORS.some((c) => c.id === (value.look ?? DEFAULT_LOOK).color)}
+          onPick={(hex) => set({ look: { ...(value.look ?? DEFAULT_LOOK), color: hex }, mapSymbol: 'auto' })}
+        />
       </View>
       {/* mehr Luft zwischen Farbwahl und Knöpfen (Koray 9.11.) */}
       <View style={[styles.row, { marginTop: Spacing.l }]}>
