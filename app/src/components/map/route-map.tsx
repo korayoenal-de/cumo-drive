@@ -157,6 +157,30 @@ export function RouteMap({
   const roundTrip = !!start && !!ziel && Math.abs(start[0] - ziel[0]) + Math.abs(start[1] - ziel[1]) < 0.0005;
   const pad = edgePadding ?? EDGE;
 
+  // Pässe auf der Karte: ohne "Alle Pässe zeigen" nur bis 50 km um Route, Start, Zwischenziele und Ziel,
+  // ohne Punkte um den eigenen Standort (Koray 9.11.: die ganzen Alpenpässe waren zu viel)
+  const posLat = position ? Math.round(position[0] * 20) / 20 : null;
+  const posLon = position ? Math.round(position[1] * 20) / 20 : null;
+  const shownPasses = useMemo(() => {
+    if (!layers || !settings.passes) return [];
+    if (settings.passesAll) return PASSES;
+    const ref: LatLon[] = [...tour.wegpunkte, ...sampleLine(tour, 400)];
+    // Luftlinie zwischen den Punkten, solange noch keine Route steht
+    if (tour.linie.length === 0)
+      for (let i = 1; i < tour.wegpunkte.length; i++) {
+        const a = tour.wegpunkte[i - 1];
+        const b = tour.wegpunkte[i];
+        const n = Math.ceil(haversine(a, b) / 20000);
+        for (let k = 1; k < n; k++) ref.push([a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n]);
+      }
+    if (!ref.length && posLat != null && posLon != null) ref.push([posLat, posLon]);
+    if (!ref.length) return [];
+    return PASSES.filter((ps) => {
+      const p = passPoint(ps);
+      return ref.some((q) => Math.abs(q[0] - p[0]) < 0.5 && haversine(q, p) <= 50000);
+    });
+  }, [layers, settings.passes, settings.passesAll, tour, posLat, posLon]);
+
   // Ausschnitt an die Tour anpassen, solange keine Warnung gewählt ist und die Kamera nicht folgt
   useEffect(() => {
     if (!ready || !autoFit || followUser || highlightIndex != null || fitCoords.length < 2) return;
@@ -385,7 +409,7 @@ export function RouteMap({
           ))}
         {layers &&
           settings.passes &&
-          PASSES.map((ps) => (
+          shownPasses.map((ps) => (
             <Marker
               // Zustand im Schlüssel: ohne tracksViewChanges zeichnet Apple Maps einen Marker sonst nicht neu
               key={`pass-${ps.id}-${pickedPassIds?.has(ps.id) ? 'drin' : 'frei'}`}

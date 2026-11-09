@@ -13,6 +13,8 @@ export type MapSettings = {
   warnings: boolean;
   /** Alpenpässe und Bergstraßen aus unserer Liste */
   passes: boolean;
+  /** Alle Pässe zeigen; sonst nur im Umkreis von 50 km um Start, Zwischenziele, Ziel und Route (Koray 9.11.) */
+  passesAll: boolean;
   /** Gespeicherte Touren aus Meine Touren als dünne Linien */
   myTours: boolean;
   /** Eigene gefahrene Strecken aus Fahrten */
@@ -34,6 +36,7 @@ const DEFAULTS: MapSettings = {
   style: 'standard',
   warnings: true,
   passes: false,
+  passesAll: false,
   myTours: false,
   drives: false,
   weather: true,

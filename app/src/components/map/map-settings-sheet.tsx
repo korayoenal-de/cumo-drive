@@ -91,7 +91,13 @@ const LAYERS: { key: LayerKey; icon: SFSymbol; label: string; note: string }[] =
       key: 'passes',
       icon: 'mountain.2',
       label: 'Pässe',
-      note: 'Alle Pässe aus unserer Liste, orange die Ikonen',
+      note: 'Orange die Ikonen',
+    },
+    {
+      key: 'passesAll',
+      icon: 'globe.europe.africa',
+      label: 'Alle Pässe zeigen',
+      note: 'Sonst nur bis 50 km um deine Route, Start und Ziel',
     },
     {
       key: 'myTours',
@@ -160,7 +166,7 @@ function MapSettingsBody({ onClose }: { onClose: () => void }) {
         <View style={styles.group}>
           <AppText style={styles.label}>Auf der Karte</AppText>
           <View style={styles.card}>
-            {LAYERS.map((l, i) => (
+            {LAYERS.filter((l) => l.key !== 'passesAll' || st.passes).map((l, i) => (
               <View key={l.key} style={[styles.row, i > 0 && styles.rowLine]}>
                 <View style={styles.rowIcon}>
                   <SymbolView
@@ -175,7 +181,7 @@ function MapSettingsBody({ onClose }: { onClose: () => void }) {
                   <AppText style={styles.rowNote}>{l.key === 'weather' ? weatherNote(l.note, weather) : l.note}</AppText>
                 </View>
                 <Switch
-                  value={st[l.key]}
+                  value={!!st[l.key]}
                   onValueChange={(v) => setMapSettings({ [l.key]: v })}
                   trackColor={{ false: Colors.line, true: Colors.signal }}
                   thumbColor={Colors.text}
