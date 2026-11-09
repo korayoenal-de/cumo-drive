@@ -10,7 +10,6 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react
 import { MembershipSection } from '@/components/paywall/membership-section';
 import { VoiceSection } from '@/components/settings/voice-section';
 import { NameField, useNameCheck } from '@/components/auth/name-field';
-import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
@@ -19,7 +18,7 @@ import { clearLocalTours } from '@/lib/library';
 import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { formatKm } from '@/lib/tour';
-import { deleteVehicle, FUELS, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleName, vehicleSummary, type Vehicle } from '@/lib/vehicle';
+import { deleteVehicle, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleName, type Vehicle } from '@/lib/vehicle';
 import { CAR_COLORS, CarStagePicker, CarSprite, carLookFor, DEFAULT_LOOK, frameFor } from '@/components/map/car-sprite';
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
@@ -253,9 +252,6 @@ function Garage({ drives }: { drives: Drive[] | null }) {
                   <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="medium" />
                 </Pressable>
               </View>
-              <AppText variant="caption" muted>
-                {vehicleSummary(v, false)}
-              </AppText>
               {drives && (
                 <AppText style={styles.stat}>
                   {(() => {
@@ -271,12 +267,12 @@ function Garage({ drives }: { drives: Drive[] | null }) {
       <ActionSheet
         visible={!!menu}
         title={menu?.model.trim() || 'Fahrzeug'}
-        subtitle={menu ? vehicleSummary(menu, false) : undefined}
+        subtitle={undefined}
         items={
           menu
             ? [
                 ...(current?.id !== menu.id ? [{ key: 'cur', icon: 'checkmark.circle' as const, label: 'Als aktuell wählen', hint: 'Damit fährst du ab jetzt', onPress: () => void selectVehicle(menu.id) }] : []),
-                { key: 'edit', icon: 'pencil' as const, label: 'Bearbeiten', hint: 'Marke, Modell und Kraftstoff', onPress: () => setEdit(menu) },
+                { key: 'edit', icon: 'pencil' as const, label: 'Bearbeiten', hint: 'Marke und Modell, Form und Farbe', onPress: () => setEdit(menu) },
                 carLookFor(menu)
                   ? { key: 'sym', icon: 'location.north.fill' as const, label: 'Pfeil auf der Karte', hint: 'Statt deines Autos wieder den Pfeil zeigen', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'pfeil' }) }
                   : { key: 'sym', icon: 'car.fill' as const, label: 'Auto auf der Karte', hint: 'Form und Farbe wählst du beim Bearbeiten', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'auto' }).then(() => showToast('Dein Auto fährt jetzt auf der Karte mit')) },
@@ -321,16 +317,15 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
   const set = (patch: Partial<Vehicle>) => onChange({ ...value, ...patch });
   return (
     <View style={styles.card}>
-      {/* Nur noch Marke und Modell (Koray 9.11.); Breite, Bodenfreiheit und Reichweite entfallen */}
-      <View style={styles.row}>
-        <TextInput value={value.brand ?? ''} onChangeText={(t) => set({ brand: t })} placeholder="Marke" placeholderTextColor={Colors.muted} style={[styles.input, styles.flex]} accessibilityLabel="Marke" />
-        <TextInput value={value.model} onChangeText={(t) => set({ model: t })} placeholder="Modell, etwa 911 GT3" placeholderTextColor={Colors.muted} style={[styles.input, styles.flex]} accessibilityLabel="Modell" />
-      </View>
-      <View style={styles.wrap}>
-        {FUELS.map((f) => (
-          <Chip key={f.id} label={f.label} active={value.fuel === f.id} onSurface onPress={() => set({ fuel: f.id })} />
-        ))}
-      </View>
+      {/* Ein Feld für Marke und Modell, keine Spritwahl mehr (Koray 9.11.) */}
+      <TextInput
+        value={vehicleName(value)}
+        onChangeText={(t) => set({ brand: '', model: t })}
+        placeholder="Marke und Modell, etwa Porsche 911 GT3"
+        placeholderTextColor={Colors.muted}
+        style={styles.input}
+        accessibilityLabel="Marke und Modell"
+      />
       {/* Kartensymbol: Form und Lack, Vorschau zum Drehen (Koray 9.11., Platzhalter Modelle) */}
       <AppText variant="title">Auf der Karte</AppText>
       <CarStagePicker look={value.look ?? DEFAULT_LOOK} onForm={(form) => set({ look: { ...(value.look ?? DEFAULT_LOOK), form }, mapSymbol: 'auto' })} />

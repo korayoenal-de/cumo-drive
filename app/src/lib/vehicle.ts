@@ -158,10 +158,6 @@ export function vehicleName(v: Vehicle): string {
 }
 
 export function vehicleSummary(v: Vehicle, withModel = true): string {
-  return [
-    withModel ? vehicleName(v) || null : null,
-    FUELS.find((f) => f.id === v.fuel)?.label,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  // Sprit wird seit 9.11. nicht mehr gewählt und nicht mehr angezeigt
+  return withModel ? vehicleName(v) : '';
 }
