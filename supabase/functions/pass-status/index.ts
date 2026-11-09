@@ -61,11 +61,20 @@ function namesPass(i: Incident, p: Pass): boolean {
 }
 
 function match(list: Pass[], inc: Incident[], now: string) {
-  const closures = inc.filter((i) => i.properties.iconCategory === 8).map((i) => ({ i, line: lineOf(i) }));
+  // Nur Sperrungen ab 500 m, mit Rahmen; je Pass erst grob über den Rahmen (8 km), dann genau.
+  // Sonst rechnet die Funktion mit 1 Grad Kacheln zu lange (9.11.: WORKER_RESOURCE_LIMIT).
+  const closures = inc
+    .filter((i) => i.properties.iconCategory === 8 && (i.properties.length ?? 0) >= 500)
+    .map((i) => {
+      const line = lineOf(i);
+      const lats = line.map((q) => q[0]);
+      const lons = line.map((q) => q[1]);
+      return { i, line, box: [Math.min(...lats) - 0.08, Math.min(...lons) - 0.12, Math.max(...lats) + 0.08, Math.max(...lons) + 0.12] };
+    });
   return list.map((p) => {
     const pt: LatLon = [p.lat, p.lon];
     const hits = closures.filter((c) => {
-      if ((c.i.properties.length ?? 0) < 500) return false;
+      if (p.lat < c.box[0] || p.lon < c.box[1] || p.lat > c.box[2] || p.lon > c.box[3]) return false;
       const d = distTo(pt, c.line);
       return d <= 600 || (d <= 8000 && namesPass(c.i, p));
     });
