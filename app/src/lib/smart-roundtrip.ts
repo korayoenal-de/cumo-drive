@@ -99,7 +99,10 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         };
         candidates.push(cand);
         const ratio = t.laenge_km / req.km;
-        if ((t.km_je_klasse?.raus ?? 0) === 0 && ratio > 0.7 && ratio < 1.3 && spur < Math.max(2, t.laenge_km * 0.05)) return cand;
+        // Nur ohne eigenen Server sofort nehmen; sonst tritt die Pass Runde gegen die freien Varianten an
+        // (Tester 9.11.: eine Pass Runde durch die Rheinebene gewann ungeprüft, Fahrspaß fast null)
+        if (!own && (t.km_je_klasse?.raus ?? 0) === 0 && ratio > 0.7 && ratio < 1.3 && spur < Math.max(2, t.laenge_km * 0.05)) return cand;
+        if (own && ratio > 0.7 && ratio < 1.3) break;
         reachKm = reachKm / Math.max(0.5, Math.min(2.5, ratio));
       } catch (e) {
         if (signal?.aborted) throw e;
@@ -108,7 +111,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       }
     }
     const fit = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0 && c.laenge_km < req.km * 1.5 && spurKm(c) < Math.max(2, c.laenge_km * 0.05));
-    if (fit.length) return fit.sort((a, b) => b.score - a.score)[0];
+    if (fit.length && !own) return fit.sort((a, b) => b.score - a.score)[0];
   }
 
   // 0. Eigener Routing Server: Sportwagen Profil mit Kurven, mehrere Varianten, alles lokal

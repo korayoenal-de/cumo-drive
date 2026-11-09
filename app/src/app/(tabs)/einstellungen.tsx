@@ -20,7 +20,7 @@ import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { formatKm } from '@/lib/tour';
 import { deleteVehicle, FUELS, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleName, vehicleSummary, type Vehicle } from '@/lib/vehicle';
-import { CAR_COLORS, CAR_FORMS, CarPreview, CarSprite, carLookFor, DEFAULT_LOOK, frameFor } from '@/components/map/car-sprite';
+import { CAR_COLORS, CarCoverFlow, CarSprite, carLookFor, DEFAULT_LOOK, frameFor } from '@/components/map/car-sprite';
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
 
@@ -333,12 +333,7 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
       </View>
       {/* Kartensymbol: Form und Lack, Vorschau zum Drehen (Koray 9.11., Platzhalter Modelle) */}
       <AppText variant="title">Auf der Karte</AppText>
-      <CarPreview look={value.look ?? DEFAULT_LOOK} size={200} />
-      <View style={styles.wrap}>
-        {CAR_FORMS.map((f) => (
-          <Chip key={f.id} label={f.label} active={(value.look ?? DEFAULT_LOOK).form === f.id} onSurface onPress={() => set({ look: { ...(value.look ?? DEFAULT_LOOK), form: f.id }, mapSymbol: 'auto' })} />
-        ))}
-      </View>
+      <CarCoverFlow look={value.look ?? DEFAULT_LOOK} onForm={(form) => set({ look: { ...(value.look ?? DEFAULT_LOOK), form }, mapSymbol: 'auto' })} />
       <View style={styles.dots}>
         {CAR_COLORS.map((c) => {
           const on = (value.look ?? DEFAULT_LOOK).color === c.id;

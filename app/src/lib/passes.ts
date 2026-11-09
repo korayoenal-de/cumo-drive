@@ -206,7 +206,10 @@ export function passLoopVia(
   const reach = km / 3.3;
   // Wintersperren verhindern keine Planung (Touren werden oft im Winter für den Sommer geplant).
   // Bei gleicher Eignung gewinnt der offene Pass knapp, die Tour zeigt Sperren als Hinweis.
-  const open = passesNear(list, start, reach).filter((x) => x.km > 3);
+  // Mit gewählter Richtung nur Pässe grob in diese Richtung (Tester 9.11.: "nach Westen" ab Altleiningen
+  // brachte wieder die Runde über den Odenwald im Osten)
+  const inDir = (p: Pass) => bearing === null || Math.abs(((bearingTo(start, passPoint(p)) - bearing + 540) % 360) - 180) < 70;
+  const open = passesNear(list, start, reach).filter((x) => x.km > 3 && inDir(x.pass));
   if (!open.length) return null;
   const score = (x: { pass: Pass; km: number }) => {
     const dirFit = bearing === null ? 1 : Math.cos(((bearingTo(start, passPoint(x.pass)) - bearing) * Math.PI) / 180) * 0.5 + 0.5;
