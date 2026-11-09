@@ -575,7 +575,7 @@ export default function Planner() {
               <AppText style={styles.cancelText}>Abbrechen</AppText>
             </Pressable>
           </View>
-          <ProgressBar step={phaseIndex(tourPlan.step ?? 'route')} />
+          <ProgressBar step={phaseIndex(tourPlan.step ?? 'route')} expectMs={8000} />
         </View>
       ) : view.kind === 'working' ? (
         <View style={styles.workBox}>
@@ -588,7 +588,7 @@ export default function Planner() {
             </Pressable>
           </View>
           {/* Balken mit Prozent statt Logo (Koray 8.11.) */}
-          <ProgressBar step={phaseIndex(view.phase)} done={radar?.phase === 'aufloesen'} doneMs={REVEAL_MS - 300} />
+          <ProgressBar step={phaseIndex(view.phase)} expectMs={12000} done={radar?.phase === 'aufloesen'} doneMs={REVEAL_MS - 300} />
         </View>
       ) : (
         <AppText variant="caption" muted numberOfLines={2} style={styles.summaryHint}>
