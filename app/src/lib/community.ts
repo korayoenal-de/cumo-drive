@@ -18,12 +18,15 @@ export type CommunityTour = {
   description: string | null;
   published_at: string;
   owner: string;
+  /** Start der Tour für den Pin auf der Community Karte */
+  start_lat: number | null;
+  start_lon: number | null;
 };
 
 export async function listCommunity(limit = 100): Promise<CommunityTour[]> {
   const { data, error } = await supabase
     .from('tours')
-    .select('id,name,km,minutes,curves,profile,author,description,published_at,owner')
+    .select('id,name,km,minutes,curves,profile,author,description,published_at,owner,start_lat,start_lon')
     .eq('published', true)
     .order('published_at', { ascending: false })
     .limit(limit);

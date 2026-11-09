@@ -1,0 +1,132 @@
+/**
+ * Karte der Community (Koray 9.11.): Pins am Start jeder Route oder Ausfahrt.
+ * Routen: dunkle Pins mit Streckensymbol und km. Ausfahrten: orange Pins mit Teilnehmerzahl und Datum.
+ * Antippen wählt den Pin, die ganze Strecke erscheint auf der Karte.
+ */
+import { SymbolView } from 'expo-symbols';
+import { useEffect, useRef } from 'react';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
+
+import { AppText } from '@/components/ui/text';
+import { Colors, Fonts } from '@/constants/theme';
+import { useMapSettings, type MapStyle } from '@/lib/map-settings';
+import type { LatLon } from '@/lib/tour';
+
+export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt'; p: LatLon; label: string; count?: number };
+
+const MAP_TYPE: Record<MapStyle, 'mutedStandard' | 'hybrid' | 'hybridFlyover'> = { standard: 'mutedStandard', satellit: 'hybrid', '3d': 'hybridFlyover' };
+const ll = (p: LatLon) => ({ latitude: p[0], longitude: p[1] });
+
+type Props = {
+  pins: CommunityPin[];
+  selected: string | null;
+  onSelect: (id: string | null) => void;
+  line: LatLon[] | null;
+  /** Höhe, die das Blatt unten verdeckt */
+  bottom: number;
+  top: number;
+  style?: StyleProp<ViewStyle>;
+};
+
+export function CommunityMap({ pins, selected, onSelect, line, bottom, top, style }: Props) {
+  const settings = useMapSettings();
+  const map = useRef<MapView>(null);
+  const pad = { top: top + 30, right: 40, bottom: bottom + 30, left: 40 };
+  const pinKey = pins.map((p) => p.id).join(',');
+
+  // Alle Pins zeigen, wenn sich die Auswahl der Pins ändert (Routen oder Ausfahrten)
+  useEffect(() => {
+    if (!pins.length || selected) return;
+    const t = setTimeout(() => map.current?.fitToCoordinates(pins.map((p) => ll(p.p)), { edgePadding: pad, animated: true }), 60);
+    return () => clearTimeout(t);
+    // nur bei neuen Pins, nicht bei jeder Blatt Höhe
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinKey]);
+
+  // Gewählte Strecke ganz zeigen
+  useEffect(() => {
+    if (!line || line.length < 2) return;
+    const step = Math.max(1, Math.floor(line.length / 200));
+    const pts = line.filter((_, i) => i % step === 0).map(ll);
+    map.current?.fitToCoordinates(pts, { edgePadding: pad, animated: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [line]);
+
+  return (
+    <MapView
+      ref={map}
+      style={style}
+      userInterfaceStyle="dark"
+      mapType={MAP_TYPE[settings.style]}
+      showsUserLocation
+      showsPointsOfInterests={false}
+      showsCompass={false}
+      toolbarEnabled={false}
+      pitchEnabled={false}
+      onPress={(e) => {
+        // Tippen auf die freie Karte hebt die Auswahl auf, Tippen auf einen Pin nicht
+        if (e.nativeEvent.action !== 'marker-press') onSelect(null);
+      }}
+      initialRegion={{ latitude: 48.8, longitude: 9.2, latitudeDelta: 6, longitudeDelta: 6 }}>
+      {line && line.length > 1 && (
+        <>
+          <Polyline coordinates={line.map(ll)} strokeColor="rgba(0,0,0,0.45)" strokeWidth={8} lineCap="round" lineJoin="round" zIndex={1} />
+          <Polyline coordinates={line.map(ll)} strokeColor={Colors.signal} strokeWidth={5} lineCap="round" lineJoin="round" zIndex={2} />
+        </>
+      )}
+      {pins.map((p) => {
+        const on = p.id === selected;
+        return (
+          <Marker
+            key={`${p.id}-${on ? 1 : 0}`}
+            coordinate={ll(p.p)}
+            anchor={{ x: 0.5, y: 1 }}
+            zIndex={on ? 50 : p.kind === 'ausfahrt' ? 20 : 10}
+            tracksViewChanges={false}
+            onPress={() => onSelect(p.id)}
+            accessibilityLabel={p.kind === 'route' ? `Route, ${p.label}` : `Ausfahrt am ${p.label}`}>
+            <Pin pin={p} on={on} />
+          </Marker>
+        );
+      })}
+    </MapView>
+  );
+}
+
+function Pin({ pin, on }: { pin: CommunityPin; on: boolean }) {
+  const ride = pin.kind === 'ausfahrt';
+  const bg = ride ? Colors.signal : on ? Colors.text : Colors.surface;
+  const fg = ride ? Colors.onSignal : on ? Colors.ground : Colors.text;
+  return (
+    <View style={styles.wrap}>
+      <View style={[styles.pill, { backgroundColor: bg }, ride && on && styles.rideOn]}>
+        {ride ? (
+          <View style={styles.people}>
+            <View style={[styles.dot, styles.dotA]} />
+            <View style={[styles.dot, styles.dotB]}>
+              <AppText style={styles.count}>{pin.count ?? ''}</AppText>
+            </View>
+          </View>
+        ) : (
+          <SymbolView name="point.topleft.down.to.point.bottomright.curvepath" size={13} weight="bold" tintColor={fg} />
+        )}
+        <AppText style={[styles.label, { color: fg }]}>{pin.label}</AppText>
+      </View>
+      <View style={[styles.tip, { borderTopColor: bg }]} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrap: { alignItems: 'center' },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 30, paddingHorizontal: 10, borderRadius: 15, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
+  rideOn: { borderWidth: 2, borderColor: Colors.text },
+  label: { fontFamily: Fonts.bold, fontSize: 13, lineHeight: 16, fontVariant: ['tabular-nums'] },
+  tip: { width: 0, height: 0, borderLeftWidth: 5, borderRightWidth: 5, borderTopWidth: 7, borderLeftColor: 'transparent', borderRightColor: 'transparent', marginTop: -1 },
+  people: { flexDirection: 'row', alignItems: 'center' },
+  dot: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  dotA: { backgroundColor: Colors.signalDeep },
+  dotB: { backgroundColor: '#7A3018', marginLeft: -6 },
+  count: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 10, lineHeight: 12 },
+});
