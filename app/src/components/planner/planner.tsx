@@ -29,6 +29,7 @@ import { Chip } from '@/components/ui/chip';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { RadarChip, ScanChip } from './radar-chip';
+import { usePillText } from './use-pill';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
@@ -55,15 +56,6 @@ import { TourMode } from './tour-mode';
 
 
 /** Schritte beim ersten Planen in Tour planen, gleiche Wortwahl wie bei der Rundtour */
-/** Arbeitsschritt oben über der Karte, kurz (Koray 9.11.: das Warten erklären), für Tour und Rundtour */
-const PILL: Record<PlanPhase, string> = {
-  start: 'Standort bestimmen',
-  route: 'Kurvige Straßen berechnen',
-  compare: 'Beste Runde wählen',
-  traffic: 'Verkehrsmeldungen prüfen',
-  check: 'Straßen für Sportwagen prüfen',
-  fix: 'Sperrung umfahren',
-};
 const phaseIndex = (p: PlanPhase | PlanStep) => Math.max(0, PHASES.findIndex((x) => x.id === p));
 
 /** Wort für den Toast nach dem Einplanen */
@@ -473,6 +465,11 @@ export default function Planner() {
     setDetent(1);
   }
   const inTour = view.kind === 'form' && mode === 'tour';
+  const pill = usePillText(
+    scan ? (tourPlan.step ?? null) : view.kind === 'working' ? view.phase : null,
+    scan ? 'tour' : 'runde',
+    scan ? scan.spots.length : 0,
+  );
   const mapTour: Tour =
     view.kind === 'result'
       ? view.tour
@@ -964,12 +961,12 @@ export default function Planner() {
         />
           <MapLayersButton style={[styles.layersBtn, { top: insets.top + Spacing.s }]} />
           {/* Was gerade passiert, links oben neben den Karteneinstellungen (Koray 9.11.) */}
-          {scan && tourPlan.step && <ScanChip top={insets.top + Spacing.s} text={PILL[tourPlan.step]} />}
+          {scan && tourPlan.step && pill && <ScanChip top={insets.top + Spacing.s} text={pill} />}
           {view.kind === 'working' &&
             (radar?.phase === 'aufloesen' ? (
               <RadarChip key="aufloesen" count={radar.count} found={radar.roads.length} top={insets.top + Spacing.s} />
             ) : (
-              <ScanChip top={insets.top + Spacing.s} text={PILL[view.phase]} />
+              pill && <ScanChip top={insets.top + Spacing.s} text={pill} />
             ))}
           {passOverlay && (
             <MapPassActions

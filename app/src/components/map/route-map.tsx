@@ -830,7 +830,7 @@ function CorridorScan({ scan }: { scan: Scan }) {
       <Polyline coordinates={head.map(ll)} strokeColor="rgba(226,70,28,0.5)" strokeWidth={2} lineCap="round" zIndex={1} />
       {/* Geprüfte Abschnitte als feine Punkte auf der Linie, damit man sieht, wie weit der Scan ist (Koray 9.11.) */}
       {ticks.map((t, i) =>
-        k >= t.frac ? <Circle key={`tick-${i}`} center={ll(t.p)} radius={Math.max(80, lenM * 0.0014)} fillColor="rgba(244,244,242,0.6)" strokeWidth={0} zIndex={1} /> : null,
+        k >= t.frac ? <Circle key={`tick-${i}`} center={ll(t.p)} radius={Math.max(60, lenM * 0.001)} fillColor="rgba(226,70,28,0.55)" strokeWidth={0} zIndex={1} /> : null,
       )}
       {k < 1 && <Circle key="scan-head" center={ll(head[head.length - 1])} radius={Math.max(150, lenM * 0.004)} fillColor="rgba(244,244,242,0.9)" strokeColor="rgba(226,70,28,0.9)" strokeWidth={2} zIndex={3} />}
       {scan.spots.map((s) => {
@@ -842,9 +842,9 @@ function CorridorScan({ scan }: { scan: Scan }) {
           <Circle
             key={`scan-${s.id}`}
             center={ll(s.p)}
-            radius={Math.max(120, lenM * (hi ? 0.0032 : 0.0022) * (0.7 + 0.3 * lit))}
+            radius={Math.max(150, lenM * (hi ? 0.0055 : 0.0038) * (0.7 + 0.3 * lit))}
             fillColor={`rgba(226,70,28,${(0.9 * lit).toFixed(2)})`}
-            strokeColor={hi ? `rgba(244,244,242,${(0.85 * lit).toFixed(2)})` : `rgba(11,11,12,${(0.6 * lit).toFixed(2)})`}
+            strokeColor={hi ? `rgba(244,244,242,${(0.95 * lit).toFixed(2)})` : `rgba(244,244,242,${(0.45 * lit).toFixed(2)})`}
             strokeWidth={1}
             zIndex={1}
           />
