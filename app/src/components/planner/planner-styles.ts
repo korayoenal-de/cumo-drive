@@ -1,7 +1,7 @@
 /** Styles des Planers, gemeinsam für alle Planer Dateien. Alle Werte aus den Design Tokens. */
 import { StyleSheet } from 'react-native';
 
-import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   dragging: { zIndex: 10 },
@@ -46,7 +46,7 @@ export const styles = StyleSheet.create({
 
   typoTabs: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 20 },
   // Reiter sind Bedienelemente: Inter Bold, normal geschrieben (Koray 9.11.)
-  typoTab: { fontFamily: Fonts.bold, fontSize: Type.tab, lineHeight: 28, color: Colors.faint },
+  typoTab: { fontFamily: Fonts.bold, fontSize: Type.tab, lineHeight: Leading.tab, color: Colors.faint },
   typoTabOn: { color: Colors.text },
   segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: Spacing.xs },
   segItem: { flex: 1, height: 38, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
