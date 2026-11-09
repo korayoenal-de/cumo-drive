@@ -18,7 +18,7 @@ import { doubledStretch } from './doubled';
 import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from './graphhopper';
 import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
 import { planChecked, type PlannedTour, type PlanStep } from './plan';
-import { prefetchClosures } from './road-closures';
+import { closureExclude, closuresNear, closuresOnRoute, prefetchClosures } from './road-closures';
 import { DIRECTIONS, hillyVia, loopPoints, roundTrip, type Direction } from './roundtrip';
 import { countCurves } from './stats';
 import { flatten, haversine, type LatLon, type Profile } from './tour';
@@ -138,8 +138,32 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         .map((t) => ({ ...t, engine: 'cumo' as const, score: base(t) }))
         .sort((a, b) => b.score - a.score);
       const top = await Promise.all(ranked.slice(0, 3).map((t) => despur(t, req, signal)));
-      for (const t of top) candidates.push({ ...t, score: base(t) - spurKm(t) * 100 });
-      if (candidates.length) return candidates.sort((a, b) => b.score - a.score)[0];
+      // Aktuelle Sperrungen auch bei der Rundtour (Tester 9.11.: Runde ab Altleiningen fuhr durch eine
+      // gesperrte Strecke bei Freinsheim). Die Meldungen sind meist schon vorab geholt.
+      onStep?.('traffic');
+      const lines = top.map((t) => flatten(t).map((x) => x.p));
+      const closures = await closuresNear(lines.flat(), signal);
+      // Stichstraßen zählen dreifach so schwer wie bisher (Tester 9.11.: Hin und Zurück bei Neustadt)
+      top.forEach((t, i) => {
+        const hits = closures.length ? closuresOnRoute(lines[i], closures).length : 0;
+        candidates.push({ ...t, score: base(t) - spurKm(t) * 300 - hits * 1000 });
+      });
+      if (candidates.length) {
+        const best = candidates.sort((a, b) => b.score - a.score)[0];
+        const line = flatten(best).map((x) => x.p);
+        const hits = closures.length ? closuresOnRoute(line, closures) : [];
+        if (!hits.length) return best;
+        // Auch die beste Runde trifft eine Sperrung: einmal um die Sperrung herum neu planen
+        onStep?.('fix');
+        try {
+          const ex = closureExclude(hits, best.wegpunkte);
+          const again = await cumoPlan(req.name, best.wegpunkte, req.profile, req.avoid, signal, ex);
+          if (closuresOnRoute(flatten(again).map((x) => x.p), closures).length < hits.length) return { ...best, ...again, engine: 'cumo', score: best.score };
+        } catch (e) {
+          if (signal?.aborted) throw e;
+        }
+        return best;
+      }
     } catch (e) {
       if (signal?.aborted) throw e;
       lastError = e;

@@ -258,6 +258,38 @@ const MAJOR = new Set(['motorway', 'trunk', 'primary', 'secondary']);
 
 type Seg = { a: number; b: number; km: number; c: CheckClass; why: string[]; minor: boolean; name: string };
 
+/**
+ * Raster der kuratierten Strecken (etwa 1 km Zellen), um schnell zu prüfen, ob ein Stück auf einer von Menschen
+ * geprüften Strecke liegt. Dort gilt die schmale Breite aus OSM nur als Hinweis, nicht als Sperre
+ * (Tester 9.11.: K 31 Höningen nach Leistadt steht mit 2,8 m in der Karte, fährt sich aber gut).
+ */
+let curatedGrid: Map<string, LatLon[]> | null = null;
+const cellOf = (p: LatLon) => `${Math.floor(p[0] * 100)},${Math.floor(p[1] * 70)}`;
+function onCurated(p: LatLon): boolean {
+  if (!curatedGrid) {
+    curatedGrid = new Map();
+    for (const r of [...HIGHLIGHT_ROADS, ...PREFER_ROADS]) {
+      for (let i = 0; i < r.line.length; i++) {
+        // Zwischenpunkte, damit lange Abschnitte zwischen zwei Stützpunkten nicht durchs Raster fallen
+        const a = r.line[i];
+        const b = r.line[Math.min(r.line.length - 1, i + 1)];
+        const n = Math.max(1, Math.ceil(haversine(a, b) / 80));
+        for (let k = 0; k < n; k++) {
+          const q: LatLon = [a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n];
+          const key = cellOf(q);
+          const list = curatedGrid.get(key);
+          if (list) list.push(q);
+          else curatedGrid.set(key, [q]);
+        }
+      }
+    }
+  }
+  const [la, lo] = [Math.floor(p[0] * 100), Math.floor(p[1] * 70)];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) for (const q of curatedGrid.get(`${la + dy},${lo + dx}`) ?? []) if (haversine(p, q) < 120) return true;
+  return false;
+}
+
 /** Wert eines Details an einem Punktindex. */
 function valueAt(details: Detail[] | undefined, i: number) {
   if (!details) return null;
@@ -301,11 +333,15 @@ export function checkFromDetails(path: GhPath): Pick<Tour, 'linie' | 'warnungen'
     // (Engstelle, meist 2 bis 2,5 m) und die Straßenbreite width im selben Wert:
     // unter 1,9 m passt kein Sportwagen, 2,5 bis 3 m ist eine einspurige Straße, beides raus.
     const mwText = typeof mw === 'number' ? String(mw).replace('.', ',') : '';
-    if (typeof mw === 'number' && (mw < 1.9 || (mw >= 2.5 && mw < 3))) why.push(`nur ${mwText} m breit`);
+    // Auf kuratierten Strecken ist eine einspurige Breite (2,5 bis 3 m) nur zu prüfen, nicht gesperrt
+    const narrow = typeof mw === 'number' && mw >= 2.5 && mw < 3;
+    const curated = narrow && onCurated(shape[Math.floor((a + b) / 2)]);
+    if (typeof mw === 'number' && (mw < 1.9 || (narrow && !curated))) why.push(`nur ${mwText} m breit`);
     let c: CheckClass = why.length ? 'raus' : 'ok';
+    if (c === 'ok' && curated) why.push(`schmal, ${mwText} m laut Karte, von Fahrern empfohlen`);
     if (c === 'ok') {
       if (typeof mw === 'number' && mw < 2.5) why.push(`Engstelle ${mwText} m`);
-      else if (typeof mw === 'number' && mw < 4.5) why.push(`schmal, ${mwText} m, Gegenverkehr wird eng`);
+      else if (!curated && typeof mw === 'number' && mw < 4.5) why.push(`schmal, ${mwText} m, Gegenverkehr wird eng`);
       // Pflaster nur bei echtem Kopfstein ab 300 m und nicht in den ersten und letzten 500 m: Pflastersteine
       // (paving_stones) fahren sich wie Asphalt, am Start oder Ziel liegt oft nur ein Parkplatz (Koray 9.11.)
       const nearEnds = fromKm < 0.5 || atKm > totalKm - 0.5;

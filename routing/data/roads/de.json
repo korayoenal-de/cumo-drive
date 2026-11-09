@@ -3641,5 +3641,35 @@
       "Koray Önal, eigene Fahrt (CUMO DRIVERS CLUB), November 2026"
     ],
     "insider": true
+  },
+  {
+    "id": "de-k31-hoeningen-leistadt",
+    "name": "K 31 Höningen nach Leistadt",
+    "country": "DE",
+    "region": "Pfälzerwald, Leiningerland",
+    "kind": "strecke",
+    "tier": "highlight",
+    "note": "Waldstrecke zwischen Leiningerland und Weinstraße",
+    "roads": [
+      "K 31"
+    ],
+    "from": {
+      "name": "Höningen",
+      "lat": 49.4914,
+      "lon": 8.0762
+    },
+    "to": {
+      "name": "Leistadt",
+      "lat": 49.4933,
+      "lon": 8.1568
+    },
+    "via": [],
+    "length_km": 13.3,
+    "facts": "Tipp eines CDC Testers (9.11.2026)",
+    "quality": 4,
+    "caveats": "Laut OSM nur 2,8 m breit, von Fahrern als gut befahrbar bestätigt",
+    "sources": [
+      "Tester Hinweis"
+    ]
   }
 ]
