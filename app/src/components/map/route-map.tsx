@@ -17,8 +17,8 @@ import { listDriveTracks } from '@/lib/drives';
 import { useLibrary } from '@/lib/library';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { passPoint, PASSES } from '@/lib/passes';
-import { RADAR_FAST_MS, RADAR_MS, RADAR_REPEAT_MS, REVEAL_MS, type RadarRoad, type RadarSpot } from '@/lib/radar';
-import type { CheckClass, LatLon } from '@/lib/tour';
+import { RADAR_FAST_MS, RADAR_MS, RADAR_REPEAT_MS, REVEAL_MS, SCAN_MS, type RadarRoad, type RadarSpot, type Scan } from '@/lib/radar';
+import { haversine, type CheckClass, type LatLon } from '@/lib/tour';
 import { CarTopView, carSymbolFor } from '@/components/map/car-marker';
 import { useVehicles } from '@/lib/vehicle';
 import { useRouteWeather, WeatherMarkers, WeatherSheet } from '@/components/map/weather-layer';
@@ -65,6 +65,7 @@ export function RouteMap({
   pickedPassIds,
   flyTo,
   radar,
+  scan,
 }: RouteMapProps) {
   const settings = useMapSettings();
   // Eigenes Auto statt Pfeil, wenn in der Garage eingeschaltet
@@ -521,6 +522,7 @@ export function RouteMap({
             )}
           </MeMarker>
         )}
+        {scan && <CorridorScan key={scan.pts.map((p) => p.join(',')).join(';')} scan={scan} />}
         {radar && ringAt && fitCoords.length < 2 && <RadarRoads key={ringKey} radiusM={radar.radiusM} roads={radar.roads} spots={radar.spots} line={radar.line} fast={radar.phase === 'aufloesen'} />}
       </MapView>
       {radar && ringAt && fitCoords.length < 2 && <RadarRing key={ringKey} x={ringAt.x} y={ringAt.y} r={ringAt.r} fast={radar.phase === 'aufloesen'} />}
@@ -747,6 +749,60 @@ function RadarRoads({ radiusM, roads, spots, line, fast }: { radiusM: number; ro
             lineCap="round"
             lineJoin="round"
             zIndex={2}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+/**
+ * Scan beim ersten Planen einer Tour (Koray 9.11.): eine Linie läuft vom Start über die Zwischenziele zum Ziel,
+ * Highlights leuchten als Strecke auf, bevorzugte Strecken als kleine Punkte, sobald die Linie bei ihnen ist.
+ */
+function CorridorScan({ scan }: { scan: Scan }) {
+  const reduced = useReducedMotion();
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    const t0 = Date.now() - (reduced ? SCAN_MS : 0);
+    const id = setInterval(() => {
+      const d = Date.now() - t0;
+      setT(d);
+      if (d > SCAN_MS + 400) clearInterval(id);
+    }, 60);
+    return () => clearInterval(id);
+  }, [reduced]);
+  const k = 1 - Math.pow(1 - Math.min(1, t / SCAN_MS), 2);
+  // Luftlinie in feinen Schritten, damit der Kopf gleichmäßig läuft
+  const steps = useMemo(() => {
+    const out: LatLon[] = [];
+    for (let i = 1; i < scan.pts.length; i++) {
+      const a = scan.pts[i - 1];
+      const b = scan.pts[i];
+      for (let j = 0; j < 40; j++) out.push([a[0] + ((b[0] - a[0]) * j) / 40, a[1] + ((b[1] - a[1]) * j) / 40]);
+    }
+    out.push(scan.pts[scan.pts.length - 1]);
+    return out;
+  }, [scan.pts]);
+  const lenM = useMemo(() => steps.reduce((s, p, i) => (i ? s + haversine(steps[i - 1], p) : 0), 0), [steps]);
+  const head = steps.slice(0, Math.max(2, Math.round(steps.length * k)));
+  return (
+    <>
+      <Polyline coordinates={head.map(ll)} strokeColor="rgba(226,70,28,0.55)" strokeWidth={3} lineDashPattern={[2, 8]} lineCap="round" zIndex={1} />
+      {scan.spots.map((s) => {
+        const lit = Math.max(0, Math.min(1, (k - s.frac) / 0.06));
+        if (lit <= 0) return null;
+        if (s.kind === 'highlight' && s.line)
+          return <Polyline key={`scan-${s.id}`} coordinates={s.line.map(ll)} strokeColor={`rgba(226,70,28,${(0.9 * lit).toFixed(2)})`} strokeWidth={4} lineCap="round" lineJoin="round" zIndex={2} />;
+        return (
+          <Circle
+            key={`scan-${s.id}`}
+            center={ll(s.p)}
+            radius={Math.max(250, lenM * (0.004 + 0.002 * lit))}
+            fillColor={`rgba(226,70,28,${(0.85 * lit).toFixed(2)})`}
+            strokeColor={`rgba(11,11,12,${(0.6 * lit).toFixed(2)})`}
+            strokeWidth={1}
+            zIndex={1}
           />
         );
       })}

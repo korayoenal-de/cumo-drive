@@ -4,7 +4,7 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { Pass } from '@/lib/passes';
-import type { Radar } from '@/lib/radar';
+import type { Radar, Scan } from '@/lib/radar';
 import type { CheckClass, LatLon, Tour, Warning } from '@/lib/tour';
 import { Colors } from '@/constants/theme';
 
@@ -57,6 +57,8 @@ export type RouteMapProps = {
   flyTo?: { p: LatLon; n: number } | null;
   /** Radar beim Erstellen einer Rundtour: Ring ab dem Start, Strecken im Umkreis leuchten auf */
   radar?: Radar | null;
+  /** Scan entlang der Strecke beim ersten Planen in Tour planen */
+  scan?: Scan | null;
 };
 
 export type MapPin = { id: string; p: LatLon; label: string; title: string };

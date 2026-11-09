@@ -107,3 +107,66 @@ export function curvyPieces(line: LatLon[], center: LatLon, max = 30): RadarRoad
   // die längsten zuerst, damit bei vielen Stücken die markanten bleiben
   return out.sort((a, b) => b.line.length - a.line.length).slice(0, max);
 }
+
+/** Dauer des Scans entlang der Strecke von Start zum Ziel (erste Planung in Tour planen, Koray 9.11.) */
+export const SCAN_MS = 3400;
+
+export type ScanSpot = { id: string; p: LatLon; frac: number; kind: 'highlight' | 'prefer'; line?: LatLon[] };
+/** Scan beim ersten Planen einer Tour: ein Band läuft vom Start über die Zwischenziele zum Ziel */
+export type Scan = { pts: LatLon[]; spots: ScanSpot[] };
+
+/**
+ * Strecken im Korridor entlang der Luftlinie über alle Punkte, mit ihrer Lage auf dem Weg (0 Start, 1 Ziel).
+ * Breite je nach Länge zwischen 8 und 25 km. Highlights als Linie, bevorzugte Strecken als Punkt.
+ */
+export function corridorSpots(pts: LatLon[], max = 60): ScanSpot[] {
+  if (pts.length < 2) return [];
+  const lat0 = (pts[0][0] * Math.PI) / 180;
+  const kx = 111320 * Math.cos(lat0);
+  const ky = 111320;
+  const xy = (p: LatLon) => [p[1] * kx, p[0] * ky];
+  const segs: { a: number[]; b: number[]; from: number; len: number }[] = [];
+  let total = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const a = xy(pts[i - 1]);
+    const b = xy(pts[i]);
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    segs.push({ a, b, from: total, len });
+    total += len;
+  }
+  if (total < 1000) return [];
+  const width = Math.max(8000, Math.min(25000, total * 0.12));
+  const lats = pts.map((p) => p[0]);
+  const lons = pts.map((p) => p[1]);
+  const dLat = width / ky;
+  const dLon = width / kx;
+  const box = [Math.min(...lats) - dLat, Math.max(...lats) + dLat, Math.min(...lons) - dLon, Math.max(...lons) + dLon];
+  const out: (ScanSpot & { d: number })[] = [];
+  const consider = (r: { id: string; line: LatLon[] }, kind: ScanSpot['kind']) => {
+    if (r.line.length < 2) return;
+    const p = r.line[Math.floor(r.line.length / 2)];
+    if (p[0] < box[0] || p[0] > box[1] || p[1] < box[2] || p[1] > box[3]) return;
+    const q = xy(p);
+    let best = Infinity;
+    let along = 0;
+    for (const s of segs) {
+      const vx = s.b[0] - s.a[0];
+      const vy = s.b[1] - s.a[1];
+      const t = s.len ? Math.max(0, Math.min(1, ((q[0] - s.a[0]) * vx + (q[1] - s.a[1]) * vy) / (s.len * s.len))) : 0;
+      const d = Math.hypot(s.a[0] + vx * t - q[0], s.a[1] + vy * t - q[1]);
+      if (d < best) {
+        best = d;
+        along = s.from + t * s.len;
+      }
+    }
+    if (best <= width) out.push({ id: r.id, p, frac: along / total, kind, line: kind === 'highlight' ? r.line : undefined, d: best });
+  };
+  HIGHLIGHT_ROADS.forEach((r) => consider(r, 'highlight'));
+  PREFER_ROADS.forEach((r) => consider(r, 'prefer'));
+  // die nächsten zur Linie behalten, dann nach Lage sortieren
+  return out
+    .sort((a, b) => a.d - b.d)
+    .slice(0, max)
+    .sort((a, b) => a.frac - b.frac)
+    .map(({ d: _d, ...x }) => x);
+}

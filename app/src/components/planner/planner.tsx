@@ -36,10 +36,10 @@ import { Colors, Spacing } from '@/constants/theme';
 import { onEditTour, takeEditTour } from '@/lib/edit-tour';
 import { reverseName } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
-import { type PlannedTour } from '@/lib/plan';
+import { type PlannedTour, type PlanStep } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { spliceStop } from '@/lib/stop-splice';
-import { curvyPieces, radarRadiusM, radarRoads, radarSpots, REVEAL_MS, type Radar } from '@/lib/radar';
+import { corridorSpots, curvyPieces, radarRadiusM, radarRoads, radarSpots, REVEAL_MS, type Radar, type Scan } from '@/lib/radar';
 import { flatten, haversine, normProfile, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
@@ -52,6 +52,11 @@ import { PlaceSearch } from './place-search';
 import { styles } from './planner-styles';
 import { useTourPlan } from './use-tour-plan';
 import { TourMode } from './tour-mode';
+
+
+/** Schritte beim ersten Planen in Tour planen, gleiche Wortwahl wie bei der Rundtour */
+const SCAN_ORDER: PlanStep[] = ['route', 'check', 'fix'];
+const SCAN_STEP: Record<PlanStep, string> = { route: 'Route berechnen', check: 'Prüfen', fix: 'Gesperrte Stellen umfahren' };
 
 /** Wort für den Toast nach dem Einplanen */
 const STOP_WORD: Record<PlannedStop['cat'], string> = { tank: 'Tankstopp', kaffee: 'Kaffeepause', mittag: 'Mittagspause', aussicht: 'Aussichtspunkt', hotel: 'Übernachtung', pass: 'Pass' };
@@ -150,6 +155,8 @@ export default function Planner() {
   const [detent, setDetent] = useState<Detent>(1);
   /** Radar während eine Rundtour entsteht (Ladescreen Konzept C) */
   const [radar, setRadar] = useState<Radar | null>(null);
+  /** Scan entlang der Strecke beim ersten Planen in Tour planen (Koray 9.11.) */
+  const [scan, setScan] = useState<Scan | null>(null);
   const reduceMotion = useReducedMotion();
   // Suchen: nur der Ring, die Zahl nennt die Traumstrecken im Umkreis. Die Strecken selbst zeigen wir erst beim
   // Auflösen, und dann die kurvigen Stücke der fertigen Route, damit das Gefundene zur Strecke passt (Koray 8.11.)
@@ -447,6 +454,16 @@ export default function Planner() {
   const tourPts = tourPlan.pts;
   const tourFits = !!tourPlan.planned && samePts(tourPlan.planned.wegpunkte, tourPts);
   const routeTour = tourFits ? tourPlan.planned : null;
+  // Erste Planung einer neuen Tour: Blatt klein, Schritt und Balken im Kopf, Scan auf der Karte.
+  // Jede weitere Änderung rechnet ruhig im Losfahren Knopf (Zustand im Rendern nachgeführt)
+  const firstPlan = view.kind === 'form' && mode === 'tour' && !!tourPlan.step && !tourPlan.planned;
+  if (firstPlan && !scan) {
+    setScan({ pts: tourPlan.pts, spots: corridorSpots(tourPlan.pts) });
+    setDetent(0);
+  } else if (!tourPlan.step && scan) {
+    setScan(null);
+    setDetent(1);
+  }
   const inTour = view.kind === 'form' && mode === 'tour';
   const mapTour: Tour =
     view.kind === 'result'
@@ -525,7 +542,7 @@ export default function Planner() {
   // Kopf des Blatts: Modus oder Name der Tour, darunter Fortschritt oder Hinweis
   const header = (
     <>
-      {view.kind === 'form' ? (
+      {view.kind === 'form' && !scan ? (
         <TypoTabs
           value={mode === 'tour' ? 'route' : 'runde'}
           options={[
@@ -543,7 +560,19 @@ export default function Planner() {
         // Beim Erstellen steht nur der Schritt im Kopf, ohne Tour wird erstellt darüber (Koray 9.11.)
         view.kind === 'error' ? <AppText variant="label">Das hat nicht geklappt</AppText> : null
       )}
-      {view.kind === 'working' ? (
+      {scan ? (
+        <View style={styles.workBox}>
+          <View style={styles.summary}>
+            <AppText variant="title" style={styles.flex} numberOfLines={1}>
+              {SCAN_STEP[tourPlan.step ?? 'route']}
+            </AppText>
+            <Pressable accessibilityRole="button" onPress={tourPlan.cancel} hitSlop={4} style={({ pressed }) => [styles.cancelChip, pressed && styles.pressedDim]}>
+              <AppText style={styles.cancelText}>Abbrechen</AppText>
+            </Pressable>
+          </View>
+          <ProgressBar step={1 + Math.max(0, SCAN_ORDER.indexOf(tourPlan.step ?? 'route'))} />
+        </View>
+      ) : view.kind === 'working' ? (
         <View style={styles.workBox}>
           <View style={styles.summary}>
             <AppText variant="title" style={styles.flex} numberOfLines={1}>
@@ -918,6 +947,7 @@ export default function Planner() {
           pickedPassIds={inTour ? pickedPassIds : undefined}
           flyTo={inTour ? flyTo : null}
           radar={view.kind === 'working' ? radar : null}
+          scan={scan}
           // MapKit rechnet die Safe Area selbst dazu; ohne Abzug schwebt der Hinweis Apple Karten über dem Blatt
           mapPadding={{ top: 0, right: 0, bottom: Math.max(0, covered - insets.bottom), left: 0 }}
           edgePadding={{ top: insets.top + Spacing.xxxl, right: Spacing.xxxl, bottom: Spacing.xl + insets.bottom, left: Spacing.xxxl }}

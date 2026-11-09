@@ -344,6 +344,11 @@ export function useTourPlan(onPlanned?: () => void) {
   return {
     start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg, dirty,
     legProfile, setSlot, add, insertAt, insertRoad, roadWarn, save, reset, load, snapshot, restore,
+    /** Laufende Planung abbrechen, die Punkte bleiben stehen */
+    cancel: () => {
+      abort.current?.abort();
+      setStep(null);
+    },
     /** Mit den gesetzten Punkten und den Profilen je Etappe neu planen. */
     planNow: (profile: Profile, avoid: Avoid) => pts.length >= 2 && void plan(pts, profilesFor(legProfiles, start, pts.length, profile), avoid),
     setLegProfile: (leg: number, p: Profile, profile: Profile, avoid: Avoid) => {
