@@ -24,7 +24,7 @@ export const CAR_FORMS: { id: CarForm; label: string }[] = [
   { id: 'cabrio', label: 'Cabrio' },
   { id: 'fastback', label: 'Fastback' },
   { id: 'limousine', label: 'Limousine' },
-  { id: 'kombi', label: 'Kombi' },
+  // Kombi folgt später (Koray 9.11.): Bilder liegen bereit, in der Auswahl noch ausgeblendet
   { id: 'gelaende', label: 'Geländewagen' },
 ];
 
