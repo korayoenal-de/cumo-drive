@@ -8,6 +8,7 @@ import { useRef, useState } from 'react';
 import { toPlanError } from '@/components/planner/create-tour';
 import { saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName } from '@/lib/geocode';
+import { HIGHLIGHT_ROADS, PREFER_ROADS } from '@/lib/highlight-roads';
 import { planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
 import { insertVia, movePoint } from '@/lib/route-edit';
 import { flatten, haversine, normProfile, type LatLon, type Profile } from '@/lib/tour';
@@ -18,6 +19,35 @@ import { fitLegs, keyOf, type LegProfile, type PointKind } from './planner-share
 
 
 export type TourPlan = ReturnType<typeof useTourPlan>;
+
+/**
+ * Zwischenziel mitten auf einer kuratierten Strecke, etwa eine Passhöhe (Koray 9.11., Hahntennjoch):
+ * Die Strecke wird ganz durchfahren, in der Richtung, die besser zwischen den Nachbarpunkten liegt.
+ * Sonst fährt der Router zur Passhöhe hinauf und auf demselben Weg wieder hinunter.
+ * Nur Strecken bis 40 km, und nur wenn der Punkt nicht am Anfang oder Ende liegt.
+ */
+function crossingFor(p: LatLon, prev: LatLon, next: LatLon): LatLon[] | null {
+  let best: { line: LatLon[]; d: number } | null = null;
+  for (const r of [...HIGHLIGHT_ROADS, ...PREFER_ROADS]) {
+    const line = r.line;
+    if (line.length < 3) continue;
+    const a = line[0];
+    const b = line[line.length - 1];
+    if (Math.abs(a[0] - p[0]) > 0.4 || Math.abs(a[1] - p[1]) > 0.6) continue;
+    let near = Infinity;
+    for (const q of line) near = Math.min(near, haversine(q, p));
+    if (near > 400 || haversine(a, p) < 1500 || haversine(b, p) < 1500) continue;
+    let len = 0;
+    for (let i = 1; i < line.length; i++) len += haversine(line[i - 1], line[i]);
+    if (len > 40000) continue;
+    if (!best || near < best.d) best = { line, d: near };
+  }
+  if (!best) return null;
+  const l = best.line;
+  const fwd = haversine(prev, l[0]) + haversine(l[l.length - 1], next);
+  const back = haversine(prev, l[l.length - 1]) + haversine(l[0], next);
+  return fwd <= back ? l : [...l].reverse();
+}
 
 /** Stützpunkte entlang einer Strecke: etwa alle 2,5 km und der Ausstieg, die ersten 1,5 km frei */
 function shapePoints(line: LatLon[]): LatLon[] {
@@ -122,9 +152,21 @@ export function useTourPlan(onPlanned?: () => void) {
       const xPts: LatLon[] = [];
       const xProf: Profile[] = [];
       points.forEach((p, i) => {
+        const inner = i > 0 && i < points.length - 1;
+        const cross = inner && !roads.current[keyOf(p)] ? crossingFor(p, points[i - 1], points[i + 1]) : null;
+        if (cross) {
+          // Strecke ganz durchfahren: Einstieg, Stützpunkte, Ausstieg statt nur des Punkts
+          xPts.push(cross[0]);
+          xProf.push(profiles[i]);
+          for (const q of shapePoints(cross)) {
+            xPts.push(q);
+            xProf.push(profiles[i]);
+          }
+          return;
+        }
         xPts.push(p);
         if (i < profiles.length) xProf.push(profiles[i]);
-        const r = i > 0 && i < points.length - 1 ? roads.current[keyOf(p)] : undefined;
+        const r = inner ? roads.current[keyOf(p)] : undefined;
         if (r) for (const q of shapePoints(r.line)) {
           xPts.push(q);
           xProf.push(profiles[i]);
