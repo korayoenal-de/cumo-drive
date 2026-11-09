@@ -8,9 +8,12 @@ type Incident = {
 };
 type Closure = { id: string; line: [number, number][]; from?: string; to?: string; text?: string; road?: string };
 
-const SIZE = 0.5;
+/** Die App schickt 0,5 Grad Kacheln; gefragt wird je 1 Grad Kachel (etwa 8.500 km², TomTom erlaubt 10.000),
+ *  das sind ein Viertel der Abfragen. Merkzeit 30 Minuten (9.11.: freies Kontingent 2.500 im Monat). */
+const APP_SIZE = 0.5;
+const SIZE = 1;
 const MAX_TILES = 30;
-const TTL_MS = 10 * 60 * 1000;
+const TTL_MS = 30 * 60 * 1000;
 const FIELDS = '{incidents{type,geometry{type,coordinates},properties{id,iconCategory,events{description},from,to,roadNumbers}}}';
 const cache = new Map<string, { at: number; items: Closure[] }>();
 
@@ -57,6 +60,14 @@ Deno.serve(async (req) => {
       tiles = body.tiles
         .filter((t): t is [number, number] => Array.isArray(t) && t.length === 2 && t.every((v) => Number.isInteger(v) && Math.abs(v) < 400))
         .slice(0, MAX_TILES);
+      // auf 1 Grad Kacheln zusammenfassen
+      const big = new Map<string, [number, number]>();
+      for (const [x, y] of tiles) {
+        const bx = Math.floor((x * APP_SIZE) / SIZE);
+        const by = Math.floor((y * APP_SIZE) / SIZE);
+        big.set(`${bx},${by}`, [bx, by]);
+      }
+      tiles = [...big.values()];
     }
   } catch {
     return Response.json({ error: 'Anfrage ungültig' }, { status: 400, headers: cors });

@@ -1,5 +1,6 @@
 // Passstatus aus TomTom Sperrmeldungen, für alle Nutzer zwischengespeichert in public.pass_status.
-// Läuft per Zeitplan (pg_cron, alle 4 Stunden) und fragt TomTom höchstens alle 2 Stunden ab.
+// Läuft per Zeitplan (pg_cron, alle 4 Stunden) und fragt TomTom höchstens einmal am Tag ab (9.11.: das
+// freie Kontingent von 2.500 Abfragen im Monat war mit 124 Kacheln alle 4 Stunden nach drei Tagen weg).
 // Logik gleich wie app/src/lib/pass-status.ts; passes.json kommt per `npm run sync:functions`.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import passes from './passes.json' with { type: 'json' };
@@ -12,9 +13,10 @@ type Incident = {
 };
 
 const FIELDS = '{incidents{type,geometry{type,coordinates},properties{iconCategory,events{description},startTime,endTime,from,to,length}}}';
-const MIN_AGE_MIN = 110;
+const MIN_AGE_MIN = 20 * 60;
 
-function tiles(list: Pass[], size = 0.5): [number, number, number, number][] {
+/** 1 Grad Kacheln (etwa 8.500 km², TomTom erlaubt 10.000): 50 Abfragen je Lauf statt 124 */
+function tiles(list: Pass[], size = 1): [number, number, number, number][] {
   const keys = new Set(list.map((p) => `${Math.floor(p.lon / size)},${Math.floor(p.lat / size)}`));
   return [...keys].map((k) => {
     const [x, y] = k.split(',').map(Number);
