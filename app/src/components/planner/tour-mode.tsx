@@ -443,26 +443,24 @@ export function TourMode({
               {body}
             </Pressable>
           )}
-          {/* Aktionen zum Punkt hinter ⋯, getrennt von den Orten in der Nähe (Konzept D4, Koray 9.11.) */}
+          {/* Konzept D1 (Koray 9.11.): zwei gleich große Knöpfe, Orte in der Nähe als Symbol und Aktionen hinter ⋯.
+              Am Start keine Orte; bei einer Runde ist er zugleich das Ziel */}
+          {p && (kind !== 'start' || isLoop) && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={kind === 'via' ? `Café, Essen und Hotels in ${nameOf(p)}` : `Hotels in ${nameOf(p)}`}
+              hitSlop={4}
+              onPress={() => {
+                setLegMenu(null);
+                setOrtOpen(id);
+              }}
+              style={({ pressed }) => [styles.ortBtn, kind !== 'via' && styles.ortBtnZiel, pressed && { opacity: 0.75 }]}>
+              <SymbolView name={kind === 'via' ? 'cup.and.saucer.fill' : 'bed.double.fill'} size={18} tintColor={kind === 'via' ? Colors.text : Colors.signal} />
+            </Pressable>
+          )}
           {p && <MoreButton label={`Aktionen für ${role} ${nameOf(p)}`} onPress={(v) => openMenu(kind, index, p, v)} />}
         </Animated.View>
         </Swipeable>
-        {/* Orte in der Nähe als eigene, beschriftete Zeile unter dem Punkt; am Start nicht, bei einer Runde ist er zugleich das Ziel */}
-        {p && (kind !== 'start' || isLoop) && (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setLegMenu(null);
-              setOrtOpen(id);
-            }}
-            style={({ pressed }) => [styles.ortRow, pressed && { backgroundColor: Colors.pressTint }]}>
-            <SymbolView name={kind === 'via' ? 'cup.and.saucer.fill' : 'bed.double.fill'} size={16} tintColor={kind === 'via' ? Colors.muted : Colors.signal} />
-            <AppText style={styles.ortRowText} numberOfLines={1}>
-              {kind === 'via' ? `Pause oder Übernachten in ${nameOf(p)}` : `Übernachten in ${nameOf(p)}`}
-            </AppText>
-            <SymbolView name="chevron.right" size={13} tintColor={Colors.muted} weight="bold" />
-          </Pressable>
-        )}
         </View>
         {/* Orte in der Nähe als Vollfläche wie die Suche (Koray 8.11.) */}
         {p && (
@@ -774,7 +772,7 @@ function MoreButton({ label, onPress }: { label: string; onPress: (v: ViewRef | 
       hitSlop={4}
       onPress={() => onPress(ref.current)}
       style={({ pressed }) => [styles.more, pressed && { backgroundColor: Colors.line }]}>
-      <SymbolView name="ellipsis" size={18} tintColor={Colors.muted} weight="bold" />
+      <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="bold" />
     </Pressable>
   );
 }

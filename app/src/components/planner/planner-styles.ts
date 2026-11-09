@@ -152,14 +152,14 @@ export const styles = StyleSheet.create({
   pointMain: { flex: 1, minHeight: 52, justifyContent: 'center', paddingHorizontal: Spacing.s },
   pointRowVia: { marginLeft: 28, minHeight: 48 },
   pointArea: { flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 52 },
-  more: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: Spacing.xs },
+  more: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2, marginRight: Spacing.xs },
+  ortBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2, marginRight: Spacing.s },
+  ortBtnZiel: { backgroundColor: Colors.signalTint },
   ortBadge: { minHeight: 44, justifyContent: 'center', marginRight: Spacing.s },
   // Wischen zum Löschen: der Container trägt Rundung und Einzug, rechts erscheint die rote Taste
   swipeBox: { borderRadius: Radius.m, overflow: 'hidden' },
   // Punkt und seine Ortszeile als eine Karte (Konzept D4)
   pointCard: { borderRadius: Radius.m, overflow: 'hidden', backgroundColor: Colors.surface },
-  ortRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 48, paddingLeft: Spacing.l, paddingRight: Spacing.l, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
-  ortRowText: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
   swipeDelete: { width: 96, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', gap: 2 },
   swipeDeleteText: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.onSignal },
   symbol: { width: 28, alignItems: 'center', justifyContent: 'center' },
