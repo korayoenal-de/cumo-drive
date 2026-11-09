@@ -17,7 +17,7 @@ final class CumoCarPlay: Module {
     // ab Build 13: die Karte im Auto blendet das gefahrene Stück selbst aus und gleitet im Bildtakt
     Constant("trimsRoute") { true }
     // ab Build 14: Menü Mehr, Gruppe, Bremshinweis, Bewertung, Dashboard und Kombiinstrument
-    Constant("build") { 14 }
+    Constant("build") { 15 }
 
     AsyncFunction("isConnected") { () -> Bool in
       CarPlayBridge.shared.connected
