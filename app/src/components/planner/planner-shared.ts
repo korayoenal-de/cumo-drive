@@ -73,6 +73,8 @@ export function roughDetourKm(pts: LatLon[], p: LatLon): number | null {
 
 export const STEP_TEXT: Record<PlanStep, string> = {
   route: 'Route wird berechnet',
+  traffic: 'Verkehrsmeldungen werden geprüft',
+  compare: 'Beste Variante wird gewählt',
   check: 'Etappen Check läuft',
   fix: 'Gesperrte Stellen werden umfahren',
 };

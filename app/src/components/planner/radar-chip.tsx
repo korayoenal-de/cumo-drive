@@ -16,7 +16,7 @@ export function RadarChip({ count, top, found }: { count: number; top: number; f
     <View pointerEvents="none" style={[styles.wrap, { top }]}>
       <Animated.View entering={FadeIn.delay(found != null ? 400 : RADAR_MS * 0.6).duration(300)} exiting={FadeOut.duration(200)} style={styles.chip} accessibilityLiveRegion="polite">
         <View style={styles.dot} />
-        <AppText style={styles.text}>{text}</AppText>
+        <AppText style={styles.text} numberOfLines={1}>{text}</AppText>
       </Animated.View>
     </View>
   );
@@ -28,15 +28,16 @@ export function ScanChip({ text, top }: { text: string; top: number }) {
     <View pointerEvents="none" style={[styles.wrap, { top }]}>
       <Animated.View key={text} entering={FadeIn.duration(250)} exiting={FadeOut.duration(150)} style={styles.chip} accessibilityLiveRegion="polite">
         <View style={styles.dot} />
-        <AppText style={styles.text}>{text}</AppText>
+        <AppText style={styles.text} numberOfLines={1}>{text}</AppText>
       </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: Colors.overlaySurface },
+  // links oben, damit die Plakette nicht unter den Karteneinstellungen rechts liegt
+  wrap: { position: 'absolute', left: 16, right: 76, alignItems: 'flex-start' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: Colors.overlaySurface, maxWidth: '100%' },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.signal },
   text: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
 });

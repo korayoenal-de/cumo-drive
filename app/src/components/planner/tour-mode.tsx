@@ -49,6 +49,8 @@ import { type TourPlan } from './use-tour-plan';
 /** Laden im Losfahren Knopf (Koray 9.11.): geschätzter Fortschritt je Schritt der Planung */
 const LOAD_STAGES: Record<PlanStep, LoadStage> = {
   route: { label: 'Route wird berechnet', from: 0, to: 62, tau: 2500 },
+  traffic: { label: 'Verkehrsmeldungen prüfen', from: 62, to: 85, tau: 1500 },
+  compare: { label: 'Beste Variante wählen', from: 62, to: 90, tau: 1500 },
   check: { label: 'Strecke wird geprüft', from: 62, to: 90, tau: 1500 },
   fix: { label: 'Sperrungen werden umfahren', from: 90, to: 97, tau: 2000 },
 };

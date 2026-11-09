@@ -19,6 +19,8 @@ import { DEFAULT_AVOID } from '@/lib/valhalla';
 
 const STEP_TEXT: Record<PlanStep, string> = {
   route: 'Strecke wird berechnet',
+  traffic: 'Verkehrsmeldungen werden geprüft',
+  compare: 'Beste Variante wird gewählt',
   check: 'Etappen Check läuft',
   fix: 'Gesperrte Stücke werden umfahren',
 };

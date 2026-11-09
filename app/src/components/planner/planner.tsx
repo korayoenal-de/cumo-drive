@@ -55,8 +55,16 @@ import { TourMode } from './tour-mode';
 
 
 /** Schritte beim ersten Planen in Tour planen, gleiche Wortwahl wie bei der Rundtour */
-const SCAN_ORDER: PlanStep[] = ['route', 'check', 'fix'];
-const SCAN_STEP: Record<PlanStep, string> = { route: 'Route berechnen', check: 'Prüfen', fix: 'Gesperrte Stellen umfahren' };
+/** Arbeitsschritt oben über der Karte, kurz (Koray 9.11.: das Warten erklären), für Tour und Rundtour */
+const PILL: Record<PlanPhase, string> = {
+  start: 'Standort bestimmen',
+  route: 'Kurvige Straßen berechnen',
+  compare: 'Beste Runde wählen',
+  traffic: 'Verkehrsmeldungen prüfen',
+  check: 'Straßen für Sportwagen prüfen',
+  fix: 'Sperrung umfahren',
+};
+const phaseIndex = (p: PlanPhase | PlanStep) => Math.max(0, PHASES.findIndex((x) => x.id === p));
 
 /** Wort für den Toast nach dem Einplanen */
 const STOP_WORD: Record<PlannedStop['cat'], string> = { tank: 'Tankstopp', kaffee: 'Kaffeepause', mittag: 'Mittagspause', aussicht: 'Aussichtspunkt', hotel: 'Übernachtung', pass: 'Pass' };
@@ -564,26 +572,26 @@ export default function Planner() {
         <View style={styles.workBox}>
           <View style={styles.summary}>
             <AppText variant="title" style={styles.flex} numberOfLines={1}>
-              {SCAN_STEP[tourPlan.step ?? 'route']}
+              {`${tourPlan.names[keyOf(tourPlan.pts[0])] ?? 'Start'} nach ${tourPlan.names[keyOf(tourPlan.pts[tourPlan.pts.length - 1])] ?? 'Ziel'}`}
             </AppText>
             <Pressable accessibilityRole="button" onPress={tourPlan.cancel} hitSlop={4} style={({ pressed }) => [styles.cancelChip, pressed && styles.pressedDim]}>
               <AppText style={styles.cancelText}>Abbrechen</AppText>
             </Pressable>
           </View>
-          <ProgressBar step={1 + Math.max(0, SCAN_ORDER.indexOf(tourPlan.step ?? 'route'))} />
+          <ProgressBar step={phaseIndex(tourPlan.step ?? 'route')} />
         </View>
       ) : view.kind === 'working' ? (
         <View style={styles.workBox}>
           <View style={styles.summary}>
             <AppText variant="title" style={styles.flex} numberOfLines={1}>
-              {radar?.phase === 'aufloesen' ? 'Fertig' : PHASES.find((x) => x.id === view.phase)?.label}
+              {radar?.phase === 'aufloesen' ? 'Fertig' : `Rundtour, ${roundKm} km`}
             </AppText>
             <Pressable accessibilityRole="button" onPress={cancel} hitSlop={4} style={({ pressed }) => [styles.cancelChip, pressed && styles.pressedDim]}>
               <AppText style={styles.cancelText}>Abbrechen</AppText>
             </Pressable>
           </View>
           {/* Balken mit Prozent statt Logo (Koray 8.11.) */}
-          <ProgressBar step={PHASES.findIndex((x) => x.id === view.phase)} done={radar?.phase === 'aufloesen'} doneMs={REVEAL_MS - 300} />
+          <ProgressBar step={phaseIndex(view.phase)} done={radar?.phase === 'aufloesen'} doneMs={REVEAL_MS - 300} />
         </View>
       ) : (
         <AppText variant="caption" muted numberOfLines={2} style={styles.summaryHint}>
@@ -955,21 +963,14 @@ export default function Planner() {
           style={StyleSheet.absoluteFill}
         />
           <MapLayersButton style={[styles.layersBtn, { top: insets.top + Spacing.s }]} />
-          {scan && tourPlan.step && (
-            <ScanChip
-              top={insets.top + Spacing.s}
-              text={
-                tourPlan.step === 'fix'
-                  ? 'Sperrung gefunden, wir planen drumherum'
-                  : tourPlan.step === 'check'
-                    ? 'Strecke wird für Sportwagen geprüft'
-                    : scan.spots.length
-                      ? `${scan.spots.length} Traumstrecken entlang der Route`
-                      : 'Kurvige Straßen suchen'
-              }
-            />
-          )}
-          {view.kind === 'working' && radar && <RadarChip key={`${radar.center[0]}-${radar.radiusM}-${radar.phase}`} count={radar.count} found={radar.phase === 'aufloesen' ? radar.roads.length : undefined} top={insets.top + Spacing.s} />}
+          {/* Was gerade passiert, links oben neben den Karteneinstellungen (Koray 9.11.) */}
+          {scan && tourPlan.step && <ScanChip top={insets.top + Spacing.s} text={PILL[tourPlan.step]} />}
+          {view.kind === 'working' &&
+            (radar?.phase === 'aufloesen' ? (
+              <RadarChip key="aufloesen" count={radar.count} found={radar.roads.length} top={insets.top + Spacing.s} />
+            ) : (
+              <ScanChip top={insets.top + Spacing.s} text={PILL[view.phase]} />
+            ))}
           {passOverlay && (
             <MapPassActions
               pass={passOverlay}

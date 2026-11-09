@@ -18,6 +18,7 @@ import { doubledStretch } from './doubled';
 import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from './graphhopper';
 import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
 import { planChecked, type PlannedTour, type PlanStep } from './plan';
+import { prefetchClosures } from './road-closures';
 import { DIRECTIONS, hillyVia, loopPoints, roundTrip, type Direction } from './roundtrip';
 import { countCurves } from './stats';
 import { flatten, haversine, type LatLon, type Profile } from './tour';
@@ -55,6 +56,14 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
     req.bearing ?? (req.direction === 'zufall' ? seed % 360 : DIRECTIONS.find((d) => d.id === req.direction)!.bearing);
   const candidates: SmartTour[] = [];
   let lastError: unknown = null;
+  // Verkehrsmeldungen im Umkreis schon jetzt holen, parallel zu den Varianten (Koray 9.11.: Rundtour zu langsam)
+  {
+    const r = Math.max(8, req.km * 0.32) / 111;
+    const lat = req.start[0];
+    const lon = req.start[1];
+    const k = r / Math.max(0.2, Math.cos((lat * Math.PI) / 180));
+    prefetchClosures([[lat + r, lon], [lat, lon + k], [lat - r, lon], [lat, lon - k], [lat + r, lon]]);
+  }
 
   // Pässe Profil: gezielt über bekannte Pässe in Reichweite, die jetzt offen sind.
   // Bergstraßen sind viel länger als die Luftlinie; passt die Länge nicht, wird die Reichweite
@@ -117,6 +126,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         curvy ? favoriteLoops(req, free ? undefined : heading, seed, signal) : Promise.resolve([]),
         circleLoops(req, heading, free, seed, signal),
       ]);
+      onStep?.('compare');
       // Erst ohne Stichstraßen bewerten: Kurven, Länge, Traumstrecken, Richtung. Die drei besten
       // bekommen die Stichstraße herausgeplant, danach zählt jeder übrige km doppelt mit 100 Punkten.
       // (Heppenheim 5.11.: eine Runde mit 11 Kurven durch Mannheim gewann gegen Runden mit 30 Kurven,

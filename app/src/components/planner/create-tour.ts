@@ -11,11 +11,13 @@ import { smartRoundTrip } from '@/lib/smart-roundtrip';
 import type { LatLon, Profile } from '@/lib/tour';
 import type { Avoid } from '@/lib/valhalla';
 
-export type PlanPhase = 'start' | 'route' | 'check' | 'fix';
+export type PlanPhase = 'start' | 'route' | 'compare' | 'traffic' | 'check' | 'fix';
 
 export const PHASES: { id: PlanPhase; label: string }[] = [
   { id: 'start', label: 'Startort bestimmen' },
   { id: 'route', label: 'Route berechnen' },
+  { id: 'compare', label: 'Beste Runde wählen' },
+  { id: 'traffic', label: 'Verkehrsmeldungen prüfen' },
   { id: 'check', label: 'Prüfen' },
   { id: 'fix', label: 'Gesperrte Stellen umfahren' },
 ];

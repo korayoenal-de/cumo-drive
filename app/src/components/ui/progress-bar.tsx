@@ -10,12 +10,14 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from '
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Type } from '@/constants/theme';
 
-/** Bereiche je Schritt in Prozent: Startort, Route, Prüfen, Umfahren */
+/** Bereiche je Schritt in Prozent, Reihenfolge wie PHASES: Startort, Route, Vergleich, Verkehr, Prüfen, Umfahren */
 const RANGES: [number, number][] = [
-  [0, 12],
-  [12, 62],
-  [62, 88],
-  [88, 95],
+  [0, 10],
+  [10, 58],
+  [58, 72],
+  [72, 84],
+  [84, 90],
+  [90, 96],
 ];
 
 export function ProgressBar({ step, done = false, doneMs = 2000 }: { step: number; done?: boolean; doneMs?: number }) {

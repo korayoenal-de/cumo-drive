@@ -824,9 +824,15 @@ function CorridorScan({ scan }: { scan: Scan }) {
   }, [scan.pts]);
   const lenM = useMemo(() => steps.reduce((s, p, i) => (i ? s + haversine(steps[i - 1], p) : 0), 0), [steps]);
   const head = steps.slice(0, Math.max(2, Math.round(steps.length * k)));
+  const ticks = useMemo(() => Array.from({ length: 18 }, (_, i) => ({ frac: (i + 0.5) / 18, p: steps[Math.min(steps.length - 1, Math.round(((i + 0.5) / 18) * (steps.length - 1)))] })), [steps]);
   return (
     <>
       <Polyline coordinates={head.map(ll)} strokeColor="rgba(226,70,28,0.5)" strokeWidth={2} lineCap="round" zIndex={1} />
+      {/* Geprüfte Abschnitte als feine Punkte auf der Linie, damit man sieht, wie weit der Scan ist (Koray 9.11.) */}
+      {ticks.map((t, i) =>
+        k >= t.frac ? <Circle key={`tick-${i}`} center={ll(t.p)} radius={Math.max(80, lenM * 0.0014)} fillColor="rgba(244,244,242,0.6)" strokeWidth={0} zIndex={1} /> : null,
+      )}
+      {k < 1 && <Circle key="scan-head" center={ll(head[head.length - 1])} radius={Math.max(150, lenM * 0.004)} fillColor="rgba(244,244,242,0.9)" strokeColor="rgba(226,70,28,0.9)" strokeWidth={2} zIndex={3} />}
       {scan.spots.map((s) => {
         const lit = Math.max(0, Math.min(1, (k - s.frac) / 0.06));
         if (lit <= 0) return null;

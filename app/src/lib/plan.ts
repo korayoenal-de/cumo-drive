@@ -10,7 +10,8 @@ import { closureExclude, closureLabel, closuresNear, closuresOnRoute, prefetchCl
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import { route, VALHALLA_URL, type Avoid } from './valhalla';
 
-export type PlanStep = 'route' | 'check' | 'fix';
+/** Schritte beim Planen; traffic: Verkehrsmeldungen, compare: Varianten vergleichen (Rundtour) */
+export type PlanStep = 'route' | 'traffic' | 'check' | 'fix' | 'compare';
 
 /** direkt: Etappen, auf denen die kurvige Variante nichts brachte und der direkte Weg gewählt wurde */
 export type PlannedTour = Tour & { minutes: number; fixes: number; direkt?: number; kurvenKm?: number };
@@ -133,6 +134,7 @@ export async function planChecked(
   snapMajor = false,
 ): Promise<PlannedTour> {
   const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, []);
+  onStep?.('traffic');
   // Aktuelle Sperrungen aus Verkehrsmeldungen (Koray 8.11.): umplanen, was nicht geht als Warnung
   const closures = await closuresNear(lineOf(first), signal);
   if (!closures.length) return first;
