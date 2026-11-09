@@ -20,7 +20,7 @@ import Animated, {
 
 import { useWeatherStatus, type WeatherStatus } from '@/lib/weather';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import {
   MAP_STYLES,
   setMapSettings,
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(22,22,24,0.94)',
+    backgroundColor: Colors.overlaySurface,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: Colors.shadow,
@@ -230,15 +230,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: Type.h1,
-    lineHeight: 34,
+    fontSize: Type.h2,
+    lineHeight: 30,
     textTransform: 'uppercase',
     color: Colors.text,
   },
   close: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: Size.icon,
+    height: Size.icon,
+    borderRadius: Radius.pill,
     backgroundColor: Colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',

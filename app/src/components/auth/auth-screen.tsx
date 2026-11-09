@@ -7,7 +7,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollVie
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { signIn } from '@/lib/auth';
 import { signUpWithName } from '@/lib/profile';
@@ -111,10 +111,11 @@ const styles = StyleSheet.create({
   gapS: { gap: Spacing.m },
   gapM: { gap: Spacing.m },
   brand: { color: Colors.signal, fontFamily: Fonts.bold, letterSpacing: 2 },
-  input: { height: 54, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
-  primary: { height: 54, borderRadius: 27, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  input: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
-  disabled: { opacity: 0.4 },
+  // inaktiv grau statt blassem Orange (UI Konsistenz Check 9.11.)
+  disabled: { backgroundColor: Colors.surface2 },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
   switch: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   link: { color: Colors.text, fontFamily: Fonts.semibold },

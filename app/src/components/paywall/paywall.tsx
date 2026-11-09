@@ -5,11 +5,12 @@
  * dort ein freundlicher Hinweis zurück.
  */
 import { useState, type ReactNode } from 'react';
+import { SymbolView } from 'expo-symbols';
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { CONTACT_EMAIL, PRICES, type PlanId, type Price } from '@/lib/entitlement';
 import { purchase, restorePurchases } from '@/lib/purchase';
 
@@ -59,7 +60,7 @@ export function Paywall({
       {onClose && (
         <View style={styles.topBar}>
           <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={onClose} hitSlop={12} style={styles.close}>
-            <AppText style={styles.closeText}>Schließen</AppText>
+            <SymbolView name="xmark" size={18} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         </View>
       )}
@@ -180,8 +181,7 @@ const styles = StyleSheet.create({
   legalLink: { color: Colors.text, textDecorationLine: 'underline', minHeight: 24 },
   safe: { flex: 1, backgroundColor: Colors.ground },
   topBar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: Spacing.xl, paddingTop: Spacing.s },
-  close: { height: 36, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, justifyContent: 'center' },
-  closeText: { fontFamily: Fonts.semibold, fontSize: Type.small },
+  close: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.xxxl, gap: Spacing.xxl },
   flex: { flex: 1 },
   gapS: { gap: Spacing.s },
@@ -199,14 +199,14 @@ const styles = StyleSheet.create({
   radio: { width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   radioOn: { backgroundColor: Colors.signal },
   radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.onSignal },
-  planName: { fontFamily: Fonts.displayBold, fontSize: Type.button },
+  planName: { fontFamily: Fonts.bold, fontSize: Type.title },
   pill: { backgroundColor: Colors.signal, borderRadius: Radius.pill, paddingHorizontal: Spacing.s, paddingVertical: 2 },
-  pillText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase' },
+  pillText: { color: Colors.onSignal, fontFamily: Fonts.semibold, fontSize: Type.caption },
   priceCol: { alignItems: 'flex-end' },
-  price: { fontFamily: Fonts.displayBold, fontSize: Type.button, fontVariant: ['tabular-nums'] },
-  primary: { height: 54, borderRadius: 27, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  price: { fontFamily: Fonts.display, fontSize: Type.metric, fontVariant: ['tabular-nums'] },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
-  secondary: { height: 48, borderRadius: 24, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   disabled: { opacity: 0.5 },
   note: { color: Colors.warn, fontFamily: Fonts.medium, fontSize: Type.small, textAlign: 'center' },

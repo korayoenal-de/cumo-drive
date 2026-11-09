@@ -73,3 +73,30 @@ Regeln:
 * Haptisches Feedback beim Aufklappen und Bestätigen braucht `expo-haptics` und damit einen neuen App Build.
 * Dieselbe Aufklapp Logik für Community Karten, Fahrten und Garage übernehmen.
 * Planer Ergebnis: Knöpfe auf eine Hauptaktion plus aufklappbare Nebenaktionen reduzieren.
+
+## Regeln aus dem UI Konsistenz Check (9.11.2026)
+
+Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
+
+**Schrift**
+- Archivo nur für Gelesenes: Screen Titel (Display 34/36), Titel von Ebenen (26/30), Tournamen, Kennzahlen (22/26). Immer Archivo 900, kein zweites Gewicht.
+- Alles Bedienbare in Inter, auch große Reiter wie Gespeichert und Gefahren oder Schnelle Runde und Route: Inter Bold 22/28, normal geschrieben, inaktiv `faint`.
+- Titel und Tasten Inter Bold 17/22, Zeilen und Labels Inter Semibold 15/20, Caption 13/16 nur auf der Karte, auf Plaketten und in der Tab Leiste. Nichts sonst unter 15 pt.
+- Versalien nur in Archivo.
+
+**Ebenen**
+- ActionSheet: Optionen zu einem Objekt (2 bis 6 Zeilen).
+- ConfirmSheet: Rückfrage vor Endgültigem.
+- OptionsSheet: ein bis zwei Felder, auch der Name beim Speichern. Zentrierte Dialoge gibt es nicht.
+- Vollfläche (pageSheet): Suche, Orte in der Nähe, Highlight, Karteneinstellungen; Kopf mit Titel 26, Rolle grau, Schließen 44.
+- Schwebendes Menü: schnelle Aktionen am Auslöser (⋯).
+- Ausnahme: das Menü in der Navigation schließt nach 4 s von selbst.
+- Abdunkelung immer `scrim` (0.5), Flächen über der Karte `overlay` oder `overlaySurface`.
+
+**Farben**
+- Nur Tokens. Tints einheitlich 0.14. Sondergruppen mit Begründung: Ansagen in der Navigation, Verkehrszeichen, Verlauf des Fahrspaß Pegels.
+
+**Maße**
+- Haupttaste und Zweittaste 56, rund (`Size.button`, `Radius.pill`); Eingabefelder 52 mit Radius 14; Chips, Reiter als Pille und Symboltasten 44.
+- Radien: 14 für Felder und Zeilen, 20 für Karten und Sheets, rund für alles Antippbare.
+- Abstände: 2, 4, 8, 12, 16, 20, 28, 40, 48.

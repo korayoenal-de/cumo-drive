@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   body: { padding: Spacing.xl, paddingBottom: Spacing.xxxl, gap: Spacing.xxl },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l },
   kind: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  title: { fontFamily: Fonts.display, fontSize: Type.h1, lineHeight: 34, color: Colors.text, textTransform: 'uppercase' },
+  title: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 30, color: Colors.text, textTransform: 'uppercase' },
   gaugeBig: { alignItems: 'center', gap: Spacing.xs },
   levelBig: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.text },
   facts: { flexDirection: 'row', flexWrap: 'wrap', rowGap: Spacing.l },

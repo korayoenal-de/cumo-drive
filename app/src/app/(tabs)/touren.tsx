@@ -14,7 +14,7 @@ import { TourCard } from '@/components/tours/tour-card';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { setEditTour } from '@/lib/edit-tour';
 import { filterTours, folders, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
@@ -76,7 +76,7 @@ export default function Touren() {
     <Screen>
       {/* Import als Symbol neben der Überschrift statt großem Knopf (Koray 8.11.) */}
       <View style={styles.titleRow}>
-        <AppText variant="display" style={styles.flex}>{'Meine\nTouren'}</AppText>
+        <AppText variant="display" style={styles.flex} numberOfLines={1} adjustsFontSizeToFit>Meine Touren</AppText>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="GPX oder KML importieren"
@@ -247,8 +247,8 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
 
 
 const styles = StyleSheet.create({
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m },
-  importBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', marginTop: Spacing.s },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
+  importBtn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   gapS: { gap: Spacing.s },
   gapM: { gap: Spacing.m },
@@ -259,19 +259,19 @@ const styles = StyleSheet.create({
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   rowMain: { gap: 2, minHeight: 44, justifyContent: 'center' },
   name: { fontFamily: Fonts.semibold, fontSize: Type.title },
-  search: { height: 48, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
-  primary: { height: 50, borderRadius: 25, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  search: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
-  secondary: { height: 48, borderRadius: 24, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   danger: { backgroundColor: Colors.signalTint },
   disabled: { opacity: 0.4 },
   segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: 3 },
-  segItem: { flex: 1, height: 40, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
+  segItem: { flex: 1, height: Size.chip, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
   segOn: { backgroundColor: Colors.surface2 },
   segText: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted },
   segTextOn: { fontFamily: Fonts.semibold, color: Colors.text },
-  field: { minHeight: 48, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
+  field: { minHeight: Size.input, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   area: { minHeight: 96, textAlignVertical: 'top' },
   tourCard: { backgroundColor: Colors.surface, borderRadius: Radius.l, paddingHorizontal: Spacing.m, paddingVertical: Spacing.m, gap: Spacing.s },
   head: { gap: 2, paddingHorizontal: Spacing.xs },

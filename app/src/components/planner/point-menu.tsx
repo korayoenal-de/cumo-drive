@@ -68,7 +68,7 @@ export function PointMenu({ menu, onPick, onClose }: { menu: PointMenuState | nu
 }
 
 const styles = StyleSheet.create({
-  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.35)' },
+  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: Colors.scrim },
   menu: {
     position: 'absolute',
     width: WIDTH,

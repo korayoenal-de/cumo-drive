@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteMap } from '@/components/map/route-map';
 import { CLASS_LINE, tourWarnings } from '@/components/map/route-map-shared';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { formatKm } from '@/lib/tour';
 
@@ -105,12 +105,12 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
   empty: { flex: 1, backgroundColor: Colors.ground, padding: Spacing.xl, gap: Spacing.m, alignItems: 'flex-start' },
   top: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s, paddingHorizontal: Spacing.l },
-  titleCard: { flex: 1, backgroundColor: 'rgba(11,11,12,0.88)', borderRadius: Radius.l, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m },
-  close: { height: 48, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: 'rgba(11,11,12,0.88)', justifyContent: 'center' },
+  titleCard: { flex: 1, backgroundColor: Colors.overlay, borderRadius: Radius.l, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m },
+  close: { height: 48, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.overlay, justifyContent: 'center' },
   closeText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, gap: Spacing.m, paddingTop: Spacing.m, backgroundColor: 'rgba(11,11,12,0.92)', borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l },
+  bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, gap: Spacing.m, paddingTop: Spacing.m, backgroundColor: Colors.overlay, borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l },
   chips: { gap: Spacing.s, paddingHorizontal: Spacing.l },
-  chip: { height: 40, paddingHorizontal: 14, borderRadius: Radius.pill, backgroundColor: Colors.surface, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, maxWidth: 260 },
+  chip: { height: Size.chip, paddingHorizontal: 14, borderRadius: Radius.pill, backgroundColor: Colors.surface, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, maxWidth: 260 },
   // Auswahl bleibt am hellen Rand erkennbar, das Padding gleicht die Randbreite aus
   chipOn: { borderWidth: 1, borderColor: Colors.text, paddingHorizontal: 13, backgroundColor: Colors.surface2 },
   chipDot: { width: 10, height: 10, borderRadius: 5 },

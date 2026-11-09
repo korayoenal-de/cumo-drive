@@ -12,7 +12,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { STOP_REASONS, type RideMsg, type RideStop, type StopReason } from '@/lib/group/ride';
 import { highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { formatKm } from '@/lib/tour';
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   stopText: { fontFamily: Fonts.medium, fontSize: Type.title, color: Colors.onSignal },
   stopBtn: { height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   stopBtnText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.onSignal },
-  leadBtn: { alignSelf: 'flex-end', height: 52, paddingHorizontal: Spacing.xl, borderRadius: 26, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  leadBtn: { alignSelf: 'flex-end', height: Size.button, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   leadText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.onSignal },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   reason: { flexGrow: 1, flexBasis: '45%', height: 56, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },

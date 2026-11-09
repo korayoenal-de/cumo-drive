@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { placesNear, type NearPlace } from '@/lib/stops-along';
 import { formatKm, type LatLon } from '@/lib/tour';
 
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   title: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 28, color: Colors.text, textTransform: 'uppercase' },
   role: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  close: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
+  close: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   tabs: { flexDirection: 'row', gap: Spacing.xs },
   tab: { height: 44, paddingHorizontal: 18, borderRadius: 22, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   tabOn: { backgroundColor: Colors.text },
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, minWidth: 0 },
   name: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   muted: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted },
-  dist: { fontFamily: Fonts.display, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
+  dist: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
   pressed: { opacity: 0.75 },
 });
 

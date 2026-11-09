@@ -985,7 +985,7 @@ function StatsGrid({ st }: { st: RideStats }) {
 const styles = StyleSheet.create({
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: Spacing.m },
   statCell: { width: '50%', gap: 2, paddingRight: Spacing.s },
-  statValue: { fontFamily: Fonts.displayBold, fontSize: 22, fontVariant: ['tabular-nums'] },
+  statValue: { fontFamily: Fonts.display, fontSize: 22, fontVariant: ['tabular-nums'] },
   statNote: { width: '100%' },
   root: { flex: 1, backgroundColor: Colors.ground },
   pad: { paddingHorizontal: Spacing.l },
@@ -1060,8 +1060,8 @@ const styles = StyleSheet.create({
   skipText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
   skipBtn: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   skipBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
-  offTour: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: 'rgba(11,11,12,0.92)', borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
-  curve: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: 'rgba(11,11,12,0.92)', borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
+  offTour: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: Colors.overlay, borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
+  curve: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: Colors.overlay, borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
   offDash: { width: 22, height: 4, borderRadius: 2, backgroundColor: Colors.warn },
   offText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
   tourName: {

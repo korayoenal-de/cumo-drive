@@ -8,7 +8,7 @@ import Animated from 'react-native-reanimated';
 
 import { softEnter } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadow, Spacing, Type, Size } from '@/constants/theme';
 import type { Maneuver } from '@/lib/navigation/types';
 
 import { formatClock, formatDistance, formatRemaining } from './format';
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   maneuver: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   maneuverRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l },
   arrowBox: { width: 84, height: 84, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  exit: { position: 'absolute', bottom: 2, fontFamily: Fonts.bold, fontSize: 10, color: Colors.onSignal },
+  exit: { position: 'absolute', bottom: 2, fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.onSignal },
   dist: { fontFamily: Fonts.display, fontSize: 46, lineHeight: 50, fontVariant: ['tabular-nums'] },
   distUnit: { fontFamily: Fonts.display, fontSize: Type.h2, color: Colors.muted, textTransform: 'uppercase' },
   instruction: { fontFamily: Fonts.bold, fontSize: Type.button, lineHeight: 23 },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   fill: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 3, backgroundColor: Colors.signal },
   via: { position: 'absolute', width: 2, height: 6, marginLeft: -1, backgroundColor: Colors.muted, opacity: 0.7 },
   viaDone: { backgroundColor: Colors.onSignal, opacity: 0.6 },
-  round: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  round: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   roundSignal: { backgroundColor: Colors.signal },
   roundOpen: { backgroundColor: Colors.text },
   menu: { position: 'absolute', right: Spacing.xl, paddingBottom: Spacing.m, alignItems: 'flex-end', gap: Spacing.s },
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   funkHint: { position: 'absolute', top: -44, alignSelf: 'center', backgroundColor: Colors.surface2, borderRadius: Radius.pill, paddingHorizontal: Spacing.l, height: 34, justifyContent: 'center' },
   sim: { alignSelf: 'flex-start', height: 30, paddingHorizontal: Spacing.m, borderRadius: Radius.pill, backgroundColor: Colors.surface, justifyContent: 'center' },
 
-  big: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  big: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   bigText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
   ghost: { height: 52, borderRadius: Radius.m, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   ghostText: { fontFamily: Fonts.semibold, fontSize: Type.input },

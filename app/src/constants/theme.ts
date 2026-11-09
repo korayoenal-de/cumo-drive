@@ -21,8 +21,10 @@ export const Colors = {
   signalTint: 'rgba(226,70,28,0.14)',
   /** Text für Entfernen und Fehler auf signalTint (Design System stop-text) */
   stopText: '#FF8A66',
-  goodTint: 'rgba(76,195,138,0.12)',
-  warnTint: 'rgba(232,176,58,0.12)',
+  goodTint: 'rgba(76,195,138,0.14)',
+  warnTint: 'rgba(232,176,58,0.14)',
+  /** Abdunkelung hinter Sheets und Menüs (vorher 0.35 bis 0.6) */
+  scrim: 'rgba(0,0,0,0.5)',
   /** Leere Stufe im Fahrspaß Pegel und andere inaktive Flächen auf surface */
   empty: '#3A3A3F',
   /** Schwebende Karten über der Karte (Ansagen, Pass Aktionen): ground fast deckend */
@@ -35,26 +37,47 @@ export const Colors = {
 } as const;
 
 /**
- * Schriftgrößen in pt. Neue Texte nehmen eine dieser Stufen; Ausnahmen (Navigation, Kennzahlen in
- * Versalien) stehen direkt im Bauteil und sind dort begründet.
+ * Schriftgrößen in pt (UI Konsistenz Check 9.11.2026): sieben Rollen plus Reiter.
+ * Display 34 und H1 26 in Archivo (nur Gelesenes: Titel, Tournamen), Kennzahl 22 in Archivo,
+ * alles Bedienbare in Inter. Nichts unter 15 pt außer Caption auf Karte, Plaketten und Tab Leiste.
  */
 export const Type = {
-  /** kleine Zusätze, Plaketten */
+  /** nur Kartenpins, Plaketten, Tab Leiste */
   caption: 13,
-  small: 14,
-  /** Labels und Nebenzeilen, nicht kleiner als 15 pt (Design Prinzipien 5) */
+  /** früher 14; jetzt wie body, damit nichts unter 15 pt fällt */
+  small: 15,
+  /** Zeilen, Labels, Nebenzeilen, Chips */
   body: 15,
   /** Eingabefelder */
-  input: 16,
-  /** Namen in Listen, Zeilentitel */
+  input: 17,
+  /** Namen in Listen, Abschnittstitel, Tasten */
   title: 17,
-  /** Tasten */
-  button: 18,
-  h3: 20,
-  h2: 24,
-  h1: 30,
-  /** große Kennzahlen und Tournamen */
+  button: 17,
+  h3: 17,
+  /** große Reiter (Gespeichert, Gefahren; Schnelle Runde, Route): Inter Bold, normal geschrieben */
+  tab: 22,
+  /** Kennzahlen in Archivo (412 KM, 2:15 H) */
+  metric: 22,
+  /** Titel von Ebenen (Sheets, Vollflächen) in Archivo */
+  h2: 26,
+  /** Screen Titel in Archivo */
+  h1: 34,
   display: 34,
+} as const;
+
+/** Zeilenhöhen passend zur Skala */
+export const Leading = { caption: 16, body: 20, title: 22, tab: 28, metric: 26, h2: 30, display: 36 } as const;
+
+/** Feste Größen für Bedienelemente (Prinzip 7: Treffer ab 44 pt) */
+export const Size = {
+  /** Haupt und Zweittaste */
+  button: 56,
+  /** Eingabefelder */
+  input: 52,
+  /** Chips, Reiter als Pille, kleine Tasten */
+  chip: 44,
+  /** runde Symboltasten (Schließen, Zurück, Mehr) */
+  icon: 44,
 } as const;
 
 /** Schatten für schwebende Flächen (React Native boxShadow) */
@@ -66,7 +89,8 @@ export const Shadow = {
 
 export const Fonts = {
   display: 'Archivo_900Black',
-  displayBold: 'Archivo_800ExtraBold',
+  /** früher Archivo 800; vereinheitlicht auf ein Archivo Gewicht */
+  displayBold: 'Archivo_900Black',
   regular: 'Inter_400Regular',
   medium: 'Inter_500Medium',
   semibold: 'Inter_600SemiBold',
@@ -74,6 +98,8 @@ export const Fonts = {
 } as const;
 
 export const Spacing = {
+  /** Haarlinie, kleinste Lücke */
+  hair: 2,
   xs: 4,
   s: 8,
   m: 12,
@@ -85,10 +111,12 @@ export const Spacing = {
   section: 40,
 } as const;
 
+/** Drei Radien (9.11.): m für Felder und Zeilen, l für Karten und Sheets, pill für Tasten, Chips, Reiter */
 export const Radius = {
-  s: 12,
+  /** früher 12; zusammengelegt mit m */
+  s: 14,
   m: 14,
-  l: 16,
+  l: 20,
   pill: 999,
 } as const;
 

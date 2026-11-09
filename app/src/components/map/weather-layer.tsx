@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(22,22,24,0.82)',
     boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
   },
-  plaqueText: { fontFamily: Fonts.semibold, fontSize: 12, color: Colors.text, fontVariant: ['tabular-nums'] },
+  plaqueText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.text, fontVariant: ['tabular-nums'] },
   sheet: { gap: Spacing.l },
   big: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   temp: { fontFamily: Fonts.display, fontSize: 40, lineHeight: 44, color: Colors.text, fontVariant: ['tabular-nums'] },

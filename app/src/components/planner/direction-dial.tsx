@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   dial: { width: '100%', maxWidth: SIZE, alignItems: 'center', justifyContent: 'center' },
   center: { position: 'absolute', backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   centerOn: { backgroundColor: Colors.signal },
-  centerText: { fontFamily: Fonts.displayBold, fontSize: Type.body },
+  centerText: { fontFamily: Fonts.bold, fontSize: Type.body },
   centerTextOn: { color: Colors.onSignal },
   caption: { textAlign: 'center' },
 });

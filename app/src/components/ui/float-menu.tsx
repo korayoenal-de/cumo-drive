@@ -65,7 +65,7 @@ export function FloatMenu({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.35)' },
+  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: Colors.scrim },
   menu: { position: 'absolute', width: WIDTH, padding: Spacing.s, borderRadius: Radius.l + 2, backgroundColor: Colors.surface2, boxShadow: Shadow.float },
   item: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, height: ITEM_H, paddingHorizontal: Spacing.m, borderRadius: Radius.s },
   pressed: { backgroundColor: Colors.line },

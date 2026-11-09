@@ -24,7 +24,7 @@ export function RadarChip({ count, top, found }: { count: number; top: number; f
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: 'rgba(22,22,24,0.92)' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: Colors.overlaySurface },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.signal },
   text: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
 });

@@ -10,7 +10,7 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react
 
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import {
   createGroupRide,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   gapS: { gap: Spacing.s },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  input: { height: 50, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
+  input: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   suggestion: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
   memberName: { fontFamily: Fonts.semibold, fontSize: Type.input },
@@ -355,11 +355,11 @@ const styles = StyleSheet.create({
   warnText: { color: Colors.warn, fontFamily: Fonts.semibold },
   badgeMuted: { backgroundColor: Colors.surface2 },
   mutedText: { color: Colors.muted, fontFamily: Fonts.semibold },
-  removeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  removeBtn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   removeText: { color: Colors.muted, fontFamily: Fonts.bold, fontSize: Type.small },
-  smallBtn: { height: 40, minWidth: 96, borderRadius: 20, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
+  smallBtn: { height: Size.chip, minWidth: 96, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   smallBtnText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.body },
-  primary: { height: 54, borderRadius: 27, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   disabled: { opacity: 0.4 },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },

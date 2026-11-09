@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { signOut } from '@/lib/auth';
 import { setDisplayName } from '@/lib/profile';
 
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, justifyContent: 'space-between', paddingHorizontal: Spacing.xl, gap: Spacing.xxl },
   gapM: { gap: Spacing.m },
   brand: { color: Colors.signal, fontFamily: Fonts.bold, letterSpacing: 2 },
-  primary: { height: 54, borderRadius: 27, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   disabled: { opacity: 0.4 },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },

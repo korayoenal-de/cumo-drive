@@ -1,7 +1,7 @@
 /** Styles des Planers, gemeinsam für alle Planer Dateien. Alle Werte aus den Design Tokens. */
 import { StyleSheet } from 'react-native';
 
-import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   dragging: { zIndex: 10 },
@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
   stopChip: { height: 44, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingLeft: Spacing.m, paddingRight: Spacing.l, borderRadius: 22, backgroundColor: Colors.surface2 },
   stopChipText: { fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.text },
   stopIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.signalTint },
-  stopRemove: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
+  stopRemove: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   pressedSoft: { opacity: 0.8, transform: [{ scale: Motion.pressScale }] },
   linkRow: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.l },
   deleteLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.m },
@@ -44,8 +44,9 @@ export const styles = StyleSheet.create({
   signalText: { color: Colors.signal },
   onSignal: { color: Colors.onSignal },
 
-  typoTabs: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 22 },
-  typoTab: { fontFamily: Fonts.displayBold, fontSize: 28, lineHeight: 34, letterSpacing: -0.3, color: Colors.faint },
+  typoTabs: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 20 },
+  // Reiter sind Bedienelemente: Inter Bold, normal geschrieben (Koray 9.11.)
+  typoTab: { fontFamily: Fonts.bold, fontSize: Type.tab, lineHeight: 28, color: Colors.faint },
   typoTabOn: { color: Colors.text },
   segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: Spacing.xs },
   segItem: { flex: 1, height: 38, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
@@ -67,9 +68,9 @@ export const styles = StyleSheet.create({
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.good, marginTop: 5 },
   dotWarn: { backgroundColor: Colors.warn },
 
-  primary: { height: 56, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.onSignal },
-  secondary: { height: 50, borderRadius: Radius.m, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   secondaryOnSurface: { backgroundColor: Colors.surface2 },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.text },
   pressed: { opacity: 0.8 },
@@ -86,7 +87,7 @@ export const styles = StyleSheet.create({
   searchSpinner: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  stepBtn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   barH: { position: 'absolute', width: 18, height: 2, borderRadius: 1, backgroundColor: Colors.text },
   barV: { position: 'absolute', width: 2, height: 18, borderRadius: 1, backgroundColor: Colors.text },
   stepValue: { alignItems: 'center' },
@@ -104,7 +105,7 @@ export const styles = StyleSheet.create({
 
   summary: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
   summaryHint: { minHeight: 36 },
-  go: { height: 60, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  go: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   goText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
 
   headline: { fontSize: 22, lineHeight: 26 },
@@ -166,7 +167,7 @@ export const styles = StyleSheet.create({
   startRing: { width: 16, height: 16, borderRadius: 8, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center' },
   startCore: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.surface },
   viaBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  viaBadgeText: { fontFamily: Fonts.bold, fontSize: 12 },
+  viaBadgeText: { fontFamily: Fonts.bold, fontSize: Type.caption },
   moreBtn: { width: 44, height: 52, alignItems: 'center', justifyContent: 'center' },
   moreText: { fontFamily: Fonts.bold, fontSize: Type.h3, color: Colors.muted },
   legBlock: { flexDirection: 'row', paddingLeft: Spacing.s },

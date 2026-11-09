@@ -17,7 +17,7 @@ import { SOFT_LAYOUT } from '@/components/ui/action-bar';
 import { ActionSheet, ConfirmSheet, OptionsSheet, type SheetItem } from '@/components/ui/action-sheet';
 import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: Fonts.semibold, fontSize: Type.title, lineHeight: 21 },
   meta: { fontVariant: ['tabular-nums'] },
   badge: { alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.goodTint },
-  badgeText: { fontFamily: Fonts.semibold, fontSize: 12, color: Colors.good },
+  badgeText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.good },
   thumb: { width: 56, height: 56, borderRadius: Radius.m, backgroundColor: Colors.ground, overflow: 'hidden' },
   fun: { alignItems: 'center', gap: 2, minWidth: 36 },
   funText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
@@ -238,9 +238,9 @@ const styles = StyleSheet.create({
   item: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
   itemPressed: { opacity: 0.7, transform: [{ scale: Motion.pressScale }] },
   form: { gap: Spacing.s },
-  field: { minHeight: 48, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
+  field: { minHeight: Size.input, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   area: { minHeight: 88, textAlignVertical: 'top' },
-  primary: { height: 56, borderRadius: Radius.l, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.body },
   disabled: { opacity: 0.4 },
   note: { paddingHorizontal: Spacing.xs },

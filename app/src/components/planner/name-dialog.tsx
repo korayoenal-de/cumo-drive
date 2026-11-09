@@ -1,61 +1,46 @@
 /**
- * Name vergeben beim ersten Speichern einer Route (Koray 8.11.): statt eines festen Felds im Planer
- * fragt ein kleiner Dialog, sobald man auf Speichern tippt. Der Vorschlag ist markiert, Tippen ersetzt ihn.
+ * Name vergeben beim ersten Speichern einer Route (Koray 8.11.). Seit 9.11. als Bottom Sheet statt
+ * zentriertem Dialog (UI Konsistenz Check): sitzt auf der Tastatur, Vorschlag markiert, eine Hauptaktion.
+ * Abbrechen durch Tippen daneben oder Wegziehen.
  */
 import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { OptionsSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 
 export function NameDialog({ visible, initial, onCancel, onSave }: { visible: boolean; initial: string; onCancel: () => void; onSave: (name: string) => void }) {
   // beim Öffnen neu eingehängt (key), daher reicht der Startwert
   const [name, setName] = useState(initial);
   const save = () => onSave(name.trim() || initial);
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
-      <KeyboardAvoidingView behavior="padding" style={styles.flex}>
-        <Pressable style={styles.backdrop} onPress={onCancel} accessibilityLabel="Schließen" />
-        <View style={styles.card} accessibilityViewIsModal>
-          <AppText variant="title">Tour speichern</AppText>
-          <AppText variant="caption" muted>
-            Gib deiner Tour einen Namen, unter dem du sie in Meine Touren findest.
-          </AppText>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            autoFocus
-            selectTextOnFocus
-            returnKeyType="done"
-            onSubmitEditing={save}
-            placeholder="Name der Tour"
-            placeholderTextColor={Colors.muted}
-            style={styles.input}
-            accessibilityLabel="Name der Tour"
-          />
-          <View style={styles.row}>
-            <Pressable accessibilityRole="button" onPress={onCancel} style={({ pressed }) => [styles.btn, styles.secondary, pressed && styles.pressed]}>
-              <AppText style={styles.btnText}>Abbrechen</AppText>
-            </Pressable>
-            <Pressable accessibilityRole="button" onPress={save} style={({ pressed }) => [styles.btn, styles.primary, pressed && styles.pressed]}>
-              <AppText style={styles.btnText}>Speichern</AppText>
-            </Pressable>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    <OptionsSheet visible={visible} title="Tour speichern" subtitle="Unter diesem Namen findest du sie in Meine Touren." onClose={onCancel}>
+      <View style={styles.body}>
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          autoFocus
+          selectTextOnFocus
+          returnKeyType="done"
+          onSubmitEditing={save}
+          placeholder="Name der Tour"
+          placeholderTextColor={Colors.muted}
+          style={styles.input}
+          accessibilityLabel="Name der Tour"
+        />
+        <Pressable accessibilityRole="button" onPress={save} style={({ pressed }) => [styles.primary, pressed && styles.pressed]}>
+          <AppText style={styles.primaryText}>Speichern</AppText>
+        </Pressable>
+      </View>
+    </OptionsSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, justifyContent: 'center', padding: Spacing.xl },
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.55)' },
-  card: { gap: Spacing.m, padding: Spacing.xl, borderRadius: Radius.l, backgroundColor: Colors.surface },
-  input: { height: 48, borderRadius: Radius.s, backgroundColor: Colors.surface2, color: Colors.text, paddingHorizontal: Spacing.m, fontFamily: Fonts.semibold, fontSize: Type.body },
-  row: { flexDirection: 'row', gap: Spacing.s, marginTop: Spacing.s },
-  btn: { flex: 1, height: 52, borderRadius: Radius.m, alignItems: 'center', justifyContent: 'center' },
-  secondary: { backgroundColor: Colors.surface2 },
-  primary: { backgroundColor: Colors.signal },
-  btnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
+  body: { gap: Spacing.m, paddingHorizontal: Spacing.s, paddingTop: Spacing.m },
+  input: { height: Size.input, borderRadius: Radius.m, backgroundColor: Colors.surface2, color: Colors.text, paddingHorizontal: Spacing.l, fontFamily: Fonts.semibold, fontSize: Type.input },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  primaryText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
   pressed: { opacity: 0.85, transform: [{ scale: 0.985 }] },
 });

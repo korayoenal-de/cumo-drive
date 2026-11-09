@@ -12,7 +12,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
 import { FloatMenu, type Anchor } from '@/components/ui/float-menu';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 
 
 /** Schalter Solo oder Gruppe: Breite des aktiven und des inaktiven Felds, Abstand dazwischen */
@@ -143,13 +143,13 @@ function MoreButton({ open, onOpen }: { open: boolean; onOpen: (a: Anchor) => vo
 const styles = StyleSheet.create({
   wrap: { gap: Spacing.s },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
-  primary: { flex: 1, height: 56, borderRadius: 28, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  primary: { flex: 1, height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   float: { position: 'absolute', left: 0, right: 0, bottom: '100%', paddingBottom: Spacing.s, zIndex: 2 },
   primaryText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
   pressed: { opacity: 0.8, transform: [{ scale: Motion.pressScale }] },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   big: { width: 56, height: 56, borderRadius: 28 },
   roundOpen: { backgroundColor: Colors.line },
-  secondary: { flex: 1, height: 56, borderRadius: 28, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  secondary: { flex: 1, height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
 });

@@ -101,7 +101,7 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
     return (
       <div style={S.groupBox}>
         <p style={{ margin: 0 }}>Alle Mitfahrer sehen sich live auf der Karte, in der App und hier im Planer. Sprechfunk folgt.</p>
-        <input id="grp-name" aria-label="Dein Name" placeholder="Dein Name" value={name} onChange={(e) => setName(e.target.value)} style={{ ...S.search, height: 40, background: C.surface2 }} />
+        <input id="grp-name" aria-label="Dein Name" placeholder="Dein Name" value={name} onChange={(e) => setName(e.target.value)} style={{ ...S.search, height: 44, background: C.surface2 }} />
         <button
           style={S.primary}
           disabled={busy || !name.trim()}
@@ -114,7 +114,7 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
           {canShare ? 'Fahrt mit dieser Tour starten' : 'Fahrt starten'}
         </button>
         <div style={S.btnRow}>
-          <input id="grp-code" aria-label="Fahrtcode" placeholder="Fahrtcode" value={code} onChange={(e) => setCode(normalizeCode(e.target.value))} style={{ ...S.search, height: 40, flex: 1, background: C.surface2, letterSpacing: 4, textTransform: 'uppercase' }} />
+          <input id="grp-code" aria-label="Fahrtcode" placeholder="Fahrtcode" value={code} onChange={(e) => setCode(normalizeCode(e.target.value))} style={{ ...S.search, height: 44, flex: 1, background: C.surface2, letterSpacing: 4, textTransform: 'uppercase' }} />
           <button style={{ ...S.secondaryOnSurface, flex: 'none' }} disabled={busy || !name.trim() || code.length !== 6} onClick={() => void joinRide(code, name, 'Planer')}>
             Beitreten
           </button>
@@ -235,8 +235,8 @@ export function AccountBox() {
       }}>
       <b>Konto</b>
       <span style={S.small}>Ohne Konto bleiben Touren nur in diesem Browser. Mit Konto stehen sie auch in der App.</span>
-      <input id="acc-email" type="email" autoComplete="email" aria-label="E-Mail" placeholder="E-Mail" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...S.search, height: 40, background: C.surface2 }} />
-      <input id="acc-pw" type="password" autoComplete="current-password" aria-label="Passwort" placeholder="Passwort, mindestens 8 Zeichen" value={pw} onChange={(e) => setPw(e.target.value)} style={{ ...S.search, height: 40, background: C.surface2 }} />
+      <input id="acc-email" type="email" autoComplete="email" aria-label="E-Mail" placeholder="E-Mail" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...S.search, height: 44, background: C.surface2 }} />
+      <input id="acc-pw" type="password" autoComplete="current-password" aria-label="Passwort" placeholder="Passwort, mindestens 8 Zeichen" value={pw} onChange={(e) => setPw(e.target.value)} style={{ ...S.search, height: 44, background: C.surface2 }} />
       {err ? <span style={{ ...S.small, color: C.signal }}>{err}</span> : null}
       <div style={S.btnRow}>
         <button type="submit" style={S.primary} disabled={busy || !email || !pw}>

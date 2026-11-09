@@ -24,13 +24,13 @@ import Animated, {
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 
 /** Spielraum, bevor die Fläche einfärbt (Tachoabweichung) */
 const OVER_KMH = 4;
 const EASE = Easing.bezier(0.22, 1, 0.36, 1);
 const SHEEN_EASE = Easing.bezier(0.33, 0, 0.2, 1);
-const REST_BG = 'rgba(11,11,12,0.92)';
+const REST_BG = Colors.overlay;
 const WARN_BG = 'rgba(58,44,15,0.96)';
 
 export type BrakeIcon = 'right' | 'left' | 'hairR' | 'hairL' | 'serp';
@@ -256,13 +256,13 @@ const styles = StyleSheet.create({
   speed: { alignItems: 'center', minWidth: 38 },
   value: { fontFamily: Fonts.display, fontSize: 24, lineHeight: 26, color: Colors.text, fontVariant: ['tabular-nums'] },
   valueOver: { color: Colors.warn },
-  unit: { fontFamily: Fonts.semibold, fontSize: 11, color: Colors.muted },
+  unit: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
   // Verkehrszeichen: weiß mit rotem Ring, schwarze Zahl
   sign: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#FFFFFF', borderWidth: 4, borderColor: '#D7261E', alignItems: 'center', justifyContent: 'center' },
   signFree: { borderColor: '#FFFFFF', borderWidth: 0 },
   freeBar: { width: 34, height: 4, backgroundColor: '#1C1C1F', transform: [{ rotate: '-45deg' }] },
   signText: { fontFamily: Fonts.bold, fontSize: 16, color: '#0B0B0C', fontVariant: ['tabular-nums'] },
-  ico: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(232,176,58,0.16)', alignItems: 'center', justifyContent: 'center' },
+  ico: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.warnTint, alignItems: 'center', justifyContent: 'center' },
   mirror: { transform: [{ scaleX: -1 }] },
   txt: { gap: 1 },
   roll: { height: 24, overflow: 'hidden' },

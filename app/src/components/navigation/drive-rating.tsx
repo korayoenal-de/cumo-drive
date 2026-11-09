@@ -14,7 +14,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { Chip } from '@/components/ui/chip';
 import { LogoFill } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { BAD_REASONS, SCORE_WEAK, rateDriveScore, scoreWord, type HighlightVote } from '@/lib/drives';
 
 export type DrivenHighlight = { key: string; name: string; kind: 'pass' | 'strecke' };
@@ -120,7 +120,7 @@ function Thumb({ up, on, name, onPress }: { up: boolean; on: boolean; name: stri
       onPressIn={() => s.set(withSpring(0.88, Motion.press))}
       onPressOut={() => s.set(withSpring(1, Motion.press))}
       onPress={onPress}>
-      <Animated.View style={[styles.thumbBtn, on && { backgroundColor: up ? 'rgba(76,195,138,0.18)' : 'rgba(226,70,28,0.18)' }, anim]}>
+      <Animated.View style={[styles.thumbBtn, on && { backgroundColor: up ? Colors.goodTint : Colors.signalTint }, anim]}>
         <SymbolView name={up ? (on ? 'hand.thumbsup.fill' : 'hand.thumbsup') : on ? 'hand.thumbsdown.fill' : 'hand.thumbsdown'} size={20} tintColor={on ? tone : Colors.muted} />
       </Animated.View>
     </Pressable>
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   ends: { flexDirection: 'row', justifyContent: 'space-between' },
   end: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
-  input: { minHeight: 48, maxHeight: 120, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.body },
+  input: { minHeight: Size.input, maxHeight: 120, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.body },
   hlBox: { gap: Spacing.s },
   hlRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 52 },
   hlText: { flex: 1, minWidth: 0 },

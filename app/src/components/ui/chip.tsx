@@ -4,7 +4,7 @@
 import { Pressable, StyleSheet } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 
 /** onSurface: der Chip liegt auf einer Surface Karte und bekommt deshalb die hellere Füllung. */
 export function Chip({
@@ -22,10 +22,10 @@ export function Chip({
 }
 
 const styles = StyleSheet.create({
-  chip: { height: 36, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, justifyContent: 'center' },
+  chip: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, justifyContent: 'center' },
   on: { backgroundColor: Colors.signal },
   off: { backgroundColor: Colors.surface },
   offOnSurface: { backgroundColor: Colors.surface2 },
-  label: { fontSize: Type.small, fontFamily: Fonts.medium },
+  label: { fontSize: Type.body, fontFamily: Fonts.semibold },
   labelOn: { color: Colors.onSignal, fontFamily: Fonts.bold },
 });

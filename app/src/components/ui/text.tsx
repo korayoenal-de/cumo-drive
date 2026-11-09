@@ -3,7 +3,7 @@
  */
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
-import { Colors, Fonts, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Type } from '@/constants/theme';
 
 type Variant = 'display' | 'title' | 'body' | 'label' | 'caption' | 'number';
 
@@ -16,14 +16,15 @@ export function AppText({
   return <Text style={[styles.base, styles[variant], muted && styles.muted, style]} {...rest} />;
 }
 
+// Skala vom 9.11.: display Archivo 34/36, title Inter Bold 17/22, body Inter Semibold 15/20,
+// label Abschnittstitel Inter Bold 17, caption 13/16 nur Karte und Plaketten, number Kennzahl Archivo 22
 const styles = StyleSheet.create({
-  base: { color: Colors.text, fontFamily: Fonts.regular, fontSize: Type.input },
-  display: { fontFamily: Fonts.display, fontSize: 38, lineHeight: 38, textTransform: 'uppercase' },
-  title: { fontFamily: Fonts.semibold, fontSize: Type.input },
-  body: { fontFamily: Fonts.regular, fontSize: Type.input },
-  // Abschnittstitel: normal geschrieben, fett (Mittelweg: Versalien nur für Tournamen und Kennzahlen)
-  label: { fontFamily: Fonts.bold, fontSize: Type.button, letterSpacing: -0.2, color: Colors.text },
-  caption: { fontFamily: Fonts.regular, fontSize: Type.caption },
-  number: { fontFamily: Fonts.display, fontSize: Type.title, textTransform: 'uppercase', fontVariant: ['tabular-nums'] },
+  base: { color: Colors.text, fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: Leading.body },
+  display: { fontFamily: Fonts.display, fontSize: Type.display, lineHeight: Leading.display, textTransform: 'uppercase' },
+  title: { fontFamily: Fonts.bold, fontSize: Type.title, lineHeight: Leading.title },
+  body: { fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: Leading.body },
+  label: { fontFamily: Fonts.bold, fontSize: Type.title, lineHeight: Leading.title, color: Colors.text },
+  caption: { fontFamily: Fonts.semibold, fontSize: Type.caption, lineHeight: Leading.caption },
+  number: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, textTransform: 'uppercase', fontVariant: ['tabular-nums'] },
   muted: { color: Colors.muted },
 });

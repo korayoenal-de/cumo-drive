@@ -9,7 +9,7 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { planChecked, type PlanStep } from '@/lib/plan';
 import { fetchHandoff, isHandoffCode } from '@/lib/handoff';
@@ -152,14 +152,14 @@ export default function ScanScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
-  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.l, paddingBottom: Spacing.m, backgroundColor: 'rgba(11,11,12,0.85)' },
+  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.l, paddingBottom: Spacing.m, backgroundColor: Colors.overlay },
   close: { paddingVertical: Spacing.s, paddingHorizontal: 14, borderRadius: 18, backgroundColor: Colors.surface2 },
   closeText: { fontFamily: Fonts.semibold, fontSize: Type.small },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   frame: { width: 250, height: 250, borderRadius: Radius.l, borderWidth: 3, borderColor: Colors.signal },
-  card: { alignSelf: 'stretch', gap: Spacing.m, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: 'rgba(22,22,24,0.96)' },
+  card: { alignSelf: 'stretch', gap: Spacing.m, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: Colors.overlaySurface },
   bottom: { paddingHorizontal: Spacing.l },
   hint: { textAlign: 'center', fontFamily: Fonts.medium, fontSize: Type.body, lineHeight: 21, backgroundColor: 'rgba(11,11,12,0.8)', padding: Spacing.m, borderRadius: Radius.m, overflow: 'hidden' },
-  primary: { height: 50, borderRadius: 25, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
 });

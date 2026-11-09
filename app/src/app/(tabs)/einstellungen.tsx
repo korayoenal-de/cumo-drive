@@ -13,7 +13,7 @@ import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { deleteAccount, signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { clearLocalTours } from '@/lib/library';
 import { listDrives, type Drive } from '@/lib/drives';
@@ -299,8 +299,9 @@ function Garage({ drives }: { drives: Drive[] | null }) {
       />
       {edit && !list.some((v) => v.id === edit.id) && <VehicleForm value={edit} onChange={setEdit} onDone={() => setEdit(null)} />}
       {!edit && (
-        <Pressable accessibilityRole="button" onPress={() => setEdit(newVehicle())} style={styles.primary}>
-          <AppText style={styles.primaryText}>Fahrzeug hinzufügen</AppText>
+        // kein Hauptweg der Seite, daher Zweittaste (UI Konsistenz Check 9.11.)
+        <Pressable accessibilityRole="button" onPress={() => setEdit(newVehicle())} style={styles.secondary}>
+          <AppText style={styles.secondaryText}>Fahrzeug hinzufügen</AppText>
         </Pressable>
       )}
       {drives && unassigned.length > 0 && (
@@ -352,7 +353,7 @@ const styles = StyleSheet.create({
   deleteLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.m },
   deleteText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   carIcon: { transform: [{ rotate: '90deg' }], width: 30, alignItems: 'center' },
-  more: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
+  more: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   flex: { flex: 1 },
   gapS: { gap: Spacing.xs },
   gapM: { gap: Spacing.m },
@@ -363,10 +364,10 @@ const styles = StyleSheet.create({
   stat: { fontFamily: Fonts.semibold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
   badge: { backgroundColor: Colors.goodTint, borderRadius: Radius.pill, paddingHorizontal: Spacing.s, paddingVertical: 2 },
   badgeText: { color: Colors.good, fontFamily: Fonts.semibold },
-  input: { height: 50, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
-  primary: { height: 50, borderRadius: 25, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  input: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
-  secondary: { height: 48, borderRadius: 24, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   disabled: { opacity: 0.4 },
   padH: { paddingHorizontal: Spacing.l },

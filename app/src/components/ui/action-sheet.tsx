@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { sheetEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type, Size } from '@/constants/theme';
 
 const AnimatedScroll = Animated.createAnimatedComponent(GHScrollView);
 
@@ -179,7 +179,7 @@ export function ConfirmSheet({
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.6)' },
+  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: Colors.scrim },
   dragWrap: { marginTop: 'auto' },
   scrollBody: { paddingBottom: Spacing.s },
   card: {
@@ -207,6 +207,6 @@ const styles = StyleSheet.create({
   confirmRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingTop: Spacing.s },
   cancel: { flex: 1, height: 56, alignItems: 'center', justifyContent: 'center' },
   cancelText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.text },
-  confirm: { flex: 1.3, height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xl, borderRadius: Radius.l, backgroundColor: Colors.signal },
+  confirm: { flex: 1.3, height: Size.button, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, backgroundColor: Colors.signal },
   confirmText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
 });

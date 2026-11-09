@@ -20,7 +20,7 @@ import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, 
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { type Place } from '@/lib/geocode';
 import { passState, usePassLive } from '@/lib/pass-live';
 import { PASSES, passPoint, passSummary, searchPasses } from '@/lib/passes';
@@ -680,7 +680,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface2,
   },
   input: { flex: 1, height: '100%', fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
-  close: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
+  close: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   content: { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xxxl, gap: Spacing.xxl },
   section: { gap: Spacing.m },
   label: { fontFamily: Fonts.bold, fontSize: Type.h3, color: Colors.text },
@@ -695,13 +695,13 @@ const styles = StyleSheet.create({
   message: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.signal, paddingHorizontal: Spacing.xs },
   tabsBox: { marginHorizontal: -Spacing.xl },
   tabs: { gap: Spacing.s, paddingHorizontal: Spacing.xl },
-  tab: { height: 40, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
+  tab: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   tabOn: { backgroundColor: Colors.text },
   tabText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   tabTextOn: { color: Colors.ground },
   subRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   subShrink: { flexShrink: 1 },
-  detourTag: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.warn, backgroundColor: 'rgba(232,176,58,0.16)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, overflow: 'hidden' },
+  detourTag: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.warn, backgroundColor: Colors.warnTint, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, overflow: 'hidden' },
   kmBox: { alignItems: 'flex-end', marginLeft: Spacing.s },
   kmBig: { fontFamily: Fonts.display, fontSize: Type.title, color: Colors.text, fontVariant: ['tabular-nums'] },
   kmEta: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
