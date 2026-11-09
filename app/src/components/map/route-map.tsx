@@ -282,22 +282,29 @@ export function RouteMap({
   // in jedem Frame weiter (linear zwischen den letzten beiden Positionen, kurz darüber hinaus
   // fortgeschrieben), statt jede Sekunde eine neue Kamera Animation mit Abbremsen zu starten.
   const [me] = useState(() => new AnimatedRegion({ latitude: position?.[0] ?? 0, longitude: position?.[1] ?? 0, latitudeDelta: 0, longitudeDelta: 0 }));
-  const motion = useRef<{ from: LatLon; to: LatLon; hFrom: number; hTo: number; t0: number; dur: number } | null>(null);
+  // Fortschreiben mit Geschwindigkeit statt von Punkt zu Punkt (Koray 9.11.: das Auto machte alle paar Meter eine
+  // Pause, weil eine Bewegung von 1,15 s fertig war, bevor die nächste Position kam). Angezeigt wird die letzte
+  // Position plus Geschwindigkeit mal Zeit seither; der Sprung bei einer neuen Position klingt in 0,5 s aus.
+  const motion = useRef<{ p: LatLon; t: number; v: [number, number]; err: [number, number]; hFrom: number; hTo: number } | null>(null);
   const shown = useRef<{ p: LatLon; h: number } | null>(null);
   useEffect(() => {
     if (!position) return;
     const now = Date.now();
     const h = heading ?? shown.current?.h ?? 0;
     const prev = motion.current;
-    const gap = prev ? now - prev.t0 : Infinity;
+    const gap = prev ? now - prev.t : Infinity;
     // Start oder lange Pause: springen statt gleiten
     if (!prev || !shown.current || gap > 4000) {
-      motion.current = { from: position, to: position, hFrom: h, hTo: h, t0: now, dur: 1000 };
+      motion.current = { p: position, t: now, v: [0, 0], err: [0, 0], hFrom: h, hTo: h };
       shown.current = { p: position, h };
       me.setValue({ latitude: position[0], longitude: position[1], latitudeDelta: 0, longitudeDelta: 0 });
       return;
     }
-    motion.current = { from: shown.current.p, to: position, hFrom: shown.current.h, hTo: h, t0: now, dur: Math.min(1500, Math.max(400, gap)) };
+    // Geschwindigkeit in Grad je ms, leicht geglättet
+    const vNew: [number, number] = [(position[0] - prev.p[0]) / gap, (position[1] - prev.p[1]) / gap];
+    const v: [number, number] = [prev.v[0] * 0.35 + vNew[0] * 0.65, prev.v[1] * 0.35 + vNew[1] * 0.65];
+    const err: [number, number] = [shown.current.p[0] - position[0], shown.current.p[1] - position[1]];
+    motion.current = { p: position, t: now, v, err, hFrom: shown.current.h, hTo: h };
   }, [position, heading, me]);
 
   // Im Hintergrund keine Kamera Befehle: requestAnimationFrame läuft in React Native dort weiter, und
@@ -318,7 +325,6 @@ export function RouteMap({
     if (!ready || !position || !appActive || !focused) return;
     let raf = 0;
     let frame = 0;
-    let lastK = -1;
     let lastM: typeof motion.current = null;
     const tick = () => {
       raf = requestAnimationFrame(tick);
@@ -327,15 +333,15 @@ export function RouteMap({
       if (++frame % 3) return;
       const m = motion.current;
       if (!m) return;
-      // bis 15 % über die letzte Position hinaus fortschreiben, damit es bis zur nächsten nicht stehen bleibt
-      const k = Math.min(1.15, (Date.now() - m.t0) / m.dur);
-      // steht alles (Ende der Bewegung erreicht, keine neue Position): keine Kamera Befehle
-      if (m === lastM && k === lastK) return;
+      const dt = Date.now() - m.t;
+      // höchstens 2,5 s fortschreiben (Tunnel, GPS weg), danach stehen bleiben
+      const run = Math.min(dt, 2500);
+      const fade = Math.exp(-dt / 180);
+      if (m === lastM && dt > 3200) return;
       lastM = m;
-      lastK = k;
-      const p: LatLon = [m.from[0] + (m.to[0] - m.from[0]) * k, m.from[1] + (m.to[1] - m.from[1]) * k];
+      const p: LatLon = [m.p[0] + m.v[0] * run + m.err[0] * fade, m.p[1] + m.v[1] * run + m.err[1] * fade];
       const dh = ((m.hTo - m.hFrom + 540) % 360) - 180;
-      const h = (m.hFrom + dh * Math.min(1, k) + 360) % 360;
+      const h = (m.hFrom + dh * Math.min(1, dt / 600) + 360) % 360;
       shown.current = { p, h };
       me.setValue({ latitude: p[0], longitude: p[1], latitudeDelta: 0, longitudeDelta: 0 });
       if (following) map.current?.setCamera({ center: ll(p), heading: h, pitch: 50, zoom: 17, altitude: 500 });

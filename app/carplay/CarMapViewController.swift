@@ -40,6 +40,11 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private var moveStart: CFTimeInterval = 0
   private var moveDur: CFTimeInterval = 1
   private var parked = false
+  /// Geschwindigkeit in Grad je Sekunde und Abweichung beim letzten Punkt (Fortschreiben statt Pausen, 9.11.)
+  private var vLat = 0.0
+  private var vLon = 0.0
+  private var errLat = 0.0
+  private var errLon = 0.0
   /// Gefahrenes Stück der Tour ausblenden, ohne die Linie neu anzulegen: Anteil über strokeStart
   private var lineRenderer: MKPolylineRenderer?
   private var casingRenderer: MKPolylineRenderer?
@@ -191,13 +196,31 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     let now = CACurrentMediaTime()
     let gap = lastFollowAt > 0 ? now - lastFollowAt : 0
     lastFollowAt = now
-    // Neue Bewegung: von dort, wo die Kamera gerade steht, zur neuen Position, über den Abstand der Positionen
-    moveFrom = shownCenter ?? c
+    // Fortschreiben mit Geschwindigkeit: letzte Position plus Geschwindigkeit mal Zeit, der Sprung zur neuen
+    // Position klingt in 0,5 s aus. Vorher endete die Bewegung vor der nächsten Position und die Karte stand kurz.
+    if let last = moveTo, gap > 0.05, gap < 4 {
+      let nLat = (c.latitude - last.latitude) / gap
+      let nLon = (c.longitude - last.longitude) / gap
+      vLat = vLat * 0.35 + nLat * 0.65
+      vLon = vLon * 0.35 + nLon * 0.65
+    } else {
+      vLat = 0
+      vLon = 0
+    }
+    if let s = shownCenter, gap < 4 {
+      errLat = s.latitude - c.latitude
+      errLon = s.longitude - c.longitude
+    } else {
+      errLat = 0
+      errLon = 0
+    }
+    moveFrom = c
     headFrom = shownHeading
     moveTo = c
     headTo = heading
     moveStart = now
-    moveDur = min(1.6, max(0.3, gap > 0 ? gap : 1))
+    moveDur = 0.6
+    parked = false
     if shownCenter == nil { place(c, heading: heading) }
     startLink()
   }
@@ -217,17 +240,17 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   }
 
   @objc private func tick() {
-    guard following, let a = moveFrom, let b = moveTo else { return }
-    // bis 25 % über die letzte Position hinaus weiter, damit die Karte bis zur nächsten nicht stehen bleibt
-    let k = min(1.25, (CACurrentMediaTime() - moveStart) / moveDur)
-    // am Ende der Bewegung stehen bleiben, ohne jedes Bild die Kamera neu zu setzen (Akku)
-    if k >= 1.25 {
+    guard following, let a = moveTo else { return }
+    let dt = CACurrentMediaTime() - moveStart
+    // höchstens 2,5 s fortschreiben (GPS weg), danach stehen bleiben, ohne die Kamera neu zu setzen (Akku)
+    if dt > 3.2 {
       if parked { return }
       parked = true
-    } else {
-      parked = false
     }
-    let c = CLLocationCoordinate2D(latitude: a.latitude + (b.latitude - a.latitude) * k, longitude: a.longitude + (b.longitude - a.longitude) * k)
+    let run = min(dt, 2.5)
+    let fade = exp(-dt / 0.18)
+    let c = CLLocationCoordinate2D(latitude: a.latitude + vLat * run + errLat * fade, longitude: a.longitude + vLon * run + errLon * fade)
+    let k = dt / moveDur
     var d = (headTo - headFrom).truncatingRemainder(dividingBy: 360)
     if d > 180 { d -= 360 }
     if d < -180 { d += 360 }
