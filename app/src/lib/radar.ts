@@ -163,10 +163,20 @@ export function corridorSpots(pts: LatLon[], max = 60): ScanSpot[] {
   };
   HIGHLIGHT_ROADS.forEach((r) => consider(r, 'highlight'));
   PREFER_ROADS.forEach((r) => consider(r, 'prefer'));
-  // die nächsten zur Linie behalten, dann nach Lage sortieren
-  return out
-    .sort((a, b) => a.d - b.d)
-    .slice(0, max)
-    .sort((a, b) => a.frac - b.frac)
-    .map(({ d: _d, ...x }) => x);
+  // Gleichmäßig über die Strecke verteilen (Koray 9.11.: nicht alles am Start): je Zwölftel höchstens
+  // zwei Punkte, die nächsten zur Linie, Highlights zuerst
+  const buckets = new Map<number, (ScanSpot & { d: number })[]>();
+  for (const x of out) {
+    const k = Math.min(11, Math.floor(x.frac * 12));
+    buckets.set(k, [...(buckets.get(k) ?? []), x]);
+  }
+  const picked: ScanSpot[] = [];
+  for (const list of buckets.values())
+    picked.push(
+      ...list
+        .sort((a, b) => (a.kind === b.kind ? a.d - b.d : a.kind === 'highlight' ? -1 : 1))
+        .slice(0, 2)
+        .map(({ d: _d, ...x }) => x),
+    );
+  return picked.sort((a, b) => a.frac - b.frac).slice(0, max);
 }

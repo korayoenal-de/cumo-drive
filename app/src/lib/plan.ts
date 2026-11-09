@@ -6,7 +6,7 @@
 import { checkLine } from './check';
 import { cumoAvailable, cumoPlan } from './cumo-routing';
 import { tourFun } from './fun-score';
-import { closureExclude, closureLabel, closuresNear, closuresOnRoute, type ClosureHit } from './road-closures';
+import { closureExclude, closureLabel, closuresNear, closuresOnRoute, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import { route, VALHALLA_URL, type Avoid } from './valhalla';
 
@@ -307,6 +307,8 @@ export async function planLegs(
   signal?: AbortSignal,
 ): Promise<PlannedTour> {
   const first = profiles[0] ?? 'kurvig';
+  // Sperrungen schon jetzt holen, parallel zur Route (sonst wartet das Planen danach bis zu 6 s)
+  prefetchClosures(points);
   if (points.length < 3 || profiles.every((p) => p === first)) {
     const t = await planChecked(name, points, first, avoid, onStep, signal);
     // in einem Stück geplant: gilt für alle Etappen

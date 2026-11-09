@@ -27,21 +27,80 @@ function tilesOf(line: LatLon[]): [number, number][] {
   return [...keys].slice(0, MAX_TILES).map((k) => k.split(',').map(Number) as [number, number]);
 }
 
+/** Kacheln schon geholter Sperrungen, 10 Minuten wie auf dem Server: so wartet das Planen nicht zweimal */
+const cache = new Map<string, { at: number; closures: Closure[] }>();
+const FRESH = 10 * 60 * 1000;
+const inflight = new Map<string, Promise<void>>();
+
+async function fetchTiles(tiles: [number, number][], ms: number): Promise<void> {
+  if (!tiles.length) return;
+  const { supabase } = await import('./supabase');
+  const call = supabase.functions.invoke('road-closures', { body: { tiles } });
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), ms));
+  const r = await Promise.race([call, timeout]);
+  if (!r || r.error) return;
+  const data = r.data as { closures?: Closure[] } | null;
+  const list = Array.isArray(data?.closures) ? data!.closures : [];
+  for (const t of tiles) cache.set(t.join(','), { at: Date.now(), closures: list });
+}
+
+async function closuresFor(tiles: [number, number][], ms: number, signal?: AbortSignal): Promise<Closure[]> {
+  const now = Date.now();
+  const missing = tiles.filter((t) => {
+    const c = cache.get(t.join(','));
+    return !c || now - c.at > FRESH;
+  });
+  // Kacheln, die gerade schon geholt werden (Vorabruf beim Planen), abwarten statt neu fragen
+  const waits = missing.map((t) => inflight.get(t.join(','))).filter((x): x is Promise<void> => !!x);
+  const fresh = missing.filter((t) => !inflight.has(t.join(',')));
+  if (fresh.length) {
+    const job = fetchTiles(fresh, ms).catch(() => undefined);
+    for (const t of fresh) inflight.set(t.join(','), job);
+    void job.finally(() => fresh.forEach((t) => inflight.delete(t.join(','))));
+    waits.push(job);
+  }
+  if (waits.length) {
+    const abort = new Promise<void>((resolve) => signal?.addEventListener('abort', () => resolve(), { once: true }));
+    await Promise.race([Promise.all(waits), abort]);
+  }
+  const seen = new Set<string>();
+  const out: Closure[] = [];
+  for (const t of tiles) for (const c of cache.get(t.join(','))?.closures ?? []) if (!seen.has(c.id)) {
+    seen.add(c.id);
+    out.push(c);
+  }
+  return out;
+}
+
 /** Sperrungen in den Kacheln der Route; leer, wenn der Dienst nicht antwortet */
 export async function closuresNear(line: LatLon[], signal?: AbortSignal): Promise<Closure[]> {
   if (line.length < 2) return [];
   try {
-    const { supabase } = await import('./supabase');
-    const call = supabase.functions.invoke('road-closures', { body: { tiles: tilesOf(line) } });
-    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000));
-    const abort = new Promise<null>((resolve) => signal?.addEventListener('abort', () => resolve(null), { once: true }));
-    const r = await Promise.race([call, timeout, abort]);
-    if (!r || r.error) return [];
-    const data = r.data as { closures?: Closure[] } | null;
-    return Array.isArray(data?.closures) ? data!.closures : [];
+    return await closuresFor(tilesOf(line), 6000, signal);
   } catch {
     return [];
   }
+}
+
+/**
+ * Sperrungen entlang der Luftlinie schon beim Start des Planens holen, mit den Nachbarkacheln, parallel zur
+ * Routenberechnung (Koray 9.11.: das Laden dauerte zu lange). Danach findet closuresNear sie im Speicher.
+ */
+export function prefetchClosures(points: LatLon[]): void {
+  if (points.length < 2) return;
+  const keys = new Set<string>();
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1];
+    const b = points[i];
+    const n = Math.max(1, Math.ceil(haversine(a, b) / 20000));
+    for (let k = 0; k <= n; k++) {
+      const lat = a[0] + ((b[0] - a[0]) * k) / n;
+      const lon = a[1] + ((b[1] - a[1]) * k) / n;
+      for (const dy of [-1, 0, 1]) for (const dx of [-1, 0, 1]) keys.add(`${Math.floor(lon / SIZE) + dx},${Math.floor(lat / SIZE) + dy}`);
+    }
+  }
+  const tiles = [...keys].slice(0, MAX_TILES).map((k) => k.split(',').map(Number) as [number, number]);
+  void closuresFor(tiles, 8000).catch(() => undefined);
 }
 
 function distToLine(p: LatLon, line: LatLon[]): number {

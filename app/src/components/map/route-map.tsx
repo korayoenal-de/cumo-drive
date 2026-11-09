@@ -830,15 +830,15 @@ function CorridorScan({ scan }: { scan: Scan }) {
       {scan.spots.map((s) => {
         const lit = Math.max(0, Math.min(1, (k - s.frac) / 0.06));
         if (lit <= 0) return null;
-        if (s.kind === 'highlight' && s.line)
-          return <Polyline key={`scan-${s.id}`} coordinates={s.line.map(ll)} strokeColor={`rgba(226,70,28,${(0.9 * lit).toFixed(2)})`} strokeWidth={4} lineCap="round" lineJoin="round" zIndex={2} />;
+        // Alles als kleine Punkte auf der Strecke (Koray 9.11.), Highlights etwas größer und hell gerandet
+        const hi = s.kind === 'highlight';
         return (
           <Circle
             key={`scan-${s.id}`}
             center={ll(s.p)}
-            radius={Math.max(150, lenM * (0.0035 + 0.0015 * lit))}
-            fillColor={`rgba(226,70,28,${(0.85 * lit).toFixed(2)})`}
-            strokeColor={`rgba(11,11,12,${(0.6 * lit).toFixed(2)})`}
+            radius={Math.max(120, lenM * (hi ? 0.0032 : 0.0022) * (0.7 + 0.3 * lit))}
+            fillColor={`rgba(226,70,28,${(0.9 * lit).toFixed(2)})`}
+            strokeColor={hi ? `rgba(244,244,242,${(0.85 * lit).toFixed(2)})` : `rgba(11,11,12,${(0.6 * lit).toFixed(2)})`}
             strokeWidth={1}
             zIndex={1}
           />
