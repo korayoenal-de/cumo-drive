@@ -19,6 +19,8 @@ export const Colors = {
   onSignal: '#FFFFFF',
   /** Getönte Flächen für Zustände statt farbiger Rahmen, gleiche Werte wie im Web Planer. */
   signalTint: 'rgba(226,70,28,0.14)',
+  /** Hauptaktion noch inaktiv, etwa Losfahren während die Route berechnet wird (Koray 9.11.) */
+  signalDeep: '#5C2212',
   /** Text für Entfernen und Fehler auf signalTint (Design System stop-text) */
   stopText: '#FF8A66',
   goodTint: 'rgba(76,195,138,0.14)',

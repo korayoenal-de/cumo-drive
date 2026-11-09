@@ -47,7 +47,7 @@ import { type PlannedStop } from './planner-parts';
 import { showToast } from '@/lib/toast';
 import { Accordion, avoidSummary, ErrorCard, MicIcon, PrimaryButton, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
 import { Result } from './planner-result';
-import { EMPTY_TOUR, keyOf, type Mode, passIndex, type PendingPoint, roughDetourKm, samePts, STEP_TEXT } from './planner-shared';
+import { EMPTY_TOUR, keyOf, type Mode, passIndex, type PendingPoint, roughDetourKm, samePts } from './planner-shared';
 import { PlaceSearch } from './place-search';
 import { styles } from './planner-styles';
 import { useTourPlan } from './use-tour-plan';
@@ -553,13 +553,6 @@ export default function Planner() {
           </View>
           {/* Balken mit Prozent statt Logo (Koray 8.11.) */}
           <ProgressBar step={PHASES.findIndex((x) => x.id === view.phase)} done={radar?.phase === 'aufloesen'} doneMs={REVEAL_MS - 300} />
-        </View>
-      ) : inTour && tourPlan.step ? (
-        <View style={styles.summary}>
-          <ActivityIndicator color={Colors.signal} />
-          <AppText style={styles.flex} numberOfLines={1}>
-            {STEP_TEXT[tourPlan.step]}
-          </AppText>
         </View>
       ) : (
         <AppText variant="caption" muted numberOfLines={2} style={styles.summaryHint}>

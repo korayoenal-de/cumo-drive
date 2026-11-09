@@ -4,7 +4,7 @@
  */
 import { router } from 'expo-router';
 import { type ComponentRef, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SymbolView } from 'expo-symbols';
@@ -22,6 +22,7 @@ import { NameDialog } from '@/components/planner/name-dialog';
 import { showToast } from '@/lib/toast';
 import { deleteTour } from '@/lib/library';
 import { ActionBar } from '@/components/ui/action-bar';
+import { LoadingButton, type LoadStage } from '@/components/ui/loading-button';
 import { AppText } from '@/components/ui/text';
 import { Colors, Motion, Shadow } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
@@ -39,9 +40,18 @@ import { PointMenu, type PointAction, type PointMenuState } from './point-menu';
 import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
 import { Accordion, avoidSummary, DragArea, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, Warnings } from './planner-parts';
-import { keyOf, type PendingPoint, type PointKind, profileWord, samePts, STEP_TEXT } from './planner-shared';
+import { keyOf, type PendingPoint, type PointKind, profileWord, samePts } from './planner-shared';
+import { type PlanStep } from '@/lib/plan';
+
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
+
+/** Laden im Losfahren Knopf (Koray 9.11.): geschätzter Fortschritt je Schritt der Planung */
+const LOAD_STAGES: Record<PlanStep, LoadStage> = {
+  route: { label: 'Route wird berechnet', from: 0, to: 62, tau: 2500 },
+  check: { label: 'Strecke wird geprüft', from: 62, to: 90, tau: 1500 },
+  fix: { label: 'Sperrungen werden umfahren', from: 90, to: 97, tau: 2000 },
+};
 
 
 
@@ -72,6 +82,20 @@ export function TourMode({
   const live = usePassLive();
   const { pts, planned } = plan;
   const busy = plan.step !== null;
+  // Nach dem Laden kurz 100 % zeigen, dann wird der Knopf zu Losfahren (Zustand im Rendern nachgeführt)
+  const [lastStep, setLastStep] = useState<PlanStep>('route');
+  if (plan.step && plan.step !== lastStep) setLastStep(plan.step);
+  const [wasBusy, setWasBusy] = useState(false);
+  const [hold, setHold] = useState(false);
+  if (busy !== wasBusy) {
+    setWasBusy(busy);
+    setHold(!busy);
+  }
+  useEffect(() => {
+    if (!hold) return;
+    const t = setTimeout(() => setHold(false), 380);
+    return () => clearTimeout(t);
+  }, [hold]);
   // Die geplante Route passt nur, solange die Punkte dieselben sind
   const fits = !!planned && samePts(planned.wegpunkte, pts);
   const routeTour = fits ? planned : null;
@@ -602,12 +626,6 @@ export function TourMode({
         </View>
       </Section>
 
-      {plan.step && (
-        <View style={[styles.card, styles.statusRow]}>
-          <ActivityIndicator color={Colors.signal} />
-          <AppText style={styles.flex}>{STEP_TEXT[plan.step]}</AppText>
-        </View>
-      )}
       {plan.error && (
         <View style={[styles.card, styles.errorCard]}>
           <AppText variant="label" style={styles.signalText}>Das hat nicht geklappt</AppText>
@@ -704,9 +722,11 @@ export function TourMode({
       {group && routeTour && <GroupBlock savedId={plan.cloudId} />}
 
       {/* Aktionen am Ende: Losfahren als Hauptaktion, darunter die übrigen */}
-      {(routeTour || pts.length > 0) && (
+      {(routeTour || pts.length > 0 || busy) && (
       <View style={styles.actions}>
-        {routeTour ? (
+        {busy || (hold && !plan.error) ? (
+          <LoadingButton stage={LOAD_STAGES[plan.step ?? lastStep]} done={!busy} />
+        ) : routeTour ? (
           <ActionBar
             sheetTitle={plan.name.trim() || 'Neue Tour'}
             primary={{ label: 'Losfahren', onPress: () => void drive(false) }}
@@ -752,7 +772,7 @@ export function TourMode({
             onClose={() => setAskDelete(false)}
           />
         )}
-        {!routeTour && pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
+        {!routeTour && !busy && !hold && pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
       </View>
       )}
     </>
