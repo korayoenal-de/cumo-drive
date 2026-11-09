@@ -572,12 +572,14 @@ export default function NavigationScreen() {
   const maneuver = route?.maneuvers[state.next];
   // Scharfe Kurve voraus: nur in Zonen ab 70 km/h und nicht, solange das Label "Abseits der Tour" steht.
   // Sind die Tempolimits (noch) nicht geladen, zählt das eigene Tempo ab 60 km/h.
-  const ahead = status === 'laeuft' && !offTour && atKm != null ? curveCue(curves, atKm) : null;
+  const ahead = status === 'laeuft' && !offTour && atKm != null ? curveCue(curves, atKm, state.speedKmh) : null;
   const zoneLimit = ahead && zones?.route === route ? limitAt(zones.z, ahead.startKm) : null;
   // Bremshinweis in der Tempo Plakette ab Zonen mit 60 km/h (Koray 8.11.); ohne Tempolimits zählt das eigene
   // Tempo ab 60. Weite Kurven nur, wenn sie deutlich langsamer sind als das, was man dort fährt.
-  const ref = zoneLimit ?? state.speedKmh ?? 0;
-  const relevant = ahead && (ahead.kind !== 'kurve' || (ahead.vmax ?? 999) < ref + 15);
+  // Weite Kurven nur, wenn man wirklich anbremsen muss: mindestens 10 km/h unter dem eigenen Tempo
+  // (ohne Tempo das Limit). Vorher reichte "unter Limit plus 15", das meldete auch Kurven, die man so fährt.
+  const ref = state.speedKmh ?? zoneLimit ?? 0;
+  const relevant = ahead && (ahead.kind !== 'kurve' || (ahead.vmax ?? 999) <= ref - 10);
   const cue = ahead && relevant && (zoneLimit != null ? zoneLimit >= 60 : (state.speedKmh ?? 0) >= 60) ? ahead : null;
   const brakeHint = cue ? { big: cue.big, label: cue.label, icon: cue.icon, a11y: cue.a11y } : null;
   const then = route?.maneuvers[state.next + 1];

@@ -29,8 +29,11 @@ const PIN_M = 120;
 /** Weite Kurve: mindestens 30 Grad auf höchstens 150 m */
 const WIDE_DEG = 30;
 const WIDE_M = 150;
-/** Querbeschleunigung, mit der das Kurventempo geschätzt wird (zügig, aber mit Reserve), m/s² */
-const LAT_ACC = 4;
+/**
+ * Querbeschleunigung, mit der das Kurventempo geschätzt wird, m/s². Bis 9.11. waren es 4: zu vorsichtig
+ * (Tester mit E46 auf Winterreifen: Hinweis 65, gefahren 75). 5,5 ist zügig für Sportwagen, mit Reserve.
+ */
+const LAT_ACC = 5.5;
 /** Kurven, die man mit diesem Tempo oder schneller fahren kann, brauchen keinen Hinweis */
 export const CURVE_FAST_KMH = 95;
 
@@ -44,7 +47,7 @@ function vmaxIn(turns: number[], from: number, to: number): number {
   }
   if (maxDeg < 1) return 999;
   const r = (4 * STEP) / ((maxDeg * Math.PI) / 180);
-  return Math.floor((Math.sqrt(LAT_ACC * r) * 3.6) / 5) * 5;
+  return Math.round((Math.sqrt(LAT_ACC * r) * 3.6) / 5) * 5;
 }
 
 /** Abstand zu einem Manöver, innerhalb dessen keine Kurve gemeldet wird */
@@ -113,7 +116,18 @@ export function sharpCurves(shape: LatLon[], maneuverKms: number[] = []): SharpC
 export const CURVE_WARN_KM = 0.15;
 /** Weite Kurven kommen bei Landstraßen Tempo schneller näher: 250 m vorher */
 export const WIDE_WARN_KM = 0.25;
-const warnKm = (c: SharpCurve) => (c.kind === 'kurve' ? WIDE_WARN_KM : CURVE_WARN_KM);
+/**
+ * Ab wann gewarnt wird: mit bekanntem Tempo so früh, wie man zum Anbremsen braucht (1,5 s Reaktion,
+ * 3,5 m/s² Verzögerung), zwischen 80 und 250 m. Ohne Tempo wie bisher 150 m, weite Kurven 250 m.
+ */
+const warnKm = (c: SharpCurve, speedKmh?: number | null) => {
+  const fixed = c.kind === 'kurve' ? WIDE_WARN_KM : CURVE_WARN_KM;
+  if (speedKmh == null || c.vmax == null) return fixed;
+  const v = speedKmh / 3.6;
+  const w = Math.min(v, c.vmax / 3.6);
+  const m = v * 1.5 + Math.max(0, (v * v - w * w) / (2 * 3.5));
+  return Math.min(0.25, Math.max(0.08, m / 1000));
+};
 
 /** Die Kurve, die jetzt angekündigt wird: Beginn höchstens 150 m voraus, Scheitel noch nicht erreicht */
 export function curveAhead(curves: SharpCurve[], atKm: number): SharpCurve | null {
@@ -154,7 +168,7 @@ const up10 = (m: number) => Math.max(10, Math.ceil(m / 10) * 10);
  * Liegen mindestens drei Kehren mit weniger als 300 m Abstand hintereinander, wird zusammengefasst:
  * erst "3 KEHREN, folgen, erste in 120 m", dann "2 VON 3, Kehre rechts in 80 m".
  */
-export function curveCue(curves: SharpCurve[], atKm: number): CurveCue | null {
+export function curveCue(curves: SharpCurve[], atKm: number, speedKmh?: number | null): CurveCue | null {
   const i = curves.findIndex((c) => c.apexKm >= atKm);
   if (i < 0) return null;
   // Kette um die aktuelle Kurve herum
@@ -168,7 +182,7 @@ export function curveCue(curves: SharpCurve[], atKm: number): CurveCue | null {
   const dKm = c.startKm - atKm;
   // außerhalb einer Kette erst 150 m vorher; in der Kette bleibt der Hinweis bis zur letzten Kurve stehen
   const inChain = kehren >= CHAIN_MIN;
-  if (dKm > warnKm(c) && !(inChain && i > s)) return null;
+  if (dKm > warnKm(c, speedKmh) && !(inChain && i > s)) return null;
   const m = Math.round(dKm * 1000);
   const dir = c.dir === 'links' ? 'links' : 'rechts';
   if (inChain) {
