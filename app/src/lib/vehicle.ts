@@ -23,8 +23,10 @@ export type Vehicle = {
   /** Reichweite mit vollem Tank in Kilometern */
   rangeKm: number | null;
   fuel: Fuel;
-  /** Symbol auf der Karte: eigene Draufsicht statt Pfeil (Test, siehe components/map/car-marker.tsx) */
-  mapSymbol?: 'pfeil' | 'gts997';
+  /** Symbol auf der Karte: Pfeil oder das eigene Auto (gts997 war der Test vom 6.11., gilt wie auto) */
+  mapSymbol?: 'pfeil' | 'gts997' | 'auto';
+  /** Form und Lackfarbe des Kartensymbols (components/map/car-sprite.tsx) */
+  look?: { form: 'coupe' | 'coupe-fluegel' | 'fastback' | 'limousine' | 'gelaende'; color: string };
 };
 
 export const FUELS: { id: Fuel; label: string }[] = [

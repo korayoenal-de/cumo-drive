@@ -57,6 +57,8 @@ type Props = {
   /** Kopf des Blatts: steht oben im Inhalt und scrollt mit, in der kleinen Höhe ist er das Einzige, was zu sehen ist */
   header: ReactNode;
   children: ReactNode;
+  /** Inhalt ausblenden, ohne ihn abzubauen (Laden beim ersten Planen) */
+  hideBody?: boolean;
   /** Hintergrund, meist die Karte. Bekommt die Höhe, die das Blatt unten verdeckt (klein oder halb). */
   background: (covered: number) => ReactNode;
   scrollRef?: RefObject<ScrollViewInstance | null>;
@@ -66,7 +68,7 @@ type Props = {
   lockScroll?: boolean;
 };
 
-export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel, lockScroll }: Props) {
+export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel, lockScroll, hideBody }: Props) {
   const insets = useSafeAreaInsets();
   const win = useWindowDimensions();
   const [boxH, setBoxH] = useState(0);
@@ -230,7 +232,8 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
           <View onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))} style={styles.head}>
             {header}
           </View>
-          <View style={styles.body}>{children}</View>
+          {/* hideBody: nur der Kopf, etwa beim Laden; der Inhalt bleibt erhalten, damit kein Zustand verloren geht */}
+          <View style={[styles.body, hideBody && { display: 'none' }]}>{children}</View>
         </ScrollView>
         </ScrollViewMarker>
         </Animated.View>

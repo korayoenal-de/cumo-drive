@@ -19,7 +19,7 @@ import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { passPoint, PASSES } from '@/lib/passes';
 import { RADAR_FAST_MS, RADAR_MS, RADAR_REPEAT_MS, REVEAL_MS, SCAN_MS, type RadarRoad, type RadarSpot, type Scan } from '@/lib/radar';
 import { haversine, type CheckClass, type LatLon } from '@/lib/tour';
-import { CarTopView, carSymbolFor } from '@/components/map/car-marker';
+import { CarSprite, carLookFor, frameFor, TOP_FRAME } from '@/components/map/car-sprite';
 import { useVehicles } from '@/lib/vehicle';
 import { useRouteWeather, WeatherMarkers, WeatherSheet } from '@/components/map/weather-layer';
 
@@ -69,7 +69,7 @@ export function RouteMap({
 }: RouteMapProps) {
   const settings = useMapSettings();
   // Eigenes Auto statt Pfeil, wenn in der Garage eingeschaltet
-  const carSymbol = carSymbolFor(useVehicles().current);
+  const carLook = carLookFor(useVehicles().current);
   const library = useLibrary();
   // Wetter an den Pässen der Route (Ebene Wetter, nur im Planer)
   const weatherItems = useRouteWeather(tour, layers && settings.weather && tour.linie.length > 0);
@@ -205,12 +205,23 @@ export function RouteMap({
   const focusLon = focus?.[1];
   useEffect(() => {
     // Während das Radar läuft, gehört die Kamera ihm; sonst holte dieser Sprung die Karte wieder heran (Koray 8.11.)
-    if (!ready || !autoFit || followUser || radarKey || fitCoords.length >= 2 || focusLat == null || focusLon == null) return;
+    if (!ready || !autoFit || followUser || radarKey || scan || fitCoords.length >= 2 || focusLat == null || focusLon == null) return;
     map.current?.animateCamera(
       { center: { latitude: focusLat, longitude: focusLon }, zoom: 10, altitude: 60000, pitch: 0, heading: 0 },
       { duration: 600 },
     );
-  }, [ready, autoFit, followUser, radarKey, fitCoords.length, focusLat, focusLon]);
+  }, [ready, autoFit, followUser, radarKey, scan, fitCoords.length, focusLat, focusLon]);
+
+  // Scan beim ersten Planen: ganze Strecke von Start bis Ziel zeigen, nicht nur das Ziel (Koray 9.11.).
+  // Erst wenn das Blatt eingeklappt ist (mapPadding unten ändert sich), dann sitzt der Ausschnitt richtig.
+  const scanKey = scan ? scan.pts.map((p) => p.join(',')).join(';') : '';
+  useEffect(() => {
+    if (!ready || !scan || scan.pts.length < 2) return;
+    const t = setTimeout(() => map.current?.fitToCoordinates(scan.pts.map(ll), { edgePadding: { top: pad.top + 30, right: pad.right + 30, bottom: pad.bottom + 30, left: pad.left + 30 }, animated: true }), 280);
+    return () => clearTimeout(t);
+    // scanKey fasst die Punkte zusammen
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, scanKey, mapPadding?.bottom]);
 
   // Auf der Karte zeigen (Punkt Aktionen im Planer): zum Punkt fliegen, n wechselt je Aufruf
   const flyN = flyTo?.n;
@@ -513,8 +524,8 @@ export function RouteMap({
 
         {position && !following && (
           <MeMarker coordinate={me as unknown as LatLng} anchor={{ x: 0.5, y: 0.5 }} flat rotation={heading ?? 0} zIndex={40} tracksViewChanges={false}>
-            {carSymbol ? (
-              <CarTopView symbol={carSymbol} width={CAR_W} />
+            {carLook ? (
+              <CarSprite look={carLook} frame={TOP_FRAME} size={CAR_TOP} />
             ) : (
               <View style={styles.me}>
                 <View style={styles.meArrow} />
@@ -541,8 +552,9 @@ export function RouteMap({
               right: mapPadding?.right ?? 0,
             },
           ]}>
-          {carSymbol ? (
-            <CarTopView symbol={carSymbol} width={CAR_W} />
+          {carLook ? (
+            // Kamera folgt der Fahrtrichtung: das Auto zeigt sich schräg von hinten, wie bei Google (Koray 9.11.)
+            <CarSprite look={carLook} frame={frameFor(0)} size={CAR_3D} />
           ) : (
             <View style={styles.me}>
               <View style={styles.meArrow} />
@@ -624,7 +636,9 @@ type MapMarker = InstanceType<typeof Marker>;
 const MeMarker = Marker.Animated as unknown as ComponentType<ComponentProps<typeof Marker>>;
 
 /** Breite der Draufsicht in pt, etwa so groß wie der bisherige Punkt (34) */
-const CAR_W = 24;
+/** Kartensymbol: Draufsicht auf der flachen Karte, Ansicht von hinten beim Mitfahren (Bildgröße, das Auto füllt etwa drei Viertel) */
+const CAR_TOP = 64;
+const CAR_3D = 76;
 
 const styles = StyleSheet.create({
   radarRing: { position: 'absolute', borderWidth: 2, borderColor: 'rgba(226,70,28,0.9)', backgroundColor: 'rgba(226,70,28,0.1)' },
@@ -788,7 +802,7 @@ function CorridorScan({ scan }: { scan: Scan }) {
   const head = steps.slice(0, Math.max(2, Math.round(steps.length * k)));
   return (
     <>
-      <Polyline coordinates={head.map(ll)} strokeColor="rgba(226,70,28,0.55)" strokeWidth={3} lineDashPattern={[2, 8]} lineCap="round" zIndex={1} />
+      <Polyline coordinates={head.map(ll)} strokeColor="rgba(226,70,28,0.5)" strokeWidth={2} lineCap="round" zIndex={1} />
       {scan.spots.map((s) => {
         const lit = Math.max(0, Math.min(1, (k - s.frac) / 0.06));
         if (lit <= 0) return null;
@@ -798,7 +812,7 @@ function CorridorScan({ scan }: { scan: Scan }) {
           <Circle
             key={`scan-${s.id}`}
             center={ll(s.p)}
-            radius={Math.max(250, lenM * (0.004 + 0.002 * lit))}
+            radius={Math.max(150, lenM * (0.0035 + 0.0015 * lit))}
             fillColor={`rgba(226,70,28,${(0.85 * lit).toFixed(2)})`}
             strokeColor={`rgba(11,11,12,${(0.6 * lit).toFixed(2)})`}
             strokeWidth={1}

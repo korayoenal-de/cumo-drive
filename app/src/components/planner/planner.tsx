@@ -931,6 +931,7 @@ export default function Planner() {
       scrollRef={scroll}
       lockScroll={dragging}
       grabberLabel="Planer Höhe ändern"
+      hideBody={!!scan}
       header={header}
       background={(covered) => (
         <>

@@ -20,7 +20,7 @@ import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { formatKm } from '@/lib/tour';
 import { deleteVehicle, FUELS, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleName, vehicleSummary, type Vehicle } from '@/lib/vehicle';
-import { CarTopView } from '@/components/map/car-marker';
+import { CAR_COLORS, CAR_FORMS, CarPreview, CarSprite, carLookFor, DEFAULT_LOOK, frameFor } from '@/components/map/car-sprite';
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
 
@@ -234,9 +234,9 @@ function Garage({ drives }: { drives: Drive[] | null }) {
           <View key={v.id} style={styles.card}>
             <Pressable accessibilityRole="button" accessibilityHint="Fahrzeug bearbeiten" onPress={() => setEdit(v)} style={styles.gapS}>
               <View style={styles.row}>
-                {v.mapSymbol === 'gts997' && (
-                  <View style={styles.carIcon} accessibilityLabel="Fährt als eigenes Symbol auf der Karte">
-                    <CarTopView width={14} />
+                {carLookFor(v) && (
+                  <View accessibilityLabel="Fährt als eigenes Symbol auf der Karte">
+                    <CarSprite look={carLookFor(v)!} frame={frameFor(215)} size={48} />
                   </View>
                 )}
                 <AppText style={[styles.name, styles.flex]} numberOfLines={1}>
@@ -277,9 +277,9 @@ function Garage({ drives }: { drives: Drive[] | null }) {
             ? [
                 ...(current?.id !== menu.id ? [{ key: 'cur', icon: 'checkmark.circle' as const, label: 'Als aktuell wählen', hint: 'Damit fährst du ab jetzt', onPress: () => void selectVehicle(menu.id) }] : []),
                 { key: 'edit', icon: 'pencil' as const, label: 'Bearbeiten', hint: 'Marke, Modell und Kraftstoff', onPress: () => setEdit(menu) },
-                menu.mapSymbol === 'gts997'
+                carLookFor(menu)
                   ? { key: 'sym', icon: 'location.north.fill' as const, label: 'Pfeil auf der Karte', hint: 'Statt deines Autos wieder den Pfeil zeigen', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'pfeil' }) }
-                  : { key: 'sym', icon: 'car.fill' as const, label: 'Als Symbol auf der Karte', hint: 'Draufsicht 997.2 Carrera GTS statt des Pfeils (Test)', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'gts997' }).then(() => showToast('Dein Auto fährt jetzt auf der Karte mit')) },
+                  : { key: 'sym', icon: 'car.fill' as const, label: 'Auto auf der Karte', hint: 'Form und Farbe wählst du beim Bearbeiten', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'auto' }).then(() => showToast('Dein Auto fährt jetzt auf der Karte mit')) },
                 { key: 'del', icon: 'trash' as const, label: 'Fahrzeug löschen', danger: true, onPress: () => setAsk(menu) },
               ]
             : []
@@ -331,6 +331,30 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
           <Chip key={f.id} label={f.label} active={value.fuel === f.id} onSurface onPress={() => set({ fuel: f.id })} />
         ))}
       </View>
+      {/* Kartensymbol: Form und Lack, Vorschau zum Drehen (Koray 9.11., Platzhalter Modelle) */}
+      <AppText variant="title">Auf der Karte</AppText>
+      <CarPreview look={value.look ?? DEFAULT_LOOK} size={200} />
+      <View style={styles.wrap}>
+        {CAR_FORMS.map((f) => (
+          <Chip key={f.id} label={f.label} active={(value.look ?? DEFAULT_LOOK).form === f.id} onSurface onPress={() => set({ look: { ...(value.look ?? DEFAULT_LOOK), form: f.id }, mapSymbol: 'auto' })} />
+        ))}
+      </View>
+      <View style={styles.dots}>
+        {CAR_COLORS.map((c) => {
+          const on = (value.look ?? DEFAULT_LOOK).color === c.id;
+          return (
+            <Pressable
+              key={c.id}
+              accessibilityRole="button"
+              accessibilityLabel={c.label}
+              accessibilityState={{ selected: on }}
+              onPress={() => set({ look: { ...(value.look ?? DEFAULT_LOOK), color: c.id }, mapSymbol: 'auto' })}
+              style={[styles.dotRing, on && styles.dotRingOn]}>
+              <View style={[styles.dot, { backgroundColor: c.id }]} />
+            </Pressable>
+          );
+        })}
+      </View>
       <View style={styles.row}>
         <Pressable
           accessibilityRole="button"
@@ -352,7 +376,10 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
 const styles = StyleSheet.create({
   deleteLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.m },
   deleteText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  carIcon: { transform: [{ rotate: '90deg' }], width: 30, alignItems: 'center' },
+  dots: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
+  dotRing: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
+  dotRingOn: { borderColor: Colors.text },
+  dot: { width: 32, height: 32, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.25)' },
   more: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   flex: { flex: 1 },
   gapS: { gap: Spacing.xs },
