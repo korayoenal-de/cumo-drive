@@ -1,7 +1,7 @@
 # Kartensymbole der Fahrzeuge
 
 Platzhalter aus dem Kenney Car Kit 3.1, Lizenz CC0 (https://kenney.nl, Creative Commons Zero).
-Modelle: sedan-sports (Coupé mit Flügel, ohne Spoiler als Coupé, ohne Dach als Cabrio), hatchback-sports (Fastback), sedan (Limousine), suv (Geländewagen).
+Modelle: sedan-sports (Coupé mit Flügel, ohne Spoiler als Coupé, ohne Dach als Cabrio), hatchback-sports (Fastback), sedan (Limousine, mit nach hinten gezogenem Dach als Kombi), suv (Geländewagen).
 
 Je Form zwei Bogen mit 8 x 5 Feldern zu 144 px, 37 Ansichten:
 - Feld 0: Draufsicht, Front oben

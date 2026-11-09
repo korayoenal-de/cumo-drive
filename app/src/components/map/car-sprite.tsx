@@ -15,7 +15,7 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 
 import type { Vehicle } from '@/lib/vehicle';
 
-export type CarForm = 'coupe' | 'coupe-fluegel' | 'cabrio' | 'fastback' | 'limousine' | 'gelaende';
+export type CarForm = 'coupe' | 'coupe-fluegel' | 'cabrio' | 'fastback' | 'limousine' | 'kombi' | 'gelaende';
 export type CarLook = { form: CarForm; color: string };
 
 export const CAR_FORMS: { id: CarForm; label: string }[] = [
@@ -24,6 +24,7 @@ export const CAR_FORMS: { id: CarForm; label: string }[] = [
   { id: 'cabrio', label: 'Cabrio' },
   { id: 'fastback', label: 'Fastback' },
   { id: 'limousine', label: 'Limousine' },
+  { id: 'kombi', label: 'Kombi' },
   { id: 'gelaende', label: 'Geländewagen' },
 ];
 
@@ -48,6 +49,7 @@ const SHEETS: Record<CarForm, Sheet> = {
   cabrio: { o: require('@/assets/cars/cabrio-o.png'), m: require('@/assets/cars/cabrio-m.png'), ol: require('@/assets/cars/cabrio-o-l.png'), ml: require('@/assets/cars/cabrio-m-l.png') },
   fastback: { o: require('@/assets/cars/hatchback-sports-o.png'), m: require('@/assets/cars/hatchback-sports-m.png'), ol: require('@/assets/cars/hatchback-sports-o-l.png'), ml: require('@/assets/cars/hatchback-sports-m-l.png') },
   limousine: { o: require('@/assets/cars/sedan-o.png'), m: require('@/assets/cars/sedan-m.png'), ol: require('@/assets/cars/sedan-o-l.png'), ml: require('@/assets/cars/sedan-m-l.png') },
+  kombi: { o: require('@/assets/cars/kombi-o.png'), m: require('@/assets/cars/kombi-m.png'), ol: require('@/assets/cars/kombi-o-l.png'), ml: require('@/assets/cars/kombi-m-l.png') },
   gelaende: { o: require('@/assets/cars/suv-o.png'), m: require('@/assets/cars/suv-m.png'), ol: require('@/assets/cars/suv-o-l.png'), ml: require('@/assets/cars/suv-m-l.png') },
 };
 
