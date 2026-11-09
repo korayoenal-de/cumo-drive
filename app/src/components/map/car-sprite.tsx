@@ -7,7 +7,7 @@
  * Erzeugt mit scratchpad/sprites (three.js), Quelle der Modelle: assets/cars/README.md.
  */
 import { useState } from 'react';
-import { Image, Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Type } from '@/constants/theme';
@@ -71,7 +71,7 @@ export function CarSprite({ look, frame, size, rotation }: { look: CarLook; fram
 }
 
 /** Vorschau in der Garage: zum Drehen seitlich ziehen */
-export function CarPreview({ look, size }: { look: CarLook; size: number }) {
+export function CarPreview({ look, size, bare }: { look: CarLook; size: number; bare?: boolean }) {
   const [heading, setHeading] = useState(215);
   const [base, setBase] = useState(215);
   const pan = Gesture.Pan()
@@ -83,7 +83,7 @@ export function CarPreview({ look, size }: { look: CarLook; size: number }) {
   return (
     <GestureHandlerRootView>
       <GestureDetector gesture={pan}>
-        <View style={styles.stage} accessible accessibilityRole="image" accessibilityLabel="Dein Auto auf der Karte, zum Drehen seitlich ziehen">
+        <View style={bare ? styles.stageBare : styles.stage} accessible accessibilityRole="image" accessibilityLabel="Dein Auto auf der Karte, zum Drehen seitlich ziehen">
           <CarSprite look={look} frame={frameFor(heading)} size={size} />
         </View>
       </GestureDetector>
@@ -98,26 +98,17 @@ export function CarPreview({ look, size }: { look: CarLook; size: number }) {
  */
 const STAGE_CAR = 230;
 export function CarStagePicker({ look, onForm }: { look: CarLook; onForm: (f: CarForm) => void }) {
-  const win = useWindowDimensions();
-  const [open, setOpen] = useState(false);
   const label = CAR_FORMS.find((f) => f.id === look.form)?.label ?? '';
   return (
     <View style={styles.picker}>
-      <Pressable accessibilityRole="button" accessibilityLabel={`${label}, 3D Ansicht öffnen`} onPress={() => setOpen(true)} style={({ pressed }) => [styles.stage2, pressed && { opacity: 0.9 }]}>
-        <View style={styles.carArea}>
-          {/* Bodenschatten aus weichen Ellipsen */}
-          <View style={[styles.floor, { width: 220, height: 44, opacity: 0.18 }]} />
-          <View style={[styles.floor, { width: 170, height: 32, opacity: 0.22 }]} />
-          <View style={[styles.floor, { width: 120, height: 22, opacity: 0.25 }]} />
-          <CarSprite look={look} frame={frameFor(215)} size={STAGE_CAR} />
-        </View>
+      {/* Das Auto dreht sich direkt auf der Bühne (Koray 9.11.: kein eigener 3D Knopf, kein Bodenschatten) */}
+      <View style={styles.stage2}>
+        <CarPreview look={look} size={STAGE_CAR} bare />
         <View style={styles.stageFoot}>
           <AppText style={styles.stageName} numberOfLines={1}>{label}</AppText>
-          <View style={styles.badge360}>
-            <AppText style={styles.badge360Text}>360°</AppText>
-          </View>
+          <AppText style={styles.stageHint}>Zum Drehen ziehen</AppText>
         </View>
-      </Pressable>
+      </View>
       <View style={styles.strip} accessibilityRole="radiogroup">
         {CAR_FORMS.map((f) => {
           const on = f.id === look.form;
@@ -131,18 +122,6 @@ export function CarStagePicker({ look, onForm }: { look: CarLook; onForm: (f: Ca
           );
         })}
       </View>
-      <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
-        <View style={styles.detail}>
-          <View style={styles.detailHead}>
-            <AppText style={styles.detailTitle}>{label}</AppText>
-            <Pressable accessibilityRole="button" accessibilityLabel="Schließen" hitSlop={6} onPress={() => setOpen(false)} style={styles.detailClose}>
-              <AppText style={styles.detailCloseText}>✕</AppText>
-            </Pressable>
-          </View>
-          <CarPreview look={look} size={Math.min(win.width - 40, 360)} />
-          <AppText style={styles.detailHint}>Zum Drehen seitlich ziehen</AppText>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -151,22 +130,14 @@ const styles = StyleSheet.create({
   box: { overflow: 'hidden' },
   picker: { gap: 10 },
   stage2: { borderRadius: 20, backgroundColor: Colors.surface2, overflow: 'hidden' },
-  carArea: { height: 210, alignItems: 'center', justifyContent: 'center' },
-  floor: { position: 'absolute', top: 150, alignSelf: 'center', borderRadius: 200, backgroundColor: '#000' },
   stageFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: 16, paddingBottom: 14 },
   stageName: { flex: 1, fontFamily: Fonts.display, fontSize: 20, lineHeight: 24, color: Colors.text, textTransform: 'uppercase' },
-  badge360: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: 'rgba(11,11,12,0.6)', justifyContent: 'center' },
-  badge360Text: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
+  stageHint: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
+  stageBare: { alignItems: 'center', justifyContent: 'center', paddingTop: 8 },
   strip: { flexDirection: 'row', borderRadius: 14, overflow: 'hidden' },
   thumb: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1A1A1D', borderRightWidth: 1, borderRightColor: Colors.ground },
   thumbOn: { backgroundColor: '#2A2A2E' },
   thumbBar: { position: 'absolute', left: 10, right: 10, bottom: 4, height: 3, borderRadius: 2, backgroundColor: Colors.text },
-  detail: { flex: 1, backgroundColor: Colors.ground, padding: 20, gap: 16, alignItems: 'center' },
-  detailHead: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  detailTitle: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 30, color: Colors.text, textTransform: 'uppercase' },
-  detailClose: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  detailCloseText: { fontFamily: Fonts.bold, fontSize: 17, color: Colors.text },
-  detailHint: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
   coverLabel: { textAlign: 'center', fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   stage: { alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: '#1F1F22', paddingVertical: 4 },
 });
