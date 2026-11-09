@@ -345,7 +345,8 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
           );
         })}
       </View>
-      <View style={styles.row}>
+      {/* mehr Luft zwischen Farbwahl und Knöpfen (Koray 9.11.) */}
+      <View style={[styles.row, { marginTop: Spacing.l }]}>
         <Pressable
           accessibilityRole="button"
           onPress={() => {
