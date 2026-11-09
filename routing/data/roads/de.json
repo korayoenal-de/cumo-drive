@@ -769,7 +769,7 @@
     "country": "DE",
     "region": "Nordschwarzwald",
     "kind": "pass",
-    "tier": "prefer",
+    "tier": "highlight",
     "note": "Waldpass zwischen Baden-Baden und Murgtal",
     "roads": [
       "L 79"
@@ -781,8 +781,8 @@
     },
     "to": {
       "name": "Forbach",
-      "lat": 48.65361,
-      "lon": 8.33822
+      "lat": 48.68168,
+      "lon": 8.3574
     },
     "via": [
       {

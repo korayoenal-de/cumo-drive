@@ -7951,5 +7951,26 @@
     "toll": false,
     "car_note": null,
     "source": "https://de.wikipedia.org/wiki/Hals_(Gebirgspass)"
+  },
+  {
+    "id": "rote-lache",
+    "name": "Rote Lache",
+    "names": [
+      "Rote-Lache-Pass"
+    ],
+    "country": [
+      "DE"
+    ],
+    "region": "Nordschwarzwald",
+    "lat": 48.7074,
+    "lon": 8.3201,
+    "ele": 690,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Rote_Lache_(Pass)"
   }
 ]
