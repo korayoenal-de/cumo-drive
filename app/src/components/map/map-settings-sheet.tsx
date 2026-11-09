@@ -90,14 +90,14 @@ const LAYERS: { key: LayerKey; icon: SFSymbol; label: string; note: string }[] =
     {
       key: 'passes',
       icon: 'mountain.2',
-      label: 'Pässe',
-      note: 'Orange die Ikonen',
+      label: 'Pässe in der Nähe von Start und Ziel',
+      note: 'Bis 50 km um deine Tour, orange die Ikonen',
     },
     {
       key: 'passesAll',
       icon: 'globe.europe.africa',
-      label: 'Alle Pässe zeigen',
-      note: 'Sonst nur bis 50 km um deine Route, Start und Ziel',
+      label: 'Alle Pässe anzeigen',
+      note: 'Auch weit weg von deiner Tour',
     },
     {
       key: 'myTours',
