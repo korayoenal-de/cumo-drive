@@ -23,9 +23,10 @@ export function Chip({
 
 const styles = StyleSheet.create({
   chip: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, justifyContent: 'center' },
-  on: { backgroundColor: Colors.signal },
+  // Aktiv weiß wie die Reiter der Suche; Orange bleibt der Hauptaktion vorbehalten (Koray 9.11.)
+  on: { backgroundColor: Colors.text },
   off: { backgroundColor: Colors.surface },
   offOnSurface: { backgroundColor: Colors.surface2 },
   label: { fontSize: Type.body, fontFamily: Fonts.semibold },
-  labelOn: { color: Colors.onSignal, fontFamily: Fonts.bold },
+  labelOn: { color: Colors.ground, fontFamily: Fonts.bold },
 });

@@ -22,6 +22,18 @@ export function RadarChip({ count, top, found }: { count: number; top: number; f
   );
 }
 
+/** Hinweis über der Karte beim ersten Planen einer Tour: was gerade passiert (wie beim Radar der Rundtour) */
+export function ScanChip({ text, top }: { text: string; top: number }) {
+  return (
+    <View pointerEvents="none" style={[styles.wrap, { top }]}>
+      <Animated.View key={text} entering={FadeIn.duration(250)} exiting={FadeOut.duration(150)} style={styles.chip} accessibilityLiveRegion="polite">
+        <View style={styles.dot} />
+        <AppText style={styles.text}>{text}</AppText>
+      </Animated.View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 16, borderRadius: 22, backgroundColor: Colors.overlaySurface },

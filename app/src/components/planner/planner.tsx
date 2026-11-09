@@ -28,7 +28,7 @@ import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { ProgressBar } from '@/components/ui/progress-bar';
-import { RadarChip } from './radar-chip';
+import { RadarChip, ScanChip } from './radar-chip';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
@@ -955,6 +955,20 @@ export default function Planner() {
           style={StyleSheet.absoluteFill}
         />
           <MapLayersButton style={[styles.layersBtn, { top: insets.top + Spacing.s }]} />
+          {scan && tourPlan.step && (
+            <ScanChip
+              top={insets.top + Spacing.s}
+              text={
+                tourPlan.step === 'fix'
+                  ? 'Sperrung gefunden, wir planen drumherum'
+                  : tourPlan.step === 'check'
+                    ? 'Strecke wird für Sportwagen geprüft'
+                    : scan.spots.length
+                      ? `${scan.spots.length} Traumstrecken entlang der Route`
+                      : 'Kurvige Straßen suchen'
+              }
+            />
+          )}
           {view.kind === 'working' && radar && <RadarChip key={`${radar.center[0]}-${radar.radiusM}-${radar.phase}`} count={radar.count} found={radar.phase === 'aufloesen' ? radar.roads.length : undefined} top={insets.top + Spacing.s} />}
           {passOverlay && (
             <MapPassActions
