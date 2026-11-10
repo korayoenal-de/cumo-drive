@@ -401,7 +401,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       const full = await loadCommunityTour(t.id);
       const now = new Date().toISOString();
       // ungespeicherte Kopie: ohne id, Speichern im Planer legt sie unter Community in Meine Touren
-      setEditTour({ ...full.tour, name: t.name, id: '', folder: 'Community', createdAt: now, updatedAt: now, curves: t.curves ?? undefined, profile: full.profile });
+      setEditTour({ ...full.tour, name: t.name, id: '', folder: 'Community', createdAt: now, updatedAt: now, curves: t.curves ?? undefined, profile: full.profile }, { label: 'Community', href: '/community' });
       router.navigate('/');
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));

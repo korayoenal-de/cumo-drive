@@ -21,7 +21,8 @@ import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type, Size } from '@/co
 
 const AnimatedScroll = Animated.createAnimatedComponent(GHScrollView);
 
-export type SheetItem = { key: string; icon: SFSymbol; label: string; hint?: string; danger?: boolean; busy?: boolean; onPress: () => void };
+/** primary: Hauptaktion des Blatts in Signal Orange (etwa Speichern und zurück), höchstens eine je Blatt */
+export type SheetItem = { key: string; icon: SFSymbol; label: string; hint?: string; danger?: boolean; primary?: boolean; busy?: boolean; onPress: () => void };
 
 /** Zeit, bis eine geschlossene Ebene weg ist; erst danach darf die nächste aufgehen (iOS zeigt sonst nichts) */
 export const SHEET_GONE_MS = 320;
@@ -120,14 +121,14 @@ export function ActionSheet({ visible, title, subtitle, items, onClose }: { visi
               setTimeout(it.onPress, SHEET_GONE_MS);
             }}
             // Wie das schwebende Menü (Koray 8.11.): Zeilen ohne eigene Fläche, Symbol ohne Kreis, Löschen getönt
-            style={({ pressed }) => [styles.item, it.danger && styles.itemDanger, pressed && styles.itemPressed]}>
+            style={({ pressed }) => [styles.item, it.danger && styles.itemDanger, it.primary && styles.itemPrimary, pressed && (it.primary ? styles.primaryPressed : styles.itemPressed)]}>
             <View style={styles.icon}>
-              <SymbolView name={it.icon} size={20} tintColor={it.danger ? Colors.stopText : Colors.text} weight="semibold" />
+              <SymbolView name={it.icon} size={20} tintColor={it.danger ? Colors.stopText : it.primary ? Colors.onSignal : Colors.text} weight="semibold" />
             </View>
             <View style={styles.flex}>
-              <AppText style={[styles.label, it.danger && styles.danger]}>{it.label}</AppText>
+              <AppText style={[styles.label, it.danger && styles.danger, it.primary && styles.onSignal]}>{it.label}</AppText>
               {!!it.hint && (
-                <AppText style={styles.hint} numberOfLines={1}>
+                <AppText style={[styles.hint, it.primary && styles.onSignal]} numberOfLines={1}>
                   {it.hint}
                 </AppText>
               )}
@@ -200,6 +201,9 @@ const styles = StyleSheet.create({
   item: { minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m },
   itemDanger: { marginTop: Spacing.s, backgroundColor: Colors.signalTint },
   itemPressed: { backgroundColor: Colors.line },
+  itemPrimary: { borderRadius: Radius.pill, backgroundColor: Colors.signal, marginBottom: Spacing.s },
+  primaryPressed: { opacity: 0.88 },
+  onSignal: { color: Colors.onSignal },
   icon: { width: 24, alignItems: 'center', justifyContent: 'center' },
   label: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   hint: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
