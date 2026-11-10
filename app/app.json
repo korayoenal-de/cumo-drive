@@ -159,6 +159,14 @@
           "color": "#E2461C"
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cumo Drive nutzt deine Fotos, damit du ein Profilbild wählen kannst.",
+          "cameraPermission": "Cumo Drive nutzt die Kamera, damit du ein Profilbild aufnehmen kannst.",
+          "microphonePermission": false
+        }
+      ],
       "expo-app-intents",
       [
         "expo-audio",
