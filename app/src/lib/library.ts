@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
 import { deleteCloudTour, listCloudTours, loadCloudTour, saveCloudTour } from './cloud-tours';
+import { logSignal, tourKey } from './signals';
 import { supabase } from './supabase';
 import { haversine, type LatLon, type Profile, type Tour } from './tour';
 
@@ -122,6 +123,8 @@ export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?
     fun: undefined,
   };
   write([saved, ...list.filter((x) => x.id !== saved.id)]);
+  // Lernen (Koray 10.11.): nur neue Touren oder geänderte Linien zählen, nicht jedes Umbenennen
+  if (!old || tourKey(old) !== tourKey(saved)) logSignal(folder.trim() === 'Community' ? 'uebernommen' : 'gespeichert', saved, { profile: t.profile });
   return saved;
 }
 
@@ -184,6 +187,7 @@ export function markUnpublished(cloudId: string) {
 export function deleteTour(id: string) {
   const t = read().find((x) => x.id === id);
   write(read().filter((x) => x.id !== id));
+  if (t) logSignal('geloescht', t, { profile: t.profile });
   if (t?.cloudId) void deleteCloudTour(t.cloudId).catch(() => undefined);
 }
 

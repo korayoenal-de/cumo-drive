@@ -16,6 +16,7 @@ import type { PlannedTour } from './plan';
 import { BIG_CITIES } from '@/data/big-cities';
 
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from './highlight-roads';
+import { regionArea } from './regions';
 import { countCurves } from './stats';
 import { doubledStretch } from './doubled';
 import { haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
@@ -420,6 +421,8 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatL
   const ex = exclusionModel(exclude, penalize) as { areas?: { features: unknown[] }; priority?: { if: string; multiply_by: string }[] };
   const fav = profile === 'kurvig' || profile === 'paesse' ? favoriteArea(near, radiusKm) : null;
   const city = profile === 'kurvig' || profile === 'paesse' ? cityArea(near, radiusKm) : null;
+  // Fahrregionen (Koray 10.11.): Straßen außerhalb kosten etwas mehr, bei Rundtour und Route; nicht für Schnell
+  const region = profile !== 'schnell' ? regionArea(near, radiusKm) : null;
   const priority = [
     // Bei festen Server Profilen stecken Breite und Kurven Regeln schon im Profil
     ...(builtIn ? [] : [...WIDTH_MODEL, ...profileModel(profile)]),
@@ -429,9 +432,10 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatL
     ...(fav ? [{ if: '!in_fav', multiply_by: '0.7' }] : []),
     // Großstädte deutlich teurer, nicht verboten
     ...(city ? [{ if: 'in_stadt', multiply_by: '0.4' }] : []),
+    ...(region ? [{ if: '!in_region', multiply_by: profile === 'entspannt' ? '0.9' : '0.85' }] : []),
   ];
   if (!priority.length) return undefined;
-  const features = [...(ex.areas?.features ?? []), ...(fav ? [fav] : []), ...(city ? [city] : [])];
+  const features = [...(ex.areas?.features ?? []), ...(fav ? [fav] : []), ...(city ? [city] : []), ...(region ? [region] : [])];
   return {
     ...(features.length ? { areas: { type: 'FeatureCollection', features } } : {}),
     priority,

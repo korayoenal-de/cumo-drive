@@ -19,6 +19,7 @@ import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from 
 import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
 import { planChecked, type PlannedTour, type PlanStep } from './plan';
 import { closureExclude, closuresNear, closuresOnRoute, prefetchClosures } from './road-closures';
+import { regionScore } from './regions';
 import { DIRECTIONS, hillyVia, loopPoints, roundTrip, type Direction } from './roundtrip';
 import { countCurves } from './stats';
 import { flatten, haversine, type LatLon, type Profile } from './tour';
@@ -198,7 +199,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       // ihr Hin und Zurück nur ein Drittel, und sie gewannen gegen bessere freie Runden (Bensheim, Osten:
       // 10,9 km Hin und Zurück über die Juhöhe, bei jedem Neu würfeln dieselbe Runde).
       const base = (t: PlannedTour & { curves: number }) =>
-        scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading) - townPenalty(t) + (passBonus.get(t) ?? 0);
+        scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 + regionPoints(t, req.profile === 'entspannt') + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading) - townPenalty(t) + (passBonus.get(t) ?? 0);
       const passCands = candidates.splice(0);
       const ranked = [...free6, ...loops, ...circles]
         .filter((t) => (t.km_je_klasse?.raus ?? 0) === 0)
@@ -501,6 +502,16 @@ function offCourse(t: PlannedTour, start: LatLon, heading: number | undefined): 
  * Route): je km in einer Großstadt Zone 8 Punkte (Liste BIG_CITIES, Städte mit Wegpunkt ausgenommen),
  * je km Großstadt laut Server 10, je km bebaut laut Server 2. Ergebnis je Tour gemerkt.
  */
+/** Punkte für km in Fahrregionen (Koray 10.11.), je Tour gemerkt */
+const regionMemo = new WeakMap<object, number>();
+function regionPoints(t: PlannedTour, relaxed: boolean): number {
+  const known = regionMemo.get(t.linie);
+  if (known !== undefined) return known;
+  const v = regionScore(flatten(t).map((x) => x.p), relaxed);
+  regionMemo.set(t.linie, v);
+  return v;
+}
+
 const townMemo = new WeakMap<object, number>();
 function townPenalty(t: PlannedTour): number {
   const known = townMemo.get(t.linie);

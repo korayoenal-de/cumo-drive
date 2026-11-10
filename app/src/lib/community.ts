@@ -4,6 +4,7 @@
  */
 import { loadCloudTour, saveCloudTour } from './cloud-tours';
 import { dropLocalTour, markUnpublished, patchTour, saveTour, syncLibrary, type SavedTour } from './library';
+import { logSignal } from './signals';
 import { supabase } from './supabase';
 import type { Profile } from './tour';
 
@@ -48,6 +49,7 @@ export async function publishTour(t: SavedTour, author: string, description: str
   if (error) throw new Error(error.message);
   const now = new Date().toISOString();
   patchTour(t.id, { published: true, cloudId, syncedAt: now });
+  logSignal('veroeffentlicht', t, { profile: t.profile });
   return cloudId;
 }
 

@@ -19,6 +19,7 @@ import { directNote } from '@/lib/plan';
 import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 
 import { NameDialog } from '@/components/planner/name-dialog';
+import { logSignal } from '@/lib/signals';
 import { showToast } from '@/lib/toast';
 import { setEditTour } from '@/lib/edit-tour';
 import { DeleteTourSheet } from '@/components/tours/delete-tour-sheet';
@@ -321,6 +322,7 @@ export function TourMode({
       return;
     }
     setActiveTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, firstProfile, avoid);
+    logSignal('losgefahren', routeTour, { mode: 'route', profile: firstProfile, suggested: false });
     router.push('/navigation');
   };
 

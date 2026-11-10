@@ -47,6 +47,7 @@ import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
 import { type PlannedStop } from './planner-parts';
 import { noGoodAlternative } from '@/lib/smart-roundtrip';
+import { logSignal } from '@/lib/signals';
 import { showToast } from '@/lib/toast';
 import { Accordion, avoidSummary, ErrorCard, MicIcon, PrimaryButton, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
 import { Result } from './planner-result';
@@ -379,6 +380,7 @@ export default function Planner() {
       if (!ctrl.signal.aborted) {
         const fun = tourFun(flatten(tour).map((x) => x.p));
         const item = { tour, req, stops, fun };
+        logSignal('geplant', tour, { mode: 'rundtour', profile: req.profile, suggested: true, fun: fun?.score ?? null });
         setRolls((r) => (keep ? [...r, item].slice(-5) : [item]));
         setView({ kind: 'result', tour, req, stops });
         setDetent(1);
@@ -500,6 +502,8 @@ export default function Planner() {
   }
 
   function reroll(req: TourRequest) {
+    // die gezeigte Runde gefiel nicht genug: schwaches Signal dagegen
+    if (view.kind === 'result') logSignal('neu_gewuerfelt', view.tour, { mode: 'rundtour', profile: req.profile, suggested: true });
     if (exhausted.current === req) {
       showToast(NO_MORE_ROLLS);
       return;

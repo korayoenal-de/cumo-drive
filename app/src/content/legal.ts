@@ -1,7 +1,7 @@
 /**
  * Rechtstexte von Cumo Drive: Datenschutzerklärung und Nutzungsbedingungen (AGB).
  *
- * ENTWURF, ANWALTLICHE PRÜFUNG AUSSTEHEND (Stand 6. November 2026). Geschrieben von Claude auf Wunsch von
+ * ENTWURF, ANWALTLICHE PRÜFUNG AUSSTEHEND (Stand 10. November 2026). Geschrieben von Claude auf Wunsch von
  * Koray, keine Rechtsberatung. Offene Punkte für den Anwalt stehen im Projekt Doc claude/rechtstexte-entwurf.md.
  * Angezeigt unter /datenschutz und /agb (src/app/datenschutz.tsx, src/app/agb.tsx), verlinkt aus Landingpage und Paywall.
  */
@@ -12,7 +12,7 @@ export type LegalDoc = { title: string; headTitle?: string; lead: string; blocks
 const KONTAKT = 'kontakt@rallycumo.de';
 const IMPRESSUM = 'https://rallycumo.de/impressum/';
 
-export const STAND = 'Stand: 6. November 2026. Entwurf, die anwaltliche Prüfung steht noch aus.';
+export const STAND = 'Stand: 10. November 2026. Entwurf, die anwaltliche Prüfung steht noch aus.';
 
 export const DATENSCHUTZ: LegalDoc = {
   title: 'Datenschutz',
@@ -33,6 +33,7 @@ export const DATENSCHUTZ: LegalDoc = {
         'Konto: E-Mail-Adresse, Passwort (nur verschlüsselt gespeichert), Anzeigename, unter dem dich andere zur Gruppenfahrt einladen.',
         'Touren: geplante und gespeicherte Touren mit Wegpunkten, Linie, Namen und Ordnern, außerdem Touren, die du in der Community veröffentlichst.',
         'Fahrten: wenn du eine Navigation startest, die gefahrene Spur mit Zeit, Tempo und Statistik (Kilometer, Kurven, Querbeschleunigung) sowie deine Bewertung der Fahrt mit Gründen und Notiz.',
+        'Nutzung der Planung: wenn du eine Rundtour planst, neu würfelst, eine Tour speicherst, übernimmst, veröffentlichst, löschst oder losfährst, speichern wir dazu die Linie der Tour, ihre Länge, das Profil und den berechneten Fahrspaß. Die ersten und letzten 2 km der Linie schneiden wir vorher ab, damit Start und Ziel, etwa deine Haustür, nicht enthalten sind.',
         'Fahrzeuge: Angaben aus deiner Garage wie Modell, Breite, Bodenfreiheit, Reichweite und Kraftstoff.',
         'Standort: während Planung und Navigation, um dich zu führen und Rundtouren ab deinem Standort zu planen. In einer Gruppenfahrt sehen die anderen Teilnehmer deine Position live, solange die Fahrt läuft.',
         'Kamera: nur, um einen QR Code aus dem Web Planer zu lesen. Bilder speichern wir nicht.',
@@ -45,7 +46,7 @@ export const DATENSCHUTZ: LegalDoc = {
       list: [
         'Bereitstellen der App, deines Kontos, der Planung, Navigation, Gruppenfahrt und des Abgleichs zwischen App und Web Planer: zur Erfüllung des Vertrags mit dir (Art. 6 Abs. 1 lit. b DSGVO).',
         'Standort: nur mit deiner Erlaubnis im iPhone, die du jederzeit in den Einstellungen widerrufen kannst. Ohne Standort kannst du weiter planen, aber nicht navigieren.',
-        'Verbesserung der Strecken: Bewertungen und gefahrene Spuren werten wir zusammengefasst und ohne Bezug zu deiner Person aus, um den Fahrspaß Pegel von Straßen zu verbessern (berechtigtes Interesse, Art. 6 Abs. 1 lit. f DSGVO). Du kannst dem jederzeit unter der oben genannten Adresse widersprechen.',
+        'Verbesserung der Strecken: Bewertungen, gefahrene Spuren und die Nutzung der Planung werten wir zusammengefasst und ohne Bezug zu deiner Person aus, um den Fahrspaß Pegel von Straßen zu verbessern und die Planung zu verbessern (berechtigtes Interesse, Art. 6 Abs. 1 lit. f DSGVO). Ein Straßenabschnitt fließt erst ein, wenn mindestens drei verschiedene Fahrer ihn genutzt haben. Niemand außer der Auswertung sieht deine einzelnen Einträge, auch andere Fahrer nicht. Du kannst dem jederzeit unter der oben genannten Adresse widersprechen.',
         'Sicherheit und Missbrauchsschutz der Server: berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO).',
         'Gesetzliche Aufbewahrung, etwa bei Club Lizenzen auf Rechnung: rechtliche Verpflichtung (Art. 6 Abs. 1 lit. c DSGVO).',
       ],
@@ -71,6 +72,7 @@ export const DATENSCHUTZ: LegalDoc = {
       h: '5. Wie lange wir speichern',
       list: [
         'Konto, Touren, Fahrten und Fahrzeuge, bis du sie löschst oder dein Konto löschst.',
+        'Einträge zur Nutzung der Planung höchstens 24 Monate, danach bleiben nur die zusammengefassten Werte je Straßenabschnitt.',
         'Live Positionen der Gruppenfahrt werden nicht gespeichert, sondern nur während der Fahrt zwischen den Teilnehmern ausgetauscht.',
         'Server Protokolle höchstens 14 Tage.',
         'Rechnungsdaten von Club Lizenzen so lange, wie Handels und Steuerrecht es verlangen (bis zu 10 Jahre).',
@@ -79,7 +81,7 @@ export const DATENSCHUTZ: LegalDoc = {
     {
       h: '6. Konto löschen',
       p: [
-        'Du kannst dein Konto jederzeit in der App unter Einstellungen, Konto, Konto löschen entfernen. Dabei löschen wir Konto, Touren, Fahrten, Fahrzeuge und deine Bewertungen. Veröffentlichte Community Touren verschwinden ebenfalls. Bereits zusammengefasste Auswertungen ohne Personenbezug bleiben bestehen. Ein Abo kündigst du getrennt davon in den Einstellungen deiner Apple ID.',
+        'Du kannst dein Konto jederzeit in der App unter Einstellungen, Konto, Konto löschen entfernen. Dabei löschen wir Konto, Touren, Fahrten, Fahrzeuge, deine Bewertungen und die Einträge zur Nutzung der Planung. Veröffentlichte Community Touren verschwinden ebenfalls. Bereits zusammengefasste Auswertungen ohne Personenbezug bleiben bestehen. Ein Abo kündigst du getrennt davon in den Einstellungen deiner Apple ID.',
       ],
     },
     {

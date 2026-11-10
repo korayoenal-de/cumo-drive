@@ -21,6 +21,7 @@ import { saveTour, syncLibrary } from '@/lib/library';
 import { type Stop } from '@/lib/intent';
 import { type PlannedTour } from '@/lib/plan';
 import { flatten, type LatLon } from '@/lib/tour';
+import { logSignal } from '@/lib/signals';
 import { showToast } from '@/lib/toast';
 
 import { GroupBlock, Stats, StopsPlanner, Warnings, type PlannedStop } from './planner-parts';
@@ -72,6 +73,7 @@ export function Result({
       return;
     }
     setActiveTour(tour, req.profile, req.avoid);
+    logSignal('losgefahren', tour, { mode: 'rundtour', profile: req.profile, suggested: true });
     router.push('/navigation');
   };
   return (
