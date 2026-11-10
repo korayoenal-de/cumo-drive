@@ -165,7 +165,8 @@ function Active() {
           {loadingTour ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Tour der Lead übernehmen</AppText>}
         </Pressable>
       )}
-      {isLead && hasTour && !ride.tourCode && !ride.rideId && (
+      {/* auch bei Fahrten mit Einladung darf die Lead eine neue Tour schicken (Simulation 10.11., G8) */}
+      {isLead && hasTour && !ride.tourCode && (
         <Pressable accessibilityRole="button" onPress={shareActiveTour} disabled={loadingTour} style={styles.secondary}>
           <AppText style={styles.secondaryText}>Tour „{active!.tour.name}“ mit allen teilen</AppText>
         </Pressable>
