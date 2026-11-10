@@ -26,6 +26,8 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private var followCenter: CLLocationCoordinate2D?
   private var followHeading: CLLocationDirection = 0
   private var zoomScale: Double = 1
+  /// Herauszoomen bei Tempo wie in der App: ab 50 km/h langsam, ab 100 km/h ganz (Koray 10.11.)
+  private var speedZoom: Double = 0
   /// Zeit der letzten Position: die Kamera gleitet über genau diesen Abstand zur nächsten (Testfahrt 8.11.: ruckelte im Takt)
   private var lastFollowAt: CFTimeInterval = 0
   /// Flüssige Kamera wie in der App (Build 13): ein Bildtakt schiebt die Kamera zwischen zwei Positionen,
@@ -342,7 +344,10 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private func place(_ c: CLLocationCoordinate2D, heading: CLLocationDirection) {
     shownCenter = c
     shownHeading = heading
-    map.camera = MKMapCamera(lookingAtCenter: c, fromDistance: 650 * zoomScale, pitch: 50, heading: heading)
+    let kmh = hypot(vLat * 111_320, vLon * 111_320 * cos(c.latitude * .pi / 180)) * 3.6
+    let t = max(0, min(1, (kmh - 50) / 50))
+    speedZoom += (t - speedZoom) * 0.04
+    map.camera = MKMapCamera(lookingAtCenter: c, fromDistance: 650 * zoomScale * (1 + speedZoom * 1.2), pitch: 50, heading: heading)
   }
 
   /// Gefahrenes Stück ausblenden: nächster Punkt der Route ab dem letzten (nur vorwärts, mit etwas Spielraum)
