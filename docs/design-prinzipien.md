@@ -71,7 +71,6 @@ Regeln:
 * Speichern nur anbieten, wenn sich wirklich etwas geändert hat.
 
 ## Offene Punkte im Design System
-* Haptisches Feedback beim Aufklappen und Bestätigen braucht `expo-haptics` und damit einen neuen App Build.
 * Lead Blatt aus dem Funk Prototyp umsetzen.
 
 ## Regeln aus dem UI Konsistenz Check (9.11.2026)
@@ -136,3 +135,10 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 
 **CarPlay**
 - Jede Änderung an Karte und Navigation wird für CarPlay mitgedacht und dort genauso umgesetzt, soweit CarPlay es zulässt.
+
+## Haptik (entschieden am 10.11.2026, ab Build 21)
+- Nur wenn der Finger etwas bewegt oder einen Zustand auslöst; keine Haptik für normale Taps, pro Geste ein Impuls außer Rastungen.
+- In der Fahrt nur der Funk (das Handy steckt in der Halterung, CarPlay hat keine Haptik).
+- Punkte verschieben: leicht beim Abheben, Rastung bei jeder neuen Position, weich beim Ablegen.
+- Losfahren: ein kräftiger Impuls. Langer Druck auf die Karte: leicht, wenn der Punkt sitzt. Funk: fest beim Drücken, leicht beim Loslassen.
+- Tokens in `lib/haptics.ts` (abheben, rastung, ablegen, losfahren, punkt, sendung, sendungEnde).

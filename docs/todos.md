@@ -21,12 +21,11 @@ Stand: 10. November 2026, 18:00
 ## Als Nächstes (Claude)
 
 * [ ] Lead Blatt nach dem Prototyp (Status, Kacheln, Schalter, Seltenes); Navigationsansagen warten auf freien Funk
-* [ ] Build 21: CarPlay Zoom bei Tempo, Profilfoto (expo-image-picker ist ab Build 19 drin)
+* [ ] Build 21 läuft (CarPlay Zoom bei Tempo, Haptik); danach Profilfoto (expo-image-picker ist ab Build 19 drin)
 * [ ] Vermeiden als feste Einstellung, Impressum als Seite
 * [ ] Ortssuche in Routen auch über den Streckenverlauf, nicht nur den Start
 * [ ] Melden und Blockieren in der Community
 * [ ] Lernen Stufe 2: nächtliche Auswertung der Signale
-* [ ] Haptik (expo-haptics) mit dem nächsten nativen Build
 * [ ] Kombi als Fahrzeug Form, Fürth in die großen Städte der Ortsdichte
 * [ ] Fahrzeug Symbol in CarPlay verfeinern, Sperrung voraus automatisch umfahren
 
@@ -41,6 +40,8 @@ Stand: 10. November 2026, 18:00
 * [x] Navigation: Weg zur Tour um Orte herum, keine 3D Gebäude über der Linie, Zoom bei Tempo und mit zwei Fingern
 * [x] Nach der Fahrt: Karte scrollt, Bewertung mit fünf Sternen
 * [x] TomTom Kontingent 20.000 im Monat, Fahrregionen, Signale zum Lernen, Datenschutz ergänzt
+* [x] Haptik gezielt (Punkte verschieben, Losfahren, langer Druck, Funk), Build 21 gestartet
+* [x] Planen: Suche zeigt nur orange Punkte wie die Rundtour
 * [x] Expo Starter Plan, Push bei Apple eingerichtet, Dokumentation auf Stand
 
 ## Backlog
