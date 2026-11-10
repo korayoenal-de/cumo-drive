@@ -5,6 +5,8 @@
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { scheduleOnRN } from 'react-native-worklets';
 import MapView, { AnimatedRegion, Circle, Marker, Polyline, type LatLng } from 'react-native-maps';
 
 import { useIsFocused } from 'expo-router';
@@ -108,6 +110,7 @@ export function RouteMap({
   const [ready, setReady] = useState(false);
   // nach eigenem Verschieben folgt die Kamera eine Weile nicht
   const [paused, setPaused] = useState(0);
+  const pauseFollow = () => setPaused((n) => n + 1);
   // während der Übersicht (Planung ansehen) nicht folgen; die Navigation setzt overview danach auf 0
   const following = followUser && !!position && paused === 0 && !overview;
 
@@ -287,6 +290,9 @@ export function RouteMap({
   // Position plus Geschwindigkeit mal Zeit seither; der Sprung bei einer neuen Position klingt in 0,5 s aus.
   const motion = useRef<{ p: LatLon; t: number; v: [number, number]; err: [number, number]; hFrom: number; hTo: number } | null>(null);
   const zoomOut = useRef(0);
+  /** Eigener Zoom beim Mitfahren per Zwei Finger Geste, in Zoomstufen (minus heißt weiter weg) */
+  const userZoom = useSharedValue(0);
+  const pinchBase = useSharedValue(0);
   const shown = useRef<{ p: LatLon; h: number } | null>(null);
   useEffect(() => {
     if (!position) return;
@@ -351,7 +357,8 @@ export function RouteMap({
         const t = Math.max(0, Math.min(1, (kmh - 50) / 50));
         zoomOut.current += (t - zoomOut.current) * 0.04;
         const z = zoomOut.current;
-        map.current?.setCamera({ center: ll(p), heading: h, pitch: 50, zoom: 17 - z, altitude: 500 + z * 600 });
+        const uz = userZoom.get();
+        map.current?.setCamera({ center: ll(p), heading: h, pitch: 50, zoom: 17 - z + uz, altitude: (500 + z * 600) * Math.pow(2, -uz) });
       }
     };
     raf = requestAnimationFrame(tick);
@@ -576,6 +583,31 @@ export function RouteMap({
         {radar && ringAt && fitCoords.length < 2 && <RadarRoads key={ringKey} radiusM={radar.radiusM} roads={radar.roads} spots={radar.spots} line={radar.line} fast={radar.phase === 'aufloesen'} />}
       </MapView>
       {radar && ringAt && fitCoords.length < 2 && <RadarRing key={ringKey} x={ringAt.x} y={ringAt.y} r={ringAt.r} fast={radar.phase === 'aufloesen'} />}
+
+      {/* Beim Mitfahren mit zwei Fingern zoomen und trotzdem zentriert bleiben (Tester Gregor 10.11.); ein Finger
+          verschiebt die Karte wie bisher und pausiert das Mitfahren */}
+      {position && following && (
+        <GestureHandlerRootView style={StyleSheet.absoluteFill}>
+          <GestureDetector
+            gesture={Gesture.Simultaneous(
+              Gesture.Pinch()
+                .onStart(() => {
+                  pinchBase.set(userZoom.get());
+                })
+                .onUpdate((e) => {
+                  userZoom.set(Math.max(-3, Math.min(2, pinchBase.get() + Math.log2(Math.max(0.05, e.scale)))));
+                }),
+              Gesture.Pan()
+                .maxPointers(1)
+                .minDistance(12)
+                .onStart(() => {
+                  scheduleOnRN(pauseFollow);
+                }),
+            )}>
+            <View style={StyleSheet.absoluteFill} />
+          </GestureDetector>
+        </GestureHandlerRootView>
+      )}
 
       {/* Beim Mitfahren steht der eigene Punkt fest in der Kartenmitte; die Kamera bewegt sich bildweise darunter.
           So ruckelt er nicht wie ein Marker, dessen Position jede Sekunde neu gesetzt wird. */}
