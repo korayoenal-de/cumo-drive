@@ -44,7 +44,7 @@ export default function SharedTour() {
                 Profil{" "}
                 {PROFILES.find((p) => p.id === tour.profile)?.label ??
                   tour.profile}
-                , {tour.points.length} Stützpunkte
+                , {tour.waypoints ? `${tour.waypoints.length} Punkte` : `${tour.points.length} Stützpunkte`}
               </AppText>
             </View>
             <Pressable

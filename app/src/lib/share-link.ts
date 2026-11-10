@@ -9,7 +9,7 @@ import { encodeTour, shareUrl } from './share-code';
 import { formatKm, type Profile, type Tour } from './tour';
 
 export async function shareTourLink(tour: Tour, profile: Profile): Promise<void> {
-  const url = shareUrl(encodeTour(tour, profile));
+  const url = shareUrl(encodeTour(tour, profile, { full: true }));
   const km = `${formatKm(tour.laenge_km, 0)} km`;
   await Share.share({ title: tour.name, message: `${tour.name}, ${km} mit CUMO DRIVE\n${url}` });
 }

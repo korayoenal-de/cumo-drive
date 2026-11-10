@@ -779,7 +779,17 @@ export function TourMode({
                 icon: 'square.and.arrow.up',
                 label: 'Link teilen',
                 hint: 'Andere öffnen die Route direkt in CUMO DRIVE',
-                onPress: () => void shareTourLink({ ...routeTour, name: plan.name.trim() || routeTour.name }, firstProfile).catch(() => undefined),
+                onPress: () =>
+                  void shareTourLink(
+                    {
+                      ...routeTour,
+                      name: plan.name.trim() || routeTour.name,
+                      // echte Punkte mit Namen und Profil je Etappe, damit der Empfänger sie so sieht
+                      namen: routeTour.wegpunkte.map((p) => plan.names[keyOf(p)] ?? ''),
+                      etappen: routeTour.wegpunkte.slice(1).map((_, i) => plan.legProfile(i, profile)),
+                    },
+                    firstProfile,
+                  ).catch(() => undefined),
               },
               {
                 key: 'gpx',

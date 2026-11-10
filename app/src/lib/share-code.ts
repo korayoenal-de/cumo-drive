@@ -7,7 +7,16 @@ import { flatten, haversine, type LatLon, type Profile, type Tour } from './tour
 
 const PREFIX = 'cumo1:';
 
-export type SharedTour = { name: string; profile: Profile; points: LatLon[] };
+export type SharedTour = {
+  name: string;
+  profile: Profile;
+  /** Stützpunkte entlang der Linie: daraus plant die App dieselbe Strecke nach */
+  points: LatLon[];
+  /** Start, Zwischenziele und Ziel mit Namen und Profil je Etappe (nur Links, nicht im QR Code) */
+  waypoints?: LatLon[];
+  names?: string[];
+  legs?: (Profile | null)[];
+};
 
 function encodePolyline(points: LatLon[], factor = 1e5): string {
   let out = '';
@@ -97,10 +106,20 @@ export function supportPoints(tour: Tour, stepKm = 6, maxPoints = 26): LatLon[] 
   return out;
 }
 
-export function encodeTour(tour: Tour, profile: Profile): string {
+export function encodeTour(tour: Tour, profile: Profile, opts?: { full?: boolean }): string {
   // 4 Nachkommastellen (etwa 10 m) und höchstens 26 Stützpunkte halten den QR Code grob,
   // damit die iPhone Kamera ihn auch vom Bildschirm sicher liest. Die App plant ohnehin neu.
-  const payload = { n: tour.name.slice(0, 40), p: profile, q: 4, v: encodePolyline(supportPoints(tour), 1e4) };
+  // full (geteilter Link, Koray 10.11.): dazu die echten Punkte mit Namen, sonst kamen beim Empfänger
+  // die Stützpunkte als viele Punkte mit Koordinaten an
+  const extra =
+    opts?.full && tour.wegpunkte.length >= 2
+      ? {
+          w: encodePolyline(tour.wegpunkte, 1e5),
+          m: tour.wegpunkte.map((_, i) => (tour.namen?.[i] ?? '').slice(0, 40)),
+          ...(tour.etappen && tour.etappen.length === tour.wegpunkte.length - 1 ? { e: tour.etappen } : {}),
+        }
+      : {};
+  const payload = { n: tour.name.slice(0, 40), p: profile, q: 4, v: encodePolyline(supportPoints(tour), 1e4), ...extra };
   return PREFIX + b64urlEncode(JSON.stringify(payload));
 }
 
@@ -135,11 +154,17 @@ export function decodeTour(code: string): SharedTour | null {
   const raw = extractCode(code);
   if (!raw.startsWith(PREFIX)) return null;
   try {
-    const d = JSON.parse(b64urlDecode(raw.slice(PREFIX.length))) as { n?: string; p?: Profile; q?: number; v?: string };
+    const d = JSON.parse(b64urlDecode(raw.slice(PREFIX.length))) as { n?: string; p?: Profile; q?: number; v?: string; w?: string; m?: string[]; e?: (Profile | null)[] };
     if (!d.v) return null;
     const points = decodePolyline(d.v, d.q === 4 ? 1e4 : 1e5);
     if (points.length < 2) return null;
-    return { name: d.n || 'Tour vom Planer', profile: d.p ?? 'kurvig', points };
+    const waypoints = d.w ? decodePolyline(d.w, 1e5) : undefined;
+    return {
+      name: d.n || 'Tour vom Planer',
+      profile: d.p ?? 'kurvig',
+      points,
+      ...(waypoints && waypoints.length >= 2 ? { waypoints, names: d.m, legs: d.e } : {}),
+    };
   } catch {
     return null;
   }

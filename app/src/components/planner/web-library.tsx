@@ -99,7 +99,7 @@ function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTo
     }
   };
   const copyLink = () => {
-    const url = shareUrl(encodeTour(t, t.profile ?? 'kurvig'));
+    const url = shareUrl(encodeTour(t, t.profile ?? 'kurvig', { full: true }));
     navigator.clipboard
       ?.writeText(`${t.name}, ${formatKm(t.laenge_km, 0)} km mit CUMO DRIVE\n${url}`)
       .then(() => showToast('Link kopiert'))

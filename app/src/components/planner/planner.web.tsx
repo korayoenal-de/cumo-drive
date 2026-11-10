@@ -695,7 +695,7 @@ export default function Planner() {
                   label: 'Link kopieren',
                   onPress: () =>
                     void navigator.clipboard
-                      ?.writeText(`${routeName}\n${shareUrl(encodeTour({ ...routeTour, name: routeName }, profile))}`)
+                      ?.writeText(`${routeName}\n${shareUrl(encodeTour({ ...routeTour, name: routeName, namen: routeTour.wegpunkte.map((p) => plan.names[keyOf(p)] ?? "") }, profile, { full: true }))}`)
                       .then(() => showToast('Link kopiert'))
                       .catch(() => showToast('Kopieren hat nicht geklappt', { tone: 'error' })),
                 },

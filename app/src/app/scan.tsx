@@ -73,7 +73,9 @@ export default function ScanScreen() {
       );
       // wie bei der Community: ungespeicherte Kopie im Planer, das Lesezeichen legt sie unter Geteilt ab
       const now = new Date().toISOString();
-      setEditTour({ ...tour, id: '', folder: 'Geteilt', createdAt: now, updatedAt: now, profile: shared.profile });
+      // Mit echten Punkten (Link ab 10.11.): Start, Zwischenziele und Ziel samt Namen statt der Stützpunkte
+      const own = shared.waypoints ? { wegpunkte: shared.waypoints, namen: shared.names, etappen: shared.legs } : {};
+      setEditTour({ ...tour, ...own, id: '', folder: 'Geteilt', createdAt: now, updatedAt: now, profile: shared.profile });
       router.dismissTo('/');
     } catch (e) {
       if (ctrl.signal.aborted) return;
