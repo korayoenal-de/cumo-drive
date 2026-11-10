@@ -49,12 +49,13 @@ Regeln:
 * Labels und Nebenzeilen in Inter Semibold grau, über dem Wert, nicht kleiner als 15 pt.
 * Vorbild für die Ruhe: Trade Republic. Hierarchie über Gewicht und Grau, kaum über Größe.
 
-## 5b. Fahrspaß Pegel (entschieden am 5.11.2026, Variante E)
+## 5b. Fahrspaß Pegel (Variante S3, entschieden am 7.11.2026, löst E ab)
 * Jede Strecke und jedes Highlight trägt einen Pegel in fünf Stufen: Nett, Lohnend, Stark, Traumstraße, Legende.
-* Form: sieben Dreiecke auf einem geschlossenen Kreis, Spitzen zur Mitte, aus dem CDC Keyvisual. Sie stoßen an der Basis aneinander, in der Negativform bleibt ein siebenzackiger Stern frei.
-* Eine Zacke des Sterns zeigt nach oben, zwei nach unten. Stufen füllen 1, 3, 4, 6, 7 Dreiecke im Uhrzeigersinn ab unten links, gefüllt in Signal Orange, leer als dunkle Fläche. Unter 20 pt nur die orangen Dreiecke ohne graue Flächen.
-* Legende animiert (Ansage in der Navigation), 4 s, subtiler Austausch ohne graue Flächen, Stern und Dreiecke nie zugleich: Dreiecke weiten sich auf 112 % und blenden aus, danach erscheint der Stern, pulsiert auf 125 % und zurück und blendet aus, danach bauen sich die Dreiecke im Uhrzeigersinn wieder auf. Bei reduzierter Bewegung statisch.
-* Größen: Liste 28 pt, Karte 30 pt, Ansage 44 pt. Startwert ist die kuratierte Qualität 1 bis 5, Bewertungen nach der Fahrt verschieben ihn.
+* Form: acht Segmente mit rundem Rücken um einen schlanken achtzackigen Stern, der als Negativform frei bleibt.
+* Stufen füllen 1, 3, 5, 7 und 8 Segmente ab 6 Uhr im Uhrzeigersinn, gefüllt in Signal Orange, leer als dunkle Fläche (`empty`). Unter 24 pt nur die orangen Segmente.
+* Legende animiert (Ansage in der Navigation): subtiler Austausch zwischen Segmenten und Stern, nie beides zugleich. Bei reduzierter Bewegung statisch.
+* Startwert ist die kuratierte Qualität 1 bis 5; Bewertungen nach der Fahrt verschieben ihn.
+* Für ganze Touren gibt es zusätzlich den Fahrspaß Wert 0 bis 100 (Gemütlich bis Legendär) mit Logo und Rechnung im Fahrspaß Blatt.
 
 ## 6. Ruhe
 * Dunkler Grund, wenige Flächen (`surface`, `surface2`), Signalfarbe nur für die Hauptaktion und Strecken.
@@ -71,8 +72,7 @@ Regeln:
 
 ## Offene Punkte im Design System
 * Haptisches Feedback beim Aufklappen und Bestätigen braucht `expo-haptics` und damit einen neuen App Build.
-* Dieselbe Aufklapp Logik für Community Karten, Fahrten und Garage übernehmen.
-* Planer Ergebnis: Knöpfe auf eine Hauptaktion plus aufklappbare Nebenaktionen reduzieren.
+* Lead Blatt aus dem Funk Prototyp umsetzen.
 
 ## Regeln aus dem UI Konsistenz Check (9.11.2026)
 
@@ -80,7 +80,7 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 
 **Schrift**
 - Archivo nur für Gelesenes: Screen Titel (Display 34/36), Titel von Ebenen (26/30), Tournamen, Kennzahlen (22/26). Immer Archivo 900, kein zweites Gewicht.
-- Alles Bedienbare in Inter, auch große Reiter wie Gespeichert und Gefahren oder Schnelle Runde und Route: Inter Bold 22/28, normal geschrieben, inaktiv `faint`.
+- Alles Bedienbare in Inter. Große Haupt Reiter (Tour planen, Rundtour; Gespeichert, Gefahren): Inter ExtraBold 26/30, normal geschrieben, inaktiv `tabOff` #57575C (Variante D, 9.11.).
 - Titel und Tasten Inter Bold 17/22, Zeilen und Labels Inter Semibold 15/20, Caption 13/16 nur auf der Karte, auf Plaketten und in der Tab Leiste. Nichts sonst unter 15 pt.
 - Versalien nur in Archivo.
 
@@ -100,3 +100,38 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 - Haupttaste und Zweittaste 56, rund (`Size.button`, `Radius.pill`); Eingabefelder 52 mit Radius 14; Chips, Reiter als Pille und Symboltasten 44.
 - Radien: 14 für Felder und Zeilen, 20 für Karten und Sheets, rund für alles Antippbare.
 - Abstände: 2, 4, 8, 12, 16, 20, 28, 40, 48.
+
+## Muster vom 10.11.2026
+
+**Navigation zwischen Ansichten**
+- Zurück wie bei Instagram: Wer aus Meine Touren oder der Community etwas öffnet, bekommt oben links eine Pille mit dem Namen der Herkunft. Die Tableiste zeigt immer den aktuellen Tab. Kein Wischen vom Rand.
+- Ungespeicherte Änderungen fragen beim Zurück einmal nach (Speichern, Als Kopie, Verwerfen), sonst geht Zurück sofort.
+- Unterseiten (Profil, Garage, Fahren) haben die Pille „‹ Einstellungen“ und einen Display Titel.
+
+**Herkunft und Zustand**
+- Übernommene Touren tragen eine Plakette: „Von dir“ in Grün, „Von …“ neutral mit Initiale. Kein Filter dafür.
+- Ungelesene Nachrichten: orange Plakette mit Zahl am Community Tab (ab 10 „9+“).
+- Profil: Plakette „Sichtbar in Drivers“, „In Drivers, ohne Karte“ oder „Nicht in Drivers“.
+
+**Einstellungen**
+- Profilkarte oben als Fläche mit Pfeil, darunter Gruppen mit grauem Label, Zeilen in einer getönten Fläche mit feinen Trennlinien, Wert rechts grau, Pfeil für Unterseiten, Schalter für An und Aus, Hinweis grau unter der Gruppe (`settings-ui.tsx`: Group, Row, SwitchRow, SubScreen).
+- Gefährliches (Konto löschen) als rote Zeile ohne Pfeil, fragt immer nach.
+
+**Karten mit Blatt**
+- Umschalter über der Karte (Community) stehen immer fest über der Karte; das Blatt lässt ganz offen Platz darunter (`MapSheet topReserve`).
+- Ein einzelner Pin zeigt mindestens etwa 25 km Ausschnitt.
+
+**Gruppenfahrt**
+- Funk und Halt sind zwei Funktionen mit zwei Formen: Funk rund und orange, gedrückt halten; Halt helle Pille oben rechts unter der Abbiegekarte, einmal tippen, Gründe fächern nach unten auf.
+- Banner oben: „Du sprichst“ orange, „Timo spricht“ dunkel mit grüner Welle, „Funk getrennt“ gelb.
+- Funk und Navigationsansage nie gleichzeitig; Funk geht vor.
+- Blatt der Lead nach Art des Inhalts: Status nur lesen (Kreise mit Abstand), Aktionen für alle als Kacheln, Einstellungen als Schalter, Seltenes als Textzeilen. Keine Aktion, die für alle die Tour beendet.
+- Gruppen Bedienung erscheint nur, wenn wirklich jemand mitfährt.
+
+**Navigation**
+- Karte zoomt ab 50 km/h langsam heraus, mit zwei Fingern zoomen und zentriert bleiben; CarPlay macht dasselbe.
+- Keine 3D Gebäude über der Routenlinie.
+- Bewertung nach der Fahrt mit fünf Sternen, darunter das Wort (Enttäuschend bis Sensationell).
+
+**CarPlay**
+- Jede Änderung an Karte und Navigation wird für CarPlay mitgedacht und dort genauso umgesetzt, soweit CarPlay es zulässt.

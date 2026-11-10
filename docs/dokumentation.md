@@ -27,6 +27,7 @@ Rollen: Koray steuert, gestaltet, fährt und testet als Heavy User und UX Design
 * Pässe in DE, AT, CH, IT und FR werden priorisiert; Wintersperren informieren, verhindern nie die Planung
 * Schöne Strecken sind lang, ohne Unterbrechung, kurvig, mit gutem Belag und ohne Ortsdurchfahrten
 * Verantwortungsvolles Fahren ist Markenkern: kein Tempo Ranking, keine Blitzerwarnungen in Ländern, wo sie verboten sind
+* CarPlay wird bei jeder Änderung an Karte und Navigation mitgedacht
 * In App, Web Planer und Landingpage wird calimoto nie genannt
 
 ## Architektur
@@ -78,6 +79,7 @@ Runder Knopf oben rechts: Darstellung Standard (dunkel), Satellit, 3D Satellit (
 * Tempo mit Tempolimit unten links, Bremshinweis vor Kurven (5,5 m/s², nach eigenem Tempo), Kurvenwarnung ab 70er Zonen
 * Planung ansehen, Zwischenziel überspringen (langer Druck, mit Rückgängig), Pausieren
 * Abseits der Tour: gelbe Linie zurück, verpasstes Stück muss man nicht nachfahren. Weg zur Tour und zurück über den eigenen Server, um Orte herum (seit 10.11.)
+* Karte zoomt ab 50 km/h langsam heraus, mit zwei Fingern zoomen und zentriert bleiben (CarPlay zoomt ab Build 21 mit)
 * Linie nur vor dem Auto, keine 3D Gebäude über der Linie, Kamera folgt flüssig
 * Restzeit passt sich dem Tempo an (0,6 bis 1,8 fach); Live Activity auf dem Sperrbildschirm
 * CarPlay (in Entwicklung): Start im Auto mit Meine Touren und Schnelle Runde, Führung mit eigenen Symbolen, Menü Mehr, eigenes Auto aus der Garage als Standort
@@ -101,12 +103,12 @@ Umschalter Routen, Ausfahrten und Drivers als Glaspille fest über der Karte.
 
 * **Routen:** veröffentlichte Touren im Aufbau von Meine Touren; Suche nach Name, Fahrer, Ort, Adresse oder PLZ mit 50 km Umkreis um den Start; Sortierung Neueste, Kurvigste, Kurz, Lang. Tippen öffnet eine ungespeicherte Kopie, das Lesezeichen übernimmt sie.
 * **Ausfahrten:** anlegen mit Tour, Zeit, Treffpunkt und Plätzen, mitfahren anfragen, annehmen, Chat, Einladung per Name; am Tag wird daraus die Gruppenfahrt.
-* **Drivers:** Mitglieder mit Wohnort (nur Ortsmitte), Fuhrpark und Über mich; private Nachrichten, wenn erlaubt.
+* **Drivers:** Mitglieder mit Wohnort (nur Ortsmitte), Fuhrpark und Über mich; private Nachrichten, wenn erlaubt. Jeder kann sich ausblenden.
 * **Push** bei Nachrichten, Chat der Ausfahrt, Einladungen, Anfragen und Zusagen (ab Build 19).
 
 ### Einstellungen
 
-Profilkarte oben (Initialen, Name, Wohnort, Plakette "Sichtbar in Drivers"), darunter Gruppen: Fahrzeuge (Garage), Fahren (Stimme und Ansagen, Kartendarstellung), Community (Nachrichten erlauben, Garage zeigen, Mitteilungen), Mitgliedschaft, Konto (Mail, Abmelden, Konto löschen), Rechtliches, Version. Unterseiten: Profil (Name, Wohnort, Über mich, Vorschau in Drivers), Garage, Fahren. Profilfoto folgt per Update (Paket ab Build 19).
+Profilkarte oben (Initialen, Name, Wohnort, Plakette "Sichtbar in Drivers"), darunter Gruppen: Fahrzeuge (Garage), Fahren (Stimme und Ansagen, Kartendarstellung), Community (In Drivers sichtbar, Nachrichten erlauben, Mitteilungen, Garage zeigen), Mitgliedschaft, Konto (Mail, Abmelden, Konto löschen), Rechtliches, Version. Unterseiten: Profil (Name, Wohnort, Über mich, Vorschau in Drivers), Garage, Fahren. Profilfoto folgt per Update (Paket ab Build 19).
 
 ### Garage
 
@@ -114,7 +116,7 @@ Mehrere Fahrzeuge mit einem Feld für Marke und Modell, Form (Coupé, Coupé mit
 
 ### Nach der Fahrt
 
-Statistik für Autos (Kurven, Querbeschleunigung, Schnitt) und Bewertung mit stufenlosem Regler, Daumen je Highlight. Der Pegel der Strecken lernt aus den Fahrerstimmen.
+Statistik für Autos (Kurven, Querbeschleunigung, Schnitt, Spitze) und Bewertung mit fünf Sternen (intern 0 bis 100), Daumen je Highlight. Der Pegel der Strecken lernt aus den Fahrerstimmen.
 
 ## Routing Logik
 
@@ -161,7 +163,7 @@ Sehr kurvig gibt es als Server Profil, in der App wurde es am 8.11. zugunsten ei
 
 Region Frankfurt, Projekt onfxnfkhajxvjmmvmzda. Migrationen und Edge Functions kommen per GitHub Integration aus dem Repo (Push auf main).
 
-* Tabellen: profiles (Name, Wohnort, Nachrichten erlauben, Garage zeigen, Über mich, Fahrzeuge), tours (mit Veröffentlichen und Autor), drives (Spur, Statistik, Bewertung), rides, ride_members, ride_messages, direct_messages, push_tokens, handoffs, pass_status, closure_tiles, route_signals, tomtom_budget und tomtom_usage, clubs und club_members
+* Tabellen: profiles (Name, Wohnort, Sichtbarkeit in Drivers, Nachrichten erlauben, Garage zeigen, Über mich, Fahrzeuge), tours (mit Veröffentlichen und Autor), drives (Spur, Statistik, Bewertung), rides, ride_members, ride_messages, direct_messages, push_tokens, handoffs, pass_status, closure_tiles, route_signals, tomtom_budget und tomtom_usage, clubs und club_members
 * Edge Functions: pass-status, road-closures (TomTom mit Monatskontingent 20.000), notify (Push über Expo, nur mit Secret), livekit-token (Funk Zugang nach Mitgliedsprüfung)
 * Secrets (trägt Koray ein): TOMTOM_KEY, NOTIFY_SECRET (dazu im Vault notify_secret), LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET
 
@@ -193,7 +195,7 @@ Jede Ansicht wird an den Regeln in docs/design-prinzipien.md gemessen (gespiegel
 
 ## Betrieb
 
-JavaScript Änderungen gehen per OTA Update in Minuten aufs Handy; neue native Pakete brauchen einen neuen TestFlight Build. Native Pakete werden im Code so geladen, dass ältere Builds dieselben Updates ohne Absturz bekommen.
+JavaScript Änderungen gehen per OTA Update in Minuten aufs Handy; neue native Pakete und CarPlay brauchen einen neuen TestFlight Build. Native Pakete werden im Code so geladen, dass ältere Builds dieselben Updates ohne Absturz bekommen.
 
 * Kanal preview, Runtime 1.1.0. OTA nur aus einem sauberen Arbeitsstand ohne .env: `eas update --channel preview --environment preview`
 * Builds: `eas build --platform ios --profile preview --auto-submit`, Expo Starter Plan seit 10.11.
@@ -246,7 +248,7 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 ## Recht
 
-* Datenschutzerklärung und Nutzungsbedingungen als Entwurf in der App, im Web und in docs/rechtstexte-entwurf.md; Impressum und anwaltliche Prüfung stehen aus
+* Datenschutzerklärung und Nutzungsbedingungen als Entwurf in der App, im Web und in docs/rechtstexte-entwurf.md (seit 10.11. mit Profil, Drivers, Nachrichten, Push und Funk); Impressum und anwaltliche Prüfung stehen aus
 * AGB Entwurf zum Schutz unserer Daten (docs/agb-datenrechte-entwurf.md); die ODbL verlangt Namensnennung
 * Blitzerwarnungen nur, wo legal (in DE, CH, IT, FR, SI verboten, daher nicht gebaut)
 * Fotos, Musik, Videos und 3D Modelle nur mit geklärten Rechten
@@ -256,9 +258,11 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 | Datum | Entscheidung |
 |---|---|
+| 10.11. | CarPlay wird bei jeder Änderung an Karte und Navigation mitgedacht |
+| 10.11. | Bewertung nach der Fahrt mit fünf Sternen statt Regler; Zoom bei Tempo und mit zwei Fingern |
 | 10.11. | Funk und Halt getrennt; Halt als Pille oben rechts; Lead Blatt nach Art des Inhalts (Status, Kacheln, Schalter, Seltenes); kein "Tour für alle beenden" in der Navigation |
 | 10.11. | Funk über LiveKit Cloud (Frankfurt), immer verbunden, keine Aufzeichnung |
-| 10.11. | Einstellungen neu: Profilkarte oben, Gruppen, Unterseiten |
+| 10.11. | Einstellungen neu: Profilkarte oben, Gruppen, Unterseiten; Sichtbarkeit in Drivers abschaltbar |
 | 10.11. | Community Umschalter fest über der Karte; Ortssuche mit 50 km Umkreis |
 | 10.11. | Zurück Navigation mit Pille oben links, Tableiste zeigt den aktuellen Tab, kein Wischen vom Rand |
 | 10.11. | Plaketten "Von dir" und "Von …" statt Filter in Meine Touren (Variante A) |
@@ -295,7 +299,7 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 ### Als Nächstes (Claude)
 
 * [ ] Lead Blatt nach dem Prototyp, Ansagen warten auf freien Funk
-* [ ] Profilfoto in Profil und Drivers
+* [ ] Build 21: CarPlay Zoom bei Tempo, Profilfoto
 * [ ] Vermeiden als feste Einstellung, Impressum als Seite
 * [ ] Ortssuche in Routen auch über den Streckenverlauf
 * [ ] Melden und Blockieren in der Community

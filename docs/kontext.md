@@ -1,6 +1,6 @@
 # CUMO DRIVE Projektkontext
 
-Stand: 4. November 2026
+Stand: 4. November 2026. **Historischer Stand:** Idee, Festlegungen und erste Messungen. Den aktuellen Stand (10.11.) beschreibt dokumentation.md; bei Widersprüchen gilt sie.
 
 ## Idee
 
