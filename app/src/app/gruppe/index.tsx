@@ -10,6 +10,7 @@ import * as Location from 'expo-location';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
+import { haptic } from '@/lib/haptics';
 import { RouteMap } from '@/components/map/route-map';
 import type { OtherDriver } from '@/components/map/route-map-shared';
 import { Screen } from '@/components/ui/screen';
@@ -172,7 +173,10 @@ function Active() {
         </Pressable>
       )}
       {hasTour && (
-        <Pressable accessibilityRole="button" onPress={() => router.push('/navigation')} style={isLead || !ride.tourCode ? styles.primary : styles.secondary}>
+        <Pressable accessibilityRole="button" onPress={() => {
+            haptic('losfahren');
+            router.push('/navigation');
+          }} style={isLead || !ride.tourCode ? styles.primary : styles.secondary}>
           <AppText style={isLead || !ride.tourCode ? styles.primaryText : styles.secondaryText}>Losfahren</AppText>
         </Pressable>
       )}

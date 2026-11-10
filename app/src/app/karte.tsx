@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { haptic } from '@/lib/haptics';
 import { RouteMap } from '@/components/map/route-map';
 import { CLASS_LINE, tourWarnings } from '@/components/map/route-map-shared';
 import { AppText } from '@/components/ui/text';
@@ -71,7 +72,10 @@ export default function KarteScreen() {
         )}
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.replace('/navigation')}
+          onPress={() => {
+            haptic('losfahren');
+            router.replace('/navigation');
+          }}
           style={({ pressed }) => [styles.go, pressed && styles.pressed]}>
           <AppText style={styles.goText}>Losfahren</AppText>
         </Pressable>

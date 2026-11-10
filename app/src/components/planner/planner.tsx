@@ -20,6 +20,7 @@ import { useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { haptic } from '@/lib/haptics';
 import { MapLayersButton } from '@/components/map/map-settings-sheet';
 import { MapPassActions, type PassAction } from '@/components/planner/map-pass-actions';
 import { RouteMap } from '@/components/map/route-map';
@@ -598,6 +599,7 @@ export default function Planner() {
     passRoleIdx < 0 ? null : passRoleIdx === 0 ? 'Start' : passRoleIdx === tourPts.length - 1 && tourPlan.complete ? 'Ziel' : `Zwischenziel ${passRoleIdx}`;
 
   function onMapLongPress(p: LatLon) {
+    haptic('punkt');
     // Punkt auf der Karte: der Ausschnitt bleibt, wo du gerade bist (nicht zum Ziel springen)
     setMapEdit(true);
     if (!tourPts.length) {

@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 
+import { haptic } from '@/lib/haptics';
 import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
 import { shareTourLink } from '@/lib/share-link';
@@ -124,7 +125,13 @@ export function Result({
       {/* Aktionen am Ende: Losfahren, Speichern als Symbol, Seltenes im Menü */}
       <ActionBar
         sheetTitle={tour.name}
-        primary={{ label: 'Losfahren', onPress: () => drive(false) }}
+        primary={{
+          label: 'Losfahren',
+          onPress: () => {
+            haptic('losfahren');
+            drive(false);
+          },
+        }}
         choose={{
           title: 'Wie fährst du?',
           items: [

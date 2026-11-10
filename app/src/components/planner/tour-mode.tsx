@@ -9,6 +9,7 @@ import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanima
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SymbolView } from 'expo-symbols';
 
+import { haptic } from '@/lib/haptics';
 import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
 import { PASS_STATUS_URL, PASSES } from '@/lib/passes';
@@ -116,6 +117,8 @@ export function TourMode({
   const [nearPreset, setNearPreset] = useState<NearKind | undefined>(undefined);
   /** Drag and Drop am Anfasser: welcher Punkt gezogen wird und wohin er fallen würde */
   const [drag, setDrag] = useState<{ from: number; to: number } | null>(null);
+  /** Zielposition beim Ziehen, für die Rastung (Haptik) */
+  const dragTo = useRef(-1);
   const dragY = useSharedValue(0);
   /** Mitte jeder Punktzeile in der Liste, für das Ziel beim Ziehen */
   const centers = useRef<number[]>([]);
@@ -434,6 +437,8 @@ export function TourMode({
                 setMenu(null);
                 setLegMenu(null);
                 onDragChange(true);
+                dragTo.current = slot;
+                haptic('abheben');
                 setDrag({ from: slot, to: slot });
               }}
               onMove={(dy) => {
@@ -442,9 +447,15 @@ export function TourMode({
                 const y = (c[slot] ?? 0) + dy;
                 let best = slot;
                 for (let k = 0; k < c.length; k++) if (Math.abs(c[k] - y) < Math.abs(c[best] - y)) best = k;
+                if (best !== dragTo.current) {
+                  dragTo.current = best;
+                  haptic('rastung');
+                }
                 setDrag((d) => (d && d.to !== best ? { ...d, to: best } : d));
               }}
               onEnd={() => {
+                haptic('ablegen');
+                dragTo.current = -1;
                 setDrag((d) => {
                   if (d && d.to !== d.from) {
                     const order = centers.current.map((_, k) => k);
@@ -746,7 +757,13 @@ export function TourMode({
         ) : routeTour ? (
           <ActionBar
             sheetTitle={plan.name.trim() || 'Neue Tour'}
-            primary={{ label: 'Losfahren', onPress: () => void drive(false) }}
+            primary={{
+              label: 'Losfahren',
+              onPress: () => {
+                haptic('losfahren');
+                void drive(false);
+              },
+            }}
             choose={{
               title: 'Wie fährst du?',
               items: [

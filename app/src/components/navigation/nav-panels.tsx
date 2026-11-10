@@ -6,6 +6,7 @@ import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { haptic } from '@/lib/haptics';
 import { softEnter } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Shadow, Spacing, Type, Size } from '@/constants/theme';
@@ -243,8 +244,14 @@ export function BottomBar({
               accessibilityLabel={talk.disabled ? 'Funk, gerade spricht nur die Lead' : talk.talking ? 'Du sprichst, loslassen zum Beenden' : 'Funk, gedrückt halten zum Sprechen'}
               accessibilityState={{ selected: talk.talking, disabled: talk.disabled }}
               disabled={talk.disabled}
-              onPressIn={() => talk.onTalk(true)}
-              onPressOut={() => talk.onTalk(false)}
+              onPressIn={() => {
+                haptic('sendung');
+                talk.onTalk(true);
+              }}
+              onPressOut={() => {
+                haptic('sendungEnde');
+                talk.onTalk(false);
+              }}
               style={[styles.talk, talk.talking && styles.talkOn, (talk.waiting || talk.disabled) && styles.talkWait]}>
               <MicIcon />
               <AppText style={styles.talkText}>{talk.waiting ? 'Warten' : 'Funk'}</AppText>
