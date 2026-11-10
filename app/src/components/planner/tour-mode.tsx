@@ -21,7 +21,7 @@ import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/c
 import { NameDialog } from '@/components/planner/name-dialog';
 import { logSignal } from '@/lib/signals';
 import { showToast } from '@/lib/toast';
-import { setEditTour } from '@/lib/edit-tour';
+import { getEditOrigin, setEditTour } from '@/lib/edit-tour';
 import { DeleteTourSheet } from '@/components/tours/delete-tour-sheet';
 import { duplicateTour, useLibrary } from '@/lib/library';
 import { ActionBar } from '@/components/ui/action-bar';
@@ -782,7 +782,8 @@ export function TourMode({
                       onPress: () => {
                         const c = plan.cloudId ? duplicateTour(plan.cloudId) : null;
                         if (!c) return;
-                        setEditTour(c);
+                        // Herkunft bleibt: Zurück führt weiter dorthin, woher die Tour kam
+                        setEditTour(c, getEditOrigin());
                         showToast(`${c.name} angelegt, du bearbeitest jetzt die Kopie`);
                       },
                     },

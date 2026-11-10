@@ -14,8 +14,10 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as Location from 'expo-location';
-import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+import { router } from 'expo-router';
+import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MapLayersButton } from '@/components/map/map-settings-sheet';
@@ -28,14 +30,17 @@ import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { BACK_PILL_H, BackPill, EdgeSwipeBack } from './back-pill';
 import { RadarChip, ScanChip } from './radar-chip';
 import { usePillText } from './use-pill';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
-import { Colors, Spacing } from '@/constants/theme';
+import { ActionSheet } from '@/components/ui/action-sheet';
+import { Colors, Motion, Spacing } from '@/constants/theme';
 import { cumoAvailable, prewarmRouting } from '@/lib/cumo-routing';
-import { onEditTour, takeEditTour } from '@/lib/edit-tour';
+import { onEditTour, setEditBackHandler, takeEditTour, useEditOrigin } from '@/lib/edit-tour';
+import { countCurves } from '@/lib/stats';
 import { reverseName } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
 import { type PlannedTour, type PlanStep } from '@/lib/plan';
@@ -1002,8 +1007,54 @@ export default function Planner() {
     );
   }
 
+  // Zurück zur Herkunft (Koray 10.11., Muster Instagram): Pille oben links, Wischen vom linken Rand,
+  // Rückfrage nur, wenn die geöffnete Tour wirklich verändert wurde
+  const origin = useEditOrigin();
+  const [askKeep, setAskKeep] = useState(false);
+  const win = useWindowDimensions();
+  const swipeX = useSharedValue(0);
+  /** Planer aufräumen und zur Herkunft wechseln; danach ist Planen wieder im normalen Zustand */
+  const leave = () => {
+    const o = origin;
+    dropNextRoll();
+    abort.current?.abort();
+    setAskKeep(false);
+    setPending(null);
+    setMapEdit(false);
+    setView({ kind: 'form' });
+    setMode('tour');
+    setDetent(1);
+    tourPlan.reset();
+    if (o) router.navigate(o.href);
+    // erst nach dem Tabwechsel zurückschieben, sonst blitzt der Planer kurz auf
+    setTimeout(() => swipeX.set(0), 300);
+  };
+  const backCurves = routeTour ? countCurves(flatten(routeTour).map((x) => x.p)) : 0;
+  const backProfile = tourPlan.legProfile(tourPlan.start ? 0 : 1, profile);
+  const keepAndLeave = async (asCopy: boolean) => {
+    const id = await tourPlan.save(backCurves, backProfile, avoid, undefined, asCopy ? { asCopy: true } : undefined);
+    if (id) leave();
+  };
+  /** swiped: die Randgeste hat den Planer schon zur Seite gezogen, er gleitet dann ganz hinaus */
+  const goBack = (swiped = false) => {
+    if (tourPlan.changed) {
+      swipeX.set(withSpring(0, Motion.snap));
+      setAskKeep(true);
+      return;
+    }
+    if (swiped) swipeX.set(withTiming(win.width, { duration: 160 }, (done) => done && scheduleOnRN(leave)));
+    else leave();
+  };
+  // Tippt man in der Navigation auf Fertig, läuft derselbe Ablauf (navigation.tsx); nach jedem Rendern der aktuelle Stand
+  useEffect(() => {
+    setEditBackHandler(() => goBack());
+  });
+  useEffect(() => () => setEditBackHandler(null), []);
+  const chipTop = insets.top + Spacing.s + (origin ? BACK_PILL_H + Spacing.s : 0);
+
   return (
     <>
+    <EdgeSwipeBack enabled={!!origin} x={swipeX} onBack={() => goBack(true)}>
     <MapSheet
       detent={detent}
       onDetentChange={setDetent}
@@ -1034,13 +1085,14 @@ export default function Planner() {
           style={StyleSheet.absoluteFill}
         />
           <MapLayersButton style={[styles.layersBtn, { top: insets.top + Spacing.s }]} />
-          {/* Was gerade passiert, links oben neben den Karteneinstellungen (Koray 9.11.) */}
-          {scan && tourPlan.step && pill && <ScanChip top={insets.top + Spacing.s} text={pill} />}
+          {origin && <BackPill label={origin.label} top={insets.top + Spacing.s} onPress={() => goBack()} />}
+          {/* Was gerade passiert, links oben neben den Karteneinstellungen (Koray 9.11.); mit Zurück Pille darunter */}
+          {scan && tourPlan.step && pill && <ScanChip top={chipTop} text={pill} />}
           {view.kind === 'working' &&
             (radar?.phase === 'aufloesen' ? (
-              <RadarChip key="aufloesen" count={radar.count} found={radar.roads.length} top={insets.top + Spacing.s} />
+              <RadarChip key="aufloesen" count={radar.count} found={radar.roads.length} top={chipTop} />
             ) : (
-              pill && <ScanChip top={insets.top + Spacing.s} text={pill} />
+              pill && <ScanChip top={chipTop} text={pill} />
             ))}
           {passOverlay && (
             <MapPassActions
@@ -1058,6 +1110,23 @@ export default function Planner() {
       )}>
       {body}
     </MapSheet>
+    </EdgeSwipeBack>
+    <ActionSheet
+      visible={askKeep}
+      title="Änderungen behalten?"
+      subtitle={`Du hast ${tourPlan.name.trim() || 'die Tour'} verändert.`}
+      onClose={() => setAskKeep(false)}
+      items={[
+        ...(routeTour
+          ? [
+              { key: 'save', icon: 'checkmark' as const, label: 'Speichern und zurück', primary: true, busy: tourPlan.saving, onPress: () => void keepAndLeave(false) },
+              // Ungespeicherte Kopie (Community): Speichern legt ohnehin eine neue Tour an
+              ...(tourPlan.cloudId ? [{ key: 'copy', icon: 'plus.square.on.square' as const, label: 'Als Kopie speichern', hint: 'Das Original bleibt wie es war', onPress: () => void keepAndLeave(true) }] : []),
+            ]
+          : []),
+        { key: 'discard', icon: 'arrow.uturn.backward' as const, label: 'Verwerfen', danger: true, onPress: leave },
+      ]}
+    />
     <FunSheet
       fun={resultFun}
       name={resultTour?.name ?? ''}

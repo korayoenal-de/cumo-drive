@@ -34,7 +34,7 @@ const SORTS: { id: SortKey; label: string }[] = [
 
 /** Tour im Planer öffnen: dort steht sie auf der Karte, mit Losfahren und Gruppe. */
 function openTour(t: SavedTour) {
-  setEditTour(t);
+  setEditTour(t, { label: 'Meine Touren', href: '/touren' });
   router.navigate('/');
 }
 

@@ -20,6 +20,7 @@ import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
+import { getEditOrigin, requestEditBack } from '@/lib/edit-tour';
 import { useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
 import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
@@ -411,6 +412,12 @@ export default function NavigationScreen() {
     controls.stop();
     if (router.canGoBack()) router.back();
     else router.replace('/');
+  };
+  // Fertig nach der Fahrt: kam die Tour aus Meine Touren oder der Community, dorthin zurück (Koray 10.11.)
+  const done = () => {
+    const fromOrigin = !!getEditOrigin();
+    exit();
+    if (fromOrigin) setTimeout(requestEditBack, 0);
   };
   // Beenden mitten in der Fahrt: erst die Statistik zeigen, wenn es genug Punkte gibt
   const close = () => {
@@ -910,7 +917,7 @@ export default function NavigationScreen() {
               <StatsGrid st={summary} />
               {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} preset={cpScore} />}
               <SavedNote saved={saved} />
-              <BigButton label="Fertig" onPress={exit} />
+              <BigButton label="Fertig" onPress={done} />
             </InfoCard>
           </View>
         )}
@@ -926,7 +933,7 @@ export default function NavigationScreen() {
               {arrivedStats && <StatsGrid st={arrivedStats} />}
               {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} preset={cpScore} />}
               <SavedNote saved={saved} />
-              <BigButton label="Fertig" onPress={exit} />
+              <BigButton label="Fertig" onPress={done} />
             </InfoCard>
           </View>
         )}

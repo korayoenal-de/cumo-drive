@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 
 import { toPlanError } from '@/components/planner/create-tour';
+import { clearEditOrigin } from '@/lib/edit-tour';
 import { saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName } from '@/lib/geocode';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '@/lib/highlight-roads';
@@ -91,6 +92,8 @@ export function useTourPlan(onPlanned?: () => void) {
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   /** Stand beim Laden oder letzten Speichern: weicht er ab, gibt es Änderungen zu speichern */
   const [base, setBase] = useState<string | null>(null);
+  /** Stand beim Öffnen einer Tour (auch ungespeicherte Community Kopie) oder beim letzten Speichern */
+  const [loaded, setLoaded] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   /**
    * Strecken als Zwischenziel (Koray 8.11.): in der Liste ein Punkt (Einstieg), beim Planen zusätzlich Stützpunkte
@@ -106,6 +109,8 @@ export function useTourPlan(onPlanned?: () => void) {
   const sigOf = (p: LatLon[], n: string, lp: LegProfile[]) => JSON.stringify([p, n.trim(), lp]);
   /** Neue Tour oder gespeicherte Tour mit Änderungen */
   const dirty = !cloudId || base !== sigOf(pts, name, legProfiles);
+  /** Geöffnete Tour wirklich verändert (für die Rückfrage beim Zurück, Koray 10.11.) */
+  const changed = loaded !== null && loaded !== sigOf(pts, name, legProfiles);
 
   /** Profil der Etappe i (von Feld i zu Feld i+1), ohne eigenes Profil das allgemeine. */
   const legProfile = (i: number, global: Profile): Profile => normProfile(legProfiles[i] ?? global);
@@ -283,9 +288,23 @@ export function useTourPlan(onPlanned?: () => void) {
   /** Speichert und liefert die ID in Meine Touren, null wenn es nicht geklappt hat */
   /** asName: Name aus dem Dialog beim ersten Speichern, gilt sofort (der Zustand kommt erst danach an) */
   /** quiet: ohne Toast (automatisches Speichern im Web Planer); die App ruft ohne opts auf, dort bleibt alles gleich */
-  async function save(curves: number, profile: Profile, avoid: Avoid, asName?: string, opts?: { quiet?: boolean }): Promise<string | null> {
+  /** asCopy: als neue Tour neben der geöffneten speichern, die geöffnete bleibt unverändert (Zurück mit Änderungen) */
+  async function save(curves: number, profile: Profile, avoid: Avoid, asName?: string, opts?: { quiet?: boolean; asCopy?: boolean }): Promise<string | null> {
     if (!planned) return null;
     const nm = asName ?? name;
+    if (opts?.asCopy) {
+      try {
+        const namen = pts.map((p) => names[keyOf(p)] ?? '');
+        const base0 = (nm.trim() || planned.name).replace(/\s+Kopie(\s+\d+)?$/, '');
+        const copy = saveTour({ ...planned, name: `${base0} Kopie`.slice(0, 120), curves, profile, namen, etappen: legProfiles }, folder);
+        void syncLibrary();
+        if (!opts.quiet) showToast(`${copy.name} gespeichert`);
+        return copy.id;
+      } catch (e) {
+        showToast(`Speichern hat nicht geklappt: ${e instanceof Error ? e.message : String(e)}`, { tone: 'error' });
+        return null;
+      }
+    }
     setSaving(true);
     setSaveMsg(null);
     try {
@@ -296,6 +315,7 @@ export function useTourPlan(onPlanned?: () => void) {
       const saved = saveTour({ ...planned, name: nm.trim() || planned.name, curves, profile, namen, etappen: legProfiles }, folder, cloudId ?? undefined);
       setCloudId(saved.id);
       setBase(sigOf(pts, nm, legProfiles));
+      setLoaded(sigOf(pts, nm, legProfiles));
       if (asName != null) setName(asName);
       void syncLibrary();
       setSaveMsg(null);
@@ -322,14 +342,17 @@ export function useTourPlan(onPlanned?: () => void) {
     setError(null);
     setCloudId(null);
     setBase(null);
+    setLoaded(null);
     setFolder('');
     setSaveMsg(null);
     setName('Neue Tour');
+    // Tour geschlossen: auch die Herkunft der Zurück Navigation vergessen
+    clearEditOrigin();
   }
 
   /** Stand des Planers, um Zurücksetzen rückgängig zu machen */
   function snapshot() {
-    return { start, vias, ziel, legProfiles, names, name, planned, cloudId, folder, base };
+    return { start, vias, ziel, legProfiles, names, name, planned, cloudId, folder, base, loaded };
   }
   function restore(s: ReturnType<typeof snapshot>) {
     abort.current?.abort();
@@ -343,6 +366,7 @@ export function useTourPlan(onPlanned?: () => void) {
     setCloudId(s.cloudId);
     setFolder(s.folder);
     setBase(s.base);
+    setLoaded(s.loaded);
     setStep(null);
     setError(null);
   }
@@ -374,6 +398,7 @@ export function useTourPlan(onPlanned?: () => void) {
     setSaveMsg(null);
     setStep(null);
     setBase(t.id ? sigOf(w, t.name, lp) : null);
+    setLoaded(sigOf(w, t.name, lp));
     // Namen für Start und Ziel nachschlagen, bei wenigen Punkten auch für die Zwischenziele
     for (const p of v.length <= 8 ? w : [s, z]) if (p && !known[keyOf(p)]) rememberName(p);
     // Gespeicherte Strecke so zeigen, wie sie ist (importierte und Club Touren nicht neu planen).
@@ -386,7 +411,7 @@ export function useTourPlan(onPlanned?: () => void) {
   }
 
   return {
-    start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg, dirty,
+    start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg, dirty, changed,
     legProfile, setSlot, add, insertAt, insertRoad, roadWarn, save, reset, load, snapshot, restore,
     /** Laufende Planung abbrechen, die Punkte bleiben stehen */
     cancel: () => {
