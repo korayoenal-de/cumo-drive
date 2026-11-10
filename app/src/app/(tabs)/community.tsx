@@ -9,7 +9,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -87,6 +87,14 @@ export default function Community() {
   const nearNow = near && near.q === q.trim() ? near.place : null;
   const [sort, setSort] = useState<Sort>('neu');
   const [detent, setDetent] = useState<Detent>(1);
+  const detentRef = useRef<Detent>(1);
+  useEffect(() => {
+    detentRef.current = detent;
+  }, [detent]);
+  const scroll = useRef<ScrollViewInstance>(null);
+  /** Lage der Liste Drivers im Blatt und jeder Karte darin, zum Hinrollen beim Aufklappen */
+  const bodyY = useRef(0);
+  const driverY = useRef(new Map<string, number>());
   const [selected, setSelected] = useState<string | null>(null);
   const [line, setLine] = useState<LatLon[] | null>(null);
   const lines = useRef(new Map<string, LatLon[]>());
@@ -170,21 +178,27 @@ export default function Community() {
   const openRequests = (rides ?? []).reduce((n, r) => n + (r.isOwner ? r.openRequests : 0), 0);
   const selTour = seg === 'routen' ? tours?.find((t) => t.id === selected) ?? null : null;
   const selRide = seg === 'ausfahrten' ? rides?.find((r) => r.id === selected) ?? null : null;
-  const selDriver = seg === 'drivers' ? drivers?.find((d) => d.id === selected) ?? null : null;
   const meDriver = drivers?.find((d) => d.isMe) ?? null;
 
-  const select = (id: string | null) => {
+  const select = (id: string | null, fromList = false) => {
     selRef.current = id;
     setSelected(id);
     if (!id) {
       setLine(null);
       return;
     }
-    setDetent(0);
     if (seg === 'drivers') {
+      // Fahrer klappen in der Liste an ihrer Stelle auf (Koray 10.11.); vom Pin aus fährt das Blatt hoch
+      // und die Liste rollt zur Karte, sodass sie oben nie angeschnitten ist
       setLine(null);
+      if (!fromList) setDetent(2);
+      setTimeout(() => {
+        const y = driverY.current.get(id);
+        if (y != null && (detentRef.current === 2 || !fromList)) scroll.current?.scrollTo({ y: Math.max(0, bodyY.current + y - Spacing.s), animated: true });
+      }, fromList ? 60 : 380);
       return;
     }
+    setDetent(0);
     const cached = lines.current.get(id);
     if (cached) {
       setLine(cached);
@@ -250,13 +264,13 @@ export default function Community() {
       </View>
       {selTour && <RouteCard key={selTour.id} t={selTour} mine={userId === selTour.owner} big onChanged={() => { select(null); load(); }} />}
       {selRide && <RideCard key={selRide.id} r={selRide} big />}
-      {selDriver && <DriverCard key={selDriver.id} d={selDriver} big />}
     </View>
   );
 
   return (
     <View style={styles.root}>
       <MapSheet
+        scrollRef={scroll}
         detent={detent}
         onDetentChange={setDetent}
         grabberLabel={seg === 'routen' ? 'Liste der Routen' : seg === 'ausfahrten' ? 'Liste der Ausfahrten' : 'Liste der Drivers'}
@@ -291,7 +305,11 @@ export default function Community() {
               ))}
           </View>
         ) : seg === 'drivers' ? (
-          <View style={styles.body}>
+          <View
+            style={styles.body}
+            onLayout={(e) => {
+              bodyY.current = e.nativeEvent.layout.y;
+            }}>
             {!userId ? (
               <View style={styles.card}>
                 <AppText variant="title">Drivers mit Konto</AppText>
@@ -315,11 +333,21 @@ export default function Community() {
                 )}
                 <TextInput value={dq} onChangeText={setDq} placeholder="Name, Ort oder Auto suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Drivers durchsuchen" returnKeyType="search" />
                 {shownDrivers.length === 0 && <AppText muted>Kein Mitglied passt zur Suche.</AppText>}
-                {shownDrivers
-                  .filter((d) => d.id !== selected)
-                  .map((d) => (
-                    <DriverCard key={d.id} d={d} unread={unread ? (unreadBy[d.id] ?? 0) : 0} onPress={() => select(d.id)} />
-                  ))}
+                {shownDrivers.map((d) => (
+                  <View
+                    key={d.id}
+                    onLayout={(e) => {
+                      driverY.current.set(d.id, e.nativeEvent.layout.y);
+                    }}>
+                    {d.id === selected ? (
+                      <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} zuklappen`} onPress={() => select(null)}>
+                        <DriverCard d={d} big />
+                      </Pressable>
+                    ) : (
+                      <DriverCard d={d} unread={unread ? (unreadBy[d.id] ?? 0) : 0} onPress={() => select(d.id, true)} />
+                    )}
+                  </View>
+                ))}
               </>
             )}
           </View>
