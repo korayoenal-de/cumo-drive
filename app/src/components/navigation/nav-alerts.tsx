@@ -7,12 +7,14 @@
  * LeadStopButton ist der schnelle Knopf der Lead, um den Halt anzusagen.
  * MessageToast zeigt Kurznachrichten der anderen für ein paar Sekunden.
  */
+import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { STOP_REASONS, type RideMsg, type RideStop, type StopReason } from '@/lib/group/ride';
 import { highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { formatKm } from '@/lib/tour';
@@ -105,38 +107,46 @@ export function StopAlert({ stop, distM, mine, onDismiss, onCancel }: { stop: Ri
   );
 }
 
-/** Großer Knopf der Lead: einmal tippen öffnet die Gründe, zweites Tippen sendet. */
-export function LeadStopButton({ onAnnounce }: { onAnnounce: (r: StopReason) => void }) {
+/**
+ * Halt der Lead (Funk Konzept, Koray 10.11.): helle Pille oben rechts unter der Abbiegekarte, getrennt vom
+ * Funk. Antippen fächert die Gründe gestaffelt nach unten auf, ein Tipp sendet. Die Pille wird dabei zum Schließen.
+ */
+export function LeadHaltPill({ onAnnounce }: { onAnnounce: (r: StopReason) => void }) {
   const [open, setOpen] = useState(false);
-  if (!open)
-    return (
-      <Pressable accessibilityRole="button" accessibilityLabel="Halt an die Gruppe ansagen" onPress={() => setOpen(true)} style={({ pressed }) => [styles.leadBtn, pressed && styles.pressed]}>
-        <AppText style={styles.leadText}>Halt ansagen</AppText>
-      </Pressable>
-    );
   return (
-    <GlassPanel style={styles.card} fallback={Colors.overlay}>
-      <AppText variant="label">Halt an die Gruppe</AppText>
-      <View style={styles.grid}>
-        {STOP_REASONS.map((r) => (
-          <Pressable
-            key={r.id}
-            accessibilityRole="button"
-            onPress={() => {
-              onAnnounce(r.id);
-              setOpen(false);
-            }}
-            style={({ pressed }) => [styles.reason, pressed && styles.pressed]}>
-            <AppText style={styles.reasonText}>{r.label}</AppText>
-          </Pressable>
-        ))}
-      </View>
-      <Pressable accessibilityRole="button" onPress={() => setOpen(false)} style={styles.cancel}>
-        <AppText variant="caption" muted>
-          Abbrechen
-        </AppText>
+    <View style={styles.haltWrap} pointerEvents="box-none">
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={open ? 'Gründe schließen' : 'Halt an die Gruppe ansagen'}
+        accessibilityState={{ expanded: open }}
+        hitSlop={4}
+        onPress={() => setOpen(!open)}
+        style={({ pressed }) => [styles.haltPill, pressed && styles.pressed]}>
+        {open ? (
+          <SymbolView name="xmark" size={14} weight="bold" tintColor={Colors.ground} />
+        ) : (
+          <View style={styles.haltDot}>
+            <View style={styles.haltSquare} />
+          </View>
+        )}
+        <AppText style={styles.haltText}>{open ? 'Schließen' : 'Halt'}</AppText>
       </Pressable>
-    </GlassPanel>
+      {open &&
+        STOP_REASONS.map((r, i) => (
+          <Animated.View key={r.id} entering={FadeIn.delay(i * 45).duration(Motion.enter)}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Halt ansagen: ${r.label}`}
+              onPress={() => {
+                onAnnounce(r.id);
+                setOpen(false);
+              }}
+              style={({ pressed }) => [styles.haltReason, pressed && styles.pressed]}>
+              <AppText style={styles.reasonText}>{r.label}</AppText>
+            </Pressable>
+          </Animated.View>
+        ))}
+    </View>
   );
 }
 
@@ -168,12 +178,13 @@ const styles = StyleSheet.create({
   stopText: { fontFamily: Fonts.medium, fontSize: Type.title, color: Colors.onSignal },
   stopBtn: { height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   stopBtnText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.onSignal },
-  leadBtn: { alignSelf: 'flex-end', height: Size.button, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  leadText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.onSignal },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
-  reason: { flexGrow: 1, flexBasis: '45%', height: 56, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  haltWrap: { alignSelf: 'flex-end', alignItems: 'flex-end', gap: Spacing.s },
+  haltPill: { height: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, paddingRight: 18, borderRadius: Radius.pill, backgroundColor: Colors.text, boxShadow: '0 6px 18px rgba(0,0,0,0.4)' },
+  haltDot: { width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.ground, alignItems: 'center', justifyContent: 'center' },
+  haltSquare: { width: 9, height: 9, borderRadius: 3, backgroundColor: Colors.text },
+  haltText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.ground },
+  haltReason: { height: 56, minWidth: 150, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 18px rgba(0,0,0,0.4)' },
   reasonText: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.onSignal },
-  cancel: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.l },
   toast: { paddingVertical: Spacing.m },
   toastText: { fontFamily: Fonts.semibold, fontSize: Type.title },
   pressed: { opacity: 0.75 },

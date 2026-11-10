@@ -14,7 +14,7 @@ import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM, symbolFor } from '@/components/navigation/maneuver-geometry';
 import { DriveRatingCard, type DrivenHighlight } from '@/components/navigation/drive-rating';
 import { SpeedBadge } from '@/components/navigation/speed-badge';
-import { HighlightCard, HighlightStrip, LeadStopButton, StopAlert } from '@/components/navigation/nav-alerts';
+import { HighlightCard, HighlightStrip, LeadHaltPill, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
@@ -752,6 +752,8 @@ export default function NavigationScreen() {
             </AppText>
           </View>
         )}
+        {/* Halt der Lead oben rechts, getrennt vom Funk (Funk Konzept, Koray 10.11.) */}
+        {running && inRide && ride.myRole === 'lead' && !stop && <LeadHaltPill onAnnounce={announceStop} />}
         {running && stop && (
           <StopAlert stop={stop} distM={stopDistM} mine={myStop} onDismiss={() => clearStop(false)} onCancel={() => clearStop(true)} />
         )}
@@ -763,11 +765,6 @@ export default function NavigationScreen() {
             {(driveSettings.speed || brakeHint) && (
               <View style={styles.leadWrap}>
                 <SpeedBadge speedKmh={state.speedKmh} limit={limitHere} hint={brakeHint} showSpeed={driveSettings.speed} />
-              </View>
-            )}
-            {inRide && ride.myRole === 'lead' && !msgOpen && (
-              <View style={styles.leadWrap}>
-                <LeadStopButton onAnnounce={announceStop} />
               </View>
             )}
             {inRide && msgOpen && (

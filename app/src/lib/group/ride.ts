@@ -26,8 +26,9 @@ export type Me = { id: string; name: string; car: string };
 export type Member = Me & { role: Role; p: LatLon | null; heading: number | null; speedKmh: number | null; seenAt: number | null; /** gerade abseits der Tour */ off?: boolean };
 export type RideMsg = { id: string; from: string; name: string; text: string; at: number };
 /** Gründe für eine zentrale Halt Ansage der Lead */
-export type StopReason = 'parkplatz' | 'tanken' | 'pause' | 'foto';
+export type StopReason = 'sammeln' | 'parkplatz' | 'tanken' | 'pause' | 'foto';
 export const STOP_REASONS: { id: StopReason; label: string; title: string }[] = [
+  { id: 'sammeln', label: 'Sammeln', title: 'Wir sammeln uns, bitte aufschließen' },
   { id: 'parkplatz', label: 'Parkplatz', title: 'Wir fahren gleich auf einen Parkplatz' },
   { id: 'tanken', label: 'Tanken', title: 'Wir fahren gleich zum Tanken' },
   { id: 'pause', label: 'Pause', title: 'Gleich machen wir Pause' },
