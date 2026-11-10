@@ -138,8 +138,9 @@ export async function syncVehicles() {
   try {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
-    const { data } = await supabase.from('profiles').select('vehicles').eq('id', u.user.id).maybeSingle();
-    const remote = ((data as { vehicles?: Vehicle[] } | null)?.vehicles ?? []).filter((v) => v && v.id);
+    // seit 10.11. liest nur noch my_vehicles die eigene Garage (fremde Konten sehen sie über community_drivers)
+    const { data } = await supabase.rpc('my_vehicles');
+    const remote = ((Array.isArray(data) ? data : []) as Vehicle[]).filter((v) => v && v.id);
     const ids = new Set(state.list.map((v) => v.id));
     const merged = [...state.list, ...remote.filter((v) => !ids.has(v.id))];
     const changed = merged.length !== state.list.length || remote.length !== merged.length;

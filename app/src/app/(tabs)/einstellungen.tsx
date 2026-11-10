@@ -17,6 +17,7 @@ import { deleteAccount, signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { clearLocalTours } from '@/lib/library';
 import { listDrives, type Drive } from '@/lib/drives';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
+import { CommunityProfile } from '@/components/settings/community-profile';
 import { formatKm } from '@/lib/tour';
 import { deleteVehicle, newVehicle, saveVehicle, selectVehicle, syncVehicles, useVehicles, vehicleName, type Vehicle } from '@/lib/vehicle';
 import { CustomColorButton } from '@/components/garage/custom-color';
@@ -75,6 +76,7 @@ function Account({ email }: { email: string }) {
   return (
     <View style={styles.card}>
       <DisplayName />
+      <CommunityProfile />
       <AppText muted>Angemeldet als {email}. Touren, Fahrten und Fahrzeuge liegen in deinem Konto und im Web Planer.</AppText>
       <Pressable accessibilityRole="button" onPress={() => void signOut()} style={styles.secondary}>
         <AppText style={styles.secondaryText}>Abmelden</AppText>

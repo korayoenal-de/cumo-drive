@@ -4,6 +4,7 @@
  * Routen: veröffentlichte Touren zum Nachfahren (Tippen öffnet sie im Planer, Lesezeichen speichert).
  * Ausfahrten: anstehende Gruppenfahrten mit Zeit und Treffpunkt; Mitfahren anfragen, der
  * Organisator nimmt an, danach Chat und am Tag die Gruppenfahrt.
+ * Drivers (Koray 10.11.): Mitglieder an ihrem Wohnort, Fuhrpark und Anschreiben.
  */
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
@@ -13,6 +14,7 @@ import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, w
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CommunityMap, type CommunityPin } from '@/components/community/community-map';
+import { DriverCard, ringColor } from '@/components/community/driver-card';
 import { DateBlock, RideStatus } from '@/components/community/ride-bits';
 import { Chip } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
@@ -20,12 +22,13 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, shortDate, type Ausfahrt } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
+import { kmBetween, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
 import { copyCommunityTour, listCommunity, loadCommunityTour, type CommunityTour } from '@/lib/community';
 import { setEditTour } from '@/lib/edit-tour';
 import { formatMinutes } from '@/lib/intent';
 import { formatKm, type LatLon } from '@/lib/tour';
 
-type Seg = 'routen' | 'ausfahrten';
+type Seg = 'routen' | 'ausfahrten' | 'drivers';
 type Sort = 'neu' | 'kurven' | 'kurz' | 'lang';
 const SORTS: { id: Sort; label: string }[] = [
   { id: 'neu', label: 'Neueste' },
@@ -40,6 +43,9 @@ export default function Community() {
   const [seg, setSeg] = useState<Seg>('routen');
   const [tours, setTours] = useState<CommunityTour[] | null>(null);
   const [rides, setRides] = useState<Ausfahrt[] | null>(null);
+  const [drivers, setDrivers] = useState<Driver[] | null>(null);
+  const [dq, setDq] = useState('');
+  const unread = useUnreadMessages();
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<Sort>('neu');
@@ -60,6 +66,10 @@ export default function Community() {
     listAusfahrten()
       .then(setRides)
       .catch(() => setRides((r) => r ?? []));
+    listDrivers()
+      .then(setDrivers)
+      .catch(() => setDrivers((d) => d ?? []));
+    void refreshUnread();
   }, []);
 
   useFocusEffect(
@@ -82,18 +92,43 @@ export default function Community() {
     return l;
   }, [tours, q, sort]);
 
+  // Drivers: nach Nähe zum eigenen Wohnort, sonst nach Name; Suche über Name, Ort und Auto
+  const shownDrivers = useMemo(() => {
+    const me = drivers?.find((d) => d.isMe);
+    const n = dq.trim().toLowerCase();
+    const l = (drivers ?? []).filter((d) => !n || d.name.toLowerCase().includes(n) || (d.homeName ?? '').toLowerCase().includes(n) || (d.car ?? '').toLowerCase().includes(n) || (d.garage ?? []).some((g) => g.name.toLowerCase().includes(n)));
+    const dist = (d: Driver) => (me?.home && d.home ? kmBetween(me.home, d.home) : Number.POSITIVE_INFINITY);
+    return l.sort((a, b) => Number(b.isMe) - Number(a.isMe) || dist(a) - dist(b) || a.name.localeCompare(b.name, 'de'));
+  }, [drivers, dq]);
+
   const pins: CommunityPin[] = useMemo(() => {
+    if (seg === 'drivers') {
+      // gleicher Ort: leicht im Kreis versetzt, damit sich die Kreise nicht verdecken
+      const seen = new Map<string, number>();
+      return shownDrivers
+        .filter((d): d is Driver & { home: LatLon } => !!d.home)
+        .map((d) => {
+          const key = `${d.home[0]},${d.home[1]}`;
+          const i = seen.get(key) ?? 0;
+          seen.set(key, i + 1);
+          const a = i * 2.4;
+          const r = i ? 0.004 * Math.sqrt(i) : 0;
+          return { id: d.id, kind: 'driver' as const, p: [d.home[0] + r * Math.cos(a), d.home[1] + (r * Math.sin(a)) / Math.cos((d.home[0] * Math.PI) / 180)] as LatLon, label: d.name, ring: ringColor(d) };
+        });
+    }
     if (seg === 'routen')
       return shownTours.filter((t) => t.start_lat != null && t.start_lon != null).map((t) => ({ id: t.id, kind: 'route', p: [t.start_lat as number, t.start_lon as number], label: `${formatKm(Number(t.km), 0)} km` }));
     return (rides ?? [])
       .map((r) => ({ r, p: r.meeting ? ([r.meeting.lat, r.meeting.lon] as LatLon) : r.start }))
       .filter((x): x is { r: Ausfahrt; p: LatLon } => !!x.p)
       .map(({ r, p }) => ({ id: r.id, kind: 'ausfahrt', p, label: shortDate(r.startsAt), count: r.taken }));
-  }, [seg, shownTours, rides]);
+  }, [seg, shownTours, rides, shownDrivers]);
 
   const openRequests = (rides ?? []).reduce((n, r) => n + (r.isOwner ? r.openRequests : 0), 0);
   const selTour = seg === 'routen' ? tours?.find((t) => t.id === selected) ?? null : null;
   const selRide = seg === 'ausfahrten' ? rides?.find((r) => r.id === selected) ?? null : null;
+  const selDriver = seg === 'drivers' ? drivers?.find((d) => d.id === selected) ?? null : null;
+  const meDriver = drivers?.find((d) => d.isMe) ?? null;
 
   const select = (id: string | null) => {
     selRef.current = id;
@@ -103,6 +138,10 @@ export default function Community() {
       return;
     }
     setDetent(0);
+    if (seg === 'drivers') {
+      setLine(null);
+      return;
+    }
     const cached = lines.current.get(id);
     if (cached) {
       setLine(cached);
@@ -135,6 +174,7 @@ export default function Community() {
     <View style={styles.seg} accessibilityRole="tablist">
       <SegItem label="Routen" icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} />
       <SegItem label="Ausfahrten" icon="calendar" count={userId ? rides?.length ?? null : null} badge={openRequests} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} />
+      <SegItem label="Drivers" icon="person.2" count={userId ? drivers?.length ?? null : null} badge={unread} on={seg === 'drivers'} onPress={() => switchSeg('drivers')} />
     </View>
   );
 
@@ -143,7 +183,18 @@ export default function Community() {
       {/* ganz offen liegt das Blatt oben an, dann steht der Umschalter im Blatt */}
       {detent === 2 && segControl}
       <View style={styles.headRow}>
-        <AppText style={styles.kicker}>{seg === 'routen' ? 'Routen zum Nachfahren' : 'Gemeinsame Ausfahrten'}</AppText>
+        <AppText style={styles.kicker}>{seg === 'routen' ? 'Routen zum Nachfahren' : seg === 'ausfahrten' ? 'Gemeinsame Ausfahrten' : 'Drivers'}</AppText>
+        {seg === 'drivers' && userId && (
+          <Pressable accessibilityRole="button" accessibilityLabel={`Nachrichten${unread ? `, ${unread} ungelesen` : ''}`} hitSlop={4} onPress={() => router.push('/nachrichten')} style={styles.addBtn}>
+            <SymbolView name="bubble.left.and.bubble.right" size={16} weight="semibold" tintColor={Colors.text} />
+            <AppText style={styles.addText}>Nachrichten</AppText>
+            {unread > 0 && (
+              <View style={styles.badge}>
+                <AppText style={styles.badgeText}>{unread}</AppText>
+              </View>
+            )}
+          </Pressable>
+        )}
         {seg === 'ausfahrten' && userId && (
           <Pressable accessibilityRole="button" accessibilityLabel="Ausfahrt anlegen" hitSlop={4} onPress={() => router.push('/ausfahrt/neu')} style={styles.addBtn}>
             <SymbolView name="plus" size={16} weight="bold" tintColor={Colors.text} />
@@ -153,6 +204,7 @@ export default function Community() {
       </View>
       {selTour && <RouteCard key={selTour.id} t={selTour} mine={userId === selTour.owner} big />}
       {selRide && <RideCard key={selRide.id} r={selRide} big />}
+      {selDriver && <DriverCard key={selDriver.id} d={selDriver} big />}
     </View>
   );
 
@@ -161,7 +213,7 @@ export default function Community() {
       <MapSheet
         detent={detent}
         onDetentChange={setDetent}
-        grabberLabel={seg === 'routen' ? 'Liste der Routen' : 'Liste der Ausfahrten'}
+        grabberLabel={seg === 'routen' ? 'Liste der Routen' : seg === 'ausfahrten' ? 'Liste der Ausfahrten' : 'Liste der Drivers'}
         header={header}
         background={(covered) => (
           <CommunityMap pins={pins} selected={selected} onSelect={select} line={line} bottom={covered} top={topH} style={StyleSheet.absoluteFill} />
@@ -188,6 +240,39 @@ export default function Community() {
               .map((t) => (
                 <RouteCard key={t.id} t={t} mine={userId === t.owner} />
               ))}
+          </View>
+        ) : seg === 'drivers' ? (
+          <View style={styles.body}>
+            {!userId ? (
+              <View style={styles.card}>
+                <AppText variant="title">Drivers mit Konto</AppText>
+                <AppText muted>Melde dich an, um andere Mitglieder zu sehen und anzuschreiben.</AppText>
+                <Pressable accessibilityRole="button" onPress={() => router.push('/login')} style={styles.secondary}>
+                  <AppText style={styles.secondaryText}>Anmelden</AppText>
+                </Pressable>
+              </View>
+            ) : drivers === null ? (
+              <ActivityIndicator color={Colors.muted} />
+            ) : (
+              <>
+                {meDriver && !meDriver.home && (
+                  <View style={styles.card}>
+                    <AppText variant="title">Zeig dich auf der Karte</AppText>
+                    <AppText muted>Trag deinen Wohnort in den Einstellungen ein. Andere sehen dich dann dort, nur als Ortsmitte.</AppText>
+                    <Pressable accessibilityRole="button" onPress={() => router.navigate('/einstellungen')} style={styles.secondary}>
+                      <AppText style={styles.secondaryText}>Wohnort angeben</AppText>
+                    </Pressable>
+                  </View>
+                )}
+                <TextInput value={dq} onChangeText={setDq} placeholder="Name, Ort oder Auto suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Drivers durchsuchen" returnKeyType="search" />
+                {shownDrivers.length === 0 && <AppText muted>Kein Mitglied passt zur Suche.</AppText>}
+                {shownDrivers
+                  .filter((d) => d.id !== selected)
+                  .map((d) => (
+                    <DriverCard key={d.id} d={d} onPress={() => select(d.id)} />
+                  ))}
+              </>
+            )}
           </View>
         ) : (
           <View style={styles.body}>

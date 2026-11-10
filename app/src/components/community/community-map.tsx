@@ -11,9 +11,10 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
+import { initials } from '@/lib/ausfahrten';
 import type { LatLon } from '@/lib/tour';
 
-export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt'; p: LatLon; label: string; count?: number };
+export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt' | 'driver'; p: LatLon; label: string; count?: number; ring?: string };
 
 const MAP_TYPE: Record<MapStyle, 'mutedStandard' | 'hybrid' | 'hybridFlyover'> = { standard: 'mutedStandard', satellit: 'hybrid', '3d': 'hybridFlyover' };
 const ll = (p: LatLon) => ({ latitude: p[0], longitude: p[1] });
@@ -81,11 +82,11 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
           <Marker
             key={`${p.id}-${on ? 1 : 0}`}
             coordinate={ll(p.p)}
-            anchor={{ x: 0.5, y: 1 }}
-            zIndex={on ? 50 : p.kind === 'ausfahrt' ? 20 : 10}
+            anchor={p.kind === 'driver' ? { x: 0.5, y: 0.5 } : { x: 0.5, y: 1 }}
+            zIndex={on ? 50 : p.kind === 'route' ? 10 : 20}
             tracksViewChanges={false}
             onPress={() => onSelect(p.id)}
-            accessibilityLabel={p.kind === 'route' ? `Route, ${p.label}` : `Ausfahrt am ${p.label}`}>
+            accessibilityLabel={p.kind === 'route' ? `Route, ${p.label}` : p.kind === 'driver' ? `Fahrer ${p.label}` : `Ausfahrt am ${p.label}`}>
             <Pin pin={p} on={on} />
           </Marker>
         );
@@ -95,6 +96,14 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
 }
 
 function Pin({ pin, on }: { pin: CommunityPin; on: boolean }) {
+  if (pin.kind === 'driver') {
+    // Kreis mit Initialen, Ring in der Wagenfarbe aus der Garage
+    return (
+      <View style={[styles.driver, { borderColor: pin.ring ?? Colors.text }, on && styles.driverOn]}>
+        <AppText style={styles.driverText}>{initials(pin.label)}</AppText>
+      </View>
+    );
+  }
   const ride = pin.kind === 'ausfahrt';
   const bg = ride ? Colors.signal : on ? Colors.text : Colors.surface;
   const fg = ride ? Colors.onSignal : on ? Colors.ground : Colors.text;
@@ -119,6 +128,9 @@ function Pin({ pin, on }: { pin: CommunityPin; on: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  driver: { width: 38, height: 38, borderRadius: 19, borderWidth: 2.5, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  driverOn: { width: 46, height: 46, borderRadius: 23, borderWidth: 3, backgroundColor: Colors.surface },
+  driverText: { fontFamily: Fonts.extrabold, fontSize: 13, lineHeight: 16, color: Colors.text },
   wrap: { alignItems: 'center' },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 30, paddingHorizontal: 10, borderRadius: 15, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
   rideOn: { borderWidth: 2, borderColor: Colors.text },
