@@ -1,235 +1,25 @@
 /**
- * Web Planer, Seitenleiste Tour: Etappen, Speichern, an die App senden, Stopps, Pässe einbauen, Fotos.
+ * Web Planer, Bausteine der Route: Stopps an der Strecke, Pässe einbauen, Fotogalerie.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { reverseName } from '@/lib/geocode';
-import { formatMinutes } from '@/lib/intent';
-import { type RouteFormat } from '@/lib/route-file';
-import { flatten, formatKm, legs, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
-import { type TourFun } from '@/lib/fun-score';
-import { folders, useLibrary } from '@/lib/library';
+import { flatten, formatKm, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
 import { encodeTour, shareUrl } from '@/lib/share-code';
-import { closedHint, passState, type LiveRow } from '@/lib/pass-live';
-import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
-import { photoDate, photoUrl, thumbUrl, type PhotoGroup } from '@/lib/photos';
-import { PASS_STATUS_URL, PASSES, passPoint, passSummary, searchPasses, type Pass } from '@/lib/passes';
 
 import QRCode from 'qrcode';
+import { passState, type LiveRow } from '@/lib/pass-live';
+import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
+import { photoDate, photoUrl, thumbUrl, type PhotoGroup } from '@/lib/photos';
+import { PASSES, passSummary, searchPasses, type Pass } from '@/lib/passes';
 
 import { Colors, Spacing } from '@/constants/theme';
 
 import { type PlannedTour } from './web-shared';
-import { GroupPanel } from './web-account-panels';
-import { Accordion, Chip, Metric, PlaceSearch, Section, Toggle } from './web-parts';
-import { FunPillWeb } from './web-fun';
+import { Chip, Section } from './web-parts';
 import { S } from './web-styles';
-
-/* ---------- Tour ---------- */
-
-export function TourPanel(props: {
-  tour: PlannedTour;
-  group: boolean;
-  fun: TourFun | null;
-  onFun: () => void;
-  isSample: boolean;
-  names: Record<string, string>;
-  passes: { pass: Pass; km: number }[];
-  passesNear: { pass: Pass; dKm: number }[];
-  onAddPass: (p: Pass) => void;
-  onAddVia: (p: LatLon) => void;
-  live: Map<string, LiveRow> | null;
-  profile: Profile;
-  setProfile: (p: Profile) => void;
-  avoid: Avoid;
-  setAvoid: (a: Avoid) => void;
-  onFly: (p: LatLon) => void;
-  onReverse: () => void;
-  onRemove: (i: number) => void;
-  onAddPlace: (p: LatLon) => void;
-  onImport: (f: File) => void;
-  onExport: (f: RouteFormat) => void;
-  onRename: (n: string) => void;
-  savedId: string | null;
-  onSave: (folder: string) => void;
-  busy: boolean;
-}) {
-  const { tour } = props;
-  const parts = useMemo(() => legs(tour), [tour]);
-  const fileRef = useRef<HTMLInputElement | null>(null);
-  const pts = tour.wegpunkte;
-  const hint = closedHint(props.passes.map((x) => x.pass), props.live);
-
-  const avoidText = [props.avoid.closures && 'Sperrungen', props.avoid.rough && 'rauer Belag', props.avoid.ferries && 'Fähren', props.avoid.tolls && 'Maut'].filter(Boolean).join(', ') || 'Nichts';
-
-  return (
-    <div style={S.stack}>
-      {/* Kopf wie in der App: Tourname, darunter Strecke, Fahrzeit und Fahrspaß */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <input id="tour-name" aria-label="Tourname" value={tour.name} onChange={(e) => props.onRename(e.target.value)} style={S.headline} />
-        {tour.linie.length ? (
-          <div style={S.metrics}>
-            <Metric label="Strecke" value={`${formatKm(tour.laenge_km, 0)} km`} />
-            <Metric label="Fahrzeit" value={tour.minutes ? `${formatMinutes(Math.round(tour.minutes))} h` : '…'} />
-            <Metric label="Fahrspaß" value="">
-              {props.fun ? <FunPillWeb fun={props.fun} onOpen={props.onFun} /> : <span style={S.metricValue}>…</span>}
-            </Metric>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Etappen */}
-      {pts.length ? (
-        <ol style={S.wpList}>
-          {pts.map((p, i) => {
-            const leg = parts[i];
-            const label = i === 0 ? 'S' : i === pts.length - 1 ? 'Z' : String(i);
-            return (
-              <li key={`${p[0]},${p[1]},${i}`} style={{ listStyle: 'none' }}>
-                <div style={S.wpRow}>
-                  <span style={i === 0 || i === pts.length - 1 ? S.wpDotEnd : S.wpDot}>{label}</span>
-                  <button style={S.wpName} onClick={() => props.onFly(p)}>
-                    {props.names[p.join(',')] ?? `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`}
-                  </button>
-                  {!props.isSample ? (
-                    <button aria-label="Punkt entfernen" style={S.iconBtn} onClick={() => props.onRemove(i)} disabled={props.busy}>
-                      ×
-                    </button>
-                  ) : null}
-                </div>
-                {leg ? (
-                  <div style={S.leg}>
-                    <span style={S.legKm}>{formatKm(leg.endKm - leg.startKm)} km</span>
-                  </div>
-                ) : null}
-              </li>
-            );
-          })}
-        </ol>
-      ) : null}
-      <PlaceSearch near={pts[pts.length - 1]} placeholder={pts.length ? 'Ziel oder Zwischenziel hinzufügen' : 'Wo geht es los?'} onPick={(p) => props.onAddPlace(p.p)} />
-
-      {PROFILE_CHOICES.length > 1 && (
-        <Section title="Profil">
-          <div style={S.chips}>
-            {PROFILE_CHOICES.map((p) => (
-              <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
-                {p.label}
-              </Chip>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {hint ? (
-        <div style={S.winterNote}>
-          <b>{hint.title}</b>
-          <span>{hint.text}</span>
-          <a href={PASS_STATUS_URL} target="_blank" rel="noreferrer" style={S.winterLink}>
-            Aktuellen Passstatus ansehen
-          </a>
-        </div>
-      ) : null}
-
-      {props.passes.length ? (
-        <Section title="Highlights" aside={String(props.passes.length)}>
-          <ol style={S.passList}>
-            {props.passes.map(({ pass, km }) => (
-              <li key={pass.id} style={{ listStyle: 'none' }}>
-                <button style={S.passRow} onClick={() => props.onFly(passPoint(pass))}>
-                  <span style={pass.tier === 'ikone' ? S.passDotIcon : S.passDot} />
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={S.passName}>{pass.name}</span>
-                    <span style={S.dropDetail}>{passSummary(pass, undefined, passState(pass, props.live).note)}</span>
-                  </span>
-                  <span style={S.legKm}>km {Math.round(km)}</span>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </Section>
-      ) : null}
-
-      <div>
-        {pts.length >= 2 && !props.isSample ? (
-          <Accordion label="Pässe einbauen" summary={props.passesNear.length ? `${props.passesNear.length} in der Nähe` : 'Keine in der Nähe'}>
-            <AddPass near={props.passesNear} live={props.live} busy={props.busy} onAdd={props.onAddPass} />
-          </Accordion>
-        ) : null}
-        {pts.length >= 2 && !props.isSample ? (
-          <Accordion label="Unterwegs einplanen" summary="Tanken, Essen, Aussicht">
-            <StopsPanel tour={props.tour} busy={props.busy} onAdd={props.onAddVia} />
-          </Accordion>
-        ) : null}
-        <Accordion label="Vermeiden" summary={avoidText}>
-          <Toggle id="av-closures" on={props.avoid.closures} label="Gesperrte Straßen" note="Wir planen um gesperrte Straßen herum." onChange={(v) => props.setAvoid({ ...props.avoid, closures: v })} />
-          <Toggle id="av-rough" on={props.avoid.rough} label="Rauer Belag und Kopfsteinpflaster" onChange={(v) => props.setAvoid({ ...props.avoid, rough: v })} />
-          <Toggle id="av-ferries" on={props.avoid.ferries} label="Fähren" onChange={(v) => props.setAvoid({ ...props.avoid, ferries: v })} />
-          <Toggle id="av-tolls" on={props.avoid.tolls} label="Mautstraßen" onChange={(v) => props.setAvoid({ ...props.avoid, tolls: v })} />
-        </Accordion>
-        <Accordion label="Gruppenfahrt" summary="Code für die Gruppe, Live Positionen" defaultOpen={props.group}>
-          <GroupPanel tour={tour} profile={props.profile} avoid={props.avoid} isSample={props.isSample} />
-        </Accordion>
-        {!props.isSample && tour.linie.length ? (
-          <Accordion label="Ordner" summary={props.savedId ? 'Gespeichert in Meine Touren' : 'Noch nicht gespeichert'}>
-            <SaveBox savedId={props.savedId} onSave={props.onSave} busy={props.busy} />
-          </Accordion>
-        ) : null}
-        <Accordion label="Datei" summary="GPX und KML, Richtung umkehren">
-          <div style={S.btnRow}>
-            <button style={S.secondary} onClick={() => fileRef.current?.click()} disabled={props.busy}>
-              Importieren
-            </button>
-            <button style={S.secondary} disabled={props.busy || pts.length < 2} onClick={props.onReverse}>
-              Umkehren
-            </button>
-          </div>
-          <div style={S.btnRow}>
-            <button style={S.secondary} onClick={() => props.onExport('gpx')} disabled={tour.linie.length === 0}>
-              GPX exportieren
-            </button>
-            <button style={S.secondary} onClick={() => props.onExport('kml')} disabled={tour.linie.length === 0}>
-              KML exportieren
-            </button>
-          </div>
-          <input
-            ref={fileRef}
-            id="gpx-file"
-            type="file"
-            accept=".gpx,.kml,application/gpx+xml,application/vnd.google-earth.kml+xml"
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) props.onImport(f);
-              e.target.value = '';
-            }}
-          />
-        </Accordion>
-      </div>
-    </div>
-  );
-}
-
-export function SaveBox(props: { savedId: string | null; onSave: (folder: string) => void; busy: boolean }) {
-  const list = useLibrary();
-  const current = list.find((t) => t.id === props.savedId);
-  const [folder, setFolder] = useState(current?.folder ?? '');
-  return (
-    <div style={S.saveBox}>
-      <input id="save-folder" list="save-folders" aria-label="Ordner" placeholder="Ordner, zum Beispiel RCO 26" value={folder} onChange={(e) => setFolder(e.target.value)} style={{ ...S.search, height: 38, flex: 1 }} />
-      <datalist id="save-folders">
-        {folders(list).map((f) => (
-          <option key={f} value={f} />
-        ))}
-      </datalist>
-      <button style={{ ...S.secondary, flex: 'none' }} disabled={props.busy} onClick={() => props.onSave(folder)}>
-        {current ? 'Aktualisieren' : 'Speichern'}
-      </button>
-    </div>
-  );
-}
 
 /**
  * QR Code für die App. Bevorzugt ein kurzer Übergabe Code über Supabase (die App bekommt die
