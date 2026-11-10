@@ -152,7 +152,6 @@ function SearchBody({
   route,
   onPickStop,
   currentP,
-  routeMinutes,
   initialNear,
   slots,
   onSwitch,
@@ -228,9 +227,6 @@ function SearchBody({
 
   const [found, setFound] = useState<Record<string, StopRow[] | 'fehler'>>({});
   const catKey = `${cat}|${scale}`;
-  const totalKm = cum.length ? cum[cum.length - 1] : 0;
-  // Abfahrt gilt als jetzt: ungefähre Ankunft an den Stopps
-  const [openedAt] = useState(() => Date.now());
   useEffect(() => {
     if (!hasRoute || cat === 'alle' || cat === 'pass' || found[catKey]) return;
     const ctrl = new AbortController();
@@ -550,7 +546,6 @@ function SearchBody({
                       const near0 = r.extraMin != null ? r.extraMin <= 2 : r.offM < 150;
                       const min = r.extraMin ?? (near0 ? 0 : detourMin(r.offM));
                       const showKm = r.extraMin == null;
-                      const eta = showKm && routeMinutes && totalKm > 0 ? new Date(openedAt + (routeMinutes * (r.km / totalKm) + (near0 ? 0 : min)) * 60000) : null;
                       return (
                         <Pressable
                           key={r.key}
@@ -577,14 +572,13 @@ function SearchBody({
                                   {r.detail}
                                 </AppText>
                               )}
-                              {/* nur +x min, das Wort Umweg trägt die Plakette (Koray 10.11.); VoiceOver liest es vor */}
-                              {!near0 && <AppText accessibilityLabel={`Umweg ${min} Minuten`} style={styles.detourTag}>{`+${min} min`}</AppText>}
                             </View>
                           </View>
-                          {showKm && (
+                          {/* rechts: km und darunter der Umweg als Plakette, ohne Uhrzeit (Koray 10.11.) */}
+                          {(showKm || !near0) && (
                             <View style={styles.kmBox}>
-                              <AppText style={styles.kmBig}>{`in ${Math.round(r.km)} km`}</AppText>
-                              {eta && <AppText style={styles.kmEta}>{`ca. ${eta.getHours()}:${String(eta.getMinutes()).padStart(2, '0')}`}</AppText>}
+                              {showKm && <AppText style={styles.kmBig}>{`in ${Math.round(r.km)} km`}</AppText>}
+                              {!near0 && <AppText accessibilityLabel={`Umweg ${min} Minuten`} style={styles.detourTag}>{`+${min} min`}</AppText>}
                             </View>
                           )}
                         </Pressable>
@@ -704,9 +698,8 @@ const styles = StyleSheet.create({
   subRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   subShrink: { flexShrink: 1 },
   detourTag: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.warn, backgroundColor: Colors.warnTint, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, overflow: 'hidden' },
-  kmBox: { alignItems: 'flex-end', marginLeft: Spacing.s },
+  kmBox: { alignItems: 'flex-end', gap: Spacing.xs, marginLeft: Spacing.s },
   kmBig: { fontFamily: Fonts.display, fontSize: Type.title, color: Colors.text, fontVariant: ['tabular-nums'] },
-  kmEta: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
   detour: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
   detourZero: { color: Colors.good },
   groupLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, paddingHorizontal: Spacing.xs },
