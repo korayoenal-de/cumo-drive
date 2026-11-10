@@ -228,11 +228,19 @@ export async function syncLibrary(): Promise<void> {
       if (t.cloudId && t.syncedAt && t.syncedAt >= t.updatedAt) continue;
       const cloudId = await saveCloudTour(t, { id: t.cloudId, folder: t.folder, profile: t.profile });
       const now = new Date().toISOString();
-      write(read().map((x) => (x.id === t.id ? { ...x, cloudId, syncedAt: now, updatedAt: x.updatedAt > now ? x.updatedAt : now } : x)));
+      // Neue Zeile im Konto (die alte fehlte): die ist nicht veröffentlicht
+      const fresh = !!t.cloudId && cloudId !== t.cloudId;
+      write(read().map((x) => (x.id === t.id ? { ...x, cloudId, syncedAt: now, updatedAt: x.updatedAt > now ? x.updatedAt : now, ...(fresh ? { published: undefined } : {}) } : x)));
     }
     // 2. Touren aus dem Konto, die hier fehlen, herunterladen
     const local = new Set(read().map((x) => x.cloudId).filter(Boolean));
-    for (const c of await listCloudTours()) {
+    const cloud = await listCloudTours();
+    // Veröffentlicht zeigt den Stand im Konto, nicht einen alten Stand auf dem Gerät (Koray 10.11.: Vogesen
+    // Karussell stand als „In der Community“ in Meine Touren, war aber nicht veröffentlicht)
+    const pub = new Map(cloud.map((c) => [c.id, !!c.published]));
+    if (read().some((x) => x.cloudId && pub.has(x.cloudId) && !!x.published !== pub.get(x.cloudId)))
+      write(read().map((x) => (x.cloudId && pub.has(x.cloudId) ? { ...x, published: pub.get(x.cloudId) || undefined } : x)));
+    for (const c of cloud) {
       if (local.has(c.id)) continue;
       const full = await loadCloudTour(c.id);
       const saved: SavedTour = {
@@ -246,6 +254,7 @@ export async function syncLibrary(): Promise<void> {
         profile: c.profile,
         cloudId: c.id,
         syncedAt: c.updated_at,
+        published: c.published || undefined,
       };
       write([saved, ...read()]);
     }

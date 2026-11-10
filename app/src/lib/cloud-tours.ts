@@ -16,6 +16,7 @@ export type CloudTour = {
   minutes: number | null;
   curves: number | null;
   updated_at: string;
+  published: boolean | null;
 };
 
 export async function listCloudTours(): Promise<CloudTour[]> {
@@ -24,7 +25,7 @@ export async function listCloudTours(): Promise<CloudTour[]> {
   if (!u.user) return [];
   const { data, error } = await supabase
     .from('tours')
-    .select('id,name,folder,profile,km,minutes,curves,updated_at')
+    .select('id,name,folder,profile,km,minutes,curves,updated_at,published')
     .eq('owner', u.user.id)
     // Touren, die nur noch in der Community stehen, gehören nicht mehr in Meine Touren
     .eq('in_library', true)
