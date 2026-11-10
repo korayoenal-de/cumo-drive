@@ -9,13 +9,13 @@
  */
 import { router } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
-import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassPanel } from '@/components/ui/glass-panel';
+import { TabIcon, type TabIconName } from '@/components/ui/tab-icons';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Shadow, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -26,11 +26,11 @@ import { expandTabBar, tabBarCompact as compact } from '@/lib/tab-bar';
 const BAR_H = 64;
 const SHRINK = 0.2;
 
-const TABS: { name: string; href: '/' | '/touren' | '/community' | '/einstellungen'; label: string; icon: SFSymbol; active: SFSymbol }[] = [
-  { name: 'index', href: '/', label: 'Planen', icon: 'point.topleft.down.to.point.bottomright.curvepath', active: 'point.topleft.down.to.point.bottomright.curvepath' },
-  { name: 'touren', href: '/touren', label: 'Meine Touren', icon: 'bookmark', active: 'bookmark.fill' },
-  { name: 'community', href: '/community', label: 'Community', icon: 'person.2', active: 'person.2.fill' },
-  { name: 'einstellungen', href: '/einstellungen', label: 'Einstellungen', icon: 'gearshape', active: 'gearshape.fill' },
+const TABS: { name: string; href: '/' | '/touren' | '/community' | '/einstellungen'; label: string; icon: TabIconName }[] = [
+  { name: 'index', href: '/', label: 'Planen', icon: 'planen' },
+  { name: 'touren', href: '/touren', label: 'Meine Touren', icon: 'touren' },
+  { name: 'community', href: '/community', label: 'Community', icon: 'community' },
+  { name: 'einstellungen', href: '/einstellungen', label: 'Einstellungen', icon: 'einstellungen' },
 ];
 
 export default function AppTabs() {
@@ -91,7 +91,7 @@ function TabButton({ tab, isFocused, ref: _ref, ...rest }: TabProps) {
       style={styles.tab}>
       <Animated.View style={[StyleSheet.absoluteFill, styles.pill, pill]} />
       <View>
-        <SymbolView name={isFocused ? tab.active : tab.icon} size={22} tintColor={isFocused ? Colors.text : Colors.muted} weight={isFocused ? 'semibold' : 'regular'} />
+        <TabIcon name={tab.icon} on={!!isFocused} color={isFocused ? Colors.text : Colors.muted} size={24} />
         {tab.name === 'community' && <UnreadBubble />}
       </View>
       <AppText style={[styles.label, isFocused && styles.labelOn]} numberOfLines={1}>
