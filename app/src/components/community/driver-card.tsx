@@ -19,7 +19,7 @@ export const ringColor = (d: Driver) => d.garage?.find((g) => g.look)?.look?.col
 
 const write = (d: Driver) => router.push({ pathname: '/nachrichten/[id]', params: { id: d.id, name: d.name } });
 
-export function DriverCard({ d, big, onPress }: { d: Driver; big?: boolean; onPress?: () => void }) {
+export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: boolean; /** ungelesene Nachrichten von diesem Fahrer (Koray 10.11.) */ unread?: number; onPress?: () => void }) {
   const meta = [d.car, d.homeName ? `Raum ${d.homeName}` : null].filter(Boolean).join('  ·  ');
   const canWrite = !d.isMe && d.allowMessages;
 
@@ -76,9 +76,19 @@ export function DriverCard({ d, big, onPress }: { d: Driver; big?: boolean; onPr
         <AppText style={styles.name} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
         {meta ? <AppText variant="caption" muted numberOfLines={1}>{meta}</AppText> : null}
       </View>
-      {canWrite && (
-        <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} anschreiben`} hitSlop={4} onPress={() => write(d)} style={styles.round}>
-          <SymbolView name="bubble.left" size={18} weight="semibold" tintColor={Colors.text} />
+      {(canWrite || unread > 0) && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={unread ? `${unread} ungelesene ${unread === 1 ? 'Nachricht' : 'Nachrichten'} von ${d.name}` : `${d.name} anschreiben`}
+          hitSlop={4}
+          onPress={() => write(d)}
+          style={[styles.round, unread > 0 && styles.roundUnread]}>
+          <SymbolView name={unread ? 'bubble.left.fill' : 'bubble.left'} size={18} weight="semibold" tintColor={unread ? Colors.signal : Colors.text} />
+          {unread > 0 && (
+            <View style={styles.unread}>
+              <AppText style={styles.unreadText}>{unread > 9 ? '9+' : unread}</AppText>
+            </View>
+          )}
         </Pressable>
       )}
     </Pressable>
@@ -100,6 +110,9 @@ const styles = StyleSheet.create({
   car: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 44 },
   carName: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.body },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  roundUnread: { backgroundColor: Colors.signalTint },
+  unread: { position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.surface },
+  unreadText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 11, lineHeight: 13, fontVariant: ['tabular-nums'] },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.button },
 });

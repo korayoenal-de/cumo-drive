@@ -66,10 +66,10 @@ export default function Nachrichten() {
           <View style={styles.flex}>
             <View style={styles.line}>
               <AppText style={[styles.name, styles.flex]} numberOfLines={1}>{c.name}</AppText>
-              <AppText variant="caption" muted>{when(c.lastAt)}</AppText>
+              <AppText style={[styles.time, c.unread ? styles.timeUnread : null]}>{when(c.lastAt)}</AppText>
             </View>
             <View style={styles.line}>
-              <AppText variant="caption" muted={!c.unread} style={[styles.flex, c.unread ? styles.unreadText : null]} numberOfLines={1}>
+              <AppText muted={!c.unread} style={[styles.flex, styles.preview, c.unread ? styles.unreadText : null]} numberOfLines={1}>
                 {c.lastFromMe ? 'Du: ' : ''}
                 {c.lastBody}
               </AppText>
@@ -96,7 +96,11 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64 },
   line: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   name: { fontFamily: Fonts.bold, fontSize: Type.title },
+  // Vorschau wie bei WhatsApp: letzte Nachricht in 15 pt, Zeit rechts, ungelesen orange (Koray 10.11.)
+  preview: { fontFamily: Fonts.medium, fontSize: Type.body },
   unreadText: { fontFamily: Fonts.bold, color: Colors.text },
+  time: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted, fontVariant: ['tabular-nums'] },
+  timeUnread: { color: Colors.signal },
   badge: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 11, lineHeight: 13 },
   error: { color: Colors.stopText, fontFamily: Fonts.semibold },

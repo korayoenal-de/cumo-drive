@@ -23,7 +23,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, shortDate, type Ausfahrt } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
-import { kmBetween, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
+import { kmBetween, listConversations, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
 import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
 import { deleteTour, useLibrary } from '@/lib/library';
 import { showToast } from '@/lib/toast';
@@ -54,6 +54,18 @@ export default function Community() {
   const [drivers, setDrivers] = useState<Driver[] | null>(null);
   const [dq, setDq] = useState('');
   const unread = useUnreadMessages();
+  // Ungelesene je Fahrer für die Plakette in der Liste Drivers; neu geladen, wenn sich die Gesamtzahl ändert
+  const [unreadBy, setUnreadBy] = useState<Record<string, number>>({});
+  useEffect(() => {
+    if (!unread) return;
+    let alive = true;
+    listConversations()
+      .then((l) => alive && setUnreadBy(Object.fromEntries(l.filter((c) => c.unread > 0).map((c) => [c.partner, c.unread]))))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [unread]);
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState('');
   // Ort, Adresse oder PLZ in der Suche: Routen mit Start im Umkreis (Koray 10.11.)
@@ -306,7 +318,7 @@ export default function Community() {
                 {shownDrivers
                   .filter((d) => d.id !== selected)
                   .map((d) => (
-                    <DriverCard key={d.id} d={d} onPress={() => select(d.id)} />
+                    <DriverCard key={d.id} d={d} unread={unread ? (unreadBy[d.id] ?? 0) : 0} onPress={() => select(d.id)} />
                   ))}
               </>
             )}
