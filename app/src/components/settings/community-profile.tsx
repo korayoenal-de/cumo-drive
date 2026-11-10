@@ -3,7 +3,7 @@
  * gerundet), Über mich und die Schalter, ob andere einen anschreiben dürfen und den Fuhrpark sehen.
  */
 import { SymbolView } from 'expo-symbols';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -12,34 +12,66 @@ import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/
 import { loadPrivacy, savePrivacy, type Privacy } from '@/lib/drivers';
 import { searchTowns, type Place } from '@/lib/geocode';
 
-/** Eigene Privatsphäre laden und speichern, mit sofortiger Anzeige und Rücknahme bei Fehler. */
+/**
+ * Eigene Privatsphäre, für alle Ansichten geteilt (Profilkarte, Schalter, Profil Seite): ein Wechsel
+ * erscheint überall sofort (Koray 10.11.). Sofortige Anzeige, Rücknahme bei Fehler.
+ */
+const FALLBACK: Privacy = { homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true };
+let shared: Privacy | null = null;
+let loading = false;
+const listeners = new Set<() => void>();
+const emit = () => listeners.forEach((l) => l());
+const setShared = (v: Privacy | null) => {
+  shared = v;
+  emit();
+};
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+};
+const snapshot = () => shared;
+
 export function usePrivacy() {
-  const [p, setP] = useState<Privacy | null>(null);
+  const p = useSyncExternalStore(subscribe, snapshot, snapshot);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    if (shared || loading) return;
+    // null heißt ohne Konto; dann beim nächsten Öffnen erneut laden
+    loading = true;
     loadPrivacy()
-      .then(setP)
-      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true }));
+      .then(setShared)
+      .catch(() => setShared(FALLBACK))
+      .finally(() => {
+        loading = false;
+      });
   }, []);
 
   const save = async (patch: Partial<Privacy>) => {
-    if (!p) return;
-    const prev = p;
-    setP({ ...p, ...patch });
+    const prev = shared;
+    if (!prev) return;
+    setShared({ ...prev, ...patch });
     setErr(null);
     setBusy(true);
     try {
       await savePrivacy(patch);
     } catch (e) {
-      setP(prev);
+      setShared(prev);
       setErr(e instanceof Error ? e.message : 'Speichern hat nicht geklappt.');
     } finally {
       setBusy(false);
     }
   };
   return { p, save, busy, err };
+}
+
+/** Beim Abmelden vergessen, damit ein anderes Konto frisch lädt */
+export function resetPrivacy() {
+  shared = null;
+  emit();
 }
 
 /** Wohnort mit Ortssuche; steht unter Drivers nur als Ortsmitte. */

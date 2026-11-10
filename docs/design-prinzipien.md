@@ -111,7 +111,7 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 **Herkunft und Zustand**
 - Übernommene Touren tragen eine Plakette: „Von dir“ in Grün, „Von …“ neutral mit Initiale. Kein Filter dafür.
 - Ungelesene Nachrichten: orange Plakette mit Zahl am Community Tab (ab 10 „9+“).
-- Profil: Plakette „Sichtbar in Drivers“, „In Drivers, ohne Karte“ oder „Nicht in Drivers“.
+- Profil: Plakette „Sichtbar in der Community“, „In der Community, ohne Karte“ oder „Nicht in der Community“ (Schalter „In Community sichtbar“).
 
 **Einstellungen**
 - Profilkarte oben als Fläche mit Pfeil, darunter Gruppen mit grauem Label, Zeilen in einer getönten Fläche mit feinen Trennlinien, Wert rechts grau, Pfeil für Unterseiten, Schalter für An und Aus, Hinweis grau unter der Gruppe (`settings-ui.tsx`: Group, Row, SwitchRow, SubScreen).

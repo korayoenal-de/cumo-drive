@@ -34,7 +34,7 @@ Stand: 10. November 2026, 18:00
 * [x] Push bei Nachrichten, Chat, Einladungen und Anfragen (Build 19), Plakette ungelesen am Community Tab
 * [x] Funk über LiveKit (Build 20): gedrückt halten, Banner, einer spricht, Funk stumm, Nur die Lead spricht
 * [x] Halt der Lead als Pille oben rechts, Grund Sammeln; Gruppen Bedienung nur mit Mitfahrern
-* [x] Einstellungen neu mit Profil, Über mich und Schalter In Drivers sichtbar
+* [x] Einstellungen neu mit Profil, Über mich und Schalter In Community sichtbar
 * [x] Community: Umschalter fest, Ortssuche 50 km, Karte bei einem Pin, Plaketten Von dir, alte Touren zurückgezogen
 * [x] Zurück Navigation mit Pille, keine Duplikate beim Start
 * [x] Navigation: Weg zur Tour um Orte herum, keine 3D Gebäude über der Linie, Zoom bei Tempo und mit zwei Fingern

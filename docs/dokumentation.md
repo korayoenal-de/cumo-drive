@@ -108,7 +108,7 @@ Umschalter Routen, Ausfahrten und Drivers als Glaspille fest über der Karte.
 
 ### Einstellungen
 
-Profilkarte oben (Initialen, Name, Wohnort, Plakette "Sichtbar in Drivers"), darunter Gruppen: Fahrzeuge (Garage), Fahren (Stimme und Ansagen, Kartendarstellung), Community (In Drivers sichtbar, Nachrichten erlauben, Mitteilungen, Garage zeigen), Mitgliedschaft, Konto (Mail, Abmelden, Konto löschen), Rechtliches, Version. Unterseiten: Profil (Name, Wohnort, Über mich, Vorschau in Drivers), Garage, Fahren. Profilfoto folgt per Update (Paket ab Build 19).
+Profilkarte oben (Initialen, Name, Wohnort, Plakette "Sichtbar in der Community"), darunter Gruppen: Fahrzeuge (Garage), Fahren (Stimme und Ansagen, Kartendarstellung), Community (In Community sichtbar, Nachrichten erlauben, Mitteilungen, Garage zeigen), Mitgliedschaft, Konto (Mail, Abmelden, Konto löschen), Rechtliches, Version. Unterseiten: Profil (Name, Wohnort, Über mich, Vorschau in Drivers), Garage, Fahren. Profilfoto folgt per Update (Paket ab Build 19).
 
 ### Garage
 

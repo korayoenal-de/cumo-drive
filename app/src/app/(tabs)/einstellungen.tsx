@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { describeEntitlement } from '@/components/paywall/membership-section';
-import { usePrivacy } from '@/components/settings/community-profile';
+import { resetPrivacy, usePrivacy } from '@/components/settings/community-profile';
 import { Group, Row, SwitchRow } from '@/components/settings/settings-ui';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
@@ -109,7 +109,7 @@ function ProfileCard({ userId, cars }: { userId: string; cars: number }) {
         </AppText>
         {p && (
           <View style={[styles.tag, p.visible ? styles.tagGood : styles.tagMuted]}>
-            <AppText style={[styles.tagText, { color: p.visible ? Colors.good : Colors.muted }]}>{!p.visible ? 'Nicht in Drivers' : p.homeName ? 'Sichtbar in Drivers' : 'In Drivers, ohne Karte'}</AppText>
+            <AppText style={[styles.tagText, { color: p.visible ? Colors.good : Colors.muted }]}>{!p.visible ? 'Nicht in der Community' : p.homeName ? 'Sichtbar in der Community' : 'In der Community, ohne Karte'}</AppText>
           </View>
         )}
       </View>
@@ -143,8 +143,8 @@ function CommunityGroup() {
     } else void Linking.openSettings();
   };
   return (
-    <Group label="Community" hint={err ?? (p?.visible === false ? 'Du bist unter Drivers ausgeblendet. Gruppenfahrten und bestehende Unterhaltungen bleiben.' : 'Andere sehen deinen Namen, Wohnort und auf Wunsch deine Garage.')}>
-      <SwitchRow title="In Drivers sichtbar" value={p?.visible ?? true} onChange={(v) => void save({ visible: v })} />
+    <Group label="Community" hint={err ?? (p?.visible === false ? 'Du bist in der Community ausgeblendet. Gruppenfahrten und bestehende Unterhaltungen bleiben.' : 'Andere sehen deinen Namen, Wohnort und auf Wunsch deine Garage.')}>
+      <SwitchRow title="In Community sichtbar" value={p?.visible ?? true} onChange={(v) => void save({ visible: v })} />
       <SwitchRow
         title="Nachrichten erlauben"
         value={p?.allowMessages ?? true}
@@ -178,7 +178,10 @@ function Account({ email }: { email: string }) {
     <>
       <Group label="Konto" hint="Touren, Fahrten und Fahrzeuge liegen in deinem Konto und im Web Planer.">
         <Row title="E-Mail" value={email} />
-        <Row title="Abmelden" onPress={() => void signOut()} />
+        <Row title="Abmelden" onPress={() => {
+          resetPrivacy();
+          void signOut();
+        }} />
         <Row title={busy ? 'Konto wird gelöscht' : 'Konto löschen'} danger chevron={false} onPress={busy ? undefined : () => setAsk(true)} />
       </Group>
       <ConfirmSheet
