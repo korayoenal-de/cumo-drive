@@ -191,8 +191,6 @@ export default function Community() {
 
   const header = (
     <View style={styles.head}>
-      {/* ganz offen liegt das Blatt oben an, dann steht der Umschalter im Blatt */}
-      {detent === 2 && segControl}
       <View style={styles.headRow}>
         <AppText style={styles.kicker}>{seg === 'routen' ? 'Routen zum Nachfahren' : seg === 'ausfahrten' ? 'Gemeinsame Ausfahrten' : 'Drivers'}</AppText>
         {seg === 'drivers' && userId && (
@@ -226,6 +224,7 @@ export default function Community() {
         onDetentChange={setDetent}
         grabberLabel={seg === 'routen' ? 'Liste der Routen' : seg === 'ausfahrten' ? 'Liste der Ausfahrten' : 'Liste der Drivers'}
         onScrollY={onScrollY}
+        topReserve={topH + Spacing.s}
         header={header}
         background={(covered) => (
           <CommunityMap pins={pins} selected={selected} onSelect={select} line={line} bottom={covered} top={topH} style={StyleSheet.absoluteFill} />
@@ -313,11 +312,10 @@ export default function Community() {
         )}
       </MapSheet>
 
-      {detent < 2 && (
-        <View style={[styles.segWrap, { top: insets.top + Spacing.s }]} pointerEvents="box-none">
-          {segControl}
-        </View>
-      )}
+      {/* Der Umschalter steht immer fest über der Karte, auch bei ganz offenem Blatt (Koray 10.11.) */}
+      <View style={[styles.segWrap, { top: insets.top + Spacing.s }]} pointerEvents="box-none">
+        {segControl}
+      </View>
     </View>
   );
 }

@@ -68,9 +68,11 @@ type Props = {
   lockScroll?: boolean;
   /** Scrollposition des Inhalts, etwa um Karten erst beim Sichtbarwerden zu laden */
   onScrollY?: (y: number) => void;
+  /** Platz oben, den das Blatt auch ganz offen frei lässt (etwa für einen festen Umschalter über der Karte) */
+  topReserve?: number;
 };
 
-export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel, lockScroll, hideBody, onScrollY }: Props) {
+export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel, lockScroll, hideBody, onScrollY, topReserve }: Props) {
   const insets = useSafeAreaInsets();
   const win = useWindowDimensions();
   const [boxH, setBoxH] = useState(0);
@@ -79,7 +81,7 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   const H = boxH || win.height;
   /** Platz für die schwebende Tab Leiste und die Safe Area unten */
   const bottomSpace = insets.bottom + TAB_BAR_SPACE;
-  const large = Math.round(Math.min(H * LARGE, H - insets.top - Spacing.s));
+  const large = Math.round(Math.min(H * LARGE, H - Math.max(insets.top + Spacing.s, topReserve ?? 0)));
   const medium = Math.round(H * MEDIUM);
   const small = Math.round(Math.min((headH ? headH + GRAB_H : HEAD_GUESS) + bottomSpace, medium - Spacing.xxxl));
   const visible = [small, medium, large];
