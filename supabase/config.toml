@@ -14,3 +14,7 @@ verify_jwt = false
 # Wird nur von Datenbank Triggern (pg_net) aufgerufen, ohne JWT. Schutz über den Header x-notify-secret
 # (Edge Function Secret NOTIFY_SECRET, gleicher Wert im Vault unter notify_secret).
 verify_jwt = false
+
+[functions.livekit-token]
+# Zugang zum Funk: nur mit Anmeldung, die Funktion prüft zusätzlich die Mitgliedschaft in der Fahrt.
+verify_jwt = true

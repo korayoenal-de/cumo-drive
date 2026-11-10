@@ -140,7 +140,7 @@
         "expo-camera",
         {
           "cameraPermission": "CUMO DRIVE nutzt die Kamera, um Touren aus dem Web Planer per QR Code zu übernehmen.",
-          "microphonePermission": false,
+          "microphonePermission": "CUMO DRIVE nutzt das Mikrofon für den Funk in der Gruppenfahrt, solange du den Funk Knopf drückst.",
           "recordAudioAndroid": false
         }
       ],
@@ -162,20 +162,28 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Cumo Drive nutzt deine Fotos, damit du ein Profilbild wählen kannst.",
-          "cameraPermission": "Cumo Drive nutzt die Kamera, damit du ein Profilbild aufnehmen kannst.",
-          "microphonePermission": false
+          "photosPermission": "CUMO DRIVE nutzt deine Fotos, damit du ein Profilbild wählen kannst.",
+          "cameraPermission": "CUMO DRIVE nutzt die Kamera, damit du ein Profilbild aufnehmen kannst.",
+          "microphonePermission": "CUMO DRIVE nutzt das Mikrofon für den Funk in der Gruppenfahrt, solange du den Funk Knopf drückst."
         }
       ],
       "expo-app-intents",
       [
         "expo-audio",
         {
-          "microphonePermission": false,
+          "microphonePermission": "CUMO DRIVE nutzt das Mikrofon für den Funk in der Gruppenfahrt, solange du den Funk Knopf drückst.",
           "recordAudioAndroid": false
         }
       ],
-      "./plugins/with-carplay"
+      "./plugins/with-carplay",
+      "@livekit/react-native-expo-plugin",
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "cameraPermission": "CUMO DRIVE nutzt die Kamera, um Touren aus dem Web Planer per QR Code zu übernehmen.",
+          "microphonePermission": "CUMO DRIVE nutzt das Mikrofon für den Funk in der Gruppenfahrt, solange du den Funk Knopf drückst."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
