@@ -35,6 +35,8 @@ export type SmartRequest = {
   seed?: number;
   /** Linien der bisherigen Würfe: ähnliche Runden verlieren, damit Neu würfeln wirklich etwas Neues bringt */
   shown?: LatLon[][];
+  /** intern: schon eine gedrehte Richtung, nicht noch einmal drehen */
+  rotated?: boolean;
 };
 
 export type Engine = 'cumo' | 'graphhopper' | 'valhalla';
@@ -242,7 +244,31 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         const off = lengthOff(t, req.km) ? 3000 : 0;
         candidates.push({ ...t, score: base(t) - spurKm(t) * 300 - hits * 1000 - seen - off });
       }
-      if (candidates.length) return candidates.sort((a, b) => b.score - a.score)[0];
+      // Entartete Runden (unter 35 % der Länge) nie nehmen, solange es etwas anderes gibt
+      const real = candidates.filter((t) => t.laenge_km >= req.km * 0.35);
+      const pool = real.length ? real : candidates;
+      pool.sort((a, b) => b.score - a.score);
+      const best = pool[0];
+      // Stresstest 10.11.: in Alpentälern (Chur nach Westen, Brig nach Osten, Sölden) führt die gewählte
+      // Richtung oft in ein Tal ohne Ausgang, Pässe im Winter zu. Dann zusätzlich 60 Grad links und rechts
+      // davon probieren; genommen wird eine gedrehte Runde nur, wenn sie trotz Abweichung klar besser ist.
+      if (best && !req.rotated && spurKm(best) > Math.max(3, req.km * 0.06)) {
+        onStep?.('compare');
+        const alt = await Promise.all(
+          [-60, 60].map((d) =>
+            smartRoundTrip({ ...req, bearing: (heading + d + 360) % 360, rotated: true, seed: seed + (d > 0 ? 17 : 29) }, undefined, signal).catch((e) => {
+              if (signal?.aborted) throw e;
+              return null;
+            }),
+          ),
+        );
+        const better = alt
+          .filter((t): t is SmartTour => !!t && t.laenge_km >= req.km * 0.35 && spurKm(t) < spurKm(best) - 2)
+          .map((t) => ({ ...t, score: t.score - 250 }))
+          .sort((a, b) => b.score - a.score)[0];
+        if (better && better.score > best.score) return better;
+      }
+      if (best) return best;
     } catch (e) {
       if (signal?.aborted) throw e;
       lastError = e;
@@ -590,7 +616,9 @@ async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Pr
   }
   try {
     const r = await cumoPlan(req.name, [req.start, ...via, req.start], req.profile, req.avoid, signal);
-    if (spurKm(r) < spur.km - 0.1 && r.laenge_km <= t.laenge_km * 1.25 + 3 && (r.km_je_klasse?.raus ?? 0) === 0) {
+    // Liegt fast die ganze Runde auf der Stichstraße (Tal ohne Ausgang), bleiben kaum Stützpunkte und die
+    // neue Runde schrumpft auf wenige km (Stresstest 10.11.: Bad Gastein 0 km, Chur 4,5 km). Länge halten.
+    if (spurKm(r) < spur.km - 0.1 && r.laenge_km >= t.laenge_km * 0.75 && r.laenge_km <= t.laenge_km * 1.25 + 3 && (r.km_je_klasse?.raus ?? 0) === 0) {
       return { ...t, ...r, engine: 'cumo', curves: r.curves, score: t.score };
     }
   } catch (e) {
