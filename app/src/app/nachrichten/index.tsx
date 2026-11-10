@@ -12,7 +12,6 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Size, Spacing, Type, Radius } from '@/constants/theme';
 import { clock, shortDate } from '@/lib/ausfahrten';
 import { listConversations, refreshUnread, type Conversation } from '@/lib/drivers';
-import { enablePush } from '@/lib/push';
 
 const when = (d: Date) => (d.toDateString() === new Date().toDateString() ? clock(d) : shortDate(d));
 
@@ -32,8 +31,6 @@ export default function Nachrichten() {
           .catch((e: Error) => setErr(e.message));
       void load();
       void refreshUnread();
-      // Beim ersten Öffnen der Nachrichten nach der Erlaubnis für Mitteilungen fragen (iOS fragt nur einmal)
-      void enablePush(true);
       const t = setInterval(() => void load(), 20000);
       return () => clearInterval(t);
     }, []),

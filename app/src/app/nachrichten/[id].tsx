@@ -3,9 +3,9 @@
  * Darf der andere nicht angeschrieben werden (und hat selbst noch nicht geschrieben), steht ein Hinweis
  * statt des Eingabefelds.
  */
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,7 +16,6 @@ import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/c
 import { clock, shortDate } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { listDrivers, sendDirect, useDirectChat, type Driver } from '@/lib/drivers';
-import { enablePush, setOpenChat } from '@/lib/push';
 
 export default function Unterhaltung() {
   const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
@@ -29,16 +28,6 @@ export default function Unterhaltung() {
   const [sending, setSending] = useState(false);
   const [sendErr, setSendErr] = useState<string | null>(null);
   const scroll = useRef<ScrollViewInstance>(null);
-
-  // Solange die Unterhaltung offen ist, keine Mitteilung für sie; beim ersten Öffnen nach der Erlaubnis fragen
-  useFocusEffect(
-    useCallback(() => {
-      if (!id) return;
-      setOpenChat(`dm:${id}`);
-      void enablePush(true);
-      return () => setOpenChat(null);
-    }, [id]),
-  );
 
   useEffect(() => {
     listDrivers()

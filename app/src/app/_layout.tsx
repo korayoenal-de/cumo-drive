@@ -33,7 +33,6 @@ import { ToastHost } from '@/components/ui/toast';
 import { endAllNavActivities } from '@/live/nav-live';
 import { StartScreen } from '@/components/ui/start-screen';
 import { preloadOnStart } from '@/lib/preload';
-import { PushHandler } from '@/lib/push';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -152,7 +151,6 @@ export default function RootLayout() {
       <ToastHost />
       <AppIntentHandler />
       <CarPlaySync />
-      <PushHandler userId={userId} />
     </ThemeProvider>
   );
 }

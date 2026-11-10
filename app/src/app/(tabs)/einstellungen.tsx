@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { describeEntitlement } from '@/components/paywall/membership-section';
 import { usePrivacy } from '@/components/settings/community-profile';
@@ -20,7 +20,6 @@ import { refreshEntitlement, useEntitlement } from '@/lib/entitlement';
 import { clearLocalTours } from '@/lib/library';
 import { MAP_STYLES, useMapSettings } from '@/lib/map-settings';
 import { useMyProfile } from '@/lib/profile';
-import { enablePush, pushStatus, type PushStatus } from '@/lib/push';
 import { showToast } from '@/lib/toast';
 import { syncVehicles, useVehicles, vehicleName } from '@/lib/vehicle';
 import { useVoiceChoice } from '@/lib/voice-settings';
@@ -118,41 +117,11 @@ function ProfileCard({ userId, cars }: { userId: string; cars: number }) {
   );
 }
 
-/** Stand der Mitteilungen (iOS Erlaubnis), auch nach der Rückkehr aus den iOS Einstellungen */
-function usePushStatus() {
-  const [push, setPush] = useState<PushStatus>('nicht');
-  useEffect(() => {
-    const check = () => void pushStatus().then(setPush);
-    check();
-    const sub = AppState.addEventListener('change', (s) => {
-      if (s === 'active') check();
-    });
-    return () => sub.remove();
-  }, []);
-  return [push, setPush] as const;
-}
-
 function CommunityGroup() {
   const { p, save, err } = usePrivacy();
-  const [push, setPush] = usePushStatus();
-  // Einschalten fragt iOS einmalig; danach (und zum Ausschalten) geht es nur in den iOS Einstellungen
-  const togglePush = async (on: boolean) => {
-    if (on && push === 'offen') {
-      await enablePush(true);
-      setPush(await pushStatus());
-    } else void Linking.openSettings();
-  };
   return (
     <Group label="Community" hint={err ?? 'Andere sehen deinen Namen, Wohnort und auf Wunsch deine Garage.'}>
-      <SwitchRow
-        title="Nachrichten erlauben"
-        value={p?.allowMessages ?? true}
-        onChange={(v) => {
-          void save({ allowMessages: v });
-          if (v) void enablePush(true).then(() => pushStatus().then(setPush));
-        }}
-      />
-      {push !== 'nicht' && <SwitchRow title="Mitteilungen bei Nachrichten" value={push === 'an'} onChange={(v) => void togglePush(v)} />}
+      <SwitchRow title="Nachrichten erlauben" value={p?.allowMessages ?? true} onChange={(v) => void save({ allowMessages: v })} />
       <SwitchRow title="Garage im Profil zeigen" value={p?.showGarage ?? true} onChange={(v) => void save({ showGarage: v })} />
     </Group>
   );

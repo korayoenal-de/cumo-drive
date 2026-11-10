@@ -5,7 +5,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { useSyncExternalStore } from 'react';
 
-import { forgetPush } from './push';
 import { supabase } from './supabase';
 
 let session: Session | null = null;
@@ -79,12 +78,9 @@ export async function signUp(email: string, password: string) {
 export async function deleteAccount() {
   const { error } = await supabase.rpc('delete_my_account');
   if (error) throw new Error(german(error.message));
-  // Tokens fallen per Kaskade mit, hier nur den lokalen Stand räumen
-  await forgetPush();
   await supabase.auth.signOut();
 }
 
 export async function signOut() {
-  await forgetPush();
   await supabase.auth.signOut();
 }
