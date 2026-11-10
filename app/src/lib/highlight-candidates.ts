@@ -62,11 +62,35 @@ function trimEnds(line: LatLon[], m: number): LatLon[] {
   return cut([...cut(line)].reverse()).reverse();
 }
 
+/** Rahmen je Strecke, einmal berechnet: schließt fast alle Strecken ohne Abstandsrechnung aus */
+let roadBoxes: { s: number; n: number; w: number; e: number }[] | null = null;
+function boxes() {
+  if (!roadBoxes) {
+    roadBoxes = HIGHLIGHT_ROADS.map((r) => {
+      let s = 90, n = -90, w = 180, e = -180;
+      for (const [la, lo] of r.line) {
+        if (la < s) s = la;
+        if (la > n) n = la;
+        if (lo < w) w = lo;
+        if (lo > e) e = lo;
+      }
+      return { s, n, w, e };
+    });
+  }
+  return roadBoxes;
+}
+
 function snapToRoad(p: LatLon): LatLon {
   let best: LatLon = p;
   let bd = 300;
-  for (const r of HIGHLIGHT_ROADS) {
-    for (const q of r.line) {
+  // 300 m sind etwa 0,0027 Grad Breite; in der Länge großzügig
+  const dLat = 0.003;
+  const dLon = 0.005;
+  const bx = boxes();
+  for (let k = 0; k < HIGHLIGHT_ROADS.length; k++) {
+    const b = bx[k];
+    if (p[0] < b.s - dLat || p[0] > b.n + dLat || p[1] < b.w - dLon || p[1] > b.e + dLon) continue;
+    for (const q of HIGHLIGHT_ROADS[k].line) {
       const d = haversine(p, q);
       if (d < bd) {
         bd = d;
@@ -93,7 +117,10 @@ export function highlightsForLeg(leg: Leg, corridorM: number): HighlightCandidat
   for (const ps of PASSES) {
     // Passpunkt auf unsere Strecke ziehen, wenn eine durch ihn führt: der Punkt aus der Passdatenbank liegt
     // manchmal auf einem Waldweg daneben, dann umfährt die Prüfung ihn und man fährt zurück (Juhöhe, 8.11.)
-    const p = snapToRoad(passPoint(ps));
+    // erst grob mit dem Punkt aus der Datenbank prüfen, das Einrasten kostet Rechenzeit (Plus öffnete verzögert, 10.11.)
+    const raw = passPoint(ps);
+    if (offLeg(a, b, raw) > reach + 400) continue;
+    const p = snapToRoad(raw);
     if (offLeg(a, b, p) > reach) continue;
     if (angleAt(a, p, b) < MIN_ANGLE) continue;
     const extra = (haversine(a, p) + haversine(p, b) - direct) / 1000;
