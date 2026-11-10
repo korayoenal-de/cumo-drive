@@ -108,6 +108,15 @@ export function RouteMap({
   // Offener Warnhinweis als eigene Karte über der Karte: bleibt stehen, bis man daneben tippt
   // (Tester 8.11.: die Apple Blase verschwand sofort wieder)
   const [openWarn, setOpenWarn] = useState<number | null>(null);
+  // Neue Zwischenziel Pins kurz mitzeichnen lassen: mit tracksViewChanges aus zeichnete Apple Karten frisch
+  // hinzugekommene Pins manchmal leer, ab dem 7. Punkt fehlten sie dann (Tester Gregor 10.11.)
+  const pinsKey = (pins ?? []).map((p) => p.id).join('|');
+  const [pinsFreshKey, setPinsFreshKey] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setPinsFreshKey(pinsKey), 700);
+    return () => clearTimeout(t);
+  }, [pinsKey]);
+  const pinsFresh = pinsFreshKey !== pinsKey;
   const insets = useSafeAreaInsets();
   const [ready, setReady] = useState(false);
   // nach eigenem Verschieben folgt die Kamera eine Weile nicht
@@ -571,7 +580,7 @@ export function RouteMap({
                 : undefined
             }
             zIndex={35}
-            tracksViewChanges={false}>
+            tracksViewChanges={pinsFresh}>
             <View style={styles.pin}>
               <AppText style={styles.pinText}>{pin.label}</AppText>
             </View>
