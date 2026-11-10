@@ -67,21 +67,31 @@ function read(): SavedTour[] {
   return cache;
 }
 
-let hydrating = false;
-async function hydrate() {
-  if (hydrating) return;
-  hydrating = true;
-  try {
-    const raw = await AsyncStorage.getItem(KEY);
-    const stored = raw ? (JSON.parse(raw) as SavedTour[]) : [];
-    // was in der Zwischenzeit gespeichert wurde, bleibt vorn
-    const now = cache ?? [];
-    const ids = new Set(now.map((t) => t.id));
-    cache = [...now, ...stored.filter((t) => !ids.has(t.id))];
-    for (const l of listeners) l();
-  } catch {
-    // ohne Speicher bleibt die Liste leer
-  }
+let hydrating: Promise<void> | null = null;
+function hydrate(): Promise<void> {
+  if (hydrating) return hydrating;
+  hydrating = (async () => {
+    try {
+      const raw = await AsyncStorage.getItem(KEY);
+      const stored = raw ? (JSON.parse(raw) as SavedTour[]) : [];
+      // was in der Zwischenzeit gespeichert wurde, bleibt vorn; eine Tour aus dem Konto, die schon gespeichert
+      // war, nicht ein zweites Mal (Koray 10.11.: Vogesen Karussell sechsmal, bei jedem App Start eine Kopie mehr)
+      const now = cache ?? [];
+      const ids = new Set(now.map((t) => t.id));
+      const clouds = new Set(stored.map((t) => t.cloudId).filter(Boolean));
+      cache = [...now.filter((t) => !t.cloudId || !clouds.has(t.cloudId)), ...stored.filter((t) => !ids.has(t.id))];
+      for (const l of listeners) l();
+    } catch {
+      // ohne Speicher bleibt die Liste leer
+    }
+  })();
+  return hydrating;
+}
+
+/** Wartet, bis die gespeicherten Touren geladen sind (App: AsyncStorage). Im Browser sofort. */
+async function loaded(): Promise<void> {
+  read();
+  if (!storage()) await hydrate();
 }
 
 function write(list: SavedTour[]) {
@@ -224,6 +234,9 @@ export async function syncLibrary(): Promise<void> {
   // haben sonst dieselbe Tour doppelt hochgeladen und die Kopie danach wieder heruntergeladen.
   if (sync.running) return;
   setSync({ running: true, error: null });
+  // Erst die gespeicherten Touren laden: vorher war die Liste leer, der Abgleich lud alles aus dem Konto
+  // als neue Touren herunter, und beim Laden kamen die alten dazu (Duplikate bei jedem Start)
+  await loaded();
   const { data } = await supabase.auth.getSession();
   if (!data.session) {
     setSync({ running: false });
@@ -270,6 +283,13 @@ export async function syncLibrary(): Promise<void> {
     // 3. Doppelte aufräumen: gleicher Name, gleiche Länge, gleiche Strecke, gleicher Ordner.
     //    Die älteste bleibt, die Kopien gehen auch im Konto. Seit 10.11. ohne Zeitfenster, weil ein
     //    Abgleich Fehler Kopien über Stunden verteilt angelegt hat. Veröffentlichte bleiben immer.
+    // 3a. Dieselbe Tour aus dem Konto mehrfach auf dem Gerät: nur hier entfernen, nie im Konto löschen
+    const byCloud = new Set<string>();
+    for (const t of [...read()].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
+      if (!t.cloudId) continue;
+      if (byCloud.has(t.cloudId)) dropLocalTour(t.id);
+      else byCloud.add(t.cloudId);
+    }
     const seen = new Map<string, SavedTour>();
     const dupes: SavedTour[] = [];
     for (const t of [...read()].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
