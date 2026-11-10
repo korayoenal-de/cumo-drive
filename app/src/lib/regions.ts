@@ -82,7 +82,6 @@ export function regionKm(line: LatLon[]): { sport: number; panorama: number } {
 
 /** Punkte für die Bewertung: je km in einer sportlichen Region 1,5, in einer Panorama Region 0,75 */
 export function regionScore(line: LatLon[], relaxed = false): number {
-  if ((globalThis as any).__NOREG) return 0;
   const k = regionKm(line);
   return relaxed ? k.sport * 0.75 + k.panorama * 1.5 : k.sport * 1.5 + k.panorama * 0.75;
 }
@@ -90,7 +89,6 @@ export function regionScore(line: LatLon[], relaxed = false): number {
 /** Regionen in Reichweite der Punkte als GeoJSON Fläche für den Server (Koordinaten lon, lat) */
 const areaMemo = new Map<string, unknown>();
 export function regionArea(near: LatLon[], radiusKm: number) {
-  if ((globalThis as any).__NOREG) return null;
   if (!near.length) return null;
   const key = `${radiusKm.toFixed(0)}|${near.map((p) => `${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(';')}`;
   if (areaMemo.has(key)) return areaMemo.get(key) as { type: 'Feature'; id: 'region'; properties: Record<string, never>; geometry: { type: 'MultiPolygon'; coordinates: number[][][][] } } | null;

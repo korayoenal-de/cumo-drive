@@ -22,6 +22,9 @@ import { doubledStretch } from './doubled';
 import { haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import type { Avoid } from './valhalla';
 
+/** Fahrregionen als Fläche auf dem Server (aus, siehe model) */
+const SERVER_REGIONS = false;
+
 /** Eigener Routing Server (Contabo, GraphHopper mit Sportwagen Profil). Später unter routing.rallycumo.de. */
 export const CUMO_ROUTING_URL = 'https://13-140-213-164.sslip.io';
 
@@ -421,8 +424,10 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatL
   const ex = exclusionModel(exclude, penalize) as { areas?: { features: unknown[] }; priority?: { if: string; multiply_by: string }[] };
   const fav = profile === 'kurvig' || profile === 'paesse' ? favoriteArea(near, radiusKm) : null;
   const city = profile === 'kurvig' || profile === 'paesse' ? cityArea(near, radiusKm) : null;
-  // Fahrregionen (Koray 10.11.): Straßen außerhalb kosten etwas mehr, bei Rundtour und Route; nicht für Schnell
-  const region = profile !== 'schnell' ? regionArea(near, radiusKm) : null;
+  // Fahrregionen (Koray 10.11.) bewusst nicht auf dem Server: Straßen außerhalb abzuwerten ließ die Suche viel mehr
+  // Straßen prüfen, Routen brauchten im Test 5,7 bis 6,8 statt 3,9 s, ohne messbar mehr Fahrspaß (Stresstest 3).
+  // Die Regionen wirken in der Bewertung der Rundtour (smart-roundtrip.ts). Zum Messen: SERVER_REGIONS = true.
+  const region = SERVER_REGIONS && profile !== 'schnell' ? regionArea(near, radiusKm) : null;
   const priority = [
     // Bei festen Server Profilen stecken Breite und Kurven Regeln schon im Profil
     ...(builtIn ? [] : [...WIDTH_MODEL, ...profileModel(profile)]),
