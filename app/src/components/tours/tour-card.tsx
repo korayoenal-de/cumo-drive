@@ -24,6 +24,7 @@ import { loadProfile } from '@/lib/group/ride';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import { NameDialog } from '@/components/planner/name-dialog';
 import { deleteTour, renameTour, type SavedTour } from '@/lib/library';
+import { useMyProfile } from '@/lib/profile';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
 import { shareTourLink } from '@/lib/share-link';
@@ -181,10 +182,15 @@ function RouteThumb({ tour }: { tour: SavedTour }) {
 /** Veröffentlichen mit Name und kurzer Beschreibung, oder zurückziehen. */
 function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string) => void }) {
   const session = useSession();
+  const profile = useMyProfile(session?.user.id);
+  const [title, setTitle] = useState(tour.name);
   const [author, setAuthor] = useState('');
   const [desc, setDesc] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // Fahrername vorbelegen: zuerst der Name aus dem Konto, sonst der aus der Gruppenfahrt (Koray 10.11.)
+  const [touched, setTouched] = useState(false);
+  const shownAuthor = touched ? author : author || profile?.displayName || '';
   useEffect(() => {
     void loadProfile().then((p) => {
       if (p?.name) setAuthor((a) => a || p.name);
@@ -217,10 +223,29 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
         {msg && <AppText variant="caption" style={styles.danger}>{msg}</AppText>}
       </View>
     );
-  const can = !busy && !!author.trim();
+  const can = !busy && !!shownAuthor.trim() && !!title.trim();
   return (
     <View style={styles.form}>
-      <TextInput value={author} onChangeText={setAuthor} placeholder="Dein Name in der Community" placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel="Name in der Community" maxLength={60} />
+      <View style={styles.labeled}>
+        <AppText style={styles.fieldLabel}>Name der Tour</AppText>
+        <TextInput value={title} onChangeText={setTitle} placeholder="Name der Tour" placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel="Name der Tour" maxLength={120} />
+      </View>
+      <View style={styles.labeled}>
+        <AppText style={styles.fieldLabel}>Dein Name als Fahrer</AppText>
+        <TextInput
+          value={shownAuthor}
+          onChangeText={(v) => {
+            setTouched(true);
+            setAuthor(v);
+          }}
+          placeholder="So erscheinst du in der Community"
+          placeholderTextColor={Colors.muted}
+          style={styles.field}
+          accessibilityLabel="Dein Name als Fahrer"
+          maxLength={60}
+        />
+      </View>
+      <AppText style={styles.fieldLabel}>Beschreibung (optional)</AppText>
       <TextInput
         value={desc}
         onChangeText={setDesc}
@@ -231,7 +256,14 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
         maxLength={500}
         accessibilityLabel="Beschreibung"
       />
-      <Pressable accessibilityRole="button" disabled={!can} onPress={() => void run(() => publishTour(tour, author, desc), 'In der Community veröffentlicht')} style={({ pressed }) => [styles.primary, !can && styles.disabled, pressed && styles.itemPressed]}>
+      <Pressable accessibilityRole="button" disabled={!can} onPress={() =>
+          void run(async () => {
+            // neuer Name gilt auch in Meine Touren und im Konto
+            const name = title.replace(/\s+/g, ' ').trim();
+            if (name && name !== tour.name) renameTour(tour.id, name);
+            await publishTour({ ...tour, name: name || tour.name }, shownAuthor, desc);
+          }, 'In der Community veröffentlicht')
+        } style={({ pressed }) => [styles.primary, !can && styles.disabled, pressed && styles.itemPressed]}>
         {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Veröffentlichen</AppText>}
       </Pressable>
       {msg && <AppText variant="caption" style={styles.danger}>{msg}</AppText>}
@@ -240,6 +272,8 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
 }
 
 const styles = StyleSheet.create({
+  labeled: { gap: Spacing.xs },
+  fieldLabel: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted, marginLeft: Spacing.xs },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l + 4, padding: Spacing.m, gap: Spacing.m, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 56 },
