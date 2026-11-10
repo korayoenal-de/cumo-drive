@@ -6,7 +6,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RouteMap } from '@/components/map/route-map';
@@ -56,6 +56,7 @@ export default function NavigationScreen() {
   useKeepAwake();
   const active = useActiveTour();
   const insets = useSafeAreaInsets();
+  const win = useWindowDimensions();
   const [secret, setSecret] = useState(false);
   const showSim = __DEV__ || secret;
 
@@ -933,7 +934,7 @@ export default function NavigationScreen() {
         )}
 
         {summary && (
-          <View style={styles.pad}>
+          <ScrollView style={{ maxHeight: win.height - insets.top - Spacing.l }} contentContainerStyle={styles.pad} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <InfoCard>
               <AppText variant="label">Fahrt beendet</AppText>
               <AppText style={styles.tourName} numberOfLines={2}>
@@ -944,11 +945,11 @@ export default function NavigationScreen() {
               <SavedNote saved={saved} />
               <BigButton label="Fertig" onPress={done} />
             </InfoCard>
-          </View>
+          </ScrollView>
         )}
 
         {status === 'angekommen' && (
-          <View style={styles.pad}>
+          <ScrollView style={{ maxHeight: win.height - insets.top - Spacing.l }} contentContainerStyle={styles.pad} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <InfoCard tone="good">
               <AppText variant="label">Angekommen</AppText>
               <AppText style={styles.congrats}>Starke Runde!</AppText>
@@ -960,7 +961,7 @@ export default function NavigationScreen() {
               <SavedNote saved={saved} />
               <BigButton label="Fertig" onPress={done} />
             </InfoCard>
-          </View>
+          </ScrollView>
         )}
 
         {status === 'fehler' && (
@@ -1000,7 +1001,7 @@ function StatsGrid({ st }: { st: RideStats }) {
     [formatKm(st.km, st.km < 10 ? 1 : 0), 'km'],
     [h ? `${h}:${String(m).padStart(2, '0')} h` : `${m} min`, 'Fahrzeit in Bewegung'],
     [`${Math.round(st.avgKmh)} km/h`, 'Schnitt'],
-    [st.maxKmh ? `${Math.round(st.maxKmh.value)} km/h` : '–', 'Höchstgeschwindigkeit'],
+    [st.maxKmh ? `${Math.round(st.maxKmh.value)} km/h` : '–', 'Spitze'],
     [st.maxLatG ? fmtG(st.maxLatG.value) : '–', st.maxLatG ? `Querbeschleunigung, Kurve ${st.maxLatG.side}` : 'Querbeschleunigung'],
     [st.maxBrakeG ? fmtG(st.maxBrakeG.value) : '–', 'Stärkste Bremsung'],
     [st.maxAccelG ? fmtG(st.maxAccelG.value) : '–', 'Stärkste Beschleunigung'],

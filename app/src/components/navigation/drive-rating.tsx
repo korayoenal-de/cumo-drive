@@ -61,7 +61,8 @@ export function DriveRatingCard({ driveId, highlights = [], preset = null }: { d
 
   return (
     <View style={styles.box}>
-      <ScoreSlider value={score} onChange={setScore} />
+      {/* Sterne statt Regler (Koray 10.11.) */}
+      <StarRating value={score} onChange={setScore} />
       {weak && (
         <View style={styles.box}>
           <AppText style={styles.title}>Was hat dir nicht gefallen?</AppText>
@@ -133,6 +134,27 @@ const KNOB = 32;
  * Stufenloser Regler 0 bis 100. Vor der ersten Berührung steht der Knopf halb durchsichtig in der Mitte.
  * Tippen springt mit Feder an die Stelle, Ziehen folgt dem Finger. VoiceOver: in Zehnerschritten.
  */
+/** Fünf Sterne zum Antippen; intern weiter die Note 0 bis 100 für den lernenden Pegel. */
+const STAR_SCORE = [10, 30, 55, 78, 100];
+const starsFor = (v: number | null) => (v == null ? 0 : STAR_SCORE.findIndex((x, i) => v <= x || i === STAR_SCORE.length - 1) + 1);
+
+export function StarRating({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
+  const n = starsFor(value);
+  return (
+    <View style={styles.box}>
+      <AppText style={styles.title}>Wie fandest du die Tour?</AppText>
+      <View style={styles.stars} accessibilityRole="adjustable" accessibilityValue={{ text: n ? `${n} von 5 Sternen, ${scoreWord(value!)}` : 'Noch nicht bewertet' }}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Pressable key={i} accessibilityRole="button" accessibilityLabel={`${i} ${i === 1 ? 'Stern' : 'Sterne'}`} hitSlop={4} onPress={() => onChange(STAR_SCORE[i - 1])} style={({ pressed }) => [styles.star, pressed && { transform: [{ scale: Motion.pressScale }] }]}>
+            <SymbolView name={i <= n ? 'star.fill' : 'star'} size={40} weight="semibold" tintColor={i <= n ? Colors.signal : Colors.empty} />
+          </Pressable>
+        ))}
+      </View>
+      <AppText style={[styles.word, n > 0 && styles.wordOn, styles.starWord]}>{n ? scoreWord(value!) : 'Tippe auf einen Stern'}</AppText>
+    </View>
+  );
+}
+
 export function ScoreSlider({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
   const [w, setW] = useState(0);
   const [live, setLive] = useState<number | null>(value);
@@ -238,6 +260,9 @@ export function ScoreSlider({ value, onChange }: { value: number | null; onChang
 }
 
 const styles = StyleSheet.create({
+  stars: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: Spacing.s },
+  star: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
+  starWord: { textAlign: 'center' },
   box: { gap: Spacing.m },
   title: { fontFamily: Fonts.semibold, fontSize: Type.title },
   head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },

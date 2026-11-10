@@ -286,6 +286,7 @@ export function RouteMap({
   // Pause, weil eine Bewegung von 1,15 s fertig war, bevor die nächste Position kam). Angezeigt wird die letzte
   // Position plus Geschwindigkeit mal Zeit seither; der Sprung bei einer neuen Position klingt in 0,5 s aus.
   const motion = useRef<{ p: LatLon; t: number; v: [number, number]; err: [number, number]; hFrom: number; hTo: number } | null>(null);
+  const zoomOut = useRef(0);
   const shown = useRef<{ p: LatLon; h: number } | null>(null);
   useEffect(() => {
     if (!position) return;
@@ -344,7 +345,14 @@ export function RouteMap({
       const h = (m.hFrom + dh * Math.min(1, dt / 600) + 360) % 360;
       shown.current = { p, h };
       me.setValue({ latitude: p[0], longitude: p[1], latitudeDelta: 0, longitudeDelta: 0 });
-      if (following) map.current?.setCamera({ center: ll(p), heading: h, pitch: 50, zoom: 17, altitude: 500 });
+      if (following) {
+        // Schneller fahren, weiter sehen (Tester Gregor 10.11.): ab 50 km/h langsam herauszoomen, ab 100 km/h ganz
+        const kmh = Math.hypot(m.v[0] * 111320, m.v[1] * 111320 * Math.cos((p[0] * Math.PI) / 180)) * 3600;
+        const t = Math.max(0, Math.min(1, (kmh - 50) / 50));
+        zoomOut.current += (t - zoomOut.current) * 0.04;
+        const z = zoomOut.current;
+        map.current?.setCamera({ center: ll(p), heading: h, pitch: 50, zoom: 17 - z, altitude: 500 + z * 600 });
+      }
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
