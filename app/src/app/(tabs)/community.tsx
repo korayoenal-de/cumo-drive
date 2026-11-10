@@ -553,7 +553,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   head: { gap: Spacing.m, paddingBottom: Spacing.s },
   headRow: { flexDirection: 'row', alignItems: 'center', minHeight: 44, gap: Spacing.s },
-  kicker: { flex: 1, fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
+  // Überschrift des Bereichs in der Headline Schrift (Koray 10.11.), wie Meine Touren
+  kicker: { flex: 1, fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: Leading.h2, textTransform: 'uppercase', color: Colors.text },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, height: Size.icon, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
   addText: { fontFamily: Fonts.bold, fontSize: Type.body },
   body: { gap: Spacing.s, paddingBottom: Spacing.xl },
