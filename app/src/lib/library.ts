@@ -133,6 +133,34 @@ export function renameTour(id: string, name: string) {
   void syncLibrary();
 }
 
+/**
+ * Tour duplizieren (Koray 10.11.): Kopie mit „Kopie“ im Namen im selben Ordner, ohne Konto Verknüpfung
+ * und unveröffentlicht. Der nächste Abgleich legt sie im Konto an. Liefert die Kopie.
+ */
+export function duplicateTour(id: string): SavedTour | null {
+  const list = read();
+  const t = list.find((x) => x.id === id);
+  if (!t) return null;
+  const now = new Date().toISOString();
+  const base = t.name.replace(/\s+Kopie(\s+\d+)?$/, '');
+  const names = new Set(list.map((x) => x.name));
+  let name = `${base} Kopie`;
+  for (let n = 2; names.has(name); n++) name = `${base} Kopie ${n}`;
+  const copy: SavedTour = {
+    ...t,
+    id: `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+    name: name.slice(0, 120),
+    createdAt: now,
+    updatedAt: now,
+    cloudId: undefined,
+    syncedAt: undefined,
+    published: undefined,
+  };
+  write([copy, ...list]);
+  void syncLibrary();
+  return copy;
+}
+
 /** Felder ändern, ohne die Tour als geändert zu markieren (zum Beispiel nach dem Veröffentlichen). */
 export function patchTour(id: string, patch: Partial<SavedTour>) {
   write(read().map((x) => (x.id === id ? { ...x, ...patch } : x)));

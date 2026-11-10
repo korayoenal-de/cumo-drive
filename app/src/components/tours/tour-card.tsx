@@ -23,7 +23,7 @@ import { publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import { NameDialog } from '@/components/planner/name-dialog';
-import { deleteTour, renameTour, type SavedTour } from '@/lib/library';
+import { deleteTour, duplicateTour, renameTour, type SavedTour } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
@@ -52,6 +52,16 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
   };
   const items: SheetItem[] = [
     { key: 'rename', icon: 'pencil', label: 'Umbenennen', onPress: () => setSheet('rename') },
+    {
+      key: 'dup',
+      icon: 'plus.square.on.square',
+      label: 'Duplizieren',
+      hint: 'Kopie zum Abwandeln, das Original bleibt',
+      onPress: () => {
+        const c = duplicateTour(t.id);
+        if (c) showToast(`${c.name} angelegt`, { action: { label: 'Öffnen', onPress: () => onOpen(c) } });
+      },
+    },
     { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Route direkt in CUMO DRIVE', onPress: () => void shareTourLink(t, t.profile ?? 'kurvig').catch(() => undefined) },
     { key: 'gpx', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Als GPX teilen', hint: 'Für Garmin, TomTom und andere Navis', onPress: () => void exp('gpx') },
     { key: 'kml', icon: 'map', label: 'Als KML teilen', hint: 'Für Google Earth und My Maps', onPress: () => void exp('kml') },

@@ -20,7 +20,8 @@ import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/c
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { NameDialog } from '@/components/planner/name-dialog';
 import { showToast } from '@/lib/toast';
-import { deleteTour } from '@/lib/library';
+import { setEditTour } from '@/lib/edit-tour';
+import { deleteTour, duplicateTour } from '@/lib/library';
 import { ActionBar } from '@/components/ui/action-bar';
 import { LoadingButton, type LoadStage } from '@/components/ui/loading-button';
 import { AppText } from '@/components/ui/text';
@@ -770,6 +771,23 @@ export function TourMode({
                 onPress: () => void exportTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, 'gpx').catch(() => undefined),
               },
               ...(plan.cloudId ? [{ key: 'rename', icon: 'pencil' as const, label: 'Umbenennen', onPress: () => setRenaming(true) }] : []),
+              // Duplizieren (Koray 10.11.): Kopie anlegen und gleich im Planer öffnen, das Original bleibt
+              ...(plan.cloudId
+                ? [
+                    {
+                      key: 'dup',
+                      icon: 'plus.square.on.square' as const,
+                      label: 'Duplizieren',
+                      hint: 'Du bearbeitest danach die Kopie',
+                      onPress: () => {
+                        const c = plan.cloudId ? duplicateTour(plan.cloudId) : null;
+                        if (!c) return;
+                        setEditTour(c);
+                        showToast(`${c.name} angelegt, du bearbeitest jetzt die Kopie`);
+                      },
+                    },
+                  ]
+                : []),
               // Gespeicherte Tour schließen: leert den Planer, die Tour bleibt in Meine Touren (Koray 8.11.)
               ...(plan.cloudId ? [{ key: 'close', icon: 'xmark.circle' as const, label: 'Tour schließen', hint: 'Bleibt in Meine Touren', onPress: resetForm }] : []),
               plan.cloudId
