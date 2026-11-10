@@ -22,7 +22,8 @@ import { useSession } from '@/lib/auth';
 import { publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
-import { deleteTour, type SavedTour } from '@/lib/library';
+import { NameDialog } from '@/components/planner/name-dialog';
+import { deleteTour, renameTour, type SavedTour } from '@/lib/library';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
 import { shareTourLink } from '@/lib/share-link';
@@ -33,7 +34,7 @@ const SPRING = Motion.press;
 const LAYOUT = SOFT_LAYOUT;
 
 export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: SavedTour) => void }) {
-  const [sheet, setSheet] = useState<'menu' | 'publish' | 'delete' | null>(null);
+  const [sheet, setSheet] = useState<'menu' | 'publish' | 'delete' | 'rename' | null>(null);
   const scale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 
@@ -49,6 +50,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
     }
   };
   const items: SheetItem[] = [
+    { key: 'rename', icon: 'pencil', label: 'Umbenennen', onPress: () => setSheet('rename') },
     { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Route direkt in CUMO DRIVE', onPress: () => void shareTourLink(t, t.profile ?? 'kurvig').catch(() => undefined) },
     { key: 'gpx', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Als GPX teilen', hint: 'Für Garmin, TomTom und andere Navis', onPress: () => void exp('gpx') },
     { key: 'kml', icon: 'map', label: 'Als KML teilen', hint: 'Für Google Earth und My Maps', onPress: () => void exp('kml') },
@@ -113,6 +115,21 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
           }}
         />
       </OptionsSheet>
+      <NameDialog
+        key={sheet === 'rename' ? 'offen' : 'zu'}
+        visible={sheet === 'rename'}
+        title="Tour umbenennen"
+        subtitle="Der neue Name gilt auch im Konto, im Web Planer und in der Community."
+        initial={t.name}
+        onCancel={() => setSheet(null)}
+        onSave={(n) => {
+          setSheet(null);
+          if (n !== t.name) {
+            renameTour(t.id, n);
+            showToast('Umbenannt');
+          }
+        }}
+      />
       <ConfirmSheet
         visible={sheet === 'delete'}
         title="Möchtest du diese Tour wirklich löschen?"

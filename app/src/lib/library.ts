@@ -125,6 +125,14 @@ export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?
   return saved;
 }
 
+/** Gespeicherte Tour umbenennen (Koray 10.11.); geht beim nächsten Abgleich auch ins Konto und in die Community. */
+export function renameTour(id: string, name: string) {
+  const n = name.replace(/\s+/g, ' ').trim().slice(0, 120);
+  if (!n) return;
+  write(read().map((x) => (x.id === id ? { ...x, name: n, updatedAt: new Date().toISOString() } : x)));
+  void syncLibrary();
+}
+
 /** Felder ändern, ohne die Tour als geändert zu markieren (zum Beispiel nach dem Veröffentlichen). */
 export function patchTour(id: string, patch: Partial<SavedTour>) {
   write(read().map((x) => (x.id === id ? { ...x, ...patch } : x)));

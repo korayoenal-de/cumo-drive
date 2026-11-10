@@ -159,6 +159,7 @@ export function TourMode({
   const [editName, setEditName] = useState('');
   /** Dialog Name vergeben beim ersten Speichern (Koray 8.11.) */
   const [naming, setNaming] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   const editPoint = pointOf(edit);
   function removeEdited() {
     if (!edit) return;
@@ -652,6 +653,19 @@ export function TourMode({
               void plan.save(curves, firstProfile, avoid, n);
             }}
           />
+          {/* Gespeicherte Tour umbenennen (Koray 10.11.): speichert sie gleich unter dem neuen Namen */}
+          <NameDialog
+            key={renaming ? 'r-offen' : 'r-zu'}
+            visible={renaming}
+            title="Tour umbenennen"
+            subtitle="Der neue Name gilt auch im Konto, im Web Planer und in der Community."
+            initial={plan.name.trim() || routeTour.name || 'Neue Tour'}
+            onCancel={() => setRenaming(false)}
+            onSave={(n) => {
+              setRenaming(false);
+              if (n !== plan.name.trim()) void plan.save(curves, firstProfile, avoid, n);
+            }}
+          />
           <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} check={routeCheck(warnings.length, routeTour.geprueft !== false)} twiceKm={twiceKm} line={line} />
 
 
@@ -755,6 +769,7 @@ export function TourMode({
                 label: 'Als GPX teilen',
                 onPress: () => void exportTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, 'gpx').catch(() => undefined),
               },
+              ...(plan.cloudId ? [{ key: 'rename', icon: 'pencil' as const, label: 'Umbenennen', onPress: () => setRenaming(true) }] : []),
               // Gespeicherte Tour schließen: leert den Planer, die Tour bleibt in Meine Touren (Koray 8.11.)
               ...(plan.cloudId ? [{ key: 'close', icon: 'xmark.circle' as const, label: 'Tour schließen', hint: 'Bleibt in Meine Touren', onPress: resetForm }] : []),
               plan.cloudId
