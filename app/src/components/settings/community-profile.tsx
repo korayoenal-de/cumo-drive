@@ -21,7 +21,7 @@ export function usePrivacy() {
   useEffect(() => {
     loadPrivacy()
       .then(setP)
-      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null }));
+      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true }));
   }, []);
 
   const save = async (patch: Partial<Privacy>) => {

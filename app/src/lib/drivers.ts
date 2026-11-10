@@ -40,7 +40,7 @@ export type Conversation = {
 
 export type DirectMessage = { id: number; sender: string; recipient: string; body: string; createdAt: Date; readAt: Date | null };
 
-export type Privacy = { homeName: string | null; home: LatLon | null; allowMessages: boolean; showGarage: boolean; bio: string | null };
+export type Privacy = { homeName: string | null; home: LatLon | null; allowMessages: boolean; showGarage: boolean; bio: string | null; visible: boolean };
 
 function fail(message: string): never {
   throw new Error(/permission|violat|row-level/i.test(message) ? 'Dieser Fahrer möchte gerade keine Nachrichten bekommen.' : /function|relation|column|JWT/i.test(message) ? 'Das hat nicht geklappt. Bitte nochmal versuchen.' : message);
@@ -83,15 +83,16 @@ export async function listDrivers(): Promise<Driver[]> {
 export async function loadPrivacy(): Promise<Privacy | null> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return null;
-  const { data, error } = await supabase.from('profiles').select('home_name,home_lat,home_lon,allow_messages,show_garage,bio').eq('id', u.user.id).maybeSingle();
+  const { data, error } = await supabase.from('profiles').select('home_name,home_lat,home_lon,allow_messages,show_garage,bio,show_in_drivers').eq('id', u.user.id).maybeSingle();
   if (error) fail(error.message);
-  const r = data as { home_name: string | null; home_lat: number | null; home_lon: number | null; allow_messages: boolean; show_garage: boolean; bio?: string | null } | null;
+  const r = data as { home_name: string | null; home_lat: number | null; home_lon: number | null; allow_messages: boolean; show_garage: boolean; bio?: string | null; show_in_drivers?: boolean } | null;
   return {
     homeName: r?.home_name ?? null,
     home: r?.home_lat != null && r?.home_lon != null ? [r.home_lat, r.home_lon] : null,
     allowMessages: r?.allow_messages ?? true,
     showGarage: r?.show_garage ?? true,
     bio: r?.bio ?? null,
+    visible: r?.show_in_drivers ?? true,
   };
 }
 
@@ -106,6 +107,7 @@ export async function savePrivacy(p: Partial<Privacy>) {
   }
   if (p.allowMessages != null) row.allow_messages = p.allowMessages;
   if (p.showGarage != null) row.show_garage = p.showGarage;
+  if (p.visible != null) row.show_in_drivers = p.visible;
   if ('bio' in p) row.bio = p.bio?.trim().slice(0, 160) || null;
   const { error } = await supabase.from('profiles').upsert(row);
   if (error) fail(error.message);

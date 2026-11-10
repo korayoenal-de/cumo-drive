@@ -108,8 +108,8 @@ function ProfileCard({ userId, cars }: { userId: string; cars: number }) {
           {meta}
         </AppText>
         {p && (
-          <View style={[styles.tag, p.homeName ? styles.tagGood : styles.tagMuted]}>
-            <AppText style={[styles.tagText, { color: p.homeName ? Colors.good : Colors.muted }]}>{p.homeName ? 'Sichtbar in Drivers' : 'Nicht auf der Karte'}</AppText>
+          <View style={[styles.tag, p.visible ? styles.tagGood : styles.tagMuted]}>
+            <AppText style={[styles.tagText, { color: p.visible ? Colors.good : Colors.muted }]}>{!p.visible ? 'Nicht in Drivers' : p.homeName ? 'Sichtbar in Drivers' : 'In Drivers, ohne Karte'}</AppText>
           </View>
         )}
       </View>
@@ -143,7 +143,8 @@ function CommunityGroup() {
     } else void Linking.openSettings();
   };
   return (
-    <Group label="Community" hint={err ?? 'Andere sehen deinen Namen, Wohnort und auf Wunsch deine Garage.'}>
+    <Group label="Community" hint={err ?? (p?.visible === false ? 'Du bist unter Drivers ausgeblendet. Gruppenfahrten und bestehende Unterhaltungen bleiben.' : 'Andere sehen deinen Namen, Wohnort und auf Wunsch deine Garage.')}>
+      <SwitchRow title="In Drivers sichtbar" value={p?.visible ?? true} onChange={(v) => void save({ visible: v })} />
       <SwitchRow
         title="Nachrichten erlauben"
         value={p?.allowMessages ?? true}
