@@ -258,6 +258,7 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 | Datum | Entscheidung |
 |---|---|
+| 10.11. | Keine fremden Bewertungen für Cafés, Restaurants und Hotels (Tripadvisor zu enge Regeln, Foursquare ohne Speichern und mit alten Daten); später eigene Bewertungen und Club Tipps |
 | 10.11. | Tab „Touren“ statt Meine Touren, Texte gleich; eigene Tab Symbole; Haptik gezielt (Build 21) |
 | 10.11. | CarPlay wird bei jeder Änderung an Karte und Navigation mitgedacht |
 | 10.11. | Bewertung nach der Fahrt mit fünf Sternen statt Regler; Zoom bei Tempo und mit zwei Fingern |
