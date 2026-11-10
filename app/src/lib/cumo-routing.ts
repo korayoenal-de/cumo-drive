@@ -541,7 +541,8 @@ export function checkFromDetails(path: GhPath): Pick<Tour, 'linie' | 'warnungen'
     // Mindestbreite: zwei Autos müssen aneinander vorbeikommen. GraphHopper führt maxwidth
     // (Engstelle, meist 2 bis 2,5 m) und die Straßenbreite width im selben Wert:
     // unter 1,9 m passt kein Sportwagen, 2,5 bis 3 m ist eine einspurige Straße, beides raus.
-    const mwText = typeof mw === 'number' ? String(mw).replace('.', ',') : '';
+    // höchstens zwei Nachkommastellen (Koray 10.11.: "3,3000000000000003 m breit" aus der Karte)
+    const mwText = typeof mw === 'number' ? String(Math.round(mw * 100) / 100).replace('.', ',') : '';
     // Auf kuratierten Strecken ist eine einspurige Breite (2,5 bis 3 m) nur zu prüfen, nicht gesperrt
     const narrow = typeof mw === 'number' && mw >= 2.5 && mw < 3;
     const curated = narrow && onCurated(shape[Math.floor((a + b) / 2)]);

@@ -131,7 +131,12 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       tried.add(key);
       try {
         onStep?.('route');
-        const t = await planChecked(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, own ? undefined : onStep, signal, true);
+        // Mit eigenem Server direkt dort planen: findet er keinen Weg (Pass im Winter gesperrt, Stresstest 10.11.),
+        // fiel planChecked auf Valhalla zurück und rechnete je Pass Runde 10 bis 20 s. Sperrungen prüft später
+        // die gemeinsame Bewertung der drei besten.
+        const t = own
+          ? await cumoPlan(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, signal)
+          : await planChecked(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, onStep, signal, true);
         const curves = countCurves(flatten(t).map((x) => x.p));
         const bonus = loop.passes.reduce((sum, p) => sum + TIER_WEIGHT[p.tier] * 15, 0);
         // Hin und zurück auf derselben Straße zählt hart dagegen (Tester 8.11.: Runde ab Gernsheim war fast
@@ -291,6 +296,21 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         if (better && better.score > best.score) return better;
       }
       if (best) return best;
+      // Nichts in dieser Richtung (Mayrhofen nach Süden: Talende, nur Hochgebirge): erst drei andere Richtungen
+      // mit dem eigenen Server, bevor der langsame Ersatzweg rechnet (Stresstest 10.11.: 78 bis 97 s über Valhalla)
+      if (!req.rotated) {
+        onStep?.('route');
+        const alt = await Promise.all(
+          [-90, 90, 180].map((d) =>
+            smartRoundTrip({ ...req, bearing: (heading + d + 360) % 360, rotated: true, seed: seed + d }, undefined, signal).catch((e) => {
+              if (signal?.aborted) throw e;
+              return null;
+            }),
+          ),
+        );
+        const any = alt.filter((t): t is SmartTour => !!t && t.laenge_km >= req.km * 0.35).sort((a, b) => b.score - a.score)[0];
+        if (any) return any;
+      }
     } catch (e) {
       if (signal?.aborted) throw e;
       lastError = e;
@@ -299,6 +319,10 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
 
   // die Pass Varianten sind auch dann fertig, wenn der Block oben mit einem Fehler endete
   if (passJob) await passJob;
+
+  // Gedrehte Richtung (siehe oben) nur mit dem eigenen Server: der Ersatzweg über Valhalla kostete in Alpentälern
+  // bis zu 40 s und gewann dann mit einer kurzen, wenig kurvigen Runde (Stresstest 10.11.: Sölden 33,8 km)
+  if (req.rotated) throw lastError ?? new Error('Keine Runde in dieser Richtung.');
 
   // 1. Valhalla: ohne Autobahn, Via Punkte im Hügelland, geprüft und umgeplant. Bleibt eine
   // Stichstraße über 1 km, die nicht an einem Via Punkt hängt, eine zweite Runde mit anderem Seed.

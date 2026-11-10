@@ -267,3 +267,8 @@ ${marks}
 export function formatKm(km: number, digits = 1): string {
   return km.toFixed(digits).replace('.', ',');
 }
+
+/** Lange Kommazahlen in Texten auf höchstens zwei Stellen kürzen ("3,3000000000000003 m" zu "3,3 m", Koray 10.11.) */
+export function trimDecimals(text: string): string {
+  return text.replace(/(\d+),(\d{3,})/g, (_, a: string, b: string) => String(Math.round(Number(`${a}.${b}`) * 100) / 100).replace('.', ','));
+}

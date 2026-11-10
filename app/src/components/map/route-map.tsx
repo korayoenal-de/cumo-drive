@@ -18,7 +18,7 @@ import { useLibrary } from '@/lib/library';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { passPoint, PASSES } from '@/lib/passes';
 import { RADAR_FAST_MS, RADAR_MS, RADAR_REPEAT_MS, REVEAL_MS, SCAN_MS, type RadarRoad, type RadarSpot, type Scan } from '@/lib/radar';
-import { haversine, type CheckClass, type LatLon } from '@/lib/tour';
+import { haversine, trimDecimals, type CheckClass, type LatLon } from '@/lib/tour';
 import { CarSprite, carLookFor, frameFor, TOP_FRAME } from '@/components/map/car-sprite';
 import { useVehicles } from '@/lib/vehicle';
 import { useRouteWeather, WeatherMarkers, WeatherSheet } from '@/components/map/weather-layer';
@@ -638,7 +638,7 @@ function WarnCard({ top, klasse, name, reasons, onClose }: { top: number; klasse
       </View>
       <View style={styles.warnCardBody}>
         <AppText style={styles.warnCardTitle}>{name ? `${title}: ${name}` : title}</AppText>
-        {reasons.length > 0 && <AppText style={styles.warnCardText}>{reasons.join(', ')}</AppText>}
+        {reasons.length > 0 && <AppText style={styles.warnCardText}>{reasons.map(trimDecimals).join(', ')}</AppText>}
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel="Hinweis schließen" hitSlop={12} onPress={onClose} style={styles.warnCardClose}>
         <SymbolView name="xmark" size={14} weight="semibold" tintColor={Colors.muted} />

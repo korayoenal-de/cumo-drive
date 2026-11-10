@@ -18,7 +18,7 @@ import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
 import { Colors, Motion } from '@/constants/theme';
-import { formatKm, type Warning } from '@/lib/tour';
+import { formatKm, trimDecimals, type Warning } from '@/lib/tour';
 import { selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
 
 import { bigDuration, type Mode, type PointKind } from './planner-shared';
@@ -452,7 +452,9 @@ export function TrustLine({ text = TRUST_CLEAN }: { text?: string }) {
 }
 
 /** Grund aus dem Check in Alltagssprache, passend hinter "Engstelle bei km …". */
-export function reasonText(r: string): string {
+export function reasonText(raw: string): string {
+  // ältere gespeicherte Touren: lange Kommazahlen aus der Karte auf höchstens zwei Stellen kürzen
+  const r = trimDecimals(raw);
   const narrow = /^Engstelle (.+) m$/.exec(r);
   if (narrow) return `${narrow[1]} m breit`;
   const slim = /^schmal, (.+) m, (.+)$/.exec(r);
