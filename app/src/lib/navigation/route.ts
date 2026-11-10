@@ -27,6 +27,7 @@
 import { checkLine } from '../check';
 import { closureExclude, closuresNear, closuresOnRoute } from '../road-closures';
 import { flatten, haversine, type LatLon, type Tour } from '../tour';
+import { cumoAvailable, cumoPlan } from '../cumo-routing';
 import { VALHALLA_URL, costingFor, decodePolyline6 } from '../valhalla';
 import type { Maneuver, ManeuverKind, NavRequest, NavRoute } from './types';
 
@@ -373,7 +374,21 @@ async function approachOnce(
     ...costingFor(fast || haversine(from, to) > LONG_APPROACH_M ? 'schnell' : req.profile, req.avoid),
     directions_options: DIRECTIONS,
   };
-  return piece(await post('route', body, signal));
+  const plain = piece(await post('route', body, signal));
+  if (fast || haversine(from, to) > LONG_APPROACH_M) return plain;
+  // Valhalla kennt unsere Ortsdichte nicht und führt den Weg auf die Tour gern mitten durch ein Dorf
+  // (Tester Gregor 10.11.). Mit dem eigenen Server außen herum planen und nehmen, wenn es nicht viel länger dauert.
+  try {
+    if (!(await cumoAvailable())) return plain;
+    const around = await cumoPlan('Anfahrt', [from, to], 'kurvig', req.avoid, signal, exclude, true);
+    const line = flatten(around).map((x) => x.p);
+    if (line.length < 2) return plain;
+    const traced = await traceLine(line, req, signal);
+    return traced.seconds <= plain.seconds * 1.3 + 60 ? traced : plain;
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    return plain;
+  }
 }
 
 /**

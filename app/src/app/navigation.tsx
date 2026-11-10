@@ -102,6 +102,8 @@ export default function NavigationScreen() {
   const ride = useRide();
   const vehicles = useVehicles();
   const inRide = ride.status === 'aktiv';
+  // Gruppen Bedienung nur, wenn wirklich jemand mitfährt (Tester Gregor 10.11.: allein gefahren, trotzdem Kurznachrichten)
+  const withOthers = inRide && ride.members.some((m) => m.id !== ride.me?.id);
   // Funk der Gruppenfahrt: verbinden, solange die Fahrt aktiv ist (nur Fahrten mit ID, nicht alte Fahrtcodes)
   useEffect(() => {
     if (inRide && ride.rideId) void connectFunk(ride.rideId, ride.myRole === 'lead');
@@ -763,7 +765,7 @@ export default function NavigationScreen() {
         {/* Funk: wer gerade spricht (Funk Konzept, Koray 10.11.) */}
         {running && inRide && (funk.talking || funk.speaker || funk.status === 'getrennt') && <FunkBanner funk={funk} />}
         {/* Halt der Lead oben rechts, getrennt vom Funk (Funk Konzept, Koray 10.11.) */}
-        {running && inRide && ride.myRole === 'lead' && !stop && <LeadHaltPill onAnnounce={announceStop} />}
+        {running && withOthers && ride.myRole === 'lead' && !stop && <LeadHaltPill onAnnounce={announceStop} />}
         {running && stop && (
           <StopAlert stop={stop} distM={stopDistM} mine={myStop} onDismiss={() => clearStop(false)} onCancel={() => clearStop(true)} />
         )}
@@ -811,15 +813,15 @@ export default function NavigationScreen() {
               paused={state.status === 'pausiert'}
               onPause={controls.pause}
               voice={state.voice}
-              group={inRide}
+              group={withOthers}
               onFunk={inRide ? () => setMsgOpen(!msgOpen) : undefined}
               talk={
-                inRide && funk.status !== 'nicht'
+                withOthers && funk.status !== 'nicht'
                   ? { talking: funk.talking, waiting: funk.waiting, disabled: funk.onlyLead && ride.myRole !== 'lead', onTalk: pushToTalk }
                   : undefined
               }
               extraActions={
-                inRide && funk.status !== 'nicht'
+                withOthers && funk.status !== 'nicht'
                   ? [
                       { key: 'msg', label: 'Kurznachricht an die Gruppe', icon: 'bubble.left.fill', run: () => setMsgOpen(true) },
                       { key: 'hoeren', label: funk.listen ? 'Funk stumm' : 'Funk hören', icon: funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill', run: () => setFunkListen(!funk.listen) },
