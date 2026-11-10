@@ -842,8 +842,9 @@ function RadarRoads({ radiusM, roads, spots, line, fast }: { radiusM: number; ro
 }
 
 /**
- * Scan beim ersten Planen einer Tour (Koray 9.11.): eine Linie läuft vom Start über die Zwischenziele zum Ziel,
- * Highlights leuchten als Strecke auf, bevorzugte Strecken als kleine Punkte, sobald die Linie bei ihnen ist.
+ * Suche beim ersten Planen einer Tour (Koray 9.11., ohne Linie seit 10.11.): wie bei der Rundtour tauchen nur
+ * orange Punkte auf, die Strecken im Korridor, die die Planung wahrscheinlich mitnimmt. Sie erscheinen nach und
+ * nach vom Start zum Ziel; keine Luftlinie, keine Fortschrittspunkte.
  */
 function CorridorScan({ scan }: { scan: Scan }) {
   const reduced = useReducedMotion();
@@ -854,44 +855,26 @@ function CorridorScan({ scan }: { scan: Scan }) {
       const d = Date.now() - t0;
       setT(d);
       if (d > SCAN_MS + 400) clearInterval(id);
-    }, 60);
+    }, 80);
     return () => clearInterval(id);
   }, [reduced]);
   const k = 1 - Math.pow(1 - Math.min(1, t / SCAN_MS), 2);
-  // Luftlinie in feinen Schritten, damit der Kopf gleichmäßig läuft
-  const steps = useMemo(() => {
-    const out: LatLon[] = [];
-    for (let i = 1; i < scan.pts.length; i++) {
-      const a = scan.pts[i - 1];
-      const b = scan.pts[i];
-      for (let j = 0; j < 40; j++) out.push([a[0] + ((b[0] - a[0]) * j) / 40, a[1] + ((b[1] - a[1]) * j) / 40]);
-    }
-    out.push(scan.pts[scan.pts.length - 1]);
-    return out;
-  }, [scan.pts]);
-  const lenM = useMemo(() => steps.reduce((s, p, i) => (i ? s + haversine(steps[i - 1], p) : 0), 0), [steps]);
-  const head = steps.slice(0, Math.max(2, Math.round(steps.length * k)));
-  const ticks = useMemo(() => Array.from({ length: 18 }, (_, i) => ({ frac: (i + 0.5) / 18, p: steps[Math.min(steps.length - 1, Math.round(((i + 0.5) / 18) * (steps.length - 1)))] })), [steps]);
+  const lenM = useMemo(() => scan.pts.reduce((s, p, i) => (i ? s + haversine(scan.pts[i - 1], p) : 0), 0), [scan.pts]);
+  // gleiche Größe wie die Punkte der Rundtour (dort 1,4 bis 2 Prozent des Radius)
+  const base = Math.max(250, lenM * 0.006);
   return (
     <>
-      <Polyline coordinates={head.map(ll)} strokeColor="rgba(226,70,28,0.5)" strokeWidth={2} lineCap="round" zIndex={1} />
-      {/* Geprüfte Abschnitte als feine Punkte auf der Linie, damit man sieht, wie weit der Scan ist (Koray 9.11.) */}
-      {ticks.map((t, i) =>
-        k >= t.frac ? <Circle key={`tick-${i}`} center={ll(t.p)} radius={Math.max(60, lenM * 0.001)} fillColor="rgba(226,70,28,0.55)" strokeWidth={0} zIndex={1} /> : null,
-      )}
-      {k < 1 && <Circle key="scan-head" center={ll(head[head.length - 1])} radius={Math.max(150, lenM * 0.004)} fillColor="rgba(244,244,242,0.9)" strokeColor="rgba(226,70,28,0.9)" strokeWidth={2} zIndex={3} />}
       {scan.spots.map((s) => {
         const lit = Math.max(0, Math.min(1, (k - s.frac) / 0.06));
         if (lit <= 0) return null;
-        // Alles als kleine Punkte auf der Strecke (Koray 9.11.), Highlights etwas größer und hell gerandet
         const hi = s.kind === 'highlight';
         return (
           <Circle
             key={`scan-${s.id}`}
             center={ll(s.p)}
-            radius={Math.max(150, lenM * (hi ? 0.0055 : 0.0038) * (0.7 + 0.3 * lit))}
-            fillColor={`rgba(226,70,28,${(0.9 * lit).toFixed(2)})`}
-            strokeColor={hi ? `rgba(244,244,242,${(0.95 * lit).toFixed(2)})` : `rgba(244,244,242,${(0.45 * lit).toFixed(2)})`}
+            radius={base * (hi ? 1.25 : 1) * (0.7 + 0.3 * lit)}
+            fillColor={`rgba(226,70,28,${(0.85 * lit).toFixed(2)})`}
+            strokeColor={`rgba(11,11,12,${(0.6 * lit).toFixed(2)})`}
             strokeWidth={1}
             zIndex={1}
           />

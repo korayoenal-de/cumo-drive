@@ -260,7 +260,7 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 |---|---|
 | 10.11. | CarPlay wird bei jeder Änderung an Karte und Navigation mitgedacht |
 | 10.11. | Bewertung nach der Fahrt mit fünf Sternen statt Regler; Zoom bei Tempo und mit zwei Fingern |
-| 10.11. | Funk und Halt getrennt; Halt als Pille oben rechts; Lead Blatt nach Art des Inhalts (Status, Kacheln, Schalter, Seltenes); kein "Tour für alle beenden" in der Navigation |
+| 10.11. | Funk und Halt getrennt; Halt als Pille oben rechts; Lead Blatt nach Art des Inhalts (Status, Kacheln, Schalter, Seltenes); "Tour für alle beenden" bleibt (unter Seltenes, mit Rückfrage) |
 | 10.11. | Funk über LiveKit Cloud (Frankfurt), immer verbunden, keine Aufzeichnung |
 | 10.11. | Einstellungen neu: Profilkarte oben, Gruppen, Unterseiten; Sichtbarkeit in Drivers abschaltbar |
 | 10.11. | Community Umschalter fest über der Karte; Ortssuche mit 50 km Umkreis |

@@ -20,7 +20,7 @@ Design Leinwand: "Funk in der Gruppenfahrt" (Claude Design) mit "Prototyp Lead".
 ### Lead
 * Halt: helle Pille "Halt" oben rechts unter der Abbiegekarte (gebaut). Gründe fächern nach unten auf: Sammeln, Parkplatz, Tanken, Pause, Fotostopp. Ein Tipp sendet.
 * Menü als Bottom Sheet (Prototyp, noch nicht gebaut): Kopf mit Ankunft und Funk Knopf; Status nur lesen (Kreise mit Abstand, wer zurückfällt gelb vorne); Aktionen für alle als Kacheln (Zwischenziel überspringen, Tour pausieren); Schalter (Nur die Lead spricht, Ansagen); Seltenes als Textzeilen (Planung ansehen, Lead übergeben).
-* Kein "Tour für alle beenden" in der Navigation (Koray 10.11.). "Auf alle warten" entfällt, dafür Halt Grund "Sammeln".
+* "Tour für alle beenden" gehört wieder dazu (Koray 10.11. abends, es gibt einen Anwendungsfall): im Blatt der Lead unter Seltenes als Textzeile, rot, fragt immer nach. Auf der Gruppe Seite bleibt es ebenfalls. "Auf alle warten" entfällt, dafür Halt Grund "Sammeln".
 * Heute schon im Menü: Kurznachricht, Funk stumm, Nur die Lead spricht.
 
 ### Teilnehmer

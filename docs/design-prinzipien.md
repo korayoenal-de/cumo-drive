@@ -126,7 +126,7 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 - Funk und Halt sind zwei Funktionen mit zwei Formen: Funk rund und orange, gedrückt halten; Halt helle Pille oben rechts unter der Abbiegekarte, einmal tippen, Gründe fächern nach unten auf.
 - Banner oben: „Du sprichst“ orange, „Timo spricht“ dunkel mit grüner Welle, „Funk getrennt“ gelb.
 - Funk und Navigationsansage nie gleichzeitig; Funk geht vor.
-- Blatt der Lead nach Art des Inhalts: Status nur lesen (Kreise mit Abstand), Aktionen für alle als Kacheln, Einstellungen als Schalter, Seltenes als Textzeilen. Keine Aktion, die für alle die Tour beendet.
+- Blatt der Lead nach Art des Inhalts: Status nur lesen (Kreise mit Abstand), Aktionen für alle als Kacheln, Einstellungen als Schalter, Seltenes als Textzeilen; dort auch „Tour für alle beenden“, rot und immer mit Rückfrage.
 - Gruppen Bedienung erscheint nur, wenn wirklich jemand mitfährt.
 
 **Navigation**
