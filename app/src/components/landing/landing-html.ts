@@ -258,7 +258,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">01  Planen</span>
       <h3 class="cd-h3">Feierabendrunde in drei Tipps. Alpentour Etappe für Etappe.</h3>
-      <p class="cd-body">Die schnelle Runde startet an deinem Standort: Länge oder Dauer wählen, eine Richtung oder Zufall, dazu kurvig oder entspannt. Gefällt sie nicht, würfelst du neu. Gibt es in der Gegend keine bessere Runde, sagt dir die App das ehrlich, statt dir eine schlechtere zu zeigen.</p>
+      <p class="cd-body">Die schnelle Runde startet an deinem Standort: Länge oder Dauer wählen, eine Richtung oder Zufall, und die Runde wird kurvig geplant. Gefällt sie nicht, würfelst du neu. Gibt es in der Gegend keine bessere Runde, sagt dir die App das ehrlich, statt dir eine schlechtere zu zeigen.</p>
       <p class="cd-body">Für die große Tour setzt du Start, Zwischenziele und Ziel. Jede Etappe bekommt ihr eigenes Profil, etwa schnell nach München und dann kurvig bis Imst. Pässe tippst du direkt auf der Karte an und baust sie mit einem Tipp ein.</p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <span class="cd-chip">Penser Joch <span style="color: #9A9A9F;">+7 km</span></span>
