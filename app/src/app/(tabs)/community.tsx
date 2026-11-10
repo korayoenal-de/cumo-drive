@@ -28,6 +28,8 @@ import { copyCommunityTour, listCommunity, loadCommunityTour, withdrawCommunityT
 import { requestCommunityLine, setListReach, useCommunityLine, useInReach } from '@/lib/community-lines';
 import { setEditTour } from '@/lib/edit-tour';
 import { formatKm, type LatLon } from '@/lib/tour';
+import { looksLikeAddress, searchAddress } from '@/lib/address-search';
+import { searchTowns, type Place } from '@/lib/geocode';
 
 type Seg = 'routen' | 'ausfahrten' | 'drivers';
 type Sort = 'neu' | 'kurven' | 'kurz' | 'lang';
@@ -37,6 +39,9 @@ const SORTS: { id: Sort; label: string }[] = [
   { id: 'kurz', label: 'Kurz' },
   { id: 'lang', label: 'Lang' },
 ];
+
+/** Umkreis für die Ortssuche in Routen */
+const NEAR_KM = 50;
 
 export default function Community() {
   const session = useSession();
@@ -49,6 +54,23 @@ export default function Community() {
   const unread = useUnreadMessages();
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState('');
+  // Ort, Adresse oder PLZ in der Suche: Routen mit Start im Umkreis (Koray 10.11.)
+  const [near, setNear] = useState<{ q: string; place: Place } | null>(null);
+  useEffect(() => {
+    const t = q.trim();
+    if (t.length < 3 && !/^\d{4,5}$/.test(t)) return;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      (looksLikeAddress(t) ? searchAddress(t, undefined, ctrl.signal) : searchTowns(t, undefined, ctrl.signal))
+        .then((l) => setNear(l[0] ? { q: t, place: l[0] } : null))
+        .catch(() => undefined);
+    }, 400);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [q]);
+  const nearNow = near && near.q === q.trim() ? near.place : null;
   const [sort, setSort] = useState<Sort>('neu');
   const [detent, setDetent] = useState<Detent>(1);
   const [selected, setSelected] = useState<string | null>(null);
@@ -90,13 +112,14 @@ export default function Community() {
 
   const shownTours = useMemo(() => {
     const n = q.trim().toLowerCase();
-    const l = (tours ?? []).filter((t) => !n || t.name.toLowerCase().includes(n) || (t.author ?? '').toLowerCase().includes(n) || (t.description ?? '').toLowerCase().includes(n));
+    const closeBy = (t: CommunityTour) => !!nearNow && t.start_lat != null && t.start_lon != null && kmBetween([t.start_lat, t.start_lon], nearNow.p) <= NEAR_KM;
+    const l = (tours ?? []).filter((t) => !n || t.name.toLowerCase().includes(n) || (t.author ?? '').toLowerCase().includes(n) || (t.description ?? '').toLowerCase().includes(n) || closeBy(t));
     const density = (t: CommunityTour) => (t.curves ?? 0) / Math.max(1, Number(t.km));
     if (sort === 'kurven') l.sort((a, b) => density(b) - density(a));
     if (sort === 'kurz') l.sort((a, b) => Number(a.km) - Number(b.km));
     if (sort === 'lang') l.sort((a, b) => Number(b.km) - Number(a.km));
     return l;
-  }, [tours, q, sort]);
+  }, [tours, q, sort, nearNow]);
 
   // Drivers: nach Nähe zum eigenen Wohnort, sonst nach Name; Suche über Name, Ort und Auto
   const shownDrivers = useMemo(() => {
@@ -231,7 +254,7 @@ export default function Community() {
         )}>
         {seg === 'routen' ? (
           <View style={styles.body}>
-            <TextInput value={q} onChangeText={setQ} placeholder="Routen, Regionen oder Fahrer suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Routen durchsuchen" returnKeyType="search" />
+            <TextInput value={q} onChangeText={setQ} placeholder="Route, Fahrer, Ort oder PLZ suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Routen durchsuchen" returnKeyType="search" />
             <View style={styles.wrap}>
               {SORTS.map((s) => (
                 <Chip key={s.id} label={s.label} active={sort === s.id} onPress={() => setSort(s.id)} />
@@ -245,7 +268,8 @@ export default function Community() {
                 <AppText muted>Sei der Erste: Öffne eine Tour unter Meine Touren und tippe auf Veröffentlichen.</AppText>
               </View>
             )}
-            {tours && tours.length > 0 && shownTours.length === 0 && <AppText muted>Keine Route passt zur Suche.</AppText>}
+            {nearNow && <AppText muted>Auch Routen mit Start im Umkreis von {NEAR_KM} km um {nearNow.name}</AppText>}
+            {tours && tours.length > 0 && shownTours.length === 0 && <AppText muted>{nearNow ? `Keine Route startet im Umkreis von ${NEAR_KM} km um ${nearNow.name}.` : 'Keine Route passt zur Suche.'}</AppText>}
             {shownTours
               .filter((t) => t.id !== selected)
               .map((t) => (

@@ -30,6 +30,19 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
+/**
+ * Ein einzelner Pin (oder eng beieinander) zoomt sonst ganz nah heran und landet unter Blatt oder Umschalter
+ * (Koray 10.11.). Darum mindestens etwa 25 km Ausschnitt um die Pins, die Ränder rechnen den Rest.
+ */
+function withSpan(pts: LatLon[], min = 0.22): LatLon[] {
+  const lats = pts.map((p) => p[0]);
+  const lons = pts.map((p) => p[1]);
+  const c: LatLon = [(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lons) + Math.max(...lons)) / 2];
+  const h = Math.max(min, Math.max(...lats) - Math.min(...lats)) / 2;
+  const w = Math.max(min, Math.max(...lons) - Math.min(...lons)) / 2;
+  return [...pts, [c[0] - h, c[1] - w], [c[0] + h, c[1] + w]];
+}
+
 export function CommunityMap({ pins, selected, onSelect, line, bottom, top, style }: Props) {
   const settings = useMapSettings();
   const map = useRef<MapView>(null);
@@ -39,7 +52,7 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
   // Alle Pins zeigen, wenn sich die Auswahl der Pins ändert (Routen oder Ausfahrten)
   useEffect(() => {
     if (!pins.length || selected) return;
-    const t = setTimeout(() => map.current?.fitToCoordinates(pins.map((p) => ll(p.p)), { edgePadding: pad, animated: true }), 60);
+    const t = setTimeout(() => map.current?.fitToCoordinates(withSpan(pins.map((p) => p.p)).map(ll), { edgePadding: pad, animated: true }), 60);
     return () => clearTimeout(t);
     // nur bei neuen Pins, nicht bei jeder Blatt Höhe
     // eslint-disable-next-line react-hooks/exhaustive-deps
