@@ -217,6 +217,8 @@ export function useUnreadMessages(): number {
       return () => listeners.delete(l);
     },
     () => unread,
+    // Web Export rendert vorab ohne Konto
+    () => 0,
   );
 }
 
