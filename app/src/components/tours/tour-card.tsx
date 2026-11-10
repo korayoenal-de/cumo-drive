@@ -11,23 +11,22 @@ import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import Svg, { Circle, Polyline } from 'react-native-svg';
 
 import { SOFT_LAYOUT } from '@/components/ui/action-bar';
 import { DeleteTourSheet } from '@/components/tours/delete-tour-sheet';
 import { ActionSheet, OptionsSheet, type SheetItem } from '@/components/ui/action-sheet';
-import { FunGauge } from '@/components/ui/fun-gauge';
+import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
-import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import { NameDialog } from '@/components/planner/name-dialog';
 import { duplicateTour, renameTour, type SavedTour } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
+import { thumbShape } from '@/lib/route-thumb';
 import { shareTourLink } from '@/lib/share-link';
 import { showToast } from '@/lib/toast';
 import { flatten, formatKm } from '@/lib/tour';
@@ -87,7 +86,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
           onPressIn={() => scale.set(withSpring(Motion.pressScale, SPRING))}
           onPressOut={() => scale.set(withSpring(1, SPRING))}
           style={styles.main}>
-          <RouteThumb tour={t} />
+          <TourThumb tour={t} />
           <View style={styles.text}>
             <AppText style={styles.name} numberOfLines={2}>
               {t.name}
@@ -96,26 +95,14 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
               {meta}
             </AppText>
             {t.published ? (
-              <View style={styles.badge}>
-                <AppText style={styles.badgeText}>In der Community</AppText>
-              </View>
+              <GoodBadge label="In der Community" />
             ) : t.author || t.folder === 'Community' ? (
               // Aus der Community übernommen (Koray 10.11., Variante A): grau, mit Initiale des Absenders
-              <View style={styles.fromBadge} accessible accessibilityLabel={t.author ? `Von ${t.author}` : 'Aus der Community'}>
-                <View style={styles.fromInitial}>
-                  <AppText style={styles.fromInitialText}>{(t.author ?? 'C').trim().charAt(0).toUpperCase()}</AppText>
-                </View>
-                <AppText style={styles.fromText} numberOfLines={1}>{t.author ? `Von ${t.author}` : 'Aus der Community'}</AppText>
-              </View>
+              <FromBadge author={t.author} />
             ) : null}
           </View>
         </Pressable>
-        {t.fun != null && t.fun >= 0 && (
-          <View style={styles.fun} accessible accessibilityLabel={`Fahrspaß ${t.fun} von 100, ${TOUR_FUN_NAMES[tourFunLevel(t.fun)]}`}>
-            <FunGauge level={tourFunLevel(t.fun)} size={20} />
-            <AppText style={styles.funText}>{t.fun}</AppText>
-          </View>
-        )}
+        <FunMark score={t.fun} />
         <Pressable accessibilityRole="button" accessibilityLabel={`Optionen für ${t.name}`} onPress={() => setSheet('menu')} hitSlop={4} style={({ pressed }) => [styles.round, pressed && styles.itemPressed]}>
           <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="medium" />
         </Pressable>
@@ -155,37 +142,10 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
   );
 }
 
-/** Mini Karte der Strecke: Linie in Signalfarbe, Start als Punkt. */
-function RouteThumb({ tour }: { tour: SavedTour }) {
-  const S = 56;
-  const pad = 8;
-  const pts = useMemo(() => {
-    const line = flatten(tour).map((x) => x.p);
-    if (line.length < 2) return null;
-    const step = Math.max(1, Math.floor(line.length / 120));
-    const sample = line.filter((_, i) => i % step === 0 || i === line.length - 1);
-    let s = 90, n = -90, w = 180, e = -180;
-    for (const [la, lo] of sample) {
-      s = Math.min(s, la); n = Math.max(n, la); w = Math.min(w, lo); e = Math.max(e, lo);
-    }
-    const k = Math.cos((((s + n) / 2) * Math.PI) / 180);
-    const spanX = (e - w) * k || 1e-6;
-    const spanY = n - s || 1e-6;
-    const f = (S - pad * 2) / Math.max(spanX, spanY);
-    const ox = (S - spanX * f) / 2;
-    const oy = (S - spanY * f) / 2;
-    return sample.map(([la, lo]) => [ox + (lo - w) * k * f, oy + (n - la) * f] as const);
-  }, [tour]);
-  return (
-    <View style={styles.thumb} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-      {pts && (
-        <Svg width={S} height={S}>
-          <Polyline points={pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')} fill="none" stroke={Colors.signal} strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round" />
-          <Circle cx={pts[0][0]} cy={pts[0][1]} r={3} fill={Colors.text} />
-        </Svg>
-      )}
-    </View>
-  );
+/** Mini Karte der Strecke (RouteThumb), Form einmal je Tour gerechnet */
+function TourThumb({ tour }: { tour: SavedTour }) {
+  const shape = useMemo(() => thumbShape(flatten(tour).map((x) => x.p)), [tour]);
+  return <RouteThumb shape={shape} />;
 }
 
 /** Veröffentlichen mit Name und kurzer Beschreibung, oder zurückziehen. */
@@ -289,15 +249,6 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 3 },
   name: { fontFamily: Fonts.semibold, fontSize: Type.title, lineHeight: 21 },
   meta: { fontVariant: ['tabular-nums'] },
-  badge: { alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.goodTint },
-  badgeText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.good },
-  fromBadge: { alignSelf: 'flex-start', maxWidth: '100%', marginTop: 2, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 3, paddingRight: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
-  fromInitial: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#3A3A40', alignItems: 'center', justifyContent: 'center' },
-  fromInitialText: { fontFamily: Fonts.bold, fontSize: 10, color: Colors.text },
-  fromText: { flexShrink: 1, fontFamily: Fonts.semibold, fontSize: Type.caption, color: '#C9C9CD' },
-  thumb: { width: 56, height: 56, borderRadius: Radius.m, backgroundColor: Colors.ground, overflow: 'hidden' },
-  fun: { alignItems: 'center', gap: 2, minWidth: 36 },
-  funText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
   round: { minWidth: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   item: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
   itemPressed: { opacity: 0.7, transform: [{ scale: Motion.pressScale }] },

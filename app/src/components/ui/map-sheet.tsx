@@ -66,9 +66,11 @@ type Props = {
   grabberLabel: string;
   /** Inhalt darf gerade nicht scrollen (etwa beim Ziehen eines Punkts) */
   lockScroll?: boolean;
+  /** Scrollposition des Inhalts, etwa um Karten erst beim Sichtbarwerden zu laden */
+  onScrollY?: (y: number) => void;
 };
 
-export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel, lockScroll, hideBody }: Props) {
+export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel, lockScroll, hideBody, onScrollY }: Props) {
   const insets = useSafeAreaInsets();
   const win = useWindowDimensions();
   const [boxH, setBoxH] = useState(0);
@@ -166,6 +168,7 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   }, [detent]);
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     reportScroll(e.nativeEvent.contentOffset.y);
+    onScrollY?.(e.nativeEvent.contentOffset.y);
     // Unter voller Höhe bleibt der Inhalt immer oben, der Kopf ist dann immer zu sehen
     if (detent < 2 && e.nativeEvent.contentOffset.y > 1) scrollRef?.current?.scrollTo({ y: 0, animated: false });
     if (detent === 2 && !collapsing.current && e.nativeEvent.contentOffset.y < -48) {

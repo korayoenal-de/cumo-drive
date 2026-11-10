@@ -8,14 +8,15 @@
  */
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CommunityMap, type CommunityPin } from '@/components/community/community-map';
 import { DriverCard, ringColor } from '@/components/community/driver-card';
 import { DateBlock, RideStatus } from '@/components/community/ride-bits';
+import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
 import { Chip } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
@@ -24,8 +25,8 @@ import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, shortDate, typ
 import { useSession } from '@/lib/auth';
 import { kmBetween, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
 import { copyCommunityTour, listCommunity, loadCommunityTour, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
+import { requestCommunityLine, setListReach, useCommunityLine, useInReach } from '@/lib/community-lines';
 import { setEditTour } from '@/lib/edit-tour';
-import { formatMinutes } from '@/lib/intent';
 import { formatKm, type LatLon } from '@/lib/tour';
 
 type Seg = 'routen' | 'ausfahrten' | 'drivers';
@@ -55,6 +56,11 @@ export default function Community() {
   const lines = useRef(new Map<string, LatLon[]>());
   const selRef = useRef<string | null>(null);
   const userId = session?.user.id;
+  const win = useWindowDimensions();
+
+  // Routenkarten laden ihre Linie erst, wenn sie in Sichtweite kommen: Scrollposition plus Bildschirmhöhe
+  useEffect(() => setListReach(win.height), [win.height]);
+  const onScrollY = useCallback((y: number) => setListReach(y + win.height), [win.height]);
 
   const load = useCallback(() => {
     listCommunity()
@@ -148,11 +154,16 @@ export default function Community() {
       return;
     }
     setLine(null);
-    const kind = seg;
-    (kind === 'routen' ? loadCommunityTour(id) : ausfahrtTour(id))
-      .then((full) => {
-        if (!full) return;
-        const pts = full.tour.linie.flatMap((l) => l.p);
+    // Routen teilen sich den Speicher mit den Karten der Liste (Streckenbild und Fahrspaß)
+    const tour = seg === 'routen' ? tours?.find((t) => t.id === id) : undefined;
+    const got: Promise<LatLon[] | null> = tour
+      ? requestCommunityLine(tour).then((v) => v?.line ?? null)
+      : seg === 'ausfahrten'
+        ? ausfahrtTour(id).then((full) => (full ? full.tour.linie.flatMap((l) => l.p) : null))
+        : Promise.resolve(null);
+    got
+      .then((pts) => {
+        if (!pts) return;
         lines.current.set(id, pts);
         if (selRef.current === id) setLine(pts);
       })
@@ -214,6 +225,7 @@ export default function Community() {
         detent={detent}
         onDetentChange={setDetent}
         grabberLabel={seg === 'routen' ? 'Liste der Routen' : seg === 'ausfahrten' ? 'Liste der Ausfahrten' : 'Liste der Drivers'}
+        onScrollY={onScrollY}
         header={header}
         background={(covered) => (
           <CommunityMap pins={pins} selected={selected} onSelect={select} line={line} bottom={covered} top={topH} style={StyleSheet.absoluteFill} />
@@ -354,15 +366,32 @@ function usePress() {
   };
 }
 
-/** Route: Tippen öffnet sie im Planer, das Lesezeichen übernimmt sie in Meine Touren. */
-function RouteCard({ t, mine, big, onChanged }: { t: CommunityTour; mine: boolean; big?: boolean; onChanged?: () => void }) {
+/**
+ * Route der Community, Aufbau wie TourCard in Meine Touren (Koray 10.11.): Mini Streckenbild, Name,
+ * Metazeile, Plakette (eigene grün „Von dir“, fremde grau mit Initiale), Fahrspaß mit Zahl und rechts
+ * das Lesezeichen zum Übernehmen. Tippen öffnet die Route im Planer. Linie, Streckenbild und Fahrspaß
+ * lädt die Karte erst, wenn sie in Sichtweite kommt (lib/community-lines.ts).
+ * Die Beschreibung steht nur in der großen Karte: in der Liste bliebe sonst jede Karte anders hoch,
+ * die ruhige Reihe wie in Meine Touren ginge verloren. Die Suche findet sie trotzdem.
+ */
+const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: CommunityTour; mine: boolean; big?: boolean; onChanged?: () => void }) {
   const [busy, setBusy] = useState<'open' | 'save' | 'withdraw' | null>(null);
   const [confirm, setConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [top, setTop] = useState<number | null>(null);
   const press = usePress();
+  const inReach = useInReach(big ? 0 : top);
+  const data = useCommunityLine(t, !!big || inReach);
+  // Linie nur aufblenden, wenn sie wirklich nachkommt; aus dem Speicher steht sie gleich da
+  const [fade] = useState(() => data == null);
   const km = Number(t.km);
-  const meta = [`${formatKm(km, 0)} km`, t.minutes ? formatMinutes(t.minutes) : null, t.curves ? `${t.curves} Kurven` : null].filter(Boolean).join('  ·  ');
+  const author = t.author?.trim() || null;
+  const meta = useMemo(() => {
+    const date = new Date(t.published_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+    return [`${formatKm(km, 0)} km`, t.curves ? `${t.curves} Kurven` : null, date].filter(Boolean).join('  ·  ');
+  }, [km, t.curves, t.published_at]);
+  const badge = mine ? <GoodBadge label="Von dir" /> : <FromBadge author={author} />;
 
   const open = async () => {
     if (busy) return;
@@ -396,11 +425,11 @@ function RouteCard({ t, mine, big, onChanged }: { t: CommunityTour; mine: boolea
   const bookmark = (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={saved ? 'In Meine Touren gespeichert' : 'In Meine Touren speichern'}
+      accessibilityLabel={saved ? `${t.name} ist in Meine Touren gespeichert` : `${t.name} in Meine Touren speichern`}
       accessibilityState={{ disabled: saved, busy: busy === 'save' }}
       onPress={() => void keep()}
       hitSlop={4}
-      style={[styles.round, saved && styles.roundSaved]}>
+      style={({ pressed }) => [styles.round, saved && styles.roundSaved, pressed && styles.pressed]}>
       {busy === 'save' ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name={saved ? 'bookmark.fill' : 'bookmark'} size={19} tintColor={saved ? Colors.signal : Colors.text} weight="semibold" />}
     </Pressable>
   );
@@ -411,8 +440,9 @@ function RouteCard({ t, mine, big, onChanged }: { t: CommunityTour; mine: boolea
         <View style={styles.row}>
           <View style={styles.flex}>
             <AppText style={styles.bigName} numberOfLines={2}>{t.name}</AppText>
-            <AppText variant="caption" muted numberOfLines={1}>{mine ? 'Von dir' : `Von ${t.author || 'einem Fahrer'}`}</AppText>
+            {badge}
           </View>
+          <FunMark score={data?.fun} />
           {bookmark}
         </View>
         <View style={styles.metrics}>
@@ -452,27 +482,31 @@ function RouteCard({ t, mine, big, onChanged }: { t: CommunityTour; mine: boolea
   }
 
   return (
-    <Animated.View style={[styles.card, styles.cardList, press.style]}>
-      <View style={styles.row}>
+    <Animated.View onLayout={(e) => setTop(Math.round(e.nativeEvent.layout.y))} style={[styles.tourCard, press.style]}>
+      <View style={styles.tourRow}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${t.name}, ${meta}`}
+          accessibilityLabel={`${t.name}, ${meta}, ${mine ? 'von dir' : author ? `von ${author}` : 'aus der Community'}`}
           accessibilityHint="Öffnet die Route auf der Karte, dort startest du die Fahrt"
           onPress={() => void open()}
           onPressIn={press.onPressIn}
           onPressOut={press.onPressOut}
-          style={styles.main}>
-          <AppText style={styles.name} numberOfLines={2}>{t.name}</AppText>
-          <AppText variant="caption" muted numberOfLines={1} style={styles.num}>{meta}</AppText>
-          <AppText variant="caption" muted numberOfLines={1}>{mine ? 'Von dir' : `Von ${t.author || 'einem Fahrer'}`}</AppText>
-          {t.description ? <AppText variant="caption" style={styles.desc} numberOfLines={2}>{t.description}</AppText> : null}
+          style={styles.tourMain}>
+          <RouteThumb shape={data?.thumb} fade={fade} />
+          <View style={styles.tourText}>
+            <AppText style={styles.tourName} numberOfLines={2}>{t.name}</AppText>
+            <AppText variant="caption" muted numberOfLines={1} style={styles.num}>{meta}</AppText>
+            {badge}
+          </View>
+          {busy === 'open' && <ActivityIndicator color={Colors.muted} />}
         </Pressable>
+        <FunMark score={data?.fun} reserve />
         {bookmark}
       </View>
       {err && <AppText variant="caption" style={styles.error}>{err}</AppText>}
     </Animated.View>
   );
-}
+});
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
@@ -577,6 +611,13 @@ const styles = StyleSheet.create({
   desc: { color: Colors.text, opacity: 0.8 },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   roundSaved: { backgroundColor: Colors.signalTint },
+  pressed: { opacity: 0.7 },
+  // Routenkarte in der Liste: Maße wie TourCard in Meine Touren
+  tourCard: { backgroundColor: Colors.surface, borderRadius: Radius.l + 4, padding: Spacing.m, gap: Spacing.m, overflow: 'hidden' },
+  tourRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  tourMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 56 },
+  tourText: { flex: 1, gap: 3 },
+  tourName: { fontFamily: Fonts.semibold, fontSize: Type.title, lineHeight: 21 },
   name: { fontFamily: Fonts.semibold, fontSize: Type.title },
   bigName: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, textTransform: 'uppercase' },
   metrics: { flexDirection: 'row', gap: Spacing.xxl },

@@ -5,22 +5,24 @@
  * Treffpunkt und Plätze, Mitfahren lässt sich anfragen. Chat, Nachrichten und das Verwalten eigener
  * Ausfahrten bleiben in der App, das sagt ein Hinweis statt einer halben Funktion.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, longDate, requestAusfahrt, shortDate, withdrawAusfahrt, type Ausfahrt } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { copyCommunityTour, listCommunity, loadCommunityTour, type CommunityTour } from '@/lib/community';
+import { useCommunityLine } from '@/lib/community-lines';
 import { kmBetween, listDrivers, type Driver } from '@/lib/drivers';
+import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import { showToast } from '@/lib/toast';
 import { formatKm, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { currentVehicle, vehicleName } from '@/lib/vehicle';
 import { Radius, Spacing } from '@/constants/theme';
 
 import { bigDuration } from './planner-shared';
-import { Chip, Metric } from './web-parts';
+import { Chip, Gauge, Metric } from './web-parts';
 import { BODY, C } from './web-shared';
 import { S } from './web-styles';
-import { Badge, Field, pillBtn, Segmented, ViewTitle } from './web-ui';
+import { Badge, Field, FromBadge, pillBtn, RouteThumb, Segmented, ViewTitle } from './web-ui';
 
 export type Seg = 'routen' | 'ausfahrten' | 'drivers';
 export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt' | 'driver'; p: LatLon; label: string; ring?: string };
@@ -228,50 +230,87 @@ function EmptyCard(props: { title: string; text: string }) {
   );
 }
 
-function RouteCard(props: { t: CommunityTour; mine: boolean; selected: boolean; onSelect: () => void; onOpen: () => void }) {
+/**
+ * Route wie TourRow in Meine Touren: Mini Streckenbild, Name, Metazeile, Plakette, Fahrspaß mit Zahl und
+ * das Lesezeichen rechts. Tippen wählt die Route auf der Karte und klappt Beschreibung und Öffnen auf.
+ * Linie und Fahrspaß kommen erst, wenn die Karte ins Bild scrollt (lib/community-lines.ts).
+ */
+const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boolean; selected: boolean; onSelect: () => void; onOpen: () => void }) {
   const { t } = props;
   const [saving, setSaving] = useState(false);
-  const date = new Date(t.published_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
-  const meta = [`${formatKm(Number(t.km), 0)} km`, t.minutes ? bigDuration(t.minutes) : null, t.curves ? `${t.curves} Kurven` : null].filter(Boolean).join('  ·  ');
+  const [seen, setSeen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || seen || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver((es) => {
+      if (es.some((e) => e.isIntersecting)) setSeen(true);
+    }, { rootMargin: '200px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [seen]);
+  // ohne IntersectionObserver (sehr alte Browser) gleich laden
+  const data = useCommunityLine(t, seen || props.selected || typeof IntersectionObserver === 'undefined');
+  const author = t.author?.trim() || null;
+  const date = new Date(t.published_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+  const meta = [`${formatKm(Number(t.km), 0)} km`, t.curves ? `${t.curves} Kurven` : null, date].filter(Boolean).join('  ·  ');
+  const fun = data?.fun;
   return (
-    <div style={{ ...card, background: props.selected ? C.surface2 : C.surface }}>
-      <button
-        aria-expanded={props.selected}
-        onClick={props.onSelect}
-        style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start', textAlign: 'left', background: 'transparent', border: 'none', padding: 0, color: C.text, cursor: 'pointer' }}>
-        <span style={{ font: `700 17px/22px ${BODY}` }}>{t.name}</span>
-        <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted }}>{meta}</span>
-        <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted }}>{[props.mine ? 'Von dir' : t.author ? `Von ${t.author}` : null, date].filter(Boolean).join(', ')}</span>
-      </button>
+    <div ref={ref} style={{ ...card, padding: Spacing.m, gap: Spacing.m, background: props.selected ? C.surface2 : C.surface }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.m }}>
+        <button
+          aria-expanded={props.selected}
+          aria-label={`${t.name}, ${meta}, ${props.mine ? 'von dir' : author ? `von ${author}` : 'aus der Community'}`}
+          onClick={props.onSelect}
+          style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: Spacing.m, textAlign: 'left', background: 'transparent', border: 'none', padding: 0, color: C.text, cursor: 'pointer' }}>
+          <RouteThumb shape={data?.thumb ?? null} />
+          <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ font: `700 17px/22px ${BODY}`, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.name}</span>
+            <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{meta}</span>
+            {props.mine ? <Badge tone="good">Von dir</Badge> : <FromBadge author={author} />}
+          </span>
+        </button>
+        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flex: 'none', minWidth: 36 }} aria-label={fun != null && fun >= 0 ? `Fahrspaß ${fun} von 100, ${TOUR_FUN_NAMES[tourFunLevel(fun)]}` : undefined}>
+          {fun != null && fun >= 0 ? (
+            <>
+              <Gauge level={tourFunLevel(fun)} size={20} />
+              <span style={{ ...S.metricValue, fontSize: 17 }}>{fun}</span>
+            </>
+          ) : null}
+        </span>
+        <button
+          aria-label={`${t.name} in Meine Touren speichern`}
+          title="In Meine Touren speichern"
+          disabled={saving}
+          onClick={() => {
+            setSaving(true);
+            copyCommunityTour(t)
+              .then(() => showToast('In Meine Touren gespeichert'))
+              .catch(() => showToast('Speichern hat nicht geklappt', { tone: 'error' }))
+              .finally(() => setSaving(false));
+          }}
+          style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: props.selected ? C.surface : C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="16" height="18" viewBox="0 0 18 20" aria-hidden fill="none" stroke={C.text} strokeWidth="2" strokeLinejoin="round">
+            <path d="M2 2h14v16l-7-4.5L2 18z" />
+          </svg>
+        </button>
+      </div>
       {props.selected ? (
         <>
-          {t.description ? <p style={{ ...S.muted, color: C.text }}>{t.description}</p> : null}
-          <div style={{ display: 'flex', gap: Spacing.s, alignItems: 'center' }}>
-            <button style={{ ...S.primary, height: 52 }} onClick={props.onOpen}>
-              Im Planer öffnen
-            </button>
-            <button
-              aria-label="In Meine Touren speichern"
-              title="In Meine Touren speichern"
-              disabled={saving}
-              onClick={() => {
-                setSaving(true);
-                copyCommunityTour(t)
-                  .then(() => showToast('In Meine Touren gespeichert'))
-                  .catch(() => showToast('Speichern hat nicht geklappt', { tone: 'error' }))
-                  .finally(() => setSaving(false));
-              }}
-              style={{ width: 52, height: 52, flex: 'none', borderRadius: 26, border: 'none', background: C.ground, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="18" height="20" viewBox="0 0 18 20" aria-hidden fill="none" stroke={C.text} strokeWidth="2" strokeLinejoin="round">
-                <path d="M2 2h14v16l-7-4.5L2 18z" />
-              </svg>
-            </button>
+          <div style={S.metrics}>
+            <Metric label="Strecke" value={`${formatKm(Number(t.km), 0)} km`} />
+            {t.minutes ? <Metric label="Fahrzeit" value={bigDuration(t.minutes)} /> : null}
+            {t.curves ? <Metric label="Kurven" value={String(t.curves)} /> : null}
           </div>
+          {t.description ? <p style={{ ...S.muted, color: C.text, margin: 0 }}>{t.description}</p> : null}
+          <button style={{ ...S.primary, height: 52 }} onClick={props.onOpen}>
+            Im Planer öffnen
+          </button>
         </>
       ) : null}
     </div>
   );
-}
+});
 
 function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void; onChanged: () => void; onRoute: () => void }) {
   const { r } = props;

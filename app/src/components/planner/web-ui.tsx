@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { thumbShape, type ThumbShape } from '@/lib/route-thumb';
 import { flatten, type Tour } from '@/lib/tour';
 
 import { BODY, C, DISPLAY } from './web-shared';
@@ -208,36 +209,34 @@ export function Segmented<T extends string>(props: { value: T; options: { id: T;
   );
 }
 
-/** Mini Streckenbild wie in Meine Touren der App: Linie in Signalfarbe, Start als Punkt */
-export function RouteThumb(props: { tour: Tour; size?: number }) {
+/**
+ * Mini Streckenbild wie in Meine Touren der App: Linie in Signalfarbe, Start als Punkt.
+ * Statt der Tour geht auch eine fertige Form (shape); fehlt beides, bleibt die Fläche als ruhiger Platzhalter.
+ */
+export function RouteThumb(props: { tour?: Tour; shape?: ThumbShape | null; size?: number }) {
   const size = props.size ?? 56;
-  const pad = 8;
-  const pts = useMemo(() => {
-    const line = flatten(props.tour).map((x) => x.p);
-    if (line.length < 2) return null;
-    const step = Math.max(1, Math.floor(line.length / 120));
-    const sample = line.filter((_, i) => i % step === 0 || i === line.length - 1);
-    let s = 90, n = -90, w = 180, e = -180;
-    for (const [la, lo] of sample) {
-      s = Math.min(s, la); n = Math.max(n, la); w = Math.min(w, lo); e = Math.max(e, lo);
-    }
-    const k = Math.cos((((s + n) / 2) * Math.PI) / 180);
-    const spanX = (e - w) * k || 1e-6;
-    const spanY = n - s || 1e-6;
-    const f = (size - pad * 2) / Math.max(spanX, spanY);
-    const ox = (size - spanX * f) / 2;
-    const oy = (size - spanY * f) / 2;
-    return sample.map(([la, lo]) => [ox + (lo - w) * k * f, oy + (n - la) * f] as const);
-  }, [props.tour, size]);
+  const own = useMemo(() => (props.tour ? thumbShape(flatten(props.tour).map((x) => x.p), size) : null), [props.tour, size]);
+  const shape = props.shape !== undefined ? props.shape : own;
   return (
     <div aria-hidden style={{ width: size, height: size, flex: 'none', borderRadius: Radius.m, background: C.surface2, overflow: 'hidden' }}>
-      {pts ? (
-        <svg width={size} height={size}>
-          <polyline points={pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')} fill="none" stroke={C.signal} strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round" />
-          <circle cx={pts[0][0]} cy={pts[0][1]} r={3} fill={C.text} />
+      {shape ? (
+        <svg width={size} height={size} style={{ animation: props.shape !== undefined ? `cumo-fade 220ms ${EASE_OUT}` : undefined }}>
+          <polyline points={shape.points} fill="none" stroke={C.signal} strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round" />
+          <circle cx={shape.start[0]} cy={shape.start[1]} r={3} fill={C.text} />
         </svg>
       ) : null}
     </div>
+  );
+}
+
+/** Graue Plakette mit Initiale des Absenders (wie FromBadge in der App, Koray 10.11. Variante A) */
+export function FromBadge(props: { author?: string | null }) {
+  const name = props.author?.trim();
+  return (
+    <span style={{ alignSelf: 'flex-start', maxWidth: '100%', display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px 3px 3px', borderRadius: Radius.pill, background: C.surface2, boxSizing: 'border-box' }}>
+      <span aria-hidden style={{ width: 18, height: 18, flex: 'none', borderRadius: 9, background: '#3A3A40', color: C.text, font: `700 10px/18px ${BODY}`, textAlign: 'center' }}>{(name || 'C').charAt(0).toUpperCase()}</span>
+      <span style={{ font: `700 13px/16px ${BODY}`, color: '#C9C9CD', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name ? `Von ${name}` : 'Aus der Community'}</span>
+    </span>
   );
 }
 

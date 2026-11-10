@@ -143,6 +143,6 @@ export const S: Record<string, CSSProperties> = {
 if (typeof document !== 'undefined' && !document.getElementById('cd-spin')) {
   const st = document.createElement('style');
   st.id = 'cd-spin';
-  st.textContent = '@keyframes cdspin{to{transform:rotate(360deg)}} button:disabled{opacity:.45;cursor:default} [role=menuitem]:hover{background:#1F1F22} button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #E2461C;outline-offset:2px}';
+  st.textContent = '@keyframes cdspin{to{transform:rotate(360deg)}} @keyframes cumo-fade{from{opacity:0}to{opacity:1}} button:disabled{opacity:.45;cursor:default} [role=menuitem]:hover{background:#1F1F22} button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #E2461C;outline-offset:2px}';
   document.head.appendChild(st);
 }

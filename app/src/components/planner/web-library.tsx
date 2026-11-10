@@ -22,7 +22,7 @@ import { Radius, Spacing } from '@/constants/theme';
 import { Chip, Gauge } from './web-parts';
 import { BODY, C } from './web-shared';
 import { S } from './web-styles';
-import { Badge, ConfirmSheet, Field, MoreMenu, pillBtn, RouteThumb, ViewTitle, WebSheet } from './web-ui';
+import { Badge, ConfirmSheet, Field, FromBadge, MoreMenu, pillBtn, RouteThumb, ViewTitle, WebSheet } from './web-ui';
 
 const SORTS: { id: SortKey; label: string }[] = [
   { id: 'neu', label: 'Neueste' },
@@ -115,7 +115,7 @@ function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTo
         <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ font: `700 17px/22px ${BODY}`, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.name}</span>
           <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{meta}</span>
-          {t.published ? <Badge tone="good">In der Community</Badge> : t.author || t.folder === 'Community' ? <Badge tone="muted">{t.author ? `Von ${t.author}` : 'Aus der Community'}</Badge> : null}
+          {t.published ? <Badge tone="good">In der Community</Badge> : t.author || t.folder === 'Community' ? <FromBadge author={t.author} /> : null}
         </span>
       </button>
       {t.fun != null && t.fun >= 0 ? (
