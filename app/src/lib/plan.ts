@@ -14,7 +14,7 @@ import { route, VALHALLA_URL, type Avoid } from './valhalla';
 export type PlanStep = 'route' | 'traffic' | 'check' | 'fix' | 'compare';
 
 /** direkt: Etappen, auf denen die kurvige Variante nichts brachte und der direkte Weg gewählt wurde */
-export type PlannedTour = Tour & { minutes: number; fixes: number; direkt?: number; kurvenKm?: number; autobahnKm?: number; wohnKm?: number };
+export type PlannedTour = Tour & { minutes: number; fixes: number; direkt?: number; kurvenKm?: number; autobahnKm?: number; wohnKm?: number; stadtKm?: number; bebautKm?: number };
 
 /** Hinweis für die Route, wenn kurvig nichts Besseres fand (Koray 7.11.: dann ist der direkte Weg okay) */
 export function directNote(n: number | undefined, legs: number): string | null {
@@ -26,14 +26,20 @@ export function directNote(n: number | undefined, legs: number): string | null {
 /**
  * Lohnt die kurvige Variante? Sie muss beim Fahrspaß klar vorn liegen, sonst ist sie nur ein Umweg
  * durch Orte (Testfahrt 7.11.: sehr kurvig ab Heppenheim führte im Zickzack durch die Stadt).
+ * Seit 10.11. (Stresstest) zählt der Fahrspaß Wert statt der km auf kurvigen Kanten: die sind auch auf
+ * guten Strecken nur wenige km, und bei längeren Etappen gewann so fast immer der direkte Weg, etwa
+ * Titisee nach Lindau mit 75 km Autobahn und Fahrspaß 3 statt kurvig mit Fahrspaß 40.
  */
 function curvyWorthIt(curvy: PlannedTour, direct: PlannedTour): boolean {
   if (curvy.laenge_km <= direct.laenge_km * 1.05) return true;
-  // vom eigenen Server: km auf wirklich kurvigen Kanten; der Umweg muss sich in Kurven auszahlen
-  if (curvy.kurvenKm != null && direct.kurvenKm != null) {
-    const extra = curvy.laenge_km - direct.laenge_km;
-    return curvy.kurvenKm >= direct.kurvenKm + Math.max(1, 0.2 * extra);
-  }
+  // Umweg über das Doppelte ist zu viel, egal wie kurvig
+  if (curvy.laenge_km > direct.laenge_km * 2) return false;
+  // nicht durch Orte: höchstens 2 km plus 3 % mehr in Wohnstraßen als der direkte Weg
+  const townOk = curvy.wohnKm == null || direct.wohnKm == null || curvy.wohnKm <= direct.wohnKm + 2 + 0.03 * curvy.laenge_km;
+  if (!townOk) return false;
+  // Der direkte Weg führt zu einem guten Teil über die Autobahn: kurvig fährt fast ohne, dann lohnt es sich
+  if (direct.autobahnKm != null && curvy.autobahnKm != null && direct.autobahnKm > direct.laenge_km * 0.2 && curvy.autobahnKm < direct.autobahnKm * 0.3 && curvy.laenge_km <= direct.laenge_km * 1.6)
+    return true;
   const a = tourFun(flatten(curvy).map((x) => x.p))?.score ?? 0;
   const b = tourFun(flatten(direct).map((x) => x.p))?.score ?? 0;
   return a >= b + 6;
@@ -278,6 +284,8 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
   let geprueft = true;
   let autobahn: number | undefined;
   let wohn: number | undefined;
+  let stadt: number | undefined;
+  let bebaut: number | undefined;
   parts.forEach((t, i) => {
     t.linie.forEach((run, j) => {
       const p = i > 0 && j === 0 ? run.p.slice(1) : run.p;
@@ -295,6 +303,8 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
     geprueft = geprueft && !!t.geprueft;
     if (t.autobahnKm != null) autobahn = (autobahn ?? 0) + t.autobahnKm;
     if (t.wohnKm != null) wohn = (wohn ?? 0) + t.wohnKm;
+    if (t.stadtKm != null) stadt = (stadt ?? 0) + t.stadtKm;
+    if (t.bebautKm != null) bebaut = (bebaut ?? 0) + t.bebautKm;
   });
   return {
     name,
@@ -309,6 +319,8 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
     ...(direkt ? { direkt } : {}),
     ...(autobahn != null ? { autobahnKm: +autobahn.toFixed(1) } : {}),
     ...(wohn != null ? { wohnKm: +wohn.toFixed(1) } : {}),
+    ...(stadt != null ? { stadtKm: +stadt.toFixed(1) } : {}),
+    ...(bebaut != null ? { bebautKm: +bebaut.toFixed(1) } : {}),
   };
 }
 

@@ -13,7 +13,7 @@ import { checkLine } from './check';
 import { HIGHLIGHT_ROADS, type HighlightRoad } from './highlight-roads';
 import { findHighlights } from './navigation/highlights';
 import { cumulativeKm } from './navigation/route';
-import { cumoAvailable, cumoPlan, cumoRoundTrips } from './cumo-routing';
+import { bigCityKm, cumoAvailable, cumoPlan, cumoRoundTrips } from './cumo-routing';
 import { doubledStretch } from './doubled';
 import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from './graphhopper';
 import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
@@ -175,7 +175,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       // ihr Hin und Zurück nur ein Drittel, und sie gewannen gegen bessere freie Runden (Bensheim, Osten:
       // 10,9 km Hin und Zurück über die Juhöhe, bei jedem Neu würfeln dieselbe Runde).
       const base = (t: PlannedTour & { curves: number }) =>
-        scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading) + (passBonus.get(t) ?? 0);
+        scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading) - townPenalty(t) + (passBonus.get(t) ?? 0);
       const passCands = candidates.splice(0);
       const ranked = [...free6, ...loops, ...circles]
         .filter((t) => (t.km_je_klasse?.raus ?? 0) === 0)
@@ -433,11 +433,34 @@ function curvyShare(t: PlannedTour): number {
  */
 function offCourse(t: PlannedTour, start: LatLon, heading: number | undefined): number {
   if (heading === undefined) return 0;
-  const line = flatten(t).map((x) => x.p);
+  const f = flatten(t);
+  const line = f.map((x) => x.p);
   const c: LatLon = [line.reduce((a, q) => a + q[0], 0) / line.length, line.reduce((a, q) => a + q[1], 0) / line.length];
-  if (haversine(start, c) < 2000) return 0;
-  const d = Math.abs(((bearing(start, c) - heading + 540) % 360) - 180);
-  return Math.max(0, d - 40) * 3;
+  const centre = haversine(start, c) < 2000 ? 0 : Math.max(0, Math.abs(((bearing(start, c) - heading + 540) % 360) - 180) - 40) * 3;
+  // Dazu jedes Stück hinter dem Start (mehr als 110 Grad neben der Richtung, weiter als 6 km weg): 4 Punkte je km.
+  // Der Schwerpunkt allein merkte einen Schlenker auf die Gegenseite kaum (Koray 10.11.: Osten gewählt, Runde
+  // westlich um Mannheim herum).
+  let behind = 0;
+  for (let i = 1; i < f.length; i++) {
+    const p = f[i].p;
+    if (haversine(start, p) < 6000) continue;
+    if (Math.abs(((bearing(start, p) - heading + 540) % 360) - 180) > 110) behind += f[i].km - f[i - 1].km;
+  }
+  return centre + behind * 4;
+}
+
+/**
+ * Abzug für Großstadt und bebaute Gebiete (Koray 10.11.: in der Nähe von Großstädten ist meistens keine gute
+ * Route): je km in einer Großstadt Zone 8 Punkte (Liste BIG_CITIES, Städte mit Wegpunkt ausgenommen),
+ * je km Großstadt laut Server 10, je km bebaut laut Server 2. Ergebnis je Tour gemerkt.
+ */
+const townMemo = new WeakMap<object, number>();
+function townPenalty(t: PlannedTour): number {
+  const known = townMemo.get(t.linie);
+  if (known !== undefined) return known;
+  const v = bigCityKm(flatten(t).map((x) => x.p), [t.wegpunkte[0]]) * 8 + (t.stadtKm ?? 0) * 10 + (t.bebautKm ?? 0) * 2;
+  townMemo.set(t.linie, v);
+  return v;
 }
 
 /**

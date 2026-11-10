@@ -13,6 +13,8 @@ import { gzipSync, strToU8 } from 'fflate';
 import { Platform } from 'react-native';
 
 import type { PlannedTour } from './plan';
+import { BIG_CITIES } from '@/data/big-cities';
+
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from './highlight-roads';
 import { countCurves } from './stats';
 import { doubledStretch } from './doubled';
@@ -107,9 +109,29 @@ export function allowTurnAt(p: LatLon) {
   turnAt.add(pkey(p));
 }
 
-const DETAILS = ['road_class', 'surface', 'track_type', 'max_width', 'street_name', 'street_ref', 'curvature'];
+const DETAILS = ['road_class', 'surface', 'track_type', 'max_width', 'street_name', 'street_ref', 'curvature', 'urban_density'];
 
-/** Kleine Quadrate (etwa 120 m) um gesperrte Stellen, für den Ausschluss per custom_model. */
+/** Rechteck um den Abschnitt a bis b, halfM Meter breit nach jeder Seite und über die Enden hinaus */
+function corridorRect(a: LatLon, b: LatLon, halfM: number): number[][] {
+  const ky = 110540;
+  const kx = 111320 * Math.cos((a[0] * Math.PI) / 180);
+  const dx = (b[1] - a[1]) * kx;
+  const dy = (b[0] - a[0]) * ky;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = (dx / len) * halfM;
+  const uy = (dy / len) * halfM;
+  const r5 = (v: number) => Math.round(v * 1e5) / 1e5;
+  const corner = (base: LatLon, along: number, side: number) => [r5(base[1] + (along * ux - side * uy) / kx), r5(base[0] + (along * uy + side * ux) / ky)];
+  const c1 = corner(a, -1, 1);
+  return [c1, corner(b, 1, 1), corner(b, 1, -1), corner(a, -1, -1), c1];
+}
+
+/**
+ * Kleine Quadrate (etwa 120 m) um gesperrte Stellen, für den Ausschluss per custom_model.
+ * Doppelt gefahrene Stücke (penalize) als durchgehender Korridor: Punkte, die weniger als 800 m auseinander
+ * liegen, werden mit einem Rechteck verbunden (Stresstest 10.11.: 60 einzelne Quadrate deckten 30 km Rückweg
+ * auf derselben Straße kaum ab, die Route blieb dort).
+ */
 function exclusionModel(points: LatLon[], penalize: LatLon[] = []) {
   if (!points.length && !penalize.length) return {};
   const d = 0.0006;
@@ -123,11 +145,20 @@ function exclusionModel(points: LatLon[], penalize: LatLon[] = []) {
     },
   });
   const ex = points.slice(0, 40).map((p, i) => box(p, `ex${i}`));
-  // Schon befahrene Straße: deutlich teurer, aber nicht verboten (manchmal gibt es nur die eine)
-  const dup = penalize.slice(0, 60).map((p, i) => box(p, `dup${i}`));
+  const polys: number[][][][] = [];
+  for (let i = 0; i < penalize.length && polys.length < 300; i++) {
+    const p = penalize[i];
+    const next = penalize[i + 1];
+    const prev = penalize[i - 1];
+    if (next && haversine(p, next) < 800) polys.push([corridorRect(p, next, 60)]);
+    // einzelner Punkt ohne Nachbarn: kleines Quadrat
+    else if (!prev || haversine(prev, p) >= 800) polys.push([corridorRect(p, p, 60)]);
+  }
+  const dup = polys.length ? [{ type: 'Feature', id: 'dup', properties: {}, geometry: { type: 'MultiPolygon', coordinates: polys } }] : [];
   const priority = [
     ...(ex.length ? [{ if: ex.map((f) => `in_${f.id}`).join(' || '), multiply_by: '0' }] : []),
-    ...(dup.length ? [{ if: dup.map((f) => `in_${f.id}`).join(' || '), multiply_by: '0.25' }] : []),
+    // Schon befahrene Straße: deutlich teurer, aber nicht verboten (manchmal gibt es nur die eine)
+    ...(dup.length ? [{ if: 'in_dup', multiply_by: '0.15' }] : []),
   ];
   return { areas: { type: 'FeatureCollection', features: [...ex, ...dup] }, priority };
 }
@@ -319,7 +350,6 @@ function favoriteArea(near: LatLon[], radiusKm: number): FavArea | null {
     .map((x) => x.r);
   let area: FavArea | null = null;
   if (roads.length) {
-    const r5 = (v: number) => Math.round(v * 1e5) / 1e5;
     const polys: number[][][][] = [];
     for (const road of roads) {
       if (polys.length >= FAV_MAX) break;
@@ -331,20 +361,7 @@ function favoriteArea(near: LatLon[], radiusKm: number): FavArea | null {
       for (let i = 0; i < line.length - 1 && polys.length < FAV_MAX; i++) {
         const a = line[i];
         const b = line[i + 1];
-        // in Metern rechnen: Richtung des Abschnitts, Rechteck um FAV_HALF_M verbreitert und verlängert
-        const ky = 110540;
-        const kx = 111320 * Math.cos((a[0] * Math.PI) / 180);
-        const dx = (b[1] - a[1]) * kx;
-        const dy = (b[0] - a[0]) * ky;
-        const len = Math.hypot(dx, dy) || 1;
-        const ux = (dx / len) * FAV_HALF_M;
-        const uy = (dy / len) * FAV_HALF_M;
-        const corner = (base: LatLon, alongSign: number, sideSign: number) => [
-          r5(base[1] + (alongSign * ux - sideSign * uy) / kx),
-          r5(base[0] + (alongSign * uy + sideSign * ux) / ky),
-        ];
-        const c1 = corner(a, -1, 1);
-        polys.push([[c1, corner(b, 1, 1), corner(b, 1, -1), corner(a, -1, -1), c1]]);
+        polys.push([corridorRect(a, b, FAV_HALF_M)]);
       }
     }
     area = { type: 'Feature', id: 'fav', properties: {}, geometry: { type: 'MultiPolygon', coordinates: polys } };
@@ -354,10 +371,55 @@ function favoriteArea(near: LatLon[], radiusKm: number): FavArea | null {
   return area;
 }
 
+/**
+ * Großstädte in Reichweite als Achteck je Stadt (Koray 10.11.: nahe Großstädten gibt es meist keine gute Route).
+ * Städte, in denen ein Wegpunkt liegt, bleiben frei: wer dort startet oder hin will, muss hinein.
+ */
+const cityMemo = new Map<string, unknown>();
+function cityArea(near: LatLon[], radiusKm: number) {
+  if (!near.length) return null;
+  const key = `${radiusKm.toFixed(0)}|${near.map((p) => `${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(';')}`;
+  if (cityMemo.has(key)) return cityMemo.get(key) as ReturnType<typeof build>;
+  const build = () => {
+    const polys: number[][][][] = [];
+    for (const [, la, lo, r] of BIG_CITIES) {
+      const c: LatLon = [la, lo];
+      const rm = r * 1000;
+      if (near.some((p) => haversine(p, c) < rm + 1500)) continue;
+      if (!near.some((p) => haversine(p, c) < radiusKm * 1000 + rm)) continue;
+      const ring: number[][] = [];
+      for (let k = 0; k <= 8; k++) {
+        const a = ((k % 8) * Math.PI) / 4;
+        ring.push([+(lo + (Math.sin(a) * rm) / (111320 * Math.cos((la * Math.PI) / 180))).toFixed(5), +(la + (Math.cos(a) * rm) / 110540).toFixed(5)]);
+      }
+      polys.push([ring]);
+    }
+    return polys.length ? { type: 'Feature', id: 'stadt', properties: {}, geometry: { type: 'MultiPolygon', coordinates: polys } } : null;
+  };
+  const area = build();
+  if (cityMemo.size > 40) cityMemo.clear();
+  cityMemo.set(key, area);
+  return area;
+}
+
+/** km einer Linie innerhalb der Großstadt Zonen (ohne Städte, in denen ein Wegpunkt liegt) */
+export function bigCityKm(line: LatLon[], waypoints: LatLon[]): number {
+  const cities = BIG_CITIES.filter(([, la, lo, r]) => !waypoints.some((w) => haversine(w, [la, lo]) < r * 1000 + 1500));
+  let km = 0;
+  let lastIn = false;
+  for (let i = 1; i < line.length; i++) {
+    const p = line[i];
+    if (i % 3 === 1 || lastIn) lastIn = cities.some(([, la, lo, r]) => Math.abs(la - p[0]) < r / 100 && Math.abs(lo - p[1]) < r / 60 && haversine(p, [la, lo]) < r * 1000);
+    if (lastIn) km += haversine(line[i - 1], p) / 1000;
+  }
+  return +km.toFixed(1);
+}
+
 function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatLon[] = [], near: LatLon[] = [], radiusKm = 30) {
   const builtIn = ghProfile(profile).builtIn;
   const ex = exclusionModel(exclude, penalize) as { areas?: { features: unknown[] }; priority?: { if: string; multiply_by: string }[] };
   const fav = profile === 'kurvig' || profile === 'paesse' ? favoriteArea(near, radiusKm) : null;
+  const city = profile === 'kurvig' || profile === 'paesse' ? cityArea(near, radiusKm) : null;
   const priority = [
     // Bei festen Server Profilen stecken Breite und Kurven Regeln schon im Profil
     ...(builtIn ? [] : [...WIDTH_MODEL, ...profileModel(profile)]),
@@ -365,9 +427,11 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatL
     ...(ex.priority ?? []),
     // Traumstrecken bevorzugen: alles andere etwas teurer
     ...(fav ? [{ if: '!in_fav', multiply_by: '0.7' }] : []),
+    // Großstädte deutlich teurer, nicht verboten
+    ...(city ? [{ if: 'in_stadt', multiply_by: '0.4' }] : []),
   ];
   if (!priority.length) return undefined;
-  const features = [...(ex.areas?.features ?? []), ...(fav ? [fav] : [])];
+  const features = [...(ex.areas?.features ?? []), ...(fav ? [fav] : []), ...(city ? [city] : [])];
   return {
     ...(features.length ? { areas: { type: 'FeatureCollection', features } } : {}),
     priority,
@@ -552,8 +616,24 @@ function toTour(name: string, wegpunkte: LatLon[], p: GhPath): PlannedTour & { c
   };
 }
 
-/** km auf Autobahn und Schnellstraße und km in Wohnstraßen, zur Bewertung und für Tests der Planung */
-function classKm(p: GhPath, shape: LatLon[]): { autobahnKm: number; wohnKm: number } {
+/**
+ * km auf Autobahn und Schnellstraße, in Wohnstraßen, und nach Ortsdichte des Servers (city: Großstadt,
+ * residential: bebaut), zur Bewertung (Koray 10.11.: nahe Großstädten gibt es meist keine gute Route)
+ */
+function classKm(p: GhPath, shape: LatLon[]): { autobahnKm: number; wohnKm: number; stadtKm?: number; bebautKm?: number } {
+  const span = (a: number, b: number) => {
+    let km = 0;
+    for (let i = a + 1; i <= b && i < shape.length; i++) km += haversine(shape[i - 1], shape[i]) / 1000;
+    return km;
+  };
+  let city = 0;
+  let built = 0;
+  const ud = p.details.urban_density;
+  if (ud) for (const [a, b, v] of ud) {
+    if (v === 'city') city += span(a, b);
+    else if (v === 'residential') built += span(a, b);
+  }
+  const extra = ud ? { stadtKm: +city.toFixed(1), bebautKm: +built.toFixed(1) } : {};
   let fast = 0;
   let res = 0;
   for (const [a, b, v] of p.details.road_class ?? []) {
@@ -566,7 +646,7 @@ function classKm(p: GhPath, shape: LatLon[]): { autobahnKm: number; wohnKm: numb
     if (isFast) fast += km;
     else res += km;
   }
-  return { autobahnKm: +fast.toFixed(1), wohnKm: +res.toFixed(1) };
+  return { autobahnKm: +fast.toFixed(1), wohnKm: +res.toFixed(1), ...extra };
 }
 
 /**
@@ -651,18 +731,82 @@ export async function cumoPlan(
   if (dup.km <= DOUBLE_MAX_KM || long || points.some((q) => turnAt.has(pkey(q)))) return first;
   // Die doppelten Stücke nicht in die Nähe der Wegpunkte legen, dort muss die Route hin
   const penalize = dup.points.filter((q) => !points.some((w) => haversine(w, q) < 600));
-  if (!penalize.length) return first;
-  try {
-    const p = await ask(exclude, penalize);
-    const t = { ...toTour(name, points, p), fixes: first.fixes };
+  const roundish = haversine(points[0], points[points.length - 1]) < 3000;
+  const accept = (t: PlannedTour & { curves: number }, ref: PlannedTour & { curves: number }, refDup: number) => {
     const again = doubledStretch(t.linie.flatMap((r) => r.p));
-    const notWorse = (t.km_je_klasse?.raus ?? 0) <= (first.km_je_klasse?.raus ?? 0);
-    const notMuchLonger = t.laenge_km <= first.laenge_km * 1.2 + 5;
-    if (again.km < dup.km - 1 && notWorse && notMuchLonger) return t;
+    const notWorse = (t.km_je_klasse?.raus ?? 0) <= (ref.km_je_klasse?.raus ?? 0);
+    // Hin und zurück zum selben Ort (Start gleich Ziel): ein anderer Rückweg darf deutlich länger sein
+    const notMuchLonger = t.laenge_km <= first.laenge_km * (roundish ? 1.45 : 1.2) + (roundish ? 10 : 5);
+    return again.km < refDup - 1 && notWorse && notMuchLonger ? again.km : null;
+  };
+  let cur = first;
+  let curDup = dup.km;
+  if (penalize.length) {
+    try {
+      const p = await ask(exclude, penalize);
+      const t = { ...toTour(name, points, p), fixes: first.fixes };
+      const d = accept(t, cur, curDup);
+      if (d != null) {
+        cur = t;
+        curDup = d;
+      }
+    } catch (e) {
+      if (signal?.aborted) throw e;
+    }
+  }
+  if (curDup <= DOUBLE_MAX_KM || points.length < 3 || points.length > 8) return cur;
+  // Etappe für Etappe: jede meidet die Straßen der vorigen (Stresstest 10.11.: Bad Dürkheim, Annweiler,
+  // Bad Dürkheim fuhr 24 km auf demselben Weg zurück; beide Richtungen gleich zu verteuern half nicht,
+  // die Route wich dann gemeinsam auf die nächste Straße aus)
+  try {
+    const paths: GhPath[] = [];
+    let used: LatLon[] = [];
+    for (let k = 0; k < points.length - 1; k++) {
+      const legPts = [points[k], points[k + 1]];
+      const pen = used.filter((q) => !points.some((w) => haversine(w, q) < 1500));
+      const m = model(avoid, exclude, profile, pen, long ? [] : legPts, Math.min(80, Math.max(20, leg * 0.6)));
+      const p = await post({ points: legPts.map(([la, lo]) => [lo, la]), profile: ghProfile(profile).name, ...(m ? { custom_model: m } : {}) }, signal);
+      paths.push(p);
+      used = used.concat(sampleLine(p.points.coordinates.map(([lo, la]) => [la, lo] as LatLon), 300));
+    }
+    const t = { ...toTour(name, points, mergePaths(paths)), fixes: first.fixes };
+    if (accept(t, cur, curDup) != null) return t;
   } catch (e) {
     if (signal?.aborted) throw e;
   }
-  return first;
+  return cur;
+}
+
+/** Punkte entlang einer Linie im Abstand von etwa stepM */
+function sampleLine(line: LatLon[], stepM: number): LatLon[] {
+  const out: LatLon[] = [];
+  let last: LatLon | null = null;
+  for (const p of line) {
+    if (last && haversine(last, p) < stepM) continue;
+    out.push(p);
+    last = p;
+  }
+  return out;
+}
+
+/** Einzeln gerechnete Etappen zu einem Weg zusammenfügen (Punkte, Details mit verschobenem Index, Länge, Zeit) */
+function mergePaths(paths: GhPath[]): GhPath {
+  const coords: [number, number][] = [];
+  const details: Record<string, Detail[]> = {};
+  let distance = 0;
+  let time = 0;
+  paths.forEach((p, i) => {
+    const base = i === 0 ? 0 : coords.length - 1;
+    const pts = i === 0 ? p.points.coordinates : p.points.coordinates.slice(1);
+    coords.push(...pts);
+    for (const [key, list] of Object.entries(p.details)) {
+      const out = (details[key] ??= []);
+      for (const [a, b, v] of list) out.push([a + base, b + base, v]);
+    }
+    distance += p.distance;
+    time += p.time;
+  });
+  return { distance, time, points: { coordinates: coords }, details };
 }
 
 /** Rundtour Varianten vom eigenen Server (lokal, ohne Kontingent). */
