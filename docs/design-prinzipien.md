@@ -107,6 +107,7 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 - Zurück wie bei Instagram: Wer aus Meine Touren oder der Community etwas öffnet, bekommt oben links eine Pille mit dem Namen der Herkunft. Die Tableiste zeigt immer den aktuellen Tab. Kein Wischen vom Rand.
 - Ungespeicherte Änderungen fragen beim Zurück einmal nach (Speichern, Als Kopie, Verwerfen), sonst geht Zurück sofort.
 - Unterseiten (Profil, Garage, Fahren) haben die Pille „‹ Einstellungen“ und einen Display Titel.
+- Leise Taste für Nebenaktionen oben in einer Ansicht (Zurück Pille, Schließen auf Datenschutz, Nutzungsbedingungen und Impressum): Pille auf `surface`, 44 hoch, Inter Bold 15. Unterstrichene Textlinks nur im Fließtext.
 
 **Herkunft und Zustand**
 - Übernommene Touren tragen eine Plakette: „Von dir“ in Grün, „Von …“ neutral mit Initiale. Kein Filter dafür.
