@@ -16,5 +16,6 @@ export function useFunk(): FunkState {
   return useSyncExternalStore(
     () => () => undefined,
     () => state,
+    () => state,
   );
 }

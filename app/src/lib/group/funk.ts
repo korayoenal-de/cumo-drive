@@ -173,5 +173,6 @@ export function useFunk(): FunkState {
       return () => listeners.delete(l);
     },
     () => state,
+    () => state,
   );
 }
