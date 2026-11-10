@@ -17,11 +17,12 @@ import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
 import { directNote } from '@/lib/plan';
 import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/create-tour';
-import { ConfirmSheet } from '@/components/ui/action-sheet';
+
 import { NameDialog } from '@/components/planner/name-dialog';
 import { showToast } from '@/lib/toast';
 import { setEditTour } from '@/lib/edit-tour';
-import { deleteTour, duplicateTour } from '@/lib/library';
+import { DeleteTourSheet } from '@/components/tours/delete-tour-sheet';
+import { duplicateTour, useLibrary } from '@/lib/library';
 import { ActionBar } from '@/components/ui/action-bar';
 import { LoadingButton, type LoadStage } from '@/components/ui/loading-button';
 import { AppText } from '@/components/ui/text';
@@ -308,12 +309,9 @@ export function TourMode({
       action: { label: 'Rückgängig', onPress: () => plan.restore(snap) },
     });
   };
-  // Löschen entfernt die geöffnete, gespeicherte Tour aus Meine Touren (mit Rückfrage)
-  const deleteSaved = () => {
-    if (plan.cloudId) deleteTour(plan.cloudId);
-    plan.reset();
-    showToast('Tour gelöscht');
-  };
+  // Löschen entfernt die geöffnete, gespeicherte Tour aus Meine Touren (mit Rückfrage, bei veröffentlichten mit Wahl)
+  const library = useLibrary();
+  const savedTour = plan.cloudId ? library.find((x) => x.id === plan.cloudId) ?? null : null;
   // Allein oder als Gruppe: Abfrage beim Druck auf Losfahren (Koray 7.11.)
   const drive = async (asGroup = false) => {
     if (!routeTour) return;
@@ -798,14 +796,7 @@ export function TourMode({
           </ActionBar>
         ) : null}
         {routeTour && (
-          <ConfirmSheet
-            visible={askDelete}
-            title="Möchtest du diese Tour wirklich löschen?"
-            text="Sie verschwindet aus Meine Touren, auf dem Gerät und in deinem Konto."
-            confirmLabel="Löschen"
-            onConfirm={deleteSaved}
-            onClose={() => setAskDelete(false)}
-          />
+          <DeleteTourSheet tour={savedTour} visible={askDelete} onClose={() => setAskDelete(false)} onDeleted={plan.reset} />
         )}
         {!routeTour && !busy && !hold && pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
       </View>

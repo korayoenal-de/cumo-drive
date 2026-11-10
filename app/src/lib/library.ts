@@ -171,6 +171,16 @@ export function clearLocalTours() {
   write([]);
 }
 
+/** Nur auf dem Gerät entfernen, die Tour im Konto bleibt (veröffentlichte Tour behalten) */
+export function dropLocalTour(id: string) {
+  write(read().filter((x) => x.id !== id));
+}
+
+/** Nach dem Zurückziehen aus der Community die Tour auf dem Gerät als nicht veröffentlicht führen */
+export function markUnpublished(cloudId: string) {
+  write(read().map((x) => (x.cloudId === cloudId ? { ...x, published: false } : x)));
+}
+
 export function deleteTour(id: string) {
   const t = read().find((x) => x.id === id);
   write(read().filter((x) => x.id !== id));

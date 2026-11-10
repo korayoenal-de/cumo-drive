@@ -14,7 +14,8 @@ import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring
 import Svg, { Circle, Polyline } from 'react-native-svg';
 
 import { SOFT_LAYOUT } from '@/components/ui/action-bar';
-import { ActionSheet, ConfirmSheet, OptionsSheet, type SheetItem } from '@/components/ui/action-sheet';
+import { DeleteTourSheet } from '@/components/tours/delete-tour-sheet';
+import { ActionSheet, OptionsSheet, type SheetItem } from '@/components/ui/action-sheet';
 import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
@@ -23,7 +24,7 @@ import { publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import { NameDialog } from '@/components/planner/name-dialog';
-import { deleteTour, duplicateTour, renameTour, type SavedTour } from '@/lib/library';
+import { duplicateTour, renameTour, type SavedTour } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
@@ -141,17 +142,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
           }
         }}
       />
-      <ConfirmSheet
-        visible={sheet === 'delete'}
-        title="Möchtest du diese Tour wirklich löschen?"
-        text={`${t.name} verschwindet vom Gerät und aus deinem Konto.`}
-        confirmLabel="Löschen"
-        onConfirm={() => {
-          deleteTour(t.id);
-          showToast('Tour gelöscht');
-        }}
-        onClose={() => setSheet(null)}
-      />
+      <DeleteTourSheet tour={t} visible={sheet === 'delete'} onClose={() => setSheet(null)} />
     </Animated.View>
   );
 }

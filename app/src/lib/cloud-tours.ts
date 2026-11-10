@@ -26,6 +26,8 @@ export async function listCloudTours(): Promise<CloudTour[]> {
     .from('tours')
     .select('id,name,folder,profile,km,minutes,curves,updated_at')
     .eq('owner', u.user.id)
+    // Touren, die nur noch in der Community stehen, gehören nicht mehr in Meine Touren
+    .eq('in_library', true)
     .order('updated_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as CloudTour[];

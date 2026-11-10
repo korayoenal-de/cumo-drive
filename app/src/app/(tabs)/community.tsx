@@ -23,7 +23,7 @@ import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/c
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, shortDate, type Ausfahrt } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { kmBetween, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
-import { copyCommunityTour, listCommunity, loadCommunityTour, type CommunityTour } from '@/lib/community';
+import { copyCommunityTour, listCommunity, loadCommunityTour, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
 import { setEditTour } from '@/lib/edit-tour';
 import { formatMinutes } from '@/lib/intent';
 import { formatKm, type LatLon } from '@/lib/tour';
@@ -202,7 +202,7 @@ export default function Community() {
           </Pressable>
         )}
       </View>
-      {selTour && <RouteCard key={selTour.id} t={selTour} mine={userId === selTour.owner} big />}
+      {selTour && <RouteCard key={selTour.id} t={selTour} mine={userId === selTour.owner} big onChanged={() => { select(null); load(); }} />}
       {selRide && <RideCard key={selRide.id} r={selRide} big />}
       {selDriver && <DriverCard key={selDriver.id} d={selDriver} big />}
     </View>
@@ -355,8 +355,9 @@ function usePress() {
 }
 
 /** Route: Tippen öffnet sie im Planer, das Lesezeichen übernimmt sie in Meine Touren. */
-function RouteCard({ t, mine, big }: { t: CommunityTour; mine: boolean; big?: boolean }) {
-  const [busy, setBusy] = useState<'open' | 'save' | null>(null);
+function RouteCard({ t, mine, big, onChanged }: { t: CommunityTour; mine: boolean; big?: boolean; onChanged?: () => void }) {
+  const [busy, setBusy] = useState<'open' | 'save' | 'withdraw' | null>(null);
+  const [confirm, setConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const press = usePress();
@@ -423,6 +424,28 @@ function RouteCard({ t, mine, big }: { t: CommunityTour; mine: boolean; big?: bo
         <Pressable accessibilityRole="button" onPress={() => void open()} style={styles.primary}>
           {busy === 'open' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Im Planer öffnen</AppText>}
         </Pressable>
+        {/* Eigene Tour zurückziehen, auch wenn sie nicht mehr in Meine Touren liegt (Koray 10.11.) */}
+        {mine && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              if (busy) return;
+              if (!confirm) {
+                setConfirm(true);
+                setTimeout(() => setConfirm(false), 3000);
+                return;
+              }
+              setConfirm(false);
+              setBusy('withdraw');
+              withdrawCommunityTour(t.id)
+                .then(() => onChanged?.())
+                .catch((e: Error) => setErr(e.message))
+                .finally(() => setBusy(null));
+            }}
+            style={[styles.textBtn, confirm && styles.textBtnConfirm]}>
+            {busy === 'withdraw' ? <ActivityIndicator color={Colors.muted} /> : <AppText style={[styles.textBtnText, confirm && styles.textBtnTextConfirm]}>{confirm ? 'Wirklich? Nochmal tippen' : 'Aus der Community nehmen'}</AppText>}
+          </Pressable>
+        )}
         {err && <AppText variant="caption" style={styles.error}>{err}</AppText>}
       </Animated.View>
     );
@@ -565,4 +588,8 @@ const styles = StyleSheet.create({
   secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.bold, fontSize: Type.button },
   error: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  textBtn: { height: Size.chip, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', paddingHorizontal: Spacing.xl },
+  textBtnConfirm: { backgroundColor: Colors.signalTint },
+  textBtnText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
+  textBtnTextConfirm: { color: Colors.stopText, fontFamily: Fonts.bold },
 });
