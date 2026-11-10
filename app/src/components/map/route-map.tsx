@@ -382,7 +382,8 @@ export function RouteMap({
         showsMyLocationButton={false}
         showsCompass={interactive && !followUser}
         showsPointsOfInterests={false}
-        showsBuildings={followUser || settings.style === '3d'}
+        // 3D Gebäude verdecken in der Navigation die Linie, sie wirkte dahinter wie gestrichelt (Tester Gregor 10.11.)
+        showsBuildings={settings.style === '3d' && !followUser}
         showsTraffic={false}
         toolbarEnabled={false}
         pitchEnabled={interactive}
