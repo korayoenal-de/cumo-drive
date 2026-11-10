@@ -1,11 +1,11 @@
 /**
- * Web Planer, Seitenleiste Meine Touren, Gruppenfahrt und Konto.
+ * Web Planer, Gruppenfahrt und Konto (Meine Touren steht in web-library.tsx).
  */
 import { useEffect, useState } from 'react';
 
-import { formatKm, type Profile, type Tour } from '@/lib/tour';
+import { type Profile, type Tour } from '@/lib/tour';
 import { signIn, signOut, signUp, useSession } from '@/lib/auth';
-import { deleteTour, filterTours, folders, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
+import { syncLibrary, useSyncState } from '@/lib/library';
 import { type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
 import { createRide, joinRide, leaveRide, loadProfile, normalizeCode, QUICK_MESSAGES, sendMessage, setRole, useRide } from '@/lib/group/ride';
@@ -14,76 +14,6 @@ import { Spacing } from '@/constants/theme';
 import { C } from './web-shared';
 import { Chip } from './web-parts';
 import { S } from './web-styles';
-
-/* ---------- Meine Touren ---------- */
-
-export function LibraryPanel(props: { currentId: string | null; onOpen: (t: SavedTour) => void }) {
-  const list = useLibrary();
-  const [q, setQ] = useState('');
-  const [folder, setFolder] = useState<string | null>(null);
-  const [sort, setSort] = useState<SortKey>('neu');
-  const [confirm, setConfirm] = useState<string | null>(null);
-  const shown = filterTours(list, q, folder, sort);
-  const fs = folders(list);
-  return (
-    <div style={S.stack}>
-      <div>
-        <h2 style={S.h2}>Meine Touren</h2>
-        <p style={S.muted}>{list.length ? `${list.length} gespeicherte Touren.` : 'Noch keine Tour gespeichert. Plane oder importiere eine Tour und speichere sie im Tab Tour.'}</p>
-      </div>
-      <AccountBox />
-      {list.length ? (
-        <>
-          <input id="lib-search" aria-label="Touren durchsuchen" placeholder="Touren durchsuchen" value={q} onChange={(e) => setQ(e.target.value)} style={S.search} />
-          {fs.length ? (
-            <div style={S.chips}>
-              <Chip on={folder === null} onClick={() => setFolder(null)}>Alle</Chip>
-              {fs.map((f) => (
-                <Chip key={f} on={folder === f} onClick={() => setFolder(f)}>
-                  {f}
-                </Chip>
-              ))}
-            </div>
-          ) : null}
-          <div style={S.chips}>
-            {(['neu', 'name', 'laenge'] as SortKey[]).map((k) => (
-              <Chip key={k} on={sort === k} onClick={() => setSort(k)}>
-                {{ neu: 'Zuletzt geändert', name: 'Name', laenge: 'Länge', spass: 'Fahrspaß' }[k]}
-              </Chip>
-            ))}
-          </div>
-          <ul style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: Spacing.xs }}>
-            {shown.map((t) => (
-              <li key={t.id} style={{ ...S.libRow, ...(t.id === props.currentId ? { background: C.surface } : {}) }}>
-                <button style={S.libOpen} onClick={() => props.onOpen(t)}>
-                  <span style={{ fontWeight: 600 }}>{t.name}</span>
-                  <span style={S.small}>
-                    {formatKm(t.laenge_km, 0)} km{t.curves ? `, ${t.curves} Kurven` : ''}
-                    {t.folder ? `, ${t.folder}` : ''}, {new Date(t.updatedAt).toLocaleDateString('de-DE')}
-                  </span>
-                </button>
-                {t.km_je_klasse ? (
-                  <span style={t.km_je_klasse.raus > 0 ? S.badgeStop : S.badgeGood}>{t.km_je_klasse.raus > 0 ? `${formatKm(t.km_je_klasse.raus)} km raus` : 'geprüft'}</span>
-                ) : null}
-                {confirm === t.id ? (
-                  <span style={{ display: 'flex', gap: 6 }}>
-                    <button style={S.dangerSmall} onClick={() => deleteTour(t.id)}>Löschen</button>
-                    <button style={S.link} onClick={() => setConfirm(null)}>Nein</button>
-                  </span>
-                ) : (
-                  <button aria-label={`${t.name} löschen`} style={S.iconBtn} onClick={() => setConfirm(t.id)}>
-                    ×
-                  </button>
-                )}
-              </li>
-            ))}
-            {!shown.length ? <p style={S.muted}>Keine Tour passt zur Suche.</p> : null}
-          </ul>
-        </>
-      ) : null}
-    </div>
-  );
-}
 
 /** Gruppenfahrt im Web: starten oder beitreten, Mitfahrer live auf der Karte, Kurznachrichten. */
 export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; isSample: boolean }) {

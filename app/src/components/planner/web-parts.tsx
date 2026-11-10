@@ -13,9 +13,9 @@ import { S } from './web-styles';
 
 /* ---------- Bausteine ---------- */
 
-export function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick: (p: Place) => void }) {
+export function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick: (p: Place) => void; initial?: string; autoFocus?: boolean; onBlurEmpty?: () => void; id?: string }) {
   const live = usePassLive();
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(props.initial ?? '');
   const [hits, setHits] = useState<Place[]>([]);
   const [open, setOpen] = useState(false);
   const enough = q.trim().length >= 3;
@@ -48,12 +48,33 @@ export function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick:
   return (
     <div style={{ position: 'relative' }}>
       <input
-        id={`search-${props.placeholder.replace(/\W+/g, '-')}`}
+        id={props.id ?? `search-${props.placeholder.replace(/\W+/g, '-')}`}
         aria-label={props.placeholder}
         placeholder={props.placeholder}
         value={q}
+        autoFocus={props.autoFocus}
         onChange={(e) => setQ(e.target.value)}
-        onFocus={() => setOpen(true)}
+        onFocus={(e) => {
+          setOpen(true);
+          // Wie in der App: der Name steht markiert im Feld, Tippen ersetzt ihn
+          if (props.initial) e.currentTarget.select();
+        }}
+        onBlur={() => {
+          // Klick in die Vorschläge zuerst durchlassen
+          setTimeout(() => {
+            setOpen(false);
+            props.onBlurEmpty?.();
+          }, 180);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') props.onBlurEmpty?.();
+          if (e.key === 'Enter' && hits[0]) {
+            props.onPick(hits[0]);
+            setQ('');
+            setHits([]);
+            setOpen(false);
+          }
+        }}
         style={S.search}
       />
       {open && enough && hits.length ? (

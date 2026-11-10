@@ -282,7 +282,8 @@ export function useTourPlan(onPlanned?: () => void) {
 
   /** Speichert und liefert die ID in Meine Touren, null wenn es nicht geklappt hat */
   /** asName: Name aus dem Dialog beim ersten Speichern, gilt sofort (der Zustand kommt erst danach an) */
-  async function save(curves: number, profile: Profile, avoid: Avoid, asName?: string): Promise<string | null> {
+  /** quiet: ohne Toast (automatisches Speichern im Web Planer); die App ruft ohne opts auf, dort bleibt alles gleich */
+  async function save(curves: number, profile: Profile, avoid: Avoid, asName?: string, opts?: { quiet?: boolean }): Promise<string | null> {
     if (!planned) return null;
     const nm = asName ?? name;
     setSaving(true);
@@ -298,10 +299,11 @@ export function useTourPlan(onPlanned?: () => void) {
       if (asName != null) setName(asName);
       void syncLibrary();
       setSaveMsg(null);
-      showToast('In Meine Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
+      if (!opts?.quiet) showToast('In Meine Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
       return saved.id;
     } catch (e) {
       setSaveMsg(null);
+      if (opts?.quiet) throw e;
       showToast(`Speichern hat nicht geklappt: ${e instanceof Error ? e.message : String(e)}`, { tone: 'error' });
       return null;
     } finally {

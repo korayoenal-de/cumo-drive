@@ -136,7 +136,8 @@ export function addPassLayers(map: MapInstance, data: unknown) {
       filter: visible,
       paint: {
         'circle-radius': ['match', ['get', 'tier'], 'ikone', 7, 'bekannt', 5.5, 4.5],
-        'circle-color': ['case', ['get', 'closed'], '#5A5A60', ['match', ['get', 'tier'], 'ikone', Colors.warn, 'bekannt', Colors.text, Colors.muted]],
+        // wie in der App (TIER_DOT): Ikonen orange, bekannte gelb, Geheimtipps hell
+        'circle-color': ['case', ['get', 'closed'], '#5A5A60', ['match', ['get', 'tier'], 'ikone', Colors.signal, 'bekannt', Colors.warn, Colors.text]],
         'circle-stroke-color': Colors.ground,
         'circle-stroke-width': 2,
       },
@@ -158,7 +159,7 @@ export function addPassLayers(map: MapInstance, data: unknown) {
         'text-optional': true,
       },
       paint: {
-        'text-color': ['case', ['get', 'closed'], '#7A7A80', ['match', ['get', 'tier'], 'ikone', Colors.warn, Colors.text]],
+        'text-color': ['case', ['get', 'closed'], '#7A7A80', Colors.text],
         'text-halo-color': Colors.ground,
         'text-halo-width': 1.6,
       },
@@ -251,4 +252,96 @@ export function addMemberLayers(map: MapInstance) {
     layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-font': ['Noto Sans Bold'], 'text-offset': [0, 1.6], 'text-anchor': 'top' },
     paint: { 'text-color': Colors.text, 'text-halo-color': Colors.ground, 'text-halo-width': 1.6 },
   });
+}
+
+/* ---------- Karteneinstellungen und Ebenen wie in der App (Stand 10.11.2026) ---------- */
+
+/** Satellitenbild als Rasterebene unter den Beschriftungen der Grundkarte (Esri World Imagery, mit Namensnennung) */
+export const SAT_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+export function addSatelliteLayer(map: MapInstance) {
+  map.addSource('sat', { type: 'raster', tiles: [SAT_TILES], tileSize: 256, maxzoom: 19, attribution: 'Satellit: Esri, Maxar, Earthstar Geographics' });
+  const layers: { id: string; type: string }[] = map.getStyle().layers ?? [];
+  const firstSymbol = layers.find((l) => l.type === 'symbol')?.id;
+  map.addLayer({ id: 'sat', type: 'raster', source: 'sat', layout: { visibility: 'none' }, paint: { 'raster-opacity': 1 } }, firstSymbol);
+}
+
+/** Darstellung umschalten: Standard, Satellit, 3D Satellit (geneigt) */
+export function applyMapStyle(map: MapInstance, style: 'standard' | 'satellit' | '3d') {
+  if (!map.getLayer('sat')) return;
+  map.setLayoutProperty('sat', 'visibility', style === 'standard' ? 'none' : 'visible');
+  const pitch = style === '3d' ? 55 : 0;
+  if (Math.abs(map.getPitch() - pitch) > 1) map.easeTo({ pitch, duration: 600 });
+}
+
+/** Feine Linien unter der Tour: Meine Touren hell, gefahrene Strecken grün */
+export function addBackgroundLines(map: MapInstance) {
+  map.addSource('mine', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addSource('drives', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer({ id: 'mine-line', type: 'line', source: 'mine', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': 'rgba(244,244,242,0.45)', 'line-width': 2.5 } }, 'tour-casing');
+  map.addLayer({ id: 'drives-line', type: 'line', source: 'drives', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': 'rgba(76,195,138,0.7)', 'line-width': 2.5 } }, 'tour-casing');
+}
+
+export function linesGeoJson(lines: LatLon[][]) {
+  return {
+    type: 'FeatureCollection',
+    features: lines.filter((l) => l.length > 1).map((l) => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: l.map(toLngLat) } })),
+  };
+}
+
+/** Gefahrenstellen der Route als Punkte: gesperrt in Signal Orange, prüfen gelb */
+export function addWarningLayer(map: MapInstance) {
+  map.addSource('warn', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer({
+    id: 'warn-circle',
+    type: 'circle',
+    source: 'warn',
+    paint: { 'circle-radius': 8, 'circle-color': ['match', ['get', 'c'], 'raus', Colors.signal, Colors.warn], 'circle-stroke-color': Colors.ground, 'circle-stroke-width': 2.5 },
+  });
+  map.addLayer({
+    id: 'warn-label',
+    type: 'symbol',
+    source: 'warn',
+    layout: { 'text-field': '!', 'text-size': 12, 'text-font': ['Noto Sans Bold'], 'text-allow-overlap': true },
+    paint: { 'text-color': Colors.ground },
+  });
+}
+
+export function warningsGeoJson(tour: Tour) {
+  return {
+    type: 'FeatureCollection',
+    features: tour.warnungen
+      .filter((w) => w.klasse !== 'ok')
+      .map((w) => ({ type: 'Feature', properties: { c: w.klasse }, geometry: { type: 'Point', coordinates: toLngLat(w.mitte) } })),
+  };
+}
+
+/** Pins der Community: Routen am Start, Ausfahrten am Treffpunkt, Drivers am Wohnort */
+export function addCommunityLayers(map: MapInstance) {
+  map.addSource('community', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer({
+    id: 'community-circle',
+    type: 'circle',
+    source: 'community',
+    paint: {
+      'circle-radius': ['case', ['get', 'sel'], 11, 8],
+      'circle-color': ['case', ['get', 'sel'], Colors.signal, Colors.surface],
+      'circle-stroke-color': ['coalesce', ['get', 'ring'], Colors.signal],
+      'circle-stroke-width': 3,
+    },
+  });
+  map.addLayer({
+    id: 'community-label',
+    type: 'symbol',
+    source: 'community',
+    layout: { 'text-field': ['get', 'label'], 'text-size': 12, 'text-font': ['Noto Sans Bold'], 'text-offset': [0, 1.3], 'text-anchor': 'top', 'text-optional': true },
+    paint: { 'text-color': Colors.text, 'text-halo-color': Colors.ground, 'text-halo-width': 1.6 },
+  });
+}
+
+export function communityGeoJson(pins: { id: string; p: LatLon; label: string; ring?: string }[], selected: string | null) {
+  return {
+    type: 'FeatureCollection',
+    features: pins.map((x) => ({ type: 'Feature', properties: { id: x.id, label: x.label, ring: x.ring ?? null, sel: x.id === selected }, geometry: { type: 'Point', coordinates: toLngLat(x.p) } })),
+  };
 }
