@@ -163,6 +163,37 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     }
   }()
   private var meView: MKAnnotationView?
+  private var meImage: UIImage = CarMapViewController.mePin
+
+  /// Lack als Hex (#RRGGBB) in eine Farbe
+  private static func color(hex: String) -> UIColor? {
+    var h = hex.trimmingCharacters(in: .whitespaces)
+    if h.hasPrefix("#") { h.removeFirst() }
+    guard h.count == 6, let v = UInt32(h, radix: 16) else { return nil }
+    return UIColor(red: CGFloat((v >> 16) & 0xFF) / 255, green: CGFloat((v >> 8) & 0xFF) / 255, blue: CGFloat(v & 0xFF) / 255, alpha: 1)
+  }
+
+  /// Eigenes Auto als Standort (Draufsicht aus der Garage, Front oben): Lackmaske gefärbt, Details darüber.
+  /// Bilder car-<form>-m und car-<form>-o kommen aus assets/carplay-icons (Ansicht 0 der Bögen in assets/cars).
+  func setCar(form: String, color: String) {
+    var img = CarMapViewController.mePin
+    if !form.isEmpty, let mask = UIImage(named: "car-\(form)-m"), let over = UIImage(named: "car-\(form)-o"),
+       let paint = CarMapViewController.color(hex: color) {
+      let size = CGSize(width: 48, height: 48)
+      img = UIGraphicsImageRenderer(size: size).image { ctx in
+        let rect = CGRect(origin: .zero, size: size)
+        // wie tintColor in der App: Form der Maske behalten, Farbe ersetzen
+        mask.draw(in: rect)
+        ctx.cgContext.setBlendMode(.sourceAtop)
+        ctx.cgContext.setFillColor(paint.cgColor)
+        ctx.cgContext.fill(rect)
+        ctx.cgContext.setBlendMode(.normal)
+        over.draw(in: rect)
+      }
+    }
+    meImage = img
+    meView?.image = img
+  }
 
   func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
     guard let v = meView, let loc = userLocation.location, loc.course >= 0 else { return }
@@ -174,7 +205,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     if annotation is MKUserLocation {
       let v = mapView.dequeueReusableAnnotationView(withIdentifier: "ich") ?? MKAnnotationView(annotation: annotation, reuseIdentifier: "ich")
       v.annotation = annotation
-      v.image = CarMapViewController.mePin
+      v.image = meImage
       v.canShowCallout = false
       v.displayPriority = .required
       v.zPriority = .max

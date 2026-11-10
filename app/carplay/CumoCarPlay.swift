@@ -81,6 +81,11 @@ final class CumoCarPlay: Module {
       CarPlayBridge.shared.setMapStyle(style)
     }.runOnQueue(.main)
 
+    // ab Build 16: eigenes Auto als Standort, leere Form = Pin
+    AsyncFunction("setCar") { (form: String, color: String) in
+      CarPlayBridge.shared.setCar(form: form, color: color)
+    }.runOnQueue(.main)
+
     AsyncFunction("setVoice") { (on: Bool) in
       CarPlayBridge.shared.setVoice(on)
     }.runOnQueue(.main)

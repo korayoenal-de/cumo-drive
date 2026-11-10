@@ -8,9 +8,11 @@ import { useEffect, useMemo } from 'react';
 
 import { useActiveTour } from '@/lib/active-tour';
 import {
-  carPlayAvailable, carPlayHasPicker, carPlayResend, carPlaySetLibrary, carPlaySetMapStyle, carPlaySetTour, markCarPlayStart, useCarPlayEvent,
+  carPlayAvailable, carPlayHasPicker, carPlayResend, carPlaySetCar, carPlaySetLibrary, carPlaySetMapStyle, carPlaySetTour, markCarPlayStart, useCarPlayEvent,
 } from '@/lib/carplay';
+import { carLookFor } from '@/components/map/car-sprite';
 import { useLibrary } from '@/lib/library';
+import { useVehicles } from '@/lib/vehicle';
 import { carPlayStyleOf, setMapSettings, useMapSettings, type MapStyle } from '@/lib/map-settings';
 
 import { cancelCarRound, carTourItems, fillCarTourFun, planCarRound, startSavedTour } from './carplay-start';
@@ -25,6 +27,13 @@ export function CarPlaySync() {
   useEffect(() => {
     if (carPlayAvailable) carPlaySetMapStyle(style);
   }, [style]);
+  // eigenes Auto als Standort im Auto, ohne Auto der eigene Pin (Koray 10.11.)
+  const look = carLookFor(useVehicles().current);
+  const lookKey = look ? `${look.form}|${look.color}` : '';
+  useEffect(() => {
+    if (carPlayAvailable) carPlaySetCar(look);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lookKey]);
   // Meine Touren fürs Autodisplay (ab Build 16); ohne CarPlay geht nichts hinüber
   const library = useLibrary();
   const items = useMemo(() => (carPlayHasPicker ? carTourItems(library) : []), [library]);
@@ -35,6 +44,7 @@ export function CarPlaySync() {
   useCarPlayEvent('onConnect', () => {
     carPlayResend();
     carPlaySetMapStyle(style);
+    carPlaySetCar(look);
     if (carPlayHasPicker) {
       carPlaySetLibrary(items);
       fillCarTourFun(library);

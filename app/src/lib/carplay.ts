@@ -32,6 +32,8 @@ type CarPlayModule = {
   setVoice?(on: boolean): Promise<void>;
   // ab Build 11
   setMapStyle?(style: string): Promise<void>;
+  // ab Build 16: eigenes Auto als Standort (Form und Lack wie in der Garage), leer = Pin
+  setCar?(form: string, color: string): Promise<void>;
   // ab Build 14
   setMenu?(skipLabel: string, paused: boolean): Promise<void>;
   setGroup?(list: GroupPin[]): Promise<void>;
@@ -150,6 +152,11 @@ export function carPlayCamera(p: readonly [number, number], heading: number) {
 /** Kartendarstellung wie in der App (standard, satellit, 3d); ältere Builds bleiben dunkel standard */
 export function carPlaySetMapStyle(style: string) {
   quiet(native?.setMapStyle?.(style));
+}
+
+/** Eigenes Auto als Standort auf dem Autodisplay (Koray 10.11.); null = eigener Pin ohne Auto */
+export function carPlaySetCar(look: { form: string; color: string } | null) {
+  quiet(native?.setCar?.(look?.form ?? '', look?.color ?? ''));
 }
 
 export function carPlaySetVoice(on: boolean) {

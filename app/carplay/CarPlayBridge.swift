@@ -65,6 +65,7 @@ final class CarPlayBridge: NSObject {
     window.rootViewController = vc
     mapVC = vc
     vc.setStyle(mapStyle)
+    vc.setCar(form: carForm, color: carColor)
     if pickerReady { vc.setHint(CarPlayBridge.pickerHint) }
 
     let t = CPMapTemplate()
@@ -274,6 +275,15 @@ final class CarPlayBridge: NSObject {
     for m in allMaps { m.setStyle(style) }
   }
 
+  /// eigenes Auto (Form und Lack aus der Garage), auch für eine Karte, die erst nach dem Einstecken entsteht
+  private var carForm = ""
+  private var carColor = ""
+  func setCar(form: String, color: String) {
+    carForm = form
+    carColor = color
+    for m in allMaps { m.setCar(form: form, color: color) }
+  }
+
   // MARK: Build 14: Menü, Gruppe, Bremshinweis, Bewertung, Dashboard und Kombiinstrument
 
   /// Zustand für das Menü Mehr aus der App
@@ -317,6 +327,7 @@ final class CarPlayBridge: NSObject {
   func addMap(_ vc: CarMapViewController) {
     extraMaps.append(vc)
     vc.setStyle(mapStyle)
+    vc.setCar(form: carForm, color: carColor)
     vc.setRoute(tourCoords)
     vc.setGroup(group)
     vc.follow(true)
