@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import type { LegalDoc } from '@/content/legal';
 
 const MARK = [
@@ -48,8 +48,8 @@ export function LegalPage({ doc, description, other }: { doc: LegalDoc; descript
               <AppText style={styles.logoText}>CUMO DRIVE</AppText>
             </Pressable>
             {!web && (
-              <Pressable accessibilityRole="button" onPress={home} hitSlop={8}>
-                <AppText style={styles.link}>Schließen</AppText>
+              <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={home} style={({ pressed }) => [styles.quiet, pressed && styles.pressed]}>
+                <AppText style={styles.quietText}>Schließen</AppText>
               </Pressable>
             )}
           </View>
@@ -114,5 +114,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   foot: { gap: Spacing.m, paddingTop: Spacing.xxl },
   stand: { fontFamily: Fonts.semibold, fontSize: 14, color: Colors.muted },
+  /** Leise Taste wie die Zurück Pille: Fläche surface, rund, 44 hoch (Koray 10.11.) */
+  quiet: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  quietText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
+  pressed: { backgroundColor: Colors.surface2, transform: [{ scale: Motion.pressScale }] },
   link: { fontFamily: Fonts.bold, fontSize: 16, color: Colors.text, textDecorationLine: 'underline' },
 });
