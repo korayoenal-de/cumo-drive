@@ -45,6 +45,11 @@ function storage(): Storage | null {
   }
 }
 
+/** Aktuelle Liste ohne Hook (für Abläufe nach dem Abgleich) */
+export function readLibrary(): SavedTour[] {
+  return read();
+}
+
 function read(): SavedTour[] {
   if (cache) return cache;
   const st = storage();

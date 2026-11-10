@@ -17,7 +17,8 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { setEditTour } from '@/lib/edit-tour';
-import { filterTours, folders, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
+import { backfillAuthors } from '@/lib/community';
+import { filterTours, folders, readLibrary, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
 import { listDrives, type Drive } from '@/lib/drives';
 import { fmtG } from '@/lib/ride-stats';
 import { importTourFile } from '@/lib/route-file';
@@ -65,7 +66,7 @@ export default function Touren() {
   // Beim Öffnen des Tabs mit dem Konto abgleichen
   useFocusEffect(
     useCallback(() => {
-      if (session) void syncLibrary();
+      if (session) void syncLibrary().then(() => backfillAuthors(readLibrary()));
     }, [session]),
   );
 

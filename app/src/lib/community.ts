@@ -95,3 +95,21 @@ export async function copyCommunityTour(c: CommunityTour): Promise<SavedTour> {
   void syncLibrary();
   return saved;
 }
+
+/**
+ * Ältere übernommene Touren haben keinen Absender gespeichert: einmal über den Namen in der Community nachtragen,
+ * damit die Plakette „Von Timo“ statt „Aus der Community“ zeigt (Koray 10.11.).
+ */
+export async function backfillAuthors(list: SavedTour[]) {
+  const open = list.filter((t) => t.folder === 'Community' && !t.author && !t.published);
+  if (!open.length) return;
+  try {
+    const byName = new Map((await listCommunity()).filter((c) => c.author).map((c) => [c.name, c.author!]));
+    for (const t of open) {
+      const a = byName.get(t.name);
+      if (a) patchTour(t.id, { author: a });
+    }
+  } catch {
+    // ohne Netz bleibt die allgemeine Plakette
+  }
+}
