@@ -3,7 +3,8 @@
  * ergeben. Ein Punkt, zu dem man hoch und auf demselben Weg wieder runter fährt, fliegt raus; eine Strecke wird in
  * Fahrtrichtung durchfahren, Einstieg zuerst. Rechnet mit Luftlinie und einem Faktor für Straßen.
  */
-import { HIGHLIGHT_ROADS, type HighlightRoad } from './highlight-roads';
+import { learnedLevel } from './highlight-feedback';
+import { defaultLevel, HIGHLIGHT_ROADS, type HighlightRoad } from './highlight-roads';
 import { PASSES, passPoint, type Pass } from './passes';
 import { haversine, type LatLon } from './tour';
 
@@ -22,7 +23,13 @@ export type HighlightCandidate = {
   extraMin: number;
   pass?: Pass;
   road?: HighlightRoad;
+  /** Fahrspaß Pegel 1 bis 5, wie in der Ansage (Koray 10.11.: in der Liste statt Berg Symbol) */
+  level: number;
 };
+
+/** Pegel der Pässe nach Stufe: Ikone Legende, bekannt Traumstraße, Geheimtipp Stark */
+export const PASS_TIER_LEVEL: Record<Pass['tier'], number> = { ikone: 5, bekannt: 4, mittel: 3 };
+export const passLevel = (ps: Pass) => learnedLevel(ps.id, PASS_TIER_LEVEL[ps.tier]);
 
 /** Faktor Luftlinie zu Straße und Tempo auf Umwegen */
 const ROAD = 1.3;
@@ -124,7 +131,7 @@ export function highlightsForLeg(leg: Leg, corridorM: number): HighlightCandidat
     if (offLeg(a, b, p) > reach) continue;
     if (angleAt(a, p, b) < MIN_ANGLE) continue;
     const extra = (haversine(a, p) + haversine(p, b) - direct) / 1000;
-    out.push({ key: ps.id, name: ps.name, detail: `${ps.ele.toLocaleString('de-DE')} m, ${ps.region}`, p, extraMin: minutes(extra), pass: ps });
+    out.push({ key: ps.id, name: ps.name, detail: `${ps.ele.toLocaleString('de-DE')} m, ${ps.region}`, p, extraMin: minutes(extra), pass: ps, level: passLevel(ps) });
   }
   for (const r of HIGHLIGHT_ROADS) {
     if (r.line.length < 2) continue;
@@ -142,7 +149,7 @@ export function highlightsForLeg(leg: Leg, corridorM: number): HighlightCandidat
     const extra = (haversine(a, entry) + len / ROAD + haversine(exit, b) - direct) / 1000;
     const dir = fwd ? r.line : [...r.line].reverse();
     const line = trimEnds(dir, 250);
-    out.push({ key: r.id, name: r.name, detail: `Strecke, ${Math.round(len / 1000)} km`, p: line[0], exit: line[line.length - 1], line, extraMin: minutes(extra), road: r });
+    out.push({ key: r.id, name: r.name, detail: `Strecke, ${Math.round(len / 1000)} km`, p: line[0], exit: line[line.length - 1], line, extraMin: minutes(extra), road: r, level: learnedLevel(`road:${r.id}`, r.level ?? defaultLevel(r.kind)) });
   }
   // gleicher Name als Pass und als Strecke (etwa Juhöhe): die Strecke behalten
   const roads = new Set(out.filter((c) => c.road).map((c) => c.name));

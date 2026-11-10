@@ -20,6 +20,7 @@ import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, 
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/text';
+import { FUN_NAMES, FunGauge, type FunLevel } from '@/components/ui/fun-gauge';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { type Place } from '@/lib/geocode';
 import { passState, usePassLive } from '@/lib/pass-live';
@@ -27,7 +28,7 @@ import { PASSES, passPoint, passSummary, searchPasses } from '@/lib/passes';
 import { rememberPlace, useRecentPlaces } from '@/lib/recent-places';
 import { placesNear, stopsAlong, type StopKind } from '@/lib/stops-along';
 import { formatKm, haversine, type LatLon } from '@/lib/tour';
-import { highlightsForLeg, type Leg } from '@/lib/highlight-candidates';
+import { highlightsForLeg, passLevel, type Leg } from '@/lib/highlight-candidates';
 
 import { LocationIcon, PointSymbol } from './planner-parts';
 import type { PointKind } from './planner-shared';
@@ -97,7 +98,7 @@ export const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.s
   pass: 'mountain.2.fill',
 };
 /** extraMin und exit nur bei Highlights für eine Etappe: Umweg in Minuten, Ausstieg einer Strecke */
-type StopRow = { key: string; name: string; detail: string; p: LatLon; km: number; offM: number; extraMin?: number; exit?: LatLon; line?: LatLon[] };
+type StopRow = { key: string; name: string; detail: string; p: LatLon; km: number; offM: number; extraMin?: number; exit?: LatLon; line?: LatLon[]; /** Fahrspaß Pegel bei Highlights */ level?: number };
 
 /**
  * Lage eines Punkts zwischen Start und Ziel der Etappe in km ab Start (auf die Luftlinie projiziert):
@@ -137,7 +138,7 @@ function passesNear(line: LatLon[], cum: number[], maxM: number): StopRow[] {
         km = cum[i];
       }
     }
-    if (best <= maxM) out.push({ key: ps.id, name: ps.name, detail: `${ps.ele.toLocaleString('de-DE')} m, ${ps.region}`, p: pp, km, offM: best });
+    if (best <= maxM) out.push({ key: ps.id, name: ps.name, detail: `${ps.ele.toLocaleString('de-DE')} m, ${ps.region}`, p: pp, km, offM: best, level: passLevel(ps) });
   }
   return out;
 }
@@ -192,7 +193,7 @@ function SearchBody({
   const legRows = useMemo<StopRow[] | null>(
     () =>
       leg
-        ? highlightsForLeg(leg, 8000).filter((c) => !taken.has(c.name)).map((c) => ({ key: c.key, name: c.name, detail: c.detail, p: c.p, km: alongLeg(leg.a, leg.b, c.p), offM: 0, extraMin: c.extraMin, exit: c.exit, line: c.line }))
+        ? highlightsForLeg(leg, 8000).filter((c) => !taken.has(c.name)).map((c) => ({ key: c.key, name: c.name, detail: c.detail, p: c.p, km: alongLeg(leg.a, leg.b, c.p), offM: 0, extraMin: c.extraMin, exit: c.exit, line: c.line, level: c.level }))
         : null,
     [leg, taken],
   );
@@ -573,9 +574,16 @@ function SearchBody({
                             else onPick(r.p, r.name);
                           }}
                           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
-                          <View style={[styles.icon, styles.iconTint]}>
-                            <SymbolView name={CAT_ICON[cat as Exclude<Cat, 'alle'>]} size={16} tintColor={Colors.signal} />
-                          </View>
+                          {/* Highlights zeigen den Fahrspaß Pegel statt des Berg Symbols, der Stufenname steht vorn im Detail (Koray 10.11.) */}
+                          {r.level ? (
+                            <View style={styles.gauge}>
+                              <FunGauge level={Math.max(1, Math.min(5, Math.round(r.level))) as FunLevel} size={30} />
+                            </View>
+                          ) : (
+                            <View style={[styles.icon, styles.iconTint]}>
+                              <SymbolView name={CAT_ICON[cat as Exclude<Cat, 'alle'>]} size={16} tintColor={Colors.signal} />
+                            </View>
+                          )}
                           <View style={styles.rowMain}>
                             <AppText style={styles.name} numberOfLines={1}>
                               {r.name}
@@ -583,7 +591,7 @@ function SearchBody({
                             <View style={styles.subRow}>
                               {!!r.detail && (
                                 <AppText style={[styles.sub, styles.subShrink]} numberOfLines={1}>
-                                  {r.detail}
+                                  {r.level ? `${FUN_NAMES[Math.max(1, Math.min(5, Math.round(r.level))) as FunLevel]} · ${r.detail}` : r.detail}
                                 </AppText>
                               )}
                             </View>
@@ -718,6 +726,7 @@ const styles = StyleSheet.create({
   detourZero: { color: Colors.good },
   groupLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, paddingHorizontal: Spacing.xs },
   iconTint: { backgroundColor: Colors.signalTint },
+  gauge: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   widenLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.l },
   widenLinkText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.signal },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m },
