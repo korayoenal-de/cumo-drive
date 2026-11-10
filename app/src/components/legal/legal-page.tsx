@@ -29,10 +29,13 @@ export function LegalPage({ doc, description, other }: { doc: LegalDoc; descript
   const home = () => (web ? router.navigate('/') : router.canGoBack() ? router.back() : router.replace('/'));
   return (
     <View style={styles.root}>
-      <Head>
-        <title>{`${doc.headTitle ?? doc.title} | Cumo Drive`}</title>
-        <meta name="description" content={description} />
-      </Head>
+      {/* Head nur im Web: in der App zeigt expo-router sonst einen Hinweis zur Handoff Herkunft (Koray 10.11.) */}
+      {web && (
+        <Head>
+          <title>{`${doc.headTitle ?? doc.title} | Cumo Drive`}</title>
+          <meta name="description" content={description} />
+        </Head>
+      )}
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + Spacing.l, paddingBottom: insets.bottom + Spacing.xxxl }]}>
         <View style={styles.col}>
           <View style={styles.head}>
