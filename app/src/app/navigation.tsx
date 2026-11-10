@@ -981,7 +981,7 @@ export default function NavigationScreen() {
 
 function SavedNote({ saved }: { saved: string | null }) {
   const text: Record<string, string> = {
-    ok: 'Im Konto gespeichert, du findest die Fahrt unter Meine Touren, Gefahren.',
+    ok: 'Im Konto gespeichert, du findest die Fahrt unter Touren, Gefahren.',
     fehler: 'Speichern hat nicht geklappt. Prüfe die Verbindung.',
     simulation: 'Simulation, wird nicht gespeichert.',
     ohne_konto: 'Melde dich unter Einstellungen an, dann werden deine Fahrten gespeichert.',

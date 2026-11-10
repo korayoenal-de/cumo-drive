@@ -404,7 +404,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       </div>
     </div>
   </div>
-  <div class="cd-grid3">${featureCard('route', 'Routen', 'Veröffentlichte Touren anderer Fahrer, etwa die Sellaronda groß und klein. Antippen öffnet eine Kopie im Planer, das Lesezeichen legt sie in Meine Touren.')}${featureCard('calendar', 'Ausfahrten', 'Gemeinsame Ausfahrten mit Termin, Treffpunkt und Plätzen. Du fragst an oder wirst eingeladen, der Organisator nimmt an, und im Chat klärt ihr den Rest.')}${featureCard('people', 'Drivers', 'Mitglieder mit ungefährem Wohnort auf der Karte und private Nachrichten. Was andere von dir sehen, auch deinen Fuhrpark, stellst du selbst ein.')}
+  <div class="cd-grid3">${featureCard('route', 'Routen', 'Veröffentlichte Touren anderer Fahrer, etwa die Sellaronda groß und klein. Antippen öffnet eine Kopie im Planer, das Lesezeichen legt sie unter Touren ab.')}${featureCard('calendar', 'Ausfahrten', 'Gemeinsame Ausfahrten mit Termin, Treffpunkt und Plätzen. Du fragst an oder wirst eingeladen, der Organisator nimmt an, und im Chat klärt ihr den Rest.')}${featureCard('people', 'Drivers', 'Mitglieder mit ungefährem Wohnort auf der Karte und private Nachrichten. Was andere von dir sehen, auch deinen Fuhrpark, stellst du selbst ein.')}
   </div>
 </section>
 
@@ -413,10 +413,10 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   <div class="cd-two" style="flex-direction: row-reverse;">
     <div class="cd-phones" style="flex: 0 0 auto; display: flex; gap: 24px; align-items: flex-start;">
       <div class="cd-phone cd-hide-sm" style="width: 260px; margin-top: 96px;"><img src="/landing/paesse-karte.jpg" alt="Stilfser Joch und Umbrailpass auf der Karte"></div>
-      <div class="cd-phone" style="width: 270px; max-width: 70vw;"><img src="/landing/meine-touren.jpg" style="aspect-ratio: 760 / 1300; object-fit: cover; object-position: bottom;" alt="Meine Touren mit Sellaronda, Jaufen und Timmelsjoch, Stilfser Joch, Penser Joch, Würzjoch und Mendelpass"></div>
+      <div class="cd-phone" style="width: 270px; max-width: 70vw;"><img src="/landing/meine-touren.jpg" style="aspect-ratio: 760 / 1300; object-fit: cover; object-position: bottom;" alt="Touren mit Sellaronda, Jaufen und Timmelsjoch, Stilfser Joch, Penser Joch, Würzjoch und Mendelpass"></div>
     </div>
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
-      <span class="cd-label">06  Meine Touren</span>
+      <span class="cd-label">06  Touren</span>
       <h3 class="cd-h3">Jede Tour bleibt. Die besten teilst du.</h3>
       <p class="cd-body">Geplante Touren liegen in deinem Konto, in der App und im Web Planer. Ein Tipp öffnet sie so, wie du sie gespeichert hast, ohne neu zu planen. Du benennst sie um, duplizierst sie, sortierst sie in Ordner oder nach Fahrspaß und teilst sie als GPX oder KML. Touren aus anderen Apps und Navis importierst du genauso.</p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -449,7 +449,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
         <span class="cd-label">Web Planer</span>
         <h3 class="cd-h3">Am Rechner planen. Auf dem Handy fahren.</h3>
-        <p class="cd-body">Die große Tour planst du am besten auf dem großen Bildschirm. Im Web Planer setzt du Start, Zwischenziele und Pässe auf der Karte und siehst die Highlights deiner Tour. Fertig geplant, holst du die Tour per QR Code aufs iPhone oder findest sie einfach in Meine Touren.</p>
+        <p class="cd-body">Die große Tour planst du am besten auf dem großen Bildschirm. Im Web Planer setzt du Start, Zwischenziele und Pässe auf der Karte und siehst die Highlights deiner Tour. Fertig geplant, holst du die Tour per QR Code aufs iPhone oder findest sie einfach unter Touren.</p>
         <div style="display: flex; gap: 12px; flex-wrap: wrap; padding-top: 4px;">
           <a href="/planer" class="cd-btn cd-btn-surface">Web Planer öffnen</a>
         </div>

@@ -34,7 +34,7 @@ const SORTS: { id: SortKey; label: string }[] = [
 
 /** Tour im Planer öffnen: dort steht sie auf der Karte, mit Losfahren und Gruppe. */
 function openTour(t: SavedTour) {
-  setEditTour(t, { label: 'Meine Touren', href: '/touren' });
+  setEditTour(t, { label: 'Touren', href: '/touren' });
   router.navigate('/');
 }
 
@@ -78,7 +78,7 @@ export default function Touren() {
     <Screen>
       {/* Import als Symbol neben der Überschrift statt großem Knopf (Koray 8.11.) */}
       <View style={styles.titleRow}>
-        <AppText variant="display" style={styles.flex} numberOfLines={1} adjustsFontSizeToFit>Meine Touren</AppText>
+        <AppText variant="display" style={styles.flex} numberOfLines={1} adjustsFontSizeToFit>Touren</AppText>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="GPX oder KML importieren"

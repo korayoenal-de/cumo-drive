@@ -10,7 +10,7 @@ import { OptionsSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 
-export function NameDialog({ visible, initial, onCancel, onSave, title = 'Tour speichern', subtitle = 'Unter diesem Namen findest du sie in Meine Touren.' }: { visible: boolean; initial: string; onCancel: () => void; onSave: (name: string) => void; title?: string; subtitle?: string }) {
+export function NameDialog({ visible, initial, onCancel, onSave, title = 'Tour speichern', subtitle = 'Unter diesem Namen findest du sie im Tab Touren.' }: { visible: boolean; initial: string; onCancel: () => void; onSave: (name: string) => void; title?: string; subtitle?: string }) {
   // beim Öffnen neu eingehängt (key), daher reicht der Startwert
   const [name, setName] = useState(initial);
   const save = () => onSave(name.trim() || initial);

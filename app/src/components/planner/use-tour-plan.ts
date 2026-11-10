@@ -319,7 +319,7 @@ export function useTourPlan(onPlanned?: () => void) {
       if (asName != null) setName(asName);
       void syncLibrary();
       setSaveMsg(null);
-      if (!opts?.quiet) showToast('In Meine Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
+      if (!opts?.quiet) showToast('Unter Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
       return saved.id;
     } catch (e) {
       setSaveMsg(null);

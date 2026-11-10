@@ -25,7 +25,7 @@ export function DeleteTourSheet({ tour, visible, onClose, onDeleted }: { tour: S
     try {
       await removeKeepPublished(tour);
       onClose();
-      showToast('Aus Meine Touren entfernt, in der Community bleibt sie');
+      showToast('Aus Touren entfernt, in der Community bleibt sie');
       onDeleted?.();
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });

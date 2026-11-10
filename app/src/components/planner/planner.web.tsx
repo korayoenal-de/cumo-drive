@@ -79,7 +79,7 @@ type MapMenu = { x: number; y: number; p: LatLon; pass?: Pass } | null;
 
 const AREAS: { id: Area; label: string }[] = [
   { id: 'planen', label: 'Planen' },
-  { id: 'touren', label: 'Meine Touren' },
+  { id: 'touren', label: 'Touren' },
   { id: 'community', label: 'Community' },
 ];
 
@@ -673,7 +673,7 @@ export default function Planner() {
                 ) : plan.dirty || saveState === 'saving' ? (
                   <StatusLine tone="muted" text="Wird gespeichert …" />
                 ) : (
-                  <StatusLine tone="good" text="Gespeichert, in der App unter Meine Touren." />
+                  <StatusLine tone="good" text="Gespeichert, in der App unter Touren." />
                 )}
               </span>
             ) : (
@@ -681,9 +681,9 @@ export default function Planner() {
                 style={S.primary}
                 onClick={() => {
                   setEdited(true);
-                  void plan.save(curvesRoute, profile, avoid, autoName(plan), { quiet: true }).then(() => showToast('In Meine Touren gespeichert, auch in der App'));
+                  void plan.save(curvesRoute, profile, avoid, autoName(plan), { quiet: true }).then(() => showToast('Unter Touren gespeichert, auch in der App'));
                 }}>
-                In Meine Touren speichern
+                Unter Touren speichern
               </button>
             )}
             <MoreMenu
@@ -741,7 +741,7 @@ export default function Planner() {
           <ConfirmSheet
             narrow={narrow}
             title="Auch die veröffentlichte Route löschen?"
-            text={`${savedTour.name} steht in der Community. Löschen nimmt sie auch dort heraus. Nur bei dir entfernen geht unter Meine Touren.`}
+            text={`${savedTour.name} steht in der Community. Löschen nimmt sie auch dort heraus. Nur bei dir entfernen geht unter Touren.`}
             confirmLabel="Überall löschen"
             onClose={() => setAskDelete(false)}
             onConfirm={() => deleteSaved(savedTour, plan.reset, () => setAskDelete(false))}

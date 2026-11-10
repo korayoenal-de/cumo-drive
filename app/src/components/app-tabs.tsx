@@ -28,7 +28,7 @@ const SHRINK = 0.2;
 
 const TABS: { name: string; href: '/' | '/touren' | '/community' | '/einstellungen'; label: string; icon: TabIconName }[] = [
   { name: 'index', href: '/', label: 'Planen', icon: 'planen' },
-  { name: 'touren', href: '/touren', label: 'Routen', icon: 'touren' },
+  { name: 'touren', href: '/touren', label: 'Touren', icon: 'touren' },
   { name: 'community', href: '/community', label: 'Community', icon: 'community' },
   { name: 'einstellungen', href: '/einstellungen', label: 'Einstellungen', icon: 'einstellungen' },
 ];

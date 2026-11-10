@@ -121,7 +121,7 @@ export function useRoundTrip(opts: { setBusy: (s: string | null) => void; setErr
       const t = saveTour({ ...cur.tour, curves: countCurves(flatten(cur.tour).map((x) => x.p)), profile: cur.req.profile }, '', st.savedId ?? undefined);
       setSt((s) => ({ ...s, savedId: t.id, savedFor: cur.tour }));
       void syncLibrary();
-      showToast('In Meine Touren gespeichert, auch in der App');
+      showToast('Unter Touren gespeichert, auch in der App');
     },
     /** Stopp einplanen, die Runde bleibt eine Runde (spliceStop wie in der App) */
     addStop: async (p: LatLon) => {
@@ -357,7 +357,7 @@ export function RoundResult(props: {
       <div style={{ display: 'flex', gap: Spacing.s, alignItems: 'center' }}>
         {saved ? (
           <span style={{ flex: 1 }}>
-            <StatusLine tone="good" text="Gespeichert, in der App unter Meine Touren." />
+            <StatusLine tone="good" text="Gespeichert, in der App unter Touren." />
           </span>
         ) : (
           <button style={S.primary} disabled={props.busy} onClick={round.save}>
@@ -382,7 +382,7 @@ export function RoundResult(props: {
         <ConfirmSheet
           narrow={props.narrow}
           title="Möchtest du diese Runde wirklich verwerfen?"
-          text="Gespeicherte Runden bleiben in Meine Touren."
+          text="Gespeicherte Runden bleiben unter Touren."
           confirmLabel="Verwerfen"
           onClose={() => setAsk(false)}
           onConfirm={() => {

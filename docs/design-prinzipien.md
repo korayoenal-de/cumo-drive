@@ -13,12 +13,12 @@ Jede Rückfrage, jedes Menü und jede Meldung nutzt genau eines dieser Muster. B
 | Muster | Wofür | Beispiele | Schließen |
 |---|---|---|---|
 | **Aufklappen an Ort und Stelle** | eine Wahl, die zum Inhalt gehört und klein bleibt | Profil einer Etappe, Vermeiden, Länge in km oder Dauer | Tippen auf dieselbe Stelle |
-| **Bottom Sheet mit Optionen** (`ActionSheet`) | Optionen zu einem Objekt, 2 bis 6 Zeilen, je Symbol, Name, Hinweis | Optionen einer Tour in Meine Touren, Weiteres im Planer (Anpassen, Neu würfeln, Verwerfen), Optionen eines Fahrzeugs | Tipp daneben, Zeile wählen |
+| **Bottom Sheet mit Optionen** (`ActionSheet`) | Optionen zu einem Objekt, 2 bis 6 Zeilen, je Symbol, Name, Hinweis | Optionen einer Tour in Touren, Weiteres im Planer (Anpassen, Neu würfeln, Verwerfen), Optionen eines Fahrzeugs | Tipp daneben, Zeile wählen |
 | **Rückfrage** (`ConfirmSheet`) | vor allem, was sich nicht rückgängig machen lässt | Tour löschen, Runde verwerfen, Fahrzeug löschen | Abbrechen oder Bestätigen |
 | **Bottom Sheet mit Inhalt** (`OptionsSheet`) | kurze Eingabe zu einem Objekt, höchstens zwei Felder | In der Community veröffentlichen | Tipp daneben, Fertig |
 | **Ebene** (Modal als Page Sheet) | eigene Aufgabe mit viel Inhalt oder Tastatur, Wischen nach unten schließt | Ortssuche, Highlight Details, Karteneinstellungen | Wischen, X oben |
 | **Schwebende Karte über der Karte** | Aktionen zu etwas auf der Karte, die Karte bleibt sichtbar | angetippter Pass, neuer Punkt durch langen Druck | Tipp auf die Karte |
-| **Toast** | Bestätigung einer erledigten Aktion, nichts mehr zu tun | Gespeichert unter Meine Touren, Tour gelöscht, In der Community veröffentlicht | verschwindet nach 2,6 s, mit Folgeaktion nach 5 s |
+| **Toast** | Bestätigung einer erledigten Aktion, nichts mehr zu tun | Gespeichert unter Touren, Tour gelöscht, In der Community veröffentlicht | verschwindet nach 2,6 s, mit Folgeaktion nach 5 s |
 | **Hinweis im Inhalt** | Zustand oder Fehler, der zu einer Stelle gehört | Feld leer, Route geändert und nicht gespeichert, Standort nicht freigegeben | verschwindet, wenn der Grund weg ist |
 | **Vollbild** | Modus, der alles andere ersetzt | Navigation, QR Scan, Mitgliedschaft | eigener Knopf |
 
@@ -103,7 +103,7 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 ## Muster vom 10.11.2026
 
 **Navigation zwischen Ansichten**
-- Zurück wie bei Instagram: Wer aus Meine Touren oder der Community etwas öffnet, bekommt oben links eine Pille mit dem Namen der Herkunft. Die Tableiste zeigt immer den aktuellen Tab. Kein Wischen vom Rand.
+- Zurück wie bei Instagram: Wer aus Touren oder der Community etwas öffnet, bekommt oben links eine Pille mit dem Namen der Herkunft. Die Tableiste zeigt immer den aktuellen Tab. Kein Wischen vom Rand.
 - Ungespeicherte Änderungen fragen beim Zurück einmal nach (Speichern, Als Kopie, Verwerfen), sonst geht Zurück sofort.
 - Unterseiten (Profil, Garage, Fahren) haben die Pille „‹ Einstellungen“ und einen Display Titel.
 - Leise Taste für Nebenaktionen oben in einer Ansicht (Zurück Pille, Schließen auf Datenschutz, Nutzungsbedingungen und Impressum): Pille auf `surface`, 44 hoch, Inter Bold 15. Unterstrichene Textlinks nur im Fließtext.
@@ -142,3 +142,7 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 - Punkte verschieben: leicht beim Abheben, Rastung bei jeder neuen Position, weich beim Ablegen.
 - Losfahren: ein kräftiger Impuls. Langer Druck auf die Karte: leicht, wenn der Punkt sitzt. Funk: fest beim Drücken, leicht beim Loslassen.
 - Tokens in `lib/haptics.ts` (abheben, rastung, ablegen, losfahren, punkt, sendung, sendungEnde).
+
+## Namen (10.11.2026)
+- Der Tab heißt „Touren“ (früher Meine Touren), in allen Texten gleich: „Unter Touren gespeichert“, „Aus Touren entfernt“. „Routen“ ist der Reiter in der Community.
+- Tableiste mit eigenen Symbolen (`tab-icons.tsx`): Raster 24, Strich 1,8, aktiv gefüllt und 2,0.

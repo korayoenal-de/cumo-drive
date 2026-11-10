@@ -12,7 +12,7 @@ import { useSyncExternalStore } from 'react';
 
 import type { SavedTour } from './library';
 
-export type EditOrigin = { label: 'Meine Touren' | 'Community'; href: '/touren' | '/community' };
+export type EditOrigin = { label: 'Touren' | 'Community'; href: '/touren' | '/community' };
 
 let pending: SavedTour | null = null;
 let origin: EditOrigin | null = null;

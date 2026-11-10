@@ -41,7 +41,7 @@ export function LibraryPanel(props: { currentId: string | null; onOpen: (t: Save
   const fs = folders(list).filter((d) => d !== 'Community');
   return (
     <div style={S.stack}>
-      <ViewTitle>Meine Touren</ViewTitle>
+      <ViewTitle>Touren</ViewTitle>
       {sync.error ? <p style={{ ...S.muted, color: C.warn }}>Abgleich mit dem Konto hat nicht geklappt. Wir versuchen es gleich erneut.</p> : null}
       {!list.length ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.m, background: C.surface, borderRadius: Radius.l, padding: Spacing.xl }}>
@@ -214,7 +214,7 @@ function DeleteSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
               removeKeepPublished(t)
                 .then(() => {
                   props.onClose();
-                  showToast('Aus Meine Touren entfernt, in der Community bleibt sie');
+                  showToast('Aus Touren entfernt, in der Community bleibt sie');
                 })
                 .catch((e: Error) => showToast(e.message || 'Das hat nicht geklappt.', { tone: 'error' }))
                 .finally(() => setBusy(false));

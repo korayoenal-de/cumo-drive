@@ -18,7 +18,7 @@ const LAYERS: { key: LayerKey; label: string; note: string }[] = [
   { key: 'warnings', label: 'Gefahrenstellen', note: 'Gesperrte und zu prüfende Stellen auf der Route' },
   { key: 'passes', label: 'Pässe in der Nähe von Start und Ziel', note: 'Bis 50 km um deine Tour, orange die Ikonen' },
   { key: 'passesAll', label: 'Alle Pässe anzeigen', note: 'Auch weit weg von deiner Tour' },
-  { key: 'myTours', label: 'Meine Touren', note: 'Gespeicherte Touren als feine Linien' },
+  { key: 'myTours', label: 'Gespeicherte Touren', note: 'Als feine Linien' },
   { key: 'drives', label: 'Gefahrene Strecken', note: 'Deine Fahrten in Grün, so siehst du, was noch fehlt' },
 ];
 

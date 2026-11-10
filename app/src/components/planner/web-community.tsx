@@ -143,7 +143,7 @@ export function CommunityPanel(props: {
           </div>
           {err ? <p style={S.errorText}>Community konnte nicht geladen werden: {err}</p> : null}
           {tours === null && !err ? <p style={S.muted}>Wird geladen …</p> : null}
-          {tours?.length === 0 ? <EmptyCard title="Noch keine Routen veröffentlicht" text="Sei der Erste: Öffne Meine Touren und veröffentliche eine Tour über das Menü ⋯." /> : null}
+          {tours?.length === 0 ? <EmptyCard title="Noch keine Routen veröffentlicht" text="Sei der Erste: Öffne Touren und veröffentliche eine Tour über das Menü ⋯." /> : null}
           {tours && tours.length > 0 && !shownTours.length ? <p style={S.muted}>Keine Route passt zur Suche.</p> : null}
           {shownTours.map((t) => (
             <RouteCard
@@ -279,13 +279,13 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
           ) : null}
         </span>
         <button
-          aria-label={`${t.name} in Meine Touren speichern`}
-          title="In Meine Touren speichern"
+          aria-label={`${t.name} unter Touren speichern`}
+          title="Unter Touren speichern"
           disabled={saving}
           onClick={() => {
             setSaving(true);
             copyCommunityTour(t)
-              .then(() => showToast('In Meine Touren gespeichert'))
+              .then(() => showToast('Unter Touren gespeichert'))
               .catch(() => showToast('Speichern hat nicht geklappt', { tone: 'error' }))
               .finally(() => setSaving(false));
           }}

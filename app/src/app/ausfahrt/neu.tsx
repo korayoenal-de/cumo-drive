@@ -138,7 +138,7 @@ export default function AusfahrtNeu() {
               <View style={styles.flex}>
                 <AppText style={styles.tourName} numberOfLines={2}>{tour.name}</AppText>
                 <AppText variant="caption" muted>
-                  {[`${formatKm(tour.laenge_km, 0)} km`, tour.minutes ? formatMinutes(Math.round(tour.minutes)) : null, 'aus Meine Touren'].filter(Boolean).join('  ·  ')}
+                  {[`${formatKm(tour.laenge_km, 0)} km`, tour.minutes ? formatMinutes(Math.round(tour.minutes)) : null, 'aus Touren'].filter(Boolean).join('  ·  ')}
                 </AppText>
               </View>
               <AppText style={styles.change}>Ändern</AppText>
@@ -147,7 +147,7 @@ export default function AusfahrtNeu() {
         ) : (
           <View style={styles.section}>
             <AppText style={styles.label}>Welche Tour fahrt ihr?</AppText>
-            {tours.length === 0 && <AppText muted>Speichere zuerst eine Tour unter Meine Touren.</AppText>}
+            {tours.length === 0 && <AppText muted>Speichere zuerst eine Tour unter Touren.</AppText>}
             {tours.slice(0, 30).map((t) => (
               <Pressable
                 key={t.id}

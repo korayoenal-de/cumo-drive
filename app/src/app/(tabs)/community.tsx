@@ -267,7 +267,7 @@ export default function Community() {
             {tours?.length === 0 && (
               <View style={styles.card}>
                 <AppText variant="title">Noch keine Routen veröffentlicht</AppText>
-                <AppText muted>Sei der Erste: Öffne eine Tour unter Meine Touren und tippe auf Veröffentlichen.</AppText>
+                <AppText muted>Sei der Erste: Öffne eine Tour unter Touren und tippe auf Veröffentlichen.</AppText>
               </View>
             )}
             {nearNow && <AppText muted>Auch Routen mit Start im Umkreis von {NEAR_KM} km um {nearNow.name}</AppText>}
@@ -445,7 +445,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
         // eigene veröffentlichte Tour: nur aus Meine Touren, in der Community bleibt sie
         if (kept.published) await removeKeepPublished(kept);
         else deleteTour(kept.id);
-        showToast('Aus Meine Touren entfernt', kept.published ? {} : { action: { label: 'Rückgängig', onPress: () => void copyCommunityTour(t).catch(() => undefined) } });
+        showToast('Aus Touren entfernt', kept.published ? {} : { action: { label: 'Rückgängig', onPress: () => void copyCommunityTour(t).catch(() => undefined) } });
       } catch (e) {
         setErr(e instanceof Error ? e.message : String(e));
       }
@@ -454,7 +454,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
     setBusy('save');
     try {
       await copyCommunityTour(t);
-      showToast('Gespeichert unter Meine Touren');
+      showToast('Gespeichert unter Touren');
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -464,7 +464,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
   const bookmark = (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={saved ? `${t.name} aus Meine Touren entfernen` : `${t.name} in Meine Touren speichern`}
+      accessibilityLabel={saved ? `${t.name} aus Touren entfernen` : `${t.name} unter Touren speichern`}
       accessibilityState={{ selected: saved, busy: busy === 'save' }}
       onPress={() => void keep()}
       hitSlop={4}
@@ -493,7 +493,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
         <Pressable accessibilityRole="button" onPress={() => void open()} style={styles.primary}>
           {busy === 'open' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Im Planer öffnen</AppText>}
         </Pressable>
-        {/* Eigene Tour zurückziehen, auch wenn sie nicht mehr in Meine Touren liegt (Koray 10.11.) */}
+        {/* Eigene Tour zurückziehen, auch wenn sie nicht mehr unter Touren liegt (Koray 10.11.) */}
         {mine && (
           <Pressable
             accessibilityRole="button"

@@ -54,10 +54,10 @@ function Start({ error }: { error: string | null }) {
       <AppText muted>Alle sehen sich live auf der Karte und schicken sich Kurznachrichten. Sprechfunk folgt.</AppText>
       <View style={styles.card}>
         <AppText variant="label">So geht es</AppText>
-        <AppText>Öffne eine gespeicherte Tour in Meine Touren, tippe auf Losfahren und dann auf Als Gruppe fahren. Dort lädst du bis zu 5 Mitfahrer mit ihrem Namen ein.</AppText>
+        <AppText>Öffne eine gespeicherte Tour unter Touren, tippe auf Losfahren und dann auf Als Gruppe fahren. Dort lädst du bis zu 5 Mitfahrer mit ihrem Namen ein.</AppText>
         <AppText muted>Wurdest du eingeladen, erscheint die Einladung unten über den Tabs. Nach der Zusage fährst du mit einem Tipp mit.</AppText>
         <Pressable accessibilityRole="button" onPress={() => router.navigate('/touren')} style={[styles.secondary, styles.secondaryOnSurface]}>
-          <AppText style={styles.secondaryText}>Zu Meine Touren</AppText>
+          <AppText style={styles.secondaryText}>Zu Touren</AppText>
         </Pressable>
       </View>
       {error && <AppText style={styles.error}>{error}</AppText>}

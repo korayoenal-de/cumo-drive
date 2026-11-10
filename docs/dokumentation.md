@@ -51,7 +51,7 @@ Fällt der eigene Server aus (Neuaufbau, wöchentlicher Import), plant die App �
 
 ## Funktionen der App
 
-Vier Tabs: Planen, Meine Touren, Community und Einstellungen. Die Tableiste schrumpft beim Scrollen nach unten auf 80 % und wächst beim Hochscrollen wieder. Eine Plakette am Community Tab zählt ungelesene Nachrichten.
+Vier Tabs: Planen, Touren, Community und Einstellungen. Die Tableiste schrumpft beim Scrollen nach unten auf 80 % und wächst beim Hochscrollen wieder. Eine Plakette am Community Tab zählt ungelesene Nachrichten.
 
 ### Planen
 
@@ -70,7 +70,7 @@ Volle Karte mit ziehbarem Blatt (drei Höhen). Zwei Modi als große Reiter: Tour
 
 ### Karte und Ebenen
 
-Runder Knopf oben rechts: Darstellung Standard (dunkel), Satellit, 3D Satellit (gilt für alle Karten); Ebenen Gefahrenstellen, Pässe (nur bis 50 km um die Tour, Alle Pässe als Schalter), Meine Touren, Gefahrene Strecken, Wetter an den Pässen (Apple WeatherKit). Doppelt gefahrene Abschnitte erscheinen als zwei versetzte Linien mit Richtungspfeilen.
+Runder Knopf oben rechts: Darstellung Standard (dunkel), Satellit, 3D Satellit (gilt für alle Karten); Ebenen Gefahrenstellen, Pässe (nur bis 50 km um die Tour, Alle Pässe als Schalter), Touren, Gefahrene Strecken, Wetter an den Pässen (Apple WeatherKit). Doppelt gefahrene Abschnitte erscheinen als zwei versetzte Linien mit Richtungspfeilen.
 
 ### Navigation
 
@@ -82,7 +82,7 @@ Runder Knopf oben rechts: Darstellung Standard (dunkel), Satellit, 3D Satellit (
 * Karte zoomt ab 50 km/h langsam heraus, mit zwei Fingern zoomen und zentriert bleiben (CarPlay zoomt ab Build 21 mit)
 * Linie nur vor dem Auto, keine 3D Gebäude über der Linie, Kamera folgt flüssig
 * Restzeit passt sich dem Tempo an (0,6 bis 1,8 fach); Live Activity auf dem Sperrbildschirm
-* CarPlay (in Entwicklung): Start im Auto mit Meine Touren und Schnelle Runde, Führung mit eigenen Symbolen, Menü Mehr, eigenes Auto aus der Garage als Standort
+* CarPlay (in Entwicklung): Start im Auto mit Touren und Schnelle Runde, Führung mit eigenen Symbolen, Menü Mehr, eigenes Auto aus der Garage als Standort
 
 ### Gruppenfahrt
 
@@ -93,7 +93,7 @@ Runder Knopf oben rechts: Darstellung Standard (dunkel), Satellit, 3D Satellit (
 * Gruppen Bedienung erscheint nur, wenn wirklich jemand mitfährt
 * Konzept und offene Punkte: claude/funk-konzept.md
 
-### Meine Touren
+### Touren
 
 Karten im Stil von Trade Republic mit Streckenbild, Fahrspaß und Plakette "Von dir" oder "Von …" für übernommene Touren. Reiter Gespeichert und Gefahren, Import als Symbol. Tippen öffnet die Tour im Planer ohne Neuplanung; oben links führt eine Pille zurück zur Herkunft. Abgleich mit dem Konto ohne Duplikate.
 
@@ -101,7 +101,7 @@ Karten im Stil von Trade Republic mit Streckenbild, Fahrspaß und Plakette "Von 
 
 Umschalter Routen, Ausfahrten und Drivers als Glaspille fest über der Karte.
 
-* **Routen:** veröffentlichte Touren im Aufbau von Meine Touren; Suche nach Name, Fahrer, Ort, Adresse oder PLZ mit 50 km Umkreis um den Start; Sortierung Neueste, Kurvigste, Kurz, Lang. Tippen öffnet eine ungespeicherte Kopie, das Lesezeichen übernimmt sie.
+* **Routen:** veröffentlichte Touren im Aufbau von Touren; Suche nach Name, Fahrer, Ort, Adresse oder PLZ mit 50 km Umkreis um den Start; Sortierung Neueste, Kurvigste, Kurz, Lang. Tippen öffnet eine ungespeicherte Kopie, das Lesezeichen übernimmt sie.
 * **Ausfahrten:** anlegen mit Tour, Zeit, Treffpunkt und Plätzen, mitfahren anfragen, annehmen, Chat, Einladung per Name; am Tag wird daraus die Gruppenfahrt.
 * **Drivers:** Mitglieder mit Wohnort (nur Ortsmitte), Fuhrpark und Über mich; private Nachrichten, wenn erlaubt. Jeder kann sich ausblenden.
 * **Push** bei Nachrichten, Chat der Ausfahrt, Einladungen, Anfragen und Zusagen (ab Build 19).
@@ -191,7 +191,7 @@ Jede Ansicht wird an den Regeln in docs/design-prinzipien.md gemessen (gespiegel
 
 **Fahrspaß Pegel (Variante S3, seit 7.11.):** acht Segmente mit rundem Rücken um einen schlanken achtzackigen Stern als Negativform; fünf Stufen Nett, Lohnend, Stark, Traumstraße, Legende füllen 1, 3, 5, 7 und 8 Segmente ab 6 Uhr im Uhrzeigersinn. Legende animiert als subtiler Austausch.
 
-**Artefakte:** CUMO DRIVE Design System, Design Leinwände (Zurück Navigation, Meine Touren Herkunft, Einstellungen neu, Funk in der Gruppenfahrt mit Prototyp), User Flows für den synthetischen Test (96 Flows).
+**Artefakte:** CUMO DRIVE Design System, Design Leinwände (Zurück Navigation, Touren Herkunft, Einstellungen neu, Funk in der Gruppenfahrt mit Prototyp), User Flows für den synthetischen Test (96 Flows).
 
 ## Betrieb
 
@@ -258,6 +258,7 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 | Datum | Entscheidung |
 |---|---|
+| 10.11. | Tab „Touren“ statt Meine Touren, Texte gleich; eigene Tab Symbole; Haptik gezielt (Build 21) |
 | 10.11. | CarPlay wird bei jeder Änderung an Karte und Navigation mitgedacht |
 | 10.11. | Bewertung nach der Fahrt mit fünf Sternen statt Regler; Zoom bei Tempo und mit zwei Fingern |
 | 10.11. | Funk und Halt getrennt; Halt als Pille oben rechts; Lead Blatt nach Art des Inhalts (Status, Kacheln, Schalter, Seltenes); "Tour für alle beenden" bleibt (unter Seltenes, mit Rückfrage) |
@@ -265,7 +266,7 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 | 10.11. | Einstellungen neu: Profilkarte oben, Gruppen, Unterseiten; Sichtbarkeit in Drivers abschaltbar |
 | 10.11. | Community Umschalter fest über der Karte; Ortssuche mit 50 km Umkreis |
 | 10.11. | Zurück Navigation mit Pille oben links, Tableiste zeigt den aktuellen Tab, kein Wischen vom Rand |
-| 10.11. | Plaketten "Von dir" und "Von …" statt Filter in Meine Touren (Variante A) |
+| 10.11. | Plaketten "Von dir" und "Von …" statt Filter in Touren (Variante A) |
 | 10.11. | Club Preise öffentlich auf Anfrage; CarPlay "in Entwicklung" |
 | 10.11. | Fahrregionen nur in der Bewertung, nicht auf dem Server; Neu würfeln sagt ehrlich, wenn nichts Besseres kommt |
 | 10.11. | TomTom Kosten begrenzt: Kontingent 20.000 im Monat, Tests höchstens 200 € |

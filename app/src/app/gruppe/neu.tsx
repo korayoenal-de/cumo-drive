@@ -112,7 +112,7 @@ export default function GruppeNeu() {
       <Screen>
         <BackLink />
         <AppText variant="display">{'Gruppen\nfahrt'}</AppText>
-        <AppText muted>Diese Tour gibt es nicht mehr in Meine Touren. Wähle dort eine Tour und tippe auf Losfahren, dann Als Gruppe fahren.</AppText>
+        <AppText muted>Diese Tour gibt es nicht mehr unter Touren. Wähle dort eine Tour und tippe auf Losfahren, dann Als Gruppe fahren.</AppText>
       </Screen>
     );
   }

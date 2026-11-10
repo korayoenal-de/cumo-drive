@@ -140,7 +140,7 @@ export function AccountBox() {
             ? 'Touren werden abgeglichen …'
             : sync.error
               ? `Abgleich fehlgeschlagen: ${sync.error}`
-              : 'Deine Touren liegen im Konto und erscheinen in der App unter Meine Touren.'}
+              : 'Deine Touren liegen im Konto und erscheinen in der App unter Touren.'}
         </span>
       </div>
     );

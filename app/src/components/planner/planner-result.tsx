@@ -63,7 +63,7 @@ export function Result({
     const t = saveTour({ ...tour, curves, profile: req.profile }, '', savedId ?? undefined);
     setSaved({ tour, id: t.id });
     void syncLibrary();
-    showToast('In Meine Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
+    showToast('Unter Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
     return t.id;
   };
   const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);

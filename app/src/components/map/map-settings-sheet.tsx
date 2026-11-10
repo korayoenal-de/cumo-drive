@@ -102,8 +102,8 @@ const LAYERS: { key: LayerKey; icon: SFSymbol; label: string; note: string }[] =
     {
       key: 'myTours',
       icon: 'bookmark',
-      label: 'Meine Touren',
-      note: 'Gespeicherte Touren als feine Linien',
+      label: 'Gespeicherte Touren',
+      note: 'Als feine Linien',
     },
     {
       key: 'drives',

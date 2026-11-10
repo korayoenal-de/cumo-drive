@@ -309,7 +309,7 @@ export function TourMode({
     const snap = plan.snapshot();
     const wasSaved = !!plan.cloudId;
     plan.reset();
-    showToast(wasSaved ? 'Planer geleert, die Tour bleibt in Meine Touren' : 'Planung zurückgesetzt', {
+    showToast(wasSaved ? 'Planer geleert, die Tour bleibt unter Touren' : 'Planung zurückgesetzt', {
       action: { label: 'Rückgängig', onPress: () => plan.restore(snap) },
     });
   };
@@ -807,7 +807,7 @@ export function TourMode({
                   ]
                 : []),
               // Gespeicherte Tour schließen: leert den Planer, die Tour bleibt in Meine Touren (Koray 8.11.)
-              ...(plan.cloudId ? [{ key: 'close', icon: 'xmark.circle' as const, label: 'Tour schließen', hint: 'Bleibt in Meine Touren', onPress: resetForm }] : []),
+              ...(plan.cloudId ? [{ key: 'close', icon: 'xmark.circle' as const, label: 'Tour schließen', hint: 'Bleibt unter Touren', onPress: resetForm }] : []),
               plan.cloudId
                 ? { key: 'delete', icon: 'trash', label: 'Route löschen', danger: true, onPress: () => setAskDelete(true) }
                 : { key: 'reset', icon: 'arrow.counterclockwise', label: 'Planung verwerfen', danger: true, onPress: resetForm },

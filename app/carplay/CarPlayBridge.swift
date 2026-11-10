@@ -369,7 +369,7 @@ final class CarPlayBridge: NSObject {
 
   private func showTours() {
     guard let ic = interfaceController, session == nil, !planning else { return }
-    let list = CPListTemplate(title: "Meine Touren", sections: tourSections())
+    let list = CPListTemplate(title: "Touren", sections: tourSections())
     list.emptyViewTitleVariants = ["Noch keine Touren"]
     list.emptyViewSubtitleVariants = ["Gespeicherte Touren aus der App stehen hier."]
     toursList = list

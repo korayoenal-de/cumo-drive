@@ -4,7 +4,7 @@ Stand: 10. November 2026, 18:00. Ausführlich: Cumo Drive Dokumentation (https:/
 
 ## Produkt
 * Navigations App für Sportwagenfahrer ("calimoto für Autos") mit Gruppenfahrt und Funk. Ziel Monetarisierung und die schönste, einfachste App ihrer Art. Koray steuert, gestaltet, testet; Claude programmiert und betreibt.
-* Tabs: Planen (Tour planen, Rundtour), Meine Touren (Gespeichert, Gefahren), Community (Routen, Ausfahrten, Drivers), Einstellungen (Profilkarte, Gruppen, Unterseiten).
+* Tabs: Planen (Tour planen, Rundtour), Touren (Gespeichert, Gefahren), Community (Routen, Ausfahrten, Drivers), Einstellungen (Profilkarte, Gruppen, Unterseiten).
 * Profil nur Kurvig, Schnell je Etappe; Fahrspaß 0 bis 100; Pegel S3; Sperrungen aus TomTom werden umplant.
 * Navigation mit 42 Symbolen, Highlight Ansagen, Tempo und Bremshinweis, Zoom bei Tempo und mit zwei Fingern, Weg zur Tour um Orte herum; CarPlay in Entwicklung.
 * Gruppenfahrt: Live Positionen, Kurznachrichten, Halt der Lead als Pille oben rechts, Funk über LiveKit (ab Build 20). Push bei Nachrichten (ab Build 19).

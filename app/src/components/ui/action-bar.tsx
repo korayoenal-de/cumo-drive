@@ -79,7 +79,7 @@ export function ActionBar({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Speichern"
-            accessibilityHint="Unter Meine Touren ablegen"
+            accessibilityHint="Unter Touren ablegen"
             accessibilityState={{ busy: save.busy }}
             disabled={save.busy}
             onPress={save.onPress}
