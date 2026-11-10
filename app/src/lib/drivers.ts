@@ -229,3 +229,23 @@ export function kmBetween(a: LatLon, b: LatLon): number {
   const x = Math.sin(dLat / 2) ** 2 + Math.cos((a[0] * Math.PI) / 180) * Math.cos((b[0] * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
   return 6371 * 2 * Math.asin(Math.sqrt(x));
 }
+
+/**
+ * Ungelesene Nachrichten in der ganzen App aktuell halten (Koray 10.11.: Plakette am Community Tab):
+ * beim Start, live über Realtime für neue Nachrichten an mich und als Rückfall jede Minute.
+ */
+export function useUnreadWatcher(userId: string | undefined) {
+  useEffect(() => {
+    if (!userId) return;
+    void refreshUnread();
+    const ch = supabase
+      .channel(`unread:${userId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient=eq.${userId}` }, () => void refreshUnread())
+      .subscribe();
+    const t = setInterval(() => void refreshUnread(), 60000);
+    return () => {
+      clearInterval(t);
+      void supabase.removeChannel(ch);
+    };
+  }, [userId]);
+}

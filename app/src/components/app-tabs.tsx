@@ -18,6 +18,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Shadow, Spacing, Type } from '@/constants/theme';
+import { useSession } from '@/lib/auth';
+import { useUnreadMessages, useUnreadWatcher } from '@/lib/drivers';
 import { useRide, type RideState } from '@/lib/group/ride';
 import { expandTabBar, tabBarCompact as compact } from '@/lib/tab-bar';
 
@@ -32,6 +34,7 @@ const TABS: { name: string; href: '/' | '/touren' | '/community' | '/einstellung
 ];
 
 export default function AppTabs() {
+  useUnreadWatcher(useSession()?.user.id);
   return (
     <Tabs style={styles.flex}>
       <TabSlot />
@@ -87,11 +90,25 @@ function TabButton({ tab, isFocused, ref: _ref, ...rest }: TabProps) {
       accessibilityState={{ selected: !!isFocused }}
       style={styles.tab}>
       <Animated.View style={[StyleSheet.absoluteFill, styles.pill, pill]} />
-      <SymbolView name={isFocused ? tab.active : tab.icon} size={22} tintColor={isFocused ? Colors.text : Colors.muted} weight={isFocused ? 'semibold' : 'regular'} />
+      <View>
+        <SymbolView name={isFocused ? tab.active : tab.icon} size={22} tintColor={isFocused ? Colors.text : Colors.muted} weight={isFocused ? 'semibold' : 'regular'} />
+        {tab.name === 'community' && <UnreadBubble />}
+      </View>
       <AppText style={[styles.label, isFocused && styles.labelOn]} numberOfLines={1}>
         {tab.label}
       </AppText>
     </Pressable>
+  );
+}
+
+/** Plakette für ungelesene Nachrichten am Community Tab (Koray 10.11.) */
+function UnreadBubble() {
+  const n = useUnreadMessages();
+  if (n <= 0) return null;
+  return (
+    <View style={styles.bubble} accessible accessibilityLabel={`${n} ungelesene Nachrichten`}>
+      <AppText style={styles.bubbleText}>{n > 9 ? '9+' : n}</AppText>
+    </View>
   );
 }
 
@@ -129,4 +146,6 @@ const styles = StyleSheet.create({
   accessory: { height: 52, borderRadius: 26, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingHorizontal: Spacing.l },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.good },
   title: { fontFamily: Fonts.semibold, fontSize: Type.small },
+  bubble: { position: 'absolute', top: -5, right: -11, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
+  bubbleText: { fontFamily: Fonts.bold, fontSize: 10, lineHeight: 12, color: Colors.onSignal },
 });
