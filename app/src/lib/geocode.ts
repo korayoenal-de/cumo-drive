@@ -40,8 +40,11 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
     const pr = f.properties;
     // Adresse mit Hausnummer: ohne eigenen Namen ist sie der Titel, sonst steht sie im Untertitel
     const addr = pr.street && pr.housenumber ? `${pr.street} ${pr.housenumber}` : undefined;
-    const name = pr.name ?? addr ?? pr.street ?? pr.city ?? 'Ort';
-    const detail = [addr !== name ? addr : undefined, pr.city !== name ? pr.city : undefined, pr.state, pr.country].filter(Boolean).join(', ');
+    // Suche nach PLZ: Photon liefert dann die Postleitzahl als Namen, gemeint ist der Ort (Tester Joe 10.11.)
+    const plz = pr.name && /^\d{4,5}$/.test(pr.name.trim()) ? pr.name.trim() : undefined;
+    const town = pr.city ?? pr.town ?? pr.village ?? pr.locality ?? pr.district;
+    const name = (plz && town) || (pr.name ?? addr ?? pr.street ?? pr.city ?? 'Ort');
+    const detail = [plz, addr !== name ? addr : undefined, pr.city !== name ? pr.city : undefined, pr.state, pr.country].filter(Boolean).join(', ');
     return { name, detail, p: [f.geometry.coordinates[1], f.geometry.coordinates[0]] as LatLon };
   });
   // Gleicher Name in wenigen km Abstand nur einmal (Tester 8.11.: sechsmal "Tegernsee" für Ort, See, Bahnhof

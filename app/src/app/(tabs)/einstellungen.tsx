@@ -322,7 +322,8 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
     <View style={styles.card}>
       {/* Ein Feld für Marke und Modell, keine Spritwahl mehr (Koray 9.11.) */}
       <TextInput
-        value={vehicleName(value)}
+        // roh anzeigen: vehicleName schneidet Leerzeichen am Ende ab, dann ließ sich kein Leerzeichen tippen (Tester Joe 10.11.)
+        value={value.brand ? vehicleName(value) : value.model}
         onChangeText={(t) => set({ brand: '', model: t })}
         placeholder="Marke und Modell, etwa Porsche 911 GT3"
         placeholderTextColor={Colors.muted}

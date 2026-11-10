@@ -135,7 +135,52 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     }
   }
 
+  /// Eigener Standort Pin statt des dunkelroten Systempunkts (Koray 10.11.: wirkte billig): weiße Scheibe mit
+  /// hellem orangem Ring und Pfeil in Fahrtrichtung, wie der Fallback ohne Auto in der App (route-map.tsx, styles.me).
+  private static let pinOrange = UIColor(red: 255 / 255, green: 122 / 255, blue: 77 / 255, alpha: 1)
+  private static let mePin: UIImage = {
+    let size: CGFloat = 38
+    let r = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
+    return r.image { ctx in
+      let c = ctx.cgContext
+      let disc = CGRect(x: 3, y: 3, width: size - 6, height: size - 6)
+      c.setShadow(offset: CGSize(width: 0, height: 1), blur: 3, color: UIColor(white: 0, alpha: 0.5).cgColor)
+      c.setFillColor(UIColor(red: 244 / 255, green: 244 / 255, blue: 242 / 255, alpha: 1).cgColor)
+      c.fillEllipse(in: disc)
+      c.setShadow(offset: .zero, blur: 0, color: nil)
+      c.setStrokeColor(pinOrange.cgColor)
+      c.setLineWidth(3)
+      c.strokeEllipse(in: disc.insetBy(dx: 1.5, dy: 1.5))
+      // Pfeil nach oben, die Drehung kommt über die Fahrtrichtung
+      let mid = size / 2
+      c.setFillColor(pinOrange.cgColor)
+      c.move(to: CGPoint(x: mid, y: mid - 9))
+      c.addLine(to: CGPoint(x: mid + 7, y: mid + 7))
+      c.addLine(to: CGPoint(x: mid, y: mid + 3))
+      c.addLine(to: CGPoint(x: mid - 7, y: mid + 7))
+      c.closePath()
+      c.fillPath()
+    }
+  }()
+  private var meView: MKAnnotationView?
+
+  func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
+    guard let v = meView, let loc = userLocation.location, loc.course >= 0 else { return }
+    let angle = (loc.course - mapView.camera.heading) * .pi / 180
+    UIView.animate(withDuration: 0.3) { v.transform = CGAffineTransform(rotationAngle: CGFloat(angle)) }
+  }
+
   func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+    if annotation is MKUserLocation {
+      let v = mapView.dequeueReusableAnnotationView(withIdentifier: "ich") ?? MKAnnotationView(annotation: annotation, reuseIdentifier: "ich")
+      v.annotation = annotation
+      v.image = CarMapViewController.mePin
+      v.canShowCallout = false
+      v.displayPriority = .required
+      v.zPriority = .max
+      meView = v
+      return v
+    }
     guard let g = annotation as? GroupAnnotation else { return nil }
     let v = (mapView.dequeueReusableAnnotationView(withIdentifier: "gruppe") as? MKMarkerAnnotationView)
       ?? MKMarkerAnnotationView(annotation: g, reuseIdentifier: "gruppe")

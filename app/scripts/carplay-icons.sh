@@ -12,7 +12,8 @@ for f in "$tmp"/*.svg; do
   n=$(basename "$f" .svg)
   rsvg-convert -w 128 -h 128 "$f" -o "assets/carplay-icons/$n@2x.png"
   rsvg-convert -w 192 -h 192 "$f" -o "assets/carplay-icons/$n@3x.png"
-  sed 's/#FFFFFF/#E2461C/g' "$f" > "$tmp/$n-on.tmp"
+  # Helleres Orange als in der App: #E2461C wirkte auf dem Autodisplay dunkel und billig (Koray 10.11.)
+  sed 's/#FFFFFF/#FF7A4D/g' "$f" > "$tmp/$n-on.tmp"
   rsvg-convert -w 128 -h 128 "$tmp/$n-on.tmp" -o "assets/carplay-icons/$n-on@2x.png"
   rsvg-convert -w 192 -h 192 "$tmp/$n-on.tmp" -o "assets/carplay-icons/$n-on@3x.png"
 done
