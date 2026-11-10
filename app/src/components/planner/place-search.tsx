@@ -99,6 +99,20 @@ export const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.s
 /** extraMin und exit nur bei Highlights für eine Etappe: Umweg in Minuten, Ausstieg einer Strecke */
 type StopRow = { key: string; name: string; detail: string; p: LatLon; km: number; offM: number; extraMin?: number; exit?: LatLon; line?: LatLon[] };
 
+/**
+ * Lage eines Punkts zwischen Start und Ziel der Etappe in km ab Start (auf die Luftlinie projiziert):
+ * so stehen Highlights in der Reihenfolge, in der man an ihnen vorbeikommt (Koray 10.11.)
+ */
+function alongLeg(a: LatLon, b: LatLon, p: LatLon): number {
+  const kx = Math.cos((((a[0] + b[0]) / 2) * Math.PI) / 180);
+  const bx = (b[1] - a[1]) * kx;
+  const by = b[0] - a[0];
+  const len2 = bx * bx + by * by;
+  if (len2 === 0) return 0;
+  const t = Math.max(0, Math.min(1, (((p[1] - a[1]) * kx) * bx + (p[0] - a[0]) * by) / len2));
+  return (t * Math.sqrt(len2) * 111.32);
+}
+
 /** Umweg hin und zurück zur Route, grob mit 35 km/h auf kleinen Straßen */
 const detourMin = (offM: number) => Math.max(1, Math.round(((2 * offM) / 1000 / 35) * 60));
 
@@ -178,7 +192,7 @@ function SearchBody({
   const legRows = useMemo<StopRow[] | null>(
     () =>
       leg
-        ? highlightsForLeg(leg, 8000).filter((c) => !taken.has(c.name)).map((c) => ({ key: c.key, name: c.name, detail: c.detail, p: c.p, km: 0, offM: 0, extraMin: c.extraMin, exit: c.exit, line: c.line }))
+        ? highlightsForLeg(leg, 8000).filter((c) => !taken.has(c.name)).map((c) => ({ key: c.key, name: c.name, detail: c.detail, p: c.p, km: alongLeg(leg.a, leg.b, c.p), offM: 0, extraMin: c.extraMin, exit: c.exit, line: c.line }))
         : null,
     [leg, taken],
   );
@@ -243,7 +257,7 @@ function SearchBody({
     const raw = cat === 'pass' ? (fromLeg ? legRows : passesNear(route!, cum, 8000 * scale)) : found[catKey];
     if (!raw || raw === 'fehler') return raw ?? null;
     const f = q.toLowerCase();
-    return raw.filter((r) => !f || `${r.name} ${r.detail}`.toLowerCase().includes(f)).sort((a, b) => (a.extraMin ?? 0) - (b.extraMin ?? 0) || a.offM - b.offM);
+    return raw.filter((r) => !f || `${r.name} ${r.detail}`.toLowerCase().includes(f)).sort((a, b) => a.km - b.km || (a.extraMin ?? 0) - (b.extraMin ?? 0) || a.offM - b.offM);
   }, [cat, hasRoute, route, cum, scale, found, catKey, q, legRows]);
   const catLoading = cat !== 'alle' && catRows === null && (hasRoute || !!routeLoading);
   // Ohne Route und ohne Planung gibt es keine Strecke, an der man suchen könnte
@@ -540,7 +554,7 @@ function SearchBody({
                     Ankunft; nur ein echter Umweg bekommt eine Plakette, "0 min" und "Direkt an der Strecke" entfallen */}
                 <View style={styles.group}>
                   {[...(catRows ?? [])]
-                    .sort((a, b) => (a.extraMin != null || b.extraMin != null ? 0 : a.km - b.km))
+                    .sort((a, b) => a.km - b.km)
                     .slice(0, 25)
                     .map((r) => {
                       const near0 = r.extraMin != null ? r.extraMin <= 2 : r.offM < 150;
