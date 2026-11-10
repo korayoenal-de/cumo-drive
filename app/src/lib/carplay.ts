@@ -37,11 +37,23 @@ type CarPlayModule = {
   setGroup?(list: GroupPin[]): Promise<void>;
   hint?(title: string, subtitle: string): Promise<void>;
   askRating?(): Promise<void>;
+  // ab Build 16: Start im Auto ohne iPhone (Meine Touren, Schnelle Runde)
+  setLibrary?(list: CarTourItem[]): Promise<void>;
+  endPlanning?(message: string): Promise<void>;
   addListener(event: CarPlayEvent, cb: (e: CarPlayPayload) => void): Sub;
 };
-type CarPlayEvent = 'onConnect' | 'onDisconnect' | 'onStart' | 'onEnd' | 'onVoice' | 'onSkip' | 'onPause' | 'onMapStyle' | 'onRate';
-/** Nutzdaten der Ereignisse ab Build 14: onPause { on }, onMapStyle { style }, onRate { score } */
-export type CarPlayPayload = { on?: boolean; style?: string; score?: number };
+type CarPlayEvent =
+  | 'onConnect' | 'onDisconnect' | 'onStart' | 'onEnd' | 'onVoice' | 'onSkip' | 'onPause' | 'onMapStyle' | 'onRate'
+  | 'onPickTour' | 'onRoundTrip' | 'onRoundCancel';
+/** Ereignisse, die es erst ab Build 16 gibt (ältere Builds kennen sie nicht) */
+const PICKER_EVENTS: readonly CarPlayEvent[] = ['onPickTour', 'onRoundTrip', 'onRoundCancel'];
+/**
+ * Nutzdaten der Ereignisse ab Build 14: onPause { on }, onMapStyle { style }, onRate { score };
+ * ab Build 16: onPickTour { id }, onRoundTrip { km }
+ */
+export type CarPlayPayload = { on?: boolean; style?: string; score?: number; id?: string; km?: number };
+/** Eintrag der Liste Meine Touren im Auto: fun ist die Stufe 1 bis 5 (Logo als Pegel), 0 ohne Wert */
+export type CarTourItem = { id: string; name: string; detail: string; fun: number };
 export type GroupPin = { id: string; name: string; lat: number; lon: number; detail?: string };
 
 const native: CarPlayModule | null = Platform.OS === 'ios' ? requireOptionalNativeModule<CarPlayModule>('CumoCarPlay') : null;
@@ -51,6 +63,8 @@ export const carPlayAvailable = !!native;
 export const carPlayHasRejoin = !!native?.setRejoin;
 /** ab Build 13: die Karte im Auto blendet das gefahrene Stück selbst aus, die Linie geht nur einmal hinüber */
 export const carPlayTrims = !!(native as { trimsRoute?: boolean } | null)?.trimsRoute;
+/** ab Build 16: das Autodisplay bietet Meine Touren und Schnelle Runde an */
+export const carPlayHasPicker = !!native?.setLibrary;
 
 const quiet = (p: Promise<unknown> | undefined) => void p?.catch(() => undefined);
 
@@ -162,6 +176,16 @@ export function carPlayAskRating() {
   quiet(native?.askRating?.());
 }
 
+/** Gespeicherte Touren fürs Autodisplay, neueste zuerst (ab Build 16) */
+export function carPlaySetLibrary(list: CarTourItem[]) {
+  quiet(native?.setLibrary?.(list));
+}
+
+/** Schnelle Runde fertig (leer) oder gescheitert (kurzer Grund fürs Autodisplay) (ab Build 16) */
+export function carPlayEndPlanning(message: string) {
+  quiet(native?.endPlanning?.(message));
+}
+
 // "Los" auf dem Autodisplay: merken, bis die Navigation bereit ist
 let pendingStart = false;
 export function takeCarPlayStart(): boolean {
@@ -178,6 +202,7 @@ export function useCarPlayEvent(event: CarPlayEvent, cb: (e: CarPlayPayload) => 
   });
   useEffect(() => {
     if (!native) return;
+    if (PICKER_EVENTS.includes(event) && !native.setLibrary) return;
     const sub = native.addListener(event, (e) => ref.current(e ?? {}));
     return () => sub.remove();
   }, [event]);

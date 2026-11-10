@@ -39,6 +39,21 @@ final class CarPlayBridge: NSObject {
   private var tourKm: Double = 0
   private var tourMinutes: Double = 0
 
+  /// Build 16: Start im Auto ohne iPhone (Tester 10.11.): Meine Touren und Schnelle Runde.
+  /// Die Liste kommt aus der App (setLibrary); erst danach erscheinen die Knöpfe, damit ein älteres
+  /// JavaScript ohne diese Ereignisse keine toten Knöpfe zeigt.
+  private var pickerReady = false
+  /// id, name, detail, fun (Stufe 1 bis 5, 0: keine), neueste zuerst
+  private var library: [[String: Any]] = []
+  private weak var toursList: CPListTemplate?
+  /// Schnelle Runde: Planung läuft in der App, solange steht ein Hinweis mit Abbrechen über der Karte
+  private var planning = false
+  private var planToken = 0
+  private var planningAlert: CPNavigationAlert?
+  private static let roundKms = [50, 100, 150]
+  private static let maxTours = 24
+  static let pickerHint = "Wähle oben eine Tour oder eine Runde."
+
   var guiding: Bool { session != nil }
 
   // MARK: Verbindung
@@ -50,6 +65,7 @@ final class CarPlayBridge: NSObject {
     window.rootViewController = vc
     mapVC = vc
     vc.setStyle(mapStyle)
+    if pickerReady { vc.setHint(CarPlayBridge.pickerHint) }
 
     let t = CPMapTemplate()
     t.mapDelegate = self
@@ -69,6 +85,12 @@ final class CarPlayBridge: NSObject {
 
   func disconnect() {
     connected = false
+    // laufende Planung einer Runde abbrechen, ohne Autodisplay braucht sie keiner
+    if planning { emit?("onRoundCancel", [:]) }
+    planning = false
+    planToken += 1
+    planningAlert = nil
+    toursList = nil
     session = nil
     trip = nil
     maneuverKey = nil
@@ -138,6 +160,9 @@ final class CarPlayBridge: NSObject {
 
   func startGuidance() {
     guard let t = mapTemplate, session == nil else { return }
+    // offene Listen schließen, die Führung gehört auf die Karte
+    if planning { cancelPlanning() }
+    if let ic = interfaceController, ic.topTemplate !== t { ic.popToRootTemplate(animated: false, completion: nil) }
     t.hideTripPreviews()
     if trip == nil { trip = makeTrip() }
     guard let trip else { return }
@@ -301,6 +326,136 @@ final class CarPlayBridge: NSObject {
     extraMaps.removeAll { $0 === vc }
   }
 
+  // MARK: Build 16: Meine Touren und Schnelle Runde
+
+  /// Gespeicherte Touren aus der App, neueste zuerst; eine offene Liste wird gleich aufgefrischt
+  func setLibrary(_ list: [[String: Any]]) {
+    library = list
+    if !pickerReady {
+      pickerReady = true
+      mapVC?.setHint(CarPlayBridge.pickerHint)
+      updateButtons()
+    }
+    toursList?.updateSections(tourSections())
+  }
+
+  private func tourSections() -> [CPListSection] {
+    let limit = max(1, min(CarPlayBridge.maxTours, CPListTemplate.maximumItemCount))
+    let items: [CPListItem] = library.prefix(limit).compactMap { t in
+      guard let id = t["id"] as? String else { return nil }
+      let level = (t["fun"] as? NSNumber)?.intValue ?? 0
+      let image = (1...5).contains(level) ? UIImage(named: "fun-\(level)")?.withRenderingMode(.alwaysOriginal) : nil
+      let name = t["name"] as? String ?? ""
+      let item = CPListItem(text: name.isEmpty ? "Tour" : name, detailText: t["detail"] as? String, image: image)
+      item.handler = { [weak self] _, completion in
+        self?.pickTour(id)
+        completion()
+      }
+      return item
+    }
+    return items.isEmpty ? [] : [CPListSection(items: items)]
+  }
+
+  private func showTours() {
+    guard let ic = interfaceController, session == nil, !planning else { return }
+    let list = CPListTemplate(title: "Meine Touren", sections: tourSections())
+    list.emptyViewTitleVariants = ["Noch keine Touren"]
+    list.emptyViewSubtitleVariants = ["Gespeicherte Touren aus der App stehen hier."]
+    toursList = list
+    ic.pushTemplate(list, animated: true, completion: nil)
+  }
+
+  private func showRounds() {
+    guard let ic = interfaceController, session == nil, !planning else { return }
+    let items = CarPlayBridge.roundKms.map { km -> CPListItem in
+      let item = CPListItem(text: "\(km) km", detailText: "Kurvig, Richtung zufällig", image: UIImage(systemName: "arrow.triangle.2.circlepath"))
+      item.handler = { [weak self] _, completion in
+        self?.planRound(km)
+        completion()
+      }
+      return item
+    }
+    ic.pushTemplate(CPListTemplate(title: "Schnelle Runde", sections: [CPListSection(items: items)]), animated: true, completion: nil)
+  }
+
+  /// Tour gewählt: zurück zur Karte, die App setzt die aktive Tour und schickt sie als Vorschau mit Los
+  private func pickTour(_ id: String) {
+    guard session == nil, !planning else { return }
+    interfaceController?.popToRootTemplate(animated: true, completion: nil)
+    emit?("onPickTour", ["id": id])
+  }
+
+  /// Runde planen: zurück zur Karte, Hinweis mit Abbrechen, die App plant und meldet sich mit endPlanning
+  private func planRound(_ km: Int) {
+    guard session == nil, !planning else { return }
+    planning = true
+    planToken += 1
+    let token = planToken
+    interfaceController?.popToRootTemplate(animated: true) { [weak self] _, _ in
+      self?.showPlanning(km, token: token)
+    }
+    emit?("onRoundTrip", ["km": km])
+    // Sicherheitsnetz: antwortet die App nicht, nicht ewig warten
+    DispatchQueue.main.asyncAfter(deadline: .now() + 90) { [weak self] in
+      guard let self, self.planning, self.planToken == token else { return }
+      self.emit?("onRoundCancel", [:])
+      self.endPlanning(message: "Das hat zu lange gedauert.")
+    }
+  }
+
+  private func showPlanning(_ km: Int, token: Int) {
+    guard planning, planToken == token, let t = mapTemplate else { return }
+    let cancel = CPAlertAction(title: "Abbrechen", style: .default) { [weak self] _ in self?.cancelPlanning() }
+    let a = CPNavigationAlert(
+      titleVariants: ["Runde wird geplant"],
+      subtitleVariants: ["\(km) km ab deinem Standort"],
+      image: nil,
+      primaryAction: cancel,
+      secondaryAction: nil,
+      // 0: bleibt stehen, bis die Planung fertig ist oder abgebrochen wird
+      duration: 0
+    )
+    planningAlert = a
+    let present = { [weak self, weak t] in
+      guard let self, let t, self.planning, self.planToken == token else { return }
+      t.present(navigationAlert: a, animated: true)
+    }
+    if t.currentNavigationAlert != nil {
+      t.dismissNavigationAlert(animated: false) { _ in present() }
+    } else {
+      present()
+    }
+  }
+
+  private func dismissPlanningAlert() {
+    if let t = mapTemplate, let a = planningAlert, t.currentNavigationAlert === a {
+      t.dismissNavigationAlert(animated: true) { _ in }
+    }
+    planningAlert = nil
+  }
+
+  private func cancelPlanning() {
+    guard planning else { return }
+    planning = false
+    planToken += 1
+    dismissPlanningAlert()
+    emit?("onRoundCancel", [:])
+  }
+
+  /// Planung fertig (message leer) oder gescheitert (kurzer Grund); die Tour selbst kommt über setTour
+  func endPlanning(message: String) {
+    guard planning else { return }
+    planning = false
+    planToken += 1
+    if message.isEmpty {
+      dismissPlanningAlert()
+    } else {
+      // alert ersetzt den Hinweis zur Planung
+      planningAlert = nil
+      alert(title: "Runde nicht geplant", subtitle: message, image: "", duration: 8)
+    }
+  }
+
   private static let styleNames = ["standard": "Standard", "satellit": "Satellit", "3d": "3D Satellit"]
 
   private func showMore() {
@@ -372,7 +527,14 @@ final class CarPlayBridge: NSObject {
       t.leadingNavigationBarButtons = [CPBarButton(title: "Fertig") { [weak self] _ in self?.setPanning(false) }]
       t.trailingNavigationBarButtons = []
     } else {
-      t.leadingNavigationBarButtons = []
+      // Build 16: ohne Führung oben links Touren und Runde (höchstens zwei Knöpfe je Seite)
+      if session == nil && pickerReady {
+        let tours = CPBarButton(title: "Touren") { [weak self] _ in self?.showTours() }
+        let round = CPBarButton(title: "Runde") { [weak self] _ in self?.showRounds() }
+        t.leadingNavigationBarButtons = [tours, round]
+      } else {
+        t.leadingNavigationBarButtons = []
+      }
       t.trailingNavigationBarButtons = session != nil
         ? [CPBarButton(title: "Beenden") { [weak self] _ in self?.emit?("onEnd", [:]) }]
         : []

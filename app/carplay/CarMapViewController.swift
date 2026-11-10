@@ -101,6 +101,12 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     hint.isHidden = line != nil || !showsHint
   }
 
+  /// Build 16: Hinweis ohne Tour, wenn das Autodisplay selbst Touren und Runden anbietet
+  func setHint(_ text: String) {
+    loadViewIfNeeded()
+    hint.text = text
+  }
+
   /// Teilnehmer: id, name, lat, lon; vorhandene Marker gleiten an die neue Stelle
   func setGroup(_ list: [[String: Any]]) {
     loadViewIfNeeded()

@@ -6,7 +6,8 @@ final class CumoCarPlay: Module {
   public func definition() -> ExpoModulesCore.ModuleDefinition {
     Name("CumoCarPlay")
 
-    Events("onConnect", "onDisconnect", "onStart", "onEnd", "onVoice", "onSkip", "onPause", "onMapStyle", "onRate")
+    Events("onConnect", "onDisconnect", "onStart", "onEnd", "onVoice", "onSkip", "onPause", "onMapStyle", "onRate",
+           "onPickTour", "onRoundTrip", "onRoundCancel")
 
     OnCreate {
       CarPlayBridge.shared.emit = { [weak self] name, body in
@@ -17,7 +18,8 @@ final class CumoCarPlay: Module {
     // ab Build 13: die Karte im Auto blendet das gefahrene Stück selbst aus und gleitet im Bildtakt
     Constant("trimsRoute") { true }
     // ab Build 14: Menü Mehr, Gruppe, Bremshinweis, Bewertung, Dashboard und Kombiinstrument
-    Constant("build") { 15 }
+    // ab Build 16: Meine Touren und Schnelle Runde direkt auf dem Autodisplay
+    Constant("build") { 16 }
 
     AsyncFunction("isConnected") { () -> Bool in
       CarPlayBridge.shared.connected
@@ -97,6 +99,16 @@ final class CumoCarPlay: Module {
 
     AsyncFunction("askRating") {
       CarPlayBridge.shared.askRating()
+    }.runOnQueue(.main)
+
+    // Build 16: gespeicherte Touren (id, name, detail, fun), neueste zuerst
+    AsyncFunction("setLibrary") { (list: [[String: Any]]) in
+      CarPlayBridge.shared.setLibrary(list)
+    }.runOnQueue(.main)
+
+    // Build 16: Schnelle Runde fertig (leer) oder gescheitert (kurzer Grund)
+    AsyncFunction("endPlanning") { (message: String) in
+      CarPlayBridge.shared.endPlanning(message: message)
     }.runOnQueue(.main)
   }
 }

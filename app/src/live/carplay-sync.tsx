@@ -1,13 +1,19 @@
 /**
  * Hält CarPlay mit der App gleich: die aktive Tour erscheint auf dem Autodisplay als Vorschau,
  * "Los" dort öffnet die Navigation und startet sie (src/app/navigation.tsx).
+ * Ab Build 16 kann man im Auto auch selbst starten: Meine Touren oder eine Schnelle Runde (carplay-start.ts).
  */
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useActiveTour } from '@/lib/active-tour';
-import { carPlayAvailable, carPlayResend, carPlaySetMapStyle, carPlaySetTour, markCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
+import {
+  carPlayAvailable, carPlayHasPicker, carPlayResend, carPlaySetLibrary, carPlaySetMapStyle, carPlaySetTour, markCarPlayStart, useCarPlayEvent,
+} from '@/lib/carplay';
+import { useLibrary } from '@/lib/library';
 import { carPlayStyleOf, setMapSettings, useMapSettings, type MapStyle } from '@/lib/map-settings';
+
+import { cancelCarRound, carTourItems, fillCarTourFun, planCarRound, startSavedTour } from './carplay-start';
 
 export function CarPlaySync() {
   const active = useActiveTour();
@@ -19,11 +25,22 @@ export function CarPlaySync() {
   useEffect(() => {
     if (carPlayAvailable) carPlaySetMapStyle(style);
   }, [style]);
+  // Meine Touren fürs Autodisplay (ab Build 16); ohne CarPlay geht nichts hinüber
+  const library = useLibrary();
+  const items = useMemo(() => (carPlayHasPicker ? carTourItems(library) : []), [library]);
+  useEffect(() => {
+    if (carPlayHasPicker) carPlaySetLibrary(items);
+  }, [items]);
   // nach dem Einstecken die Tour und die Darstellung erneut schicken (die Karte im Auto ist neu)
   useCarPlayEvent('onConnect', () => {
     carPlayResend();
     carPlaySetMapStyle(style);
+    if (carPlayHasPicker) {
+      carPlaySetLibrary(items);
+      fillCarTourFun(library);
+    }
   });
+  useCarPlayEvent('onDisconnect', () => cancelCarRound());
   // Kartenstil im Auto gewechselt (Menü Mehr): gilt dann für alle Karten der App
   useCarPlayEvent('onMapStyle', (e) => {
     if (e.style === 'standard' || e.style === 'satellit' || e.style === '3d') setMapSettings({ style: e.style as MapStyle });
@@ -33,5 +50,13 @@ export function CarPlaySync() {
     markCarPlayStart();
     router.navigate('/navigation');
   });
+  // Start im Auto: Tour aus Meine Touren oder Schnelle Runde ab dem Standort
+  useCarPlayEvent('onPickTour', (e) => {
+    if (e.id) startSavedTour(e.id);
+  });
+  useCarPlayEvent('onRoundTrip', (e) => {
+    if (e.km && e.km > 0) void planCarRound(e.km);
+  });
+  useCarPlayEvent('onRoundCancel', () => cancelCarRound());
   return null;
 }
