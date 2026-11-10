@@ -34,6 +34,7 @@ import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Spacing } from '@/constants/theme';
+import { cumoAvailable, prewarmRouting } from '@/lib/cumo-routing';
 import { onEditTour, takeEditTour } from '@/lib/edit-tour';
 import { reverseName } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
@@ -145,6 +146,17 @@ export default function Planner() {
   const [mode, setMode] = useState<Mode>('tour');
   const [view, setView] = useState<Stage>({ kind: 'form' });
   const abort = useRef<AbortController | null>(null);
+  /**
+   * Nächste Runde vorab rechnen (10.11.): Kurz nachdem eine Rundtour steht, rechnet die App im Hintergrund
+   * schon die nächste mit neuem Würfelwert. Neu würfeln zeigt sie dann ohne Wartezeit auf die Planung.
+   * Nur mit eigenem Routing Server, damit keine fremden Kontingente doppelt belastet werden.
+   */
+  const nextRoll = useRef<{ req: TourRequest; seed: number; ctrl: AbortController; job: Promise<PlannedTour> } | null>(null);
+  const dropNextRoll = () => {
+    nextRoll.current?.ctrl.abort();
+    nextRoll.current = null;
+  };
+  useEffect(() => dropNextRoll, []);
   const lastStops = useRef<Stop[]>([]);
   /** Gewürfelte Runden mit Fahrspaß Wert, damit man zu einer besseren zurückkehren kann (höchstens fünf) */
   const [rolls, setRolls] = useState<{ tour: PlannedTour; req: TourRequest; stops: Stop[]; fun: TourFun | null }[]>([]);
@@ -157,6 +169,8 @@ export default function Planner() {
   const [radar, setRadar] = useState<Radar | null>(null);
   /** Scan entlang der Strecke beim ersten Planen in Tour planen (Koray 9.11.) */
   const [scan, setScan] = useState<Scan | null>(null);
+  // Routing Server schon beim Öffnen des Planers prüfen und die Verbindung aufbauen (10.11.)
+  useEffect(() => prewarmRouting(), []);
   const reduceMotion = useReducedMotion();
   // Suchen: nur der Ring, die Zahl nennt die Traumstrecken im Umkreis. Die Strecken selbst zeigen wir erst beim
   // Auflösen, und dann die kurvigen Stücke der fertigen Route, damit das Gefundene zur Strecke passt (Koray 8.11.)
@@ -289,8 +303,9 @@ export default function Planner() {
 
   // Startort Vorschläge schon beim Tippen
 
-  async function run(prepare: (signal: AbortSignal) => Promise<TourRequest>, stops: Stop[], seed = newSeed(), keep = false) {
+  async function run(prepare: (signal: AbortSignal) => Promise<TourRequest>, stops: Stop[], seed = newSeed(), keep = false, ready?: Promise<PlannedTour>) {
     abort.current?.abort();
+    if (!ready) dropNextRoll();
     const ctrl = new AbortController();
     abort.current = ctrl;
     lastStops.current = stops;
@@ -315,7 +330,8 @@ export default function Planner() {
     try {
       req = await prepare(ctrl.signal);
       if (!ctrl.signal.aborted) startRadar(req.start.p, req.km);
-      const tour = await buildTour(req, seed, step, ctrl.signal);
+      // vorab gerechnete Runde nehmen; klappte sie nicht, ganz normal neu planen
+      const tour = ready ? await ready.catch(() => buildTour(req!, seed, step, ctrl.signal)) : await buildTour(req, seed, step, ctrl.signal);
       // Auflösen: der Ring findet die kurvigen Stücke der Route, dann zeichnet sich die Linie, danach das Ergebnis
       const line = flatten(tour).map((x) => x.p);
       if (!ctrl.signal.aborted && line.length > 1 && !reduceMotion) {
@@ -338,6 +354,19 @@ export default function Planner() {
         setView({ kind: 'result', tour, req, stops });
         setDetent(1);
         toTop();
+        // die nächste Runde vorab rechnen, sobald das Ergebnis steht und die Karte zur Ruhe gekommen ist
+        const shown = req;
+        setTimeout(() => {
+          if (abort.current !== ctrl || ctrl.signal.aborted || nextRoll.current) return;
+          void cumoAvailable().then((own) => {
+            if (!own || abort.current !== ctrl || ctrl.signal.aborted || nextRoll.current) return;
+            const c = new AbortController();
+            const s = newSeed();
+            const job = buildTour(shown, s, () => undefined, c.signal);
+            job.catch(() => undefined);
+            nextRoll.current = { req: shown, seed: s, ctrl: c, job };
+          });
+        }, 1500);
       }
     } catch (e) {
       const error = toPlanError(e, ctrl.signal);
@@ -441,10 +470,17 @@ export default function Planner() {
   }
 
   function reroll(req: TourRequest) {
+    const next = nextRoll.current;
+    if (next && next.req === req) {
+      nextRoll.current = null;
+      void run(async () => req, lastStops.current, next.seed, true, next.job);
+      return;
+    }
     void run(async () => req, lastStops.current, newSeed(), true);
   }
 
   function cancel() {
+    dropNextRoll();
     abort.current?.abort();
     setView({ kind: 'form' });
     setDetent(1);

@@ -133,7 +133,7 @@ export async function planChecked(
   signal?: AbortSignal,
   snapMajor = false,
 ): Promise<PlannedTour> {
-  const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, []);
+  const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, [], true);
   onStep?.('traffic');
   // Aktuelle Sperrungen aus Verkehrsmeldungen (Koray 8.11.): umplanen, was nicht geht als Warnung
   const closures = await closuresNear(lineOf(first), signal);
@@ -144,7 +144,10 @@ export async function planChecked(
   if (hits.length && ex.length) {
     onStep?.('fix');
     try {
-      const again = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, ex);
+      // Nur die gewählte Variante um die Sperrung herum neu rechnen, ohne nochmal zu vergleichen
+      // (10.11.: das Umplanen fragte sonst wieder beide Varianten mit allen Runden ab)
+      const again = await planCore(name, points, first.direkt ? 'schnell' : profile, avoid, onStep, signal, snapMajor, ex, false);
+      if (first.direkt) again.direkt = first.direkt;
       const h2 = closuresOnRoute(lineOf(again), closures);
       if (h2.length < hits.length) {
         tour = again;
@@ -185,6 +188,8 @@ async function planCore(
   signal: AbortSignal | undefined,
   snapMajor: boolean,
   extraExclude: LatLon[],
+  /** kurvig gegen den direkten Weg vergleichen (nur beim ersten Planen) */
+  compare: boolean,
 ): Promise<PlannedTour> {
   // Eigener Routing Server (Sportwagen Profil, Prüfung ohne fremde Dienste) hat Vorrang
   if (await cumoAvailable()) {
@@ -194,11 +199,17 @@ async function planCore(
     // Dann den Punkt auf die nächste Straße setzen und nochmal, statt auf den langsamen Weg zu fallen.
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
-        const curvy = profile === 'kurvig' || profile === 'paesse';
-        const [main, direct] = await Promise.all([
-          cumoPlan(name, pts, profile, avoid, signal, extraExclude),
-          curvy ? cumoPlan(name, pts, 'schnell', avoid, signal, extraExclude).catch(() => null) : Promise.resolve(null),
-        ]);
+        const curvy = compare && (profile === 'kurvig' || profile === 'paesse');
+        // Der direkte Weg dient erst nur zum Vergleich: eine einzige Abfrage ohne Nachbessern (10.11.: sechs
+        // von acht Abfragen einer einfachen Route gingen auf diesen Vergleich). Hat er gesperrte Stücke, läuft
+        // die volle Planung gleich hinterher, parallel zur kurvigen Variante, damit sie fertig ist, falls er gewinnt.
+        const directJob = curvy
+          ? cumoPlan(name, pts, 'schnell', avoid, signal, extraExclude, true)
+              // findet die volle Planung keinen Weg, zählt der direkte Weg nicht (wie bisher)
+              .then((d) => ((d.km_je_klasse?.raus ?? 0) === 0 ? d : cumoPlan(name, pts, 'schnell', avoid, signal, extraExclude)))
+              .catch(() => null)
+          : Promise.resolve(null);
+        const [main, direct] = await Promise.all([cumoPlan(name, pts, profile, avoid, signal, extraExclude), directJob]);
         if (direct && !curvyWorthIt(main, direct)) return { ...direct, direkt: 1 };
         return main;
       } catch (e) {
@@ -316,10 +327,20 @@ export async function planLegs(
     // in einem Stück geplant: gilt für alle Etappen
     return t.direkt ? { ...t, direkt: points.length - 1 } : t;
   }
-  const parts: PlannedTour[] = [];
+  // Etappen mit eigenem Profil gleichzeitig planen statt nacheinander (10.11.); aufeinander folgende
+  // Etappen mit demselben Profil bleiben ein Stück, dort gilt weiter kein Wenden am Zwischenziel
+  const groups: { from: number; to: number; profile: Profile }[] = [];
   for (let i = 0; i < points.length - 1; i++) {
-    if (signal?.aborted) throw new Error('Abgebrochen');
-    parts.push(await planChecked(name, [points[i], points[i + 1]], profiles[i] ?? first, avoid, onStep, signal));
+    const p = profiles[i] ?? first;
+    const last = groups[groups.length - 1];
+    if (last && last.profile === p) last.to = i + 1;
+    else groups.push({ from: i, to: i + 1, profile: p });
   }
+  const parts = await Promise.all(
+    groups.map(async (g) => {
+      const t = await planChecked(name, points.slice(g.from, g.to + 1), g.profile, avoid, onStep, signal);
+      return t.direkt ? { ...t, direkt: g.to - g.from } : t;
+    }),
+  );
   return mergeLegs(name, points, parts);
 }

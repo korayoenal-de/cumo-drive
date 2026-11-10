@@ -70,10 +70,13 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
   // nachgeregelt und neu gewählt (höchstens drei Versuche).
   // Pass Varianten bei jeder kurvigen Runde (Koray 8.11.: Pässe werden ohnehin bevorzugt, kein eigenes Profil mehr);
   // sie gewinnen nur als echte Runde, sonst treten sie gegen die normalen Runden an
-  if (req.profile === 'kurvig' || req.profile === 'paesse') {
+  // Mit eigenem Server laufen die Pass Varianten gleichzeitig mit den freien Varianten (10.11.: bei 150 km
+  // liefen sie 14 s lang nacheinander davor). Ohne eigenen Server bleibt es beim Nacheinander, dort darf
+  // eine gute Pass Runde sofort gewinnen.
+  const own = await cumoAvailable();
+  const passPhase = async (): Promise<SmartTour | null> => {
     const month = new Date().getMonth() + 1;
     const dir = req.direction === 'zufall' && req.bearing === undefined ? null : heading;
-    const own = await cumoAvailable();
     let reachKm = req.km;
     const tried = new Set<string>();
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -84,7 +87,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       tried.add(key);
       try {
         onStep?.('route');
-        const t = await planChecked(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, onStep, signal, true);
+        const t = await planChecked(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, own ? undefined : onStep, signal, true);
         const curves = countCurves(flatten(t).map((x) => x.p));
         const bonus = loop.passes.reduce((sum, p) => sum + TIER_WEIGHT[p.tier] * 15, 0);
         // Hin und zurück auf derselben Straße zählt hart dagegen (Tester 8.11.: Runde ab Gernsheim war fast
@@ -110,25 +113,38 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         break;
       }
     }
-    const fit = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0 && c.laenge_km < req.km * 1.5 && spurKm(c) < Math.max(2, c.laenge_km * 0.05));
-    if (fit.length && !own) return fit.sort((a, b) => b.score - a.score)[0];
+    return null;
+  };
+  let passJob: Promise<SmartTour | null> | null = null;
+  if (req.profile === 'kurvig' || req.profile === 'paesse') {
+    if (own) {
+      // Fehler hier nicht unbehandelt lassen; ein Abbruch wird unten über das Signal erkannt
+      passJob = passPhase().catch(() => null);
+    } else {
+      const early = await passPhase();
+      if (early) return early;
+      const fit = candidates.filter((c) => (c.km_je_klasse?.raus ?? 0) === 0 && c.laenge_km < req.km * 1.5 && spurKm(c) < Math.max(2, c.laenge_km * 0.05));
+      if (fit.length) return fit.sort((a, b) => b.score - a.score)[0];
+    }
   }
 
   // 0. Eigener Routing Server: Sportwagen Profil mit Kurven, mehrere Varianten, alles lokal
-  if (await cumoAvailable()) {
+  if (own) {
     try {
       onStep?.('route');
       // Ohne Richtung in sechs Richtungen suchen: so gewinnt das Hügelland mit Kurven statt der Weg durch die Ebene und Städte
       const free = req.direction === 'zufall' && req.bearing === undefined;
       // Runden über kuratierte Traumstrecken gleichzeitig mit den freien Varianten rechnen
       const curvy = req.profile === 'kurvig' || req.profile === 'paesse';
-      const [own, loops, circles] = await Promise.all([
+      const [free6, loops, circles] = await Promise.all([
         // Seeds weit auseinander, sonst überschneiden sich die Varianten zweier Würfe (seed + i) und
         // Neu würfeln bringt dieselbe Runde
         cumoRoundTrips(req.name, req.start, req.km, heading, req.profile, req.avoid, free ? 6 : 5, (seed * 11) % 100000, signal, free),
         curvy ? favoriteLoops(req, free ? undefined : heading, seed, signal) : Promise.resolve([]),
         circleLoops(req, heading, free, seed, signal),
+        passJob,
       ]);
+      if (signal?.aborted) throw new Error('Abgebrochen');
       onStep?.('compare');
       // Erst ohne Stichstraßen bewerten: Kurven, Länge, Traumstrecken, Richtung. Die drei besten
       // bekommen die Stichstraße herausgeplant, danach zählt jeder übrige km doppelt mit 100 Punkten.
@@ -136,7 +152,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       // weil diese 0,8 km Stichstraße hatten, die sich leicht herausplanen ließ.)
       const base = (t: PlannedTour & { curves: number }) =>
         scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading);
-      const ranked = [...own, ...loops, ...circles]
+      const ranked = [...free6, ...loops, ...circles]
         .filter((t) => (t.km_je_klasse?.raus ?? 0) === 0)
         .map((t) => ({ ...t, engine: 'cumo' as const, score: base(t) }))
         .sort((a, b) => b.score - a.score);
@@ -172,6 +188,9 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       lastError = e;
     }
   }
+
+  // die Pass Varianten sind auch dann fertig, wenn der Block oben mit einem Fehler endete
+  if (passJob) await passJob;
 
   // 1. Valhalla: ohne Autobahn, Via Punkte im Hügelland, geprüft und umgeplant. Bleibt eine
   // Stichstraße über 1 km, die nicht an einem Via Punkt hängt, eine zweite Runde mit anderem Seed.
@@ -459,13 +478,42 @@ async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Pr
   return t;
 }
 
-/** km der Tour auf kuratierten Traumstrecken */
+/**
+ * Raster der Stützpunkte aller Traumstrecken (Zellen etwa 220 m), einmal aufgebaut. Vorher verglich favKm
+ * jeden Punkt der Tour mit jedem Punkt jeder Strecke in der Nähe: bei einer 150 km Rundtour mit 14 Varianten
+ * waren das über 1,5 s Rechenzeit am Rechner, auf dem Handy ein Mehrfaches (Messung 10.11.).
+ */
+const FAV_CELL = 0.002;
+let favGrid: Map<string, LatLon[]> | null = null;
+function nearFavPoint(p: LatLon): boolean {
+  if (!favGrid) {
+    favGrid = new Map();
+    for (const r of HIGHLIGHT_ROADS) for (const q of r.line) {
+      const k = `${Math.floor(q[0] / FAV_CELL)},${Math.floor(q[1] / FAV_CELL)}`;
+      const list = favGrid.get(k);
+      if (list) list.push(q);
+      else favGrid.set(k, [q]);
+    }
+  }
+  const cy = Math.floor(p[0] / FAV_CELL);
+  const cx = Math.floor(p[1] / FAV_CELL);
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      const list = favGrid.get(`${cy + dy},${cx + dx}`);
+      if (list) for (const q of list) if (haversine(q, p) < 120) return true;
+    }
+  return false;
+}
+
+/** km der Tour auf kuratierten Traumstrecken (Ergebnis je Tour gemerkt, es wird mehrfach gebraucht) */
+const favKmMemo = new WeakMap<object, number>();
 function favKm(t: PlannedTour): number {
+  const known = favKmMemo.get(t.linie);
+  if (known !== undefined) return known;
   const line = flatten(t);
-  const near = HIGHLIGHT_ROADS.filter((r) => r.line.some((q) => line.some((x, i) => i % 20 === 0 && haversine(q, x.p) < 3000)));
-  if (!near.length) return 0;
   let km = 0;
-  for (let i = 1; i < line.length; i++) if (near.some((r) => r.line.some((q) => haversine(q, line[i].p) < 120))) km += line[i].km - line[i - 1].km;
+  for (let i = 1; i < line.length; i++) if (nearFavPoint(line[i].p)) km += line[i].km - line[i - 1].km;
+  favKmMemo.set(t.linie, km);
   return km;
 }
 

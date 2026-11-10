@@ -27,9 +27,9 @@ function tilesOf(line: LatLon[]): [number, number][] {
   return [...keys].slice(0, MAX_TILES).map((k) => k.split(',').map(Number) as [number, number]);
 }
 
-/** Kacheln schon geholter Sperrungen, 10 Minuten wie auf dem Server: so wartet das Planen nicht zweimal */
+/** Kacheln schon geholter Sperrungen, 30 Minuten wie auf dem Server: so wartet das Planen nicht zweimal */
 const cache = new Map<string, { at: number; closures: Closure[] }>();
-const FRESH = 10 * 60 * 1000;
+const FRESH = 30 * 60 * 1000;
 const inflight = new Map<string, Promise<void>>();
 
 async function fetchTiles(tiles: [number, number][], ms: number): Promise<void> {
@@ -83,8 +83,11 @@ export async function closuresNear(line: LatLon[], signal?: AbortSignal): Promis
 }
 
 /**
- * Sperrungen entlang der Luftlinie schon beim Start des Planens holen, mit den Nachbarkacheln, parallel zur
- * Routenberechnung (Koray 9.11.: das Laden dauerte zu lange). Danach findet closuresNear sie im Speicher.
+ * Sperrungen entlang der Luftlinie schon beim Start des Planens holen, parallel zur Routenberechnung
+ * (Koray 9.11.: das Laden dauerte zu lange). Danach findet closuresNear sie im Speicher.
+ * Seit 10.11. nur noch die Kacheln, die die Route wahrscheinlich berührt: die Luftlinie mit einem Rand
+ * (15 % der Etappe, 6 bis 20 km) statt immer alle acht Nachbarkacheln. Das waren bis zu neunmal so viele
+ * Kacheln, entsprechend mehr TomTom Abfragen und eine Antwort von 1,7 MB für eine Route durch die Pfalz.
  */
 export function prefetchClosures(points: LatLon[]): void {
   if (points.length < 2) return;
@@ -92,11 +95,16 @@ export function prefetchClosures(points: LatLon[]): void {
   for (let i = 1; i < points.length; i++) {
     const a = points[i - 1];
     const b = points[i];
-    const n = Math.max(1, Math.ceil(haversine(a, b) / 20000));
+    const leg = haversine(a, b);
+    const n = Math.max(1, Math.ceil(leg / 10000));
+    const marginKm = Math.min(20, Math.max(6, (leg / 1000) * 0.15));
+    const dLat = marginKm / 111;
     for (let k = 0; k <= n; k++) {
       const lat = a[0] + ((b[0] - a[0]) * k) / n;
       const lon = a[1] + ((b[1] - a[1]) * k) / n;
-      for (const dy of [-1, 0, 1]) for (const dx of [-1, 0, 1]) keys.add(`${Math.floor(lon / SIZE) + dx},${Math.floor(lat / SIZE) + dy}`);
+      const dLon = dLat / Math.max(0.2, Math.cos((lat * Math.PI) / 180));
+      for (const [la, lo] of [[lat, lon], [lat + dLat, lon + dLon], [lat + dLat, lon - dLon], [lat - dLat, lon + dLon], [lat - dLat, lon - dLon]])
+        keys.add(`${Math.floor(lo / SIZE)},${Math.floor(la / SIZE)}`);
     }
   }
   const tiles = [...keys].slice(0, MAX_TILES).map((k) => k.split(',').map(Number) as [number, number]);

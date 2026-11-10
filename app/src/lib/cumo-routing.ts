@@ -9,6 +9,9 @@
  * localhost oder im lokalen Netz ein Server auf dem Rechner (Port 8989), zum Entwickeln.
  */
 
+import { gzipSync, strToU8 } from 'fflate';
+import { Platform } from 'react-native';
+
 import type { PlannedTour } from './plan';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from './highlight-roads';
 import { countCurves } from './stats';
@@ -35,11 +38,32 @@ let availability: { at: number; ok: boolean } | null = null;
 /** Profile, die der Server kennt (aus /info); kurvig und sehr_kurvig gibt es seit dem Neuaufbau mit festen Profilen */
 let serverProfiles = new Set<string>();
 
-/** Ist der eigene Server erreichbar? Ergebnis wird 30 Sekunden gemerkt. */
-export async function cumoAvailable(): Promise<boolean> {
+/** Wie lange das Ergebnis gilt: erreichbar 5 Minuten (ein Fehler bei einer Abfrage setzt es sofort zurück), sonst 20 s */
+const OK_MS = 5 * 60 * 1000;
+const DOWN_MS = 20 * 1000;
+let checking: Promise<boolean> | null = null;
+
+/**
+ * Ist der eigene Server erreichbar? Die Prüfung kostete vor jeder Planung bis zu 0,7 s (Messung 10.11.);
+ * jetzt wird sie beim Öffnen des Planers vorab gemacht (prewarmRouting) und 5 Minuten gemerkt.
+ */
+export function cumoAvailable(): Promise<boolean> {
+  if (availability && Date.now() - availability.at < (availability.ok ? OK_MS : DOWN_MS)) return Promise.resolve(availability.ok);
+  // mehrere Aufrufe gleichzeitig (Planen und Vorwärmen) teilen sich eine Prüfung
+  checking ??= probe().finally(() => {
+    checking = null;
+  });
+  return checking;
+}
+
+/** Beim Öffnen des Planers: Server prüfen und die Verbindung aufbauen, bevor die erste Route kommt */
+export function prewarmRouting(): void {
+  void cumoAvailable().catch(() => undefined);
+}
+
+async function probe(): Promise<boolean> {
   const url = routingServerUrl();
   if (!url) return false;
-  if (availability && Date.now() - availability.at < 30000) return availability.ok;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 3000);
   let ok = false;
@@ -167,18 +191,86 @@ function avoidModel(avoid: Avoid) {
   return priority;
 }
 
-async function post(body: Record<string, unknown>, signal?: AbortSignal): Promise<GhPath> {
+/**
+ * Antworten des Servers 5 Minuten merken (höchstens 60): dieselbe Abfrage kommt oft mehrfach, etwa beim
+ * Zurücknehmen einer Änderung, beim Wechsel des Profils hin und zurück, beim Umplanen um eine Sperrung
+ * oder wenn Rundtour Varianten dieselben Stützpunkte ergeben. Gleichzeitige gleiche Abfragen teilen sich eine.
+ */
+const MEMO_MS = 5 * 60 * 1000;
+const MEMO_MAX = 60;
+const memo = new Map<string, { at: number; path: Promise<GhPath> }>();
+
+/** Anfragen ab 2 KB komprimiert senden (nur in der App, im Browser erlaubt der Server den Kopf nicht): der
+ *  Traumstrecken Bereich macht eine kurvige Abfrage rund 100 KB groß, im Mobilnetz zählt der Upload. */
+const GZIP_MIN = 2000;
+/** wird false, sobald eine komprimierte Anfrage scheitert, die unkomprimiert klappt (Sicherheitsnetz) */
+let gzipOk = Platform.OS !== 'web';
+
+async function send(text: string, signal?: AbortSignal): Promise<GhPath> {
   const url = routingServerUrl();
   if (!url) throw new Error('Kein eigener Routing Server eingestellt.');
-  const res = await fetch(`${url}/route`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ points_encoded: false, instructions: false, details: DETAILS, ...body }),
-    signal,
-  });
-  const data = (await res.json().catch(() => ({}))) as { message?: string; paths?: GhPath[] };
-  if (!res.ok || !data.paths?.length) throw new Error(`Eigener Routing Server: ${data.message ?? `Fehler ${res.status}`}`);
-  return data.paths[0];
+  const ask = (zip: boolean) =>
+    fetch(`${url}/route`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(zip ? { 'Content-Encoding': 'gzip' } : {}) },
+      body: zip ? gzipSync(strToU8(text), { level: 4 }) : text,
+      signal,
+    });
+  const read = async (res: Response) => {
+    const data = (await res.json().catch(() => ({}))) as { message?: string; paths?: GhPath[] };
+    return { ok: res.ok && !!data.paths?.length, data, status: res.status };
+  };
+  const zip = gzipOk && text.length >= GZIP_MIN;
+  let out: Awaited<ReturnType<typeof read>> | null = null;
+  try {
+    out = await read(await ask(zip));
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    if (!zip) {
+      // Netzfehler: beim nächsten Planen neu prüfen, ob der Server da ist
+      availability = null;
+      throw e;
+    }
+  }
+  // Komprimiert gescheitert ohne klare Antwort des Routers: einmal unkomprimiert, und dabei bleiben, wenn es so klappt
+  if (zip && (!out || (!out.ok && !out.data.message))) {
+    try {
+      const plain = await read(await ask(false));
+      if (plain.ok) gzipOk = false;
+      out = plain;
+    } catch (e) {
+      if (!signal?.aborted) availability = null;
+      throw e;
+    }
+  }
+  if (!out || !out.ok) throw new Error(`Eigener Routing Server: ${out?.data.message ?? `Fehler ${out?.status ?? 0}`}`);
+  return out.data.paths![0];
+}
+
+async function post(body: Record<string, unknown>, signal?: AbortSignal): Promise<GhPath> {
+  const text = JSON.stringify({ points_encoded: false, instructions: false, details: DETAILS, ...body });
+  const now = Date.now();
+  const hit = memo.get(text);
+  if (hit && now - hit.at < MEMO_MS) {
+    try {
+      return await hit.path;
+    } catch (e) {
+      // die geteilte Abfrage wurde von einem anderen Aufrufer abgebrochen: selbst neu fragen
+      if (signal?.aborted) throw e;
+    }
+  }
+  const path = send(text, signal);
+  memo.set(text, { at: now, path });
+  if (memo.size > MEMO_MAX) for (const k of memo.keys()) {
+    memo.delete(k);
+    if (memo.size <= MEMO_MAX) break;
+  }
+  try {
+    return await path;
+  } catch (e) {
+    if (memo.get(text)?.path === path) memo.delete(text);
+    throw e;
+  }
 }
 
 /**
@@ -189,10 +281,26 @@ async function post(body: Record<string, unknown>, signal?: AbortSignal): Promis
  * Nur Strecken in der Nähe der Anfrage, die nächstgelegenen zuerst, höchstens FAV_MAX Quadrate,
  * damit die Anfrage klein bleibt.
  */
-const FAV_MAX = 1500;
+const FAV_MAX = 600;
+/** Halbe Breite des Korridors in Metern (wie bisher die Quadrate: gut 60 m um die Linie) */
+const FAV_HALF_M = 62;
+/** Stützpunkte der Linie dichter als so werden zusammengefasst */
+const FAV_STEP_M = 150;
 
-function favoriteArea(near: LatLon[], radiusKm: number) {
+type FavArea = { type: 'Feature'; id: 'fav'; properties: Record<string, never>; geometry: { type: 'MultiPolygon'; coordinates: number[][][][] } };
+/** Der Bereich hängt nur von den Punkten und dem Radius ab und wird je Planung mehrfach gebraucht */
+const favMemo = new Map<string, FavArea | null>();
+
+/**
+ * Seit 10.11. ein Rechteck je Abschnitt der Linie statt eines Quadrats alle 120 m: gleiche Abdeckung mit
+ * einem Drittel der Flächen. Die Anfrage schrumpft von rund 100 auf 30 KB (komprimiert unter 10 KB),
+ * und der Server prüft je Straße weniger Flächen.
+ */
+function favoriteArea(near: LatLon[], radiusKm: number): FavArea | null {
   if (!near.length) return null;
+  const key = `${radiusKm.toFixed(1)}|${near.map((p) => `${p[0].toFixed(3)},${p[1].toFixed(3)}`).join(';')}`;
+  const known = favMemo.get(key);
+  if (known !== undefined) return known;
   const reach = radiusKm * 1000;
   // Grob vorsortieren (etwa radiusKm um die Punkte), dann den kleinsten Abstand bestimmen
   const dLat = radiusKm / 111 + 0.01;
@@ -209,24 +317,41 @@ function favoriteArea(near: LatLon[], radiusKm: number) {
     .filter((x) => x.dist < reach)
     .sort((a, b) => a.dist - b.dist)
     .map((x) => x.r);
-  if (!roads.length) return null;
-  const d = 0.0006;
-  const r5 = (v: number) => Math.round(v * 1e5) / 1e5;
-  const polys: number[][][][] = [];
-  for (const road of roads) {
-    if (polys.length >= FAV_MAX) break;
-    for (let i = 0; i < road.line.length - 1 && polys.length < FAV_MAX; i++) {
-      const a = road.line[i];
-      const b = road.line[i + 1];
-      const n = Math.max(1, Math.round(haversine(a, b) / 120));
-      for (let k = 0; k < n && polys.length < FAV_MAX; k++) {
-        const la = a[0] + ((b[0] - a[0]) * k) / n;
-        const lo = a[1] + ((b[1] - a[1]) * k) / n;
-        polys.push([[[r5(lo - d), r5(la - d)], [r5(lo + d), r5(la - d)], [r5(lo + d), r5(la + d)], [r5(lo - d), r5(la + d)], [r5(lo - d), r5(la - d)]]]);
+  let area: FavArea | null = null;
+  if (roads.length) {
+    const r5 = (v: number) => Math.round(v * 1e5) / 1e5;
+    const polys: number[][][][] = [];
+    for (const road of roads) {
+      if (polys.length >= FAV_MAX) break;
+      // Linie auf Abschnitte ab 150 m ausdünnen, der letzte Punkt bleibt
+      const line: LatLon[] = [road.line[0]];
+      for (let i = 1; i < road.line.length; i++) {
+        if (i === road.line.length - 1 || haversine(line[line.length - 1], road.line[i]) >= FAV_STEP_M) line.push(road.line[i]);
+      }
+      for (let i = 0; i < line.length - 1 && polys.length < FAV_MAX; i++) {
+        const a = line[i];
+        const b = line[i + 1];
+        // in Metern rechnen: Richtung des Abschnitts, Rechteck um FAV_HALF_M verbreitert und verlängert
+        const ky = 110540;
+        const kx = 111320 * Math.cos((a[0] * Math.PI) / 180);
+        const dx = (b[1] - a[1]) * kx;
+        const dy = (b[0] - a[0]) * ky;
+        const len = Math.hypot(dx, dy) || 1;
+        const ux = (dx / len) * FAV_HALF_M;
+        const uy = (dy / len) * FAV_HALF_M;
+        const corner = (base: LatLon, alongSign: number, sideSign: number) => [
+          r5(base[1] + (alongSign * ux - sideSign * uy) / kx),
+          r5(base[0] + (alongSign * uy + sideSign * ux) / ky),
+        ];
+        const c1 = corner(a, -1, 1);
+        polys.push([[c1, corner(b, 1, 1), corner(b, 1, -1), corner(a, -1, -1), c1]]);
       }
     }
+    area = { type: 'Feature', id: 'fav', properties: {}, geometry: { type: 'MultiPolygon', coordinates: polys } };
   }
-  return { type: 'Feature', id: 'fav', properties: {}, geometry: { type: 'MultiPolygon', coordinates: polys } };
+  if (favMemo.size > 40) favMemo.clear();
+  favMemo.set(key, area);
+  return area;
 }
 
 function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatLon[] = [], near: LatLon[] = [], radiusKm = 30) {
@@ -290,11 +415,19 @@ function onCurated(p: LatLon): boolean {
   return false;
 }
 
-/** Wert eines Details an einem Punktindex. */
-function valueAt(details: Detail[] | undefined, i: number) {
-  if (!details) return null;
-  for (const [a, b, v] of details) if (i >= a && i < b) return v;
-  return null;
+/**
+ * Wert eines Details an einem Punktindex, für aufsteigende Indizes: merkt sich die Stelle und sucht von dort
+ * weiter. Vorher lief jede Abfrage von vorn durch die Liste, bei langen Routen mit tausenden Abschnitten
+ * waren das Millionen Vergleiche je Prüfung (Messung 10.11.).
+ */
+function detailCursor(details: Detail[] | undefined) {
+  let k = 0;
+  return (i: number) => {
+    if (!details) return null;
+    if (k >= details.length || i < details[k][0]) k = 0;
+    while (k < details.length && i >= details[k][1]) k++;
+    return k < details.length && i >= details[k][0] ? details[k][2] : null;
+  };
 }
 
 export function checkFromDetails(path: GhPath): Pick<Tour, 'linie' | 'warnungen' | 'km_je_klasse'> {
@@ -307,6 +440,14 @@ export function checkFromDetails(path: GhPath): Pick<Tour, 'linie' | 'warnungen'
   }
   const idx = [...cuts].sort((x, y) => x - y);
   const segs: Seg[] = [];
+  const at = {
+    road_class: detailCursor(path.details.road_class),
+    surface: detailCursor(path.details.surface),
+    track_type: detailCursor(path.details.track_type),
+    max_width: detailCursor(path.details.max_width),
+    street_ref: detailCursor(path.details.street_ref),
+    street_name: detailCursor(path.details.street_name),
+  };
   // Gesamtlänge und Lage je Stück, für Start und Ziel (Parkplatz, Hofeinfahrt)
   let totalKm = 0;
   for (let i = 1; i < shape.length; i++) totalKm += haversine(shape[i - 1], shape[i]) / 1000;
@@ -319,12 +460,12 @@ export function checkFromDetails(path: GhPath): Pick<Tour, 'linie' | 'warnungen'
     for (let i = a + 1; i <= b; i++) km += haversine(shape[i - 1], shape[i]) / 1000;
     const fromKm = atKm;
     atKm += km;
-    const rc = String(valueAt(path.details.road_class, a) ?? '').toLowerCase();
-    const sf = String(valueAt(path.details.surface, a) ?? '').toLowerCase();
-    const tt = String(valueAt(path.details.track_type, a) ?? '').toLowerCase();
-    const mw = valueAt(path.details.max_width, a);
-    const ref = String(valueAt(path.details.street_ref, a) ?? '');
-    const name = String(valueAt(path.details.street_name, a) ?? '') || ref;
+    const rc = String(at.road_class(a) ?? '').toLowerCase();
+    const sf = String(at.surface(a) ?? '').toLowerCase();
+    const tt = String(at.track_type(a) ?? '').toLowerCase();
+    const mw = at.max_width(a);
+    const ref = String(at.street_ref(a) ?? '');
+    const name = String(at.street_name(a) ?? '') || ref;
     const why: string[] = [];
     if (NON_CAR.has(rc)) why.push(rc === 'track' ? 'Wirtschafts oder Waldweg' : `als ${rc} eingetragen`);
     if (UNPAVED.has(sf)) why.push(`Belag ${sf}`);
@@ -438,6 +579,8 @@ export async function cumoPlan(
   signal?: AbortSignal,
   /** von vornherein ausschließen (zum Beispiel aktuelle Sperrungen aus Verkehrsmeldungen) */
   extraExclude: LatLon[] = [],
+  /** nur eine Abfrage, ohne Nachbessern: reicht zum Vergleichen (Länge, Kurven km) */
+  quick = false,
 ): Promise<PlannedTour & { curves: number }> {
   let leg = 0;
   let sum = 0;
@@ -471,7 +614,7 @@ export async function cumoPlan(
   };
   let exclude: LatLon[] = [...extraExclude];
   let best: (PlannedTour & { curves: number }) | null = null;
-  for (let round = 0; round < 3; round++) {
+  for (let round = 0; round < (quick ? 1 : 3); round++) {
     const p = await ask(exclude, []);
     const t = { ...toTour(name, points, p), fixes: round };
     if (!best || (t.km_je_klasse?.raus ?? 0) < (best.km_je_klasse?.raus ?? Infinity)) best = t;
@@ -482,6 +625,7 @@ export async function cumoPlan(
     exclude = [...exclude, ...more].slice(0, 40);
   }
   const first = best!;
+  if (quick) return first;
   const dup = doubledStretch(first.linie.flatMap((r) => r.p));
   // Lange Routen nicht ein zweites Mal rechnen: die Anfrage mit Strafzonen dauerte bei 700 km über
   // eine Minute, und doppelte Stücke fallen dort kaum ins Gewicht
