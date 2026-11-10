@@ -25,6 +25,8 @@ export type SavedTour = Tour & {
   syncedAt?: string;
   /** In der Community veröffentlicht */
   published?: boolean;
+  /** Aus der Community übernommen: wer sie veröffentlicht hat (Koray 10.11., Plakette „Von Timo“) */
+  author?: string;
   /** Fahrspaß Wert 0 bis 100, -1 wenn keiner berechenbar ist; fehlt er, rechnet die Liste ihn nach */
   fun?: number;
   /** Stand der Rechnung zu fun (TOUR_FUN_VERSION) */
@@ -106,7 +108,7 @@ function thinRuns(linie: Tour['linie']): Tour['linie'] {
   });
 }
 
-export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?: Profile }, folder: string, id?: string): SavedTour {
+export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?: Profile; author?: string }, folder: string, id?: string): SavedTour {
   const list = read();
   const now = new Date().toISOString();
   const old = id ? list.find((x) => x.id === id) : undefined;
@@ -255,6 +257,8 @@ export async function syncLibrary(): Promise<void> {
         cloudId: c.id,
         syncedAt: c.updated_at,
         published: c.published || undefined,
+        // übernommene Touren tragen den Namen dessen, der sie veröffentlicht hat
+        author: !c.published && c.folder === 'Community' && c.author ? c.author : undefined,
       };
       write([saved, ...read()]);
     }

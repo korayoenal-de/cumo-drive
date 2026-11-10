@@ -91,7 +91,7 @@ export async function unpublishTour(t: SavedTour) {
 /** Community Tour in Meine Touren übernehmen (als eigene Kopie). */
 export async function copyCommunityTour(c: CommunityTour): Promise<SavedTour> {
   const full = await loadCommunityTour(c.id);
-  const saved = saveTour({ ...full.tour, name: c.name, curves: c.curves ?? undefined, profile: full.profile }, 'Community');
+  const saved = saveTour({ ...full.tour, name: c.name, curves: c.curves ?? undefined, profile: full.profile, author: c.author?.trim() || undefined }, 'Community');
   void syncLibrary();
   return saved;
 }

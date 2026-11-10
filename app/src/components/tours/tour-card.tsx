@@ -95,11 +95,19 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
             <AppText variant="caption" muted numberOfLines={1} style={styles.meta}>
               {meta}
             </AppText>
-            {t.published && (
+            {t.published ? (
               <View style={styles.badge}>
                 <AppText style={styles.badgeText}>In der Community</AppText>
               </View>
-            )}
+            ) : t.author || t.folder === 'Community' ? (
+              // Aus der Community übernommen (Koray 10.11., Variante A): grau, mit Initiale des Absenders
+              <View style={styles.fromBadge} accessible accessibilityLabel={t.author ? `Von ${t.author}` : 'Aus der Community'}>
+                <View style={styles.fromInitial}>
+                  <AppText style={styles.fromInitialText}>{(t.author ?? 'C').trim().charAt(0).toUpperCase()}</AppText>
+                </View>
+                <AppText style={styles.fromText} numberOfLines={1}>{t.author ? `Von ${t.author}` : 'Aus der Community'}</AppText>
+              </View>
+            ) : null}
           </View>
         </Pressable>
         {t.fun != null && t.fun >= 0 && (
@@ -283,6 +291,10 @@ const styles = StyleSheet.create({
   meta: { fontVariant: ['tabular-nums'] },
   badge: { alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.goodTint },
   badgeText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.good },
+  fromBadge: { alignSelf: 'flex-start', maxWidth: '100%', marginTop: 2, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 3, paddingRight: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
+  fromInitial: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#3A3A40', alignItems: 'center', justifyContent: 'center' },
+  fromInitialText: { fontFamily: Fonts.bold, fontSize: 10, color: Colors.text },
+  fromText: { flexShrink: 1, fontFamily: Fonts.semibold, fontSize: Type.caption, color: '#C9C9CD' },
   thumb: { width: 56, height: 56, borderRadius: Radius.m, backgroundColor: Colors.ground, overflow: 'hidden' },
   fun: { alignItems: 'center', gap: 2, minWidth: 36 },
   funText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },

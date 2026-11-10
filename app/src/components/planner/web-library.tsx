@@ -38,7 +38,7 @@ export function LibraryPanel(props: { currentId: string | null; onOpen: (t: Save
   const [folder, setFolder] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>('neu');
   const shown = filterTours(list, q, folder, sort);
-  const fs = folders(list);
+  const fs = folders(list).filter((d) => d !== 'Community');
   return (
     <div style={S.stack}>
       <ViewTitle>Meine Touren</ViewTitle>
@@ -115,7 +115,7 @@ function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTo
         <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ font: `700 17px/22px ${BODY}`, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.name}</span>
           <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{meta}</span>
-          {t.published ? <Badge tone="good">In der Community</Badge> : null}
+          {t.published ? <Badge tone="good">In der Community</Badge> : t.author || t.folder === 'Community' ? <Badge tone="muted">{t.author ? `Von ${t.author}` : 'Aus der Community'}</Badge> : null}
         </span>
       </button>
       {t.fun != null && t.fun >= 0 ? (

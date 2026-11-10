@@ -17,6 +17,7 @@ export type CloudTour = {
   curves: number | null;
   updated_at: string;
   published: boolean | null;
+  author: string | null;
 };
 
 export async function listCloudTours(): Promise<CloudTour[]> {
@@ -25,7 +26,7 @@ export async function listCloudTours(): Promise<CloudTour[]> {
   if (!u.user) return [];
   const { data, error } = await supabase
     .from('tours')
-    .select('id,name,folder,profile,km,minutes,curves,updated_at,published')
+    .select('id,name,folder,profile,km,minutes,curves,updated_at,published,author')
     .eq('owner', u.user.id)
     // Touren, die nur noch in der Community stehen, gehören nicht mehr in Meine Touren
     .eq('in_library', true)
@@ -42,7 +43,7 @@ export async function loadCloudTour(id: string): Promise<{ tour: Tour & { minute
 
 /** Tour anlegen oder aktualisieren; liefert die ID im Konto. */
 export async function saveCloudTour(
-  t: Tour & { minutes?: number; curves?: number },
+  t: Tour & { minutes?: number; curves?: number; author?: string; published?: boolean },
   opts: { id?: string; folder?: string; profile?: Profile; avoid?: Avoid },
 ): Promise<string> {
   const row = {
@@ -54,6 +55,8 @@ export async function saveCloudTour(
     minutes: t.minutes != null ? Math.round(t.minutes) : null,
     curves: t.curves ?? null,
     data: packTour(t, opts.profile ?? 'kurvig', opts.avoid),
+    // Absender einer übernommenen Tour; bei veröffentlichten steht dort der eigene Name, den nie überschreiben
+    ...(t.author && !t.published ? { author: t.author.slice(0, 60) } : {}),
   };
   if (opts.id) {
     // Ohne Treffer (fremde oder gelöschte Tour) meldet Supabase keinen Fehler, dann neu anlegen.

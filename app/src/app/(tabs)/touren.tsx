@@ -69,7 +69,8 @@ export default function Touren() {
     }, [session]),
   );
 
-  const dirs = useMemo(() => folders(list), [list]);
+  // Übernommene Touren erkennt man an der Plakette „Von …“, ein eigener Filter dafür entfällt (Koray 10.11.)
+  const dirs = useMemo(() => folders(list).filter((d) => d !== 'Community'), [list]);
   const shown = useMemo(() => filterTours(list, q, folder, sort), [list, q, folder, sort]);
 
   return (
