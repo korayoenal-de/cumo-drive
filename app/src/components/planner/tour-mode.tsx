@@ -602,7 +602,7 @@ export function TourMode({
           <View style={styles.wrap}>
             <SmallButton label="Als Start" onPress={() => addPending('start')} />
             {plan.complete && <SmallButton label="Als Zwischenziel" onPress={() => addPending('via')} />}
-            <SmallButton label="Als Ziel" onPress={() => addPending('ziel')} strong />
+            <SmallButton label={plan.complete ? 'Als neues Ziel' : 'Als Ziel'} onPress={() => addPending('ziel')} strong />
             <SmallButton label="Abbrechen" onPress={() => setPending(null)} />
           </View>
         </View>

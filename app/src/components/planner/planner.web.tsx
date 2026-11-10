@@ -853,7 +853,7 @@ function MapMenuCard(props: {
             Als Start
           </button>
           <button role="menuitem" style={S.menuItem} onClick={() => act('ziel')}>
-            Als Ziel
+            {plan.complete ? 'Als neues Ziel' : 'Als Ziel'}
           </button>
         </>
       )}

@@ -42,7 +42,8 @@ export function MapPassActions({
       : empty
         ? { a: 'start', label: 'Als Start' }
         : { a: 'ziel', label: 'Als Ziel' };
-  const secondary: { a: PassAction; label: string } | null = role ? null : complete || empty ? { a: 'ziel', label: 'Als Ziel' } : null;
+  // Bei fertiger Route verlängert das neue Ziel die Tour, das alte wird Zwischenziel
+  const secondary: { a: PassAction; label: string } | null = role ? null : complete ? { a: 'ziel', label: 'Als neues Ziel' } : empty ? { a: 'ziel', label: 'Als Ziel' } : null;
   return (
     <Animated.View
       key={pass.id}

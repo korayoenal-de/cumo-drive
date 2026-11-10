@@ -277,6 +277,14 @@ export function useTourPlan(onPlanned?: () => void) {
 
   /** Von der Karte oder für Stopps: Zwischenziel dort einfügen, wo es den kleinsten Umweg macht. */
   function add(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string) {
+    // Neues Ziel von der Karte verlängert die Tour: das bisherige Ziel wird letztes Zwischenziel (Tester Gregor 10.11.).
+    // Das Feld Ziel im Blatt ersetzt weiterhin (setSlot).
+    if (kind === 'ziel' && start && ziel) {
+      rememberName(p, known);
+      const lp = fitLegs(legProfiles, vias.length);
+      apply(start, [...vias, ziel], p, [...lp, lp[lp.length - 1] ?? null], profile, avoid);
+      return;
+    }
     if (kind !== 'via' || !start || !ziel) {
       setSlot(kind === 'via' && !start ? 'start' : kind === 'via' && !ziel ? 'ziel' : kind, p, profile, avoid, known);
       return;
