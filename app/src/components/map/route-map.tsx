@@ -64,6 +64,8 @@ export function RouteMap({
   layers = false,
   onPressPass,
   onPressMap,
+  onPressPin,
+  overlayTop = 0,
   pickedPassIds,
   flyTo,
   radar,
@@ -553,7 +555,23 @@ export function RouteMap({
         ))}
 
         {(pins ?? []).map((pin) => (
-          <Marker key={pin.id} coordinate={ll(pin.p)} anchor={{ x: 0.5, y: 1 }} title={pin.title} zIndex={35} tracksViewChanges={false}>
+          <Marker
+            key={pin.id}
+            coordinate={ll(pin.p)}
+            anchor={{ x: 0.5, y: 1 }}
+            // antippbar (Koray 10.11.): eigene Aktionen statt der Apple Blase
+            title={onPressPin ? undefined : pin.title}
+            accessibilityLabel={pin.title}
+            onPress={
+              onPressPin
+                ? () => {
+                    setOpenWarn(null);
+                    onPressPin(pin.id);
+                  }
+                : undefined
+            }
+            zIndex={35}
+            tracksViewChanges={false}>
             <View style={styles.pin}>
               <AppText style={styles.pinText}>{pin.label}</AppText>
             </View>
@@ -638,7 +656,7 @@ export function RouteMap({
         <WarnCard
           key={openWarn}
           // nie unter der Dynamic Island: mindestens der sichere Rand oben (Tester 8.11.)
-          top={Math.max(mapPadding?.top ?? 0, insets.top) + Spacing.m}
+          top={Math.max(mapPadding?.top ?? 0, insets.top) + Spacing.m + overlayTop}
           klasse={tour.warnungen[openWarn].klasse}
           name={tour.warnungen[openWarn].name}
           reasons={tour.warnungen[openWarn].gruende}

@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { haptic } from '@/lib/haptics';
 import { MapLayersButton } from '@/components/map/map-settings-sheet';
-import { MapPassActions, type PassAction } from '@/components/planner/map-pass-actions';
+import { MapPassActions, MapPointActions, type PassAction } from '@/components/planner/map-pass-actions';
 import { RouteMap } from '@/components/map/route-map';
 import { passState, usePassLive } from '@/lib/pass-live';
 import { PASSES, passPoint, passSummary, type Pass } from '@/lib/passes';
@@ -224,6 +224,8 @@ export default function Planner() {
   // Steht eine Route, geht das Blatt auf halbe Höhe, damit sie auf der Karte zu sehen ist.
   const tourPlan = useTourPlan(() => setDetent(1));
   const [pending, setPending] = useState<PendingPoint | null>(null);
+  /** Angetippter Zwischenpunkt auf der Karte (Index unter den Zwischenzielen) */
+  const [selVia, setSelVia] = useState<number | null>(null);
 
   // Aus Meine Touren "Ändern": Tour in "Route" öffnen und einmal planen
   const loadTour = tourPlan.load;
@@ -575,7 +577,19 @@ export default function Planner() {
 
   /** Tipp auf einen Pass der Karte: Aktionen schweben über der Karte, ein Tipp daneben blendet sie aus. */
   function onMapPassPress(pass: Pass) {
+    setSelVia(null);
     setPending({ p: passPoint(pass), name: pass.name, pass });
+  }
+
+  /** Tipp auf ein nummeriertes Zwischenziel: ist es ein Pass, dieselben Aktionen wie beim Pass, sonst Entfernen */
+  function onPinPress(id: string) {
+    const i = Number(/^via(\d+)-/.exec(id)?.[1] ?? -1);
+    const p = tourPts.slice(1, -1)[i];
+    if (!p) return;
+    const ps = PASSES.find((x) => passIndex([p], x) === 0);
+    if (ps) return onMapPassPress(ps);
+    setPending(null);
+    setSelVia(i);
   }
 
   /** Aktion für den angetippten Pass, direkt auf die Route */
@@ -1077,7 +1091,12 @@ export default function Planner() {
           autoFit={!(inTour && mapEdit)}
           onLongPress={inTour ? onMapLongPress : undefined}
           onPressPass={inTour ? onMapPassPress : undefined}
-          onPressMap={passOverlay ? () => setPending(null) : undefined}
+          onPressPin={inTour ? onPinPress : undefined}
+          onPressMap={passOverlay || selVia != null ? () => {
+            setPending(null);
+            setSelVia(null);
+          } : undefined}
+          overlayTop={origin ? BACK_PILL_H + Spacing.s : 0}
           pickedPassIds={inTour ? pickedPassIds : undefined}
           flyTo={inTour ? flyTo : null}
           radar={view.kind === 'working' ? radar : null}
@@ -1097,6 +1116,19 @@ export default function Planner() {
             ) : (
               pill && <ScanChip top={chipTop} text={pill} />
             ))}
+          {inTour && selVia != null && !passOverlay && tourPts.slice(1, -1)[selVia] && (
+            <MapPointActions
+              label={String(selVia + 1)}
+              name={tourPlan.names[keyOf(tourPts.slice(1, -1)[selVia])] ?? `Zwischenziel ${selVia + 1}`}
+              role={`Zwischenziel ${selVia + 1}`}
+              bottom={covered + Spacing.m}
+              onRemove={() => {
+                setMapEdit(true);
+                tourPlan.removeVia(selVia, profile, avoid);
+                setSelVia(null);
+              }}
+            />
+          )}
           {passOverlay && (
             <MapPassActions
               pass={passOverlay}

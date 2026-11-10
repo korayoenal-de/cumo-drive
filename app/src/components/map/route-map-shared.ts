@@ -49,6 +49,10 @@ export type RouteMapProps = {
   layers?: boolean;
   /** Tipp auf einen Pass der Pässe Ebene (zum Beispiel zur Route hinzufügen) */
   onPressPass?: (pass: Pass) => void;
+  /** Tipp auf einen nummerierten Punkt (Zwischenziel), id wie in pins */
+  onPressPin?: (id: string) => void;
+  /** Platz oben, den andere Elemente belegen (Zurück Pille): Hinweiskarten beginnen darunter */
+  overlayTop?: number;
   /** Tipp auf eine freie Stelle der Karte (nicht auf einen Marker) */
   onPressMap?: () => void;
   /** Pässe, die schon als Punkt in der Planung stehen: sie erscheinen markiert */

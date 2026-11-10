@@ -102,5 +102,36 @@ const styles = StyleSheet.create({
   btnQuiet: { backgroundColor: Colors.surface2 },
   btnText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },
   onSignal: { color: Colors.onSignal },
+  num: { minWidth: 26, height: 26, paddingHorizontal: 6, borderRadius: 13, backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  numText: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
   pressed: { opacity: 0.85, transform: [{ scale: Motion.pressScale }] },
 });
+
+/**
+ * Angetippter Punkt der Route (Zwischenziel oder Highlight, Koray 10.11.): gleiche schwebende Karte wie beim
+ * Pass, mit der Nummer auf der Karte und der Aktion Entfernen.
+ */
+export function MapPointActions({ label, name, role, bottom, onRemove }: { label: string; name: string; role: string; bottom: number; onRemove: () => void }) {
+  return (
+    <Animated.View key={`${label}-${name}`} entering={softEnter()} exiting={FadeOut.duration(120)} style={[styles.wrap, { bottom }]} pointerEvents="box-none">
+      <View style={styles.card}>
+        <View style={styles.head}>
+          <View style={styles.num}>
+            <AppText style={styles.numText}>{label}</AppText>
+          </View>
+          <View style={styles.flex}>
+            <AppText style={styles.name} numberOfLines={1}>
+              {name}
+            </AppText>
+            <AppText style={styles.sub} numberOfLines={1}>
+              {role}
+            </AppText>
+          </View>
+        </View>
+        <Pressable accessibilityRole="button" onPress={onRemove} style={({ pressed }) => [styles.btn, styles.btnQuiet, pressed && styles.pressed]}>
+          <AppText style={styles.btnText}>Aus der Route entfernen</AppText>
+        </Pressable>
+      </View>
+    </Animated.View>
+  );
+}
