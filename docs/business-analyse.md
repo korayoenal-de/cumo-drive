@@ -370,3 +370,13 @@ Die Zahlen wurden mit zwei Python Skripten berechnet: ein Marktmodell (Pool, TAM
 49. RevenueCat, Subscription App Trends and Benchmarks 2026: https://www.revenuecat.com/blog/growth/subscription-app-trends-benchmarks-2026.md
 50. SaaStr, Top 10 Learnings from RevenueCat's State of Subscription Apps: https://www.saastr.com/the-top-10-learnings-from-revenuecats-state-of-subscription-apps/
 51. Motorradonline, 5 Millionen Marke geknackt (Krafträder 1.1.2025: 5.059.248): https://www.motorradonline.de/ratgeber/5-millionen-marke-geknackt-motorraeder-in-deutschland/
+
+## Interne Club Preise (nicht öffentlich, Stand 10.11.2026)
+
+Entscheidung Koray 10.11.: Club Lizenzen stehen auf der Landingpage nur mit „Preis auf Anfrage“. Intern gelten (wie in app/src/lib/entitlement.ts):
+
+| Lizenz | Preis | Umfang |
+|---|---|---|
+| Club S | 490 € im Jahr | bis 12 Fahrzeuge |
+| Club L | 890 € im Jahr | bis 20 Fahrzeuge |
+| Event Pass | 149 € je Veranstaltung | bis 20 Fahrzeuge |

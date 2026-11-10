@@ -315,7 +315,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   <div style="display: flex; flex-direction: column; gap: 20px; max-width: 760px;">
     <span class="cd-label">CarPlay</span>
     <h3 class="cd-h2">Die Kurven auf dem großen Display.</h3>
-    <p class="cd-lead">Plane auf dem iPhone, fahr mit CarPlay. Die Tour liegt als Linie auf der Karte im Auto, ein Tipp auf Los startet die Führung. Manöver, Restweg und Ankunft stehen im Blick, Pässe und Traumstrecken melden sich kurz vorher.</p>
+    <p class="cd-lead">Plane auf dem iPhone, fahr mit CarPlay. Die Tour liegt als Linie auf der Karte im Auto, ein Tipp auf Los startet die Führung. Manöver, Restweg und Ankunft stehen im Blick, Pässe und Traumstrecken melden sich kurz vorher. CarPlay ist noch in Entwicklung und für Tester schon nutzbar.</p>
   </div>
   <div class="cp-car" role="img" aria-label="CUMO DRIVE in CarPlay: Karte mit oranger Tour, Abbiegehinweis rechts auf die SS 44 in 800 m, Hinweis Jaufenpass in 600 m mit 20 Kehren, Ankunft 11:36">
     <div class="cp-screen">
@@ -508,11 +508,11 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   </div>
   <div class="cd-grid2">
     <div class="cd-card" style="background: transparent; box-shadow: inset 0 0 0 1px #232326;">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;"><span class="cd-h3" style="font-size: 28px;">Club S</span><span class="cd-title">490 € im Jahr</span></div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;"><span class="cd-h3" style="font-size: 28px;">Club S</span><span class="cd-title">Preis auf Anfrage</span></div>
       <p class="cd-body" style="font-size: 16px;">Für Markenclubs und Stammtische: 12 Fahrzeuge, alle Mitglieder ohne eigenes Abo, gemeinsame Clubtouren.</p>
     </div>
     <div class="cd-card" style="background: transparent; box-shadow: inset 0 0 0 1px #232326;">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;"><span class="cd-h3" style="font-size: 28px;">Club L</span><span class="cd-title">890 € im Jahr</span></div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;"><span class="cd-h3" style="font-size: 28px;">Club L</span><span class="cd-title">Preis auf Anfrage</span></div>
       <p class="cd-body" style="font-size: 16px;">Für Tourenveranstalter, Hotels und Autohäuser: 20 Fahrzeuge, Teilnehmer ohne eigenes Abo, eigene Touren für alle Mitfahrer.</p>
     </div>
   </div>
