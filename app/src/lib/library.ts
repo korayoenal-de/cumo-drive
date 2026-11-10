@@ -199,15 +199,19 @@ export async function syncLibrary(): Promise<void> {
       };
       write([saved, ...read()]);
     }
-    // 3. Doppelte aus dem alten Fehler aufräumen: gleicher Name, gleiche Länge, gleiche Strecke,
-    //    innerhalb von 10 Minuten angelegt. Die älteste bleibt, die Kopien gehen auch im Konto.
+    // 3. Doppelte aufräumen: gleicher Name, gleiche Länge, gleiche Strecke, gleicher Ordner.
+    //    Die älteste bleibt, die Kopien gehen auch im Konto. Seit 10.11. ohne Zeitfenster, weil ein
+    //    Abgleich Fehler Kopien über Stunden verteilt angelegt hat. Veröffentlichte bleiben immer.
     const seen = new Map<string, SavedTour>();
     const dupes: SavedTour[] = [];
     for (const t of [...read()].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
-      const pts = t.linie.reduce((n, r) => n + r.p.length, 0);
-      const key = `${t.name}|${t.laenge_km}|${pts}|${t.folder}`;
+      // Start und Ziel statt Punktzahl: heruntergeladene Kopien sind ausgedünnt und haben weniger Punkte
+      const a0 = t.wegpunkte[0];
+      const a1 = t.wegpunkte[t.wegpunkte.length - 1];
+      const ends = a0 && a1 ? `${a0[0].toFixed(4)},${a0[1].toFixed(4)},${a1[0].toFixed(4)},${a1[1].toFixed(4)},${t.wegpunkte.length}` : '';
+      const key = `${t.name}|${Math.round(t.laenge_km * 10)}|${ends}|${t.folder}`;
       const first = seen.get(key);
-      if (first && Math.abs(Date.parse(t.createdAt) - Date.parse(first.createdAt)) < 10 * 60 * 1000 && !t.published) dupes.push(t);
+      if (first && !t.published) dupes.push(t);
       else if (!first) seen.set(key, t);
     }
     for (const d of dupes) deleteTour(d.id);

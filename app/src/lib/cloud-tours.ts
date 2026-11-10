@@ -53,9 +53,14 @@ export async function saveCloudTour(
     data: packTour(t, opts.profile ?? 'kurvig', opts.avoid),
   };
   if (opts.id) {
-    // Ohne Treffer (fremde oder gelöschte Tour) meldet Supabase keinen Fehler, dann neu anlegen
+    // Ohne Treffer (fremde oder gelöschte Tour) meldet Supabase keinen Fehler, dann neu anlegen.
+    // Bei einem Fehler nie neu anlegen: sonst entsteht bei jedem Abgleich eine weitere Kopie (Koray 10.11.).
     const { data, error } = await supabase.from('tours').update(row).eq('id', opts.id).select('id');
-    if (!error && data && data.length > 0) return opts.id;
+    if (error) throw new Error(error.message);
+    if (data && data.length > 0) return opts.id;
+    const { data: u } = await supabase.auth.getUser();
+    const { data: own } = await supabase.from('tours').select('id').eq('id', opts.id).eq('owner', u.user?.id ?? '').maybeSingle();
+    if (own) return opts.id;
   }
   const { data, error } = await supabase.from('tours').insert(row).select('id').single();
   if (error) throw new Error(error.message);
