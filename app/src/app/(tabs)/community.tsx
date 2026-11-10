@@ -6,10 +6,10 @@
  * Organisator nimmt an, danach Chat und am Tag die Gruppenfahrt.
  */
 import { router, useFocusEffect } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
+import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CommunityMap, type CommunityPin } from '@/components/community/community-map';
@@ -133,8 +133,8 @@ export default function Community() {
 
   const segControl = (
     <View style={styles.seg} accessibilityRole="tablist">
-      <SegItem label="Routen" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} />
-      <SegItem label="Ausfahrten" count={userId ? rides?.length ?? null : null} badge={openRequests} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} />
+      <SegItem label="Routen" icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} />
+      <SegItem label="Ausfahrten" icon="calendar" count={userId ? rides?.length ?? null : null} badge={openRequests} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} />
     </View>
   );
 
@@ -225,22 +225,37 @@ export default function Community() {
   );
 }
 
-function SegItem({ label, count, badge, on, onPress }: { label: string; count: number | null; badge?: number; on: boolean; onPress: () => void }) {
+/**
+ * Glaspille (Konzept A, Koray 10.11.): aktive Ansicht weiß mit Wort und Zahl, die anderen nur als
+ * Symbol. Beim Wechsel gleitet die weiße Fläche mit Feder, das Wort blendet auf.
+ */
+function SegItem({ label, icon, count, badge, on, onPress }: { label: string; icon: SFSymbol; count: number | null; badge?: number; on: boolean; onPress: () => void }) {
   return (
-    <Pressable
-      accessibilityRole="tab"
-      accessibilityState={{ selected: on }}
-      accessibilityLabel={`${label}${count != null ? `, ${count}` : ''}${badge ? `, ${badge} offene Anfragen` : ''}`}
-      onPress={onPress}
-      style={[styles.segItem, on && styles.segOn]}>
-      <AppText style={[styles.segText, on && styles.segTextOn]}>{label}</AppText>
-      {count != null && <AppText style={[styles.segCount, on && styles.segTextOn]}>{count}</AppText>}
-      {!!badge && (
-        <View style={styles.badge}>
-          <AppText style={styles.badgeText}>{badge}</AppText>
+    <Animated.View layout={LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)}>
+      <Pressable
+        accessibilityRole="tab"
+        accessibilityState={{ selected: on }}
+        accessibilityLabel={`${label}${count != null ? `, ${count}` : ''}${badge ? `, ${badge} offene Anfragen` : ''}`}
+        hitSlop={4}
+        onPress={onPress}
+        style={[styles.segItem, on && styles.segOn]}>
+        <View>
+          <SymbolView name={icon} size={17} weight="bold" tintColor={on ? Colors.ground : Colors.muted} />
+          {!on && !!badge && <View style={styles.badgeDot} />}
         </View>
-      )}
-    </Pressable>
+        {on && (
+          <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.segLabel}>
+            <AppText style={styles.segText}>{label}</AppText>
+            {count != null && <AppText style={styles.segCount}>{count}</AppText>}
+            {!!badge && (
+              <View style={styles.badge}>
+                <AppText style={styles.badgeText}>{badge}</AppText>
+              </View>
+            )}
+          </Animated.View>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -434,15 +449,16 @@ const styles = StyleSheet.create({
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, height: Size.icon, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
   addText: { fontFamily: Fonts.bold, fontSize: Type.body },
   body: { gap: Spacing.s, paddingBottom: Spacing.xl },
-  segWrap: { position: 'absolute', left: Spacing.l, right: Spacing.l, alignItems: 'stretch' },
-  seg: { flexDirection: 'row', height: 48, padding: 4, gap: 4, borderRadius: 24, backgroundColor: Colors.overlaySurface, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' },
-  segItem: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 20 },
-  segOn: { backgroundColor: Colors.text },
-  segText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.muted },
-  segTextOn: { color: Colors.ground },
-  segCount: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.muted, opacity: 0.7, fontVariant: ['tabular-nums'] },
-  badge: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 12, lineHeight: 14 },
+  segWrap: { position: 'absolute', left: Spacing.l, right: Spacing.l, alignItems: 'flex-start' },
+  seg: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', height: 44, padding: 4, gap: 2, borderRadius: 22, backgroundColor: Colors.overlaySurface, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' },
+  segItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 36, minWidth: 40, paddingHorizontal: 11, borderRadius: 18 },
+  segOn: { backgroundColor: Colors.text, paddingLeft: 12, paddingRight: 14 },
+  segLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  segText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.ground },
+  segCount: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.ground, opacity: 0.55, fontVariant: ['tabular-nums'] },
+  badge: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  badgeDot: { position: 'absolute', top: -2, right: -4, width: 9, height: 9, borderRadius: 5, backgroundColor: Colors.signal, borderWidth: 1.5, borderColor: Colors.overlaySurface },
+  badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 11, lineHeight: 13 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s, marginBottom: Spacing.xs },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
