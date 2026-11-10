@@ -577,7 +577,8 @@ function SearchBody({
                                   {r.detail}
                                 </AppText>
                               )}
-                              {!near0 && <AppText style={styles.detourTag}>{`Umweg +${min} min`}</AppText>}
+                              {/* nur +x min, das Wort Umweg trägt die Plakette (Koray 10.11.); VoiceOver liest es vor */}
+                              {!near0 && <AppText accessibilityLabel={`Umweg ${min} Minuten`} style={styles.detourTag}>{`+${min} min`}</AppText>}
                             </View>
                           </View>
                           {showKm && (
