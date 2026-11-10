@@ -2,7 +2,7 @@
  * Bausteine des Navigationsscreens: Manöver Karte oben, Leiste unten, Zustands Karten.
  */
 import { useEffect, useState, type ReactNode } from 'react';
-import { SymbolView } from 'expo-symbols';
+import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -107,7 +107,7 @@ export type NavExtra = {
  * der Pausieren und Beenden aufklappt (Aufklappen statt Wechseln).
  */
 export function BottomBar({
-  eta, remainingKm, extra, voice, group, paused, showSim, bottomInset, onEnd, onPause, onVoice, onSecret, onSimulate, onFunk, onOverview, skipLabel, onSkip,
+  eta, remainingKm, extra, voice, group, paused, showSim, bottomInset, onEnd, onPause, onVoice, onSecret, onSimulate, onFunk, onOverview, skipLabel, onSkip, talk, extraActions,
 }: {
   eta: Date | null;
   remainingKm: number | null;
@@ -129,6 +129,10 @@ export function BottomBar({
   /** Nächstes Zwischenziel überspringen, schnellster Weg zum Ziel danach; Text etwa "Kolmbach überspringen" */
   skipLabel?: string;
   onSkip?: () => void;
+  /** Echter Funk (ab Build 20): gedrückt halten spricht. Ohne talk öffnet der Mikrofon Knopf die Kurznachrichten. */
+  talk?: { talking: boolean; waiting: boolean; disabled: boolean; onTalk: (on: boolean) => void };
+  /** Zusätzliche Einträge im Menü, etwa Kurznachricht oder Funk hören */
+  extraActions?: { key: string; label: string; icon: SFSymbol; run: () => void }[];
 }) {
   const now = useNow();
   const [funkHint, setFunkHint] = useState(false);
@@ -149,6 +153,7 @@ export function BottomBar({
   const rest = paused ? 'Pausiert' : [formatRemaining(eta, now), km].filter(Boolean).join(' · ');
   const done = extra ? Math.max(0, Math.min(100, extra.donePct)) : null;
   const actions = [
+    ...(extraActions ?? []).map((a) => ({ ...a, signal: false })),
     ...(onOverview ? [{ key: 'plan', label: 'Planung ansehen', icon: 'map.fill' as const, signal: false, run: onOverview }] : []),
     ...(onSkip && skipLabel ? [{ key: 'skip', label: skipLabel, icon: 'forward.end.fill' as const, signal: false, run: onSkip }] : []),
     paused
@@ -201,7 +206,7 @@ export function BottomBar({
             )}
           </Pressable>
 
-          {group && (
+          {group && !talk && (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Funk"
@@ -231,6 +236,20 @@ export function BottomBar({
               tintColor={menu ? Colors.ground : Colors.onSignal}
             />
           </Pressable>
+
+          {group && talk && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={talk.disabled ? 'Funk, gerade spricht nur die Lead' : talk.talking ? 'Du sprichst, loslassen zum Beenden' : 'Funk, gedrückt halten zum Sprechen'}
+              accessibilityState={{ selected: talk.talking, disabled: talk.disabled }}
+              disabled={talk.disabled}
+              onPressIn={() => talk.onTalk(true)}
+              onPressOut={() => talk.onTalk(false)}
+              style={[styles.talk, talk.talking && styles.talkOn, (talk.waiting || talk.disabled) && styles.talkWait]}>
+              <MicIcon />
+              <AppText style={styles.talkText}>{talk.waiting ? 'Warten' : 'Funk'}</AppText>
+            </Pressable>
+          )}
         </View>
         {showSim && (
           <Pressable accessibilityRole="button" onPress={onSimulate} style={styles.sim}>
@@ -270,6 +289,10 @@ const styles = StyleSheet.create({
 
   info: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
 
+  talk: { width: 76, height: 76, borderRadius: 38, marginTop: -18, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', gap: 2, boxShadow: Shadow.float },
+  talkOn: { backgroundColor: '#FF7A4D', transform: [{ scale: 1.08 }] },
+  talkWait: { backgroundColor: Colors.surface2 },
+  talkText: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.onSignal },
   bar: { borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l, paddingHorizontal: Spacing.xl, paddingTop: Spacing.l, gap: Spacing.s },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   etaBox: { flex: 1, minWidth: 0, gap: Spacing.s, paddingVertical: Spacing.xs },

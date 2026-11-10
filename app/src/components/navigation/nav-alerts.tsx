@@ -14,7 +14,8 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import type { FunkState } from '@/lib/group/funk';
 import { STOP_REASONS, type RideMsg, type RideStop, type StopReason } from '@/lib/group/ride';
 import { highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { formatKm } from '@/lib/tour';
@@ -150,6 +151,20 @@ export function LeadHaltPill({ onAnnounce }: { onAnnounce: (r: StopReason) => vo
   );
 }
 
+/** Funk Banner oben: ich spreche (orange), ein anderer spricht (mit Name) oder der Funk ist kurz getrennt. */
+export function FunkBanner({ funk }: { funk: FunkState }) {
+  const mine = funk.talking;
+  const text = mine ? 'Du sprichst' : funk.speaker ? `${funk.speaker.name} spricht` : 'Funk getrennt, verbinde neu';
+  return (
+    <Animated.View entering={FadeIn.duration(Motion.enter)} accessibilityLiveRegion="polite" accessibilityLabel={text} style={[styles.funkBanner, mine && styles.funkMine, !mine && !funk.speaker && styles.funkLost]}>
+      <SymbolView name={funk.speaker || mine ? 'waveform' : 'wifi.exclamationmark'} size={20} weight="bold" tintColor={mine ? Colors.onSignal : funk.speaker ? Colors.good : Colors.ground} />
+      <AppText style={[styles.funkText, mine && { color: Colors.onSignal }, !mine && !funk.speaker && { color: Colors.ground }]} numberOfLines={1}>
+        {text}
+      </AppText>
+    </Animated.View>
+  );
+}
+
 export function MessageToast({ msg }: { msg: RideMsg }) {
   return (
     <GlassPanel style={[styles.card, styles.toast]} fallback={Colors.overlay}>
@@ -178,6 +193,10 @@ const styles = StyleSheet.create({
   stopText: { fontFamily: Fonts.medium, fontSize: Type.title, color: Colors.onSignal },
   stopBtn: { height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   stopBtnText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.onSignal },
+  funkBanner: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 52, paddingHorizontal: Spacing.l, borderRadius: Radius.l, backgroundColor: Colors.ground },
+  funkMine: { backgroundColor: Colors.signal },
+  funkLost: { backgroundColor: Colors.warn },
+  funkText: { flex: 1, fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   haltWrap: { alignSelf: 'flex-end', alignItems: 'flex-end', gap: Spacing.s },
   haltPill: { height: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, paddingRight: 18, borderRadius: Radius.pill, backgroundColor: Colors.text, boxShadow: '0 6px 18px rgba(0,0,0,0.4)' },
   haltDot: { width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.ground, alignItems: 'center', justifyContent: 'center' },

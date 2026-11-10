@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
   const name = (prof as { display_name?: string } | null)?.display_name ?? 'Fahrer';
 
   const at = new AccessToken(key, secret, { identity: u.user.id, name, ttl: '8h' });
-  // Senden und hören im eigenen Raum, keine Daten; die App veröffentlicht nur das Mikrofon
-  at.addGrant({ room: `ride-${ride}`, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: false });
+  // Senden und hören im eigenen Raum; Daten nur für den Schalter "Nur die Lead spricht"
+  at.addGrant({ room: `ride-${ride}`, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true });
   return json({ url, token: await at.toJwt() });
 });

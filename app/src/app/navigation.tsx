@@ -14,7 +14,7 @@ import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM, symbolFor } from '@/components/navigation/maneuver-geometry';
 import { DriveRatingCard, type DrivenHighlight } from '@/components/navigation/drive-rating';
 import { SpeedBadge } from '@/components/navigation/speed-badge';
-import { HighlightCard, HighlightStrip, LeadHaltPill, StopAlert } from '@/components/navigation/nav-alerts';
+import { FunkBanner, HighlightCard, HighlightStrip, LeadHaltPill, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
@@ -39,6 +39,7 @@ import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
 import Animated, { FadeOut } from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
 import { elevationProfile } from '@/lib/stats';
+import { connectFunk, disconnectFunk, pushToTalk, setFunkListen, setOnlyLead, useFunk } from '@/lib/group/funk';
 import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, STOP_REASONS, useRide } from '@/lib/group/ride';
 import { currentVehicle, selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
@@ -101,7 +102,14 @@ export default function NavigationScreen() {
   const ride = useRide();
   const vehicles = useVehicles();
   const inRide = ride.status === 'aktiv';
+  // Funk der Gruppenfahrt: verbinden, solange die Fahrt aktiv ist (nur Fahrten mit ID, nicht alte Fahrtcodes)
+  useEffect(() => {
+    if (inRide && ride.rideId) void connectFunk(ride.rideId, ride.myRole === 'lead');
+    else void disconnectFunk();
+  }, [inRide, ride.rideId, ride.myRole]);
+  useEffect(() => () => void disconnectFunk(), []);
   const [msgOpen, setMsgOpen] = useState(false);
+  const funk = useFunk();
   const driveSettings = useDriveSettings();
   // Karte "Zwischenziel überspringen" nach langem Druck auf das Manöver, schließt nach 6 s von selbst
   const [skipOpen, setSkipOpen] = useState(false);
@@ -752,6 +760,8 @@ export default function NavigationScreen() {
             </AppText>
           </View>
         )}
+        {/* Funk: wer gerade spricht (Funk Konzept, Koray 10.11.) */}
+        {running && inRide && (funk.talking || funk.speaker || funk.status === 'getrennt') && <FunkBanner funk={funk} />}
         {/* Halt der Lead oben rechts, getrennt vom Funk (Funk Konzept, Koray 10.11.) */}
         {running && inRide && ride.myRole === 'lead' && !stop && <LeadHaltPill onAnnounce={announceStop} />}
         {running && stop && (
@@ -803,6 +813,22 @@ export default function NavigationScreen() {
               voice={state.voice}
               group={inRide}
               onFunk={inRide ? () => setMsgOpen(!msgOpen) : undefined}
+              talk={
+                inRide && funk.status !== 'nicht'
+                  ? { talking: funk.talking, waiting: funk.waiting, disabled: funk.onlyLead && ride.myRole !== 'lead', onTalk: pushToTalk }
+                  : undefined
+              }
+              extraActions={
+                inRide && funk.status !== 'nicht'
+                  ? [
+                      { key: 'msg', label: 'Kurznachricht an die Gruppe', icon: 'bubble.left.fill', run: () => setMsgOpen(true) },
+                      { key: 'hoeren', label: funk.listen ? 'Funk stumm' : 'Funk hören', icon: funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill', run: () => setFunkListen(!funk.listen) },
+                      ...(ride.myRole === 'lead'
+                        ? [{ key: 'nurlead', label: funk.onlyLead ? 'Alle dürfen sprechen' : 'Nur die Lead spricht', icon: 'person.wave.2.fill' as const, run: () => setOnlyLead(!funk.onlyLead) }]
+                        : []),
+                    ]
+                  : undefined
+              }
               showSim={showSim}
               bottomInset={insets.bottom + Spacing.m}
               onEnd={close}
