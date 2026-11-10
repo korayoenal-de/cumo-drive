@@ -1,5 +1,5 @@
 // Passstatus aus TomTom Sperrmeldungen, für alle Nutzer zwischengespeichert in public.pass_status.
-// Läuft per Zeitplan (pg_cron, alle 4 Stunden) und fragt TomTom höchstens einmal am Tag ab (9.11.: das
+// Läuft per Zeitplan (pg_cron, alle 4 Stunden) und fragt TomTom höchstens einmal am Tag ab (November bis April alle zwei Tage, Monatskontingent in tomtom_usage) (9.11.: das
 // freie Kontingent von 2.500 Abfragen im Monat war mit 124 Kacheln alle 4 Stunden nach drei Tagen weg).
 // Logik gleich wie app/src/lib/pass-status.ts; passes.json kommt per `npm run sync:functions`.
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -13,7 +13,11 @@ type Incident = {
 };
 
 const FIELDS = '{incidents{type,geometry{type,coordinates},properties{iconCategory,events{description},startTime,endTime,from,to,length}}}';
-const MIN_AGE_MIN = 20 * 60;
+// Einmal am Tag, von November bis April alle zwei Tage (Koray 10.11.: TomTom Kosten)
+const MIN_AGE_MIN = (() => {
+  const m = new Date().getUTCMonth() + 1;
+  return (m >= 11 || m <= 4 ? 44 : 20) * 60;
+})();
 
 /** 1 Grad Kacheln (etwa 8.500 km², TomTom erlaubt 10.000): 50 Abfragen je Lauf statt 124 */
 function tiles(list: Pass[], size = 1): [number, number, number, number][] {
@@ -104,6 +108,10 @@ Deno.serve(async (req) => {
   }
 
   const list = passes as Pass[];
+  // Monatskontingent (Tabelle tomtom_usage): alle Kacheln auf einmal reservieren, sonst diesmal auslassen
+  const need = tiles(list).length;
+  const { data: ok, error: takeErr } = await db.rpc('tomtom_take', { n: need });
+  if (!force && !takeErr && ok === false) return Response.json({ skipped: true, reason: 'TomTom Kontingent für diesen Monat erreicht' });
   const all: Incident[] = [];
   for (const t of tiles(list)) {
     all.push(...(await incidents(key, t)));

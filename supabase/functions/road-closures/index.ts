@@ -12,11 +12,12 @@ type Incident = {
 type Closure = { id: string; line: [number, number][]; from?: string; to?: string; text?: string; road?: string };
 
 /** Die App schickt 0,5 Grad Kacheln; gefragt wird je 1 Grad Kachel (etwa 8.500 km², TomTom erlaubt 10.000),
- *  das sind ein Viertel der Abfragen. Merkzeit 30 Minuten (9.11.: freies Kontingent 2.500 im Monat). */
+ *  das sind ein Viertel der Abfragen. Merkzeit 2 Stunden, Monatskontingent in tomtom_usage (9.11. und 10.11.). */
 const APP_SIZE = 0.5;
 const SIZE = 1;
 const MAX_TILES = 30;
-const TTL_MS = 30 * 60 * 1000;
+// 2 Stunden (Koray 10.11.: TomTom Kosten, Kreditkarte hinterlegt); Vollsperrungen ändern sich selten schneller
+const TTL_MS = 2 * 60 * 60 * 1000;
 const FIELDS = '{incidents{type,geometry{type,coordinates},properties{id,iconCategory,events{description},from,to,roadNumbers}}}';
 const cache = new Map<string, { at: number; items: Closure[] }>();
 /** gleichzeitige Abfragen derselben Kachel teilen sich einen TomTom Aufruf */
@@ -86,7 +87,37 @@ function tile(key: string, x: number, y: number): Promise<Closure[]> {
   return job;
 }
 
+/** Eine TomTom Abfrage aus dem Monatskontingent nehmen (Tabelle tomtom_usage); ohne Datenbank immer erlaubt */
+async function take(): Promise<boolean> {
+  if (!DB_URL || !DB_KEY) return true;
+  try {
+    const r = await fetch(`${DB_URL}/rest/v1/rpc/tomtom_take`, { method: 'POST', headers: dbHeaders(), body: JSON.stringify({ n: 1 }) });
+    if (!r.ok) return true; // Funktion fehlt noch (Migration läuft nach): nicht blockieren
+    return (await r.json()) === true;
+  } catch {
+    return true;
+  }
+}
+
+/** Letzter bekannter Stand einer Kachel, egal wie alt (wenn das Kontingent erschöpft ist) */
+async function stale(k: string): Promise<Closure[]> {
+  if (!DB_URL || !DB_KEY) return [];
+  try {
+    const r = await fetch(`${DB_URL}/rest/v1/closure_tiles?select=items&key=eq.${encodeURIComponent(k)}`, { headers: dbHeaders() });
+    const rows = r.ok ? ((await r.json()) as { items: Closure[] }[]) : [];
+    return Array.isArray(rows[0]?.items) ? rows[0].items : [];
+  } catch {
+    return [];
+  }
+}
+
 async function fetchTile(key: string, x: number, y: number): Promise<Closure[]> {
+  if (!(await take())) {
+    const old = await stale(`${x},${y}`);
+    // kurz im Speicher halten, damit nicht jede Anfrage erneut das Kontingent prüft
+    cache.set(`${x},${y}`, { at: Date.now() - TTL_MS + 10 * 60 * 1000, items: old });
+    return old;
+  }
   const bbox = [x * SIZE, y * SIZE, (x + 1) * SIZE, (y + 1) * SIZE].map((v) => v.toFixed(4)).join(',');
   const q = new URLSearchParams({ key, bbox, fields: FIELDS, language: 'de-DE', categoryFilter: '8', timeValidityFilter: 'present' });
   const r = await fetch(`https://api.tomtom.com/traffic/services/5/incidentDetails?${q}`);
