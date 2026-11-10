@@ -20,7 +20,7 @@ import Animated, {
 
 import { useWeatherStatus, type WeatherStatus } from '@/lib/weather';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Shadow } from '@/constants/theme';
 import {
   MAP_STYLES,
   setMapSettings,
@@ -217,13 +217,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.overlaySurface,
+    // deckend und mit boxShadow wie die Zurück Pille: der alte iOS Schatten auf halb durchsichtiger Fläche
+    // sah auf manchen Geräten wie ein heller Rand unten rechts aus (Tester 10.11.)
+    backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.shadow,
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    boxShadow: Shadow.float,
   },
   sheet: { flex: 1, backgroundColor: Colors.ground },
   head: {
