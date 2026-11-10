@@ -2,9 +2,9 @@
  * Chat einer Ausfahrt: Organisator und angenommene Mitfahrer. Neue Nachrichten kommen live
  * (Supabase Realtime), eigene stehen rechts in getöntem Orange.
  */
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ausfahrtTeilnehmer, clock, listAusfahrten, sendNachricht, shortDate, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
+import { enablePush, setOpenChat } from '@/lib/push';
 
 export default function AusfahrtChat() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -27,6 +28,16 @@ export default function AusfahrtChat() {
   const [sending, setSending] = useState(false);
   const [sendErr, setSendErr] = useState<string | null>(null);
   const scroll = useRef<ScrollViewInstance>(null);
+
+  // Solange der Chat offen ist, keine Mitteilung für ihn; beim ersten Öffnen nach der Erlaubnis fragen
+  useFocusEffect(
+    useCallback(() => {
+      if (!id) return;
+      setOpenChat(`ride:${id}`);
+      void enablePush(true);
+      return () => setOpenChat(null);
+    }, [id]),
+  );
 
   useEffect(() => {
     if (!id) return;

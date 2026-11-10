@@ -9,3 +9,8 @@ verify_jwt = false
 [functions.road-closures]
 # Öffentlich aufrufbar wie pass-status; liefert nur Sperrungen, je Kachel höchstens alle 10 Minuten TomTom
 verify_jwt = false
+
+[functions.notify]
+# Wird nur von Datenbank Triggern (pg_net) aufgerufen, ohne JWT. Schutz über den Header x-notify-secret
+# (Edge Function Secret NOTIFY_SECRET, gleicher Wert im Vault unter notify_secret).
+verify_jwt = false

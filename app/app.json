@@ -152,6 +152,13 @@
           "enablePushNotifications": false
         }
       ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#E2461C"
+        }
+      ],
       "expo-app-intents",
       [
         "expo-audio",
