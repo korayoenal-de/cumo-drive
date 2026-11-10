@@ -33,10 +33,30 @@ export type SmartRequest = {
   profile: Profile;
   avoid: Avoid;
   seed?: number;
+  /** Linien der bisherigen Würfe: ähnliche Runden verlieren, damit Neu würfeln wirklich etwas Neues bringt */
+  shown?: LatLon[][];
 };
 
 export type Engine = 'cumo' | 'graphhopper' | 'valhalla';
 export type SmartTour = PlannedTour & { engine: Engine; score: number; curves: number; passes?: string[] };
+
+/** Bonus der Pass Runden (je Pass nach Stufe), damit sie in der gemeinsamen Bewertung mitzählen */
+const passBonus = new WeakMap<object, number>();
+
+/**
+ * Anteil der Runde, der auf einer schon gezeigten Runde liegt (Stichprobe alle 20 Punkte, 150 m Abstand).
+ * Ab 60 % gilt sie als dieselbe Runde (Koray 10.11.: Neu würfeln brachte genau dieselbe Runde).
+ */
+function sameAsShown(t: PlannedTour, shown: LatLon[][] | undefined): boolean {
+  if (!shown?.length) return false;
+  const line = flatten(t).map((x) => x.p).filter((_, i) => i % 20 === 0);
+  if (!line.length) return false;
+  return shown.some((old) => {
+    const probe = old.filter((_, i) => i % 5 === 0);
+    const hit = line.filter((p) => probe.some((q) => Math.abs(q[0] - p[0]) < 0.003 && Math.abs(q[1] - p[1]) < 0.004 && haversine(p, q) < 150)).length;
+    return hit / line.length >= 0.6;
+  });
+}
 
 /**
  * Gleiche Bewertung für alle Kandidaten; gesperrte km wiegen schwer. Prüfstellen (Zufahrten,
@@ -101,6 +121,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
           passes: loop.passes.map((p) => p.name),
         };
         candidates.push(cand);
+        passBonus.set(cand, bonus);
         const ratio = t.laenge_km / req.km;
         // Nur ohne eigenen Server sofort nehmen; sonst tritt die Pass Runde gegen die freien Varianten an
         // (Tester 9.11.: eine Pass Runde durch die Rheinebene gewann ungeprüft, Fahrspaß fast null)
@@ -147,42 +168,65 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       if (signal?.aborted) throw new Error('Abgebrochen');
       onStep?.('compare');
       // Erst ohne Stichstraßen bewerten: Kurven, Länge, Traumstrecken, Richtung. Die drei besten
-      // bekommen die Stichstraße herausgeplant, danach zählt jeder übrige km doppelt mit 100 Punkten.
+      // bekommen die Stichstraße herausgeplant, danach zählt jeder übrige km mit 300 Punkten.
       // (Heppenheim 5.11.: eine Runde mit 11 Kurven durch Mannheim gewann gegen Runden mit 30 Kurven,
       // weil diese 0,8 km Stichstraße hatten, die sich leicht herausplanen ließ.)
+      // Seit 10.11. treten die Pass Runden hier mit derselben Bewertung an (plus Pass Bonus): vorher zählte
+      // ihr Hin und Zurück nur ein Drittel, und sie gewannen gegen bessere freie Runden (Bensheim, Osten:
+      // 10,9 km Hin und Zurück über die Juhöhe, bei jedem Neu würfeln dieselbe Runde).
       const base = (t: PlannedTour & { curves: number }) =>
-        scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading);
+        scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading) + (passBonus.get(t) ?? 0);
+      const passCands = candidates.splice(0);
       const ranked = [...free6, ...loops, ...circles]
         .filter((t) => (t.km_je_klasse?.raus ?? 0) === 0)
-        .map((t) => ({ ...t, engine: 'cumo' as const, score: base(t) }))
+        .map((t) => ({ ...t, engine: 'cumo' as const, score: base(t) }) as SmartTour)
+        .concat(passCands.filter((t) => (t.km_je_klasse?.raus ?? 0) === 0).map((t) => ({ ...t, score: base(t) })))
+        // schon gezeigte Runden nach hinten, damit Neu würfeln etwas anderes zeigt
+        .map((t) => (sameAsShown(t, req.shown) ? { ...t, score: t.score - 400 } : t))
         .sort((a, b) => b.score - a.score);
-      const top = await Promise.all(ranked.slice(0, 3).map((t) => despur(t, req, signal)));
+      for (const t of ranked) {
+        const p = passCands.find((c) => c.wegpunkte === t.wegpunkte && c.passes === t.passes);
+        if (p) passBonus.set(t, passBonus.get(p) ?? 0);
+      }
+      const top = await Promise.all(
+        ranked.slice(0, 3).map(async (t) => {
+          const d = await despur(t, req, signal);
+          if (d !== t) passBonus.set(d, passBonus.get(t) ?? 0);
+          return d;
+        }),
+      );
       // Aktuelle Sperrungen auch bei der Rundtour (Tester 9.11.: Runde ab Altleiningen fuhr durch eine
       // gesperrte Strecke bei Freinsheim). Die Meldungen sind meist schon vorab geholt.
       onStep?.('traffic');
-      const lines = top.map((t) => flatten(t).map((x) => x.p));
-      const closures = await closuresNear(lines.flat(), signal);
-      // Stichstraßen zählen dreifach so schwer wie bisher (Tester 9.11.: Hin und Zurück bei Neustadt)
-      top.forEach((t, i) => {
-        const hits = closures.length ? closuresOnRoute(lines[i], closures).length : 0;
-        candidates.push({ ...t, score: base(t) - spurKm(t) * 300 - hits * 1000 });
-      });
-      if (candidates.length) {
-        const best = candidates.sort((a, b) => b.score - a.score)[0];
-        const line = flatten(best).map((x) => x.p);
-        const hits = closures.length ? closuresOnRoute(line, closures) : [];
-        if (!hits.length) return best;
-        // Auch die beste Runde trifft eine Sperrung: einmal um die Sperrung herum neu planen
-        onStep?.('fix');
-        try {
-          const ex = closureExclude(hits, best.wegpunkte);
-          const again = await cumoPlan(req.name, best.wegpunkte, req.profile, req.avoid, signal, ex);
-          if (closuresOnRoute(flatten(again).map((x) => x.p), closures).length < hits.length) return { ...best, ...again, engine: 'cumo', score: best.score };
-        } catch (e) {
-          if (signal?.aborted) throw e;
-        }
-        return best;
+      const closures = await closuresNear(top.map((t) => flatten(t).map((x) => x.p)).flat(), signal);
+      // Jede der drei besten um ihre Sperrungen herum neu planen, bevor gewertet wird (10.11.: vorher bekamen
+      // sie nur 1000 Strafpunkte je Sperrung, umgeplant wurde erst der Sieger; so verloren gute Runden gegen
+      // schlechte, die zufällig keine Sperrung trafen)
+      const fixed = await Promise.all(
+        top.map(async (t) => {
+          const hits = closures.length ? closuresOnRoute(flatten(t).map((x) => x.p), closures) : [];
+          if (!hits.length) return { t, hits: 0 };
+          onStep?.('fix');
+          try {
+            const ex = closureExclude(hits, t.wegpunkte);
+            const again = await cumoPlan(req.name, t.wegpunkte, req.profile, req.avoid, signal, ex);
+            const left = closuresOnRoute(flatten(again).map((x) => x.p), closures).length;
+            if (left < hits.length && (again.km_je_klasse?.raus ?? 0) === 0) {
+              const n: SmartTour = { ...t, ...again, engine: 'cumo', curves: again.curves, score: t.score };
+              passBonus.set(n, passBonus.get(t) ?? 0);
+              return { t: n, hits: left };
+            }
+          } catch (e) {
+            if (signal?.aborted) throw e;
+          }
+          return { t, hits: hits.length };
+        }),
+      );
+      for (const { t, hits } of fixed) {
+        const seen = sameAsShown(t, req.shown) ? 400 : 0;
+        candidates.push({ ...t, score: base(t) - spurKm(t) * 300 - hits * 1000 - seen });
       }
+      if (candidates.length) return candidates.sort((a, b) => b.score - a.score)[0];
     } catch (e) {
       if (signal?.aborted) throw e;
       lastError = e;

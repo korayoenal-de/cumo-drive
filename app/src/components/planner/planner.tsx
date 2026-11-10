@@ -151,6 +151,8 @@ export default function Planner() {
    * schon die nächste mit neuem Würfelwert. Neu würfeln zeigt sie dann ohne Wartezeit auf die Planung.
    * Nur mit eigenem Routing Server, damit keine fremden Kontingente doppelt belastet werden.
    */
+  /** Linien der Runden dieses Würfelns, damit Neu würfeln nicht dieselbe Runde bringt */
+  const shownLines = useRef<LatLon[][]>([]);
   const nextRoll = useRef<{ req: TourRequest; seed: number; ctrl: AbortController; job: Promise<PlannedTour> } | null>(null);
   const dropNextRoll = () => {
     nextRoll.current?.ctrl.abort();
@@ -331,7 +333,9 @@ export default function Planner() {
       req = await prepare(ctrl.signal);
       if (!ctrl.signal.aborted) startRadar(req.start.p, req.km);
       // vorab gerechnete Runde nehmen; klappte sie nicht, ganz normal neu planen
-      const tour = ready ? await ready.catch(() => buildTour(req!, seed, step, ctrl.signal)) : await buildTour(req, seed, step, ctrl.signal);
+      if (!keep) shownLines.current = [];
+      const shown = [...shownLines.current];
+      const tour = ready ? await ready.catch(() => buildTour(req!, seed, step, ctrl.signal, shown)) : await buildTour(req, seed, step, ctrl.signal, shown);
       // Auflösen: der Ring findet die kurvigen Stücke der Route, dann zeichnet sich die Linie, danach das Ergebnis
       const line = flatten(tour).map((x) => x.p);
       if (!ctrl.signal.aborted && line.length > 1 && !reduceMotion) {
@@ -354,6 +358,7 @@ export default function Planner() {
         setView({ kind: 'result', tour, req, stops });
         setDetent(1);
         toTop();
+        shownLines.current = [...shownLines.current, flatten(tour).map((x) => x.p)].slice(-5);
         // die nächste Runde vorab rechnen, sobald das Ergebnis steht und die Karte zur Ruhe gekommen ist
         const shown = req;
         setTimeout(() => {
@@ -362,7 +367,7 @@ export default function Planner() {
             if (!own || abort.current !== ctrl || ctrl.signal.aborted || nextRoll.current) return;
             const c = new AbortController();
             const s = newSeed();
-            const job = buildTour(shown, s, () => undefined, c.signal);
+            const job = buildTour(shown, s, () => undefined, c.signal, [...shownLines.current]);
             job.catch(() => undefined);
             nextRoll.current = { req: shown, seed: s, ctrl: c, job };
           });

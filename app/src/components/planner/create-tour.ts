@@ -133,6 +133,8 @@ export async function buildTour(
   seed: number,
   onPhase: (p: PlanPhase) => void,
   signal?: AbortSignal,
+  /** Linien der bisher gezeigten Runden (Neu würfeln soll etwas anderes bringen) */
+  shown?: LatLon[][],
 ): Promise<PlannedTour> {
   return smartRoundTrip(
     {
@@ -144,6 +146,7 @@ export async function buildTour(
       profile: req.profile,
       avoid: req.avoid,
       seed,
+      shown,
     },
     (s: PlanPhase) => onPhase(s),
     signal,
