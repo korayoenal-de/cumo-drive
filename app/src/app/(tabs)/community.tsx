@@ -24,7 +24,9 @@ import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/c
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, shortDate, type Ausfahrt } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { kmBetween, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
-import { copyCommunityTour, listCommunity, loadCommunityTour, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
+import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
+import { deleteTour, useLibrary } from '@/lib/library';
+import { showToast } from '@/lib/toast';
 import { requestCommunityLine, setListReach, useCommunityLine, useInReach } from '@/lib/community-lines';
 import { setEditTour } from '@/lib/edit-tour';
 import { formatKm, type LatLon } from '@/lib/tour';
@@ -399,7 +401,10 @@ function usePress() {
 const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: CommunityTour; mine: boolean; big?: boolean; onChanged?: () => void }) {
   const [busy, setBusy] = useState<'open' | 'save' | 'withdraw' | null>(null);
   const [confirm, setConfirm] = useState(false);
-  const [saved, setSaved] = useState(false);
+  // Gespeichert heißt: liegt in Meine Touren (übernommen unter Community, eigene als veröffentlichte Tour)
+  const library = useLibrary();
+  const kept = useMemo(() => library.find((x) => x.name === t.name && (x.folder === 'Community' || (mine && x.published))) ?? null, [library, t.name, mine]);
+  const saved = !!kept;
   const [err, setErr] = useState<string | null>(null);
   const [top, setTop] = useState<number | null>(null);
   const press = usePress();
@@ -432,12 +437,24 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
     }
   };
   const keep = async () => {
-    if (busy || saved) return;
-    setBusy('save');
+    if (busy) return;
     setErr(null);
+    // Lesezeichen schaltet um (Koray 10.11.): gespeichert heißt hier wieder entfernen, mit Rückgängig
+    if (kept) {
+      try {
+        // eigene veröffentlichte Tour: nur aus Meine Touren, in der Community bleibt sie
+        if (kept.published) await removeKeepPublished(kept);
+        else deleteTour(kept.id);
+        showToast('Aus Meine Touren entfernt', kept.published ? {} : { action: { label: 'Rückgängig', onPress: () => void copyCommunityTour(t).catch(() => undefined) } });
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : String(e));
+      }
+      return;
+    }
+    setBusy('save');
     try {
       await copyCommunityTour(t);
-      setSaved(true);
+      showToast('Gespeichert unter Meine Touren');
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -447,8 +464,8 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
   const bookmark = (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={saved ? `${t.name} ist in Meine Touren gespeichert` : `${t.name} in Meine Touren speichern`}
-      accessibilityState={{ disabled: saved, busy: busy === 'save' }}
+      accessibilityLabel={saved ? `${t.name} aus Meine Touren entfernen` : `${t.name} in Meine Touren speichern`}
+      accessibilityState={{ selected: saved, busy: busy === 'save' }}
       onPress={() => void keep()}
       hitSlop={4}
       style={({ pressed }) => [styles.round, saved && styles.roundSaved, pressed && styles.pressed]}>
