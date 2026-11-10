@@ -181,8 +181,10 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         .filter((t) => (t.km_je_klasse?.raus ?? 0) === 0)
         .map((t) => ({ ...t, engine: 'cumo' as const, score: base(t) }) as SmartTour)
         .concat(passCands.filter((t) => (t.km_je_klasse?.raus ?? 0) === 0).map((t) => ({ ...t, score: base(t) })))
-        // schon gezeigte Runden nach hinten, damit Neu würfeln etwas anderes zeigt
+        // schon gezeigte Runden nach hinten, damit Neu würfeln etwas anderes zeigt; Länge weit daneben ganz nach hinten
+        // (Koray 10.11.: 200 km gewünscht, eine 68 km Pass Runde kam unter die drei besten)
         .map((t) => (sameAsShown(t, req.shown) ? { ...t, score: t.score - 400 } : t))
+        .map((t) => (lengthOff(t, req.km) ? { ...t, score: t.score - 3000 } : t))
         .sort((a, b) => b.score - a.score);
       for (const t of ranked) {
         const p = passCands.find((c) => c.wegpunkte === t.wegpunkte && c.passes === t.passes);
@@ -209,9 +211,21 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
           onStep?.('fix');
           try {
             const ex = closureExclude(hits, t.wegpunkte);
-            const again = await cumoPlan(req.name, t.wegpunkte, req.profile, req.avoid, signal, ex);
-            const left = closuresOnRoute(flatten(again).map((x) => x.p), closures).length;
-            if (left < hits.length && (again.km_je_klasse?.raus ?? 0) === 0) {
+            // Runden vom Server haben nur Start und Ziel als Wegpunkte (beide am Start). Mit ihnen allein
+            // neu gerechnet entsteht eine Runde von 0 km (Koray 10.11.: 56 statt 200 km). Dann Stützpunkte
+            // entlang der Runde nehmen, abseits der Sperrungen.
+            // Auch vorhandene Stützpunkte (alle 7 km nach despur) können auf der gesperrten Straße liegen und
+            // zwingen die Route dann wieder hindurch: solche weglassen; bleiben zu wenige, neu entlang der Runde
+            const closedAt = hits.flatMap((h) => h.points.filter((_, i) => i % 4 === 0));
+            const kept = t.wegpunkte.filter((w, i) => i === 0 || i === t.wegpunkte.length - 1 || !closedAt.some((q) => haversine(q, w) < 1500));
+            const pts = kept.length > 2 ? kept : viaAlong(t, req.start, closedAt);
+            if (pts.length < 3) return { t, hits: uniqueHits(hits) };
+            const again = await cumoPlan(req.name, pts, req.profile, req.avoid, signal, ex);
+            const leftHits = closuresOnRoute(flatten(again).map((x) => x.p), closures);
+            const left = uniqueHits(leftHits);
+            // nur nehmen, wenn die Runde ihre Länge behält
+            const keepsLength = again.laenge_km >= t.laenge_km * 0.8 && again.laenge_km <= t.laenge_km * 1.3 + 5;
+            if (left < uniqueHits(hits) && keepsLength && (again.km_je_klasse?.raus ?? 0) === 0) {
               const n: SmartTour = { ...t, ...again, engine: 'cumo', curves: again.curves, score: t.score };
               passBonus.set(n, passBonus.get(t) ?? 0);
               return { t: n, hits: left };
@@ -219,12 +233,14 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
           } catch (e) {
             if (signal?.aborted) throw e;
           }
-          return { t, hits: hits.length };
+          return { t, hits: uniqueHits(hits) };
         }),
       );
       for (const { t, hits } of fixed) {
         const seen = sameAsShown(t, req.shown) ? 400 : 0;
-        candidates.push({ ...t, score: base(t) - spurKm(t) * 300 - hits * 1000 - seen });
+        // Länge weit daneben verliert immer gegen eine passende Runde
+        const off = lengthOff(t, req.km) ? 3000 : 0;
+        candidates.push({ ...t, score: base(t) - spurKm(t) * 300 - hits * 1000 - seen - off });
       }
       if (candidates.length) return candidates.sort((a, b) => b.score - a.score)[0];
     } catch (e) {
@@ -497,6 +513,44 @@ function snapToHighlights(via: LatLon[], start: LatLon): LatLon[] {
     prev = pair[1];
   }
   return out;
+}
+
+/** Länge weit neben dem Wunsch (unter 60 % oder über 160 %) */
+function lengthOff(t: PlannedTour, km: number): boolean {
+  const r = t.laenge_km / km;
+  return r < 0.6 || r > 1.6;
+}
+
+/**
+ * Sperrungen zählen je Stelle, nicht je Meldung: TomTom meldet jede Sperrung einmal je Fahrtrichtung, und
+ * lange Sperrungen in Abschnitten (Bensheim 10.11.: 12 Meldungen auf 6 Stellen). Treffer, deren Stücke
+ * weniger als 300 m auseinander liegen, sind eine Stelle.
+ */
+function uniqueHits(hits: { points: LatLon[] }[]): number {
+  const sites: LatLon[][] = [];
+  for (const h of hits) {
+    const near = sites.find((s) => s.some((q) => h.points.some((p) => haversine(p, q) < 300)));
+    if (near) near.push(...h.points);
+    else sites.push([...h.points]);
+  }
+  return sites.length;
+}
+
+/**
+ * Stützpunkte entlang einer Runde, etwa alle 12 km, nicht in den letzten 3 km und nicht näher als 1,5 km
+ * an den Stellen in away (Sperrungen). Für Runden, die nur Start und Ziel als Wegpunkte haben.
+ */
+function viaAlong(t: PlannedTour, start: LatLon, away: LatLon[]): LatLon[] {
+  const line = flatten(t);
+  const via: LatLon[] = [];
+  let last = 0;
+  for (const x of line) {
+    if (x.km - last < 12 || x.km > t.laenge_km - 3) continue;
+    if (away.some((q) => haversine(q, x.p) < 1500)) continue;
+    via.push(x.p);
+    last = x.km;
+  }
+  return [start, ...via, start];
 }
 
 async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Promise<SmartTour> {

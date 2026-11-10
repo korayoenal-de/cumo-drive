@@ -548,7 +548,25 @@ function toTour(name: string, wegpunkte: LatLon[], p: GhPath): PlannedTour & { c
     name, wegpunkte, ...chk, laenge_km: +(p.distance / 1000).toFixed(1), minutes: p.time / 60000, geprueft: true, fixes: 0,
     curves: countCurves(shape),
     kurvenKm: windingKm(p, shape),
+    ...classKm(p, shape),
   };
+}
+
+/** km auf Autobahn und Schnellstraße und km in Wohnstraßen, zur Bewertung und für Tests der Planung */
+function classKm(p: GhPath, shape: LatLon[]): { autobahnKm: number; wohnKm: number } {
+  let fast = 0;
+  let res = 0;
+  for (const [a, b, v] of p.details.road_class ?? []) {
+    const rc = String(v ?? '').toLowerCase();
+    const isFast = rc === 'motorway' || rc === 'trunk';
+    const isRes = rc === 'residential' || rc === 'living_street' || rc === 'service';
+    if (!isFast && !isRes) continue;
+    let km = 0;
+    for (let i = a + 1; i <= b && i < shape.length; i++) km += haversine(shape[i - 1], shape[i]) / 1000;
+    if (isFast) fast += km;
+    else res += km;
+  }
+  return { autobahnKm: +fast.toFixed(1), wohnKm: +res.toFixed(1) };
 }
 
 /**

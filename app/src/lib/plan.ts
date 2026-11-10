@@ -14,7 +14,7 @@ import { route, VALHALLA_URL, type Avoid } from './valhalla';
 export type PlanStep = 'route' | 'traffic' | 'check' | 'fix' | 'compare';
 
 /** direkt: Etappen, auf denen die kurvige Variante nichts brachte und der direkte Weg gewählt wurde */
-export type PlannedTour = Tour & { minutes: number; fixes: number; direkt?: number; kurvenKm?: number };
+export type PlannedTour = Tour & { minutes: number; fixes: number; direkt?: number; kurvenKm?: number; autobahnKm?: number; wohnKm?: number };
 
 /** Hinweis für die Route, wenn kurvig nichts Besseres fand (Koray 7.11.: dann ist der direkte Weg okay) */
 export function directNote(n: number | undefined, legs: number): string | null {
@@ -276,6 +276,8 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
   let fixes = 0;
   let direkt = 0;
   let geprueft = true;
+  let autobahn: number | undefined;
+  let wohn: number | undefined;
   parts.forEach((t, i) => {
     t.linie.forEach((run, j) => {
       const p = i > 0 && j === 0 ? run.p.slice(1) : run.p;
@@ -291,6 +293,8 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
     fixes += t.fixes;
     direkt += t.direkt ?? 0;
     geprueft = geprueft && !!t.geprueft;
+    if (t.autobahnKm != null) autobahn = (autobahn ?? 0) + t.autobahnKm;
+    if (t.wohnKm != null) wohn = (wohn ?? 0) + t.wohnKm;
   });
   return {
     name,
@@ -303,6 +307,8 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
     fixes,
     geprueft,
     ...(direkt ? { direkt } : {}),
+    ...(autobahn != null ? { autobahnKm: +autobahn.toFixed(1) } : {}),
+    ...(wohn != null ? { wohnKm: +wohn.toFixed(1) } : {}),
   };
 }
 
