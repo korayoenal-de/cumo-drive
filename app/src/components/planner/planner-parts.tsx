@@ -340,7 +340,8 @@ const STOP_CHIPS: { id: Exclude<Cat, 'alle'>; label: string }[] = [
   { id: 'kaffee', label: 'Café' },
   { id: 'mittag', label: 'Essen' },
   { id: 'aussicht', label: 'Aussicht' },
-  { id: 'pass', label: 'Pässe' },
+  // gleiche Namen wie die Reiter der Ortssuche (CATS in place-search.tsx), Koray 10.11.
+  { id: 'pass', label: 'Highlights/Pässe' },
 ];
 
 /**
