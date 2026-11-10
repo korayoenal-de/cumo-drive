@@ -66,6 +66,14 @@ let channel: RealtimeChannel | null = null;
 let watch: Location.LocationSubscription | null = null;
 let lastSent: { p: LatLon; at: number } | null = null;
 const positions = new Map<string, Pick<Member, 'p' | 'heading' | 'speedKmh' | 'seenAt' | 'off'>>();
+/**
+ * Zuletzt per Presence gesehene Mitglieder. Fällt jemand ins Funkloch, entfernt der Realtime Server
+ * die Presence nach etwa einer Minute; ohne diese Liste verschwände er dann samt letzter Position
+ * von der Karte (Simulation G10, 10.11.). Wer bewusst geht, meldet sich mit `bye` ab.
+ */
+const known = new Map<string, Pick<Member, 'name' | 'car' | 'role'>>();
+/** So lange bleibt ein Mitglied ohne Verbindung mit seiner letzten Position sichtbar */
+const LOST_KEEP_MS = 10 * 60000;
 
 function set(patch: Partial<RideState>) {
   state = { ...state, ...patch };
@@ -119,11 +127,20 @@ function rebuildMembers() {
   if (!channel) return;
   const pres = channel.presenceState<{ id: string; name: string; car: string; role: Role }>();
   const list: Member[] = [];
+  const present = new Set<string>();
   for (const entries of Object.values(pres)) {
     const e = entries[0];
     if (!e) continue;
+    present.add(e.id);
+    known.set(e.id, { name: e.name, car: e.car, role: e.role });
     const pos = positions.get(e.id);
     list.push({ id: e.id, name: e.name, car: e.car, role: e.role, p: pos?.p ?? null, heading: pos?.heading ?? null, speedKmh: pos?.speedKmh ?? null, seenAt: pos?.seenAt ?? null, off: pos?.off ?? false });
+  }
+  // ohne Verbindung, aber nicht abgemeldet: mit letzter Position (seenAt zeigt das Alter)
+  for (const [id, k] of known) {
+    const pos = positions.get(id);
+    if (present.has(id) || !pos?.p || pos.seenAt == null || Date.now() - pos.seenAt > LOST_KEEP_MS) continue;
+    list.push({ id, ...k, p: pos.p, heading: pos.heading, speedKmh: pos.speedKmh, seenAt: pos.seenAt, off: pos.off ?? false });
   }
   const order: Record<Role, number> = { lead: 0, mitfahrer: 1, schluss: 2 };
   list.sort((a, b) => order[a.role] - order[b.role] || a.name.localeCompare(b.name));
@@ -193,6 +210,7 @@ export async function startRide(rideId: string, role: Role, opts: { name: string
 
 function connect(topic: string, me: Me, role: Role, info: { code: string | null; rideId: string | null; name: string | null; tourCode: string | null }) {
   positions.clear();
+  known.clear();
   set({ status: 'verbinde', ...info, me, myRole: role, members: [], messages: [], stop: null, error: null });
 
   const ch = supabase.channel(topic, { config: { broadcast: { self: false }, presence: { key: me.id } } });
@@ -221,6 +239,12 @@ function connect(topic: string, me: Me, role: Role, info: { code: string | null;
     const t = payload as { code: string };
     if (t.code && t.code !== state.tourCode) set({ tourCode: t.code });
   });
+  ch.on('broadcast', { event: 'bye' }, ({ payload }) => {
+    const id = (payload as { id: string }).id;
+    known.delete(id);
+    positions.delete(id);
+    rebuildMembers();
+  });
   ch.on('broadcast', { event: 'ende' }, () => {
     // Lead hat die Fahrt für alle beendet
     void leaveRide().then(() => set({ error: 'Die Lead hat die Gruppenfahrt beendet.' }));
@@ -236,12 +260,41 @@ function connect(topic: string, me: Me, role: Role, info: { code: string | null;
   ch.subscribe(async (s) => {
     if (s === 'SUBSCRIBED') {
       await ch.track({ id: me.id, name: me.name, car: me.car, role: state.myRole });
-      set({ status: 'aktiv' });
+      // auch nach dem Wiederverbinden: alten Verbindungsfehler löschen (Simulation G10)
+      set({ status: 'aktiv', error: null });
       void startWatching();
+      // Wer beim Beenden oder beim Rollenwechsel kein Netz hatte, hat das Broadcast verpasst (Simulation G6, G12)
+      if (state.rideId) void syncWithRide(state.rideId);
     } else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') {
       set({ status: 'fehler', error: 'Keine Verbindung zur Gruppe. Netz prüfen und nochmal versuchen.' });
     }
   });
+}
+
+/**
+ * Nach jedem Beitritt mit der Fahrt in der Datenbank abgleichen: schon beendet heißt verlassen wie beim
+ * Broadcast `ende`, eine inzwischen vergebene Rolle (setRole schreibt sie in ride_members) übernehmen.
+ */
+async function syncWithRide(rideId: string) {
+  try {
+    const { data } = await supabase.from('rides').select('status').eq('id', rideId).maybeSingle();
+    if (state.rideId !== rideId) return;
+    if ((data as { status?: string } | null)?.status === 'beendet') {
+      await leaveRide();
+      set({ error: 'Die Lead hat die Gruppenfahrt beendet.' });
+      return;
+    }
+    const me = state.me;
+    if (!me) return;
+    const { data: row } = await supabase.from('ride_members').select('role').eq('ride_id', rideId).eq('user_id', me.id).maybeSingle();
+    const role = (row as { role?: Role } | null)?.role;
+    if (role && role !== state.myRole && state.rideId === rideId && channel) {
+      set({ myRole: role });
+      void channel.track({ id: me.id, name: me.name, car: me.car, role });
+    }
+  } catch {
+    // ohne Netz beim nächsten Beitritt
+  }
 }
 
 /** Neue Fahrt anlegen; wer sie anlegt, fährt vorne (Lead). */
@@ -257,6 +310,8 @@ export async function leaveRide() {
   lastSent = null;
   if (channel) {
     try {
+      // bewusst gehen: die anderen nehmen einen sofort von der Karte (sonst bliebe man als „ohne Verbindung“)
+      if (state.me) await channel.send({ type: 'broadcast', event: 'bye', payload: { id: state.me.id } });
       await channel.untrack();
       await supabase.removeChannel(channel);
     } catch {
@@ -265,6 +320,7 @@ export async function leaveRide() {
   }
   channel = null;
   positions.clear();
+  known.clear();
   set({ status: 'aus', code: null, rideId: null, name: null, members: [], messages: [], tourCode: null, stop: null, error: null, myRole: 'mitfahrer' });
 }
 
