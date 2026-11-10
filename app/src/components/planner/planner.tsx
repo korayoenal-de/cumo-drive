@@ -46,6 +46,7 @@ import { flatten, haversine, normProfile, PROFILES, PROFILE_CHOICES, type LatLon
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 
 import { type PlannedStop } from './planner-parts';
+import { noGoodAlternative } from '@/lib/smart-roundtrip';
 import { showToast } from '@/lib/toast';
 import { Accordion, avoidSummary, ErrorCard, MicIcon, PrimaryButton, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
 import { Result } from './planner-result';
@@ -60,6 +61,8 @@ import { TourMode } from './tour-mode';
 const phaseIndex = (p: PlanPhase | PlanStep) => Math.max(0, PHASES.findIndex((x) => x.id === p));
 
 /** Wort für den Toast nach dem Einplanen */
+/** Neu würfeln ohne gute Alternative (Koray 10.11.) */
+const NO_MORE_ROLLS = 'Eine bessere Runde gibt es hier gerade nicht. Probier eine andere Richtung oder Länge.';
 const STOP_WORD: Record<PlannedStop['cat'], string> = { tank: 'Tankstopp', kaffee: 'Kaffeepause', mittag: 'Mittagspause', aussicht: 'Aussichtspunkt', hotel: 'Übernachtung', pass: 'Pass' };
 
 
@@ -159,6 +162,8 @@ export default function Planner() {
     nextRoll.current = null;
   };
   useEffect(() => dropNextRoll, []);
+  /** Würfeln für diese Anfrage ausgeschöpft: es kam nichts Gutes mehr (Koray 10.11.: ehrlich sagen statt endlos würfeln) */
+  const exhausted = useRef<TourRequest | null>(null);
   const lastStops = useRef<Stop[]>([]);
   /** Gewürfelte Runden mit Fahrspaß Wert, damit man zu einer besseren zurückkehren kann (höchstens fünf) */
   const [rolls, setRolls] = useState<{ tour: PlannedTour; req: TourRequest; stops: Stop[]; fun: TourFun | null }[]>([]);
@@ -308,6 +313,10 @@ export default function Planner() {
   async function run(prepare: (signal: AbortSignal) => Promise<TourRequest>, stops: Stop[], seed = newSeed(), keep = false, ready?: Promise<PlannedTour>) {
     abort.current?.abort();
     if (!ready) dropNextRoll();
+    // für Neu würfeln: was gerade zu sehen ist, und die bisherigen Runden zum Vergleich
+    const before = view;
+    const earlier = keep ? rolls : [];
+    if (!keep) exhausted.current = null;
     const ctrl = new AbortController();
     abort.current = ctrl;
     lastStops.current = stops;
@@ -335,7 +344,23 @@ export default function Planner() {
       // vorab gerechnete Runde nehmen; klappte sie nicht, ganz normal neu planen
       if (!keep) shownLines.current = [];
       const shown = [...shownLines.current];
-      const tour = ready ? await ready.catch(() => buildTour(req!, seed, step, ctrl.signal, shown)) : await buildTour(req, seed, step, ctrl.signal, shown);
+      let tour = ready ? await ready.catch(() => buildTour(req!, seed, step, ctrl.signal, shown)) : await buildTour(req, seed, step, ctrl.signal, shown);
+      // Neu würfeln ohne gute Alternative: einmal still mit anderem Würfelwert nachlegen. Kommt wieder nichts
+      // Gutes, bleibt die bisherige Runde stehen und wir sagen es ehrlich (Koray 10.11.)
+      const prev = earlier.filter((r) => r.req === req);
+      if (prev.length && before.kind === 'result') {
+        const best = Math.max(...prev.map((r) => r.fun?.score ?? 0));
+        const weak = (t: PlannedTour) => noGoodAlternative(t, prev.map((r) => r.tour), req!.km, tourFun(flatten(t).map((x) => x.p))?.score ?? null, best);
+        if (weak(tour) && !ctrl.signal.aborted) tour = await buildTour(req, newSeed(), step, ctrl.signal, [...shown, flatten(tour).map((x) => x.p)]);
+        if (weak(tour) && !ctrl.signal.aborted) {
+          exhausted.current = req;
+          setRadar(null);
+          setView(before);
+          setDetent(1);
+          showToast(NO_MORE_ROLLS);
+          return;
+        }
+      }
       // Auflösen: der Ring findet die kurvigen Stücke der Route, dann zeichnet sich die Linie, danach das Ergebnis
       const line = flatten(tour).map((x) => x.p);
       if (!ctrl.signal.aborted && line.length > 1 && !reduceMotion) {
@@ -362,7 +387,7 @@ export default function Planner() {
         // die nächste Runde vorab rechnen, sobald das Ergebnis steht und die Karte zur Ruhe gekommen ist
         const shown = req;
         setTimeout(() => {
-          if (abort.current !== ctrl || ctrl.signal.aborted || nextRoll.current) return;
+          if (abort.current !== ctrl || ctrl.signal.aborted || nextRoll.current || exhausted.current === shown) return;
           void cumoAvailable().then((own) => {
             if (!own || abort.current !== ctrl || ctrl.signal.aborted || nextRoll.current) return;
             const c = new AbortController();
@@ -475,6 +500,10 @@ export default function Planner() {
   }
 
   function reroll(req: TourRequest) {
+    if (exhausted.current === req) {
+      showToast(NO_MORE_ROLLS);
+      return;
+    }
     const next = nextRoll.current;
     if (next && next.req === req) {
       nextRoll.current = null;

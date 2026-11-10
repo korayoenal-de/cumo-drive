@@ -61,6 +61,27 @@ function sameAsShown(t: PlannedTour, shown: LatLon[][] | undefined): boolean {
 }
 
 /**
+ * Bringt Neu würfeln noch eine gute Alternative? (Koray 10.11.: wenn nichts Gutes mehr kommt, ehrlich sagen
+ * statt endlos weiter zu würfeln.) Keine Alternative ist eine Runde, die großteils auf einer schon gezeigten
+ * liegt, oder die klar schlechter ist als eine gezeigte: Länge weit daneben, mehr als 3 km (oder 6 %)
+ * Stichstraße, oder Fahrspaß mehr als 15 Punkte unter der besten gezeigten Runde.
+ */
+export function noGoodAlternative(t: PlannedTour, prev: PlannedTour[], km: number, fun: number | null, bestFun: number | null): boolean {
+  if (!prev.length) return false;
+  // fast dieselbe Runde zählt nur dann als neu, wenn sie klar besser ist (Bad Gastein: gleiche Runde,
+  // aber 0,6 statt 7 km Stichstraße)
+  if (sameAsShown(t, prev.map((p) => flatten(p).map((x) => x.p)))) {
+    const better = spurKm(t) < Math.min(...prev.map(spurKm)) - 2 || (fun != null && bestFun != null && fun >= bestFun + 8);
+    if (!better) return true;
+  }
+  // schlechter als schon Gezeigtes: zählt nur, wenn eine gezeigte Runde es besser konnte
+  if (lengthOff(t, km) && prev.some((p) => !lengthOff(p, km))) return true;
+  const spur = spurKm(t);
+  if (spur > Math.max(3, km * 0.06) && spur > Math.min(...prev.map(spurKm)) + 1) return true;
+  return fun != null && bestFun != null && fun < bestFun - 15;
+}
+
+/**
  * Gleiche Bewertung für alle Kandidaten; gesperrte km wiegen schwer. Prüfstellen (Zufahrten,
  * Spielstraßen) und kleine Straßen ohne Nummer kosten ebenfalls, damit der Ersatzweg keine
  * schmalen Schlenker wählt.
