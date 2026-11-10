@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 import { LANDING_CSS, LANDING_HTML } from './landing-html';
 
 const DESC =
-  'Die Navi App für Sportwagen: kurvige Touren, geprüft auf Breite und Belag, Pässe und Traumstrecken mit Ansage, allein oder in der Gruppe.';
+  'Die Navi App für Sportwagen: kurvige Touren, geprüft auf Breite, Belag und Sperrungen, 370 Pässe und 486 Traumstrecken mit Ansage, allein, in der Gruppe oder bei Ausfahrten der Community.';
 
 export default function Landing() {
   // deutsche Seite: richtige Aussprache beim Vorlesen
