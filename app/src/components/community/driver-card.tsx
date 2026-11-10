@@ -37,6 +37,7 @@ export function DriverCard({ d, big, onPress }: { d: Driver; big?: boolean; onPr
             </AppText>
           </View>
         </View>
+        {d.bio ? <AppText style={styles.bio}>{d.bio}</AppText> : null}
         {d.garage && d.garage.length > 0 ? (
           <View style={styles.garage}>
             <AppText style={styles.label}>Fuhrpark</AppText>
@@ -85,6 +86,7 @@ export function DriverCard({ d, big, onPress }: { d: Driver; big?: boolean; onPr
 }
 
 const styles = StyleSheet.create({
+  bio: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.text, lineHeight: 21 },
   flex: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },

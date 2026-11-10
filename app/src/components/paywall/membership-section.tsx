@@ -11,7 +11,7 @@ import { formatUntil, PRICES, refreshEntitlement, useEntitlement, type Entitleme
 
 import { TrialBadge } from './entitlement-gate';
 
-function describe(e: Entitlement): { title: string; text: string } {
+export function describeEntitlement(e: Entitlement): { title: string; text: string } {
   const until = formatUntil(e.until);
   if (!e.active) {
     return {
@@ -38,7 +38,7 @@ export function MembershipSection() {
       void refreshEntitlement();
     }, []),
   );
-  const d = describe(e);
+  const d = describeEntitlement(e);
   return (
     <View style={styles.gapM}>
       <AppText variant="label">Mitgliedschaft</AppText>

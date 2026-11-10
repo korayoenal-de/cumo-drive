@@ -46,7 +46,7 @@ function CommunityProfileWeb() {
   useEffect(() => {
     loadPrivacy()
       .then(setP)
-      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true }));
+      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null }));
   }, []);
   useEffect(() => {
     if (!editing || q.trim().length < 2) return;

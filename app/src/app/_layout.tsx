@@ -136,6 +136,9 @@ export default function RootLayout() {
           name="navigation"
           options={{ presentation: 'fullScreenModal', title: 'Navigation', gestureEnabled: false }}
         />
+        <Stack.Screen name="profil" options={{ title: 'Profil' }} />
+        <Stack.Screen name="garage" options={{ title: 'Garage' }} />
+        <Stack.Screen name="ansagen" options={{ title: 'Fahren' }} />
         <Stack.Screen name="mitgliedschaft" options={{ presentation: 'fullScreenModal', title: 'Mitgliedschaft' }} />
         <Stack.Screen name="ausfahrt/[id]" options={{ title: 'Ausfahrt' }} />
         <Stack.Screen name="ausfahrt/chat" options={{ title: 'Chat der Ausfahrt' }} />

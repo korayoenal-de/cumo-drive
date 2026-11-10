@@ -269,8 +269,8 @@ export default function Community() {
                 {meDriver && !meDriver.home && (
                   <View style={styles.card}>
                     <AppText variant="title">Zeig dich auf der Karte</AppText>
-                    <AppText muted>Trag deinen Wohnort in den Einstellungen ein. Andere sehen dich dann dort, nur als Ortsmitte.</AppText>
-                    <Pressable accessibilityRole="button" onPress={() => router.navigate('/einstellungen')} style={styles.secondary}>
+                    <AppText muted>Trag deinen Wohnort in deinem Profil ein. Andere sehen dich dann dort, nur als Ortsmitte.</AppText>
+                    <Pressable accessibilityRole="button" onPress={() => router.push('/profil')} style={styles.secondary}>
                       <AppText style={styles.secondaryText}>Wohnort angeben</AppText>
                     </Pressable>
                   </View>

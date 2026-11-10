@@ -1,10 +1,10 @@
 /**
- * Profil für die Community (Koray 10.11.): Wohnort (steht auf der Drivers Karte, auf etwa 1 km
- * gerundet), ob andere einen anschreiben dürfen und ob sie den Fuhrpark sehen.
+ * Bausteine für das eigene Profil (Koray 10.11.): Wohnort (steht auf der Drivers Karte, auf etwa 1 km
+ * gerundet), Über mich und die Schalter, ob andere einen anschreiben dürfen und den Fuhrpark sehen.
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/text';
@@ -12,33 +12,17 @@ import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/
 import { loadPrivacy, savePrivacy, type Privacy } from '@/lib/drivers';
 import { searchTowns, type Place } from '@/lib/geocode';
 
-export function CommunityProfile() {
+/** Eigene Privatsphäre laden und speichern, mit sofortiger Anzeige und Rücknahme bei Fehler. */
+export function usePrivacy() {
   const [p, setP] = useState<Privacy | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [q, setQ] = useState('');
-  const [found, setFound] = useState<Place[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     loadPrivacy()
       .then(setP)
-      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true }));
+      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null }));
   }, []);
-
-  useEffect(() => {
-    if (!editing || q.trim().length < 2) return;
-    const ctrl = new AbortController();
-    const t = setTimeout(() => {
-      searchTowns(q.trim(), undefined, ctrl.signal)
-        .then(setFound)
-        .catch(() => undefined);
-    }, 250);
-    return () => {
-      clearTimeout(t);
-      ctrl.abort();
-    };
-  }, [q, editing]);
 
   const save = async (patch: Partial<Privacy>) => {
     if (!p) return;
@@ -55,8 +39,28 @@ export function CommunityProfile() {
       setBusy(false);
     }
   };
+  return { p, save, busy, err };
+}
 
-  if (!p) return <ActivityIndicator color={Colors.muted} />;
+/** Wohnort mit Ortssuche; steht unter Drivers nur als Ortsmitte. */
+export function HomeField({ p, save }: { p: Privacy; save: (patch: Partial<Privacy>) => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
+  const [q, setQ] = useState('');
+  const [found, setFound] = useState<Place[]>([]);
+
+  useEffect(() => {
+    if (!editing || q.trim().length < 2) return;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => {
+      searchTowns(q.trim(), undefined, ctrl.signal)
+        .then(setFound)
+        .catch(() => undefined);
+    }, 250);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [q, editing]);
 
   return (
     <View style={styles.wrap}>
@@ -115,16 +119,34 @@ export function CommunityProfile() {
         </Animated.View>
       )}
       <AppText variant="caption" muted>Andere Mitglieder sehen dich unter Drivers an diesem Ort, nur als Ortsmitte, nie mit Adresse oder Live Standort.</AppText>
-
-      <ToggleRow label="Andere dürfen mich anschreiben" value={p.allowMessages} onChange={(v) => void save({ allowMessages: v })} />
-      <ToggleRow label="Andere sehen meinen Fuhrpark" value={p.showGarage} onChange={(v) => void save({ showGarage: v })} />
-      {busy && <AppText variant="caption" muted>Wird gespeichert</AppText>}
-      {err && <AppText style={styles.error}>{err}</AppText>}
     </View>
   );
 }
 
-function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+/** Kurzer Text über dich, bis 160 Zeichen; gespeichert beim Verlassen des Felds. */
+export function BioField({ p, save }: { p: Privacy; save: (patch: Partial<Privacy>) => Promise<void> }) {
+  const [draft, setDraft] = useState(p.bio ?? '');
+  return (
+    <View style={styles.edit}>
+      <AppText variant="caption" muted>Über mich</AppText>
+      <TextInput
+        value={draft}
+        onChangeText={(t) => setDraft(t.slice(0, 160))}
+        onEndEditing={() => {
+          if (draft.trim() !== (p.bio ?? '')) void save({ bio: draft.trim() || null });
+        }}
+        placeholder="Kurz, zum Beispiel deine Lieblingsstrecke"
+        placeholderTextColor={Colors.muted}
+        multiline
+        style={[styles.input, styles.bio]}
+        accessibilityLabel="Über mich"
+      />
+      <AppText variant="caption" muted style={styles.count}>{draft.length} von 160</AppText>
+    </View>
+  );
+}
+
+export function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
     <View style={styles.toggle}>
       <AppText style={[styles.flex, styles.toggleText]}>{label}</AppText>
@@ -148,6 +170,8 @@ const styles = StyleSheet.create({
   textBtn: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
   textBtnText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   toggle: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 44 },
+  bio: { height: undefined, minHeight: 88, paddingTop: Spacing.m, paddingBottom: Spacing.m, textAlignVertical: 'top' },
+  count: { alignSelf: 'flex-end', fontVariant: ['tabular-nums'] },
   toggleText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   error: { color: Colors.stopText, fontFamily: Fonts.semibold },
 });

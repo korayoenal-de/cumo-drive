@@ -18,6 +18,7 @@ export type Driver = {
   name: string;
   car: string | null;
   homeName: string | null;
+  bio?: string | null;
   home: LatLon | null;
   allowMessages: boolean;
   /** null, wenn der Fahrer seinen Fuhrpark nicht zeigt */
@@ -39,7 +40,7 @@ export type Conversation = {
 
 export type DirectMessage = { id: number; sender: string; recipient: string; body: string; createdAt: Date; readAt: Date | null };
 
-export type Privacy = { homeName: string | null; home: LatLon | null; allowMessages: boolean; showGarage: boolean };
+export type Privacy = { homeName: string | null; home: LatLon | null; allowMessages: boolean; showGarage: boolean; bio: string | null };
 
 function fail(message: string): never {
   throw new Error(/permission|violat|row-level/i.test(message) ? 'Dieser Fahrer möchte gerade keine Nachrichten bekommen.' : /function|relation|column|JWT/i.test(message) ? 'Das hat nicht geklappt. Bitte nochmal versuchen.' : message);
@@ -47,7 +48,7 @@ function fail(message: string): never {
 
 type DriverRow = {
   id: string; display_name: string; car: string | null; home_name: string | null; home_lat: number | null; home_lon: number | null;
-  allow_messages: boolean; garage: { brand?: string | null; model?: string | null; look?: CarLook | null }[] | null; member_since: string | null; is_me: boolean;
+  allow_messages: boolean; garage: { brand?: string | null; model?: string | null; look?: CarLook | null }[] | null; member_since: string | null; is_me: boolean; bio?: string | null;
 };
 
 export async function listDrivers(): Promise<Driver[]> {
@@ -73,6 +74,7 @@ export async function listDrivers(): Promise<Driver[]> {
       : null,
     memberSince: r.member_since ? new Date(r.member_since) : null,
     isMe: r.is_me,
+    bio: r.bio?.trim() || null,
   }));
 }
 
@@ -81,14 +83,15 @@ export async function listDrivers(): Promise<Driver[]> {
 export async function loadPrivacy(): Promise<Privacy | null> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return null;
-  const { data, error } = await supabase.from('profiles').select('home_name,home_lat,home_lon,allow_messages,show_garage').eq('id', u.user.id).maybeSingle();
+  const { data, error } = await supabase.from('profiles').select('home_name,home_lat,home_lon,allow_messages,show_garage,bio').eq('id', u.user.id).maybeSingle();
   if (error) fail(error.message);
-  const r = data as { home_name: string | null; home_lat: number | null; home_lon: number | null; allow_messages: boolean; show_garage: boolean } | null;
+  const r = data as { home_name: string | null; home_lat: number | null; home_lon: number | null; allow_messages: boolean; show_garage: boolean; bio?: string | null } | null;
   return {
     homeName: r?.home_name ?? null,
     home: r?.home_lat != null && r?.home_lon != null ? [r.home_lat, r.home_lon] : null,
     allowMessages: r?.allow_messages ?? true,
     showGarage: r?.show_garage ?? true,
+    bio: r?.bio ?? null,
   };
 }
 
@@ -103,6 +106,7 @@ export async function savePrivacy(p: Partial<Privacy>) {
   }
   if (p.allowMessages != null) row.allow_messages = p.allowMessages;
   if (p.showGarage != null) row.show_garage = p.showGarage;
+  if ('bio' in p) row.bio = p.bio?.trim().slice(0, 160) || null;
   const { error } = await supabase.from('profiles').upsert(row);
   if (error) fail(error.message);
 }
