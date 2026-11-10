@@ -30,7 +30,7 @@ import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip } from '@/components/ui/chip';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { ProgressBar } from '@/components/ui/progress-bar';
-import { BACK_PILL_H, BackPill, EdgeSwipeBack } from './back-pill';
+import { BACK_PILL_H, BackPill } from './back-pill';
 import { RadarChip, ScanChip } from './radar-chip';
 import { usePillText } from './use-pill';
 import { tourFun, type TourFun } from '@/lib/fun-score';
@@ -1036,6 +1036,7 @@ export default function Planner() {
     if (id) leave();
   };
   /** swiped: die Randgeste hat den Planer schon zur Seite gezogen, er gleitet dann ganz hinaus */
+  // Wischen vom Rand entfernt (Koray 10.11.), zurück nur über die Pille
   const goBack = (swiped = false) => {
     if (tourPlan.changed) {
       swipeX.set(withSpring(0, Motion.snap));
@@ -1054,7 +1055,7 @@ export default function Planner() {
 
   return (
     <>
-    <EdgeSwipeBack enabled={!!origin} x={swipeX} onBack={() => goBack(true)}>
+    <View style={{ flex: 1 }}>
     <MapSheet
       detent={detent}
       onDetentChange={setDetent}
@@ -1110,7 +1111,7 @@ export default function Planner() {
       )}>
       {body}
     </MapSheet>
-    </EdgeSwipeBack>
+    </View>
     <ActionSheet
       visible={askKeep}
       title="Änderungen behalten?"
