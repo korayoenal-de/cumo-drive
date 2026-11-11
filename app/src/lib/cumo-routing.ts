@@ -793,7 +793,10 @@ export async function cumoPlan(
       if (signal?.aborted) throw e;
     }
   }
-  if (curDup <= DOUBLE_MAX_KM || points.length < 3 || points.length > 8) return cur;
+  // Die Strafzonen haben geholfen, aber die Route deutlich verlängert (sie gelten für Hin und Rückweg gleich und
+  // drängen oft schon die Anfahrt weg): dann auch Etappe für Etappe versuchen und das Kürzere nehmen (11.11.)
+  const detour = cur !== first && cur.laenge_km > first.laenge_km + 2;
+  if ((curDup <= DOUBLE_MAX_KM && !detour) || points.length < 3 || points.length > 8) return cur;
   // Etappe für Etappe: jede meidet die Straßen der vorigen (Stresstest 10.11.: Bad Dürkheim, Annweiler,
   // Bad Dürkheim fuhr 24 km auf demselben Weg zurück; beide Richtungen gleich zu verteuern half nicht,
   // die Route wich dann gemeinsam auf die nächste Straße aus)
@@ -809,7 +812,10 @@ export async function cumoPlan(
       used = used.concat(sampleLine(p.points.coordinates.map(([lo, la]) => [la, lo] as LatLon), 300));
     }
     const t = { ...toTour(name, points, mergePaths(paths)), fixes: first.fixes };
-    if (accept(t, cur, curDup) != null) return t;
+    if (detour) {
+      // beide Varianten fahren kaum noch doppelt: die kürzere gewinnt
+      if (accept(t, first, dup.km) != null && t.laenge_km < cur.laenge_km) return t;
+    } else if (accept(t, cur, curDup) != null) return t;
   } catch (e) {
     if (signal?.aborted) throw e;
   }

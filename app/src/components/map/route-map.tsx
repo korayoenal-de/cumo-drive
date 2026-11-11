@@ -67,6 +67,7 @@ export function RouteMap({
   onPressMap,
   onPressPin,
   onDragPoint,
+  onDragStart,
   onLongPressLine,
   stale,
   draft,
@@ -550,7 +551,10 @@ export function RouteMap({
             anchor={{ x: 0.5, y: 0.5 }}
             title={onDragPoint ? undefined : 'Ziel'}
             draggable={!!onDragPoint}
-            onDragStart={() => haptic('abheben')}
+            onDragStart={() => {
+              haptic('abheben');
+              onDragStart?.();
+            }}
             onDragEnd={(e) => {
               haptic('ablegen');
               onDragPoint?.('ziel', [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
@@ -567,7 +571,10 @@ export function RouteMap({
             anchor={{ x: 0.5, y: 0.5 }}
             title={onDragPoint && !roundTrip ? undefined : roundTrip ? 'Start und Ziel' : 'Start'}
             draggable={!!onDragPoint && !roundTrip}
-            onDragStart={() => haptic('abheben')}
+            onDragStart={() => {
+              haptic('abheben');
+              onDragStart?.();
+            }}
             onDragEnd={(e) => {
               haptic('ablegen');
               onDragPoint?.('start', [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
@@ -622,7 +629,10 @@ export function RouteMap({
             }
             zIndex={35}
             draggable={!!onDragPoint}
-            onDragStart={() => haptic('abheben')}
+            onDragStart={() => {
+              haptic('abheben');
+              onDragStart?.();
+            }}
             onDragEnd={(e) => {
               haptic('ablegen');
               onDragPoint?.(pin.id, [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);

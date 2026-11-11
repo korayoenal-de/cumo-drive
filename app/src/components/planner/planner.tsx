@@ -222,7 +222,16 @@ export default function Planner() {
 
   // Tour von Hand: Zustand lebt hier, damit er beim Wechsel der Modi erhalten bleibt.
   // Steht eine Route, geht das Blatt auf halbe Höhe, damit sie auf der Karte zu sehen ist.
-  const tourPlan = useTourPlan(() => setDetent(1));
+  /** true, solange auf der Karte geplant wird: dann bleibt das Blatt klein, auch wenn die neue Strecke fertig ist */
+  const onMap = useRef(false);
+  const tourPlan = useTourPlan(() => {
+    if (!onMap.current) setDetent(1);
+  });
+  /** Auf der Karte wird ein Punkt angefasst, gezogen oder gesetzt (Koray 11.11.): Blatt klein, die Karte hat Platz */
+  const workOnMap = () => {
+    onMap.current = true;
+    setDetent(0);
+  };
   const [pending, setPending] = useState<PendingPoint | null>(null);
   /** Angetippter Zwischenpunkt auf der Karte (Index unter den Zwischenzielen) */
   const [selVia, setSelVia] = useState<number | null>(null);
@@ -254,6 +263,7 @@ export default function Planner() {
       // Neu geöffnete Tour (Link, Community, Touren) immer ganz zeigen: ein vorheriges Ziehen auf der Karte
       // hatte das Einpassen abgeschaltet, die Karte blieb dann am alten Ort (Koray 11.11.)
       setMapEdit(false);
+      onMap.current = false;
       setProfile(p);
       loadTour(t, p, avoid);
     };
@@ -613,6 +623,7 @@ export default function Planner() {
 
   /** Tipp auf einen Pass der Karte: Aktionen schweben über der Karte, ein Tipp daneben blendet sie aus. */
   function onMapPassPress(pass: Pass) {
+    workOnMap();
     setSelVia(null);
     setPending({ p: passPoint(pass), name: pass.name, pass });
   }
@@ -622,6 +633,7 @@ export default function Planner() {
    * Stelle, die Strecke wird neu geplant. So lässt sich etwa ein Stich vermeiden.
    */
   function onDragPoint(id: string, p: LatLon) {
+    workOnMap();
     setPending(null);
     setSelVia(null);
     setMapEdit(true);
@@ -635,6 +647,7 @@ export default function Planner() {
 
   /** Langer Druck auf die Linie: dort entsteht ein Zwischenziel, das sich dann ziehen lässt */
   function onLongPressLine(p: LatLon) {
+    workOnMap();
     haptic('punkt');
     setPending(null);
     setMapEdit(true);
@@ -649,6 +662,7 @@ export default function Planner() {
     if (!p) return;
     const ps = PASSES.find((x) => passIndex([p], x) === 0);
     if (ps) return onMapPassPress(ps);
+    workOnMap();
     setPending(null);
     setSelVia(i);
   }
@@ -826,7 +840,11 @@ export default function Planner() {
           pending={pending}
           setPending={setPending}
           onDragChange={setDragging}
-          onListEdit={() => setMapEdit(false)}
+          onListEdit={() => {
+            setMapEdit(false);
+    onMap.current = false;
+            onMap.current = false;
+          }}
           onShowPoint={(p) => {
             setMapEdit(true);
             setDetent(0);
@@ -1155,6 +1173,7 @@ export default function Planner() {
           onPressPass={inTour ? onMapPassPress : undefined}
           onPressPin={inTour ? onPinPress : undefined}
           onDragPoint={inTour && tourPlan.complete ? onDragPoint : undefined}
+          onDragStart={inTour ? workOnMap : undefined}
           onLongPressLine={inTour && tourPlan.complete && routeTour ? onLongPressLine : undefined}
           stale={adjustBusy}
           draft={adjustBusy ? tourPts : undefined}

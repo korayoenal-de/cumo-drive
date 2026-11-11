@@ -55,6 +55,8 @@ export type RouteMapProps = {
   draft?: LatLon[];
   /** Strecke wird gerade neu gerechnet: Linie blass zeigen (Ziehen, Koray 11.11.) */
   stale?: boolean;
+  /** Ein Punkt wird angehoben (Beginn des Ziehens) */
+  onDragStart?: () => void;
   /** Langer Druck auf die Linie der Tour (statt irgendwo auf die Karte): dort entsteht ein Ziehpunkt */
   onLongPressLine?: (p: LatLon) => void;
   /** Tipp auf einen nummerierten Punkt (Zwischenziel), id wie in pins */

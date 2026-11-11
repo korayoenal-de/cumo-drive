@@ -8,7 +8,9 @@
  */
 import { haversine, type LatLon } from './tour';
 
-const STEP = 100;
+// 50 statt 100 (11.11.): Hin und Rückweg werden unabhängig abgetastet und lagen bis zu 50 m versetzt, bei 35 m
+// Toleranz fiel so ein 3 km Stich auf 0,5 km (Punkt bei Reinheim). Jetzt höchstens 25 m Versatz bei 45 m Toleranz.
+const STEP = 50;
 
 export type Doubled = {
   /** doppelt gefahrene Kilometer */
@@ -17,7 +19,7 @@ export type Doubled = {
   points: LatLon[];
 };
 
-export function doubledStretch(line: LatLon[], minGap = 1500, tol = 35): Doubled {
+export function doubledStretch(line: LatLon[], minGap = 1500, tol = 45): Doubled {
   const samples = resample(line, STEP);
   if (samples.length < 3) return { km: 0, points: [] };
   const cell = 0.001; // etwa 110 m in der Breite, groß genug für tol
@@ -56,7 +58,7 @@ export function doubledStretch(line: LatLon[], minGap = 1500, tol = 35): Doubled
     }
     if (found) {
       hits++;
-      if (i - lastPick >= 4) {
+      if (i - lastPick >= 400 / STEP) {
         points.push(p);
         lastPick = i;
       }
