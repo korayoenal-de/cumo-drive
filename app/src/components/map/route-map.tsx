@@ -69,6 +69,7 @@ export function RouteMap({
   onDragPoint,
   onLongPressLine,
   stale,
+  draft,
   overlayTop = 0,
   pickedPassIds,
   flyTo,
@@ -489,6 +490,17 @@ export function RouteMap({
             zIndex={CLASS_LINE[r.c].z}
           />
         ))}
+        {draft && draft.length >= 2 && (
+          <Polyline
+            key={`entwurf-${draft.map((p) => p.join(',')).join(';')}`}
+            coordinates={draft.map(ll)}
+            strokeColor="rgba(244,244,242,0.85)"
+            strokeWidth={3}
+            lineDashPattern={[6, 8]}
+            lineCap="round"
+            zIndex={12}
+          />
+        )}
         {runs.map((r, i) => (
           <Polyline
             key={`linie-${r.key}-${i}`}

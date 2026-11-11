@@ -121,6 +121,9 @@ export function useTourPlan(onPlanned?: () => void) {
     return Array.from({ length: Math.max(1, count - 1) }, (_, i) => lp[i + offset] ?? global);
   }
 
+  /** Laufende Namenssuche einer geladenen Tour; eine neue Tour bricht sie ab */
+  const nameSeq = useRef(0);
+
   function rememberName(p: LatLon, known?: string) {
     const k = keyOf(p);
     if (known) {
@@ -424,7 +427,15 @@ export function useTourPlan(onPlanned?: () => void) {
     setBase(t.id ? sigOf(w, t.name, lp) : null);
     setLoaded(sigOf(w, t.name, lp));
     // Namen für Start und Ziel nachschlagen, bei wenigen Punkten auch für die Zwischenziele
-    for (const p of v.length <= 8 ? w : [s, z]) if (p && !known[keyOf(p)]) rememberName(p);
+    // Fehlende Namen nachschlagen: Start und Ziel sofort, Zwischenziele nach und nach (etwa einer je Sekunde),
+    // damit die Ortssuche bei langen Touren nicht überlastet (Koray 11.11.). Eine neue Tour bricht ab.
+    const seq = ++nameSeq.current;
+    for (const p of [s, z]) if (p && !known[keyOf(p)]) rememberName(p);
+    v.filter((p) => !known[keyOf(p)]).forEach((p, i) => {
+      setTimeout(() => {
+        if (nameSeq.current === seq) rememberName(p);
+      }, (v.length <= 8 ? 150 : 1100) * (i + 1));
+    });
     // Gespeicherte Strecke so zeigen, wie sie ist (importierte und Club Touren nicht neu planen).
     // Neu geplant wird erst, wenn ein Punkt verschoben oder hinzugefügt wird.
     if (t.linie.length) {

@@ -1152,6 +1152,7 @@ export default function Planner() {
           onDragPoint={inTour && tourPlan.complete ? onDragPoint : undefined}
           onLongPressLine={inTour && tourPlan.complete && routeTour ? onLongPressLine : undefined}
           stale={adjustBusy}
+          draft={adjustBusy ? tourPts : undefined}
           onPressMap={passOverlay || selVia != null ? () => {
             setPending(null);
             setSelVia(null);

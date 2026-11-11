@@ -434,7 +434,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
 
   /** Zwischenziel überspringen: wie eine Neuberechnung, aber zurück auf die Route erst ab index */
   const skipTo = useCallback(
-    async (index: number, fast = false): Promise<SkipUndo | null> => {
+    async (index: number, fast = false, speech = 'Das nächste Zwischenziel wird übersprungen.'): Promise<SkipUndo | null> => {
       const r = reqRef.current;
       const current = routeRef.current;
       const pos = posRef.current;
@@ -443,7 +443,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       reroutingRef.current = true;
       lastRerouteRef.current = Date.now();
       setState((s) => ({ ...s, status: 'neuberechnung' }));
-      voice().say('Das nächste Zwischenziel wird übersprungen.', true);
+      voice().say(speech, true);
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       try {

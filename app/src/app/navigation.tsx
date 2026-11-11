@@ -616,6 +616,37 @@ export default function NavigationScreen() {
     controls.choose('fresh');
     controls.say('Du fährst jetzt deine eigene Route. Die Gruppe sieht dich weiter auf der Karte.');
   };
+  // Sammelpunkt (Martin 11.11.): Halt der Lead mit Ort, sonst die Lead selbst, wenn sie vor einem fährt.
+  // Ziel ist die Stelle der Tour dort; der Weg dahin ist der schnellste, danach geht es auf der Tour weiter.
+  const meet = (() => {
+    if (!withOthers || !route || ride.myRole === 'lead') return null;
+    const lead = ride.members.find((m) => m.role === 'lead' && m.id !== ride.me?.id && m.p);
+    const target = stop?.p ?? lead?.p ?? null;
+    if (!target) return null;
+    const doneKm = state.remainingKm != null ? route.km - state.remainingKm : 0;
+    let from = route.cumKm.findIndex((k) => k >= doneKm);
+    if (from < 0) from = 0;
+    let best = -1;
+    let bd = Infinity;
+    for (let i = from; i < route.shape.length; i++) {
+      const d = haversine(route.shape[i], target);
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+    }
+    // nur, wenn der Punkt nah an der Tour und vor einem liegt
+    if (best < 0 || bd > 2000 || route.cumKm[best] - doneKm < 0.3) return null;
+    return { index: best, label: stop?.p ? 'Zum Halt der Lead' : 'Zur Lead aufschließen', speech: stop?.p ? 'Ich führe dich zum Halt der Gruppe.' : 'Ich führe dich zur Lead.' };
+  })();
+  const goMeet = () => {
+    if (!meet) return;
+    if (ownRoute) {
+      setOwnRouteState(false);
+      setOwnRoute(false);
+    }
+    void controls.skipTo(meet.index, true, meet.speech);
+  };
   const backToGroup = () => {
     setOwnRouteState(false);
     setOwnRoute(false);
@@ -797,6 +828,11 @@ export default function NavigationScreen() {
             {/* Selbst wählen statt warten (Martin 11.11.): wer nicht umdrehen kann, nimmt gleich eine neue Route.
                 Ohne Tipp führt die App nach 8 s zurück, nach zweimal Ignorieren plant sie selbst neu. */}
             {/* erst nach dem ersten Ignorieren fragen (Koray 11.11.): beim ersten Mal führt die App einfach zurück */}
+            {status !== 'neuberechnung' && (state.ignored ?? 0) >= 1 && meet && (
+              <Pressable accessibilityRole="button" onPress={goMeet} style={({ pressed }) => [styles.offBtn, styles.offBtnWide, pressed && styles.offPressed]}>
+                <AppText style={styles.offBtnText}>{meet.label}</AppText>
+              </Pressable>
+            )}
             {status !== 'neuberechnung' && (state.ignored ?? 0) >= 1 && (
               <View style={styles.offBtns}>
                 <Pressable accessibilityRole="button" onPress={() => controls.choose('rejoin')} style={({ pressed }) => [styles.offBtn, pressed && styles.offPressed]}>
@@ -1166,6 +1202,7 @@ const styles = StyleSheet.create({
   offBtns: { flexDirection: 'row', gap: Spacing.s },
   offBtn: { flex: 1, height: 52, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.m },
   offBtnMain: { backgroundColor: Colors.signal },
+  offBtnWide: { flex: 0, alignSelf: 'stretch' },
   offBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   offBtnMainText: { color: Colors.onSignal },
   offPressed: { transform: [{ scale: 0.985 }], opacity: 0.9 },

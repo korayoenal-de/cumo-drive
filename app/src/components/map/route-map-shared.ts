@@ -51,6 +51,8 @@ export type RouteMapProps = {
   onPressPass?: (pass: Pass) => void;
   /** Punkte halten und ziehen (Koray 11.11.): 'start', 'ziel' oder die id eines Pins, mit der neuen Lage */
   onDragPoint?: (id: string, p: LatLon) => void;
+  /** Gestrichelte Hilfslinie durch die Punkte, solange gerechnet wird (Koray 11.11.) */
+  draft?: LatLon[];
   /** Strecke wird gerade neu gerechnet: Linie blass zeigen (Ziehen, Koray 11.11.) */
   stale?: boolean;
   /** Langer Druck auf die Linie der Tour (statt irgendwo auf die Karte): dort entsteht ein Ziehpunkt */
