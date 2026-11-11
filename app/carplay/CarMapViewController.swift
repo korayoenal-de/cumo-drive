@@ -22,6 +22,8 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private var rejoin: RejoinPolyline?
   private var rejoinCasing: RejoinCasingPolyline?
   private var following = false
+  /** letzter Bildtakt, um einen angehaltenen Display Link zu bemerken */
+  private var lastTick: CFTimeInterval = 0
   /// Kamera wie in der App: schräg von hinten, folgt der Position, die die App schickt
   private var followCenter: CLLocationCoordinate2D?
   private var followHeading: CLLocationDirection = 0
@@ -279,6 +281,11 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     map.setUserTrackingMode(.none, animated: false)
     let now = CACurrentMediaTime()
     let gap = lastFollowAt > 0 ? now - lastFollowAt : 0
+    // doppelte oder dicht folgende Positionen verfälschen die Geschwindigkeit (Zoom pulsierte, Tester Tom 11.11.)
+    if let last = moveTo, gap < 0.3 || (last.latitude == c.latitude && last.longitude == c.longitude) {
+      headTo = heading
+      return
+    }
     lastFollowAt = now
     // Fortschreiben mit Geschwindigkeit: letzte Position plus Geschwindigkeit mal Zeit, der Sprung zur neuen
     // Position klingt in 0,5 s aus. Vorher endete die Bewegung vor der nächsten Position und die Karte stand kurz.
@@ -305,13 +312,16 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     moveStart = now
     moveDur = 0.6
     parked = false
-    if shownCenter == nil { place(c, heading: heading) }
+    // Kommt kein Bildtakt (Display Link angehalten), wenigstens bei jeder Position nachführen
+    if shownCenter == nil || (link != nil && now - lastTick > 0.6) { place(c, heading: heading) }
     startLink()
   }
 
   private func startLink() {
     guard link == nil else { return }
-    let l = CADisplayLink(target: self, selector: #selector(tick))
+    // Bildtakt des Auto Displays, nicht des iPhones: der iPhone Takt steht still, sobald dessen Bildschirm aus ist,
+    // dann blieb die Karte stehen und das Auto fuhr aus dem Bild (Tester Tom 11.11.)
+    let l = view.window?.screen.displayLink(withTarget: self, selector: #selector(tick)) ?? CADisplayLink(target: self, selector: #selector(tick))
     l.preferredFrameRateRange = CAFrameRateRange(minimum: 20, maximum: 30, preferred: 30)
     l.add(to: .main, forMode: .common)
     link = l
@@ -324,6 +334,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   }
 
   @objc private func tick() {
+    lastTick = CACurrentMediaTime()
     guard following, let a = moveTo else { return }
     let dt = CACurrentMediaTime() - moveStart
     // höchstens 2,5 s fortschreiben (GPS weg), danach stehen bleiben, ohne die Kamera neu zu setzen (Akku)
@@ -346,7 +357,8 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     shownHeading = heading
     let kmh = hypot(vLat * 111_320, vLon * 111_320 * cos(c.latitude * .pi / 180)) * 3.6
     let t = max(0, min(1, (kmh - 50) / 50))
-    speedZoom += (t - speedZoom) * 0.04
+    // langsam folgen (etwa 8 s), damit schwankendes Tempo nicht pulsiert
+    speedZoom += (t - speedZoom) * 0.012
     map.camera = MKMapCamera(lookingAtCenter: c, fromDistance: 650 * zoomScale * (1 + speedZoom * 1.2), pitch: 50, heading: heading)
   }
 

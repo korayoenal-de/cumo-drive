@@ -127,6 +127,19 @@ function bearing(a: LatLon, b: LatLon): number {
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
+/**
+ * Beginnt die Linie gegen die Fahrtrichtung (Wenden)? Gemessen an der Richtung zum Punkt etwa 150 m weiter.
+ * Tester Tom 11.11.: auf einer Autobahnauffahrt sollte er umdrehen, weil der eigene Server die Fahrtrichtung
+ * nicht kennt. Dann gilt der Weg von Valhalla, der sie berücksichtigt.
+ */
+export function startsAgainst(line: LatLon[], heading: number | null | undefined): boolean {
+  if (heading == null || line.length < 2) return false;
+  let k = 1;
+  while (k < line.length - 1 && haversine(line[0], line[k]) < 150) k++;
+  const d = Math.abs(((bearing(line[0], line[k]) - heading + 540) % 360) - 180);
+  return d > 110;
+}
+
 function turnAngle(a: LatLon, b: LatLon, c: LatLon): number {
   const d = Math.abs(bearing(a, b) - bearing(b, c)) % 360;
   return d > 180 ? 360 - d : d;
@@ -382,7 +395,7 @@ async function approachOnce(
     if (!(await cumoAvailable())) return plain;
     const around = await cumoPlan('Anfahrt', [from, to], 'kurvig', req.avoid, signal, exclude, true);
     const line = flatten(around).map((x) => x.p);
-    if (line.length < 2) return plain;
+    if (line.length < 2 || startsAgainst(line, fromHeading)) return plain;
     const traced = await traceLine(line, req, signal);
     return traced.seconds <= plain.seconds * 1.3 + 60 ? traced : plain;
   } catch (e) {

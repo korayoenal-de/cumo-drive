@@ -733,6 +733,7 @@ export default function NavigationScreen() {
         showUser
         position={state.position}
         heading={state.heading}
+        speedKmh={state.speedKmh}
         others={others}
         pins={pins}
         dashed={rejoinM != null && rejoinM > 0 ? dashed : null}

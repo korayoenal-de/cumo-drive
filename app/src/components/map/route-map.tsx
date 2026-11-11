@@ -52,6 +52,7 @@ export function RouteMap({
   heading,
   highlightIndex,
   position,
+  speedKmh,
   edgePadding,
   mapPadding,
   others,
@@ -307,6 +308,10 @@ export function RouteMap({
   // Position plus Geschwindigkeit mal Zeit seither; der Sprung bei einer neuen Position klingt in 0,5 s aus.
   const motion = useRef<{ p: LatLon; t: number; v: [number, number]; err: [number, number]; hFrom: number; hTo: number } | null>(null);
   const zoomOut = useRef(0);
+  const speedRef = useRef<number | null>(null);
+  useEffect(() => {
+    speedRef.current = speedKmh ?? null;
+  }, [speedKmh]);
   /** Eigener Zoom beim Mitfahren per Zwei Finger Geste, in Zoomstufen (minus heißt weiter weg) */
   const userZoom = useSharedValue(0);
   const pinchBase = useSharedValue(0);
@@ -324,7 +329,10 @@ export function RouteMap({
       me.setValue({ latitude: position[0], longitude: position[1], latitudeDelta: 0, longitudeDelta: 0 });
       return;
     }
-    // Geschwindigkeit in Grad je ms, leicht geglättet
+    // Geschwindigkeit in Grad je ms, leicht geglättet. Doppelte oder dicht folgende Positionen (unter 0,3 s)
+    // ändern sie nicht: sonst fiel sie kurz auf fast null, und Auto und Zoom ruckten vor und zurück (Tester Tom 11.11.)
+    const same = position[0] === prev.p[0] && position[1] === prev.p[1];
+    if (same || gap < 300) return;
     const vNew: [number, number] = [(position[0] - prev.p[0]) / gap, (position[1] - prev.p[1]) / gap];
     const v: [number, number] = [prev.v[0] * 0.35 + vNew[0] * 0.65, prev.v[1] * 0.35 + vNew[1] * 0.65];
     const err: [number, number] = [shown.current.p[0] - position[0], shown.current.p[1] - position[1]];
@@ -370,9 +378,11 @@ export function RouteMap({
       me.setValue({ latitude: p[0], longitude: p[1], latitudeDelta: 0, longitudeDelta: 0 });
       if (following) {
         // Schneller fahren, weiter sehen (Tester Gregor 10.11.): ab 50 km/h langsam herauszoomen, ab 100 km/h ganz
-        const kmh = Math.hypot(m.v[0] * 111320, m.v[1] * 111320 * Math.cos((p[0] * Math.PI) / 180)) * 3600;
+        // Tempo vom GPS, wenn es eins gibt (ruhiger als aus den Positionen gerechnet); der Zoom folgt langsam,
+        // etwa 8 s für den ganzen Weg, damit er bei schwankendem Tempo nicht pulsiert (Tester Tom 11.11.)
+        const kmh = speedRef.current ?? Math.hypot(m.v[0] * 111320, m.v[1] * 111320 * Math.cos((p[0] * Math.PI) / 180)) * 3600;
         const t = Math.max(0, Math.min(1, (kmh - 50) / 50));
-        zoomOut.current += (t - zoomOut.current) * 0.04;
+        zoomOut.current += (t - zoomOut.current) * 0.012;
         const z = zoomOut.current;
         const uz = userZoom.get();
         map.current?.setCamera({ center: ll(p), heading: h, pitch: 50, zoom: 17 - z + uz, altitude: (500 + z * 600) * Math.pow(2, -uz) });

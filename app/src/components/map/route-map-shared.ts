@@ -24,6 +24,8 @@ export type RouteMapProps = {
   /** Warnung, zu der die Karte springen soll, Index in tour.warnungen */
   highlightIndex?: number | null;
   /** Position aus der Navigation (auch simuliert); ohne sie folgt nichts */
+  /** Tempo laut GPS (km/h): bestimmt, wie weit die Karte beim Mitfahren herauszoomt */
+  speedKmh?: number | null;
   position?: LatLon | null;
   /** Rand beim Einpassen der Tour in Punkten */
   edgePadding?: { top: number; right: number; bottom: number; left: number };
