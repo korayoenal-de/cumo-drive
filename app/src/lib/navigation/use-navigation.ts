@@ -86,6 +86,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const posRef = useRef<{ p: LatLon; h: number | null } | null>(null);
   /** Wie oft hintereinander die Rückführung auf die Tour ignoriert wurde */
   const ignoredRef = useRef(0);
+  /** darf die App nach zweimal Ignorieren selbst neu planen (allein ja, in der Gruppe nein) */
+  const autoFreshRef = useRef(true);
 
   useEffect(() => {
     reqRef.current = req;
@@ -162,7 +164,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       lastRerouteRef.current = Date.now();
       setState((s) => ({ ...s, status: 'neuberechnung' }));
       // Zweimal die Rückführung ignoriert: bewusst anders gefahren, also ab hier neu planen (Koray 11.11.)
-      const fresh = mode === 'fresh' || (mode === 'auto' && ignoredRef.current >= 2);
+      // in der Gruppe nie von selbst: das würde einen still von der Gruppe trennen (Koray 11.11.)
+      const fresh = mode === 'fresh' || (mode === 'auto' && ignoredRef.current >= 2 && autoFreshRef.current);
       voice().say(fresh ? 'Neue Route ab hier.' : 'Route wird neu berechnet.', true);
       const ctrl = new AbortController();
       abortRef.current = ctrl;
@@ -472,6 +475,37 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     [reroute],
   );
 
+  /** Zurück zur ursprünglichen Tour (Gruppe): Weg zum nächsten Punkt der Tour, dann ihr folgen */
+  const backToTour = useCallback(async () => {
+    const pos = posRef.current;
+    if (!pos || !activeRef.current || !req || reroutingRef.current) return;
+    reroutingRef.current = true;
+    lastRerouteRef.current = Date.now();
+    setState((s) => ({ ...s, status: 'neuberechnung' }));
+    voice().say('Zurück zur Tour der Gruppe.', true);
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    try {
+      reqRef.current = req;
+      // am nächsten Punkt der Tour einsteigen, nicht zurück zum Start
+      const { route } = await fetchNavRouteDetail({ ...req, entry: undefined }, pos.p, ctrl.signal);
+      if (!activeRef.current) return;
+      ignoredRef.current = 0;
+      setRoute(route);
+      setState((s) => ({ ...s, status: 'laeuft', route, error: undefined }));
+    } catch (e) {
+      if (isAbort(e) || !activeRef.current) return;
+      setState((s) => ({ ...s, status: 'laeuft', error: friendly(e) }));
+    } finally {
+      reroutingRef.current = false;
+      offSinceRef.current = null;
+    }
+  }, [req, setRoute, voice]);
+
+  const setAutoFresh = useCallback((on: boolean) => {
+    autoFreshRef.current = on;
+  }, []);
+
   const restore = useCallback(
     (u: SkipUndo) => {
       if (!activeRef.current) return;
@@ -496,5 +530,5 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     setState((s) => ({ ...INITIAL, voice: s.voice }));
   }, [req?.tour, cleanup]);
 
-  return [state, { start, stop, pause, setVoice, say, simulate, skipTo, restore, choose }];
+  return [state, { start, stop, pause, setVoice, say, simulate, skipTo, restore, choose, backToTour, setAutoFresh }];
 }

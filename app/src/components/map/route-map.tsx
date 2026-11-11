@@ -623,8 +623,8 @@ export function RouteMap({
         ))}
 
         {(others ?? []).map((o) => (
-          <Marker key={`${o.id}${o.off ? '-ab' : ''}`} coordinate={ll(o.p)} anchor={{ x: 0.5, y: 0.5 }} title={o.name} description={`${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[o.role]}${o.off ? ', abseits der Tour' : ''}`} zIndex={30} tracksViewChanges={false}>
-            <View style={[styles.other, { borderColor: o.off ? Colors.warn : ROLE_COLOR[o.role] }, o.off && styles.otherOff, o.stale && styles.otherStale]}>
+          <Marker key={`${o.id}${o.off ? '-ab' : ''}${o.own ? '-eigen' : ''}`} coordinate={ll(o.p)} anchor={{ x: 0.5, y: 0.5 }} title={o.name} description={`${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[o.role]}${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}`} zIndex={30} tracksViewChanges={false}>
+            <View style={[styles.other, { borderColor: o.own ? Colors.muted : o.off ? Colors.warn : ROLE_COLOR[o.role] }, o.off && !o.own && styles.otherOff, (o.stale || o.own) && styles.otherStale]}>
               <AppText style={styles.otherText}>{o.name.slice(0, 1).toUpperCase()}</AppText>
             </View>
           </Marker>

@@ -23,7 +23,7 @@ import type { LatLon } from '../tour';
 
 export type Role = 'lead' | 'schluss' | 'mitfahrer';
 export type Me = { id: string; name: string; car: string };
-export type Member = Me & { role: Role; p: LatLon | null; heading: number | null; speedKmh: number | null; seenAt: number | null; /** gerade abseits der Tour */ off?: boolean };
+export type Member = Me & { role: Role; p: LatLon | null; heading: number | null; speedKmh: number | null; seenAt: number | null; /** gerade abseits der Tour */ off?: boolean; /** fährt bewusst eine eigene Route (Koray 11.11.) */ own?: boolean };
 export type RideMsg = { id: string; from: string; name: string; text: string; at: number };
 /** Gründe für eine zentrale Halt Ansage der Lead */
 export type StopReason = 'sammeln' | 'parkplatz' | 'tanken' | 'pause' | 'foto';
@@ -66,7 +66,7 @@ const listeners = new Set<() => void>();
 let channel: RealtimeChannel | null = null;
 let watch: Location.LocationSubscription | null = null;
 let lastSent: { p: LatLon; at: number } | null = null;
-const positions = new Map<string, Pick<Member, 'p' | 'heading' | 'speedKmh' | 'seenAt' | 'off'>>();
+const positions = new Map<string, Pick<Member, 'p' | 'heading' | 'speedKmh' | 'seenAt' | 'off' | 'own'>>();
 /**
  * Zuletzt per Presence gesehene Mitglieder. Fällt jemand ins Funkloch, entfernt der Realtime Server
  * die Presence nach etwa einer Minute; ohne diese Liste verschwände er dann samt letzter Position
@@ -135,13 +135,13 @@ function rebuildMembers() {
     present.add(e.id);
     known.set(e.id, { name: e.name, car: e.car, role: e.role });
     const pos = positions.get(e.id);
-    list.push({ id: e.id, name: e.name, car: e.car, role: e.role, p: pos?.p ?? null, heading: pos?.heading ?? null, speedKmh: pos?.speedKmh ?? null, seenAt: pos?.seenAt ?? null, off: pos?.off ?? false });
+    list.push({ id: e.id, name: e.name, car: e.car, role: e.role, p: pos?.p ?? null, heading: pos?.heading ?? null, speedKmh: pos?.speedKmh ?? null, seenAt: pos?.seenAt ?? null, off: pos?.off ?? false, own: pos?.own ?? false });
   }
   // ohne Verbindung, aber nicht abgemeldet: mit letzter Position (seenAt zeigt das Alter)
   for (const [id, k] of known) {
     const pos = positions.get(id);
     if (present.has(id) || !pos?.p || pos.seenAt == null || Date.now() - pos.seenAt > LOST_KEEP_MS) continue;
-    list.push({ id, ...k, p: pos.p, heading: pos.heading, speedKmh: pos.speedKmh, seenAt: pos.seenAt, off: pos.off ?? false });
+    list.push({ id, ...k, p: pos.p, heading: pos.heading, speedKmh: pos.speedKmh, seenAt: pos.seenAt, off: pos.off ?? false, own: pos.own ?? false });
   }
   const order: Record<Role, number> = { lead: 0, mitfahrer: 1, schluss: 2 };
   list.sort((a, b) => order[a.role] - order[b.role] || a.name.localeCompare(b.name));
@@ -176,9 +176,31 @@ export function sendPosition(p: LatLon, heading: number | null, speedKmh: number
   const now = Date.now();
   if (now - lastPosAt < 2000) return;
   lastPosAt = now;
-  positions.set(me.id, { p, heading, speedKmh, seenAt: Date.now(), off });
+  positions.set(me.id, { p, heading, speedKmh, seenAt: Date.now(), off, own: ownRoute });
   rebuildMembers();
-  void channel.send({ type: 'broadcast', event: 'pos', payload: { id: me.id, lat: p[0], lon: p[1], h: heading, v: speedKmh, off } });
+  void channel.send({ type: 'broadcast', event: 'pos', payload: { id: me.id, lat: p[0], lon: p[1], h: heading, v: speedKmh, off, own: ownRoute } });
+}
+
+/**
+ * Eigene Route in der Gruppe (Koray 11.11.): wer bewusst anders fährt, bleibt in der Gruppe (Karte, Funk),
+ * ist aber nicht mehr auf der gemeinsamen Strecke. Die anderen bekommen eine Kurznachricht und sehen ihn grau.
+ */
+let ownRoute = false;
+export function setOwnRoute(on: boolean) {
+  if (ownRoute === on) return;
+  ownRoute = on;
+  const me = state.me;
+  if (!me) return;
+  sendMessage(on ? `${me.name} fährt eine eigene Route` : `${me.name} ist wieder auf der Tour`);
+  const cur = positions.get(me.id);
+  if (cur) {
+    positions.set(me.id, { ...cur, own: on });
+    rebuildMembers();
+  }
+  lastPosAt = 0;
+}
+export function isOwnRoute() {
+  return ownRoute;
 }
 
 export async function joinRide(code: string, name: string, car: string, role: Role = 'mitfahrer', tourCode: string | null = null) {
@@ -222,8 +244,8 @@ function connect(topic: string, me: Me, role: Role, info: { code: string | null;
     if (state.myRole === 'lead' && state.tourCode) void ch.send({ type: 'broadcast', event: 'tour', payload: { code: state.tourCode } });
   });
   ch.on('broadcast', { event: 'pos' }, ({ payload }) => {
-    const x = payload as { id: string; lat: number; lon: number; h: number | null; v: number | null; off?: boolean };
-    positions.set(x.id, { p: [x.lat, x.lon], heading: x.h, speedKmh: x.v, seenAt: Date.now(), off: !!x.off });
+    const x = payload as { id: string; lat: number; lon: number; h: number | null; v: number | null; off?: boolean; own?: boolean };
+    positions.set(x.id, { p: [x.lat, x.lon], heading: x.h, speedKmh: x.v, seenAt: Date.now(), off: !!x.off, own: !!x.own });
     rebuildMembers();
   });
   ch.on('broadcast', { event: 'msg' }, ({ payload }) => {
@@ -306,6 +328,7 @@ export async function createRide(name: string, car: string, tourCode: string | n
 }
 
 export async function leaveRide() {
+  ownRoute = false;
   watch?.remove();
   watch = null;
   lastSent = null;

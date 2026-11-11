@@ -122,6 +122,10 @@ export type NavControls = {
   restore: (u: SkipUndo) => void;
   /** Bei einer Abweichung selbst wählen: zurück zur Tour oder neue Route ab hier */
   choose: (mode: 'rejoin' | 'fresh') => void;
+  /** Gruppe: von der eigenen Route zurück auf die gemeinsame Tour */
+  backToTour: () => Promise<void>;
+  /** Nach zweimal Ignorieren selbst neu planen erlauben (allein) oder nicht (Gruppe) */
+  setAutoFresh: (on: boolean) => void;
 };
 
 export type SkipUndo = { route: NavRoute; done: number; hint: number };

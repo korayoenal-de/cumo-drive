@@ -40,7 +40,7 @@ import Animated, { FadeOut } from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
 import { elevationProfile } from '@/lib/stats';
 import { connectFunk, disconnectFunk, pushToTalk, setFunkListen, setOnlyLead, useFunk } from '@/lib/group/funk';
-import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, STOP_REASONS, useRide } from '@/lib/group/ride';
+import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, setOwnRoute, STOP_REASONS, useRide } from '@/lib/group/ride';
 import { currentVehicle, selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
@@ -105,6 +105,18 @@ export default function NavigationScreen() {
   const inRide = ride.status === 'aktiv';
   // Gruppen Bedienung nur, wenn wirklich jemand mitfährt (Tester Gregor 10.11.: allein gefahren, trotzdem Kurznachrichten)
   const withOthers = inRide && ride.members.some((m) => m.id !== ride.me?.id);
+  // In der Gruppe plant die App nie von selbst neu, nur auf Wunsch (Koray 11.11.)
+  const { setAutoFresh } = controls;
+  useEffect(() => {
+    setAutoFresh(!withOthers);
+  }, [setAutoFresh, withOthers]);
+  const [ownRoute, setOwnRouteState] = useState(false);
+  const [confirmOwn, setConfirmOwn] = useState(false);
+  useEffect(() => {
+    if (!confirmOwn) return;
+    const t = setTimeout(() => setConfirmOwn(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmOwn]);
   // Funk der Gruppenfahrt: verbinden, solange die Fahrt aktiv ist (nur Fahrten mit ID, nicht alte Fahrtcodes)
   useEffect(() => {
     if (inRide && ride.rideId) void connectFunk(ride.rideId, ride.myRole === 'lead');
@@ -146,6 +158,7 @@ export default function NavigationScreen() {
           role: m.role,
           stale: !m.seenAt,
           off: m.off,
+          own: m.own,
         })),
     [ride.members, ride.me?.id],
   );
@@ -590,6 +603,24 @@ export default function NavigationScreen() {
 
   const { status, route } = state;
   const running = status === 'laeuft' || status === 'pausiert' || status === 'neuberechnung';
+  // Eigene Route in der Gruppe: erst bestätigen (3 s), dann Gruppe informieren (Koray 11.11.)
+  const chooseOwn = () => {
+    if (!withOthers) return controls.choose('fresh');
+    if (!confirmOwn) {
+      setConfirmOwn(true);
+      return;
+    }
+    setConfirmOwn(false);
+    setOwnRouteState(true);
+    setOwnRoute(true);
+    controls.choose('fresh');
+    controls.say('Du fährst jetzt deine eigene Route. Die Gruppe sieht dich weiter auf der Karte.');
+  };
+  const backToGroup = () => {
+    setOwnRouteState(false);
+    setOwnRoute(false);
+    void controls.backToTour();
+  };
   // Abseits der Tour: Meter bis zurück auf die Route (gestrichelter Weg), oder nur abseits ohne neue Route
   const rejoinM =
     route?.rejoinIndex != null && state.remainingKm != null ? (route.cumKm[route.rejoinIndex] - (route.km - state.remainingKm)) * 1000 : null;
@@ -649,7 +680,7 @@ export default function NavigationScreen() {
         name: o.name,
         lat: o.p[0],
         lon: o.p[1],
-        detail: state.position ? `${formatKm(haversine(state.position, o.p) / 1000)} km entfernt${o.off ? ', abseits der Tour' : ''}` : undefined,
+        detail: state.position ? `${formatKm(haversine(state.position, o.p) / 1000)} km entfernt${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}` : undefined,
       })),
     );
   }, [cpRunning, others, state.position]);
@@ -771,12 +802,22 @@ export default function NavigationScreen() {
                 <Pressable accessibilityRole="button" onPress={() => controls.choose('rejoin')} style={({ pressed }) => [styles.offBtn, pressed && styles.offPressed]}>
                   <AppText style={styles.offBtnText}>Zurück zur Tour</AppText>
                 </Pressable>
-                <Pressable accessibilityRole="button" onPress={() => controls.choose('fresh')} style={({ pressed }) => [styles.offBtn, styles.offBtnMain, pressed && styles.offPressed]}>
-                  <AppText style={[styles.offBtnText, styles.offBtnMainText]}>Neue Route ab hier</AppText>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={withOthers ? (confirmOwn ? 'Ja, Gruppe verlassen' : 'Eigene Route, verlässt die Strecke der Gruppe') : 'Neue Route ab hier'}
+                  onPress={chooseOwn}
+                  style={({ pressed }) => [styles.offBtn, styles.offBtnMain, pressed && styles.offPressed]}>
+                  <AppText style={[styles.offBtnText, styles.offBtnMainText]}>{withOthers ? (confirmOwn ? 'Ja, Gruppe verlassen' : 'Eigene Route') : 'Neue Route ab hier'}</AppText>
                 </Pressable>
               </View>
             )}
           </View>
+        )}
+        {/* Eigene Route in der Gruppe: leise zurück zur gemeinsamen Tour (Koray 11.11.) */}
+        {running && withOthers && ownRoute && status !== 'neuberechnung' && (
+          <Pressable accessibilityRole="button" onPress={backToGroup} style={({ pressed }) => [styles.groupBack, pressed && styles.offPressed]}>
+            <AppText style={styles.groupBackText}>‹ Zurück zur Gruppe</AppText>
+          </Pressable>
         )}
         {/* Funk: wer gerade spricht (Funk Konzept, Koray 10.11.) */}
         {running && inRide && (funk.talking || funk.speaker || funk.status === 'getrennt') && <FunkBanner funk={funk} />}
@@ -1118,6 +1159,8 @@ const styles = StyleSheet.create({
   skipBtn: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   skipBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
   curve: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: Colors.overlay, borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
+  groupBack: { alignSelf: 'flex-start', height: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.overlay, alignItems: 'center', justifyContent: 'center' },
+  groupBackText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   offCard: { alignSelf: 'stretch', gap: Spacing.m, backgroundColor: Colors.overlay, borderRadius: Radius.l, padding: Spacing.m },
   offRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingHorizontal: Spacing.xs },
   offBtns: { flexDirection: 'row', gap: Spacing.s },
