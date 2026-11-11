@@ -10,7 +10,7 @@ import { clearEditOrigin } from '@/lib/edit-tour';
 import { saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName } from '@/lib/geocode';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '@/lib/highlight-roads';
-import { planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
+import { planChanged, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
 import { insertVia, movePoint } from '@/lib/route-edit';
 import { flatten, haversine, normProfile, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
@@ -149,7 +149,15 @@ export function useTourPlan(onPlanned?: () => void) {
     return null;
   }
 
-  async function plan(points: LatLon[], profiles: Profile[], avoid: Avoid, tourName = name) {
+  /**
+   * Zu jeder gezeigten Tour, wie sie geplant wurde (Punkte mit Stützpunkten, Profile, Vermeiden). Ändert sich
+   * danach nur ein Punkt, werden nur die Etappen daneben neu geplant (Prüfung 11.11.). Hängt an der Tour
+   * selbst, damit es auch nach Rückgängig wieder passt.
+   */
+  const plannedAs = useRef(new WeakMap<PlannedTour, { raw: PlannedTour; profiles: Profile[]; avoid: string }>());
+
+  /** full: alles neu planen, auch wenn sich nichts geändert hat (Taste Neu planen, anderes Vermeiden) */
+  async function plan(points: LatLon[], profiles: Profile[], avoid: Avoid, tourName = name, full = false) {
     abort.current?.abort();
     const ctrl = new AbortController();
     abort.current = ctrl;
@@ -181,10 +189,24 @@ export function useTourPlan(onPlanned?: () => void) {
           xProf.push(profiles[i]);
         }
       });
-      const raw = await planLegs(tourName.trim() || 'Neue Tour', xPts, xProf, avoid, (st) => !ctrl.signal.aborted && setStep(st), ctrl.signal);
+      const nm = tourName.trim() || 'Neue Tour';
+      const onStep = (st: PlanStep) => !ctrl.signal.aborted && setStep(st);
+      const avoidKey = JSON.stringify(avoid);
+      const before = !full && planned ? plannedAs.current.get(planned) : undefined;
+      let raw: PlannedTour | null = null;
+      if (before && before.avoid === avoidKey) {
+        try {
+          raw = await planChanged(before.raw, before.profiles, nm, xPts, xProf, avoid, onStep, ctrl.signal);
+        } catch (e) {
+          // das Teilstück ließ sich nicht planen: unten alles neu, dort kommt auch die Fehlermeldung
+          if (ctrl.signal.aborted) throw e;
+        }
+      }
+      raw ??= await planLegs(nm, xPts, xProf, avoid, onStep, ctrl.signal);
       // In der Tour stehen nur die sichtbaren Punkte; die Etappen ordnen sich über die Linie wieder zu
       const t = xPts.length === points.length ? raw : { ...raw, wegpunkte: points, direkt: raw.direkt ? Math.min(raw.direkt, points.length - 1) : raw.direkt };
       if (!ctrl.signal.aborted) {
+        plannedAs.current.set(t, { raw: { ...raw, wegpunkte: xPts }, profiles: xProf, avoid: avoidKey });
         setPlanned(t);
         setRoadWarn(roadCoverage(points, t));
         onPlanned?.();
@@ -440,7 +462,10 @@ export function useTourPlan(onPlanned?: () => void) {
     // Gespeicherte Strecke so zeigen, wie sie ist (importierte und Club Touren nicht neu planen).
     // Neu geplant wird erst, wenn ein Punkt verschoben oder hinzugefügt wird.
     if (t.linie.length) {
-      setPlanned({ ...t, minutes: t.minutes ?? Math.round((t.laenge_km / 55) * 60), fixes: 0 });
+      const shown: PlannedTour = { ...t, minutes: t.minutes ?? Math.round((t.laenge_km / 55) * 60), fixes: 0 };
+      // auch die gespeicherte Strecke bleibt beim Ändern stehen, wo sich nichts ändert (importierte Touren behalten ihre Linie)
+      if (w.length >= 3) plannedAs.current.set(shown, { raw: shown, profiles: lp.map((x) => x ?? profile), avoid: JSON.stringify(avoid) });
+      setPlanned(shown);
       onPlanned?.();
     } else if (s && z) void plan([s, ...v, z], lp.map((x) => x ?? profile), avoid, t.name);
     else setPlanned(null);
@@ -455,7 +480,7 @@ export function useTourPlan(onPlanned?: () => void) {
       setStep(null);
     },
     /** Mit den gesetzten Punkten und den Profilen je Etappe neu planen. */
-    planNow: (profile: Profile, avoid: Avoid) => pts.length >= 2 && void plan(pts, profilesFor(legProfiles, start, pts.length, profile), avoid),
+    planNow: (profile: Profile, avoid: Avoid) => pts.length >= 2 && void plan(pts, profilesFor(legProfiles, start, pts.length, profile), avoid, name, true),
     setLegProfile: (leg: number, p: Profile, profile: Profile, avoid: Avoid) => {
       const lp = [...fitLegs(legProfiles, vias.length)];
       lp[leg] = p;

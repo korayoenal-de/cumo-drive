@@ -8,13 +8,28 @@ import { cumoAvailable, cumoPlan } from './cumo-routing';
 import { tourFun } from './fun-score';
 import { closureExclude, closureLabel, closuresNear, closuresOnRoute, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
+import { seamsOk, windowFor } from './plan-window';
 import { route, VALHALLA_URL, type Avoid } from './valhalla';
 
 /** Schritte beim Planen; traffic: Verkehrsmeldungen, compare: Varianten vergleichen (Rundtour) */
 export type PlanStep = 'route' | 'traffic' | 'check' | 'fix' | 'compare';
 
 /** direkt: Etappen, auf denen die kurvige Variante nichts brachte und der direkte Weg gewählt wurde */
-export type PlannedTour = Tour & { minutes: number; fixes: number; direkt?: number; kurvenKm?: number; autobahnKm?: number; wohnKm?: number; stadtKm?: number; bebautKm?: number };
+export type PlannedTour = Tour & {
+  minutes: number;
+  fixes: number;
+  direkt?: number;
+  kurvenKm?: number;
+  autobahnKm?: number;
+  wohnKm?: number;
+  stadtKm?: number;
+  bebautKm?: number;
+  /** je Etappe (Wegpunkt zu Wegpunkt): Minuten und km vom Router, und ob der direkte Weg gewählt wurde.
+   *  Damit lassen sich unveränderte Etappen beim Ändern wiederverwenden (plan-window.ts). */
+  legMin?: number[];
+  legKm?: number[];
+  legDirekt?: boolean[];
+};
 
 /** Hinweis für die Route, wenn kurvig nichts Besseres fand (Koray 7.11.: dann ist der direkte Weg okay) */
 export function directNote(n: number | undefined, legs: number): string | null {
@@ -286,6 +301,7 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
   let wohn: number | undefined;
   let stadt: number | undefined;
   let bebaut: number | undefined;
+  const perLeg = parts.every((t) => t.legMin && t.legKm && t.legMin.length === t.wegpunkte.length - 1);
   parts.forEach((t, i) => {
     t.linie.forEach((run, j) => {
       const p = i > 0 && j === 0 ? run.p.slice(1) : run.p;
@@ -321,6 +337,13 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
     ...(wohn != null ? { wohnKm: +wohn.toFixed(1) } : {}),
     ...(stadt != null ? { stadtKm: +stadt.toFixed(1) } : {}),
     ...(bebaut != null ? { bebautKm: +bebaut.toFixed(1) } : {}),
+    ...(perLeg
+      ? {
+          legMin: parts.flatMap((t) => t.legMin!),
+          legKm: parts.flatMap((t) => t.legKm!),
+          legDirekt: parts.flatMap((t) => t.legDirekt ?? t.legMin!.map(() => false)),
+        }
+      : {}),
   };
 }
 
@@ -343,7 +366,8 @@ export async function planLegs(
   if (points.length < 3 || profiles.every((p) => p === first)) {
     const t = await planChecked(name, points, first, avoid, onStep, signal);
     // in einem Stück geplant: gilt für alle Etappen
-    return t.direkt ? { ...t, direkt: points.length - 1 } : t;
+    const all = { ...t, legDirekt: points.slice(1).map(() => !!t.direkt) };
+    return t.direkt ? { ...all, direkt: points.length - 1 } : all;
   }
   // Etappen mit eigenem Profil gleichzeitig planen statt nacheinander (10.11.); aufeinander folgende
   // Etappen mit demselben Profil bleiben ein Stück, dort gilt weiter kein Wenden am Zwischenziel
@@ -357,8 +381,32 @@ export async function planLegs(
   const parts = await Promise.all(
     groups.map(async (g) => {
       const t = await planChecked(name, points.slice(g.from, g.to + 1), g.profile, avoid, onStep, signal);
-      return t.direkt ? { ...t, direkt: g.to - g.from } : t;
+      const all = { ...t, legDirekt: Array.from({ length: g.to - g.from }, () => !!t.direkt) };
+      return t.direkt ? { ...all, direkt: g.to - g.from } : all;
     }),
   );
   return mergeLegs(name, points, parts);
+}
+
+/**
+ * Wie planLegs, aber nur das geänderte Stück wird neu geplant; die Etappen davor und danach bleiben, wie sie
+ * in prev stehen (plan-window.ts). Liefert null, wenn nichts wiederverwendbar ist oder die Nahtstelle nicht
+ * passt: dann plant der Aufrufer alles neu.
+ */
+export async function planChanged(
+  prev: PlannedTour,
+  prevProfiles: Profile[],
+  name: string,
+  points: LatLon[],
+  profiles: Profile[],
+  avoid: Avoid,
+  onStep?: (s: PlanStep) => void,
+  signal?: AbortSignal,
+): Promise<PlannedTour | null> {
+  const w = windowFor(prev, prevProfiles, points, profiles);
+  if (!w) return null;
+  const middle = await planLegs(name, w.points, w.profiles, avoid, onStep, signal);
+  const parts = [w.head, middle, w.tail].filter((t): t is PlannedTour => !!t);
+  const merged = mergeLegs(name, points, parts);
+  return seamsOk(merged, w, middle) ? merged : null;
 }

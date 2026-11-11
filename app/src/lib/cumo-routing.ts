@@ -116,6 +116,8 @@ export function allowTurnAt(p: LatLon) {
   turnAt.add(pkey(p));
 }
 
+/** Zeit und Länge je Etappe: damit bleiben unveränderte Etappen beim Ändern stehen (plan-window.ts) */
+const LEG_DETAILS = ['leg_time', 'leg_distance'];
 const DETAILS = ['road_class', 'surface', 'track_type', 'max_width', 'street_name', 'street_ref', 'curvature', 'urban_density'];
 
 /** Rechteck um den Abschnitt a bis b, halfM Meter breit nach jeder Seite und über die Enden hinaus */
@@ -286,7 +288,7 @@ async function send(text: string, signal?: AbortSignal): Promise<GhPath> {
 }
 
 async function post(body: Record<string, unknown>, signal?: AbortSignal): Promise<GhPath> {
-  const text = JSON.stringify({ points_encoded: false, instructions: false, details: DETAILS, ...body });
+  const text = JSON.stringify({ points_encoded: false, instructions: false, details: [...DETAILS, ...LEG_DETAILS], ...body });
   const now = Date.now();
   const hit = memo.get(text);
   if (hit && now - hit.at < MEMO_MS) {
@@ -618,6 +620,14 @@ export function checkFromDetails(path: GhPath): Pick<Tour, 'linie' | 'warnungen'
   };
 }
 
+/** Minuten und km je Etappe aus den Details des Routers; leer, wenn sie fehlen oder nicht zur Zahl der Etappen passen */
+function legDetails(p: GhPath, legs: number): { legMin?: number[]; legKm?: number[] } {
+  const t = p.details.leg_time;
+  const d = p.details.leg_distance;
+  if (!t || !d || t.length !== legs || d.length !== legs) return {};
+  return { legMin: t.map((x) => Number(x[2]) / 60000), legKm: d.map((x) => Number(x[2]) / 1000) };
+}
+
 function toTour(name: string, wegpunkte: LatLon[], p: GhPath): PlannedTour & { curves: number } {
   const chk = checkFromDetails(p);
   const shape: LatLon[] = p.points.coordinates.map(([lon, lat]) => [lat, lon]);
@@ -626,6 +636,7 @@ function toTour(name: string, wegpunkte: LatLon[], p: GhPath): PlannedTour & { c
     curves: countCurves(shape),
     kurvenKm: windingKm(p, shape),
     ...classKm(p, shape),
+    ...legDetails(p, wegpunkte.length - 1),
   };
 }
 
