@@ -754,13 +754,29 @@ export default function NavigationScreen() {
         )}
         {status === 'neuberechnung' && <Recalculating first={!route} />}
         {offTour && (
-          <View style={styles.offTour} accessibilityRole="alert">
-            <View style={styles.offDash} />
-            <AppText style={styles.offText} numberOfLines={1}>
-              {rejoinM != null && rejoinM > 20 && status !== 'neuberechnung'
-                ? `Abseits der Tour, zurück in ${formatDistance(rejoinM).value} ${formatDistance(rejoinM).unit}`
-                : 'Abseits der Tour'}
-            </AppText>
+          <View style={styles.offCard} accessibilityRole="alert">
+            <View style={styles.offRow}>
+              <View style={styles.offDash} />
+              <AppText style={styles.offText} numberOfLines={1}>
+                {rejoinM != null && rejoinM > 20 && status !== 'neuberechnung'
+                  ? `Abseits der Tour, zurück in ${formatDistance(rejoinM).value} ${formatDistance(rejoinM).unit}`
+                  : 'Abseits der Tour'}
+              </AppText>
+            </View>
+            {/* Selbst wählen statt warten (Martin 11.11.): wer nicht umdrehen kann, nimmt gleich eine neue Route.
+                Ohne Tipp führt die App nach 8 s zurück, nach zweimal Ignorieren plant sie selbst neu. */}
+            {status !== 'neuberechnung' && (
+              <View style={styles.offBtns}>
+                {!(rejoinM != null && rejoinM > 20) && (
+                  <Pressable accessibilityRole="button" onPress={() => controls.choose('rejoin')} style={({ pressed }) => [styles.offBtn, pressed && styles.offPressed]}>
+                    <AppText style={styles.offBtnText}>Zurück zur Tour</AppText>
+                  </Pressable>
+                )}
+                <Pressable accessibilityRole="button" onPress={() => controls.choose('fresh')} style={({ pressed }) => [styles.offBtn, styles.offBtnMain, pressed && styles.offPressed]}>
+                  <AppText style={[styles.offBtnText, styles.offBtnMainText]}>Neue Route ab hier</AppText>
+                </Pressable>
+              </View>
+            )}
           </View>
         )}
         {/* Funk: wer gerade spricht (Funk Konzept, Koray 10.11.) */}
@@ -1102,8 +1118,15 @@ const styles = StyleSheet.create({
   skipText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
   skipBtn: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   skipBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
-  offTour: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: Colors.overlay, borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
   curve: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: Colors.overlay, borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
+  offCard: { alignSelf: 'stretch', gap: Spacing.m, backgroundColor: Colors.overlay, borderRadius: Radius.l, padding: Spacing.m },
+  offRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingHorizontal: Spacing.xs },
+  offBtns: { flexDirection: 'row', gap: Spacing.s },
+  offBtn: { flex: 1, height: 52, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.m },
+  offBtnMain: { backgroundColor: Colors.signal },
+  offBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
+  offBtnMainText: { color: Colors.onSignal },
+  offPressed: { transform: [{ scale: 0.985 }], opacity: 0.9 },
   offDash: { width: 22, height: 4, borderRadius: 2, backgroundColor: Colors.warn },
   offText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
   tourName: {

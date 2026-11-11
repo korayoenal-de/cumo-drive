@@ -118,6 +118,8 @@ export type NavControls = {
   skipTo: (index: number, fast?: boolean) => Promise<SkipUndo | null>;
   /** Stand vor dem Überspringen wiederherstellen */
   restore: (u: SkipUndo) => void;
+  /** Bei einer Abweichung selbst wählen: zurück zur Tour oder neue Route ab hier */
+  choose: (mode: 'rejoin' | 'fresh') => void;
 };
 
 export type SkipUndo = { route: NavRoute; done: number; hint: number };

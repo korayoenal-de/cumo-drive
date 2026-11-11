@@ -153,7 +153,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
 
   /** Neue Route nach einer Abweichung holen, höchstens alle 20 s. */
   const reroute = useCallback(
-    async (pos: LatLon, heading?: number | null) => {
+    /** mode: auto nach Regel, rejoin oder fresh, wenn die Fahrerin selbst gewählt hat (Martin 11.11.) */
+    async (pos: LatLon, heading?: number | null, mode: 'auto' | 'rejoin' | 'fresh' = 'auto') => {
       const r = reqRef.current;
       const current = routeRef.current;
       if (!r || !current || reroutingRef.current) return;
@@ -161,7 +162,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       lastRerouteRef.current = Date.now();
       setState((s) => ({ ...s, status: 'neuberechnung' }));
       // Zweimal die Rückführung ignoriert: bewusst anders gefahren, also ab hier neu planen (Koray 11.11.)
-      const fresh = ignoredRef.current >= 2;
+      const fresh = mode === 'fresh' || (mode === 'auto' && ignoredRef.current >= 2);
       voice().say(fresh ? 'Neue Route ab hier.' : 'Route wird neu berechnet.', true);
       const ctrl = new AbortController();
       abortRef.current = ctrl;
@@ -460,6 +461,16 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     [setRoute, voice],
   );
 
+  /** Wahl bei einer Abweichung: zurück zur Tour oder neue Route ab hier, sofort */
+  const choose = useCallback(
+    (mode: 'rejoin' | 'fresh') => {
+      const pos = posRef.current;
+      if (!pos || !activeRef.current) return;
+      void reroute(pos.p, pos.h, mode);
+    },
+    [reroute],
+  );
+
   const restore = useCallback(
     (u: SkipUndo) => {
       if (!activeRef.current) return;
@@ -484,5 +495,5 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     setState((s) => ({ ...INITIAL, voice: s.voice }));
   }, [req?.tour, cleanup]);
 
-  return [state, { start, stop, pause, setVoice, say, simulate, skipTo, restore }];
+  return [state, { start, stop, pause, setVoice, say, simulate, skipTo, restore, choose }];
 }
