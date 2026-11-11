@@ -34,10 +34,32 @@ Regeln:
 * Alle Animationen nutzen `Motion` aus `theme.ts`. Keine linearen Übergänge.
 * Ebenen und Optionen (Bottom Sheets, schwebende Aktionen, Toasts, Listen) erscheinen ohne Feder: Auslaufkurve EASE_OUT, Sheets 300 ms, Optionen 260 ms, gestaffelt 45 ms (components/ui/motion.ts). Seit 6.11. nachmittags, weil die Federn dort noch nachwippten.
 * Federn `press` (Drücken) und `snap` nur noch für Gesten und Druck (Blatt ziehen, Tab Leiste, Drücken), ohne Überschwingen. Keine Standard Feder von Reanimated.
-* Bedienelemente ändern ihre Größe höchstens um `Motion.pop` (2 Prozent): Puls beim Speichern, aktiver Tab in der Tab Leiste, Punkt beim Ziehen (die Hälfte). Gedrückt immer `Motion.pressScale` (98,5 Prozent), überall gleich. Das sind 20 Prozent der früheren Ausschläge (3 bis 15 Prozent).
+* Bedienelemente ändern ihre Größe höchstens um `Motion.pop` (2 Prozent): Puls beim Speichern, Punkt beim Ziehen (die Hälfte). Gedrückt immer `Motion.pressScale` (98,5 Prozent), überall gleich. Das sind 20 Prozent der früheren Ausschläge (3 bis 15 Prozent).
 * Eigene Werte haben nur die Navigationssymbole (Puls 6 Prozent nach dem Aufbau, 10 Prozent bei Symbolen ohne Pfeil) und der Stern der Legende im Fahrspaß Pegel (125 Prozent).
 * Pfeil kurz vor dem Manöver: die Linie baut sich bis zur Basis der Spitze auf, dann füllt sich die ganze Spitze auf einmal, danach der Puls. Umgebung und schwacher Pfeil liegen in einer Ebene, so ist im Kreisverkehr nur ein Weg zu sehen.
 * Bei „Bewegung reduzieren“ nur Deckkraft, kein Aufbau, kein Puls.
+
+### Wann sich etwas bewegt (Regeln vom 11.11.2026)
+Bewegung ist ein Akzent, kein Schmuck. Sie steht nur dort, wo sie etwas erklärt. Es gibt genau sechs Anlässe:
+
+1. **Auswahl gleitet.** In einer festen Leiste gibt es eine einzige Markierung, und sie wandert zur neuen Auswahl: Tab Leiste, Glaspille in der Community. Eine Feder (`snap`) für jede Entfernung, über drei Plätze also dreimal so schnell wie zum Nachbarn. Beim ersten Erscheinen steht sie sofort richtig.
+2. **Der Finger führt.** Was man zieht, folgt dem Finger eins zu eins und rastet beim Loslassen mit `snap` ein: Blatt, Richtungsregler, Bewertungsregler, Punkte. Das läuft auf dem UI Thread, damit es auch beim Planen nicht hakt.
+3. **Aufklappen am Ort.** Optionen erscheinen dort, wo getippt wurde, gestaffelt mit EASE_OUT (siehe oben). Der Rest rückt mit `SOFT_LAYOUT` nach.
+4. **Zustand wird Ergebnis.** Laden und Ergebnis stehen an derselben Stelle und gehen ineinander über: Zurück Pille beim Anpassen, Ladeknopf, Speichern.
+5. **Druck.** Jede Taste gibt mit `pressScale` nach, auch Chips.
+6. **Bedeutung.** Eigene Animationen haben nur der Manöverpfeil, die Legende im Fahrspaß Pegel und der Ladekreis.
+
+Bewusst ohne Bewegung:
+* Chips und Textreiter (Tour planen, Rundtour) wechseln sofort. Sie liegen einzeln, dort gibt es keine Fläche, die wandern könnte.
+* Seiten und Listen blenden beim Tabwechsel nicht ein. Inhalt ist sofort da (Prinzip 8).
+* Keine Dauerschleifen außer beim Laden. Nie zwei Bewegungen gleichzeitig, die um Aufmerksamkeit bitten.
+* Inhalt federt im Blatt nicht über seine Enden hinaus: oben übernimmt das Blatt, unten endet er, wo er endet.
+
+### Gesten im Blatt (11.11.2026)
+* Ein Element, das man zieht, entscheidet beim Aufsetzen des Fingers, ob es die Berührung nimmt. Nimmt es sie, scrollt für diese Berührung nichts. Beispiel Richtungsregler: Ring und Beschriftung gehören dem Regler, Mitte und Ecken der Seite.
+* Waagerechte Regler nehmen nur waagerechte Bewegung, senkrecht scrollt die Seite weiter (Bewertungsregler).
+* Klein und halb zieht jede senkrechte Bewegung das Blatt. Ganz offen scrollt der Inhalt; steht er oben, folgt das Blatt beim Runterziehen dem Finger.
+* Passt der Inhalt ganz hinein, scrollt nichts.
 
 ## 4. Inhalt zeigt sich selbst
 * Touren mit Mini Streckenbild, Zahlen in Tabellenziffern, Status als getönte Plakette statt Text im Fließtext.

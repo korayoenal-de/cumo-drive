@@ -122,6 +122,8 @@ Statistik für Autos (Kurven, Querbeschleunigung, Schnitt, Spitze) und Bewertung
 
 Die App plant über den eigenen GraphHopper Server mit Sportwagen Gewichtung. Ist er nicht erreichbar, fällt sie auf Valhalla zurück.
 
+**Nur das Geänderte neu planen (11.11.):** Wird ein Punkt verschoben, eingefügt oder entfernt oder das Profil einer Etappe geändert, plant die App nur das Stück zwischen den unveränderten Nachbarpunkten. Die Etappen davor und danach bleiben genau so stehen, auch bei gespeicherten und importierten Touren. Die Fahrzeit je Etappe kommt vom Router (leg_time). Fährt die Tour an der Nahtstelle dadurch hin und zurück, wird wie früher alles geplant. „Route planen“ und ein anderes Vermeiden planen immer alles (lib/plan-window.ts).
+
 | Profil | Wo | Wirkung |
 |---|---|---|
 | Kurvig | Rundtour und Tour planen | bevorzugt Kurven, meidet Orte, distance_influence 5 |
@@ -258,6 +260,10 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 | Datum | Entscheidung |
 |---|---|
+| 11.11. | Bewegung nur zu sechs Anlässen (Auswahl gleitet, Finger führt, Aufklappen am Ort, Zustand wird Ergebnis, Druck, Bedeutung); Markierung der Tab Leiste und der Glaspille gleitet |
+| 11.11. | Blatt zieht auf dem UI Thread, Inhalt federt nicht über seine Enden; Richtungsregler nimmt die Berührung auf dem Ring sofort |
+| 11.11. | Rückfragen überall als Blatt, kein „Nochmal tippen“; Systemschrift höchstens 120 % |
+| 11.11. | Nur geänderte Etappen neu planen, der Rest der Tour bleibt stehen |
 | 10.11. | Keine fremden Bewertungen für Cafés, Restaurants und Hotels (Tripadvisor zu enge Regeln, Foursquare ohne Speichern und mit alten Daten); später eigene Bewertungen und Club Tipps |
 | 10.11. | Tab „Touren“ statt Meine Touren, Texte gleich; eigene Tab Symbole; Haptik gezielt (Build 21) |
 | 10.11. | CarPlay wird bei jeder Änderung an Karte und Navigation mitgedacht |

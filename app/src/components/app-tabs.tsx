@@ -11,7 +11,7 @@ import { router } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
 import { useEffect, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { makeMutable, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassPanel } from '@/components/ui/glass-panel';
@@ -23,6 +23,10 @@ import { useUnreadMessages, useUnreadWatcher } from '@/lib/drivers';
 import { useInviteCount, useInvitesWatcher } from '@/components/group/invites-banner';
 import { useRide, type RideState } from '@/lib/group/ride';
 import { expandTabBar, tabBarCompact as compact } from '@/lib/tab-bar';
+
+/** Stelle der Markierung in der Leiste (0 bis 3, dazwischen beim Gleiten); eine für alle Tabs */
+const tabPos = makeMutable(0);
+let tabPosPlaced = false;
 
 const BAR_H = 64;
 const SHRINK = 0.2;
@@ -62,11 +66,15 @@ function Dock({ children }: { children?: ReactNode }) {
     const c = compact.get();
     return { transform: [{ translateY: (BAR_H * SHRINK * c) / 2 }, { scale: 1 - SHRINK * c }] };
   });
+  /** Breite eines Tabs, aus der Breite der Leiste */
+  const tabW = useSharedValue(0);
+  const pillStyle = useAnimatedStyle(() => ({ width: tabW.get(), opacity: tabW.get() > 0 ? 1 : 0, transform: [{ translateX: tabPos.get() * tabW.get() }] }));
   return (
     <View pointerEvents="box-none" style={[styles.dock, { paddingBottom: Math.max(insets.bottom - 6, Spacing.s) }]}>
       {active && <RideAccessory ride={ride} />}
-      <Animated.View style={[styles.barWrap, barStyle]}>
+      <Animated.View style={[styles.barWrap, barStyle]} onLayout={(e) => tabW.set((e.nativeEvent.layout.width - 2 * Spacing.xs) / TABS.length)}>
         <GlassPanel style={styles.bar} fallback={Colors.overlaySurface} tint="rgba(11,11,12,0.5)">
+          <Animated.View pointerEvents="none" style={[styles.pill, pillStyle]} />
           {children}
         </GlassPanel>
       </Animated.View>
@@ -77,12 +85,16 @@ function Dock({ children }: { children?: ReactNode }) {
 type TabProps = TabTriggerSlotProps & { tab: (typeof TABS)[number] };
 
 function TabButton({ tab, isFocused, ref: _ref, ...rest }: TabProps) {
-  const on = useSharedValue(isFocused ? 1 : 0);
+  const index = TABS.indexOf(tab);
   useEffect(() => {
-    on.set(withSpring(isFocused ? 1 : 0, Motion.snap));
-    if (isFocused) expandTabBar();
-  }, [isFocused, on]);
-  const pill = useAnimatedStyle(() => ({ opacity: on.get(), transform: [{ scale: 1 - Motion.pop + on.get() * Motion.pop }] }));
+    if (!isFocused) return;
+    // Die Markierung gleitet zum neuen Tab (Koray 11.11., Regel „Auswahl gleitet“): eine Feder für jede
+    // Entfernung, über drei Tabs also dreimal so schnell wie zum Nachbarn. Beim Start steht sie sofort richtig.
+    if (tabPosPlaced) tabPos.set(withSpring(index, Motion.snap));
+    else tabPos.set(index);
+    tabPosPlaced = true;
+    expandTabBar();
+  }, [isFocused, index]);
   return (
     <Pressable
       {...rest}
@@ -90,7 +102,6 @@ function TabButton({ tab, isFocused, ref: _ref, ...rest }: TabProps) {
       accessibilityLabel={tab.label}
       accessibilityState={{ selected: !!isFocused }}
       style={styles.tab}>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.pill, pill]} />
       <View>
         <TabIcon name={tab.icon} on={!!isFocused} color={isFocused ? Colors.text : Colors.muted} size={24} />
         {tab.name === 'community' && <UnreadBubble />}
@@ -144,7 +155,7 @@ const styles = StyleSheet.create({
   barWrap: { borderRadius: BAR_H / 2, boxShadow: Shadow.float },
   bar: { height: BAR_H, borderRadius: BAR_H / 2, padding: Spacing.xs, flexDirection: 'row' },
   tab: { flex: 1, height: BAR_H - 8, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: (BAR_H - 8) / 2 },
-  pill: { backgroundColor: Colors.pressTint, borderRadius: (BAR_H - 8) / 2 },
+  pill: { position: 'absolute', left: Spacing.xs, top: Spacing.xs, height: BAR_H - 8, backgroundColor: Colors.pressTint, borderRadius: (BAR_H - 8) / 2 },
   label: { alignSelf: 'stretch', textAlign: 'center', paddingHorizontal: 2, fontFamily: Fonts.medium, fontSize: Type.caption, color: Colors.muted },
   labelOn: { fontFamily: Fonts.semibold, color: Colors.text },
   accessory: { height: 52, borderRadius: 26, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingHorizontal: Spacing.l },
