@@ -81,21 +81,39 @@ export function DirectionDial({
    * Die Geste entscheidet schon beim Aufsetzen des Fingers: auf Ring oder Beschriftung übernimmt sie und das
    * Scrollen ist für diese Berührung aus; in der Mitte (Zufall) und in den Ecken gibt sie ab, dort scrollt die Seite.
    */
+  /** 1: diese Berührung liegt auf dem Ring und gehört dem Regler */
+  const own = useSharedValue(0);
   const pan = Gesture.Pan()
     .manualActivation(true)
     .shouldCancelWhenOutside(false)
     .onTouchesDown((e, manager) => {
       const t = e.changedTouches[0];
       const r = t ? Math.hypot(t.x / scale - C, t.y / scale - C) : 0;
-      if (e.numberOfTouches === 1 && r > RING_IN && r < RING_OUT) manager.activate();
-      else manager.fail();
+      if (e.numberOfTouches === 1 && r > RING_IN && r < RING_OUT) {
+        // sofort reagieren, auch auf ein kurzes Tippen; übernommen wird mit der ersten Bewegung
+        // (beim Aufsetzen selbst nimmt die Geste das Aktivieren noch nicht an, Fehler vom 11.11.)
+        own.set(1);
+        scheduleOnRN(begin);
+        track(t.x, t.y);
+      } else {
+        own.set(0);
+        manager.fail();
+      }
     })
-    .onStart((e) => {
-      scheduleOnRN(begin);
-      track(e.x, e.y);
+    .onTouchesMove((_e, manager) => {
+      if (own.get()) manager.activate();
     })
-    .onUpdate((e) => track(e.x, e.y))
-    .onFinalize(() => scheduleOnRN(end));
+    .onTouchesUp((_e, manager) => {
+      own.set(0);
+      manager.end();
+    })
+    .onUpdate((e) => {
+      if (own.get()) track(e.x, e.y);
+    })
+    .onFinalize(() => {
+      own.set(0);
+      scheduleOnRN(end);
+    });
 
   const step = (n: number) => {
     const i = cur ? DIRECTIONS.indexOf(cur) : n > 0 ? -1 : 0;
