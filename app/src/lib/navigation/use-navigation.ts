@@ -9,6 +9,7 @@ import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { haversine, type LatLon } from '../tour';
+import { replanFromHere } from './replan';
 import { fetchNavRouteDetail, rejoinNavRoute } from './route';
 import { pointAtKm, progress, snapToRoute } from './tracker';
 import type { NavControls, NavRequest, NavRoute, NavState, SkipUndo } from './types';
@@ -83,9 +84,12 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const pausedRef = useRef(false);
   /** letzte Position (GPS oder Simulation), für Überspringen */
   const posRef = useRef<{ p: LatLon; h: number | null } | null>(null);
+  /** Wie oft hintereinander die Rückführung auf die Tour ignoriert wurde */
+  const ignoredRef = useRef(0);
 
   useEffect(() => {
     reqRef.current = req;
+    ignoredRef.current = 0;
   }, [req]);
 
   const voice = useCallback(() => {
@@ -156,11 +160,22 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       reroutingRef.current = true;
       lastRerouteRef.current = Date.now();
       setState((s) => ({ ...s, status: 'neuberechnung' }));
-      voice().say('Route wird neu berechnet.', true);
+      // Zweimal die Rückführung ignoriert: bewusst anders gefahren, also ab hier neu planen (Koray 11.11.)
+      const fresh = ignoredRef.current >= 2;
+      voice().say(fresh ? 'Neue Route ab hier.' : 'Route wird neu berechnet.', true);
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       try {
-        const { route } = await rejoinNavRoute(r, current, doneIndexRef.current, pos, ctrl.signal, heading);
+        let route: NavRoute;
+        if (fresh) {
+          const out = await replanFromHere(r, pos, ctrl.signal);
+          reqRef.current = out.req;
+          route = out.route;
+          ignoredRef.current = 0;
+        } else {
+          route = (await rejoinNavRoute(r, current, doneIndexRef.current, pos, ctrl.signal, heading)).route;
+          ignoredRef.current += 1;
+        }
         if (!activeRef.current) return;
         setRoute(route);
         setState((s) => ({ ...s, status: 'laeuft', route, error: undefined }));
@@ -186,6 +201,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const snap = snapToRoute(route, fix.pos, hintRef.current, (fix.speedKmh ?? 0) >= 12 ? fix.heading : null);
       hintRef.current = snap.index;
       if (snap.offM <= OFF_ROUTE_M) doneIndexRef.current = Math.max(doneIndexRef.current, snap.index);
+      // Nach einer Rückführung wieder 1 km auf der Route: die Abweichung war ein Versehen, Zählung von vorn
+      if (snap.offM <= OFF_ROUTE_M && snap.km > 1) ignoredRef.current = 0;
       const pr = progress(route, snap.km);
       const end = route.shape[route.shape.length - 1];
       const toEndM = haversine(fix.pos, end);
