@@ -1,6 +1,6 @@
 /**
  * Inhalt der Landingpage als HTML für den Web Build (statisch, damit Suchmaschinen alles lesen).
- * Gestaltung nach dem Entwurf vom 6.11. (Design Artefakt URTXEm5yCFeJkmvkhZbTWz), Inhalt auf dem Stand vom 10.11.2026.
+ * Gestaltung nach dem Entwurf vom 6.11. (Design Artefakt URTXEm5yCFeJkmvkhZbTWz), Inhalt auf dem Stand vom 11.11.2026 (Abläufe, Namen und Pegel wie in der App).
  * Bilder liegen unter public/landing. Drei Bildschirmfotos (schnelle-runde, route-paesse, meine-touren) stammen aus einem
  * älteren Stand und werden per CSS beschnitten: oben die alte Reiterleiste, unten Profil "Sehr kurvig" und ein Hinweistext.
  * Login und Registrieren führen auf /login und /registrieren, der Web Planer auf /planer.
@@ -12,33 +12,39 @@
 const SIGNAL = '#E2461C';
 const EMPTY = '#2C2C30';
 
-/** Sieben Dreiecke des Fahrspaß Pegels (Variante E), Reihenfolge wie im Logo */
-const TRIANGLES = [
-  '12.00,16.20 7.29,22.09 16.71,22.09',
-  '8.72,14.62 1.17,14.61 7.05,21.98',
-  '7.91,11.07 3.21,5.16 1.11,14.35',
-  '10.18,8.22 11.87,0.86 3.37,4.95',
-  '13.82,8.22 20.63,4.95 12.13,0.86',
-  '16.09,11.07 22.89,14.35 20.79,5.16',
-  '15.28,14.62 16.95,21.98 22.83,14.61',
-];
-/** Füllreihenfolge im Uhrzeigersinn ab unten links */
-const FILL_ORDER = [1, 2, 3, 4, 5, 6, 0];
+/**
+ * Fahrspaß Pegel und Logo (Variante S3, seit 7.11. wie in der App): acht Segmente mit rundem Rücken um einen
+ * achtzackigen Stern, der als Negativform frei bleibt. Gefüllt ab 6 Uhr im Uhrzeigersinn.
+ */
+const SEGS = Array.from({ length: 8 }, (_, k) => {
+  const RO = 11.4;
+  const RI = 4.2;
+  const RD = 0.22;
+  const at = (r: number, a: number): [number, number] => [12 + r * Math.sin((a * Math.PI) / 180), 12 - r * Math.cos((a * Math.PI) / 180)];
+  const l = (p: [number, number], q: [number, number], t: number): [number, number] => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+  const P = (p: [number, number]) => `${p[0].toFixed(2)},${p[1].toFixed(2)}`;
+  const c = 202.5 + k * 45;
+  const A = at(RI, c);
+  const L = at(RO, c - 22.5);
+  const R = at(RO, c + 22.5);
+  const a1 = l(A, L, RD);
+  const a2 = l(A, R, RD);
+  return `M${P(a2)} L${P(R)} A${RO},${RO} 0 0 0 ${P(L)} L${P(a1)} Q${P(A)} ${P(a2)} Z`;
+});
 
 function mark(filled: number, attrs: string): string {
-  const on = new Set(FILL_ORDER.slice(0, filled));
-  const polys = TRIANGLES.map((p, i) => `<polygon points="${p}" fill="${on.has(i) ? SIGNAL : EMPTY}"></polygon>`).join('');
-  return `<svg viewBox="0 0 24 24" ${attrs}>${polys}</svg>`;
+  const paths = SEGS.map((d, i) => `<path d="${d}" fill="${i < filled ? SIGNAL : EMPTY}"></path>`).join('');
+  return `<svg viewBox="0 0 24 24" ${attrs}>${paths}</svg>`;
 }
 
-const LOGO = (size: number, extra = '') => mark(7, `width="${size}" height="${size}" aria-hidden="true"${extra}`);
+const LOGO = (size: number, extra = '') => mark(8, `width="${size}" height="${size}" aria-hidden="true"${extra}`);
 
 const LEVELS: [string, number][] = [
   ['Nett', 1],
   ['Lohnend', 3],
-  ['Stark', 4],
-  ['Traumstraße', 6],
-  ['Legende', 7],
+  ['Stark', 5],
+  ['Traumstraße', 7],
+  ['Legende', 8],
 ];
 
 const GAUGES = LEVELS.map(
@@ -220,7 +226,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 28px;">
       <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 16px; box-sizing: border-box; line-height: 1.3; border-radius: 18px; background: rgba(76,195,138,0.14); color: #4CC38A; font: 700 15px Inter, sans-serif;"><span style="width: 8px; height: 8px; border-radius: 4px; background: #4CC38A; flex-shrink: 0;"></span>Beta für iPhone und CarPlay, jetzt testen</span>
       <h1 class="cd-h1" style="font-size: clamp(52px, 5.6vw, 80px);">Kurven statt Kilometer.</h1>
-      <p class="cd-lead">Die Navi App für Sportwagen. Cumo Drive plant kurvige Touren für Autos, nicht für Motorräder: Breite, Belag und Sperrungen geprüft, Großstädte und Ortsdurchfahrten gemieden, Pässe und Traumstrecken mit Ansage. Allein, mit deiner Gruppe oder bei einer Ausfahrt aus der Community.</p>
+      <p class="cd-lead">Die Navi App für Sportwagen. Cumo Drive plant kurvige Touren für Autos, nicht für Motorräder: Breite, Belag und Sperrungen geprüft, Großstädte und Ortsdurchfahrten gemieden, Pässe und Traumstrecken mit Ansage und Fahrspaß Pegel. Allein, mit deiner Gruppe und Funk oder bei einer Ausfahrt aus der Community.</p>
       <div style="display: flex; gap: 12px; flex-wrap: wrap;">
         <a href="/registrieren" class="cd-btn cd-btn-signal">14 Tage kostenlos fahren</a>
         <a href="#planen" class="cd-btn cd-btn-surface">So funktioniert es</a>
@@ -252,20 +258,20 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
 <section id="planen" class="cd-wrap" style="padding-top: 140px; padding-bottom: 70px;">
   <div class="cd-two">
     <div class="cd-phones" style="flex: 0 0 auto; display: flex; gap: 24px; align-items: flex-start;">
-      <div class="cd-phone" style="width: 270px; max-width: 70vw;"><img src="/landing/schnelle-runde.jpg" alt="Schnelle Runde: Länge 100 km, Richtung Südost" style="aspect-ratio: 760 / 1110; object-fit: cover; object-position: top;"></div>
+      <div class="cd-phone" style="width: 270px; max-width: 70vw;"><img src="/landing/schnelle-runde.jpg" alt="Rundtour: Länge 100 km, Richtung Südost" style="aspect-ratio: 760 / 1110; object-fit: cover; object-position: top;"></div>
       <div class="cd-phone cd-hide-sm" style="width: 270px; margin-top: 96px;"><img src="/landing/route-paesse.jpg" style="aspect-ratio: 760 / 1300; object-fit: cover; object-position: bottom;" alt="Route von Meran über Jaufenpass und Timmelsjoch: 157 km, 2:35 h, 118 Kurven, Höhenprofil und Etappen Check bestanden"></div>
     </div>
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">01  Planen</span>
       <h3 class="cd-h3">Feierabendrunde in drei Tipps. Alpentour Etappe für Etappe.</h3>
-      <p class="cd-body">Die schnelle Runde startet an deinem Standort: Länge oder Dauer wählen, eine Richtung oder Zufall, und die Runde wird kurvig geplant. Gefällt sie nicht, würfelst du neu. Gibt es in der Gegend keine bessere Runde, sagt dir die App das ehrlich, statt dir eine schlechtere zu zeigen.</p>
-      <p class="cd-body">Für die große Tour setzt du Start, Zwischenziele und Ziel. Jede Etappe bekommt ihr eigenes Profil, etwa schnell nach München und dann kurvig bis Imst. Pässe tippst du direkt auf der Karte an und baust sie mit einem Tipp ein.</p>
+      <p class="cd-body"><b style="color: #F4F4F2;">Rundtour</b> startet an deinem Standort: Länge oder Dauer wählen, am Ring die Richtung ziehen oder Zufall, und die Runde wird kurvig geplant, Pässe in der Nähe gleich mit. Gefällt sie nicht, würfelst du neu. Gibt es in der Gegend keine bessere Runde, sagt dir die App das ehrlich, statt dir eine schlechtere zu zeigen.</p>
+      <p class="cd-body"><b style="color: #F4F4F2;">Tour planen</b> ist für die große Fahrt: Start, Zwischenziele und Ziel, jede Etappe mit eigenem Profil, etwa schnell nach München und dann kurvig bis Imst. Oder du planst direkt auf der Karte: Punkte halten und verschieben, die Linie lange drücken für ein neues Zwischenziel. Neu gerechnet wird nur das Stück, das sich ändert, und jede Änderung lässt sich rückgängig machen.</p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <span class="cd-chip">Penser Joch <span style="color: #9A9A9F;">+7 km</span></span>
-        <span class="cd-chip">Brennerpass <span style="color: #9A9A9F;">+14 km</span></span>
-        <span class="cd-chip">Gampenpass <span style="color: #9A9A9F;">+15 km</span></span>
+        <span class="cd-chip">${mark(8, 'width="18" height="18" aria-hidden="true"')}Timmelsjoch <span style="color: #E8B03A;">+12 min</span></span>
+        <span class="cd-chip">${mark(7, 'width="18" height="18" aria-hidden="true"')}Penser Joch <span style="color: #E8B03A;">+9 min</span></span>
+        <span class="cd-chip">${mark(5, 'width="18" height="18" aria-hidden="true"')}Gampenpass <span style="color: #E8B03A;">+18 min</span></span>
       </div>
-      <p class="cd-body" style="font-size: 15px;">Pässe in der Nähe erscheinen je Etappe als Vorschlag mit Umweg in Kilometern. Rundtouren ziehen sanft in die Fahrregionen, vom Schwarzwald über die Vogesen bis in die Dolomiten.</p>
+      <p class="cd-body" style="font-size: 15px;">Highlights und Pässe erscheinen je Etappe mit Pegel und Umweg in Minuten, aber nur, wenn sie einen sinnvollen Bogen ergeben. Unterwegs planst du Super Plus, Aussicht, Mittag und Kaffee ein, sortiert nach Kilometer. Zum Schluss bekommt jede Tour ihren Fahrspaß Wert von 0 bis 100, von Gemütlich bis Legendär.</p>
     </div>
   </div>
 </section>
@@ -280,7 +286,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       <span class="cd-label">02  Highlights und Fahrspaß Pegel</span>
       <h3 class="cd-h3">Jede Strecke hat ihren Pegel. Das Pordoijoch ist Legende.</h3>
       <p class="cd-body">Pässe, Bergrennstrecken, Rallyeprüfungen und Traumstraßen stehen nach Fahrspaß gerankt in deiner Tour. Antippen zeigt den Abschnitt auf der Karte mit Länge, Kehren, Höhe und Wintersperre.</p>
-      <p class="cd-body">Nach der Fahrt gibst du jedem gefahrenen Highlight Daumen hoch oder runter. So wandert der Pegel mit dem, was Fahrer wirklich erleben.</p>
+      <p class="cd-body">Nach der Fahrt gibst du jedem gefahrenen Highlight Daumen hoch oder runter. So wandert der Pegel mit dem, was Fahrer wirklich erleben. Die ganze Tour bekommt dazu ihren Fahrspaß Wert, gerechnet aus Kurven, Traumstrecken, Pässen und Fluss.</p>
       <div class="cd-card" style="padding: 24px; gap: 18px;">
         <span class="cd-label">Fünf Stufen</span>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between;">${GAUGES}
@@ -304,7 +310,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       <span class="cd-label">03  Navigation</span>
       <h3 class="cd-h3">„In 950 Metern beginnt der Jaufenpass. 20 Kehren.“</h3>
       <p class="cd-body">Kurz vor jedem Highlight kommt die Ansage mit Karte und Pegel. Bei einer Legende läuft die Stern Animation. Dazu 42 eigene Abbiegesymbole, die sich vor dem Manöver aufbauen.</p>
-      <div class="cd-grid2" style="padding-top: 8px;">${smallCard('Kurven mit Ansage', 'Scharfe Kurven und Kehren 150 m vorher, nur außerorts ab 70 km/h.')}${smallCard('Ankunft nach deinem Tempo', 'Restzeit und Ankunft lernen laufend mit, wie du wirklich fährst.')}${smallCard('Pause mit einem Tipp', 'Für den Kaffee am Pass: Ansagen und Zeit stehen, bis du weiterfährst.')}${smallCard('Auf dem Sperrbildschirm', 'Die Live Activity zeigt das nächste Manöver, ohne dass du die App öffnest. Die Stimme der Ansagen wählst du mit Hörprobe.')}${smallCard('Tempo im Blick', 'Dein Tempo und das erlaubte Tempo unten links. Zu schnell färbt sich nur die Fläche, ohne Ton.')}${smallCard('Abschnitt auslassen', 'Lange auf das Manöver drücken, schon geht es direkt zum nächsten Zwischenziel. Rückgängig inklusive.')}
+      <div class="cd-grid2" style="padding-top: 8px;">${smallCard('Kurven mit Ansage', 'Scharfe Kurven und Kehren 150 m vorher, nur außerorts ab 70 km/h.')}${smallCard('Ankunft nach deinem Tempo', 'Restzeit und Ankunft lernen laufend mit, wie du wirklich fährst.')}${smallCard('Pause mit einem Tipp', 'Für den Kaffee am Pass: Ansagen und Zeit stehen, bis du weiterfährst.')}${smallCard('Auf dem Sperrbildschirm', 'Die Live Activity zeigt das nächste Manöver, ohne dass du die App öffnest. Die Stimme der Ansagen wählst du mit Hörprobe.')}${smallCard('Tempo im Blick', 'Dein Tempo und das erlaubte Tempo unten links. Zu schnell färbt sich nur die Fläche, ohne Ton.')}${smallCard('Abschnitt auslassen', 'Lange auf das Manöver drücken, schon geht es direkt zum nächsten Zwischenziel. Rückgängig inklusive.')}${smallCard('Abseits der Tour', 'Verfahren? Eine gelbe Linie führt ohne Wenden zurück. Fährst du bewusst anders, wählst du Neue Route ab hier, und die Tour wird über die offenen Ziele neu geplant.')}${smallCard('Bremshinweis', 'Vor engen Kurven passend zu deinem Tempo, damit du nicht zu schnell hineinfährst.')}
       </div>
     </div>
   </div>
@@ -350,12 +356,13 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
         <span class="cd-label">04  Gruppenfahrt</span>
         <h3 class="cd-h3">Solo oder Gruppe. Direkt im Losfahren Knopf.</h3>
-        <p class="cd-body">Lade bis zu fünf Mitfahrer mit ihrem Namen ein. Alle fahren dieselbe Route und sehen sich live auf der Karte. Die Lead sagt Tankstopp oder Pause mit einem Tipp an, bei allen erscheint der Halt groß im Bild. Wer die Route verlässt, wird ohne Wenden zur nächsten Stelle zurückgeführt.</p>
+        <p class="cd-body">Lade bis zu fünf Mitfahrer mit ihrem Namen ein. Alle fahren dieselbe Route und sehen sich live auf der Karte. Über Funk sprichst du mit der Gruppe, Knopf halten und reden, immer einer nach dem anderen. Die Lead sagt Tankstopp oder Pause mit einem Tipp an, bei allen erscheint der Halt groß im Bild. Wer zurückfällt, schließt mit einem Tipp zum Halt der Lead auf, und wer eine eigene Route fährt, gibt der Gruppe automatisch Bescheid.</p>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <span class="cd-chip">Live Positionen</span>
           <span class="cd-chip">Halt ansagen</span>
           <span class="cd-chip">Kurznachrichten mit Ansage</span>
-          <span class="cd-chip">Funk <span style="color: #9A9A9F;">bald</span></span>
+          <span class="cd-chip">Funk</span>
+          <span class="cd-chip">Zum Halt aufschließen</span>
         </div>
       </div>
       <div class="cd-side" style="flex: 0 0 auto; width: 420px; max-width: 100%; display: flex; flex-direction: column; gap: 14px;">
@@ -386,7 +393,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">05  Community</span>
       <h3 class="cd-h3">Routen nachfahren. Ausfahrten finden. Fahrer kennenlernen.</h3>
-      <p class="cd-body">Die Community hat drei Bereiche. Unter Routen liegen veröffentlichte Touren zum Nachfahren, ein Tipp öffnet sie im Planer. Unter Ausfahrten verabredest du dich zu gemeinsamen Touren. Unter Drivers findest du Fahrer aus deiner Gegend und schreibst ihnen direkt.</p>
+      <p class="cd-body">Die Community hat drei Bereiche. Unter Routen liegen veröffentlichte Touren zum Nachfahren, ein Tipp öffnet sie im Planer, das Original bleibt unberührt. Unter Ausfahrten verabredest du dich zu gemeinsamen Touren, Einladungen kommen als Mitteilung. Unter Drivers findest du Fahrer aus deiner Gegend und schreibst ihnen direkt, mit allen Gesprächen an einem Ort.</p>
     </div>
     <div class="cd-side" style="flex: 0 0 auto; width: 420px; max-width: 100%;">
       <div class="cd-ride" role="img" aria-label="Beispiel einer Ausfahrt: Sellaronda am Samstag um 9 Uhr, Treffpunkt Parkplatz am Start, noch 3 Plätze frei, mit Knopf Mitfahren anfragen">
@@ -404,11 +411,11 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       </div>
     </div>
   </div>
-  <div class="cd-grid3">${featureCard('route', 'Routen', 'Veröffentlichte Touren anderer Fahrer, etwa die Sellaronda groß und klein. Antippen öffnet eine Kopie im Planer, das Lesezeichen legt sie unter Touren ab.')}${featureCard('calendar', 'Ausfahrten', 'Gemeinsame Ausfahrten mit Termin, Treffpunkt und Plätzen. Du fragst an oder wirst eingeladen, der Organisator nimmt an, und im Chat klärt ihr den Rest.')}${featureCard('people', 'Drivers', 'Mitglieder mit ungefährem Wohnort auf der Karte und private Nachrichten. Was andere von dir sehen, auch deinen Fuhrpark, stellst du selbst ein.')}
+  <div class="cd-grid3">${featureCard('route', 'Routen', 'Veröffentlichte Touren anderer Fahrer, etwa die Sellaronda groß und klein. Antippen öffnet eine Kopie im Planer, das Lesezeichen legt sie unter Touren ab. Deine abgewandelte Fassung teilst du mit Hinweis auf das Original.')}${featureCard('calendar', 'Ausfahrten', 'Gemeinsame Ausfahrten mit Termin, Treffpunkt und Plätzen. Du fragst an oder wirst eingeladen, der Organisator nimmt an, und im Chat klärt ihr den Rest.')}${featureCard('people', 'Drivers', 'Mitglieder mit ungefährem Wohnort auf der Karte und private Nachrichten. Was andere von dir sehen, auch deinen Fuhrpark, stellst du selbst ein.')}
   </div>
 </section>
 
-<!-- 06 Meine Touren -->
+<!-- 06 Touren -->
 <section class="cd-wrap" style="padding-top: 70px; padding-bottom: 140px; display: flex; flex-direction: column; gap: 48px;">
   <div class="cd-two" style="flex-direction: row-reverse;">
     <div class="cd-phones" style="flex: 0 0 auto; display: flex; gap: 24px; align-items: flex-start;">
@@ -418,9 +425,9 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">06  Touren</span>
       <h3 class="cd-h3">Jede Tour bleibt. Die besten teilst du.</h3>
-      <p class="cd-body">Geplante Touren liegen in deinem Konto, in der App und im Web Planer. Ein Tipp öffnet sie so, wie du sie gespeichert hast, ohne neu zu planen. Du benennst sie um, duplizierst sie, sortierst sie in Ordner oder nach Fahrspaß und teilst sie als GPX oder KML. Touren aus anderen Apps und Navis importierst du genauso.</p>
+      <p class="cd-body">Geplante Touren liegen in deinem Konto, in der App und im Web Planer. Ein Tipp öffnet sie so, wie du sie gespeichert hast, ohne neu zu planen. Du benennst sie um, duplizierst sie, sortierst sie nach Fahrspaß und teilst sie als kurzen Link, der direkt in Cumo Drive öffnet, oder als GPX und KML für andere Navis. Touren aus anderen Apps importierst du genauso. Unter Gefahren findest du jede Fahrt wieder.</p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <span class="cd-chip">Ordner</span>
+        <span class="cd-chip">Link teilen</span>
         <span class="cd-chip">Nach Fahrspaß sortieren</span>
         <span class="cd-chip">Duplizieren</span>
         <span class="cd-chip">GPX und KML</span>
@@ -432,7 +439,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div class="cd-card">
       <span class="cd-label">Nach der Fahrt</span>
       <div class="cd-title">Statistik für Autos</div>
-      <p class="cd-body" style="font-size: 16px;">Kilometer, Kurven, Querbeschleunigung und Schnitt, je Fahrzeug. Dazu deine Bewertung von nicht gut bis sensationell, und bei nicht gut fragt die App kurz nach dem Grund.</p>
+      <p class="cd-body" style="font-size: 16px;">Kilometer, Kurven, Querbeschleunigung und Schnitt, je Fahrzeug. Dazu deine Bewertung mit bis zu fünf Sternen und ein Daumen für jedes Highlight unterwegs.</p>
     </div>
     <div class="cd-card">
       <span class="cd-label">Garage</span>
@@ -449,13 +456,13 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
         <span class="cd-label">Web Planer</span>
         <h3 class="cd-h3">Am Rechner planen. Auf dem Handy fahren.</h3>
-        <p class="cd-body">Die große Tour planst du am besten auf dem großen Bildschirm. Im Web Planer setzt du Start, Zwischenziele und Pässe auf der Karte und siehst die Highlights deiner Tour. Fertig geplant, holst du die Tour per QR Code aufs iPhone oder findest sie einfach unter Touren.</p>
+        <p class="cd-body">Die große Tour planst du am besten auf dem großen Bildschirm. Der Web Planer kann, was die App kann: Punkte und Linie mit der Maus ziehen, Highlights und Pässe je Etappe einbauen, Stopps einplanen, Rundtouren würfeln. Jede Änderung landet von selbst unter Touren und steht kurz darauf auf deinem iPhone.</p>
         <div style="display: flex; gap: 12px; flex-wrap: wrap; padding-top: 4px;">
           <a href="/planer" class="cd-btn cd-btn-surface">Web Planer öffnen</a>
         </div>
       </div>
       <div class="cd-side cd-steps" style="flex: 0 0 auto; width: 420px; max-width: 100%;">
-        <div class="cd-step"><b>01</b><div><div class="cd-title" style="font-size: 17px;">Am Rechner planen</div><p class="cd-body" style="font-size: 15px;">Start, Zwischenziele, Pässe und Profil je Etappe.</p></div></div>
+        <div class="cd-step"><b>01</b><div><div class="cd-title" style="font-size: 17px;">Am Rechner planen</div><p class="cd-body" style="font-size: 15px;">Start, Zwischenziele, Highlights und Profil je Etappe, direkt auf der Karte.</p></div></div>
         <div class="cd-step"><b>02</b><div><div class="cd-title" style="font-size: 17px;">QR Code scannen</div><p class="cd-body" style="font-size: 15px;">Die App übernimmt die Tour mit allen Stützpunkten.</p></div></div>
         <div class="cd-step"><b>03</b><div><div class="cd-title" style="font-size: 17px;">Losfahren</div><p class="cd-body" style="font-size: 15px;">Allein, mit der Gruppe oder über CarPlay.</p></div></div>
       </div>

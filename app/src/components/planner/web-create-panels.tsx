@@ -12,6 +12,8 @@ import { formatMinutes, targetKm } from '@/lib/intent';
 import { saveTour, syncLibrary } from '@/lib/library';
 import { exportTour } from '@/lib/route-file';
 import { DIRECTIONS, type Direction } from '@/lib/roundtrip';
+
+import { WebDirectionDial } from './web-direction-dial';
 import { logSignal } from '@/lib/signals';
 import { noGoodAlternative } from '@/lib/smart-roundtrip';
 import { tourFun, TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
@@ -184,8 +186,6 @@ export function RoundTripPanel(props: {
     );
   };
 
-  const grid: (Direction | 'mitte')[] = ['NW', 'N', 'NO', 'W', 'mitte', 'O', 'SW', 'S', 'SO'];
-  const arrow: Record<string, string> = { NW: '↖', N: '↑', NO: '↗', W: '←', O: '→', SW: '↙', S: '↓', SO: '↘' };
   const avoidText = [props.avoid.closures && 'Sperrungen', props.avoid.rough && 'rauer Belag', props.avoid.ferries && 'Fähren', props.avoid.tolls && 'Maut'].filter(Boolean).join(', ') || 'Nichts';
   const stepBtn = { width: 52, height: 52, borderRadius: 26, border: 'none', background: C.surface2, color: C.text, font: `700 22px ${BODY}`, cursor: 'pointer' } as const;
 
@@ -252,19 +252,7 @@ export function RoundTripPanel(props: {
         </div>
       </Section>
       <Section title="Richtung" aside={dir === 'zufall' ? 'Zufall' : DIRECTIONS.find((d) => d.id === dir)?.label}>
-        <div style={S.compass}>
-          {grid.map((g) =>
-            g === 'mitte' ? (
-              <button key={g} style={dir === 'zufall' ? S.compassOn : S.compassBtn} onClick={() => setDir('zufall')} aria-label="Zufällige Richtung" aria-pressed={dir === 'zufall'}>
-                ?
-              </button>
-            ) : (
-              <button key={g} style={dir === g ? S.compassOn : S.compassBtn} onClick={() => setDir(g)} aria-label={DIRECTIONS.find((d) => d.id === g)?.label} aria-pressed={dir === g}>
-                {arrow[g]}
-              </button>
-            ),
-          )}
-        </div>
+        <WebDirectionDial value={dir} onChange={setDir} />
       </Section>
       {PROFILE_CHOICES.length > 1 && (
         <Section title="Profil">

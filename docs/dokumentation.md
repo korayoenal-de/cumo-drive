@@ -260,6 +260,9 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 | Datum | Entscheidung |
 |---|---|
+| 11.11. | Web Planer zieht nach: Punkte und Linie mit der Maus ziehen (Laden und Rückgängig oben links), Klick auf Punkt mit Aktionen, Highlights/Pässe je Etappe mit Pegel und Umweg, Unterwegs einplanen mit +min, Richtungsring, kurze Links, Lesezeichen schaltet um, Cluster |
+| 11.11. | Landingpage auf den Stand der App: Rundtour und Tour planen, Karte direkt bearbeiten, Pegel S3, Funk, Abseits der Tour, Link teilen |
+| 11.11. | Eigene Routen in der Community ohne Lesezeichen |
 | 11.11. | Aus der Community gespeicherte Tour: Umbenennen gilt nur bei dir, „Aus Touren entfernen“ statt Löschen, Veröffentlichen erst nach einer Änderung der Strecke und dann mit „Nach einer Route von …“ |
 | 11.11. | Community Karte bündelt Pins zu Kreisen mit Zahl, Tippen zoomt heran; Server liefert später nur den Ausschnitt |
 | 11.11. | Bewegung nur zu sechs Anlässen (Auswahl gleitet, Finger führt, Aufklappen am Ort, Zustand wird Ergebnis, Druck, Bedeutung); Markierung der Tab Leiste und der Glaspille gleitet |
