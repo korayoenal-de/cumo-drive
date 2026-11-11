@@ -92,7 +92,7 @@ function CommunityProfileWeb() {
               setFound([]);
               setEditing(true);
             }}>
-            {p.homeName ? 'Ändern' : 'Angeben'}
+            {p.homeName ? 'Ändern' : 'Anlegen'}
           </button>
         </div>
       ) : (
@@ -236,74 +236,110 @@ function VehicleSheet(props: { v: Vehicle; narrow: boolean; onClose: () => void 
   );
 }
 
-/** Geburtstag, optional, wie in der App (Konzept E): TT.MM.JJJJ, die Punkte setzt das Feld selbst */
+/** Geburtstag wie in der App (E2): zugeklappt mit Ändern oder Anlegen, offen mit Speichern; die Punkte setzt das Feld selbst */
 function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => void }) {
   const { p, onSave } = props;
   const saved = birthDigits(p.birthDate);
+  const [open, setOpen] = useState(false);
   const [digits, setDigits] = useState(saved);
-  const [hint, setHint] = useState<string | null>(null);
-  const shown = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean).join('.');
+  const [show, setShow] = useState<BirthdayShow>(p.birthdayShow);
+  const [ask, setAsk] = useState(false);
+  const fmt = (d: string) => [d.slice(0, 2), d.slice(2, 4), d.slice(4, 8)].filter(Boolean).join('.');
+  const parsed = digits.length === 8 ? parseBirthday(digits) : null;
+  const iso = parsed && 'iso' in parsed ? parsed.iso : null;
+  const hint = parsed && 'hint' in parsed ? parsed.hint : null;
+  const canSave = !!iso && (digits !== saved || show !== p.birthdayShow);
   const age = ageOf(p.birthDate);
-  const commit = () => {
-    if (digits === saved) return setHint(null);
-    if (!digits) {
-      setHint(null);
-      onSave({ birthDate: null });
-      return;
-    }
-    const r = parseBirthday(digits);
-    if ('hint' in r) return setHint(r.hint);
-    setHint(null);
-    onSave({ birthDate: r.iso });
+  const sees = p.birthdayShow === 'age' ? (age != null ? `${age} Jahre` : null) : p.birthdayShow === 'birthday' ? 'nur am Geburtstag' : 'nichts';
+  const doSave = () => {
+    if (!canSave || !iso) return;
+    setOpen(false);
+    onSave({ birthDate: iso, birthdayShow: show });
   };
+
+  if (!open)
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.m }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={S.metricLabel}>Geburtstag</span>
+          <span style={{ font: `700 17px ${BODY}`, color: p.birthDate ? C.text : C.muted }}>{p.birthDate ? fmt(saved) : 'Nicht angegeben'}</span>
+          {p.birthDate && sees ? <span style={S.muted}>Drivers sieht: {sees}</span> : null}
+        </div>
+        <button
+          style={{ ...S.secondaryOnSurface, flex: 'none' }}
+          onClick={() => {
+            setDigits(saved);
+            setShow(p.birthdayShow);
+            setOpen(true);
+          }}>
+          {p.birthDate ? 'Ändern' : 'Anlegen'}
+        </button>
+      </div>
+    );
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label htmlFor="pv-geb" style={S.metricLabel}>Geburtstag (optional)</label>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.s }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.s }}>
+        <label htmlFor="pv-geb" style={{ ...S.metricLabel, flex: 1 }}>Geburtstag</label>
+        <button aria-label="Verwerfen" onClick={() => setOpen(false)} style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <XIcon />
+        </button>
+      </div>
       <input
         id="pv-geb"
+        autoFocus
         inputMode="numeric"
         autoComplete="bday"
-        value={shown}
+        value={fmt(digits)}
         placeholder="TT.MM.JJJJ"
-        onChange={(e) => {
-          setDigits(e.target.value.replace(/[^0-9]/g, '').slice(0, 8));
-          setHint(null);
-        }}
-        onBlur={commit}
-        onKeyDown={(e) => e.key === 'Enter' && commit()}
+        onChange={(e) => setDigits(e.target.value.replace(/[^0-9]/g, '').slice(0, 8))}
+        onKeyDown={(e) => e.key === 'Enter' && doSave()}
         style={{ ...S.search, height: 52, background: C.surface2, maxWidth: 220, font: `400 22px ${DISPLAY}`, letterSpacing: '0.04em', fontVariantNumeric: 'tabular-nums' }}
       />
-      <span style={hint ? S.errorText : S.muted}>
-        {hint ?? (age != null ? `Daraus: ${age} Jahre. Das Datum selbst sieht niemand.` : 'Das Datum selbst sieht niemand. Unter Drivers erscheint nur, was du hier freigibst.')}
-      </span>
-      {p.birthDate ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-          <span style={S.metricLabel}>Sichtbar in Drivers</span>
-          <div style={S.chips} role="radiogroup" aria-label="Sichtbar in Drivers">
-            {SHOW_WEB.map((o) => {
-              const on = p.birthdayShow === o.v;
-              return (
-                <button
-                  key={o.v}
-                  role="radio"
-                  aria-checked={on}
-                  onClick={() => onSave({ birthdayShow: o.v })}
-                  style={{ ...S.chip, background: on ? C.text : C.surface2, color: on ? C.ground : C.text, fontWeight: on ? 700 : 600 }}>
-                  {o.label}
-                </button>
-              );
-            })}
-          </div>
+      <span style={hint ? S.errorText : S.muted}>{hint ?? 'Das Datum selbst sieht niemand.'}</span>
+      <span style={S.metricLabel}>Sichtbar in Drivers</span>
+      <div style={S.chips} role="radiogroup" aria-label="Sichtbar in Drivers">
+        {SHOW_WEB.map((o) => {
+          const on = show === o.v;
+          return (
+            <button
+              key={o.v}
+              role="radio"
+              aria-checked={on}
+              onClick={() => setShow(o.v)}
+              style={{ ...S.chip, background: on ? C.text : C.surface2, color: on ? C.ground : C.text, fontWeight: on ? 700 : 600 }}>
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ display: 'flex', gap: Spacing.s, alignItems: 'center' }}>
+        <button disabled={!canSave} onClick={doSave} style={{ ...S.primary, opacity: canSave ? 1 : 0.4, cursor: canSave ? 'pointer' : 'default' }}>
+          Speichern
+        </button>
+        {p.birthDate ? (
           <button
-            style={{ ...S.link, fontSize: 15, alignSelf: 'flex-start' }}
-            onClick={() => {
-              setDigits('');
-              setHint(null);
-              onSave({ birthDate: null });
-            }}>
-            Geburtstag entfernen
+            aria-label="Geburtstag entfernen"
+            onClick={() => setAsk(true)}
+            style={{ width: 52, height: 52, flex: 'none', borderRadius: 26, border: 'none', background: C.surface2, color: C.muted, cursor: 'pointer', font: `600 15px ${BODY}` }}>
+            <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
-        </div>
+        ) : null}
+      </div>
+      {ask ? (
+        <ConfirmSheet
+          narrow
+          title="Möchtest du deinen Geburtstag entfernen?"
+          confirmLabel="Entfernen"
+          onClose={() => setAsk(false)}
+          onConfirm={() => {
+            setAsk(false);
+            setOpen(false);
+            onSave({ birthDate: null });
+          }}
+        />
       ) : null}
     </div>
   );

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
@@ -105,7 +106,7 @@ export function HomeField({ p, save }: { p: Privacy; save: (patch: Partial<Priva
             <AppText style={styles.value} numberOfLines={1}>{p.homeName ?? 'Noch nicht angegeben'}</AppText>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Wohnort ändern" onPress={() => { setQ(''); setFound([]); setEditing(true); }} style={styles.secondary}>
-            <AppText style={styles.secondaryText}>{p.homeName ? 'Ändern' : 'Angeben'}</AppText>
+            <AppText style={styles.secondaryText}>{p.homeName ? 'Ändern' : 'Anlegen'}</AppText>
           </Pressable>
         </View>
       ) : (
@@ -158,25 +159,107 @@ export function HomeField({ p, save }: { p: Privacy; save: (patch: Partial<Priva
 }
 
 /** Kurzer Text über dich, bis 160 Zeichen; gespeichert beim Verlassen des Felds. */
-export function BioField({ p, save }: { p: Privacy; save: (patch: Partial<Privacy>) => Promise<void> }) {
-  const [draft, setDraft] = useState(p.bio ?? '');
+/**
+ * Gemeinsames Muster aller Profilfelder (Koray 11.11., E2): zugeklappt Label, Wert und rechts Ändern oder Anlegen;
+ * offen am Ort mit X zum Verwerfen, Speichern als Hauptaktion und Papierkorb, wenn es schon etwas gibt.
+ * Nach Speichern klappt das Feld wieder zu.
+ */
+function FieldRow(props: { label: string; value: string | null; sub?: string | null; lines?: number; onOpen: () => void }) {
+  const { label, value, sub, lines = 1, onOpen } = props;
   return (
-    <View style={styles.edit}>
-      <AppText variant="caption" muted>Über mich</AppText>
-      <TextInput maxFontSizeMultiplier={1.2}
+    <View style={styles.row}>
+      <View style={styles.flex}>
+        <AppText variant="caption" muted>{label}</AppText>
+        <AppText style={[styles.value, !value && styles.valueEmpty]} numberOfLines={lines}>{value ?? 'Nicht angegeben'}</AppText>
+        {sub ? <AppText variant="caption" muted>{sub}</AppText> : null}
+      </View>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${label} ${value ? 'ändern' : 'anlegen'}`} onPress={onOpen} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
+        <AppText style={styles.secondaryText}>{value ? 'Ändern' : 'Anlegen'}</AppText>
+      </Pressable>
+    </View>
+  );
+}
+
+function FieldHead({ label, onClose }: { label: string; onClose: () => void }) {
+  return (
+    <View style={styles.row}>
+      <AppText variant="caption" muted style={styles.flex}>{label}</AppText>
+      <Pressable accessibilityRole="button" accessibilityLabel="Verwerfen" hitSlop={4} onPress={onClose} style={styles.round}>
+        <SymbolView name="xmark" size={14} weight="bold" tintColor={Colors.text} />
+      </Pressable>
+    </View>
+  );
+}
+
+function FieldFoot(props: { canSave: boolean; onSave: () => void; removeTitle?: string | null; onRemove: () => void }) {
+  const { canSave, onSave, removeTitle, onRemove } = props;
+  const [ask, setAsk] = useState(false);
+  return (
+    <View style={styles.row}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !canSave }}
+        disabled={!canSave}
+        onPress={onSave}
+        style={({ pressed }) => [styles.primary, styles.flex, !canSave && styles.primaryOff, pressed && styles.pressed]}>
+        <AppText style={styles.primaryText}>Speichern</AppText>
+      </Pressable>
+      {removeTitle ? (
+        <Pressable accessibilityRole="button" accessibilityLabel="Entfernen" onPress={() => setAsk(true)} style={({ pressed }) => [styles.trash, pressed && styles.pressed]}>
+          <SymbolView name="trash" size={18} weight="semibold" tintColor={Colors.muted} />
+        </Pressable>
+      ) : null}
+      <ConfirmSheet
+        visible={ask}
+        title={removeTitle ?? ''}
+        confirmLabel="Entfernen"
+        onConfirm={() => {
+          setAsk(false);
+          onRemove();
+        }}
+        onClose={() => setAsk(false)}
+      />
+    </View>
+  );
+}
+
+export function BioField({ p, save }: { p: Privacy; save: (patch: Partial<Privacy>) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(p.bio ?? '');
+  const close = () => {
+    setDraft(p.bio ?? '');
+    setOpen(false);
+  };
+  if (!open) return <FieldRow label="Über mich" value={p.bio} lines={4} onOpen={() => setOpen(true)} />;
+  return (
+    <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.edit}>
+      <FieldHead label="Über mich" onClose={close} />
+      <TextInput
+        maxFontSizeMultiplier={1.2}
         value={draft}
         onChangeText={(t) => setDraft(t.slice(0, 160))}
-        onEndEditing={() => {
-          if (draft.trim() !== (p.bio ?? '')) void save({ bio: draft.trim() || null });
-        }}
         placeholder="Kurz, zum Beispiel deine Lieblingsstrecke"
         placeholderTextColor={Colors.muted}
+        autoFocus
         multiline
         style={[styles.input, styles.bio]}
         accessibilityLabel="Über mich"
       />
       <AppText variant="caption" muted style={styles.count}>{draft.length} von 160</AppText>
-    </View>
+      <FieldFoot
+        canSave={draft.trim() !== (p.bio ?? '')}
+        onSave={() => {
+          setOpen(false);
+          void save({ bio: draft.trim() || null });
+        }}
+        removeTitle={p.bio ? 'Möchtest du deinen Text unter Über mich entfernen?' : null}
+        onRemove={() => {
+          setDraft('');
+          setOpen(false);
+          void save({ bio: null });
+        }}
+      />
+    </Animated.View>
   );
 }
 
@@ -197,24 +280,22 @@ const SHOW: { v: BirthdayShow; label: string }[] = [
 
 export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<Privacy>) => Promise<void> }) {
   const saved = birthDigits(p.birthDate);
+  const [open, setOpen] = useState(false);
   const [digits, setDigits] = useState(saved);
+  const [show, setShow] = useState<BirthdayShow>(p.birthdayShow);
   const [focus, setFocus] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
   const input = useRef<React.ComponentRef<typeof TextInput>>(null);
-  const age = ageOf(p.birthDate);
   const active = focus ? (digits.length < 2 ? 0 : digits.length < 4 ? 1 : 2) : -1;
+  const parsed = digits.length === 8 ? parseBirthday(digits) : null;
+  const iso = parsed && 'iso' in parsed ? parsed.iso : null;
+  const changed = digits !== saved || show !== p.birthdayShow;
 
-  const commit = (d: string) => {
-    if (d === saved) return setHint(null);
-    if (!d) {
-      setHint(null);
-      void save({ birthDate: null });
-      return;
-    }
-    const r = parseBirthday(d);
-    if ('hint' in r) return setHint(r.hint);
+  const openUp = () => {
+    setDigits(saved);
+    setShow(p.birthdayShow);
     setHint(null);
-    void save({ birthDate: r.iso });
+    setOpen(true);
   };
   const change = (t: string) => {
     const d = t.replace(/[^0-9]/g, '').slice(0, 8);
@@ -231,13 +312,26 @@ export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<P
     }
   };
 
+  if (!open) {
+    const age = ageOf(p.birthDate);
+    const sees = p.birthdayShow === 'age' ? (age != null ? `${age} Jahre` : null) : p.birthdayShow === 'birthday' ? 'nur am Geburtstag' : 'nichts';
+    return (
+      <FieldRow
+        label="Geburtstag"
+        value={p.birthDate ? `${saved.slice(0, 2)}.${saved.slice(2, 4)}.${saved.slice(4)}` : null}
+        sub={p.birthDate && sees ? `Drivers sieht: ${sees}` : null}
+        onOpen={openUp}
+      />
+    );
+  }
+
   return (
-    <View style={styles.edit}>
-      <AppText variant="caption" muted>Geburtstag (optional)</AppText>
+    <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.edit}>
+      <FieldHead label="Geburtstag" onClose={() => setOpen(false)} />
       <Pressable
         onPress={() => input.current?.focus()}
         accessibilityRole="button"
-        accessibilityLabel={p.birthDate ? `Geburtstag ${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}, ändern` : 'Geburtstag eingeben'}
+        accessibilityLabel="Geburtstag eingeben, Tag, Monat, Jahr"
         style={styles.dateRow}>
         {SEGS.map((sg, i) => {
           const part = digits.slice(sg.from, sg.from + sg.len);
@@ -259,12 +353,9 @@ export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<P
           value={digits}
           onChangeText={change}
           onFocus={() => setFocus(true)}
-          onBlur={() => {
-            setFocus(false);
-            commit(digits);
-          }}
+          onBlur={() => setFocus(false)}
+          autoFocus
           keyboardType="number-pad"
-          returnKeyType="done"
           maxLength={8}
           caretHidden
           style={styles.hidden}
@@ -274,31 +365,29 @@ export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<P
       {hint ? (
         <AppText variant="caption" style={styles.hint}>{hint}</AppText>
       ) : (
-        <AppText variant="caption" muted>
-          {age != null ? `Daraus: ${age} Jahre. Das Datum selbst sieht niemand.` : 'Das Datum selbst sieht niemand. Unter Drivers erscheint nur, was du hier freigibst.'}
-        </AppText>
+        <AppText variant="caption" muted>Das Datum selbst sieht niemand.</AppText>
       )}
-      {p.birthDate ? (
-        <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.edit}>
-          <AppText variant="caption" muted>Sichtbar in Drivers</AppText>
-          <View style={styles.chips}>
-            {SHOW.map((o) => (
-              <Chip key={o.v} label={o.label} active={p.birthdayShow === o.v} onSurface onPress={() => void save({ birthdayShow: o.v })} />
-            ))}
-          </View>
-          <Pressable
-            style={styles.textBtn}
-            accessibilityRole="button"
-            onPress={() => {
-              setDigits('');
-              setHint(null);
-              void save({ birthDate: null });
-            }}>
-            <AppText style={styles.textBtnText}>Geburtstag entfernen</AppText>
-          </Pressable>
-        </Animated.View>
-      ) : null}
-    </View>
+      <AppText variant="caption" muted>Sichtbar in Drivers</AppText>
+      <View style={styles.chips}>
+        {SHOW.map((o) => (
+          <Chip key={o.v} label={o.label} active={show === o.v} onSurface onPress={() => setShow(o.v)} />
+        ))}
+      </View>
+      <FieldFoot
+        canSave={!!iso && changed}
+        onSave={() => {
+          if (!iso) return;
+          setOpen(false);
+          void save({ birthDate: iso, birthdayShow: show });
+        }}
+        removeTitle={p.birthDate ? 'Möchtest du deinen Geburtstag entfernen?' : null}
+        onRemove={() => {
+          setDigits('');
+          setOpen(false);
+          void save({ birthDate: null });
+        }}
+      />
+    </Animated.View>
   );
 }
 
@@ -313,6 +402,12 @@ export function ToggleRow({ label, value, onChange }: { label: string; value: bo
 
 const styles = StyleSheet.create({
   hint: { color: Colors.stopText },
+  valueEmpty: { color: Colors.faint },
+  pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
+  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  primaryOff: { backgroundColor: Colors.signalDeep },
+  primaryText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
+  trash: { width: Size.button, height: Size.button, borderRadius: Size.button / 2, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
   seg: { minHeight: 52, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2, justifyContent: 'center' },
   // Zustand als getönte Fläche statt Rahmen (Regel Ruhe)

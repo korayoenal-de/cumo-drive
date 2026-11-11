@@ -43,7 +43,7 @@ export default function Profil() {
               <View style={styles.sep} />
               <BirthdayField key={`geb${p.birthDate ?? ''}`} p={p} save={save} />
               <View style={styles.sep} />
-              <BioField key={p.bio ?? ""} p={p} save={save} />
+              <BioField key={`bio${p.bio ?? ""}`} p={p} save={save} />
             </>
           ) : (
             <ActivityIndicator color={Colors.muted} />
