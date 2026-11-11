@@ -12,7 +12,7 @@ import { CarSprite, frameFor } from '@/components/map/car-sprite';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { monthYear } from '@/lib/ausfahrten';
-import { ageOf, type Driver } from '@/lib/drivers';
+import { type Driver } from '@/lib/drivers';
 
 /** Wagenfarbe des ersten Autos als Ring um den Kreis, sonst weiß */
 export const ringColor = (d: Driver) => d.garage?.find((g) => g.look)?.look?.color ?? Colors.text;
@@ -32,8 +32,9 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
           </View>
           <View style={styles.flex}>
             <AppText style={styles.bigName} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
+            {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>Hat heute Geburtstag</AppText> : null}
             <AppText variant="caption" muted numberOfLines={1}>
-              {[ageOf(d.birthYear) ? `${ageOf(d.birthYear)} Jahre` : null, d.homeName ? `Raum ${d.homeName}` : 'Wohnort nicht angegeben', d.memberSince ? `dabei seit ${monthYear(d.memberSince)}` : null].filter(Boolean).join('  ·  ')}
+              {[d.age != null ? `${d.age} Jahre` : null, d.homeName ? `Raum ${d.homeName}` : 'Wohnort nicht angegeben', d.memberSince ? `dabei seit ${monthYear(d.memberSince)}` : null].filter(Boolean).join('  ·  ')}
             </AppText>
           </View>
         </View>
@@ -74,6 +75,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
       </View>
       <View style={styles.flex}>
         <AppText style={styles.name} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
+        {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>Hat heute Geburtstag</AppText> : null}
         {meta ? <AppText variant="caption" muted numberOfLines={1}>{meta}</AppText> : null}
       </View>
       {(canWrite || unread > 0) && (
@@ -96,6 +98,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
 }
 
 const styles = StyleSheet.create({
+  bday: { color: Colors.text, fontFamily: Fonts.bold },
   bio: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.text, lineHeight: 21 },
   flex: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },

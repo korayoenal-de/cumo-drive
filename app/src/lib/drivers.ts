@@ -19,8 +19,10 @@ export type Driver = {
   car: string | null;
   homeName: string | null;
   bio?: string | null;
-  /** Jahrgang, wenn angegeben (Alter im Profil) */
-  birthYear?: number | null;
+  /** Alter, wenn angegeben und zum Zeigen freigegeben */
+  age?: number | null;
+  /** hat heute Geburtstag (wenn nicht ausgeblendet) */
+  birthdayToday?: boolean;
   home: LatLon | null;
   allowMessages: boolean;
   /** null, wenn der Fahrer seinen Fuhrpark nicht zeigt */
@@ -42,10 +44,63 @@ export type Conversation = {
 
 export type DirectMessage = { id: number; sender: string; recipient: string; body: string; createdAt: Date; readAt: Date | null };
 
-export type Privacy = { homeName: string | null; home: LatLon | null; allowMessages: boolean; showGarage: boolean; bio: string | null; visible: boolean; birthYear: number | null };
+/** Was Drivers vom Geburtstag sieht: das Alter (und am Tag selbst den Hinweis), nur den Geburtstag oder nichts */
+export type BirthdayShow = 'age' | 'birthday' | 'none';
 
-/** Alter aus dem Jahrgang (auf ein Jahr genau) */
-export const ageOf = (birthYear: number | null | undefined): number | null => (birthYear ? new Date().getFullYear() - birthYear : null);
+export type Privacy = {
+  homeName: string | null; home: LatLon | null; allowMessages: boolean; showGarage: boolean; bio: string | null; visible: boolean;
+  /** Geburtstag als JJJJ-MM-TT, nur für dich selbst lesbar */
+  birthDate: string | null;
+  birthdayShow: BirthdayShow;
+};
+
+/** Alter am heutigen Tag aus JJJJ-MM-TT */
+export function ageOf(iso: string | null | undefined, now = new Date()): number | null {
+  const m = iso ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso) : null;
+  if (!m) return null;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  let a = now.getFullYear() - y;
+  if (now.getMonth() + 1 < mo || (now.getMonth() + 1 === mo && now.getDate() < d)) a -= 1;
+  return a;
+}
+
+/** Ob heute Geburtstag ist; wer am 29.2. geboren ist, feiert in anderen Jahren am 28.2. */
+export function isBirthday(iso: string | null | undefined, now = new Date()): boolean {
+  const m = iso ? /^\d{4}-(\d{2})-(\d{2})$/.exec(iso) : null;
+  if (!m) return false;
+  const mo = +m[1], d = +m[2];
+  const nm = now.getMonth() + 1, nd = now.getDate();
+  if (mo === nm && d === nd) return true;
+  const leap = new Date(now.getFullYear(), 1, 29).getDate() === 29;
+  return mo === 2 && d === 29 && !leap && nm === 2 && nd === 28;
+}
+
+/**
+ * Prüft acht Ziffern TTMMJJJJ: echtes Datum, ab 16 und höchstens 105 Jahre.
+ * Liefert JJJJ-MM-TT oder einen Hinweis.
+ */
+export function parseBirthday(digits: string, now = new Date()): { iso: string } | { hint: string } {
+  if (digits.length < 8) return { hint: 'Bitte vollständig eingeben, zum Beispiel 14.03.1984.' };
+  const d = +digits.slice(0, 2), mo = +digits.slice(2, 4), y = +digits.slice(4, 8);
+  const dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return { hint: 'Dieses Datum gibt es nicht.' };
+  const iso = `${digits.slice(4, 8)}-${digits.slice(2, 4)}-${digits.slice(0, 2)}`;
+  const a = ageOf(iso, now) ?? 0;
+  if (a < 16) return { hint: 'Drivers ist ab 16 Jahren.' };
+  if (a > 105 || y < 1920) return { hint: 'Bitte das Jahr prüfen.' };
+  return { iso };
+}
+
+/** Was Drivers aus dem eigenen Geburtstag zeigt (für die Vorschau im Profil, wie community_drivers) */
+export function shownBirthday(p: Pick<Privacy, 'birthDate' | 'birthdayShow'>): { age: number | null; birthdayToday: boolean } {
+  return {
+    age: p.birthdayShow === 'age' ? ageOf(p.birthDate) : null,
+    birthdayToday: p.birthdayShow !== 'none' && isBirthday(p.birthDate),
+  };
+}
+
+/** JJJJ-MM-TT zu den Ziffern TTMMJJJJ für das Eingabefeld */
+export const birthDigits = (iso: string | null) => (iso ? `${iso.slice(8, 10)}${iso.slice(5, 7)}${iso.slice(0, 4)}` : '');
 
 function fail(message: string): never {
   throw new Error(/permission|violat|row-level/i.test(message) ? 'Dieser Fahrer möchte gerade keine Nachrichten bekommen.' : /function|relation|column|JWT/i.test(message) ? 'Das hat nicht geklappt. Bitte nochmal versuchen.' : message);
@@ -53,7 +108,7 @@ function fail(message: string): never {
 
 type DriverRow = {
   id: string; display_name: string; car: string | null; home_name: string | null; home_lat: number | null; home_lon: number | null;
-  allow_messages: boolean; garage: { brand?: string | null; model?: string | null; look?: CarLook | null }[] | null; member_since: string | null; is_me: boolean; bio?: string | null; birth_year?: number | null;
+  allow_messages: boolean; garage: { brand?: string | null; model?: string | null; look?: CarLook | null }[] | null; member_since: string | null; is_me: boolean; bio?: string | null; age?: number | null; birthday_today?: boolean | null;
 };
 
 export async function listDrivers(): Promise<Driver[]> {
@@ -80,7 +135,8 @@ export async function listDrivers(): Promise<Driver[]> {
     memberSince: r.member_since ? new Date(r.member_since) : null,
     isMe: r.is_me,
     bio: r.bio?.trim() || null,
-    birthYear: r.birth_year ?? null,
+    age: r.age ?? null,
+    birthdayToday: !!r.birthday_today,
   }));
 }
 
@@ -89,9 +145,12 @@ export async function listDrivers(): Promise<Driver[]> {
 export async function loadPrivacy(): Promise<Privacy | null> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return null;
-  const { data, error } = await supabase.from('profiles').select('home_name,home_lat,home_lon,allow_messages,show_garage,bio,show_in_drivers,birth_year').eq('id', u.user.id).maybeSingle();
+  const [{ data, error }, bd] = await Promise.all([
+    supabase.from('profiles').select('home_name,home_lat,home_lon,allow_messages,show_garage,bio,show_in_drivers,birthday_show').eq('id', u.user.id).maybeSingle(),
+    supabase.rpc('my_birth_date'),
+  ]);
   if (error) fail(error.message);
-  const r = data as { home_name: string | null; home_lat: number | null; home_lon: number | null; allow_messages: boolean; show_garage: boolean; bio?: string | null; show_in_drivers?: boolean; birth_year?: number | null } | null;
+  const r = data as { home_name: string | null; home_lat: number | null; home_lon: number | null; allow_messages: boolean; show_garage: boolean; bio?: string | null; show_in_drivers?: boolean; birthday_show?: BirthdayShow | null } | null;
   return {
     homeName: r?.home_name ?? null,
     home: r?.home_lat != null && r?.home_lon != null ? [r.home_lat, r.home_lon] : null,
@@ -99,7 +158,8 @@ export async function loadPrivacy(): Promise<Privacy | null> {
     showGarage: r?.show_garage ?? true,
     bio: r?.bio ?? null,
     visible: r?.show_in_drivers ?? true,
-    birthYear: r?.birth_year ?? null,
+    birthDate: typeof bd.data === 'string' ? bd.data : null,
+    birthdayShow: r?.birthday_show ?? 'age',
   };
 }
 
@@ -116,9 +176,16 @@ export async function savePrivacy(p: Partial<Privacy>) {
   if (p.showGarage != null) row.show_garage = p.showGarage;
   if (p.visible != null) row.show_in_drivers = p.visible;
   if ('bio' in p) row.bio = p.bio?.trim().slice(0, 160) || null;
-  if ('birthYear' in p) row.birth_year = p.birthYear ?? null;
-  const { error } = await supabase.from('profiles').upsert(row);
-  if (error) fail(error.message);
+  if (p.birthdayShow) row.birthday_show = p.birthdayShow;
+  if (Object.keys(row).length > 1) {
+    const { error } = await supabase.from('profiles').upsert(row);
+    if (error) fail(error.message);
+  }
+  // birth_date ist für andere nicht lesbar, darum kein upsert (der bräuchte Leserechte), sondern ein update der eigenen Zeile
+  if ('birthDate' in p) {
+    const { error } = await supabase.from('profiles').update({ birth_date: p.birthDate ?? null }).eq('id', u.user.id);
+    if (error) fail(/check/i.test(error.message) ? 'Bitte das Datum prüfen.' : error.message);
+  }
 }
 
 // Nachrichten ---------------------------------------------------------------------------------

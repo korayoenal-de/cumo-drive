@@ -7,11 +7,12 @@ import { useState } from 'react';
 
 import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { DriverCard } from '@/components/community/driver-card';
-import { AgeField, BioField, HomeField, usePrivacy } from '@/components/settings/community-profile';
+import { BioField, BirthdayField, HomeField, usePrivacy } from '@/components/settings/community-profile';
 import { SubScreen } from '@/components/settings/settings-ui';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
+import { shownBirthday } from '@/lib/drivers';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { useVehicles, vehicleName } from '@/lib/vehicle';
 import { carLookFor } from '@/components/map/car-sprite';
@@ -40,7 +41,7 @@ export default function Profil() {
               <View style={styles.sep} />
               <HomeField p={p} save={save} />
               <View style={styles.sep} />
-              <AgeField key={`age${p.birthYear ?? ''}`} p={p} save={save} />
+              <BirthdayField key={`geb${p.birthDate ?? ''}`} p={p} save={save} />
               <View style={styles.sep} />
               <BioField key={p.bio ?? ""} p={p} save={save} />
             </>
@@ -62,7 +63,7 @@ export default function Profil() {
               car: null,
               homeName: p.homeName,
               bio: p.bio,
-              birthYear: p.birthYear,
+              ...shownBirthday(p),
               home: p.home,
               allowMessages: p.allowMessages,
               garage: list.map((v) => ({ name: vehicleName(v) || 'Fahrzeug', look: carLookFor(v) ?? null })),

@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from 'react';
 
-import { loadPrivacy, savePrivacy, type Privacy } from '@/lib/drivers';
+import { ageOf, birthDigits, loadPrivacy, parseBirthday, savePrivacy, type BirthdayShow, type Privacy } from '@/lib/drivers';
 import { searchTowns, type Place } from '@/lib/geocode';
 import { deleteVehicle, newVehicle, saveVehicle, selectVehicle, useVehicles, vehicleName, type Vehicle } from '@/lib/vehicle';
 import { showToast } from '@/lib/toast';
@@ -13,7 +13,7 @@ import { Radius, Spacing } from '@/constants/theme';
 
 import { AccountBox } from './web-account-panels';
 import { Section, Toggle } from './web-parts';
-import { BODY, C } from './web-shared';
+import { BODY, C, DISPLAY } from './web-shared';
 import { S } from './web-styles';
 import { ConfirmSheet, Field, MoreMenu, pillBtn, ViewTitle, WebSheet, XIcon } from './web-ui';
 
@@ -46,7 +46,7 @@ function CommunityProfileWeb() {
   useEffect(() => {
     loadPrivacy()
       .then(setP)
-      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true, birthYear: null }));
+      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true, birthDate: null, birthdayShow: 'age' }));
   }, []);
   useEffect(() => {
     if (!editing || q.trim().length < 2) return;
@@ -130,7 +130,7 @@ function CommunityProfileWeb() {
         </div>
       )}
       <span style={S.muted}>Andere Mitglieder sehen dich unter Drivers an diesem Ort, nur als Ortsmitte, nie mit Adresse oder Live Standort.</span>
-      <AgeWeb key={`age${p.birthYear ?? ''}`} birthYear={p.birthYear} onSave={(birthYear) => void save({ birthYear })} />
+      <BirthdayWeb key={`geb${p.birthDate ?? ''}`} p={p} onSave={(patch) => void save(patch)} />
       <Toggle id="pv-msg" on={p.allowMessages} label="Andere dürfen mich anschreiben" onChange={(v) => void save({ allowMessages: v })} />
       <Toggle id="pv-garage" on={p.showGarage} label="Andere sehen meinen Fuhrpark" onChange={(v) => void save({ showGarage: v })} />
       {busy ? <span style={S.muted}>Wird gespeichert</span> : null}
@@ -236,41 +236,81 @@ function VehicleSheet(props: { v: Vehicle; narrow: boolean; onClose: () => void 
   );
 }
 
-/** Alter, optional, wie in der App: eingegeben das Alter, gespeichert der Jahrgang */
-function AgeWeb(props: { birthYear: number | null; onSave: (birthYear: number | null) => void }) {
-  const now = new Date().getFullYear();
-  const shown = props.birthYear ? String(now - props.birthYear) : '';
-  const [draft, setDraft] = useState(shown);
+/** Geburtstag, optional, wie in der App (Konzept E): TT.MM.JJJJ, die Punkte setzt das Feld selbst */
+function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => void }) {
+  const { p, onSave } = props;
+  const saved = birthDigits(p.birthDate);
+  const [digits, setDigits] = useState(saved);
   const [hint, setHint] = useState<string | null>(null);
+  const shown = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean).join('.');
+  const age = ageOf(p.birthDate);
   const commit = () => {
-    const t = draft.trim();
-    if (t === shown) return;
-    if (!t) {
+    if (digits === saved) return setHint(null);
+    if (!digits) {
       setHint(null);
-      props.onSave(null);
+      onSave({ birthDate: null });
       return;
     }
-    const age = Number.parseInt(t, 10);
-    if (!Number.isFinite(age) || age < 16 || age > 105) {
-      setHint('Bitte ein Alter zwischen 16 und 105 eingeben.');
-      return;
-    }
+    const r = parseBirthday(digits);
+    if ('hint' in r) return setHint(r.hint);
     setHint(null);
-    props.onSave(now - age);
+    onSave({ birthDate: r.iso });
   };
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span style={S.metricLabel}>Alter (optional)</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label htmlFor="pv-geb" style={S.metricLabel}>Geburtstag (optional)</label>
       <input
+        id="pv-geb"
         inputMode="numeric"
-        value={draft}
-        placeholder="zum Beispiel 42"
-        onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
+        autoComplete="bday"
+        value={shown}
+        placeholder="TT.MM.JJJJ"
+        onChange={(e) => {
+          setDigits(e.target.value.replace(/[^0-9]/g, '').slice(0, 8));
+          setHint(null);
+        }}
         onBlur={commit}
         onKeyDown={(e) => e.key === 'Enter' && commit()}
-        style={{ ...S.search, height: 52, background: C.surface2, maxWidth: 200 }}
+        style={{ ...S.search, height: 52, background: C.surface2, maxWidth: 220, font: `400 22px ${DISPLAY}`, letterSpacing: '0.04em', fontVariantNumeric: 'tabular-nums' }}
       />
-      <span style={hint ? S.errorText : S.muted}>{hint ?? 'Erscheint unter Drivers. Leer lassen, wenn du es nicht zeigen möchtest.'}</span>
-    </label>
+      <span style={hint ? S.errorText : S.muted}>
+        {hint ?? (age != null ? `Daraus: ${age} Jahre. Das Datum selbst sieht niemand.` : 'Das Datum selbst sieht niemand. Unter Drivers erscheint nur, was du hier freigibst.')}
+      </span>
+      {p.birthDate ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+          <span style={S.metricLabel}>Sichtbar in Drivers</span>
+          <div style={S.chips} role="radiogroup" aria-label="Sichtbar in Drivers">
+            {SHOW_WEB.map((o) => {
+              const on = p.birthdayShow === o.v;
+              return (
+                <button
+                  key={o.v}
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => onSave({ birthdayShow: o.v })}
+                  style={{ ...S.chip, background: on ? C.text : C.surface2, color: on ? C.ground : C.text, fontWeight: on ? 700 : 600 }}>
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            style={{ ...S.link, fontSize: 15, alignSelf: 'flex-start' }}
+            onClick={() => {
+              setDigits('');
+              setHint(null);
+              onSave({ birthDate: null });
+            }}>
+            Geburtstag entfernen
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
+
+const SHOW_WEB: { v: BirthdayShow; label: string }[] = [
+  { v: 'age', label: 'Alter' },
+  { v: 'birthday', label: 'Nur Geburtstag' },
+  { v: 'none', label: 'Nichts' },
+];

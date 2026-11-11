@@ -260,6 +260,7 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 | Datum | Entscheidung |
 |---|---|
+| 11.11. | Geburtstag statt Alter im Profil (Konzept E): TT.MM.JJJJ, freiwillig. Das Datum sieht niemand (keine Spaltenfreigabe, eigene Angabe über my_birth_date). Drivers zeigt je nach Wahl Alter, nur am Tag „Hat heute Geburtstag“ oder nichts |
 | 11.11. | Web Planer zieht nach: Punkte und Linie mit der Maus ziehen (Laden und Rückgängig oben links), Klick auf Punkt mit Aktionen, Highlights/Pässe je Etappe mit Pegel und Umweg, Unterwegs einplanen mit +min, Richtungsring, kurze Links, Lesezeichen schaltet um, Cluster |
 | 11.11. | Landingpage auf den Stand der App: Rundtour und Tour planen, Karte direkt bearbeiten, Pegel S3, Funk, Abseits der Tour, Link teilen |
 | 11.11. | Eigene Routen in der Community ohne Lesezeichen |
@@ -321,6 +322,7 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 * [ ] Kombi als Fahrzeug Form, Fürth in die großen Städte der Ortsdichte
 
 ### Später
+* Geburtstag als Anlass: Hinweis in der Gruppenfahrt, Glückwunsch im Club, eventuell kleine Überraschung (Grundlage seit 11.11. da: birth_date, birthday_show, is_birthday())
 
 * Android und Android Auto, CarPlay Antrag (claude/carplay-antrag.md), Offline Karten, App Icon, Supabase Pro bei echten Nutzern
 * Rundtour mit Auswahl aus zwei bis drei Alternativen

@@ -3,20 +3,22 @@
  * gerundet), Über mich und die Schalter, ob andere einen anschreiben dürfen und den Fuhrpark sehen.
  */
 import { SymbolView } from 'expo-symbols';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
-import { loadPrivacy, savePrivacy, type Privacy } from '@/lib/drivers';
+import { ageOf, birthDigits, loadPrivacy, parseBirthday, savePrivacy, type BirthdayShow, type Privacy } from '@/lib/drivers';
+import { haptic } from '@/lib/haptics';
 import { searchTowns, type Place } from '@/lib/geocode';
 
 /**
  * Eigene Privatsphäre, für alle Ansichten geteilt (Profilkarte, Schalter, Profil Seite): ein Wechsel
  * erscheint überall sofort (Koray 10.11.). Sofortige Anzeige, Rücknahme bei Fehler.
  */
-const FALLBACK: Privacy = { homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true, birthYear: null };
+const FALLBACK: Privacy = { homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true, birthDate: null, birthdayShow: 'age' };
 let shared: Privacy | null = null;
 let loading = false;
 const listeners = new Set<() => void>();
@@ -179,47 +181,123 @@ export function BioField({ p, save }: { p: Privacy; save: (patch: Partial<Privac
 }
 
 /**
- * Alter, optional (Koray 11.11.): eingegeben wird das Alter, gespeichert der Jahrgang, damit es mitwächst.
- * Sichtbar unter Drivers wie Wohnort und Über mich. Leeres Feld entfernt es wieder.
+ * Geburtstag, optional (Koray 11.11., Konzept E): TT.MM.JJJJ über den Ziffernblock, das Feld springt selbst weiter.
+ * Das Datum sieht niemand; Drivers zeigt je nach Wahl das Alter, nur am Tag selbst den Geburtstag oder nichts.
  */
-export function AgeField({ p, save }: { p: Privacy; save: (patch: Partial<Privacy>) => Promise<void> }) {
-  const now = new Date().getFullYear();
-  const shown = p.birthYear ? String(now - p.birthYear) : '';
-  const [draft, setDraft] = useState(shown);
+const SEGS = [
+  { from: 0, len: 2, ph: 'TT' },
+  { from: 2, len: 2, ph: 'MM' },
+  { from: 4, len: 4, ph: 'JJJJ' },
+] as const;
+const SHOW: { v: BirthdayShow; label: string }[] = [
+  { v: 'age', label: 'Alter' },
+  { v: 'birthday', label: 'Nur Geburtstag' },
+  { v: 'none', label: 'Nichts' },
+];
+
+export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<Privacy>) => Promise<void> }) {
+  const saved = birthDigits(p.birthDate);
+  const [digits, setDigits] = useState(saved);
+  const [focus, setFocus] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
-  const commit = () => {
-    const t = draft.trim();
-    if (t === shown) return;
-    if (!t) {
+  const input = useRef<React.ComponentRef<typeof TextInput>>(null);
+  const age = ageOf(p.birthDate);
+  const active = focus ? (digits.length < 2 ? 0 : digits.length < 4 ? 1 : 2) : -1;
+
+  const commit = (d: string) => {
+    if (d === saved) return setHint(null);
+    if (!d) {
       setHint(null);
-      void save({ birthYear: null });
+      void save({ birthDate: null });
       return;
     }
-    const age = Number.parseInt(t, 10);
-    if (!Number.isFinite(age) || age < 16 || age > 105) {
-      setHint('Bitte ein Alter zwischen 16 und 105 eingeben.');
-      return;
-    }
+    const r = parseBirthday(d);
+    if ('hint' in r) return setHint(r.hint);
     setHint(null);
-    void save({ birthYear: now - age });
+    void save({ birthDate: r.iso });
   };
+  const change = (t: string) => {
+    const d = t.replace(/[^0-9]/g, '').slice(0, 8);
+    // jede fertige Gruppe rastet spürbar ein
+    if (d.length > digits.length && (d.length === 2 || d.length === 4)) haptic('rastung');
+    setDigits(d);
+    setHint(null);
+    if (d.length === 8) {
+      const r = parseBirthday(d);
+      if ('iso' in r) {
+        haptic('ablegen');
+        input.current?.blur();
+      } else setHint(r.hint);
+    }
+  };
+
   return (
     <View style={styles.edit}>
-      <AppText variant="caption" muted>Alter (optional)</AppText>
-      <TextInput
-        maxFontSizeMultiplier={1.2}
-        value={draft}
-        onChangeText={(t) => setDraft(t.replace(/[^0-9]/g, '').slice(0, 3))}
-        onEndEditing={commit}
-        onSubmitEditing={commit}
-        placeholder="zum Beispiel 42"
-        placeholderTextColor={Colors.muted}
-        keyboardType="number-pad"
-        returnKeyType="done"
-        style={styles.input}
-        accessibilityLabel="Alter, optional"
-      />
-      {hint ? <AppText variant="caption" style={styles.hint}>{hint}</AppText> : <AppText variant="caption" muted>Erscheint unter Drivers. Leer lassen, wenn du es nicht zeigen möchtest.</AppText>}
+      <AppText variant="caption" muted>Geburtstag (optional)</AppText>
+      <Pressable
+        onPress={() => input.current?.focus()}
+        accessibilityRole="button"
+        accessibilityLabel={p.birthDate ? `Geburtstag ${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}, ändern` : 'Geburtstag eingeben'}
+        style={styles.dateRow}>
+        {SEGS.map((sg, i) => {
+          const part = digits.slice(sg.from, sg.from + sg.len);
+          return (
+            <View key={sg.ph} style={styles.dateRow}>
+              {i > 0 && <AppText style={styles.dot}>.</AppText>}
+              <View style={[styles.seg, i === active && styles.segOn]}>
+                <AppText style={styles.segText}>
+                  {part}
+                  <AppText style={[styles.segText, styles.segPh]}>{sg.ph.slice(part.length)}</AppText>
+                </AppText>
+              </View>
+            </View>
+          );
+        })}
+        <TextInput
+          ref={input}
+          maxFontSizeMultiplier={1.2}
+          value={digits}
+          onChangeText={change}
+          onFocus={() => setFocus(true)}
+          onBlur={() => {
+            setFocus(false);
+            commit(digits);
+          }}
+          keyboardType="number-pad"
+          returnKeyType="done"
+          maxLength={8}
+          caretHidden
+          style={styles.hidden}
+          accessibilityLabel="Geburtstag, acht Ziffern"
+        />
+      </Pressable>
+      {hint ? (
+        <AppText variant="caption" style={styles.hint}>{hint}</AppText>
+      ) : (
+        <AppText variant="caption" muted>
+          {age != null ? `Daraus: ${age} Jahre. Das Datum selbst sieht niemand.` : 'Das Datum selbst sieht niemand. Unter Drivers erscheint nur, was du hier freigibst.'}
+        </AppText>
+      )}
+      {p.birthDate ? (
+        <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.edit}>
+          <AppText variant="caption" muted>Sichtbar in Drivers</AppText>
+          <View style={styles.chips}>
+            {SHOW.map((o) => (
+              <Chip key={o.v} label={o.label} active={p.birthdayShow === o.v} onSurface onPress={() => void save({ birthdayShow: o.v })} />
+            ))}
+          </View>
+          <Pressable
+            style={styles.textBtn}
+            accessibilityRole="button"
+            onPress={() => {
+              setDigits('');
+              setHint(null);
+              void save({ birthDate: null });
+            }}>
+            <AppText style={styles.textBtnText}>Geburtstag entfernen</AppText>
+          </Pressable>
+        </Animated.View>
+      ) : null}
     </View>
   );
 }
@@ -235,6 +313,15 @@ export function ToggleRow({ label, value, onChange }: { label: string; value: bo
 
 const styles = StyleSheet.create({
   hint: { color: Colors.stopText },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
+  seg: { minHeight: 52, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2, justifyContent: 'center' },
+  // Zustand als getönte Fläche statt Rahmen (Regel Ruhe)
+  segOn: { backgroundColor: Colors.signalTint },
+  segText: { fontFamily: Fonts.display, fontSize: 24, fontVariant: ['tabular-nums'], color: Colors.text },
+  segPh: { color: Colors.faint },
+  dot: { fontFamily: Fonts.display, fontSize: 24, color: Colors.muted },
+  hidden: { position: 'absolute', width: 1, height: 1, opacity: 0 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   wrap: { gap: Spacing.m },
   flex: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
