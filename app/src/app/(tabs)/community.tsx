@@ -240,10 +240,12 @@ export default function Community() {
   const thumbX = useSharedValue(0);
   const thumbW = useSharedValue(0);
   const thumbPlaced = useSharedValue(false);
-  const syncThumb = useCallback(
-    (active: Seg) => {
-      const b = segBoxes.get()[active];
-      if (!b) return;
+  /** Solange die gleitende Fläche nicht gemessen ist, trägt die aktive Ansicht ihre weiße Fläche selbst */
+  const [thumbReady, setThumbReady] = useState(false);
+  /** Fläche auf den Kasten setzen: beim ersten Mal sofort, danach mit Feder */
+  const moveThumb = useCallback(
+    (b: { x: number; w: number } | undefined) => {
+      if (!b || b.w <= 0) return;
       if (thumbPlaced.get()) {
         thumbX.set(withSpring(b.x, Motion.snap));
         thumbW.set(withSpring(b.w, Motion.snap));
@@ -252,22 +254,24 @@ export default function Community() {
         thumbW.set(b.w);
         thumbPlaced.set(true);
       }
+      setThumbReady(true);
     },
-    [segBoxes, thumbX, thumbW, thumbPlaced],
+    [thumbX, thumbW, thumbPlaced],
   );
   const onSegBox = (id: Seg) => (x: number, w: number) => {
     segBoxes.set({ ...segBoxes.get(), [id]: { x, w } });
-    if (id === seg) syncThumb(seg);
+    // den gemessenen Kasten direkt nehmen: der gerade gesetzte Wert ist beim Zurücklesen noch nicht da (Fehler 11.11.)
+    if (id === seg) moveThumb({ x, w });
   };
-  useEffect(() => syncThumb(seg), [seg, syncThumb]);
+  useEffect(() => moveThumb(segBoxes.get()[seg]), [seg, segBoxes, moveThumb]);
   const thumbStyle = useAnimatedStyle(() => ({ width: thumbW.get(), opacity: thumbW.get() > 0 ? 1 : 0, transform: [{ translateX: thumbX.get() }] }));
 
   const segControl = (
     <View style={styles.seg} accessibilityRole="tablist">
       <Animated.View pointerEvents="none" style={[styles.segThumb, thumbStyle]} />
-      <SegItem label="Routen" icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} onBox={onSegBox('routen')} />
-      <SegItem label="Ausfahrten" icon="calendar" count={userId ? rides?.length ?? null : null} badge={openRequests + inviteCount} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} onBox={onSegBox('ausfahrten')} />
-      <SegItem label="Drivers" icon="person.2" count={userId ? drivers?.length ?? null : null} badge={unread} on={seg === 'drivers'} onPress={() => switchSeg('drivers')} onBox={onSegBox('drivers')} />
+      <SegItem label="Routen" icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} onBox={onSegBox('routen')} ownFill={!thumbReady} />
+      <SegItem label="Ausfahrten" icon="calendar" count={userId ? rides?.length ?? null : null} badge={openRequests + inviteCount} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} onBox={onSegBox('ausfahrten')} ownFill={!thumbReady} />
+      <SegItem label="Drivers" icon="person.2" count={userId ? drivers?.length ?? null : null} badge={unread} on={seg === 'drivers'} onPress={() => switchSeg('drivers')} onBox={onSegBox('drivers')} ownFill={!thumbReady} />
     </View>
   );
 
@@ -423,7 +427,7 @@ export default function Community() {
  * Glaspille (Konzept A, Koray 10.11.): aktive Ansicht weiß mit Wort und Zahl, die anderen nur als
  * Symbol. Beim Wechsel gleitet die weiße Fläche mit Feder, das Wort blendet auf.
  */
-function SegItem({ label, icon, count, badge, on, onPress, onBox }: { label: string; icon: SFSymbol; count: number | null; badge?: number; on: boolean; onPress: () => void; onBox: (x: number, w: number) => void }) {
+function SegItem({ label, icon, count, badge, on, onPress, onBox, ownFill }: { ownFill: boolean; label: string; icon: SFSymbol; count: number | null; badge?: number; on: boolean; onPress: () => void; onBox: (x: number, w: number) => void }) {
   return (
     <Animated.View
       layout={LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)}
@@ -434,7 +438,7 @@ function SegItem({ label, icon, count, badge, on, onPress, onBox }: { label: str
         accessibilityLabel={`${label}${count != null ? `, ${count}` : ''}${badge ? `, ${badge} offene Anfragen` : ''}`}
         hitSlop={4}
         onPress={onPress}
-        style={[styles.segItem, on && styles.segOn]}>
+        style={[styles.segItem, on && styles.segOn, on && ownFill && styles.segFill]}>
         <View>
           <SymbolView name={icon} size={17} weight="bold" tintColor={on ? Colors.ground : Colors.muted} />
           {!on && !!badge && <View style={styles.badgeDot} />}
@@ -723,6 +727,7 @@ const styles = StyleSheet.create({
   seg: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', height: 44, padding: 4, gap: 2, borderRadius: 22, backgroundColor: Colors.overlaySurface, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' },
   segItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 36, minWidth: 40, paddingHorizontal: 11, borderRadius: 18 },
   segOn: { paddingLeft: 12, paddingRight: 14 },
+  segFill: { backgroundColor: Colors.text },
   segThumb: { position: 'absolute', left: 0, top: 4, height: 36, borderRadius: 18, backgroundColor: Colors.text },
   segLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   segText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.ground },
