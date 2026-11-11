@@ -138,11 +138,18 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
         ) : list === 'fehler' ? (
           <AppText style={[styles.muted, styles.pad]}>Lässt sich gerade nicht laden.</AppText>
         ) : list.length === 0 ? (
-          <AppText style={[styles.muted, styles.pad]}>Keine {meta.plural} in der Nähe.</AppText>
+          <AppText style={[styles.muted, styles.pad]}>
+            {kind === 'hotel' ? `Keine ${meta.plural} in der Nähe.` : `Hier haben wir noch keine empfohlenen ${meta.plural}. Über die Suche findest du jedes ${meta.one}.`}
+          </AppText>
         ) : (
           // Schlicht aufgelistet, die Zahl steht in der Überschrift (Koray 9.11.)
           <View style={[styles.section, styles.pad]}>
-            <AppText style={styles.label}>{`${list.length} ${list.length === 1 ? meta.one : meta.plural} in ${name}`}</AppText>
+            {/* Cafés und Restaurants sind unsere Empfehlungen, das sagt die Überschrift (Koray 11.11.) */}
+            <AppText style={styles.label}>
+              {kind === 'hotel'
+                ? `${list.length} ${list.length === 1 ? meta.one : meta.plural} in ${name}`
+                : `${list.length} ${list.length === 1 ? (kind === 'kaffee' ? 'empfohlenes Café' : 'empfohlenes Restaurant') : `empfohlene ${meta.plural}`} in ${name}`}
+            </AppText>
             <View style={styles.group}>{list.map(row)}</View>
           </View>
         )}

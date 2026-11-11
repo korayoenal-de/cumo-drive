@@ -100,7 +100,9 @@ export function StopsPanel(props: { tour: PlannedTour; busy: boolean; onAdd: (p:
       {kind && <p style={S.muted}>{STOP_KINDS.find((k) => k.id === kind)?.hint}</p>}
       {kind && !cur && <p style={S.muted}>Wird gesucht …</p>}
       {cur?.error && <p style={S.muted}>Gerade nicht erreichbar ({cur.error}). Versuch es gleich noch mal.</p>}
-      {cur?.hits && cur.hits.length === 0 && <p style={S.muted}>Nichts direkt an der Strecke gefunden.</p>}
+      {cur?.hits && cur.hits.length === 0 && (
+        <p style={S.muted}>{kind === 'mittag' || kind === 'kaffee' ? 'Hier haben wir noch keine Empfehlung. Jedes andere Lokal findest du über die Suche bei den Punkten.' : 'Nichts direkt an der Strecke gefunden.'}</p>
+      )}
       {cur?.hits && cur.hits.length > 0 && (
         <ol style={S.passList}>
           {cur.hits.map((h) => (

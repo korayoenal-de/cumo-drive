@@ -7,6 +7,7 @@
  * routing/server/cloud/poi-tiles.sh nach jedem Kartenimport). Nur wenn dort keine meta.json erreichbar ist
  * (oder Kacheln nicht laden), fragt die App wie bisher die öffentliche Overpass API.
  */
+import { RECOMMENDED, recommendedNear } from './recommended';
 import { CUMO_ROUTING_URL, routingServerUrl } from './cumo-routing';
 import { haversine, type LatLon } from './tour';
 import type { Stop } from './intent';
@@ -23,13 +24,17 @@ export type StopHit = {
   km: number;
   /** Abstand zur Route in Metern */
   offM: number;
+  /** aus unseren Empfehlungen (Mittag und Kaffee) */
+  recommended?: boolean;
+  /** Hinweis zum Parken (Empfehlungen) */
+  parking?: string;
 };
 
 export const STOP_KINDS: { id: StopKind; label: string; hint: string }[] = [
   { id: 'tank', label: 'Super Plus', hint: 'Tankstellen mit 98 Oktan oder Marken mit Super Plus' },
   { id: 'aussicht', label: 'Aussicht', hint: 'Aussichtspunkte mit Parkplatz in der Nähe' },
-  { id: 'mittag', label: 'Mittag', hint: 'Restaurants direkt an der Strecke' },
-  { id: 'kaffee', label: 'Kaffee', hint: 'Cafés direkt an der Strecke' },
+  { id: 'mittag', label: 'Mittag', hint: 'Unsere Empfehlungen: Restaurants mit Parkplatz, gut für Sportwagen' },
+  { id: 'kaffee', label: 'Kaffee', hint: 'Unsere Empfehlungen: Cafés mit Parkplatz, gut für Sportwagen' },
   { id: 'hotel', label: 'Hotel', hint: 'Hotels, Gasthöfe und Pensionen nahe der Strecke' },
 ];
 
@@ -452,8 +457,33 @@ async function fromOverpass(kind: StopKind, line: LatLon[], signal?: AbortSignal
  * Stopps einer Art entlang der Route, nach Kilometer sortiert, höchstens limit Stück.
  * scale weitet den Korridor um die Route (Korridor erweitern in der Ortssuche: 3).
  */
+/**
+ * Mittag und Kaffee zeigen nur unsere Empfehlungen (Koray 11.11.), dafür in einem breiteren Korridor:
+ * ein empfohlenes Lokal lohnt ein paar Minuten Umweg. Die freie Suche findet weiterhin jedes Lokal.
+ */
+const REC_RADIUS = 3000;
+function recommendedAlong(kind: 'mittag' | 'kaffee', line: LatLon[], limit: number, scale: number): StopHit[] {
+  const c = corridor(line);
+  const maxM = REC_RADIUS * scale;
+  // grober Rahmen um die Strecke, damit nicht jeder Eintrag gegen jedes Segment gerechnet wird
+  const lat = c.pts.map((p) => p[0]);
+  const lon = c.pts.map((p) => p[1]);
+  const pad = maxM / 70000;
+  const box = [Math.min(...lat) - pad, Math.max(...lat) + pad, Math.min(...lon) - pad, Math.max(...lon) + pad];
+  const hits: StopHit[] = [];
+  for (const r of RECOMMENDED) {
+    if (!r.kinds.includes(kind)) continue;
+    if (r.p[0] < box[0] || r.p[0] > box[1] || r.p[1] < box[2] || r.p[1] > box[3]) continue;
+    const n = nearest(c, r.p);
+    if (n.d > maxM) continue;
+    hits.push({ id: r.id, kind, name: r.name, detail: r.food, p: r.p, km: n.km, offM: n.d, recommended: true, parking: r.parking });
+  }
+  return hits.sort((a, b) => a.km - b.km).slice(0, Math.max(limit, 40));
+}
+
 export async function stopsAlong(kind: StopKind, line: LatLon[], signal?: AbortSignal, limit = 12, scale = 1): Promise<StopHit[]> {
   if (line.length < 2) return [];
+  if (kind === 'mittag' || kind === 'kaffee') return recommendedAlong(kind, line, limit, scale);
   const base = await poiBase();
   if (signal?.aborted) throw new Error('Abgebrochen');
   // Fehlt die Art in den Kacheln (Hotels bis zum nächsten Import), wäre jede Kachel leer: dann Overpass
@@ -497,6 +527,9 @@ export type NearPlace = {
 };
 
 export async function placesNear(kind: 'hotel' | 'kaffee' | 'mittag', at: LatLon, signal?: AbortSignal): Promise<NearPlace[]> {
+  // Pause am Ziel oder Zwischenziel: nur Empfehlungen, im Umkreis von 15 km (Koray 11.11.)
+  if (kind !== 'hotel')
+    return recommendedNear(kind, at, 15000).map((r) => ({ id: r.id, name: r.name, detail: r.food, type: kind === 'kaffee' ? 'Café' : 'Restaurant', p: r.p, distM: r.distM, parking: 'parkplatz' as const, food: true }));
   const cfg = NEAR_QUERY[kind];
   const lists = await Promise.all(
     cfg.q.map(async (q) => {

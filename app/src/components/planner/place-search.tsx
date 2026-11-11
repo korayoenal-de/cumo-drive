@@ -502,10 +502,12 @@ function SearchBody({
             ) : hotels === 'fehler' ? (
               <AppText style={styles.empty}>Die {nearTab.plural} lassen sich gerade nicht laden. Versuch es gleich noch einmal.</AppText>
             ) : hotels.length === 0 ? (
-              <AppText style={styles.empty}>Rund um {current} gibt es keine {nearTab.plural} mit Namen in der Karte.</AppText>
+              <AppText style={styles.empty}>
+                {nearKind === 'hotel' ? `Rund um ${current} gibt es keine ${nearTab.plural} mit Namen in der Karte.` : `Rund um ${current} haben wir noch keine empfohlenen ${nearTab.plural}. Über die Suche findest du jedes Lokal.`}
+              </AppText>
             ) : (
               <View style={styles.section}>
-                <AppText style={styles.groupLabel}>{nearTab.plural} in der Nähe von {current}</AppText>
+                <AppText style={styles.groupLabel}>{nearKind === 'hotel' ? `${nearTab.plural} in der Nähe von ${current}` : `Empfohlene ${nearTab.plural} in der Nähe von ${current}`}</AppText>
                 <View style={styles.group}>
                   {hotels.slice(0, 20).map((r) => (
                     <Pressable
@@ -542,7 +544,15 @@ function SearchBody({
               <AppText style={styles.empty}>Die Stopps lassen sich gerade nicht laden. Versuch es gleich noch einmal.</AppText>
             ) : catRows && catRows.length === 0 ? (
               <View style={styles.section}>
-                <AppText style={styles.empty}>{q ? `Nichts zu „${q}“ nah an der Route.` : 'Nah an der Route gibt es hier nichts.'}</AppText>
+                <AppText style={styles.empty}>
+                  {cat === 'kaffee' || cat === 'mittag'
+                    ? q
+                      ? `„${q}“ ist nicht unter unseren Empfehlungen. Unter Alle findest du jedes ${cat === 'kaffee' ? 'Café' : 'Restaurant'}.`
+                      : `Hier haben wir noch keine Empfehlung. Unter Alle findest du jedes ${cat === 'kaffee' ? 'Café' : 'Restaurant'}.`
+                    : q
+                      ? `Nichts zu „${q}“ nah an der Route.`
+                      : 'Nah an der Route gibt es hier nichts.'}
+                </AppText>
                 {scale < 3 && (
                   <Pressable accessibilityRole="button" onPress={() => setScale(3)} style={({ pressed }) => [styles.widen, pressed && styles.pressed]}>
                     <AppText style={styles.widenText}>Korridor erweitern</AppText>
@@ -553,6 +563,9 @@ function SearchBody({
               <>
                 {/* Konzept A3 (Koray 8.11.): eine Liste nach Kilometern, rechts groß "in X km" und die ungefähre
                     Ankunft; nur ein echter Umweg bekommt eine Plakette, "0 min" und "Direkt an der Strecke" entfallen */}
+                {(cat === 'kaffee' || cat === 'mittag') && (
+                  <AppText style={styles.recNote}>Unsere Empfehlungen: mit Parkplatz und gut für Sportwagen. Jedes andere Lokal findest du unter Alle.</AppText>
+                )}
                 <View style={styles.group}>
                   {[...(catRows ?? [])]
                     .sort((a, b) => a.km - b.km)
@@ -709,6 +722,7 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, minWidth: 0 },
   name: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   sub: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
+  recNote: { fontFamily: Fonts.semibold, fontSize: Type.caption + 2, lineHeight: 19, color: Colors.muted, marginBottom: Spacing.xs },
   empty: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, paddingHorizontal: Spacing.xs },
   message: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.signal, paddingHorizontal: Spacing.xs },
   tabsBox: { marginHorizontal: -Spacing.xl },
