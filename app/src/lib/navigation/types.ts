@@ -98,6 +98,8 @@ export type NavState = {
   pace: number;
   /** Abstand zur Route in Metern */
   offRouteM: number | null;
+  /** Wie oft die Rückführung auf die Tour gerade hintereinander ignoriert wurde */
+  ignored?: number;
   voice: boolean;
 };
 

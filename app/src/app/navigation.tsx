@@ -765,13 +765,12 @@ export default function NavigationScreen() {
             </View>
             {/* Selbst wählen statt warten (Martin 11.11.): wer nicht umdrehen kann, nimmt gleich eine neue Route.
                 Ohne Tipp führt die App nach 8 s zurück, nach zweimal Ignorieren plant sie selbst neu. */}
-            {status !== 'neuberechnung' && (
+            {/* erst nach dem ersten Ignorieren fragen (Koray 11.11.): beim ersten Mal führt die App einfach zurück */}
+            {status !== 'neuberechnung' && (state.ignored ?? 0) >= 1 && (
               <View style={styles.offBtns}>
-                {!(rejoinM != null && rejoinM > 20) && (
-                  <Pressable accessibilityRole="button" onPress={() => controls.choose('rejoin')} style={({ pressed }) => [styles.offBtn, pressed && styles.offPressed]}>
-                    <AppText style={styles.offBtnText}>Zurück zur Tour</AppText>
-                  </Pressable>
-                )}
+                <Pressable accessibilityRole="button" onPress={() => controls.choose('rejoin')} style={({ pressed }) => [styles.offBtn, pressed && styles.offPressed]}>
+                  <AppText style={styles.offBtnText}>Zurück zur Tour</AppText>
+                </Pressable>
                 <Pressable accessibilityRole="button" onPress={() => controls.choose('fresh')} style={({ pressed }) => [styles.offBtn, styles.offBtnMain, pressed && styles.offPressed]}>
                   <AppText style={[styles.offBtnText, styles.offBtnMainText]}>Neue Route ab hier</AppText>
                 </Pressable>

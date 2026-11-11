@@ -264,6 +264,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         eta: arrived ? new Date(fix.at) : eta,
         pace,
         offRouteM: snap.offM,
+        ignored: ignoredRef.current,
       }));
     },
     [keepAwake, reroute, stopSim, voice],
