@@ -46,7 +46,7 @@ function CommunityProfileWeb() {
   useEffect(() => {
     loadPrivacy()
       .then(setP)
-      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true }));
+      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true, birthYear: null }));
   }, []);
   useEffect(() => {
     if (!editing || q.trim().length < 2) return;
@@ -130,6 +130,7 @@ function CommunityProfileWeb() {
         </div>
       )}
       <span style={S.muted}>Andere Mitglieder sehen dich unter Drivers an diesem Ort, nur als Ortsmitte, nie mit Adresse oder Live Standort.</span>
+      <AgeWeb key={`age${p.birthYear ?? ''}`} birthYear={p.birthYear} onSave={(birthYear) => void save({ birthYear })} />
       <Toggle id="pv-msg" on={p.allowMessages} label="Andere dürfen mich anschreiben" onChange={(v) => void save({ allowMessages: v })} />
       <Toggle id="pv-garage" on={p.showGarage} label="Andere sehen meinen Fuhrpark" onChange={(v) => void save({ showGarage: v })} />
       {busy ? <span style={S.muted}>Wird gespeichert</span> : null}
@@ -232,5 +233,44 @@ function VehicleSheet(props: { v: Vehicle; narrow: boolean; onClose: () => void 
         </button>
       </form>
     </WebSheet>
+  );
+}
+
+/** Alter, optional, wie in der App: eingegeben das Alter, gespeichert der Jahrgang */
+function AgeWeb(props: { birthYear: number | null; onSave: (birthYear: number | null) => void }) {
+  const now = new Date().getFullYear();
+  const shown = props.birthYear ? String(now - props.birthYear) : '';
+  const [draft, setDraft] = useState(shown);
+  const [hint, setHint] = useState<string | null>(null);
+  const commit = () => {
+    const t = draft.trim();
+    if (t === shown) return;
+    if (!t) {
+      setHint(null);
+      props.onSave(null);
+      return;
+    }
+    const age = Number.parseInt(t, 10);
+    if (!Number.isFinite(age) || age < 16 || age > 105) {
+      setHint('Bitte ein Alter zwischen 16 und 105 eingeben.');
+      return;
+    }
+    setHint(null);
+    props.onSave(now - age);
+  };
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <span style={S.metricLabel}>Alter (optional)</span>
+      <input
+        inputMode="numeric"
+        value={draft}
+        placeholder="zum Beispiel 42"
+        onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
+        onBlur={commit}
+        onKeyDown={(e) => e.key === 'Enter' && commit()}
+        style={{ ...S.search, height: 52, background: C.surface2, maxWidth: 200 }}
+      />
+      <span style={hint ? S.errorText : S.muted}>{hint ?? 'Erscheint unter Drivers. Leer lassen, wenn du es nicht zeigen möchtest.'}</span>
+    </label>
   );
 }

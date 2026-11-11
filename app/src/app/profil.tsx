@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { DriverCard } from '@/components/community/driver-card';
-import { BioField, HomeField, usePrivacy } from '@/components/settings/community-profile';
+import { AgeField, BioField, HomeField, usePrivacy } from '@/components/settings/community-profile';
 import { SubScreen } from '@/components/settings/settings-ui';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
@@ -40,6 +40,8 @@ export default function Profil() {
               <View style={styles.sep} />
               <HomeField p={p} save={save} />
               <View style={styles.sep} />
+              <AgeField key={`age${p.birthYear ?? ''}`} p={p} save={save} />
+              <View style={styles.sep} />
               <BioField key={p.bio ?? ""} p={p} save={save} />
             </>
           ) : (
@@ -60,6 +62,7 @@ export default function Profil() {
               car: null,
               homeName: p.homeName,
               bio: p.bio,
+              birthYear: p.birthYear,
               home: p.home,
               allowMessages: p.allowMessages,
               garage: list.map((v) => ({ name: vehicleName(v) || 'Fahrzeug', look: carLookFor(v) ?? null })),

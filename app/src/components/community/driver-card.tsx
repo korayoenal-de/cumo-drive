@@ -12,7 +12,7 @@ import { CarSprite, frameFor } from '@/components/map/car-sprite';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { monthYear } from '@/lib/ausfahrten';
-import type { Driver } from '@/lib/drivers';
+import { ageOf, type Driver } from '@/lib/drivers';
 
 /** Wagenfarbe des ersten Autos als Ring um den Kreis, sonst weiß */
 export const ringColor = (d: Driver) => d.garage?.find((g) => g.look)?.look?.color ?? Colors.text;
@@ -33,7 +33,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
           <View style={styles.flex}>
             <AppText style={styles.bigName} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
             <AppText variant="caption" muted numberOfLines={1}>
-              {[d.homeName ? `Raum ${d.homeName}` : 'Wohnort nicht angegeben', d.memberSince ? `dabei seit ${monthYear(d.memberSince)}` : null].filter(Boolean).join('  ·  ')}
+              {[ageOf(d.birthYear) ? `${ageOf(d.birthYear)} Jahre` : null, d.homeName ? `Raum ${d.homeName}` : 'Wohnort nicht angegeben', d.memberSince ? `dabei seit ${monthYear(d.memberSince)}` : null].filter(Boolean).join('  ·  ')}
             </AppText>
           </View>
         </View>

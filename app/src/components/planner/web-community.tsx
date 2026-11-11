@@ -12,7 +12,7 @@ import { useSession } from '@/lib/auth';
 import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, type CommunityTour } from '@/lib/community';
 import { deleteTour, saveTour, syncLibrary, useLibrary } from '@/lib/library';
 import { useCommunityLine } from '@/lib/community-lines';
-import { kmBetween, listDrivers, type Driver } from '@/lib/drivers';
+import { ageOf, kmBetween, listDrivers, type Driver } from '@/lib/drivers';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import { showToast } from '@/lib/toast';
 import { formatKm, type LatLon, type Profile, type Tour } from '@/lib/tour';
@@ -488,6 +488,7 @@ function DriverCard(props: { d: Driver; km: number | null; selected: boolean; on
               ))}
             </div>
           ) : null}
+          {ageOf(d.birthYear) ? <span style={S.metricLabel}>{ageOf(d.birthYear)} Jahre</span> : null}
           {d.memberSince ? <span style={S.metricLabel}>Dabei seit {d.memberSince.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</span> : null}
           {!d.isMe ? (
             <span style={appHint}>{d.allowMessages ? 'Nachrichten an Drivers schreibst du in der App unter Community.' : 'Dieser Driver möchte gerade keine Nachrichten bekommen.'}</span>

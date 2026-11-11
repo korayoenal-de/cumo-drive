@@ -16,7 +16,7 @@ import { searchTowns, type Place } from '@/lib/geocode';
  * Eigene Privatsphäre, für alle Ansichten geteilt (Profilkarte, Schalter, Profil Seite): ein Wechsel
  * erscheint überall sofort (Koray 10.11.). Sofortige Anzeige, Rücknahme bei Fehler.
  */
-const FALLBACK: Privacy = { homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true };
+const FALLBACK: Privacy = { homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true, birthYear: null };
 let shared: Privacy | null = null;
 let loading = false;
 const listeners = new Set<() => void>();
@@ -178,6 +178,52 @@ export function BioField({ p, save }: { p: Privacy; save: (patch: Partial<Privac
   );
 }
 
+/**
+ * Alter, optional (Koray 11.11.): eingegeben wird das Alter, gespeichert der Jahrgang, damit es mitwächst.
+ * Sichtbar unter Drivers wie Wohnort und Über mich. Leeres Feld entfernt es wieder.
+ */
+export function AgeField({ p, save }: { p: Privacy; save: (patch: Partial<Privacy>) => Promise<void> }) {
+  const now = new Date().getFullYear();
+  const shown = p.birthYear ? String(now - p.birthYear) : '';
+  const [draft, setDraft] = useState(shown);
+  const [hint, setHint] = useState<string | null>(null);
+  const commit = () => {
+    const t = draft.trim();
+    if (t === shown) return;
+    if (!t) {
+      setHint(null);
+      void save({ birthYear: null });
+      return;
+    }
+    const age = Number.parseInt(t, 10);
+    if (!Number.isFinite(age) || age < 16 || age > 105) {
+      setHint('Bitte ein Alter zwischen 16 und 105 eingeben.');
+      return;
+    }
+    setHint(null);
+    void save({ birthYear: now - age });
+  };
+  return (
+    <View style={styles.edit}>
+      <AppText variant="caption" muted>Alter (optional)</AppText>
+      <TextInput
+        maxFontSizeMultiplier={1.2}
+        value={draft}
+        onChangeText={(t) => setDraft(t.replace(/[^0-9]/g, '').slice(0, 3))}
+        onEndEditing={commit}
+        onSubmitEditing={commit}
+        placeholder="zum Beispiel 42"
+        placeholderTextColor={Colors.muted}
+        keyboardType="number-pad"
+        returnKeyType="done"
+        style={styles.input}
+        accessibilityLabel="Alter, optional"
+      />
+      {hint ? <AppText variant="caption" style={styles.hint}>{hint}</AppText> : <AppText variant="caption" muted>Erscheint unter Drivers. Leer lassen, wenn du es nicht zeigen möchtest.</AppText>}
+    </View>
+  );
+}
+
 export function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
     <View style={styles.toggle}>
@@ -188,6 +234,7 @@ export function ToggleRow({ label, value, onChange }: { label: string; value: bo
 }
 
 const styles = StyleSheet.create({
+  hint: { color: Colors.stopText },
   wrap: { gap: Spacing.m },
   flex: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
