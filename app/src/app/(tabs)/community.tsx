@@ -551,7 +551,8 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       setBusy(null);
     }
   };
-  const bookmark = (
+  // Eigene Routen lassen sich nicht merken, sie liegen schon unter Touren (Koray 11.11.)
+  const bookmark = mine ? null : (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={saved ? `${t.name} aus Touren entfernen` : `${t.name} unter Touren speichern`}

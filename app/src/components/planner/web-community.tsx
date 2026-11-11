@@ -9,7 +9,8 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, longDate, requestAusfahrt, shortDate, withdrawAusfahrt, type Ausfahrt } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
-import { copyCommunityTour, listCommunity, loadCommunityTour, type CommunityTour } from '@/lib/community';
+import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, type CommunityTour } from '@/lib/community';
+import { deleteTour, saveTour, syncLibrary, useLibrary } from '@/lib/library';
 import { useCommunityLine } from '@/lib/community-lines';
 import { kmBetween, listDrivers, type Driver } from '@/lib/drivers';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
@@ -256,6 +257,48 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
   const date = new Date(t.published_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
   const meta = [`${formatKm(Number(t.km), 0)} km`, t.curves ? `${t.curves} Kurven` : null, date].filter(Boolean).join('  ·  ');
   const fun = data?.fun;
+  // Lesezeichen schaltet um wie in der App: gespeichert heißt wieder entfernen, mit Rückgängig
+  const library = useLibrary();
+  const kept = useMemo(
+    () => library.find((x) => x.communityId === t.id || (x.name === t.name && (x.folder === 'Community' || (props.mine && x.published)))) ?? null,
+    [library, t.id, t.name, props.mine],
+  );
+  const keep = async () => {
+    if (saving) return;
+    if (kept) {
+      // eigene Änderungen nicht über das Lesezeichen löschen
+      if (kept.edited || (!kept.published && Math.abs(kept.laenge_km - Number(t.km)) > 0.5)) {
+        showToast('Du hast diese Route bearbeitet. Deine Fassung bleibt unter Touren.');
+        return;
+      }
+      try {
+        if (kept.published) await removeKeepPublished(kept);
+        else deleteTour(kept.id);
+        showToast(
+          'Aus Touren entfernt',
+          kept.published
+            ? {}
+            : {
+                action: {
+                  label: 'Rückgängig',
+                  onPress: () => {
+                    saveTour(kept, kept.folder);
+                    void syncLibrary();
+                  },
+                },
+              },
+        );
+      } catch {
+        showToast('Das hat nicht geklappt', { tone: 'error' });
+      }
+      return;
+    }
+    setSaving(true);
+    copyCommunityTour(t)
+      .then(() => showToast('Unter Touren gespeichert'))
+      .catch(() => showToast('Speichern hat nicht geklappt', { tone: 'error' }))
+      .finally(() => setSaving(false));
+  };
   return (
     <div ref={ref} style={{ ...card, padding: Spacing.m, gap: Spacing.m, background: props.selected ? C.surface2 : C.surface }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.m }}>
@@ -279,22 +322,18 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
             </>
           ) : null}
         </span>
-        <button
-          aria-label={`${t.name} unter Touren speichern`}
-          title="Unter Touren speichern"
+        {/* eigene Routen ohne Lesezeichen, sie liegen schon unter Touren (wie in der App) */}
+        {props.mine ? null : <button
+          aria-label={kept ? `${t.name} aus Touren entfernen` : `${t.name} unter Touren speichern`}
+          aria-pressed={!!kept}
+          title={kept ? 'Aus Touren entfernen' : 'Unter Touren speichern'}
           disabled={saving}
-          onClick={() => {
-            setSaving(true);
-            copyCommunityTour(t)
-              .then(() => showToast('Unter Touren gespeichert'))
-              .catch(() => showToast('Speichern hat nicht geklappt', { tone: 'error' }))
-              .finally(() => setSaving(false));
-          }}
-          style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: props.selected ? C.surface : C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="16" height="18" viewBox="0 0 18 20" aria-hidden fill="none" stroke={C.text} strokeWidth="2" strokeLinejoin="round">
+          onClick={() => void keep()}
+          style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: kept ? '#3A1C12' : props.selected ? C.surface : C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="16" height="18" viewBox="0 0 18 20" aria-hidden fill={kept ? C.signal : 'none'} stroke={kept ? C.signal : C.text} strokeWidth="2" strokeLinejoin="round">
             <path d="M2 2h14v16l-7-4.5L2 18z" />
           </svg>
-        </button>
+        </button>}
       </div>
       {props.selected ? (
         <>

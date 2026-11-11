@@ -50,7 +50,7 @@ export function pointsGeoJson(points: LatLon[]) {
     type: 'FeatureCollection',
     features: points.map((p, i) => ({
       type: 'Feature',
-      properties: { label: i === 0 ? 'S' : i === points.length - 1 ? 'Z' : String(i), kind: i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'via' },
+      properties: { idx: i, label: i === 0 ? 'S' : i === points.length - 1 ? 'Z' : String(i), kind: i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'via' },
       geometry: { type: 'Point', coordinates: toLngLat(p) },
     })),
   };
@@ -318,11 +318,33 @@ export function warningsGeoJson(tour: Tour) {
 
 /** Pins der Community: Routen am Start, Ausfahrten am Treffpunkt, Drivers am Wohnort */
 export function addCommunityLayers(map: MapInstance) {
-  map.addSource('community', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  // Pins bündeln sich zu Kreisen mit Zahl, näher heran lösen sie sich auf (wie in der App, 11.11.)
+  map.addSource('community', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, cluster: true, clusterRadius: 44, clusterMaxZoom: 13 });
+  map.addLayer({
+    id: 'community-cluster',
+    type: 'circle',
+    source: 'community',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-radius': ['step', ['get', 'point_count'], 20, 10, 23, 100, 27],
+      'circle-color': Colors.text,
+      'circle-stroke-color': 'rgba(11,11,12,0.55)',
+      'circle-stroke-width': 3,
+    },
+  });
+  map.addLayer({
+    id: 'community-count',
+    type: 'symbol',
+    source: 'community',
+    filter: ['has', 'point_count'],
+    layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 14, 'text-font': ['Noto Sans Bold'], 'text-allow-overlap': true },
+    paint: { 'text-color': Colors.ground },
+  });
   map.addLayer({
     id: 'community-circle',
     type: 'circle',
     source: 'community',
+    filter: ['!', ['has', 'point_count']],
     paint: {
       'circle-radius': ['case', ['get', 'sel'], 11, 8],
       'circle-color': ['case', ['get', 'sel'], Colors.signal, Colors.surface],
@@ -334,6 +356,7 @@ export function addCommunityLayers(map: MapInstance) {
     id: 'community-label',
     type: 'symbol',
     source: 'community',
+    filter: ['!', ['has', 'point_count']],
     layout: { 'text-field': ['get', 'label'], 'text-size': 12, 'text-font': ['Noto Sans Bold'], 'text-offset': [0, 1.3], 'text-anchor': 'top', 'text-optional': true },
     paint: { 'text-color': Colors.text, 'text-halo-color': Colors.ground, 'text-halo-width': 1.6 },
   });

@@ -13,7 +13,7 @@ import { loadProfile } from '@/lib/group/ride';
 import { deleteTour, duplicateTour, filterTours, folders, fromCommunity, renameTour, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
-import { encodeTour, shareUrl } from '@/lib/share-code';
+import { copyTourLink } from '@/lib/share-link';
 import { showToast } from '@/lib/toast';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { formatKm } from '@/lib/tour';
@@ -100,9 +100,7 @@ function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTo
     }
   };
   const copyLink = () => {
-    const url = shareUrl(encodeTour(t, t.profile ?? 'kurvig', { full: true }));
-    navigator.clipboard
-      ?.writeText(`${t.name}, ${formatKm(t.laenge_km, 0)} km mit CUMO DRIVE\n${url}`)
+    copyTourLink(t, t.profile ?? 'kurvig')
       .then(() => showToast('Link kopiert'))
       .catch(() => showToast('Kopieren hat nicht geklappt', { tone: 'error' }));
   };

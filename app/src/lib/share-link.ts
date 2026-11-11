@@ -32,14 +32,38 @@ export async function resolveShareCode(code: string): Promise<string> {
   return data;
 }
 
-export async function shareTourLink(tour: Tour, profile: Profile): Promise<void> {
+/** Text mit kurzem Link (ohne Netz: langer Link, der trägt alles selbst) */
+export async function tourLinkText(tour: Tour, profile: Profile): Promise<string> {
   const code = encodeTour(tour, profile, { full: true });
   let url = shareUrl(code);
   try {
     url = shareUrl(await createShortCode(code));
   } catch {
-    // ohne Netz oder Server: langer Link, der trägt alles selbst
+    // ohne Netz oder Server: langer Link
   }
-  const km = `${formatKm(tour.laenge_km, 0)} km`;
-  await Share.share({ title: tour.name, message: `${tour.name}, ${km} mit CUMO DRIVE\n${url}` });
+  return `${tour.name}, ${formatKm(tour.laenge_km, 0)} km mit CUMO DRIVE\n${url}`;
+}
+
+export async function shareTourLink(tour: Tour, profile: Profile): Promise<void> {
+  await Share.share({ title: tour.name, message: await tourLinkText(tour, profile) });
+}
+
+/**
+ * Im Browser: kurzen Link in die Zwischenablage (Web Planer, 11.11.). Safari erlaubt das Schreiben nur direkt im
+ * Klick, daher geht der noch ausstehende Text als ClipboardItem hinein; sonst nach dem Anlegen mit writeText.
+ */
+export async function copyTourLink(tour: Tour, profile: Profile): Promise<void> {
+  const text = tourLinkText(tour, profile);
+  const nav = typeof navigator !== 'undefined' ? navigator : null;
+  if (!nav?.clipboard) throw new Error('Kopieren geht in diesem Browser nicht');
+  const Item = (globalThis as { ClipboardItem?: new (d: Record<string, Promise<Blob>>) => unknown }).ClipboardItem;
+  if (Item && nav.clipboard.write) {
+    try {
+      await nav.clipboard.write([new Item({ 'text/plain': text.then((t) => new Blob([t], { type: 'text/plain' })) }) as ClipboardItem]);
+      return;
+    } catch {
+      // ältere Browser kennen ausstehende Inhalte nicht: unten weiter
+    }
+  }
+  await nav.clipboard.writeText(await text);
 }

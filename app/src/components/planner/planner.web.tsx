@@ -28,7 +28,7 @@ import { useRide } from '@/lib/group/ride';
 import { passState, usePassLive } from '@/lib/pass-live';
 import { photoGroupsGeoJson, usePhotoGroups, type PhotoGroup } from '@/lib/photos';
 import { PASSES, passesAlong, passesGeoJson, passPoint, passSummary, type Pass } from '@/lib/passes';
-import { encodeTour, shareUrl } from '@/lib/share-code';
+import { copyTourLink } from '@/lib/share-link';
 import { exportTour } from '@/lib/route-file';
 import { deleteTour, duplicateTour } from '@/lib/library';
 import { showToast } from '@/lib/toast';
@@ -57,6 +57,8 @@ import {
 } from './map-web';
 
 import { EMPTY_TOUR, keyOf, passIndex, samePts, STEP_TEXT } from './planner-shared';
+import { AdjustChip, addDraftLayers, adjustText, dimTour, setDraft, useMapEdit, type AdjustState } from './web-map-edit';
+import { spurKm } from '@/lib/smart-roundtrip';
 import { useTourPlan } from './use-tour-plan';
 import { C, type PlannedTour } from './web-shared';
 import { Gallery } from './web-tour-panels';
@@ -75,7 +77,8 @@ import { S } from './web-styles';
 
 type Area = 'planen' | 'touren' | 'community' | 'einstellungen';
 type PlanMode = 'tour' | 'rundtour';
-type MapMenu = { x: number; y: number; p: LatLon; pass?: Pass } | null;
+/** wp: Index eines gesetzten Punkts (Klick auf einen Punkt der Route) */
+type MapMenu = { x: number; y: number; p: LatLon; pass?: Pass; wp?: number } | null;
 
 const AREAS: { id: Area; label: string }[] = [
   { id: 'planen', label: 'Planen' },
@@ -143,7 +146,27 @@ export default function Planner() {
   const roundTour = round.current?.tour ?? null;
 
   // Was die Karte gerade zeigt
-  const shownTour: PlannedTour | null = area === 'community' ? null : mode === 'rundtour' && area === 'planen' ? roundTour : routeTour;
+  // Nach einer Änderung auf der Karte bleibt die alte Strecke blass stehen, bis die neue da ist (wie in der App)
+  const [adjust, setAdjust] = useState<{ snap: ReturnType<typeof plan.snapshot>; km: number | null; busy: boolean } | null>(null);
+  const [adjustDone, setAdjustDone] = useState<AdjustState | null>(null);
+  const keepOld = !!adjust && !!plan.step && !routeTour ? plan.planned : null;
+  const shownTour: PlannedTour | null = area === 'community' ? null : mode === 'rundtour' && area === 'planen' ? roundTour : (routeTour ?? keepOld);
+  if (adjust) {
+    // erst warten, bis gerechnet wird, dann Ergebnis mit Rückgängig melden (Zustand im Rendern nachgeführt)
+    if (plan.step && !adjust.busy) setAdjust({ ...adjust, busy: true });
+    else if (!plan.step && adjust.busy) {
+      const before = adjust;
+      setAdjust(null);
+      const now = plan.planned;
+      if (now && now !== before.snap.planned && !plan.error) {
+        const r = adjustText(before.km, now.laenge_km, spurKm(now));
+        setAdjustDone({ kind: 'done', text: r.text, warn: r.warn, onUndo: () => {
+          plan.restore(before.snap);
+          setAdjustDone(null);
+        } });
+      }
+    }
+  }
   const line = useMemo(() => (shownTour ? flatten(shownTour).map((x) => x.p) : []), [shownTour]);
   useEffect(() => {
     shownRef.current = shownTour;
@@ -189,19 +212,22 @@ export default function Planner() {
         m.on('load', () => {
           addSatelliteLayer(m);
           addTourLayers(m);
+          addDraftLayers(m);
           addBackgroundLines(m);
           addPassLayers(m, passesGeoJson([], new Date().getMonth() + 1));
           addPhotoLayers(m);
           addWarningLayer(m);
           addMemberLayers(m);
           addCommunityLayers(m);
-          for (const layer of ['pass-circle', 'photo-circle', 'community-circle']) {
+          for (const layer of ['pass-circle', 'photo-circle', 'community-circle', 'community-cluster']) {
             m.on('mouseenter', layer, () => (m.getCanvas().style.cursor = 'pointer'));
             m.on('mouseleave', layer, () => (m.getCanvas().style.cursor = ''));
           }
           setMapReady(true);
         });
         map.current = m;
+        // nur für automatische Prüfungen auf dem eigenen Rechner
+        if (location.hostname === '127.0.0.1' || location.hostname.endsWith('.test')) (window as unknown as { __cdmap?: MapInstance }).__cdmap = m;
       })
       .catch((e: Error) => setMapError(e.message));
     return () => {
@@ -368,17 +394,66 @@ export default function Planner() {
     [plan, avoid, round],
   );
 
+  /* ---------- Karte direkt bearbeiten (wie in der App, 11.11.) ---------- */
+  /** Stand vor einer Änderung auf der Karte merken: danach Laden und Ergebnis mit Rückgängig */
+  const beginAdjust = () => {
+    setMenu(null);
+    setEdited(true);
+    mapEdit.current = true;
+    setAdjustDone(null);
+    setAdjust({ snap: plan.snapshot(), km: routeTour?.laenge_km ?? plan.planned?.laenge_km ?? null, busy: false });
+  };
+  const editOn = area === 'planen' && mode === 'tour' && plan.complete && !plan.step && !busy;
+  const wasEdit = useMapEdit(map, mapReady, editOn, plan.pts, !!routeTour, {
+    onMovePoint: (idx, p) => {
+      beginAdjust();
+      const last = plan.pts.length - 1;
+      if (idx === 0) plan.setSlot('start', p, profile, avoid);
+      else if (idx === last) plan.setSlot('ziel', p, profile, avoid);
+      else plan.dragVia(idx - 1, p, profile, avoid);
+    },
+    onPullLine: (p) => {
+      beginAdjust();
+      plan.add('via', p, profile, avoid);
+    },
+    onPointClick: (idx, at) => {
+      const p = plan.pts[idx];
+      if (!p) return;
+      const pass = PASSES.find((x) => passIndex([p], x) === 0);
+      setMenu({ x: at.x, y: at.y, p, pass, wp: idx });
+    },
+  });
+  // Vorschau und blasse alte Strecke nur, solange gerechnet wird
+  const adjusting = !!adjust && !!plan.step;
+  useEffect(() => {
+    const m = map.current;
+    if (!mapReady || !m) return;
+    dimTour(m, adjusting);
+    if (!adjusting && !adjust) setDraft(m, null);
+  }, [mapReady, adjusting, adjust]);
+  const clearDone = useCallback(() => setAdjustDone(null), []);
+
   // Klick auf die Karte
   useEffect(() => {
     const m = map.current;
     if (!mapReady || !m) return;
     const box = (pt: { x: number; y: number }, r: number) => [[pt.x - r, pt.y - r], [pt.x + r, pt.y + r]];
     const onClick = (e: { lngLat: { lat: number; lng: number }; point: { x: number; y: number } }) => {
+      // Ende eines Ziehens oder Klick auf einen Punkt: das erledigt die Bearbeitung (web-map-edit)
+      if (wasEdit()) return;
       if (menu) {
         setMenu(null);
         return;
       }
       if (area === 'community') {
+        // Kreis mit Zahl: so nah heran, dass er sich auflöst
+        const cl = m.queryRenderedFeatures(box(e.point, 4), { layers: ['community-cluster'] })[0];
+        if (cl) {
+          void Promise.resolve(m.getSource('community').getClusterExpansionZoom(cl.properties.cluster_id))
+            .then((z: number) => m.easeTo({ center: cl.geometry.coordinates, zoom: z + 0.5, duration: 500 }))
+            .catch(() => undefined);
+          return;
+        }
         const hit = m.queryRenderedFeatures(box(e.point, 10), { layers: ['community-circle'] })[0];
         if (hit) setSelPin(hit.properties.id);
         return;
@@ -420,7 +495,7 @@ export default function Planner() {
       m.off('contextmenu', onContext);
       m.off('movestart', onMove);
     };
-  }, [mapReady, mode, area, busy, plan, menu, photoGroups, addPoint]);
+  }, [mapReady, mode, area, busy, plan, menu, photoGroups, addPoint, wasEdit]);
 
   useEffect(() => {
     if (!menu) return;
@@ -512,9 +587,13 @@ export default function Planner() {
         />
       ) : null}
       {area === 'planen' && mode === 'tour' && !plan.step && !narrow ? (
-        <div style={S.hint}>{plan.complete ? 'Klick fragt nach der Rolle des Punkts, Rechtsklick öffnet alle Optionen' : 'Klick setzt einen Punkt, Rechtsklick öffnet alle Optionen'}</div>
+        <div style={S.hint}>{plan.complete ? 'Punkte und Linie lassen sich greifen und ziehen. Klick fragt nach der Rolle eines neuen Punkts.' : 'Klick setzt einen Punkt, Rechtsklick öffnet alle Optionen'}</div>
       ) : null}
-      {menu ? <MapMenuCard menu={menu} plan={plan} live={live} photoGroups={photoGroups} onGallery={(g) => setGallery({ g, i: null })} onClose={() => setMenu(null)} onAdd={(k, p, n) => void addPoint(k, p, n)} onRemovePass={(pass) => {
+      {area === 'planen' && mode === 'tour' ? <AdjustChip state={adjusting ? { kind: 'busy' } : adjustDone} onDone={clearDone} /> : null}
+      {menu ? <MapMenuCard menu={menu} plan={plan} live={live} photoGroups={photoGroups} onGallery={(g) => setGallery({ g, i: null })} onClose={() => setMenu(null)} onAdd={(k, p, n) => void addPoint(k, p, n)} onRemoveAt={(idx) => {
+        beginAdjust();
+        plan.removeAt(plan.start ? idx : idx + 1, profile, avoid);
+      }} onRemovePass={(pass) => {
         const i = passIndex(plan.pts, pass);
         if (i >= 0) {
           setEdited(true);
@@ -693,9 +772,17 @@ export default function Planner() {
                 {
                   key: 'link',
                   label: 'Link kopieren',
+                  // kurzer Link wie in der App, mit echten Punkten, Namen und Profil je Etappe
                   onPress: () =>
-                    void navigator.clipboard
-                      ?.writeText(`${routeName}\n${shareUrl(encodeTour({ ...routeTour, name: routeName, namen: routeTour.wegpunkte.map((p) => plan.names[keyOf(p)] ?? "") }, profile, { full: true }))}`)
+                    void copyTourLink(
+                      {
+                        ...routeTour,
+                        name: routeName,
+                        namen: routeTour.wegpunkte.map((p) => plan.names[keyOf(p)] ?? ''),
+                        etappen: routeTour.wegpunkte.slice(1).map((_, i) => plan.legProfile(i, profile)),
+                      },
+                      profile,
+                    )
                       .then(() => showToast('Link kopiert'))
                       .catch(() => showToast('Kopieren hat nicht geklappt', { tone: 'error' })),
                 },
@@ -792,14 +879,18 @@ function MapMenuCard(props: {
   onClose: () => void;
   onAdd: (k: 'start' | 'via' | 'ziel' | 'rundtour', p: LatLon, name?: string) => void;
   onRemovePass: (pass: Pass) => void;
+  /** gesetzten Punkt entfernen (Index in plan.pts) */
+  onRemoveAt: (idx: number) => void;
 }) {
   const { menu, plan } = props;
   const pass = menu.pass;
-  const inRoute = pass ? passIndex(plan.pts, pass) >= 0 : false;
+  const inRoute = pass ? passIndex(plan.pts, pass) >= 0 : menu.wp != null;
+  const wpRole = menu.wp == null ? null : menu.wp === 0 && plan.start ? 'Start' : menu.wp === plan.pts.length - 1 && plan.ziel ? 'Ziel' : `Zwischenziel ${plan.start ? menu.wp : menu.wp + 1}`;
+  const known = menu.wp != null ? plan.names[keyOf(menu.p)] : undefined;
   const photos = pass ? (props.photoGroups ?? []).filter((g) => g.pass?.id === pass.id) : [];
-  const [name, setName] = useState<string | null>(pass?.name ?? null);
+  const [name, setName] = useState<string | null>(pass?.name ?? known ?? null);
   useEffect(() => {
-    if (pass) return;
+    if (pass || known) return;
     let alive = true;
     reverseName(menu.p)
       .then((n) => alive && setName(n))
@@ -807,7 +898,7 @@ function MapMenuCard(props: {
     return () => {
       alive = false;
     };
-  }, [menu.p, pass]);
+  }, [menu.p, pass, known]);
   const act = (k: 'start' | 'via' | 'ziel' | 'rundtour') => {
     props.onClose();
     props.onAdd(k, menu.p, name ?? undefined);
@@ -818,7 +909,8 @@ function MapMenuCard(props: {
     <div style={{ ...S.menu, left, top: menu.y + 8 }} role="menu" onContextMenu={(e) => e.preventDefault()}>
       <div style={S.menuHead}>
         <b>{pass ? pass.name : (name ?? 'Neuer Punkt')}</b>
-        {pass ? <span style={S.dropDetail}>{passSummary(pass, undefined, passState(pass, props.live).note)}</span> : <span style={S.dropDetail}>{`${menu.p[0].toFixed(4)}, ${menu.p[1].toFixed(4)}`}</span>}
+        {wpRole ? <span style={S.dropDetail}>{wpRole}</span> : null}
+        {pass ? <span style={S.dropDetail}>{passSummary(pass, undefined, passState(pass, props.live).note)}</span> : wpRole ? null : <span style={S.dropDetail}>{`${menu.p[0].toFixed(4)}, ${menu.p[1].toFixed(4)}`}</span>}
         {pass?.car_note ? <span style={S.dropDetail}>{pass.car_note}</span> : null}
       </div>
       {photos.length ? (
@@ -832,13 +924,14 @@ function MapMenuCard(props: {
           Fotos ansehen ({photos.reduce((n, g) => n + g.photos.length, 0)})
         </button>
       ) : null}
-      {inRoute && pass ? (
+      {inRoute ? (
         <button
           role="menuitem"
           style={{ ...S.menuItem, color: Colors.stopText }}
           onClick={() => {
             props.onClose();
-            props.onRemovePass(pass);
+            if (menu.wp != null) props.onRemoveAt(menu.wp);
+            else if (pass) props.onRemovePass(pass);
           }}>
           Aus der Route entfernen
         </button>

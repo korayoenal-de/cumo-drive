@@ -14,11 +14,12 @@ import { passState, type LiveRow } from '@/lib/pass-live';
 import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
 import { photoDate, photoUrl, thumbUrl, type PhotoGroup } from '@/lib/photos';
 import { PASSES, passSummary, searchPasses, type Pass } from '@/lib/passes';
+import { highlightsForLeg, passLevel, type HighlightCandidate } from '@/lib/highlight-candidates';
 
 import { Colors, Spacing } from '@/constants/theme';
 
-import { type PlannedTour } from './web-shared';
-import { Chip, Section } from './web-parts';
+import { BODY, C, type PlannedTour } from './web-shared';
+import { Chip, Gauge, Section } from './web-parts';
 import { S } from './web-styles';
 
 /**
@@ -88,7 +89,7 @@ export function StopsPanel(props: { tour: PlannedTour; busy: boolean; onAdd: (p:
 
   const cur = res?.key === key ? res : null;
   return (
-    <Section title="Stopps an der Strecke">
+    <Section title="Unterwegs einplanen">
       <div style={S.chips}>
         {STOP_KINDS.map((k) => (
           <Chip key={k.id} on={kind === k.id} onClick={() => setKind(kind === k.id ? null : k.id)}>
@@ -107,8 +108,9 @@ export function StopsPanel(props: { tour: PlannedTour; busy: boolean; onAdd: (p:
               <span style={S.legKm}>km {Math.round(h.km)}</span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={S.passName}>{h.name}</span>
-                <span style={S.dropDetail}>{[h.detail, h.offM > 150 ? `${formatKm(h.offM / 1000, 1)} km neben der Route` : 'direkt an der Route'].filter(Boolean).join(', ')}</span>
+                <span style={S.dropDetail}>{h.detail || 'direkt an der Route'}</span>
               </span>
+              {h.offM >= 150 ? <span style={detourTag} aria-label={`Umweg ${detourMin(h.offM)} Minuten`}>+{detourMin(h.offM)} min</span> : null}
               <button style={{ ...S.secondary, flex: 'none', padding: '0 12px' }} disabled={props.busy} onClick={() => props.onAdd(h.p)}>
                 Einplanen
               </button>
@@ -119,6 +121,93 @@ export function StopsPanel(props: { tour: PlannedTour; busy: boolean; onAdd: (p:
     </Section>
   );
 }
+
+/**
+ * Highlights und Pässe einbauen (wie in der App seit 10.11.): je Etappe die Pässe und Traumstrecken, die dort einen
+ * Bogen ergeben, mit Fahrspaß Pegel und Umweg in Minuten, nach Etappe geordnet. Dazu die Suche nach einem Pass.
+ * Eine Strecke wird ganz durchfahren (insertRoad), ein Pass als Zwischenziel eingefügt.
+ */
+export function AddHighlight(props: {
+  pts: LatLon[];
+  taken: Set<string>;
+  live: Map<string, LiveRow> | null;
+  busy: boolean;
+  onAdd: (leg: number, c: HighlightCandidate) => void;
+  onAddPass: (p: Pass) => void;
+}) {
+  const [q, setQ] = useState('');
+  const searching = q.trim().length >= 2;
+  const rows = useMemo(() => {
+    if (searching) return [];
+    const seen = new Set<string>();
+    const out: { leg: number; c: HighlightCandidate }[] = [];
+    for (let i = 0; i < props.pts.length - 1; i++) {
+      for (const c of highlightsForLeg({ a: props.pts[i], b: props.pts[i + 1] }, 8000)) {
+        if (seen.has(c.key) || props.taken.has(c.name)) continue;
+        seen.add(c.key);
+        out.push({ leg: i, c });
+      }
+    }
+    // je Etappe die kleinsten Umwege zuerst, insgesamt höchstens 12
+    return out.sort((x, y) => x.leg - y.leg || x.c.extraMin - y.c.extraMin).slice(0, 12);
+  }, [props.pts, props.taken, searching]);
+  const hits = searching ? searchPasses(PASSES, q, 6) : [];
+  return (
+    <Section title="Highlights/Pässe" aside={!searching && rows.length ? 'auf deinen Etappen' : undefined}>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Pass suchen, zum Beispiel Stelvio" style={S.search} aria-label="Pass suchen" />
+      {searching ? (
+        hits.length ? (
+          <ol style={S.passList}>
+            {hits.map((pass) => (
+              <li key={pass.id} style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: Spacing.s }}>
+                <Gauge level={passLevel(pass)} size={22} />
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={S.passName}>{pass.name}</span>
+                  <span style={S.dropDetail}>{passSummary(pass, undefined, passState(pass, props.live).note)}</span>
+                </span>
+                <button
+                  style={{ ...S.secondary, flex: 'none', padding: '0 12px' }}
+                  disabled={props.busy}
+                  onClick={() => {
+                    props.onAddPass(pass);
+                    setQ('');
+                  }}>
+                  Einbauen
+                </button>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p style={S.muted}>Kein Pass gefunden.</p>
+        )
+      ) : rows.length ? (
+        <ol style={S.passList}>
+          {rows.map(({ leg, c }) => (
+            <li key={c.key} style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: Spacing.s }}>
+              <Gauge level={c.level} size={22} label={`Fahrspaß ${FUN_NAMES[c.level] ?? ''}`} />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={S.passName}>{c.name}</span>
+                <span style={S.dropDetail}>{[FUN_NAMES[c.level], c.detail, props.pts.length > 2 ? `Etappe ${leg + 1}` : null].filter(Boolean).join(', ')}</span>
+              </span>
+              {c.extraMin > 2 ? <span style={detourTag}>+{c.extraMin} min</span> : null}
+              <button style={{ ...S.secondary, flex: 'none', padding: '0 12px' }} disabled={props.busy} onClick={() => props.onAdd(leg, c)}>
+                Einbauen
+              </button>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p style={S.muted}>Auf deinen Etappen liegt kein Highlight mit gutem Bogen. Such einen Pass über das Feld.</p>
+      )}
+    </Section>
+  );
+}
+
+/** grober Umweg hin und zurück bei 35 km/h, wie in der App */
+const detourMin = (offM: number) => Math.max(1, Math.round(((2 * offM) / 1000 / 35) * 60));
+const FUN_NAMES: Record<number, string> = { 1: 'Nett', 2: 'Lohnend', 3: 'Stark', 4: 'Traumstraße', 5: 'Legende' };
+/** Umweg wie in der App: gelbe Plakette */
+const detourTag: React.CSSProperties = { flex: 'none', padding: '3px 8px', borderRadius: 10, background: 'rgba(232,176,58,0.16)', color: C.warn, font: `700 13px ${BODY}`, fontVariantNumeric: 'tabular-nums' };
 
 /** Bekannte Pässe in die Tour einbauen: Suche nach Name plus Vorschläge in der Nähe der Route. */
 export function AddPass(props: { near: { pass: Pass; dKm: number }[]; live: Map<string, LiveRow> | null; busy: boolean; onAdd: (p: Pass) => void }) {

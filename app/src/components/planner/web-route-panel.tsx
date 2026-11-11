@@ -12,6 +12,7 @@ import { passPoint, passSummary, type Pass } from '@/lib/passes';
 import { formatKm, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
 import { type TourFun } from '@/lib/fun-score';
 import { type Avoid } from '@/lib/valhalla';
+import { showToast } from '@/lib/toast';
 import { type ElevationProfile } from '@/lib/stats';
 import { Radius, Spacing } from '@/constants/theme';
 
@@ -19,7 +20,7 @@ import { keyOf, profileWord, type PointKind } from './planner-shared';
 import { type TourPlan } from './use-tour-plan';
 import { Accordion, PlaceSearch, Toggle } from './web-parts';
 import { ResultDetails, ResultStats } from './web-result';
-import { AddPass, StopsPanel } from './web-tour-panels';
+import { AddHighlight, StopsPanel } from './web-tour-panels';
 import { BODY, C } from './web-shared';
 import { S } from './web-styles';
 import { XIcon } from './web-ui';
@@ -312,12 +313,21 @@ export function RoutePanel(props: {
 
       <div>
         {routeTour ? (
-          <Accordion label="Pässe einbauen" summary={props.passesNear.length ? `${props.passesNear.length} in der Nähe` : 'Pass suchen'}>
-            <AddPass
-              near={props.passesNear}
+          <Accordion label="Highlights/Pässe" summary="Pässe und Traumstrecken auf deinen Etappen">
+            <AddHighlight
+              pts={pts}
+              taken={new Set(pts.map((p) => plan.names[keyOf(p)]).filter(Boolean))}
               live={props.live}
               busy={busy}
-              onAdd={(pass) => {
+              onAdd={(leg, c) => {
+                props.touch();
+                if (c.line && c.line.length > 2) {
+                  const snap = plan.snapshot();
+                  const replaced = plan.insertRoad(leg, c.line, profile, avoid, c.name);
+                  if (replaced) showToast(`${c.name} ersetzt ${replaced}, es lag nur 2 km davor`, { action: { label: 'Rückgängig', onPress: () => plan.restore(snap) } });
+                } else plan.insertAt(leg, c.p, profile, avoid, c.name);
+              }}
+              onAddPass={(pass) => {
                 props.touch();
                 plan.add('via', passPoint(pass), profile, avoid, pass.name);
               }}
