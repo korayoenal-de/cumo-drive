@@ -24,6 +24,8 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private var following = false
   /** letzter Bildtakt, um einen angehaltenen Display Link zu bemerken */
   private var lastTick: CFTimeInterval = 0
+  /** letzte Position aus der App; bleibt sie aus, folgt die Kamera dem Standort der Karte */
+  private var lastAppAt: CFTimeInterval = 0
   /// Kamera wie in der App: schräg von hinten, folgt der Position, die die App schickt
   private var followCenter: CLLocationCoordinate2D?
   private var followHeading: CLLocationDirection = 0
@@ -200,6 +202,11 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   }
 
   func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
+    // Kommen aus der App keine Positionen mehr (iPhone gesperrt, JavaScript schläft), folgt die Kamera dem eigenen
+    // Standort der Karte, damit das Auto nicht aus dem Bild fährt (Tester Tom 11.11.)
+    if following, let loc = userLocation.location, loc.course >= 0, loc.speed > 2, CACurrentMediaTime() - lastAppAt > 1.5 {
+      followCamera(loc.coordinate, heading: loc.course, fromApp: false)
+    }
     guard let v = meView, let loc = userLocation.location, loc.course >= 0 else { return }
     let angle = (loc.course - mapView.camera.heading) * .pi / 180
     UIView.animate(withDuration: 0.3) { v.transform = CGAffineTransform(rotationAngle: CGFloat(angle)) }
@@ -273,7 +280,8 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   }
 
   /// Position und Fahrtrichtung aus der App: Kamera schräg von hinten wie auf dem iPhone (pitch 50)
-  func followCamera(_ c: CLLocationCoordinate2D, heading: CLLocationDirection) {
+  func followCamera(_ c: CLLocationCoordinate2D, heading: CLLocationDirection, fromApp: Bool = true) {
+    if fromApp { lastAppAt = CACurrentMediaTime() }
     followCenter = c
     followHeading = heading
     trimRoute(at: c)

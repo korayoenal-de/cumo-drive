@@ -8,6 +8,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { carPlayCamera } from '../carplay';
 import { haversine, type LatLon } from '../tour';
 import { replanFromHere } from './replan';
 import { fetchNavRouteDetail, rejoinNavRoute } from './route';
@@ -254,6 +255,10 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       } else {
         offSinceRef.current = null;
       }
+
+      // Kamera im Auto direkt bei jeder Position, nicht erst über React: bei gesperrtem iPhone laufen die Effekte
+      // erst wieder, wenn der Bildschirm angeht, und das Auto fuhr aus dem Bild (Tester Tom 11.11.). Ohne CarPlay tut das nichts.
+      if (fix.heading != null) carPlayCamera(fix.pos, fix.heading);
 
       setState((s) => ({
         ...s,
