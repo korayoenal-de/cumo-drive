@@ -4,13 +4,14 @@
  * Der Code steht hinter #, er erreicht den Server also nie.
  */
 import { Redirect } from "expo-router";
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Linking, Platform, Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/text";
 import { Colors, Fonts, Radius, Spacing, Type } from "@/constants/theme";
 import { PROFILES } from "@/lib/tour";
 import { appLink, decodeTour, extractCode } from "@/lib/share-code";
+import { isShortCode, resolveShareCode } from "@/lib/share-link";
 
 const subscribe = (cb: () => void) => {
   if (typeof window === "undefined") return () => undefined;
@@ -23,7 +24,21 @@ const getHash = () =>
 export default function SharedTour() {
   const hash = useSyncExternalStore(subscribe, getHash, () => "");
   const code = useMemo(() => (hash ? extractCode(hash) : ""), [hash]);
-  const tour = useMemo(() => (code ? decodeTour(code) : null), [code]);
+  // Kurzer Link (s:...): Tour Code bei uns abholen, die App bekommt trotzdem den kurzen Code
+  const [resolved, setResolved] = useState<{ code: string; full: string | null } | null>(null);
+  useEffect(() => {
+    if (!isShortCode(code)) return;
+    let alive = true;
+    resolveShareCode(code)
+      .then((full) => alive && setResolved({ code, full }))
+      .catch(() => alive && setResolved({ code, full: null }));
+    return () => {
+      alive = false;
+    };
+  }, [code]);
+  const short = isShortCode(code);
+  const full = short ? (resolved?.code === code ? resolved.full : undefined) : code;
+  const tour = useMemo(() => (full ? decodeTour(full) : null), [full]);
 
   if (Platform.OS !== "web") return <Redirect href="/" />;
 
@@ -60,6 +75,8 @@ export default function SharedTour() {
               Öffnet die Route in deiner CUMO DRIVE App. Sie plant die Strecke neu, prüft sie mit dem Etappen Check und legt sie in den Planer. Dort speicherst du sie mit dem Lesezeichen.
             </AppText>
           </>
+        ) : short && full === undefined ? (
+          <AppText muted>Tour wird geladen</AppText>
         ) : (
           <>
             <AppText variant="title">Kein gültiger Tour Code.</AppText>

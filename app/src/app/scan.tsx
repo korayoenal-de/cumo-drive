@@ -15,6 +15,7 @@ import { planChecked, type PlanStep } from '@/lib/plan';
 import { fetchHandoff, isHandoffCode } from '@/lib/handoff';
 import { setEditTour } from '@/lib/edit-tour';
 import { decodeTour, extractCode } from '@/lib/share-code';
+import { isShortCode, resolveShareCode } from '@/lib/share-link';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 
 const STEP_TEXT: Record<PlanStep, string> = {
@@ -53,7 +54,20 @@ export default function ScanScreen() {
       }
       return;
     }
-    const shared = decodeTour(raw);
+    // Kurzer Link (s:...): Tour Code erst bei uns abholen
+    let full = raw;
+    if (isShortCode(raw)) {
+      handled.current = true;
+      setStatus({ kind: 'busy', text: 'Link wird geladen', name: 'Geteilte Tour' });
+      try {
+        full = await resolveShareCode(raw);
+      } catch (e) {
+        handled.current = false;
+        setStatus({ kind: 'error', text: e instanceof Error ? e.message : 'Der Link konnte nicht geladen werden.' });
+        return;
+      }
+    }
+    const shared = decodeTour(full);
     if (!shared) {
       setStatus({ kind: 'error', text: 'Das ist kein CUMO DRIVE Code. Im Web Planer auf „An die App senden“ klicken.' });
       return;
