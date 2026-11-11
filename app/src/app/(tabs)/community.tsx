@@ -338,7 +338,7 @@ export default function Community() {
             {shownTours
               .filter((t) => t.id !== selected)
               .map((t) => (
-                <RouteCard key={t.id} t={t} mine={userId === t.owner} />
+                <RouteCard key={t.id} t={t} mine={userId === t.owner} onChanged={load} />
               ))}
           </View>
         ) : seg === 'drivers' ? (
@@ -551,8 +551,20 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       setBusy(null);
     }
   };
-  // Eigene Routen lassen sich nicht merken, sie liegen schon unter Touren (Koray 11.11.)
-  const bookmark = mine ? null : (
+  // Eigene Routen lassen sich nicht merken, sie liegen schon unter Touren (Koray 11.11.). An der Stelle steht
+  // das Zeichen für veröffentlicht; Tippen fragt, ob die Route aus der Community soll (Koray 11.11. abends)
+  const bookmark = mine ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${t.name} ist veröffentlicht. Aus der Community nehmen`}
+      onPress={() => {
+        if (!busy) setConfirm(true);
+      }}
+      hitSlop={4}
+      style={({ pressed }) => [styles.round, styles.roundMine, pressed && styles.pressed]}>
+      {busy === 'withdraw' ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="globe.europe.africa.fill" size={20} tintColor={Colors.good} weight="semibold" />}
+    </Pressable>
+  ) : (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={saved ? `${t.name} aus Touren entfernen` : `${t.name} unter Touren speichern`}
@@ -562,6 +574,24 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       style={({ pressed }) => [styles.round, saved && styles.roundSaved, pressed && styles.pressed]}>
       {busy === 'save' ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name={saved ? 'bookmark.fill' : 'bookmark'} size={19} tintColor={saved ? Colors.signal : Colors.text} weight="semibold" />}
     </Pressable>
+  );
+
+  // Rückfrage als Blatt wie überall (Prüfung 11.11.), nicht mehr „Nochmal tippen“
+  const withdrawSheet = (
+  <ConfirmSheet
+    visible={confirm}
+    title="Möchtest du diese Route wirklich aus der Community nehmen?"
+    text="Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten."
+    confirmLabel="Herausnehmen"
+    onConfirm={() => {
+      setBusy('withdraw');
+      withdrawCommunityTour(t.id)
+        .then(() => onChanged?.())
+        .catch((e: Error) => setErr(e.message))
+        .finally(() => setBusy(null));
+    }}
+    onClose={() => setConfirm(false)}
+  />
   );
 
   if (big) {
@@ -595,21 +625,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
             {busy === 'withdraw' ? <ActivityIndicator color={Colors.muted} /> : <AppText style={styles.textBtnText}>Aus der Community nehmen</AppText>}
           </Pressable>
         )}
-        {/* Rückfrage als Blatt wie überall (Prüfung 11.11.), nicht mehr „Nochmal tippen“ */}
-        <ConfirmSheet
-          visible={confirm}
-          title="Möchtest du diese Route wirklich aus der Community nehmen?"
-          text="Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten."
-          confirmLabel="Herausnehmen"
-          onConfirm={() => {
-            setBusy('withdraw');
-            withdrawCommunityTour(t.id)
-              .then(() => onChanged?.())
-              .catch((e: Error) => setErr(e.message))
-              .finally(() => setBusy(null));
-          }}
-          onClose={() => setConfirm(false)}
-        />
+        {withdrawSheet}
         {err && <AppText variant="caption" style={styles.error}>{err}</AppText>}
       </Animated.View>
     );
@@ -638,6 +654,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
         {bookmark}
       </View>
       {err && <AppText variant="caption" style={styles.error}>{err}</AppText>}
+      {mine && withdrawSheet}
     </Animated.View>
   );
 });
@@ -746,6 +763,7 @@ const styles = StyleSheet.create({
   num: { fontVariant: ['tabular-nums'] },
   desc: { color: Colors.text, opacity: 0.8 },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  roundMine: { backgroundColor: Colors.goodTint },
   roundSaved: { backgroundColor: Colors.signalTint },
   pressed: { opacity: 0.7 },
   // Routenkarte in der Liste: Maße wie TourCard in Meine Touren

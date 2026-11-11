@@ -9,7 +9,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, longDate, requestAusfahrt, shortDate, withdrawAusfahrt, type Ausfahrt } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
-import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, type CommunityTour } from '@/lib/community';
+import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
 import { deleteTour, saveTour, syncLibrary, useLibrary } from '@/lib/library';
 import { useCommunityLine } from '@/lib/community-lines';
 import { kmBetween, listDrivers, type Driver } from '@/lib/drivers';
@@ -23,7 +23,7 @@ import { bigDuration } from './planner-shared';
 import { Chip, Gauge, Metric } from './web-parts';
 import { BODY, C } from './web-shared';
 import { S } from './web-styles';
-import { Badge, Field, FromBadge, pillBtn, RouteThumb, Segmented, ViewTitle } from './web-ui';
+import { Badge, ConfirmSheet, Field, FromBadge, pillBtn, RouteThumb, Segmented, ViewTitle } from './web-ui';
 
 export type Seg = 'routen' | 'ausfahrten' | 'drivers';
 export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt' | 'driver'; p: LatLon; label: string; ring?: string };
@@ -152,6 +152,7 @@ export function CommunityPanel(props: {
               t={t}
               mine={userId === t.owner}
               selected={props.selected === t.id}
+              onWithdrawn={(id) => setTours((l) => l?.filter((x) => x.id !== id) ?? l)}
               onSelect={() => props.onSelect(props.selected === t.id ? null : t.id, t.start_lat != null && t.start_lon != null ? [t.start_lat, t.start_lon] : undefined)}
               onOpen={async () => {
                 try {
@@ -237,9 +238,10 @@ function EmptyCard(props: { title: string; text: string }) {
  * das Lesezeichen rechts. Tippen wählt die Route auf der Karte und klappt Beschreibung und Öffnen auf.
  * Linie und Fahrspaß kommen erst, wenn die Karte ins Bild scrollt (lib/community-lines.ts).
  */
-const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boolean; selected: boolean; onSelect: () => void; onOpen: () => void }) {
+const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boolean; selected: boolean; onSelect: () => void; onOpen: () => void; onWithdrawn: (id: string) => void }) {
   const { t } = props;
   const [saving, setSaving] = useState(false);
+  const [ask, setAsk] = useState(false);
   const [seen, setSeen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -322,8 +324,21 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
             </>
           ) : null}
         </span>
-        {/* eigene Routen ohne Lesezeichen, sie liegen schon unter Touren (wie in der App) */}
-        {props.mine ? null : <button
+        {/* eigene Routen ohne Lesezeichen, sie liegen schon unter Touren; an der Stelle das Zeichen für veröffentlicht,
+            Klick fragt, ob die Route aus der Community soll (wie in der App) */}
+        {props.mine ? (
+          <button
+            aria-label={`${t.name} ist veröffentlicht. Aus der Community nehmen`}
+            title="Aus der Community nehmen"
+            disabled={saving}
+            onClick={() => setAsk(true)}
+            style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: 'rgba(76,195,138,0.14)', color: C.good, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="10" cy="10" r="8" />
+              <path d="M2 10h16M10 2c2.5 2.4 2.5 13.6 0 16M10 2c-2.5 2.4-2.5 13.6 0 16" />
+            </svg>
+          </button>
+        ) : <button
           aria-label={kept ? `${t.name} aus Touren entfernen` : `${t.name} unter Touren speichern`}
           aria-pressed={!!kept}
           title={kept ? 'Aus Touren entfernen' : 'Unter Touren speichern'}
@@ -347,6 +362,27 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
             Im Planer öffnen
           </button>
         </>
+      ) : null}
+      {ask ? (
+        <ConfirmSheet
+          narrow
+          title="Möchtest du diese Route wirklich aus der Community nehmen?"
+          text="Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten."
+          confirmLabel="Herausnehmen"
+          busy={saving}
+          onClose={() => setAsk(false)}
+          onConfirm={() => {
+            setSaving(true);
+            withdrawCommunityTour(t.id)
+              .then(() => {
+                setAsk(false);
+                showToast('Aus der Community genommen');
+                props.onWithdrawn(t.id);
+              })
+              .catch(() => showToast('Das hat nicht geklappt', { tone: 'error' }))
+              .finally(() => setSaving(false));
+          }}
+        />
       ) : null}
     </div>
   );
