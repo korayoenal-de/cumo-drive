@@ -25,10 +25,11 @@ import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, shortDate, typ
 import { useSession } from '@/lib/auth';
 import { kmBetween, listConversations, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
 import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
-import { deleteTour, useLibrary } from '@/lib/library';
+import { deleteTour, saveTour, syncLibrary, useLibrary } from '@/lib/library';
 import { showToast } from '@/lib/toast';
 import { requestCommunityLine, setListReach, useCommunityLine, useInReach } from '@/lib/community-lines';
 import { setEditTour } from '@/lib/edit-tour';
+import { InvitesList, useInviteCount } from '@/components/group/invites-banner';
 import { formatKm, type LatLon } from '@/lib/tour';
 import { looksLikeAddress, searchAddress } from '@/lib/address-search';
 import { searchTowns, type Place } from '@/lib/geocode';
@@ -175,6 +176,7 @@ export default function Community() {
       .map(({ r, p }) => ({ id: r.id, kind: 'ausfahrt', p, label: shortDate(r.startsAt), count: r.taken }));
   }, [seg, shownTours, rides, shownDrivers]);
 
+  const inviteCount = useInviteCount();
   const openRequests = (rides ?? []).reduce((n, r) => n + (r.isOwner ? r.openRequests : 0), 0);
   const selTour = seg === 'routen' ? tours?.find((t) => t.id === selected) ?? null : null;
   const selRide = seg === 'ausfahrten' ? rides?.find((r) => r.id === selected) ?? null : null;
@@ -235,7 +237,7 @@ export default function Community() {
   const segControl = (
     <View style={styles.seg} accessibilityRole="tablist">
       <SegItem label="Routen" icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} />
-      <SegItem label="Ausfahrten" icon="calendar" count={userId ? rides?.length ?? null : null} badge={openRequests} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} />
+      <SegItem label="Ausfahrten" icon="calendar" count={userId ? rides?.length ?? null : null} badge={openRequests + inviteCount} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} />
       <SegItem label="Drivers" icon="person.2" count={userId ? drivers?.length ?? null : null} badge={unread} on={seg === 'drivers'} onPress={() => switchSeg('drivers')} />
     </View>
   );
@@ -353,6 +355,8 @@ export default function Community() {
           </View>
         ) : (
           <View style={styles.body}>
+            {/* Einladungen zu Gruppenfahrten stehen hier oben, nicht mehr über jedem Screen (Koray 11.11.) */}
+            {userId && <InvitesList />}
             {!userId ? (
               <View style={styles.card}>
                 <AppText variant="title">Ausfahrten mit Konto</AppText>
@@ -481,11 +485,20 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
     setErr(null);
     // Lesezeichen schaltet um (Koray 10.11.): gespeichert heißt hier wieder entfernen, mit Rückgängig
     if (kept) {
+      // Bearbeitete Kopie nicht über das Lesezeichen löschen: die eigenen Änderungen gingen sonst verloren
+      // (Koray 11.11.). Erkannt an der Länge, die nach dem Bearbeiten nicht mehr zum Original passt.
+      if (!kept.published && Math.abs(kept.laenge_km - t.km) > 0.5) {
+        showToast('Du hast diese Route bearbeitet. Deine Fassung bleibt unter Touren.', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
+        return;
+      }
       try {
         // eigene veröffentlichte Tour: nur aus Meine Touren, in der Community bleibt sie
         if (kept.published) await removeKeepPublished(kept);
         else deleteTour(kept.id);
-        showToast('Aus Touren entfernt', kept.published ? {} : { action: { label: 'Rückgängig', onPress: () => void copyCommunityTour(t).catch(() => undefined) } });
+        showToast('Aus Touren entfernt', kept.published ? {} : { action: { label: 'Rückgängig', onPress: () => {
+                saveTour(kept, kept.folder);
+                void syncLibrary();
+              } } });
       } catch (e) {
         setErr(e instanceof Error ? e.message : String(e));
       }

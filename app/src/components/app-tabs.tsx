@@ -20,6 +20,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Shadow, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { useUnreadMessages, useUnreadWatcher } from '@/lib/drivers';
+import { useInviteCount, useInvitesWatcher } from '@/components/group/invites-banner';
 import { useRide, type RideState } from '@/lib/group/ride';
 import { expandTabBar, tabBarCompact as compact } from '@/lib/tab-bar';
 
@@ -103,10 +104,12 @@ function TabButton({ tab, isFocused, ref: _ref, ...rest }: TabProps) {
 
 /** Plakette für ungelesene Nachrichten am Community Tab (Koray 10.11.) */
 function UnreadBubble() {
-  const n = useUnreadMessages();
+  // Nachrichten und Einladungen zu Gruppenfahrten zusammen (Koray 11.11.)
+  useInvitesWatcher();
+  const n = useUnreadMessages() + useInviteCount();
   if (n <= 0) return null;
   return (
-    <View style={styles.bubble} accessible accessibilityLabel={`${n} ungelesene Nachrichten`}>
+    <View style={styles.bubble} accessible accessibilityLabel={`${n} neue Nachrichten oder Einladungen`}>
       <AppText style={styles.bubbleText}>{n > 9 ? '9+' : n}</AppText>
     </View>
   );
