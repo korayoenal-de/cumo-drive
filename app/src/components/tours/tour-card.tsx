@@ -197,11 +197,11 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
     <View style={styles.form}>
       <View style={styles.labeled}>
         <AppText style={styles.fieldLabel}>Name der Tour</AppText>
-        <TextInput value={title} onChangeText={setTitle} placeholder="Name der Tour" placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel="Name der Tour" maxLength={120} />
+        <TextInput maxFontSizeMultiplier={1.2} value={title} onChangeText={setTitle} placeholder="Name der Tour" placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel="Name der Tour" maxLength={120} />
       </View>
       <View style={styles.labeled}>
         <AppText style={styles.fieldLabel}>Dein Name als Fahrer</AppText>
-        <TextInput
+        <TextInput maxFontSizeMultiplier={1.2}
           value={shownAuthor}
           onChangeText={(v) => {
             setTouched(true);
@@ -215,7 +215,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
         />
       </View>
       <AppText style={styles.fieldLabel}>Beschreibung (optional)</AppText>
-      <TextInput
+      <TextInput maxFontSizeMultiplier={1.2}
         value={desc}
         onChangeText={setDesc}
         placeholder="Was macht die Tour aus? Beste Abschnitte, Stopps, Tageszeit"

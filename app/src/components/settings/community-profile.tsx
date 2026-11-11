@@ -109,7 +109,7 @@ export function HomeField({ p, save }: { p: Privacy; save: (patch: Partial<Priva
       ) : (
         <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.edit}>
           <View style={styles.row}>
-            <TextInput
+            <TextInput maxFontSizeMultiplier={1.2}
               value={q}
               onChangeText={setQ}
               placeholder="Ort, zum Beispiel Bad Dürkheim"
@@ -161,7 +161,7 @@ export function BioField({ p, save }: { p: Privacy; save: (patch: Partial<Privac
   return (
     <View style={styles.edit}>
       <AppText variant="caption" muted>Über mich</AppText>
-      <TextInput
+      <TextInput maxFontSizeMultiplier={1.2}
         value={draft}
         onChangeText={(t) => setDraft(t.slice(0, 160))}
         onEndEditing={() => {

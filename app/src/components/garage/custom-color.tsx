@@ -46,7 +46,7 @@ export function CustomColorButton({ value, custom, onPick }: { value: string; cu
         <View style={styles.body}>
           <View style={styles.row}>
             <View style={[styles.preview, { backgroundColor: hex ?? Colors.surface2 }]} />
-            <TextInput
+            <TextInput maxFontSizeMultiplier={1.2}
               value={text}
               onChangeText={setText}
               autoFocus

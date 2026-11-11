@@ -17,7 +17,7 @@ export function NameDialog({ visible, initial, onCancel, onSave, title = 'Tour s
   return (
     <OptionsSheet visible={visible} title={title} subtitle={subtitle} onClose={onCancel}>
       <View style={styles.body}>
-        <TextInput
+        <TextInput maxFontSizeMultiplier={1.2}
           value={name}
           onChangeText={setName}
           autoFocus

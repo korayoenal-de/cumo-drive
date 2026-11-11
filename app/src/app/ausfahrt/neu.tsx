@@ -200,7 +200,7 @@ export default function AusfahrtNeu() {
             {/* Treffpunkt */}
             <View style={styles.section}>
               <AppText style={styles.label}>Treffpunkt</AppText>
-              <TextInput value={meetingName} onChangeText={setMeeting} placeholder="Zum Beispiel Parkplatz am Start" placeholderTextColor={Colors.muted} maxLength={80} style={styles.input} accessibilityLabel="Treffpunkt" />
+              <TextInput maxFontSizeMultiplier={1.2} value={meetingName} onChangeText={setMeeting} placeholder="Zum Beispiel Parkplatz am Start" placeholderTextColor={Colors.muted} maxLength={80} style={styles.input} accessibilityLabel="Treffpunkt" />
               <AppText variant="caption" muted>Start der Tour, der Name ist frei wählbar.</AppText>
             </View>
 
@@ -235,7 +235,7 @@ export default function AusfahrtNeu() {
             {/* Hinweis */}
             <View style={styles.section}>
               <AppText style={styles.label}>Hinweis an Mitfahrer (optional)</AppText>
-              <TextInput value={note} onChangeText={setNote} placeholder="Zum Beispiel Mittag am Ziel, Rückweg frei" placeholderTextColor={Colors.muted} multiline maxLength={500} style={[styles.input, styles.inputMulti]} accessibilityLabel="Hinweis an Mitfahrer" />
+              <TextInput maxFontSizeMultiplier={1.2} value={note} onChangeText={setNote} placeholder="Zum Beispiel Mittag am Ziel, Rückweg frei" placeholderTextColor={Colors.muted} multiline maxLength={500} style={[styles.input, styles.inputMulti]} accessibilityLabel="Hinweis an Mitfahrer" />
             </View>
 
             {err && <AppText style={styles.error}>{err}</AppText>}

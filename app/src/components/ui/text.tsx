@@ -5,6 +5,9 @@ import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { Colors, Fonts, Leading, Type } from '@/constants/theme';
 
+/** Obergrenze für die Systemschriftgröße, auch für Eingabefelder */
+export const MAX_FONT_SCALE = 1.2;
+
 type Variant = 'display' | 'title' | 'body' | 'label' | 'caption' | 'number';
 
 export function AppText({
@@ -13,7 +16,8 @@ export function AppText({
   style,
   ...rest
 }: TextProps & { variant?: Variant; muted?: boolean }) {
-  return <Text style={[styles.base, styles[variant], muted && styles.muted, style]} {...rest} />;
+  // Systemschrift wächst höchstens auf 120 % (Prüfung 11.11.): darüber brechen Kennzahlen, Plaketten und die Tableiste
+  return <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.base, styles[variant], muted && styles.muted, style]} {...rest} />;
 }
 
 // Skala vom 9.11.: display Archivo 34/36, title Inter Bold 17/22, body Inter Semibold 15/20,

@@ -14,6 +14,7 @@ import { haptic } from '@/lib/haptics';
 import { RouteMap } from '@/components/map/route-map';
 import type { OtherDriver } from '@/components/map/route-map-shared';
 import { Screen } from '@/components/ui/screen';
+import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { setActiveTour, useActiveTour } from '@/lib/active-tour';
@@ -125,6 +126,13 @@ function Active() {
   };
 
   const [ending, setEnding] = useState(false);
+  // Art bleibt beim Schließen stehen, damit der Text im Ausblenden nicht springt
+  const [ask, setAskKind] = useState<'end' | 'leave'>('leave');
+  const [askOpen, setAskOpen] = useState(false);
+  const setAsk = (k: 'end' | 'leave' | null) => {
+    if (k) setAskKind(k);
+    setAskOpen(k !== null);
+  };
   const end = async () => {
     setEnding(true);
     try {
@@ -206,13 +214,22 @@ function Active() {
       </View>
 
       {isLead && ride.rideId && (
-        <Pressable accessibilityRole="button" disabled={ending} onPress={() => void end()} style={styles.secondary}>
+        <Pressable accessibilityRole="button" disabled={ending} onPress={() => setAsk('end')} style={styles.secondary}>
           {ending ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>Fahrt für alle beenden</AppText>}
         </Pressable>
       )}
-      <Pressable accessibilityRole="button" onPress={() => void leaveRide()} style={styles.leave}>
+      <Pressable accessibilityRole="button" onPress={() => setAsk('leave')} style={styles.leave}>
         <AppText style={styles.leaveText}>Fahrt verlassen</AppText>
       </Pressable>
+      {/* Gefährliches fragt immer nach (Prinzip 2, Prüfung 11.11.): ein Fehltipp beendete sonst die Fahrt für alle */}
+      <ConfirmSheet
+        visible={askOpen}
+        title={ask === 'end' ? 'Möchtest du die Fahrt wirklich für alle beenden?' : 'Möchtest du die Fahrt wirklich verlassen?'}
+        text={ask === 'end' ? 'Alle Mitfahrer verlieren die Live Karte und den Funk.' : 'Die Gruppe sieht dich dann nicht mehr auf der Karte. Du kannst später wieder mitfahren.'}
+        confirmLabel={ask === 'end' ? 'Beenden' : 'Verlassen'}
+        onConfirm={() => (ask === 'end' ? void end() : void leaveRide())}
+        onClose={() => setAsk(null)}
+      />
     </Screen>
   );
 }

@@ -44,7 +44,7 @@ export function NameField({ value, onChange, check, onSurface }: { value: string
   const tone = check.state === 'frei' ? styles.good : check.state === 'vergeben' || check.state === 'ungueltig' || check.state === 'fehler' ? styles.bad : styles.muted;
   return (
     <View style={styles.gap}>
-      <TextInput
+      <TextInput maxFontSizeMultiplier={1.2}
         value={value}
         onChangeText={onChange}
         placeholder="Name, so sehen dich die anderen"

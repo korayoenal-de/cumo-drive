@@ -220,7 +220,7 @@ export default function GruppeNeu() {
 
       <View style={styles.card}>
         <AppText variant="label">Mitfahrer einladen</AppText>
-        <TextInput
+        <TextInput maxFontSizeMultiplier={1.2}
           value={query}
           onChangeText={setQuery}
           placeholder={full ? 'Die Gruppe ist voll' : 'Name suchen'}

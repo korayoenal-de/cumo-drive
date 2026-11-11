@@ -71,7 +71,7 @@ export function DriveRatingCard({ driveId, highlights = [], preset = null }: { d
               <Chip key={r.id} label={r.label} active={reasons.includes(r.id)} onPress={() => toggle(r.id)} />
             ))}
           </View>
-          <TextInput
+          <TextInput maxFontSizeMultiplier={1.2}
             value={note}
             onChangeText={setNote}
             placeholder="Wo genau? Zum Beispiel: Ortsdurchfahrt nach dem Pass"

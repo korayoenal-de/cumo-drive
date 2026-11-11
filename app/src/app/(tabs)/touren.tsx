@@ -126,7 +126,7 @@ export default function Touren() {
       ) : (
         <>
           <View style={styles.gapM}>
-            <TextInput
+            <TextInput maxFontSizeMultiplier={1.2}
               value={q}
               onChangeText={setQ}
               placeholder="Touren durchsuchen"

@@ -55,7 +55,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
 
         <View style={styles.gapM}>
           {mode === 'register' && <NameField value={name} onChange={setName} check={check} />}
-          <TextInput
+          <TextInput maxFontSizeMultiplier={1.2}
             value={email}
             onChangeText={setEmail}
             placeholder="E-Mail"
@@ -68,7 +68,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             style={styles.input}
             accessibilityLabel="E-Mail"
           />
-          <TextInput
+          <TextInput maxFontSizeMultiplier={1.2}
             value={pw}
             onChangeText={setPw}
             placeholder={mode === 'register' ? 'Passwort, mindestens 8 Zeichen' : 'Passwort'}

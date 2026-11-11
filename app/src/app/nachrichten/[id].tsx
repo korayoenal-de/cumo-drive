@@ -113,7 +113,7 @@ export default function Unterhaltung() {
       {sendErr && <AppText style={[styles.error, styles.padH]}>{sendErr}</AppText>}
       {canWrite ? (
         <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.s }]}>
-          <TextInput value={text} onChangeText={setText} placeholder="Nachricht" placeholderTextColor={Colors.muted} multiline maxLength={1000} style={styles.input} accessibilityLabel="Nachricht schreiben" />
+          <TextInput maxFontSizeMultiplier={1.2} value={text} onChangeText={setText} placeholder="Nachricht" placeholderTextColor={Colors.muted} multiline maxLength={1000} style={styles.input} accessibilityLabel="Nachricht schreiben" />
           <Pressable accessibilityRole="button" accessibilityLabel="Senden" accessibilityState={{ disabled: !ok }} disabled={!ok} onPress={() => void send()} style={[styles.send, !ok && styles.sendOff]}>
             {sending ? <ActivityIndicator color={Colors.onSignal} /> : <SymbolView name="arrow.up" size={18} weight="bold" tintColor={Colors.onSignal} />}
           </Pressable>

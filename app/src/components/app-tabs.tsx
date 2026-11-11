@@ -95,7 +95,8 @@ function TabButton({ tab, isFocused, ref: _ref, ...rest }: TabProps) {
         <TabIcon name={tab.icon} on={!!isFocused} color={isFocused ? Colors.text : Colors.muted} size={24} />
         {tab.name === 'community' && <UnreadBubble />}
       </View>
-      <AppText style={[styles.label, isFocused && styles.labelOn]} numberOfLines={1}>
+      {/* Leiste hat feste Höhe und vier feste Breiten: Systemschrift vergrößert hier nicht, lange Wörter schrumpfen leicht (Prüfung 11.11.) */}
+      <AppText style={[styles.label, isFocused && styles.labelOn]} numberOfLines={1} maxFontSizeMultiplier={1} adjustsFontSizeToFit minimumFontScale={0.8}>
         {tab.label}
       </AppText>
     </Pressable>
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
   bar: { height: BAR_H, borderRadius: BAR_H / 2, padding: Spacing.xs, flexDirection: 'row' },
   tab: { flex: 1, height: BAR_H - 8, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: (BAR_H - 8) / 2 },
   pill: { backgroundColor: Colors.pressTint, borderRadius: (BAR_H - 8) / 2 },
-  label: { fontFamily: Fonts.medium, fontSize: Type.caption, color: Colors.muted },
+  label: { alignSelf: 'stretch', textAlign: 'center', paddingHorizontal: 2, fontFamily: Fonts.medium, fontSize: Type.caption, color: Colors.muted },
   labelOn: { fontFamily: Fonts.semibold, color: Colors.text },
   accessory: { height: 52, borderRadius: 26, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingHorizontal: Spacing.l },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.good },

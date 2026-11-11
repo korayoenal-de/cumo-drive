@@ -121,7 +121,7 @@ export default function AusfahrtChat() {
 
       {sendErr && <AppText style={[styles.error, styles.sendErr]}>{sendErr}</AppText>}
       <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.s }]}>
-        <TextInput
+        <TextInput maxFontSizeMultiplier={1.2}
           value={text}
           onChangeText={setText}
           placeholder="Nachricht"

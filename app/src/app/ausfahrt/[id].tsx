@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar, DateBlock } from '@/components/community/ride-bits';
 import { RoutePreview } from '@/components/planner/route-preview';
+import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import {
@@ -82,12 +83,6 @@ export default function AusfahrtDetail() {
       .catch(() => undefined);
   }, [id]);
 
-  // Bestätigen klappt nach 3 s zurück (Prinzip 2)
-  useEffect(() => {
-    if (!confirm) return;
-    const t = setTimeout(() => setConfirm(false), 3000);
-    return () => clearTimeout(t);
-  }, [confirm]);
 
   /** Führt eine Aktion aus, lädt danach neu; true bei Erfolg */
   const run = async (key: string, fn: () => Promise<unknown>): Promise<boolean> => {
@@ -312,7 +307,7 @@ export default function AusfahrtDetail() {
         {asking && (
           <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.section}>
             <AppText style={styles.label}>Nachricht an {a.ownerName} (optional)</AppText>
-            <TextInput
+            <TextInput maxFontSizeMultiplier={1.2}
               value={msg}
               onChangeText={setMsg}
               placeholder="Kurz zu dir und deinem Auto"
@@ -362,31 +357,35 @@ export default function AusfahrtDetail() {
         {(a.myStatus === 'angefragt' || a.myStatus === 'eingeladen' || (a.myStatus === 'zugesagt' && !a.isOwner) || a.isOwner) && !inThisRide && (
           <Pressable
             accessibilityRole="button"
-            onPress={() => {
-              if (!confirm) {
-                setConfirm(true);
-                return;
-              }
-              setConfirm(false);
-              void run('cancel', async () => {
-                if (a.isOwner) {
-                  await cancelAusfahrt(a.id);
-                  back();
-                } else if (a.myStatus === 'eingeladen') await respondInvite(a.id, false);
-                else await withdrawAusfahrt(a.id);
-              });
-            }}
-            style={[styles.textBtn, confirm && styles.confirm]}>
+            onPress={() => setConfirm(true)}
+            style={styles.textBtn}>
             {busy === 'cancel' ? (
               <ActivityIndicator color={Colors.stopText} />
             ) : (
-              <AppText style={[styles.textBtnText, confirm && styles.confirmText]}>
-                {confirm ? 'Wirklich? Nochmal tippen' : a.isOwner ? 'Ausfahrt absagen' : a.myStatus === 'angefragt' ? 'Anfrage zurückziehen' : a.myStatus === 'eingeladen' ? 'Absagen' : 'Doch nicht mitfahren'}
+              <AppText style={styles.textBtnText}>
+                {a.isOwner ? 'Ausfahrt absagen' : a.myStatus === 'angefragt' ? 'Anfrage zurückziehen' : a.myStatus === 'eingeladen' ? 'Absagen' : 'Doch nicht mitfahren'}
               </AppText>
             )}
           </Pressable>
         )}
       </ScrollView>
+      {/* Rückfrage als Blatt wie überall (Prüfung 11.11.) */}
+      <ConfirmSheet
+        visible={confirm}
+        title={a.isOwner ? 'Möchtest du diese Ausfahrt wirklich absagen?' : a.myStatus === 'angefragt' ? 'Möchtest du deine Anfrage wirklich zurückziehen?' : a.myStatus === 'eingeladen' ? 'Möchtest du die Einladung wirklich absagen?' : 'Möchtest du wirklich nicht mehr mitfahren?'}
+        text={a.isOwner ? 'Alle, die zugesagt haben, sehen die Ausfahrt dann als abgesagt.' : undefined}
+        confirmLabel={a.isOwner ? 'Absagen' : a.myStatus === 'angefragt' ? 'Zurückziehen' : 'Absagen'}
+        onConfirm={() =>
+          void run('cancel', async () => {
+            if (a.isOwner) {
+              await cancelAusfahrt(a.id);
+              back();
+            } else if (a.myStatus === 'eingeladen') await respondInvite(a.id, false);
+            else await withdrawAusfahrt(a.id);
+          })
+        }
+        onClose={() => setConfirm(false)}
+      />
     </View>
   );
 }
@@ -408,7 +407,7 @@ function InviteBox({ exclude, onInvite, busyId, onClose }: { exclude: Set<string
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.inviteBox}>
       <View style={styles.row}>
-        <TextInput
+        <TextInput maxFontSizeMultiplier={1.2}
           value={q}
           onChangeText={setQ}
           placeholder="Name eines Fahrers"
@@ -518,7 +517,5 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.4 },
   textBtn: { height: Size.chip, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', paddingHorizontal: Spacing.xl },
   textBtnText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  confirm: { backgroundColor: Colors.signalTint },
-  confirmText: { color: Colors.stopText, fontFamily: Fonts.bold },
   error: { color: Colors.stopText, fontFamily: Fonts.semibold },
 });

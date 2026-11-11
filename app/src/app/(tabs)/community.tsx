@@ -19,6 +19,7 @@ import { DateBlock, RideStatus } from '@/components/community/ride-bits';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
 import { Chip } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
+import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, shortDate, type Ausfahrt } from '@/lib/ausfahrten';
@@ -284,7 +285,7 @@ export default function Community() {
         )}>
         {seg === 'routen' ? (
           <View style={styles.body}>
-            <TextInput value={q} onChangeText={setQ} placeholder="Route, Fahrer, Ort oder PLZ suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Routen durchsuchen" returnKeyType="search" />
+            <TextInput maxFontSizeMultiplier={1.2} value={q} onChangeText={setQ} placeholder="Route, Fahrer, Ort oder PLZ suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Routen durchsuchen" returnKeyType="search" />
             <View style={styles.wrap}>
               {SORTS.map((s) => (
                 <Chip key={s.id} label={s.label} active={sort === s.id} onPress={() => setSort(s.id)} />
@@ -333,7 +334,7 @@ export default function Community() {
                     </Pressable>
                   </View>
                 )}
-                <TextInput value={dq} onChangeText={setDq} placeholder="Name, Ort oder Auto suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Drivers durchsuchen" returnKeyType="search" />
+                <TextInput maxFontSizeMultiplier={1.2} value={dq} onChangeText={setDq} placeholder="Name, Ort oder Auto suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Drivers durchsuchen" returnKeyType="search" />
                 {shownDrivers.length === 0 && <AppText muted>Kein Mitglied passt zur Suche.</AppText>}
                 {shownDrivers.map((d) => (
                   <View
@@ -551,23 +552,27 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
           <Pressable
             accessibilityRole="button"
             onPress={() => {
-              if (busy) return;
-              if (!confirm) {
-                setConfirm(true);
-                setTimeout(() => setConfirm(false), 3000);
-                return;
-              }
-              setConfirm(false);
-              setBusy('withdraw');
-              withdrawCommunityTour(t.id)
-                .then(() => onChanged?.())
-                .catch((e: Error) => setErr(e.message))
-                .finally(() => setBusy(null));
+              if (!busy) setConfirm(true);
             }}
-            style={[styles.textBtn, confirm && styles.textBtnConfirm]}>
-            {busy === 'withdraw' ? <ActivityIndicator color={Colors.muted} /> : <AppText style={[styles.textBtnText, confirm && styles.textBtnTextConfirm]}>{confirm ? 'Wirklich? Nochmal tippen' : 'Aus der Community nehmen'}</AppText>}
+            style={styles.textBtn}>
+            {busy === 'withdraw' ? <ActivityIndicator color={Colors.muted} /> : <AppText style={styles.textBtnText}>Aus der Community nehmen</AppText>}
           </Pressable>
         )}
+        {/* Rückfrage als Blatt wie überall (Prüfung 11.11.), nicht mehr „Nochmal tippen“ */}
+        <ConfirmSheet
+          visible={confirm}
+          title="Möchtest du diese Route wirklich aus der Community nehmen?"
+          text="Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten."
+          confirmLabel="Herausnehmen"
+          onConfirm={() => {
+            setBusy('withdraw');
+            withdrawCommunityTour(t.id)
+              .then(() => onChanged?.())
+              .catch((e: Error) => setErr(e.message))
+              .finally(() => setBusy(null));
+          }}
+          onClose={() => setConfirm(false)}
+        />
         {err && <AppText variant="caption" style={styles.error}>{err}</AppText>}
       </Animated.View>
     );
@@ -723,7 +728,5 @@ const styles = StyleSheet.create({
   secondaryText: { fontFamily: Fonts.bold, fontSize: Type.button },
   error: { color: Colors.stopText, fontFamily: Fonts.semibold },
   textBtn: { height: Size.chip, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', paddingHorizontal: Spacing.xl },
-  textBtnConfirm: { backgroundColor: Colors.signalTint },
   textBtnText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  textBtnTextConfirm: { color: Colors.stopText, fontFamily: Fonts.bold },
 });

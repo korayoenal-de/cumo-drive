@@ -339,7 +339,7 @@ function SearchBody({
               </View>
               <View style={styles.field}>
                 <SymbolView name="magnifyingglass" size={18} tintColor={Colors.muted} />
-                <TextInput
+                <TextInput maxFontSizeMultiplier={1.2}
                   value={query}
                   onChangeText={setQuery}
                   placeholder={CATS.find((c) => c.id === cat)?.placeholder}
@@ -366,7 +366,7 @@ function SearchBody({
                       <PointSymbol kind={sl.kind} label={String((sl.index ?? 0) + 1)} />
                       {sl.active ? (
                         <Animated.View entering={FadeIn.duration(180)} style={[styles.field, styles.fieldOn]}>
-              <TextInput
+              <TextInput maxFontSizeMultiplier={1.2}
                 value={query}
                 onChangeText={setQuery}
                 placeholder={CATS.find((c) => c.id === cat)?.placeholder || placeholder}
@@ -415,7 +415,7 @@ function SearchBody({
               <View style={styles.searchRow}>
                 <View style={styles.field}>
                   <SymbolView name="magnifyingglass" size={18} tintColor={Colors.muted} />
-              <TextInput
+              <TextInput maxFontSizeMultiplier={1.2}
                 value={query}
                 onChangeText={setQuery}
                 placeholder={CATS.find((c) => c.id === cat)?.placeholder || placeholder}

@@ -216,7 +216,7 @@ function Login() {
   return (
     <View style={styles.card}>
       <AppText muted>Mit Konto findest du deine Touren auch im Web Planer, kannst Touren veröffentlichen und deine Fahrten werden gespeichert.</AppText>
-      <TextInput
+      <TextInput maxFontSizeMultiplier={1.2}
         value={email}
         onChangeText={setEmail}
         placeholder="E-Mail"
@@ -227,7 +227,7 @@ function Login() {
         style={styles.input}
         accessibilityLabel="E-Mail"
       />
-      <TextInput
+      <TextInput maxFontSizeMultiplier={1.2}
         value={pw}
         onChangeText={setPw}
         placeholder="Passwort, mindestens 8 Zeichen"

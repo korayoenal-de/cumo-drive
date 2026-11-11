@@ -836,7 +836,7 @@ export default function Planner() {
       ) : mode === 'beschreiben' ? (
         <>
           <View style={styles.inputCard}>
-            <TextInput
+            <TextInput maxFontSizeMultiplier={1.2}
               value={text}
               onChangeText={setText}
               placeholder="Was willst du erleben?"

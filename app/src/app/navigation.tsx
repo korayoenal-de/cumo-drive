@@ -17,6 +17,7 @@ import { SpeedBadge } from '@/components/navigation/speed-badge';
 import { FunkBanner, HighlightCard, HighlightStrip, LeadHaltPill, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { Chip } from '@/components/ui/chip';
+import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
@@ -112,11 +113,6 @@ export default function NavigationScreen() {
   }, [setAutoFresh, withOthers]);
   const [ownRoute, setOwnRouteState] = useState(false);
   const [confirmOwn, setConfirmOwn] = useState(false);
-  useEffect(() => {
-    if (!confirmOwn) return;
-    const t = setTimeout(() => setConfirmOwn(false), 3000);
-    return () => clearTimeout(t);
-  }, [confirmOwn]);
   // Funk der Gruppenfahrt: verbinden, solange die Fahrt aktiv ist (nur Fahrten mit ID, nicht alte Fahrtcodes)
   useEffect(() => {
     if (inRide && ride.rideId) void connectFunk(ride.rideId, ride.myRole === 'lead');
@@ -603,14 +599,12 @@ export default function NavigationScreen() {
 
   const { status, route } = state;
   const running = status === 'laeuft' || status === 'pausiert' || status === 'neuberechnung';
-  // Eigene Route in der Gruppe: erst bestätigen (3 s), dann Gruppe informieren (Koray 11.11.)
+  // Eigene Route in der Gruppe: erst nachfragen (Blatt wie überall, Prüfung 11.11.), dann Gruppe informieren
   const chooseOwn = () => {
     if (!withOthers) return controls.choose('fresh');
-    if (!confirmOwn) {
-      setConfirmOwn(true);
-      return;
-    }
-    setConfirmOwn(false);
+    setConfirmOwn(true);
+  };
+  const goOwn = () => {
     setOwnRouteState(true);
     setOwnRoute(true);
     controls.choose('fresh');
@@ -842,12 +836,12 @@ export default function NavigationScreen() {
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={withOthers ? (confirmOwn ? 'Ja, Gruppe verlassen' : 'Eigene Route, verlässt die Strecke der Gruppe') : 'Neue Route ab hier'}
+                  accessibilityLabel={withOthers ? 'Eigene Route, verlässt die Strecke der Gruppe' : 'Neue Route ab hier'}
                   onPress={chooseOwn}
                   style={({ pressed }) => [styles.offBtn, styles.offBtnMain, pressed && styles.offPressed]}>
                   {/* kurze Wörter: zwei Tasten nebeneinander haben je nur etwa 140 pt (Prüfung 11.11.) */}
                   <AppText style={[styles.offBtnText, styles.offBtnMainText]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-                    {withOthers ? (confirmOwn ? 'Ja, verlassen' : 'Eigene Route') : 'Neue Route'}
+                    {withOthers ? 'Eigene Route' : 'Neue Route'}
                   </AppText>
                 </Pressable>
               </View>
@@ -1072,6 +1066,14 @@ export default function NavigationScreen() {
           </View>
         )}
       </View>
+      <ConfirmSheet
+        visible={confirmOwn}
+        title="Möchtest du die Strecke der Gruppe wirklich verlassen?"
+        text="Du fährst dann deine eigene Route. Die Gruppe sieht dich weiter auf der Karte und erfährt davon."
+        confirmLabel="Eigene Route"
+        onConfirm={goOwn}
+        onClose={() => setConfirmOwn(false)}
+      />
     </View>
   );
 }
