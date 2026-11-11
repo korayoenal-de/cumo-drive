@@ -68,6 +68,7 @@ export function RouteMap({
   onPressPin,
   onDragPoint,
   onLongPressLine,
+  stale,
   overlayTop = 0,
   pickedPassIds,
   flyTo,
@@ -481,7 +482,7 @@ export function RouteMap({
           <Polyline
             key={`rand-${r.key}-${i}`}
             coordinates={r.coords}
-            strokeColor={Colors.ground}
+            strokeColor={stale ? 'rgba(11,11,12,0.35)' : Colors.ground}
             strokeWidth={CLASS_LINE[r.c].width + 3}
             lineCap="round"
             lineJoin="round"
@@ -492,7 +493,7 @@ export function RouteMap({
           <Polyline
             key={`linie-${r.key}-${i}`}
             coordinates={r.coords}
-            strokeColor={CLASS_LINE[r.c].color}
+            strokeColor={stale ? `${CLASS_LINE[r.c].color}59` : CLASS_LINE[r.c].color}
             strokeWidth={CLASS_LINE[r.c].width}
             lineCap="round"
             lineJoin="round"

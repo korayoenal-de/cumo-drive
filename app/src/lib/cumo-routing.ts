@@ -109,6 +109,9 @@ let passThroughOk = true;
  */
 const turnAt = new Set<string>();
 const pkey = (p: LatLon) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`;
+const SNAP_PREVENT = ['motorway', 'trunk', 'track', 'ferry', 'tunnel', 'ford'];
+let snapOk = true;
+
 export function allowTurnAt(p: LatLon) {
   turnAt.add(pkey(p));
 }
@@ -708,6 +711,9 @@ export async function cumoPlan(
       points: points.map(([la, lo]) => [lo, la]),
       profile: ghProfile(profile).name,
       ...(m ? { custom_model: m } : {}),
+      // Punkte nicht auf Wirtschaftswege, Autobahnen oder Fähren einrasten: ein gezogener Punkt neben einem
+      // Feldweg erzeugte sonst einen Stich (Koray 11.11.). Kennt der Server das nicht, geht es ohne weiter.
+      ...(snapOk ? { snap_preventions: SNAP_PREVENT } : {}),
     };
     if (points.length > 2 && passThroughOk && !points.some((q) => turnAt.has(pkey(q)))) {
       try {
@@ -718,7 +724,17 @@ export async function cumoPlan(
         passThroughOk = false;
       }
     }
-    return post(body, signal);
+    try {
+      return await post(body, signal);
+    } catch (e) {
+      if (signal?.aborted || !snapOk) throw e;
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!/snap|cannot find point|point ?not ?found/i.test(msg)) throw e;
+      // unbekannter Parameter: für diese Sitzung abschalten; kein Punkt gefunden: nur diesmal ohne
+      if (/snap/i.test(msg)) snapOk = false;
+      const { snap_preventions: _drop, ...plain } = body as typeof body & { snap_preventions?: string[] };
+      return post(plain, signal);
+    }
   };
   let exclude: LatLon[] = [...extraExclude];
   let best: (PlannedTour & { curves: number }) | null = null;

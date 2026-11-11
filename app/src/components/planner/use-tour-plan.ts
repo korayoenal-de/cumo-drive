@@ -275,6 +275,22 @@ export function useTourPlan(onPlanned?: () => void) {
     }
   }
 
+  /**
+   * Gezogenes Zwischenziel (Koray 11.11.): an die neue Stelle, und dorthin in der Reihenfolge, wo es den
+   * kleinsten Umweg macht. Zieht man die 2 hinter die 3, wird sie zur 3, statt eine Schleife zu erzwingen.
+   */
+  function dragVia(i: number, p: LatLon, profile: Profile, avoid: Avoid) {
+    if (!start || !ziel || i < 0 || i >= vias.length) return;
+    rememberName(p);
+    const rest = vias.filter((_, k) => k !== i);
+    const full = insertVia([start, ...rest, ziel], p);
+    const at = Math.max(0, full.indexOf(p) - 1);
+    const v = [...rest];
+    v.splice(at, 0, p);
+    // Profile je Etappe bleiben an ihrer Stelle; beim Umsortieren passt die Zahl wieder
+    apply(start, v, ziel, fitLegs(legProfiles, v.length), profile, avoid);
+  }
+
   /** Von der Karte oder für Stopps: Zwischenziel dort einfügen, wo es den kleinsten Umweg macht. */
   function add(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string) {
     // Neues Ziel von der Karte verlängert die Tour: das bisherige Ziel wird letztes Zwischenziel (Tester Gregor 10.11.).
@@ -420,7 +436,7 @@ export function useTourPlan(onPlanned?: () => void) {
 
   return {
     start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg, dirty, changed,
-    legProfile, setSlot, add, insertAt, insertRoad, roadWarn, save, reset, load, snapshot, restore,
+    legProfile, setSlot, add, dragVia, insertAt, insertRoad, roadWarn, save, reset, load, snapshot, restore,
     /** Laufende Planung abbrechen, die Punkte bleiben stehen */
     cancel: () => {
       abort.current?.abort();
