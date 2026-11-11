@@ -9,7 +9,7 @@ import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
+import { ActionSheet, SHEET_GONE_MS, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
 import { FloatMenu, type Anchor } from '@/components/ui/float-menu';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
@@ -103,7 +103,8 @@ export function ActionBar({
         onPick={(key) => {
           setAnchor(null);
           const it = more.find((x) => x.key === key);
-          if (it) run(it);
+          // erst wenn das Menü (Modal) weg ist: sonst öffnet iOS das Teilen Blatt nicht (Link teilen im Planer, 11.11.)
+          if (it) setTimeout(() => run(it), SHEET_GONE_MS);
         }}
         onClose={() => setAnchor(null)}
       />
