@@ -249,6 +249,11 @@ export default function Planner() {
       setView({ kind: 'form' });
       setMode('tour');
       setPending(null);
+      setSelVia(null);
+      setAdjust(null);
+      // Neu geöffnete Tour (Link, Community, Touren) immer ganz zeigen: ein vorheriges Ziehen auf der Karte
+      // hatte das Einpassen abgeschaltet, die Karte blieb dann am alten Ort (Koray 11.11.)
+      setMapEdit(false);
       setProfile(p);
       loadTour(t, p, avoid);
     };
