@@ -42,7 +42,7 @@ export function CommunityPanel(props: {
   onSelect: (id: string | null, p?: LatLon) => void;
   onPins: (pins: CommunityPin[]) => void;
   /** Tour als ungespeicherte Kopie im Planer öffnen */
-  onOpenTour: (t: Tour & { minutes?: number }, profile: Profile) => void;
+  onOpenTour: (t: Tour & { minutes?: number; author?: string; communityId?: string }, profile: Profile) => void;
   onSettings: () => void;
 }) {
   const session = useSession();
@@ -155,7 +155,8 @@ export function CommunityPanel(props: {
               onOpen={async () => {
                 try {
                   const full = await loadCommunityTour(t.id);
-                  props.onOpenTour({ ...full.tour, name: t.name }, full.profile);
+                  // Herkunft mitgeben: gespeichert gilt sie als Community Tour (wie in der App)
+                  props.onOpenTour({ ...full.tour, name: t.name, author: t.author?.trim() || undefined, communityId: t.id }, full.profile);
                 } catch (e) {
                   showToast(e instanceof Error ? e.message : 'Die Route ließ sich nicht laden.', { tone: 'error' });
                 }

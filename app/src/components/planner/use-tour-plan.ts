@@ -7,7 +7,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { toPlanError } from '@/components/planner/create-tour';
 import { clearEditOrigin } from '@/lib/edit-tour';
-import { saveTour, syncLibrary, type SavedTour } from '@/lib/library';
+import { fromCommunity, saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName } from '@/lib/geocode';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '@/lib/highlight-roads';
 import { planChanged, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
@@ -121,6 +121,9 @@ export function useTourPlan(onPlanned?: () => void) {
     const offset = s ? 0 : 1;
     return Array.from({ length: Math.max(1, count - 1) }, (_, i) => lp[i + offset] ?? global);
   }
+
+  /** Aus der Community geöffnet: wer sie veröffentlicht hat und ob sie schon abgewandelt ist (Koray 11.11.) */
+  const origin = useRef<{ author?: string; communityId?: string; edited?: boolean } | null>(null);
 
   /** Laufende Namenssuche einer geladenen Tour; eine neue Tour bricht sie ab */
   const nameSeq = useRef(0);
@@ -343,10 +346,11 @@ export function useTourPlan(onPlanned?: () => void) {
     if (!planned) return null;
     const nm = asName ?? name;
     // Aus der Community geöffnet und die Strecke geändert: als abgewandelt merken (erst dann lässt sie sich veröffentlichen)
-    const src = planned as PlannedTour & { author?: string; communityId?: string; edited?: boolean };
+    // Herkunft aus dem Laden: die neu geplante Tour trägt sie nicht mehr
+    const src = origin.current ?? {};
     // nur Punkte und Profile zählen, ein neuer Name ist keine Änderung der Strecke
     const routeChanged = loaded !== null && loaded !== sigOf(pts, (JSON.parse(loaded) as [unknown, string])[1], legProfiles);
-    const varied = src.author || src.communityId ? { edited: src.edited || routeChanged || undefined } : {};
+    const varied = origin.current ? { author: src.author, communityId: src.communityId, edited: src.edited || routeChanged || undefined } : {};
     if (opts?.asCopy) {
       try {
         const namen = pts.map((p) => names[keyOf(p)] ?? '');
@@ -388,6 +392,7 @@ export function useTourPlan(onPlanned?: () => void) {
 
   function reset() {
     abort.current?.abort();
+    origin.current = null;
     setStart(null);
     setVias([]);
     setZiel(null);
@@ -429,6 +434,7 @@ export function useTourPlan(onPlanned?: () => void) {
   /** Gespeicherte Tour zum Ändern laden: erster Wegpunkt Start, letzter Ziel, dazwischen Zwischenziele. Speichern ersetzt dieselbe Tour. */
   function load(t: SavedTour, profile: Profile, avoid: Avoid) {
     abort.current?.abort();
+    origin.current = fromCommunity(t) ? { author: t.author, communityId: t.communityId, edited: t.edited } : null;
     const w = t.wegpunkte;
     const s = w[0] ?? null;
     const z = w.length > 1 ? w[w.length - 1] : null;

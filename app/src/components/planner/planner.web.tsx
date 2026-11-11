@@ -442,9 +442,9 @@ export default function Planner() {
     [plan, avoid, fitTour],
   );
   const openCopy = useCallback(
-    (t: Tour & { minutes?: number }, p: Profile) => {
+    (t: Tour & { minutes?: number; author?: string; communityId?: string }, p: Profile) => {
       const now = new Date().toISOString();
-      openTour({ ...t, id: '', folder: '', createdAt: now, updatedAt: now, profile: p });
+      openTour({ ...t, id: '', folder: t.communityId ? 'Community' : '', createdAt: now, updatedAt: now, profile: p });
     },
     [openTour],
   );

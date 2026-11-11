@@ -7,10 +7,10 @@
 import { useEffect, useState } from 'react';
 
 import { useSession } from '@/lib/auth';
-import { publishTour, removeKeepPublished, unpublishTour } from '@/lib/community';
+import { creditLine, publishTour, removeKeepPublished, unpublishTour } from '@/lib/community';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import { loadProfile } from '@/lib/group/ride';
-import { deleteTour, duplicateTour, filterTours, folders, renameTour, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
+import { deleteTour, duplicateTour, filterTours, folders, fromCommunity, renameTour, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
 import { encodeTour, shareUrl } from '@/lib/share-code';
@@ -87,6 +87,7 @@ export function LibraryPanel(props: { currentId: string | null; onOpen: (t: Save
 
 function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTour) => void; narrow: boolean }) {
   const t = props.tour;
+  const taken = fromCommunity(t);
   const [sheet, setSheet] = useState<'publish' | 'delete' | 'rename' | null>(null);
   useEffect(() => ensureTourFun(t), [t]);
   const date = new Date(t.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -140,8 +141,11 @@ function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTo
           { key: 'link', label: 'Link kopieren', onPress: copyLink },
           { key: 'gpx', label: 'Als GPX herunterladen', onPress: () => void exp('gpx') },
           { key: 'kml', label: 'Als KML herunterladen', onPress: () => void exp('kml') },
-          { key: 'pub', label: t.published ? 'Aus der Community nehmen' : 'In der Community veröffentlichen', onPress: () => setSheet('publish') },
-          { key: 'del', label: 'Tour löschen', danger: true, onPress: () => setSheet('delete') },
+          // aus der Community gespeichert (wie in der App, Koray 11.11.): Veröffentlichen erst nach einer Änderung der Strecke
+          ...(taken && !t.edited
+            ? []
+            : [{ key: 'pub', label: t.published ? 'Aus der Community nehmen' : taken ? 'Deine Variante veröffentlichen' : 'In der Community veröffentlichen', onPress: () => setSheet('publish') }]),
+          { key: 'del', label: taken ? 'Aus Touren entfernen' : 'Tour löschen', danger: true, onPress: () => setSheet('delete') },
         ]}
       />
       {sheet === 'rename' ? <RenameSheet tour={t} narrow={props.narrow} onClose={() => setSheet(null)} /> : null}
@@ -149,7 +153,7 @@ function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTo
         <WebSheet
           narrow={props.narrow}
           title={t.published ? 'Aus der Community nehmen?' : 'In der Community veröffentlichen'}
-          subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
+          subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : taken ? `Alle sehen Strecke, Tourname und deinen Namen. Dabei steht: ${creditLine(t)}` : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
           onClose={() => setSheet(null)}>
           <PublishForm
             tour={t}
@@ -176,7 +180,11 @@ function RenameSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
     }
   };
   return (
-    <WebSheet narrow={props.narrow} title="Tour umbenennen" subtitle="Der neue Name gilt auch im Konto, in der App und in der Community." onClose={props.onClose}>
+    <WebSheet
+      narrow={props.narrow}
+      title="Tour umbenennen"
+      subtitle={fromCommunity(props.tour) ? 'Der neue Name gilt nur bei dir. In der Community behält die Route ihren Namen.' : 'Der neue Name gilt auch im Konto, in der App und in der Community.'}
+      onClose={props.onClose}>
       <form
         style={{ display: 'flex', flexDirection: 'column', gap: Spacing.l }}
         onSubmit={(e) => {
@@ -232,6 +240,22 @@ function DeleteSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
             },
           },
         ]}
+      />
+    );
+  }
+  if (fromCommunity(t)) {
+    return (
+      <ConfirmSheet
+        narrow={props.narrow}
+        title="Möchtest du diese Tour wirklich aus Touren entfernen?"
+        text={t.edited ? `${t.name} mit deinen Änderungen verschwindet. Das Original bleibt in der Community.` : `${t.name} bleibt in der Community erhalten.`}
+        confirmLabel="Entfernen"
+        onClose={props.onClose}
+        onConfirm={() => {
+          deleteTour(t.id);
+          props.onClose();
+          showToast('Aus Touren entfernt');
+        }}
       />
     );
   }
