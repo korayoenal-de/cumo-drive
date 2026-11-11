@@ -254,14 +254,16 @@ export default function Community() {
         thumbW.set(b.w);
         thumbPlaced.set(true);
       }
-      setThumbReady(true);
     },
     [thumbX, thumbW, thumbPlaced],
   );
   const onSegBox = (id: Seg) => (x: number, w: number) => {
     segBoxes.set({ ...segBoxes.get(), [id]: { x, w } });
     // den gemessenen Kasten direkt nehmen: der gerade gesetzte Wert ist beim Zurücklesen noch nicht da (Fehler 11.11.)
-    if (id === seg) moveThumb({ x, w });
+    if (id === seg && w > 0) {
+      moveThumb({ x, w });
+      setThumbReady(true);
+    }
   };
   useEffect(() => moveThumb(segBoxes.get()[seg]), [seg, segBoxes, moveThumb]);
   const thumbStyle = useAnimatedStyle(() => ({ width: thumbW.get(), opacity: thumbW.get() > 0 ? 1 : 0, transform: [{ translateX: thumbX.get() }] }));
