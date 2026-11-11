@@ -82,7 +82,7 @@ export type Cat = 'alle' | StopKind | 'pass';
 const CATS: { id: Cat; label: string; placeholder: string }[] = [
   { id: 'alle', label: 'Alle', placeholder: '' },
   { id: 'tank', label: 'Tanken', placeholder: 'Marke, etwa Shell' },
-  { id: 'kaffee', label: 'Café', placeholder: 'Café suchen' },
+  // Café gibt es nicht mehr als eigene Auswahl: einen Kaffee bekommt man in jedem Restaurant (Koray 11.11.)
   { id: 'mittag', label: 'Essen', placeholder: 'Restaurant suchen' },
   { id: 'aussicht', label: 'Aussicht', placeholder: 'Aussichtspunkt suchen' },
   { id: 'hotel', label: 'Hotel', placeholder: 'Hotel suchen' },
@@ -211,7 +211,7 @@ function SearchBody({
   const nearHotel = role !== 'Start';
   const hotelMode = !!current && !!currentP && query === current && !stopsOnly;
   // Rund um den Ort: Hotel, Café und Restaurant (Koray 8.11.)
-  const [nearKind, setNearKind] = useState<'hotel' | 'kaffee' | 'mittag'>(initialNear && (nearHotel || initialNear !== 'hotel') ? initialNear : nearHotel ? 'hotel' : 'kaffee');
+  const [nearKind, setNearKind] = useState<'hotel' | 'kaffee' | 'mittag'>(initialNear && initialNear !== 'kaffee' && (nearHotel || initialNear !== 'hotel') ? initialNear : nearHotel ? 'hotel' : 'mittag');
   const [nearFound, setNearFound] = useState<Record<string, StopRow[] | 'fehler'>>({});
   const hotels = nearFound[nearKind] ?? null;
   useEffect(() => {
@@ -227,7 +227,6 @@ function SearchBody({
   }, [hotelMode, currentP, nearKind, nearFound]);
   const NEAR_TABS = [
     { id: 'hotel' as const, label: 'Hotel', plural: 'Hotels', icon: 'bed.double.fill' as const },
-    { id: 'kaffee' as const, label: 'Café', plural: 'Cafés', icon: 'cup.and.saucer.fill' as const },
     { id: 'mittag' as const, label: 'Essen', plural: 'Restaurants', icon: 'fork.knife' as const },
   ].filter((t) => nearHotel || t.id !== 'hotel');
   const nearTab = NEAR_TABS.find((t) => t.id === nearKind)!;
@@ -545,10 +544,10 @@ function SearchBody({
             ) : catRows && catRows.length === 0 ? (
               <View style={styles.section}>
                 <AppText style={styles.empty}>
-                  {cat === 'kaffee' || cat === 'mittag'
+                  {cat === 'mittag'
                     ? q
-                      ? `„${q}“ ist nicht unter unseren Empfehlungen. Unter Alle findest du jedes ${cat === 'kaffee' ? 'Café' : 'Restaurant'}.`
-                      : `Hier haben wir noch keine Empfehlung. Unter Alle findest du jedes ${cat === 'kaffee' ? 'Café' : 'Restaurant'}.`
+                      ? `„${q}“ ist nicht unter unseren Empfehlungen. Unter Alle findest du jedes Lokal.`
+                      : 'Hier haben wir noch keine Empfehlung. Unter Alle findest du jedes Lokal.'
                     : q
                       ? `Nichts zu „${q}“ nah an der Route.`
                       : 'Nah an der Route gibt es hier nichts.'}
@@ -563,7 +562,7 @@ function SearchBody({
               <>
                 {/* Konzept A3 (Koray 8.11.): eine Liste nach Kilometern, rechts groß "in X km" und die ungefähre
                     Ankunft; nur ein echter Umweg bekommt eine Plakette, "0 min" und "Direkt an der Strecke" entfallen */}
-                {(cat === 'kaffee' || cat === 'mittag') && (
+                {cat === 'mittag' && (
                   <AppText style={styles.recNote}>Unsere Empfehlungen: mit Parkplatz und gut für Sportwagen. Jedes andere Lokal findest du unter Alle.</AppText>
                 )}
                 <View style={styles.group}>

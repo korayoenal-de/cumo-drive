@@ -337,7 +337,6 @@ export type PlannedStop = { key: string; name: string; detail: string; cat: Excl
 
 const STOP_CHIPS: { id: Exclude<Cat, 'alle'>; label: string }[] = [
   { id: 'tank', label: 'Tanken' },
-  { id: 'kaffee', label: 'Café' },
   { id: 'mittag', label: 'Essen' },
   { id: 'aussicht', label: 'Aussicht' },
   // gleiche Namen wie die Reiter der Ortssuche (CATS in place-search.tsx), Koray 10.11.

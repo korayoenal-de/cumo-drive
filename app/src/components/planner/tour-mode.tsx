@@ -509,7 +509,7 @@ export function TourMode({
             name={nameOf(p)}
             role={role}
             withHotel={kind !== 'start' || isLoop}
-            initialKind={kind === 'via' ? 'kaffee' : 'hotel'}
+            initialKind={kind === 'via' ? 'mittag' : 'hotel'}
             onClose={() => setOrtOpen(null)}
             onPick={(q, name) => {
               onListEdit();

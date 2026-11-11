@@ -33,8 +33,7 @@ export type StopHit = {
 export const STOP_KINDS: { id: StopKind; label: string; hint: string }[] = [
   { id: 'tank', label: 'Super Plus', hint: 'Tankstellen mit 98 Oktan oder Marken mit Super Plus' },
   { id: 'aussicht', label: 'Aussicht', hint: 'Aussichtspunkte mit Parkplatz in der Nähe' },
-  { id: 'mittag', label: 'Mittag', hint: 'Unsere Empfehlungen: Restaurants mit Parkplatz, gut für Sportwagen' },
-  { id: 'kaffee', label: 'Kaffee', hint: 'Unsere Empfehlungen: Cafés mit Parkplatz, gut für Sportwagen' },
+  { id: 'mittag', label: 'Essen', hint: 'Unsere Empfehlungen: Restaurants mit Parkplatz, gut für Sportwagen. Einen Kaffee gibt es dort auch.' },
   { id: 'hotel', label: 'Hotel', hint: 'Hotels, Gasthöfe und Pensionen nahe der Strecke' },
 ];
 
@@ -472,7 +471,6 @@ function recommendedAlong(kind: 'mittag' | 'kaffee', line: LatLon[], limit: numb
   const box = [Math.min(...lat) - pad, Math.max(...lat) + pad, Math.min(...lon) - pad, Math.max(...lon) + pad];
   const hits: StopHit[] = [];
   for (const r of RECOMMENDED) {
-    if (!r.kinds.includes(kind)) continue;
     if (r.p[0] < box[0] || r.p[0] > box[1] || r.p[1] < box[2] || r.p[1] > box[3]) continue;
     const n = nearest(c, r.p);
     if (n.d > maxM) continue;
@@ -529,7 +527,7 @@ export type NearPlace = {
 export async function placesNear(kind: 'hotel' | 'kaffee' | 'mittag', at: LatLon, signal?: AbortSignal): Promise<NearPlace[]> {
   // Pause am Ziel oder Zwischenziel: nur Empfehlungen, im Umkreis von 15 km (Koray 11.11.)
   if (kind !== 'hotel')
-    return recommendedNear(kind, at, 15000).map((r) => ({ id: r.id, name: r.name, detail: r.food, type: kind === 'kaffee' ? 'Café' : 'Restaurant', p: r.p, distM: r.distM, parking: 'parkplatz' as const, food: true }));
+    return recommendedNear(kind, at, 15000).map((r) => ({ id: r.id, name: r.name, detail: r.food, type: 'Restaurant', p: r.p, distM: r.distM, parking: 'parkplatz' as const, food: true }));
   const cfg = NEAR_QUERY[kind];
   const lists = await Promise.all(
     cfg.q.map(async (q) => {

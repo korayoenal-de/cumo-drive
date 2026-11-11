@@ -1,6 +1,7 @@
 /**
- * Empfehlungen für Mittag und Kaffee (Koray 11.11.): kuratierte Restaurants und Cafés, die sich für Sportwagen eignen
- * (Parkplatz, Lage an schönen Strecken, Treffpunkte der Szene). Die Tabs Mittag und Kaffee zeigen nur diese;
+ * Empfehlungen zum Einkehren (Koray 11.11.): kuratierte Restaurants, die sich für Sportwagen eignen (Parkplatz, Lage an
+ * schönen Strecken, Treffpunkte der Szene). Eigene Cafés gibt es nicht mehr, einen Kaffee bekommt man in jedem
+ * Restaurant. Der Tab Essen zeigt nur diese;
  * die freie Ortssuche findet weiterhin jedes Lokal.
  *
  * Quelle: Korays Recherche, jeder Eintrag gegen OpenStreetMap geprüft (Name am Ort gefunden), Position aus OSM.
@@ -29,10 +30,9 @@ export type RecommendedStop = {
 export const RECOMMENDED: RecommendedStop[] = (RAW as unknown as { stops: RecommendedStop[] }).stops;
 
 /** Empfehlungen einer Art im Umkreis um einen Punkt, nächste zuerst */
-export function recommendedNear(kind: 'mittag' | 'kaffee', at: LatLon, radiusM: number): (RecommendedStop & { distM: number })[] {
+export function recommendedNear(_kind: 'mittag' | 'kaffee', at: LatLon, radiusM: number): (RecommendedStop & { distM: number })[] {
   const out: (RecommendedStop & { distM: number })[] = [];
   for (const r of RECOMMENDED) {
-    if (!r.kinds.includes(kind)) continue;
     if (Math.abs(r.p[0] - at[0]) > radiusM / 100000 + 0.01) continue;
     const distM = haversine(at, r.p);
     if (distM <= radiusM) out.push({ ...r, distM });

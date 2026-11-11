@@ -271,7 +271,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
         <span class="cd-chip">${mark(7, 'width="18" height="18" aria-hidden="true"')}Penser Joch <span style="color: #E8B03A;">+9 min</span></span>
         <span class="cd-chip">${mark(5, 'width="18" height="18" aria-hidden="true"')}Gampenpass <span style="color: #E8B03A;">+18 min</span></span>
       </div>
-      <p class="cd-body" style="font-size: 15px;">Highlights und Pässe erscheinen je Etappe mit Pegel und Umweg in Minuten, aber nur, wenn sie einen sinnvollen Bogen ergeben. Unterwegs planst du Super Plus, Aussicht, Mittag und Kaffee ein, sortiert nach Kilometer. Zum Schluss bekommt jede Tour ihren Fahrspaß Wert von 0 bis 100, von Gemütlich bis Legendär.</p>
+      <p class="cd-body" style="font-size: 15px;">Highlights und Pässe erscheinen je Etappe mit Pegel und Umweg in Minuten, aber nur, wenn sie einen sinnvollen Bogen ergeben. Unterwegs planst du Super Plus, Aussicht und Einkehr ein, sortiert nach Kilometer. Zum Essen zeigen wir nur Restaurants, die wir für Sportwagen empfehlen, mit Parkplatz und an guten Strecken. Zum Schluss bekommt jede Tour ihren Fahrspaß Wert von 0 bis 100, von Gemütlich bis Legendär.</p>
     </div>
   </div>
 </section>
@@ -477,7 +477,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <h2 class="cd-h2">Von Fahrern recherchiert, nicht vom Algorithmus geraten.</h2>
     <p class="cd-lead">Eigener Routing Server mit Sportwagen Gewichtung, jede Woche neu gebaut. Dazu eine kuratierte Datenbank mit Quelle zu jedem Eintrag, auf die Straße gelegt und geprüft. Passstatus und Wintersperren werden laufend aktualisiert.</p>
   </div>
-  <div class="cd-grid4">${dataCard('Pässe', '370', 'In drei Stufen: Ikone, Bekannt und Geheimtipp. Mit Höhe, Kehren, Maut und Wintersperre.')}${dataCard('Traumstrecken', '486', 'Bergrennen, Rallyeprüfungen und Panoramastraßen in Deutschland, Österreich, der Schweiz, Italien, Frankreich und Slowenien.')}${dataCard('Fahrregionen', '94', 'Gegenden, die als Ganzes zum Fahren gemacht sind, etwa Schwarzwald, Vogesen oder Dolomiten.')}${dataCard('Stopps an der Strecke', '319.000', 'Super Plus, Aussichtspunkte, Mittag und Kaffee, sortiert nach Umweg in Minuten.')}
+  <div class="cd-grid4">${dataCard('Pässe', '370', 'In drei Stufen: Ikone, Bekannt und Geheimtipp. Mit Höhe, Kehren, Maut und Wintersperre.')}${dataCard('Traumstrecken', '486', 'Bergrennen, Rallyeprüfungen und Panoramastraßen in Deutschland, Österreich, der Schweiz, Italien, Frankreich und Slowenien.')}${dataCard('Fahrregionen', '94', 'Gegenden, die als Ganzes zum Fahren gemacht sind, etwa Schwarzwald, Vogesen oder Dolomiten.')}${dataCard('Stopps an der Strecke', '45.000', 'Super Plus und Aussichtspunkte, dazu ausgewählte Restaurants mit Parkplatz für Sportwagen, sortiert nach Umweg in Minuten.')}
   </div>
   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
     <span class="cd-chip" style="color: #9A9A9F;">Kartendaten © OpenStreetMap Mitwirkende</span>

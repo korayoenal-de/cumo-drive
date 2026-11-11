@@ -17,7 +17,6 @@ export type NearKind = 'hotel' | 'kaffee' | 'mittag';
 
 const KINDS: { id: NearKind; label: string; one: string; plural: string; icon: 'bed.double.fill' | 'cup.and.saucer.fill' | 'fork.knife' }[] = [
   { id: 'hotel', label: 'Hotel', one: 'Hotel', plural: 'Hotels', icon: 'bed.double.fill' },
-  { id: 'kaffee', label: 'Café', one: 'Café', plural: 'Cafés', icon: 'cup.and.saucer.fill' },
   { id: 'mittag', label: 'Essen', one: 'Restaurant', plural: 'Restaurants', icon: 'fork.knife' },
 ];
 
@@ -148,7 +147,7 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
             <AppText style={styles.label}>
               {kind === 'hotel'
                 ? `${list.length} ${list.length === 1 ? meta.one : meta.plural} in ${name}`
-                : `${list.length} ${list.length === 1 ? (kind === 'kaffee' ? 'empfohlenes Café' : 'empfohlenes Restaurant') : `empfohlene ${meta.plural}`} in ${name}`}
+                : `${list.length} ${list.length === 1 ? 'empfohlenes Restaurant' : `empfohlene ${meta.plural}`} in ${name}`}
             </AppText>
             <View style={styles.group}>{list.map(row)}</View>
           </View>
