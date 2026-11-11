@@ -581,6 +581,28 @@ export default function Planner() {
     setPending({ p: passPoint(pass), name: pass.name, pass });
   }
 
+  /**
+   * Punkte auf der Karte halten und ziehen (Koray 11.11.): Start, Ziel und Zwischenziele wandern an die neue
+   * Stelle, die Strecke wird neu geplant. So lässt sich etwa ein Stich vermeiden.
+   */
+  function onDragPoint(id: string, p: LatLon) {
+    setPending(null);
+    setSelVia(null);
+    setMapEdit(true);
+    if (id === 'start' || id === 'ziel') return tourPlan.setSlot(id, p, profile, avoid);
+    const i = Number(/^via(\d+)-/.exec(id)?.[1] ?? -1);
+    if (i >= 0) tourPlan.setSlot('via', p, profile, avoid, undefined, i);
+  }
+
+  /** Langer Druck auf die Linie: dort entsteht ein Zwischenziel, das sich dann ziehen lässt */
+  function onLongPressLine(p: LatLon) {
+    haptic('punkt');
+    setPending(null);
+    setMapEdit(true);
+    tourPlan.add('via', p, profile, avoid);
+    showToast('Neuer Punkt auf der Strecke. Halten und ziehen verschiebt sie.');
+  }
+
   /** Tipp auf ein nummeriertes Zwischenziel: ist es ein Pass, dieselben Aktionen wie beim Pass, sonst Entfernen */
   function onPinPress(id: string) {
     const i = Number(/^via(\d+)-/.exec(id)?.[1] ?? -1);
@@ -693,7 +715,7 @@ export default function Planner() {
               ? `${PROFILE_WORD[view.req.profile]}, ${view.req.towardName ? `Richtung ${view.req.towardName}` : dirPhrase(view.req.direction)}${roundStops.length ? `, mit ${roundStops.length} ${roundStops.length === 1 ? 'Stopp' : 'Stopps'}` : ''}`
               : mode === 'tour'
                 ? tourPts.length
-                  ? 'Lange auf die Karte drücken setzt einen Punkt.'
+                  ? 'Lange drücken setzt einen Punkt, Punkte halten und ziehen.'
                   : 'Start, Ziel und Zwischenziele frei setzen.'
                 : mode === 'beschreiben'
                   ? 'Beschreib deine Runde in einem Satz, wir planen sie.'
@@ -1092,6 +1114,8 @@ export default function Planner() {
           onLongPress={inTour ? onMapLongPress : undefined}
           onPressPass={inTour ? onMapPassPress : undefined}
           onPressPin={inTour ? onPinPress : undefined}
+          onDragPoint={inTour && tourPlan.complete ? onDragPoint : undefined}
+          onLongPressLine={inTour && tourPlan.complete && routeTour ? onLongPressLine : undefined}
           onPressMap={passOverlay || selVia != null ? () => {
             setPending(null);
             setSelVia(null);

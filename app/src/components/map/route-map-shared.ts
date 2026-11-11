@@ -49,6 +49,10 @@ export type RouteMapProps = {
   layers?: boolean;
   /** Tipp auf einen Pass der Pässe Ebene (zum Beispiel zur Route hinzufügen) */
   onPressPass?: (pass: Pass) => void;
+  /** Punkte halten und ziehen (Koray 11.11.): 'start', 'ziel' oder die id eines Pins, mit der neuen Lage */
+  onDragPoint?: (id: string, p: LatLon) => void;
+  /** Langer Druck auf die Linie der Tour (statt irgendwo auf die Karte): dort entsteht ein Ziehpunkt */
+  onLongPressLine?: (p: LatLon) => void;
   /** Tipp auf einen nummerierten Punkt (Zwischenziel), id wie in pins */
   onPressPin?: (id: string) => void;
   /** Platz oben, den andere Elemente belegen (Zurück Pille): Hinweiskarten beginnen darunter */

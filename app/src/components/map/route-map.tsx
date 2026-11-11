@@ -20,7 +20,8 @@ import { useLibrary } from '@/lib/library';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { passPoint, PASSES } from '@/lib/passes';
 import { RADAR_FAST_MS, RADAR_MS, RADAR_REPEAT_MS, REVEAL_MS, SCAN_MS, type RadarRoad, type RadarSpot, type Scan } from '@/lib/radar';
-import { haversine, trimDecimals, type CheckClass, type LatLon } from '@/lib/tour';
+import { haversine, trimDecimals, type CheckClass, type LatLon, type Tour } from '@/lib/tour';
+import { haptic } from '@/lib/haptics';
 import { CarSprite, carLookFor, frameFor, TOP_FRAME } from '@/components/map/car-sprite';
 import { useVehicles } from '@/lib/vehicle';
 import { useRouteWeather, WeatherMarkers, WeatherSheet } from '@/components/map/weather-layer';
@@ -65,6 +66,8 @@ export function RouteMap({
   onPressPass,
   onPressMap,
   onPressPin,
+  onDragPoint,
+  onLongPressLine,
   overlayTop = 0,
   pickedPassIds,
   flyTo,
@@ -429,8 +432,13 @@ export function RouteMap({
           onPressMap?.();
         }}
         onLongPress={
-          onLongPress
-            ? (e) => onLongPress([e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude])
+          onLongPress || onLongPressLine
+            ? (e) => {
+                const p: LatLon = [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude];
+                // auf der Linie (etwa 28 Bildpunkte): Ziehpunkt statt neuer Ort
+                if (onLongPressLine && tour && mpp > 0 && distToLine(tour, p) < 28 * mpp) onLongPressLine(p);
+                else onLongPress?.(p);
+              }
             : undefined
         }>
         {tourLines.map((t) => (
@@ -524,14 +532,34 @@ export function RouteMap({
         )}
 
         {ziel && !roundTrip && (
-          <Marker coordinate={ll(ziel)} anchor={{ x: 0.5, y: 0.5 }} title="Ziel" zIndex={20}>
+          <Marker
+            coordinate={ll(ziel)}
+            anchor={{ x: 0.5, y: 0.5 }}
+            title={onDragPoint ? undefined : 'Ziel'}
+            draggable={!!onDragPoint}
+            onDragStart={() => haptic('abheben')}
+            onDragEnd={(e) => {
+              haptic('ablegen');
+              onDragPoint?.('ziel', [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
+            }}
+            zIndex={20}>
             <View style={styles.ziel}>
               <View style={styles.zielInner} />
             </View>
           </Marker>
         )}
         {start && (
-          <Marker coordinate={ll(start)} anchor={{ x: 0.5, y: 0.5 }} title={roundTrip ? 'Start und Ziel' : 'Start'} zIndex={21}>
+          <Marker
+            coordinate={ll(start)}
+            anchor={{ x: 0.5, y: 0.5 }}
+            title={onDragPoint && !roundTrip ? undefined : roundTrip ? 'Start und Ziel' : 'Start'}
+            draggable={!!onDragPoint && !roundTrip}
+            onDragStart={() => haptic('abheben')}
+            onDragEnd={(e) => {
+              haptic('ablegen');
+              onDragPoint?.('start', [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
+            }}
+            zIndex={21}>
             <View style={styles.startHalo}>
               <View style={styles.start} />
             </View>
@@ -580,6 +608,12 @@ export function RouteMap({
                 : undefined
             }
             zIndex={35}
+            draggable={!!onDragPoint}
+            onDragStart={() => haptic('abheben')}
+            onDragEnd={(e) => {
+              haptic('ablegen');
+              onDragPoint?.(pin.id, [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
+            }}
             tracksViewChanges={pinsFresh}>
             <View style={styles.pin}>
               <AppText style={styles.pinText}>{pin.label}</AppText>
@@ -943,4 +977,27 @@ function RadarRing({ x, y, r, fast }: { x: number; y: number; r: number; fast: b
       style={[styles.radarRing, { left: x - r, top: y - r, width: 2 * r, height: 2 * r, borderRadius: r }, style]}
     />
   );
+}
+
+/** Kürzester Abstand eines Punkts zur Linie der Tour in Metern (flach gerechnet, reicht für die Trefferprüfung) */
+function distToLine(tour: Tour, p: LatLon): number {
+  const kx = Math.cos((p[0] * Math.PI) / 180) * 111320;
+  const ky = 110540;
+  let best = Infinity;
+  for (const seg of tour.linie) {
+    const c = seg.p;
+    for (let i = 1; i < c.length; i++) {
+      const ax = (c[i - 1][1] - p[1]) * kx;
+      const ay = (c[i - 1][0] - p[0]) * ky;
+      const bx = (c[i][1] - p[1]) * kx;
+      const by = (c[i][0] - p[0]) * ky;
+      const dx = bx - ax;
+      const dy = by - ay;
+      const l2 = dx * dx + dy * dy;
+      const t = l2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / l2)) : 0;
+      const d = Math.hypot(ax + t * dx, ay + t * dy);
+      if (d < best) best = d;
+    }
+  }
+  return best;
 }
