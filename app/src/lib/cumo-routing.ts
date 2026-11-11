@@ -109,7 +109,9 @@ let passThroughOk = true;
  */
 const turnAt = new Set<string>();
 const pkey = (p: LatLon) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`;
-const SNAP_PREVENT = ['motorway', 'trunk', 'track', 'ferry', 'tunnel', 'ford'];
+// 'track' kennt der Server hier nicht (Fehler „Cannot find snap_prevention: track“, bemerkt 11.11.): damit fiel die
+// ganze Angabe für die Sitzung weg. Wirtschaftswege hält das Profil selbst fern.
+const SNAP_PREVENT = ['motorway', 'trunk', 'ferry', 'tunnel', 'ford'];
 let snapOk = true;
 
 export function allowTurnAt(p: LatLon) {
