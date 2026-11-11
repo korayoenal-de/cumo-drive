@@ -4,20 +4,22 @@
  * Antippen wählt den Pin, die ganze Strecke erscheint auf der Karte.
  */
 import { SymbolView } from 'expo-symbols';
-import { useEffect, useRef } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { initials } from '@/lib/ausfahrten';
+import { clusterLabel, clusterPins, type Region } from '@/lib/map-cluster';
 import type { LatLon } from '@/lib/tour';
 
 export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt' | 'driver'; p: LatLon; label: string; count?: number; ring?: string };
 
 const MAP_TYPE: Record<MapStyle, 'mutedStandard' | 'hybrid' | 'hybridFlyover'> = { standard: 'mutedStandard', satellit: 'hybrid', '3d': 'hybridFlyover' };
 const ll = (p: LatLon) => ({ latitude: p[0], longitude: p[1] });
+const START: Region = { latitude: 48.8, longitude: 9.2, latitudeDelta: 6, longitudeDelta: 6 };
 
 type Props = {
   pins: CommunityPin[];
@@ -48,6 +50,10 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
   const map = useRef<MapView>(null);
   const pad = { top: top + 30, right: 40, bottom: bottom + 30, left: 40 };
   const pinKey = pins.map((p) => p.id).join(',');
+  const win = useWindowDimensions();
+  // Ausschnitt der Karte: daraus ergibt sich, welche Pins zu einem Kreis mit Zahl werden (Koray 11.11.)
+  const [region, setRegion] = useState<Region>(START);
+  const groups = useMemo(() => clusterPins(pins, region, win.width, 56, selected), [pins, region, win.width, selected]);
 
   // Alle Pins zeigen, wenn sich die Auswahl der Pins ändert (Routen oder Ausfahrten)
   useEffect(() => {
@@ -82,14 +88,35 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
         // Tippen auf die freie Karte hebt die Auswahl auf, Tippen auf einen Pin nicht
         if (e.nativeEvent.action !== 'marker-press') onSelect(null);
       }}
-      initialRegion={{ latitude: 48.8, longitude: 9.2, latitudeDelta: 6, longitudeDelta: 6 }}>
+      onRegionChangeComplete={setRegion}
+      initialRegion={START}>
       {line && line.length > 1 && (
         <>
           <Polyline coordinates={line.map(ll)} strokeColor="rgba(0,0,0,0.45)" strokeWidth={8} lineCap="round" lineJoin="round" zIndex={1} />
           <Polyline coordinates={line.map(ll)} strokeColor={Colors.signal} strokeWidth={5} lineCap="round" lineJoin="round" zIndex={2} />
         </>
       )}
-      {pins.map((p) => {
+      {groups.map((g) => {
+        if (g.items.length > 1) {
+          const n = g.items.length;
+          const kind = g.items[0].kind;
+          return (
+            <Marker
+              key={g.key}
+              coordinate={ll(g.p)}
+              anchor={{ x: 0.5, y: 0.5 }}
+              zIndex={30}
+              tracksViewChanges={false}
+              // näher heran, bis sich der Kreis auflöst
+              onPress={() => map.current?.fitToCoordinates(withSpan(g.items.map((x) => x.p), 0.03).map(ll), { edgePadding: pad, animated: true })}
+              accessibilityLabel={`${n} ${kind === 'driver' ? 'Fahrer' : kind === 'route' ? 'Routen' : 'Ausfahrten'} hier, tippen zum Heranzoomen`}>
+              <View style={[styles.cluster, n >= 10 && styles.clusterM, n >= 100 && styles.clusterL, kind === 'ausfahrt' && styles.clusterRide]}>
+                <AppText style={[styles.clusterText, kind === 'ausfahrt' && styles.clusterTextRide]}>{clusterLabel(n)}</AppText>
+              </View>
+            </Marker>
+          );
+        }
+        const p = g.items[0];
         const on = p.id === selected;
         return (
           <Marker
@@ -144,6 +171,13 @@ const styles = StyleSheet.create({
   driver: { width: 38, height: 38, borderRadius: 19, borderWidth: 2.5, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   driverOn: { width: 46, height: 46, borderRadius: 23, borderWidth: 3, backgroundColor: Colors.surface },
   driverText: { fontFamily: Fonts.extrabold, fontSize: 13, lineHeight: 16, color: Colors.text },
+  // Kreis mit Zahl für mehrere Pins an einer Stelle: hell, damit er sich von den einzelnen dunklen Pins abhebt
+  cluster: { minWidth: 40, height: 40, paddingHorizontal: 8, borderRadius: 20, backgroundColor: Colors.text, borderWidth: 3, borderColor: 'rgba(11,11,12,0.55)', alignItems: 'center', justifyContent: 'center' },
+  clusterM: { minWidth: 46, height: 46, borderRadius: 23 },
+  clusterL: { minWidth: 54, height: 54, borderRadius: 27 },
+  clusterRide: { backgroundColor: Colors.signal },
+  clusterText: { fontFamily: Fonts.extrabold, fontSize: 15, lineHeight: 18, color: Colors.ground, fontVariant: ['tabular-nums'] },
+  clusterTextRide: { color: Colors.onSignal },
   wrap: { alignItems: 'center' },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 30, paddingHorizontal: 10, borderRadius: 15, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
   rideOn: { borderWidth: 2, borderColor: Colors.text },
