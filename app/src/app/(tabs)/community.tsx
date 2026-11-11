@@ -484,7 +484,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
   const [confirm, setConfirm] = useState(false);
   // Gespeichert heißt: liegt in Meine Touren (übernommen unter Community, eigene als veröffentlichte Tour)
   const library = useLibrary();
-  const kept = useMemo(() => library.find((x) => x.name === t.name && (x.folder === 'Community' || (mine && x.published))) ?? null, [library, t.name, mine]);
+  const kept = useMemo(() => library.find((x) => x.communityId === t.id || (x.name === t.name && (x.folder === 'Community' || (mine && x.published)))) ?? null, [library, t.id, t.name, mine]);
   const saved = !!kept;
   const [err, setErr] = useState<string | null>(null);
   const [top, setTop] = useState<number | null>(null);
@@ -509,7 +509,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       const full = await loadCommunityTour(t.id);
       const now = new Date().toISOString();
       // ungespeicherte Kopie: ohne id, Speichern im Planer legt sie unter Community in Meine Touren
-      setEditTour({ ...full.tour, name: t.name, id: '', folder: 'Community', createdAt: now, updatedAt: now, curves: t.curves ?? undefined, profile: full.profile }, { label: 'Community', href: '/community' });
+      setEditTour({ ...full.tour, name: t.name, author: t.author?.trim() || undefined, communityId: t.id, id: '', folder: 'Community', createdAt: now, updatedAt: now, curves: t.curves ?? undefined, profile: full.profile }, { label: 'Community', href: '/community' });
       router.navigate('/');
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));

@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { removeKeepPublished } from '@/lib/community';
-import { deleteTour, type SavedTour } from '@/lib/library';
+import { deleteTour, fromCommunity, type SavedTour } from '@/lib/library';
 import { showToast } from '@/lib/toast';
 
 export function DeleteTourSheet({ tour, visible, onClose, onDeleted }: { tour: SavedTour | null; visible: boolean; onClose: () => void; onDeleted?: () => void }) {
@@ -45,6 +45,23 @@ export function DeleteTourSheet({ tour, visible, onClose, onDeleted }: { tour: S
           { key: 'mine', icon: 'bookmark.slash', label: 'Nur bei mir löschen', hint: 'In der Community bleibt sie für andere sichtbar', busy, onPress: () => void onlyMine() },
           { key: 'all', icon: 'trash', label: 'Überall löschen', hint: 'Auch aus der Community und aus deinem Konto', danger: true, onPress: everywhere },
         ]}
+      />
+    );
+  }
+  if (fromCommunity(tour)) {
+    // aus der Community gespeichert: es verschwindet nur das Lesezeichen, die Route dort bleibt
+    return (
+      <ConfirmSheet
+        visible={visible}
+        title="Möchtest du diese Tour wirklich aus Touren entfernen?"
+        text={tour.edited ? `${tour.name} mit deinen Änderungen verschwindet. Das Original bleibt in der Community.` : `${tour.name} bleibt in der Community erhalten.`}
+        confirmLabel="Entfernen"
+        onConfirm={() => {
+          deleteTour(tour.id);
+          showToast('Aus Touren entfernt');
+          onDeleted?.();
+        }}
+        onClose={onClose}
       />
     );
   }

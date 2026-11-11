@@ -342,11 +342,16 @@ export function useTourPlan(onPlanned?: () => void) {
   async function save(curves: number, profile: Profile, avoid: Avoid, asName?: string, opts?: { quiet?: boolean; asCopy?: boolean }): Promise<string | null> {
     if (!planned) return null;
     const nm = asName ?? name;
+    // Aus der Community geöffnet und die Strecke geändert: als abgewandelt merken (erst dann lässt sie sich veröffentlichen)
+    const src = planned as PlannedTour & { author?: string; communityId?: string; edited?: boolean };
+    // nur Punkte und Profile zählen, ein neuer Name ist keine Änderung der Strecke
+    const routeChanged = loaded !== null && loaded !== sigOf(pts, (JSON.parse(loaded) as [unknown, string])[1], legProfiles);
+    const varied = src.author || src.communityId ? { edited: src.edited || routeChanged || undefined } : {};
     if (opts?.asCopy) {
       try {
         const namen = pts.map((p) => names[keyOf(p)] ?? '');
         const base0 = (nm.trim() || planned.name).replace(/\s+Kopie(\s+\d+)?$/, '');
-        const copy = saveTour({ ...planned, name: `${base0} Kopie`.slice(0, 120), curves, profile, namen, etappen: legProfiles }, folder);
+        const copy = saveTour({ ...planned, ...varied, name: `${base0} Kopie`.slice(0, 120), curves, profile, namen, etappen: legProfiles }, folder);
         void syncLibrary();
         if (!opts.quiet) showToast(`${copy.name} gespeichert`);
         return copy.id;
@@ -362,7 +367,7 @@ export function useTourPlan(onPlanned?: () => void) {
       // Namen der Punkte und Profile der Etappen mitspeichern, sonst kommen beim Öffnen nur Ortsnamen
       // aus der Rückwärtssuche zurück (aus "Sellajoch" wurde "Kanzenei", 6.11.)
       const namen = pts.map((p) => names[keyOf(p)] ?? '');
-      const saved = saveTour({ ...planned, name: nm.trim() || planned.name, curves, profile, namen, etappen: legProfiles }, folder, cloudId ?? undefined);
+      const saved = saveTour({ ...planned, ...varied, name: nm.trim() || planned.name, curves, profile, namen, etappen: legProfiles }, folder, cloudId ?? undefined);
       setCloudId(saved.id);
       setBase(sigOf(pts, nm, legProfiles));
       setLoaded(sigOf(pts, nm, legProfiles));

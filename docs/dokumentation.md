@@ -260,6 +260,8 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 | Datum | Entscheidung |
 |---|---|
+| 11.11. | Aus der Community gespeicherte Tour: Umbenennen gilt nur bei dir, „Aus Touren entfernen“ statt Löschen, Veröffentlichen erst nach einer Änderung der Strecke und dann mit „Nach einer Route von …“ |
+| 11.11. | Community Karte bündelt Pins zu Kreisen mit Zahl, Tippen zoomt heran; Server liefert später nur den Ausschnitt |
 | 11.11. | Bewegung nur zu sechs Anlässen (Auswahl gleitet, Finger führt, Aufklappen am Ort, Zustand wird Ergebnis, Druck, Bedeutung); Markierung der Tab Leiste und der Glaspille gleitet |
 | 11.11. | Blatt zieht auf dem UI Thread, Inhalt federt nicht über seine Enden; Richtungsregler nimmt die Berührung auf dem Ring sofort |
 | 11.11. | Rückfragen überall als Blatt, kein „Nochmal tippen“; Systemschrift höchstens 120 % |

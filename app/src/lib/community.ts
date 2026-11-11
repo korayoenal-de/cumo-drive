@@ -3,7 +3,7 @@
  * ansehen und fahren; veröffentlichen kann man nur eigene Touren mit Konto.
  */
 import { loadCloudTour, saveCloudTour } from './cloud-tours';
-import { dropLocalTour, markUnpublished, patchTour, saveTour, syncLibrary, type SavedTour } from './library';
+import { dropLocalTour, fromCommunity, markUnpublished, patchTour, saveTour, syncLibrary, type SavedTour } from './library';
 import { logSignal } from './signals';
 import { supabase } from './supabase';
 import type { Profile } from './tour';
@@ -38,13 +38,19 @@ export async function listCommunity(limit = 100): Promise<CommunityTour[]> {
 export const loadCommunityTour = loadCloudTour;
 
 /** Eigene Tour veröffentlichen: erst ins Konto laden (falls noch nicht), dann freigeben. */
+/** Fester Zusatz, wenn eine abgewandelte Community Route veröffentlicht wird: die Herkunft bleibt sichtbar */
+export function creditLine(t: Pick<SavedTour, 'author' | 'folder' | 'published'>): string | null {
+  if (!fromCommunity(t)) return null;
+  return t.author ? `Nach einer Route von ${t.author}.` : 'Nach einer Route aus der Community.';
+}
+
 export async function publishTour(t: SavedTour, author: string, description: string): Promise<string> {
   const { data } = await supabase.auth.getSession();
   if (!data.session) throw new Error('Zum Veröffentlichen brauchst du ein Konto (Einstellungen).');
   const cloudId = await saveCloudTour(t, { id: t.cloudId, folder: t.folder, profile: t.profile });
   const { error } = await supabase
     .from('tours')
-    .update({ published: true, published_at: new Date().toISOString(), author: author.trim().slice(0, 60) || null, description: description.trim().slice(0, 500) || null })
+    .update({ published: true, published_at: new Date().toISOString(), author: author.trim().slice(0, 60) || null, description: [creditLine(t), description.trim()].filter(Boolean).join(' ').slice(0, 500) || null })
     .eq('id', cloudId);
   if (error) throw new Error(error.message);
   const now = new Date().toISOString();
@@ -91,7 +97,7 @@ export async function unpublishTour(t: SavedTour) {
 /** Community Tour in Meine Touren übernehmen (als eigene Kopie). */
 export async function copyCommunityTour(c: CommunityTour): Promise<SavedTour> {
   const full = await loadCommunityTour(c.id);
-  const saved = saveTour({ ...full.tour, name: c.name, curves: c.curves ?? undefined, profile: full.profile, author: c.author?.trim() || undefined }, 'Community');
+  const saved = saveTour({ ...full.tour, name: c.name, curves: c.curves ?? undefined, profile: full.profile, author: c.author?.trim() || undefined, communityId: c.id }, 'Community');
   void syncLibrary();
   return saved;
 }

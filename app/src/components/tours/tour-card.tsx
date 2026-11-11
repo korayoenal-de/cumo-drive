@@ -19,10 +19,10 @@ import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/to
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
-import { publishTour, unpublishTour } from '@/lib/community';
+import { creditLine, publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
 import { NameDialog } from '@/components/planner/name-dialog';
-import { duplicateTour, renameTour, type SavedTour } from '@/lib/library';
+import { duplicateTour, fromCommunity, renameTour, type SavedTour } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
@@ -50,8 +50,11 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
       showToast(e instanceof Error ? e.message : 'Export hat nicht geklappt.', { tone: 'error' });
     }
   };
+  // Aus der Community gespeichert (Koray 11.11.): Umbenennen gilt nur bei dir, Entfernen statt Löschen, und
+  // veröffentlichen lässt sie sich erst, wenn du die Strecke geändert hast (dann mit Hinweis auf die Herkunft)
+  const taken = fromCommunity(t);
   const items: SheetItem[] = [
-    { key: 'rename', icon: 'pencil', label: 'Umbenennen', onPress: () => setSheet('rename') },
+    { key: 'rename', icon: 'pencil', label: 'Umbenennen', hint: taken ? 'Nur bei dir, in der Community bleibt der Name' : undefined, onPress: () => setSheet('rename') },
     {
       key: 'dup',
       icon: 'plus.square.on.square',
@@ -65,14 +68,20 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
     { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Route direkt in CUMO DRIVE', onPress: () => void shareTourLink(t, t.profile ?? 'kurvig').catch(() => undefined) },
     { key: 'gpx', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Als GPX teilen', hint: 'Für Garmin, TomTom und andere Navis', onPress: () => void exp('gpx') },
     { key: 'kml', icon: 'map', label: 'Als KML teilen', hint: 'Für Google Earth und My Maps', onPress: () => void exp('kml') },
-    {
-      key: 'pub',
-      icon: t.published ? 'person.2.slash' : 'person.2',
-      label: t.published ? 'Aus der Community nehmen' : 'In der Community veröffentlichen',
-      hint: t.published ? 'Andere sehen die Tour dann nicht mehr' : 'Andere können die Tour finden und fahren',
-      onPress: () => setSheet('publish'),
-    },
-    { key: 'del', icon: 'trash', label: 'Tour löschen', hint: 'Vom Gerät und aus deinem Konto', danger: true, onPress: () => setSheet('delete') },
+    ...(taken && !t.edited
+      ? []
+      : [
+          {
+            key: 'pub',
+            icon: (t.published ? 'person.2.slash' : 'person.2') as SheetItem['icon'],
+            label: t.published ? 'Aus der Community nehmen' : taken ? 'Deine Variante veröffentlichen' : 'In der Community veröffentlichen',
+            hint: t.published ? 'Andere sehen die Tour dann nicht mehr' : taken ? (creditLine(t) ?? '').replace(/\.$/, '') : 'Andere können die Tour finden und fahren',
+            onPress: () => setSheet('publish'),
+          },
+        ]),
+    taken
+      ? { key: 'del', icon: 'bookmark.slash', label: 'Aus Touren entfernen', hint: 'In der Community bleibt sie erhalten', danger: true, onPress: () => setSheet('delete') }
+      : { key: 'del', icon: 'trash', label: 'Tour löschen', hint: 'Vom Gerät und aus deinem Konto', danger: true, onPress: () => setSheet('delete') },
   ];
 
   return (
@@ -112,7 +121,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
       <OptionsSheet
         visible={sheet === 'publish'}
         title={t.published ? 'Aus der Community nehmen?' : 'In der Community veröffentlichen'}
-        subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
+        subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : taken ? `Alle sehen Strecke, Tourname und deinen Namen. Dabei steht: ${creditLine(t)}` : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
         onClose={() => setSheet(null)}>
         <PublishForm
           tour={t}

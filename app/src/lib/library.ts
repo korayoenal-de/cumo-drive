@@ -27,6 +27,10 @@ export type SavedTour = Tour & {
   published?: boolean;
   /** Aus der Community übernommen: wer sie veröffentlicht hat (Koray 10.11., Plakette „Von Timo“) */
   author?: string;
+  /** Aus der Community übernommen: ID der Route dort, damit das Lesezeichen auch nach dem Umbenennen passt */
+  communityId?: string;
+  /** Übernommene Tour, deren Strecke danach geändert wurde: erst dann darf sie veröffentlicht werden (Koray 11.11.) */
+  edited?: boolean;
   /** Fahrspaß Wert 0 bis 100, -1 wenn keiner berechenbar ist; fehlt er, rechnet die Liste ihn nach */
   fun?: number;
   /** Stand der Rechnung zu fun (TOUR_FUN_VERSION) */
@@ -123,10 +127,17 @@ function thinRuns(linie: Tour['linie']): Tour['linie'] {
   });
 }
 
-export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?: Profile; author?: string }, folder: string, id?: string): SavedTour {
+/** Aus der Community übernommen und (noch) nicht selbst veröffentlicht */
+export function fromCommunity(t: Pick<SavedTour, 'published' | 'author' | 'folder'>): boolean {
+  return !t.published && (!!t.author || t.folder === 'Community');
+}
+
+export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?: Profile; author?: string; communityId?: string; edited?: boolean }, folder: string, id?: string): SavedTour {
   const list = read();
   const now = new Date().toISOString();
   const old = id ? list.find((x) => x.id === id) : undefined;
+  // Herkunft bleibt beim Überschreiben erhalten; ändert sich dabei die Strecke, gilt die Tour als abgewandelt
+  const keepOrigin = old && fromCommunity(old);
   const saved: SavedTour = {
     ...t,
     linie: thinRuns(t.linie),
@@ -139,6 +150,12 @@ export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?
     // Strecke kann sich geändert haben: Fahrspaß neu rechnen lassen
     fun: undefined,
   };
+  if (keepOrigin) {
+    saved.author = t.author ?? old.author;
+    saved.communityId = t.communityId ?? old.communityId;
+    // erst nach dem Ausdünnen vergleichen, sonst gilt jede gespeicherte Linie als geändert
+    saved.edited = t.edited || old.edited || tourKey(old) !== tourKey(saved) || undefined;
+  }
   write([saved, ...list.filter((x) => x.id !== saved.id)]);
   // Lernen (Koray 10.11.): nur neue Touren oder geänderte Linien zählen, nicht jedes Umbenennen
   if (!old || tourKey(old) !== tourKey(saved)) logSignal(folder.trim() === 'Community' ? 'uebernommen' : 'gespeichert', saved, { profile: t.profile });
