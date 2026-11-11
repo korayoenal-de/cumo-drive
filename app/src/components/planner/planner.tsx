@@ -226,6 +226,15 @@ export default function Planner() {
   const [pending, setPending] = useState<PendingPoint | null>(null);
   /** Angetippter Zwischenpunkt auf der Karte (Index unter den Zwischenzielen) */
   const [selVia, setSelVia] = useState<number | null>(null);
+  /** Letzte Änderung kam von der Karte (langer Druck, Pass Aktion): Ausschnitt nicht anpassen */
+  const [mapEdit, setMapEdit] = useState(false);
+  /** Ergebnis nach dem Ziehen, ein paar Sekunden in der Pille oben links mit Rückgängig */
+  const [adjustDone, setAdjustDone] = useState<{ text: string; tone?: 'warn'; snap: ReturnType<ReturnType<typeof useTourPlan>['snapshot']> } | null>(null);
+  useEffect(() => {
+    if (!adjustDone) return;
+    const t = setTimeout(() => setAdjustDone(null), adjustDone.tone ? 7000 : 5000);
+    return () => clearTimeout(t);
+  }, [adjustDone]);
   /** Nach dem Ziehen eines Punkts: Stand vorher, Länge vorher, ob schon gerechnet wird */
   const [adjust, setAdjust] = useState<{ snap: ReturnType<ReturnType<typeof useTourPlan>['snapshot']>; km: number | null; busy: boolean } | null>(null);
 
@@ -558,17 +567,14 @@ export default function Planner() {
       if (now && now !== before.snap.planned) {
         const d = before.km != null ? Math.round(now.laenge_km - before.km) : 0;
         const spur = spurKm(now);
-        const text =
-          spur >= 0.3
-            ? `Achtung: ${formatKm(spur, 1)} km fährst du hin und zurück.`
-            : d === 0
-              ? 'Strecke angepasst.'
-              : `Strecke angepasst, ${d > 0 ? '+' : '−'}${Math.abs(d)} km.`;
-        setTimeout(() => showToast(text, { action: { label: 'Rückgängig', onPress: () => tourPlan.restore(before.snap) } }), 0);
+        const text = spur >= 0.3 ? `${formatKm(spur, 1)} km hin und zurück` : d === 0 ? 'Angepasst' : `${d > 0 ? '+' : '−'}${Math.abs(d)} km`;
+        setAdjustDone({ text, tone: spur >= 0.3 ? 'warn' : undefined, snap: before.snap });
       }
     }
   }
-  const adjustBusy = !!adjust?.busy && !!tourPlan.step;
+  // Jede Neuplanung, die auf der Karte ausgelöst wurde (Ziehen, langer Druck, Pass Aktionen), zeigt ihr Laden
+  // oben in der Pille, dort ist der Blick (Koray 11.11.); die erste Planung einer neuen Tour hat ihren eigenen Scan
+  const adjustBusy = (!!adjust?.busy || (mapEdit && !!tourPlan.planned)) && !!tourPlan.step && mode === 'tour' && view.kind === 'form';
   const inTour = view.kind === 'form' && mode === 'tour';
   const pill = usePillText(
     scan ? (tourPlan.step ?? null) : view.kind === 'working' ? view.phase : null,
@@ -584,8 +590,6 @@ export default function Planner() {
   const pins = inTour
     ? tourPts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: tourPlan.names[keyOf(p)] ?? `Zwischenziel ${i + 1}` }))
     : undefined;
-  /** Letzte Änderung kam von der Karte (langer Druck, Pass Aktion): Ausschnitt nicht anpassen */
-  const [mapEdit, setMapEdit] = useState(false);
   /** Punkt Aktion Auf der Karte zeigen */
   const [flyTo, setFlyTo] = useState<{ p: LatLon; n: number } | null>(null);
   const focus = inTour
@@ -613,6 +617,7 @@ export default function Planner() {
     setSelVia(null);
     setMapEdit(true);
     // Stand vorher merken: Laden oben links, danach Hinweis mit Rückgängig
+    setAdjustDone(null);
     setAdjust({ snap: tourPlan.snapshot(), km: routeTour?.laenge_km ?? null, busy: false });
     if (id === 'start' || id === 'ziel') return tourPlan.setSlot(id, p, profile, avoid);
     const i = Number(/^via(\d+)-/.exec(id)?.[1] ?? -1);
@@ -1158,11 +1163,26 @@ export default function Planner() {
         />
           <MapLayersButton style={[styles.layersBtn, { top: insets.top + Spacing.s }]} />
           {/* Während eine gezogene Strecke neu gerechnet wird, steht oben links der Ladehinweis statt der Zurück Pille */}
-          {adjustBusy ? (
-            <ScanChip top={insets.top + Spacing.s} text="Strecke wird angepasst" />
-          ) : (
-            origin && <BackPill label={origin.label} top={insets.top + Spacing.s} onPress={() => goBack()} />
-          )}
+          <BackPill
+            label={origin?.label}
+            top={insets.top + Spacing.s}
+            onPress={() => goBack()}
+            status={
+              adjustBusy
+                ? { kind: 'busy', text: 'Strecke wird angepasst' }
+                : adjustDone
+                  ? {
+                      kind: 'done',
+                      text: adjustDone.text,
+                      tone: adjustDone.tone,
+                      onUndo: () => {
+                        tourPlan.restore(adjustDone.snap);
+                        setAdjustDone(null);
+                      },
+                    }
+                  : null
+            }
+          />
           {/* Was gerade passiert, links oben neben den Karteneinstellungen (Koray 9.11.); mit Zurück Pille darunter */}
           {scan && tourPlan.step && pill && <ScanChip top={chipTop} text={pill} />}
           {view.kind === 'working' &&
