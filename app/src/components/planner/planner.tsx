@@ -586,15 +586,19 @@ export default function Planner() {
     scan ? 'tour' : 'runde',
     scan ? scan.spots.length : 0,
   );
-  const mapTour: Tour =
-    view.kind === 'result'
-      ? view.tour
-      : inTour
-        ? (routeTour ?? { name: tourPlan.name, laenge_km: 0, wegpunkte: tourPts, linie: [], warnungen: [] })
-        : EMPTY_TOUR;
-  const pins = inTour
-    ? tourPts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: tourPlan.names[keyOf(p)] ?? `Zwischenziel ${i + 1}` }))
-    : undefined;
+  // Entwurf ohne Route und Pins nur neu bauen, wenn sich Punkte oder Namen ändern: sonst zeichnet die Karte
+  // bei jedem Rendern alles neu (Prüfung 11.11.). Während eine gezogene Strecke rechnet, bleibt die alte
+  // Strecke blass stehen, bis die neue da ist.
+  const draftTour = useMemo<Tour>(() => ({ name: '', laenge_km: 0, wegpunkte: tourPts, linie: [], warnungen: [] }), [tourPts]);
+  const oldPlanned = tourPlan.planned;
+  // alte Linie mit den neuen Punkten, damit Start und Ziel schon an der neuen Stelle stehen
+  const staleTour = useMemo<Tour | null>(() => (oldPlanned ? { ...oldPlanned, wegpunkte: tourPts, warnungen: [] } : null), [oldPlanned, tourPts]);
+  const mapTour: Tour = view.kind === 'result' ? view.tour : inTour ? (routeTour ?? (adjustBusy && staleTour ? staleTour : draftTour)) : EMPTY_TOUR;
+  const names = tourPlan.names;
+  const pins = useMemo(
+    () => (inTour ? tourPts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: names[keyOf(p)] ?? `Zwischenziel ${i + 1}` })) : undefined),
+    [inTour, tourPts, names],
+  );
   /** Punkt Aktion Auf der Karte zeigen */
   const [flyTo, setFlyTo] = useState<{ p: LatLon; n: number } | null>(null);
   const focus = inTour
@@ -1102,10 +1106,11 @@ export default function Planner() {
     // erst nach dem Tabwechsel zurückschieben, sonst blitzt der Planer kurz auf
     setTimeout(() => swipeX.set(0), 300);
   };
-  const backCurves = routeTour ? countCurves(flatten(routeTour).map((x) => x.p)) : 0;
+  // Kurven erst beim Speichern zählen: bei langen Touren kostete das vorher jedes Rendern (Prüfung 11.11.)
+  const backCurvesNow = () => (routeTour ? countCurves(flatten(routeTour).map((x) => x.p)) : 0);
   const backProfile = tourPlan.legProfile(tourPlan.start ? 0 : 1, profile);
   const keepAndLeave = async (asCopy: boolean) => {
-    const id = await tourPlan.save(backCurves, backProfile, avoid, undefined, asCopy ? { asCopy: true } : undefined);
+    const id = await tourPlan.save(backCurvesNow(), backProfile, avoid, undefined, asCopy ? { asCopy: true } : undefined);
     if (id) leave();
   };
   /** swiped: die Randgeste hat den Planer schon zur Seite gezogen, er gleitet dann ganz hinaus */

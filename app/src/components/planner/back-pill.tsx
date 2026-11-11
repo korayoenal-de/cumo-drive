@@ -8,7 +8,7 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -36,6 +36,7 @@ export type PillStatus =
 export function BackPill({ label, top, onPress, status }: { label?: string | null; top: number; onPress?: () => void; status?: PillStatus | null }) {
   const press = useSharedValue(1);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: press.get() }] }));
+  const win = useWindowDimensions();
   const mode = status?.kind ?? (label ? 'back' : null);
   if (!mode) return null;
   const pressIn = () => press.set(withSpring(Motion.pressScale, Motion.press));
@@ -46,7 +47,7 @@ export function BackPill({ label, top, onPress, status }: { label?: string | nul
       exiting={FadeOut.duration(150)}
       // Breite wächst und schrumpft mit Feder, der Inhalt blendet über
       layout={LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)}
-      style={[styles.wrap, { top }, anim]}>
+      style={[styles.wrap, { top, maxWidth: win.width - Spacing.l - 76 }, anim]}>
       {mode === 'back' && (
         <Pressable accessibilityRole="button" accessibilityLabel={`Zurück zu ${label}`} hitSlop={4} onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} style={styles.pill}>
           <Animated.View key="back" entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)} style={styles.row}>
@@ -78,7 +79,7 @@ export function BackPill({ label, top, onPress, status }: { label?: string | nul
           onPressOut={pressOut}
           style={styles.pill}>
           <Animated.View key={`done-${status.text}`} entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)} style={styles.row}>
-            <AppText style={[styles.text, status.tone === 'warn' && styles.warn]} numberOfLines={1}>
+            <AppText style={[styles.text, styles.shrink, status.tone === 'warn' && styles.warn]} numberOfLines={1}>
               {status.text}
             </AppText>
             <View style={styles.sep} />
@@ -118,6 +119,7 @@ function PulseDot() {
 }
 
 const styles = StyleSheet.create({
+  // rechts bleibt Platz für die Karteneinstellungen (44 breit plus Rand): lange Texte kürzen statt darunter laufen
   wrap: { position: 'absolute', left: Spacing.l, borderRadius: BACK_PILL_H / 2, boxShadow: Shadow.float },
   pill: {
     height: BACK_PILL_H,
@@ -128,9 +130,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(11,11,12,0.86)',
     overflow: 'hidden',
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s - 2 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s - 2, maxWidth: '100%' },
   text: { fontFamily: Fonts.bold, fontSize: 16, color: '#FFFFFF' },
   warn: { color: Colors.warn },
+  shrink: { flexShrink: 1 },
   undo: { color: Colors.signal },
   sep: { width: 1, height: 18, marginHorizontal: Spacing.xs, backgroundColor: 'rgba(255,255,255,0.18)' },
   dot: { width: 8, height: 8, borderRadius: 4, marginHorizontal: 3, backgroundColor: Colors.signal },

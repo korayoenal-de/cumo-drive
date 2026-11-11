@@ -836,14 +836,19 @@ export default function NavigationScreen() {
             {status !== 'neuberechnung' && (state.ignored ?? 0) >= 1 && (
               <View style={styles.offBtns}>
                 <Pressable accessibilityRole="button" onPress={() => controls.choose('rejoin')} style={({ pressed }) => [styles.offBtn, pressed && styles.offPressed]}>
-                  <AppText style={styles.offBtnText}>Zurück zur Tour</AppText>
+                  <AppText style={styles.offBtnText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+                    Zurück zur Tour
+                  </AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={withOthers ? (confirmOwn ? 'Ja, Gruppe verlassen' : 'Eigene Route, verlässt die Strecke der Gruppe') : 'Neue Route ab hier'}
                   onPress={chooseOwn}
                   style={({ pressed }) => [styles.offBtn, styles.offBtnMain, pressed && styles.offPressed]}>
-                  <AppText style={[styles.offBtnText, styles.offBtnMainText]}>{withOthers ? (confirmOwn ? 'Ja, Gruppe verlassen' : 'Eigene Route') : 'Neue Route ab hier'}</AppText>
+                  {/* kurze Wörter: zwei Tasten nebeneinander haben je nur etwa 140 pt (Prüfung 11.11.) */}
+                  <AppText style={[styles.offBtnText, styles.offBtnMainText]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+                    {withOthers ? (confirmOwn ? 'Ja, verlassen' : 'Eigene Route') : 'Neue Route'}
+                  </AppText>
                 </Pressable>
               </View>
             )}
@@ -1200,7 +1205,7 @@ const styles = StyleSheet.create({
   offCard: { alignSelf: 'stretch', gap: Spacing.m, backgroundColor: Colors.overlay, borderRadius: Radius.l, padding: Spacing.m },
   offRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingHorizontal: Spacing.xs },
   offBtns: { flexDirection: 'row', gap: Spacing.s },
-  offBtn: { flex: 1, height: 52, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.m },
+  offBtn: { flex: 1, height: 52, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.s },
   offBtnMain: { backgroundColor: Colors.signal },
   offBtnWide: { flex: 0, alignSelf: 'stretch' },
   offBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },

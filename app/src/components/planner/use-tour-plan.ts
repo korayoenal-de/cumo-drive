@@ -3,7 +3,7 @@
  * Planen mit Prüfung und Speichern. Ohne Oberfläche; die Oberfläche steht in tour-mode.tsx.
  */
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { toPlanError } from '@/components/planner/create-tour';
 import { clearEditOrigin } from '@/lib/edit-tour';
@@ -105,7 +105,8 @@ export function useTourPlan(onPlanned?: () => void) {
 
   const complete = !!start && !!ziel;
   /** Alle gesetzten Punkte in Reihenfolge; vollständig, sobald Start und Ziel da sind. */
-  const pts: LatLon[] = [...(start ? [start] : []), ...vias, ...(ziel ? [ziel] : [])];
+  // stabil, solange sich kein Punkt ändert: Karte und Listen rechnen sonst bei jedem Rendern neu (Prüfung 11.11.)
+  const pts: LatLon[] = useMemo(() => [...(start ? [start] : []), ...vias, ...(ziel ? [ziel] : [])], [start, vias, ziel]);
   const sigOf = (p: LatLon[], n: string, lp: LegProfile[]) => JSON.stringify([p, n.trim(), lp]);
   /** Neue Tour oder gespeicherte Tour mit Änderungen */
   const dirty = !cloudId || base !== sigOf(pts, name, legProfiles);
