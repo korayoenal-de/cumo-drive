@@ -40,9 +40,10 @@ final class CarPlayBridge: NSObject {
   private var tourMinutes: Double = 0
 
   /// Build 16: Start im Auto ohne iPhone (Tester 10.11.): Meine Touren und Schnelle Runde.
-  /// Die Liste kommt aus der App (setLibrary); erst danach erscheinen die Knöpfe, damit ein älteres
-  /// JavaScript ohne diese Ereignisse keine toten Knöpfe zeigt.
-  private var pickerReady = false
+  /// Seit Build 24 (Koray 12.11.) stehen die Knöpfe sofort da, auch bevor die Liste aus der App kam
+  /// (libraryArrived); das JavaScript aller Builds dieser Laufzeit kennt die Ereignisse.
+  private var pickerReady = true
+  private var libraryArrived = false
   /// id, name, detail, fun (Stufe 1 bis 5, 0: keine), neueste zuerst
   private var library: [[String: Any]] = []
   private weak var toursList: CPListTemplate?
@@ -66,7 +67,7 @@ final class CarPlayBridge: NSObject {
     mapVC = vc
     vc.setStyle(mapStyle)
     vc.setCar(form: carForm, color: carColor)
-    if pickerReady { vc.setHint(CarPlayBridge.pickerHint) }
+    if pickerReady && session == nil { vc.setHint(CarPlayBridge.pickerHint) }
 
     let t = CPMapTemplate()
     t.mapDelegate = self
@@ -342,11 +343,7 @@ final class CarPlayBridge: NSObject {
   /// Gespeicherte Touren aus der App, neueste zuerst; eine offene Liste wird gleich aufgefrischt
   func setLibrary(_ list: [[String: Any]]) {
     library = list
-    if !pickerReady {
-      pickerReady = true
-      mapVC?.setHint(CarPlayBridge.pickerHint)
-      updateButtons()
-    }
+    libraryArrived = true
     toursList?.updateSections(tourSections())
   }
 
@@ -370,8 +367,8 @@ final class CarPlayBridge: NSObject {
   private func showTours() {
     guard let ic = interfaceController, session == nil, !planning else { return }
     let list = CPListTemplate(title: "Touren", sections: tourSections())
-    list.emptyViewTitleVariants = ["Noch keine Touren"]
-    list.emptyViewSubtitleVariants = ["Gespeicherte Touren aus der App stehen hier."]
+    list.emptyViewTitleVariants = libraryArrived ? ["Noch keine Touren"] : ["Touren werden geladen"]
+    list.emptyViewSubtitleVariants = libraryArrived ? ["Gespeicherte Touren aus der App stehen hier."] : ["Kommt nichts, öffne Cumo Drive einmal auf dem iPhone."]
     toursList = list
     ic.pushTemplate(list, animated: true, completion: nil)
   }
@@ -533,6 +530,9 @@ final class CarPlayBridge: NSObject {
     let more = CPMapButton { [weak self] _ in self?.showMore() }
     more.image = UIImage(systemName: "ellipsis")
     t.mapButtons = panning ? [] : (session != nil ? [voice, overview, pan, more] : [pan, zoomIn, zoomOut])
+    // Ohne Führung bleibt die Leiste mit Touren und Runde stehen (Koray 12.11.: sonst blendet CarPlay sie
+    // nach ein paar Sekunden aus und man sieht nur die Karte); während der Führung darf sie verschwinden
+    t.automaticallyHidesNavigationBar = session != nil
 
     if panning {
       t.leadingNavigationBarButtons = [CPBarButton(title: "Fertig") { [weak self] _ in self?.setPanning(false) }]
