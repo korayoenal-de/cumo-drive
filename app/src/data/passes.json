@@ -7395,101 +7395,6 @@
     "source": "https://it.wikipedia.org/wiki/Passo_dell%27Eira"
   },
   {
-    "id": "colle-di-tenda",
-    "name": "Colle di Tenda",
-    "names": [
-      "Col de Tende",
-      "Tendapass",
-      "Tenda"
-    ],
-    "country": [
-      "IT",
-      "FR"
-    ],
-    "region": "Piemont und Alpes-Maritimes",
-    "lat": 44.14968,
-    "lon": 7.56188,
-    "ele": 1871,
-    "tier": "bekannt",
-    "hairpins": 46,
-    "winter_closed": true,
-    "closed_months": null,
-    "toll": false,
-    "car_note": "Passstraße über die Scheitelhöhe nur teils asphaltiert, Schotter; Südrampe zeitweise gesperrt, für Sportwagen ungeeignet",
-    "source": "https://it.wikipedia.org/wiki/Colle_di_Tenda"
-  },
-  {
-    "id": "colle-dei-signori",
-    "name": "Colle dei Signori (Ligurische Grenzkammstraße)",
-    "names": [
-      "Ligurische Grenzkammstraße",
-      "Ligurische Grenzkammstrasse",
-      "Via del Sale",
-      "Col des Seigneurs",
-      "Colle dei Signori"
-    ],
-    "country": [
-      "IT",
-      "FR"
-    ],
-    "region": "Ligurien und Piemont",
-    "lat": 44.15832,
-    "lon": 7.67149,
-    "ele": 2111,
-    "tier": "bekannt",
-    "hairpins": null,
-    "winter_closed": true,
-    "closed_months": "Nov bis Mai",
-    "toll": true,
-    "car_note": "Schotterpiste auf rund 30 km, Maut, Di und Do für Kfz gesperrt; für Sportwagen ungeeignet",
-    "source": "https://de.wikipedia.org/wiki/Ligurische_Grenzkammstra%C3%9Fe"
-  },
-  {
-    "id": "colle-dell-assietta",
-    "name": "Colle dell'Assietta",
-    "names": [
-      "Assietta",
-      "Assiettastraße",
-      "Strada dell'Assietta"
-    ],
-    "country": [
-      "IT"
-    ],
-    "region": "Piemont",
-    "lat": 45.07038,
-    "lon": 6.95714,
-    "ele": 2472,
-    "tier": "bekannt",
-    "hairpins": null,
-    "winter_closed": true,
-    "closed_months": null,
-    "toll": false,
-    "car_note": "Schotterpiste auf rund 35 km, im Juli und August Mi und Sa 9 bis 17 Uhr für Kfz gesperrt; für Sportwagen ungeeignet",
-    "source": "https://de.wikipedia.org/wiki/Colle_dell%E2%80%99Assietta"
-  },
-  {
-    "id": "colle-delle-finestre",
-    "name": "Colle delle Finestre",
-    "names": [
-      "Finestre",
-      "Colle di Finestre"
-    ],
-    "country": [
-      "IT"
-    ],
-    "region": "Piemont",
-    "lat": 45.07203,
-    "lon": 7.05334,
-    "ele": 2176,
-    "tier": "bekannt",
-    "hairpins": null,
-    "winter_closed": true,
-    "closed_months": "Nov bis Mai",
-    "toll": false,
-    "car_note": "Schotter auf 8 km (Nordrampe ab Il Colletto), für Sportwagen ungeeignet",
-    "source": "https://de.wikipedia.org/wiki/Colle_delle_Finestre"
-  },
-  {
     "id": "pas-de-la-graille",
     "name": "Pas de la Graille",
     "names": [
@@ -7782,27 +7687,6 @@
     "source": "https://de.wikipedia.org/wiki/Koppenpass"
   },
   {
-    "id": "sommertoerl",
-    "name": "Sommertörl",
-    "names": [
-      "Sommertoerl"
-    ],
-    "country": [
-      "AT"
-    ],
-    "region": "Steiermark",
-    "lat": 47.28771,
-    "lon": 14.55,
-    "ele": 1644,
-    "tier": "mittel",
-    "hairpins": null,
-    "winter_closed": true,
-    "closed_months": null,
-    "toll": false,
-    "car_note": "Teils nicht ausgebaute Privatstraße (öffentlich befahrbar), im Winter nicht geräumt",
-    "source": "https://de.wikipedia.org/wiki/Sommert%C3%B6rl"
-  },
-  {
     "id": "buchauer-sattel",
     "name": "Buchauer Sattel",
     "names": [
@@ -7822,28 +7706,6 @@
     "toll": false,
     "car_note": null,
     "source": "https://de.wikipedia.org/wiki/Buchauer_Sattel"
-  },
-  {
-    "id": "hirschegger-sattel",
-    "name": "Hirschegger Sattel",
-    "names": [
-      "Salzstiegel",
-      "Hirschegg"
-    ],
-    "country": [
-      "AT"
-    ],
-    "region": "Steiermark",
-    "lat": 47.06854,
-    "lon": 14.87183,
-    "ele": 1543,
-    "tier": "mittel",
-    "hairpins": null,
-    "winter_closed": false,
-    "closed_months": null,
-    "toll": false,
-    "car_note": "Straße nicht ausgebaut, teils geschottert; für Sportwagen nur bedingt geeignet",
-    "source": "https://de.wikipedia.org/wiki/Hirschegger_Sattel"
   },
   {
     "id": "pfaffensattel",
