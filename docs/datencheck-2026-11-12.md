@@ -7,6 +7,7 @@ Geprüft: alle 370 Pässe und 486 kuratierten Strecken gegen den eigenen Graph (
 | Punkt | Entscheidung |
 |---|---|
 | Grundsatz | Schotter und Forstwege bleiben draußen, auch bei bekannten Namen. Wir sind eine Sportwagen App. |
+| Grundsatz, Abgrenzung | Maßgeblich ist die Passstraße selbst. Ist sie asphaltiert, gilt die Schotterregel nicht, auch wenn dahinter oder daneben Schotter beginnt (Beispiel Croce Domini). Raus sind nur Pässe, deren Überfahrt selbst über Schotter führt (Finestre, Assietta, Lavardet). |
 | 1 Außerhalb des Gebiets | Mittelitalien und Pyrenäen nachladen, zuerst als Testaufbau nur auf Server 2. Süditalien und Inseln ausblenden, bis sie abgedeckt sind. |
 | 2 Profil weicht ab | Einzeln prüfen. Die 7 betroffenen Highlights werden bis dahin nicht angesagt. Ergebnis je Strecke: gut, Linie neu ziehen, abenteuerlich oder raus. Neue Linien werden mit dem Sportwagen Profil gezogen. |
 | 3 Ortsanteil | Ab 70 Prozent streichen. Zwischen 50 und 70 Prozent zurückstufen (keine Ansage, kein Anziehen der Planung). Bergrennen und Rallyeprüfungen einzeln. Ortsanteil wird feste Prüfung in der Pipeline. |
@@ -15,9 +16,9 @@ Geprüft: alle 370 Pässe und 486 kuratierten Strecken gegen den eigenen Graph (
 | 6 Breite und Pflaster | Nichts streichen. Die 7 engen Strecken und die Tremola sind Ausgangsmaterial für das Stufen Konzept. |
 | 7 Anlieger frei | Die 6 Strecken einzeln prüfen. Das Sportwagen Profil wertet Anlieger Abschnitte künftig stark ab, Test zuerst auf Server 2. |
 
-### Neue Idee: Stufen (Konzept folgt)
+### Warnung an Highlights (aus der Idee der Stufen entstanden, entschieden 12.11.)
 
-Jede Strecke und jeder Pass bekommt eine Stufe, der Fahrer wählt, bis zu welcher Stufe geplant wird. Arbeitsstand: 1 für sehr tiefe Sportwagen, 2 für Fahrer, die auch schmalere Straßen fahren, 3 Abenteuer (zum Beispiel Gavia: sehr schmal, ausgesetzt, mit Warnung). Wording offen. Die Stufe ist eine Wahl des Fahrers und wird nicht aus Fahrzeugmaßen abgeleitet (Breite und Bodenfreiheit sind bewusst nicht mehr in der App). Erst Konzept und Design, dann bauen.
+Kein Schalter, keine Frage, kein eigener Name. Enge oder ausgesetzte Pässe werden selbstverständlich eingeplant und tragen ein gelbes Label mit dem Hauptgrund (Einspurig, Sehr schmal, Langes Pflaster) und dem Zickzack Zeichen. Es ist die einzige Warnung dieser Art. Gründe als Bausteine im Feld warn in passes.json. Stand: 21 Pässe, darunter Stilfser Joch und die Pässe aus Korays Liste. Pragel (Wochenendsperre), Tremalzo und Col du Sabot (Sackgasse) sind nicht dabei. Offen: Doch umfahren, Tremola als angesagtes Highlight. Konzept: Canvas „Stufen für Strecken und Pässe“.
 
 ## Bereits bereinigt (12.11.)
 
