@@ -93,7 +93,7 @@ function Active() {
     () =>
       ride.members
         .filter((m) => m.id !== ride.me?.id && m.p)
-        .map((m) => ({ id: m.id, p: m.p!, name: m.name, role: m.role, stale: !m.seenAt || now - m.seenAt > 60000 })),
+        .map((m) => ({ id: m.id, p: m.p!, name: m.name, role: m.role, stale: !m.seenAt || now - m.seenAt > 60000, heading: m.heading, speedKmh: m.speedKmh, seenAt: m.seenAt })),
     [ride.members, ride.me?.id, now],
   );
 

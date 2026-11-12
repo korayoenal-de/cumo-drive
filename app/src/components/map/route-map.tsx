@@ -3,7 +3,7 @@
  * Später mit eigenem App Build MapLibre: dann wird nur diese Datei ersetzt, die Props bleiben.
  */
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
-import { AppState, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, Easing as RNEasing, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -26,7 +26,8 @@ import { CarSprite, carLookFor, frameFor, TOP_FRAME } from '@/components/map/car
 import { useVehicles } from '@/lib/vehicle';
 import { useRouteWeather, WeatherMarkers, WeatherSheet } from '@/components/map/weather-layer';
 
-import { CLASS_LINE, ROLE_COLOR, sampleLine, tourWarnings, type RouteMapProps } from './route-map-shared';
+import { POS_INTERVAL_MS, predictPosition } from '@/lib/group/predict';
+import { CLASS_LINE, ROLE_COLOR, sampleLine, tourWarnings, type OtherDriver, type RouteMapProps } from './route-map-shared';
 
 export type { RouteMapProps } from './route-map-shared';
 
@@ -655,11 +656,7 @@ export function RouteMap({
         ))}
 
         {(others ?? []).map((o) => (
-          <Marker key={`${o.id}${o.off ? '-ab' : ''}${o.own ? '-eigen' : ''}`} coordinate={ll(o.p)} anchor={{ x: 0.5, y: 0.5 }} title={o.name} description={`${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[o.role]}${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}`} zIndex={30} tracksViewChanges={false}>
-            <View style={[styles.other, { borderColor: o.own ? Colors.muted : o.off ? Colors.warn : ROLE_COLOR[o.role] }, o.off && !o.own && styles.otherOff, (o.stale || o.own) && styles.otherStale]}>
-              <AppText style={styles.otherText}>{o.name.slice(0, 1).toUpperCase()}</AppText>
-            </View>
-          </Marker>
+          <OtherMarker key={o.id} o={o} />
         ))}
 
         {position && !following && (
@@ -799,6 +796,53 @@ function llCached(p: LatLon[]) {
 type MapMarker = InstanceType<typeof Marker>;
 /** Marker mit animierter Position (Typen von react-native-maps kennen die Kinder nicht). */
 const MeMarker = Marker.Animated as unknown as ComponentType<ComponentProps<typeof Marker>>;
+
+/** Älter als das gilt eine Position als veraltet (Punkt wird blass) */
+const OTHER_STALE_MS = 20000;
+
+/**
+ * Mitfahrer auf der Karte (12.11.): gleitet zwischen den Meldungen statt zu springen. Bei jeder Meldung läuft
+ * der Punkt in gut zwei Sekunden gleichmäßig dorthin, wo der Fahrer bei der nächsten Meldung voraussichtlich ist
+ * (Kurs und Tempo fortgeschrieben). Erster Punkt und Sprünge über 400 m werden gesetzt statt gefahren.
+ */
+function OtherMarker({ o }: { o: OtherDriver }) {
+  const [region] = useState(() => new AnimatedRegion({ latitude: o.p[0], longitude: o.p[1], latitudeDelta: 0, longitudeDelta: 0 }));
+  const last = useRef<LatLon | null>(null);
+  // veraltet ist die Meldung, deren Zeit abgelaufen ist; eine neue Meldung macht den Punkt von selbst wieder frisch
+  const [oldSeen, setOldSeen] = useState<number | null | undefined>(undefined);
+  useEffect(() => {
+    const now = Date.now();
+    const target = predictPosition(o.p, o.heading, o.speedKmh, o.seenAt, now + POS_INTERVAL_MS);
+    const jump = last.current ? haversine(last.current, target) : Infinity;
+    last.current = target;
+    if (jump > 400) {
+      region.setValue({ latitude: target[0], longitude: target[1], latitudeDelta: 0, longitudeDelta: 0 });
+    } else {
+      region
+        .timing({ latitude: target[0], longitude: target[1], latitudeDelta: 0, longitudeDelta: 0, duration: POS_INTERVAL_MS, easing: RNEasing.linear, useNativeDriver: false } as unknown as Parameters<typeof region.timing>[0])
+        .start();
+    }
+    const seen = o.seenAt ?? null;
+    const t = setTimeout(() => setOldSeen(seen), OTHER_STALE_MS);
+    return () => clearTimeout(t);
+  }, [o.p, o.heading, o.speedKmh, o.seenAt, region]);
+  const faded = o.stale || o.own || oldSeen === (o.seenAt ?? null);
+  return (
+    <MeMarker
+      // der Inhalt wird nur beim Einhängen gezeichnet (tracksViewChanges aus), darum bei jedem Wechsel des Aussehens neu
+      key={`${o.off ? 'ab' : ''}${o.own ? 'eigen' : ''}${faded ? 'blass' : ''}`}
+      coordinate={region as unknown as LatLng}
+      anchor={{ x: 0.5, y: 0.5 }}
+      title={o.name}
+      description={`${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[o.role]}${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}`}
+      zIndex={30}
+      tracksViewChanges={false}>
+      <View style={[styles.other, { borderColor: o.own ? Colors.muted : o.off ? Colors.warn : ROLE_COLOR[o.role] }, o.off && !o.own && styles.otherOff, faded && styles.otherStale]}>
+        <AppText style={styles.otherText}>{o.name.slice(0, 1).toUpperCase()}</AppText>
+      </View>
+    </MeMarker>
+  );
+}
 
 /** Breite der Draufsicht in pt, etwa so groß wie der bisherige Punkt (34) */
 /** Kartensymbol: Draufsicht auf der flachen Karte, Ansicht von hinten beim Mitfahren (Bildgröße, das Auto füllt etwa drei Viertel) */

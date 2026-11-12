@@ -124,7 +124,8 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
       seen.insert(id)
       let c = CLLocationCoordinate2D(latitude: lat, longitude: lon)
       if let a = groupPins[id] {
-        UIView.animate(withDuration: 0.8) { a.coordinate = c }
+        // gleichmäßig und aus der laufenden Bewegung heraus, sonst fährt der Punkt in Schüben (12.11.)
+        UIView.animate(withDuration: 1.0, delay: 0, options: [.curveLinear, .beginFromCurrentState, .allowUserInteraction], animations: { a.coordinate = c })
       } else {
         let a = GroupAnnotation()
         a.coordinate = c

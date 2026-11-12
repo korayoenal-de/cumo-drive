@@ -79,7 +79,7 @@ export type RouteMapProps = {
 
 export type MapPin = { id: string; p: LatLon; label: string; title: string };
 
-export type OtherDriver = { id: string; p: LatLon; name: string; role: 'lead' | 'schluss' | 'mitfahrer'; stale: boolean; /** abseits der Tour */ off?: boolean; /** fährt eine eigene Route */ own?: boolean };
+export type OtherDriver = { id: string; p: LatLon; name: string; role: 'lead' | 'schluss' | 'mitfahrer'; stale: boolean; /** abseits der Tour */ off?: boolean; /** fährt eine eigene Route */ own?: boolean; /** Kurs, Tempo und Zeit der letzten Meldung: damit gleitet der Punkt zwischen den Meldungen */ heading?: number | null; speedKmh?: number | null; seenAt?: number | null };
 
 /** Farbe je Rolle: Lead im Signal Orange, Schlusslicht gelb, Mitfahrer hell. */
 export const ROLE_COLOR: Record<OtherDriver['role'], string> = { lead: Colors.signal, schluss: Colors.warn, mitfahrer: Colors.text };

@@ -55,18 +55,38 @@ let room: import('livekit-client').Room | null = null;
 let current: string | null = null;
 let isLead = false;
 let wantTalk = false;
+/**
+ * Von selbst wieder verbinden (12.11.): Nach einem langen Tunnel oder Funkloch gibt LiveKit auf und meldet
+ * Disconnected. Bisher blieb der Funk dann für den Rest der Fahrt aus. Jetzt versuchen wir es erneut,
+ * erst nach 3 s, dann 6, 12, 24 und danach alle 30 s, mit frischem Zugang.
+ */
+let retry: ReturnType<typeof setTimeout> | null = null;
+let tries = 0;
+function scheduleReconnect(rideId: string) {
+  if (retry || current !== rideId) return;
+  const wait = Math.min(30000, 3000 * 2 ** tries);
+  tries += 1;
+  retry = setTimeout(() => {
+    retry = null;
+    if (current !== rideId) return;
+    current = null;
+    void connectFunk(rideId, isLead, true);
+  }, wait);
+}
 
 export function funkAvailable() {
   return available;
 }
 
 /** Mit dem Funk der Fahrt verbinden; mehrfach aufrufbar, verbindet nur einmal. */
-export async function connectFunk(rideId: string, lead: boolean) {
+export async function connectFunk(rideId: string, lead: boolean, again = false) {
   isLead = lead;
   if (!lk || !rn || current === rideId) return;
-  await disconnectFunk();
+  await teardown();
+  if (!again) tries = 0;
   current = rideId;
-  set({ status: 'verbinde', error: null });
+  // beim Wiederverbinden bleibt die Anzeige auf getrennt, bis es wirklich steht
+  set(again ? { status: 'getrennt' } : { status: 'verbinde', error: null });
   try {
     const { data, error } = await supabase.functions.invoke('livekit-token', { body: { ride: rideId } });
     if (error || !data?.token) throw new Error((data as { error?: string } | null)?.error ?? 'Funk Zugang fehlgeschlagen.');
@@ -86,10 +106,13 @@ export async function connectFunk(rideId: string, lead: boolean) {
     r.on(lk.RoomEvent.TrackSubscribed, (_t, pub) => {
       if (!state.listen) pub.setEnabled(false);
     });
-    r.on(lk.RoomEvent.Reconnecting, () => set({ status: 'getrennt' }));
-    r.on(lk.RoomEvent.Reconnected, () => set({ status: 'an' }));
+    r.on(lk.RoomEvent.Reconnecting, () => room === r && set({ status: 'getrennt' }));
+    r.on(lk.RoomEvent.Reconnected, () => room === r && set({ status: 'an' }));
     r.on(lk.RoomEvent.Disconnected, () => {
-      if (current === rideId) set({ status: 'getrennt', talking: false, speaker: null });
+      // nur der aktuelle Raum zählt; ein alter Raum, den wir selbst schließen, meldet sich hier auch
+      if (room !== r || current !== rideId) return;
+      set({ status: 'getrennt', talking: false, waiting: false, speaker: null });
+      scheduleReconnect(rideId);
     });
     r.on(lk.RoomEvent.DataReceived, (payload) => {
       try {
@@ -100,21 +123,46 @@ export async function connectFunk(rideId: string, lead: boolean) {
       }
     });
     await r.connect(data.url as string, data.token as string, { autoSubscribe: true });
+    if (room !== r) return;
     applyListen();
-    set({ status: 'an' });
+    tries = 0;
+    set({ status: 'an', error: null });
+    // Mikrofon vorbereiten (12.11.): stumm veröffentlichen, damit schon das erste Drücken sofort sendet.
+    // Bisher wurde das Mikrofon erst beim ersten Drücken geöffnet und angemeldet, die ersten Worte fehlten.
+    // Klappt das nicht, bleibt es beim alten Weg über setMicrophoneEnabled.
+    try {
+      const t = await lk.createLocalAudioTrack({ echoCancellation: true, noiseSuppression: true, autoGainControl: true });
+      await t.mute();
+      if (room === r) await r.localParticipant.publishTrack(t, { source: lk.Track.Source.Microphone });
+      else t.stop();
+    } catch {
+      /* dann öffnet das erste Drücken das Mikrofon */
+    }
   } catch (e) {
-    if (current === rideId) set({ status: 'fehler', error: e instanceof Error ? e.message : 'Funk nicht verfügbar.' });
+    if (current !== rideId) return;
+    // ohne Netz beim Verbinden: weiter versuchen statt aufgeben
+    set({ status: again ? 'getrennt' : 'fehler', error: e instanceof Error ? e.message : 'Funk nicht verfügbar.' });
+    room = null;
+    scheduleReconnect(rideId);
   }
 }
 
 export async function disconnectFunk() {
+  if (retry) clearTimeout(retry);
+  retry = null;
+  tries = 0;
+  await teardown();
+  set({ status: available ? 'aus' : 'nicht', talking: false, waiting: false, speaker: null, onlyLead: false });
+}
+
+/** Raum und Tonsitzung schließen, ohne den Wunsch nach Funk aufzugeben (auch vor dem Wiederverbinden) */
+async function teardown() {
   wantTalk = false;
   const r = room;
   room = null;
   current = null;
-  set({ status: available ? 'aus' : 'nicht', talking: false, waiting: false, speaker: null, onlyLead: false });
   if (r) await r.disconnect().catch(() => undefined);
-  if (rn) await rn.AudioSession.stopAudioSession().catch(() => undefined);
+  if (r && rn) await rn.AudioSession.stopAudioSession().catch(() => undefined);
 }
 
 async function startTalking() {

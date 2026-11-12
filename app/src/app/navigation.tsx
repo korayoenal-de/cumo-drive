@@ -36,6 +36,7 @@ import { closureLabel, closuresNear, closuresOnRoute } from '@/lib/road-closures
 import { limitAt, loadSpeedZones, type SpeedZones } from '@/lib/navigation/speed-zones';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
 import { warnLabel } from '@/lib/passes';
+import { predictPosition } from '@/lib/group/predict';
 import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
 import Animated, { FadeOut } from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
@@ -156,6 +157,9 @@ export default function NavigationScreen() {
           stale: !m.seenAt,
           off: m.off,
           own: m.own,
+          heading: m.heading,
+          speedKmh: m.speedKmh,
+          seenAt: m.seenAt,
         })),
     [ride.members, ride.me?.id],
   );
@@ -703,13 +707,18 @@ export default function NavigationScreen() {
   useEffect(() => {
     if (!cpRunning) return;
     carPlaySetGroup(
-      others.map((o) => ({
+      others.map((o) => {
+        // CarPlay lässt den Punkt in 0,8 s an die neue Stelle gleiten; wir geben die Stelle, an der der Fahrer
+        // dann voraussichtlich ist. Dieser Effekt läuft mit jeder eigenen Position (etwa jede Sekunde).
+        const q = predictPosition(o.p, o.heading, o.speedKmh, o.seenAt, Date.now() + 800);
+        return {
         id: o.id,
         name: o.name,
-        lat: o.p[0],
-        lon: o.p[1],
+        lat: q[0],
+        lon: q[1],
         detail: state.position ? `${formatKm(haversine(state.position, o.p) / 1000)} km entfernt${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}` : undefined,
-      })),
+        };
+      }),
     );
   }, [cpRunning, others, state.position]);
 
