@@ -3,6 +3,7 @@
  * Stellen ausschließen, bis die Route sauber ist oder keine Besserung mehr kommt.
  * Das unterscheidet uns von calimoto, das gesperrte Straßen nur anzeigt.
  */
+import { avoidedPoints } from './avoid-pass';
 import { checkLine } from './check';
 import { cumoAvailable, cumoPlan } from './cumo-routing';
 import { tourFun } from './fun-score';
@@ -154,7 +155,9 @@ export async function planChecked(
   signal?: AbortSignal,
   snapMajor = false,
 ): Promise<PlannedTour> {
-  const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, [], true);
+  // Pässe mit Warnung, die du herausgenommen hast (Doch umfahren): Passhöhe gesperrt, außer sie ist selbst ein Punkt
+  const skip = avoidedPoints().filter((q) => !points.some((w) => haversine(w, q) < 400));
+  const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, skip, true);
   onStep?.('traffic');
   // Aktuelle Sperrungen aus Verkehrsmeldungen (Koray 8.11.): umplanen, was nicht geht als Warnung
   const closures = await closuresNear(lineOf(first), signal);
@@ -167,7 +170,7 @@ export async function planChecked(
     try {
       // Nur die gewählte Variante um die Sperrung herum neu rechnen, ohne nochmal zu vergleichen
       // (10.11.: das Umplanen fragte sonst wieder beide Varianten mit allen Runden ab)
-      const again = await planCore(name, points, first.direkt ? 'schnell' : profile, avoid, onStep, signal, snapMajor, ex, false);
+      const again = await planCore(name, points, first.direkt ? 'schnell' : profile, avoid, onStep, signal, snapMajor, [...skip, ...ex], false);
       if (first.direkt) again.direkt = first.direkt;
       const h2 = closuresOnRoute(lineOf(again), closures);
       if (h2.length < hits.length) {

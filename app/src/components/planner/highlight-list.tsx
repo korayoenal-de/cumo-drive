@@ -14,6 +14,7 @@ import { FUN_NAMES, FunGauge, toFunLevel } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { WarnLabel } from '@/components/ui/warn-label';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { allowPass, avoidPass, useAvoidedPasses } from '@/lib/avoid-pass';
 import { findHighlights, highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { cumulativeKm } from '@/lib/navigation/route';
 import { passState, usePassLive } from '@/lib/pass-live';
@@ -28,17 +29,23 @@ const KIND_LABEL: Record<string, string> = {
   strecke: 'Traumstrecke',
 };
 
-export function HighlightList({ line }: { line: LatLon[] }) {
+/**
+ * onAvoid: Pass mit Warnung für diese Tour herausnehmen (Doch umfahren) oder wieder einplanen; der Aufrufer
+ * plant danach neu. Ohne onAvoid (Rundtour) gibt es nur das Label.
+ */
+export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () => void }) {
+  const avoided = useAvoidedPasses();
   const cum = useMemo(() => (line.length < 2 ? [] : cumulativeKm(line)), [line]);
   const list = useMemo(() => {
     if (line.length < 2) return [];
     return findHighlights(line, cum, null).sort((a, b) => b.level - a.level || a.startKm - b.startKm);
   }, [line, cum]);
   const [open, setOpen] = useState<Highlight | null>(null);
-  if (!list.length) return null;
+  if (!list.length && !(onAvoid && avoided.length)) return null;
   return (
     <View style={styles.wrap}>
       <AppText variant="label">{`Highlights auf der Strecke (${list.length})`}</AppText>
+      {list.length > 0 && (
       <View style={styles.card}>
         {list.map((h, i) => {
           const lv = toFunLevel(h.level);
@@ -64,10 +71,41 @@ export function HighlightList({ line }: { line: LatLon[] }) {
                   <AppText style={styles.level}>{FUN_NAMES[lv]}</AppText>
                 </View>
               </Pressable>
+              {onAvoid && h.kind === 'pass' && h.warn?.length ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${h.name} doch umfahren`}
+                  onPress={() => {
+                    const p = PASSES.find((x) => x.id === h.id);
+                    if (!p) return;
+                    avoidPass({ id: p.id, name: p.name, p: [p.lat, p.lon] });
+                    onAvoid();
+                  }}
+                  style={({ pressed }) => [styles.avoid, pressed && styles.pressed]}>
+                  <AppText style={styles.avoidText}>Doch umfahren</AppText>
+                </Pressable>
+              ) : null}
             </Animated.View>
           );
         })}
       </View>
+      )}
+      {onAvoid &&
+        avoided.map((a) => (
+          <View key={a.id} style={styles.avoided}>
+            <AppText style={[styles.sub, styles.flex]} numberOfLines={1}>{`${a.name} umfahren`}</AppText>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${a.name} wieder einplanen`}
+              onPress={() => {
+                allowPass(a.id);
+                onAvoid();
+              }}
+              style={({ pressed }) => [styles.avoidBack, pressed && styles.pressed]}>
+              <AppText style={styles.avoidBackText}>Wieder einplanen</AppText>
+            </Pressable>
+          </View>
+        ))}
       <Modal visible={!!open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(null)}>
         {open && <HighlightDetail h={open} line={line} cum={cum} onClose={() => setOpen(null)} />}
       </Modal>
@@ -175,6 +213,11 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64, paddingVertical: Spacing.s, paddingHorizontal: Spacing.s, borderRadius: Radius.m },
   rowPressed: { backgroundColor: Colors.pressTint },
   warned: { gap: 4, paddingVertical: 2 },
+  avoid: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.s },
+  avoidText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.muted },
+  avoided: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.s },
+  avoidBack: { minHeight: 44, justifyContent: 'center' },
+  avoidBackText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   name: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   sub: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   gauge: { alignItems: 'center', gap: 2, minWidth: 72 },

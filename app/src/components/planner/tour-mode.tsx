@@ -690,7 +690,8 @@ export function TourMode({
             </Pressable>
           )}
 
-          <HighlightList line={line} />
+          {/* Doch umfahren und Wieder einplanen: Liste ändern, dann alles neu planen */}
+          <HighlightList line={line} onAvoid={() => plan.planNow(profile, avoid)} />
 
           {warnings.length > 0 && <Warnings warnings={warnings} checked={routeTour.geprueft !== false} />}
 

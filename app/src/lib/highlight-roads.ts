@@ -11,6 +11,7 @@
  * Ohne `say` wird "die {note} {name}" gesprochen, deshalb sind alle Notizen weiblich (Strecke, Straße).
  */
 import curatedData from '@/data/curated-roads.json';
+import type { WarnKey } from '@/lib/passes';
 
 import type { LatLon } from './tour';
 
@@ -28,6 +29,8 @@ export type HighlightRoad = {
   line: LatLon[];
   /** Fahrspaß Pegel 1 bis 5 (Nett bis Legende); ohne Angabe gilt der Standard der Art */
   level?: number;
+  /** Warnung am Highlight, Gründe als Bausteine wie bei den Pässen (Tremola: langes Pflaster) */
+  warn?: WarnKey[];
 };
 
 /** Pegel ohne eigene Angabe: Rallye und Bergrennen Traumstraße, sonst Stark */
@@ -513,11 +516,12 @@ type CuratedRoad = {
   country: string;
   line: LatLon[];
   level?: number;
+  warn?: WarnKey[];
 };
 
 const CURATED = curatedData as unknown as CuratedRoad[];
 
-const toRoad = ({ id, name, kind, note, line, level }: CuratedRoad): HighlightRoad => ({ id, name, kind, note, line, level });
+const toRoad = ({ id, name, kind, note, line, level, warn }: CuratedRoad): HighlightRoad => ({ id, name, kind, note, line, level, ...(warn ? { warn } : {}) });
 
 /** Abstand eines Punkts zur Strecke a b in Metern (flache Näherung, reicht für 150 m). */
 function segmentDistance(p: LatLon, a: LatLon, b: LatLon) {

@@ -10,6 +10,7 @@ import { clearEditOrigin } from '@/lib/edit-tour';
 import { fromCommunity, saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName } from '@/lib/geocode';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '@/lib/highlight-roads';
+import { avoidedKey, clearAvoidedPasses } from '@/lib/avoid-pass';
 import { planChanged, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
 import { insertVia, movePoint } from '@/lib/route-edit';
 import { flatten, haversine, normProfile, type LatLon, type Profile } from '@/lib/tour';
@@ -194,7 +195,8 @@ export function useTourPlan(onPlanned?: () => void) {
       });
       const nm = tourName.trim() || 'Neue Tour';
       const onStep = (st: PlanStep) => !ctrl.signal.aborted && setStep(st);
-      const avoidKey = JSON.stringify(avoid);
+      // herausgenommene Pässe gehören zum Schlüssel: ändert sich die Liste, wird nichts wiederverwendet
+      const avoidKey = `${JSON.stringify(avoid)}|${avoidedKey()}`;
       const before = !full && planned ? plannedAs.current.get(planned) : undefined;
       let raw: PlannedTour | null = null;
       if (before && before.avoid === avoidKey) {
@@ -392,6 +394,7 @@ export function useTourPlan(onPlanned?: () => void) {
 
   function reset() {
     abort.current?.abort();
+    clearAvoidedPasses();
     origin.current = null;
     setStart(null);
     setVias([]);
@@ -434,6 +437,7 @@ export function useTourPlan(onPlanned?: () => void) {
   /** Gespeicherte Tour zum Ändern laden: erster Wegpunkt Start, letzter Ziel, dazwischen Zwischenziele. Speichern ersetzt dieselbe Tour. */
   function load(t: SavedTour, profile: Profile, avoid: Avoid) {
     abort.current?.abort();
+    clearAvoidedPasses();
     origin.current = fromCommunity(t) ? { author: t.author, communityId: t.communityId, edited: t.edited } : null;
     const w = t.wegpunkte;
     const s = w[0] ?? null;
