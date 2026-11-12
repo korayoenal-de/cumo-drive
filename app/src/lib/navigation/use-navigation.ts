@@ -14,6 +14,7 @@ import { replanFromHere } from './replan';
 import { fetchNavRouteDetail, rejoinNavRoute } from './route';
 import { pointAtKm, progress, snapToRoute } from './tracker';
 import type { NavControls, NavRequest, NavRoute, NavState, SkipUndo } from './types';
+import { townAfter, wantsToward, withToward } from './toward';
 import { createVoiceGuide, type VoiceGuide } from './voice';
 
 const KEEP_AWAKE_TAG = 'cumo-navigation';
@@ -154,6 +155,31 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     [voice],
   );
 
+  /**
+   * Orte an den nächsten Abzweigungen ergänzen (Tester Gregor 12.11.), im Hintergrund und nur für die
+   * nächsten drei Manöver: so steht der Ort, bevor die erste Ansage kommt, und es gibt kaum Abfragen.
+   */
+  const towardTried = useRef(new Set<string>());
+  const enrichAhead = useCallback((route: NavRoute, next: number) => {
+    for (let i = next; i < Math.min(route.maneuvers.length, next + 3); i++) {
+      const m = route.maneuvers[i];
+      const key = `${m.km.toFixed(2)}|${m.text}`;
+      if (!wantsToward(m) || towardTried.current.has(key)) continue;
+      towardTried.current.add(key);
+      void townAfter(route, m)
+        .then((town) => {
+          const cur = routeRef.current;
+          // dieselbe Route (eine Ergänzung davor ersetzt nur das Objekt, nicht die Linie)
+          if (!town || !activeRef.current || !cur || cur.shape !== route.shape) return;
+          const maneuvers = cur.maneuvers.map((x) => (x.index === m.index && x.text === m.text ? withToward(x, town) : x));
+          const updated = { ...cur, maneuvers };
+          routeRef.current = updated;
+          setState((s) => (s.route === cur ? { ...s, route: updated } : s));
+        })
+        .catch(() => undefined);
+    }
+  }, []);
+
   /** Neue Route nach einer Abweichung holen, höchstens alle 20 s. */
   const reroute = useCallback(
     /** mode: auto nach Regel, rejoin oder fresh, wenn die Fahrerin selbst gewählt hat (Martin 11.11.) */
@@ -242,6 +268,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         stopSim();
         keepAwake(false);
       } else {
+        enrichAhead(route, pr.next);
         voice().update(route, pr.next, pr.distToNextM, fix.speedKmh);
       }
 
@@ -275,7 +302,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         ignored: ignoredRef.current,
       }));
     },
-    [keepAwake, reroute, stopSim, voice],
+    [enrichAhead, keepAwake, reroute, stopSim, voice],
   );
 
   const start = useCallback(async () => {

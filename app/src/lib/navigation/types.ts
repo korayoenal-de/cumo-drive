@@ -45,6 +45,8 @@ export type Maneuver = {
   speech: string;
   /** Straßenname oder Nummer nach dem Manöver */
   street?: string;
+  /** Ort, in dessen Richtung es nach dem Manöver geht (von der App ergänzt, wo der Wegweiser fehlt) */
+  toward?: string;
   /** Ausfahrt im Kreisverkehr, falls bekannt */
   exit?: number;
   /** Index im Shape der NavRoute, an dem das Manöver liegt */
