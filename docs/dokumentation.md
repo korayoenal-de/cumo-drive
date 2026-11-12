@@ -77,6 +77,7 @@ Runder Knopf oben rechts: Darstellung Standard (dunkel), Satellit, 3D Satellit (
 * Abbiegehinweise mit 42 eigenen Symbolen, der Pfeil baut sich vor dem Manöver auf
 * Highlights werden kurz vorher mit Karte, Sprachansage und Pegel angekündigt; Legende mit Stern Animation
 * Tempo mit Tempolimit unten links, Bremshinweis vor Kurven (5,5 m/s², nach eigenem Tempo), Kurvenwarnung ab 70er Zonen
+* Tempolimit Anzeige (Entscheidung Koray 12.11.): bekanntes Schild als Verkehrszeichen; außerorts ohne Eintrag in den Straßendaten die geschätzten 100 als graue Plakette ohne roten Ring; im Ort und auf der Autobahn wird nicht geraten. Ein Ortstempo (bis 50) endet 150 m nach dem letzten Straßennamen
 * Planung ansehen, Zwischenziel überspringen (langer Druck, mit Rückgängig), Pausieren
 * Abseits der Tour: gelbe Linie zurück, verpasstes Stück muss man nicht nachfahren. Weg zur Tour und zurück über den eigenen Server, um Orte herum (seit 10.11.)
 * Karte zoomt ab 50 km/h langsam heraus, mit zwei Fingern zoomen und zentriert bleiben (CarPlay zoomt ab Build 21 mit)
