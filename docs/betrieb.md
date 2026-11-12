@@ -55,7 +55,7 @@ Reserve: ein dritter gleicher Server lässt sich ohne Änderung der Logik in die
 |---|---|---|
 | Code, Profile, Skripte, kuratierte Daten | GitHub | jede Änderung committet und gepusht |
 | Einstellungen, Skripte, Dienste der Server | jeweils der andere Server, /opt/backup/<name>/<Datum> | jede Nacht 2:10 Uhr, 14 Stände (backup.sh) |
-| Graph, Kartendaten und POI Kacheln | auf beiden Servern | aus OpenStreetMap jederzeit neu baubar (etwa eine Stunde, Kacheln 20 Minuten) |
+| Graph, Kartendaten und POI Kacheln | auf beiden Servern | aus OpenStreetMap jederzeit neu baubar (Graph rund neun Stunden, siehe Neuaufbau, Kacheln 20 Minuten) |
 | Konten, Touren, Nachrichten (Supabase) | Supabase | im Gratistarif KEINE Sicherung; Pro sichert täglich, 7 Tage |
 
 Erste Sicherung in beide Richtungen am 12.11. von Hand geprüft. Offen: Supabase Pro vor echten Nutzern. Wiederherstellung einmal üben (Server aus der Sicherung neu aufsetzen).
@@ -65,7 +65,7 @@ Erste Sicherung in beide Richtungen am 12.11. von Hand geprüft. Offen: Supabase
 | Ausfall | Was passiert | Wer merkt es |
 |---|---|---|
 | Ein Routing Server antwortet nicht | App fragt automatisch den anderen (Prüfung /info, Wechsel auch mitten in der Planung) | Überwachung des Partners nach 3 Minuten |
-| Neuaufbau (So und Mo 3 Uhr) | läuft nur, wenn der andere Server gesund ist; App plant solange dort | Protokoll setup.log |
+| Neuaufbau (So und Mo 3 Uhr) | dauert rund neun Stunden (gemessen 8.11. auf Server 1: 3 Uhr bis nach 12 Uhr), das Routing dieses Servers ist solange aus; läuft nur, wenn der andere Server gesund ist, die App plant solange dort | Protokoll setup.log |
 | Import scheitert | alter Graph läuft sofort weiter | Protokoll |
 | Neuer Graph liefert keine Route | automatisch zurück zum alten Graph | Protokoll |
 | GraphHopper hängt | Wächter startet nach drei Fehlversuchen neu | Protokoll |
@@ -76,6 +76,10 @@ Erste Sicherung in beide Richtungen am 12.11. von Hand geprüft. Offen: Supabase
 | LiveKit weg | Funk aus, Gruppenfahrt mit Live Positionen läuft weiter | Banner „Funk getrennt“ |
 | TomTom weg oder Kontingent leer | keine aktuellen Sperrungen, Planung läuft | Protokoll der Edge Function |
 | sslip.io weg | BEIDE Server nicht erreichbar, weil ihre Namen daran hängen | siehe Schwachstellen |
+
+### Dauer des Neuaufbaus (korrigiert 12.11.)
+
+Die frühere Angabe „etwa eine Stunde“ war falsch. Gemessen am Protokoll vom 8.11. (Server 1, altes Gebiet): Einlesen und Ortsdichte gut eine Stunde, danach die Landmarken für vier Profile nacheinander mit je etwa 70 Minuten, zusammen fast fünf Stunden, dann POI Kacheln. Insgesamt rund neun Stunden. Mit nur einem Server war das eigene Routing sonntags den ganzen Vormittag aus. Offen: Landmarken gleichzeitig rechnen (prepare.lm.threads), erwartet drei bis vier Stunden, erst nach Messung als Zahl übernehmen.
 
 Überwachung (monitor.sh, jede Minute): eigener Dienst, Partner, POI des Partners, Ortssuche, Platte ab 85 Prozent. Zustandswechsel stehen in setup.log. Mit einer Adresse in /etc/cumo-notify (Webhook, zum Beispiel ntfy) geht zusätzlich eine Nachricht aufs Handy.
 

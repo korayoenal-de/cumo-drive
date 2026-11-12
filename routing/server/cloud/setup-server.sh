@@ -39,7 +39,7 @@ for r in "${REGIONS[@]}"; do
 done
 log "Kartendaten zusammenfügen"
 osmium merge "${files[@]}" -o data/region.new.osm.pbf --overwrite
-log "Graph bauen (dauert etwa eine Stunde)"
+log "Graph bauen (dauert mehrere Stunden, vor allem die Landmarken)"
 rm -rf data/graph-cache.new
 sed 's#data/graph-cache#data/graph-cache.new#; s#data/region.osm.pbf#data/region.new.osm.pbf#' config.yml > config.import.yml
 chown -R cumo:cumo "$BASE"
