@@ -50,8 +50,6 @@ import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour
 
 /** So lange ersetzt die Highlight Ansage die Routenführung */
 const HL_SHOW_MS = 5000;
-/** Ab dieser Entfernung zeigt CarPlay das Manöversymbol in Signal Orange */
-const CP_SOON_M = 200;
 /** Ab so viel Abstand zur Route gilt man auf dem Autodisplay als abseits (wie in der App) */
 const CP_OFF_M = 60;
 
@@ -541,9 +539,6 @@ export default function NavigationScreen() {
     const m = r?.maneuvers[state.next];
     if (!cpRunning || !r || !m || state.distToNextM == null) return;
     const v = Math.max(8, (state.speedKmh ?? 50) / 3.6);
-    // kurz vor dem Manöver wird das Symbol orange (CarPlay erlaubt dort keine Animation); neuer Schlüssel,
-    // damit CarPlay das Bild austauscht
-    const soon = state.distToNextM < CP_SOON_M;
     const restSecs = state.eta ? Math.max(0, (state.eta.getTime() - Date.now()) / 1000) : 0;
     // Abseits der Tour (Testfahrt 7.11.): ohne neue Route ein eigener Hinweis statt "0 m",
     // mit Rückweg steht "Zurück zur Tour" vor jeder Anweisung, bis die Tour wieder erreicht ist
@@ -568,10 +563,11 @@ export default function NavigationScreen() {
     };
     const t = r.maneuvers[state.next + 1];
     carPlayUpdate({
-      key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}${soon ? '-on' : ''}${rejoin > 20 ? '-zurueck' : ''}`,
+      key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}${rejoin > 20 ? '-zurueck' : ''}`,
       text: rejoin > 20 ? `Zurück zur Tour: ${m.text}` : m.text,
       symbol: symbolForKind(m.kind, m.exit),
-      icon: `${icon(state.next)}${soon ? '-on' : ''}`,
+      // immer dieselbe weiße Fassung (Koray 12.11.: der Wechsel nach Orange vor dem Manöver wirkte wie ein Flackern)
+      icon: icon(state.next),
       ...(t ? { thenText: t.text, thenSymbol: symbolForKind(t.kind, t.exit), thenIcon: icon(state.next + 1) } : {}),
       distM: state.distToNextM,
       secs: state.distToNextM / v,

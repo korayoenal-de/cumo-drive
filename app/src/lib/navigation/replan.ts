@@ -5,6 +5,7 @@
  */
 import { planChecked } from '../plan';
 import { flatten, haversine, type LatLon } from '../tour';
+import { mergeIndex } from './merge';
 import { fetchNavRouteDetail } from './route';
 import type { NavRequest, NavRoute } from './types';
 
@@ -85,5 +86,7 @@ export async function replanFromHere(
   const tour = await planChecked(req.tour.name, [pos, ...stops], req.profile, req.avoid, undefined, signal, false, hint);
   const next: NavRequest = { ...req, tour, entry: 'start' };
   const { route } = await fetchNavRouteDetail(next, pos, signal);
-  return { req: next, route };
+  // Die abweichende Strecke bleibt gelb, bis sie wieder auf die alte Tour trifft (Koray 12.11.)
+  const join = mergeIndex(route.shape, flatten(req.tour).map((x) => x.p));
+  return { req: next, route: join > 0 ? { ...route, rejoinIndex: join } : route };
 }
