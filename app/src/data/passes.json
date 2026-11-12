@@ -20,7 +20,11 @@
     "closed_months": "Nov bis Mai",
     "toll": false,
     "car_note": null,
-    "source": "https://de.wikipedia.org/wiki/Stilfser_Joch"
+    "source": "https://de.wikipedia.org/wiki/Stilfser_Joch",
+    "warn": [
+      "kehren",
+      "schmal"
+    ]
   },
   {
     "id": "gavia",
@@ -42,7 +46,12 @@
     "closed_months": null,
     "toll": false,
     "car_note": "Südrampe teils nur 2,5 bis 4 m breit, einige sehr enge Kehren, Ausweichstellen",
-    "source": "https://de.wikipedia.org/wiki/Gaviapass"
+    "source": "https://de.wikipedia.org/wiki/Gaviapass",
+    "warn": [
+      "schmal",
+      "ausgesetzt",
+      "kehren"
+    ]
   },
   {
     "id": "sellajoch",
@@ -680,7 +689,12 @@
     "closed_months": null,
     "toll": false,
     "car_note": "stellenweise nur einspurig",
-    "source": "https://de.wikipedia.org/wiki/Mortirolopass"
+    "source": "https://de.wikipedia.org/wiki/Mortirolopass",
+    "warn": [
+      "einspurig",
+      "steil",
+      "kehren"
+    ]
   },
   {
     "id": "foscagno",
@@ -769,7 +783,12 @@
     "closed_months": "Okt bis Mai",
     "toll": false,
     "car_note": "nur einspurig ausgebaut, kurven und kehrenreich",
-    "source": "https://de.wikipedia.org/wiki/Passo_del_Vivione"
+    "source": "https://de.wikipedia.org/wiki/Passo_del_Vivione",
+    "warn": [
+      "einspurig",
+      "ausgesetzt",
+      "kehren"
+    ]
   },
   {
     "id": "croce-domini",
@@ -961,7 +980,12 @@
     "closed_months": null,
     "toll": false,
     "car_note": "nur einspurig befahrbar, Verkehr durch Ampeln geregelt",
-    "source": "https://de.wikipedia.org/wiki/Passo_San_Boldo"
+    "source": "https://de.wikipedia.org/wiki/Passo_San_Boldo",
+    "warn": [
+      "einspurig",
+      "ampel",
+      "kehren"
+    ]
   },
   {
     "id": "staller-sattel",
@@ -984,7 +1008,11 @@
     "closed_months": "Okt bis Mai",
     "toll": false,
     "car_note": "Westseite einspurig mit stündlicher Einbahnregelung, Verbot für Wohnwagen und Busse",
-    "source": "https://de.wikipedia.org/wiki/Staller_Sattel"
+    "source": "https://de.wikipedia.org/wiki/Staller_Sattel",
+    "warn": [
+      "einspurig",
+      "einbahn"
+    ]
   },
   {
     "id": "pian-delle-fugazze",
@@ -1208,7 +1236,11 @@
     "closed_months": "Nov bis Jun",
     "toll": false,
     "car_note": "oberhalb Isola 2000 teils nur einspurig",
-    "source": "https://de.wikipedia.org/wiki/Col_de_la_Lombarde"
+    "source": "https://de.wikipedia.org/wiki/Col_de_la_Lombarde",
+    "warn": [
+      "einspurig",
+      "schmal"
+    ]
   },
   {
     "id": "colle-della-maddalena",
@@ -3633,7 +3665,10 @@
     "closed_months": "Nov bis Mai",
     "toll": false,
     "car_note": "nach der Mörlialp einspurig",
-    "source": "https://de.wikipedia.org/wiki/Glaubenbielen"
+    "source": "https://de.wikipedia.org/wiki/Glaubenbielen",
+    "warn": [
+      "einspurig"
+    ]
   },
   {
     "id": "glaubenberg",
@@ -3676,27 +3711,6 @@
     "toll": false,
     "car_note": null,
     "source": "https://de.wikipedia.org/wiki/Br%C3%BCnigpass"
-  },
-  {
-    "id": "pragelpass",
-    "name": "Pragelpass",
-    "names": [
-      "Pragel"
-    ],
-    "country": [
-      "CH"
-    ],
-    "region": "Schwyz und Glarus",
-    "lat": 46.99466,
-    "lon": 8.86675,
-    "ele": 1548,
-    "tier": "mittel",
-    "hairpins": null,
-    "winter_closed": true,
-    "closed_months": "Nov bis Jun",
-    "toll": false,
-    "car_note": "mehrheitlich einspurig, bis 18 % steil, kurzes Stück der Ostrampe an Wochenenden für Motorfahrzeuge gesperrt",
-    "source": "https://de.wikipedia.org/wiki/Pragelpass"
   },
   {
     "id": "ibergeregg",
@@ -4288,7 +4302,11 @@
     "closed_months": "Nov bis Apr",
     "toll": false,
     "car_note": "meist einspurig und recht schmal mit Ausweichstellen",
-    "source": "https://de.wikipedia.org/wiki/%C3%84cherlipass"
+    "source": "https://de.wikipedia.org/wiki/%C3%84cherlipass",
+    "warn": [
+      "einspurig",
+      "schmal"
+    ]
   },
   {
     "id": "col-des-etroits",
@@ -7276,7 +7294,11 @@
     "closed_months": "Nov bis Mai",
     "toll": false,
     "car_note": "Schmal, teils einspurig mit Ausweichstellen",
-    "source": "https://it.wikipedia.org/wiki/Passo_del_Cason_di_Lanza"
+    "source": "https://it.wikipedia.org/wiki/Passo_del_Cason_di_Lanza",
+    "warn": [
+      "einspurig",
+      "schmal"
+    ]
   },
   {
     "id": "sella-cereschiatis",
@@ -7368,7 +7390,10 @@
     "closed_months": null,
     "toll": false,
     "car_note": "Sehr schmale Bergstraße nahe dem Mortirolo",
-    "source": "https://www.openstreetmap.org/node/565219218"
+    "source": "https://www.openstreetmap.org/node/565219218",
+    "warn": [
+      "schmal"
+    ]
   },
   {
     "id": "passo-d-eira",
@@ -7438,29 +7463,6 @@
     "source": "https://www.openstreetmap.org/node/3308396762"
   },
   {
-    "id": "forcella-lavardet",
-    "name": "Forcella Lavardet",
-    "names": [
-      "Lavardet",
-      "Forcella di Lavardet",
-      "Passo Lavardet"
-    ],
-    "country": [
-      "IT"
-    ],
-    "region": "Friaul und Venetien",
-    "lat": 46.49978,
-    "lon": 12.62857,
-    "ele": 1542,
-    "tier": "mittel",
-    "hairpins": null,
-    "winter_closed": true,
-    "closed_months": null,
-    "toll": false,
-    "car_note": null,
-    "source": "https://it.wikipedia.org/wiki/Forcella_Lavardet"
-  },
-  {
     "id": "forcella-aurine",
     "name": "Forcella Aurine",
     "names": [
@@ -7482,29 +7484,6 @@
     "toll": false,
     "car_note": null,
     "source": "https://it.wikipedia.org/wiki/Forcella_Aurine"
-  },
-  {
-    "id": "passo-di-tremalzo",
-    "name": "Passo di Tremalzo",
-    "names": [
-      "Tremalzo",
-      "Passo del Tremalzo",
-      "Tremalzopass"
-    ],
-    "country": [
-      "IT"
-    ],
-    "region": "Trentino und Lombardei",
-    "lat": 45.83669,
-    "lon": 10.69026,
-    "ele": 1664,
-    "tier": "bekannt",
-    "hairpins": null,
-    "winter_closed": true,
-    "closed_months": null,
-    "toll": false,
-    "car_note": "Nur von Norden (Ledrotal) asphaltiert, Stichstraße; Südrampe ab Passo Nota Schotter und seit 2015 Fahrverbot für Kfz",
-    "source": "https://it.wikipedia.org/wiki/Passo_del_Tremalzo"
   },
   {
     "id": "bocca-di-navene",
