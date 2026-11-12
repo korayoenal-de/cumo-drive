@@ -2,6 +2,23 @@
 
 Geprüft: alle 370 Pässe und 486 kuratierten Strecken gegen den eigenen Graph (Sportwagen Profil, Stand der Karten 8.11.). Automatische Prüfung, jede Zeile unten ist ein Verdacht und noch keine Entscheidung. Skripte und Rohdaten liegen im Ordner Server/datencheck.
 
+## Entscheidungen von Koray (12.11.)
+
+| Punkt | Entscheidung |
+|---|---|
+| Grundsatz | Schotter und Forstwege bleiben draußen, auch bei bekannten Namen. Wir sind eine Sportwagen App. |
+| 1 Außerhalb des Gebiets | Mittelitalien und Pyrenäen nachladen, zuerst als Testaufbau nur auf Server 2. Süditalien und Inseln ausblenden, bis sie abgedeckt sind. |
+| 2 Profil weicht ab | Einzeln prüfen. Die 7 betroffenen Highlights werden bis dahin nicht angesagt. Ergebnis je Strecke: gut, Linie neu ziehen, abenteuerlich oder raus. Neue Linien werden mit dem Sportwagen Profil gezogen. |
+| 3 Ortsanteil | Ab 70 Prozent streichen. Zwischen 50 und 70 Prozent zurückstufen (keine Ansage, kein Anziehen der Planung). Bergrennen und Rallyeprüfungen einzeln. Ortsanteil wird feste Prüfung in der Pipeline. |
+| 4 Schnellstraße | Alle 13 einzeln prüfen, bis dahin zurückgestuft. |
+| 5 Doppelte | Die 8 echten Doppelten zusammenführen (längere Linie, höherer Pegel, besserer Name), Koray bestätigt Namen und Pegel. Geschachtelte bleiben. Pipeline bekommt die fehlende Prüfung. |
+| 6 Breite und Pflaster | Nichts streichen. Die 7 engen Strecken und die Tremola sind Ausgangsmaterial für das Stufen Konzept. |
+| 7 Anlieger frei | Die 6 Strecken einzeln prüfen. Das Sportwagen Profil wertet Anlieger Abschnitte künftig stark ab, Test zuerst auf Server 2. |
+
+### Neue Idee: Stufen (Konzept folgt)
+
+Jede Strecke und jeder Pass bekommt eine Stufe, der Fahrer wählt, bis zu welcher Stufe geplant wird. Arbeitsstand: 1 für sehr tiefe Sportwagen, 2 für Fahrer, die auch schmalere Straßen fahren, 3 Abenteuer (zum Beispiel Gavia: sehr schmal, ausgesetzt, mit Warnung). Wording offen. Die Stufe ist eine Wahl des Fahrers und wird nicht aus Fahrzeugmaßen abgeleitet (Breite und Bodenfreiheit sind bewusst nicht mehr in der App). Erst Konzept und Design, dann bauen.
+
 ## Bereits bereinigt (12.11.)
 
 * Sechs Pässe entfernt, weil Schotter oder für Sportwagen nicht befahrbar: Colle dei Signori (Ligurische Grenzkammstraße), Colle dell'Assietta, Colle delle Finestre, Colle di Tenda (Scheitelstraße), Sommertörl, Hirschegger Sattel.
