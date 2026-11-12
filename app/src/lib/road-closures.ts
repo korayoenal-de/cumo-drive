@@ -177,12 +177,20 @@ export function closuresOnRoute(route: LatLon[], closures: Closure[]): ClosureHi
   return out.sort((a, b) => a.firstIndex - b.firstIndex);
 }
 
-/** Punkte zum Ausschließen beim Neuplanen, nicht direkt an den Wegpunkten */
+/** Liegt ein Wegpunkt so nah an der gesperrten Straße, gilt sie als gewollt (Passhöhe als Ziel) */
+const WANTED_M = 1500;
+
+/**
+ * Punkte zum Ausschließen beim Neuplanen, nicht direkt an den Wegpunkten.
+ * Liegt ein Wegpunkt auf der gesperrten Straße selbst (12.11.: Umbrailpass und Stilfser Joch als Ziele in der
+ * Wintersperre), gibt es keinen anderen Weg dorthin. Dann wird nicht umgeplant, die Sperrung bleibt als
+ * Hinweis an der Route: Wintersperren informieren, sie verhindern nie die Planung.
+ */
 export function closureExclude(hits: ClosureHit[], waypoints: LatLon[]): LatLon[] {
   const out: LatLon[] = [];
   for (const h of hits) {
     const mid = h.points[Math.floor(h.points.length / 2)];
-    if (waypoints.some((w) => haversine(w, mid) < 300)) continue;
+    if (waypoints.some((w) => haversine(w, mid) < 300 || distToLine(w, h.closure.line) < WANTED_M)) continue;
     out.push(mid);
   }
   return out.slice(0, 20);

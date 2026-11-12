@@ -170,7 +170,11 @@ export async function planChecked(
     try {
       // Nur die gewählte Variante um die Sperrung herum neu rechnen, ohne nochmal zu vergleichen
       // (10.11.: das Umplanen fragte sonst wieder beide Varianten mit allen Runden ab)
-      const again = await planCore(name, points, first.direkt ? 'schnell' : profile, avoid, onStep, signal, snapMajor, [...skip, ...ex], false);
+      // Mit Frist: findet sich in FIX_BUDGET_MS kein Weg um die Sperrung, bleibt die erste Route mit Hinweis
+      // (12.11.: das Umplanen um eine Wintersperre lief über eine Minute und blieb dann stehen)
+      const again = await withBudget(signal, FIX_BUDGET_MS, (s) =>
+        planCore(name, points, first.direkt ? 'schnell' : profile, avoid, onStep, s, snapMajor, [...skip, ...ex], false),
+      );
       if (first.direkt) again.direkt = first.direkt;
       const h2 = closuresOnRoute(lineOf(again), closures);
       if (h2.length < hits.length) {
@@ -185,6 +189,26 @@ export async function planChecked(
 }
 
 const lineOf = (t: Tour): LatLon[] => flatten(t).map((x) => x.p);
+
+/** So lange darf das Umplanen um eine Sperrung dauern */
+const FIX_BUDGET_MS = 12000;
+
+/** Aufgabe mit eigener Frist: bricht nach ms ab (oder wenn der Aufrufer abbricht) und wirft dann */
+async function withBudget<T>(signal: AbortSignal | undefined, ms: number, job: (s: AbortSignal) => Promise<T>): Promise<T> {
+  const ctrl = new AbortController();
+  const onAbort = () => ctrl.abort();
+  signal?.addEventListener('abort', onAbort);
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await Promise.race([
+      job(ctrl.signal),
+      new Promise<never>((_, reject) => ctrl.signal.addEventListener('abort', () => reject(new Error('Frist abgelaufen')), { once: true })),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
+  }
+}
 
 /** Verbliebene Sperrungen als Warnung "Gesperrt" an der Stelle (Liste und Marker wie beim Etappen Check) */
 function withClosureWarnings(tour: PlannedTour, hits: ClosureHit[]): PlannedTour {

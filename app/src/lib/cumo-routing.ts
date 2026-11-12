@@ -297,22 +297,40 @@ async function send(text: string, signal?: AbortSignal): Promise<GhPath> {
   }
 }
 
+/** Längste Wartezeit auf eine Antwort samt Übertragung. Ohne Frist blieb die Planung stehen, wenn eine Antwort
+ *  im Mobilnetz verloren ging (12.11.: der Server hatte geantwortet, am Telefon kam nichts an). */
+const ROUTE_TIMEOUT_MS = 30000;
+
 async function sendTo(url: string, text: string, signal?: AbortSignal): Promise<GhPath> {
-  const ask = (zip: boolean) =>
-    fetch(`${url}/route`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(zip ? { 'Content-Encoding': 'gzip' } : {}) },
-      body: zip ? gzipSync(strToU8(text), { level: 4 }) : text,
-      signal,
-    });
-  const read = async (res: Response) => {
-    const data = (await res.json().catch(() => ({}))) as { message?: string; paths?: GhPath[] };
-    return { ok: res.ok && !!data.paths?.length, data, status: res.status };
+  type Out = { ok: boolean; data: { message?: string; paths?: GhPath[] }; status: number };
+  const ask = async (zip: boolean): Promise<Out> => {
+    const ctrl = new AbortController();
+    const onAbort = () => ctrl.abort();
+    signal?.addEventListener('abort', onAbort);
+    if (signal?.aborted) ctrl.abort();
+    const timer = setTimeout(() => ctrl.abort(), ROUTE_TIMEOUT_MS);
+    try {
+      const res = await fetch(`${url}/route`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(zip ? { 'Content-Encoding': 'gzip' } : {}) },
+        body: zip ? gzipSync(strToU8(text), { level: 4 }) : text,
+        signal: ctrl.signal,
+      });
+      // auch das Lesen der Antwort steht unter der Frist
+      const data = (await res.json().catch((e) => {
+        if (ctrl.signal.aborted) throw e;
+        return {};
+      })) as Out['data'];
+      return { ok: res.ok && !!data.paths?.length, data, status: res.status };
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
+    }
   };
   const zip = gzipOk && text.length >= GZIP_MIN;
-  let out: Awaited<ReturnType<typeof read>> | null = null;
+  let out: Out | null = null;
   try {
-    out = await read(await ask(zip));
+    out = await ask(zip);
   } catch (e) {
     if (signal?.aborted) throw e;
     if (!zip) {
@@ -324,7 +342,7 @@ async function sendTo(url: string, text: string, signal?: AbortSignal): Promise<
   // Komprimiert gescheitert ohne klare Antwort des Routers: einmal unkomprimiert, und dabei bleiben, wenn es so klappt
   if (zip && (!out || (!out.ok && !out.data.message))) {
     try {
-      const plain = await read(await ask(false));
+      const plain = await ask(false);
       if (plain.ok) gzipOk = false;
       out = plain;
     } catch (e) {
