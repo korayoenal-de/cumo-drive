@@ -179,3 +179,20 @@ export async function listDriveTracks(limit = 60): Promise<{ id: string; p: LatL
     })
     .filter((d) => d.p.length > 1);
 }
+
+/**
+ * Spuren bestimmter Fahrten in voller Auflösung (Tester Gregor 12.11.: nach der Fahrt sehen, wo man wirklich
+ * gefahren ist, oft anders als geplant). Für die sichtbaren Karten in Meine Touren, nicht für alle auf einmal.
+ */
+export async function getDriveTracks(ids: string[]): Promise<Record<string, LatLon[]>> {
+  if (!ids.length) return {};
+  const { data, error } = await supabase.from('drives').select('id,track').in('id', ids);
+  if (error) throw new Error(error.message);
+  const out: Record<string, LatLon[]> = {};
+  for (const d of (data ?? []) as { id: string; track: string | null }[]) {
+    if (!d.track) continue;
+    const p = decode(d.track);
+    if (p.length > 1) out[d.id] = p;
+  }
+  return out;
+}
