@@ -23,15 +23,13 @@ graphhopper:
     # die Landmarken sind dafür vorberechnet. Als Zusatz pro Anfrage dauerte eine Route mit 700 km 16 statt 2 Sekunden.
     - name: kurvig
       custom_model_files: [sportwagen.json, kurvig.json]
-    - name: sehr_kurvig
-      custom_model_files: [sportwagen.json, sehr_kurvig.json]
+    # Sehr kurvig gibt es seit 8.11. nicht mehr in der App; das Profil ist seit 12.11. aus dem Server (spart rund eine Stunde je Neuaufbau)
 
   # Landmarken beschleunigen flexible Anfragen (Rundtouren, Änderungen zur Laufzeit)
   profiles_lm:
     - profile: sportwagen
     - profile: auto
     - profile: kurvig
-    - profile: sehr_kurvig
   profiles_ch: []
 
   prepare.min_network_size: 200
