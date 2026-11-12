@@ -54,11 +54,11 @@ Reserve: ein dritter gleicher Server lässt sich ohne Änderung der Logik in die
 | Was | Wo | Wie |
 |---|---|---|
 | Code, Profile, Skripte, kuratierte Daten | GitHub | jede Änderung committet und gepusht |
-| Einstellungen, Skripte, POI Kacheln, Dienste der Server | jeweils der andere Server, /opt/backup/<name>/<Datum> | jede Nacht 2:10 Uhr, 14 Stände (backup.sh) |
-| Graph und Kartendaten | auf beiden Servern | aus OpenStreetMap jederzeit neu baubar (etwa eine Stunde) |
+| Einstellungen, Skripte, Dienste der Server | jeweils der andere Server, /opt/backup/<name>/<Datum> | jede Nacht 2:10 Uhr, 14 Stände (backup.sh) |
+| Graph, Kartendaten und POI Kacheln | auf beiden Servern | aus OpenStreetMap jederzeit neu baubar (etwa eine Stunde, Kacheln 20 Minuten) |
 | Konten, Touren, Nachrichten (Supabase) | Supabase | im Gratistarif KEINE Sicherung; Pro sichert täglich, 7 Tage |
 
-Offen: Supabase Pro vor echten Nutzern. Wiederherstellung einmal üben (Server aus der Sicherung neu aufsetzen).
+Erste Sicherung in beide Richtungen am 12.11. von Hand geprüft. Offen: Supabase Pro vor echten Nutzern. Wiederherstellung einmal üben (Server aus der Sicherung neu aufsetzen).
 
 ## 4. Verfügbarkeit und Ausfälle
 
@@ -120,9 +120,8 @@ Offen: Linien kodiert übertragen (points_encoded) spart etwa zwei Drittel der A
 
 ## 8. Sicherheit
 
-* Server 2: Anmeldung nur per Schlüssel, Firewall (22, 80, 443), fail2ban, automatische Sicherheitsupdates.
-* Server 1: Firewall und Updates aktiv; **Anmeldung per Passwort ist noch erlaubt und fail2ban läuft nicht.** Umstellung wartet auf Korays OK (betrieb.sh mit LOCK_SSH=1).
-* Schlüssel: Koray (eigener), Claude (claude-cumo-drive), Server 1 nach Server 2 für Kopie und Sicherung. Für die Sicherung von Server 2 nach Server 1 fehlt der Schlüssel in der Gegenrichtung noch (wartet auf OK).
+* Beide Server: Anmeldung nur per Schlüssel (Passwort abgeschaltet), Firewall (22, 80, 443), fail2ban, automatische Sicherheitsupdates. Server 1 seit 12.11. 10:03 Uhr mit Korays OK umgestellt.
+* Schlüssel: Koray (eigener), Claude (claude-cumo-drive), dazu je ein Schlüssel von Server zu Server für Kopie und Sicherung in beide Richtungen.
 * GraphHopper und Photon hören nur lokal, erreichbar nur über den Webserver.
 * Geheimnisse liegen nicht auf den Servern (kein Supabase Schlüssel, kein TomTom Schlüssel).
 
