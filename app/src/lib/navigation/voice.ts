@@ -30,9 +30,44 @@ export type VoiceGuide = {
 
 const ORDINAL = ['', 'erste', 'zweite', 'dritte', 'vierte', 'fünfte', 'sechste', 'siebte', 'achte'];
 
-function thresholds(speedKmh: number | null): Record<Stage, number> {
-  const fast = (speedKmh ?? 0) > 60;
-  return fast ? { weit: 1000, nah: 300, jetzt: 60 } : { weit: 400, nah: 100, jetzt: 30 };
+/**
+ * Abstände der drei Stufen nach dem Tempo statt nur zwei Bänder (Klassiker: bei 100 km/h kam die Ansage zu
+ * spät, im Ort zu früh). Gerechnet in Sekunden bis zum Manöver: weit etwa 30 s, nah etwa 11 s, jetzt etwa 3,5 s
+ * (so lange dauert der Satz), jeweils mit Unter und Obergrenze. 30 km/h: 400, 100, 30 m; 50 km/h: 417, 153,
+ * 49 m; 100 km/h: 833, 306, 97 m; 130 km/h: 1083, 397, 120 m.
+ */
+export function thresholds(speedKmh: number | null): Record<Stage, number> {
+  const v = Math.max(0, speedKmh ?? 0) / 3.6;
+  const clamp = (x: number, lo: number, hi: number) => Math.round(Math.max(lo, Math.min(hi, x)));
+  return { weit: clamp(v * 30, 400, 1500), nah: clamp(v * 11, 100, 500), jetzt: clamp(v * 3.5, 30, 120) };
+}
+
+/** Abstand zum folgenden Manöver, ab dem es gleich mit angesagt wird */
+const THEN_SOON_M = 120;
+const THEN_M = 350;
+
+/** Folgemanöver kurz danach: "Dann sofort links abbiegen." (Klassiker: das zweite Manöver kam zu spät) */
+export function thenPhrase(m: Maneuver, after: Maneuver | undefined): string {
+  if (!after || after.kind === 'start' || after.kind === 'zwischenziel') return '';
+  const gap = (after.km - m.km) * 1000;
+  if (gap > THEN_M) return '';
+  if (after.kind.startsWith('ziel')) return ' Dann bist du am Ziel.';
+  const short = nowPhrase(after).replace(/^Jetzt /, '');
+  return ` ${gap <= THEN_SOON_M ? 'Dann sofort' : 'Danach'} ${short}`;
+}
+
+/** Spur Hinweis aus den Kartendaten: links, rechts oder in der Mitte einordnen */
+export function lanePhrase(m: Maneuver): string {
+  const l = m.lanes;
+  if (!l || l.length < 2) return '';
+  const use = l.map((x) => x.use);
+  const first = use.indexOf(true);
+  const last = use.lastIndexOf(true);
+  if (first < 0) return '';
+  if (first === 0 && last < l.length - 1) return last === 0 ? ' Benutze die linke Spur.' : ' Bitte links einordnen.';
+  if (last === l.length - 1 && first > 0) return first === l.length - 1 ? ' Benutze die rechte Spur.' : ' Bitte rechts einordnen.';
+  if (first > 0 && last < l.length - 1) return ' Benutze die mittlere Spur.';
+  return '';
 }
 
 /** "300 Metern", "1 Kilometer", "1,5 Kilometern" */
@@ -133,17 +168,25 @@ export function createVoiceGuide(speak: (text: string) => void = defaultSpeak, s
       else if (distToNextM <= th.nah) stage = 'nah';
       else if (distToNextM <= th.weit) stage = 'weit';
       if (!stage) return;
-      const key = `${next}:${stage}`;
+      // Schlüssel nach der Lage des Manövers, nicht nach seiner Nummer: ergänzte Manöver (Gabelungen) verschieben
+      // die Nummern, sonst käme eine Ansage doppelt
+      const id = `${m.km.toFixed(3)}|${m.kind}`;
+      const key = `${id}:${stage}`;
       if (done.has(key)) return;
       // übersprungene größere Stufen gelten als erledigt
       done.add(key);
-      if (stage !== 'weit') done.add(`${next}:weit`);
-      if (stage === 'jetzt') done.add(`${next}:nah`);
+      if (stage !== 'weit') done.add(`${id}:weit`);
+      if (stage === 'jetzt') done.add(`${id}:nah`);
       // Ankunft sagt die Navigation selbst an, sobald der Status wechselt
       if (m.kind.startsWith('ziel') && stage === 'jetzt') return;
       // Bei sehr kurzem Abstand zur Vorankündigung lohnt "weit" nicht
       if (stage === 'weit' && distToNextM < th.nah * 1.5) return;
-      say(stage === 'jetzt' ? nowPhrase(m) : aheadPhrase(m, distToNextM), stage === 'jetzt');
+      const after = route.maneuvers[next + 1];
+      const text =
+        stage === 'jetzt'
+          ? nowPhrase(m) + thenPhrase(m, after)
+          : aheadPhrase(m, distToNextM) + (stage === 'nah' ? lanePhrase(m) : '') + thenPhrase(m, after);
+      say(text, stage === 'jetzt');
     },
     say,
     setEnabled(on) {

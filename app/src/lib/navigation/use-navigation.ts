@@ -14,6 +14,8 @@ import { replanFromHere } from './replan';
 import { fetchNavRouteDetail, rejoinNavRoute } from './route';
 import { pointAtKm, progress, snapToRoute } from './tracker';
 import type { NavControls, NavRequest, NavRoute, NavState, SkipUndo } from './types';
+import { edgesAlong, exitWord, forksIn, roundaboutByDirection, roundaboutExits, slice, withForks } from './junctions';
+import { roundaboutTurn } from './roundabout';
 import { townAfter, wantsToward, withToward } from './toward';
 import { createVoiceGuide, type VoiceGuide } from './voice';
 
@@ -47,7 +49,24 @@ const INITIAL: NavState = {
 /** Sprachansagen an oder aus, über Fahrten hinweg gemerkt (Testfahrer 8.11.: war bei jeder Fahrt wieder an) */
 const VOICE_KEY = 'cumo.drive.stimme.v1';
 
-type Fix = { pos: LatLon; heading: number | null; speedKmh: number | null; at: number };
+/** virtual: im Tunnel fortgeschrieben, kein GPS; accuracy: Genauigkeit des GPS in Metern */
+type Fix = { pos: LatLon; heading: number | null; speedKmh: number | null; at: number; accuracy?: number | null; virtual?: boolean };
+
+/**
+ * Tunnel (Navigationsklassiker): ohne GPS stand das Auto still oder sprang danach. Kommt länger als 2,5 s keine
+ * brauchbare Position, fährt die Anzeige mit dem letzten Tempo auf der Route weiter, höchstens 3 Minuten und
+ * 5 km, nur wenn man vorher auf der Route und schneller als 20 km/h war.
+ */
+const DR_AFTER_MS = 2500;
+const DR_MAX_MS = 180000;
+const DR_MAX_KM = 5;
+const DR_MIN_KMH = 20;
+/** Positionen ungenauer als das gelten im Tunnel als unbrauchbar */
+const DR_BAD_ACCURACY_M = 80;
+/** Parallel zur Route und nah dran (Brücke, Nebenstraße, GPS Versatz): erst nach dieser Zeit abweichend */
+const PARALLEL_MS = 16000;
+const PARALLEL_M = 130;
+const PARALLEL_DEG = 25;
 
 /** Fehler in einen freundlichen deutschen Satz übersetzen. */
 function friendly(e: unknown): string {
@@ -84,6 +103,13 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const keepAwakeRef = useRef(false);
   /** Pause: Positionen werden nicht verarbeitet, keine Ansagen, die Simulation steht */
   const pausedRef = useRef(false);
+  /** Tunnel: letzte echte Position auf der Route und ob gerade fortgeschrieben wird */
+  const drRef = useRef<{
+    last: { at: number; km: number; speedKmh: number | null; offM: number } | null;
+    lastGood: number;
+    active: boolean;
+    timer: ReturnType<typeof setInterval> | null;
+  }>({ last: null, lastGood: 0, active: false, timer: null });
   /** letzte Position (GPS oder Simulation), für Überspringen */
   const posRef = useRef<{ p: LatLon; h: number | null } | null>(null);
   /** Wie oft hintereinander die Rückführung auf die Tour ignoriert wurde */
@@ -136,6 +162,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     subRef.current?.remove();
     subRef.current = null;
     stopSim();
+    if (drRef.current.timer) clearInterval(drRef.current.timer);
+    drRef.current = { last: null, lastGood: 0, active: false, timer: null };
     abortRef.current?.abort();
     abortRef.current = null;
     keepAwake(false);
@@ -160,25 +188,80 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
    * nächsten drei Manöver: so steht der Ort, bevor die erste Ansage kommt, und es gibt kaum Abfragen.
    */
   const towardTried = useRef(new Set<string>());
-  const enrichAhead = useCallback((route: NavRoute, next: number) => {
-    for (let i = next; i < Math.min(route.maneuvers.length, next + 3); i++) {
-      const m = route.maneuvers[i];
-      const key = `${m.km.toFixed(2)}|${m.text}`;
-      if (!wantsToward(m) || towardTried.current.has(key)) continue;
-      towardTried.current.add(key);
-      void townAfter(route, m)
-        .then((town) => {
-          const cur = routeRef.current;
-          // dieselbe Route (eine Ergänzung davor ersetzt nur das Objekt, nicht die Linie)
-          if (!town || !activeRef.current || !cur || cur.shape !== route.shape) return;
-          const maneuvers = cur.maneuvers.map((x) => (x.index === m.index && x.text === m.text ? withToward(x, town) : x));
-          const updated = { ...cur, maneuvers };
-          routeRef.current = updated;
-          setState((s) => (s.route === cur ? { ...s, route: updated } : s));
-        })
-        .catch(() => undefined);
-    }
+  /** Route ersetzen, ohne Fortschritt und Ansagen zurückzusetzen (Ergänzungen im Hintergrund) */
+  const patchRoute = useCallback((base: NavRoute, change: (cur: NavRoute) => NavRoute | null) => {
+    const cur = routeRef.current;
+    // dieselbe Route (eine Ergänzung davor ersetzt nur das Objekt, nicht die Linie)
+    if (!activeRef.current || !cur || cur.shape !== base.shape) return;
+    const updated = change(cur);
+    if (!updated) return;
+    routeRef.current = updated;
+    setState((s) => (s.route === cur ? { ...s, route: updated } : s));
   }, []);
+
+  const enrichAhead = useCallback(
+    (route: NavRoute, next: number) => {
+      for (let i = next; i < Math.min(route.maneuvers.length, next + 3); i++) {
+        const m = route.maneuvers[i];
+        const key = `${m.km.toFixed(2)}|${m.text}`;
+        if (towardTried.current.has(key)) continue;
+        const round = m.kind === 'kreisverkehr' && m.exit != null;
+        if (!round && !wantsToward(m)) continue;
+        towardTried.current.add(key);
+        void (async () => {
+          let out = m;
+          // Kreisverkehr: zählt Valhalla eine Zufahrt oder einen Wirtschaftsweg mit, gilt die Richtung statt der Zahl
+          if (round) {
+            const s = slice(route, m.km - 0.08, m.km + 0.5, 0);
+            const ex = s.points.length >= 2 ? roundaboutExits((await edgesAlong(s.points)).edges) : null;
+            const word = exitWord(roundaboutTurn(route, i));
+            if (ex && word && (ex.all !== ex.real || ex.all !== m.exit)) out = roundaboutByDirection(m, word);
+          }
+          if (wantsToward(out)) {
+            const town = await townAfter(route, out).catch(() => null);
+            if (town) out = withToward(out, town);
+          }
+          if (out === m) return;
+          patchRoute(route, (cur) => ({ ...cur, maneuvers: cur.maneuvers.map((x) => (x.index === m.index && x.text === m.text ? out : x)) }));
+        })().catch(() => undefined);
+      }
+    },
+    [patchRoute],
+  );
+
+  /**
+   * Gabelungen ohne Hinweis (Klassiker: die Straße teilt sich, die App schweigt): die nächsten 6 km der Route
+   * ansehen, sobald man auf 3 km an das Ende des geprüften Stücks herankommt.
+   */
+  const forkScan = useRef<{ shape: LatLon[] | null; toKm: number; busy: boolean }>({ shape: null, toKm: 0, busy: false });
+  const scanForks = useCallback(
+    (route: NavRoute, atKm: number) => {
+      const f = forkScan.current;
+      if (f.shape !== route.shape) {
+        f.shape = route.shape;
+        f.toKm = 0;
+        f.busy = false;
+      }
+      if (f.busy || f.toKm >= route.km || f.toKm - atKm > 3) return;
+      const from = Math.max(atKm, f.toKm);
+      const to = Math.min(route.km, from + 6);
+      f.busy = true;
+      const shape = route.shape;
+      const s = slice(route, from, to + 0.05, 25);
+      void edgesAlong(s.points)
+        .then(({ edges, shape: sh }) => {
+          const forks = forksIn(edges, sh);
+          if (forks.length) patchRoute(route, (cur) => withForks(cur, forks, s.from, s.to));
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          if (forkScan.current.shape !== shape) return;
+          forkScan.current.toKm = to;
+          forkScan.current.busy = false;
+        });
+    },
+    [patchRoute],
+  );
 
   /** Neue Route nach einer Abweichung holen, höchstens alle 20 s. */
   const reroute = useCallback(
@@ -227,9 +310,21 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     (fix: Fix) => {
       const route = routeRef.current;
       if (!activeRef.current || !route || arrivedRef.current) return;
+      // Im Tunnel liefert das GPS oft noch Positionen, aber weit daneben: dann weiter fortschreiben
+      const bad = !fix.virtual && (fix.accuracy ?? 0) > DR_BAD_ACCURACY_M;
+      if (bad && drRef.current.active) return;
+      if (!fix.virtual && !bad) drRef.current.lastGood = fix.at;
       posRef.current = { p: fix.pos, h: fix.heading };
+      // So weit kann man seit der letzten Position höchstens gekommen sein (Serpentinen, Kehren übereinander)
+      const last = drRef.current.last;
+      const dtS = last ? Math.max(0, (fix.at - last.at) / 1000) : 0;
+      const maxAheadM = last && dtS > 0 && dtS < 30 ? Math.max(fix.speedKmh ?? 0, last.speedKmh ?? 0, 30) / 3.6 * dtS * 1.6 + 60 : undefined;
       // Fahrtrichtung nur bei Fahrt, im Stand ist der GPS Kurs Zufall
-      const snap = snapToRoute(route, fix.pos, hintRef.current, (fix.speedKmh ?? 0) >= 12 ? fix.heading : null);
+      const snap = snapToRoute(route, fix.pos, hintRef.current, (fix.speedKmh ?? 0) >= 12 ? fix.heading : null, maxAheadM);
+      if (!fix.virtual) {
+        drRef.current.last = { at: fix.at, km: snap.km, speedKmh: fix.speedKmh, offM: snap.offM };
+        if (!bad) drRef.current.active = false;
+      }
       hintRef.current = snap.index;
       if (snap.offM <= OFF_ROUTE_M) doneIndexRef.current = Math.max(doneIndexRef.current, snap.index);
       // Nach einer Rückführung wieder 1 km auf der Route: die Abweichung war ein Versehen, Zählung von vorn
@@ -245,7 +340,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       // Pausen und Umwege verfälschen es nicht; ältere Kilometer verlieren an Gewicht (etwa 20 km Halbwertszeit),
       // so passt sich die Ankunft laufend an Autobahn, Pässe oder Kolonne an.
       const p = paceRef.current;
-      if (p && snap.offM <= OFF_ROUTE_M) {
+      if (p && !fix.virtual && snap.offM <= OFF_ROUTE_M) {
         const dkm = snap.km - p.km;
         const dt = fix.at - p.at;
         if (dkm > 0 && dkm < 1 && dt > 0 && dt < 30000 && (fix.speedKmh ?? 0) > 3) {
@@ -269,14 +364,21 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         keepAwake(false);
       } else {
         enrichAhead(route, pr.next);
+        scanForks(route, snap.km);
         voice().update(route, pr.next, pr.distToNextM, fix.speedKmh);
       }
 
-      // Abweichung erkennen
+      // Abweichung erkennen: ungenaue Positionen zählen mit ihrer Ungenauigkeit, fortgeschriebene gar nicht.
+      // Läuft man parallel zur Route und nah dran (Brücke über Unterführung, Nebenstraße neben der Bundesstraße,
+      // GPS Versatz in der Stadt), wartet die App doppelt so lange, bevor sie neu plant.
       const now = fix.at;
-      if (!arrived && snap.offM > OFF_ROUTE_M) {
+      const offLimit = Math.max(OFF_ROUTE_M, (fix.accuracy ?? 0) * 1.5);
+      const along = pointAtKm(route, snap.km).heading;
+      const parallel =
+        fix.heading != null && (fix.speedKmh ?? 0) >= 12 && snap.offM < PARALLEL_M && Math.abs((((fix.heading - along) % 360) + 540) % 360 - 180) < PARALLEL_DEG;
+      if (!arrived && !fix.virtual && snap.offM > offLimit) {
         if (offSinceRef.current == null) offSinceRef.current = now;
-        if (now - offSinceRef.current > OFF_ROUTE_MS && Date.now() - lastRerouteRef.current > REROUTE_GAP_MS) {
+        if (now - offSinceRef.current > (parallel ? PARALLEL_MS : OFF_ROUTE_MS) && Date.now() - lastRerouteRef.current > REROUTE_GAP_MS) {
           void reroute(fix.pos, fix.heading);
         }
       } else {
@@ -306,7 +408,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         ignored: ignoredRef.current,
       }));
     },
-    [enrichAhead, keepAwake, reroute, stopSim, voice],
+    [enrichAhead, keepAwake, reroute, scanForks, stopSim, voice],
   );
 
   const start = useCallback(async () => {
@@ -359,12 +461,13 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 10 },
         (loc) => {
           if (simRef.current || pausedRef.current) return; // Simulation hat Vorrang, Pause hält an
-          const { latitude, longitude, heading, speed } = loc.coords;
+          const { latitude, longitude, heading, speed, accuracy } = loc.coords;
           onFix({
             pos: [latitude, longitude],
             heading: heading != null && heading >= 0 ? heading : null,
             speedKmh: speed != null && speed >= 0 ? speed * 3.6 : null,
             at: loc.timestamp || Date.now(),
+            accuracy,
           });
         },
         (reason) => {
@@ -374,6 +477,26 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       if (!activeRef.current) {
         subRef.current?.remove();
         subRef.current = null;
+      } else {
+        // Tunnel: jede Sekunde prüfen, ob eine brauchbare Position fehlt, und dann auf der Route weiterfahren
+        if (drRef.current.timer) clearInterval(drRef.current.timer);
+        drRef.current.timer = setInterval(() => {
+          const d = drRef.current;
+          const r = routeRef.current;
+          const last = d.last;
+          if (!r || !last || simRef.current || pausedRef.current || arrivedRef.current || !activeRef.current) return;
+          const now = Date.now();
+          const since = now - Math.max(d.lastGood, last.at);
+          if (since < DR_AFTER_MS || since > DR_MAX_MS) {
+            d.active = false;
+            return;
+          }
+          if ((last.speedKmh ?? 0) < DR_MIN_KMH || last.offM > OFF_ROUTE_M) return;
+          const km = Math.min(r.km, last.km + Math.min(DR_MAX_KM, ((last.speedKmh ?? 0) / 3.6) * (now - last.at) / 1000 / 1000));
+          const p = pointAtKm(r, km);
+          d.active = true;
+          onFix({ pos: p.point, heading: p.heading, speedKmh: last.speedKmh, at: now, virtual: true });
+        }, 1000);
       }
     } catch (e) {
       if (isAbort(e)) return;

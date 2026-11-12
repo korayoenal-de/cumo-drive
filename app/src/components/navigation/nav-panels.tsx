@@ -10,7 +10,7 @@ import { haptic } from '@/lib/haptics';
 import { softEnter } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Shadow, Spacing, Type, Size } from '@/constants/theme';
-import type { Maneuver } from '@/lib/navigation/types';
+import type { Lane, Maneuver } from '@/lib/navigation/types';
 
 import { formatClock, formatDistance, formatRemaining } from './format';
 import { ManeuverIcon, MicIcon, SpeakerIcon } from './maneuver-icon';
@@ -48,6 +48,7 @@ export function ManeuverCard({ maneuver, distM, then, soon = false, footer, turn
           ) : null}
         </View>
       </View>
+      {maneuver.lanes && distM != null && distM < LANES_SHOW_M ? <LaneRow lanes={maneuver.lanes} /> : null}
       {then && (
         <View style={styles.then}>
           <AppText variant="caption" muted>Dann</AppText>
@@ -57,6 +58,42 @@ export function ManeuverCard({ maneuver, distM, then, soon = false, footer, turn
       )}
       {footer}
     </GlassPanel>
+  );
+}
+
+/** Spuren zeigen, sobald das Manöver näher als so viele Meter ist */
+const LANES_SHOW_M = 1500;
+
+/** Symbol je Spur: die empfohlene Richtung, sonst die erste der Spur */
+function laneSymbol(dirs: number): SFSymbol {
+  if (dirs & 256) return 'arrow.uturn.left';
+  if (dirs & 4) return 'arrow.turn.left.down';
+  if (dirs & 8) return 'arrow.turn.up.left';
+  if (dirs & 16) return 'arrow.up.left';
+  if (dirs & 2) return 'arrow.up';
+  if (dirs & 32) return 'arrow.up.right';
+  if (dirs & 64) return 'arrow.turn.up.right';
+  if (dirs & 128) return 'arrow.turn.right.down';
+  return 'arrow.up';
+}
+
+/**
+ * Spurempfehlung (Navigationsklassiker, Koray 12.11.): Pfeile von links nach rechts, die richtigen Spuren hell,
+ * mögliche gedämpft, die anderen kaum sichtbar. Aus den Kartendaten, nur wenn nicht alle Spuren passen.
+ */
+export function LaneRow({ lanes }: { lanes: Lane[] }) {
+  const use = lanes.map((l, i) => (l.use ? i + 1 : 0)).filter(Boolean);
+  return (
+    <View
+      style={styles.lanes}
+      accessible
+      accessibilityLabel={`Spur ${use.join(' und ')} von ${lanes.length}, von links gezählt`}>
+      {lanes.map((l, i) => (
+        <View key={i} style={[styles.lane, l.use && styles.laneUse]}>
+          <SymbolView name={laneSymbol(l.dirs)} size={20} weight="bold" tintColor={l.use ? Colors.text : l.ok ? Colors.muted : Colors.line} />
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -324,6 +361,9 @@ const styles = StyleSheet.create({
   instruction: { fontFamily: Fonts.bold, fontSize: Type.button, lineHeight: 23 },
   street: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, marginTop: 2 },
   then: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingTop: Spacing.m },
+  lanes: { flexDirection: 'row', alignSelf: 'flex-start', gap: 4, paddingTop: Spacing.m },
+  lane: { width: 36, height: 36, borderRadius: Radius.s, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.04)' },
+  laneUse: { backgroundColor: 'rgba(255,255,255,0.14)' },
 
   info: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
 

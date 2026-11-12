@@ -78,7 +78,14 @@ function segBearing(a: LatLon, b: LatLon): number {
 
 type Scored = Snap & { score: number };
 
-function searchRange(route: NavRoute, p: LatLon, from: number, to: number, refKm?: number, heading?: number | null): Scored | null {
+/**
+ * Weiter voraus, als man seit der letzten Position gefahren sein kann, kostet zusätzlich 0,6 m je Meter
+ * (Serpentinen: die nächste Kehre liegt oft nur 50 m Luftlinie entfernt, aber 400 m weiter auf der Straße).
+ */
+const IMPLAUSIBLE_COST = 0.6;
+const IMPLAUSIBLE_CAP_M = 250;
+
+function searchRange(route: NavRoute, p: LatLon, from: number, to: number, refKm?: number, heading?: number | null, maxAheadM?: number): Scored | null {
   const { shape, cumKm } = route;
   let best: Scored | null = null;
   let bestScore = Infinity;
@@ -89,6 +96,7 @@ function searchRange(route: NavRoute, p: LatLon, from: number, to: number, refKm
     if (refKm != null) {
       const d = (km - refKm) * 1000;
       score += d < 0 ? Math.min(BACK_CAP_M, BACK_COST * Math.max(0, -d - BACK_FREE_M)) : Math.min(AHEAD_CAP_M, AHEAD_COST * Math.max(0, d - AHEAD_FREE_M));
+      if (maxAheadM != null && d > maxAheadM) score += Math.min(IMPLAUSIBLE_CAP_M, IMPLAUSIBLE_COST * (d - maxAheadM));
     }
     if (heading != null && pr.dist < bestScore) {
       const diff = Math.abs(((segBearing(shape[i], shape[i + 1]) - heading + 540) % 360) - 180);
@@ -121,7 +129,11 @@ export function indexAtKm(route: NavRoute, km: number): number {
  * richtige Durchgang gewählt wird. Nur wenn dort nichts Nahes liegt, wird die ganze Route
  * durchsucht. Ohne Hinweis (hintIndex kleiner 0) wird immer die ganze Route durchsucht.
  */
-export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, heading?: number | null): Snap {
+/**
+ * maxAheadM: so weit kann man seit der letzten Position höchstens gekommen sein (Tempo mal Zeit plus Reserve).
+ * Ohne Angabe gilt nur die allgemeine Vorliebe für den bisherigen Fortschritt.
+ */
+export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, heading?: number | null, maxAheadM?: number): Snap {
   const n = route.shape.length;
   if (n === 0) return { index: 0, km: 0, offM: Infinity, point: pos };
   if (n === 1) return { index: 0, km: 0, offM: haversine(route.shape[0], pos), point: route.shape[0] };
@@ -130,7 +142,7 @@ export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, hea
     const h = Math.min(hintIndex, n - 1);
     const from = indexAtKm(route, route.cumKm[h] - WINDOW_BACK_KM);
     const to = indexAtKm(route, route.cumKm[h] + WINDOW_AHEAD_KM) + 1;
-    const local = searchRange(route, pos, Math.max(0, from - 1), to, route.cumKm[h], heading);
+    const local = searchRange(route, pos, Math.max(0, from - 1), to, route.cumKm[h], heading, maxAheadM);
     // Bewertet wird mit Abstand plus Kosten für Richtung und Rücksprung, nicht nur mit dem Abstand:
     // sonst gewinnt auf Hin und Rückweg derselben Straße der falsche Durchgang.
     if (local && local.score <= LOCAL_OK_M) return strip(local);

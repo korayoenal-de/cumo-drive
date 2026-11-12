@@ -37,6 +37,12 @@ export type ManeuverKind =
   | 'ziel_links'
   | 'ziel_rechts';
 
+/**
+ * Eine Spur: dirs als Bitmaske wie bei Valhalla (2 geradeaus, 4 scharf links, 8 links, 16 leicht links,
+ * 32 leicht rechts, 64 rechts, 128 scharf rechts, 256 wenden), use: diese Spur nehmen, ok: geht auch
+ */
+export type Lane = { dirs: number; use: boolean; ok: boolean };
+
 export type Maneuver = {
   kind: ManeuverKind;
   /** Anweisung zum Lesen, zum Beispiel "Links abbiegen auf L 3120" */
@@ -47,6 +53,8 @@ export type Maneuver = {
   street?: string;
   /** Ort, in dessen Richtung es nach dem Manöver geht (von der App ergänzt, wo der Wegweiser fehlt) */
   toward?: string;
+  /** Spuren an dieser Stelle von links nach rechts (nur wenn nicht alle passen), aus den Kartendaten */
+  lanes?: Lane[];
   /** Ausfahrt im Kreisverkehr, falls bekannt */
   exit?: number;
   /** Index im Shape der NavRoute, an dem das Manöver liegt */

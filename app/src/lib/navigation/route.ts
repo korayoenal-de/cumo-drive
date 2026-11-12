@@ -29,7 +29,7 @@ import { closureExclude, closuresNear, closuresOnRoute } from '../road-closures'
 import { flatten, haversine, type LatLon, type Tour } from '../tour';
 import { cumoAvailable, cumoPlan } from '../cumo-routing';
 import { VALHALLA_URL, costingFor, decodePolyline6 } from '../valhalla';
-import type { Maneuver, ManeuverKind, NavRequest, NavRoute } from './types';
+import type { Lane, Maneuver, ManeuverKind, NavRequest, NavRoute } from './types';
 
 /** Mindestabstand der Punkte nach dem Ausdünnen in Metern */
 const THIN_M = 40;
@@ -53,6 +53,8 @@ type VManeuver = {
   street_names?: string[];
   begin_street_names?: string[];
   roundabout_exit_count?: number;
+  /** Spuren von links nach rechts: directions Bitmaske, active empfohlen, valid möglich */
+  lanes?: { directions: number; active?: number; valid?: number }[];
   begin_shape_index: number;
   end_shape_index: number;
   length: number;
@@ -510,12 +512,35 @@ function cleanStreet(m: VManeuver): string | undefined {
   return names?.length ? names.join(', ') : undefined;
 }
 
+/**
+ * Spuren nur, wenn sie etwas sagen: mindestens zwei, eine davon empfohlen, und nicht alle gleich gut.
+ * Valhalla meldet sie von links nach rechts.
+ */
+export function lanesOf(m: Pick<VManeuver, 'lanes'>): Lane[] | undefined {
+  const l = m.lanes;
+  if (!l || l.length < 2) return undefined;
+  const lanes = l.map((x) => ({ dirs: x.directions || 2, use: !!x.active, ok: !!x.active || !!x.valid }));
+  if (!lanes.some((x) => x.use) || lanes.every((x) => x.ok)) return undefined;
+  return lanes;
+}
+
+/**
+ * Nur der erste Satz der Ansage: Valhalla hängt bei kurz aufeinander folgenden Manövern selbst
+ * "Dann, in 200 Meter, ..." an. Das macht jetzt die Ansage selbst, einheitlich und mit dem richtigen Abstand.
+ */
+export function firstSentence(text: string): string {
+  const i = text.search(/\.\s+Dann\b/);
+  return i > 0 ? text.slice(0, i + 1) : text;
+}
+
 function toManeuver(m: VManeuver & { idx: number }, cumKm: number[]): Maneuver {
   const index = Math.min(Math.max(0, m.idx), cumKm.length - 1);
+  const lanes = lanesOf(m);
   return {
     kind: kindFor(m.type),
-    text: m.instruction,
-    speech: m.verbal_pre_transition_instruction || m.instruction,
+    text: firstSentence(m.instruction),
+    speech: firstSentence(m.verbal_pre_transition_instruction || m.instruction),
+    ...(lanes ? { lanes } : {}),
     ...(cleanStreet(m) ? { street: cleanStreet(m) } : {}),
     ...(m.type === 26 && m.roundabout_exit_count ? { exit: m.roundabout_exit_count } : {}),
     index,
