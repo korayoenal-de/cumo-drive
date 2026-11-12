@@ -27,7 +27,22 @@ export type SpeedZones = {
 const STEP_M = 25;
 const CHUNK_PTS = 1600;
 
-type Edge = { length?: number; speed_limit?: number | string; road_class?: string; use?: string; density?: number };
+type Edge = { length?: number; speed_limit?: number | string; road_class?: string; use?: string; density?: number; names?: string[] };
+
+/** Straßennummer statt Straßenname: B 47, L 3345, K 65, A 5, E 35, St 2068, SS 12, D 902 */
+const REF = /^\p{L}{1,3}\s?\d+\s?\p{L}?$/u;
+/** Trägt die Kante einen Straßennamen (Rohrheimer Straße)? Nur eine Nummer oder gar kein Name zählt nicht. */
+function hasStreetName(e: Edge): boolean {
+  return (e.names ?? []).some((n) => !REF.test(n.trim()));
+}
+/** Trägt die Kante nur eine Straßennummer? Das ist die freie Strecke zwischen zwei Orten. */
+function refOnly(e: Edge): boolean {
+  return !!e.names?.length && !hasStreetName(e);
+}
+/** Bis zu diesem Tempo gilt ein Schild als Ortstempo, das am Ortsausgang endet */
+const TOWN_MAX = 50;
+/** So weit darf ein Ortstempo ohne Straßennamen weitergelten (Kreisverkehr, kurze Lücke in den Daten) */
+const TOWN_CARRY_M = 150;
 
 const SMALL = new Set(['residential', 'service_other', 'service']);
 
@@ -36,19 +51,29 @@ function tagged(e: Edge): number | null {
   return typeof e.speed_limit === 'number' && e.speed_limit > 0 ? e.speed_limit : null;
 }
 
-type Lim = { v: number; known: boolean; cls: string };
+type Lim = { v: number; known: boolean; cls: string; /** Meter ohne Schild und ohne Straßennamen seit dem letzten Schild */ openM?: number };
 
-/** Limits je Kante; fehlende vom vorigen Schild derselben Straßenklasse übernehmen, sonst schätzen */
-function edgeLimits(edges: Edge[], carry: Lim | null): Lim[] {
+/**
+ * Limits je Kante; fehlende vom vorigen Schild derselben Straßenklasse übernehmen, sonst schätzen.
+ * Ein Ortstempo (bis 50) endet am Ortsausgang: Dort steht kein neues Schild in den Daten, die Straße verliert
+ * aber ihren Namen und trägt nur noch die Nummer. Nach TOWN_CARRY_M ohne Straßennamen gilt es nicht mehr
+ * (Koray 12.11.: L 3345 hinter Schwanheim zeigte bis zur K 65 noch 50, dort sind 80).
+ */
+export function edgeLimits(edges: Edge[], carry: Lim | null): Lim[] {
   let last = carry;
   return edges.map((e) => {
     const cls = e.road_class ?? '';
     const t = tagged(e);
-    if (t != null) return (last = { v: t, known: true, cls });
-    if (last && last.known && last.cls === cls) return { ...last };
+    if (t != null) return (last = { v: t, known: true, cls, openM: 0 });
+    if (last && last.known && last.cls === cls) {
+      if (last.v > TOWN_MAX) return { ...last };
+      const openM = hasStreetName(e) ? 0 : (last.openM ?? 0) + (e.length ?? 0) * 1000;
+      if (openM <= TOWN_CARRY_M) return (last = { ...last, openM });
+      last = null;
+    }
     if (SMALL.has(cls) || e.use === 'living_street') return { v: 50, known: false, cls };
     if (cls === 'motorway') return { v: 130, known: false, cls };
-    return { v: (e.density ?? 0) <= 1 ? 100 : 50, known: false, cls };
+    return { v: (e.density ?? 0) <= 1 || refOnly(e) ? 100 : 50, known: false, cls };
   });
 }
 
@@ -76,7 +101,7 @@ export async function loadSpeedZones(shape: LatLon[], onPart: (z: SpeedZones) =>
         shape: part.map(([lat, lon]) => ({ lat, lon })),
         costing: 'auto',
         shape_match: 'map_snap',
-        filters: { attributes: ['edge.length', 'edge.speed_limit', 'edge.road_class', 'edge.use', 'edge.density'], action: 'include' },
+        filters: { attributes: ['edge.length', 'edge.speed_limit', 'edge.road_class', 'edge.use', 'edge.density', 'edge.names'], action: 'include' },
       }),
       signal,
     });

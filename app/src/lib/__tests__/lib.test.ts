@@ -11,6 +11,7 @@ import { decodeTour, encodeTour, extractCode } from '../share-code';
 import { flatten, haversine, type LatLon, type Tour } from '../tour';
 import { findHighlights } from '../navigation/highlights';
 import { cumulativeKm, tourFromLine } from '../navigation/route';
+import { edgeLimits } from '../navigation/speed-zones';
 import { pointAtKm, snapToRoute } from '../navigation/tracker';
 import type { NavRoute } from '../navigation/types';
 import { PASSES, passesAlong } from '../passes';
@@ -243,5 +244,30 @@ describe('Kreisverkehr Richtung', () => {
     assert.ok(Math.abs(t) > 130, `Winkel ${t}`);
     assert.equal(symbolFor('kreisverkehr', 4, t), 'kreisverkehr_w_4');
     assert.equal(symbolFor('kreisverkehr', 2, 85), 'kreisverkehr_r_2');
+  });
+});
+
+describe('Tempolimit am Ortsausgang', () => {
+  // Kanten wie am 12.11. hinter Schwanheim: im Ort 50 mit Straßenname, danach L 3345 ohne Schild bis zur K 65
+  const town = { length: 0.041, speed_limit: 50, road_class: 'secondary', density: 2, names: ['Rohrheimer Straße', 'L 3345'] };
+  const open = (length: number) => ({ length, road_class: 'secondary', density: 2, names: ['L 3345'] });
+
+  it('50 aus dem Ort gilt auf der freien Strecke nicht weiter', () => {
+    const l = edgeLimits([town, open(0.008), open(0.1), open(0.106), open(0.13), open(0.27)], null);
+    assert.deepEqual(l.map((x) => x.known), [true, true, true, false, false, false]);
+    // geschätzt wird dort außerorts, damit die Kurvenwarnung arbeitet; angezeigt wird nichts
+    assert.deepEqual(l.slice(3).map((x) => x.v), [100, 100, 100]);
+  });
+
+  it('50 bleibt im Ort über eine Lücke mit Straßenname und über einen kurzen Kreisverkehr ohne Namen', () => {
+    const gap = { length: 0.4, road_class: 'secondary', density: 2, names: ['Rohrheimer Straße', 'L 3345'] };
+    const ring = { length: 0.03, road_class: 'secondary', density: 2 };
+    const l = edgeLimits([town, gap, ring, ring, gap], null);
+    assert.ok(l.every((x) => x.known && x.v === 50));
+  });
+
+  it('70 und mehr gelten bis zum nächsten Schild weiter', () => {
+    const l = edgeLimits([{ ...town, speed_limit: 70 }, open(0.5), open(0.5)], null);
+    assert.ok(l.every((x) => x.known && x.v === 70));
   });
 });

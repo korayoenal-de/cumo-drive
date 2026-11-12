@@ -39,6 +39,8 @@ const THIN_TURN = 35;
 const CHUNK = 1500;
 /** Überlappung zweier Stücke in Punkten */
 const OVERLAP = 40;
+/** Gewicht der Richtungswechsel beim zweiten Abgleich, wenn der erste eine Kehrtwende enthält (Valhalla trace_options) */
+const UTURN_RETRY_FACTOR = 100;
 /** Ab diesem Abstand zum Linienanfang gibt es ein Anfahrtsstück */
 const APPROACH_M = 150;
 /** Ab dieser Luftlinie zur Tour fährt die Anfahrt die schnellste Route statt des Tourprofils. */
@@ -293,6 +295,47 @@ function joinPieces(a: Piece, b: Piece): Piece {
   };
 }
 
+function isUturn(t: number) {
+  return t === 12 || t === 13;
+}
+function uturns(r: VTrip): number {
+  let n = 0;
+  for (const leg of r.trip.legs) for (const m of leg.maneuvers) if (isUturn(m.type)) n++;
+  return n;
+}
+function tripKm(r: VTrip): number {
+  return r.trip.summary.length;
+}
+function matchedTo(r: VTrip, count: number): number {
+  const locs = r.trip.locations ?? [];
+  return locs.length ? (locs[locs.length - 1].original_index ?? count - 1) : count - 1;
+}
+
+/**
+ * Der Abgleich erfindet an manchen Abzweigungen eine Kehrtwende: statt rechts abzubiegen fährt er ein paar
+ * Meter über die Kreuzung, wendet und biegt dann links ab (Koray 12.11., B 47 Bensheim auf Ampèrestraße:
+ * „Nach links eine Kehrtwende machen um auf B 47 zu bleiben“, die Tourlinie selbst bog einfach rechts ab).
+ * Enthält die Antwort eine Kehrtwende, wird deshalb einmal mit teureren Richtungswechseln abgeglichen. Das
+ * Ergebnis zählt nur, wenn es weniger Kehrtwenden hat, nicht länger ist und genauso weit reicht. Eine echte
+ * Wende der Tour (Stich hin und zurück) bleibt in beiden Antworten stehen.
+ */
+async function withoutInventedUturn(first: VTrip, shape: { lat: number; lon: number }[], count: number, req: NavRequest, signal?: AbortSignal): Promise<VTrip> {
+  const n = uturns(first);
+  if (!n) return first;
+  try {
+    const second = await post(
+      'trace_route',
+      { shape, ...costingFor('schnell', req.avoid), shape_match: 'map_snap', trace_options: { turn_penalty_factor: UTURN_RETRY_FACTOR }, directions_options: DIRECTIONS },
+      signal,
+    );
+    const better = uturns(second) < n && tripKm(second) <= tripKm(first) + 0.005 && matchedTo(second, count) >= matchedTo(first, count);
+    return better ? second : first;
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    return first;
+  }
+}
+
 /**
  * Ein Stück der Linie abgleichen. Valhalla hört an einer Stelle, die es nicht zuordnen kann (etwa eine
  * Wende auf einer Nebenfahrbahn), mit einem "via" auf und liefert nur den Teil davor. Dann geht es ab
@@ -307,10 +350,11 @@ async function traceChunk(points: LatLon[], req: NavRequest, signal?: AbortSigna
     // mit den Kosten der Planung (kein Schotter, Wirtschaftswege teuer): sonst legt der Abgleich die Tour
     // zwischen zwei Punkten gern über einen parallelen Feldweg (Testfahrt 8.11.). Führt die Tour selbst
     // über ein gesperrtes Stück, findet der Abgleich so keinen Weg: dann wie bisher ohne Kosten.
-    const r = await post('trace_route', { shape, ...costingFor('schnell', req.avoid), shape_match: 'map_snap', directions_options: DIRECTIONS }, signal).catch((e: unknown) => {
+    const first = await post('trace_route', { shape, ...costingFor('schnell', req.avoid), shape_match: 'map_snap', directions_options: DIRECTIONS }, signal).catch((e: unknown) => {
       if (signal?.aborted) throw e;
       return post('trace_route', { shape, costing: 'auto', shape_match: 'map_snap', directions_options: DIRECTIONS }, signal);
     });
+    const r = await withoutInventedUturn(first, shape, part.length, req, signal);
     const p = piece(r);
     acc = acc ? joinPieces(acc, p) : p;
     const locs = r.trip.locations ?? [];
