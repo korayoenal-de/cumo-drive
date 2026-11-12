@@ -121,6 +121,12 @@ export async function respondInvite(rideId: string, accept: boolean, vehicle?: s
   if (error) fail(error.message);
 }
 
+/** Absagen mit freiwilligem Grund (Koray 12.11.); der Veranstalter sieht ihn still in der Ausfahrt */
+export async function declineInvite(rideId: string, reason?: string | null) {
+  const { error } = await supabase.rpc('decline_invite', { ride: rideId, reason: reason?.trim() || null });
+  if (error) fail(error.message);
+}
+
 /** Status der Fahrt setzen (nur Ersteller): läuft beim Start, beendet am Ende. */
 export async function setRideStatus(rideId: string, status: 'laeuft' | 'beendet') {
   const { error } = await supabase.from('rides').update({ status }).eq('id', rideId);

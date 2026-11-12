@@ -19,6 +19,7 @@ import { deleteAccount, signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { refreshEntitlement, useEntitlement } from '@/lib/entitlement';
 import { clearLocalTours } from '@/lib/library';
 import { MAP_STYLES, useMapSettings } from '@/lib/map-settings';
+import { noticeSeen, useModeration } from '@/lib/moderation';
 import { useMyProfile } from '@/lib/profile';
 import { enablePush, pushStatus, type PushStatus } from '@/lib/push';
 import { showToast } from '@/lib/toast';
@@ -39,6 +40,8 @@ export default function Einstellungen() {
   const map = useMapSettings();
   const voice = useVoiceChoice();
   const ent = useEntitlement();
+  const moderation = useModeration(!!session);
+  const reloadModeration = moderation.reload;
 
   useEffect(() => {
     if (session) void syncVehicles();
@@ -46,6 +49,8 @@ export default function Einstellungen() {
   useFocusEffect(
     useCallback(() => {
       if (session) void refreshEntitlement();
+      if (session) reloadModeration();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session]),
   );
 
@@ -58,6 +63,22 @@ export default function Einstellungen() {
         Einstellungen
       </AppText>
       {session ? <ProfileCard userId={session.user.id} cars={list.length} /> : <Login />}
+      {/* Hinweise mit Begründung nach Entfernen oder Sperren (Koray 12.11.) */}
+      {moderation.notices.map((n) => (
+        <View key={n.id} style={styles.notice}>
+          <AppText style={styles.noticeTitle}>Hinweis von Cumo Drive</AppText>
+          <AppText style={styles.noticeText}>{n.body}</AppText>
+          <Pressable accessibilityRole="button" onPress={() => void noticeSeen(n.id).then(moderation.reload)} style={styles.noticeBtn}>
+            <AppText style={styles.noticeBtnText}>Verstanden</AppText>
+          </Pressable>
+        </View>
+      ))}
+
+      {moderation.mod?.admin && (
+        <Group label="Prüfung" hint="Gemeldete Inhalte ansehen, entfernen oder Konten sperren.">
+          <Row title="Prüfbereich" value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : 'Nichts offen'} onPress={() => router.push('/pruefung')} />
+        </Group>
+      )}
 
       <Group label="Fahrzeuge">
         <Row title="Garage" value={cars} onPress={() => router.push('/garage')} />
@@ -155,6 +176,7 @@ function CommunityGroup() {
       />
       {push !== 'nicht' && <SwitchRow title="Mitteilungen bei Nachrichten" value={push === 'an'} onChange={(v) => void togglePush(v)} />}
       <SwitchRow title="Garage im Profil zeigen" value={p?.showGarage ?? true} onChange={(v) => void save({ showGarage: v })} />
+      <Row title="Blockierte Drivers" onPress={() => router.push('/blockiert')} />
     </Group>
   );
 }
@@ -251,6 +273,11 @@ function Login() {
 }
 
 const styles = StyleSheet.create({
+  notice: { backgroundColor: Colors.signalTint, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.s },
+  noticeTitle: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.stopText },
+  noticeText: { fontFamily: Fonts.medium, fontSize: Type.body, lineHeight: 21, color: Colors.text },
+  noticeBtn: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
+  noticeBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   flex: { flex: 1, gap: 3 },
   grow: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },

@@ -11,6 +11,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/community/ride-bits';
+import { BlockSheet, ReportSheet } from '@/components/moderation/report-sheet';
+import { ActionSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { clock, shortDate } from '@/lib/ausfahrten';
@@ -29,6 +31,10 @@ export default function Unterhaltung() {
   const [sending, setSending] = useState(false);
   const [sendErr, setSendErr] = useState<string | null>(null);
   const scroll = useRef<ScrollViewInstance>(null);
+  // Melden und Blockieren (Koray 12.11.): Menü oben rechts, einzelne Nachricht lange drücken
+  const [menu, setMenu] = useState(false);
+  const [report, setReport] = useState<{ kind: 'direct_message' | 'profile'; ref: string } | null>(null);
+  const [block, setBlock] = useState(false);
 
   // Solange die Unterhaltung offen ist, keine Mitteilung für sie; beim ersten Öffnen nach der Erlaubnis fragen
   useFocusEffect(
@@ -79,6 +85,9 @@ export default function Unterhaltung() {
             <AppText variant="caption" muted numberOfLines={1}>{[partner.car, partner.homeName ? `Raum ${partner.homeName}` : null].filter(Boolean).join('  ·  ')}</AppText>
           ) : null}
         </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Mehr" hitSlop={4} onPress={() => setMenu(true)} style={styles.round}>
+          <SymbolView name="ellipsis" size={18} weight="semibold" tintColor={Colors.text} />
+        </Pressable>
       </View>
 
       <ScrollView
@@ -98,13 +107,20 @@ export default function Unterhaltung() {
           return (
             <View key={m.id} style={styles.gap}>
               {newDay && <AppText variant="caption" muted style={styles.center}>{shortDate(m.createdAt)}</AppText>}
-              <Animated.View entering={FadeInDown.duration(Motion.enter)} style={[styles.bubble, mine ? styles.mine : styles.other]}>
-                <AppText style={styles.body}>{m.body}</AppText>
-                <AppText style={styles.time}>
-                  {clock(m.createdAt)}
-                  {mine && m.readAt ? '  ·  gelesen' : ''}
-                </AppText>
-              </Animated.View>
+              <Pressable
+                disabled={mine}
+                delayLongPress={350}
+                onLongPress={() => setReport({ kind: 'direct_message', ref: String(m.id) })}
+                accessibilityHint={mine ? undefined : 'Lange drücken, um die Nachricht zu melden'}
+                style={mine ? styles.alignEnd : styles.alignStart}>
+                <Animated.View entering={FadeInDown.duration(Motion.enter)} style={[styles.bubble, mine ? styles.mine : styles.other]}>
+                  <AppText style={styles.body}>{m.body}</AppText>
+                  <AppText style={styles.time}>
+                    {clock(m.createdAt)}
+                    {mine && m.readAt ? '  ·  gelesen' : ''}
+                  </AppText>
+                </Animated.View>
+              </Pressable>
             </View>
           );
         })}
@@ -123,6 +139,25 @@ export default function Unterhaltung() {
           <AppText muted style={styles.flex}>{title} möchte gerade keine Nachrichten bekommen.</AppText>
         </View>
       )}
+      <ActionSheet
+        visible={menu}
+        title={title}
+        onClose={() => setMenu(false)}
+        items={[
+          { key: 'melden', icon: 'exclamationmark.bubble', label: `${title} melden`, hint: 'Einzelne Nachricht: lange drücken', onPress: () => { setMenu(false); setTimeout(() => setReport({ kind: 'profile', ref: id ?? '' }), SHEET_GONE_MS); } },
+          { key: 'blockieren', icon: 'hand.raised', label: `${title} blockieren`, danger: true, onPress: () => { setMenu(false); setTimeout(() => setBlock(true), SHEET_GONE_MS); } },
+        ]}
+      />
+      <ReportSheet visible={!!report} kind={report?.kind ?? 'profile'} refId={report?.ref ?? ''} userId={id} name={title} onClose={() => setReport(null)} />
+      {id ? (
+        <BlockSheet
+          visible={block}
+          userId={id}
+          name={title}
+          onClose={() => setBlock(false)}
+          onDone={() => (router.canGoBack() ? router.back() : router.navigate('/nachrichten'))}
+        />
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
@@ -136,7 +171,9 @@ const styles = StyleSheet.create({
   list: { padding: Spacing.l, gap: Spacing.s },
   gap: { gap: Spacing.s },
   center: { textAlign: 'center', marginVertical: Spacing.s },
-  bubble: { maxWidth: '82%', borderRadius: Radius.l, paddingHorizontal: Spacing.m, paddingVertical: Spacing.s, gap: 2 },
+  alignEnd: { alignSelf: 'flex-end', maxWidth: '82%' },
+  alignStart: { alignSelf: 'flex-start', maxWidth: '82%' },
+  bubble: { borderRadius: Radius.l, paddingHorizontal: Spacing.m, paddingVertical: Spacing.s, gap: 2 },
   other: { alignSelf: 'flex-start', backgroundColor: Colors.surface, borderBottomLeftRadius: 6 },
   mine: { alignSelf: 'flex-end', backgroundColor: Colors.signalTint, borderBottomRightRadius: 6 },
   body: { fontFamily: Fonts.medium, fontSize: Type.body, lineHeight: Leading.body },

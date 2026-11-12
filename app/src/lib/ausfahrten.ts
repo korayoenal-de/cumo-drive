@@ -115,6 +115,25 @@ export async function ausfahrtTour(id: string): Promise<{ tour: Tour & { minutes
   return unpackTour(data as Packed);
 }
 
+export type Absage = { userId: string; name: string; reason: string | null };
+
+/** Absagen für den Veranstalter, still ohne Zahl (Koray 12.11.) */
+export async function ausfahrtAbsagen(id: string): Promise<Absage[]> {
+  const { data, error } = await supabase.rpc('ride_declines', { ride: id });
+  if (error) return [];
+  return ((data ?? []) as { user_id: string; display_name: string | null; reason: string | null }[]).map((r) => ({ userId: r.user_id, name: r.display_name ?? 'Fahrer', reason: r.reason }));
+}
+
+/** „Heute“, „Morgen“, „in 3 Tagen“, „in 2 Wochen“ */
+export function relDay(d: Date, now = new Date()): string {
+  const day = (x: Date) => Math.floor(new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime() / 86400000);
+  const n = day(d) - day(now);
+  if (n <= 0) return 'Heute';
+  if (n === 1) return 'Morgen';
+  if (n < 14) return `in ${n} Tagen`;
+  return `in ${Math.round(n / 7)} Wochen`;
+}
+
 export async function ausfahrtTeilnehmer(id: string): Promise<Teilnehmer[]> {
   const { data, error } = await supabase.rpc('community_ride_members', { ride: id });
   if (error) fail(error.message);

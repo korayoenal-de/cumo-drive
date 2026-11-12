@@ -10,6 +10,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/community/ride-bits';
+import { ReportSheet } from '@/components/moderation/report-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ausfahrtTeilnehmer, clock, listAusfahrten, sendNachricht, shortDate, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
@@ -28,6 +29,8 @@ export default function AusfahrtChat() {
   const [sending, setSending] = useState(false);
   const [sendErr, setSendErr] = useState<string | null>(null);
   const scroll = useRef<ScrollViewInstance>(null);
+  // fremde Nachricht lange drücken: melden (Koray 12.11.)
+  const [report, setReport] = useState<{ ref: string; userId: string; name: string } | null>(null);
 
   // Solange der Chat offen ist, keine Mitteilung für ihn; beim ersten Öffnen nach der Erlaubnis fragen
   useFocusEffect(
@@ -108,11 +111,16 @@ export default function AusfahrtChat() {
           return (
             <Animated.View key={m.id} entering={FadeInDown.duration(Motion.enter)} style={[styles.msgRow, mine && styles.msgRowMine, !first && styles.msgFollow]}>
               {!mine && (first ? <Avatar name={name} size={32} /> : <View style={styles.avatarGap} />)}
-              <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
+              <Pressable
+                disabled={mine}
+                delayLongPress={350}
+                onLongPress={() => setReport({ ref: String(m.id), userId: m.userId, name })}
+                accessibilityHint={mine ? undefined : 'Lange drücken, um die Nachricht zu melden'}
+                style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
                 {!mine && first && <AppText style={styles.author}>{name}</AppText>}
                 <AppText style={styles.body}>{m.body}</AppText>
                 <AppText style={styles.time}>{clock(m.createdAt)}</AppText>
-              </View>
+              </Pressable>
             </Animated.View>
           );
         })}
@@ -135,6 +143,7 @@ export default function AusfahrtChat() {
           {sending ? <ActivityIndicator color={Colors.onSignal} /> : <SymbolView name="arrow.up" size={18} weight="bold" tintColor={Colors.onSignal} />}
         </Pressable>
       </View>
+      <ReportSheet visible={!!report} kind="ride_message" refId={report?.ref ?? ''} userId={report?.userId} name={report?.name} onClose={() => setReport(null)} />
     </KeyboardAvoidingView>
   );
 }

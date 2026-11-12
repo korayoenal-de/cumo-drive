@@ -13,17 +13,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar, DateBlock } from '@/components/community/ride-bits';
 import { RoutePreview } from '@/components/planner/route-preview';
+import { ReportSheet } from '@/components/moderation/report-sheet';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import {
   answerAnfrage, arrival, ausfahrtTeilnehmer, ausfahrtTour, cancelAusfahrt, clock, freeSeats, listAnfragen,
-  listAusfahrten, longDate, monthYear, requestAusfahrt, withdrawAusfahrt, type Anfrage, type Ausfahrt, type Teilnehmer,
+  listAusfahrten, longDate, monthYear, requestAusfahrt, withdrawAusfahrt, ausfahrtAbsagen, type Absage, type Anfrage, type Ausfahrt, type Teilnehmer,
 } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { myVehicleLabel, rideAlong, startAsLead } from '@/lib/group/start';
 import { useRide } from '@/lib/group/ride';
-import { inviteToRide, removeFromRide, respondInvite, rideOverview, setRideStatus, type RideMemberRow } from '@/lib/group/invites';
+import { declineInvite, inviteToRide, removeFromRide, respondInvite, rideOverview, setRideStatus, type RideMemberRow } from '@/lib/group/invites';
 import { findProfiles, type FoundProfile } from '@/lib/profile';
 import { formatKm, type Profile, type Tour } from '@/lib/tour';
 
@@ -45,6 +46,8 @@ export default function AusfahrtDetail() {
   const [asking, setAsking] = useState(false);
   const [msg, setMsg] = useState('');
   const [confirm, setConfirm] = useState(false);
+  const [report, setReport] = useState(false);
+  const [declines, setDeclines] = useState<Absage[]>([]);
   const [now, setNow] = useState(() => Date.now());
 
   const load = useCallback(async () => {
@@ -58,6 +61,7 @@ export default function AusfahrtDetail() {
       if (found.isOwner) {
         setRequests(await listAnfragen(id));
         setInvited((await rideOverview(id)).filter((m) => m.status === 'eingeladen'));
+        setDeclines(await ausfahrtAbsagen(id));
       }
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -288,6 +292,13 @@ export default function AusfahrtDetail() {
                 </Pressable>
               </Animated.View>
             ))}
+          {/* Absagen still, ohne Zahl (Koray 12.11.) */}
+          {a.isOwner && declines.length > 0 && (
+            <AppText variant="caption" muted>
+              {declines.length === 1 ? '1 abgesagt: ' : `${declines.length} abgesagt: `}
+              {declines.map((d) => (d.reason ? `${d.name} (${d.reason})` : d.name)).join(', ')}
+            </AppText>
+          )}
           {a.isOwner && free > 0 && !inviting && (
             <Pressable accessibilityRole="button" onPress={() => setInviting(true)} style={styles.inviteBtn}>
               <SymbolView name="person.badge.plus" size={18} weight="semibold" tintColor={Colors.text} />
@@ -368,7 +379,13 @@ export default function AusfahrtDetail() {
             )}
           </Pressable>
         )}
+        {!a.isOwner && (
+          <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={styles.textBtn}>
+            <AppText style={styles.textBtnText}>Ausfahrt melden</AppText>
+          </Pressable>
+        )}
       </ScrollView>
+      {!a.isOwner && <ReportSheet visible={report} kind="ausfahrt" refId={a.id} onClose={() => setReport(false)} />}
       {/* Rückfrage als Blatt wie überall (Prüfung 11.11.) */}
       <ConfirmSheet
         visible={confirm}
@@ -380,7 +397,7 @@ export default function AusfahrtDetail() {
             if (a.isOwner) {
               await cancelAusfahrt(a.id);
               back();
-            } else if (a.myStatus === 'eingeladen') await respondInvite(a.id, false);
+            } else if (a.myStatus === 'eingeladen') await declineInvite(a.id);
             else await withdrawAusfahrt(a.id);
           })
         }

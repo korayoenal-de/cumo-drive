@@ -11,7 +11,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type Event =
   | { type: 'dm'; id: number; actor?: string | null }
   | { type: 'ride_message'; id: number; actor?: string | null }
-  | { type: 'ride_member'; ride: string; user: string; status: string; old?: string | null; actor?: string | null };
+  | { type: 'ride_member'; ride: string; user: string; status: string; old?: string | null; actor?: string | null }
+  | { type: 'ride_start'; ride: string; actor?: string | null };
 
 type Note = { user: string; title: string; body: string; data: { url: string; chat?: string; type: string } };
 
@@ -51,6 +52,9 @@ async function directMessage(id: number): Promise<Note[]> {
   if (!m) return [];
   const { data: p } = await db.from('profiles').select('allow_messages').eq('id', m.recipient).maybeSingle();
   if (!p) return [];
+  // Blockiert: keine Mitteilung (Koray 12.11.)
+  const { count: blocked } = await db.from('blocks').select('blocker', { count: 'exact', head: true }).eq('blocker', m.recipient).eq('blocked', m.sender);
+  if (blocked) return [];
   if (!p.allow_messages) {
     // Wer keine Nachrichten möchte, bekommt trotzdem Antworten in Unterhaltungen, die er selbst begonnen hat
     const { count } = await db.from('direct_messages').select('id', { count: 'exact', head: true }).eq('sender', m.recipient).eq('recipient', m.sender);
@@ -77,7 +81,7 @@ async function rideMember(e: Extract<Event, { type: 'ride_member' }>): Promise<N
   if (!UUID.test(e.ride) || !UUID.test(e.user)) return [];
   const { data: r } = await db.from('rides').select('id,name,owner,public,status').eq('id', e.ride).maybeSingle();
   if (!r || r.status === 'beendet') return [];
-  const { data: m } = await db.from('ride_members').select('status').eq('ride_id', e.ride).eq('user_id', e.user).maybeSingle();
+  const { data: m } = await db.from('ride_members').select('status,message').eq('ride_id', e.ride).eq('user_id', e.user).maybeSingle();
   // Inzwischen wieder geändert: dann gilt die neuere Änderung mit ihrer eigenen Mitteilung
   if (!m || m.status !== e.status) return [];
   const ride = short(r.name, 60);
@@ -99,9 +103,23 @@ async function rideMember(e: Extract<Event, { type: 'ride_member' }>): Promise<N
     return [{ user: r.owner, title: 'Zusage', body: short(`${await nameOf(e.user)} fährt bei ${ride} mit.`), data }];
   }
   if (e.old === 'eingeladen' && e.status === 'abgesagt' && e.user !== r.owner) {
-    return [{ user: r.owner, title: 'Absage', body: short(`${await nameOf(e.user)} hat für ${ride} abgesagt.`), data }];
+    const why = (m.message as string | null)?.trim();
+    return [{ user: r.owner, title: 'Absage', body: short(`${await nameOf(e.user)} hat für ${ride} abgesagt${why ? `: ${why}` : ''}.`), data }];
   }
   return [];
+}
+
+/** Veranstalter hat die Gruppenfahrt gestartet: an alle, die zugesagt haben (Koray 12.11.) */
+async function rideStart(e: Extract<Event, { type: 'ride_start' }>): Promise<Note[]> {
+  if (!UUID.test(e.ride)) return [];
+  const { data: r } = await db.from('rides').select('id,name,owner,public,status').eq('id', e.ride).maybeSingle();
+  if (!r || r.status !== 'laeuft') return [];
+  const { data: members } = await db.from('ride_members').select('user_id').eq('ride_id', r.id).eq('status', 'zugesagt').limit(200);
+  const to = ((members ?? []) as { user_id: string }[]).map((x) => x.user_id).filter((u) => u !== r.owner);
+  if (!to.length) return [];
+  const lead = await nameOf(r.owner);
+  const data = { url: r.public ? `/ausfahrt/${r.id}` : '/', type: 'ride_start' };
+  return to.map((user) => ({ user, title: `${lead} hat die Gruppenfahrt gestartet`, body: short(`${r.name}: tippe, um mitzufahren. Funk und Live Karte sind an.`), data }));
 }
 
 async function notes(e: Event): Promise<Note[]> {
@@ -109,6 +127,7 @@ async function notes(e: Event): Promise<Note[]> {
   if (e.type === 'dm' && Number.isSafeInteger(e.id)) list = await directMessage(e.id);
   else if (e.type === 'ride_message' && Number.isSafeInteger(e.id)) list = await rideMessage(e.id);
   else if (e.type === 'ride_member') list = await rideMember(e);
+  else if (e.type === 'ride_start') list = await rideStart(e);
   // Wer etwas selbst ausgelöst hat, bekommt dazu keine Mitteilung
   return e.actor ? list.filter((n) => n.user !== e.actor) : list;
 }

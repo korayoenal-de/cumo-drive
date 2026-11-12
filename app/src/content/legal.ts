@@ -70,7 +70,7 @@ export const DATENSCHUTZ: LegalDoc = {
         'LiveKit (LiveKit Inc., USA, Server in Frankfurt am Main): überträgt den Funk in der Gruppenfahrt live zwischen den Teilnehmern, ohne Aufzeichnung. Übermittelt werden dein Anzeigename, eine Kennung und deine Stimme, solange du sprichst. Auftragsverarbeiter; Grundlage für eine Übermittlung in die USA sind Standardvertragsklauseln.',
         'Push Mitteilungen über Expo (650 Industries Inc., USA) und den Apple Push Dienst: Titel, kurzer Text und Gerätekennzeichen der Mitteilung.',
         'Im Web Planer zusätzlich: OpenFreeMap für die Karte und unpkg für die Kartenbibliothek. Die Landingpage lädt Schriften von Google Fonts (Google Ireland Limited); dabei wird deine IP-Adresse an Google übermittelt.',
-        'Andere Fahrer: in einer Gruppenfahrt Anzeigename, Fahrzeug, Live Position und im Funk deine Stimme, nur für die Dauer der Fahrt. In der Community deinen Anzeigenamen und die veröffentlichte Tour, unter Drivers (abschaltbar) Name, Ortsmitte, Über mich und auf Wunsch deinen Fuhrpark. Private Nachrichten sieht nur der Empfänger.',
+        'Andere Fahrer: in einer Gruppenfahrt Anzeigename, Fahrzeug, Live Position und im Funk deine Stimme, nur für die Dauer der Fahrt. In der Community deinen Anzeigenamen und die veröffentlichte Tour, unter Drivers (abschaltbar) Name, Ortsmitte, Über mich und auf Wunsch deinen Fuhrpark. Private Nachrichten sieht nur der Empfänger; meldet jemand eine Nachricht, sehen wir eine Kopie davon zur Prüfung.',
       ],
     },
     {
@@ -175,6 +175,16 @@ export const AGB: LegalDoc = {
         'Wenn du eine Tour in der Community veröffentlichst, erlaubst du uns unentgeltlich, sie in Cumo Drive anzuzeigen, anderen Nutzern bereitzustellen und zur Verbesserung der Routenplanung zu nutzen. Die Anzeige endet, wenn du die Tour zurückziehst oder löschst.',
         'Bewertungen und gefahrene Spuren werten wir zusammengefasst und ohne Bezug zu deiner Person aus, um Straßen zu bewerten. Die Auswertung wird Teil unserer Datenbank.',
         'Veröffentliche nur, was du darfst: keine fremden Inhalte ohne Rechte, keine beleidigenden oder rechtswidrigen Inhalte, keine Strecken, die zu verbotenem Verhalten auffordern. Wir dürfen solche Inhalte entfernen.',
+      ],
+    },
+    {
+      h: '7a. Nachrichten, Melden und Sperren',
+      list: [
+        'Nachrichten, Chats und der Funk sind für Fahrten und Austausch unter Fahrern gedacht. Verboten sind rechtswidrige Inhalte und Geschäfte aller Art (zum Beispiel mit Drogen, Waffen oder gestohlener Ware), Werbung und Spam, Betrug sowie Belästigung.',
+        'Jeden Inhalt und jedes Profil kannst du melden und andere Fahrer blockieren. Gemeldete Inhalte sehen wir uns an; dafür speichern wir zu jeder Meldung eine Kopie des gemeldeten Inhalts.',
+        'Verstößt ein Inhalt gegen diese Bedingungen oder gegen Gesetze, entfernen wir ihn oder sperren das Konto. Du bekommst dann in der App eine Mitteilung mit Begründung und kannst uns unter ' + KONTAKT + ' widersprechen.',
+        'Neue Konten können andere erst nach 24 Stunden anschreiben, außer man fährt gemeinsam. Neue Gespräche sind pro Tag begrenzt.',
+        'Behörden geben wir Daten nur auf förmliche Anfrage heraus. Bei Hinweisen auf eine Gefahr für Leben oder Sicherheit von Menschen informieren wir die zuständigen Behörden.',
       ],
     },
     {

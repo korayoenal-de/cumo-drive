@@ -4,15 +4,18 @@
  */
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Avatar } from '@/components/community/ride-bits';
+import { BlockSheet, ReportSheet } from '@/components/moderation/report-sheet';
 import { CarSprite, frameFor } from '@/components/map/car-sprite';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { monthYear } from '@/lib/ausfahrten';
 import { type Driver } from '@/lib/drivers';
+import { useIsBlocked } from '@/lib/moderation';
 
 /** Wagenfarbe des ersten Autos als Ring um den Kreis, sonst weiß */
 export const ringColor = (d: Driver) => d.garage?.find((g) => g.look)?.look?.color ?? Colors.text;
@@ -22,6 +25,11 @@ const write = (d: Driver) => router.push({ pathname: '/nachrichten/[id]', params
 export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: boolean; /** ungelesene Nachrichten von diesem Fahrer (Koray 10.11.) */ unread?: number; onPress?: () => void }) {
   const meta = [d.car, d.homeName ? `Raum ${d.homeName}` : null].filter(Boolean).join('  ·  ');
   const canWrite = !d.isMe && d.allowMessages;
+  const [report, setReport] = useState(false);
+  const [block, setBlock] = useState(false);
+  // blockiert: sofort weg, bis die Liste neu geladen ist (Koray 12.11.)
+  const blocked = useIsBlocked(d.id);
+  if (blocked && !d.isMe) return null;
 
   if (big) {
     return (
@@ -64,6 +72,18 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
         ) : (
           <AppText variant="caption" muted>So sehen dich andere. Wohnort, Nachrichten und Fuhrpark stellst du in den Einstellungen ein.</AppText>
         )}
+        {!d.isMe && (
+          <View style={styles.quiet}>
+            <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={styles.quietBtn}>
+              <AppText style={styles.quietText}>Melden</AppText>
+            </Pressable>
+            <Pressable accessibilityRole="button" onPress={() => setBlock(true)} style={styles.quietBtn}>
+              <AppText style={styles.quietText}>Blockieren</AppText>
+            </Pressable>
+          </View>
+        )}
+        {!d.isMe && <ReportSheet visible={report} kind="profile" refId={d.id} userId={d.id} name={d.name} onClose={() => setReport(false)} />}
+        {!d.isMe && <BlockSheet visible={block} userId={d.id} name={d.name} onClose={() => setBlock(false)} />}
       </Animated.View>
     );
   }
@@ -98,6 +118,9 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
 }
 
 const styles = StyleSheet.create({
+  quiet: { flexDirection: 'row', gap: Spacing.l },
+  quietBtn: { minHeight: 44, justifyContent: 'center' },
+  quietText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   bday: { color: Colors.text, fontFamily: Fonts.bold },
   bio: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.text, lineHeight: 21 },
   flex: { flex: 1 },
