@@ -95,6 +95,18 @@ Schwachstellen, die bleiben:
 * Graph und Kartendaten: wöchentlich, nur geänderte Dateien werden geladen (curl -z).
 * Protokolle werden wöchentlich rotiert (8 Wochen).
 
+### Aktualität der Daten
+
+| Daten | Quelle | Takt | Wie |
+|---|---|---|---|
+| Straßennetz (Graph) | OpenStreetMap Auszüge (Geofabrik) | wöchentlich, Server 1 So 3 Uhr, Server 2 Mo 3 Uhr | setup-server.sh, mit Rückweg zum alten Graph |
+| Stopps (POI Kacheln) | OpenStreetMap | wöchentlich, im selben Lauf | poi-tiles.sh |
+| Ortssuche (Photon Europa) | fertiger Wochenstand von GraphHopper, gebaut aus OpenStreetMap | Prüfung Mi 4 Uhr, geladen wird nur ein neuerer Stand | photon-update.sh: laden, tauschen, Probeabfrage, sonst alter Stand zurück |
+| Sperrungen | TomTom | alle zwei Stunden je Kachel | Supabase Edge Function |
+| Kuratierte Strecken, Pässe, Empfehlungen | eigene Daten | mit jedem OTA Update | in der App |
+
+Die Ortssuche läuft seit 12.11. auf Server 2 (Stand der Daten 10.11.), Antwort 0,2 bis 0,7 s. Während des Tauschs (etwa 20 Minuten) fragt die App den öffentlichen Dienst. Abhängigkeit: Der Wochenstand kommt von GraphHopper; fällt er weg, läuft der letzte Stand weiter und wir bauen ihn selbst aus OpenStreetMap (Nominatim Import, aufwendig).
+
 ## 6. Kosten im Monat (Stand der Preisseiten 12.11.)
 
 | Posten | Kosten | Hinweis |
