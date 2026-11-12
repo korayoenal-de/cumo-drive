@@ -31,8 +31,9 @@ const SERVER_REGIONS = false;
  */
 export const CUMO_ROUTING_SERVERS = ['https://13-140-213-164.sslip.io', 'https://13-140-213-114.sslip.io'];
 export const CUMO_ROUTING_URL = CUMO_ROUTING_SERVERS[0];
-/** Index des Servers, der zuletzt geantwortet hat */
-let active = 0;
+/** Index des Servers dieser Sitzung: Start zufällig, damit sich die Last auf beide verteilt; danach bleibt es
+ *  bei dem, der antwortet (gleiche Ergebnisse innerhalb einer Sitzung) */
+let active = Math.random() < 0.5 ? 0 : 1;
 
 /** Fester Server aus der Umgebung oder der Entwicklung im lokalen Netz (dann ohne Wechsel) */
 function fixedServer(): string | null {

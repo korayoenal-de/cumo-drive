@@ -1,6 +1,7 @@
 /**
- * Ortssuche über Photon (Komoot, OSM Daten, ohne Schlüssel). Prototyp, später eigener Dienst.
+ * Ortssuche über Photon (OSM Daten): eigene Server zuerst, komoot als Notfall (lib/photon.ts).
  */
+import { photonFetch } from './photon';
 import { haversine, type LatLon } from './tour';
 
 export type Place = { name: string; detail: string; p: LatLon };
@@ -17,7 +18,7 @@ export async function searchTowns(q: string, near?: LatLon, signal?: AbortSignal
 
 export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSignal, layers: string[] = []): Promise<Place[]> {
   const ask = async (bias: LatLon | undefined) => {
-    const url = new URL('https://photon.komoot.io/api/');
+    const url = new URL('https://x/api/');
     for (const l of layers) url.searchParams.append('layer', l);
     url.searchParams.set('q', q);
     url.searchParams.set('limit', '6');
@@ -26,8 +27,7 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
       url.searchParams.set('lat', String(bias[0]));
       url.searchParams.set('lon', String(bias[1]));
     }
-    const res = await fetch(url.toString(), { signal });
-    if (!res.ok) throw new Error(`Ortssuche: Fehler ${res.status}`);
+    const res = await photonFetch(`${url.pathname}${url.search}`, signal);
     return ((await res.json()) as { features: F[] }).features;
   };
   type F = { geometry: { coordinates: [number, number] }; properties: Record<string, string> };
@@ -63,12 +63,23 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
     .slice(0, 8);
 }
 
+/** Ortsnamen je Punkt (auf etwa 100 m) merken: beim Öffnen einer Tour fragte jede Ansicht dieselben Punkte neu */
+const reverseCache = new Map<string, string>();
+
 export async function reverseName(p: LatLon, signal?: AbortSignal): Promise<string> {
+  const key = `${p[0].toFixed(3)},${p[1].toFixed(3)}`;
+  const hit = reverseCache.get(key);
+  if (hit) return hit;
   try {
-    const res = await fetch(`https://photon.komoot.io/reverse?lat=${p[0]}&lon=${p[1]}&lang=de`, { signal });
+    const res = await photonFetch(`/reverse?lat=${p[0]}&lon=${p[1]}&lang=de`, signal);
     const data = (await res.json()) as { features: { properties: Record<string, string> }[] };
     const pr = data.features[0]?.properties ?? {};
-    return pr.city ?? pr.name ?? pr.district ?? 'Standort';
+    const name = pr.city ?? pr.name ?? pr.district ?? 'Standort';
+    if (data.features.length) {
+      reverseCache.set(key, name);
+      if (reverseCache.size > 300) reverseCache.delete(reverseCache.keys().next().value!);
+    }
+    return name;
   } catch {
     return 'Standort';
   }

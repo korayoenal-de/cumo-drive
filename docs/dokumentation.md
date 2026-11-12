@@ -260,6 +260,7 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 | Datum | Entscheidung |
 |---|---|
+| 12.11. | Zweiter Routing Server (Contabo, gleiche Größe): App wechselt bei Ausfall oder Neuaufbau automatisch, Last verteilt sich, Neuaufbau versetzt (So und Mo 3 Uhr) mit Rückweg zum alten Graph, gegenseitige Sicherung und Überwachung, eigene Ortssuche (Photon Europa). Alles dazu in docs/betrieb.md |
 | 12.11. | Ausfahrten neu: rote Zahl nur, wenn jetzt etwas zu tun ist (offene Einladung, gestartete Gruppenfahrt). Zusage verschwindet aus der Zahl und steht unter „Deine nächsten“ mit „in 8 Tagen“; heute und morgen oben mit Losfahrzeit aus der Anfahrt. Erinnerung lokal am Vortag 18 Uhr und 15 min vor der Losfahrzeit. Absagen im Blatt mit freiwilligem Grund, Veranstalter sieht Absagen still. Mitteilung, wenn der Veranstalter die Gruppenfahrt startet |
 | 12.11. | Schutz vor Missbrauch, Stufe 1: Melden (Nachricht lange drücken, Profil, Route, Ausfahrt) mit Kopie des Inhalts, Blockieren, Prüfbereich für Admins (In Ordnung, Entfernen, Sperren) mit Hinweis und Begründung an Betroffene, neue Konten schreiben Fremde erst nach 24 h an (außer gemeinsame Fahrt), höchstens 5 neue Gespräche am Tag, Abschnitt 7a in den Nutzungsbedingungen |
 | 11.11. | Geburtstag statt Alter im Profil (Konzept E): TT.MM.JJJJ, freiwillig. Das Datum sieht niemand (keine Spaltenfreigabe, eigene Angabe über my_birth_date). Drivers zeigt je nach Wahl Alter, nur am Tag „Hat heute Geburtstag“ oder nichts |

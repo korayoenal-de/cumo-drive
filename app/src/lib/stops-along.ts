@@ -9,6 +9,7 @@
  */
 import { RECOMMENDED, recommendedNear } from './recommended';
 import { CUMO_ROUTING_SERVERS, routingServerUrl } from './cumo-routing';
+import { photonFetch } from './photon';
 import { haversine, type LatLon } from './tour';
 import type { Stop } from './intent';
 
@@ -531,7 +532,7 @@ export async function placesNear(kind: 'hotel' | 'kaffee' | 'mittag', at: LatLon
   const cfg = NEAR_QUERY[kind];
   const lists = await Promise.all(
     cfg.q.map(async (q) => {
-      const url = new URL('https://photon.komoot.io/api/');
+      const url = new URL('https://x/api/');
       url.searchParams.set('q', q);
       url.searchParams.set('lat', String(at[0]));
       url.searchParams.set('lon', String(at[1]));
@@ -540,8 +541,7 @@ export async function placesNear(kind: 'hotel' | 'kaffee' | 'mittag', at: LatLon
       url.searchParams.set('zoom', '14');
       url.searchParams.set('lang', 'de');
       for (const t of cfg.tags) url.searchParams.append('osm_tag', t);
-      const r = await fetch(url.toString(), { signal });
-      if (!r.ok) throw new Error(`Suche ${r.status}`);
+      const r = await photonFetch(`${url.pathname}${url.search}`, signal);
       const j = (await r.json()) as { features?: { geometry: { coordinates: [number, number] }; properties: Record<string, string | number | undefined> }[] };
       return j.features ?? [];
     }),
