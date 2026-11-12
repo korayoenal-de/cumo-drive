@@ -8,6 +8,7 @@
  * Kommt man erst spät in den Bereich (zum Beispiel nach einer Neuberechnung), wird nur die
  * passende Stufe angesagt und die übersprungenen entfallen.
  */
+import { voiceVolume } from '../drive-settings';
 import * as Speech from 'expo-speech';
 
 import type { Maneuver, NavRoute } from './types';
@@ -203,7 +204,7 @@ function defaultSpeak(text: string) {
       speaking = Math.max(0, speaking - 1);
       if (!speaking) audioOff();
     };
-    Speech.speak(text, { language: 'de-DE', voice: chosenVoiceId(), rate: 1.0, onDone: done, onStopped: done, onError: done });
+    Speech.speak(text, { language: 'de-DE', voice: chosenVoiceId(), rate: 1.0, volume: voiceVolume(), onDone: done, onStopped: done, onError: done });
   } catch {
     // Sprachausgabe ist nicht wichtig genug, um die Navigation zu stören
   }

@@ -12,6 +12,7 @@ import { OptionsSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import { setDriveSetting, useDriveSettings } from '@/lib/drive-settings';
+import { VolumeSteps, volumeLabel } from '@/components/settings/volume-steps';
 import { germanVoices, playSample, setVoiceChoice, useVoiceChoice, type VoiceOption } from '@/lib/voice-settings';
 
 export function VoiceSection() {
@@ -52,6 +53,19 @@ export function VoiceSection() {
         </View>
         <SymbolView name="chevron.right" size={14} weight="semibold" tintColor={Colors.muted} />
       </Pressable>
+
+      <View style={[styles.card, styles.volumeCard]}>
+        <View style={styles.flex}>
+          <AppText style={styles.label}>Lautstärke</AppText>
+          <AppText style={styles.value}>{volumeLabel(drive.volume)}</AppText>
+        </View>
+        <View style={styles.volume}>
+          <VolumeSteps height={36} />
+        </View>
+      </View>
+      <AppText variant="caption" muted style={styles.volumeHint}>
+        Im Verhältnis zur Lautstärke des iPhones. Während der Hörprobe regeln die Tasten des iPhones die Ansagen insgesamt. In der Navigation erreichst du das auch mit langem Druck auf den Lautsprecher.
+      </AppText>
 
       <View style={styles.card}>
         <View style={styles.flex}>
@@ -106,6 +120,9 @@ function Row({ name, detail, active, onPress }: { name: string; detail: string; 
 }
 
 const styles = StyleSheet.create({
+  volumeCard: { alignItems: 'center' },
+  volume: { width: 150, flexDirection: 'row' },
+  volumeHint: { paddingHorizontal: Spacing.xs },
   flex: { flex: 1, minWidth: 0 },
   gapM: { gap: Spacing.m },
   card: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l },

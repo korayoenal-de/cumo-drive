@@ -2,6 +2,7 @@
  * Stimme der Ansagen: eine der deutschen Stimmen, die auf dem iPhone installiert sind.
  * Ohne Auswahl spricht die Standardstimme für Deutsch. Liegt auf dem Gerät (AsyncStorage).
  */
+import { voiceVolume } from './drive-settings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Speech from 'expo-speech';
 import { useSyncExternalStore } from 'react';
@@ -86,7 +87,7 @@ export async function germanVoices(): Promise<VoiceOption[]> {
 
 export const VOICE_SAMPLE = 'In 300 Metern rechts abbiegen. Danach beginnt die Juhöhe, eine starke Kurvenstrecke.';
 
-export function playSample(id: string | undefined) {
+export function playSample(id: string | undefined, text = VOICE_SAMPLE) {
   Speech.stop().catch(() => {});
-  Speech.speak(VOICE_SAMPLE, { language: 'de-DE', voice: id, rate: 1.0 });
+  Speech.speak(text, { language: 'de-DE', voice: id, rate: 1.0, volume: voiceVolume() });
 }

@@ -15,6 +15,8 @@ import type { Maneuver } from '@/lib/navigation/types';
 import { formatClock, formatDistance, formatRemaining } from './format';
 import { ManeuverIcon, MicIcon, SpeakerIcon } from './maneuver-icon';
 import { GlassPanel } from '@/components/ui/glass-panel';
+import { VolumeSteps, volumeLabel } from '@/components/settings/volume-steps';
+import { useDriveSettings } from '@/lib/drive-settings';
 
 /**
  * Zustands Karten über der Karte: Colors.signalTint und Colors.goodTint auf Ground verrechnet,
@@ -138,6 +140,14 @@ export function BottomBar({
   const now = useNow();
   const [funkHint, setFunkHint] = useState(false);
   const [menu, setMenu] = useState(false);
+  // Lautstärke der Ansagen: langer Druck auf den Lautsprecher (Koray 12.11.), klappt nach 5 s von selbst zu
+  const [vol, setVol] = useState(0);
+  const { volume } = useDriveSettings();
+  useEffect(() => {
+    if (!vol) return;
+    const t = setTimeout(() => setVol(0), 5000);
+    return () => clearTimeout(t);
+  }, [vol, volume]);
   useEffect(() => {
     if (!funkHint) return;
     const t = setTimeout(() => setFunkHint(false), 2500);
@@ -165,6 +175,19 @@ export function BottomBar({
 
   return (
     <View>
+      {vol > 0 && !menu && (
+        <View style={[styles.menu, { bottom: '100%' }]} pointerEvents="box-none">
+          <Animated.View entering={softEnter(0)} style={styles.volPanel}>
+            <View style={styles.volHead}>
+              <AppText style={styles.pillText}>Lautstärke</AppText>
+              <AppText variant="caption" muted>{volumeLabel(volume)}</AppText>
+            </View>
+            <View style={styles.volSteps}>
+              <VolumeSteps height={40} />
+            </View>
+          </Animated.View>
+        </View>
+      )}
       {menu && (
         <View style={[styles.menu, { bottom: '100%' }]} pointerEvents="box-none">
           {actions.map((a, i) => (
@@ -220,7 +243,15 @@ export function BottomBar({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={voice ? 'Ansagen aus' : 'Ansagen an'}
-            onPress={onVoice}
+            accessibilityHint="Lange drücken für die Lautstärke"
+            onPress={() => (vol ? setVol(0) : onVoice())}
+            onLongPress={() => {
+              haptic('abheben');
+              setMenu(false);
+              if (!voice) onVoice();
+              setVol(Date.now());
+            }}
+            delayLongPress={450}
             style={({ pressed }) => [styles.round, pressed && styles.pressed]}>
             <SpeakerIcon on={voice} color={voice ? Colors.text : Colors.muted} />
           </Pressable>
@@ -313,6 +344,9 @@ const styles = StyleSheet.create({
   round: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   roundSignal: { backgroundColor: Colors.signal },
   roundOpen: { backgroundColor: Colors.text },
+  volPanel: { width: 260, padding: Spacing.l, gap: Spacing.m, borderRadius: Radius.l, backgroundColor: Colors.surface2, boxShadow: Shadow.sheet },
+  volHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  volSteps: { flexDirection: 'row' },
   menu: { position: 'absolute', right: Spacing.xl, paddingBottom: Spacing.m, alignItems: 'flex-end', gap: Spacing.s },
   pill: { height: 52, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingLeft: Spacing.l, paddingRight: Spacing.xl, borderRadius: 26, backgroundColor: Colors.surface2, boxShadow: Shadow.sheet },
   pillSignal: { backgroundColor: Colors.signal },
