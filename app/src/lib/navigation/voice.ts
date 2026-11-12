@@ -48,7 +48,8 @@ const THEN_M = 350;
 
 /** Folgemanöver kurz danach: "Dann sofort links abbiegen." (Klassiker: das zweite Manöver kam zu spät) */
 export function thenPhrase(m: Maneuver, after: Maneuver | undefined): string {
-  if (!after || after.kind === 'start' || after.kind === 'zwischenziel') return '';
+  // geradeaus weiter ist kein eigenes Manöver, das man vorbereiten muss
+  if (!after || after.kind === 'start' || after.kind === 'zwischenziel' || after.kind === 'geradeaus') return '';
   const gap = (after.km - m.km) * 1000;
   if (gap > THEN_M) return '';
   if (after.kind.startsWith('ziel')) return ' Dann bist du am Ziel.';
@@ -179,6 +180,9 @@ export function createVoiceGuide(speak: (text: string) => void = defaultSpeak, s
       if (stage === 'jetzt') done.add(`${id}:nah`);
       // Ankunft sagt die Navigation selbst an, sobald der Status wechselt
       if (m.kind.startsWith('ziel') && stage === 'jetzt') return;
+      // Ziel kurz nach dem letzten Abbiegen: "Dann bist du am Ziel" kam schon, die frühe Vorankündigung entfällt
+      const prev = route.maneuvers[next - 1];
+      if (m.kind.startsWith('ziel') && stage === 'weit' && prev && (m.km - prev.km) * 1000 <= THEN_M) return;
       // Bei sehr kurzem Abstand zur Vorankündigung lohnt "weit" nicht
       if (stage === 'weit' && distToNextM < th.nah * 1.5) return;
       const after = route.maneuvers[next + 1];

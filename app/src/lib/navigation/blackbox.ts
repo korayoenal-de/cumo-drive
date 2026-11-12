@@ -8,13 +8,14 @@
  * Reine Datenhaltung ohne React, damit testbar und von überall aufrufbar.
  */
 import type { LatLon } from '../tour';
+import type { NavRoute } from './types';
 
 export type BbKind =
   /** Position: [lat, lon, kmh, Kurs, Genauigkeit, Abstand zur Route, km auf der Route, fortgeschrieben 1/0] */
   | 'gps'
   /** Ansage, Text */
   | 'say'
-  /** neue Route: km, Zahl der Manöver, Rückweg Index */
+  /** neue Route: km, Zahl der Manöver, Rückweg Index, Quelle, Linie (Polyline 1e5), Manöver [km, Art, Text, Ansage, Ausfahrt] */
   | 'route'
   /** Neuberechnung: Art (auto, rejoin, fresh), Ergebnis oder Fehler, Dauer in ms */
   | 'reroute'
@@ -86,4 +87,64 @@ export function bbSnapshot(lastS?: number): BbLog | null {
 
 export function bbStop() {
   bbLog('state', 'ende');
+}
+
+/** Linie als Polyline (Faktor 1e5), wie die Spur der Fahrten */
+export function encodeLine(points: LatLon[]): string {
+  let out = '';
+  let pla = 0;
+  let plo = 0;
+  const enc = (v: number) => {
+    let x = v < 0 ? ~(v << 1) : v << 1;
+    while (x >= 0x20) {
+      out += String.fromCharCode((0x20 | (x & 0x1f)) + 63);
+      x >>= 5;
+    }
+    out += String.fromCharCode(x + 63);
+  };
+  for (const [la, lo] of points) {
+    const a = Math.round(la * 1e5);
+    const b = Math.round(lo * 1e5);
+    enc(a - pla);
+    enc(b - plo);
+    pla = a;
+    plo = b;
+  }
+  return out;
+}
+
+export function decodeLine(str: string): LatLon[] {
+  const out: LatLon[] = [];
+  let i = 0;
+  let la = 0;
+  let lo = 0;
+  const next = () => {
+    let shift = 0;
+    let res = 0;
+    let b: number;
+    do {
+      b = str.charCodeAt(i++) - 63;
+      res |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    return res & 1 ? ~(res >> 1) : res >> 1;
+  };
+  while (i < str.length) {
+    la += next();
+    lo += next();
+    out.push([la / 1e5, lo / 1e5]);
+  }
+  return out;
+}
+
+/** Route für die Blackbox: so viel, dass sich die Fahrt am Schreibtisch nachspielen lässt */
+export function bbRoute(route: NavRoute, now = Date.now()) {
+  bbLog('route', {
+    km: Math.round(route.km * 1000) / 1000,
+    rejoin: route.rejoinIndex ?? null,
+    source: route.source,
+    minutes: Math.round(route.minutes * 10) / 10,
+    line: encodeLine(route.shape),
+    man: route.maneuvers.map((m) => [Math.round(m.km * 1000) / 1000, m.kind, m.text, m.speech, m.exit ?? null, m.index]),
+  }, now);
 }

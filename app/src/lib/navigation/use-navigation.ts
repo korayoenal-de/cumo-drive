@@ -17,7 +17,7 @@ import type { NavControls, NavRequest, NavRoute, NavState, SkipUndo } from './ty
 import { edgesAlong, exitWord, forksIn, roundaboutByDirection, roundaboutExits, slice, withForks } from './junctions';
 import { roundaboutTurn } from './roundabout';
 import { townAfter, wantsToward, withToward } from './toward';
-import { bbGps, bbLog, bbStart, bbStop } from './blackbox';
+import { bbGps, bbLog, bbRoute, bbStart, bbStop } from './blackbox';
 import { createVoiceGuide, speakText, type VoiceGuide } from './voice';
 
 const KEEP_AWAKE_TAG = 'cumo-navigation';
@@ -181,7 +181,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const setRoute = useCallback(
     (route: NavRoute) => {
       routeRef.current = route;
-      bbLog('route', [Math.round(route.km * 1000) / 1000, route.maneuvers.length, route.rejoinIndex ?? null, route.source]);
+      bbRoute(route);
       // Neue Routen beginnen am Standort (Anfahrt) oder am Tour Start: von vorne suchen. Sonst landet
       // man bei einer Runde, deren Start gleich Ziel ist, sofort am Ende (Ziel erreicht).
       hintRef.current = 0;
@@ -204,7 +204,10 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     if (!activeRef.current || !cur || cur.shape !== base.shape) return;
     const updated = change(cur);
     if (!updated) return;
-    const added = updated.maneuvers.filter((m) => !cur.maneuvers.includes(m)).map((m) => `${m.km.toFixed(3)} ${m.text}`);
+    // vollständig, damit sich die Fahrt nachspielen lässt: [km, Art, Text, Ansage, Ausfahrt, Index]
+    const added = updated.maneuvers
+      .filter((m) => !cur.maneuvers.includes(m))
+      .map((m) => [Math.round(m.km * 1000) / 1000, m.kind, m.text, m.speech, m.exit ?? null, m.index]);
     if (added.length) bbLog('enrich', added);
     routeRef.current = updated;
     setState((s) => (s.route === cur ? { ...s, route: updated } : s));

@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "paths": {
+      "expo-speech": ["scripts/replay/stub.ts"],
+      "@react-native-async-storage/async-storage": ["scripts/replay/stub.ts"],
+      "react-native": ["scripts/replay/stub.ts"],
+      "@/*": ["src/*"]
+    },
+    "esModuleInterop": true
+  }
+}
