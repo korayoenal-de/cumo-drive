@@ -28,7 +28,7 @@ Folgerung: Nicht die Rechenzeit bremst, sondern die Zahl der Anfragen nacheinand
 
 Umgesetzt (12.11.):
 
-* Eigene Ortssuche auf Server 2, die App fragt sie zuerst (höchstens 2,5 s), der öffentliche Dienst bleibt Notfall (lib/photon.ts).
+* Eigene Ortssuche auf beiden Servern (seit 12.11. abends auch Server 1). Die App fragt zuerst Server 2, dann Server 1 (je höchstens 4 s, gesperrt erst nach zwei Fristüberschreitungen in Folge), der öffentliche Dienst bleibt Notfall mit 7 s Frist (lib/photon.ts).
 * Ortsnamen je Punkt werden gemerkt, statt mehrfach gefragt zu werden.
 * Seit 11.11.: nur der geänderte Abschnitt wird neu geplant.
 
@@ -105,11 +105,11 @@ Schwachstellen, die bleiben:
 |---|---|---|---|
 | Straßennetz (Graph) | OpenStreetMap Auszüge (Geofabrik) | wöchentlich, Server 1 So 3 Uhr, Server 2 Mo 3 Uhr | setup-server.sh, mit Rückweg zum alten Graph |
 | Stopps (POI Kacheln) | OpenStreetMap | wöchentlich, im selben Lauf | poi-tiles.sh |
-| Ortssuche (Photon Europa) | fertiger Wochenstand von GraphHopper, gebaut aus OpenStreetMap | Prüfung Mi 4 Uhr, geladen wird nur ein neuerer Stand | photon-update.sh: laden, tauschen, Probeabfrage, sonst alter Stand zurück |
+| Ortssuche (Photon Europa) | fertiger Wochenstand von GraphHopper, gebaut aus OpenStreetMap | Prüfung Server 2 Mi 4 Uhr, Server 1 Do 4 Uhr, geladen wird nur ein neuerer Stand | photon-update.sh: laden, tauschen, Probeabfrage, sonst alter Stand zurück |
 | Sperrungen | TomTom | alle zwei Stunden je Kachel | Supabase Edge Function |
 | Kuratierte Strecken, Pässe, Empfehlungen | eigene Daten | mit jedem OTA Update | in der App |
 
-Die Ortssuche läuft seit 12.11. auf Server 2 (Stand der Daten 10.11.), Antwort 0,2 bis 0,7 s. Während des Tauschs (etwa 20 Minuten) fragt die App den öffentlichen Dienst. Abhängigkeit: Der Wochenstand kommt von GraphHopper; fällt er weg, läuft der letzte Stand weiter und wir bauen ihn selbst aus OpenStreetMap (Nominatim Import, aufwendig).
+Die Ortssuche läuft seit 12.11. auf Server 2 und seit 12.11. 18:25 auch auf Server 1 (Daten von Server 2 kopiert, 46 GB, etwa 30 Minuten; Einrichtung /root/photon-einrichten.sh), Stand der Daten 10.11., Antwort 0,2 bis 0,7 s. Server 1 aktualisiert donnerstags, damit nie beide gleichzeitig tauschen. Während des Tauschs (etwa 20 Minuten) fragt die App den öffentlichen Dienst. Abhängigkeit: Der Wochenstand kommt von GraphHopper; fällt er weg, läuft der letzte Stand weiter und wir bauen ihn selbst aus OpenStreetMap (Nominatim Import, aufwendig).
 
 ## 6. Kosten im Monat (Stand der Preisseiten 12.11.)
 
