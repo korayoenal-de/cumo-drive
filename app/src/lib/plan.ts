@@ -5,7 +5,7 @@
  */
 import { avoidedPoints } from './avoid-pass';
 import { checkLine } from './check';
-import { cumoAvailable, cumoPlan } from './cumo-routing';
+import { cumoAvailable, cumoPlan, type PlanHint } from './cumo-routing';
 import { tourFun } from './fun-score';
 import { closureExclude, closureLabel, closuresNear, closuresOnRoute, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
@@ -154,10 +154,11 @@ export async function planChecked(
   onStep?: (s: PlanStep) => void,
   signal?: AbortSignal,
   snapMajor = false,
+  hint?: PlanHint,
 ): Promise<PlannedTour> {
   // Pässe mit Warnung, die du herausgenommen hast (Doch umfahren): Passhöhe gesperrt, außer sie ist selbst ein Punkt
   const skip = avoidedPoints().filter((q) => !points.some((w) => haversine(w, q) < 400));
-  const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, skip, true);
+  const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, skip, true, hint);
   onStep?.('traffic');
   // Aktuelle Sperrungen aus Verkehrsmeldungen (Koray 8.11.): umplanen, was nicht geht als Warnung
   const closures = await closuresNear(lineOf(first), signal);
@@ -173,7 +174,7 @@ export async function planChecked(
       // Mit Frist: findet sich in FIX_BUDGET_MS kein Weg um die Sperrung, bleibt die erste Route mit Hinweis
       // (12.11.: das Umplanen um eine Wintersperre lief über eine Minute und blieb dann stehen)
       const again = await withBudget(signal, FIX_BUDGET_MS, (s) =>
-        planCore(name, points, first.direkt ? 'schnell' : profile, avoid, onStep, s, snapMajor, [...skip, ...ex], false),
+        planCore(name, points, first.direkt ? 'schnell' : profile, avoid, onStep, s, snapMajor, [...skip, ...ex], false, hint),
       );
       if (first.direkt) again.direkt = first.direkt;
       const h2 = closuresOnRoute(lineOf(again), closures);
@@ -238,6 +239,7 @@ async function planCore(
   extraExclude: LatLon[],
   /** kurvig gegen den direkten Weg vergleichen (nur beim ersten Planen) */
   compare: boolean,
+  hint?: PlanHint,
 ): Promise<PlannedTour> {
   // Eigener Routing Server (Sportwagen Profil, Prüfung ohne fremde Dienste) hat Vorrang
   if (await cumoAvailable()) {
@@ -252,12 +254,12 @@ async function planCore(
         // von acht Abfragen einer einfachen Route gingen auf diesen Vergleich). Hat er gesperrte Stücke, läuft
         // die volle Planung gleich hinterher, parallel zur kurvigen Variante, damit sie fertig ist, falls er gewinnt.
         const directJob = curvy
-          ? cumoPlan(name, pts, 'schnell', avoid, signal, extraExclude, true)
+          ? cumoPlan(name, pts, 'schnell', avoid, signal, extraExclude, true, hint)
               // findet die volle Planung keinen Weg, zählt der direkte Weg nicht (wie bisher)
-              .then((d) => ((d.km_je_klasse?.raus ?? 0) === 0 ? d : cumoPlan(name, pts, 'schnell', avoid, signal, extraExclude)))
+              .then((d) => ((d.km_je_klasse?.raus ?? 0) === 0 ? d : cumoPlan(name, pts, 'schnell', avoid, signal, extraExclude, false, hint)))
               .catch(() => null)
           : Promise.resolve(null);
-        const [main, direct] = await Promise.all([cumoPlan(name, pts, profile, avoid, signal, extraExclude), directJob]);
+        const [main, direct] = await Promise.all([cumoPlan(name, pts, profile, avoid, signal, extraExclude, false, hint), directJob]);
         if (direct && !curvyWorthIt(main, direct)) return { ...direct, direkt: 1 };
         return main;
       } catch (e) {

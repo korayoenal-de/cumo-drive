@@ -764,6 +764,15 @@ function windingKm(p: GhPath, shape: LatLon[]): number | undefined {
  * An Zwischenzielen kein Wenden (pass_through). Fährt die Route danach noch mehr als
  * DOUBLE_MAX_KM auf derselben Straße zurück, wird sie einmal mit verteuerten Stücken neu gerechnet.
  */
+export type PlanHint = {
+  /** Fahrtrichtung am Start in Grad: die Route soll geradeaus weitergehen statt zu wenden */
+  heading?: number | null;
+  /** deutlich teurer, aber nicht verboten (das Stück der alten Tour, das die Fahrerin gerade umfährt) */
+  penalize?: LatLon[];
+};
+/** wird false, sobald der Server die Fahrtrichtung ablehnt */
+let headingOk = true;
+
 export async function cumoPlan(
   name: string,
   points: LatLon[],
@@ -774,6 +783,8 @@ export async function cumoPlan(
   extraExclude: LatLon[] = [],
   /** nur eine Abfrage, ohne Nachbessern: reicht zum Vergleichen (Länge, Kurven km) */
   quick = false,
+  /** Neue Route ab hier in der Navigation: Fahrtrichtung am Start und Straßen, die man gerade bewusst meidet */
+  hint?: PlanHint,
 ): Promise<PlannedTour & { curves: number }> {
   let leg = 0;
   let sum = 0;
@@ -783,7 +794,9 @@ export async function cumoPlan(
     sum += d;
   }
   const long = sum > 200;
-  const ask = async (exclude: LatLon[], penalize: LatLon[]) => {
+  const hintPen = hint?.penalize ?? [];
+  const ask = async (exclude: LatLon[], penalize0: LatLon[]) => {
+    const penalize = hintPen.length ? [...hintPen, ...penalize0] : penalize0;
     // Traumstrecken im Umkreis der Wegpunkte, bei langen Etappen entsprechend weiter
     // Lange Routen (Summe der Luftlinien über 200 km) ohne Traumstrecken Bereich: den prüft der
     // Server für jede besuchte Straße, bei 700 km dauerte das 35 statt 16 Sekunden (Messung 6.11.).
@@ -797,6 +810,17 @@ export async function cumoPlan(
       // Feldweg erzeugte sonst einen Stich (Koray 11.11.). Kennt der Server das nicht, geht es ohne weiter.
       ...(snapOk ? { snap_preventions: SNAP_PREVENT } : {}),
     };
+    // Mit Fahrtrichtung am Start (Tester Gregor 12.11.: Neue Route ab hier führte per Wende zurück in den Ort).
+    // Lehnt der Server das ab oder findet so keinen Weg, geht es ohne weiter.
+    if (hint?.heading != null && headingOk) {
+      try {
+        const withHeading = { ...body, headings: [Math.round(hint.heading)], heading_penalty: 300 };
+        return await post(points.length > 2 && passThroughOk ? { ...withHeading, pass_through: true } : withHeading, signal);
+      } catch (e) {
+        if (signal?.aborted) throw e;
+        if (/heading/i.test(e instanceof Error ? e.message : '')) headingOk = false;
+      }
+    }
     if (points.length > 2 && passThroughOk && !points.some((q) => turnAt.has(pkey(q)))) {
       try {
         return await post({ ...body, pass_through: true }, signal);

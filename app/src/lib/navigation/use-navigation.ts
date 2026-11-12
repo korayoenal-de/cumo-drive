@@ -173,7 +173,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       try {
         let route: NavRoute;
         if (fresh) {
-          const out = await replanFromHere(r, pos, ctrl.signal);
+          const out = await replanFromHere(r, pos, ctrl.signal, heading);
           reqRef.current = out.req;
           route = out.route;
           ignoredRef.current = 0;
