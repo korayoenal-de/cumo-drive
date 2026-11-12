@@ -19,6 +19,10 @@ REGIONS=(
   europe/france/provence-alpes-cote-d-azur-latest.osm.pbf
   europe/slovenia-latest.osm.pbf
 )
+# Je Server anpassbar, ohne das Skript zu ändern (Testaufbau 12.11.: Mittelitalien und Pyrenäen nur auf Server 2):
+# /etc/cumo-routing.env mit HEAP=30g und EXTRA_REGIONS="europe/italy/centro-latest.osm.pbf ..."
+[ -f /etc/cumo-routing.env ] && . /etc/cumo-routing.env
+for r in ${EXTRA_REGIONS:-}; do REGIONS+=("$r"); done
 log() { echo "$(date -Is) $*" | tee -a "$BASE/setup.log"; }
 mkdir -p "$BASE/bin" "$BASE/download" "$BASE/data"
 cd "$BASE"
