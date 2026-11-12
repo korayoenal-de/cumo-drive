@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { carPlayCamera } from '../carplay';
 import { haversine, type LatLon } from '../tour';
+import { offlineRejoin } from './offline';
 import { replanFromHere } from './replan';
 import { fetchNavRouteDetail, rejoinNavRoute } from './route';
 import { pointAtKm, progress, snapToRoute } from './tracker';
@@ -313,6 +314,16 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       } catch (e) {
         bbLog('reroute', [mode, fresh ? 'neu' : 'zurueck', 'fehler', Date.now() - t0, e instanceof Error ? e.message.slice(0, 120) : '']);
         if (isAbort(e) || !activeRef.current) return;
+        // Funkloch: Rückweg als Luftlinie zur Tour, ohne Netz gerechnet; nächster Versuch übers Netz in 20 s
+        const msg = e instanceof Error ? e.message : String(e);
+        const offline = /network|fetch|Netz|internet|offline|timed out|abgebrochen|Frist/i.test(msg) ? offlineRejoin(current, doneIndexRef.current, pos) : null;
+        if (offline) {
+          bbLog('reroute', [mode, 'ohne_netz', 'ok']);
+          voice().say(offline.maneuvers[0].speech, true);
+          setRoute(offline);
+          setState((s) => ({ ...s, status: 'laeuft', route: offline, error: undefined }));
+          return;
+        }
         // alte Route behalten, nächster Versuch frühestens in 20 s
         setState((s) => ({ ...s, status: 'laeuft', error: friendly(e) }));
       } finally {
