@@ -171,6 +171,19 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   }()
   private var meView: MKAnnotationView?
   private var meImage: UIImage = CarMapViewController.mePin
+  /// Auto an der Stelle, die die App meldet (auf der Linie eingerastet), genau in der Mitte der Kamera
+  /// (Koray 12.11.: der Standort des iPhones lag neben der Spur und das Auto stand schief)
+  private let car = CarAnnotation()
+  private var carView: MKAnnotationView?
+  private var carShown = false
+
+  /// App Positionen frisch: eigenes Auto zeigen, sonst den Standort des iPhones
+  private func showCar(_ on: Bool) {
+    guard on != carShown else { return }
+    carShown = on
+    if on { map.addAnnotation(car) } else { map.removeAnnotation(car) }
+    meView?.alpha = on ? 0 : 1
+  }
 
   /// Lack als Hex (#RRGGBB) in eine Farbe
   private static func color(hex: String) -> UIColor? {
@@ -200,6 +213,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     }
     meImage = img
     meView?.image = img
+    carView?.image = img
   }
 
   func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
@@ -208,12 +222,24 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     if following, let loc = userLocation.location, loc.course >= 0, loc.speed > 2, CACurrentMediaTime() - lastAppAt > 1.5 {
       followCamera(loc.coordinate, heading: loc.course, fromApp: false)
     }
-    guard let v = meView, let loc = userLocation.location, loc.course >= 0 else { return }
+    // App liefert keine Positionen mehr: wieder der Standort des iPhones
+    if carShown, CACurrentMediaTime() - lastAppAt > 3 { showCar(false) }
+    guard !carShown, let v = meView, let loc = userLocation.location, loc.course >= 0 else { return }
     let angle = (loc.course - mapView.camera.heading) * .pi / 180
     UIView.animate(withDuration: 0.3) { v.transform = CGAffineTransform(rotationAngle: CGFloat(angle)) }
   }
 
   func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+    if annotation is CarAnnotation {
+      let v = mapView.dequeueReusableAnnotationView(withIdentifier: "auto") ?? MKAnnotationView(annotation: annotation, reuseIdentifier: "auto")
+      v.annotation = annotation
+      v.image = meImage
+      v.canShowCallout = false
+      v.displayPriority = .required
+      v.zPriority = .max
+      carView = v
+      return v
+    }
     if annotation is MKUserLocation {
       let v = mapView.dequeueReusableAnnotationView(withIdentifier: "ich") ?? MKAnnotationView(annotation: annotation, reuseIdentifier: "ich")
       v.annotation = annotation
@@ -221,6 +247,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
       v.canShowCallout = false
       v.displayPriority = .required
       v.zPriority = .max
+      v.alpha = carShown ? 0 : 1
       meView = v
       return v
     }
@@ -258,8 +285,8 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     let l = MKPolyline(coordinates: coords, count: coords.count)
     casing = c
     line = l
-    map.addOverlay(c, level: .aboveRoads)
-    map.addOverlay(l, level: .aboveRoads)
+    map.addOverlay(c, level: .aboveLabels)
+    map.addOverlay(l, level: .aboveLabels)
     if !following { showOverview() }
   }
 
@@ -276,8 +303,8 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     let r = RejoinPolyline(coordinates: coords, count: coords.count)
     rejoinCasing = c
     rejoin = r
-    map.addOverlay(c, level: .aboveRoads)
-    map.addOverlay(r, level: .aboveRoads)
+    map.addOverlay(c, level: .aboveLabels)
+    map.addOverlay(r, level: .aboveLabels)
   }
 
   /// Position und Fahrtrichtung aus der App: Kamera schräg von hinten wie auf dem iPhone (pitch 50)
@@ -369,6 +396,15 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     // langsam folgen (etwa 8 s), damit schwankendes Tempo nicht pulsiert
     speedZoom += (t - speedZoom) * 0.012
     map.camera = MKMapCamera(lookingAtCenter: c, fromDistance: 650 * zoomScale * (1 + speedZoom * 1.2), pitch: 50, heading: heading)
+    // Auto in der Mitte, gedreht in die Richtung der Straße relativ zur Kamera
+    if CACurrentMediaTime() - lastAppAt < 3 {
+      showCar(true)
+      car.coordinate = c
+      var d = (headTo - heading).truncatingRemainder(dividingBy: 360)
+      if d > 180 { d -= 360 }
+      if d < -180 { d += 360 }
+      carView?.transform = CGAffineTransform(rotationAngle: CGFloat(d * .pi / 180))
+    }
   }
 
   /// Gefahrenes Stück ausblenden: nächster Punkt der Route ab dem letzten (nur vorwärts, mit etwas Spielraum)
@@ -507,3 +543,6 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     return r
   }
 }
+
+/// Eigenes Auto auf dem Autodisplay (Position aus der App)
+final class CarAnnotation: MKPointAnnotation {}

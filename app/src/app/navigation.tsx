@@ -520,9 +520,15 @@ export default function NavigationScreen() {
   useEffect(() => {
     carPlaySetRejoin(cpRunning ? dashed : null);
   }, [cpRunning, dashed]);
-  // Kamera auf dem Autodisplay folgt derselben Position wie auf dem iPhone
+  // Kamera auf dem Autodisplay: kommt direkt aus der Navigation (use-navigation, auf der Linie eingerastet).
+  // Hier nur der Anfang, bevor die erste Position verarbeitet ist; sonst zogen zwei Quellen an der Kamera.
+  const cpStarted = useRef(false);
   useEffect(() => {
-    if (cpRunning && state.position && state.heading != null) carPlayCamera(state.position, state.heading);
+    if (!cpRunning) cpStarted.current = false;
+    else if (!cpStarted.current && state.position && state.heading != null) {
+      cpStarted.current = true;
+      carPlayCamera(state.position, state.heading);
+    }
   }, [cpRunning, state.position, state.heading]);
   // Ton Knopf auf dem Autodisplay
   useEffect(() => {

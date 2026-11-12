@@ -285,7 +285,11 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
 
       // Kamera im Auto direkt bei jeder Position, nicht erst über React: bei gesperrtem iPhone laufen die Effekte
       // erst wieder, wenn der Bildschirm angeht, und das Auto fuhr aus dem Bild (Tester Tom 11.11.). Ohne CarPlay tut das nichts.
-      if (fix.heading != null) carPlayCamera(fix.pos, fix.heading);
+      // Auf der Route: Punkt auf der Linie und Richtung der Straße (Koray 12.11.: das Auto stand schief neben der Spur)
+      if (snap.offM <= OFF_ROUTE_M) {
+        const on = pointAtKm(route, snap.km);
+        carPlayCamera(on.point, on.heading);
+      } else if (fix.heading != null) carPlayCamera(fix.pos, fix.heading);
 
       setState((s) => ({
         ...s,
