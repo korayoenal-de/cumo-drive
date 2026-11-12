@@ -1,0 +1,98 @@
+{
+ "_": "Entscheidungen aus der Datenprüfung vom 12.11.2026 (docs/datencheck-2026-11-12.md). build_roads.py wendet sie am Ende an (apply_auswahl.py).",
+ "gestrichen": {
+  "de-gorxheimer-tal": "Ortsanteil 93 Prozent",
+  "de-externsteine": "Ortsanteil 81 Prozent",
+  "at-kleinwalsertal": "Ortsanteil 71 Prozent",
+  "at-kufstein-walchsee": "Ortsanteil 70 Prozent",
+  "de-fichtelberg": "Linie kaputt (930 m)"
+ },
+ "geparkt": {
+  "de-neuffener-steige": "Ortsanteil 50 bis 70 Prozent",
+  "at-b41-gmuend-schrems": "Ortsanteil 50 bis 70 Prozent",
+  "at-forchtenstein": "Ortsanteil 50 bis 70 Prozent",
+  "de-saaletal": "Ortsanteil 50 bis 70 Prozent",
+  "at-gmunden-scharnstein": "Ortsanteil 50 bis 70 Prozent",
+  "fr-route-des-cretes-cassis": "Ortsanteil 50 bis 70 Prozent, dazu Schnellstraße ab 25 Prozent",
+  "at-voitsberg-stallhofen": "Ortsanteil 50 bis 70 Prozent",
+  "de-ahrtal": "Ortsanteil 50 bis 70 Prozent",
+  "ch-malcantone": "Ortsanteil 50 bis 70 Prozent",
+  "at-velden-keutschach": "Ortsanteil 50 bis 70 Prozent",
+  "ch-rigi-nordseite": "Ortsanteil 50 bis 70 Prozent, dazu Schnellstraße ab 25 Prozent",
+  "fr-vence-grasse": "Ortsanteil 50 bis 70 Prozent",
+  "de-illertal-hoehe": "Ortsanteil 50 bis 70 Prozent, dazu Schnellstraße ab 25 Prozent",
+  "de-siegtal": "Ortsanteil 50 bis 70 Prozent",
+  "at-b72-weiz-anger": "Ortsanteil 50 bis 70 Prozent",
+  "de-guldenklinger-hoehe": "Ortsanteil 50 bis 70 Prozent",
+  "fr-gerardmer-cornimont": "Ortsanteil 50 bis 70 Prozent",
+  "de-mittleres-erzgebirge": "Ortsanteil 50 bis 70 Prozent",
+  "de-schleizer-dreieck": "Ortsanteil 50 bis 70 Prozent",
+  "de-hassberge": "Ortsanteil 50 bis 70 Prozent",
+  "de-weiher-abtsteinach": "Ortsanteil 50 bis 70 Prozent",
+  "ch-urnaesch-herisau": "Ortsanteil 50 bis 70 Prozent",
+  "de-aartal-b54": "Ortsanteil 50 bis 70 Prozent",
+  "at-b145-bad-aussee-traunkirchen": "Ortsanteil 50 bis 70 Prozent",
+  "si-slovenske-gorice": "Ortsanteil 50 bis 70 Prozent, dazu Schnellstraße ab 25 Prozent",
+  "at-b50-eisenstadt-mattersburg": "Schnellstraße ab 25 Prozent, einzeln prüfen",
+  "at-packsattel": "Schnellstraße ab 25 Prozent, einzeln prüfen",
+  "si-postojna-kozina": "Schnellstraße ab 25 Prozent, einzeln prüfen",
+  "si-vipava": "Schnellstraße ab 25 Prozent, einzeln prüfen",
+  "at-lavanttal": "Schnellstraße ab 25 Prozent, einzeln prüfen",
+  "ch-jurassien-villars-reclere": "Schnellstraße ab 25 Prozent, einzeln prüfen",
+  "de-weserbergland-rinteln": "Schnellstraße ab 25 Prozent, einzeln prüfen",
+  "de-rottal": "Schnellstraße ab 25 Prozent, einzeln prüfen",
+  "de-hunsrueckhoehenstrasse": "Schnellstraße ab 25 Prozent, einzeln prüfen",
+  "it-alghero-bosa": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-orientale-sarda": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-villasimius-solanas": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-san-pantaleo": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-sulcis": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-madonie-piano-battaglia": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-targa-florio-castelbuono": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-alcantara": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-etna-sud": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-madonie-cerami-nicosia": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-amalfitana": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-fasano-selva": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-maratea": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-appennino-lucano": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-castel-di-sangro-isernia": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-campo-imperatore": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-svolte-di-popoli": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "it-valle-del-sagittario": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "fr-calanches-de-piana": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "fr-col-de-bavella": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "fr-col-de-sorba": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
+  "fr-col-de-vergio": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist"
+ },
+ "nur_bevorzugt": [
+  "de-b305-weitsee",
+  "de-hoher-meissner",
+  "at-gesaeuse",
+  "at-malta-hochalmstrasse",
+  "fr-col-de-joux-plane",
+  "si-snovik-crnivec"
+ ],
+ "zusammengefuehrt": {
+  "ch-centovalli-intragna-camedo": "ch-centovalli",
+  "at-gerlos-alpenstrasse": "at-gerlos",
+  "de-harzhochstrasse": "de-harzhochstrasse-b242",
+  "ch-furkapass": "ch-furkastrasse",
+  "de-notschrei-todtnau": "de-notschrei-oberried-todtnau",
+  "at-faschina-damuels-fontanella": "at-faschinastrasse",
+  "at-faschinajoch": "at-faschinastrasse",
+  "ch-tremola": "ch-gotthard-tremola"
+ },
+ "umbenannt": {
+  "de-harzhochstrasse-b242": "Harzhochstraße",
+  "ch-furkastrasse": "Furkapass"
+ },
+ "felder": {
+  "ch-gotthard-tremola": {
+   "tier": "highlight",
+   "warn": [
+    "pflaster"
+   ]
+  }
+ }
+}

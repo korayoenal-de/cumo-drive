@@ -295,6 +295,9 @@ for r in kept:
 order = {'DE': 0, 'AT': 1, 'CH': 2, 'IT': 3, 'FR': 4, 'SI': 5}
 kept.sort(key=lambda r: (order.get(r['country'], 9), r['tier'] != 'highlight', r['id']))
 out = [{k: v for k, v in r.items() if not k.startswith('_')} for r in kept]
+# Entscheidungen aus der Datenprüfung (gestrichen, geparkt, zusammengeführt) gelten auch nach einem Neubau
+from apply_auswahl import apply as apply_auswahl
+out = apply_auswahl(out)
 txt = '[\n' + ',\n'.join(json.dumps(o, ensure_ascii=False, separators=(',', ':')) for o in out) + '\n]\n'
 open(OUT, 'w').write(txt)
 json.dump({'skipped': skipped, 'dups': dups, 'demoted': demoted,
