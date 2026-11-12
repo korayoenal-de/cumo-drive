@@ -8,7 +8,7 @@
  * (oder Kacheln nicht laden), fragt die App wie bisher die öffentliche Overpass API.
  */
 import { RECOMMENDED, recommendedNear } from './recommended';
-import { CUMO_ROUTING_URL, routingServerUrl } from './cumo-routing';
+import { CUMO_ROUTING_SERVERS, routingServerUrl } from './cumo-routing';
 import { haversine, type LatLon } from './tour';
 import type { Stop } from './intent';
 
@@ -191,7 +191,7 @@ async function poiBase(): Promise<string | null> {
   if (poiBaseCache && (poiBaseCache.base || Date.now() - poiBaseCache.at < 60000)) return poiBaseCache.base;
   const pending = (async () => {
     // in der Entwicklung zeigt routingServerUrl auf den Mac (ohne Kacheln), dann der eigene Server
-    const cands = [...new Set([routingServerUrl(), CUMO_ROUTING_URL].filter((u): u is string => !!u))];
+    const cands = [...new Set([routingServerUrl(), ...CUMO_ROUTING_SERVERS].filter((u): u is string => !!u))];
     for (const u of cands) {
       try {
         const r = await fetchWithTimeout(`${u}/poi/v1/meta.json`, 4000);

@@ -25,19 +25,40 @@ import type { Avoid } from './valhalla';
 /** Fahrregionen als Fläche auf dem Server (aus, siehe model) */
 const SERVER_REGIONS = false;
 
-/** Eigener Routing Server (Contabo, GraphHopper mit Sportwagen Profil). Später unter routing.rallycumo.de. */
-export const CUMO_ROUTING_URL = 'https://13-140-213-164.sslip.io';
+/**
+ * Eigene Routing Server (Contabo, GraphHopper mit Sportwagen Profil). Seit 12.11. zwei gleiche Server:
+ * fällt einer aus oder baut gerade neu, plant die App über den anderen (Koray 12.11., Unabhängigkeit).
+ */
+export const CUMO_ROUTING_SERVERS = ['https://13-140-213-164.sslip.io', 'https://13-140-213-114.sslip.io'];
+export const CUMO_ROUTING_URL = CUMO_ROUTING_SERVERS[0];
+/** Index des Servers, der zuletzt geantwortet hat */
+let active = 0;
 
-export function routingServerUrl(): string | null {
+/** Fester Server aus der Umgebung oder der Entwicklung im lokalen Netz (dann ohne Wechsel) */
+function fixedServer(): string | null {
   const env = process.env.EXPO_PUBLIC_ROUTING_URL;
   if (env) return env.replace(/\/$/, '');
   if (typeof window !== 'undefined' && typeof window.location?.hostname === 'string' && window.location.hostname) {
-    // Entwicklung im lokalen Netz: Server auf dem Mac, sonst der eigene Server im Netz
     const h = window.location.hostname;
     const local = h === 'localhost' || h === '127.0.0.1' || /^(10|192\.168|172\.(1[6-9]|2\d|3[01]))\./.test(h);
-    return local ? `http://${h}:8989` : CUMO_ROUTING_URL;
+    if (local) return `http://${h}:8989`;
   }
-  return CUMO_ROUTING_URL;
+  return null;
+}
+
+export function routingServerUrl(): string | null {
+  return fixedServer() ?? CUMO_ROUTING_SERVERS[active];
+}
+
+/** Auf den anderen Server wechseln; null, wenn es keinen anderen gibt */
+function switchServer(from: string): string | null {
+  if (fixedServer()) return null;
+  const i = CUMO_ROUTING_SERVERS.indexOf(from);
+  const next = (i + 1) % CUMO_ROUTING_SERVERS.length;
+  if (next === i) return null;
+  active = next;
+  availability = null;
+  return CUMO_ROUTING_SERVERS[next];
 }
 
 let availability: { at: number; ok: boolean } | null = null;
@@ -68,8 +89,20 @@ export function prewarmRouting(): void {
 }
 
 async function probe(): Promise<boolean> {
-  const url = routingServerUrl();
-  if (!url) return false;
+  const fixed = fixedServer();
+  const order = fixed ? [fixed] : [...CUMO_ROUTING_SERVERS.slice(active), ...CUMO_ROUTING_SERVERS.slice(0, active)];
+  for (const url of order) {
+    if (await probeOne(url)) {
+      if (!fixed) active = CUMO_ROUTING_SERVERS.indexOf(url);
+      availability = { at: Date.now(), ok: true };
+      return true;
+    }
+  }
+  availability = { at: Date.now(), ok: false };
+  return false;
+}
+
+async function probeOne(url: string): Promise<boolean> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 3000);
   let ok = false;
@@ -85,7 +118,6 @@ async function probe(): Promise<boolean> {
   } finally {
     clearTimeout(t);
   }
-  availability = { at: Date.now(), ok };
   return ok;
 }
 
@@ -248,9 +280,23 @@ const GZIP_MIN = 2000;
 /** wird false, sobald eine komprimierte Anfrage scheitert, die unkomprimiert klappt (Sicherheitsnetz) */
 let gzipOk = Platform.OS !== 'web';
 
+/** Ein Server antwortet nicht oder mit einem Serverfehler: dann einmal den anderen fragen */
 async function send(text: string, signal?: AbortSignal): Promise<GhPath> {
   const url = routingServerUrl();
   if (!url) throw new Error('Kein eigener Routing Server eingestellt.');
+  try {
+    return await sendTo(url, text, signal);
+  } catch (e) {
+    const status = (e as { status?: number }).status;
+    const down = status == null ? !(e instanceof Error && e.message.startsWith('Eigener Routing Server:')) : status >= 500;
+    if (signal?.aborted || !down) throw e;
+    const alt = switchServer(url);
+    if (!alt) throw e;
+    return sendTo(alt, text, signal);
+  }
+}
+
+async function sendTo(url: string, text: string, signal?: AbortSignal): Promise<GhPath> {
   const ask = (zip: boolean) =>
     fetch(`${url}/route`, {
       method: 'POST',
@@ -285,7 +331,11 @@ async function send(text: string, signal?: AbortSignal): Promise<GhPath> {
       throw e;
     }
   }
-  if (!out || !out.ok) throw new Error(`Eigener Routing Server: ${out?.data.message ?? `Fehler ${out?.status ?? 0}`}`);
+  if (!out || !out.ok) {
+    const err = new Error(`Eigener Routing Server: ${out?.data.message ?? `Fehler ${out?.status ?? 0}`}`) as Error & { status?: number };
+    err.status = out?.status ?? 0;
+    throw err;
+  }
   return out.data.paths![0];
 }
 
