@@ -56,7 +56,7 @@ function thin(samples: Sample[]): LatLon[] {
 const r1 = (v: number | undefined | null) => (v == null ? null : Math.round(v * 10) / 10);
 const r2 = (v: number | undefined | null) => (v == null ? null : Math.round(v * 100) / 100);
 
-export async function saveDrive(name: string, stats: RideStats, samples: Sample[], vehicle?: { id: string; model: string } | null): Promise<string> {
+export async function saveDrive(name: string, stats: RideStats, samples: Sample[], vehicle?: { id: string; model: string } | null, navLog?: unknown): Promise<string> {
   const row = {
     name: name.slice(0, 120) || 'Fahrt',
     started_at: new Date(samples[0]?.t ?? Date.now()).toISOString(),
@@ -71,7 +71,10 @@ export async function saveDrive(name: string, stats: RideStats, samples: Sample[
     track: encode(thin(samples)),
     ...(vehicle ? { vehicle_id: vehicle.id, vehicle_name: vehicle.model.slice(0, 80) || null } : {}),
   };
-  const { data, error } = await supabase.from('drives').insert(row).select('id').single();
+  const withLog: Record<string, unknown> = navLog ? { ...row, nav_log: navLog } : row;
+  let { data, error } = await supabase.from('drives').insert(withLog).select('id').single();
+  // Spalte nav_log noch nicht da (Migration nicht eingespielt): ohne Blackbox speichern statt die Fahrt zu verlieren
+  if (error && navLog && /nav_log/.test(error.message)) ({ data, error } = await supabase.from('drives').insert(row).select('id').single());
   if (error) throw new Error(error.message);
   return (data as { id: string }).id;
 }
@@ -195,4 +198,15 @@ export async function getDriveTracks(ids: string[]): Promise<Record<string, LatL
     if (p.length > 1) out[d.id] = p;
   }
   return out;
+}
+
+/**
+ * "Problem melden" aus der Navigation (Koray 12.11.): Ort, was die App gerade zeigte, und die letzten Minuten
+ * der Blackbox. Liefert false ohne Konto oder ohne Netz; die Meldung steht dann trotzdem im Protokoll der Fahrt.
+ */
+export async function sendNavReport(r: { p: LatLon | null; context: Record<string, unknown>; log: unknown }): Promise<boolean> {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) return false;
+  const { error } = await supabase.from('nav_reports').insert({ lat: r.p?.[0] ?? null, lon: r.p?.[1] ?? null, context: r.context, log: r.log });
+  return !error;
 }

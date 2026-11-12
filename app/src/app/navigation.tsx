@@ -28,7 +28,9 @@ import { roundaboutTurn } from '@/lib/navigation/roundabout';
 import { toFunLevel } from '@/components/ui/fun-gauge';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
 import { useSession } from '@/lib/auth';
-import { saveDrive } from '@/lib/drives';
+import { saveDrive, sendNavReport } from '@/lib/drives';
+import { bbLog, bbSnapshot } from '@/lib/navigation/blackbox';
+import { haptic } from '@/lib/haptics';
 import { useNavigation } from '@/lib/navigation';
 import { feedbackKey } from '@/lib/highlight-feedback';
 import { curveCue, sharpCurves } from '@/lib/navigation/curves';
@@ -419,7 +421,7 @@ export default function NavigationScreen() {
       const t = setTimeout(() => setSaved(why), 0);
       return () => clearTimeout(t);
     }
-    saveDrive(active.tour.name, shownStats, samples.current, currentVehicle())
+    saveDrive(active.tour.name, shownStats, samples.current, currentVehicle(), bbSnapshot())
       .then((id) => {
         setDriveId(id);
         setSaved('ok');
@@ -681,6 +683,34 @@ export default function NavigationScreen() {
   // Angezeigt wird ein bekanntes Schild, außerorts ohne Eintrag die geschätzten 100 in Grau (Koray 12.11.)
   const shownLimit = atKm != null && zones?.route === route ? shownLimitAt(zones.z, atKm) : null;
   const limitHere = shownLimit?.limit ?? null;
+  const limitEst = shownLimit?.estimated ?? false;
+  // Blackbox: jedes angezeigte Tempolimit mit Stelle (Klassiker Tempolimit, Koray 12.11.)
+  useEffect(() => {
+    if (running) bbLog('limit', [limitHere, limitEst ? 1 : 0, atKm == null ? null : Math.round(atKm * 1000) / 1000]);
+    // nur bei Wechsel des Limits, nicht bei jedem Meter
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running, limitHere, limitEst]);
+  // Problem melden: ein Tipp während der Fahrt, die letzten vier Minuten gehen mit
+  const reportProblem = () => {
+    haptic('punkt');
+    const m = route?.maneuvers[state.next];
+    const context = {
+      tour: active?.tour.name ?? null,
+      km: atKm == null ? null : Math.round(atKm * 1000) / 1000,
+      manoever: m ? { text: m.text, speech: m.speech, km: m.km, kind: m.kind } : null,
+      danach: route?.maneuvers[state.next + 1]?.text ?? null,
+      abstand: state.distToNextM == null ? null : Math.round(state.distToNextM),
+      tempo: state.speedKmh == null ? null : Math.round(state.speedKmh),
+      limit: limitHere,
+      limitGeschaetzt: limitEst,
+      abseits: state.offRouteM == null ? null : Math.round(state.offRouteM),
+      status: state.status,
+    };
+    bbLog('report', context);
+    void sendNavReport({ p: state.position, context, log: bbSnapshot(240) })
+      .catch(() => false)
+      .then((ok) => showToast(ok ? 'Danke, die Stelle ist gemerkt.' : 'Gemerkt, die Stelle steht im Protokoll der Fahrt.'));
+  };
   // Nächstes Zwischenziel überspringen: Ziel ist das Zwischenziel danach, sonst das Ende der Route
   const nextVia = atKm != null ? viaKms.findIndex((k) => k > atKm + 0.1) : -1;
   const skipTarget = (() => {
@@ -932,17 +962,18 @@ export default function NavigationScreen() {
                   ? { talking: funk.talking, waiting: funk.waiting, disabled: funk.onlyLead && ride.myRole !== 'lead', onTalk: pushToTalk }
                   : undefined
               }
-              extraActions={
-                withOthers && funk.status !== 'nicht'
+              extraActions={[
+                { key: 'melden', label: 'Problem melden', icon: 'exclamationmark.bubble.fill' as const, run: reportProblem },
+                ...(withOthers && funk.status !== 'nicht'
                   ? [
-                      { key: 'msg', label: 'Kurznachricht an die Gruppe', icon: 'bubble.left.fill', run: () => setMsgOpen(true) },
-                      { key: 'hoeren', label: funk.listen ? 'Funk stumm' : 'Funk hören', icon: funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill', run: () => setFunkListen(!funk.listen) },
+                      { key: 'msg', label: 'Kurznachricht an die Gruppe', icon: 'bubble.left.fill' as const, run: () => setMsgOpen(true) },
+                      { key: 'hoeren', label: funk.listen ? 'Funk stumm' : 'Funk hören', icon: (funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill') as 'speaker.slash.fill', run: () => setFunkListen(!funk.listen) },
                       ...(ride.myRole === 'lead'
                         ? [{ key: 'nurlead', label: funk.onlyLead ? 'Alle dürfen sprechen' : 'Nur die Lead spricht', icon: 'person.wave.2.fill' as const, run: () => setOnlyLead(!funk.onlyLead) }]
                         : []),
                     ]
-                  : undefined
-              }
+                  : []),
+              ]}
               showSim={showSim}
               bottomInset={insets.bottom + Spacing.m}
               onEnd={close}
