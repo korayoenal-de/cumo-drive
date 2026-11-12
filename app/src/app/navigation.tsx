@@ -33,7 +33,7 @@ import { useNavigation } from '@/lib/navigation';
 import { feedbackKey } from '@/lib/highlight-feedback';
 import { curveCue, sharpCurves } from '@/lib/navigation/curves';
 import { closureLabel, closuresNear, closuresOnRoute } from '@/lib/road-closures';
-import { limitAt, loadSpeedZones, type SpeedZones } from '@/lib/navigation/speed-zones';
+import { limitAt, loadSpeedZones, shownLimitAt, type SpeedZones } from '@/lib/navigation/speed-zones';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
 import { warnLabel } from '@/lib/passes';
 import { predictPosition } from '@/lib/group/predict';
@@ -678,8 +678,9 @@ export default function NavigationScreen() {
   const brakeHint = cue ? { big: cue.big, label: cue.label, icon: cue.icon, a11y: cue.a11y } : null;
   const then = route?.maneuvers[state.next + 1];
   // Tempo unten links: Limit an der aktuellen Stelle der Route, sobald die Zonen geladen sind
-  // Angezeigt wird nur ein bekanntes Schild, geschätzte Limits zählen nur für die Kurvenwarnung
-  const limitHere = atKm != null && zones?.route === route ? limitAt(zones.z, atKm, true) : null;
+  // Angezeigt wird ein bekanntes Schild, außerorts ohne Eintrag die geschätzten 100 in Grau (Koray 12.11.)
+  const shownLimit = atKm != null && zones?.route === route ? shownLimitAt(zones.z, atKm) : null;
+  const limitHere = shownLimit?.limit ?? null;
   // Nächstes Zwischenziel überspringen: Ziel ist das Zwischenziel danach, sonst das Ende der Route
   const nextVia = atKm != null ? viaKms.findIndex((k) => k > atKm + 0.1) : -1;
   const skipTarget = (() => {
@@ -887,7 +888,7 @@ export default function NavigationScreen() {
           <>
             {(driveSettings.speed || brakeHint) && (
               <View style={styles.leadWrap}>
-                <SpeedBadge speedKmh={state.speedKmh} limit={limitHere} hint={brakeHint} showSpeed={driveSettings.speed} />
+                <SpeedBadge speedKmh={state.speedKmh} limit={limitHere} estimated={shownLimit?.estimated} hint={brakeHint} showSpeed={driveSettings.speed} />
               </View>
             )}
             {inRide && msgOpen && (

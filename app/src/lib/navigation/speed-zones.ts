@@ -4,8 +4,9 @@
  * Ist maxspeed an einer Kante nicht eingetragen, gilt das Limit der vorigen eingetragenen Kante
  * derselben Straßenklasse (Schilder gelten bis zum nächsten Schild, aber nicht über eine Abfahrt
  * hinaus). Sonst wird geschätzt: Wohnstraßen und Zufahrten 50, im Ort 50, außerorts 100.
- * Geschätzte Werte zählen nur für die Kurvenwarnung, angezeigt wird nur ein bekanntes Schild
- * (sonst stand nach der Autobahn in der Stadt noch das Schild unbegrenzt, 7.11.2026).
+ * Geschätzte Werte zählen für die Kurvenwarnung; angezeigt wird ein bekanntes Schild (sonst stand nach der
+ * Autobahn in der Stadt noch das Schild unbegrenzt, 7.11.2026) und seit 12.11. außerorts ohne Eintrag die
+ * geschätzten 100 als graue Plakette (shownLimitAt).
  * Valhallas geschätztes Tempo taugt dafür nicht (alle Bundesstraßen 57 km/h, Messung 6.11.).
  * Wird stückweise geladen (etwa 40 km je Anfrage); onPart meldet jeden fertigen Teil.
  */
@@ -135,5 +136,22 @@ export async function loadSpeedZones(shape: LatLon[], onPart: (z: SpeedZones) =>
 export function limitAt(z: SpeedZones | null, km: number, onlyKnown = false): number | null {
   if (!z || km > z.loadedKm) return null;
   for (let i = 0; i < z.endKm.length; i++) if (km <= z.endKm[i]) return onlyKnown && !z.known[i] ? null : z.limit[i];
+  return null;
+}
+
+/** Geschätzte Limits, die angezeigt werden dürfen: nur die freie Strecke außerorts (Koray 12.11.) */
+const SHOW_ESTIMATE = 100;
+
+/**
+ * Limit für die Anzeige bei km: ein bekanntes Schild, oder außerorts ohne Eintrag die geschätzten 100,
+ * dann mit estimated (graue Plakette ohne roten Ring). Im Ort und auf der Autobahn wird weiter nicht geraten.
+ */
+export function shownLimitAt(z: SpeedZones | null, km: number): { limit: number; estimated: boolean } | null {
+  if (!z || km > z.loadedKm) return null;
+  for (let i = 0; i < z.endKm.length; i++) {
+    if (km > z.endKm[i]) continue;
+    if (z.known[i]) return { limit: z.limit[i], estimated: false };
+    return z.limit[i] === SHOW_ESTIMATE ? { limit: z.limit[i], estimated: true } : null;
+  }
   return null;
 }

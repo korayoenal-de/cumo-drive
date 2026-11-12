@@ -5,7 +5,8 @@
  * dreht in seine Lage, die Meter rollen herunter. Danach ruhiger Rückweg zum Tempo; ein neues Limit
  * pulsiert kurz am Schild. Alles mit Auslaufkurve, ohne Federn. Reduzierte Bewegung: nur Überblenden.
  *
- * Das Limit kommt aus den Straßendaten (speed-zones.ts); ohne Angabe steht kein Schild, geraten wird nie.
+ * Das Limit kommt aus den Straßendaten (speed-zones.ts). Ohne Angabe steht kein Schild; nur außerorts zeigt eine
+ * graue Plakette ohne roten Ring die geschätzten 100 (Koray 12.11.). Sie färbt die Fläche nie ein.
  * Zu schnell färbt nur die Fläche ein (warn getönt), ohne Ton und ohne Wertung.
  */
 import { useEffect, useRef, useState } from 'react';
@@ -59,10 +60,10 @@ const rollOut = new Keyframe({
   100: { opacity: 0, transform: [{ translateY: -10 }], easing: EASE },
 }).duration(140);
 
-export function SpeedBadge({ speedKmh, limit, hint, showSpeed = true }: { speedKmh: number | null; limit: number | null; hint: BrakeHint | null; showSpeed?: boolean }) {
+export function SpeedBadge({ speedKmh, limit, estimated = false, hint, showSpeed = true }: { speedKmh: number | null; limit: number | null; /** geschätzt statt Schild: grau, ohne Ring */ estimated?: boolean; hint: BrakeHint | null; showSpeed?: boolean }) {
   const reduced = useReducedMotion();
   const v = speedKmh != null && speedKmh >= 3 ? Math.round(speedKmh) : 0;
-  const over = limit != null && limit < 130 && v > limit + OVER_KMH;
+  const over = limit != null && !estimated && limit < 130 && v > limit + OVER_KMH;
 
   // Breiten der beiden Ebenen, gemessen im Layout
   const [restW, setRestW] = useState(0);
@@ -179,7 +180,7 @@ export function SpeedBadge({ speedKmh, limit, hint, showSpeed = true }: { speedK
   // Ohne Tempoanzeige gibt es die Plakette nur während eines Hinweises
   if (!showSpeed && !hint && !shown) return null;
 
-  const label = hint ? hint.a11y : `Tempo ${v} km/h${limit != null ? `, erlaubt ${limit >= 130 ? 'unbegrenzt' : `${limit} km/h`}` : ''}${over ? ', zu schnell' : ''}`;
+  const label = hint ? hint.a11y : `Tempo ${v} km/h${limit != null ? `, ${estimated ? 'geschätzt erlaubt' : 'erlaubt'} ${limit >= 130 ? 'unbegrenzt' : `${limit} km/h`}` : ''}${over ? ', zu schnell' : ''}`;
   const s = shown;
   return (
     <Animated.View style={[styles.pill, pillStyle]} accessible accessibilityRole={hint ? 'alert' : undefined} accessibilityLabel={label} accessibilityLiveRegion="polite">
@@ -205,8 +206,8 @@ export function SpeedBadge({ speedKmh, limit, hint, showSpeed = true }: { speedK
               <AppText style={styles.unit}>km/h</AppText>
             </Animated.View>
             {limit != null && (
-              <Animated.View style={[styles.sign, limit >= 130 && styles.signFree, signStyle]}>
-                {limit >= 130 ? <View style={styles.freeBar} /> : <AppText style={styles.signText}>{limit}</AppText>}
+              <Animated.View style={[styles.sign, limit >= 130 && styles.signFree, estimated && styles.signGuess, signStyle]}>
+                {limit >= 130 ? <View style={styles.freeBar} /> : <AppText style={[styles.signText, estimated && styles.signGuessText]}>{limit}</AppText>}
               </Animated.View>
             )}
           </>
@@ -261,6 +262,9 @@ const styles = StyleSheet.create({
   sign: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#FFFFFF', borderWidth: 4, borderColor: '#D7261E', alignItems: 'center', justifyContent: 'center' },
   signFree: { borderColor: '#FFFFFF', borderWidth: 0 },
   freeBar: { width: 34, height: 4, backgroundColor: '#1C1C1F', transform: [{ rotate: '-45deg' }] },
+  // Schätzung: graue Fläche ohne Ring, damit sie nicht wie ein bestätigtes Schild aussieht
+  signGuess: { backgroundColor: '#3A3A3E', borderWidth: 0 },
+  signGuessText: { color: '#C8C8CC' },
   signText: { fontFamily: Fonts.bold, fontSize: 16, color: '#0B0B0C', fontVariant: ['tabular-nums'] },
   ico: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.warnTint, alignItems: 'center', justifyContent: 'center' },
   mirror: { transform: [{ scaleX: -1 }] },
