@@ -194,10 +194,10 @@ const lineOf = (t: Tour): LatLon[] => flatten(t).map((x) => x.p);
 /** Bis zu dieser Summe der Luftlinien wird Kurvig mit dem direkten Weg verglichen */
 const COMPARE_MAX_M = 200000;
 /** So lange darf der Vergleich mit dem direkten Weg dauern */
-const COMPARE_BUDGET_MS = 8000;
+const COMPARE_BUDGET_MS = 5000;
 
 /** So lange darf das Umplanen um eine Sperrung dauern */
-const FIX_BUDGET_MS = 12000;
+const FIX_BUDGET_MS = 5000;
 
 /** Aufgabe mit eigener Frist: bricht nach ms ab (oder wenn der Aufrufer abbricht) und wirft dann */
 async function withBudget<T>(signal: AbortSignal | undefined, ms: number, job: (s: AbortSignal) => Promise<T>): Promise<T> {
