@@ -737,6 +737,8 @@ export default function Planner() {
       )}
       {scan ? (
         <View style={styles.workBox}>
+          {/* Balken über Name und Abbrechen (Koray 12.11.) */}
+          <ProgressBar step={phaseIndex(tourPlan.step ?? 'route')} expectMs={8000} />
           <View style={styles.summary}>
             <AppText variant="title" style={styles.flex} numberOfLines={1}>
               {`${tourPlan.names[keyOf(tourPlan.pts[0])] ?? 'Start'} nach ${tourPlan.names[keyOf(tourPlan.pts[tourPlan.pts.length - 1])] ?? 'Ziel'}`}
@@ -745,10 +747,11 @@ export default function Planner() {
               <AppText style={styles.cancelText}>Abbrechen</AppText>
             </Pressable>
           </View>
-          <ProgressBar step={phaseIndex(tourPlan.step ?? 'route')} expectMs={8000} />
         </View>
       ) : view.kind === 'working' ? (
         <View style={styles.workBox}>
+          {/* Balken mit Prozent statt Logo (Koray 8.11.) */}
+          <ProgressBar step={phaseIndex(view.phase)} expectMs={12000} done={radar?.phase === 'aufloesen'} doneMs={REVEAL_MS - 300} />
           <View style={styles.summary}>
             <AppText variant="title" style={styles.flex} numberOfLines={1}>
               {radar?.phase === 'aufloesen' ? 'Fertig' : `Rundtour, ${roundKm} km`}
@@ -757,8 +760,6 @@ export default function Planner() {
               <AppText style={styles.cancelText}>Abbrechen</AppText>
             </Pressable>
           </View>
-          {/* Balken mit Prozent statt Logo (Koray 8.11.) */}
-          <ProgressBar step={phaseIndex(view.phase)} expectMs={12000} done={radar?.phase === 'aufloesen'} doneMs={REVEAL_MS - 300} />
         </View>
       ) : (
         <AppText variant="caption" muted numberOfLines={2} style={styles.summaryHint}>
