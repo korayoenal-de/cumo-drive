@@ -191,6 +191,11 @@ export async function planChecked(
 
 const lineOf = (t: Tour): LatLon[] => flatten(t).map((x) => x.p);
 
+/** Bis zu dieser Summe der Luftlinien wird Kurvig mit dem direkten Weg verglichen */
+const COMPARE_MAX_M = 200000;
+/** So lange darf der Vergleich mit dem direkten Weg dauern */
+const COMPARE_BUDGET_MS = 8000;
+
 /** So lange darf das Umplanen um eine Sperrung dauern */
 const FIX_BUDGET_MS = 12000;
 
@@ -249,15 +254,22 @@ async function planCore(
     // Dann den Punkt auf die nächste Straße setzen und nochmal, statt auf den langsamen Weg zu fallen.
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
-        const curvy = compare && (profile === 'kurvig' || profile === 'paesse');
+        // Lange Routen (Luftlinie über 200 km) nicht gegen den direkten Weg vergleichen: der fährt dort Autobahn,
+        // und Kurvig fährt keine Autobahn (Koray 12.11.). Der Vergleich dauerte über 700 km bis über eine Minute
+        // und hielt die Planung auf (Heppenheim über Gaviapass, 12.11. abends).
+        let air = 0;
+        for (let k = 1; k < pts.length; k++) air += haversine(pts[k - 1], pts[k]);
+        const curvy = compare && (profile === 'kurvig' || profile === 'paesse') && air <= COMPARE_MAX_M;
         // Der direkte Weg dient erst nur zum Vergleich: eine einzige Abfrage ohne Nachbessern (10.11.: sechs
         // von acht Abfragen einer einfachen Route gingen auf diesen Vergleich). Hat er gesperrte Stücke, läuft
         // die volle Planung gleich hinterher, parallel zur kurvigen Variante, damit sie fertig ist, falls er gewinnt.
+        // Der Vergleich hat eine eigene Frist: ist er bis dahin nicht fertig, gilt die kurvige Route
         const directJob = curvy
-          ? cumoPlan(name, pts, 'schnell', avoid, signal, extraExclude, true, hint)
-              // findet die volle Planung keinen Weg, zählt der direkte Weg nicht (wie bisher)
-              .then((d) => ((d.km_je_klasse?.raus ?? 0) === 0 ? d : cumoPlan(name, pts, 'schnell', avoid, signal, extraExclude, false, hint)))
-              .catch(() => null)
+          ? withBudget(signal, COMPARE_BUDGET_MS, (s) =>
+              cumoPlan(name, pts, 'schnell', avoid, s, extraExclude, true, hint)
+                // findet die volle Planung keinen Weg, zählt der direkte Weg nicht (wie bisher)
+                .then((d) => ((d.km_je_klasse?.raus ?? 0) === 0 ? d : cumoPlan(name, pts, 'schnell', avoid, s, extraExclude, false, hint))),
+            ).catch(() => null)
           : Promise.resolve(null);
         const [main, direct] = await Promise.all([cumoPlan(name, pts, profile, avoid, signal, extraExclude, false, hint), directJob]);
         if (direct && !curvyWorthIt(main, direct)) return { ...direct, direkt: 1 };

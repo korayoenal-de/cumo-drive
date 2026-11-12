@@ -30,7 +30,7 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 /**
- * onAvoid: Pass mit Warnung für diese Tour herausnehmen (Doch umfahren) oder wieder einplanen; der Aufrufer
+ * onAvoid: Pass mit Warnung für diese Tour herausnehmen (Auslassen) oder wieder einplanen; der Aufrufer
  * plant danach neu. Ohne onAvoid (Rundtour) gibt es nur das Label.
  */
 export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () => void }) {
@@ -57,11 +57,11 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
                 onPress={() => setOpen(h)}
                 style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
                 <View style={[styles.flex, h.warn?.length ? styles.warned : null]}>
-                  {/* Warnung als Label über dem Namen, der Hauptgrund selbst (Konzept 12.11.) */}
-                  <WarnLabel warn={h.warn} />
+                  {/* Warnung als Label unter dem Namen, der Hauptgrund selbst (Koray 12.11. abends) */}
                   <AppText style={styles.name} numberOfLines={1}>
                     {h.name}
                   </AppText>
+                  <WarnLabel warn={h.warn} />
                   <AppText style={styles.sub} numberOfLines={1}>
                     {`km ${Math.round(h.startKm)} · ${highlightFacts(h)}`}
                   </AppText>
@@ -74,7 +74,7 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
               {onAvoid && h.kind === 'pass' && h.warn?.length ? (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`${h.name} doch umfahren`}
+                  accessibilityLabel={`${h.name} auslassen`}
                   onPress={() => {
                     const p = PASSES.find((x) => x.id === h.id);
                     if (!p) return;
@@ -82,7 +82,7 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
                     onAvoid();
                   }}
                   style={({ pressed }) => [styles.avoid, pressed && styles.pressed]}>
-                  <AppText style={styles.avoidText}>Doch umfahren</AppText>
+                  <AppText style={styles.avoidText}>Auslassen</AppText>
                 </Pressable>
               ) : null}
             </Animated.View>
@@ -93,7 +93,7 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
       {onAvoid &&
         avoided.map((a) => (
           <View key={a.id} style={styles.avoided}>
-            <AppText style={[styles.sub, styles.flex]} numberOfLines={1}>{`${a.name} umfahren`}</AppText>
+            <AppText style={[styles.sub, styles.flex]} numberOfLines={1}>{`${a.name} ausgelassen`}</AppText>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`${a.name} wieder einplanen`}
@@ -214,10 +214,10 @@ const styles = StyleSheet.create({
   rowPressed: { backgroundColor: Colors.pressTint },
   warned: { gap: 4, paddingVertical: 2 },
   avoid: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.s },
-  avoidText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.muted },
+  avoidText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.signal },
   avoided: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.s },
   avoidBack: { minHeight: 44, justifyContent: 'center' },
-  avoidBackText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
+  avoidBackText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.signal },
   name: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   sub: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   gauge: { alignItems: 'center', gap: 2, minWidth: 72 },

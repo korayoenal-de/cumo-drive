@@ -56,11 +56,11 @@ export function MapPassActions({
         <View style={styles.head}>
           <SymbolView name="mountain.2.fill" size={18} tintColor={Colors.signal} />
           <View style={[styles.flex, pass.warn?.length ? styles.warned : null]}>
-            {/* Warnung vor dem Hinzufügen: Label über dem Namen, weitere Gründe darunter (Konzept 12.11.) */}
-            <WarnLabel warn={pass.warn} />
+            {/* Warnung vor dem Hinzufügen: Label unter dem Namen, weitere Gründe darunter (Koray 12.11. abends) */}
             <AppText style={styles.name} numberOfLines={1}>
               {pass.name}
             </AppText>
+            <WarnLabel warn={pass.warn} />
             <AppText style={styles.sub} numberOfLines={1}>
               {sub}
             </AppText>
