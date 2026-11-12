@@ -566,7 +566,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       }}
       hitSlop={4}
       style={({ pressed }) => [styles.round, styles.roundMine, pressed && styles.pressed]}>
-      {busy === 'withdraw' ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="globe.europe.africa.fill" size={20} tintColor={Colors.good} weight="semibold" />}
+      {busy === 'withdraw' ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="eye.fill" size={20} tintColor={Colors.good} weight="semibold" />}
     </Pressable>
   ) : (
     <Pressable

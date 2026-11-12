@@ -333,9 +333,9 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
             disabled={saving}
             onClick={() => setAsk(true)}
             style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: 'rgba(76,195,138,0.14)', color: C.good, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8">
-              <circle cx="10" cy="10" r="8" />
-              <path d="M2 10h16M10 2c2.5 2.4 2.5 13.6 0 16M10 2c-2.5 2.4-2.5 13.6 0 16" />
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+              <circle cx="12" cy="12" r="3" />
             </svg>
           </button>
         ) : <button

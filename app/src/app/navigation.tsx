@@ -16,7 +16,6 @@ import { DriveRatingCard, type DrivenHighlight } from '@/components/navigation/d
 import { SpeedBadge } from '@/components/navigation/speed-badge';
 import { FunkBanner, HighlightCard, HighlightStrip, LeadHaltPill, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
-import { Chip } from '@/components/ui/chip';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
@@ -42,7 +41,8 @@ import { softEnter } from '@/components/ui/motion';
 import { elevationProfile } from '@/lib/stats';
 import { connectFunk, disconnectFunk, pushToTalk, setFunkListen, setOnlyLead, useFunk } from '@/lib/group/funk';
 import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, setOwnRoute, STOP_REASONS, useRide } from '@/lib/group/ride';
-import { currentVehicle, selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
+import { currentVehicle, useVehicles } from '@/lib/vehicle';
+import { VehiclePick } from '@/components/navigation/vehicle-pick';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
 
@@ -997,11 +997,7 @@ export default function NavigationScreen() {
                 ))}
               </View>
               {vehicles.list.length > 0 && (
-                <View style={styles.vehicleRow} accessibilityRole="radiogroup" accessibilityLabel="Fahrzeug für diese Fahrt">
-                  {vehicles.list.map((v) => (
-                    <Chip key={v.id} label={vehicleName(v) || 'Fahrzeug'} active={vehicles.current?.id === v.id} onPress={() => void selectVehicle(v.id)} />
-                  ))}
-                </View>
+                <VehiclePick list={vehicles.list} current={vehicles.current ?? null} />
               )}
               <BigButton label="Start" onPress={() => void controls.start()} />
               <View style={styles.row}>
@@ -1134,7 +1130,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   row: { flexDirection: 'row', gap: Spacing.s },
   entry: { gap: Spacing.s },
-  vehicleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   msgSheet: {
     marginHorizontal: Spacing.l,
     marginBottom: Spacing.s,
