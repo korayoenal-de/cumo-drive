@@ -14,10 +14,12 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { AppText } from '@/components/ui/text';
+import { WarnLabel, ZigzagIcon } from '@/components/ui/warn-label';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import type { FunkState } from '@/lib/group/funk';
 import { STOP_REASONS, type RideMsg, type RideStop, type StopReason } from '@/lib/group/ride';
 import { highlightFacts, type Highlight } from '@/lib/navigation/highlights';
+import { warnRest, warnSpeech } from '@/lib/passes';
 import { formatKm } from '@/lib/tour';
 
 import { formatDistance } from './format';
@@ -31,17 +33,19 @@ export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
   const d = formatDistance(Math.max(0, distM));
   return (
     <GlassPanel style={styles.card} fallback={Colors.overlay}>
-      <View style={styles.row} accessible accessibilityRole="alert" accessibilityLabel={`${distM > 50 ? `In ${d.value} ${d.unit === 'm' ? 'Metern' : 'Kilometern'}` : 'Jetzt'} ${h.name}, ${highlightFacts(h)}`}>
+      <View style={styles.row} accessible accessibilityRole="alert" accessibilityLabel={`${distM > 50 ? `In ${d.value} ${d.unit === 'm' ? 'Metern' : 'Kilometern'}` : 'Jetzt'} ${h.name}, ${highlightFacts(h)}${h.warn?.length ? `. Warnung: ${warnSpeech(h.warn)}` : ''}`}>
         <NavSymbolIcon symbol={HIGHLIGHT_SYMBOL[h.kind]} size={44} soon />
         <View style={styles.flex}>
           <AppText variant="caption" style={styles.kicker}>
             {`${distM > 50 ? `In ${d.value} ${d.unit}` : 'Jetzt'} · ${FUN_NAMES[toFunLevel(h.level)]}`}
           </AppText>
+          {/* Warnung als Label über dem Namen, weitere Gründe vor den Fakten (Konzept 12.11.) */}
+          <WarnLabel warn={h.warn} />
           <AppText style={styles.title} numberOfLines={1}>
             {h.name}
           </AppText>
           <AppText variant="caption" muted style={styles.num}>
-            {highlightFacts(h)}
+            {[warnRest(h.warn)?.replace(/\.$/, ''), highlightFacts(h)].filter(Boolean).join(' · ')}
           </AppText>
         </View>
         <FunGauge level={toFunLevel(h.level)} size={44} animate />
@@ -67,6 +71,8 @@ export function HighlightStrip({ h, atKm, onPress }: { h: Highlight; atKm: numbe
       style={styles.strip}>
       <View style={styles.stripRow}>
         <FunGauge level={toFunLevel(h.level)} size={20} />
+        {/* Im Abschnitt spricht das Highlight, nur das kleine Zeichen erinnert an die Warnung */}
+        {h.warn?.length ? <ZigzagIcon size={16} /> : null}
         <AppText style={styles.stripName} numberOfLines={1}>
           {h.name}
         </AppText>

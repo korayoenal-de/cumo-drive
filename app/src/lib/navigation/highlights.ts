@@ -9,7 +9,7 @@
  */
 import { learnedLevel } from '../highlight-feedback';
 import { defaultLevel, HIGHLIGHT_ROADS, type HighlightRoad } from '../highlight-roads';
-import { PASSES, passesAlong, type Pass } from '../passes';
+import { PASSES, passesAlong, warnSpeech, type Pass, type WarnKey } from '../passes';
 import { resample, type ElevationProfile } from '../stats';
 import { haversine, type LatLon } from '../tour';
 
@@ -36,6 +36,8 @@ export type Highlight = {
   level: number;
   /** Bei Pässen: Bergrennstrecke auf diesem Anstieg, wird im Overlay und in der Ansage mitgenannt */
   race?: { name: string; note: string };
+  /** Warnung: Gründe als Bausteine, der erste ist das Label (einspurig, sehr schmal und so weiter) */
+  warn?: WarnKey[];
 };
 
 function heading(a: LatLon, b: LatLon) {
@@ -169,6 +171,7 @@ export function findHighlights(
       id: pass.id,
       kind: 'pass',
       name: pass.name,
+      warn: pass.warn,
       startKm,
       endKm,
       topKm: v?.top ?? km,
@@ -364,7 +367,9 @@ export function highlightSpeech(h: Highlight, distM: number): string {
   const race = raceLabel(h);
   const extra = race ? ` Auf diesem Anstieg liegt die ${race}.` : '';
   const legend = h.level >= 5 ? ' Eine Legende, viel Spaß.' : '';
-  return `${where} ${what}. ${len} Kilometer${pins}.${extra}${legend}`;
+  // Warnung sachlich und kurz direkt nach der Länge, ohne Alarm (Konzept 12.11.)
+  const warn = h.warn?.length ? ` ${warnSpeech(h.warn)}` : '';
+  return `${where} ${what}. ${len} Kilometer${pins}.${warn}${extra}${legend}`;
 }
 
 /** Nur für Tests: Länge der Linie in km. */

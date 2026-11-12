@@ -8,8 +8,9 @@ import Animated, { FadeOut } from 'react-native-reanimated';
 
 import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
+import { WarnLabel } from '@/components/ui/warn-label';
 import { Colors, Fonts, Motion, Spacing, Type } from '@/constants/theme';
-import type { Pass } from '@/lib/passes';
+import { warnRest, type Pass } from '@/lib/passes';
 
 export type PassAction = 'via' | 'start' | 'ziel' | 'remove';
 
@@ -54,13 +55,20 @@ export function MapPassActions({
       <View style={styles.card}>
         <View style={styles.head}>
           <SymbolView name="mountain.2.fill" size={18} tintColor={Colors.signal} />
-          <View style={styles.flex}>
+          <View style={[styles.flex, pass.warn?.length ? styles.warned : null]}>
+            {/* Warnung vor dem Hinzufügen: Label über dem Namen, weitere Gründe darunter (Konzept 12.11.) */}
+            <WarnLabel warn={pass.warn} />
             <AppText style={styles.name} numberOfLines={1}>
               {pass.name}
             </AppText>
             <AppText style={styles.sub} numberOfLines={1}>
               {sub}
             </AppText>
+            {warnRest(pass.warn) ? (
+              <AppText style={styles.sub} numberOfLines={1}>
+                {warnRest(pass.warn)}
+              </AppText>
+            ) : null}
           </View>
         </View>
         <View style={styles.row}>
@@ -95,6 +103,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.xs },
+  warned: { gap: 3 },
   name: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   sub: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   row: { flexDirection: 'row', gap: Spacing.s },

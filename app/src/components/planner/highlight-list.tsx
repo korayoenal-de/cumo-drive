@@ -12,11 +12,12 @@ import { RouteMap } from '@/components/map/route-map';
 import { softEnter } from '@/components/ui/action-bar';
 import { FUN_NAMES, FunGauge, toFunLevel } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
+import { WarnLabel } from '@/components/ui/warn-label';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import { findHighlights, highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { cumulativeKm } from '@/lib/navigation/route';
 import { passState, usePassLive } from '@/lib/pass-live';
-import { PASSES, TIER_LABEL } from '@/lib/passes';
+import { PASSES, TIER_LABEL, warnLabel, warnRest } from '@/lib/passes';
 import type { LatLon, Tour } from '@/lib/tour';
 
 const KIND_LABEL: Record<string, string> = {
@@ -45,10 +46,12 @@ export function HighlightList({ line }: { line: LatLon[] }) {
             <Animated.View key={h.id} entering={softEnter(i)}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`${h.name}, ${FUN_NAMES[lv]}, Details öffnen`}
+                accessibilityLabel={`${h.name}, ${FUN_NAMES[lv]}${h.warn?.length ? `, Warnung: ${warnLabel(h.warn)}` : ''}, Details öffnen`}
                 onPress={() => setOpen(h)}
                 style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
-                <View style={styles.flex}>
+                <View style={[styles.flex, h.warn?.length ? styles.warned : null]}>
+                  {/* Warnung als Label über dem Namen, der Hauptgrund selbst (Konzept 12.11.) */}
+                  <WarnLabel warn={h.warn} />
                   <AppText style={styles.name} numberOfLines={1}>
                     {h.name}
                   </AppText>
@@ -141,11 +144,18 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
             </AppText>
           </View>
         )}
-        {pass?.car_note && (
-          <View style={styles.note}>
-            <AppText style={styles.noteTitle}>Für Sportwagen</AppText>
-            <AppText style={styles.noteText}>{pass.car_note}</AppText>
+        {h.warn?.length ? (
+          <View style={[styles.note, styles.noteWarn]}>
+            <WarnLabel warn={h.warn} />
+            <AppText style={styles.noteText}>{[warnRest(h.warn), pass?.car_note ? `${pass.car_note}.` : null].filter(Boolean).join(' ')}</AppText>
           </View>
+        ) : (
+          pass?.car_note && (
+            <View style={styles.note}>
+              <AppText style={styles.noteTitle}>Für Sportwagen</AppText>
+              <AppText style={styles.noteText}>{pass.car_note}</AppText>
+            </View>
+          )
         )}
         {pass?.toll && <AppText style={styles.sub}>Mautpflichtig.</AppText>}
         {!!pass?.source && (
@@ -164,6 +174,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: Radius.l, backgroundColor: Colors.surface, paddingHorizontal: Spacing.xs, paddingVertical: Spacing.xs, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64, paddingVertical: Spacing.s, paddingHorizontal: Spacing.s, borderRadius: Radius.m },
   rowPressed: { backgroundColor: Colors.pressTint },
+  warned: { gap: 4, paddingVertical: 2 },
   name: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   sub: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   gauge: { alignItems: 'center', gap: 2, minWidth: 72 },

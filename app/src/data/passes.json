@@ -508,8 +508,11 @@
     "winter_closed": true,
     "closed_months": "Nov bis Apr",
     "toll": false,
-    "car_note": null,
-    "source": "https://de.wikipedia.org/wiki/W%C3%BCrzjoch"
+    "car_note": "Schmale, kurvenreiche Auffahrt durch das Villnößtal",
+    "source": "https://de.wikipedia.org/wiki/W%C3%BCrzjoch",
+    "warn": [
+      "schmal"
+    ]
   },
   {
     "id": "jaufenpass",
@@ -809,8 +812,11 @@
     "winter_closed": true,
     "closed_months": "Nov bis Mai",
     "toll": false,
-    "car_note": null,
-    "source": "https://de.wikipedia.org/wiki/Passo_di_Croce_Domini"
+    "car_note": "Sehr schmale und unübersichtliche Auffahrt aus dem Val Camonica, auf der Hochebene Übergang in Schotter",
+    "source": "https://de.wikipedia.org/wiki/Passo_di_Croce_Domini",
+    "warn": [
+      "schmal"
+    ]
   },
   {
     "id": "san-marco",
@@ -895,8 +901,11 @@
     "winter_closed": false,
     "closed_months": null,
     "toll": false,
-    "car_note": null,
-    "source": "https://de.wikipedia.org/wiki/Manghenpass"
+    "car_note": "Wenig befahren, sehr schmale und unübersichtliche Fahrbahn",
+    "source": "https://de.wikipedia.org/wiki/Manghenpass",
+    "warn": [
+      "schmal"
+    ]
   },
   {
     "id": "brocon",
@@ -1213,8 +1222,13 @@
     "winter_closed": true,
     "closed_months": "Okt bis Jun",
     "toll": false,
-    "car_note": null,
-    "source": "https://de.wikipedia.org/wiki/Col_Agnel"
+    "car_note": "Italienische Seite im oberen Bereich sehr schmal, steil und ohne Leitplanken",
+    "source": "https://de.wikipedia.org/wiki/Col_Agnel",
+    "warn": [
+      "schmal",
+      "steil",
+      "ausgesetzt"
+    ]
   },
   {
     "id": "colle-della-lombarda",
@@ -1372,8 +1386,12 @@
     "winter_closed": true,
     "closed_months": null,
     "toll": false,
-    "car_note": null,
-    "source": "https://de.wikipedia.org/wiki/Colle_di_Sampeyre"
+    "car_note": "Extrem schmale, teils ausgewaschene Asphaltdecke und ungesicherte Abhänge",
+    "source": "https://de.wikipedia.org/wiki/Colle_di_Sampeyre",
+    "warn": [
+      "schmal",
+      "ausgesetzt"
+    ]
   },
   {
     "id": "colle-san-carlo",
@@ -5585,8 +5603,12 @@
     "winter_closed": true,
     "closed_months": "Okt bis Mai",
     "toll": false,
-    "car_note": null,
-    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Cayolle"
+    "car_note": "Südrampe durch die Bachelard Schlucht direkt an der Felswand, kleine unbeleuchtete Tunnel",
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Cayolle",
+    "warn": [
+      "schmal",
+      "ausgesetzt"
+    ]
   },
   {
     "id": "col-de-turini",
@@ -6049,8 +6071,12 @@
     "winter_closed": false,
     "closed_months": null,
     "toll": false,
-    "car_note": null,
-    "source": "https://fr.wikipedia.org/wiki/Col_du_Chaussy"
+    "car_note": "Lacets de Montvernier: 18 sehr enge Kehren übereinander in der Felswand, einspurig",
+    "source": "https://fr.wikipedia.org/wiki/Col_du_Chaussy",
+    "warn": [
+      "einspurig",
+      "kehren"
+    ]
   },
   {
     "id": "col-de-sarenne",
@@ -6453,8 +6479,12 @@
     "winter_closed": false,
     "closed_months": null,
     "toll": false,
-    "car_note": null,
-    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Machine"
+    "car_note": "In die senkrechte Felswand gesprengte schmale Straße mit niedriger Steinbrüstung über tiefer Schlucht",
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Machine",
+    "warn": [
+      "schmal",
+      "ausgesetzt"
+    ]
   },
   {
     "id": "col-du-festre",
@@ -7813,5 +7843,57 @@
     "toll": false,
     "car_note": null,
     "source": "https://de.wikipedia.org/wiki/Rote_Lache_(Pass)"
+  },
+  {
+    "id": "colle-fauniera",
+    "name": "Colle Fauniera",
+    "names": [
+      "Colle dei Morti",
+      "Colle Fauniera"
+    ],
+    "country": [
+      "IT"
+    ],
+    "region": "Piemont, Cottische Alpen",
+    "lat": 44.38565,
+    "lon": 7.12181,
+    "ele": 2481,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Sehr einsam, schmale Asphaltstraße ohne Randsicherung im Hochgebirge, Zurücksetzen bei Gegenverkehr",
+    "source": "",
+    "warn": [
+      "schmal",
+      "ausgesetzt"
+    ]
+  },
+  {
+    "id": "col-de-parquetout",
+    "name": "Col de Parquetout",
+    "names": [
+      "Col de Parquetout"
+    ],
+    "country": [
+      "FR"
+    ],
+    "region": "Isère, Dauphiné Alpen",
+    "lat": 44.87634,
+    "lon": 5.92501,
+    "ele": 1382,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": "Sehr schmal und steil, enge Kehren an steiler Bergflanke fast ohne Leitplanken",
+    "source": "",
+    "warn": [
+      "schmal",
+      "steil",
+      "kehren"
+    ]
   }
 ]

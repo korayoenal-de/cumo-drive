@@ -25,7 +25,43 @@ export type Pass = {
   toll: boolean;
   car_note: string | null;
   source: string;
+  /** Warnung am Highlight (Koray 12.11.): Gründe als Bausteine, der erste ist das Label. Schotter steht nie in den Daten. */
+  warn?: WarnKey[];
 };
+
+export type WarnKey = 'einspurig' | 'schmal' | 'ausgesetzt' | 'kehren' | 'ampel' | 'einbahn' | 'pflaster' | 'steil';
+
+export const WARN_LABEL: Record<WarnKey, string> = {
+  einspurig: 'Einspurig',
+  schmal: 'Sehr schmal',
+  ausgesetzt: 'Ausgesetzt',
+  kehren: 'Enge Kehren',
+  ampel: 'Ampelregelung',
+  einbahn: 'Einbahn im Stundentakt',
+  pflaster: 'Langes Pflaster',
+  steil: 'Sehr steil',
+};
+
+const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
+
+/** Label am Highlight: der Hauptgrund selbst, kein Oberbegriff (Wording A, 12.11.) */
+export function warnLabel(w?: readonly WarnKey[] | null): string | null {
+  return w?.length ? WARN_LABEL[w[0]] : null;
+}
+
+/** Die weiteren Gründe als Satz unter dem Label, zum Beispiel "Sehr steil, enge Kehren." */
+export function warnRest(w?: readonly WarnKey[] | null): string | null {
+  if (!w || w.length < 2) return null;
+  const rest = w.slice(1).map((k) => WARN_LABEL[k]);
+  return `${[rest[0], ...rest.slice(1).map(lower)].join(', ')}.`;
+}
+
+/** Alle Gründe für die Ansage: "Einspurig, sehr steil und enge Kehren." */
+export function warnSpeech(w?: readonly WarnKey[] | null): string {
+  if (!w?.length) return '';
+  const all = w.map((k, i) => (i ? lower(WARN_LABEL[k]) : WARN_LABEL[k]));
+  return all.length === 1 ? `${all[0]}.` : `${all.slice(0, -1).join(', ')} und ${all[all.length - 1]}.`;
+}
 
 export const TIER_LABEL: Record<PassTier, string> = { ikone: 'Ikone', bekannt: 'Bekannt', mittel: 'Geheimtipp' };
 export const TIER_WEIGHT: Record<PassTier, number> = { ikone: 3, bekannt: 2, mittel: 1 };
@@ -164,7 +200,7 @@ export function closedNote(closed: Pass[]): string {
 export const PASS_STATUS_URL = 'https://www.ace.de/reisen/reiseinformationen/alpenpaesse';
 
 /** Alle geprüften Pässe (DE, AT, CH, IT und Grenzpässe). */
-export const PASSES = passData as Pass[];
+export const PASSES = passData as unknown as Pass[];
 
 /** Kurzbeschreibung für Listen und Karten, zum Beispiel "2757 m, Ikone, 82 Kehren". */
 export function passSummary(p: Pass, month?: number, stateNote?: string): string {

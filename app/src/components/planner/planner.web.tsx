@@ -27,7 +27,7 @@ import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
 import { useRide } from '@/lib/group/ride';
 import { passState, usePassLive } from '@/lib/pass-live';
 import { photoGroupsGeoJson, usePhotoGroups, type PhotoGroup } from '@/lib/photos';
-import { PASSES, passesAlong, passesGeoJson, passPoint, passSummary, type Pass } from '@/lib/passes';
+import { PASSES, passesAlong, passesGeoJson, passPoint, passSummary, warnSpeech, type Pass } from '@/lib/passes';
 import { copyTourLink } from '@/lib/share-link';
 import { exportTour } from '@/lib/route-file';
 import { deleteTour, duplicateTour } from '@/lib/library';
@@ -911,6 +911,7 @@ function MapMenuCard(props: {
         <b>{pass ? pass.name : (name ?? 'Neuer Punkt')}</b>
         {wpRole ? <span style={S.dropDetail}>{wpRole}</span> : null}
         {pass ? <span style={S.dropDetail}>{passSummary(pass, undefined, passState(pass, props.live).note)}</span> : wpRole ? null : <span style={S.dropDetail}>{`${menu.p[0].toFixed(4)}, ${menu.p[1].toFixed(4)}`}</span>}
+        {pass?.warn?.length ? <span style={{ ...S.dropDetail, color: C.warn, fontWeight: 700 }}>{warnSpeech(pass.warn)}</span> : null}
         {pass?.car_note ? <span style={S.dropDetail}>{pass.car_note}</span> : null}
       </div>
       {photos.length ? (

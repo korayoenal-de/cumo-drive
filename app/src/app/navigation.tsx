@@ -35,6 +35,7 @@ import { curveCue, sharpCurves } from '@/lib/navigation/curves';
 import { closureLabel, closuresNear, closuresOnRoute } from '@/lib/road-closures';
 import { limitAt, loadSpeedZones, type SpeedZones } from '@/lib/navigation/speed-zones';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
+import { warnLabel } from '@/lib/passes';
 import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
 import Animated, { FadeOut } from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
@@ -211,7 +212,9 @@ export default function NavigationScreen() {
     controls.say(highlightSpeech(nextHl, hlDistM));
     const len = Math.max(1, Math.round(nextHl.endKm - nextHl.startKm));
     const where = hlDistM > 150 ? `In ${Math.round(hlDistM / 100) * 100} m` : 'Jetzt';
-    carPlayAlert(nextHl.name, `${where}, ${len} km${nextHl.hairpins >= 3 ? `, ${nextHl.hairpins} Kehren` : ''}`, `fun-${toFunLevel(nextHl.level)}`);
+    // CarPlay: Warnung als erstes Wort der Unterzeile, Text wie am Telefon (Konzept 12.11.)
+    const warn = warnLabel(nextHl.warn);
+    carPlayAlert(nextHl.name, `${warn ? `${warn} · ` : ''}${where}, ${len} km${nextHl.hairpins >= 3 ? `, ${nextHl.hairpins} Kehren` : ''}`, `fun-${toFunLevel(nextHl.level)}`);
   }, [nextHl, hlDistM, state.status, controls]);
 
   // Halt Ansage der Lead: großes Overlay und Ansage für alle anderen

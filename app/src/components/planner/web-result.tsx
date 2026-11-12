@@ -12,7 +12,7 @@ import { type TourFun } from '@/lib/fun-score';
 import { findHighlights, highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { cumulativeKm } from '@/lib/navigation/route';
 import { closedHint, passState, usePassLive } from '@/lib/pass-live';
-import { PASS_STATUS_URL, PASSES, passesAlong, TIER_LABEL } from '@/lib/passes';
+import { PASS_STATUS_URL, PASSES, passesAlong, TIER_LABEL, warnSpeech } from '@/lib/passes';
 import { elevationProfile, type ElevationProfile } from '@/lib/stats';
 import { formatKm, type LatLon, type Tour, type Warning } from '@/lib/tour';
 import { Colors, Radius, Spacing } from '@/constants/theme';
@@ -133,7 +133,11 @@ export function HighlightsWeb(props: { line: LatLon[]; onFly: (p: LatLon) => voi
                   {pass && (pass.winter_closed || state?.closed) ? (
                     <span style={{ color: C.warn }}>{[state?.closed ? 'Gerade gesperrt.' : 'Wintersperre.', state?.note, pass.closed_months ? `Meist gesperrt ${pass.closed_months}.` : null].filter(Boolean).join(' ')}</span>
                   ) : null}
-                  {pass?.car_note ? <span>Für Sportwagen: {pass.car_note}</span> : null}
+                  {h.warn?.length ? (
+                    <span style={{ color: C.warn, fontWeight: 700 }}>{[warnSpeech(h.warn), pass?.car_note ? `${pass.car_note}.` : null].filter(Boolean).join(' ')}</span>
+                  ) : pass?.car_note ? (
+                    <span>Für Sportwagen: {pass.car_note}</span>
+                  ) : null}
                   {pass?.source ? (
                     <a href={pass.source} target="_blank" rel="noreferrer" style={{ color: C.signal, fontWeight: 700, textDecoration: 'none' }}>
                       Mehr dazu
