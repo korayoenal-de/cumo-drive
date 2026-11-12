@@ -4,12 +4,33 @@
   {
    "id": "rec-n4026971185",
    "name": "Crosspoint Timmelsjoch",
-   "kinds": ["mittag"],
-   "p": [46.90901, 11.05326],
+   "kinds": [
+    "mittag"
+   ],
+   "p": [
+    46.90901,
+    11.05326
+   ],
    "region": "Ötztal / Timmelsjoch",
    "food": "Gutes Essen mit Panoramaterrasse auf 2.175 m, starke Architektur, Motorradmuseum im Haus",
    "parking": "Riesiger Parkplatz direkt vor der Mautstelle",
    "land": "AT",
+   "tip": "Clubtipp von Koray"
+  },
+  {
+   "id": "rec-w200226213",
+   "name": "Rifugio Piezza, Da Aurelio",
+   "kinds": [
+    "mittag"
+   ],
+   "p": [
+    46.48494,
+    12.04667
+   ],
+   "region": "Dolomiten / Passo Giau",
+   "food": "Gehobene Küche mit hoher Qualität, etwas hochpreisig, direkt an der Passstraße",
+   "parking": "",
+   "land": "IT",
    "tip": "Clubtipp von Koray"
   }
  ]
