@@ -403,8 +403,28 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
       var d = (headTo - heading).truncatingRemainder(dividingBy: 360)
       if d > 180 { d -= 360 }
       if d < -180 { d += 360 }
-      carView?.transform = CGAffineTransform(rotationAngle: CGFloat(d * .pi / 180))
+      // Winkel der Straße, wie sie auf dem Bildschirm liegt: Die Karte ist geneigt, und das Auto steht wegen der
+      // Ränder des Displays nicht genau in der Bildmitte. Eine gerade Straße läuft dort schräg auf den Fluchtpunkt
+      // zu, das aufrechte Auto stand deshalb leicht schief zur Spur (Koray 12.11., B 460 bei Lorsch).
+      let angle = screenAngle(at: c, heading: headTo) ?? CGFloat(d * .pi / 180)
+      carView?.transform = CGAffineTransform(rotationAngle: angle)
     }
+  }
+
+  /// Richtung auf dem Bildschirm (0 zeigt nach oben, im Uhrzeigersinn), in die ein Punkt 40 m voraus liegt
+  private func screenAngle(at c: CLLocationCoordinate2D, heading: CLLocationDirection) -> CGFloat? {
+    let r = heading * .pi / 180
+    let m = 40.0
+    let ahead = CLLocationCoordinate2D(
+      latitude: c.latitude + m * cos(r) / 111_320,
+      longitude: c.longitude + m * sin(r) / (111_320 * cos(c.latitude * .pi / 180))
+    )
+    let a = map.convert(c, toPointTo: map)
+    let b = map.convert(ahead, toPointTo: map)
+    let dx = b.x - a.x
+    let dy = b.y - a.y
+    guard dx.isFinite, dy.isFinite, hypot(dx, dy) > 2 else { return nil }
+    return atan2(dx, -dy)
   }
 
   /// Gefahrenes Stück ausblenden: nächster Punkt der Route ab dem letzten (nur vorwärts, mit etwas Spielraum)
