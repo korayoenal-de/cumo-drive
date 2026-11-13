@@ -3,7 +3,7 @@
  * Umschalter, Routen, Ausfahrten und Drivers, dazu Pins auf der großen Karte. Routen öffnen sich als
  * ungespeicherte Kopie im Planer, das Lesezeichen legt sie in Meine Touren. Ausfahrten zeigen Zeit,
  * Treffpunkt und Plätze, Mitfahren lässt sich anfragen. Chat, Nachrichten und das Verwalten eigener
- * Ausfahrten bleiben in der App, das sagt ein Hinweis statt einer halben Funktion.
+ * Ausfahrten bleiben in der App, das sagt ein Hinweis statt einer halben Funktion. Melden geht auch hier (13.11.).
  */
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -14,6 +14,7 @@ import { deleteTour, saveTour, syncLibrary, useLibrary } from '@/lib/library';
 import { useCommunityLine } from '@/lib/community-lines';
 import { kmBetween, listDrivers, type Driver } from '@/lib/drivers';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
+import { blockUser, REASONS, reportContent, type ReportKind, type ReportReason } from '@/lib/moderation';
 import { showToast } from '@/lib/toast';
 import { formatKm, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { currentVehicle, vehicleName } from '@/lib/vehicle';
@@ -238,6 +239,81 @@ function EmptyCard(props: { title: string; text: string }) {
  * das Lesezeichen rechts. Tippen wählt die Route auf der Karte und klappt Beschreibung und Öffnen auf.
  * Linie und Fahrspaß kommen erst, wenn die Karte ins Bild scrollt (lib/community-lines.ts).
  */
+/**
+ * Melden im Web Planer (Missbrauch Stufe 2, 13.11.): klappt unter der Karte auf, Grund als Chip, freiwillige
+ * Notiz, Melden als Hauptaktion. Danach auf Wunsch gleich blockieren (wenn das Konto bekannt ist).
+ * Gleicher Server Aufruf wie in der App (report_content), Inhalt wird beim Melden kopiert.
+ */
+function WebReport(props: { kind: ReportKind; refId: string; userId?: string | null; name?: string | null }) {
+  const session = useSession();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<ReportReason | null>(null);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  if (!session) return null;
+  const send = async () => {
+    if (!reason || busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await reportContent(props.kind, props.refId, reason, note);
+      setSent(true);
+      showToast('Danke, wir schauen es uns an');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (!open)
+    return (
+      <button style={{ ...S.link, fontSize: 15, alignSelf: 'flex-start', color: C.muted }} onClick={() => setOpen(true)}>
+        Melden
+      </button>
+    );
+  if (sent)
+    return props.userId ? (
+      <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.m, flexWrap: 'wrap' }}>
+        <span style={S.muted}>Gemeldet. Möchtest du {props.name ?? 'diese Person'} auch blockieren?</span>
+        <button
+          style={{ ...S.link, fontSize: 15 }}
+          onClick={() =>
+            void blockUser(props.userId!)
+              .then(() => showToast(`${props.name ?? 'Person'} blockiert`))
+              .catch(() => showToast('Das hat nicht geklappt', { tone: 'error' }))
+          }>
+          Blockieren
+        </button>
+      </div>
+    ) : (
+      <span style={S.muted}>Gemeldet. Danke!</span>
+    );
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, background: C.ground }}>
+      <span style={S.metricLabel}>Was stimmt hier nicht?</span>
+      <div style={S.chips}>
+        {REASONS.map((r) => (
+          <Chip key={r.v} on={reason === r.v} onClick={() => setReason(r.v)}>
+            {r.label}
+          </Chip>
+        ))}
+      </div>
+      <Field id={`melden-${props.refId}`} label="Notiz (freiwillig)" value={note} onChange={setNote} area max={500} />
+      {err ? <span style={{ ...S.muted, color: C.warn }}>{err}</span> : null}
+      <div style={{ display: 'flex', gap: Spacing.s }}>
+        <button type="button" style={{ ...pillBtn, background: C.surface2, color: C.text }} onClick={() => setOpen(false)}>
+          Abbrechen
+        </button>
+        <button type="button" style={{ ...pillBtn, background: reason ? C.signal : C.surface2, color: reason ? '#fff' : C.muted }} disabled={!reason || busy} onClick={() => void send()}>
+          {busy ? 'Wird gemeldet' : 'Melden'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boolean; selected: boolean; onSelect: () => void; onOpen: () => void; onWithdrawn: (id: string) => void }) {
   const { t } = props;
   const [saving, setSaving] = useState(false);
@@ -361,6 +437,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
           <button style={{ ...S.primary, height: 52 }} onClick={props.onOpen}>
             Im Planer öffnen
           </button>
+          {!props.mine ? <WebReport kind="tour" refId={t.id} userId={t.owner} name={author} /> : null}
         </>
       ) : null}
       {ask ? (
@@ -443,6 +520,7 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
           <button style={{ ...S.secondaryOnSurface, flex: 'none', alignSelf: 'flex-start' }} onClick={props.onRoute}>
             Route im Planer ansehen
           </button>
+          {!r.isOwner ? <WebReport kind="ausfahrt" refId={r.id} name={r.ownerName} /> : null}
           {canAsk && !asking ? (
             <button style={{ ...S.primary, flex: 'none' }} onClick={() => setAsking(true)}>
               Mitfahren anfragen
@@ -530,6 +608,7 @@ function DriverCard(props: { d: Driver; km: number | null; selected: boolean; on
           {!d.isMe ? (
             <span style={appHint}>{d.allowMessages ? 'Nachrichten an Drivers schreibst du in der App unter Community.' : 'Dieser Driver möchte gerade keine Nachrichten bekommen.'}</span>
           ) : null}
+          {!d.isMe ? <WebReport kind="profile" refId={d.id} userId={d.id} name={d.name} /> : null}
         </div>
       ) : null}
     </div>

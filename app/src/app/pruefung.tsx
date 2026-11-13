@@ -56,12 +56,14 @@ export default function Pruefung() {
             <AppText variant="caption" muted>{shortDate(r.createdAt)}</AppText>
           </View>
           <AppText muted>{KIND_LABEL[r.kind]} von {r.targetName ?? 'unbekannt'}{r.targetReports > 1 ? `, ${r.targetReports} Meldungen insgesamt` : ''}{r.targetBanned ? ', schon gesperrt' : ''}</AppText>
-          <View style={[styles.snap, r.kind === 'profile' && styles.snapRow]}>
+          {/* stiller Hinweis des Servers: welches Muster, darunter ein Beispiel (Stufe 2, 13.11.) */}
+          {r.kind === 'hinweis' && r.note ? <AppText style={styles.btnText}>{r.note}</AppText> : null}
+          <View style={[styles.snap, (r.kind === 'profile' || r.kind === 'hinweis') && styles.snapRow]}>
             {/* gemeldetes Profil: auch das Foto zeigen, Entfernen nimmt es mit weg */}
-            {r.kind === 'profile' && r.target ? <Avatar name={r.targetName ?? '?'} userId={r.target} size={56} /> : null}
+            {(r.kind === 'profile' || r.kind === 'hinweis') && r.target ? <Avatar name={r.targetName ?? '?'} userId={r.target} size={56} /> : null}
             <AppText style={[styles.snapText, styles.flex]}>{r.snapshot ?? 'Kein Inhalt gespeichert'}</AppText>
           </View>
-          {r.note ? <AppText muted>Notiz von {r.reporterName ?? 'Melder'}: {r.note}</AppText> : null}
+          {r.note && r.kind !== 'hinweis' ? <AppText muted>Notiz von {r.reporterName ?? 'Melder'}: {r.note}</AppText> : null}
           <View style={styles.actions}>
             <Pressable accessibilityRole="button" disabled={busy === r.id} onPress={() => void resolve(r, 'ok')} style={styles.btn}>
               {busy === r.id ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.btnText}>In Ordnung</AppText>}

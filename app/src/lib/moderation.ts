@@ -7,6 +7,8 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { supabase } from './supabase';
 
 export type ReportKind = 'direct_message' | 'ride_message' | 'profile' | 'tour' | 'ausfahrt';
+/** Im Prüfbereich zusätzlich: stille Hinweise des Servers (Stufe 2, 13.11.), nicht zum Melden */
+export type AdminKind = ReportKind | 'hinweis';
 export type ReportReason = 'illegal' | 'spam' | 'belaestigung' | 'betrug' | 'anderes';
 
 export const REASONS: { v: ReportReason; label: string }[] = [
@@ -16,7 +18,7 @@ export const REASONS: { v: ReportReason; label: string }[] = [
   { v: 'betrug', label: 'Betrug' },
   { v: 'anderes', label: 'Anderes' },
 ];
-export const reasonLabel = (r: string) => REASONS.find((x) => x.v === r)?.label ?? r;
+export const reasonLabel = (r: string) => (r === 'automatisch' ? 'Hinweis vom Server' : (REASONS.find((x) => x.v === r)?.label ?? r));
 
 const msg = (e: { message: string }) => (/function|relation|column|JWT|permission/i.test(e.message) ? 'Das hat nicht geklappt. Bitte nochmal versuchen.' : e.message);
 
@@ -112,7 +114,7 @@ export function useModeration(signedIn: boolean) {
 // Prüfbereich ------------------------------------------------------------------------------------------
 
 export type AdminReport = {
-  id: number; kind: ReportKind; ref: string; reason: ReportReason; note: string | null; snapshot: string | null; createdAt: Date;
+  id: number; kind: AdminKind; ref: string; reason: ReportReason | 'automatisch'; note: string | null; snapshot: string | null; createdAt: Date;
   reporterName: string | null; target: string | null; targetName: string | null; targetReports: number; targetBanned: boolean;
 };
 
@@ -121,9 +123,9 @@ export async function adminReports(): Promise<AdminReport[]> {
   if (error) throw new Error(msg(error));
   return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
     id: Number(r.id),
-    kind: r.kind as ReportKind,
+    kind: r.kind as AdminKind,
     ref: String(r.ref),
-    reason: r.reason as ReportReason,
+    reason: r.reason as AdminReport['reason'],
     note: (r.note as string | null) ?? null,
     snapshot: (r.snapshot as string | null) ?? null,
     createdAt: new Date(String(r.created_at)),
@@ -140,10 +142,11 @@ export async function adminResolve(id: number, action: 'ok' | 'entfernt' | 'gesp
   if (error) throw new Error(msg(error));
 }
 
-export const KIND_LABEL: Record<ReportKind, string> = {
+export const KIND_LABEL: Record<AdminKind, string> = {
   direct_message: 'Private Nachricht',
   ride_message: 'Nachricht im Chat einer Ausfahrt',
   profile: 'Profil',
   tour: 'Tour in der Community',
   ausfahrt: 'Ausfahrt',
+  hinweis: 'Auffälliges Verhalten',
 };
