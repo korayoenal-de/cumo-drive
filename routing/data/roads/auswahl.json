@@ -40,8 +40,7 @@
   "fr-calanches-de-piana": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
   "fr-col-de-bavella": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
   "fr-col-de-sorba": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
-  "fr-col-de-vergio": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist",
-  "si-davca": "Linie nutzt Nebenwege, für Sportwagen doppelt so lang; Korays Entscheidung (Datencheck 13.11.)"
+  "fr-col-de-vergio": "Außerhalb des Routing Gebiets (Süditalien, Inseln), bis die Region geladen ist"
  },
  "nur_bevorzugt": [],
  "zusammengefuehrt": {
@@ -63,6 +62,11 @@
    "tier": "highlight",
    "warn": [
     "pflaster"
+   ]
+  },
+  "si-davca": {
+   "warn": [
+    "einspurig"
    ]
   }
  },
