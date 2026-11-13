@@ -5,7 +5,7 @@
 import { router } from 'expo-router';
 import { type ComponentRef, useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { interpolate, type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SymbolView } from 'expo-symbols';
 
@@ -411,18 +411,15 @@ export function TourMode({
           rightThreshold={36}
           overshootRight={false}
           containerStyle={styles.swipeBox}
-          renderRightActions={(_prog, _tr, m) => (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`${role} löschen`}
+          renderRightActions={(prog, _tr, m) => (
+            <SwipeDelete
+              progress={prog}
+              label={`${role} löschen`}
               onPress={() => {
                 m.close();
                 if (p) runAction({ idx: idxOf(kind, index), name: nameOf(p) }, 'entfernen');
               }}
-              style={({ pressed }) => [styles.swipeDelete, pressed && { opacity: 0.8 }]}>
-              <SymbolView name="trash.fill" size={18} tintColor={Colors.onSignal} weight="semibold" />
-              <AppText style={styles.swipeDeleteText}>Löschen</AppText>
-            </Pressable>
+            />
           )}>
         <Animated.View style={[styles.pointRow, drag?.from === slot && dragStyle]}>
           {canDrag ? (
@@ -851,5 +848,21 @@ function MoreButton({ label, onPress }: { label: string; onPress: (v: ViewRef | 
       style={({ pressed }) => [styles.more, pressed && { backgroundColor: Colors.line }]}>
       <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="bold" />
     </Pressable>
+  );
+}
+
+/**
+ * Rote Löschtaste hinter einer Punktkarte (Koray 13.11.): im Ruhezustand ganz unsichtbar, sonst schimmerte sie an den
+ * runden Ecken der Karte durch. Sie blendet erst beim Wischen nach links ein und sitzt 2 pt eingerückt.
+ */
+function SwipeDelete({ progress, label, onPress }: { progress: SharedValue<number>; label: string; onPress: () => void }) {
+  const fade = useAnimatedStyle(() => ({ opacity: interpolate(progress.get(), [0, 0.2], [0, 1], 'clamp') }));
+  return (
+    <Animated.View style={[styles.swipeDeleteWrap, fade]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.swipeDelete, pressed && { opacity: 0.8 }]}>
+        <SymbolView name="trash.fill" size={18} tintColor={Colors.onSignal} weight="semibold" />
+        <AppText style={styles.swipeDeleteText}>Löschen</AppText>
+      </Pressable>
+    </Animated.View>
   );
 }

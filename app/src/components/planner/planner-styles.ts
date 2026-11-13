@@ -162,7 +162,8 @@ export const styles = StyleSheet.create({
   swipeBox: { borderRadius: Radius.m, overflow: 'hidden' },
   // Punkt und seine Ortszeile als eine Karte (Konzept D4)
   pointCard: { borderRadius: Radius.m, overflow: 'hidden', backgroundColor: Colors.surface },
-  swipeDelete: { width: 96, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', gap: 2 },
+  swipeDeleteWrap: { paddingVertical: 2, paddingRight: 2 },
+  swipeDelete: { flex: 1, width: 94, borderRadius: Radius.m - 2, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', gap: 2 },
   swipeDeleteText: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.onSignal },
   symbol: { width: 28, alignItems: 'center', justifyContent: 'center' },
   startRing: { width: 16, height: 16, borderRadius: 8, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center' },
