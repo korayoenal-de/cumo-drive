@@ -77,12 +77,31 @@ export function useAvatar(userId: string | null | undefined): string | null {
   return v != null ? avatarUrl(userId, v) : null;
 }
 
-/** Verkleinern, wenn das Modul im Build ist (ab Build 28), sonst null */
-async function shrink(uri: string): Promise<string | null> {
+function manipulator(): typeof import('expo-image-manipulator') | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const m = require('expo-image-manipulator') as typeof import('expo-image-manipulator');
+    return require('expo-image-manipulator') as typeof import('expo-image-manipulator');
+  } catch {
+    return null;
+  }
+}
+
+/** Kann die App selbst zuschneiden (expo-image-manipulator ab Build 28)? Sonst schneidet iOS quadratisch zu. */
+export function canCrop(): boolean {
+  const m = manipulator();
+  return !!m?.ImageManipulator;
+}
+
+/** Ausschnitt in Bildpixeln */
+export type Crop = { originX: number; originY: number; width: number; height: number };
+
+/** Zuschneiden (wenn gewählt) und auf 512 Pixel verkleinern, wenn das Modul im Build ist, sonst null */
+async function shrink(uri: string, crop?: Crop): Promise<string | null> {
+  const m = manipulator();
+  if (!m) return null;
+  try {
     const ctx = m.ImageManipulator.manipulate(uri);
+    if (crop) ctx.crop(crop);
     ctx.resize({ width: SIZE, height: SIZE });
     const img = await ctx.renderAsync();
     const out = await img.saveAsync({ format: m.SaveFormat.JPEG, compress: 0.82 });
@@ -93,18 +112,31 @@ async function shrink(uri: string): Promise<string | null> {
 }
 
 export type PickResult = { ok: true } | { ok: false; cancelled?: boolean; message?: string };
+export type Picked = { uri: string; width: number; height: number };
 
-/** Foto wählen (Mediathek) oder aufnehmen, verkleinern, hochladen und die Fassung erhöhen */
-export async function pickAvatar(source: 'library' | 'camera'): Promise<PickResult> {
+/**
+ * Foto wählen oder aufnehmen. Mit eigenem Zuschnitt (canCrop) kommt das ganze Bild zurück und der Kreis
+ * im Profil legt den Ausschnitt fest (Koray 13.11.: reinzoomen und verschieben in der Kreismaske);
+ * ältere Builds lassen iOS quadratisch zuschneiden.
+ */
+export async function pickPhoto(source: 'library' | 'camera'): Promise<Picked | PickResult> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return { ok: false, message: 'Melde dich an, um ein Foto zu setzen.' };
   const perm = source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) return { ok: false, message: source === 'camera' ? 'Ohne Zugriff auf die Kamera geht es nicht. Du kannst ihn in den iPhone Einstellungen erlauben.' : 'Ohne Zugriff auf deine Fotos geht es nicht. Du kannst ihn in den iPhone Einstellungen erlauben.' };
-  const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.6 };
+  const own = canCrop();
+  const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], allowsEditing: !own, aspect: [1, 1], quality: own ? 0.9 : 0.6 };
   const res = source === 'camera' ? await ImagePicker.launchCameraAsync({ ...opts, cameraType: ImagePicker.CameraType.front }) : await ImagePicker.launchImageLibraryAsync(opts);
   if (res.canceled || !res.assets?.[0]) return { ok: false, cancelled: true };
-  const picked = res.assets[0].uri;
-  const small = (await shrink(picked)) ?? picked;
+  const a = res.assets[0];
+  return { uri: a.uri, width: a.width, height: a.height };
+}
+
+/** Zuschneiden, verkleinern, hochladen und die Fassung erhöhen */
+export async function uploadAvatar(uri: string, crop?: Crop): Promise<PickResult> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return { ok: false, message: 'Melde dich an, um ein Foto zu setzen.' };
+  const small = (await shrink(uri, crop)) ?? uri;
   const bytes = await new File(small).bytes();
   if (bytes.byteLength > MAX_BYTES) return { ok: false, message: 'Das Foto ist zu groß. Mit dem nächsten App Update wird es automatisch verkleinert.' };
   const { error } = await supabase.storage.from('avatars').upload(`${u.user.id}.jpg`, bytes, { contentType: 'image/jpeg', upsert: true, cacheControl: '3600' });

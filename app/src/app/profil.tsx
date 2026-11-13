@@ -11,7 +11,8 @@ import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { DriverCard } from '@/components/community/driver-card';
 import { Avatar } from '@/components/community/ride-bits';
 import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
-import { pickAvatar, removeAvatar, useAvatar } from '@/lib/avatars';
+import { canCrop, pickPhoto, removeAvatar, uploadAvatar, useAvatar, type Crop, type Picked, type PickResult } from '@/lib/avatars';
+import { AvatarCropper } from '@/components/settings/avatar-cropper';
 import { haptic } from '@/lib/haptics';
 import { BioField, BirthdayField, HomeField, usePrivacy } from '@/components/settings/community-profile';
 import { SubScreen } from '@/components/settings/settings-ui';
@@ -91,21 +92,41 @@ function PhotoField({ userId, name }: { userId: string; name: string }) {
   const [ask, setAsk] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const run = async (what: 'library' | 'camera' | 'remove') => {
+  // gewähltes Foto, bis der Ausschnitt im Kreis feststeht
+  const [photo, setPhoto] = useState<Picked | null>(null);
+  const report = (r: PickResult) => {
+    if (r.ok) haptic('punkt');
+    else if (!r.cancelled && r.message) setMsg(r.message);
+  };
+  const upload = async (uri: string, crop?: Crop) => {
     setBusy(true);
-    setMsg(null);
     try {
-      const r = what === 'remove' ? await removeAvatar() : await pickAvatar(what);
-      if (r.ok) haptic('punkt');
-      else if (!r.cancelled && r.message) setMsg(r.message);
+      report(await uploadAvatar(uri, crop));
     } finally {
       setBusy(false);
-      setAsk(false);
     }
+  };
+  const run = async (what: 'library' | 'camera' | 'remove') => {
+    setMsg(null);
+    if (what === 'remove') {
+      setBusy(true);
+      try {
+        report(await removeAvatar());
+      } finally {
+        setBusy(false);
+        setAsk(false);
+      }
+      return;
+    }
+    const p = await pickPhoto(what);
+    if (!('uri' in p)) return report(p);
+    // mit eigenem Zuschnitt erst den Ausschnitt im Kreis wählen, sonst hat iOS schon quadratisch zugeschnitten
+    if (canCrop()) setPhoto(p);
+    else await upload(p.uri);
   };
   // Optionen zum Foto im Bottom Sheet (Design Prinzipien: Optionen zu einem Objekt), Entfernen unten rot mit Rückfrage
   const items: SheetItem[] = [
-    { key: 'library', icon: 'photo.on.rectangle', label: 'Aus deinen Fotos', hint: 'Quadratisch zuschneiden', onPress: () => void run('library') },
+    { key: 'library', icon: 'photo.on.rectangle', label: 'Aus deinen Fotos', hint: 'Danach den Ausschnitt im Kreis wählen', onPress: () => void run('library') },
     { key: 'camera', icon: 'camera', label: 'Foto aufnehmen', onPress: () => void run('camera') },
     ...(url ? [{ key: 'remove', icon: 'trash' as const, label: 'Foto entfernen', hint: 'Dann zeigen wir deine Initialen', danger: true, onPress: () => setAsk(true) }] : []),
   ];
@@ -125,6 +146,15 @@ function PhotoField({ userId, name }: { userId: string; name: string }) {
       {!url && <AppText variant="caption" muted>Tippe auf den Kreis, um ein Foto zu setzen.</AppText>}
       {msg && <AppText style={styles.error}>{msg}</AppText>}
       <ActionSheet visible={open} title="Profilfoto" items={items} onClose={() => setOpen(false)} />
+      <AvatarCropper
+        photo={photo}
+        onCancel={() => setPhoto(null)}
+        onDone={(crop) => {
+          const p = photo;
+          setPhoto(null);
+          if (p) void upload(p.uri, crop);
+        }}
+      />
       <ConfirmSheet
         visible={ask}
         title="Möchtest du dein Profilfoto wirklich entfernen?"
