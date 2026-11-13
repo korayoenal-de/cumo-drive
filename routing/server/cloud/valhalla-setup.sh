@@ -24,7 +24,7 @@ docker run -d --name valhalla --restart unless-stopped \
   -e build_tar=True -e serve_tiles=True -e server_threads=6 -e force_rebuild=False \
   ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
 for i in $(seq 1 600); do
-  if curl -sf -m 5 http://127.0.0.1:8002/status >/dev/null; then log "Valhalla läuft"; break; fi
+  if curl -sf -m 5 http://127.0.0.1:8002/status >/dev/null; then touch /opt/valhalla/ready; log "Valhalla läuft"; break; fi
   sleep 60
 done
 # Webserver: /valhalla auf den lokalen Dienst
@@ -39,3 +39,23 @@ PY
   if caddy validate --config /etc/caddy/Caddyfile >/dev/null 2>&1; then systemctl reload caddy; log "Webserver ergänzt"; else cp /etc/caddy/Caddyfile.vor-valhalla /etc/caddy/Caddyfile; log "Webserver NICHT geändert"; fi
 fi
 log "FERTIG"; df -h / | tail -1; du -sh /opt/valhalla
+# Wöchentlicher Neubau dienstags 3:00 (valhalla-update.sh)
+cp "$(dirname "$0")/valhalla-update.sh" /opt/cumo-routing/valhalla-update.sh 2>/dev/null && chmod +x /opt/cumo-routing/valhalla-update.sh
+cat > /etc/systemd/system/cumo-valhalla-update.service <<'EOS'
+[Unit]
+Description=CUMO DRIVE Valhalla Neubau
+[Service]
+Type=oneshot
+ExecStart=/opt/cumo-routing/valhalla-update.sh
+TimeoutStartSec=13h
+EOS
+cat > /etc/systemd/system/cumo-valhalla-update.timer <<'EOS'
+[Unit]
+Description=CUMO DRIVE Valhalla Neubau dienstags
+[Timer]
+OnCalendar=Tue *-*-* 03:00:00
+Persistent=true
+[Install]
+WantedBy=timers.target
+EOS
+systemctl daemon-reload && systemctl enable --now cumo-valhalla-update.timer >/dev/null 2>&1

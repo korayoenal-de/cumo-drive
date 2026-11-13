@@ -81,7 +81,9 @@ Erste Sicherung in beide Richtungen am 12.11. von Hand geprüft. Offen: Supabase
 
 Die frühere Angabe „etwa eine Stunde“ war falsch. Gemessen am Protokoll vom 8.11. (Server 1, altes Gebiet): Einlesen und Ortsdichte gut eine Stunde, danach die Landmarken für vier Profile nacheinander mit je etwa 70 Minuten, zusammen fast fünf Stunden, dann POI Kacheln. Insgesamt rund neun Stunden. Mit nur einem Server war das eigene Routing sonntags den ganzen Vormittag aus. Offen: Landmarken gleichzeitig rechnen (prepare.lm.threads), erwartet drei bis vier Stunden, erst nach Messung als Zahl übernehmen.
 
-Überwachung (monitor.sh, jede Minute): eigener Dienst, Partner, POI des Partners, Ortssuche, Platte ab 85 Prozent. Zustandswechsel stehen in setup.log. Mit einer Adresse in /etc/cumo-notify (Webhook, zum Beispiel ntfy) geht zusätzlich eine Nachricht aufs Handy.
+Überwachung (monitor.sh, jede Minute, Stand 13.11.): eigener Dienst, Partner, Stopps des Partners, Ortssuche, eigener Valhalla (sobald /opt/valhalla/ready existiert), alle 10 Minuten eine echte Route, gescheiterte Abläufe (Neuaufbau, Ortssuche, Sicherung, Valhalla), Platte ab 85 Prozent, Speicher unter 2 GB. Auf dem Server mit /etc/cumo-primary zusätzlich die Datenbank (Supabase) und um 8 Uhr eine Tagesmeldung. Zustandswechsel stehen in setup.log; mit einer Adresse in /etc/cumo-notify (ntfy Kanal) geht eine Nachricht aufs Handy. Vorher lief keine Meldung: der Zähler scheiterte an Leerzeichen im Dateinamen.
+
+Valhalla (Server 2, /opt/valhalla, Docker): Neubau dienstags 3:00 über cumo-valhalla-update.timer (valhalla-update.sh), währenddessen fragt die App den öffentlichen Valhalla.
 
 Schwachstellen, die bleiben:
 
