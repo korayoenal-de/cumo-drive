@@ -15,7 +15,7 @@ import { soonThresholdM, symbolFor } from '@/components/navigation/maneuver-geom
 import { DriveRatingCard, type DrivenHighlight } from '@/components/navigation/drive-rating';
 import { SpeedBadge } from '@/components/navigation/speed-badge';
 import { FunkBanner, HighlightCard, HighlightStrip, LeadHaltPill, StopAlert } from '@/components/navigation/nav-alerts';
-import { BigButton, BottomBar, InfoCard, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
+import { BigButton, BottomBar, InfoCard, LANES_SHOW_M, laneSymbol, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
@@ -569,8 +569,11 @@ export default function NavigationScreen() {
       return `nav-${symbolFor(x.kind, x.exit, turns[k]).replaceAll('_', '-')}`;
     };
     const t = r.maneuvers[state.next + 1];
+    // Spurpfeile wie auf dem iPhone, ab 1,5 km vor dem Manöver (neuer Schlüssel, damit CarPlay das Bild zeigt)
+    const lanes = m.lanes && state.distToNextM < LANES_SHOW_M ? m.lanes.map((l) => `${laneSymbol(l.dirs)}|${l.use ? 'u' : l.ok ? 'o' : 'x'}`).join(',') : '';
     carPlayUpdate({
-      key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}${soon ? '-on' : ''}${rejoin > 20 ? '-zurueck' : ''}`,
+      key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}${soon ? '-on' : ''}${rejoin > 20 ? '-zurueck' : ''}${lanes ? '-spur' : ''}`,
+      ...(lanes ? { lanes } : {}),
       text: rejoin > 20 ? `Zurück zur Tour: ${m.text}` : m.text,
       symbol: symbolForKind(m.kind, m.exit),
       icon: `${icon(state.next)}${soon ? '-on' : ''}`,

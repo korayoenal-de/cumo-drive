@@ -62,10 +62,10 @@ export function ManeuverCard({ maneuver, distM, then, soon = false, footer, turn
 }
 
 /** Spuren zeigen, sobald das Manöver näher als so viele Meter ist */
-const LANES_SHOW_M = 1500;
+export const LANES_SHOW_M = 1500;
 
 /** Symbol je Spur: die empfohlene Richtung, sonst die erste der Spur */
-function laneSymbol(dirs: number): SFSymbol {
+export function laneSymbol(dirs: number): SFSymbol {
   if (dirs & 256) return 'arrow.uturn.left';
   if (dirs & 4) return 'arrow.turn.left.down';
   if (dirs & 8) return 'arrow.turn.up.left';

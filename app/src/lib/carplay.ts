@@ -15,6 +15,8 @@ type Update = {
   key: string; text: string; symbol: string; icon?: string; distM: number; secs: number; restKm: number; restSecs: number;
   /** Manöver danach ("Dann"), ab Build 10 */
   thenText?: string; thenSymbol?: string; thenIcon?: string;
+  /** Spurempfehlung "sfsymbol|u,sfsymbol|x" von links nach rechts (u empfohlen, o möglich, x falsch), ab Build 29 */
+  lanes?: string;
 };
 type Sub = { remove: () => void };
 type CarPlayModule = {

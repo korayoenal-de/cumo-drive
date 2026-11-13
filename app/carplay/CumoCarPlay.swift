@@ -51,7 +51,8 @@ final class CumoCarPlay: Module {
         restSecs: num("restSecs"),
         thenText: p["thenText"] as? String ?? "",
         thenSymbol: p["thenSymbol"] as? String ?? "",
-        thenIcon: p["thenIcon"] as? String ?? ""
+        thenIcon: p["thenIcon"] as? String ?? "",
+        lanes: p["lanes"] as? String ?? ""
       )
     }.runOnQueue(.main)
 

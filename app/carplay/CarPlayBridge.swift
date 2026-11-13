@@ -190,13 +190,15 @@ final class CarPlayBridge: NSObject {
 
   /// then: das Manöver danach ("Dann" wie in der App), CarPlay zeigt es unter dem ersten, wenn Platz ist
   func update(key: String, text: String, symbol: String, icon: String, distM: Double, secs: Double, restKm: Double, restSecs: Double,
-              thenText: String = "", thenSymbol: String = "", thenIcon: String = "") {
+              thenText: String = "", thenSymbol: String = "", thenIcon: String = "", lanes: String = "") {
     guard let s = session else { return }
     if key != maneuverKey {
       let m = CPManeuver()
       m.instructionVariants = [text]
       m.symbolImage = CarPlayBridge.maneuverImage(icon: icon, symbol: symbol, size: 44)
       m.initialTravelEstimates = CPTravelEstimates(distanceRemaining: CarPlayBridge.distance(distM), timeRemaining: secs)
+      // Spurempfehlung wie auf dem iPhone (13.11.): als Bild unter der Anweisung
+      if !lanes.isEmpty, let img = CarPlayBridge.laneImage(lanes) { m.junctionImage = img }
       var list = [m]
       if !thenText.isEmpty {
         let n = CPManeuver()
@@ -212,6 +214,31 @@ final class CarPlayBridge: NSObject {
     }
     if let t = mapTemplate, let trip {
       t.updateEstimates(CPTravelEstimates(distanceRemaining: CarPlayBridge.distance(restKm * 1000), timeRemaining: restSecs), for: trip)
+    }
+  }
+
+  /// Spuren von links nach rechts: "sfsymbol|u" je Spur, durch Komma getrennt. u: empfohlen (hell, hinterlegt),
+  /// o: möglich (gedämpft), x: falsch (kaum sichtbar). CarPlay erlaubt für junctionImage höchstens 140 x 100 Punkte.
+  static func laneImage(_ spec: String) -> UIImage? {
+    let lanes = spec.split(separator: ",").map { $0.split(separator: "|").map(String.init) }.filter { $0.count == 2 }
+    guard !lanes.isEmpty else { return nil }
+    let cell = min(30.0, 140.0 / Double(lanes.count))
+    let size = CGSize(width: cell * Double(lanes.count), height: 34)
+    let cfg = UIImage.SymbolConfiguration(pointSize: min(18, cell * 0.62), weight: .bold)
+    let r = UIGraphicsImageRenderer(size: size)
+    return r.image { _ in
+      for (i, l) in lanes.enumerated() {
+        let x = Double(i) * cell
+        let state = l[1]
+        if state == "u" {
+          UIColor(white: 1, alpha: 0.18).setFill()
+          UIBezierPath(roundedRect: CGRect(x: x + 1.5, y: 1, width: cell - 3, height: 32), cornerRadius: 7).fill()
+        }
+        let color: UIColor = state == "u" ? .white : state == "o" ? UIColor(white: 1, alpha: 0.55) : UIColor(white: 1, alpha: 0.22)
+        guard let sym = UIImage(systemName: l[0], withConfiguration: cfg)?.withTintColor(color, renderingMode: .alwaysOriginal) else { continue }
+        let s = sym.size
+        sym.draw(in: CGRect(x: x + (cell - s.width) / 2, y: (34 - s.height) / 2, width: s.width, height: s.height))
+      }
     }
   }
 
