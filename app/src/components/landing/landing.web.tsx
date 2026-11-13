@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 import { LANDING_CSS, LANDING_HTML } from './landing-html';
 
 const DESC =
-  'Die Navi App für Sportwagen: kurvige Touren, geprüft auf Breite, Belag und Sperrungen, 363 Pässe und 437 Traumstrecken mit Ansage, allein, in der Gruppe oder bei Ausfahrten der Community.';
+  'Die Navi App für Sportwagen: kurvige Touren, geprüft auf Breite, Belag und Sperrungen, 363 Pässe und 439 Traumstrecken mit Ansage, allein, in der Gruppe oder bei Ausfahrten der Community.';
 
 /** Schriften von der eigenen Domain statt Google Fonts (Datenschutz, keine Übertragung der IP an Dritte) */
 const FONT_FACES = [

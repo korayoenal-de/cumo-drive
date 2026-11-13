@@ -1,6 +1,6 @@
 /**
  * Inhalt der Landingpage als HTML für den Web Build (statisch, damit Suchmaschinen alles lesen).
- * Gestaltung nach dem Entwurf vom 6.11. (Design Artefakt URTXEm5yCFeJkmvkhZbTWz), Inhalt auf dem Stand vom 11.11.2026 (Abläufe, Namen und Pegel wie in der App).
+ * Gestaltung nach dem Entwurf vom 6.11. (Design Artefakt URTXEm5yCFeJkmvkhZbTWz), Inhalt auf dem Stand vom 13.11.2026 (Abläufe, Namen und Pegel wie in der App).
  * Bilder liegen unter public/landing. Drei Bildschirmfotos (schnelle-runde, route-paesse, meine-touren) stammen aus einem
  * älteren Stand und werden per CSS beschnitten: oben die alte Reiterleiste, unten Profil "Sehr kurvig" und ein Hinweistext.
  * Login und Registrieren führen auf /login und /registrieren, der Web Planer auf /planer.
@@ -231,7 +231,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
         <a href="/registrieren" class="cd-btn cd-btn-signal">14 Tage kostenlos fahren</a>
         <a href="#planen" class="cd-btn cd-btn-surface">So funktioniert es</a>
       </div>
-      <div class="cd-stats" style="padding-top: 20px;">${stat('Pässe', '370')}${stat('Traumstrecken', '486')}${stat('Fahrregionen', '94')}${stat('Fahrspaß Stufen', '5')}
+      <div class="cd-stats" style="padding-top: 20px;">${stat('Pässe', '363')}${stat('Traumstrecken', '439')}${stat('Fahrregionen', '94')}${stat('Fahrspaß Stufen', '5')}
       </div>
     </div>
     <div class="cd-phones" style="flex: 0 0 auto; position: relative; display: flex; gap: 28px; align-items: flex-end; justify-content: flex-end;">
@@ -271,7 +271,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
         <span class="cd-chip">${mark(7, 'width="18" height="18" aria-hidden="true"')}Penser Joch <span style="color: #E8B03A;">+9 min</span></span>
         <span class="cd-chip">${mark(5, 'width="18" height="18" aria-hidden="true"')}Gampenpass <span style="color: #E8B03A;">+18 min</span></span>
       </div>
-      <p class="cd-body" style="font-size: 15px;">Highlights und Pässe erscheinen je Etappe mit Pegel und Umweg in Minuten, aber nur, wenn sie einen sinnvollen Bogen ergeben. Unterwegs planst du Super Plus, Aussicht und Einkehr ein, sortiert nach Kilometer. Zum Essen zeigen wir nur Restaurants, die wir für Sportwagen empfehlen, mit Parkplatz und an guten Strecken. Zum Schluss bekommt jede Tour ihren Fahrspaß Wert von 0 bis 100, von Gemütlich bis Legendär.</p>
+      <p class="cd-body" style="font-size: 15px;">Highlights und Pässe erscheinen je Etappe mit Pegel und Umweg in Minuten, aber nur, wenn sie einen sinnvollen Bogen ergeben. Unterwegs planst du Super Plus, Aussicht, Einkehr und Hotel ein, sortiert nach Kilometer. Zum Essen zeigen wir nur Restaurants, die wir für Sportwagen empfehlen, mit Parkplatz und an guten Strecken. Zum Schluss bekommt jede Tour ihren Fahrspaß Wert von 0 bis 100, von Gemütlich bis Legendär.</p>
     </div>
   </div>
 </section>
@@ -285,7 +285,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">02  Highlights und Fahrspaß Pegel</span>
       <h3 class="cd-h3">Jede Strecke hat ihren Pegel. Das Pordoijoch ist Legende.</h3>
-      <p class="cd-body">Pässe, Bergrennstrecken, Rallyeprüfungen und Traumstraßen stehen nach Fahrspaß gerankt in deiner Tour. Antippen zeigt den Abschnitt auf der Karte mit Länge, Kehren, Höhe und Wintersperre.</p>
+      <p class="cd-body">Pässe, Bergrennstrecken, Rallyeprüfungen und Traumstraßen stehen nach Fahrspaß gerankt in deiner Tour. Antippen zeigt den Abschnitt auf der Karte mit Länge, Kehren, Höhe und Wintersperre. Enge Pässe tragen einen Hinweis wie Einspurig oder Langes Pflaster, ein Tipp auf Auslassen plant ohne sie.</p>
       <p class="cd-body">Nach der Fahrt gibst du jedem gefahrenen Highlight Daumen hoch oder runter. So wandert der Pegel mit dem, was Fahrer wirklich erleben. Die ganze Tour bekommt dazu ihren Fahrspaß Wert, gerechnet aus Kurven, Traumstrecken, Pässen und Fluss.</p>
       <div class="cd-card" style="padding: 24px; gap: 18px;">
         <span class="cd-label">Fünf Stufen</span>
@@ -309,7 +309,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">03  Navigation</span>
       <h3 class="cd-h3">„In 950 Metern beginnt der Jaufenpass. 20 Kehren.“</h3>
-      <p class="cd-body">Kurz vor jedem Highlight kommt die Ansage mit Karte und Pegel. Bei einer Legende läuft die Stern Animation. Dazu 42 eigene Abbiegesymbole, die sich vor dem Manöver aufbauen.</p>
+      <p class="cd-body">Kurz vor jedem Highlight kommt die Ansage mit Karte und Pegel. Bei einer Legende läuft die Stern Animation. Dazu 42 eigene Abbiegesymbole, die sich vor dem Manöver aufbauen, Spurempfehlung, Kreisverkehre mit Richtung und Ansagen, die sich nach deinem Tempo richten. Im Tunnel läuft die Führung weiter, und fehlt unterwegs das Netz, zeigt dir die App trotzdem den Weg zurück zur Tour.</p>
       <div class="cd-grid2" style="padding-top: 8px;">${smallCard('Kurven mit Ansage', 'Scharfe Kurven und Kehren 150 m vorher, nur außerorts ab 70 km/h.')}${smallCard('Ankunft nach deinem Tempo', 'Restzeit und Ankunft lernen laufend mit, wie du wirklich fährst.')}${smallCard('Pause mit einem Tipp', 'Für den Kaffee am Pass: Ansagen und Zeit stehen, bis du weiterfährst.')}${smallCard('Auf dem Sperrbildschirm', 'Die Live Activity zeigt das nächste Manöver, ohne dass du die App öffnest. Die Stimme der Ansagen wählst du mit Hörprobe.')}${smallCard('Tempo im Blick', 'Dein Tempo und das erlaubte Tempo unten links. Zu schnell färbt sich nur die Fläche, ohne Ton.')}${smallCard('Abschnitt auslassen', 'Lange auf das Manöver drücken, schon geht es direkt zum nächsten Zwischenziel. Rückgängig inklusive.')}${smallCard('Abseits der Tour', 'Verfahren? Eine gelbe Linie führt ohne Wenden zurück. Fährst du bewusst anders, wählst du Neue Route ab hier, und die Tour wird über die offenen Ziele neu geplant.')}${smallCard('Bremshinweis', 'Vor engen Kurven passend zu deinem Tempo, damit du nicht zu schnell hineinfährst.')}
       </div>
     </div>
@@ -393,7 +393,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">05  Community</span>
       <h3 class="cd-h3">Routen nachfahren. Ausfahrten finden. Fahrer kennenlernen.</h3>
-      <p class="cd-body">Die Community hat drei Bereiche. Unter Routen liegen veröffentlichte Touren zum Nachfahren, ein Tipp öffnet sie im Planer, das Original bleibt unberührt. Unter Ausfahrten verabredest du dich zu gemeinsamen Touren, Einladungen kommen als Mitteilung. Unter Drivers findest du Fahrer aus deiner Gegend und schreibst ihnen direkt, mit allen Gesprächen an einem Ort.</p>
+      <p class="cd-body">Die Community hat drei Bereiche. Unter Routen liegen veröffentlichte Touren zum Nachfahren, ein Tipp öffnet sie im Planer, das Original bleibt unberührt. Unter Ausfahrten verabredest du dich zu gemeinsamen Touren, Einladungen kommen als Mitteilung. Unter Drivers findest du Fahrer aus deiner Gegend, mit Profilfoto und Fuhrpark, und schreibst ihnen direkt, mit allen Gesprächen an einem Ort. Wer stört, den meldest oder blockierst du mit zwei Tipps.</p>
     </div>
     <div class="cd-side" style="flex: 0 0 auto; width: 420px; max-width: 100%;">
       <div class="cd-ride" role="img" aria-label="Beispiel einer Ausfahrt: Sellaronda am Samstag um 9 Uhr, Treffpunkt Parkplatz am Start, noch 3 Plätze frei, mit Knopf Mitfahren anfragen">
@@ -439,12 +439,12 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div class="cd-card">
       <span class="cd-label">Nach der Fahrt</span>
       <div class="cd-title">Statistik für Autos</div>
-      <p class="cd-body" style="font-size: 16px;">Kilometer, Kurven, Querbeschleunigung und Schnitt, je Fahrzeug. Dazu deine Bewertung mit bis zu fünf Sternen und ein Daumen für jedes Highlight unterwegs.</p>
+      <p class="cd-body" style="font-size: 16px;">Kilometer, Kurven, Querbeschleunigung und Schnitt, je Fahrzeug. Dazu deine Bewertung per Regler von Enttäuschend bis Sensationell und ein Daumen für jedes Highlight unterwegs.</p>
     </div>
     <div class="cd-card">
       <span class="cd-label">Garage</span>
       <div class="cd-title">Mehrere Fahrzeuge</div>
-      <p class="cd-body" style="font-size: 16px;">Jedes Auto mit Breite, Bodenfreiheit, Reichweite und Sprit. Vor der Fahrt wählst du, mit welchem du fährst, die Kilometer landen beim richtigen Auto.</p>
+      <p class="cd-body" style="font-size: 16px;">Jedes Auto mit Marke, Modell, Form und Lackfarbe, auf Wunsch fährt es als Symbol auf der Karte mit. Vor der Fahrt wählst du, mit welchem du fährst, die Kilometer landen beim richtigen Auto.</p>
     </div>
   </div>
 </section>
@@ -477,7 +477,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <h2 class="cd-h2">Von Fahrern recherchiert, nicht vom Algorithmus geraten.</h2>
     <p class="cd-lead">Eigener Routing Server mit Sportwagen Gewichtung, jede Woche neu gebaut. Dazu eine kuratierte Datenbank mit Quelle zu jedem Eintrag, auf die Straße gelegt und geprüft. Passstatus und Wintersperren werden laufend aktualisiert.</p>
   </div>
-  <div class="cd-grid4">${dataCard('Pässe', '363', 'In drei Stufen: Ikone, Bekannt und Geheimtipp. Mit Höhe, Kehren, Maut und Wintersperre.')}${dataCard('Traumstrecken', '437', 'Bergrennen, Rallyeprüfungen und Panoramastraßen in Deutschland, Österreich, der Schweiz, Italien, Frankreich und Slowenien.')}${dataCard('Fahrregionen', '94', 'Gegenden, die als Ganzes zum Fahren gemacht sind, etwa Schwarzwald, Vogesen oder Dolomiten.')}${dataCard('Stopps an der Strecke', '45.000', 'Super Plus und Aussichtspunkte, dazu ausgewählte Restaurants mit Parkplatz für Sportwagen, sortiert nach Umweg in Minuten.')}
+  <div class="cd-grid4">${dataCard('Pässe', '363', 'In drei Stufen: Ikone, Bekannt und Geheimtipp. Mit Höhe, Kehren, Maut und Wintersperre.')}${dataCard('Traumstrecken', '439', 'Bergrennen, Rallyeprüfungen und Panoramastraßen in Deutschland, Österreich, der Schweiz, Italien, Frankreich und Slowenien.')}${dataCard('Fahrregionen', '94', 'Gegenden, die als Ganzes zum Fahren gemacht sind, etwa Schwarzwald, Vogesen oder Dolomiten.')}${dataCard('Stopps an der Strecke', '130.000', 'Super Plus, Aussichtspunkte und Hotels, dazu ausgewählte Restaurants mit Parkplatz für Sportwagen, sortiert nach Umweg in Minuten.')}
   </div>
   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
     <span class="cd-chip" style="color: #9A9A9F;">Kartendaten © OpenStreetMap Mitwirkende</span>
