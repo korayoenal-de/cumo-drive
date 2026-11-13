@@ -39,6 +39,9 @@ const THIN_TURN = 35;
 const CHUNK = 1500;
 /** Überlappung zweier Stücke in Punkten */
 const OVERLAP = 40;
+/** Höchstlänge je trace_route Anfrage: Valhalla lehnt über 200 km ab (Koray 13.11., Lorsch nach Rosenheim:
+ *  „Path distance exceeds the max distance limit“, auf Autobahnen sind die Punkte dünn) */
+const CHUNK_KM = 150;
 /** Gewicht der Richtungswechsel beim zweiten Abgleich, wenn der erste eine Kehrtwende enthält (Valhalla trace_options) */
 const UTURN_RETRY_FACTOR = 100;
 /** Ab diesem Abstand zum Linienanfang gibt es ein Anfahrtsstück */
@@ -372,10 +375,14 @@ async function traceLine(line: LatLon[], req: NavRequest, signal?: AbortSignal):
   const pts = thinLine(line);
   if (pts.length < 2) throw new Error('Die Tour ist zu kurz für eine Routenführung.');
   const ranges: [number, number][] = [];
-  for (let start = 0; ; start += CHUNK - OVERLAP) {
-    const end = Math.min(start + CHUNK, pts.length);
+  const cum = cumulativeKm(pts);
+  for (let start = 0; ; ) {
+    // Ende nach Punkten oder nach Länge, was zuerst erreicht ist
+    let end = Math.min(start + CHUNK, pts.length);
+    while (end - start > OVERLAP + 2 && cum[end - 1] - cum[start] > CHUNK_KM) end--;
     ranges.push([start, end]);
     if (end === pts.length) break;
+    start = end - OVERLAP;
   }
   // nacheinander, um den öffentlichen Server fair zu nutzen
   const pieces: Piece[] = [];
