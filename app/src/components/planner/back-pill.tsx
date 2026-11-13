@@ -120,7 +120,7 @@ function PulseDot() {
 
 const styles = StyleSheet.create({
   // rechts bleibt Platz für die Karteneinstellungen (44 breit plus Rand): lange Texte kürzen statt darunter laufen
-  wrap: { position: 'absolute', left: Spacing.l, borderRadius: BACK_PILL_H / 2, boxShadow: Shadow.float },
+  wrap: { position: 'absolute', left: Spacing.l, borderRadius: BACK_PILL_H / 2, boxShadow: Shadow.button },
   pill: {
     height: BACK_PILL_H,
     borderRadius: BACK_PILL_H / 2,

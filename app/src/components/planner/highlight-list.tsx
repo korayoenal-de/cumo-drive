@@ -13,7 +13,7 @@ import { softEnter } from '@/components/ui/action-bar';
 import { FUN_NAMES, FunGauge, toFunLevel } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { WarnLabel } from '@/components/ui/warn-label';
-import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 import { allowPass, avoidPass, useAvoidedPasses } from '@/lib/avoid-pass';
 import { findHighlights, highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { cumulativeKm } from '@/lib/navigation/route';
@@ -114,6 +114,16 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
 }
 
 /** Zweite Ebene: Abschnitt auf der Karte, Pegel groß, Daten als Kennzahlen, bei Pässen Sperre und Quelle. */
+const MONTHS: Record<string, string> = { Jan: 'Januar', Feb: 'Februar', Mär: 'März', Apr: 'April', Mai: 'Mai', Jun: 'Juni', Jul: 'Juli', Aug: 'August', Sep: 'September', Okt: 'Oktober', Nov: 'November', Dez: 'Dezember' };
+/** "Okt bis Jun" wird "Oktober bis Juni" */
+const monthsLong = (s: string) => s.replace(/\b(Jan|Feb|Mär|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)\b/g, (m) => MONTHS[m] ?? m);
+
+/** Titel des Sperrhinweises (Koray 13.11.): "Gesperrt bis 1. April", sonst "Gerade gesperrt" oder "Wintersperre" */
+function closedTitle(state: ReturnType<typeof passState> | null): string {
+  if (state?.closed && state.until) return `Gesperrt bis ${new Date(state.until).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}`;
+  return state?.closed ? 'Gerade gesperrt' : 'Wintersperre';
+}
+
 function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon[]; cum: number[]; onClose: () => void }) {
   const live = usePassLive();
   const lv = toFunLevel(h.level);
@@ -139,6 +149,11 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
     <View style={styles.screen}>
       <View style={styles.mapBox}>
         <RouteMap tour={part} interactive={false} style={StyleSheet.absoluteFill} />
+        {/* Fahrspaß Pegel als kleine Plakette neben dem X (Koray 13.11.: schwebte vorher ohne Bezug unter dem Titel) */}
+        <View style={styles.levelPill} accessible accessibilityLabel={`Fahrspaß ${FUN_NAMES[lv]}`}>
+          <FunGauge level={lv} size={24} animate={lv >= 5} />
+          <AppText style={styles.levelPillText}>{FUN_NAMES[lv]}</AppText>
+        </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Schließen"
@@ -152,10 +167,6 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
           <View style={styles.flex}>
             <AppText style={styles.kind}>{kind}</AppText>
             <AppText style={styles.title}>{h.name}</AppText>
-          </View>
-          <View style={styles.gaugeBig}>
-            <FunGauge level={lv} size={56} animate={lv >= 5} />
-            <AppText style={styles.levelBig}>{FUN_NAMES[lv]}</AppText>
           </View>
         </View>
 
@@ -176,10 +187,8 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
         )}
         {pass && (pass.winter_closed || state?.closed) && (
           <View style={[styles.note, state?.closed && styles.noteWarn]}>
-            <AppText style={styles.noteTitle}>{state?.closed ? 'Gerade gesperrt' : 'Wintersperre'}</AppText>
-            <AppText style={styles.noteText}>
-              {[state?.note, pass.closed_months ? `Meist gesperrt ${pass.closed_months}.` : null].filter(Boolean).join(' ')}
-            </AppText>
+            <AppText style={styles.noteTitle}>{closedTitle(state)}</AppText>
+            {pass.closed_months ? <AppText style={styles.noteText}>{`Meist gesperrt von ${monthsLong(pass.closed_months)}.`}</AppText> : null}
           </View>
         )}
         {h.warn?.length ? (
@@ -235,17 +244,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.overlay,
+    boxShadow: Shadow.button,
   },
+  levelPill: {
+    position: 'absolute',
+    top: Spacing.l,
+    right: Spacing.l + 44 + Spacing.s,
+    height: 44,
+    borderRadius: 22,
+    paddingLeft: Spacing.s + 2,
+    paddingRight: Spacing.m,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.s,
+    backgroundColor: Colors.overlay,
+    boxShadow: Shadow.button,
+  },
+  levelPillText: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.text },
   body: { padding: Spacing.xl, paddingBottom: Spacing.xxxl, gap: Spacing.xxl },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l },
   kind: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   title: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 30, color: Colors.text, textTransform: 'uppercase' },
-  gaugeBig: { alignItems: 'center', gap: Spacing.xs },
-  levelBig: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.text },
   facts: { flexDirection: 'row', flexWrap: 'wrap', rowGap: Spacing.l },
-  fact: { width: '50%', gap: 2 },
+  fact: { width: '50%', gap: 4 },
   factLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  factValue: { fontFamily: Fonts.display, fontSize: Type.h2, color: Colors.text, fontVariant: ['tabular-nums'] },
+  // Zeilenhöhe über der Schrift (Koray 13.11.: Werte oben und unten beschnitten)
+  factValue: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: Math.round(Type.h2 * 1.25), color: Colors.text, fontVariant: ['tabular-nums'] },
   note: { borderRadius: Radius.l, backgroundColor: Colors.surface, padding: Spacing.l, gap: Spacing.xs },
   noteWarn: { backgroundColor: Colors.warnTint },
   noteTitle: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },

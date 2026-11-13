@@ -87,6 +87,8 @@ export const Size = {
 /** Schatten für schwebende Flächen (React Native boxShadow) */
 export const Shadow = {
   float: '0 8px 24px rgba(0,0,0,0.35)',
+  /** Schwebende Knöpfe auf der Karte (Koray 13.11.): nur nach unten, weich, direkt auf der Kreisform */
+  button: '0 4px 12px rgba(0,0,0,0.35)',
   sheet: '0 -6px 24px rgba(0,0,0,0.45)',
   lift: '0 10px 28px rgba(0,0,0,0.55)',
 } as const;

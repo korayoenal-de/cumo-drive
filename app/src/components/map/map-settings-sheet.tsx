@@ -217,12 +217,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    // deckend und mit boxShadow wie die Zurück Pille: der alte iOS Schatten auf halb durchsichtiger Fläche
-    // sah auf manchen Geräten wie ein heller Rand unten rechts aus (Tester 10.11.)
+    // deckend, Schatten nur nach unten (Shadow.button, Koray 13.11.: der weite Schatten wirkte unten rechts
+    // wie eine hellere Sichel, ein zweiter Kreis)
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: Shadow.float,
+    boxShadow: Shadow.button,
   },
   sheet: { flex: 1, backgroundColor: Colors.ground },
   head: {
