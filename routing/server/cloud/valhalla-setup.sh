@@ -2,6 +2,9 @@
 # Eigener Valhalla Server (Koray 12.11.): statt des öffentlichen FOSSGIS Servers, der höchstens eine Anfrage
 # je Sekunde und keine starke Nutzung erlaubt. Läuft auf Server 2 neben GraphHopper, Kacheln aus denselben
 # Kartendaten. Docker Image von nilsnolde (Valhalla, MIT Lizenz).
+# Mit Höhendaten (13.11.): das Höhenprofil kommt dann über /height vom eigenen Server statt von FOSSGIS.
+# GraphHopper kann dafür nicht einspringen, er hat keinen Endpunkt für Höhen einer beliebigen Linie
+# (gespeicherte und geteilte Touren). Das Image lädt die Höhenkacheln (SRTM, frei) für das Gebiet selbst, etwa 1 GB.
 # Erst starten, wenn kein Neuaufbau von GraphHopper läuft: systemctl is-active cumo-routing-update.service
 set -euo pipefail
 log() { echo "$(date -Is) $*"; }
@@ -17,7 +20,7 @@ log "Kacheln bauen und Dienst starten (dauert einige Stunden)"
 docker run -d --name valhalla --restart unless-stopped \
   -p 127.0.0.1:8002:8002 \
   -v /opt/valhalla/custom_files:/custom_files \
-  -e use_tiles_ignore_pbf=True -e build_elevation=False -e build_admins=True -e build_time_zones=True \
+  -e use_tiles_ignore_pbf=True -e build_elevation=True -e build_admins=True -e build_time_zones=True \
   -e build_tar=True -e serve_tiles=True -e server_threads=6 -e force_rebuild=False \
   ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
 for i in $(seq 1 600); do
