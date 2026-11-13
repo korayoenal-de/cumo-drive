@@ -138,9 +138,9 @@ function PhotoField({ userId, name }: { userId: string; name: string }) {
         disabled={busy}
         onPress={() => setOpen(true)}
         style={({ pressed }) => [styles.photoBtn, pressed && styles.pressed]}>
-        <Avatar name={name} userId={userId} size={96} />
+        <Avatar name={name} userId={userId} size={96} busy={busy} />
         <View style={styles.photoBadge}>
-          {busy ? <ActivityIndicator size="small" color={Colors.onSignal} /> : <SymbolView name="camera.fill" size={15} weight="bold" tintColor={Colors.onSignal} />}
+          <SymbolView name="camera.fill" size={15} weight="bold" tintColor={Colors.onSignal} />
         </View>
       </Pressable>
       {!url && <AppText variant="caption" muted>Tippe auf den Kreis, um ein Foto zu setzen.</AppText>}

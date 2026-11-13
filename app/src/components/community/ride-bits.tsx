@@ -2,7 +2,10 @@
  * Kleine Bausteine der Ausfahrten: Datumsblock (SA 14) und Status als getönte Plakette.
  */
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+
+import { LogoSpinner } from '@/components/ui/fun-gauge';
 
 import { AppText } from '@/components/ui/text';
 import { useAvatar } from '@/lib/avatars';
@@ -42,17 +45,38 @@ export function DateBlock({ d }: { d: Date }) {
   );
 }
 
-/** Profilfoto im Kreis (Koray 13.11.), ohne Foto die Initialen; das Foto blendet weich über die Initialen */
-export function Avatar({ name, userId, size = 44 }: { name: string; userId?: string | null; size?: number }) {
+/**
+ * Profilfoto im Kreis (Koray 13.11.), ohne Foto die Initialen; das Foto blendet weich über die Initialen.
+ * Ab 56 Punkten zeigt der Kreis den Lade Spinner aus dem Logo, solange das Foto lädt oder busy (Hochladen) gilt.
+ */
+export function Avatar({ name, userId, size = 44, busy = false }: { name: string; userId?: string | null; size?: number; busy?: boolean }) {
   const url = useAvatar(userId);
+  const [loaded, setLoaded] = useState<string | null>(null);
   const r = size / 2;
+  const spin = size >= 56 && (busy || (!!url && loaded !== url));
   // Schrift wächst mit dem Kreis, Zeilenhöhe passend dazu (Koray 13.11.: in den Einstellungen waren die
   // Initialen oben abgeschnitten, weil die Standard Zeilenhöhe kleiner war als die Schrift)
   const fs = size < 40 ? 12 : Math.round(size * 0.34);
   return (
     <View style={[styles.avatar, { width: size, height: size, borderRadius: r }]}>
       <AppText allowFontScaling={false} style={[styles.avatarText, { fontSize: fs, lineHeight: Math.round(fs * 1.25) }]}>{initials(name)}</AppText>
-      {url && <Image source={{ uri: url }} style={[StyleSheet.absoluteFill, { borderRadius: r }]} contentFit="cover" transition={180} cachePolicy="memory-disk" accessibilityIgnoresInvertColors />}
+      {url && (
+        <Image
+          source={{ uri: url }}
+          style={[StyleSheet.absoluteFill, { borderRadius: r }]}
+          contentFit="cover"
+          transition={180}
+          cachePolicy="memory-disk"
+          onLoad={() => setLoaded(url)}
+          onError={() => setLoaded(url)}
+          accessibilityIgnoresInvertColors
+        />
+      )}
+      {spin && (
+        <View style={[StyleSheet.absoluteFill, styles.spinner]}>
+          <LogoSpinner size={Math.round(size * 0.36)} label={busy ? 'Foto wird hochgeladen' : 'Foto lädt'} />
+        </View>
+      )}
     </View>
   );
 }
@@ -60,6 +84,7 @@ export function Avatar({ name, userId, size = 44 }: { name: string; userId?: str
 const styles = StyleSheet.create({
   avatar: { backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarText: { fontFamily: Fonts.extrabold, color: Colors.text },
+  spinner: { alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(11,11,12,0.6)' },
   tag: { height: 28, paddingHorizontal: 10, borderRadius: 14, justifyContent: 'center' },
   tagGood: { backgroundColor: Colors.goodTint },
   tagSignal: { backgroundColor: Colors.signalTint },
