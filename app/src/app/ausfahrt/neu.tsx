@@ -1,6 +1,8 @@
 /**
- * Ausfahrt anlegen (Konzept Koray 9.11.): Tour aus Meine Touren, Abfahrt, Treffpunkt, Plätze und
- * ein Hinweis. Ankunft und Ziel kommen aus der Tour. Veröffentlichen nur mit Mitgliedschaft.
+ * Ausfahrt anlegen (Konzept Koray 9.11., privat seit 13.11.): Tour aus Touren, Abfahrt, Treffpunkt, Mitfahrer,
+ * Plätze und ein Hinweis. Ankunft und Ziel kommen aus der Tour.
+ * Privat ist der Standard: nur Organisator und Eingeladene sehen die Ausfahrt. Kostenfrei mit drei Fahrzeugen
+ * insgesamt (du und zwei Mitfahrer); in der Community veröffentlichen und mehr Plätze gibt es mit der Mitgliedschaft.
  */
 import { router, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -13,6 +15,9 @@ import { RoutePreview } from '@/components/planner/route-preview';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { clock, publishAusfahrt, shortDate } from '@/lib/ausfahrten';
+import { Avatar } from '@/components/community/ride-bits';
+import { refreshContacts, useContacts } from '@/lib/contacts';
+import { inviteToRide } from '@/lib/group/invites';
 import { useSession } from '@/lib/auth';
 import { maxGroupVehicles, useEntitlement } from '@/lib/entitlement';
 import { formatMinutes } from '@/lib/intent';
@@ -46,8 +51,19 @@ export default function AusfahrtNeu() {
   });
   const [minutes, setMinutes] = useState(10 * 60);
   const [meeting, setMeeting] = useState<string | null>(null);
-  const maxSeats = Math.max(1, maxGroupVehicles(ent) - 1);
-  const [seats, setSeats] = useState(Math.min(5, maxSeats));
+  // ohne Mitgliedschaft privat mit drei Fahrzeugen insgesamt, also zwei Mitfahrern (Koray 13.11.)
+  const FREE_SEATS = 2;
+  const maxSeats = ent.active ? Math.max(1, maxGroupVehicles(ent) - 1) : FREE_SEATS;
+  // gewünschte Plätze; angezeigt und gesendet wird höchstens, was das Konto erlaubt
+  const [seatsWanted, setSeats] = useState(5);
+  const seats = Math.min(seatsWanted, maxSeats);
+  const [pub, setPub] = useState(false);
+  const contacts = useContacts();
+  const friends = (contacts.list ?? []).filter((c) => c.status === 'kontakt');
+  const [picked, setPicked] = useState<string[]>([]);
+  useEffect(() => {
+    void refreshContacts();
+  }, []);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -70,7 +86,7 @@ export default function AusfahrtNeu() {
   const arr = tour?.minutes ? new Date(startsAt.getTime() + tour.minutes * 60000) : null;
   const tooSoon = startsAt.getTime() < now + 30 * 60000;
 
-  const close = () => (router.canGoBack() ? router.back() : router.navigate('/community'));
+  const close = () => (router.canGoBack() ? router.back() : router.navigate('/touren'));
 
   const publish = async () => {
     if (!tour || busy) return;
@@ -82,7 +98,9 @@ export default function AusfahrtNeu() {
     setErr(null);
     try {
       const start = tour.wegpunkte[0];
-      const id = await publishAusfahrt(tour as SavedTour, { startsAt, meeting: { name: meetingName.trim() || startName, lat: start[0], lon: start[1] }, note, seats });
+      const id = await publishAusfahrt(tour as SavedTour, { startsAt, meeting: { name: meetingName.trim() || startName, lat: start[0], lon: start[1] }, note, seats: Math.max(seats, picked.length), public: pub && ent.active });
+      // gewählte Kontakte gleich einladen; scheitert eine Einladung, bleibt die Ausfahrt trotzdem stehen
+      for (const uid of picked) await inviteToRide(id, uid).catch(() => undefined);
       router.replace({ pathname: '/ausfahrt/[id]', params: { id } });
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -111,18 +129,6 @@ export default function AusfahrtNeu() {
       </View>
     );
   }
-  if (!ent.loading && !ent.active) {
-    return (
-      <View style={[styles.root, styles.pad, { paddingTop: insets.top + Spacing.s }]}>
-        {head}
-        <AppText muted>Ausfahrten veröffentlichen kannst du mit der Mitgliedschaft. Mitfahren und anfragen geht auch ohne.</AppText>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/mitgliedschaft')} style={styles.primary}>
-          <AppText style={styles.primaryText}>Mitgliedschaft ansehen</AppText>
-        </Pressable>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={[styles.pad, { paddingTop: insets.top + Spacing.s, paddingBottom: insets.bottom + Spacing.xxxl }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets>
@@ -219,17 +225,76 @@ export default function AusfahrtNeu() {
             </View>
             <AppText variant="caption" muted style={styles.under}>Aus der Tour berechnet, Pausen nicht eingerechnet.</AppText>
 
+            {/* Mitfahrer aus den Kontakten (Koray 13.11.); weitere lädst du danach ein oder per Link */}
+            <View style={styles.section}>
+              <View style={styles.rowBetween}>
+                <AppText style={styles.label}>Wer fährt mit</AppText>
+                {picked.length > 0 && <AppText style={styles.label}>{picked.length} von {seats}</AppText>}
+              </View>
+              {friends.length === 0 ? (
+                <AppText variant="caption" muted>Nach dem Anlegen lädst du Fahrer ein oder teilst einen Link, etwa in WhatsApp.</AppText>
+              ) : (
+                <>
+                  {friends.map((c) => {
+                    const on = picked.includes(c.id);
+                    const full = !on && picked.length >= seats;
+                    return (
+                      <Pressable
+                        key={c.id}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: on, disabled: full }}
+                        disabled={full}
+                        onPress={() => setPicked((l) => (on ? l.filter((x) => x !== c.id) : [...l, c.id]))}
+                        style={[styles.pickRow, on && styles.pickOn, full && styles.stepOff]}>
+                        <Avatar name={c.name} userId={c.id} size={36} />
+                        <View style={styles.flex}>
+                          <AppText style={styles.pickName} numberOfLines={1}>{c.name}</AppText>
+                          {c.car ? <AppText variant="caption" muted numberOfLines={1}>{c.car}</AppText> : null}
+                        </View>
+                        <View style={[styles.check, on && styles.checkOn]}>{on && <SymbolView name="checkmark" size={13} weight="bold" tintColor={Colors.ground} />}</View>
+                      </Pressable>
+                    );
+                  })}
+                  <AppText variant="caption" muted>Eingeladene sagen zu oder ab. Einen Link zum Teilen bekommst du nach dem Anlegen.</AppText>
+                </>
+              )}
+            </View>
+
+            {/* Sichtbarkeit: privat ist der Standard */}
+            <View style={styles.section}>
+              <AppText style={styles.label}>Wer sieht die Ausfahrt</AppText>
+              <Pressable accessibilityRole="radio" accessibilityState={{ selected: !pub }} onPress={() => setPub(false)} style={[styles.option, !pub && styles.pickOn]}>
+                <View style={[styles.radio, !pub && styles.radioOn]} />
+                <View style={styles.flex}>
+                  <AppText style={styles.pickName}>Privat</AppText>
+                  <AppText variant="caption" muted>Nur du und deine Eingeladenen. Nicht in der Community.</AppText>
+                </View>
+              </Pressable>
+              <Pressable
+                accessibilityRole="radio"
+                accessibilityState={{ selected: pub }}
+                onPress={() => (ent.active ? setPub(true) : router.push('/mitgliedschaft'))}
+                style={[styles.option, pub && styles.pickOn]}>
+                <View style={[styles.radio, pub && styles.radioOn]} />
+                <View style={styles.flex}>
+                  <AppText style={styles.pickName}>In der Community</AppText>
+                  <AppText variant="caption" muted>{ent.active ? 'Alle sehen sie unter Ausfahrten und können anfragen.' : 'Mit der Mitgliedschaft, dazu mehr Plätze.'}</AppText>
+                </View>
+              </Pressable>
+            </View>
+
             {/* Plätze */}
             <View style={styles.section}>
               <AppText style={styles.label}>Plätze für Mitfahrer</AppText>
               <View style={styles.stepper}>
-                <StepBtn icon="minus" label="Ein Platz weniger" disabled={seats <= 1} onPress={() => setSeats((s) => Math.max(1, s - 1))} />
+                <StepBtn icon="minus" label="Ein Platz weniger" disabled={seats <= Math.max(1, picked.length)} onPress={() => setSeats(Math.max(1, picked.length, seats - 1))} />
                 <View style={styles.stepVal}>
                   <AppText style={styles.metric}>{seats}</AppText>
                   <AppText variant="caption" muted>{seats === 1 ? 'Fahrzeug' : 'Fahrzeuge'}</AppText>
                 </View>
-                <StepBtn icon="plus" label="Ein Platz mehr" disabled={seats >= maxSeats} onPress={() => setSeats((s) => Math.min(maxSeats, s + 1))} />
+                <StepBtn icon="plus" label="Ein Platz mehr" disabled={seats >= maxSeats} onPress={() => setSeats(Math.min(maxSeats, seats + 1))} />
               </View>
+              {!ent.active && <AppText variant="caption" muted>Kostenfrei fahrt ihr zu dritt, du und zwei Mitfahrer. Mehr Plätze gibt es mit der Mitgliedschaft.</AppText>}
             </View>
 
             {/* Hinweis */}
@@ -240,9 +305,9 @@ export default function AusfahrtNeu() {
 
             {err && <AppText style={styles.error}>{err}</AppText>}
             <Pressable accessibilityRole="button" onPress={() => void publish()} disabled={busy} style={[styles.primary, tooSoon && styles.primaryOff]}>
-              {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Ausfahrt veröffentlichen</AppText>}
+              {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{pub ? 'Ausfahrt veröffentlichen' : 'Ausfahrt anlegen'}</AppText>}
             </Pressable>
-            <AppText variant="caption" muted style={styles.center}>Für alle mit Konto in der Community sichtbar, mit Treffpunkt und Zeit.</AppText>
+            <AppText variant="caption" muted style={styles.center}>{pub ? 'Für alle mit Konto in der Community sichtbar, mit Treffpunkt und Zeit.' : 'Privat: in der Community steht sie nicht.'}</AppText>
           </Animated.View>
         )}
       </ScrollView>
@@ -278,6 +343,12 @@ const styles = StyleSheet.create({
   pickRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 60, paddingHorizontal: Spacing.l, borderRadius: Radius.m, backgroundColor: Colors.surface },
   pickOn: { backgroundColor: Colors.surface2 },
   pickName: { fontFamily: Fonts.bold, fontSize: Type.title },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  option: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: Colors.muted },
+  radioOn: { borderWidth: 7, borderColor: Colors.signal },
+  check: { width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  checkOn: { backgroundColor: Colors.text },
   days: { gap: Spacing.s, paddingRight: Spacing.xl },
   day: { width: 64, height: 64, borderRadius: Radius.m, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', gap: 2 },
   dayOn: { backgroundColor: Colors.text },

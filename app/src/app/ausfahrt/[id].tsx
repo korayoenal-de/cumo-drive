@@ -7,7 +7,7 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Share, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,7 +19,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import {
   answerAnfrage, arrival, ausfahrtTeilnehmer, ausfahrtTour, cancelAusfahrt, clock, freeSeats, listAnfragen,
-  listAusfahrten, longDate, monthYear, requestAusfahrt, withdrawAusfahrt, ausfahrtAbsagen, type Absage, type Anfrage, type Ausfahrt, type Teilnehmer,
+  listAusfahrten, longDate, monthYear, requestAusfahrt, withdrawAusfahrt, ausfahrtAbsagen, rideByLink, rideLink, type Absage, type Anfrage, type Ausfahrt, type LinkedRide, type Teilnehmer,
 } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { refreshContacts, useContacts, type Contact } from '@/lib/contacts';
@@ -32,11 +32,13 @@ import { formatKm, type Profile, type Tour } from '@/lib/tour';
 type Full = { tour: Tour & { minutes?: number }; profile: Profile };
 
 export default function AusfahrtDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // k: Schlüssel aus einem Einladungslink einer privaten Ausfahrt (Koray 13.11.)
+  const { id, k } = useLocalSearchParams<{ id: string; k?: string }>();
   const insets = useSafeAreaInsets();
   const session = useSession();
   const ride = useRide();
   const [a, setA] = useState<Ausfahrt | null | undefined>(undefined);
+  const [linked, setLinked] = useState<LinkedRide | null>(null);
   const [full, setFull] = useState<Full | null>(null);
   const [members, setMembers] = useState<Teilnehmer[]>([]);
   const [invited, setInvited] = useState<RideMemberRow[]>([]);
@@ -65,7 +67,10 @@ export default function AusfahrtDetail() {
       const all = await listAusfahrten();
       const found = all.find((x) => x.id === id) ?? null;
       setA(found);
-      if (!found) return;
+      if (!found) {
+        if (k) setLinked(await rideByLink(id, k).catch(() => null));
+        return;
+      }
       setMembers(await ausfahrtTeilnehmer(id));
       if (found.isOwner) {
         setRequests(await listAnfragen(id));
@@ -76,7 +81,7 @@ export default function AusfahrtDetail() {
       setErr(e instanceof Error ? e.message : String(e));
       setA((x) => x ?? null);
     }
-  }, [id]);
+  }, [id, k]);
 
   useFocusEffect(
     useCallback(() => {
@@ -120,6 +125,38 @@ export default function AusfahrtDetail() {
     return (
       <View style={[styles.root, styles.center]}>
         <ActivityIndicator color={Colors.muted} />
+      </View>
+    );
+  }
+  if (a === null && linked) {
+    // Einladungslink: Eckdaten und Anfrage; der Organisator nimmt an (Koray 13.11.)
+    return (
+      <View style={[styles.root, { paddingTop: insets.top + Spacing.s, paddingHorizontal: Spacing.xl, gap: Spacing.l }]}>
+        <BackButton onPress={back} />
+        <AppText style={styles.kicker}>{linked.ownerName} lädt dich ein</AppText>
+        <AppText variant="display">{linked.name}</AppText>
+        <AppText style={styles.value}>{longDate(linked.startsAt)}, {clock(linked.startsAt)}{linked.km ? `  ·  ${formatKm(linked.km, 0)} km` : ''}</AppText>
+        {linked.free > 0 ? (
+          <>
+            <TextInput maxFontSizeMultiplier={1.2}
+              value={msg}
+              onChangeText={setMsg}
+              placeholder={`Nachricht an ${linked.ownerName} (optional)`}
+              placeholderTextColor={Colors.muted}
+              multiline
+              maxLength={300}
+              style={[styles.input, styles.inputMulti]}
+              accessibilityLabel={`Nachricht an ${linked.ownerName}`}
+            />
+            <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void run('ask', () => requestAusfahrt(linked.id, msg, myVehicleLabel() || null, k ?? null))} style={styles.primary}>
+              {busy === 'ask' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Mitfahren anfragen</AppText>}
+            </Pressable>
+            <AppText variant="caption" muted>{linked.ownerName} bestätigt deine Anfrage. Danach siehst du Tour, Treffpunkt und wer dabei ist.</AppText>
+          </>
+        ) : (
+          <AppText muted>Die Ausfahrt ist schon voll.</AppText>
+        )}
+        {err && <AppText style={styles.error}>{err}</AppText>}
       </View>
     );
   }
@@ -184,7 +221,7 @@ export default function AusfahrtDetail() {
 
         <View style={styles.titleBlock}>
           <View style={styles.row}>
-            <AppText style={styles.kicker}>Ausfahrt</AppText>
+            <AppText style={styles.kicker}>{a.isPublic ? 'Ausfahrt' : 'Private Ausfahrt'}</AppText>
             <View style={[styles.tag, free > 0 ? styles.tagGood : styles.tagMuted]}>
               <AppText style={[styles.tagText, { color: free > 0 ? Colors.good : Colors.muted }]}>{free > 0 ? `${free} von ${a.maxMembers - 1} Plätzen frei` : 'Ausgebucht'}</AppText>
             </View>
@@ -313,10 +350,26 @@ export default function AusfahrtDetail() {
             </AppText>
           )}
           {a.isOwner && free > 0 && !inviting && (
-            <Pressable accessibilityRole="button" onPress={() => setInviting(true)} style={styles.inviteBtn}>
-              <SymbolView name="person.badge.plus" size={18} weight="semibold" tintColor={Colors.text} />
-              <AppText style={styles.secondaryText}>Mitglieder einladen</AppText>
-            </Pressable>
+            <View style={styles.row}>
+              <Pressable accessibilityRole="button" onPress={() => setInviting(true)} style={[styles.inviteBtn, styles.flex]}>
+                <SymbolView name="person.badge.plus" size={18} weight="semibold" tintColor={Colors.text} />
+                <AppText style={styles.secondaryText}>Einladen</AppText>
+              </Pressable>
+              {/* Link zum Teilen, etwa in WhatsApp: führt zu einer Anfrage (Koray 13.11.) */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityHint="Wer den Link öffnet, fragt an. Du nimmst an."
+                onPress={() =>
+                  void run('link', async () => {
+                    const url = await rideLink(a.id);
+                    await Share.share({ message: `${a.name}, ${longDate(a.startsAt)} um ${clock(a.startsAt)}. Fahr mit, frag in CUMO DRIVE an: ${url}` });
+                  })
+                }
+                style={[styles.inviteBtn, styles.flex]}>
+                {busy === 'link' ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="square.and.arrow.up" size={18} weight="semibold" tintColor={Colors.text} />}
+                <AppText style={styles.secondaryText}>Link teilen</AppText>
+              </Pressable>
+            </View>
           )}
           {a.isOwner && inviting && (
             <InviteBox

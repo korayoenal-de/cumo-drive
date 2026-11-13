@@ -80,13 +80,14 @@ async function rideMessage(id: number): Promise<Note[]> {
 
 async function rideMember(e: Extract<Event, { type: 'ride_member' }>): Promise<Note[]> {
   if (!UUID.test(e.ride) || !UUID.test(e.user)) return [];
-  const { data: r } = await db.from('rides').select('id,name,owner,public,status').eq('id', e.ride).maybeSingle();
+  const { data: r } = await db.from('rides').select('id,name,owner,public,status,starts_at').eq('id', e.ride).maybeSingle();
   if (!r || r.status === 'beendet') return [];
   const { data: m } = await db.from('ride_members').select('status,message').eq('ride_id', e.ride).eq('user_id', e.user).maybeSingle();
   // Inzwischen wieder geändert: dann gilt die neuere Änderung mit ihrer eigenen Mitteilung
   if (!m || m.status !== e.status) return [];
   const ride = short(r.name, 60);
-  const url = r.public ? `/ausfahrt/${r.id}` : '/';
+  // Ausfahrten (auch private, Koray 13.11.) öffnen ihre Seite, schnelle Gruppenfahrten ohne Termin den Planer
+  const url = r.public || r.starts_at ? `/ausfahrt/${r.id}` : '/';
   const data = { url, type: 'ride_member' };
   if (e.status === 'eingeladen' && e.user !== r.owner) {
     return [{ user: e.user, title: 'Einladung zur Ausfahrt', body: short(`${await nameOf(r.owner)} lädt dich zu ${ride} ein.`), data }];
@@ -113,13 +114,13 @@ async function rideMember(e: Extract<Event, { type: 'ride_member' }>): Promise<N
 /** Veranstalter hat die Gruppenfahrt gestartet: an alle, die zugesagt haben (Koray 12.11.) */
 async function rideStart(e: Extract<Event, { type: 'ride_start' }>): Promise<Note[]> {
   if (!UUID.test(e.ride)) return [];
-  const { data: r } = await db.from('rides').select('id,name,owner,public,status').eq('id', e.ride).maybeSingle();
+  const { data: r } = await db.from('rides').select('id,name,owner,public,status,starts_at').eq('id', e.ride).maybeSingle();
   if (!r || r.status !== 'laeuft') return [];
   const { data: members } = await db.from('ride_members').select('user_id').eq('ride_id', r.id).eq('status', 'zugesagt').limit(200);
   const to = ((members ?? []) as { user_id: string }[]).map((x) => x.user_id).filter((u) => u !== r.owner);
   if (!to.length) return [];
   const lead = await nameOf(r.owner);
-  const data = { url: r.public ? `/ausfahrt/${r.id}` : '/', type: 'ride_start' };
+  const data = { url: r.public || r.starts_at ? `/ausfahrt/${r.id}` : '/', type: 'ride_start' };
   return to.map((user) => ({ user, title: `${lead} hat die Gruppenfahrt gestartet`, body: short(`${r.name}: tippe, um mitzufahren. Funk und Live Karte sind an.`), data }));
 }
 

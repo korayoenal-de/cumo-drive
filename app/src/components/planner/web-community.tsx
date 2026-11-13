@@ -66,7 +66,7 @@ export function CommunityPanel(props: {
       })
       .catch((e: Error) => setErr(e.message));
     listAusfahrten()
-      .then(setRides)
+      .then((l) => setRides(l.filter((r) => r.isPublic)))
       .catch(() => setRides((r) => r ?? []));
     listDrivers()
       .then(setDrivers)

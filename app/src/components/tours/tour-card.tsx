@@ -7,6 +7,7 @@
  * im selben Sheet, Löschen fragt in einem ConfirmSheet nach, Erfolg meldet ein Toast.
  * Muster: docs/design-prinzipien.md, Abschnitt Ebenen und Rückmeldungen.
  */
+import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -54,6 +55,8 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
   // veröffentlichen lässt sie sich erst, wenn du die Strecke geändert hast (dann mit Hinweis auf die Herkunft)
   const taken = fromCommunity(t);
   const items: SheetItem[] = [
+    // Ausfahrt aus der Tour planen, privat als Standard (Koray 13.11.)
+    { key: 'ride', icon: 'calendar.badge.plus', label: 'Ausfahrt planen', hint: 'Mit Termin, Treffpunkt und deinen Leuten', primary: true, onPress: () => router.push({ pathname: '/ausfahrt/neu', params: { tour: t.id } }) },
     { key: 'rename', icon: 'pencil', label: 'Umbenennen', hint: taken ? 'Nur bei dir, in der Community bleibt der Name' : undefined, onPress: () => setSheet('rename') },
     {
       key: 'dup',

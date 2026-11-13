@@ -39,6 +39,8 @@ export type Ausfahrt = {
   isOwner: boolean;
   openRequests: number;
   rideStatus: 'geplant' | 'laeuft' | 'beendet';
+  /** in der Community sichtbar; sonst privat, nur für Organisator und Eingeladene (Koray 13.11.) */
+  isPublic: boolean;
 };
 
 export type Anfrage = {
@@ -74,6 +76,7 @@ type Row = {
   note: string | null; km: number | string | null; minutes: number | null; start_lat: number | null; start_lon: number | null;
   end_lat: number | null; end_lon: number | null; goal_name: string | null; taken: number; max_members: number;
   my_status: MemberStatus | null; is_owner: boolean; open_requests: number; ride_status: Ausfahrt['rideStatus'];
+  is_public?: boolean | null;
 };
 
 export async function listAusfahrten(): Promise<Ausfahrt[]> {
@@ -104,6 +107,8 @@ export async function listAusfahrten(): Promise<Ausfahrt[]> {
       isOwner: r.is_owner,
       openRequests: r.open_requests ?? 0,
       rideStatus: r.ride_status,
+      // ältere Server ohne Spalte: dort kamen nur öffentliche Ausfahrten
+      isPublic: r.is_public ?? true,
     };
   });
 }
@@ -146,7 +151,7 @@ export async function ausfahrtTeilnehmer(id: string): Promise<Teilnehmer[]> {
 }
 
 /** Ausfahrt aus einer eigenen Tour veröffentlichen; die Tour kommt dafür ins Konto. */
-export async function publishAusfahrt(t: SavedTour, opts: { startsAt: Date; meeting: MeetingPoint | null; note: string; seats: number }): Promise<string> {
+export async function publishAusfahrt(t: SavedTour, opts: { startsAt: Date; meeting: MeetingPoint | null; note: string; seats: number; public?: boolean }): Promise<string> {
   const { data: s } = await supabase.auth.getSession();
   if (!s.session) throw new Error('Zum Veröffentlichen brauchst du ein Konto (Einstellungen).');
   // Die gemerkte Konto ID kann fremd oder gelöscht sein (anderes Konto, Kopie aus der Community).
@@ -166,6 +171,7 @@ export async function publishAusfahrt(t: SavedTour, opts: { startsAt: Date; meet
     p_meeting: opts.meeting,
     p_note: opts.note.trim() || null,
     p_seats: opts.seats,
+    p_public: opts.public ?? false,
   });
   if (error) fail(error.message);
   return data as string;
@@ -176,9 +182,34 @@ export async function cancelAusfahrt(id: string) {
   if (error) fail(error.message);
 }
 
-export async function requestAusfahrt(id: string, message: string, vehicle: string | null) {
-  const { error } = await supabase.rpc('request_ride', { ride: id, msg: message.trim() || null, my_vehicle: vehicle?.trim() || null });
+/** Mitfahren anfragen; bei einer privaten Ausfahrt mit dem Schlüssel aus dem Einladungslink */
+export async function requestAusfahrt(id: string, message: string, vehicle: string | null, key?: string | null) {
+  const { error } = await supabase.rpc('request_ride', { ride: id, msg: message.trim() || null, my_vehicle: vehicle?.trim() || null, k: key ?? null });
   if (error) fail(error.message);
+}
+
+/** Einladungslink einer eigenen Ausfahrt: führt zu einer Anfrage, die du annimmst (Koray 13.11.) */
+export const RIDE_LINK_BASE = 'https://drive.rallycumo.de/a';
+export async function rideLink(id: string): Promise<string> {
+  const { data, error } = await supabase.rpc('ride_link_key', { ride: id });
+  if (error) fail(error.message);
+  return `${RIDE_LINK_BASE}#${id}.${data as string}`;
+}
+
+/** Ausfahrt und Schlüssel aus einem Einladungslink (Text nach dem #) */
+export function parseRideLink(hash: string): { id: string; key: string } | null {
+  const m = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.([0-9a-f]{8,40})/i.exec(hash);
+  return m ? { id: m[1].toLowerCase(), key: m[2].toLowerCase() } : null;
+}
+
+export type LinkedRide = { id: string; name: string; ownerName: string; startsAt: Date; km: number | null; free: number; rideStatus: Ausfahrt['rideStatus'] };
+
+/** Eckdaten für Eingeladene per Link, noch ohne Teilnehmer und Tour */
+export async function rideByLink(id: string, key: string): Promise<LinkedRide | null> {
+  const { data, error } = await supabase.rpc('ride_by_link', { ride: id, k: key });
+  if (error) fail(error.message);
+  const r = ((data ?? []) as { id: string; name: string; owner_name: string | null; starts_at: string; km: number | string | null; max_members: number; taken: number; ride_status: Ausfahrt['rideStatus'] }[])[0];
+  return r ? { id: r.id, name: r.name, ownerName: r.owner_name ?? 'Fahrer', startsAt: new Date(r.starts_at), km: num(r.km), free: Math.max(0, r.max_members - r.taken), rideStatus: r.ride_status } : null;
 }
 
 export async function withdrawAusfahrt(id: string) {

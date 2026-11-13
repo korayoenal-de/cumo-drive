@@ -12,6 +12,8 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react
 import { TypoTabs } from '@/components/planner/planner-parts';
 import { RouteThumb } from '@/components/tours/tour-bits';
 import { TourCard } from '@/components/tours/tour-card';
+import { DateBlock } from '@/components/community/ride-bits';
+import { clock, listAusfahrten, type Ausfahrt } from '@/lib/ausfahrten';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
@@ -26,6 +28,61 @@ import { fmtG } from '@/lib/ride-stats';
 import { importTourFile } from '@/lib/route-file';
 import { countCurves } from '@/lib/stats';
 import { flatten, formatKm, type LatLon, type Tour } from '@/lib/tour';
+
+/**
+ * Anstehende Ausfahrten oben in Touren (Koray 13.11.): eigene und die, zu denen du eingeladen bist oder
+ * angefragt hast. Private Ausfahrten stehen nur hier und nicht in der Community.
+ */
+function Upcoming() {
+  const [rides, setRides] = useState<Ausfahrt[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      listAusfahrten()
+        .then((l) => alive && setRides(l.filter((a) => a.rideStatus !== 'beendet' && (a.isOwner || a.myStatus === 'zugesagt' || a.myStatus === 'eingeladen' || a.myStatus === 'angefragt'))))
+        .catch(() => undefined);
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+  if (!rides.length) return null;
+  return (
+    <View style={styles.upcoming}>
+      <AppText style={styles.upLabel}>Anstehend</AppText>
+      {rides.map((a) => {
+        const state = a.isOwner
+          ? `${a.taken} von ${a.maxMembers} Fahrzeugen${a.openRequests ? `, ${a.openRequests} ${a.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : ''}`
+          : a.myStatus === 'eingeladen'
+            ? `Einladung von ${a.ownerName}`
+            : a.myStatus === 'angefragt'
+              ? 'Angefragt, wartet auf Antwort'
+              : `Mit ${a.ownerName}`;
+        return (
+          <Pressable
+            key={a.id}
+            accessibilityRole="button"
+            accessibilityLabel={`${a.name}, ${clock(a.startsAt)}, ${state}${a.isPublic ? '' : ', privat'}`}
+            onPress={() => router.push({ pathname: '/ausfahrt/[id]', params: { id: a.id } })}
+            style={({ pressed }) => [styles.upCard, pressed && { opacity: 0.85 }]}>
+            <DateBlock d={a.startsAt} />
+            <View style={styles.flex}>
+              <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
+              <AppText variant="caption" muted numberOfLines={1}>{clock(a.startsAt)}{a.meeting?.name ? ` ab ${a.meeting.name}` : ''}</AppText>
+              <AppText variant="caption" style={a.myStatus === 'eingeladen' || a.openRequests ? styles.upAttn : styles.upMuted} numberOfLines={1}>{state}</AppText>
+            </View>
+            {!a.isPublic && (
+              <View style={styles.privat}>
+                <SymbolView name="lock.fill" size={11} weight="bold" tintColor={Colors.text} />
+                <AppText style={styles.privatText}>Privat</AppText>
+              </View>
+            )}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 const SORTS: { id: SortKey; label: string }[] = [
   { id: 'neu', label: 'Neueste' },
@@ -91,6 +148,8 @@ export default function Touren() {
         </Pressable>
       </View>
       {importMsg && <AppText variant="caption" muted>{importMsg}</AppText>}
+
+      {session && <Upcoming />}
 
       {/* Wie im Planer: Reiter als große Schrift, aktiv hell, inaktiv grau (Koray 8.11.) */}
       <TypoTabs
@@ -301,6 +360,14 @@ function DriveCard({ line, label, onOpen, children }: { line?: LatLon[]; label: 
 }
 
 const styles = StyleSheet.create({
+  upcoming: { gap: Spacing.s },
+  upLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
+  upCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l },
+  upName: { fontFamily: Fonts.bold, fontSize: Type.title },
+  upMuted: { color: Colors.muted },
+  upAttn: { color: Colors.signal, fontFamily: Fonts.semibold },
+  privat: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: Colors.surface2 },
+  privatText: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
   driveRow: { flexDirection: 'row', alignItems: 'center' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   importBtn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },

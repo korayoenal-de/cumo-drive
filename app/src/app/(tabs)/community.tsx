@@ -122,8 +122,9 @@ export default function Community() {
         setErr(null);
       })
       .catch((e: Error) => setErr(e.message));
+    // private Ausfahrten stehen nur unter Touren, nicht in der Community (Koray 13.11.)
     listAusfahrten()
-      .then(setRides)
+      .then((l) => setRides(l.filter((r) => r.isPublic)))
       .catch(() => setRides((r) => r ?? []));
     listDrivers()
       .then(setDrivers)
