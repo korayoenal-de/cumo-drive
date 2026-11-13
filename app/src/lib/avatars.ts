@@ -37,24 +37,57 @@ function queue(id: string, force = false) {
   if (timer) return;
   timer = setTimeout(async () => {
     timer = null;
-    const ids = [...pending];
+    const all = [...pending];
     pending = new Set();
-    try {
-      const { data, error } = await supabase.from('profiles').select('id,avatar_v').in('id', ids);
-      if (error) throw error;
-      const now = Date.now();
-      for (const id of ids) {
-        if (!known.has(id)) known.set(id, null);
-        fetchedAt.set(id, now);
+    // Nur echte Konten abfragen: eine fremde Kennung im selben Aufruf ließ früher die ganze Abfrage scheitern
+    const ids = all.filter((id) => UUID.test(id));
+    for (const id of all) if (!UUID.test(id)) known.set(id, null);
+    for (let i = 0; i < ids.length; i += 100) {
+      const part = ids.slice(i, i + 100);
+      try {
+        const { data, error } = await supabase.from('profiles').select('id,avatar_v').in('id', part);
+        if (error) throw error;
+        const now = Date.now();
+        const rows = (data ?? []) as { id: string; avatar_v: number | null }[];
+        for (const id of part) {
+          known.set(id, rows.find((r) => r.id === id)?.avatar_v ?? null);
+          fetchedAt.set(id, now);
+        }
+      } catch {
+        // Fehler nicht als "kein Foto" merken: beim nächsten Kreis erneut fragen
+        for (const id of part) if (!known.has(id)) known.set(id, null);
       }
-      for (const id of ids) if (!(data ?? []).some((r: { id: string }) => r.id === id)) known.set(id, null);
-      for (const r of (data ?? []) as { id: string; avatar_v: number | null }[]) known.set(r.id, r.avatar_v ?? null);
-    } catch {
-      // Fehler nicht als "kein Foto" merken: beim nächsten Kreis erneut fragen
-      for (const id of ids) if (!known.has(id)) known.set(id, null);
     }
     emit();
+    void healOwn(ids);
   }, 60);
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Eigenes Foto liegt im Speicher, aber die Fassung fehlt im Profil (Koray 13.11.: Foto hochgeladen, aber nirgends
+ * zu sehen): einmal je Sitzung nachsehen und die Fassung nachtragen, damit es auch die anderen sehen.
+ */
+let healed = false;
+async function healOwn(ids: string[]) {
+  if (healed) return;
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    const me = u.user?.id;
+    if (!me || !ids.includes(me) || known.get(me) != null) return;
+    healed = true;
+    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/public/avatars/${me}.jpg`, { method: 'HEAD' });
+    if (!r.ok) return;
+    const v = Math.floor(Date.now() / 1000);
+    // auch wenn das Nachtragen scheitert: das eigene Foto zeigen wir, es liegt ja im Speicher
+    await supabase.from('profiles').update({ avatar_v: v }).eq('id', me);
+    known.set(me, v);
+    fetchedAt.set(me, Date.now());
+    emit();
+  } catch {
+    // beim nächsten Start wieder
+  }
 }
 
 export function avatarUrl(userId: string, v: number): string {
