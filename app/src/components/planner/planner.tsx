@@ -49,7 +49,9 @@ import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { spliceStop } from '@/lib/stop-splice';
 import { corridorSpots, curvyPieces, radarRadiusM, radarRoads, radarSpots, REVEAL_MS, type Radar, type Scan } from '@/lib/radar';
 import { flatten, formatKm, haversine, normProfile, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
-import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
+import { DEFAULT_AVOID } from '@/lib/valhalla';
+import { clearAvoidedPasses } from '@/lib/avoid-pass';
+import { useAvoid } from '@/lib/avoid-settings';
 
 import { type PlannedStop } from './planner-parts';
 import { noGoodAlternative, spurKm } from '@/lib/smart-roundtrip';
@@ -216,7 +218,8 @@ export default function Planner() {
   const [minIdx, setMinIdx] = useState(2);
   const [direction, setDirection] = useState<Direction>('zufall');
   const [profile, setProfile] = useState<Profile>('kurvig');
-  const [avoid, setAvoid] = useState<Avoid>(DEFAULT_AVOID);
+  // Vermeiden bleibt als feste Einstellung stehen (lib/avoid-settings)
+  const [avoid, setAvoid] = useAvoid();
 
   const roundKm = lengthBy === 'km' ? KM_STEPS[kmIdx] : targetKm({ minutes: MIN_STEPS[minIdx] }, profile);
 
@@ -471,6 +474,8 @@ export default function Planner() {
   }
 
   function createRoundTrip() {
+    // Neue Runde: ausgelassene Pässe der vorigen gelten nicht mehr
+    clearAvoidedPasses();
     void run(async (signal) => {
       // Ohne gewählten Ort neu orten, der gemerkte Standort kann nach einer Fahrt veraltet sein
       const start = picked ?? (await locate(signal, FRESH_MS).catch((e) => {
@@ -807,6 +812,11 @@ export default function Planner() {
           stops={view.stops}
           group={false}
           onReroll={() => reroll(view.req)}
+          onAvoid={() => {
+            // Auslassen in der Rundtour (13.11.): dieselbe Anfrage neu planen, der Pass ist dann gesperrt
+            const req = view.req;
+            void run(async () => req, lastStops.current);
+          }}
           fun={resultFun}
           funDelta={funDelta}
           onFun={() => setFunOpen(true)}

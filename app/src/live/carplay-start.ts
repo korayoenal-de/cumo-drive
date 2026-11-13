@@ -12,6 +12,7 @@ import { readLibrary, type SavedTour } from '@/lib/library';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { normProfile } from '@/lib/tour';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
+import { avoidSetting } from '@/lib/avoid-settings';
 
 /** Höchstens so viele Touren im Auto (CarPlay kürzt Listen je nach Auto ohnehin) */
 const MAX_TOURS = 24;
@@ -70,13 +71,13 @@ export async function planCarRound(km: number) {
     const start = await locate(ctrl.signal, FRESH_MS);
     if (ctrl.signal.aborted) return;
     const tour = await buildTour(
-      { start, km, direction: 'zufall', profile: 'kurvig', avoid: DEFAULT_AVOID },
+      { start, km, direction: 'zufall', profile: 'kurvig', avoid: avoidSetting() },
       newSeed(),
       () => undefined,
       ctrl.signal,
     );
     if (ctrl.signal.aborted) return;
-    setActiveTour(tour, 'kurvig', DEFAULT_AVOID);
+    setActiveTour(tour, 'kurvig', avoidSetting());
     carPlayEndPlanning('');
   } catch (e) {
     // abgebrochen (im Auto oder durch eine neue Runde): das Autodisplay weiß es schon

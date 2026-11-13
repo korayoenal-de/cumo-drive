@@ -31,8 +31,10 @@ import { styles } from './planner-styles';
 
 
 export function Result({
-  tour, req, group, onReroll, onBack, onAdjust, onAddStop, onRemoveStop, planned, adding, rolls = [], rollIdx = -1, onPickRoll, fun, funDelta, onFun,
+  tour, req, group, onReroll, onBack, onAdjust, onAddStop, onRemoveStop, planned, adding, rolls = [], rollIdx = -1, onPickRoll, fun, funDelta, onFun, onAvoid,
 }: {
+  /** Pass mit Warnung auslassen oder wieder einplanen: die Runde wird danach neu geplant */
+  onAvoid?: () => void;
   fun?: TourFun | null;
   funDelta?: number | null;
   onFun?: () => void;
@@ -96,7 +98,7 @@ export function Result({
         </Pressable>
       )}
 
-      <HighlightList line={line} />
+      <HighlightList line={line} onAvoid={onAvoid} />
 
       {warnings.length > 0 && <Warnings warnings={warnings} checked={tour.geprueft !== false} />}
 

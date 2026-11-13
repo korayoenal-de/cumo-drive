@@ -31,7 +31,7 @@ const KIND_LABEL: Record<string, string> = {
 
 /**
  * onAvoid: Pass mit Warnung für diese Tour herausnehmen (Auslassen) oder wieder einplanen; der Aufrufer
- * plant danach neu. Ohne onAvoid (Rundtour) gibt es nur das Label.
+ * plant danach neu (Route und seit 13.11. auch Rundtour). Ohne onAvoid gibt es nur das Label.
  */
 export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () => void }) {
   const avoided = useAvoidedPasses();

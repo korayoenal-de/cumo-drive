@@ -12,7 +12,8 @@ import { type TourFun } from '@/lib/fun-score';
 import { findHighlights, highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { cumulativeKm } from '@/lib/navigation/route';
 import { closedHint, passState, usePassLive } from '@/lib/pass-live';
-import { PASS_STATUS_URL, PASSES, passesAlong, TIER_LABEL, warnSpeech } from '@/lib/passes';
+import { allowPass, avoidPass, useAvoidedPasses } from '@/lib/avoid-pass';
+import { PASS_STATUS_URL, PASSES, passesAlong, TIER_LABEL, warnLabel, warnSpeech } from '@/lib/passes';
 import { elevationProfile, type ElevationProfile } from '@/lib/stats';
 import { formatKm, type LatLon, type Tour, type Warning } from '@/lib/tour';
 import { Colors, Radius, Spacing } from '@/constants/theme';
@@ -41,7 +42,7 @@ export function ResultStats(props: { tour: PlannedTour; curves: number; fun: Tou
 }
 
 /** Alles unter den Kennzahlen: Passhinweis, Highlights, Warnungen, Höhenprofil */
-export function ResultDetails(props: { tour: PlannedTour; line: LatLon[]; onFly: (p: LatLon) => void; onHoverKm: (km: number | null) => void; elev: ElevationProfile | null }) {
+export function ResultDetails(props: { tour: PlannedTour; line: LatLon[]; onFly: (p: LatLon) => void; onHoverKm: (km: number | null) => void; elev: ElevationProfile | null; onAvoid?: () => void }) {
   const live = usePassLive();
   const passes = useMemo(() => passesAlong(PASSES, props.line), [props.line]);
   const hint = closedHint(passes.map((x) => x.pass), live);
@@ -54,7 +55,7 @@ export function ResultDetails(props: { tour: PlannedTour; line: LatLon[]; onFly:
           <span style={{ fontSize: 15 }}>{hint.text} Klick für den aktuellen Passstatus.</span>
         </a>
       ) : null}
-      <HighlightsWeb line={props.line} onFly={props.onFly} />
+      <HighlightsWeb line={props.line} onFly={props.onFly} onAvoid={props.onAvoid} />
       {warnings.length ? <WarningsWeb warnings={warnings} checked={props.tour.geprueft !== false} onFly={props.onFly} /> : null}
       {props.elev && props.elev.km.length > 2 ? <ElevationChart e={props.elev} onHoverKm={props.onHoverKm} /> : null}
     </>
@@ -82,16 +83,21 @@ export function useElevation(line: LatLon[]): ElevationProfile | null {
 
 const KIND_LABEL: Record<string, string> = { pass: 'Pass', rallye: 'Rallyestrecke', bergrennen: 'Bergrennstrecke', aussicht: 'Aussichtsstrecke', strecke: 'Traumstrecke' };
 
-/** Highlights nach Fahrspaß Pegel gerankt; Klick klappt die Details an Ort und Stelle auf */
-export function HighlightsWeb(props: { line: LatLon[]; onFly: (p: LatLon) => void }) {
+/**
+ * Highlights nach Fahrspaß Pegel gerankt; Klick klappt die Details an Ort und Stelle auf. Pässe mit Warnung
+ * tragen den Hauptgrund unter dem Namen und lassen sich auslassen (onAvoid plant danach neu, wie in der App).
+ */
+export function HighlightsWeb(props: { line: LatLon[]; onFly: (p: LatLon) => void; onAvoid?: () => void }) {
   const live = usePassLive();
+  const avoided = useAvoidedPasses();
+  const { onAvoid } = props;
   const cum = useMemo(() => (props.line.length < 2 ? [] : cumulativeKm(props.line)), [props.line]);
   const list = useMemo(
     () => (props.line.length < 2 ? [] : findHighlights(props.line, cum, null).sort((a, b) => b.level - a.level || a.startKm - b.startKm)),
     [props.line, cum],
   );
   const [open, setOpen] = useState<string | null>(null);
-  if (!list.length) return null;
+  if (!list.length && !(onAvoid && avoided.length)) return null;
   const at = (h: Highlight): LatLon => {
     const i = cum.findIndex((k) => k >= (h.startKm + h.endKm) / 2);
     return props.line[Math.max(0, i)];
@@ -116,6 +122,7 @@ export function HighlightsWeb(props: { line: LatLon[]; onFly: (p: LatLon) => voi
                 style={{ display: 'flex', alignItems: 'center', gap: Spacing.m, minHeight: 64, padding: '8px 10px', border: 'none', borderRadius: Radius.m, background: isOpen ? C.surface2 : 'transparent', color: C.text, cursor: 'pointer', textAlign: 'left' }}>
                 <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <span style={{ font: `700 17px/22px ${BODY}`, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.name}</span>
+                  {h.warn?.length ? <span style={{ font: `700 15px/20px ${BODY}`, color: C.warn }}>{warnLabel(h.warn)}</span> : null}
                   <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`km ${Math.round(h.startKm)} · ${highlightFacts(h)}`}</span>
                 </span>
                 <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 72 }}>
@@ -145,13 +152,42 @@ export function HighlightsWeb(props: { line: LatLon[]; onFly: (p: LatLon) => voi
                   ) : null}
                 </div>
               ) : null}
+              {onAvoid && h.kind === 'pass' && h.warn?.length && pass ? (
+                <button
+                  aria-label={`${h.name} auslassen`}
+                  onClick={() => {
+                    avoidPass({ id: pass.id, name: pass.name, p: [pass.lat, pass.lon] });
+                    onAvoid();
+                  }}
+                  style={AVOID_BTN}>
+                  Auslassen
+                </button>
+              ) : null}
             </div>
           );
         })}
+        {onAvoid &&
+          avoided.map((a) => (
+            <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: Spacing.m, minHeight: 52, padding: '4px 10px' }}>
+              <span style={{ flex: 1, minWidth: 0, font: `600 15px ${BODY}`, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${a.name} ausgelassen`}</span>
+              <button
+                aria-label={`${a.name} wieder einplanen`}
+                onClick={() => {
+                  allowPass(a.id);
+                  onAvoid();
+                }}
+                style={{ ...AVOID_BTN, alignSelf: 'center', margin: 0 }}>
+                Wieder einplanen
+              </button>
+            </div>
+          ))}
       </div>
     </Section>
   );
 }
+
+/** Auslassen und Wieder einplanen als Link in Signal Orange (Koray 12.11.) */
+const AVOID_BTN = { alignSelf: 'flex-start', minHeight: 44, margin: '0 0 6px 10px', padding: '0 4px', border: 'none', background: 'transparent', color: C.signal, font: `700 15px ${BODY}`, cursor: 'pointer' } as const;
 
 /** Warnungen mit Prüfhinweis; Breiten mit höchstens zwei Nachkommastellen (warningText nutzt trimDecimals) */
 export function WarningsWeb(props: { warnings: Warning[]; checked: boolean; onFly: (p: LatLon) => void }) {

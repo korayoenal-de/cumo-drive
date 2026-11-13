@@ -14,6 +14,7 @@ import { Platform } from 'react-native';
 
 import type { PlannedTour } from './plan';
 import { BIG_CITIES } from '@/data/big-cities';
+import { avoidedPoints } from './avoid-pass';
 
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from './highlight-roads';
 import { regionArea } from './regions';
@@ -963,7 +964,8 @@ export async function cumoRoundTrips(
 ): Promise<(PlannedTour & { curves: number })[]> {
   // Varianten gleichzeitig anfragen (der Server hat 12 Kerne), statt nacheinander
   // Traumstrecken im Radius der Runde bevorzugen
-  const rtModel = model(avoid, [], profile, [], [start], Math.max(15, km / 2.5));
+  // Ausgelassene Pässe (Auslassen in der Rundtour) als gesperrte Quadrate
+  const rtModel = model(avoid, avoidedPoints(), profile, [], [start], Math.max(15, km / 2.5));
   const results = await Promise.all(
     Array.from({ length: count }, async (_, i) => {
       try {

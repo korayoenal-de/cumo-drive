@@ -6,7 +6,7 @@
  * hinaus). Sonst wird geschätzt: Wohnstraßen und Zufahrten 50, im Ort 50, außerorts 100.
  * Geschätzte Werte zählen für die Kurvenwarnung; angezeigt wird ein bekanntes Schild (sonst stand nach der
  * Autobahn in der Stadt noch das Schild unbegrenzt, 7.11.2026) und seit 12.11. außerorts ohne Eintrag die
- * geschätzten 100 als graue Plakette (shownLimitAt).
+ * geschätzten 100 als graue Plakette (shownLimitAt), aber nicht im Kreisverkehr und nicht auf kurzen Lücken.
  * Valhallas geschätztes Tempo taugt dafür nicht (alle Bundesstraßen 57 km/h, Messung 6.11.).
  * Wird stückweise geladen (etwa 40 km je Anfrage); onPart meldet jeden fertigen Teil.
  */
@@ -28,7 +28,7 @@ export type SpeedZones = {
 const STEP_M = 25;
 const CHUNK_PTS = 1600;
 
-type Edge = { length?: number; speed_limit?: number | string; road_class?: string; use?: string; density?: number; names?: string[] };
+type Edge = { length?: number; speed_limit?: number | string; road_class?: string; use?: string; density?: number; names?: string[]; roundabout?: boolean };
 
 /** Straßennummer statt Straßenname: B 47, L 3345, K 65, A 5, E 35, St 2068, SS 12, D 902 */
 const REF = /^\p{L}{1,3}\s?\d+\s?\p{L}?$/u;
@@ -66,6 +66,9 @@ export function edgeLimits(edges: Edge[], carry: Lim | null): Lim[] {
     const cls = e.road_class ?? '';
     const t = tagged(e);
     if (t != null) return (last = { v: t, known: true, cls, openM: 0 });
+    // Kreisverkehr ohne Schild (Koray 13.11.: am Ortsrand stand kurz die graue 100): ein Schild davor gilt
+    // weiter, sonst 50 schätzen und nichts anzeigen; danach geht es weiter wie vor dem Kreisverkehr
+    if (e.roundabout) return last && last.known ? { ...last } : { v: 50, known: false, cls };
     if (last && last.known && last.cls === cls) {
       if (last.v > TOWN_MAX) return { ...last };
       const openM = hasStreetName(e) ? 0 : (last.openM ?? 0) + (e.length ?? 0) * 1000;
@@ -102,7 +105,7 @@ export async function loadSpeedZones(shape: LatLon[], onPart: (z: SpeedZones) =>
         shape: part.map(([lat, lon]) => ({ lat, lon })),
         costing: 'auto',
         shape_match: 'map_snap',
-        filters: { attributes: ['edge.length', 'edge.speed_limit', 'edge.road_class', 'edge.use', 'edge.density', 'edge.names'], action: 'include' },
+        filters: { attributes: ['edge.length', 'edge.speed_limit', 'edge.road_class', 'edge.use', 'edge.density', 'edge.names', 'edge.roundabout'], action: 'include' },
       }),
       signal,
     });
@@ -141,6 +144,8 @@ export function limitAt(z: SpeedZones | null, km: number, onlyKnown = false): nu
 
 /** Geschätzte Limits, die angezeigt werden dürfen: nur die freie Strecke außerorts (Koray 12.11.) */
 const SHOW_ESTIMATE = 100;
+/** Kürzere Stücke mit geschätzten 100 zwischen zwei anderen Zonen werden nicht gezeigt (Lücken in den Daten) */
+const SHOW_ESTIMATE_MIN_KM = 0.5;
 
 /**
  * Limit für die Anzeige bei km: ein bekanntes Schild, oder außerorts ohne Eintrag die geschätzten 100,
@@ -151,7 +156,11 @@ export function shownLimitAt(z: SpeedZones | null, km: number): { limit: number;
   for (let i = 0; i < z.endKm.length; i++) {
     if (km > z.endKm[i]) continue;
     if (z.known[i]) return { limit: z.limit[i], estimated: false };
-    return z.limit[i] === SHOW_ESTIMATE ? { limit: z.limit[i], estimated: true } : null;
+    if (z.limit[i] !== SHOW_ESTIMATE) return null;
+    const from = i > 0 ? z.endKm[i - 1] : 0;
+    const closed = i < z.endKm.length - 1;
+    if (closed && z.endKm[i] - from < SHOW_ESTIMATE_MIN_KM) return null;
+    return { limit: z.limit[i], estimated: true };
   }
   return null;
 }

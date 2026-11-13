@@ -12,6 +12,7 @@
 import { HIGHLIGHT_ROADS, type HighlightRoad } from './highlight-roads';
 import { findHighlights } from './navigation/highlights';
 import { cumulativeKm } from './navigation/route';
+import { avoidedPasses, avoidedPoints } from './avoid-pass';
 import { bigCityKm, cumoAvailable, cumoPlan, cumoRoundTrips } from './cumo-routing';
 import { doubledStretch } from './doubled';
 import { scoreRoute, type GhRoute } from './graphhopper';
@@ -123,7 +124,9 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
     let reachKm = req.km;
     const tried = new Set<string>();
     for (let attempt = 0; attempt < 3; attempt++) {
-      const loop = passLoopVia(PASSES, req.start, reachKm, dir, month, seed + attempt);
+      // Ausgelassene Pässe (Auslassen in der Rundtour, 13.11.) kommen nicht als Ziel der Pass Runde in Frage
+      const skipped = new Set(avoidedPasses().map((a) => a.id));
+      const loop = passLoopVia(skipped.size ? PASSES.filter((p) => !skipped.has(p.id)) : PASSES, req.start, reachKm, dir, month, seed + attempt);
       if (!loop) break;
       const key = loop.passes.map((p) => p.id).join('+');
       if (tried.has(key)) break;
@@ -134,7 +137,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         // fiel planChecked auf Valhalla zurück und rechnete je Pass Runde 10 bis 20 s. Sperrungen prüft später
         // die gemeinsame Bewertung der drei besten.
         const t = own
-          ? await cumoPlan(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, signal)
+          ? await cumoPlan(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, signal, avoidedPoints())
           : await planChecked(req.name, [req.start, ...loop.via, req.start], req.profile, req.avoid, onStep, signal, true);
         const curves = countCurves(flatten(t).map((x) => x.p));
         const bonus = loop.passes.reduce((sum, p) => sum + TIER_WEIGHT[p.tier] * 15, 0);

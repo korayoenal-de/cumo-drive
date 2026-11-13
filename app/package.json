@@ -70,7 +70,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "sync:functions": "cp src/data/passes.json ../supabase/functions/pass-status/passes.json",
-    "test": "tsx --test src/lib/__tests__/*.test.ts",
+    "test": "tsx --tsconfig scripts/replay/tsconfig.json --test src/lib/__tests__/*.test.ts",
     "qa": "tsx qa/check.ts && tsx qa/stress.ts"
   },
   "private": true

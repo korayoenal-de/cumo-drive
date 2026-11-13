@@ -11,11 +11,13 @@ import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput,
 import { Avatar } from '@/components/community/ride-bits';
 import { describeEntitlement } from '@/components/paywall/membership-section';
 import { resetPrivacy, usePrivacy } from '@/components/settings/community-profile';
+import { avoidSummary } from '@/components/planner/planner-parts';
 import { Group, Row, SwitchRow } from '@/components/settings/settings-ui';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { useAvoid } from '@/lib/avoid-settings';
 import { deleteAccount, signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { refreshEntitlement, useEntitlement } from '@/lib/entitlement';
 import { clearLocalTours } from '@/lib/library';
@@ -32,6 +34,7 @@ export default function Einstellungen() {
   const session = useSession();
   const { list, current } = useVehicles();
   const map = useMapSettings();
+  const [avoid] = useAvoid();
   const voice = useVoiceChoice();
   const ent = useEntitlement();
   const moderation = useModeration(!!session);
@@ -81,6 +84,7 @@ export default function Einstellungen() {
 
       <Group label="Fahren">
         <Row title="Stimme und Ansagen" value={voice?.name ?? 'Standard'} onPress={() => router.push('/ansagen')} />
+        <Row title="Vermeiden" value={avoidSummary(avoid)} onPress={() => router.push('/ansagen')} />
         <Row title="Kartendarstellung" value={MAP_STYLES.find((s) => s.id === map.style)?.label ?? 'Standard'} onPress={() => router.push('/ansagen')} />
       </Group>
 

@@ -1,6 +1,7 @@
 /**
  * Tests für reine Rechenfunktionen ohne Netz und ohne React Native.
- * Starten mit: npm test (Node Test Runner über tsx, keine weitere Bibliothek nötig).
+ * Starten mit: npm test (Node Test Runner über tsx; expo-speech, AsyncStorage und react-native ersetzt
+ * scripts/replay/stub.ts, damit die Navigationsmodule ohne App laden).
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
@@ -11,7 +12,7 @@ import { decodeTour, encodeTour, extractCode } from '../share-code';
 import { flatten, haversine, type LatLon, type Tour } from '../tour';
 import { findHighlights } from '../navigation/highlights';
 import { cumulativeKm, tourFromLine } from '../navigation/route';
-import { edgeLimits } from '../navigation/speed-zones';
+import { edgeLimits, shownLimitAt } from '../navigation/speed-zones';
 import { pointAtKm, snapToRoute } from '../navigation/tracker';
 import type { NavRoute } from '../navigation/types';
 import { PASSES, passesAlong } from '../passes';
@@ -269,5 +270,28 @@ describe('Tempolimit am Ortsausgang', () => {
   it('70 und mehr gelten bis zum nächsten Schild weiter', () => {
     const l = edgeLimits([{ ...town, speed_limit: 70 }, open(0.5), open(0.5)], null);
     assert.ok(l.every((x) => x.known && x.v === 70));
+  });
+});
+
+describe('Graue 100 (Koray 13.11.)', () => {
+  const open = (length: number) => ({ length, road_class: 'secondary', density: 0, names: ['L 3345'] });
+
+  it('im Kreisverkehr ohne Schild wird keine 100 geschätzt', () => {
+    const ring = { length: 0.05, road_class: 'secondary', density: 0, roundabout: true };
+    const l = edgeLimits([open(1), ring, ring, open(1)], null);
+    assert.deepEqual(l.map((x) => x.v), [100, 50, 50, 100]);
+    assert.ok(l.every((x) => !x.known));
+  });
+
+  it('ein Schild vor dem Kreisverkehr gilt darin weiter', () => {
+    const ring = { length: 0.05, road_class: 'secondary', density: 0, roundabout: true };
+    const l = edgeLimits([{ ...open(0.5), speed_limit: 70 }, ring], null);
+    assert.ok(l.every((x) => x.known && x.v === 70));
+  });
+
+  it('kurze Lücken mit geschätzten 100 zwischen zwei Zonen zeigen nichts', () => {
+    const z = { endKm: [1, 1.2, 3], limit: [70, 100, 70], known: [true, false, true], loadedKm: 3 };
+    assert.equal(shownLimitAt(z, 1.1), null);
+    assert.deepEqual(shownLimitAt({ ...z, endKm: [1, 2, 3] }, 1.5), { limit: 100, estimated: true });
   });
 });

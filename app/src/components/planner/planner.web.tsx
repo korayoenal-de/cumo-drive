@@ -23,7 +23,7 @@ import { saveTour, syncLibrary, useLibrary, type SavedTour } from '@/lib/library
 import { useMapSettings } from '@/lib/map-settings';
 import { routeCheck } from '@/components/ui/fun-pill';
 import { distToProbe, passesNearRoute, probeLine } from '@/lib/route-edit';
-import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
+import { useAvoid } from '@/lib/avoid-settings';
 import { useRide } from '@/lib/group/ride';
 import { passState, usePassLive } from '@/lib/pass-live';
 import { photoGroupsGeoJson, usePhotoGroups, type PhotoGroup } from '@/lib/photos';
@@ -98,7 +98,8 @@ export default function Planner() {
   const [rtStart, setRtStart] = useState<{ p: LatLon; name: string } | null>(null);
   const [ownServer, setOwnServer] = useState<boolean | null>(null);
   const profile: Profile = 'kurvig';
-  const [avoid, setAvoid] = useState<Avoid>(DEFAULT_AVOID);
+  // Vermeiden bleibt als feste Einstellung stehen (lib/avoid-settings)
+  const [avoid, setAvoid] = useAvoid();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [funOpen, setFunOpen] = useState(false);

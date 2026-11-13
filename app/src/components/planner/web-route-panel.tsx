@@ -309,7 +309,7 @@ export function RoutePanel(props: {
         </div>
       ) : null}
 
-      {routeTour ? <ResultDetails tour={routeTour} line={props.line} onFly={props.onFly} onHoverKm={props.onHoverKm} elev={props.elev} /> : null}
+      {routeTour ? <ResultDetails tour={routeTour} line={props.line} onFly={props.onFly} onHoverKm={props.onHoverKm} elev={props.elev} onAvoid={() => plan.planNow(profile, avoid)} /> : null}
 
       <div>
         {routeTour ? (

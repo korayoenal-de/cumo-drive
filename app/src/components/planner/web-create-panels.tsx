@@ -19,6 +19,7 @@ import { noGoodAlternative } from '@/lib/smart-roundtrip';
 import { tourFun, TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
 import { countCurves } from '@/lib/stats';
 import { flatten, PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
+import { clearAvoidedPasses } from '@/lib/avoid-pass';
 import { type Avoid } from '@/lib/valhalla';
 import { showToast } from '@/lib/toast';
 import { spliceStop } from '@/lib/stop-splice';
@@ -102,7 +103,15 @@ export function useRoundTrip(opts: { setBusy: (s: string | null) => void; setErr
   return {
     state: st,
     current: cur,
-    create: (req: TourRequest) => void run(req, false),
+    create: (req: TourRequest) => {
+      // Neue Runde: ausgelassene Pässe der vorigen gelten nicht mehr
+      clearAvoidedPasses();
+      void run(req, false);
+    },
+    /** Auslassen oder Wieder einplanen (13.11.): dieselbe Anfrage neu planen */
+    replan: () => {
+      if (cur) void run(cur.req, false);
+    },
     reroll: () => {
       if (!cur) return;
       logSignal('neu_gewuerfelt', cur.tour, { mode: 'rundtour', profile: cur.req.profile, suggested: true });
@@ -336,7 +345,7 @@ export function RoundResult(props: {
           </div>
         </Section>
       ) : null}
-      <ResultDetails tour={cur.tour} line={props.line} onFly={props.onFly} onHoverKm={props.onHoverKm} elev={props.elev} />
+      <ResultDetails tour={cur.tour} line={props.line} onFly={props.onFly} onHoverKm={props.onHoverKm} elev={props.elev} onAvoid={round.replan} />
       <div>
         <Accordion label="Unterwegs einplanen" summary="Tanken, Essen, Aussicht">
           <StopsPanel tour={cur.tour} busy={props.busy} onAdd={(p) => void round.addStop(p)} />
