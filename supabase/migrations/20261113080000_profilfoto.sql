@@ -32,3 +32,4 @@ end;
 $$;
 revoke all on function public.admin_remove_avatar(uuid) from public, anon;
 grant execute on function public.admin_remove_avatar(uuid) to authenticated;
+

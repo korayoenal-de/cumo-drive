@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { Avatar } from '@/components/community/ride-bits';
 import { SubScreen } from '@/components/settings/settings-ui';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
@@ -55,8 +56,10 @@ export default function Pruefung() {
             <AppText variant="caption" muted>{shortDate(r.createdAt)}</AppText>
           </View>
           <AppText muted>{KIND_LABEL[r.kind]} von {r.targetName ?? 'unbekannt'}{r.targetReports > 1 ? `, ${r.targetReports} Meldungen insgesamt` : ''}{r.targetBanned ? ', schon gesperrt' : ''}</AppText>
-          <View style={styles.snap}>
-            <AppText style={styles.snapText}>{r.snapshot ?? 'Kein Inhalt gespeichert'}</AppText>
+          <View style={[styles.snap, r.kind === 'profile' && styles.snapRow]}>
+            {/* gemeldetes Profil: auch das Foto zeigen, Entfernen nimmt es mit weg */}
+            {r.kind === 'profile' && r.target ? <Avatar name={r.targetName ?? '?'} userId={r.target} size={56} /> : null}
+            <AppText style={[styles.snapText, styles.flex]}>{r.snapshot ?? 'Kein Inhalt gespeichert'}</AppText>
           </View>
           {r.note ? <AppText muted>Notiz von {r.reporterName ?? 'Melder'}: {r.note}</AppText> : null}
           <View style={styles.actions}>
@@ -96,6 +99,8 @@ export default function Pruefung() {
 }
 
 const styles = StyleSheet.create({
+  snapRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
+  flex: { flex: 1 },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.s },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   kicker: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.stopText },

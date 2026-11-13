@@ -35,7 +35,7 @@ export const DATENSCHUTZ: LegalDoc = {
         'Fahrten: wenn du eine Navigation startest, die gefahrene Spur mit Zeit, Tempo und Statistik (Kilometer, Kurven, Querbeschleunigung) sowie deine Bewertung der Fahrt mit Gründen und Notiz.',
         'Nutzung der Planung: wenn du eine Rundtour planst, neu würfelst, eine Tour speicherst, übernimmst, veröffentlichst, löschst oder losfährst, speichern wir dazu die Linie der Tour, ihre Länge, das Profil und den berechneten Fahrspaß. Die ersten und letzten 2 km der Linie schneiden wir vorher ab, damit Start und Ziel, etwa deine Haustür, nicht enthalten sind.',
         'Fahrzeuge: Angaben aus deiner Garage wie Marke und Modell, Form und Farbe des Fahrzeugsymbols.',
-        'Profil und Community: Wohnort (für andere nur als Ortsmitte, nie als Adresse), der Text Über mich, ob du unter Drivers sichtbar bist, ob andere dich anschreiben dürfen und ob sie deinen Fuhrpark sehen. Dazu private Nachrichten, Ausfahrten mit Anfragen und Chat.',
+        'Profil und Community: Profilfoto, wenn du eins setzt (auf 512 Pixel verkleinert, für alle mit dem Link abrufbar, jederzeit entfernbar), Wohnort (für andere nur als Ortsmitte, nie als Adresse), der Text Über mich, ob du unter Drivers sichtbar bist, ob andere dich anschreiben dürfen und ob sie deinen Fuhrpark sehen. Dazu private Nachrichten, Ausfahrten mit Anfragen und Chat.',
         'Funk in der Gruppenfahrt: deine Stimme nur, solange du den Funk Knopf gedrückt hältst. Sie wird live an die anderen Teilnehmer übertragen und nicht aufgezeichnet oder gespeichert.',
         'Mitteilungen: wenn du sie erlaubst, ein Gerätekennzeichen für Push Mitteilungen bei Nachrichten, Einladungen und Anfragen.',
         'Standort: während Planung und Navigation, um dich zu führen und Rundtouren ab deinem Standort zu planen. In einer Gruppenfahrt sehen die anderen Teilnehmer deine Position live, solange die Fahrt läuft.',
@@ -70,7 +70,7 @@ export const DATENSCHUTZ: LegalDoc = {
         'LiveKit (LiveKit Inc., USA, Server in Frankfurt am Main): überträgt den Funk in der Gruppenfahrt live zwischen den Teilnehmern, ohne Aufzeichnung. Übermittelt werden dein Anzeigename, eine Kennung und deine Stimme, solange du sprichst. Auftragsverarbeiter; Grundlage für eine Übermittlung in die USA sind Standardvertragsklauseln.',
         'Push Mitteilungen über Expo (650 Industries Inc., USA) und den Apple Push Dienst: Titel, kurzer Text und Gerätekennzeichen der Mitteilung.',
         'Im Web Planer zusätzlich: OpenFreeMap für die Karte und unpkg für die Kartenbibliothek. Die Landingpage lädt Schriften von Google Fonts (Google Ireland Limited); dabei wird deine IP-Adresse an Google übermittelt.',
-        'Andere Fahrer: in einer Gruppenfahrt Anzeigename, Fahrzeug, Live Position und im Funk deine Stimme, nur für die Dauer der Fahrt. In der Community deinen Anzeigenamen und die veröffentlichte Tour, unter Drivers (abschaltbar) Name, Ortsmitte, Über mich und auf Wunsch deinen Fuhrpark. Private Nachrichten sieht nur der Empfänger; meldet jemand eine Nachricht, sehen wir eine Kopie davon zur Prüfung.',
+        'Andere Fahrer: in einer Gruppenfahrt Anzeigename, Fahrzeug, Live Position und im Funk deine Stimme, nur für die Dauer der Fahrt. In der Community deinen Anzeigenamen, dein Profilfoto und die veröffentlichte Tour, unter Drivers (abschaltbar) Name, Ortsmitte, Über mich und auf Wunsch deinen Fuhrpark. Private Nachrichten sieht nur der Empfänger; meldet jemand eine Nachricht, sehen wir eine Kopie davon zur Prüfung.',
       ],
     },
     {
