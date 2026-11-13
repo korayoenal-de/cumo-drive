@@ -236,7 +236,7 @@ export default function AusfahrtDetail() {
             {requests.map((r) => (
               <Animated.View key={r.userId} entering={FadeIn.duration(Motion.enter)} exiting={FadeOut.duration(180)} layout={LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)} style={styles.request}>
                 <View style={styles.row}>
-                  <Avatar name={r.name} />
+                  <Avatar name={r.name} userId={r.userId} />
                   <View style={styles.flex}>
                     <AppText style={styles.name}>{r.name}</AppText>
                     <AppText variant="caption" muted numberOfLines={2}>
@@ -269,7 +269,7 @@ export default function AusfahrtDetail() {
           <AppText variant="title">Dabei</AppText>
           {members.map((m) => (
             <View key={m.userId} style={styles.member}>
-              <Avatar name={m.name} />
+              <Avatar name={m.name} userId={m.userId} />
               <View style={styles.flex}>
                 <AppText style={styles.name}>{m.name}{session?.user.id === m.userId ? ' (du)' : ''}</AppText>
                 <AppText variant="caption" muted numberOfLines={1}>{[m.isOwner ? 'organisiert' : null, m.vehicle].filter(Boolean).join('  ·  ') || 'Mitfahrer'}</AppText>
@@ -279,7 +279,7 @@ export default function AusfahrtDetail() {
           {a.isOwner &&
             invited.map((m) => (
               <Animated.View key={m.userId} entering={FadeIn.duration(Motion.enter)} exiting={FadeOut.duration(180)} style={styles.member}>
-                <Avatar name={m.name} />
+                <Avatar name={m.name} userId={m.userId} />
                 <View style={styles.flex}>
                   <AppText style={styles.name}>{m.name}</AppText>
                   <AppText variant="caption" muted numberOfLines={1}>{m.vehicle ?? 'Fahrer'}</AppText>
@@ -444,7 +444,7 @@ function InviteBox({ exclude, onInvite, busyId, onClose }: { exclude: Set<string
         const sent = done.has(p.id);
         return (
           <View key={p.id} style={styles.member}>
-            <Avatar name={p.displayName} size={36} />
+            <Avatar name={p.displayName} userId={p.id} size={36} />
             <View style={styles.flex}>
               <AppText style={styles.name}>{p.displayName}</AppText>
               {p.car ? <AppText variant="caption" muted numberOfLines={1}>{p.car}</AppText> : null}

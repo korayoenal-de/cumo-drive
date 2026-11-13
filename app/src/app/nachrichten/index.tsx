@@ -62,7 +62,7 @@ export default function Nachrichten() {
           accessibilityLabel={`${c.name}${c.unread ? `, ${c.unread} ungelesen` : ''}, ${c.lastBody}`}
           onPress={() => router.push({ pathname: '/nachrichten/[id]', params: { id: c.partner, name: c.name } })}
           style={styles.row}>
-          <Avatar name={c.name} />
+          <Avatar name={c.name} userId={c.partner} />
           <View style={styles.flex}>
             <View style={styles.line}>
               <AppText style={[styles.name, styles.flex]} numberOfLines={1}>{c.name}</AppText>

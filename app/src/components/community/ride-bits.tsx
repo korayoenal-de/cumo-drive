@@ -1,9 +1,11 @@
 /**
  * Kleine Bausteine der Ausfahrten: Datumsblock (SA 14) und Status als getönte Plakette.
  */
+import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
+import { useAvatar } from '@/lib/avatars';
 import { Colors, Fonts, Leading, Radius, Type } from '@/constants/theme';
 import { freeSeats, initials, weekday, type Ausfahrt } from '@/lib/ausfahrten';
 
@@ -40,17 +42,20 @@ export function DateBlock({ d }: { d: Date }) {
   );
 }
 
-/** Initialen im Kreis als Profilbild */
-export function Avatar({ name, size = 44 }: { name: string; size?: number }) {
+/** Profilfoto im Kreis (Koray 13.11.), ohne Foto die Initialen; das Foto blendet weich über die Initialen */
+export function Avatar({ name, userId, size = 44 }: { name: string; userId?: string | null; size?: number }) {
+  const url = useAvatar(userId);
+  const r = size / 2;
   return (
-    <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
-      <AppText style={[styles.avatarText, { fontSize: size < 40 ? 12 : 15 }]}>{initials(name)}</AppText>
+    <View style={[styles.avatar, { width: size, height: size, borderRadius: r }]}>
+      <AppText style={[styles.avatarText, { fontSize: size < 40 ? 12 : size > 56 ? 24 : 15 }]}>{initials(name)}</AppText>
+      {url && <Image source={{ uri: url }} style={[StyleSheet.absoluteFill, { borderRadius: r }]} contentFit="cover" transition={180} cachePolicy="memory-disk" accessibilityIgnoresInvertColors />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  avatar: { backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  avatar: { backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarText: { fontFamily: Fonts.extrabold, color: Colors.text },
   tag: { height: 28, paddingHorizontal: 10, borderRadius: 14, justifyContent: 'center' },
   tagGood: { backgroundColor: Colors.goodTint },

@@ -39,7 +39,7 @@ export default function Blockiert() {
       <View style={styles.list}>
         {list?.map((b) => (
           <View key={b.userId} style={styles.row}>
-            <Avatar name={b.name} size={40} />
+            <Avatar name={b.name} userId={b.userId} size={40} />
             <AppText style={styles.name} numberOfLines={1}>{b.name}</AppText>
             <Pressable accessibilityRole="button" accessibilityLabel={`${b.name} nicht mehr blockieren`} onPress={() => void lift(b)} style={styles.btn}>
               {busy === b.userId ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.btnText}>Aufheben</AppText>}

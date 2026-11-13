@@ -8,6 +8,7 @@ import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { Avatar } from '@/components/community/ride-bits';
 import { describeEntitlement } from '@/components/paywall/membership-section';
 import { resetPrivacy, usePrivacy } from '@/components/settings/community-profile';
 import { Group, Row, SwitchRow } from '@/components/settings/settings-ui';
@@ -26,13 +27,6 @@ import { showToast } from '@/lib/toast';
 import { syncVehicles, useVehicles, vehicleName } from '@/lib/vehicle';
 import { useVoiceChoice } from '@/lib/voice-settings';
 
-const initials = (n: string) =>
-  n
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join('') || '?';
 
 export default function Einstellungen() {
   const session = useSession();
@@ -118,9 +112,7 @@ function ProfileCard({ userId, cars }: { userId: string; cars: number }) {
   const meta = [p?.homeName ?? 'Wohnort fehlt', cars ? (cars === 1 ? '1 Fahrzeug' : `${cars} Fahrzeuge`) : null].filter(Boolean).join(' · ');
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`Profil bearbeiten, ${name ?? 'noch kein Name'}`} onPress={() => router.push('/profil')} style={({ pressed }) => [styles.profile, pressed && styles.pressed]}>
-      <View style={styles.avatar}>
-        <AppText style={styles.avatarText}>{name ? initials(name) : '?'}</AppText>
-      </View>
+      <Avatar name={name ?? '?'} userId={userId} size={64} />
       <View style={styles.flex}>
         <AppText style={styles.profileName} numberOfLines={1}>
           {name ?? 'Noch kein Name'}
@@ -284,8 +276,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   profile: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: Colors.surface },
   pressed: { backgroundColor: Colors.surface2 },
-  avatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: Colors.signalTint, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontFamily: Fonts.display, fontSize: 24, color: '#FF7A4D' },
   profileName: { fontFamily: Fonts.bold, fontSize: Type.title },
   profileMeta: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted },
   tag: { alignSelf: 'flex-start', marginTop: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: Radius.pill },

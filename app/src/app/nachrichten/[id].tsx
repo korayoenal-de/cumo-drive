@@ -78,7 +78,7 @@ export default function Unterhaltung() {
         <Pressable accessibilityRole="button" accessibilityLabel="Zurück" hitSlop={4} onPress={() => (router.canGoBack() ? router.back() : router.navigate('/nachrichten'))} style={styles.round}>
           <SymbolView name="chevron.left" size={18} weight="semibold" tintColor={Colors.text} />
         </Pressable>
-        <Avatar name={title} size={36} />
+        <Avatar name={title} userId={id} size={36} />
         <View style={styles.flex}>
           <AppText style={styles.title} numberOfLines={1}>{title}</AppText>
           {partner && (partner.car || partner.homeName) ? (

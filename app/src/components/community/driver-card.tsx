@@ -36,7 +36,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
       <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.card}>
         <View style={styles.row}>
           <View style={[styles.ring, { borderColor: ringColor(d) }]}>
-            <Avatar name={d.name} size={48} />
+            <Avatar name={d.name} userId={d.id} size={48} />
           </View>
           <View style={styles.flex}>
             <AppText style={styles.bigName} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
@@ -91,7 +91,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${d.name}${meta ? `, ${meta}` : ''}`} onPress={onPress} style={[styles.card, styles.small]}>
       <View style={[styles.ringSmall, { borderColor: ringColor(d) }]}>
-        <Avatar name={d.name} size={40} />
+        <Avatar name={d.name} userId={d.id} size={40} />
       </View>
       <View style={styles.flex}>
         <AppText style={styles.name} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>

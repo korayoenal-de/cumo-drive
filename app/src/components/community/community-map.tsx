@@ -8,10 +8,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
+import { Avatar } from '@/components/community/ride-bits';
+import { useAvatar } from '@/lib/avatars';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
-import { initials } from '@/lib/ausfahrten';
 import { clusterLabel, clusterPins, type Region } from '@/lib/map-cluster';
 import type { LatLon } from '@/lib/tour';
 
@@ -118,29 +119,46 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
         }
         const p = g.items[0];
         const on = p.id === selected;
-        return (
-          <Marker
-            key={`${p.id}-${on ? 1 : 0}`}
-            coordinate={ll(p.p)}
-            anchor={p.kind === 'driver' ? { x: 0.5, y: 0.5 } : { x: 0.5, y: 1 }}
-            zIndex={on ? 50 : p.kind === 'route' ? 10 : 20}
-            tracksViewChanges={false}
-            onPress={() => onSelect(p.id)}
-            accessibilityLabel={p.kind === 'route' ? `Route, ${p.label}` : p.kind === 'driver' ? `Fahrer ${p.label}` : `Ausfahrt am ${p.label}`}>
-            <Pin pin={p} on={on} />
-          </Marker>
-        );
+        return <PinMarker key={p.id} pin={p} on={on} onSelect={onSelect} />;
       })}
     </MapView>
   );
 }
 
+/**
+ * Eine Marke. Die Karte zeichnet Marken einmal als Bild (tracksViewChanges aus, sonst ruckelt sie); kommt das
+ * Profilfoto später, baut ein neuer Schlüssel die Marke neu.
+ */
+function PinMarker({ pin, on, onSelect }: { pin: CommunityPin; on: boolean; onSelect: (id: string | null) => void }) {
+  const photo = useAvatar(pin.kind === 'driver' ? pin.id : null);
+  // kurz mitzeichnen, bis das Foto geladen ist, dann wieder als festes Bild
+  const [track, setTrack] = useState(false);
+  useEffect(() => {
+    if (!photo) return;
+    setTrack(true);
+    const t = setTimeout(() => setTrack(false), 1500);
+    return () => clearTimeout(t);
+  }, [photo]);
+  return (
+    <Marker
+      key={`${pin.id}-${on ? 1 : 0}-${photo ?? ''}`}
+      coordinate={ll(pin.p)}
+      anchor={pin.kind === 'driver' ? { x: 0.5, y: 0.5 } : { x: 0.5, y: 1 }}
+      zIndex={on ? 50 : pin.kind === 'route' ? 10 : 20}
+      tracksViewChanges={track}
+      onPress={() => onSelect(pin.id)}
+      accessibilityLabel={pin.kind === 'route' ? `Route, ${pin.label}` : pin.kind === 'driver' ? `Fahrer ${pin.label}` : `Ausfahrt am ${pin.label}`}>
+      <Pin pin={pin} on={on} />
+    </Marker>
+  );
+}
+
 function Pin({ pin, on }: { pin: CommunityPin; on: boolean }) {
   if (pin.kind === 'driver') {
-    // Kreis mit Initialen, Ring in der Wagenfarbe aus der Garage
+    // Profilfoto oder Initialen im Kreis, Ring in der Wagenfarbe aus der Garage
     return (
       <View style={[styles.driver, { borderColor: pin.ring ?? Colors.text }, on && styles.driverOn]}>
-        <AppText style={styles.driverText}>{initials(pin.label)}</AppText>
+        <Avatar name={pin.label} userId={pin.id} size={33} />
       </View>
     );
   }
@@ -170,7 +188,6 @@ function Pin({ pin, on }: { pin: CommunityPin; on: boolean }) {
 const styles = StyleSheet.create({
   driver: { width: 38, height: 38, borderRadius: 19, borderWidth: 2.5, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   driverOn: { width: 46, height: 46, borderRadius: 23, borderWidth: 3, backgroundColor: Colors.surface },
-  driverText: { fontFamily: Fonts.extrabold, fontSize: 13, lineHeight: 16, color: Colors.text },
   // Kreis mit Zahl für mehrere Pins an einer Stelle: hell, damit er sich von den einzelnen dunklen Pins abhebt
   cluster: { minWidth: 40, height: 40, paddingHorizontal: 8, borderRadius: 20, backgroundColor: Colors.text, borderWidth: 3, borderColor: 'rgba(11,11,12,0.55)', alignItems: 'center', justifyContent: 'center' },
   clusterM: { minWidth: 46, height: 46, borderRadius: 23 },

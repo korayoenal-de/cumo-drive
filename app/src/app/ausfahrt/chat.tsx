@@ -110,7 +110,7 @@ export default function AusfahrtChat() {
           const name = names.get(m.userId) ?? 'Fahrer';
           return (
             <Animated.View key={m.id} entering={FadeInDown.duration(Motion.enter)} style={[styles.msgRow, mine && styles.msgRowMine, !first && styles.msgFollow]}>
-              {!mine && (first ? <Avatar name={name} size={32} /> : <View style={styles.avatarGap} />)}
+              {!mine && (first ? <Avatar name={name} userId={m.userId} size={32} /> : <View style={styles.avatarGap} />)}
               <Pressable
                 disabled={mine}
                 delayLongPress={350}
