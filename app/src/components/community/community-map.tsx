@@ -132,11 +132,11 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
 function PinMarker({ pin, on, onSelect }: { pin: CommunityPin; on: boolean; onSelect: (id: string | null) => void }) {
   const photo = useAvatar(pin.kind === 'driver' ? pin.id : null);
   // kurz mitzeichnen, bis das Foto geladen ist, dann wieder als festes Bild
-  const [track, setTrack] = useState(false);
+  const [settled, setSettled] = useState<string | null>(null);
+  const track = !!photo && photo !== settled;
   useEffect(() => {
     if (!photo) return;
-    setTrack(true);
-    const t = setTimeout(() => setTrack(false), 1500);
+    const t = setTimeout(() => setSettled(photo), 1500);
     return () => clearTimeout(t);
   }, [photo]);
   return (
