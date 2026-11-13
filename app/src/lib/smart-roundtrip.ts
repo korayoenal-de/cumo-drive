@@ -9,13 +9,12 @@
  * Grenze heute: Keiner der beiden öffentlichen Dienste kann Kurven aktiv bevorzugen. Das
  * leistet erst ein eigener Routing Server mit Sportwagen Profil.
  */
-import { checkLine } from './check';
 import { HIGHLIGHT_ROADS, type HighlightRoad } from './highlight-roads';
 import { findHighlights } from './navigation/highlights';
 import { cumulativeKm } from './navigation/route';
 import { bigCityKm, cumoAvailable, cumoPlan, cumoRoundTrips } from './cumo-routing';
 import { doubledStretch } from './doubled';
-import { ghRoundTripCandidates, graphhopperKey, scoreRoute, type GhRoute } from './graphhopper';
+import { scoreRoute, type GhRoute } from './graphhopper';
 import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
 import { planChecked, type PlannedTour, type PlanStep } from './plan';
 import { closureExclude, closuresNear, closuresOnRoute, prefetchClosures } from './road-closures';
@@ -349,25 +348,6 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       if (signal?.aborted) throw e;
       lastError = e;
       break;
-    }
-  }
-
-  // 2. GraphHopper Varianten, nur für kurvige Profile und mit Schlüssel
-  if (graphhopperKey() && req.profile !== 'schnell') {
-    try {
-      onStep?.('route');
-      const gh = await ghRoundTripCandidates(req.start, req.km, heading, 4, seed % 100000, signal);
-      for (const c of gh.slice(0, 2)) {
-        onStep?.('check');
-        const chk = await checkLine(c.shape, undefined, signal);
-        const t: PlannedTour = {
-          name: req.name, wegpunkte: [req.start, req.start], ...chk, laenge_km: +c.km.toFixed(1), minutes: c.minutes, geprueft: true, fixes: 0,
-        };
-        candidates.push({ ...t, engine: 'graphhopper', curves: c.curves, score: scoreTour(t, c.curves, c.fastKm, req.km) - spurKm(t) * 100 });
-      }
-    } catch (e) {
-      if (signal?.aborted) throw e;
-      lastError = lastError ?? e;
     }
   }
 
