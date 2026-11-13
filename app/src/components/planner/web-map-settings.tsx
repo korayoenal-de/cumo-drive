@@ -1,11 +1,12 @@
 /**
  * Karteneinstellungen im Web Planer wie in der App (components/map/map-settings-sheet.tsx): runder Knopf
- * oben rechts auf der Karte, darüber schwebt die Karte mit Darstellung und Ebenen. Die Werte liegen in
+ * oben rechts auf der Karte, darüber schweben die Ebenen. Satellit gibt es nur in der App (Apple Karten),
+ * im Web fehlt dafür eine kommerziell freie Quelle. Die Werte liegen in
  * lib/map-settings (im Browser lokal gespeichert). Wetter gibt es nur in der App (WeatherKit).
  */
 import { useEffect, useRef, useState } from 'react';
 
-import { MAP_STYLES, setMapSettings, useMapSettings, type MapSettings } from '@/lib/map-settings';
+import { setMapSettings, useMapSettings } from '@/lib/map-settings';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 
 import { Toggle } from './web-parts';
@@ -21,12 +22,6 @@ const LAYERS: { key: LayerKey; label: string; note: string }[] = [
   { key: 'myTours', label: 'Gespeicherte Touren', note: 'Als feine Linien' },
   { key: 'drives', label: 'Gefahrene Strecken', note: 'Deine Fahrten in Grün, so siehst du, was noch fehlt' },
 ];
-
-const PREVIEW: Record<MapSettings['style'], string> = {
-  standard: 'linear-gradient(135deg, #1b1b1e 0%, #26262a 60%, #1b1b1e 100%)',
-  satellit: 'linear-gradient(135deg, #2f4a2a 0%, #4b5d35 50%, #6b6a4a 100%)',
-  '3d': 'linear-gradient(160deg, #6b6a4a 0%, #3e5530 45%, #24361f 100%)',
-};
 
 export function MapSettingsButton(props: { top: number; right: number }) {
   const [open, setOpen] = useState(false);
@@ -67,25 +62,6 @@ export function MapSettingsButton(props: { top: number; right: number }) {
             <button aria-label="Schließen" onClick={() => setOpen(false)} style={{ width: 44, height: 44, borderRadius: 22, border: 'none', background: C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <XIcon />
             </button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.s }}>
-            <span style={{ font: `600 15px ${BODY}`, color: C.muted }}>Darstellung</span>
-            <div role="radiogroup" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: Spacing.s }}>
-              {MAP_STYLES.map((m) => {
-                const on = st.style === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => setMapSettings({ style: m.id })}
-                    style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 6, borderRadius: Radius.m, border: 'none', background: on ? C.surface2 : 'transparent', boxShadow: on ? `inset 0 0 0 2px ${C.signal}` : undefined, cursor: 'pointer', color: on ? C.text : C.muted, font: `600 13px ${BODY}` }}>
-                    <span aria-hidden style={{ height: 52, borderRadius: 10, background: PREVIEW[m.id] }} />
-                    {m.label}
-                  </button>
-                );
-              })}
-            </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.s }}>
             <span style={{ font: `600 15px ${BODY}`, color: C.muted }}>Auf der Karte</span>

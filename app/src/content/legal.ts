@@ -69,7 +69,7 @@ export const DATENSCHUTZ: LegalDoc = {
         'TomTom (TomTom International B.V., Niederlande): liefert unserem Server Meldungen zu gesperrten Pässen und aktuellen Sperrungen. Unser Server fragt dafür grobe Kartenbereiche ab, keine Daten von dir.',
         'LiveKit (LiveKit Inc., USA, Server in Frankfurt am Main): überträgt den Funk in der Gruppenfahrt live zwischen den Teilnehmern, ohne Aufzeichnung. Übermittelt werden dein Anzeigename, eine Kennung und deine Stimme, solange du sprichst. Auftragsverarbeiter; Grundlage für eine Übermittlung in die USA sind Standardvertragsklauseln.',
         'Push Mitteilungen über Expo (650 Industries Inc., USA) und den Apple Push Dienst: Titel, kurzer Text und Gerätekennzeichen der Mitteilung.',
-        'Im Web Planer zusätzlich: OpenFreeMap für die Karte und unpkg für die Kartenbibliothek. Die Landingpage lädt Schriften von Google Fonts (Google Ireland Limited); dabei wird deine IP-Adresse an Google übermittelt.',
+        'Im Web Planer zusätzlich: OpenFreeMap für die Kartenkacheln. Kartenbibliothek und Schriften liefern wir von unserer eigenen Domain aus, ohne Google Fonts oder fremde CDNs.',
         'Andere Fahrer: in einer Gruppenfahrt Anzeigename, Fahrzeug, Live Position und im Funk deine Stimme, nur für die Dauer der Fahrt. In der Community deinen Anzeigenamen, dein Profilfoto und die veröffentlichte Tour, unter Drivers (abschaltbar) Name, Ortsmitte, Über mich und auf Wunsch deinen Fuhrpark. Private Nachrichten sieht nur der Empfänger; meldet jemand eine Nachricht, sehen wir eine Kopie davon zur Prüfung.',
       ],
     },

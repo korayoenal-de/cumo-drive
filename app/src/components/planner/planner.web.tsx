@@ -40,10 +40,8 @@ import {
   addMemberLayers,
   addPassLayers,
   addPhotoLayers,
-  addSatelliteLayer,
   addTourLayers,
   addWarningLayer,
-  applyMapStyle,
   boundsOf,
   communityGeoJson,
   hoverGeoJson,
@@ -210,7 +208,6 @@ export default function Planner() {
         const m = new ml.Map({ container: mapEl.current, style: MAP_STYLE, center: [8.9, 49.4], zoom: 7, attributionControl: { compact: true } });
         m.addControl(new ml.NavigationControl({ showCompass: false }), 'bottom-right');
         m.on('load', () => {
-          addSatelliteLayer(m);
           addTourLayers(m);
           addDraftLayers(m);
           addBackgroundLines(m);
@@ -251,10 +248,6 @@ export default function Planner() {
   useEffect(() => {
     map.current?.resize();
   }, [narrow, mapReady]);
-
-  useEffect(() => {
-    if (mapReady && map.current) applyMapStyle(map.current, settings.style);
-  }, [mapReady, settings.style]);
 
   // Tour und Punkte zeichnen
   const ptsKey = plan.pts.map(keyOf).join('|');

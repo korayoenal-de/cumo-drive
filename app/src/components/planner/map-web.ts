@@ -1,5 +1,6 @@
 /**
- * Lädt MapLibre GL im Browser zur Laufzeit (fertiger Build vom CDN) und zeichnet Touren.
+ * Lädt MapLibre GL im Browser zur Laufzeit (fertiger Build, von unserer eigenen Domain unter
+ * /vendor ausgeliefert, kein fremdes CDN) und zeichnet Touren.
  * So bleibt der Expo Bundler frei von Worker Dateien; die App auf dem Handy nutzt später
  * eine native Karte.
  */
@@ -21,10 +22,10 @@ export function loadMapLibre(): Promise<MapLib> {
   loading = new Promise((resolve, reject) => {
     const css = document.createElement('link');
     css.rel = 'stylesheet';
-    css.href = `https://unpkg.com/maplibre-gl@${VERSION}/dist/maplibre-gl.css`;
+    css.href = `/vendor/maplibre-gl-${VERSION}/maplibre-gl.css`;
     document.head.appendChild(css);
     const js = document.createElement('script');
-    js.src = `https://unpkg.com/maplibre-gl@${VERSION}/dist/maplibre-gl.js`;
+    js.src = `/vendor/maplibre-gl-${VERSION}/maplibre-gl.js`;
     js.onload = () => resolve(w.maplibregl);
     js.onerror = () => reject(new Error('Die Karte konnte nicht geladen werden. Bitte Internetverbindung prüfen.'));
     document.head.appendChild(js);
@@ -256,23 +257,8 @@ export function addMemberLayers(map: MapInstance) {
 
 /* ---------- Karteneinstellungen und Ebenen wie in der App (Stand 10.11.2026) ---------- */
 
-/** Satellitenbild als Rasterebene unter den Beschriftungen der Grundkarte (Esri World Imagery, mit Namensnennung) */
-export const SAT_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-
-export function addSatelliteLayer(map: MapInstance) {
-  map.addSource('sat', { type: 'raster', tiles: [SAT_TILES], tileSize: 256, maxzoom: 19, attribution: 'Satellit: Esri, Maxar, Earthstar Geographics' });
-  const layers: { id: string; type: string }[] = map.getStyle().layers ?? [];
-  const firstSymbol = layers.find((l) => l.type === 'symbol')?.id;
-  map.addLayer({ id: 'sat', type: 'raster', source: 'sat', layout: { visibility: 'none' }, paint: { 'raster-opacity': 1 } }, firstSymbol);
-}
-
-/** Darstellung umschalten: Standard, Satellit, 3D Satellit (geneigt) */
-export function applyMapStyle(map: MapInstance, style: 'standard' | 'satellit' | '3d') {
-  if (!map.getLayer('sat')) return;
-  map.setLayoutProperty('sat', 'visibility', style === 'standard' ? 'none' : 'visible');
-  const pitch = style === '3d' ? 55 : 0;
-  if (Math.abs(map.getPitch() - pitch) > 1) map.easeTo({ pitch, duration: 600 });
-}
+/* Satellit gibt es im Web nicht (13.11.): Esri World Imagery ist für kommerzielle Nutzung ohne Vertrag nicht frei.
+   In der App liefert Apple Karten den Satellit. */
 
 /** Feine Linien unter der Tour: Meine Touren hell, gefahrene Strecken grün */
 export function addBackgroundLines(map: MapInstance) {

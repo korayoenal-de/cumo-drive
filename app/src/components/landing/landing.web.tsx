@@ -10,6 +10,17 @@ import { LANDING_CSS, LANDING_HTML } from './landing-html';
 const DESC =
   'Die Navi App für Sportwagen: kurvige Touren, geprüft auf Breite, Belag und Sperrungen, 363 Pässe und 437 Traumstrecken mit Ansage, allein, in der Gruppe oder bei Ausfahrten der Community.';
 
+/** Schriften von der eigenen Domain statt Google Fonts (Datenschutz, keine Übertragung der IP an Dritte) */
+const FONT_FACES = [
+  ['Archivo', 800, 'Archivo_800ExtraBold'],
+  ['Archivo', 900, 'Archivo_900Black'],
+  ['Inter', 400, 'Inter_400Regular'],
+  ['Inter', 600, 'Inter_600SemiBold'],
+  ['Inter', 700, 'Inter_700Bold'],
+]
+  .map(([f, w, file]) => `@font-face{font-family:${f};font-weight:${w};font-style:normal;font-display:swap;src:url(/fonts/${file}.ttf) format("truetype")}`)
+  .join('');
+
 export default function Landing() {
   // deutsche Seite: richtige Aussprache beim Vorlesen
   useEffect(() => {
@@ -23,10 +34,10 @@ export default function Landing() {
         <meta property="og:title" content="Cumo Drive" />
         <meta property="og:description" content={DESC} />
         <meta property="og:image" content="https://drive.rallycumo.de/landing/rundtour.jpg" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=Inter:wght@400;600;700&display=swap" />
+        <link rel="preload" href="/fonts/Archivo_900Black.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/Inter_400Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
       </Head>
-      <style dangerouslySetInnerHTML={{ __html: LANDING_CSS + '.cd-scroll{position:fixed;inset:0;overflow-y:auto;scroll-behavior:smooth;background:#0B0B0C;-webkit-overflow-scrolling:touch}' }} />
+      <style dangerouslySetInnerHTML={{ __html: FONT_FACES + LANDING_CSS + '.cd-scroll{position:fixed;inset:0;overflow-y:auto;scroll-behavior:smooth;background:#0B0B0C;-webkit-overflow-scrolling:touch}' }} />
       {/* eigener Scrollbereich: die App Hülle im Browser ist auf Fensterhöhe festgelegt */}
       <div className="cd-scroll" dangerouslySetInnerHTML={{ __html: LANDING_HTML }} />
     </>
