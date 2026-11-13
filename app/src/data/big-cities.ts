@@ -2,8 +2,6 @@
  * Großstädte in DE, AT, CH, FR mit Radius in km (Koray 10.11.: in der Nähe von Großstädten gibt es meist keine
  * gute Route). Die Planung meidet diese Zonen bei kurvigen Profilen und zieht Kilometer darin bei der Bewertung
  * der Rundtouren ab. Koordinaten über Photon (OpenStreetMap), Radius nach Größe der Stadt geschätzt.
- * Am Ende stehen einzelne kleine Orte, durch die die Planung sonst gerne mitten hindurch fährt.
- * Startet oder führt eine Tour bewusst dorthin (Wegpunkt im Umkreis), gilt die Zone nicht.
  */
 export type BigCity = [name: string, lat: number, lon: number, radiusKm: number];
 
@@ -74,6 +72,7 @@ export const BIG_CITIES: BigCity[] = [
   ['Koblenz', 50.3533, 7.5944, 4],
   ['Jena', 50.9282, 11.5879, 4],
   ['Erlangen', 49.5977, 11.0037, 4],
+  ['Fürth', 49.4772, 10.9887, 5],
   ['Siegen', 50.8751, 8.0256, 4],
   ['Worms', 49.6303, 8.3621, 4],
   ['Hanau', 50.1329, 8.917, 4],
@@ -130,6 +129,4 @@ export const BIG_CITIES: BigCity[] = [
   ['Nancy', 48.6937, 6.1834, 6],
   ['Avignon', 43.9492, 4.8059, 5],
   ['Annecy', 45.8992, 6.1289, 4],
-  // Kleine Orte mit langer Ortsdurchfahrt, die gute Runden zerschneiden (Koray 13.11.): Fürth im Kreis Bergstraße
-  ['Fürth (Bergstraße)', 49.6515, 8.7845, 1.2],
 ];
