@@ -14,7 +14,8 @@ import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, w
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CommunityMap, type CommunityPin } from '@/components/community/community-map';
-import { DriverCard, ringColor } from '@/components/community/driver-card';
+import { ContactRequests, DriverCard, ringColor } from '@/components/community/driver-card';
+import { refreshContacts, useContacts } from '@/lib/contacts';
 import { DateBlock, RideStatus } from '@/components/community/ride-bits';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
 import { Chip } from '@/components/ui/chip';
@@ -58,6 +59,9 @@ export default function Community() {
   const [rides, setRides] = useState<Ausfahrt[] | null>(null);
   const [drivers, setDrivers] = useState<Driver[] | null>(null);
   const [dq, setDq] = useState('');
+  // Drivers: alle oder nur Kontakte (TestFlight Review, Koray 13.11.)
+  const [dseg, setDseg] = useState<'alle' | 'kontakte'>('alle');
+  const contacts = useContacts();
   const unread = useUnreadMessages();
   // Ungelesene je Fahrer für die Plakette in der Liste Drivers; neu geladen, wenn sich die Gesamtzahl ändert
   const [unreadBy, setUnreadBy] = useState<Record<string, number>>({});
@@ -124,6 +128,7 @@ export default function Community() {
     listDrivers()
       .then(setDrivers)
       .catch(() => setDrivers((d) => d ?? []));
+    void refreshContacts();
     void refreshUnread();
   }, []);
 
@@ -152,10 +157,12 @@ export default function Community() {
   const shownDrivers = useMemo(() => {
     const me = drivers?.find((d) => d.isMe);
     const n = dq.trim().toLowerCase();
-    const l = (drivers ?? []).filter((d) => !n || d.name.toLowerCase().includes(n) || (d.homeName ?? '').toLowerCase().includes(n) || (d.car ?? '').toLowerCase().includes(n) || (d.garage ?? []).some((g) => g.name.toLowerCase().includes(n)));
+    const l = (drivers ?? []).filter((d) => dseg === 'alle' || contacts.byId.get(d.id) === 'kontakt').filter((d) => !n || d.name.toLowerCase().includes(n) || (d.homeName ?? '').toLowerCase().includes(n) || (d.car ?? '').toLowerCase().includes(n) || (d.garage ?? []).some((g) => g.name.toLowerCase().includes(n)));
     const dist = (d: Driver) => (me?.home && d.home ? kmBetween(me.home, d.home) : Number.POSITIVE_INFINITY);
     return l.sort((a, b) => Number(b.isMe) - Number(a.isMe) || dist(a) - dist(b) || a.name.localeCompare(b.name, 'de'));
-  }, [drivers, dq]);
+  }, [drivers, dq, dseg, contacts]);
+  const contactCount = (drivers ?? []).filter((d) => contacts.byId.get(d.id) === 'kontakt').length;
+  const others = (drivers ?? []).filter((d) => !d.isMe).length;
 
   const pins: CommunityPin[] = useMemo(() => {
     if (seg === 'drivers') {
@@ -371,8 +378,23 @@ export default function Community() {
                     </Pressable>
                   </View>
                 )}
-                <TextInput maxFontSizeMultiplier={1.2} value={dq} onChangeText={setDq} placeholder="Name, Ort oder Auto suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Drivers durchsuchen" returnKeyType="search" />
-                {shownDrivers.length === 0 && <AppText muted>Kein Mitglied passt zur Suche.</AppText>}
+                <ContactRequests list={contacts.list} />
+                <View style={styles.dsegRow}>
+                  <Chip label={`Alle ${others}`} active={dseg === 'alle'} onPress={() => setDseg('alle')} />
+                  <Chip label={`Kontakte ${contactCount}`} active={dseg === 'kontakte'} onPress={() => setDseg('kontakte')} />
+                </View>
+                {dseg === 'kontakte' && contactCount === 0 ? (
+                  <View style={styles.card}>
+                    <AppText variant="title">Noch keine Kontakte</AppText>
+                    <AppText muted>Tippe bei einem Fahrer auf das Plus. Sobald er bestätigt, steht er hier und beim Einladen zu Gruppenfahrten ganz oben.</AppText>
+                    <Pressable accessibilityRole="button" onPress={() => setDseg('alle')} style={styles.secondary}>
+                      <AppText style={styles.secondaryText}>Fahrer entdecken</AppText>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <TextInput maxFontSizeMultiplier={1.2} value={dq} onChangeText={setDq} placeholder={dseg === 'kontakte' ? 'Kontakte durchsuchen' : 'Name, Ort oder Auto suchen'} placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel={dseg === 'kontakte' ? 'Kontakte durchsuchen' : 'Drivers durchsuchen'} returnKeyType="search" />
+                )}
+                {shownDrivers.length === 0 && (dseg === 'alle' || contactCount > 0) && <AppText muted>{dseg === 'kontakte' ? 'Kein Kontakt passt zur Suche.' : 'Kein Mitglied passt zur Suche.'}</AppText>}
                 {shownDrivers.map((d) => (
                   <View
                     key={d.id}
@@ -857,6 +879,7 @@ const styles = StyleSheet.create({
   metric: { gap: 2 },
   metricLabel: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
   metricValue: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, fontVariant: ['tabular-nums'] },
+  dsegRow: { flexDirection: 'row', gap: Spacing.s },
   search: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.button },

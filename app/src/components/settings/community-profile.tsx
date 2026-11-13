@@ -19,7 +19,7 @@ import { searchTowns, type Place } from '@/lib/geocode';
  * Eigene Privatsphäre, für alle Ansichten geteilt (Profilkarte, Schalter, Profil Seite): ein Wechsel
  * erscheint überall sofort (Koray 10.11.). Sofortige Anzeige, Rücknahme bei Fehler.
  */
-const FALLBACK: Privacy = { homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true, birthDate: null, birthdayShow: 'age' };
+const FALLBACK: Privacy = { homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true, birthDate: null, birthdayShow: 'age', invitesContactsOnly: false };
 let shared: Privacy | null = null;
 let loading = false;
 const listeners = new Set<() => void>();

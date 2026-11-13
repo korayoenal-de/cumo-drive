@@ -174,6 +174,7 @@ function CommunityGroup() {
         }}
       />
       {push !== 'nicht' && <SwitchRow title="Mitteilungen bei Nachrichten" value={push === 'an'} onChange={(v) => void togglePush(v)} />}
+      <SwitchRow title="Einladungen nur von Kontakten" value={p?.invitesContactsOnly ?? false} onChange={(v) => void save({ invitesContactsOnly: v })} />
       <SwitchRow title="Garage im Profil zeigen" value={p?.showGarage ?? true} onChange={(v) => void save({ showGarage: v })} />
       <Row title="Blockierte Drivers" onPress={() => router.push('/blockiert')} />
     </Group>

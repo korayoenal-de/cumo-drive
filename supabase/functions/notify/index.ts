@@ -12,7 +12,8 @@ type Event =
   | { type: 'dm'; id: number; actor?: string | null }
   | { type: 'ride_message'; id: number; actor?: string | null }
   | { type: 'ride_member'; ride: string; user: string; status: string; old?: string | null; actor?: string | null }
-  | { type: 'ride_start'; ride: string; actor?: string | null };
+  | { type: 'ride_start'; ride: string; actor?: string | null }
+  | { type: 'contact'; to: string; actor: string; state: 'pending' | 'accepted' };
 
 type Note = { user: string; title: string; body: string; data: { url: string; chat?: string; type: string } };
 
@@ -122,12 +123,26 @@ async function rideStart(e: Extract<Event, { type: 'ride_start' }>): Promise<Not
   return to.map((user) => ({ user, title: `${lead} hat die Gruppenfahrt gestartet`, body: short(`${r.name}: tippe, um mitzufahren. Funk und Live Karte sind an.`), data }));
 }
 
+/** Kontaktanfrage und Annahme unter Drivers (Koray 13.11.); nur, wenn die Zeile noch so besteht */
+async function contact(e: Extract<Event, { type: 'contact' }>): Promise<Note[]> {
+  if (!UUID.test(e.to) || !UUID.test(e.actor)) return [];
+  const [requester, addressee] = e.state === 'pending' ? [e.actor, e.to] : [e.to, e.actor];
+  const { data: c } = await db.from('contacts').select('status').eq('requester', requester).eq('addressee', addressee).maybeSingle();
+  if (!c || (e.state === 'accepted') !== (c.status === 'accepted')) return [];
+  const who = await nameOf(e.actor);
+  const data = { url: '/community', type: 'contact' };
+  return e.state === 'pending'
+    ? [{ user: e.to, title: 'Kontaktanfrage', body: short(`${who} möchte dich als Kontakt hinzufügen.`), data }]
+    : [{ user: e.to, title: 'Neuer Kontakt', body: short(`${who} hat deine Anfrage angenommen.`), data }];
+}
+
 async function notes(e: Event): Promise<Note[]> {
   let list: Note[] = [];
   if (e.type === 'dm' && Number.isSafeInteger(e.id)) list = await directMessage(e.id);
   else if (e.type === 'ride_message' && Number.isSafeInteger(e.id)) list = await rideMessage(e.id);
   else if (e.type === 'ride_member') list = await rideMember(e);
   else if (e.type === 'ride_start') list = await rideStart(e);
+  else if (e.type === 'contact') list = await contact(e);
   // Wer etwas selbst ausgelöst hat, bekommt dazu keine Mitteilung
   return e.actor ? list.filter((n) => n.user !== e.actor) : list;
 }

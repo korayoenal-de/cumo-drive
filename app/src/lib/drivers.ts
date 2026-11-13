@@ -52,6 +52,8 @@ export type Privacy = {
   /** Geburtstag als JJJJ-MM-TT, nur für dich selbst lesbar */
   birthDate: string | null;
   birthdayShow: BirthdayShow;
+  /** Einladungen zu Gruppenfahrten nur von Kontakten (Koray 13.11.) */
+  invitesContactsOnly: boolean;
 };
 
 /** Alter am heutigen Tag aus JJJJ-MM-TT */
@@ -146,11 +148,11 @@ export async function loadPrivacy(): Promise<Privacy | null> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return null;
   const [{ data, error }, bd] = await Promise.all([
-    supabase.from('profiles').select('home_name,home_lat,home_lon,allow_messages,show_garage,bio,show_in_drivers,birthday_show').eq('id', u.user.id).maybeSingle(),
+    supabase.from('profiles').select('home_name,home_lat,home_lon,allow_messages,show_garage,bio,show_in_drivers,birthday_show,invites_contacts_only').eq('id', u.user.id).maybeSingle(),
     supabase.rpc('my_birth_date'),
   ]);
   if (error) fail(error.message);
-  const r = data as { home_name: string | null; home_lat: number | null; home_lon: number | null; allow_messages: boolean; show_garage: boolean; bio?: string | null; show_in_drivers?: boolean; birthday_show?: BirthdayShow | null } | null;
+  const r = data as { home_name: string | null; home_lat: number | null; home_lon: number | null; allow_messages: boolean; show_garage: boolean; bio?: string | null; show_in_drivers?: boolean; birthday_show?: BirthdayShow | null; invites_contacts_only?: boolean } | null;
   return {
     homeName: r?.home_name ?? null,
     home: r?.home_lat != null && r?.home_lon != null ? [r.home_lat, r.home_lon] : null,
@@ -160,6 +162,7 @@ export async function loadPrivacy(): Promise<Privacy | null> {
     visible: r?.show_in_drivers ?? true,
     birthDate: typeof bd.data === 'string' ? bd.data : null,
     birthdayShow: r?.birthday_show ?? 'age',
+    invitesContactsOnly: r?.invites_contacts_only ?? false,
   };
 }
 
@@ -179,6 +182,11 @@ export async function savePrivacy(p: Partial<Privacy>) {
   if (p.birthdayShow) row.birthday_show = p.birthdayShow;
   if (Object.keys(row).length > 1) {
     const { error } = await supabase.from('profiles').upsert(row);
+    if (error) fail(error.message);
+  }
+  // neue Spalte nur mit Update Recht, darum wie birth_date als update der eigenen Zeile
+  if (p.invitesContactsOnly != null) {
+    const { error } = await supabase.from('profiles').update({ invites_contacts_only: p.invitesContactsOnly }).eq('id', u.user.id);
     if (error) fail(error.message);
   }
   // birth_date ist für andere nicht lesbar, darum kein upsert (der bräuchte Leserechte), sondern ein update der eigenen Zeile

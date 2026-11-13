@@ -32,8 +32,9 @@ Deno.serve(async (req) => {
   const ride = body?.ride ?? '';
   if (!UUID.test(ride)) return json({ error: 'Ungültige Fahrt.' }, 400);
 
-  // Mitgliedschaft über die bestehende Funktion, mit den Rechten des Fahrers
-  const { data: member, error } = await db.rpc('is_ride_member', { r: ride });
+  // Funk erst nach der Zusage (Koray 13.11.: eine Einladung ist eine Anfrage). can_chat gilt für den
+  // Organisator und alle mit Status zugesagt, Eingeladene und Anfragende hören noch nicht mit.
+  const { data: member, error } = await db.rpc('can_chat', { r: ride });
   if (error || member !== true) return json({ error: 'Du bist nicht in dieser Gruppenfahrt.' }, 403);
 
   const { data: prof } = await db.from('profiles').select('display_name').eq('id', u.user.id).maybeSingle();

@@ -1,11 +1,13 @@
 /**
  * Karte eines Mitglieds unter Drivers: Name, Wohnort, Auto. Groß (gewählt auf der Karte) mit
  * Fuhrpark und der Hauptaktion Anschreiben, klein in der Liste mit Symbol zum Anschreiben.
+ * Kontakte (Koray 13.11.): Plus schickt eine Anfrage, danach steht dort grau Angefragt; bestätigte
+ * Kontakte tragen ein Häkchen am Bild. Die große Karte lädt zu einer eigenen Ausfahrt ein.
  */
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Avatar } from '@/components/community/ride-bits';
@@ -13,7 +15,11 @@ import { BlockSheet, ReportSheet } from '@/components/moderation/report-sheet';
 import { CarSprite, frameFor } from '@/components/map/car-sprite';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
-import { monthYear } from '@/lib/ausfahrten';
+import { ActionSheet, type SheetItem } from '@/components/ui/action-sheet';
+import { freeSeats, listAusfahrten, longDate, monthYear, type Ausfahrt } from '@/lib/ausfahrten';
+import { answerContact, removeContact, requestContact, useContacts, type Contact } from '@/lib/contacts';
+import { inviteToRide } from '@/lib/group/invites';
+import { showToast } from '@/lib/toast';
 import { type Driver } from '@/lib/drivers';
 import { useIsBlocked } from '@/lib/moderation';
 
@@ -29,7 +35,24 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
   const [block, setBlock] = useState(false);
   // blockiert: sofort weg, bis die Liste neu geladen ist (Koray 12.11.)
   const blocked = useIsBlocked(d.id);
+  const status = useContacts().byId.get(d.id) ?? null;
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [contactBusy, setContactBusy] = useState(false);
   if (blocked && !d.isMe) return null;
+  const contactAction = async () => {
+    setContactBusy(true);
+    try {
+      if (status === 'kontakt' || status === 'angefragt') await removeContact(d.id);
+      else {
+        const now = await requestContact(d.id);
+        showToast(now === 'kontakt' ? `${d.name} ist jetzt dein Kontakt.` : `Anfrage an ${d.name} geschickt.`);
+      }
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });
+    } finally {
+      setContactBusy(false);
+    }
+  };
 
   if (big) {
     return (
@@ -37,6 +60,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
         <View style={styles.row}>
           <View style={[styles.ring, { borderColor: ringColor(d) }]}>
             <Avatar name={d.name} userId={d.id} size={48} />
+            {status === 'kontakt' && <ContactCheck />}
           </View>
           <View style={styles.flex}>
             <AppText style={styles.bigName} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
@@ -73,6 +97,30 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
           <AppText variant="caption" muted>So sehen dich andere. Wohnort, Nachrichten und Fuhrpark stellst du in den Einstellungen ein.</AppText>
         )}
         {!d.isMe && (
+          <View style={styles.actions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={status === 'kontakt' ? `${d.name} aus Kontakten entfernen` : status === 'angefragt' ? `Anfrage an ${d.name} zurückziehen` : `${d.name} zu Kontakten hinzufügen`}
+              disabled={contactBusy}
+              onPress={() => void contactAction()}
+              style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
+              {contactBusy ? (
+                <ActivityIndicator color={Colors.muted} />
+              ) : (
+                <>
+                  <SymbolView name={status === 'kontakt' ? 'person.crop.circle.badge.checkmark' : status === 'angefragt' ? 'clock' : 'person.badge.plus'} size={18} weight="semibold" tintColor={status === 'angefragt' ? Colors.muted : Colors.text} />
+                  <AppText style={[styles.secondaryText, status === 'angefragt' && { color: Colors.muted }]}>{status === 'kontakt' ? 'Kontakt' : status === 'angefragt' ? 'Angefragt' : status === 'anfrage' ? 'Bestätigen' : 'Zu Kontakten'}</AppText>
+                </>
+              )}
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} zur Gruppenfahrt einladen`} onPress={() => setInviteOpen(true)} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
+              <SymbolView name="car.2" size={18} weight="semibold" tintColor={Colors.text} />
+              <AppText style={styles.secondaryText}>Einladen</AppText>
+            </Pressable>
+          </View>
+        )}
+        {!d.isMe && <InviteSheet d={d} visible={inviteOpen} onClose={() => setInviteOpen(false)} />}
+        {!d.isMe && (
           <View style={styles.quiet}>
             <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={styles.quietBtn}>
               <AppText style={styles.quietText}>Melden</AppText>
@@ -92,12 +140,14 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
     <Pressable accessibilityRole="button" accessibilityLabel={`${d.name}${meta ? `, ${meta}` : ''}`} onPress={onPress} style={[styles.card, styles.small]}>
       <View style={[styles.ringSmall, { borderColor: ringColor(d) }]}>
         <Avatar name={d.name} userId={d.id} size={40} />
+        {status === 'kontakt' && <ContactCheck />}
       </View>
       <View style={styles.flex}>
         <AppText style={styles.name} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
         {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>Hat heute Geburtstag</AppText> : null}
         {meta ? <AppText variant="caption" muted numberOfLines={1}>{meta}</AppText> : null}
       </View>
+      {!d.isMe && status !== 'kontakt' && <ContactButton d={d} status={status} />}
       {(canWrite || unread > 0) && (
         <Pressable
           accessibilityRole="button"
@@ -117,7 +167,133 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
   );
 }
 
+/** Häkchen am Bild für bestätigte Kontakte */
+function ContactCheck() {
+  return (
+    <View style={styles.check} accessibilityLabel="Kontakt">
+      <SymbolView name="checkmark" size={9} weight="heavy" tintColor={Colors.ground} />
+    </View>
+  );
+}
+
+/** Plus in der Liste; nach dem Tippen grau Angefragt (Tippen zieht zurück) */
+function ContactButton({ d, status }: { d: Driver; status: Contact['status'] | null }) {
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    try {
+      if (status === 'angefragt') await removeContact(d.id);
+      else {
+        const now = await requestContact(d.id);
+        if (now === 'kontakt') showToast(`${d.name} ist jetzt dein Kontakt.`);
+      }
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (status === 'angefragt') {
+    return (
+      <Pressable accessibilityRole="button" accessibilityLabel={`Anfrage an ${d.name} zurückziehen`} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.pending}>
+        {busy ? <ActivityIndicator color={Colors.muted} /> : <AppText style={styles.pendingText}>Angefragt</AppText>}
+      </Pressable>
+    );
+  }
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} zu Kontakten hinzufügen`} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.round}>
+      {busy ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="plus" size={18} weight="semibold" tintColor={Colors.text} />}
+    </Pressable>
+  );
+}
+
+/** Offene Anfragen an mich, oben unter Drivers: Annehmen oder Ablehnen */
+export function ContactRequests({ list }: { list: Contact[] | null }) {
+  const asks = (list ?? []).filter((c) => c.status === 'anfrage');
+  const [busy, setBusy] = useState<string | null>(null);
+  if (!asks.length) return null;
+  const answer = async (c: Contact, yes: boolean) => {
+    setBusy(c.id + yes);
+    try {
+      await answerContact(c.id, yes);
+      if (yes) showToast(`${c.name} ist jetzt dein Kontakt.`);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.card}>
+      <AppText variant="title">{asks.length === 1 ? 'Kontaktanfrage' : `${asks.length} Kontaktanfragen`}</AppText>
+      {asks.map((c) => (
+        <View key={c.id} style={styles.row}>
+          <Avatar name={c.name} userId={c.id} size={40} />
+          <View style={styles.flex}>
+            <AppText style={styles.name} numberOfLines={1}>{c.name}</AppText>
+            {c.car ? <AppText variant="caption" muted numberOfLines={1}>{c.car}</AppText> : null}
+          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Anfrage von ${c.name} ablehnen`} hitSlop={4} disabled={!!busy} onPress={() => void answer(c, false)} style={styles.round}>
+            {busy === c.id + false ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="xmark" size={15} weight="bold" tintColor={Colors.muted} />}
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Anfrage von ${c.name} annehmen`} disabled={!!busy} onPress={() => void answer(c, true)} style={styles.accept}>
+            {busy === c.id + true ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.acceptText}>Annehmen</AppText>}
+          </Pressable>
+        </View>
+      ))}
+    </Animated.View>
+  );
+}
+
+/**
+ * Zur Gruppenfahrt einladen: eigene, anstehende Ausfahrten mit freiem Platz als Auswahl im Blatt.
+ * Ohne passende Ausfahrt führt das Blatt zum Anlegen einer neuen.
+ */
+function InviteSheet({ d, visible, onClose }: { d: Driver; visible: boolean; onClose: () => void }) {
+  const [rides, setRides] = useState<Ausfahrt[] | null>(null);
+  useEffect(() => {
+    if (!visible) return;
+    let alive = true;
+    listAusfahrten()
+      .then((l) => alive && setRides(l.filter((a) => a.isOwner && a.rideStatus !== 'beendet' && freeSeats(a) > 0)))
+      .catch(() => alive && setRides([]));
+    return () => {
+      alive = false;
+    };
+  }, [visible]);
+  const invite = async (a: Ausfahrt) => {
+    try {
+      await inviteToRide(a.id, d.id);
+      showToast(`${d.name} ist zu ${a.name} eingeladen.`);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });
+    }
+  };
+  const items: SheetItem[] = [
+    ...(rides ?? []).map((a) => ({ key: a.id, icon: 'car.2' as const, label: a.name, hint: longDate(a.startsAt), onPress: () => void invite(a) })),
+    { key: 'neu', icon: 'plus' as const, label: 'Neue Ausfahrt erstellen', primary: !rides?.length, onPress: () => router.push('/ausfahrt/neu') },
+  ];
+  return (
+    <ActionSheet
+      visible={visible}
+      title={`${d.name} einladen`}
+      subtitle={rides === null ? 'Deine Ausfahrten werden geladen.' : rides.length ? 'Zu welcher Ausfahrt? Die Einladung ist eine Anfrage, Funk und Live Karte gibt es erst nach der Zusage.' : 'Du hast gerade keine Ausfahrt mit freiem Platz.'}
+      items={items}
+      onClose={onClose}
+    />
+  );
+}
+
 const styles = StyleSheet.create({
+  actions: { flexDirection: 'row', gap: Spacing.s },
+  secondary: { flex: 1, height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, flexDirection: 'row', gap: Spacing.s, alignItems: 'center', justifyContent: 'center' },
+  secondaryText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.text },
+  pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
+  check: { position: 'absolute', right: -3, bottom: -3, width: 18, height: 18, borderRadius: 9, backgroundColor: Colors.good, borderWidth: 2, borderColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  pending: { minHeight: 44, paddingHorizontal: Spacing.m, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  pendingText: { fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.muted },
+  accept: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  acceptText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
   quiet: { flexDirection: 'row', gap: Spacing.l },
   quietBtn: { minHeight: 44, justifyContent: 'center' },
   quietText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },

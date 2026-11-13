@@ -46,7 +46,7 @@ function CommunityProfileWeb() {
   useEffect(() => {
     loadPrivacy()
       .then(setP)
-      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true, birthDate: null, birthdayShow: 'age' }));
+      .catch(() => setP({ homeName: null, home: null, allowMessages: true, showGarage: true, bio: null, visible: true, birthDate: null, birthdayShow: 'age', invitesContactsOnly: false }));
   }, []);
   useEffect(() => {
     if (!editing || q.trim().length < 2) return;
@@ -132,6 +132,7 @@ function CommunityProfileWeb() {
       <span style={S.muted}>Andere Mitglieder sehen dich unter Drivers an diesem Ort, nur als Ortsmitte, nie mit Adresse oder Live Standort.</span>
       <BirthdayWeb key={`geb${p.birthDate ?? ''}`} p={p} onSave={(patch) => void save(patch)} />
       <Toggle id="pv-msg" on={p.allowMessages} label="Andere dürfen mich anschreiben" onChange={(v) => void save({ allowMessages: v })} />
+      <Toggle id="pv-inv" on={p.invitesContactsOnly} label="Einladungen nur von Kontakten" onChange={(v) => void save({ invitesContactsOnly: v })} />
       <Toggle id="pv-garage" on={p.showGarage} label="Andere sehen meinen Fuhrpark" onChange={(v) => void save({ showGarage: v })} />
       {busy ? <span style={S.muted}>Wird gespeichert</span> : null}
       {err ? <span style={S.errorText}>{err}</span> : null}

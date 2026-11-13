@@ -6,8 +6,8 @@
  */
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,6 +22,7 @@ import {
   listAusfahrten, longDate, monthYear, requestAusfahrt, withdrawAusfahrt, ausfahrtAbsagen, type Absage, type Anfrage, type Ausfahrt, type Teilnehmer,
 } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
+import { refreshContacts, useContacts, type Contact } from '@/lib/contacts';
 import { myVehicleLabel, rideAlong, startAsLead } from '@/lib/group/start';
 import { useRide } from '@/lib/group/ride';
 import { declineInvite, inviteToRide, removeFromRide, respondInvite, rideOverview, setRideStatus, type RideMemberRow } from '@/lib/group/invites';
@@ -49,6 +50,14 @@ export default function AusfahrtDetail() {
   const [report, setReport] = useState(false);
   const [declines, setDeclines] = useState<Absage[]>([]);
   const [now, setNow] = useState(() => Date.now());
+  // Einladen (TestFlight Review 13.11.): das Feld rollt nach oben, darunter bleibt Platz für vier bis fünf Vorschläge
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const sectionY = useRef(0);
+  const winH = useWindowDimensions().height;
+  const contacts = useContacts();
+  useEffect(() => {
+    if (inviting) void refreshContacts();
+  }, [inviting]);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -162,7 +171,7 @@ export default function AusfahrtDetail() {
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: Spacing.xxxl }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets>
+      <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: inviting ? winH * 0.6 : Spacing.xxxl }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets>
         <View style={styles.topRow}>
           <BackButton onPress={back} />
           <View style={styles.flex} />
@@ -265,7 +274,11 @@ export default function AusfahrtDetail() {
           </View>
         )}
 
-        <View style={styles.section}>
+        <View
+          style={styles.section}
+          onLayout={(e) => {
+            sectionY.current = e.nativeEvent.layout.y;
+          }}>
           <AppText variant="title">Dabei</AppText>
           {members.map((m) => (
             <View key={m.userId} style={styles.member}>
@@ -310,6 +323,8 @@ export default function AusfahrtDetail() {
               exclude={new Set([...members.map((m) => m.userId), ...invited.map((m) => m.userId), ...requests.map((r) => r.userId)])}
               onInvite={(p) => run(`inv-${p.id}`, () => inviteToRide(a.id, p.id))}
               busyId={busy?.startsWith('inv-') ? busy.slice(4) : null}
+              contacts={(contacts.list ?? []).filter((c) => c.status === 'kontakt')}
+              onPlaced={(y) => scrollRef.current?.scrollTo({ y: Math.max(0, sectionY.current + y - insets.top - Size.button - Spacing.l), animated: true })}
               onClose={() => setInviting(false)}
             />
           )}
@@ -407,11 +422,17 @@ export default function AusfahrtDetail() {
   );
 }
 
-/** Mitglieder per Name einladen: Suche klappt inline auf, Treffer antippen lädt ein */
-function InviteBox({ exclude, onInvite, busyId, onClose }: { exclude: Set<string>; onInvite: (p: FoundProfile) => Promise<boolean>; busyId: string | null; onClose: () => void }) {
+/**
+ * Mitglieder einladen (TestFlight Review, Koray 13.11.): vor dem Tippen stehen deine Kontakte als Vorschläge da,
+ * beim Tippen gefiltert, Kontakte immer oben, dann weitere Fahrer. Jede Zeile hat ihr eigenes Einladen, das Feld
+ * bleibt offen, so lädst du mehrere nacheinander ein. Das X schließt, ebenso Tippen daneben bei leerem Feld.
+ * Beim Öffnen rollt die Ansicht mit der Tastatur nach oben, damit vier bis fünf Vorschläge Platz haben.
+ */
+function InviteBox({ exclude, onInvite, busyId, contacts, onPlaced, onClose }: { exclude: Set<string>; onInvite: (p: FoundProfile) => Promise<boolean>; busyId: string | null; contacts: Contact[]; onPlaced: (y: number) => void; onClose: () => void }) {
   const [q, setQ] = useState('');
   const [found, setFound] = useState<FoundProfile[]>([]);
   const [done, setDone] = useState<Set<string>>(() => new Set());
+  const placed = useRef(false);
   useEffect(() => {
     const t = setTimeout(() => {
       findProfiles(q)
@@ -420,9 +441,21 @@ function InviteBox({ exclude, onInvite, busyId, onClose }: { exclude: Set<string
     }, 250);
     return () => clearTimeout(t);
   }, [q]);
-  const shown = q.trim().length >= 2 ? found.filter((p) => !exclude.has(p.id) || done.has(p.id)) : [];
+  const n = q.trim().toLowerCase();
+  const open = (id: string) => !exclude.has(id) || done.has(id);
+  const mine: FoundProfile[] = contacts.filter((c) => open(c.id) && (!n || c.name.toLowerCase().includes(n))).map((c) => ({ id: c.id, displayName: c.name, car: c.car }));
+  const ids = new Set(mine.map((p) => p.id));
+  const more = n.length >= 2 ? found.filter((p) => open(p.id) && !ids.has(p.id)) : [];
+  const shown = [...mine, ...more];
   return (
-    <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.inviteBox}>
+    <Animated.View
+      entering={FadeIn.duration(Motion.enter)}
+      style={styles.inviteBox}
+      onLayout={(e) => {
+        if (placed.current) return;
+        placed.current = true;
+        onPlaced(e.nativeEvent.layout.y);
+      }}>
       <View style={styles.row}>
         <TextInput maxFontSizeMultiplier={1.2}
           value={q}
@@ -432,6 +465,9 @@ function InviteBox({ exclude, onInvite, busyId, onClose }: { exclude: Set<string
           autoFocus
           autoCapitalize="none"
           autoCorrect={false}
+          onBlur={() => {
+            if (!q.trim() && done.size === 0) onClose();
+          }}
           style={[styles.input, styles.inputOnSurface, styles.flex]}
           accessibilityLabel="Fahrer zum Einladen suchen"
         />
@@ -439,11 +475,13 @@ function InviteBox({ exclude, onInvite, busyId, onClose }: { exclude: Set<string
           <SymbolView name="xmark" size={14} weight="bold" tintColor={Colors.text} />
         </Pressable>
       </View>
-      {q.trim().length >= 2 && shown.length === 0 && <AppText variant="caption" muted>Kein Fahrer mit diesem Namen.</AppText>}
+      {!n && mine.length > 0 && <AppText style={styles.label}>Deine Kontakte</AppText>}
+      {!n && mine.length === 0 && <AppText variant="caption" muted>Tipp den Namen eines Fahrers. Kontakte aus Drivers stehen hier künftig gleich oben.</AppText>}
+      {n.length >= 2 && shown.length === 0 && <AppText variant="caption" muted>Kein Fahrer mit diesem Namen.</AppText>}
       {shown.map((p) => {
         const sent = done.has(p.id);
         return (
-          <View key={p.id} style={styles.member}>
+          <Animated.View key={p.id} entering={FadeIn.duration(Motion.enter)} layout={LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)} style={styles.member}>
             <Avatar name={p.displayName} userId={p.id} size={36} />
             <View style={styles.flex}>
               <AppText style={styles.name}>{p.displayName}</AppText>
@@ -459,10 +497,10 @@ function InviteBox({ exclude, onInvite, busyId, onClose }: { exclude: Set<string
               style={[styles.invitePill, sent && styles.invitePillDone]}>
               {busyId === p.id ? <ActivityIndicator color={Colors.ground} /> : <AppText style={[styles.invitePillText, sent && styles.invitePillTextDone]}>{sent ? 'Eingeladen' : 'Einladen'}</AppText>}
             </Pressable>
-          </View>
+          </Animated.View>
         );
       })}
-      <AppText variant="caption" muted>Eingeladene sehen die Einladung in der App und sagen zu oder ab.</AppText>
+      <AppText variant="caption" muted>Die Einladung ist eine Anfrage. Erst nach der Zusage sind Funk und Live Karte dabei.</AppText>
     </Animated.View>
   );
 }

@@ -27,6 +27,7 @@ import {
 import { startAsLead, myVehicleLabel } from '@/lib/group/start';
 import { useLibrary } from '@/lib/library';
 import { cleanName, findProfiles, useMyProfile, type FoundProfile } from '@/lib/profile';
+import { refreshContacts, useContacts } from '@/lib/contacts';
 import { formatKm } from '@/lib/tour';
 import { useVehicles } from '@/lib/vehicle';
 
@@ -104,7 +105,16 @@ export default function GruppeNeu() {
     };
   }, [q]);
   const invitedIds = new Set(others.filter((m) => m.status !== 'abgesagt').map((m) => m.userId));
-  const suggestions = q.length >= 2 && found?.q === q ? found.list.filter((p) => !invitedIds.has(p.id)) : [];
+  // Kontakte zuerst (Koray 13.11.): ohne Eingabe alle, beim Tippen die passenden, danach weitere Fahrer
+  const contacts = useContacts();
+  useEffect(() => {
+    void refreshContacts();
+  }, []);
+  const mine: FoundProfile[] = (contacts.list ?? [])
+    .filter((c) => c.status === 'kontakt' && !invitedIds.has(c.id) && (!q || c.name.toLowerCase().includes(q.toLowerCase())))
+    .map((c) => ({ id: c.id, displayName: c.name, car: c.car }));
+  const mineIds = new Set(mine.map((p) => p.id));
+  const suggestions = [...mine, ...(q.length >= 2 && found?.q === q ? found.list.filter((p) => !invitedIds.has(p.id) && !mineIds.has(p.id)) : [])];
   const searching = q.length >= 2 && found?.q !== q;
 
   if (!saved) {
@@ -233,6 +243,7 @@ export default function GruppeNeu() {
           accessibilityLabel="Mitfahrer mit Namen suchen"
         />
         {searching && <ActivityIndicator color={Colors.muted} />}
+        {!q && mine.length > 0 && !full && <AppText variant="caption" muted>Deine Kontakte</AppText>}
         {suggestions.map((p) => (
           <View key={p.id} style={styles.suggestion}>
             <View style={styles.flex}>
