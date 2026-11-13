@@ -2,7 +2,8 @@
 """Wendet routing/data/roads/auswahl.json auf die kuratierten Strecken an (Datenprüfung 12.11.2026).
 
 gestrichen und geparkt fliegen aus der App Datei, zusammengeführte Doppelte ebenfalls,
-nur_bevorzugt wird nicht mehr angesagt, umbenannt und felder überschreiben einzelne Werte.
+nur_bevorzugt wird nicht mehr angesagt, umbenannt und felder überschreiben einzelne Werte,
+neue_linie ersetzt die Linie (Datencheck 13.11.: Linien über Schotter, Wirtschaftswege oder Autobahn).
 Aufruf allein: python3 routing/scripts/apply_auswahl.py (arbeitet auf app/src/data/curated-roads.json).
 """
 import json, os
@@ -30,6 +31,8 @@ def apply(roads):
             r['tier'] = 'prefer'
         if r['id'] in sel['umbenannt']:
             r['name'] = sel['umbenannt'][r['id']]
+        if r['id'] in sel.get('neue_linie', {}):
+            r['line'] = sel['neue_linie'][r['id']]
         if r['id'] in sel['felder']:
             line = r.pop('line')
             r.update(sel['felder'][r['id']])
@@ -44,7 +47,9 @@ def write(roads):
 
 
 if __name__ == '__main__':
-    before = json.load(open(OUT))
+    import sys
+    # optional: Eingabe mit zurückgeholten Strecken (Datencheck), sonst die App Datei selbst
+    before = json.load(open(sys.argv[1] if len(sys.argv) > 1 else OUT))
     after = apply(before)
     write(after)
     print('vorher', len(before), 'nachher', len(after))
