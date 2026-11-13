@@ -8,7 +8,7 @@ Messwerte stammen vom 12.11. und sind Momentaufnahmen.
 | Server | Adresse | Rolle |
 |---|---|---|
 | Server 1 (vmd211515) | 13.140.213.164, https://13-140-213-164.sslip.io | Routing (GraphHopper 11), POI Kacheln; Neuaufbau So 3 Uhr |
-| Server 2 (vmd212412) | 13.140.213.114, https://13-140-213-114.sslip.io | Routing, POI Kacheln, Ortssuche (Photon Europa, unter /photon); Neuaufbau Mo 3 Uhr |
+| Server 2 (vmd212412) | 13.140.213.114, https://13-140-213-114.sslip.io | Routing, POI Kacheln, Ortssuche (Photon Europa, unter /photon); Neuaufbau Mo 3 Uhr; zusätzliche Gebiete Mittelitalien, Pyrenäen und Zentralmassiv (Koray 13.11.), Speicher beim Aufbau 30 GB, Landmarken zwei Profile gleichzeitig |
 
 Beide: Contabo Cloud VPS 12 (12 Kerne, 48 GB, 400 GB SSD), Ubuntu 24.04, Caddy davor (TLS, HTTP/2 und HTTP/3), Ordner /opt/cumo-routing.
 Skripte im Repo unter routing/server/cloud: setup-server.sh (Neuaufbau), betrieb.sh (Sicherung, Überwachung, Absicherung), harden.sh (Wächter).
