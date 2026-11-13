@@ -18,6 +18,7 @@ import { AppText } from '@/components/ui/text';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { useAvoid } from '@/lib/avoid-settings';
+import { refreshAvatar } from '@/lib/avatars';
 import { deleteAccount, signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { refreshEntitlement, useEntitlement } from '@/lib/entitlement';
 import { clearLocalTours } from '@/lib/library';
@@ -111,6 +112,8 @@ export default function Einstellungen() {
 /** Profilkarte: so sehen dich andere unter Drivers; Tippen öffnet Profil bearbeiten. */
 function ProfileCard({ userId, cars }: { userId: string; cars: number }) {
   const profile = useMyProfile(userId);
+  // eigenes Foto bei jedem Öffnen der Einstellungen frisch holen
+  useFocusEffect(useCallback(() => refreshAvatar(userId), [userId]));
   const { p } = usePrivacy();
   const name = profile?.displayName ?? null;
   const meta = [p?.homeName ?? 'Wohnort fehlt', cars ? (cars === 1 ? '1 Fahrzeug' : `${cars} Fahrzeuge`) : null].filter(Boolean).join(' · ');

@@ -46,9 +46,12 @@ export function DateBlock({ d }: { d: Date }) {
 export function Avatar({ name, userId, size = 44 }: { name: string; userId?: string | null; size?: number }) {
   const url = useAvatar(userId);
   const r = size / 2;
+  // Schrift wächst mit dem Kreis, Zeilenhöhe passend dazu (Koray 13.11.: in den Einstellungen waren die
+  // Initialen oben abgeschnitten, weil die Standard Zeilenhöhe kleiner war als die Schrift)
+  const fs = size < 40 ? 12 : Math.round(size * 0.34);
   return (
     <View style={[styles.avatar, { width: size, height: size, borderRadius: r }]}>
-      <AppText style={[styles.avatarText, { fontSize: size < 40 ? 12 : size > 56 ? 24 : 15 }]}>{initials(name)}</AppText>
+      <AppText allowFontScaling={false} style={[styles.avatarText, { fontSize: fs, lineHeight: Math.round(fs * 1.25) }]}>{initials(name)}</AppText>
       {url && <Image source={{ uri: url }} style={[StyleSheet.absoluteFill, { borderRadius: r }]} contentFit="cover" transition={180} cachePolicy="memory-disk" accessibilityIgnoresInvertColors />}
     </View>
   );

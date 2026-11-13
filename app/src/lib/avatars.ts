@@ -18,6 +18,10 @@ const MAX_BYTES = 1024 * 1024;
 
 type Entry = number | null;
 const known = new Map<string, Entry>();
+/** Wann eine Fassung zuletzt geholt wurde: nach FRESH_MS fragt der nächste Kreis neu nach (Koray 13.11.: in den
+ * Einstellungen blieben nach dem Hochladen die Initialen stehen, weil dort noch "kein Foto" gemerkt war) */
+const fetchedAt = new Map<string, number>();
+const FRESH_MS = 2 * 60 * 1000;
 const listeners = new Set<() => void>();
 let pending = new Set<string>();
 let timer: ReturnType<typeof setTimeout> | null = null;
@@ -26,8 +30,9 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
-function queue(id: string) {
-  if (known.has(id) || pending.has(id)) return;
+function queue(id: string, force = false) {
+  const at = fetchedAt.get(id);
+  if (pending.has(id) || (!force && known.has(id) && at != null && Date.now() - at < FRESH_MS)) return;
   pending.add(id);
   if (timer) return;
   timer = setTimeout(async () => {
@@ -35,11 +40,18 @@ function queue(id: string) {
     const ids = [...pending];
     pending = new Set();
     try {
-      const { data } = await supabase.from('profiles').select('id,avatar_v').in('id', ids);
-      for (const id of ids) known.set(id, null);
+      const { data, error } = await supabase.from('profiles').select('id,avatar_v').in('id', ids);
+      if (error) throw error;
+      const now = Date.now();
+      for (const id of ids) {
+        if (!known.has(id)) known.set(id, null);
+        fetchedAt.set(id, now);
+      }
+      for (const id of ids) if (!(data ?? []).some((r: { id: string }) => r.id === id)) known.set(id, null);
       for (const r of (data ?? []) as { id: string; avatar_v: number | null }[]) known.set(r.id, r.avatar_v ?? null);
     } catch {
-      for (const id of ids) known.set(id, null);
+      // Fehler nicht als "kein Foto" merken: beim nächsten Kreis erneut fragen
+      for (const id of ids) if (!known.has(id)) known.set(id, null);
     }
     emit();
   }, 60);
@@ -101,8 +113,14 @@ export async function pickAvatar(source: 'library' | 'camera'): Promise<PickResu
   const { error: e2 } = await supabase.from('profiles').update({ avatar_v: v }).eq('id', u.user.id);
   if (e2) return { ok: false, message: 'Das Foto ist hochgeladen, aber noch nicht gespeichert. Versuch es gleich noch einmal.' };
   known.set(u.user.id, v);
+  fetchedAt.set(u.user.id, Date.now());
   emit();
   return { ok: true };
+}
+
+/** Eigenes Foto neu holen, etwa wenn die Einstellungen in den Vordergrund kommen */
+export function refreshAvatar(userId: string) {
+  queue(userId, true);
 }
 
 export async function removeAvatar(): Promise<PickResult> {
@@ -112,6 +130,7 @@ export async function removeAvatar(): Promise<PickResult> {
   if (error) return { ok: false, message: 'Das Foto ließ sich nicht entfernen.' };
   await supabase.storage.from('avatars').remove([`${u.user.id}.jpg`]).catch(() => undefined);
   known.set(u.user.id, null);
+  fetchedAt.set(u.user.id, Date.now());
   emit();
   return { ok: true };
 }
