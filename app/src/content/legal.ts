@@ -64,8 +64,6 @@ export const DATENSCHUTZ: LegalDoc = {
         'Expo (650 Industries Inc., USA): liefert Aktualisierungen der App aus. Dabei fallen IP-Adresse und Gerätedaten an. Grundlage für die Übermittlung in die USA ist das EU US Data Privacy Framework.',
         'Photon von komoot (komoot GmbH, Deutschland): Ortssuche und die Namen von Wegpunkten. Übermittelt wird der Suchbegriff oder die Koordinate.',
         'Valhalla Server der FOSSGIS e.V. (Deutschland): Höhenprofil, Tempolimits entlang der Route und Ersatzrouting, wenn unser Server nicht erreichbar ist. Übermittelt wird die Linie der Route.',
-        'Overpass API (FOSSGIS e.V. und kumi systems, Europa): Tankstellen, Aussichtspunkte, Cafés und Restaurants entlang der Route. Übermittelt wird ein Bereich um die Route.',
-        'GraphHopper (GraphHopper GmbH, Deutschland): Vergleichsrouting für kurvige Profile, wenn unser Server nicht erreichbar ist.',
         'TomTom (TomTom International B.V., Niederlande): liefert unserem Server Meldungen zu gesperrten Pässen und aktuellen Sperrungen. Unser Server fragt dafür grobe Kartenbereiche ab, keine Daten von dir.',
         'LiveKit (LiveKit Inc., USA, Server in Frankfurt am Main): überträgt den Funk in der Gruppenfahrt live zwischen den Teilnehmern, ohne Aufzeichnung. Übermittelt werden dein Anzeigename, eine Kennung und deine Stimme, solange du sprichst. Auftragsverarbeiter; Grundlage für eine Übermittlung in die USA sind Standardvertragsklauseln.',
         'Push Mitteilungen über Expo (650 Industries Inc., USA) und den Apple Push Dienst: Titel, kurzer Text und Gerätekennzeichen der Mitteilung.',

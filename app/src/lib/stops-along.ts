@@ -3,9 +3,10 @@
  * Parkplatz, Restaurants, Cafés und Hotels. Liefert sie nach Streckenkilometer sortiert, damit man sie als
  * Via Punkt einplanen kann.
  *
- * Quelle zuerst die POI Kacheln vom eigenen Routing Server (statische Dateien unter /poi/v1, gebaut von
- * routing/server/cloud/poi-tiles.sh nach jedem Kartenimport). Nur wenn dort keine meta.json erreichbar ist
- * (oder Kacheln nicht laden), fragt die App wie bisher die öffentliche Overpass API.
+ * Quelle sind nur die POI Kacheln auf unseren eigenen Routing Servern (statische Dateien unter /poi/v1, gebaut
+ * von routing/server/cloud/poi-tiles.sh nach jedem Kartenimport). Die öffentliche Overpass API fragt die App
+ * seit 13.11. nicht mehr (kein Vertrag, oft überlastet, und jede Anfrage verriet die geplante Strecke).
+ * Fehlt eine Art auf einem Server (Hotels bis zu seinem nächsten Import), springt der andere ein.
  */
 import { RECOMMENDED, recommendedNear } from './recommended';
 import { CUMO_ROUTING_SERVERS, routingServerUrl } from './cumo-routing';
@@ -38,15 +39,9 @@ export const STOP_KINDS: { id: StopKind; label: string; hint: string }[] = [
   { id: 'hotel', label: 'Hotel', hint: 'Hotels, Gasthöfe und Pensionen nahe der Strecke' },
 ];
 
-/** Suchradius um die Route je Art, in Metern (gleich für Kacheln und Overpass). */
+/** Suchradius um die Route je Art, in Metern. */
 // Hotels dürfen etwas abseits liegen, für die Nacht fährt man gern ein Stück
 const RADIUS: Record<StopKind, number> = { tank: 1200, aussicht: 1500, mittag: 400, kaffee: 400, hotel: 2500 };
-
-const ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
-
-/** Marken, die fast überall Super Plus (98) führen, falls fuel:octane_98 nicht eingetragen ist.
- * Gleiche Liste in routing/server/cloud/poi_tiles.py. */
-const PREMIUM_BRANDS = 'Shell|Aral|Esso|OMV|TotalEnergies|Total|BP|Agip|Eni|Q8|Tamoil|Avia|Jet|Migrol|Coop|Socar|Eni Station';
 
 const M_PER_DEG = 111195;
 const toRad = (d: number) => (d * Math.PI) / 180;
@@ -182,36 +177,37 @@ function rowTags(r: PoiRow): Record<string, string> {
   return t;
 }
 
-let poiBaseCache: { base: string | null; at: number; pending?: Promise<string | null> } | null = null;
-/** Arten, für die der Server Kacheln hat (aus meta.json). Ältere Kacheln kennen noch keine Hotels. */
-let poiKinds: Set<string> | null = null;
+type PoiServer = { base: string; kinds: Set<string> };
+let poiCache: { list: PoiServer[]; at: number; pending?: Promise<PoiServer[]> } | null = null;
 
-/** Server mit POI Kacheln (meta.json erreichbar), erfolgreich für die ganze Sitzung, Fehlschlag 60 s gemerkt. */
-async function poiBase(): Promise<string | null> {
-  if (poiBaseCache?.pending) return poiBaseCache.pending;
-  if (poiBaseCache && (poiBaseCache.base || Date.now() - poiBaseCache.at < 60000)) return poiBaseCache.base;
+/**
+ * Server mit POI Kacheln (meta.json erreichbar) und ihren Arten. Gefunden für die ganze Sitzung gemerkt,
+ * kein Server 60 s lang.
+ */
+async function poiServers(): Promise<PoiServer[]> {
+  if (poiCache?.pending) return poiCache.pending;
+  if (poiCache && (poiCache.list.length || Date.now() - poiCache.at < 60000)) return poiCache.list;
   const pending = (async () => {
-    // in der Entwicklung zeigt routingServerUrl auf den Mac (ohne Kacheln), dann der eigene Server
+    // in der Entwicklung zeigt routingServerUrl auf den Mac (ohne Kacheln), dann die eigenen Server
     const cands = [...new Set([routingServerUrl(), ...CUMO_ROUTING_SERVERS].filter((u): u is string => !!u))];
-    for (const u of cands) {
-      try {
-        const r = await fetchWithTimeout(`${u}/poi/v1/meta.json`, 4000);
-        if (!r.ok) continue;
-        const j = (await r.json()) as { version?: number; counts?: Record<string, unknown> } | null;
-        if (j && !Array.isArray(j) && j.version === 1) {
-          poiKinds = new Set(Object.keys(j.counts ?? {}));
-          return u;
+    const found = await Promise.all(
+      cands.map(async (u): Promise<PoiServer | null> => {
+        try {
+          const r = await fetchWithTimeout(`${u}/poi/v1/meta.json`, 4000);
+          if (!r.ok) return null;
+          const j = (await r.json()) as { version?: number; counts?: Record<string, unknown> } | null;
+          return j && !Array.isArray(j) && j.version === 1 ? { base: u, kinds: new Set(Object.keys(j.counts ?? {})) } : null;
+        } catch {
+          return null;
         }
-      } catch {
-        // nächster Kandidat
-      }
-    }
-    return null;
+      }),
+    );
+    return found.filter((x): x is PoiServer => !!x);
   })();
-  poiBaseCache = { base: null, at: Date.now(), pending };
-  const base = await pending;
-  poiBaseCache = { base, at: Date.now() };
-  return base;
+  poiCache = { list: [], at: Date.now(), pending };
+  const list = await pending;
+  poiCache = { list, at: Date.now() };
+  return list;
 }
 
 const tileCache = new Map<string, Promise<PoiRow[]>>();
@@ -299,160 +295,6 @@ async function fromTiles(base: string, kind: StopKind, line: LatLon[], signal?: 
   return out;
 }
 
-// ---------- Overpass als Ersatz ----------
-
-/** Route auf höchstens etwa 180 Stützpunkte ausdünnen (Overpass around mit Linie). */
-function probe(line: LatLon[], stepM = 1500): LatLon[] {
-  const out: LatLon[] = [];
-  let acc = 0;
-  for (let i = 0; i < line.length; i++) {
-    if (i === 0) {
-      out.push(line[0]);
-      continue;
-    }
-    acc += haversine(line[i - 1], line[i]);
-    if (acc >= stepM) {
-      out.push(line[i]);
-      acc = 0;
-    }
-  }
-  if (out[out.length - 1] !== line[line.length - 1]) out.push(line[line.length - 1]);
-  if (out.length <= 180) return out;
-  const k = Math.ceil(out.length / 180);
-  return out.filter((_, i) => i % k === 0 || i === out.length - 1);
-}
-
-const f5 = (v: number) => v.toFixed(5);
-
-function query(kind: StopKind, pts: LatLon[], scale = 1): string {
-  const path = pts.map(([a, b]) => `${f5(a)},${f5(b)}`).join(',');
-  const near = (r: number) => `(around:${r},${path})`;
-  const r = Math.round(RADIUS[kind] * scale);
-  switch (kind) {
-    case 'tank':
-      return `[out:json][timeout:10];(
-nwr[amenity=fuel]["fuel:octane_98"="yes"]${near(r)};
-nwr[amenity=fuel]["fuel:octane_100"="yes"]${near(r)};
-nwr[amenity=fuel][brand~"^(${PREMIUM_BRANDS})$",i]${near(r)};
-);out center tags 80;`;
-    case 'aussicht':
-      return `[out:json][timeout:10];
-nwr[tourism=viewpoint]${near(r)}->.v;
-nwr[amenity=parking](around.v:300)->.p;
-nwr.v(around.p:300);
-out center tags 60;`;
-    case 'mittag':
-      return `[out:json][timeout:10];nwr[amenity=restaurant][name]${near(r)};out center tags 60;`;
-    case 'kaffee':
-      return `[out:json][timeout:10];nwr[amenity=cafe][name]${near(r)};out center tags 60;`;
-    case 'hotel':
-      return `[out:json][timeout:10];nwr[tourism~"^(hotel|guest_house|motel|chalet)$"][name]${near(r)};out center tags 60;`;
-  }
-}
-
-type OsmEl = { type: string; id: number; lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> };
-
-/** Beide Overpass Server gleichzeitig fragen, die erste gültige Antwort gewinnt, nach 8 s ist Schluss. */
-function overpass(q: string, signal?: AbortSignal, timeoutMs = 8000): Promise<OsmEl[]> {
-  return new Promise<OsmEl[]>((resolve, reject) => {
-    const ctrls = ENDPOINTS.map(() => new AbortController());
-    let pending = ENDPOINTS.length;
-    let done = false;
-    let timedOut = false;
-    let last: unknown = null;
-    const stopAll = () => ctrls.forEach((c) => c.abort());
-    const onAbort = () => stopAll();
-    const timer = setTimeout(() => {
-      timedOut = true;
-      stopAll();
-    }, timeoutMs);
-    signal?.addEventListener('abort', onAbort);
-    const settle = (fn: () => void) => {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      signal?.removeEventListener('abort', onAbort);
-      stopAll();
-      fn();
-    };
-    ENDPOINTS.forEach((url, i) => {
-      fetch(url, {
-        method: 'POST',
-        body: `data=${encodeURIComponent(q)}`,
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        signal: ctrls[i].signal,
-      })
-        .then(async (r) => {
-          if (!r.ok) throw new Error(`Overpass ${r.status}`);
-          const j = (await r.json()) as { elements?: OsmEl[] };
-          return j.elements ?? [];
-        })
-        .then(
-          (els) => settle(() => resolve(els)),
-          (e: unknown) => {
-            last = e;
-            if (--pending > 0) return;
-            settle(() => {
-              if (signal?.aborted) reject(e instanceof Error ? e : new Error('Abgebrochen'));
-              else if (timedOut) reject(new Error('Stopps konnten nicht geladen werden, Overpass antwortet gerade nicht.'));
-              else reject(last instanceof Error ? last : new Error('Stopps konnten nicht geladen werden.'));
-            });
-          },
-        );
-    });
-  });
-}
-
-/** Linie in Stücke von etwa maxKm teilen (mit einem gemeinsamen Punkt an jeder Naht). */
-function chunks(line: LatLon[], maxKm: number): LatLon[][] {
-  const out: LatLon[][] = [];
-  let cur: LatLon[] = [line[0]];
-  let km = 0;
-  for (let i = 1; i < line.length; i++) {
-    km += haversine(line[i - 1], line[i]) / 1000;
-    cur.push(line[i]);
-    if (km >= maxKm && i < line.length - 1) {
-      out.push(cur);
-      cur = [line[i]];
-      km = 0;
-    }
-  }
-  if (cur.length > 1) out.push(cur);
-  return out;
-}
-
-async function fromOverpass(kind: StopKind, line: LatLon[], signal?: AbortSignal, scale = 1): Promise<Cand[]> {
-  // Lange Routen in Stücken fragen: eine Abfrage über 500 km mit breitem Korridor (Hotels) lief in den
-  // Zeitablauf und lieferte nichts (Heppenheim bis Gardasee, 8.11.). Je Stück eigene Höchstzahl, zwei parallel.
-  const parts = chunks(line, 80);
-  const lists = await pool(parts, 2, (part) => overpass(query(kind, probe(part), scale), signal, 15000).catch((e: unknown) => {
-    if (signal?.aborted || parts.length === 1) throw e;
-    return [] as OsmEl[];
-  }), signal);
-  const seenEl = new Set<string>();
-  const els = lists.flat().filter((e) => {
-    const k = `${e.type}/${e.id}`;
-    if (seenEl.has(k)) return false;
-    seenEl.add(k);
-    return true;
-  });
-  if (!els.length && lists.every((l) => !l.length) && parts.length > 1) {
-    // alle Stücke leer: könnte ein Ausfall sein, einmal ganz fragen, damit ein Fehler sichtbar wird
-    els.push(...(await overpass(query(kind, probe(line), scale), signal, 15000)));
-  }
-  const c = corridor(line);
-  const out: Cand[] = [];
-  for (const e of els) {
-    const lat = e.lat ?? e.center?.lat;
-    const lon = e.lon ?? e.center?.lon;
-    if (lat == null || lon == null) continue;
-    const p: LatLon = [lat, lon];
-    const h = nearest(c, p);
-    out.push({ id: `${e.type}/${e.id}`, p, t: e.tags ?? {}, d: h.d, km: h.km });
-  }
-  return out;
-}
-
 /**
  * Stopps einer Art entlang der Route, nach Kilometer sortiert, höchstens limit Stück.
  * scale weitet den Korridor um die Route (Korridor erweitern in der Ortssuche: 3).
@@ -483,18 +325,17 @@ function recommendedAlong(kind: 'mittag' | 'kaffee', line: LatLon[], limit: numb
 export async function stopsAlong(kind: StopKind, line: LatLon[], signal?: AbortSignal, limit = 12, scale = 1): Promise<StopHit[]> {
   if (line.length < 2) return [];
   if (kind === 'mittag' || kind === 'kaffee') return recommendedAlong(kind, line, limit, scale);
-  const base = await poiBase();
+  const servers = (await poiServers()).filter((s) => s.kinds.has(kind));
   if (signal?.aborted) throw new Error('Abgebrochen');
-  // Fehlt die Art in den Kacheln (Hotels bis zum nächsten Import), wäre jede Kachel leer: dann Overpass
-  if (base && (!poiKinds || poiKinds.has(kind))) {
+  // der Reihe nach: hat der erste die Art nicht oder sind seine Kacheln gestört, fragt die App den nächsten
+  for (const s of servers) {
     try {
-      return finish(kind, await fromTiles(base, kind, line, signal, scale), limit);
+      return finish(kind, await fromTiles(s.base, kind, line, signal, scale), limit);
     } catch (e) {
       if (signal?.aborted) throw e;
-      // Kacheln gestört: wie früher über Overpass
     }
   }
-  return finish(kind, await fromOverpass(kind, line, signal, scale), limit);
+  throw new Error(`${STOP_KINDS.find((k) => k.id === kind)?.label ?? 'Stopps'} lassen sich gerade nicht laden. Versuch es gleich noch einmal.`);
 }
 
 /**
