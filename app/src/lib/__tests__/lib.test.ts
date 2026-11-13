@@ -144,6 +144,25 @@ describe('sharpCurves', () => {
     assert.ok(curveAhead(pin, 0.2));
   });
 
+  it('Kurvenansagen: Stufen nach Radius, Kehre, nur in Highlights, zwei Kurven mit dann', async () => {
+    const { paceNotes, paceText } = await import('../navigation/pace-notes');
+    assert.equal(paceNotes(bend(150, 60, false))[0]?.grade, 'leicht');
+    assert.equal(paceNotes(bend(60, 90, true))[0]?.grade, 'mittel');
+    assert.equal(paceNotes(bend(25, 90, false))[0]?.grade, 'scharf');
+    const pin = paceNotes(bend(15, 180, true));
+    assert.equal(pin[0]?.grade, 'kehre');
+    assert.equal(paceText(pin, 0).text, 'Kehre links');
+    assert.equal(paceNotes(bend(400, 60, false)).length, 0);
+    assert.equal(paceNotes(eastLine(20)).length, 0);
+    // außerhalb der Highlights still
+    assert.equal(paceNotes(bend(25, 90, false), [], [{ startKm: 2, endKm: 3 }]).length, 0);
+    const two = [
+      { startKm: 1, endKm: 1.05, dir: 'links' as const, grade: 'mittel' as const, radius: 60, deg: 50 },
+      { startKm: 1.08, endKm: 1.12, dir: 'rechts' as const, grade: 'scharf' as const, radius: 30, deg: 80 },
+    ];
+    assert.deepEqual(paceText(two, 0), { text: 'Links mittel, dann rechts scharf', count: 2 });
+  });
+
   it('Bremshinweis: einzelne Kurve zählt herunter, Kehrenkette wird zusammengefasst', async () => {
     const { curveCue } = await import('../navigation/curves');
     const one = [{ startKm: 1, apexKm: 1.03, dir: 'rechts' as const, kind: 'scharf' as const }];

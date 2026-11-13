@@ -2,14 +2,15 @@
  * Einstellungen für die Fahrt, auf dem Gerät gespeichert (AsyncStorage).
  * speed: eigenes Tempo und erlaubtes Tempo in der Navigation zeigen.
  * volume: Lautstärke der Ansagen im Verhältnis zur Lautstärke des iPhones (0,2 bis 1, Tester Gregor 12.11.).
+ * paceNotes: Kurvenansagen wie ein Beifahrer auf Highlights (Stufe Einfach, Koray 13.11.), Standard aus.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
-export type DriveSettings = { speed: boolean; volume: number };
+export type DriveSettings = { speed: boolean; volume: number; paceNotes: boolean };
 
 const KEY = 'cumo.drive.fahrt.v1';
-let state: DriveSettings = { speed: true, volume: 1 };
+let state: DriveSettings = { speed: true, volume: 1, paceNotes: false };
 let loaded = false;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());

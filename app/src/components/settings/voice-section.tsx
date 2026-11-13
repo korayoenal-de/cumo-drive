@@ -82,6 +82,24 @@ export function VoiceSection() {
         />
       </View>
 
+      <View style={styles.card}>
+        <View style={styles.flex}>
+          <AppText style={styles.label}>Kurvenansagen</AppText>
+          <AppText style={styles.value}>Auf Highlights wie ein Beifahrer</AppText>
+        </View>
+        <Switch
+          value={drive.paceNotes}
+          onValueChange={(v) => setDriveSetting('paceNotes', v)}
+          trackColor={{ false: Colors.line, true: Colors.signal }}
+          thumbColor={Colors.text}
+          ios_backgroundColor={Colors.line}
+          accessibilityLabel="Kurvenansagen auf Highlights"
+        />
+      </View>
+      <AppText variant="caption" muted style={styles.volumeHint}>
+        Auf Pässen und Traumstrecken sagt die Stimme jede Kurve an: links leicht, rechts mittel, links scharf, Kehre. Sie beschreibt die Kurve und nennt kein Tempo.
+      </AppText>
+
       <OptionsSheet visible={open} title="Stimme der Ansagen" subtitle="Antippen zum Wählen und Probehören." onClose={close}>
         {!voices ? (
           <ActivityIndicator color={Colors.muted} style={styles.loading} />

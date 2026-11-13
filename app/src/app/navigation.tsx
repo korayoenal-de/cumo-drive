@@ -34,6 +34,7 @@ import { haptic } from '@/lib/haptics';
 import { useNavigation } from '@/lib/navigation';
 import { feedbackKey } from '@/lib/highlight-feedback';
 import { curveCue, sharpCurves } from '@/lib/navigation/curves';
+import { leadKm, paceNotes, paceText } from '@/lib/navigation/pace-notes';
 import { closureLabel, closuresNear, closuresOnRoute } from '@/lib/road-closures';
 import { limitAt, loadSpeedZones, shownLimitAt, type SpeedZones } from '@/lib/navigation/speed-zones';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
@@ -183,6 +184,8 @@ export default function NavigationScreen() {
     hl && hl.route === state.route && atKm != null ? (hl.list.find((h) => atKm >= h.startKm - 1 && atKm <= h.startKm + 0.3) ?? null) : null;
   const hlDistM = nextHl && atKm != null ? (nextHl.startKm - atKm) * 1000 : 0;
   const saidHl = useRef(new Set<string>());
+  // Zeit der letzten Highlight Ansage: die Kurvenansage wartet kurz, damit beides nicht übereinander spricht
+  const hlSaidAt = useRef(0);
   // Ankündigung tauscht für 5 s den Platz der Routenführung (Konzept Highlight Ansage, 7.11.)
   const [hlShow, setHlShow] = useState<{ id: string; until: number } | null>(null);
   // Gefahrene Highlights für die Bewertung nach der Fahrt: Anteil je Highlight, der wirklich gefahren wurde
@@ -214,6 +217,7 @@ export default function NavigationScreen() {
   useEffect(() => {
     if (!nextHl || state.status !== 'laeuft' || hlDistM > 650 || saidHl.current.has(nextHl.id)) return;
     saidHl.current.add(nextHl.id);
+    hlSaidAt.current = Date.now();
     setHlShow({ id: nextHl.id, until: Date.now() + HL_SHOW_MS });
     controls.say(highlightSpeech(nextHl, hlDistM));
     const len = Math.max(1, Math.round(nextHl.endKm - nextHl.startKm));
@@ -693,6 +697,39 @@ export default function NavigationScreen() {
     // nur bei Wechsel des Limits, nicht bei jedem Meter
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, limitHere, limitEst]);
+  // Kurvenansagen wie ein Beifahrer, Stufe Einfach, nur auf Highlights (Koray 13.11., Schalter unter Fahren).
+  // Abbiegehinweise, Highlight Ansage und Funk gehen vor; eine Kurve, die dann zu spät käme, entfällt.
+  const paces = useMemo(
+    () =>
+      driveSettings.paceNotes && route && hl && hl.route === route && hl.list.length
+        ? paceNotes(route.shape, route.maneuvers.map((m) => m.km), hl.list.map((h) => ({ startKm: h.startKm, endKm: h.endKm })))
+        : [],
+    [driveSettings.paceNotes, route, hl],
+  );
+  const paceNext = useRef({ list: paces, i: 0 });
+  useEffect(() => {
+    if (!paces.length || status !== 'laeuft' || offTour || atKm == null) return;
+    const p = paceNext.current;
+    if (p.list !== paces) paceNext.current = { list: paces, i: 0 };
+    let i = paceNext.current.i;
+    while (i < paces.length && paces[i].startKm < atKm + 0.02) i++;
+    const n = paces[i];
+    if (!n) {
+      paceNext.current.i = i;
+      return;
+    }
+    const t = paceText(paces, i);
+    if (n.startKm - atKm > leadKm(state.speedKmh, t.count * 2)) {
+      paceNext.current.i = i;
+      return;
+    }
+    paceNext.current.i = i + t.count;
+    if (inRide && (funk.talking || funk.speaker)) return;
+    if (state.distToNextM != null && state.distToNextM < 250) return;
+    if (Date.now() - hlSaidAt.current < 6000) return;
+    controls.say(t.text);
+  }, [paces, status, offTour, atKm, state.speedKmh, state.distToNextM, inRide, funk.talking, funk.speaker, controls]);
+
   // Problem melden: ein Tipp während der Fahrt, die letzten vier Minuten gehen mit
   const reportProblem = () => {
     haptic('punkt');
