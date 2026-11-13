@@ -9,7 +9,7 @@
  */
 import { File } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 import { SUPABASE_URL, supabase } from './supabase';
 
@@ -95,19 +95,37 @@ export function avatarUrl(userId: string, v: number): string {
 }
 
 /** Adresse des Fotos oder null (kein Foto oder noch unbekannt) */
-export function useAvatar(userId: string | null | undefined): string | null {
-  const [, tick] = useState(0);
-  useEffect(() => {
-    const l = () => tick((n) => n + 1);
-    listeners.add(l);
-    if (userId) queue(userId);
-    return () => {
-      listeners.delete(l);
-    };
-  }, [userId]);
+/** Gerade hochgeladenes eigenes Foto als Datei auf dem Gerät: sofort sichtbar, ohne erst herunterzuladen */
+const localFile = new Map<string, string>();
+
+function snapshot(userId: string | null | undefined): string | null {
   if (!userId) return null;
+  const local = localFile.get(userId);
+  if (local) return local;
   const v = known.get(userId);
   return v != null ? avatarUrl(userId, v) : null;
+}
+
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+};
+
+/**
+ * Adresse des Fotos oder null. Über useSyncExternalStore (Koray 13.11.: neue Fotos erschienen erst nach dem
+ * Verlassen der Seite; der React Compiler hatte das Lesen aus dem Zwischenspeicher eingefroren).
+ */
+export function useAvatar(userId: string | null | undefined): string | null {
+  useEffect(() => {
+    if (userId) queue(userId);
+  }, [userId]);
+  return useSyncExternalStore(
+    subscribe,
+    () => snapshot(userId),
+    () => snapshot(userId),
+  );
 }
 
 function manipulator(): typeof import('expo-image-manipulator') | null {
@@ -158,7 +176,11 @@ export async function pickPhoto(source: 'library' | 'camera'): Promise<Picked | 
   const perm = source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) return { ok: false, message: source === 'camera' ? 'Ohne Zugriff auf die Kamera geht es nicht. Du kannst ihn in den iPhone Einstellungen erlauben.' : 'Ohne Zugriff auf deine Fotos geht es nicht. Du kannst ihn in den iPhone Einstellungen erlauben.' };
   const own = canCrop();
-  const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], allowsEditing: !own, aspect: [1, 1], quality: own ? 0.9 : 0.6 };
+  // Mit eigenem Zuschnitt rechnet iOS das Foto nicht erst um (HEIC zu JPEG, Kompression): das dauerte bei großen
+  // Fotos mehrere Sekunden (Koray 13.11.); verkleinert wird danach ohnehin auf 512 Pixel
+  const opts: ImagePicker.ImagePickerOptions = own
+    ? { mediaTypes: ['images'], allowsEditing: false, quality: 1, preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Current }
+    : { mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.6 };
   const res = source === 'camera' ? await ImagePicker.launchCameraAsync({ ...opts, cameraType: ImagePicker.CameraType.front }) : await ImagePicker.launchImageLibraryAsync(opts);
   if (res.canceled || !res.assets?.[0]) return { ok: false, cancelled: true };
   const a = res.assets[0];
@@ -179,6 +201,7 @@ export async function uploadAvatar(uri: string, crop?: Crop): Promise<PickResult
   if (e2) return { ok: false, message: 'Das Foto ist hochgeladen, aber noch nicht gespeichert. Versuch es gleich noch einmal.' };
   known.set(u.user.id, v);
   fetchedAt.set(u.user.id, Date.now());
+  localFile.set(u.user.id, small);
   emit();
   return { ok: true };
 }
@@ -195,6 +218,7 @@ export async function removeAvatar(): Promise<PickResult> {
   if (error) return { ok: false, message: 'Das Foto ließ sich nicht entfernen.' };
   await supabase.storage.from('avatars').remove([`${u.user.id}.jpg`]).catch(() => undefined);
   known.set(u.user.id, null);
+  localFile.delete(u.user.id);
   fetchedAt.set(u.user.id, Date.now());
   emit();
   return { ok: true };
