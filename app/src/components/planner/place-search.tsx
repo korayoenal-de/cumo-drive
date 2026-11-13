@@ -237,7 +237,8 @@ function SearchBody({
   // Solange der Name des Punkts unverändert im Feld steht, keine Suche
   const q = query === current ? '' : query.trim();
   // In einer Kategorie filtert der Begriff nur, Orte werden nicht gesucht
-  const suggest = usePlaceSuggest(cat === 'alle' ? q : '', near);
+  // Zwischenziel und Ziel: auch an der Strecke suchen, nicht nur um den Standort (13.11.)
+  const suggest = usePlaceSuggest(cat === 'alle' ? q : '', near, hasRoute && role !== 'Start' ? route : undefined);
 
   const [found, setFound] = useState<Record<string, StopRow[] | 'fehler'>>({});
   const catKey = `${cat}|${scale}`;

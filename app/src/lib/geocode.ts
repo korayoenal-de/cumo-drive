@@ -16,7 +16,8 @@ export async function searchTowns(q: string, near?: LatLon, signal?: AbortSignal
   return towns.length ? towns : searchPlaces(q, near, signal);
 }
 
-export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSignal, layers: string[] = []): Promise<Place[]> {
+/** onlyNear: nur die Abfrage mit Ortsbezug (Ortssuche entlang der Strecke, die Abfrage ohne Bezug läuft schon einmal) */
+export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSignal, layers: string[] = [], onlyNear = false): Promise<Place[]> {
   const ask = async (bias: LatLon | undefined) => {
     const url = new URL('https://x/api/');
     for (const l of layers) url.searchParams.append('layer', l);
@@ -34,7 +35,10 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
   // Mit Ortsbezug liefert Photon manchmal nur noch Treffer in der Nähe und lässt den gesuchten Ort weg
   // (Koray 8.11.: "Heppenheim" mit Bezug Meran ergab nur die Heppenheimer Straße in Kaltern).
   // Darum zusätzlich ohne Bezug fragen: erst die nahen Treffer, dann die übrigen.
-  const [biased, plain] = await Promise.all([near ? ask(near).catch(() => [] as F[]) : Promise.resolve([] as F[]), ask(undefined).catch((e: unknown) => (near ? ([] as F[]) : Promise.reject(e)))]);
+  const [biased, plain] = await Promise.all([
+    near ? ask(near).catch(() => [] as F[]) : Promise.resolve([] as F[]),
+    onlyNear && near ? Promise.resolve([] as F[]) : ask(undefined).catch((e: unknown) => (near ? ([] as F[]) : Promise.reject(e))),
+  ]);
   const features = [...biased, ...plain];
   const all = features.map((f) => {
     const pr = f.properties;

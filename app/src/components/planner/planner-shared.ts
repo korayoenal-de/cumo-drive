@@ -1,13 +1,14 @@
 /**
  * Gemeinsame Typen und Helfer des Planers: Punkte, Etappenprofile, Ortsvorschläge, Pass Abgleich.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { passPoint, type Pass } from '@/lib/passes';
 import { Colors } from '@/constants/theme';
 import { searchPlaces, type Place } from '@/lib/geocode';
 import { searchAddress } from '@/lib/address-search';
 import { type PlanStep } from '@/lib/plan';
+import { resample } from '@/lib/stats';
 import { haversine, PROFILES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 
 export const WARN = Colors.warn;
@@ -15,21 +16,46 @@ export const WARN = Colors.warn;
 /**
  * Ortsvorschläge beim Tippen: ab zwei Zeichen, 300 ms nach dem letzten Tastendruck,
  * ältere Anfragen werden abgebrochen. Bis neue Treffer da sind, bleiben die letzten stehen.
+ *
+ * along (13.11.): Gibt es schon eine Route, sucht die Ortssuche zusätzlich an drei Stellen entlang der Strecke
+ * und sortiert Treffer bis ALONG_KM neben der Linie nach vorne. So findet "Sankt Leonhard" beim Zwischenziel
+ * den Ort an der Strecke im Passeiertal und nicht den gleichnamigen am Standort.
  */
-export function usePlaceSuggest(query: string, near?: LatLon) {
+const ALONG_KM = 20;
+
+export function usePlaceSuggest(query: string, near?: LatLon, along?: LatLon[]) {
   const q = query.trim();
   const enough = q.length >= 2;
   const [res, setRes] = useState<{ q: string; hits: Place[] } | null>(null);
+  // drei Stützpunkte bei einem, zwei und drei Vierteln der Strecke (nur neu, wenn sich die Route ändert)
+  const probes = useMemo(() => {
+    if (!along || along.length < 2) return [] as LatLon[];
+    const cum = [0];
+    for (let i = 1; i < along.length; i++) cum.push(cum[i - 1] + haversine(along[i - 1], along[i]));
+    const total = cum[cum.length - 1];
+    if (total < 5000) return [] as LatLon[];
+    return [0.25, 0.5, 0.75].map((f) => along[Math.max(0, cum.findIndex((c) => c >= f * total))]);
+  }, [along]);
+  const line = useMemo(() => (along && along.length > 1 ? resample(along, 1000) : null), [along]);
   useEffect(() => {
     if (q.length < 2) return;
     const ctrl = new AbortController();
     const t = setTimeout(() => {
       // Adresse mit Hausnummer: zusätzlich der Geocoder des Geräts, seine Treffer zuerst
-      Promise.all([searchAddress(q, near, ctrl.signal).catch(() => [] as Place[]), searchPlaces(q, near, ctrl.signal).catch(() => [] as Place[])])
-        .then(([addr, places]) => {
+      const nearRoute = probes.map((p) => searchPlaces(q, p, ctrl.signal, [], true).catch(() => [] as Place[]));
+      Promise.all([searchAddress(q, near, ctrl.signal).catch(() => [] as Place[]), searchPlaces(q, near, ctrl.signal).catch(() => [] as Place[]), ...nearRoute])
+        .then(([addr, places, ...onRoute]) => {
           const near0 = (a: Place, b: Place) => Math.abs(a.p[0] - b.p[0]) + Math.abs(a.p[1] - b.p[1]) < 0.0005;
-          const hits = [...addr, ...places.filter((x) => !addr.some((y) => near0(x, y)))];
-          if (!ctrl.signal.aborted) setRes({ q, hits });
+          const merged: Place[] = [];
+          for (const x of [...addr, ...places, ...onRoute.flat()]) if (!merged.some((y) => near0(x, y) || (y.name === x.name && haversine(x.p, y.p) < 5000))) merged.push(x);
+          let hits = merged;
+          if (line) {
+            // Treffer an der Strecke zuerst, sonst bleibt die Reihenfolge der Suche (genaue Namen vorne)
+            const off = (p: LatLon) => Math.min(...line.map((l) => haversine(l, p)));
+            const ranked = merged.map((x, i) => ({ x, i, on: off(x.p) <= ALONG_KM * 1000 }));
+            hits = ranked.sort((a, b) => Number(b.on) - Number(a.on) || a.i - b.i).map((r) => r.x);
+          }
+          if (!ctrl.signal.aborted) setRes({ q, hits: hits.slice(0, 10) });
         })
         .catch(() => !ctrl.signal.aborted && setRes({ q, hits: [] }));
     }, 300);
@@ -37,7 +63,7 @@ export function usePlaceSuggest(query: string, near?: LatLon) {
       clearTimeout(t);
       ctrl.abort();
     };
-  }, [q, near]);
+  }, [q, near, probes, line]);
   return { hits: enough && res ? res.hits : null, searching: enough && res?.q !== q };
 }
 
