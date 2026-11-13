@@ -57,6 +57,8 @@ type Props = {
   children: ReactNode;
   /** Inhalt ausblenden, ohne ihn abzubauen (Laden beim ersten Planen) */
   hideBody?: boolean;
+  /** So viel weniger Luft unter dem Kopf in der kleinen Höhe (Koray 13.11.: beim Laden 24 px weniger) */
+  smallTrim?: number;
   /** Hintergrund, meist die Karte. Bekommt die Höhe, die das Blatt unten verdeckt (klein oder halb). */
   background: (covered: number) => ReactNode;
   scrollRef?: RefObject<ScrollViewInstance | null>;
@@ -70,7 +72,7 @@ type Props = {
   topReserve?: number;
 };
 
-export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel, lockScroll, hideBody, onScrollY, topReserve }: Props) {
+export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel, lockScroll, hideBody, onScrollY, topReserve, smallTrim = 0 }: Props) {
   const insets = useSafeAreaInsets();
   const win = useWindowDimensions();
   const [boxH, setBoxH] = useState(0);
@@ -81,7 +83,7 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   const bottomSpace = insets.bottom + TAB_BAR_SPACE;
   const large = Math.round(Math.min(H * LARGE, H - Math.max(insets.top + Spacing.s, topReserve ?? 0)));
   const medium = Math.round(H * MEDIUM);
-  const small = Math.round(Math.min((headH ? headH + GRAB_H : HEAD_GUESS) + bottomSpace, medium - Spacing.xxxl));
+  const small = Math.round(Math.min((headH ? headH + GRAB_H : HEAD_GUESS) + bottomSpace - smallTrim, medium - Spacing.xxxl));
   const visible = [small, medium, large];
   /** Verschiebung nach unten je Höhe; das Blatt selbst ist so hoch wie die große Höhe */
   const snaps = visible.map((v) => large - v);

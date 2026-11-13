@@ -1170,6 +1170,7 @@ export default function Planner() {
       lockScroll={dragging}
       grabberLabel="Planer Höhe ändern"
       hideBody={!!scan}
+      smallTrim={scan || view.kind === 'working' ? 24 : 0}
       header={header}
       background={(covered) => (
         <>

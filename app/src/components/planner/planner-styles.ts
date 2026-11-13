@@ -126,7 +126,8 @@ export const styles = StyleSheet.create({
   funValueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   funDelta: { fontFamily: Fonts.bold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
   pressedDim: { opacity: 0.6 },
-  workBox: { gap: Spacing.s },
+  // Balken und Zeile darunter mit 12 statt 8 Abstand (Koray 13.11.)
+  workBox: { gap: Spacing.m },
   cancelChip: { height: 44, paddingHorizontal: Spacing.l, borderRadius: 22, justifyContent: 'center', backgroundColor: Colors.surface2 },
   cancelText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   statLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
