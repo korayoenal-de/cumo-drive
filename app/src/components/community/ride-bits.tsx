@@ -3,9 +3,8 @@
  */
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { LogoSpinner } from '@/components/ui/fun-gauge';
 
 import { AppText } from '@/components/ui/text';
 import { useAvatar } from '@/lib/avatars';
@@ -47,7 +46,7 @@ export function DateBlock({ d }: { d: Date }) {
 
 /**
  * Profilfoto im Kreis (Koray 13.11.), ohne Foto die Initialen; das Foto blendet weich über die Initialen.
- * Ab 56 Punkten zeigt der Kreis den Lade Spinner aus dem Logo, solange das Foto lädt oder busy (Hochladen) gilt.
+ * Ab 56 Punkten zeigt der Kreis den Standard Spinner wie in den Suchen, solange das Foto lädt oder busy (Hochladen) gilt.
  */
 export function Avatar({ name, userId, size = 44, busy = false }: { name: string; userId?: string | null; size?: number; busy?: boolean }) {
   const url = useAvatar(userId);
@@ -74,7 +73,7 @@ export function Avatar({ name, userId, size = 44, busy = false }: { name: string
       )}
       {spin && (
         <View style={[StyleSheet.absoluteFill, styles.spinner]}>
-          <LogoSpinner size={Math.round(size * 0.36)} label={busy ? 'Foto wird hochgeladen' : 'Foto lädt'} />
+          <ActivityIndicator size={size >= 80 ? 'large' : 'small'} color={Colors.text} accessibilityLabel={busy ? 'Foto wird hochgeladen' : 'Foto lädt'} />
         </View>
       )}
     </View>
