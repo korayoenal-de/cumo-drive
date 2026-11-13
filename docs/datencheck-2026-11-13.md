@@ -25,6 +25,6 @@ Jede kuratierte Strecke (437 in der App, dazu 13 wegen Schnellstraße geparkte) 
 
 ## Für Koray
 
-* **Feldbergstraße:** Die Linie nutzt ein Stück Wirtschaftsweg mit Schotter. Auf Asphalt ist der Weg 33 Prozent länger. Geparkt, bis du entscheidest: neue Linie oder raus.
+* **Feldbergstraße (erledigt):** Die alte Linie begann am Seerundweg in Titisee und lief dort 3 km über Schotter und Wirtschaftswege. Neu aus den Quellpunkten (Titisee, Bärental, Feldberg, Todtnau) gezogen: 23,5 km, fast ganz B 317, kein Schotter.
 * **Davča:** Die Linie nutzt Nebenwege, für Sportwagen wäre der Weg doppelt so lang. Geparkt.
 * **Mangartstraße und Gorges de l'Ardèche:** Ein Stützpunkt findet keine Straße im Graph. Mangart ist eine Mautstraße mit Tunneln, eventuell fehlt sie für Autos in der Karte. Beide bleiben in der App und werden weiter angesagt, wenn man sie fährt.
