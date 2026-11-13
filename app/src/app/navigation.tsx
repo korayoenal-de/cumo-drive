@@ -21,7 +21,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { getEditOrigin, requestEditBack } from '@/lib/edit-tour';
-import { useDriveSettings } from '@/lib/drive-settings';
+import { PACE_NOTES_RELEASED, useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
 import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
@@ -701,7 +701,7 @@ export default function NavigationScreen() {
   // Abbiegehinweise, Highlight Ansage und Funk gehen vor; eine Kurve, die dann zu spät käme, entfällt.
   const paces = useMemo(
     () =>
-      driveSettings.paceNotes && route && hl && hl.route === route && hl.list.length
+      PACE_NOTES_RELEASED && driveSettings.paceNotes && route && hl && hl.route === route && hl.list.length
         ? paceNotes(route.shape, route.maneuvers.map((m) => m.km), hl.list.map((h) => ({ startKm: h.startKm, endKm: h.endKm })))
         : [],
     [driveSettings.paceNotes, route, hl],

@@ -45,6 +45,9 @@ export function useDriveSettings(): DriveSettings {
   );
 }
 
+/** Kurvenansagen zurückgehalten (Koray 13.11.): Schalter verborgen, Ansagen aus, bis Koray sie freigibt */
+export const PACE_NOTES_RELEASED = false;
+
 /** Für die Sprachausgabe außerhalb von React */
 export function voiceVolume(): number {
   load();

@@ -11,7 +11,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, View } fr
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
-import { setDriveSetting, useDriveSettings } from '@/lib/drive-settings';
+import { PACE_NOTES_RELEASED, setDriveSetting, useDriveSettings } from '@/lib/drive-settings';
 import { VolumeSteps, volumeLabel } from '@/components/settings/volume-steps';
 import { germanVoices, playSample, setVoiceChoice, useVoiceChoice, type VoiceOption } from '@/lib/voice-settings';
 
@@ -82,6 +82,7 @@ export function VoiceSection() {
         />
       </View>
 
+      {PACE_NOTES_RELEASED && (
       <View style={styles.card}>
         <View style={styles.flex}>
           <AppText style={styles.label}>Kurvenansagen</AppText>
@@ -99,6 +100,7 @@ export function VoiceSection() {
       <AppText variant="caption" muted style={styles.volumeHint}>
         Auf Pässen und Traumstrecken sagt die Stimme jede Kurve an: links leicht, rechts mittel, links scharf, Kehre. Sie beschreibt die Kurve und nennt kein Tempo.
       </AppText>
+      )}
 
       <OptionsSheet visible={open} title="Stimme der Ansagen" subtitle="Antippen zum Wählen und Probehören." onClose={close}>
         {!voices ? (
