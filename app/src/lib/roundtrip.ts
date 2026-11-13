@@ -6,7 +6,7 @@
  * Routenplaner mit dem gewählten Profil fährt. Straßen sind länger als die Luftlinie,
  * deshalb wird der Kreis kleiner angesetzt und nach dem ersten Versuch einmal nachgeregelt.
  */
-import { route, VALHALLA_URL, type Avoid } from './valhalla';
+import { route, valhallaFetch, type Avoid } from './valhalla';
 import type { LatLon, Profile } from './tour';
 
 export type Direction = 'N' | 'NO' | 'O' | 'SO' | 'S' | 'SW' | 'W' | 'NW' | 'zufall';
@@ -96,7 +96,7 @@ export async function hillyVia(via: LatLon[], spreadKm: number, profile: Profile
   const probe = (c: LatLon) => [c, ...[0, 90, 180, 270].map((b) => destination(c, 1, b))];
   const shape = slots.flat().flatMap(probe);
   try {
-    const res = await fetch(`${VALHALLA_URL}/height`, {
+    const res = await valhallaFetch('height', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ shape: shape.map(([lat, lon]) => ({ lat, lon })) }),

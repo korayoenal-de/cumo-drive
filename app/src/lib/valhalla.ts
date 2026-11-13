@@ -5,7 +5,35 @@
  */
 import type { LatLon, Profile } from './tour';
 
+/** Öffentlicher Valhalla (FOSSGIS): nur noch Notfall, höchstens eine Anfrage je Sekunde */
 export const VALHALLA_URL = 'https://valhalla1.openstreetmap.de';
+
+/**
+ * Eigener Valhalla auf Server 2 (13.11.): aus derselben Karte wie unser GraphHopper, mit Höhendaten.
+ * Antwortet er nicht (Neubau dienstags nachts, Ausfall), fragt die App 5 Minuten lang FOSSGIS.
+ */
+const OWN_VALHALLA = ['https://13-140-213-114.sslip.io/valhalla'];
+const OWN_DOWN_MS = 5 * 60 * 1000;
+let ownDownUntil = 0;
+
+/**
+ * Anfrage an Valhalla: zuerst der eigene, bei Netzfehler, 404 (Pfad noch nicht eingerichtet) oder 5xx der
+ * öffentliche. Andere Antworten (etwa 400, keine Route) gibt sie unverändert zurück.
+ */
+export async function valhallaFetch(path: string, init: RequestInit): Promise<Response> {
+  if (Date.now() >= ownDownUntil) {
+    for (const base of OWN_VALHALLA) {
+      try {
+        const res = await fetch(`${base}/${path}`, init);
+        if (res.status !== 404 && res.status < 500) return res;
+      } catch (e) {
+        if (init.signal?.aborted) throw e;
+      }
+    }
+    ownDownUntil = Date.now() + OWN_DOWN_MS;
+  }
+  return valhallaFetch(path, init);
+}
 
 export type Avoid = {
   /** gesperrte Straßen meiden (bei uns immer Standard) */
@@ -67,7 +95,7 @@ export function decodePolyline6(str: string): LatLon[] {
 }
 
 async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(`${VALHALLA_URL}/${path}`, {
+  const res = await valhallaFetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

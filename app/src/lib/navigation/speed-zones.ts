@@ -10,7 +10,7 @@
  * Valhallas geschätztes Tempo taugt dafür nicht (alle Bundesstraßen 57 km/h, Messung 6.11.).
  * Wird stückweise geladen (etwa 40 km je Anfrage); onPart meldet jeden fertigen Teil.
  */
-import { VALHALLA_URL } from '../valhalla';
+import { valhallaFetch } from '../valhalla';
 import { lineKey, resample } from '../stats';
 import type { LatLon } from '../tour';
 
@@ -98,7 +98,7 @@ export async function loadSpeedZones(shape: LatLon[], onPart: (z: SpeedZones) =>
     const part = pts.slice(a, Math.min(pts.length, a + CHUNK_PTS));
     const startKm = (a * STEP_M) / 1000;
     const partKm = ((part.length - 1) * STEP_M) / 1000;
-    const res = await fetch(`${VALHALLA_URL}/trace_attributes`, {
+    const res = await valhallaFetch('trace_attributes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -28,7 +28,7 @@ import { checkLine } from '../check';
 import { closureExclude, closuresNear, closuresOnRoute } from '../road-closures';
 import { flatten, haversine, type LatLon, type Tour } from '../tour';
 import { cumoAvailable, cumoPlan } from '../cumo-routing';
-import { VALHALLA_URL, costingFor, decodePolyline6 } from '../valhalla';
+import { valhallaFetch, costingFor, decodePolyline6 } from '../valhalla';
 import type { Lane, Maneuver, ManeuverKind, NavRequest, NavRoute } from './types';
 
 /** Mindestabstand der Punkte nach dem Ausdünnen in Metern */
@@ -83,7 +83,7 @@ export type NavRouteDetail = {
 async function post(path: string, body: unknown, signal?: AbortSignal): Promise<VTrip> {
   let res: Response;
   try {
-    res = await fetch(`${VALHALLA_URL}/${path}`, {
+    res = await valhallaFetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -654,7 +654,7 @@ export async function fetchNavRoute(req: NavRequest, from?: LatLon, signal?: Abo
  */
 /** Fahrzeit in Sekunden vom Standort zu mehreren Punkten (Valhalla Matrix), null wo kein Weg. */
 async function timesTo(from: LatLon, fromHeading: number | null | undefined, targets: LatLon[], req: NavRequest, signal?: AbortSignal): Promise<(number | null)[]> {
-  const res = await fetch(`${VALHALLA_URL}/sources_to_targets`, {
+  const res = await valhallaFetch('sources_to_targets', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

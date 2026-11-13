@@ -11,7 +11,7 @@
  *
  * Beides über trace_attributes für ein kurzes Stück der Route. Reine Rechnung getrennt vom Abruf, damit testbar.
  */
-import { VALHALLA_URL, decodePolyline6 } from '../valhalla';
+import { valhallaFetch, decodePolyline6 } from '../valhalla';
 import { haversine, type LatLon } from '../tour';
 import type { Maneuver, NavRoute } from './types';
 
@@ -51,7 +51,7 @@ export async function edgesAlong(points: LatLon[], signal?: AbortSignal): Promis
   signal?.addEventListener('abort', onAbort);
   const t = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const res = await fetch(`${VALHALLA_URL}/trace_attributes`, {
+    const res = await valhallaFetch('trace_attributes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

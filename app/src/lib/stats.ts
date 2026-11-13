@@ -1,7 +1,7 @@
 /**
  * Kennzahlen einer Tour: Höhenprofil (über Valhalla /height), Höhenmeter und Kurvenzahl.
  */
-import { VALHALLA_URL } from './valhalla';
+import { valhallaFetch } from './valhalla';
 import { haversine, type LatLon } from './tour';
 
 /** Punkte in gleichmäßigem Abstand entlang der Linie. */
@@ -46,7 +46,7 @@ export async function elevationProfile(line: LatLon[], signal?: AbortSignal): Pr
   const key = lineKey(pts);
   const hit = elevationCache.get(key);
   if (hit) return hit;
-  const res = await fetch(`${VALHALLA_URL}/height`, {
+  const res = await valhallaFetch('height', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ range: true, shape: pts.map(([lat, lon]) => ({ lat, lon })) }),

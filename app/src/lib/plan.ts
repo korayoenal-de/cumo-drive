@@ -10,7 +10,7 @@ import { tourFun } from './fun-score';
 import { closureExclude, closureLabel, closuresNear, closuresOnRoute, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import { seamsOk, windowFor } from './plan-window';
-import { route, VALHALLA_URL, type Avoid } from './valhalla';
+import { route, valhallaFetch, type Avoid } from './valhalla';
 
 /** Schritte beim Planen; traffic: Verkehrsmeldungen, compare: Varianten vergleichen (Rundtour) */
 export type PlanStep = 'route' | 'traffic' | 'check' | 'fix' | 'compare';
@@ -132,7 +132,7 @@ export function fixSpurs(points: LatLon[], shape: LatLon[], minSpurM = 150): Lat
 /** Nächster Punkt auf einer Straße (Valhalla locate), null wenn keine gefunden. */
 async function snapToRoad(p: LatLon, signal?: AbortSignal): Promise<LatLon | null> {
   try {
-    const res = await fetch(`${VALHALLA_URL}/locate`, {
+    const res = await valhallaFetch('locate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ locations: [{ lat: p[0], lon: p[1] }], costing: 'auto', verbose: false }),
