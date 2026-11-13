@@ -25,12 +25,6 @@ graphhopper:
       custom_model_files: [sportwagen.json, kurvig.json]
     # Sehr kurvig gibt es seit 8.11. nicht mehr in der App; das Profil ist seit 12.11. aus dem Server (spart rund eine Stunde je Neuaufbau)
 
-    # Kandidat Zubringer (12.11., Testbetrieb nur auf Server 2, Modell dort zub_e.json): Autobahn 0,1,
-    # ausgebaute Bundesstraße 0,25, Tempo bis 50 halb so gern. Messung: Meran nach Passo Giau 17 statt 31 km
-    # mit Tempo bis 50, ohne Autobahn, 17 Minuten länger. Noch nicht für Server 1.
-    # - name: kurvig_e
-    #   custom_model_files: [kurvig_e.json, kurvig.json]
-
   # Landmarken beschleunigen flexible Anfragen (Rundtouren, Änderungen zur Laufzeit)
   profiles_lm:
     - profile: sportwagen
