@@ -157,8 +157,28 @@ export async function planChecked(
   snapMajor = false,
   hint?: PlanHint,
 ): Promise<PlannedTour> {
-  // Start und Ziel auf eine richtige Straße, nie auf Zufahrten oder Tankstellengelände (Koray 14.11.)
+  // Start und Ziel auf eine richtige Straße, nie auf Zufahrten oder Tankstellengelände (Koray 14.11.).
+  // Die Tour behält die Punkte, die der Nutzer gesetzt hat: der Planer vergleicht sie mit seinen Punkten,
+  // sonst gilt das Ergebnis als veraltet und "Route planen" kommt wieder (Koray 14.11. 13:15).
+  const asSet = points;
   points = await snapEndsToStreet(points, signal);
+  if (points !== asSet && points.some((p, i) => p !== asSet[i])) {
+    const t = await planCheckedInner(name, points, profile, avoid, onStep, signal, snapMajor, hint);
+    return { ...t, wegpunkte: asSet };
+  }
+  return planCheckedInner(name, points, profile, avoid, onStep, signal, snapMajor, hint);
+}
+
+async function planCheckedInner(
+  name: string,
+  points: LatLon[],
+  profile: Profile,
+  avoid: Avoid,
+  onStep?: (s: PlanStep) => void,
+  signal?: AbortSignal,
+  snapMajor = false,
+  hint?: PlanHint,
+): Promise<PlannedTour> {
   // Pässe mit Warnung, die du herausgenommen hast (Doch umfahren): Passhöhe gesperrt, außer sie ist selbst ein Punkt
   const skip = avoidedPoints().filter((q) => !points.some((w) => haversine(w, q) < 400));
   const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, skip, true, hint);
