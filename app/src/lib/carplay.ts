@@ -40,6 +40,7 @@ type CarPlayModule = {
   setMenu?(skipLabel: string, paused: boolean): Promise<void>;
   setGroup?(list: GroupPin[]): Promise<void>;
   hint?(title: string, subtitle: string): Promise<void>;
+  setSpeed?(kmh: number, limit: number, estimated: boolean, showSpeed: boolean): Promise<void>;
   askRating?(): Promise<void>;
   // ab Build 16: Start im Auto ohne iPhone (Meine Touren, Schnelle Runde)
   setLibrary?(list: CarTourItem[]): Promise<void>;
@@ -173,6 +174,11 @@ export function carPlaySetMenu(skipLabel: string, paused: boolean) {
 /** Andere Teilnehmer der Gruppenfahrt als Marker und Liste (ab Build 14) */
 export function carPlaySetGroup(list: GroupPin[]) {
   quiet(native?.setGroup?.(list));
+}
+
+/** Tempo und Tempolimit unten links auf dem Autodisplay (ab Build 29); null blendet aus */
+export function carPlaySetSpeed(kmh: number | null, limit: number | null, estimated: boolean, showSpeed: boolean) {
+  quiet(native?.setSpeed?.(kmh ?? -1, limit ?? 0, estimated, showSpeed));
 }
 
 /** Bremshinweis als kurzer Hinweis (ab Build 14; ältere Builds zeigen nichts, die Ansage reicht) */

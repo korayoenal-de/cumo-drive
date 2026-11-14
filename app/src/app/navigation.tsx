@@ -24,7 +24,7 @@ import { useActiveTour } from '@/lib/active-tour';
 import { getEditOrigin, requestEditBack } from '@/lib/edit-tour';
 import { PACE_NOTES_RELEASED, useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
-import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
+import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
 import { FUN_NAMES, toFunLevel } from '@/components/ui/fun-gauge';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
@@ -746,6 +746,12 @@ export default function NavigationScreen() {
   // Angezeigt wird ein bekanntes Schild, außerorts ohne Eintrag die geschätzten 100 in Grau (Koray 12.11.)
   const shownLimit = atKm != null && zones?.route === route ? shownLimitAt(zones.z, atKm) : null;
   const limitHere = shownLimit?.limit ?? null;
+  // Tempo und Tempolimit im Auto wie unten links am iPhone (Tester Matthias 14.11.); nur bei Änderung senden
+  const cpKmh = cpRunning && state.speedKmh != null ? Math.round(state.speedKmh) : null;
+  const cpEst = !!shownLimit?.estimated;
+  useEffect(() => {
+    carPlaySetSpeed(cpKmh, cpRunning ? limitHere : null, cpEst, driveSettings.speed);
+  }, [cpKmh, cpRunning, limitHere, cpEst, driveSettings.speed]);
   const limitEst = shownLimit?.estimated ?? false;
   // Blackbox: jedes angezeigte Tempolimit mit Stelle (Klassiker Tempolimit, Koray 12.11.)
   useEffect(() => {

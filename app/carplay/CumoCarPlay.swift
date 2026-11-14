@@ -99,6 +99,11 @@ final class CumoCarPlay: Module {
       CarPlayBridge.shared.setGroup(list)
     }.runOnQueue(.main)
 
+    // Build 29: Tempo (negativ: ausblenden) und Limit (0: kein Schild)
+    AsyncFunction("setSpeed") { (kmh: Double, limit: Int, estimated: Bool, showSpeed: Bool) in
+      CarPlayBridge.shared.setSpeed(kmh: kmh < 0 ? nil : kmh, limit: limit > 0 ? limit : nil, estimated: estimated, showSpeed: showSpeed)
+    }.runOnQueue(.main)
+
     AsyncFunction("hint") { (title: String, subtitle: String) in
       CarPlayBridge.shared.hint(title: title, subtitle: subtitle)
     }.runOnQueue(.main)

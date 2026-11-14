@@ -67,6 +67,8 @@ final class CarPlayBridge: NSObject {
     mapVC = vc
     vc.setStyle(mapStyle)
     vc.setCar(form: carForm, color: carColor)
+    vc.showsSpeed = true
+    vc.setSpeed(kmh: speed.kmh, limit: speed.limit, estimated: speed.estimated, showSpeed: speed.show)
     if pickerReady && session == nil { vc.setHint(CarPlayBridge.pickerHint) }
 
     let t = CPMapTemplate()
@@ -325,6 +327,13 @@ final class CarPlayBridge: NSObject {
   func setGroup(_ list: [[String: Any]]) {
     group = list
     for m in allMaps { m.setGroup(list) }
+  }
+
+  /// Tempo und Tempolimit auf der Hauptkarte (Build 29)
+  private var speed: (kmh: Double?, limit: Int?, estimated: Bool, show: Bool) = (nil, nil, false, true)
+  func setSpeed(kmh: Double?, limit: Int?, estimated: Bool, showSpeed: Bool) {
+    speed = (kmh, limit, estimated, showSpeed)
+    mapVC?.setSpeed(kmh: kmh, limit: limit, estimated: estimated, showSpeed: showSpeed)
   }
 
   /// Bremshinweis (Co Pilot light): kurzer Hinweis ohne Bild
