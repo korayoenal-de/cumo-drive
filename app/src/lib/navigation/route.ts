@@ -201,6 +201,35 @@ function nearestIndex(shape: LatLon[], p: LatLon, from = 0, to = shape.length - 
  */
 const SKIP_WEIGHT = 0.4;
 
+/**
+ * Steht man schon auf der Tour, kurz hinter dem Start (Koray 14.11.: 200 m nach dem Start losgefahren, die
+ * Navigation schickte einen durch einen Kreisverkehr zurück zum Startpunkt), beginnt die Tour dort, wo man steht.
+ * Nur im ersten Stück der Tour und nur direkt auf der Linie, sonst gilt der Startpunkt.
+ */
+const ON_TOUR_M = 40;
+const ON_TOUR_KM = 1.5;
+function onTourAfterStart(line: LatLon[], cum: number[], p: LatLon): number | null {
+  let best = -1;
+  let bd = Infinity;
+  // Abstand zu jedem Teilstück (nicht nur zu den Stützpunkten, die liegen auf Geraden weit auseinander)
+  const kx = Math.cos((p[0] * Math.PI) / 180) * 111320;
+  const ky = 110540;
+  for (let i = 0; i < line.length - 1 && cum[i] <= ON_TOUR_KM; i++) {
+    const ax = (line[i][1] - p[1]) * kx, ay = (line[i][0] - p[0]) * ky;
+    const bx = (line[i + 1][1] - p[1]) * kx, by = (line[i + 1][0] - p[0]) * ky;
+    const dx = bx - ax, dy = by - ay;
+    const len = dx * dx + dy * dy;
+    const t = len > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len)) : 0;
+    const d = Math.hypot(ax + t * dx, ay + t * dy);
+    if (d < bd) {
+      bd = d;
+      best = i + 1;
+    }
+  }
+  // Einstieg am Ende des Teilstücks, auf dem man steht: also vor einem, nie zurück
+  return best >= 1 && bd <= ON_TOUR_M && best < line.length - 1 ? best : null;
+}
+
 function joinIndex(line: LatLon[], cum: number[], p: LatLon, roundTrip: boolean): number {
   const total = cum[cum.length - 1];
   const limit = roundTrip ? Math.max(0, total - 1) : total;
@@ -607,7 +636,7 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
   let tourLine = line;
   let lead: Piece | null = null;
   if (from && haversine(from, line[0]) > APPROACH_M) {
-    const j = req.entry === 'start' ? 0 : joinIndex(line, lineCum, from, isRoundTrip(line));
+    const j = req.entry === 'start' ? (onTourAfterStart(line, lineCum, from) ?? 0) : joinIndex(line, lineCum, from, isRoundTrip(line));
     if (haversine(from, line[j]) > APPROACH_M) {
       const h = bearing(line[Math.max(0, Math.min(j, line.length - 2))], line[Math.min(j + 1, line.length - 1)]);
       lead = await approach(from, line[j], h, req, signal, undefined, true);
