@@ -254,7 +254,7 @@ function InviteSheet({ d, visible, onClose }: { d: Driver; visible: boolean; onC
   useEffect(() => {
     if (!visible) return;
     let alive = true;
-    listAusfahrten()
+    listAusfahrten().then((l) => l.filter((x) => !x.isOver))
       .then((l) => alive && setRides(l.filter((a) => a.isOwner && a.rideStatus !== 'beendet' && freeSeats(a) > 0)))
       .catch(() => alive && setRides([]));
     return () => {

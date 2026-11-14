@@ -34,7 +34,8 @@ function dayStart(offset: number): Date {
 }
 
 export default function AusfahrtNeu() {
-  const params = useLocalSearchParams<{ tour?: string }>();
+  // invite und meetingName kommen von „Nochmal fahren“ (Koray 14.11.): dieselben Leute und derselbe Treffpunkt
+  const params = useLocalSearchParams<{ tour?: string; invite?: string; meetingName?: string }>();
   const insets = useSafeAreaInsets();
   const session = useSession();
   const ent = useEntitlement();
@@ -50,7 +51,7 @@ export default function AusfahrtNeu() {
     return Math.min(toSat, DAYS - 1);
   });
   const [minutes, setMinutes] = useState(10 * 60);
-  const [meeting, setMeeting] = useState<string | null>(null);
+  const [meeting, setMeeting] = useState<string | null>(params.meetingName || null);
   // ohne Mitgliedschaft privat mit drei Fahrzeugen insgesamt, also zwei Mitfahrern (Koray 13.11.)
   const FREE_SEATS = 2;
   const maxSeats = ent.active ? Math.max(1, maxGroupVehicles(ent) - 1) : FREE_SEATS;
@@ -60,7 +61,7 @@ export default function AusfahrtNeu() {
   const [pub, setPub] = useState(false);
   const contacts = useContacts();
   const friends = (contacts.list ?? []).filter((c) => c.status === 'kontakt');
-  const [picked, setPicked] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string[]>(() => (params.invite ? params.invite.split(',').filter(Boolean) : []));
   useEffect(() => {
     void refreshContacts();
   }, []);

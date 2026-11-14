@@ -39,7 +39,7 @@ function Upcoming() {
     useCallback(() => {
       let alive = true;
       listAusfahrten()
-        .then((l) => alive && setRides(l.filter((a) => a.rideStatus !== 'beendet' && (a.isOwner || a.myStatus === 'zugesagt' || a.myStatus === 'eingeladen' || a.myStatus === 'angefragt'))))
+        .then((l) => alive && setRides(l.filter((a) => a.rideStatus !== 'beendet' && !a.isOver && (a.isOwner || a.myStatus === 'zugesagt' || a.myStatus === 'eingeladen' || a.myStatus === 'angefragt'))))
         .catch(() => undefined);
       return () => {
         alive = false;
@@ -77,6 +77,46 @@ function Upcoming() {
                 <AppText style={styles.privatText}>Privat</AppText>
               </View>
             )}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Vergangene Ausfahrten unter Gefahren (Koray 14.11.): Tippen öffnet den Rückblick mit Chat und Nochmal fahren */
+function PastRides() {
+  const [rides, setRides] = useState<Ausfahrt[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      listAusfahrten()
+        .then((l) => alive && setRides(l.filter((a) => a.isOver && (a.isOwner || a.myStatus === 'zugesagt')).sort((x, y) => y.startsAt.getTime() - x.startsAt.getTime())))
+        .catch(() => undefined);
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+  if (!rides.length) return null;
+  return (
+    <View style={styles.upcoming}>
+      <AppText style={styles.upLabel}>Ausfahrten</AppText>
+      {rides.map((a) => {
+        const state = a.startedAt ? (a.isOwner ? 'Du hast geführt' : `Mit ${a.ownerName}`) : 'Nicht gestartet';
+        return (
+          <Pressable
+            key={a.id}
+            accessibilityRole="button"
+            accessibilityLabel={`${a.name}, ${state}`}
+            onPress={() => router.push({ pathname: '/ausfahrt/[id]', params: { id: a.id } })}
+            style={({ pressed }) => [styles.upCard, pressed && { opacity: 0.85 }]}>
+            <DateBlock d={a.startedAt ?? a.startsAt} />
+            <View style={styles.flex}>
+              <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
+              <AppText variant="caption" muted numberOfLines={1}>{a.km != null ? `${Math.round(a.km)} km` : ''}{a.meeting?.name ? `${a.km != null ? ' ab ' : 'Ab '}${a.meeting.name}` : ''}</AppText>
+              <AppText variant="caption" style={a.startedAt ? styles.upMuted : styles.upAttn} numberOfLines={1}>{state}</AppText>
+            </View>
           </Pressable>
         );
       })}
@@ -162,7 +202,10 @@ export default function Touren() {
       />
 
       {tab === 'gefahren' ? (
-        <Drives loggedIn={!!session} />
+        <>
+          {session && <PastRides />}
+          <Drives loggedIn={!!session} />
+        </>
       ) : (
         <>
 

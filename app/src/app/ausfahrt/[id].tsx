@@ -4,6 +4,7 @@
  * Teilnehmer und Organisator, am Tag Gruppenfahrt starten. Der Organisator sieht offene Anfragen
  * mit Profil und nimmt an oder lehnt ab.
  */
+import { saveTour, syncLibrary } from '@/lib/library';
 import { supabase } from '@/lib/supabase';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -216,6 +217,18 @@ export default function AusfahrtDetail() {
 
   const meetAt: LatLon | null = a.meeting ? [a.meeting.lat, a.meeting.lon] : a.start;
 
+  // Nochmal fahren (Koray 14.11.): gleiche Tour, gleicher Treffpunkt, dieselben Leute; nur das Datum fehlt
+  const againRide = async () => {
+    if (!full) {
+      setErr('Die Tour lädt noch, bitte gleich nochmal.');
+      return;
+    }
+    const saved = saveTour({ ...full.tour, name: a.name, profile: full.profile }, '');
+    void syncLibrary();
+    const others = members.filter((m) => m.userId !== session?.user.id).map((m) => m.userId);
+    router.push({ pathname: '/ausfahrt/neu', params: { tour: saved.id, invite: others.join(','), meetingName: a.meeting?.name ?? '' } });
+  };
+
   const startGroup = () =>
     run('start', async () => {
       await stopSharing();
@@ -243,7 +256,13 @@ export default function AusfahrtDetail() {
 
   /** Eine Hauptaktion je Phase (Koray 14.11.): Einladen vorher, Jetzt losfahren am Tag, Navigation während der Fahrt */
   let main: { label: string; onPress: () => void; disabled?: boolean; hint?: string } | null = null;
-  if (inThisRide) main = { label: 'Zur Navigation', onPress: () => router.push('/navigation') };
+  // Nach der Ausfahrt (Koray 14.11.): Rückblick statt Planung
+  const over = a.isOver && !inThisRide;
+  const drove = over && !!a.startedAt;
+  if (over) {
+    if (drove) main = { label: 'Nochmal fahren', onPress: () => void againRide() };
+    else if (a.isOwner) main = { label: 'Neuen Termin wählen', onPress: () => setTimeSheet(true) };
+  } else if (inThisRide) main = { label: 'Zur Navigation', onPress: () => router.push('/navigation') };
   else if (joined && a.rideStatus === 'laeuft' && !isLead) main = { label: meArrived ? 'Jetzt mitfahren' : 'Aufschließen', onPress: () => void startGroup() };
   else if (isLead && a.rideStatus === 'laeuft') main = { label: 'Jetzt losfahren', onPress: () => void startGroup() };
   else if (isLead && dayMode)
@@ -274,29 +293,48 @@ export default function AusfahrtDetail() {
         </View>
 
         <View style={styles.titleBlock}>
-          <AppText style={styles.kicker}>{a.isPublic ? 'Ausfahrt' : 'Private Ausfahrt'}</AppText>
+          {over ? (
+            <View style={[styles.tag, drove ? styles.tagGood : styles.tagWarn, styles.selfStart]}>
+              <AppText style={[styles.tagText, { color: drove ? Colors.good : Colors.warn }]}>{drove ? 'Gefahren' : 'Nicht gestartet'}</AppText>
+            </View>
+          ) : (
+            <AppText style={styles.kicker}>{a.isPublic ? 'Ausfahrt' : 'Private Ausfahrt'}</AppText>
+          )}
           <AppText variant="display">{a.name}</AppText>
         </View>
 
         <View style={styles.fields}>
-          <Pressable accessibilityRole="button" disabled={!isLead || a.rideStatus !== 'geplant'} accessibilityHint={isLead ? 'Abfahrt ändern' : undefined} onPress={() => setTimeSheet(true)} style={styles.field}>
-            <DateBlock d={a.startsAt} />
+          <Pressable accessibilityRole="button" disabled={over || !isLead || a.rideStatus !== 'geplant'} accessibilityHint={isLead && !over ? 'Abfahrt ändern' : undefined} onPress={() => setTimeSheet(true)} style={styles.field}>
+            <DateBlock d={a.startedAt ?? a.startsAt} />
             <View style={styles.flex}>
-              <AppText style={styles.label}>Abfahrt</AppText>
-              <AppText style={styles.value}>{longDate(a.startsAt)}, {clock(a.startsAt)}</AppText>
+              <AppText style={styles.label}>{drove ? 'Gefahren' : over ? 'Geplant für' : 'Abfahrt'}</AppText>
+              <AppText style={styles.value}>
+                {longDate(a.startedAt ?? a.startsAt)}, {clock(a.startedAt ?? a.startsAt)}
+                {drove && a.endedAt ? ` bis ${clock(a.endedAt)}` : ''}
+              </AppText>
             </View>
-            {isLead && a.rideStatus === 'geplant' && <AppText style={styles.change}>Ändern</AppText>}
+            {!over && isLead && a.rideStatus === 'geplant' && <AppText style={styles.change}>Ändern</AppText>}
           </Pressable>
-          <Pressable accessibilityRole="button" disabled={!isLead || a.rideStatus !== 'geplant'} accessibilityHint={isLead ? 'Treffpunkt ändern' : undefined} onPress={() => setPlaceSheet(true)} style={styles.fieldPlain}>
+          {over && !drove && (
+            <View style={styles.fieldPlain}>
+              <View style={styles.flex}>
+                <AppText style={styles.value}>Diese Ausfahrt hat nicht stattgefunden</AppText>
+                <AppText style={styles.label}>
+                  {a.isOwner ? 'Niemand hat sie gestartet. Mit einem neuen Termin bekommen alle, die zugesagt hatten, eine Mitteilung.' : 'Niemand hat sie gestartet.'}
+                </AppText>
+              </View>
+            </View>
+          )}
+          <Pressable accessibilityRole="button" disabled={over || !isLead || a.rideStatus !== 'geplant'} accessibilityHint={isLead && !over ? 'Treffpunkt ändern' : undefined} onPress={() => setPlaceSheet(true)} style={styles.fieldPlain}>
             <View style={styles.flex}>
               <AppText style={styles.label}>Treffpunkt</AppText>
               <AppText style={styles.value}>{meetingName}</AppText>
             </View>
-            {isLead && a.rideStatus === 'geplant' && <AppText style={styles.change}>Ändern</AppText>}
+            {!over && isLead && a.rideStatus === 'geplant' && <AppText style={styles.change}>Ändern</AppText>}
           </Pressable>
           {/* Anfahrt mit der eigenen Navigation, Schnell voreingestellt (Koray 14.11.) */}
           {/* Am Treffpunkt (Koray 14.11.): statt der Anfahrt groß zeigen, dass man da ist und wer noch fehlt */}
-          {joined && meArrived && a.rideStatus === 'geplant' && !inThisRide ? (
+          {over ? null : joined && meArrived && a.rideStatus === 'geplant' && !inThisRide ? (
             <View style={styles.hereCard} accessibilityRole="summary">
               <View style={styles.hereIcon}>
                 <SymbolView name="checkmark" size={20} weight="bold" tintColor={Colors.ground} />
@@ -311,10 +349,10 @@ export default function AusfahrtDetail() {
           ) : (
             joined && meetAt && !inThisRide && <MeetingRoute to={meetAt} place={meetingName} />
           )}
-          {arr && (
+          {arr && !over && (
             <View style={styles.fieldPlain}>
               <View style={styles.flex}>
-                <AppText style={styles.label}>{a.roundTrip ? 'Zurück am Start' : 'Ankunft'}</AppText>
+                <AppText style={styles.label}>{a.roundTrip ? 'Wieder am Treffpunkt' : 'Ankunft'}</AppText>
                 <AppText style={styles.value}>
                   etwa {clock(arr)}
                   {!a.roundTrip && a.goalName ? ` in ${a.goalName}` : ''}
@@ -332,7 +370,11 @@ export default function AusfahrtDetail() {
 
         <View style={styles.metrics}>
           {a.km != null && <Metric label="Strecke" value={`${formatKm(a.km, 0)} KM`} />}
-          {a.minutes != null && <Metric label="Fahrzeit" value={`${Math.floor(a.minutes / 60)}:${String(a.minutes % 60).padStart(2, '0')} H`} />}
+          {(() => {
+            const mins = drove && a.endedAt && a.startedAt ? Math.round((a.endedAt.getTime() - a.startedAt.getTime()) / 60000) : a.minutes;
+            return mins != null ? <Metric label="Fahrzeit" value={`${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')} H`} /> : null;
+          })()}
+          {drove && members.length > 0 && <Metric label="Autos" value={String(members.length)} />}
         </View>
 
         {a.note ? (
@@ -384,12 +426,12 @@ export default function AusfahrtDetail() {
           }}>
           {/* Plätze stehen bei den Teilnehmern, rechtsbündig; der letzte freie Platz in Gelb (Koray 14.11.) */}
           <View style={styles.row}>
-            <AppText variant="title" style={styles.flex}>Teilnehmer</AppText>
-            <View style={[styles.tag, free > 1 ? styles.tagGood : free === 1 ? styles.tagWarn : styles.tagMuted]}>
+            <AppText variant="title" style={styles.flex}>{drove ? 'Dabei gewesen' : 'Teilnehmer'}</AppText>
+            {!over && <View style={[styles.tag, free > 1 ? styles.tagGood : free === 1 ? styles.tagWarn : styles.tagMuted]}>
               <AppText style={[styles.tagText, { color: free > 1 ? Colors.good : free === 1 ? Colors.warn : Colors.muted }]}>
                 {free > 0 ? `${free} von ${a.maxMembers - 1} Plätzen frei` : 'Ausgebucht'}
               </AppText>
-            </View>
+            </View>}
           </View>
           {members.map((m) => {
             const d = dayOf(m.userId);
@@ -439,7 +481,7 @@ export default function AusfahrtDetail() {
               {declines.map((d) => (d.reason ? `${d.name} (${d.reason})` : d.name)).join(', ')}
             </AppText>
           )}
-          {a.isOwner && free > 0 && !inviting && (
+          {!over && a.isOwner && free > 0 && !inviting && (
             <Pressable accessibilityRole="button" onPress={() => setInviting(true)} style={styles.member}>
               <View style={styles.addCircle}>
                 <SymbolView name="plus" size={18} weight="semibold" tintColor={Colors.text} />
@@ -774,6 +816,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  selfStart: { alignSelf: 'flex-start' },
   hereCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l, minHeight: 72, borderRadius: Radius.l, backgroundColor: Colors.goodTint, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m },
   hereIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.good, alignItems: 'center', justifyContent: 'center' },
   hereTitle: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.good },

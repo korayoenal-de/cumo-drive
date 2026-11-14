@@ -41,6 +41,11 @@ export type Ausfahrt = {
   rideStatus: 'geplant' | 'laeuft' | 'beendet';
   /** in der Community sichtbar; sonst privat, nur für Organisator und Eingeladene (Koray 13.11.) */
   isPublic: boolean;
+  /** vorbei (Koray 14.11.): beendet, oder 3 Stunden nach der geplanten Rückkehr, spätestens Mitternacht */
+  isOver: boolean;
+  /** echte Fahrt: Start und Ende, wenn sie lief */
+  startedAt: Date | null;
+  endedAt: Date | null;
 };
 
 export type Anfrage = {
@@ -77,6 +82,9 @@ type Row = {
   end_lat: number | null; end_lon: number | null; goal_name: string | null; taken: number; max_members: number;
   my_status: MemberStatus | null; is_owner: boolean; open_requests: number; ride_status: Ausfahrt['rideStatus'];
   is_public?: boolean | null;
+  is_over?: boolean | null;
+  started_at?: string | null;
+  ended_at?: string | null;
 };
 
 export async function listAusfahrten(): Promise<Ausfahrt[]> {
@@ -109,6 +117,10 @@ export async function listAusfahrten(): Promise<Ausfahrt[]> {
       rideStatus: r.ride_status,
       // ältere Server ohne Spalte: dort kamen nur öffentliche Ausfahrten
       isPublic: r.is_public ?? true,
+      // ältere Server ohne Spalte: dort kamen nur anstehende Ausfahrten
+      isOver: r.is_over ?? false,
+      startedAt: r.started_at ? new Date(r.started_at) : null,
+      endedAt: r.ended_at ? new Date(r.ended_at) : null,
     };
   });
 }
