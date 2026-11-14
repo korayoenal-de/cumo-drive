@@ -1,14 +1,14 @@
 /**
  * Route zum Treffpunkt mit unserer eigenen Navigation (Koray 14.11.): nie Apple Karten oder Google Maps.
- * Schnell ist voreingestellt, Kurvig wählbar. Geplant wird vom aktuellen Standort zum Treffpunkt,
- * danach öffnet die Navigation wie bei jeder Tour (auch in CarPlay).
+ * Nach dem Tippen fragt ein Blatt Schnell (zuerst) oder Kurvig (Koray 14.11.). Geplant wird vom aktuellen
+ * Standort zum Treffpunkt, danach öffnet die Navigation wie bei jeder Tour (auch in CarPlay).
  */
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { Chip } from '@/components/ui/chip';
+import { ActionSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
@@ -36,10 +36,10 @@ export async function navigateToMeeting(to: LatLon, place: string, way: Way): Pr
 }
 
 export function MeetingRoute({ to, place }: { to: LatLon; place: string }) {
-  const [way, setWay] = useState<Way>('schnell');
+  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const go = async () => {
+  const go = async (way: Way) => {
     setBusy(true);
     setErr(null);
     try {
@@ -52,13 +52,19 @@ export function MeetingRoute({ to, place }: { to: LatLon; place: string }) {
   };
   return (
     <View style={styles.box}>
-      <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel="Art der Anfahrt">
-        <Chip label="Schnell" active={way === 'schnell'} onPress={() => setWay('schnell')} />
-        <Chip label="Kurvig" active={way === 'kurvig'} onPress={() => setWay('kurvig')} />
-      </View>
-      <Pressable accessibilityRole="button" accessibilityHint="Plant die Route ab deinem Standort und startet die Navigation" disabled={busy} onPress={() => void go()} style={({ pressed }) => [styles.btn, pressed && styles.pressed]}>
+      <Pressable accessibilityRole="button" accessibilityHint="Fragt nach Schnell oder Kurvig und startet die Navigation ab deinem Standort" disabled={busy} onPress={() => setOpen(true)} style={({ pressed }) => [styles.btn, pressed && styles.pressed]}>
         {busy ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.btnText}>Route zum Treffpunkt</AppText>}
       </Pressable>
+      <ActionSheet
+        visible={open}
+        title="Route zum Treffpunkt"
+        subtitle={place}
+        items={[
+          { key: 'schnell', icon: 'bolt.fill', label: 'Schnell', hint: 'Am schnellsten hin', primary: true, onPress: () => void go('schnell') },
+          { key: 'kurvig', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Kurvig', hint: 'Schon auf dem Weg schöne Strecken', onPress: () => void go('kurvig') },
+        ]}
+        onClose={() => setOpen(false)}
+      />
       {err && <AppText style={styles.err}>{err}</AppText>}
     </View>
   );
@@ -66,7 +72,6 @@ export function MeetingRoute({ to, place }: { to: LatLon; place: string }) {
 
 const styles = StyleSheet.create({
   box: { gap: Spacing.m },
-  row: { flexDirection: 'row', gap: Spacing.s },
   btn: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   btnText: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   pressed: { opacity: 0.85 },
