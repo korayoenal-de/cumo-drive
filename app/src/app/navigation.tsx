@@ -635,13 +635,30 @@ export default function NavigationScreen() {
     cpOffAt.current = Date.now();
     carPlayAlert('Abseits der Tour', 'Wir führen dich zurück auf die Route.');
   }, [cpOff]);
-  // "Los" auf dem Autodisplay: sofort starten, sobald die Navigation bereit ist
+  // "Los" auf dem Autodisplay: sofort starten, sobald die Navigation bereit ist. Auch nach einem Fehler
+  // (Tester Matthias 14.11.: in der Tiefgarage ohne Netz scheiterte der Start, CarPlay konnte nicht neu anstoßen)
+  const canStart = state.status === 'bereit' || state.status === 'angekommen' || state.status === 'fehler';
   useEffect(() => {
-    if ((state.status === 'bereit' || state.status === 'angekommen') && takeCarPlayStart()) void controls.start();
-  }, [state.status, controls]);
+    if (canStart && takeCarPlayStart()) void controls.start();
+  }, [canStart, controls]);
   useCarPlayEvent('onStart', () => {
-    if ((state.status === 'bereit' || state.status === 'angekommen') && takeCarPlayStart()) void controls.start();
+    if (canStart && takeCarPlayStart()) void controls.start();
   });
+  // Ohne Netz gescheitert: von selbst neu versuchen, alle 8 Sekunden, höchstens 5 Minuten lang
+  const netFail = state.status === 'fehler' && /Verbindung|Netz/i.test(state.error ?? '');
+  const retries = useRef(0);
+  useEffect(() => {
+    if (!netFail) return;
+    if (retries.current >= 37) return;
+    const t = setTimeout(() => {
+      retries.current += 1;
+      void controls.start();
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [netFail, state.error, controls]);
+  useEffect(() => {
+    if (state.status === 'laeuft') retries.current = 0;
+  }, [state.status]);
   useCarPlayEvent('onEnd', close);
   // Bewertung vom Autodisplay: geht in dieselbe Karte wie am iPhone und wird dort gespeichert
   const [cpScore, setCpScore] = useState<number | null>(null);

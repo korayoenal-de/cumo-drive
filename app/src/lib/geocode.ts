@@ -22,7 +22,7 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
     const url = new URL('https://x/api/');
     for (const l of layers) url.searchParams.append('layer', l);
     url.searchParams.set('q', q);
-    url.searchParams.set('limit', '6');
+    url.searchParams.set('limit', '10');
     url.searchParams.set('lang', 'de');
     if (bias) {
       url.searchParams.set('lat', String(bias[0]));
@@ -49,7 +49,7 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
     const town = pr.city ?? pr.town ?? pr.village ?? pr.locality ?? pr.district ?? pr.county;
     const name = (plz && town) || (pr.name ?? addr ?? pr.street ?? pr.city ?? 'Ort');
     const detail = [plz, addr !== name ? addr : undefined, pr.city !== name ? pr.city : undefined, pr.state, pr.country].filter(Boolean).join(', ');
-    return { name, detail, p: [f.geometry.coordinates[1], f.geometry.coordinates[0]] as LatLon };
+    return { name, detail, p: [f.geometry.coordinates[1], f.geometry.coordinates[0]] as LatLon, kind: pr.osm_value ?? '' };
   });
   // Gleicher Name in wenigen km Abstand nur einmal (Tester 8.11.: sechsmal "Tegernsee" für Ort, See, Bahnhof
   // und Bahnsteige). Photon sortiert den Ort zuerst, er bleibt stehen.
@@ -59,11 +59,14 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
     const l = n.toLowerCase();
     return l === want || l.startsWith(`${want} (`) || l.startsWith(`${want},`) ? 0 : 1;
   };
+  // Bei gleichem Namen zuerst Städte, dann Gemeinden, dann Dörfer (Tester Matthias 14.11.: "Erbach" zeigte nur
+  // gleichnamige Dörfer, die Stadt Erbach im Odenwald fehlte)
+  const size = (k: string) => (k === 'city' || k === 'town' ? 0 : k === 'municipality' || k === 'administrative' ? 1 : k === 'village' || k === 'suburb' ? 2 : 3);
   return all
     .filter((x, i) => !all.slice(0, i).some((y) => y.name === x.name && haversine(x.p, y.p) < 5000))
     .map((x, i) => ({ x, i }))
-    .sort((a, b) => exact(a.x.name) - exact(b.x.name) || a.i - b.i)
-    .map((e) => e.x)
+    .sort((a, b) => exact(a.x.name) - exact(b.x.name) || size(a.x.kind) - size(b.x.kind) || a.i - b.i)
+    .map(({ x: { kind: _k, ...x } }) => x)
     .slice(0, 8);
 }
 
