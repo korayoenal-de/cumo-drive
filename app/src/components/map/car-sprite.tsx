@@ -6,12 +6,13 @@
  * tintColor gefärbt, darüber liegen Schatten, Scheiben, Lichter und Räder.
  * Erzeugt mit scratchpad/sprites (three.js), Quelle der Modelle: assets/cars/README.md.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Type } from '@/constants/theme';
+import { Colors, Fonts, Shadow, Type } from '@/constants/theme';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Svg, { Path } from 'react-native-svg';
 
 import type { Vehicle } from '@/lib/vehicle';
 
@@ -73,9 +74,31 @@ export function CarSprite({ look, frame, size, rotation }: { look: CarLook; fram
 }
 
 /** Vorschau in der Garage: zum Drehen seitlich ziehen */
-export function CarPreview({ look, size, bare }: { look: CarLook; size: number; bare?: boolean }) {
+export function CarPreview({ look, size, bare, spin = 0 }: { look: CarLook; size: number; bare?: boolean; spin?: number }) {
   const [heading, setHeading] = useState(215);
   const [base, setBase] = useState(215);
+  // spin zählt hoch: das Auto dreht sich einmal ganz herum (Knopf oben rechts, Koray 14.11.)
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (!spin) return;
+    const from = Date.now();
+    const start = heading;
+    if (timer.current) clearInterval(timer.current);
+    timer.current = setInterval(() => {
+      const t = Math.min(1, (Date.now() - from) / 1400);
+      const ease = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+      setHeading(start + 360 * ease);
+      if (t >= 1 && timer.current) {
+        clearInterval(timer.current);
+        timer.current = null;
+      }
+    }, 33);
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+    };
+    // nur beim Tippen, nicht bei jeder Drehung durch den Finger
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spin]);
   const pan = Gesture.Pan()
     .runOnJS(true)
     .activeOffsetX([-6, 6])
@@ -101,15 +124,31 @@ export function CarPreview({ look, size, bare }: { look: CarLook; size: number; 
 const STAGE_CAR = 230;
 export function CarStagePicker({ look, onForm }: { look: CarLook; onForm: (f: CarForm) => void }) {
   const label = CAR_FORMS.find((f) => f.id === look.form)?.label ?? '';
+  const [spin, setSpin] = useState(0);
   return (
     <View style={styles.picker}>
-      {/* Das Auto dreht sich direkt auf der Bühne (Koray 9.11.: kein eigener 3D Knopf, kein Bodenschatten) */}
+      {/* Das Auto dreht sich direkt auf der Bühne. Der Hinweis ist seit 14.11. ein runder Knopf oben rechts
+          (Variante A): der Name hat die ganze Breite, Tippen dreht das Auto einmal und zeigt so die Geste. */}
       <View style={styles.stage2}>
-        <CarPreview look={look} size={STAGE_CAR} bare />
+        <CarPreview look={look} size={STAGE_CAR} bare spin={spin} />
         <View style={styles.stageFoot}>
-          <AppText style={styles.stageName} numberOfLines={1}>{label}</AppText>
-          <AppText style={styles.stageHint}>Zum Drehen ziehen</AppText>
+          <AppText style={styles.stageName} numberOfLines={2}>{label}</AppText>
         </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Auto einmal drehen"
+          accessibilityHint="Du kannst das Auto auch mit dem Finger seitlich drehen."
+          onPress={() => setSpin((n) => n + 1)}
+          style={({ pressed }) => [styles.spinBtn, pressed && { transform: [{ scale: 0.94 }] }]}>
+          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={Colors.text} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M12 7.5l4 2.2v4.6l-4 2.2-4-2.2V9.7z" />
+            <Path d="M8 9.7l4 2.2 4-2.2M12 11.9v4.6" />
+            <Path d="M20.5 12a8.5 4 0 0 1-6.6 3.9" />
+            <Path d="M3.5 12a8.5 4 0 0 1 6.6-3.9" />
+            <Path d="M15.3 14.3l-1.4 1.6 1.9.9" />
+            <Path d="M8.7 9.7l1.4-1.6-1.9-.9" />
+          </Svg>
+        </Pressable>
       </View>
       <View style={styles.strip} accessibilityRole="radiogroup">
         {CAR_FORMS.map((f) => {
@@ -132,9 +171,9 @@ const styles = StyleSheet.create({
   box: { overflow: 'hidden' },
   picker: { gap: 10 },
   stage2: { borderRadius: 20, backgroundColor: Colors.surface2, overflow: 'hidden' },
-  stageFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: 16, paddingBottom: 14 },
-  stageName: { flex: 1, fontFamily: Fonts.display, fontSize: 20, lineHeight: 24, color: Colors.text, textTransform: 'uppercase' },
-  stageHint: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
+  stageFoot: { paddingHorizontal: 16, paddingBottom: 14 },
+  stageName: { fontFamily: Fonts.display, fontSize: 20, lineHeight: 24, color: Colors.text, textTransform: 'uppercase' },
+  spinBtn: { position: 'absolute', top: 12, right: 12, width: 44, height: 44, borderRadius: 22, backgroundColor: '#2A2A2E', alignItems: 'center', justifyContent: 'center', boxShadow: Shadow.button },
   stageBare: { alignItems: 'center', justifyContent: 'center', paddingTop: 8 },
   strip: { flexDirection: 'row', borderRadius: 14, overflow: 'hidden' },
   thumb: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1A1A1D', borderRightWidth: 1, borderRightColor: Colors.ground },
