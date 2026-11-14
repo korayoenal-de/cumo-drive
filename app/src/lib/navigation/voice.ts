@@ -19,8 +19,8 @@ type Stage = 'weit' | 'nah' | 'jetzt';
 export type VoiceGuide = {
   /** Mit jeder neuen Position aufrufen */
   update: (route: NavRoute, next: number, distToNextM: number | null, speedKmh: number | null) => void;
-  /** Freie Ansage, zum Beispiel beim Start oder bei einer Neuberechnung */
-  say: (text: string, interrupt?: boolean) => void;
+  /** Freie Ansage, zum Beispiel beim Start oder bei einer Neuberechnung; rank 0 für Hinweise (Highlights) */
+  say: (text: string, interrupt?: boolean, rank?: SpeechRank) => void;
   setEnabled: (on: boolean) => void;
   /** Vergisst, was schon angesagt wurde (nach einer neuen Route) */
   reset: () => void;
@@ -148,14 +148,25 @@ export function aheadPhrase(m: Maneuver, distM: number): string {
   return `In ${distanceWords(distM)} ${base}`;
 }
 
-export function createVoiceGuide(speak: (text: string) => void = defaultSpeak, stopSpeech: () => void = defaultStop): VoiceGuide {
+/**
+ * Rang einer Ansage (Koray 14.11.: Folgeansagen wurden abgeschnitten). 0: Hinweise wie Highlights, Gruppe,
+ * Kurven; 1: Navigation. Eine neue Ansage stellt sich hinten an. Nur eine dringende Navigationsansage
+ * ("jetzt abbiegen") darf laufende Hinweise abbrechen, nie eine andere Navigationsansage.
+ */
+export type SpeechRank = 0 | 1;
+
+export function createVoiceGuide(
+  speak: (text: string, rank: SpeechRank) => void = defaultSpeak,
+  stopSpeech: () => void = defaultStop,
+  navPlaying: () => boolean = navigationSpeaking,
+): VoiceGuide {
   let enabled = true;
   const done = new Set<string>();
 
-  const say = (text: string, interrupt = false) => {
+  const say = (text: string, interrupt = false, rank: SpeechRank = 1) => {
     if (!enabled) return;
-    if (interrupt) stopSpeech();
-    speak(text);
+    if (interrupt && !navPlaying()) stopSpeech();
+    speak(text, rank);
   };
 
   return {
@@ -223,6 +234,8 @@ function getAudio(): AudioModule | null {
  * Ohne das hält iOS die Audiositzung der App aktiv und andere Apps pausieren dauerhaft.
  */
 let speaking = 0;
+/** Wie viele Navigationsansagen gerade laufen oder warten */
+let navQueued = 0;
 let releaseTimer: ReturnType<typeof setTimeout> | null = null;
 function audioOn() {
   const a = getAudio();
@@ -240,15 +253,25 @@ function audioOff() {
   releaseTimer = setTimeout(() => {
     if (speaking > 0) return;
     void a.setIsAudioActiveAsync(false).catch(() => {});
-  }, 600);
+  }, 1500);
 }
 
-function defaultSpeak(text: string) {
+/** Läuft gerade eine Navigationsansage oder wartet eine? Dann wird nichts abgebrochen. */
+export function navigationSpeaking(): boolean {
+  return navQueued > 0;
+}
+
+function defaultSpeak(text: string, rank: SpeechRank = 0) {
   try {
     speaking++;
+    if (rank === 1) navQueued++;
     audioOn();
+    let finished = false;
     const done = () => {
+      if (finished) return;
+      finished = true;
       speaking = Math.max(0, speaking - 1);
+      if (rank === 1) navQueued = Math.max(0, navQueued - 1);
       if (!speaking) audioOff();
     };
     Speech.speak(text, { language: 'de-DE', voice: chosenVoiceId(), rate: 1.0, volume: voiceVolume(), onDone: done, onStopped: done, onError: done });
@@ -260,8 +283,9 @@ function defaultSpeak(text: string) {
 function defaultStop() {
   Speech.stop().catch(() => {});
   speaking = 0;
+  navQueued = 0;
   audioOff();
 }
 
 /** Freie Ansage außerhalb der Navigation (zum Beispiel Gruppennachrichten), mit leiserer Musik. */
-export const speakText = defaultSpeak;
+export const speakText = (text: string, rank: SpeechRank = 0) => defaultSpeak(text, rank);

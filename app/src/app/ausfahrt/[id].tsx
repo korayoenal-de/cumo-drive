@@ -4,6 +4,7 @@
  * Teilnehmer und Organisator, am Tag Gruppenfahrt starten. Der Organisator sieht offene Anfragen
  * mit Profil und nimmt an oder lehnt ab.
  */
+import { supabase } from '@/lib/supabase';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
@@ -142,6 +143,21 @@ export default function AusfahrtDetail() {
 
   const back = () => (router.canGoBack() ? router.back() : router.navigate('/community'));
 
+  // Auto folgt der Garage bis zum Start (Koray 14.11.): steht in der Ausfahrt ein anderes als das gewählte, nachtragen
+  const myVehicleNow = myVehicleLabel();
+  const myRowVehicle = members.find((m) => m.userId === session?.user.id)?.vehicle ?? null;
+  const vehicleStale = !!a && a.rideStatus === 'geplant' && !!myVehicleNow && members.some((m) => m.userId === session?.user.id) && myRowVehicle !== myVehicleNow;
+  useEffect(() => {
+    if (!vehicleStale || !a) return;
+    void supabase
+      .rpc('ride_set_vehicle', { ride: a.id, my_vehicle: myVehicleNow })
+      .then(({ error }) => {
+        if (!error) void load();
+      });
+    // nur wenn sich das Auto unterscheidet
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehicleStale, a?.id, myVehicleNow]);
+
   if (a === undefined) {
     return (
       <View style={[styles.root, styles.center]}>
@@ -279,7 +295,22 @@ export default function AusfahrtDetail() {
             {isLead && a.rideStatus === 'geplant' && <AppText style={styles.change}>Ändern</AppText>}
           </Pressable>
           {/* Anfahrt mit der eigenen Navigation, Schnell voreingestellt (Koray 14.11.) */}
-          {joined && meetAt && !inThisRide && <MeetingRoute to={meetAt} place={meetingName} />}
+          {/* Am Treffpunkt (Koray 14.11.): statt der Anfahrt groß zeigen, dass man da ist und wer noch fehlt */}
+          {joined && meArrived && a.rideStatus === 'geplant' && !inThisRide ? (
+            <View style={styles.hereCard} accessibilityRole="summary">
+              <View style={styles.hereIcon}>
+                <SymbolView name="checkmark" size={20} weight="bold" tintColor={Colors.ground} />
+              </View>
+              <View style={styles.flex}>
+                <AppText style={styles.hereTitle}>Du bist am Treffpunkt</AppText>
+                <AppText style={styles.hereText}>
+                  {members.filter((m) => dayOf(m.userId)?.arrived).length} von {members.length} sind da
+                </AppText>
+              </View>
+            </View>
+          ) : (
+            joined && meetAt && !inThisRide && <MeetingRoute to={meetAt} place={meetingName} />
+          )}
           {arr && (
             <View style={styles.fieldPlain}>
               <View style={styles.flex}>
@@ -743,6 +774,10 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  hereCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l, minHeight: 72, borderRadius: Radius.l, backgroundColor: Colors.goodTint, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m },
+  hereIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.good, alignItems: 'center', justifyContent: 'center' },
+  hereTitle: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.good },
+  hereText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
   root: { flex: 1, backgroundColor: Colors.ground },
   center: { alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: Spacing.xl, gap: Spacing.xl },

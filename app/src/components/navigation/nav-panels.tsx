@@ -1,7 +1,8 @@
 /**
  * Bausteine des Navigationsscreens: Manöver Karte oben, Leiste unten, Zustands Karten.
  */
-import { useEffect, useState, type ReactNode } from 'react';
+import { announceMenuOpen, useCloseOnOtherMenu } from '@/lib/navigation/open-menu';
+import { useEffect, useState, type ReactNode, useCallback } from 'react';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -170,13 +171,19 @@ export function BottomBar({
   skipLabel?: string;
   onSkip?: () => void;
   /** Echter Funk (ab Build 20): gedrückt halten spricht. Ohne talk öffnet der Mikrofon Knopf die Kurznachrichten. */
-  talk?: { talking: boolean; waiting: boolean; disabled: boolean; onTalk: (on: boolean) => void };
+  talk?: { talking: boolean; waiting: boolean; disabled: boolean; onTalk: (on: boolean) => void; label?: string };
   /** Zusätzliche Einträge im Menü, etwa Kurznachricht oder Funk hören */
   extraActions?: { key: string; label: string; icon: SFSymbol; run: () => void }[];
 }) {
   const now = useNow();
   const [funkHint, setFunkHint] = useState(false);
-  const [menu, setMenu] = useState(false);
+  const [menu, setMenuRaw] = useState(false);
+  const setMenu = useCallback((v: boolean) => {
+    if (v) announceMenuOpen('tour');
+    setMenuRaw(v);
+  }, []);
+  const closeMenu = useCallback(() => setMenuRaw(false), []);
+  useCloseOnOtherMenu('tour', closeMenu);
   // Lautstärke der Ansagen: langer Druck auf den Lautsprecher (Koray 12.11.), klappt nach 5 s von selbst zu
   const [vol, setVol] = useState(0);
   const { volume } = useDriveSettings();
@@ -193,7 +200,7 @@ export function BottomBar({
   // Aufgeklappte Aktionen klappen nach 4 Sekunden von selbst zu
   useEffect(() => {
     if (!menu) return;
-    const t = setTimeout(() => setMenu(false), 4000);
+    const t = setTimeout(() => setMenuRaw(false), 4000);
     return () => clearTimeout(t);
   }, [menu]);
 
@@ -243,7 +250,7 @@ export function BottomBar({
           ))}
         </View>
       )}
-      <GlassPanel style={[styles.bar, { paddingBottom: bottomInset }]} fallback="rgba(11,11,12,0.96)">
+      <GlassPanel overflow style={[styles.bar, { paddingBottom: bottomInset }]} fallback="rgba(11,11,12,0.96)">
         {funkHint && (
           <View style={styles.funkHint}>
             <AppText variant="caption">Funk folgt bald.</AppText>
@@ -322,7 +329,7 @@ export function BottomBar({
               }}
               style={[styles.talk, talk.talking && styles.talkOn, (talk.waiting || talk.disabled) && styles.talkWait]}>
               <MicIcon />
-              <AppText style={styles.talkText}>{talk.waiting ? 'Warten' : 'Funk'}</AppText>
+              <AppText style={styles.talkText}>{talk.label ?? (talk.waiting ? 'Warten' : 'Funk')}</AppText>
             </Pressable>
           )}
         </View>

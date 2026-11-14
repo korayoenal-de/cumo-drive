@@ -91,6 +91,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const routeRef = useRef<NavRoute | null>(null);
   const hintRef = useRef(-1);
   const doneIndexRef = useRef(0);
+  /** Tatsächlich gefahrene km auf dieser Route (GPS, ohne Sprünge), für Runden und die Ankunft */
+  const odoRef = useRef<{ km: number; last: LatLon | null }>({ km: 0, last: null });
   const offSinceRef = useRef<number | null>(null);
   const lastRerouteRef = useRef(0);
   const reroutingRef = useRef(false);
@@ -128,9 +130,9 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const voice = useCallback(() => {
     // jede Ansage auch in die Blackbox
     if (!voiceRef.current)
-      voiceRef.current = createVoiceGuide((t) => {
+      voiceRef.current = createVoiceGuide((t, rank) => {
         bbLog('say', t);
-        speakText(t);
+        speakText(t, rank);
       });
     return voiceRef.current;
   }, []);
@@ -187,6 +189,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       // man bei einer Runde, deren Start gleich Ziel ist, sofort am Ende (Ziel erreicht).
       hintRef.current = 0;
       doneIndexRef.current = 0;
+      odoRef.current = { km: 0, last: null };
       offSinceRef.current = null;
       voice().reset();
     },
@@ -293,7 +296,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const fresh = mode === 'fresh' || (mode === 'auto' && ignoredRef.current >= 2 && autoFreshRef.current);
       const t0 = Date.now();
       bbLog('reroute', [mode, fresh ? 'neu' : 'zurueck', 'start']);
-      voice().say(fresh ? 'Neue Route ab hier.' : 'Route wird neu berechnet.', true);
+      // "Route wird neu berechnet" sagt nichts und schnitt Ansagen ab (Koray 14.11.): nur noch bei neuer Route
+      if (fresh) voice().say('Neue Route ab hier.');
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       try {
@@ -349,7 +353,20 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const dtS = last ? Math.max(0, (fix.at - last.at) / 1000) : 0;
       const maxAheadM = last && dtS > 0 && dtS < 30 ? Math.max(fix.speedKmh ?? 0, last.speedKmh ?? 0, 30) / 3.6 * dtS * 1.6 + 60 : undefined;
       // Fahrtrichtung nur bei Fahrt, im Stand ist der GPS Kurs Zufall
-      const snap = snapToRoute(route, fix.pos, hintRef.current, (fix.speedKmh ?? 0) >= 12 ? fix.heading : null, maxAheadM);
+      // Gefahrene Strecke mitzählen (nur echte, genaue Positionen, keine Sprünge über 1 km)
+      if (!fix.virtual && !bad) {
+        const o = odoRef.current;
+        if (o.last) {
+          const d = haversine(o.last, fix.pos) / 1000;
+          if (d < 1) o.km += d;
+        }
+        o.last = fix.pos;
+      }
+      // Runde (Start gleich Ziel): die Position darf nur so weit springen, wie man wirklich gefahren ist,
+      // plus Reserve für ausgelassene Stücke (Koray 14.11.: falsch abgebogen am Start, App hielt uns für fast am Ziel)
+      const loop = route.km > 5 && haversine(route.shape[0], route.shape[route.shape.length - 1]) < 500;
+      const maxKm = loop ? odoRef.current.km * 1.3 + 3 : undefined;
+      const snap = snapToRoute(route, fix.pos, hintRef.current, (fix.speedKmh ?? 0) >= 12 ? fix.heading : null, maxAheadM, maxKm);
       if (!fix.virtual) {
         drRef.current.last = { at: fix.at, km: snap.km, speedKmh: fix.speedKmh, offM: snap.offM };
         if (!bad && drRef.current.active) bbLog('dr', 'aus');
@@ -369,7 +386,10 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const end = route.shape[route.shape.length - 1];
       const toEndM = haversine(fix.pos, end);
       // angekommen erst, wenn man den größten Teil der Route gefahren ist (Runden enden am Start)
-      const covered = route.km < 2 || route.cumKm[Math.min(doneIndexRef.current, route.cumKm.length - 1)] > route.km * 0.6;
+      // Koray 14.11.: angekommen erst ab 70 % der Strecke; bei Runden zählt die wirklich gefahrene Strecke
+      const covered =
+        route.km < 2 ||
+        (loop ? odoRef.current.km >= route.km * 0.7 : route.cumKm[Math.min(doneIndexRef.current, route.cumKm.length - 1)] > route.km * 0.7);
       const arrived = toEndM < ARRIVE_M && pr.remainingKm < 0.3 && covered;
 
       // Ankunftszeit: geplante Restzeit mal dem bisherigen Tempo. Gezählt wird nur fahrend auf der Route,
@@ -571,7 +591,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     [voice],
   );
 
-  const say = useCallback((text: string) => voice().say(text), [voice]);
+  // Hinweise aus der Navigation (Highlights, Gruppe): Rang 0, eine dringende Abbiegeansage darf sie abbrechen
+  const say = useCallback((text: string) => voice().say(text, false, 0), [voice]);
 
   /**
    * Simulation ohne GPS. Braucht eine Route; läuft noch keine, wird sie ab dem Tour Anfang

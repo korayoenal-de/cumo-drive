@@ -3,6 +3,7 @@
  * Stellen ausschließen, bis die Route sauber ist oder keine Besserung mehr kommt.
  * Das unterscheidet uns von calimoto, das gesperrte Straßen nur anzeigt.
  */
+import { snapEndsToStreet } from './street-snap';
 import { avoidedPoints } from './avoid-pass';
 import { checkLine } from './check';
 import { cumoAvailable, cumoPlan, type PlanHint } from './cumo-routing';
@@ -156,6 +157,8 @@ export async function planChecked(
   snapMajor = false,
   hint?: PlanHint,
 ): Promise<PlannedTour> {
+  // Start und Ziel auf eine richtige Straße, nie auf Zufahrten oder Tankstellengelände (Koray 14.11.)
+  points = await snapEndsToStreet(points, signal);
   // Pässe mit Warnung, die du herausgenommen hast (Doch umfahren): Passhöhe gesperrt, außer sie ist selbst ein Punkt
   const skip = avoidedPoints().filter((q) => !points.some((w) => haversine(w, q) < 400));
   const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, skip, true, hint);

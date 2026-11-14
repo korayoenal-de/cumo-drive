@@ -133,8 +133,11 @@ export function indexAtKm(route: NavRoute, km: number): number {
  * maxAheadM: so weit kann man seit der letzten Position höchstens gekommen sein (Tempo mal Zeit plus Reserve).
  * Ohne Angabe gilt nur die allgemeine Vorliebe für den bisherigen Fortschritt.
  */
-export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, heading?: number | null, maxAheadM?: number): Snap {
+export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, heading?: number | null, maxAheadM?: number, maxKm?: number): Snap {
   const n = route.shape.length;
+  // maxKm (Runden, Koray 14.11.): weiter als bis hier darf die Position nicht springen. Wer am Start einer Runde
+  // in die falsche Richtung fährt, landet sonst auf dem Schlussstück und gilt als fast am Ziel.
+  const lastIdx = maxKm != null && maxKm < route.km ? Math.max(1, Math.min(n - 1, indexAtKm(route, maxKm))) : n - 1;
   if (n === 0) return { index: 0, km: 0, offM: Infinity, point: pos };
   if (n === 1) return { index: 0, km: 0, offM: haversine(route.shape[0], pos), point: route.shape[0] };
 
@@ -146,7 +149,7 @@ export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, hea
     // Bewertet wird mit Abstand plus Kosten für Richtung und Rücksprung, nicht nur mit dem Abstand:
     // sonst gewinnt auf Hin und Rückweg derselben Straße der falsche Durchgang.
     if (local && local.score <= LOCAL_OK_M) return strip(local);
-    const all = searchRange(route, pos, 0, n - 1, undefined, heading)!;
+    const all = searchRange(route, pos, 0, lastIdx, undefined, heading)!;
     if (local && all.score > local.score - GLOBAL_MARGIN_M) return strip(local);
     // Weit nach vorne oder zurück springen nur, wenn man wirklich nicht mehr in der Nähe ist. Sonst
     // springt man bei Runden (Ende liegt am Start) ans Ende und meldet Ziel erreicht, oder kurz vor dem
@@ -154,7 +157,7 @@ export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, hea
     if (local && local.offM < JUMP_KEEP_M && Math.abs(all.km - local.km) > 1) return strip(local);
     return strip(all);
   }
-  return strip(searchRange(route, pos, 0, n - 1, undefined, heading)!);
+  return strip(searchRange(route, pos, 0, lastIdx, undefined, heading)!);
 }
 
 function strip(s: Scored): Snap {

@@ -2,6 +2,7 @@
  * Navigationsscreen: Karte vollflächig, oben das nächste Manöver, unten Ankunft und Steuerung.
  * Läuft außerhalb der Tabs im Vollbild. Die Logik kommt aus useNavigation (src/lib/navigation).
  */
+import { setRideStatus } from '@/lib/group/invites';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
@@ -25,7 +26,7 @@ import { PACE_NOTES_RELEASED, useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
 import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
-import { toFunLevel } from '@/components/ui/fun-gauge';
+import { FUN_NAMES, toFunLevel } from '@/components/ui/fun-gauge';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
 import { useSession } from '@/lib/auth';
 import { saveDrive, sendNavReport } from '@/lib/drives';
@@ -46,7 +47,7 @@ import Animated, { FadeOut } from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
 import { elevationProfile } from '@/lib/stats';
 import { connectFunk, disconnectFunk, pushToTalk, setFunkListen, setOnlyLead, useFunk } from '@/lib/group/funk';
-import { announceStop, clearStop, QUICK_MESSAGES, sendMessage, sendPosition, setOwnRoute, STOP_REASONS, useRide } from '@/lib/group/ride';
+import { announceStop, clearStop, endRideForAll, leaveRide, QUICK_MESSAGES, sendMessage, sendPosition, setOwnRoute, STOP_REASONS, useRide } from '@/lib/group/ride';
 import { currentVehicle, useVehicles } from '@/lib/vehicle';
 import { VehiclePick } from '@/components/navigation/vehicle-pick';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
@@ -58,6 +59,9 @@ const HL_SHOW_MS = 5000;
 const CP_SOON_M = 200;
 /** Ab so viel Abstand zur Route gilt man auf dem Autodisplay als abseits (wie in der App) */
 const CP_OFF_M = 60;
+
+/** Höhe der Abbiegekarte allein; was darüber hinausgeht, schiebt das Auto nach unten */
+const TOP_BASE_H = 200;
 
 export default function NavigationScreen() {
   useKeepAwake();
@@ -91,9 +95,12 @@ export default function NavigationScreen() {
     return here && first ? haversine(here, first) / 1000 : null;
   }, [here, active]);
   const far = toStartKm != null && toStartKm > 30;
+  // Keine Wahl Einsteigen oder Startpunkt (Koray 14.11.): bei der Anfahrt zum Treffpunkt und wenn man schon
+  // am Start steht (höchstens 300 m, etwa mit "Aktuelle Position" als Start)
+  const noEntryChoice = (toStartKm != null && toStartKm <= 0.3) || !!active?.tour.name.startsWith('Zum Treffpunkt');
   const [entryTouched, setEntryTouched] = useState(false);
   // weit weg: über den Startpunkt in die ganze Tour (nur zum Start navigieren ist kein Anwendungsfall, Koray 6.11.)
-  const effEntry: NavEntry = entryTouched ? entry : far ? 'start' : entry;
+  const effEntry: NavEntry = noEntryChoice ? 'start' : entryTouched ? entry : far ? 'start' : entry;
   const req = useMemo<NavRequest | null>(
     () =>
       active
@@ -126,7 +133,19 @@ export default function NavigationScreen() {
   }, [inRide, ride.rideId, ride.myRole]);
   useEffect(() => () => void disconnectFunk(), []);
   const [msgOpen, setMsgOpen] = useState(false);
+  /** Höhe der Meldungen oben, für die Lage des Autos */
+  const [topH, setTopH] = useState(0);
   const funk = useFunk();
+  // einmal sagen, dass Funk gerade nicht geht, statt dauernd "verbinde neu" (Koray 14.11.)
+  const funkQuietSaid = useRef(false);
+  useEffect(() => {
+    if (funk.status === 'ruht' && !funkQuietSaid.current) {
+      funkQuietSaid.current = true;
+      // in der Testphase mit Grund, damit Tester ihn melden können
+      showToast(`Funk gerade nicht verfügbar${funk.error ? ` (${funk.error.slice(0, 80)})` : ''}. Wir versuchen es weiter.`);
+    }
+    if (funk.status === 'an') funkQuietSaid.current = false;
+  }, [funk.status, funk.error]);
   const driveSettings = useDriveSettings();
   // Karte "Zwischenziel überspringen" nach langem Druck auf das Manöver, schließt nach 6 s von selbst
   const [skipOpen, setSkipOpen] = useState(false);
@@ -227,6 +246,17 @@ export default function NavigationScreen() {
     const warn = warnLabel(nextHl.warn);
     carPlayAlert(nextHl.name, `${warn ? `${warn} · ` : ''}${where}, ${len} km${nextHl.hairpins >= 3 ? `, ${nextHl.hairpins} Kehren` : ''}`, `fun-${toFunLevel(nextHl.level)}`);
   }, [nextHl, hlDistM, state.status, controls]);
+  // CarPlay auch beim Einfahren ins Highlight (Koray 14.11.: auf dem iPhone zweimal, in CarPlay gar nicht)
+  const hlInSaid = useRef<string | null>(null);
+  useEffect(() => {
+    if (!onHl || state.status !== 'laeuft' || hlInSaid.current === onHl.id) return;
+    hlInSaid.current = onHl.id;
+    const len = Math.max(1, Math.round(onHl.endKm - (atKm ?? onHl.startKm)));
+    carPlayAlert(onHl.name, `${FUN_NAMES[toFunLevel(onHl.level)]} · noch ${len} km`, `fun-${toFunLevel(onHl.level)}`);
+    bbLog('state', ['carplay_hl', onHl.name]);
+    // nur beim Wechsel des Highlights
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onHl?.id, state.status]);
 
   // Halt Ansage der Lead: großes Overlay und Ansage für alle anderen
   const stop = inRide ? ride.stop : null;
@@ -443,6 +473,14 @@ export default function NavigationScreen() {
   }, [shownStats]);
 
   const exit = () => {
+    // Fahrt beendet: die Gruppenfahrt endet mit (Koray 14.11.: die Leiste "Gruppenfahrt, 1 Fahrer" blieb stehen).
+    // Die Lead beendet sie für alle, Mitfahrer verlassen sie. Nur Schließen vor dem Start lässt sie bestehen.
+    if (ride.status === 'aktiv' && (summary || state.status !== 'bereit')) {
+      if (ride.myRole === 'lead') {
+        const id = ride.rideId;
+        void endRideForAll().then(() => (id ? setRideStatus(id, 'beendet').catch(() => undefined) : undefined));
+      } else void leaveRide();
+    }
     controls.stop();
     if (router.canGoBack()) router.back();
     else router.replace('/');
@@ -840,6 +878,9 @@ export default function NavigationScreen() {
         others={others}
         pins={pins}
         dashed={rejoinM != null && rejoinM > 0 ? dashed : null}
+        // Viele Meldungen oben (Koray 14.11.): das Auto rückt um den Platz nach unten, den sie über die
+        // Abbiegekarte hinaus belegen, damit es im freien Teil der Karte bleibt
+        mapPadding={running ? { top: Math.max(0, topH - (insets.top + TOP_BASE_H)), right: 0, bottom: 0, left: 0 } : undefined}
         edgePadding={{
           top: insets.top + 60,
           right: 40,
@@ -848,7 +889,10 @@ export default function NavigationScreen() {
         }}
       />
 
-      <View style={[styles.top, { paddingTop: insets.top + Spacing.s }]} pointerEvents="box-none">
+      <View
+        style={[styles.top, { paddingTop: insets.top + Spacing.s }]}
+        pointerEvents="box-none"
+        onLayout={(e) => setTopH(Math.round(e.nativeEvent.layout.height / 8) * 8)}>
         {running && maneuver && (
           <Pressable
             onLongPress={() => skipTarget && !inRide && setSkipOpen(true)}
@@ -963,7 +1007,7 @@ export default function NavigationScreen() {
         {/* Halt der Lead oben rechts, getrennt vom Funk (Funk Konzept, Koray 10.11.) */}
         {running && withOthers && ride.myRole === 'lead' && !stop && <LeadHaltPill onAnnounce={announceStop} />}
         {running && stop && (
-          <StopAlert stop={stop} distM={stopDistM} mine={myStop} onDismiss={() => clearStop(false)} onCancel={() => clearStop(true)} />
+          <StopAlert stop={stop} distM={stopDistM} mine={myStop} reach={ride.stopReach} onDismiss={() => clearStop(false)} onCancel={() => clearStop(true)} />
         )}
       </View>
 
@@ -1013,7 +1057,14 @@ export default function NavigationScreen() {
               onFunk={inRide ? () => setMsgOpen(!msgOpen) : undefined}
               talk={
                 withOthers && funk.status !== 'nicht'
-                  ? { talking: funk.talking, waiting: funk.waiting, disabled: funk.onlyLead && ride.myRole !== 'lead', onTalk: pushToTalk }
+                  ? {
+                      talking: funk.talking,
+                      waiting: funk.waiting,
+                      // ruht nach mehreren Fehlversuchen: ruhig grau statt Banner (Koray 14.11.)
+                      disabled: funk.status === 'ruht' || (funk.onlyLead && ride.myRole !== 'lead'),
+                      label: funk.status === 'ruht' ? 'Kein Funk' : undefined,
+                      onTalk: pushToTalk,
+                    }
                   : undefined
               }
               extraActions={[
@@ -1057,12 +1108,13 @@ export default function NavigationScreen() {
                   {active.tour.minutes ? `, etwa ${Math.round(active.tour.minutes)} min` : ''}
                 </AppText>
               </Pressable>
-              {far && (
+              {far && !noEntryChoice && (
                 <AppText style={styles.farNote}>
                   Der Start ist {Math.round(toStartKm!).toLocaleString('de-DE')} km entfernt. Erst zum Start fahren oder unterwegs
                   einsteigen?
                 </AppText>
               )}
+              {!noEntryChoice && (
               <View style={styles.entry} accessibilityRole="radiogroup">
                 {(
                   [
@@ -1100,6 +1152,7 @@ export default function NavigationScreen() {
                   </Pressable>
                 ))}
               </View>
+              )}
               {vehicles.list.length > 0 && (
                 <VehiclePick list={vehicles.list} current={vehicles.current ?? null} />
               )}

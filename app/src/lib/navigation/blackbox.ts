@@ -30,7 +30,9 @@ export type BbKind =
   /** Meldung "Problem melden" */
   | 'report'
   /** Start, Pause, Ende */
-  | 'state';
+  | 'state'
+  /** Funk: Zustand und Fehlertext (Koray 14.11.: Funk verband sich nie, Ursache unklar) */
+  | 'funk';
 
 export type BbEntry = [number, BbKind, unknown];
 export type BbLog = { v: 1; start: string; entries: BbEntry[] };

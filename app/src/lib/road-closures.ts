@@ -7,6 +7,12 @@
 import { haversine, type LatLon } from './tour';
 
 export type Closure = { id: string; line: LatLon[]; from?: string; to?: string; text?: string; road?: string };
+/** Nur Fahrstreifen gesperrt, keine Vollsperrung (Koray 14.11., A5 Weinheim); zusätzlich zum Filter auf dem Server */
+export function isLaneOnly(c: Closure): boolean {
+  const t = c.text ?? '';
+  return /fahrstreifen|spur|lane|verengt|eingeengt|einspurig/i.test(t) && !/vollsperrung|straße gesperrt|fahrbahn gesperrt|road closed/i.test(t);
+}
+
 export type ClosureHit = { closure: Closure; points: LatLon[]; firstIndex: number };
 
 const SIZE = 0.5;
@@ -143,6 +149,7 @@ function lengthM(line: LatLon[]): number {
 export function closuresOnRoute(route: LatLon[], closures: Closure[]): ClosureHit[] {
   const out: ClosureHit[] = [];
   for (const c of closures) {
+    if (isLaneOnly(c)) continue;
     let lat0 = Infinity, lat1 = -Infinity, lon0 = Infinity, lon1 = -Infinity;
     for (const [la, lo] of c.line) {
       lat0 = Math.min(lat0, la);

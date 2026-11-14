@@ -7,8 +7,9 @@
  * LeadStopButton ist der schnelle Knopf der Lead, um den Halt anzusagen.
  * MessageToast zeigt Kurznachrichten der anderen für ein paar Sekunden.
  */
+import { announceMenuOpen, useCloseOnOtherMenu } from '@/lib/navigation/open-menu';
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -85,14 +86,14 @@ export function HighlightStrip({ h, atKm, onPress }: { h: Highlight; atKm: numbe
   );
 }
 
-export function StopAlert({ stop, distM, mine, onDismiss, onCancel }: { stop: RideStop; distM: number | null; mine: boolean; onDismiss: () => void; onCancel: () => void }) {
+export function StopAlert({ stop, distM, mine, reach, onDismiss, onCancel }: { stop: RideStop; distM: number | null; mine: boolean; reach?: { got: number; of: number } | null; onDismiss: () => void; onCancel: () => void }) {
   const r = STOP_REASONS.find((x) => x.id === stop.reason) ?? STOP_REASONS[0];
   const d = distM != null ? formatDistance(distM) : null;
   return (
     <GlassPanel style={[styles.card, styles.stop]} fallback="rgba(90,30,14,0.97)" tint="rgba(150,45,15,0.75)">
       <View accessible accessibilityRole="alert" style={styles.gapS}>
         <AppText variant="caption" style={styles.stopKicker}>
-          {mine ? 'An die Gruppe gesendet' : `${stop.name} hält gleich an`}
+          {mine ? (reach && reach.of > 0 ? (reach.got >= reach.of ? `Bei allen angekommen` : `Bei ${reach.got} von ${reach.of} angekommen`) : 'An die Gruppe gesendet') : `${stop.name} hält gleich an`}
         </AppText>
         <AppText style={styles.stopTitle}>{mine ? r.label : 'Gleich anhalten'}</AppText>
         <AppText style={styles.stopText}>
@@ -119,7 +120,13 @@ export function StopAlert({ stop, distM, mine, onDismiss, onCancel }: { stop: Ri
  * Funk. Antippen fächert die Gründe gestaffelt nach unten auf, ein Tipp sendet. Die Pille wird dabei zum Schließen.
  */
 export function LeadHaltPill({ onAnnounce }: { onAnnounce: (r: StopReason) => void }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpenRaw] = useState(false);
+  const setOpen = (v: boolean) => {
+    if (v) announceMenuOpen('halt');
+    setOpenRaw(v);
+  };
+  const closeHalt = useCallback(() => setOpenRaw(false), []);
+  useCloseOnOtherMenu('halt', closeHalt);
   return (
     <View style={styles.haltWrap} pointerEvents="box-none">
       <Pressable

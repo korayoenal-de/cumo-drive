@@ -11,9 +11,11 @@
 import { NativeModules } from 'react-native';
 import { useSyncExternalStore } from 'react';
 
+import { bbLog } from '@/lib/navigation/blackbox';
 import { supabase } from '@/lib/supabase';
 
-export type FunkStatus = 'nicht' | 'aus' | 'verbinde' | 'an' | 'getrennt' | 'fehler';
+/** ruht: mehrere Versuche ohne Erfolg, die App versucht es nur noch alle zwei Minuten (Koray 14.11.) */
+export type FunkStatus = 'nicht' | 'aus' | 'verbinde' | 'an' | 'getrennt' | 'fehler' | 'ruht';
 export type FunkState = {
   status: FunkStatus;
   /** Ich spreche gerade (Mikrofon an) */
@@ -62,13 +64,22 @@ let wantTalk = false;
  */
 let retry: ReturnType<typeof setTimeout> | null = null;
 let tries = 0;
+/** Zählt jedes Trennen hoch: ein Verbindungsversuch, der danach noch läuft, bricht ab (sonst verband er
+ * sich nach dem Verlassen der Gruppe wieder und das Banner blieb stehen, Koray 14.11.) */
+let gen = 0;
+/** Nach so vielen Fehlversuchen ruht der Funk und versucht es nur noch selten */
+const QUIET_AFTER = 3;
+const QUIET_MS = 2 * 60 * 1000;
 function scheduleReconnect(rideId: string) {
   if (retry || current !== rideId) return;
-  const wait = Math.min(30000, 3000 * 2 ** tries);
+  const quiet = tries >= QUIET_AFTER;
+  const wait = quiet ? QUIET_MS : Math.min(30000, 3000 * 2 ** tries);
   tries += 1;
+  if (quiet) set({ status: 'ruht', talking: false, waiting: false, speaker: null });
+  const g = gen;
   retry = setTimeout(() => {
     retry = null;
-    if (current !== rideId) return;
+    if (current !== rideId || g !== gen) return;
     current = null;
     void connectFunk(rideId, isLead, true);
   }, wait);
@@ -82,15 +93,23 @@ export function funkAvailable() {
 export async function connectFunk(rideId: string, lead: boolean, again = false) {
   isLead = lead;
   if (!lk || !rn || current === rideId) return;
+  const g = gen;
   await teardown();
+  if (g !== gen) return;
   if (!again) tries = 0;
   current = rideId;
-  // beim Wiederverbinden bleibt die Anzeige auf getrennt, bis es wirklich steht
-  set(again ? { status: 'getrennt' } : { status: 'verbinde', error: null });
+  // beim Wiederverbinden bleibt die Anzeige auf getrennt, bis es wirklich steht; ruht er, bleibt es ruhig
+  set(again ? { status: state.status === 'ruht' ? 'ruht' : 'getrennt' } : { status: 'verbinde', error: null });
   try {
     const { data, error } = await supabase.functions.invoke('livekit-token', { body: { ride: rideId } });
-    if (error || !data?.token) throw new Error((data as { error?: string } | null)?.error ?? 'Funk Zugang fehlgeschlagen.');
-    if (current !== rideId) return;
+    if (error || !data?.token) {
+      // Fehlertext der Funktion lesen (bei Status 4xx/5xx steckt er im Fehlerobjekt)
+      let why = (data as { error?: string } | null)?.error ?? null;
+      const ctx = (error as { context?: Response } | null)?.context;
+      if (!why && ctx && typeof ctx.json === 'function') why = ((await ctx.json().catch(() => null)) as { error?: string } | null)?.error ?? null;
+      throw new Error(why ?? (error instanceof Error ? error.message : 'Funk Zugang fehlgeschlagen.'));
+    }
+    if (current !== rideId || g !== gen) return;
 
     await rn.AudioSession.configureAudio({ ios: { defaultOutput: 'speaker' } });
     await rn.AudioSession.startAudioSession();
@@ -123,7 +142,8 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
       }
     });
     await r.connect(data.url as string, data.token as string, { autoSubscribe: true });
-    if (room !== r) return;
+    if (room !== r || g !== gen) return;
+    bbLog('funk', ['an']);
     applyListen();
     tries = 0;
     set({ status: 'an', error: null });
@@ -139,15 +159,18 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
       /* dann öffnet das erste Drücken das Mikrofon */
     }
   } catch (e) {
-    if (current !== rideId) return;
+    if (current !== rideId || g !== gen) return;
+    const msg = e instanceof Error ? e.message : 'Funk nicht verfügbar.';
+    bbLog('funk', ['fehler', tries, msg.slice(0, 200)]);
     // ohne Netz beim Verbinden: weiter versuchen statt aufgeben
-    set({ status: again ? 'getrennt' : 'fehler', error: e instanceof Error ? e.message : 'Funk nicht verfügbar.' });
+    set({ status: state.status === 'ruht' ? 'ruht' : again ? 'getrennt' : 'fehler', error: msg });
     room = null;
     scheduleReconnect(rideId);
   }
 }
 
 export async function disconnectFunk() {
+  gen += 1;
   if (retry) clearTimeout(retry);
   retry = null;
   tries = 0;
