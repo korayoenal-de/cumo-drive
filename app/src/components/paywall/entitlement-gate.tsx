@@ -1,6 +1,6 @@
 /**
- * Sperre nach der Testphase: zeigt den Inhalt, solange die Mitgliedschaft aktiv ist oder der
- * Stand noch lädt, sonst die Paywall mit der Möglichkeit, sich abzumelden.
+ * Früher sperrte die App nach der Testphase ganz. Seit der kostenlosen Version (Koray 14.11.) bleibt sie offen,
+ * die Grenzen greifen dort, wo sie gelten: Losfahren außerhalb des Heimatgebiets, Gruppe, Funk.
  * Ohne Anmeldung greift die Sperre nicht (das regelt die Anmeldepflicht, der Web Planer bleibt offen).
  * Dazu TrialBadge, eine kleine Pille mit den restlichen Testtagen, etwa für die Einstellungen.
  */
@@ -14,10 +14,12 @@ import { useEntitlement } from '@/lib/entitlement';
 
 import { Paywall } from './paywall';
 
+const FREE_TIER = true;
+
 export function EntitlementGate({ children }: { children: ReactNode }) {
   const session = useSession();
   const e = useEntitlement();
-  if (!session || e.loading || e.active) return <>{children}</>;
+  if (FREE_TIER || !session || e.loading || e.active) return <>{children}</>;
   return (
     <Paywall
       mode="expired"

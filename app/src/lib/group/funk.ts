@@ -13,7 +13,8 @@ import { useSyncExternalStore } from 'react';
 
 import { supabase } from '@/lib/supabase';
 
-export type FunkStatus = 'nicht' | 'aus' | 'verbinde' | 'an' | 'getrennt' | 'fehler';
+/** gesperrt: der Organisator hat keine Mitgliedschaft, Funk gibt es dann nicht (Koray 14.11.) */
+export type FunkStatus = 'nicht' | 'aus' | 'verbinde' | 'an' | 'getrennt' | 'fehler' | 'gesperrt';
 export type FunkState = {
   status: FunkStatus;
   /** Ich spreche gerade (Mikrofon an) */
@@ -89,6 +90,10 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
   set(again ? { status: 'getrennt' } : { status: 'verbinde', error: null });
   try {
     const { data, error } = await supabase.functions.invoke('livekit-token', { body: { ride: rideId } });
+    if ((data as { locked?: boolean } | null)?.locked) {
+      if (current === rideId) set({ status: 'gesperrt', error: (data as { error?: string }).error ?? null });
+      return;
+    }
     if (error || !data?.token) throw new Error((data as { error?: string } | null)?.error ?? 'Funk Zugang fehlgeschlagen.');
     if (current !== rideId) return;
 

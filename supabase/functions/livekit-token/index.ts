@@ -36,6 +36,10 @@ Deno.serve(async (req) => {
   // Organisator und alle mit Status zugesagt, Eingeladene und Anfragende hören noch nicht mit.
   const { data: member, error } = await db.rpc('can_chat', { r: ride });
   if (error || member !== true) return json({ error: 'Du bist nicht in dieser Gruppenfahrt.' }, 403);
+  // Funk gibt es mit der Mitgliedschaft des Organisators, dann für die ganze Gruppe (Koray 14.11.).
+  // Antwort 200 mit locked, damit die App das ruhig anzeigt und nicht immer wieder neu verbindet.
+  const { data: funk } = await db.rpc('ride_funk_allowed', { r: ride });
+  if (funk !== true) return json({ locked: true, error: 'Funk gibt es, wenn der Organisator die Mitgliedschaft hat.' });
 
   const { data: prof } = await db.from('profiles').select('display_name').eq('id', u.user.id).maybeSingle();
   const name = (prof as { display_name?: string } | null)?.display_name ?? 'Fahrer';

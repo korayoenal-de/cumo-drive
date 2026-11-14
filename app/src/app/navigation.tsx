@@ -998,13 +998,16 @@ export default function NavigationScreen() {
               group={withOthers}
               onFunk={inRide ? () => setMsgOpen(!msgOpen) : undefined}
               talk={
-                withOthers && funk.status !== 'nicht'
+                withOthers && funk.status !== 'nicht' && funk.status !== 'gesperrt'
                   ? { talking: funk.talking, waiting: funk.waiting, disabled: funk.onlyLead && ride.myRole !== 'lead', onTalk: pushToTalk }
                   : undefined
               }
               extraActions={[
                 { key: 'melden', label: 'Problem melden', icon: 'exclamationmark.bubble.fill' as const, run: reportProblem },
-                ...(withOthers && funk.status !== 'nicht'
+                ...(withOthers && funk.status === 'gesperrt'
+                  ? [{ key: 'msg', label: 'Kurznachricht an die Gruppe', icon: 'bubble.left.fill' as const, run: () => setMsgOpen(true) }]
+                  : []),
+                ...(withOthers && funk.status !== 'nicht' && funk.status !== 'gesperrt'
                   ? [
                       { key: 'msg', label: 'Kurznachricht an die Gruppe', icon: 'bubble.left.fill' as const, run: () => setMsgOpen(true) },
                       { key: 'hoeren', label: funk.listen ? 'Funk stumm' : 'Funk hören', icon: (funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill') as 'speaker.slash.fill', run: () => setFunkListen(!funk.listen) },
