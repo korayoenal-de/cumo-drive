@@ -511,7 +511,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <h2 class="cd-h2">14 Tage kostenlos. Dann so, wie du fährst.</h2>
     <p class="cd-lead">Jeder Plan enthält alle Funktionen, auch Gruppenfahrten bis 6 Fahrzeuge. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.</p>
   </div>
-  <div class="cd-grid4">${priceCard('Jahr', '59,99 €', 'Entspricht 5 € im Monat. Abo, jederzeit kündbar.', true)}${priceCard('Saison Pass', '39 €', 'Einmalig für 6 Monate, kein Abo. Für die Monate, in denen das Auto aus der Garage darf.')}${priceCard('Monat', '14,99 €', 'Abo, jederzeit kündbar.')}${priceCard('Woche', '6,99 €', 'Für das Wochenende im Mietwagen oder die eine Tour im Urlaub. Abo, jederzeit kündbar.')}
+  <div class="cd-grid4">${priceCard('Jahr', '59,99 €', 'Entspricht 5 € im Monat. Abo, jederzeit kündbar.', true)}${priceCard('Saison Pass', '49 €', 'Einmalig für 6 Monate, kein Abo. Für die Monate, in denen das Auto aus der Garage darf.')}${priceCard('Monat', '14,99 €', 'Abo, jederzeit kündbar.')}${priceCard('Woche', '6,99 €', 'Für das Wochenende im Mietwagen oder die eine Tour im Urlaub. Abo, jederzeit kündbar.')}
   </div>
   <div class="cd-grid2">
     <div class="cd-card" style="background: transparent; box-shadow: inset 0 0 0 1px #232326;">

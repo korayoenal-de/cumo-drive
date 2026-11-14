@@ -50,7 +50,7 @@ export const PRICES: Price[] = [
   { id: 'jahr', name: 'Jahr', amount: 59.99, priceText: '59,99 €', periodText: 'pro Jahr', perMonthText: '5,00 € im Monat', renews: true, days: 365, highlight: true },
   { id: 'monat', name: 'Monat', amount: 14.99, priceText: '14,99 €', periodText: 'pro Monat', perMonthText: null, renews: true, days: 30, highlight: false },
   { id: 'woche', name: 'Woche', amount: 6.99, priceText: '6,99 €', periodText: 'pro Woche', perMonthText: null, renews: true, days: 7, highlight: false },
-  { id: 'saison', name: 'Saison Pass', amount: 39, priceText: '39 €', periodText: 'einmalig für 6 Monate', perMonthText: null, renews: false, days: 183, highlight: false },
+  { id: 'saison', name: 'Saison Pass', amount: 49, priceText: '49 €', periodText: 'einmalig für 6 Monate', perMonthText: null, renews: false, days: 183, highlight: false },
 ];
 
 /** Club Angebote laufen auf Rechnung außerhalb der App und werden vom Betreiber zugewiesen. */
