@@ -303,6 +303,22 @@ function joinPieces(a: Piece, b: Piece): Piece {
 function isUturn(t: number) {
   return t === 12 || t === 13;
 }
+
+/**
+ * Wendet ein Stück irgendwo (Manöver Wenden oder die Linie kehrt auf wenigen Metern um)? Koray 14.11.: der Weg
+ * zurück zur Tour ließ an einer Bundesstraße mit Beschleunigungsstreifen wenden.
+ */
+function pieceTurnsBack(p: Piece): boolean {
+  if (p.maneuvers.some((m) => isUturn(m.type))) return true;
+  const sh = p.shape;
+  for (let i = 1; i + 1 < sh.length; i++) {
+    const a = bearing(sh[i - 1], sh[i]);
+    const b = bearing(sh[i], sh[i + 1]);
+    const d = Math.abs(((b - a + 540) % 360) - 180);
+    if (d > 165 && haversine(sh[i - 1], sh[i]) > 15 && haversine(sh[i], sh[i + 1]) > 15) return true;
+  }
+  return false;
+}
 function uturns(r: VTrip): number {
   let n = 0;
   for (const leg of r.trip.legs) for (const m of leg.maneuvers) if (isUturn(m.type)) n++;
@@ -450,6 +466,8 @@ async function approachOnce(
     const line = flatten(around).map((x) => x.p);
     if (line.length < 2 || startsAgainst(line, fromHeading)) return plain;
     const traced = await traceLine(line, req, signal);
+    // nie die Variante mit Wenden nehmen, wenn die andere ohne auskommt
+    if (pieceTurnsBack(traced) && !pieceTurnsBack(plain)) return plain;
     return traced.seconds <= plain.seconds * 1.3 + 60 ? traced : plain;
   } catch (e) {
     if (signal?.aborted) throw e;
@@ -760,7 +778,7 @@ export async function rejoinNavRoute(
   // Luftlinie nur zusammen mit wenig Rest Tour, sonst würde eine Rundtour gleich am Anfang abgekürzt
   const remainKm = current.km - current.cumKm[j0];
   const nearEnd = remainKm <= NEAR_END_TOUR_KM || (haversine(from, end) / 1000 <= NEAR_END_AIR_KM && remainKm <= NEAR_END_MAX_KM);
-  const j = nearEnd ? shape.length - 1 : j0 < shape.length - 1 && current.km - current.cumKm[j0] >= 0.05 ? await bestRejoin(current, j0, from, heading, req, signal) : j0;
+  let j = nearEnd ? shape.length - 1 : j0 < shape.length - 1 && current.km - current.cumKm[j0] >= 0.05 ? await bestRejoin(current, j0, from, heading, req, signal) : j0;
   if (j >= shape.length - 1 || current.km - current.cumKm[j] < 0.05) {
     // praktisch am Ziel: direkt dorthin
     // Am Ziel ist die Richtung egal, sonst erzwingt Valhalla eine Ankunft nach Norden
@@ -772,8 +790,25 @@ export async function rejoinNavRoute(
       tourStartIndex: 0,
     };
   }
-  const h = bearing(shape[j], shape[j + 1]);
-  const lead = await approach(from, shape[j], h, req, signal, heading, fast);
+  let h = bearing(shape[j], shape[j + 1]);
+  let lead = await approach(from, shape[j], h, req, signal, heading, fast);
+  // Weg zurück wendet (Koray 14.11.): weiter vorne auf der Tour einsteigen, höchstens zweimal je 1,5 km
+  for (let tries = 0; tries < 2 && pieceTurnsBack(lead); tries++) {
+    let k = j;
+    while (k < shape.length - 2 && current.cumKm[k] - current.cumKm[j] < 1.5) k++;
+    if (k >= shape.length - 2 || k === j) break;
+    try {
+      const hk = bearing(shape[k], shape[k + 1]);
+      const alt = await approach(from, shape[k], hk, req, signal, heading, fast);
+      j = k;
+      h = hk;
+      lead = alt;
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      break;
+    }
+  }
+  void h;
   const join = lead.shape.length - 1;
   const newShape = [...lead.shape, ...shape.slice(j + 1)];
   const cumKm = cumulativeKm(newShape);
