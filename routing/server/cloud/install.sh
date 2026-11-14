@@ -72,10 +72,10 @@ cat > /opt/cumo-routing/custom_models/kurvig.json <<'CUMO_EOF'
   "distance_influence": 5,
   "priority": [
     { "if": "max_width < 1.9", "multiply_by": "0" },
-    { "else_if": "max_width >= 2.5 && max_width < 3", "multiply_by": "0.1" },
-    { "else_if": "max_width >= 3 && max_width < 4.5", "multiply_by": "0.6" },
-    { "if": "road_class == PRIMARY", "multiply_by": "0.35" },
-    { "if": "road_class == SECONDARY", "multiply_by": "0.7" },
+    { "else_if": "max_width < 3", "multiply_by": "0.1" },
+    { "else_if": "max_width >= 3 && max_width < 4.5", "multiply_by": "0.85" },
+    { "if": "road_class == PRIMARY && urban_density == RURAL", "multiply_by": "0.35" },
+    { "if": "road_class == SECONDARY && urban_density == RURAL", "multiply_by": "0.7" },
     { "if": "road_class == RESIDENTIAL", "multiply_by": "0.5" },
     { "if": "curvature > 0.95", "multiply_by": "0.3" },
     { "else_if": "curvature > 0.85", "multiply_by": "0.6" }
