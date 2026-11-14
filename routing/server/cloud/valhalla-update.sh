@@ -9,6 +9,9 @@ rm -f /opt/valhalla/ready
 ln -f /opt/cumo-routing/data/region.osm.pbf /opt/valhalla/custom_files/region.osm.pbf
 for i in 1 2 3 4; do docker pull -q ghcr.io/nilsnolde/docker-valhalla/valhalla:latest >/dev/null && break; sleep 30; done
 docker rm -f valhalla >/dev/null 2>&1 || true
+# Grundstückszufahrten nicht einlesen (Koray 14.11.): sonst zählt Valhalla sie an Kreisverkehren als Ausfahrt
+# und sagt "2. Ausfahrt", wo es die erste ist (Elsass, gegen GraphHopper und den öffentlichen Valhalla geprüft)
+python3 -c 'import json; p="/opt/valhalla/custom_files/valhalla.json"; c=json.load(open(p)); c["mjolnir"]["include_driveways"]=False; json.dump(c, open(p,"w"), indent=2)'
 log "Neubau gestartet"
 docker run -d --name valhalla --restart unless-stopped \
   -p 127.0.0.1:8002:8002 \
