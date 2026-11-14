@@ -596,6 +596,10 @@ export default function Planner() {
   // oben in der Pille, dort ist der Blick (Koray 11.11.); die erste Planung einer neuen Tour hat ihren eigenen Scan
   const adjustBusy = (!!adjust?.busy || (mapEdit && !!tourPlan.planned)) && !!tourPlan.step && mode === 'tour' && view.kind === 'form';
   const inTour = view.kind === 'form' && mode === 'tour';
+  // Jede weitere Neuplanung aus der Liste (Punkte, Profil, Vermeiden) zeigt ihren Schritt ebenfalls oben auf der
+  // Karte (Koray 14.11.): Ist das Blatt klein oder der Knopf verdeckt, wirkte die App sonst hängengeblieben.
+  const listBusy = inTour && !!tourPlan.step && !scan && !adjustBusy;
+  const listPill = usePillText(listBusy ? tourPlan.step : null, 'tour', 0);
   const pill = usePillText(
     scan ? (tourPlan.step ?? null) : view.kind === 'working' ? view.phase : null,
     scan ? 'tour' : 'runde',
@@ -1212,6 +1216,8 @@ export default function Planner() {
             status={
               adjustBusy
                 ? { kind: 'busy', text: 'Strecke wird angepasst' }
+                : listBusy
+                  ? { kind: 'busy', text: listPill ?? 'Route wird berechnet' }
                 : adjustDone
                   ? {
                       kind: 'done',
