@@ -72,12 +72,6 @@ export default function Einstellungen() {
         </View>
       ))}
 
-      {moderation.mod?.admin && (
-        <Group label="Prüfung" hint="Gemeldete Inhalte ansehen, entfernen oder Konten sperren.">
-          <Row title="Prüfbereich" value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : 'Nichts offen'} onPress={() => router.push('/pruefung')} />
-        </Group>
-      )}
-
       <Group label="Fahrzeuge">
         <Row title="Garage" value={cars} onPress={() => router.push('/garage')} />
         {list.length > 1 && <Row title="Für neue Fahrten" value={current ? vehicleName(current) || 'Ohne Namen' : 'Keins'} onPress={() => router.push('/garage')} />}
@@ -98,6 +92,13 @@ export default function Einstellungen() {
       )}
 
       {session && <Account email={session.user.email ?? ''} />}
+
+      {/* Prüfbereich nur für Admins, unten über Rechtliches (Koray 14.11.) */}
+      {moderation.mod?.admin && (
+        <Group label="Prüfung" hint="Gemeldete Inhalte ansehen, entfernen oder Konten sperren.">
+          <Row title="Prüfbereich" value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : 'Nichts offen'} onPress={() => router.push('/pruefung')} />
+        </Group>
+      )}
 
       <Group label="Rechtliches">
         <Row title="Datenschutz" onPress={() => router.push('/datenschutz')} />

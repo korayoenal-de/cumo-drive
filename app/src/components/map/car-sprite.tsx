@@ -6,12 +6,15 @@
  * tintColor gefärbt, darüber liegen Schatten, Scheiben, Lichter und Räder.
  * Erzeugt mit scratchpad/sprites (three.js), Quelle der Modelle: assets/cars/README.md.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Type } from '@/constants/theme';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Animated, { Easing, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 import type { Vehicle } from '@/lib/vehicle';
 
@@ -73,9 +76,31 @@ export function CarSprite({ look, frame, size, rotation }: { look: CarLook; fram
 }
 
 /** Vorschau in der Garage: zum Drehen seitlich ziehen */
-export function CarPreview({ look, size, bare }: { look: CarLook; size: number; bare?: boolean }) {
+export function CarPreview({ look, size, bare, spin = 0 }: { look: CarLook; size: number; bare?: boolean; spin?: number }) {
   const [heading, setHeading] = useState(215);
   const [base, setBase] = useState(215);
+  // spin zählt hoch: das Auto dreht sich einmal ganz herum (Knopf oben rechts, Koray 14.11.)
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (!spin) return;
+    const from = Date.now();
+    const start = heading;
+    if (timer.current) clearInterval(timer.current);
+    timer.current = setInterval(() => {
+      const t = Math.min(1, (Date.now() - from) / 1400);
+      const ease = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+      setHeading(start + 360 * ease);
+      if (t >= 1 && timer.current) {
+        clearInterval(timer.current);
+        timer.current = null;
+      }
+    }, 33);
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+    };
+    // nur beim Tippen, nicht bei jeder Drehung durch den Finger
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spin]);
   const pan = Gesture.Pan()
     .runOnJS(true)
     .activeOffsetX([-6, 6])
@@ -99,17 +124,62 @@ export function CarPreview({ look, size, bare }: { look: CarLook; size: number; 
  * Tippen auf die Bühne öffnet die 3D Ansicht.
  */
 const STAGE_CAR = 230;
+const HINT_KEY = 'cumo.garage.drehhinweis.v1';
+
+/** Finger wischt einmal seitlich über die Bühne, darunter ein kurzes Wort */
+function SwipeHint() {
+  const x = useSharedValue(-50);
+  useEffect(() => {
+    x.set(withRepeat(withSequence(withTiming(50, { duration: 900, easing: Easing.inOut(Easing.quad) }), withTiming(-50, { duration: 0 })), 2));
+  }, [x]);
+  const finger = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));
+  return (
+    <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(300)} pointerEvents="none" style={styles.hint} accessibilityLiveRegion="polite" accessibilityLabel="Zum Drehen seitlich ziehen">
+      <Svg width={150} height={30} viewBox="0 0 150 30">
+        <Path d="M20 22 C 55 4, 95 4, 130 22" fill="none" stroke={Colors.text} strokeWidth={2.5} strokeLinecap="round" strokeDasharray="2 7" />
+        <Path d="M122 14l9 8-11 4" fill="none" stroke={Colors.text} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+      <Animated.View style={finger}>
+        <Svg width={26} height={26} viewBox="0 0 26 26">
+          <Circle cx={13} cy={13} r={11} fill="rgba(244,244,242,0.25)" stroke={Colors.text} strokeWidth={2.5} />
+        </Svg>
+      </Animated.View>
+      <View style={styles.hintPill}>
+        <AppText style={styles.hintText}>Ziehen zum Drehen</AppText>
+      </View>
+    </Animated.View>
+  );
+}
 export function CarStagePicker({ look, onForm }: { look: CarLook; onForm: (f: CarForm) => void }) {
   const label = CAR_FORMS.find((f) => f.id === look.form)?.label ?? '';
+  const [spin, setSpin] = useState(0);
+  const [hint, setHint] = useState(false);
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    AsyncStorage.getItem(HINT_KEY)
+      .then((seen) => {
+        if (seen) return;
+        void AsyncStorage.setItem(HINT_KEY, '1');
+        t = setTimeout(() => {
+          setHint(true);
+          setSpin(1);
+          t = setTimeout(() => setHint(false), 2200);
+        }, 600);
+      })
+      .catch(() => undefined);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <View style={styles.picker}>
-      {/* Das Auto dreht sich direkt auf der Bühne (Koray 9.11.: kein eigener 3D Knopf, kein Bodenschatten) */}
+      {/* Das Auto dreht sich direkt auf der Bühne. Statt „Zum Drehen ziehen“ (schnitt lange Namen ab) zeigt die
+          Garage beim allerersten Öffnen einmal eine kurze Animation: ein Finger wischt, das Auto dreht mit,
+          danach nie wieder (Koray 14.11., Variante C). Der Name hat die ganze Breite. */}
       <View style={styles.stage2}>
-        <CarPreview look={look} size={STAGE_CAR} bare />
+        <CarPreview look={look} size={STAGE_CAR} bare spin={spin} />
         <View style={styles.stageFoot}>
-          <AppText style={styles.stageName} numberOfLines={1}>{label}</AppText>
-          <AppText style={styles.stageHint}>Zum Drehen ziehen</AppText>
+          <AppText style={styles.stageName} numberOfLines={2}>{label}</AppText>
         </View>
+        {hint && <SwipeHint />}
       </View>
       <View style={styles.strip} accessibilityRole="radiogroup">
         {CAR_FORMS.map((f) => {
@@ -132,9 +202,11 @@ const styles = StyleSheet.create({
   box: { overflow: 'hidden' },
   picker: { gap: 10 },
   stage2: { borderRadius: 20, backgroundColor: Colors.surface2, overflow: 'hidden' },
-  stageFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: 16, paddingBottom: 14 },
-  stageName: { flex: 1, fontFamily: Fonts.display, fontSize: 20, lineHeight: 24, color: Colors.text, textTransform: 'uppercase' },
-  stageHint: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
+  stageFoot: { paddingHorizontal: 16, paddingBottom: 14 },
+  stageName: { fontFamily: Fonts.display, fontSize: 20, lineHeight: 24, color: Colors.text, textTransform: 'uppercase' },
+  hint: { position: 'absolute', left: 0, right: 0, top: 70, alignItems: 'center', gap: 6 },
+  hintPill: { height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: 'rgba(11,11,12,0.8)', justifyContent: 'center' },
+  hintText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
   stageBare: { alignItems: 'center', justifyContent: 'center', paddingTop: 8 },
   strip: { flexDirection: 'row', borderRadius: 14, overflow: 'hidden' },
   thumb: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1A1A1D', borderRightWidth: 1, borderRightColor: Colors.ground },

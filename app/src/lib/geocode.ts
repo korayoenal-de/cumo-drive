@@ -46,7 +46,7 @@ export async function searchPlaces(q: string, near?: LatLon, signal?: AbortSigna
     const addr = pr.street && pr.housenumber ? `${pr.street} ${pr.housenumber}` : undefined;
     // Suche nach PLZ: Photon liefert dann die Postleitzahl als Namen, gemeint ist der Ort (Tester Joe 10.11.)
     const plz = pr.name && /^\d{4,5}$/.test(pr.name.trim()) ? pr.name.trim() : undefined;
-    const town = pr.city ?? pr.town ?? pr.village ?? pr.locality ?? pr.district;
+    const town = pr.city ?? pr.town ?? pr.village ?? pr.locality ?? pr.district ?? pr.county;
     const name = (plz && town) || (pr.name ?? addr ?? pr.street ?? pr.city ?? 'Ort');
     const detail = [plz, addr !== name ? addr : undefined, pr.city !== name ? pr.city : undefined, pr.state, pr.country].filter(Boolean).join(', ');
     return { name, detail, p: [f.geometry.coordinates[1], f.geometry.coordinates[0]] as LatLon };

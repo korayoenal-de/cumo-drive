@@ -13,7 +13,10 @@ type Event =
   | { type: 'ride_message'; id: number; actor?: string | null }
   | { type: 'ride_member'; ride: string; user: string; status: string; old?: string | null; actor?: string | null }
   | { type: 'ride_start'; ride: string; actor?: string | null }
-  | { type: 'contact'; to: string; actor: string; state: 'pending' | 'accepted' };
+  | { type: 'contact'; to: string; actor: string; state: 'pending' | 'accepted' }
+  | { type: 'ride_ping'; ride: string; to: string; actor: string }
+  | { type: 'ride_changed'; ride: string; actor: string; what: 'zeit' | 'ort' | 'beides' }
+  | { type: 'ride_lead'; ride: string; actor: string; to?: string; taken?: boolean };
 
 type Note = { user: string; title: string; body: string; data: { url: string; chat?: string; type: string } };
 
@@ -117,9 +120,11 @@ async function rideStart(e: Extract<Event, { type: 'ride_start' }>): Promise<Not
   const { data: r } = await db.from('rides').select('id,name,owner,public,status,starts_at').eq('id', e.ride).maybeSingle();
   if (!r || r.status !== 'laeuft') return [];
   const { data: members } = await db.from('ride_members').select('user_id').eq('ride_id', r.id).eq('status', 'zugesagt').limit(200);
-  const to = ((members ?? []) as { user_id: string }[]).map((x) => x.user_id).filter((u) => u !== r.owner);
+  // gestartet hat der Organisator oder die übernommene Lead (Koray 14.11.)
+  const starter = e.actor && UUID.test(e.actor) ? e.actor : r.owner;
+  const to = ((members ?? []) as { user_id: string }[]).map((x) => x.user_id).filter((u) => u !== starter);
   if (!to.length) return [];
-  const lead = await nameOf(r.owner);
+  const lead = await nameOf(starter);
   const data = { url: r.public || r.starts_at ? `/ausfahrt/${r.id}` : '/', type: 'ride_start' };
   return to.map((user) => ({ user, title: `${lead} hat die Gruppenfahrt gestartet`, body: short(`${r.name}: tippe, um mitzufahren. Funk und Live Karte sind an.`), data }));
 }
@@ -137,6 +142,30 @@ async function contact(e: Extract<Event, { type: 'contact' }>): Promise<Note[]> 
     : [{ user: e.to, title: 'Neuer Kontakt', body: short(`${who} hat deine Anfrage angenommen.`), data }];
 }
 
+/** Gemeinsam losfahren (Koray 14.11.): Anpingen, Ort oder Zeit geändert, Lead gewechselt */
+async function rideDay(e: Extract<Event, { type: 'ride_ping' | 'ride_changed' | 'ride_lead' }>): Promise<Note[]> {
+  if (!UUID.test(e.ride) || !UUID.test(e.actor)) return [];
+  const { data: r } = await db.from('rides').select('id,name,status,starts_at,meeting_point').eq('id', e.ride).maybeSingle();
+  if (!r || r.status === 'beendet') return [];
+  const who = await nameOf(e.actor);
+  const url = `/ausfahrt/${r.id}`;
+  const clock = r.starts_at ? new Date(r.starts_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }) : '';
+  const place = (r.meeting_point as { name?: string } | null)?.name ?? 'Treffpunkt';
+  if (e.type === 'ride_ping') {
+    if (!e.to || !UUID.test(e.to)) return [];
+    return [{ user: e.to, title: r.name, body: short(`${who} fragt, wann du da bist.`), data: { url: `${url}?ping=1`, type: 'ride_ping' } }];
+  }
+  const { data: members } = await db.from('ride_members').select('user_id').eq('ride_id', r.id).eq('status', 'zugesagt').limit(200);
+  const all = ((members ?? []) as { user_id: string }[]).map((x) => x.user_id).filter((u) => u !== e.actor);
+  if (e.type === 'ride_changed') {
+    const body = e.what === 'zeit' ? `Neue Abfahrt: ${clock} Uhr.` : e.what === 'ort' ? `Neuer Treffpunkt: ${place}.` : `Neu: ${place}, ${clock} Uhr.`;
+    return all.map((user) => ({ user, title: r.name, body: short(`${who}: ${body}`), data: { url, type: 'ride_changed' } }));
+  }
+  if (e.taken) return all.map((user) => ({ user, title: r.name, body: short(`${who} leitet jetzt die Ausfahrt.`), data: { url, type: 'ride_lead' } }));
+  if (!e.to || !UUID.test(e.to)) return [];
+  return [{ user: e.to, title: r.name, body: short(`${who} hat dir die Lead übergeben. Du startest die Ausfahrt.`), data: { url, type: 'ride_lead' } }];
+}
+
 async function notes(e: Event): Promise<Note[]> {
   let list: Note[] = [];
   if (e.type === 'dm' && Number.isSafeInteger(e.id)) list = await directMessage(e.id);
@@ -144,6 +173,7 @@ async function notes(e: Event): Promise<Note[]> {
   else if (e.type === 'ride_member') list = await rideMember(e);
   else if (e.type === 'ride_start') list = await rideStart(e);
   else if (e.type === 'contact') list = await contact(e);
+  else if (e.type === 'ride_ping' || e.type === 'ride_changed' || e.type === 'ride_lead') list = await rideDay(e);
   // Wer etwas selbst ausgelöst hat, bekommt dazu keine Mitteilung
   return e.actor ? list.filter((n) => n.user !== e.actor) : list;
 }

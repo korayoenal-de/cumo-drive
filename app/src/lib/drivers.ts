@@ -8,6 +8,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import type { CarLook } from '@/components/map/car-sprite';
 
+import { reverseName } from './geocode';
 import { supabase } from './supabase';
 import type { LatLon } from './tour';
 
@@ -153,7 +154,7 @@ export async function loadPrivacy(): Promise<Privacy | null> {
   ]);
   if (error) fail(error.message);
   const r = data as { home_name: string | null; home_lat: number | null; home_lon: number | null; allow_messages: boolean; show_garage: boolean; bio?: string | null; show_in_drivers?: boolean; birthday_show?: BirthdayShow | null; invites_contacts_only?: boolean } | null;
-  return {
+  const out: Privacy = {
     homeName: r?.home_name ?? null,
     home: r?.home_lat != null && r?.home_lon != null ? [r.home_lat, r.home_lon] : null,
     allowMessages: r?.allow_messages ?? true,
@@ -164,6 +165,24 @@ export async function loadPrivacy(): Promise<Privacy | null> {
     birthdayShow: r?.birthday_show ?? 'age',
     invitesContactsOnly: r?.invites_contacts_only ?? false,
   };
+  // ältere Einträge mit Postleitzahl einmal still in den Ortsnamen übersetzen
+  if (out.homeName && PLZ.test(out.homeName.trim()) && out.home) {
+    const town = await placeName(out.homeName, out.home);
+    if (town && town !== out.homeName) {
+      await supabase.from('profiles').update({ home_name: town }).eq('id', u.user.id);
+      out.homeName = town;
+    }
+  }
+  return out;
+}
+
+/** Postleitzahl als Wohnort ist erlaubt, gezeigt wird der Ort (Koray 14.11.): 69493 wird Hirschberg */
+const PLZ = /^\d{4,5}$/;
+export async function placeName(name: string | null, at: LatLon | null): Promise<string | null> {
+  const n = name?.trim() || null;
+  if (!n || !PLZ.test(n) || !at) return n;
+  const town = await reverseName(at);
+  return town && town !== 'Standort' && !PLZ.test(town) ? town : n;
 }
 
 export async function savePrivacy(p: Partial<Privacy>) {
@@ -171,7 +190,7 @@ export async function savePrivacy(p: Partial<Privacy>) {
   if (!u.user) throw new Error('Bitte anmelden.');
   const row: Record<string, unknown> = { id: u.user.id };
   if ('homeName' in p || 'home' in p) {
-    row.home_name = p.homeName?.trim().slice(0, 80) || null;
+    row.home_name = (await placeName(p.homeName ?? null, p.home ?? null))?.slice(0, 80) || null;
     row.home_lat = p.home ? p.home[0] : null;
     row.home_lon = p.home ? p.home[1] : null;
   }

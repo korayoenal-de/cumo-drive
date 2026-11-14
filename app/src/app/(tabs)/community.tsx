@@ -9,12 +9,13 @@
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, Keyboard, Pressable, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CommunityMap, type CommunityPin } from '@/components/community/community-map';
 import { ContactRequests, DriverCard, ringColor } from '@/components/community/driver-card';
+import { MeetingRoute } from '@/components/group/meeting-route';
 import { refreshContacts, useContacts } from '@/lib/contacts';
 import { DateBlock, RideStatus } from '@/components/community/ride-bits';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
@@ -195,6 +196,7 @@ export default function Community() {
   const meDriver = drivers?.find((d) => d.isMe) ?? null;
 
   const select = (id: string | null, fromList = false) => {
+    Keyboard.dismiss();
     selRef.current = id;
     setSelected(id);
     if (!id) {
@@ -237,6 +239,7 @@ export default function Community() {
 
   const switchSeg = (s: Seg) => {
     if (s === seg) return;
+    Keyboard.dismiss();
     setSeg(s);
     selRef.current = null;
     setSelected(null);
@@ -732,10 +735,6 @@ function SoonCard({ r, home }: { r: Ausfahrt; home: LatLon | null }) {
   }, [r, home]);
   const to = r.meeting ? ([r.meeting.lat, r.meeting.lon] as LatLon) : r.start;
   const place = r.meeting?.name || 'Start der Tour';
-  const openMaps = () => {
-    if (!to) return;
-    void Linking.openURL(`https://maps.apple.com/?daddr=${to[0]},${to[1]}&q=${encodeURIComponent(place)}`);
-  };
   const others = Math.max(0, r.taken - 1);
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.card}>
@@ -749,11 +748,8 @@ function SoonCard({ r, home }: { r: Ausfahrt; home: LatLon | null }) {
         {min != null && <Metric label="Anfahrt" value={min >= 60 ? `${Math.floor(min / 60)}:${String(min % 60).padStart(2, '0')} H` : `${min} MIN`} />}
       </View>
       <AppText muted>{[place, r.isOwner ? 'du organisierst' : `${r.ownerName}${others > 1 ? ` und ${others - 1} weitere` : ''}`].join('  ·  ')}</AppText>
-      {to ? (
-        <Pressable accessibilityRole="button" onPress={openMaps} style={styles.secondary}>
-          <AppText style={styles.secondaryText}>Route zum Treffpunkt</AppText>
-        </Pressable>
-      ) : null}
+      {/* eigene Navigation, Schnell voreingestellt (Koray 14.11.: nie Apple Karten oder Google Maps) */}
+      {to ? <MeetingRoute to={to} place={place} /> : null}
     </Animated.View>
   );
 }
