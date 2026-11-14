@@ -7,7 +7,7 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, Share, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,12 +22,13 @@ import {
   listAusfahrten, longDate, monthYear, requestAusfahrt, withdrawAusfahrt, ausfahrtAbsagen, rideByLink, rideLink, type Absage, type Anfrage, type Ausfahrt, type LinkedRide, type Teilnehmer,
 } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
+import { MeetingRoute } from '@/components/group/meeting-route';
 import { refreshContacts, useContacts, type Contact } from '@/lib/contacts';
 import { myVehicleLabel, rideAlong, startAsLead } from '@/lib/group/start';
 import { useRide } from '@/lib/group/ride';
 import { declineInvite, inviteToRide, removeFromRide, respondInvite, rideOverview, setRideStatus, type RideMemberRow } from '@/lib/group/invites';
 import { findProfiles, type FoundProfile } from '@/lib/profile';
-import { formatKm, type Profile, type Tour } from '@/lib/tour';
+import { formatKm, type LatLon, type Profile, type Tour } from '@/lib/tour';
 
 type Full = { tour: Tour & { minutes?: number }; profile: Profile };
 
@@ -178,11 +179,7 @@ export default function AusfahrtDetail() {
   const joined = a.isOwner || a.myStatus === 'zugesagt';
   const meetingName = a.meeting?.name || 'Start der Tour';
 
-  const openMaps = () => {
-    const p = a.meeting ? [a.meeting.lat, a.meeting.lon] : a.start;
-    if (!p) return;
-    void Linking.openURL(`https://maps.apple.com/?daddr=${p[0]},${p[1]}&q=${encodeURIComponent(meetingName)}`);
-  };
+  const meetAt: LatLon | null = a.meeting ? [a.meeting.lat, a.meeting.lon] : a.start;
 
   const startGroup = () =>
     run('start', async () => {
@@ -237,13 +234,14 @@ export default function AusfahrtDetail() {
               <AppText style={styles.value}>{longDate(a.startsAt)}, {clock(a.startsAt)}</AppText>
             </View>
           </View>
-          <Pressable accessibilityRole="button" accessibilityHint="Öffnet den Treffpunkt in Karten" onPress={openMaps} style={styles.fieldPlain}>
+          <View style={styles.fieldPlain}>
             <View style={styles.flex}>
               <AppText style={styles.label}>Treffpunkt</AppText>
               <AppText style={styles.value}>{meetingName}</AppText>
             </View>
-            <SymbolView name="arrow.triangle.turn.up.right.circle" size={22} weight="semibold" tintColor={Colors.muted} />
-          </Pressable>
+          </View>
+          {/* Anfahrt mit der eigenen Navigation, Schnell voreingestellt (Koray 14.11.) */}
+          {joined && meetAt && !inThisRide && <MeetingRoute to={meetAt} place={meetingName} />}
           {arr && (
             <View style={styles.fieldPlain}>
               <View style={styles.flex}>
