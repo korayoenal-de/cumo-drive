@@ -32,7 +32,8 @@ export async function valhallaFetch(path: string, init: RequestInit): Promise<Re
     }
     ownDownUntil = Date.now() + OWN_DOWN_MS;
   }
-  return valhallaFetch(path, init);
+  // Notfall: öffentlicher Server (vorher rief sich die Funktion hier selbst auf, endlos; Koray 14.11.)
+  return fetch(`${VALHALLA_URL}/${path}`, init);
 }
 
 export type Avoid = {
