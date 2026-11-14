@@ -82,7 +82,7 @@ export default function Unterhaltung() {
         <View style={styles.flex}>
           <AppText style={styles.title} numberOfLines={1}>{title}</AppText>
           {partner && (partner.car || partner.homeName) ? (
-            <AppText variant="caption" muted numberOfLines={1}>{[partner.car, partner.homeName ? `Raum ${partner.homeName}` : null].filter(Boolean).join('  ·  ')}</AppText>
+            <AppText variant="caption" muted numberOfLines={1}>{[partner.car, partner.homeName ?? null].filter(Boolean).join('  ·  ')}</AppText>
           ) : null}
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="Mehr" hitSlop={4} onPress={() => setMenu(true)} style={styles.round}>

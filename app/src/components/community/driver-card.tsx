@@ -29,7 +29,7 @@ export const ringColor = (d: Driver) => d.garage?.find((g) => g.look)?.look?.col
 const write = (d: Driver) => router.push({ pathname: '/nachrichten/[id]', params: { id: d.id, name: d.name } });
 
 export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: boolean; /** ungelesene Nachrichten von diesem Fahrer (Koray 10.11.) */ unread?: number; onPress?: () => void }) {
-  const meta = [d.car, d.homeName ? `Raum ${d.homeName}` : null].filter(Boolean).join('  ·  ');
+  const meta = [d.car, d.homeName ?? null].filter(Boolean).join('  ·  ');
   const canWrite = !d.isMe && d.allowMessages;
   const [report, setReport] = useState(false);
   const [block, setBlock] = useState(false);
@@ -66,7 +66,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
             <AppText style={styles.bigName} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
             {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>Hat heute Geburtstag</AppText> : null}
             <AppText variant="caption" muted numberOfLines={1}>
-              {[d.age != null ? `${d.age} Jahre` : null, d.homeName ? `Raum ${d.homeName}` : 'Wohnort nicht angegeben', d.memberSince ? `dabei seit ${monthYear(d.memberSince)}` : null].filter(Boolean).join('  ·  ')}
+              {[d.age != null ? `${d.age} Jahre` : null, d.homeName ?? 'Wohnort nicht angegeben', d.memberSince ? `dabei seit ${monthYear(d.memberSince)}` : null].filter(Boolean).join('  ·  ')}
             </AppText>
           </View>
         </View>
