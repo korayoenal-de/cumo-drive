@@ -217,12 +217,7 @@ export default function AusfahrtDetail() {
         </View>
 
         <View style={styles.titleBlock}>
-          <View style={styles.row}>
-            <AppText style={styles.kicker}>{a.isPublic ? 'Ausfahrt' : 'Private Ausfahrt'}</AppText>
-            <View style={[styles.tag, free > 0 ? styles.tagGood : styles.tagMuted]}>
-              <AppText style={[styles.tagText, { color: free > 0 ? Colors.good : Colors.muted }]}>{free > 0 ? `${free} von ${a.maxMembers - 1} Plätzen frei` : 'Ausgebucht'}</AppText>
-            </View>
-          </View>
+          <AppText style={styles.kicker}>{a.isPublic ? 'Ausfahrt' : 'Private Ausfahrt'}</AppText>
           <AppText variant="display">{a.name}</AppText>
         </View>
 
@@ -314,7 +309,15 @@ export default function AusfahrtDetail() {
           onLayout={(e) => {
             sectionY.current = e.nativeEvent.layout.y;
           }}>
-          <AppText variant="title">Dabei</AppText>
+          {/* Plätze stehen bei den Teilnehmern, rechtsbündig; der letzte freie Platz in Gelb (Koray 14.11.) */}
+          <View style={styles.row}>
+            <AppText variant="title" style={styles.flex}>Teilnehmer</AppText>
+            <View style={[styles.tag, free > 1 ? styles.tagGood : free === 1 ? styles.tagWarn : styles.tagMuted]}>
+              <AppText style={[styles.tagText, { color: free > 1 ? Colors.good : free === 1 ? Colors.warn : Colors.muted }]}>
+                {free > 0 ? `${free} von ${a.maxMembers - 1} Plätzen frei` : 'Ausgebucht'}
+              </AppText>
+            </View>
+          </View>
           {members.map((m) => (
             <View key={m.userId} style={styles.member}>
               <Avatar name={m.name} userId={m.userId} />
