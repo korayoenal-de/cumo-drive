@@ -4,6 +4,8 @@
  * inklusive Ersteller. Die Fahrt wird mit der ersten Einladung angelegt, damit die Einladungen
  * gespeichert sind. „Gruppenfahrt starten“ öffnet die Navigation und den Live Kanal der Fahrt.
  */
+import { guardDrive } from '@/lib/drive-guard';
+import { avoidSetting } from '@/lib/avoid-settings';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -175,9 +177,12 @@ export default function GruppeNeu() {
     setBusy('start');
     setErr(null);
     try {
+      // Gruppenfahrt ohne Mitgliedschaft nur im Heimatgebiet (Koray 14.11.; stumm, solange LIMITS_LIVE aus ist)
+      const ok = await guardDrive(saved, saved.profile ?? 'kurvig', avoidSetting(), `gruppe:${saved.id}`);
+      if (!ok.go) return;
       const r = await ensureRide();
       await setRideStatus(r.id, 'laeuft');
-      await startAsLead(r.id, saved.name, saved, saved.profile ?? 'kurvig');
+      await startAsLead(r.id, saved.name, { ...saved, ...ok.tour }, saved.profile ?? 'kurvig');
       router.push('/navigation');
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Die Fahrt konnte nicht starten.');

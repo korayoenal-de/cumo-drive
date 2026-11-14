@@ -15,12 +15,15 @@ import { avoidSummary } from '@/components/planner/planner-parts';
 import { Group, Row, SwitchRow } from '@/components/settings/settings-ui';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { ActionSheet, ConfirmSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
+import { here } from '@/components/group/meeting-route';
+import { askMembership, LIMITS_LIVE, previewPaywall, type PaywallKind } from '@/lib/paywall';
+import { reverseName } from '@/lib/geocode';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { useAvoid } from '@/lib/avoid-settings';
 import { refreshAvatar } from '@/lib/avatars';
 import { deleteAccount, signIn, signOut, signUp, useSession } from '@/lib/auth';
-import { refreshEntitlement, useEntitlement } from '@/lib/entitlement';
+import { refreshEntitlement, setHomeArea, useEntitlement } from '@/lib/entitlement';
 import { clearLocalTours } from '@/lib/library';
 import { MAP_STYLES, useMapSettings } from '@/lib/map-settings';
 import { noticeSeen, useModeration } from '@/lib/moderation';
@@ -31,6 +34,15 @@ import { syncVehicles, useVehicles, vehicleName } from '@/lib/vehicle';
 import { useVoiceChoice } from '@/lib/voice-settings';
 
 
+const PAYWALL_PREVIEWS: { kind: PaywallKind; label: string; icon: 'map.fill' | 'person.3.fill' | 'mic.fill' | 'house.fill' | 'hourglass' | 'calendar.badge.exclamationmark' }[] = [
+  { kind: 'ausserhalb', label: 'A Losfahren außerhalb', icon: 'map.fill' },
+  { kind: 'gruppe', label: 'B Viertes Auto', icon: 'person.3.fill' },
+  { kind: 'funk', label: 'C Funk', icon: 'mic.fill' },
+  { kind: 'heimat', label: 'D Heimatgebiet ändern', icon: 'house.fill' },
+  { kind: 'testende', label: 'F Ende der Testphase', icon: 'hourglass' },
+  { kind: 'abgelaufen', label: 'G Abo abgelaufen, Ausfahrt geplant', icon: 'calendar.badge.exclamationmark' },
+];
+
 export default function Einstellungen() {
   const session = useSession();
   const { list, current } = useVehicles();
@@ -38,6 +50,22 @@ export default function Einstellungen() {
   const [avoid] = useAvoid();
   const voice = useVoiceChoice();
   const ent = useEntitlement();
+  const [paywallList, setPaywallList] = useState(false);
+  // Heimatgebiet auf den Standort setzen: das erste Mal frei, danach einmal; beim zweiten Ändern die Paywall
+  const changeHome = async () => {
+    if (ent.home && ent.home.changes >= 1) {
+      await askMembership('heimat', { homeName: ent.home.name ?? undefined });
+      return;
+    }
+    try {
+      const p = await here();
+      const name = await reverseName(p).catch(() => null);
+      await setHomeArea(p[0], p[1], name);
+      showToast(ent.home ? `Heimatgebiet geändert: ${name ?? 'dein Standort'}. Das war die eine Änderung.` : `Heimatgebiet: ${name ?? 'dein Standort'}`);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });
+    }
+  };
   const moderation = useModeration(!!session);
   const reloadModeration = moderation.reload;
 
@@ -88,6 +116,8 @@ export default function Einstellungen() {
       {session && (
         <Group label="Mitgliedschaft">
           <Row title="Dein Plan" value={describeEntitlement(ent).title} onPress={() => router.push('/mitgliedschaft')} />
+          {/* kostenlose Version: Heimatgebiet, einmal änderbar (stumm, solange LIMITS_LIVE aus ist) */}
+          {LIMITS_LIVE && !ent.active && <Row title="Heimatgebiet" value={ent.home?.name ?? (ent.home ? 'Festgelegt' : 'Noch nicht festgelegt')} onPress={() => void changeHome()} />}
         </Group>
       )}
 
@@ -97,7 +127,25 @@ export default function Einstellungen() {
       {moderation.mod?.admin && (
         <Group label="Prüfung" hint="Gemeldete Inhalte ansehen, entfernen oder Konten sperren.">
           <Row title="Prüfbereich" value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : 'Nichts offen'} onPress={() => router.push('/pruefung')} />
+          <Row title="Paywalls ansehen" value={LIMITS_LIVE ? 'Aktiv' : 'Stumm'} onPress={() => setPaywallList(true)} />
         </Group>
+      )}
+      {moderation.mod?.admin && (
+        <ActionSheet
+          visible={paywallList}
+          title="Paywalls ansehen"
+          subtitle={LIMITS_LIVE ? 'Die Grenzen gelten.' : 'Die Grenzen sind stumm. Hier nur zur Ansicht, ein Kauf ist noch nicht möglich.'}
+          items={PAYWALL_PREVIEWS.map((x) => ({
+            key: x.kind,
+            icon: x.icon,
+            label: x.label,
+            onPress: () => {
+              setPaywallList(false);
+              setTimeout(() => void previewPaywall(x.kind), SHEET_GONE_MS);
+            },
+          }))}
+          onClose={() => setPaywallList(false)}
+        />
       )}
 
       <Group label="Rechtliches">

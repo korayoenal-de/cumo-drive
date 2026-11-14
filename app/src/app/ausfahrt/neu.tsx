@@ -4,6 +4,7 @@
  * Privat ist der Standard: nur Organisator und Eingeladene sehen die Ausfahrt. Kostenfrei mit drei Fahrzeugen
  * insgesamt (du und zwei Mitfahrer); in der Community veröffentlichen und mehr Plätze gibt es mit der Mitgliedschaft.
  */
+import { askMembership, LIMITS_LIVE } from '@/lib/paywall';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
@@ -292,7 +293,21 @@ export default function AusfahrtNeu() {
                   <AppText style={styles.metric}>{seats}</AppText>
                   <AppText variant="caption" muted>{seats === 1 ? 'Fahrzeug' : 'Fahrzeuge'}</AppText>
                 </View>
-                <StepBtn icon="plus" label="Ein Platz mehr" disabled={seats >= maxSeats} onPress={() => setSeats(Math.min(maxSeats, seats + 1))} />
+                <StepBtn
+                  icon="plus"
+                  label="Ein Platz mehr"
+                  disabled={seats >= maxSeats && !(LIMITS_LIVE && !ent.active)}
+                  onPress={() => {
+                    // kostenlos an der Grenze: Paywall „Nimm alle mit“ (stumm, solange LIMITS_LIVE aus ist)
+                    if (seats >= maxSeats) {
+                      void askMembership('gruppe', { vehicles: seats + 2 }).then((r) => {
+                        if (r === 'member') setSeats(seats + 1);
+                      });
+                      return;
+                    }
+                    setSeats(Math.min(maxSeats, seats + 1));
+                  }}
+                />
               </View>
               {!ent.active && <AppText variant="caption" muted>Kostenfrei fahrt ihr zu dritt, du und zwei Mitfahrer. Mehr Plätze gibt es mit der Mitgliedschaft.</AppText>}
             </View>

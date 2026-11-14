@@ -17,6 +17,7 @@ import { type TourFun } from '@/lib/fun-score';
 import { type TourRequest } from '@/components/planner/create-tour';
 import { ActionBar } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
+import { guardDrive } from '@/lib/drive-guard';
 import { setActiveTour } from '@/lib/active-tour';
 import { saveTour, syncLibrary } from '@/lib/library';
 import { type Stop } from '@/lib/intent';
@@ -70,12 +71,18 @@ export function Result({
   };
   const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);
   // Allein oder als Gruppe: Abfrage beim Druck auf Losfahren (Koray 7.11.); als Gruppe erst speichern, dann einladen
-  const drive = (asGroup = false) => {
+  const drive = async (asGroup = false) => {
     if (asGroup) {
       router.push({ pathname: '/gruppe/neu', params: { tour: savedId ?? saveResult() } });
       return;
     }
-    setActiveTour(tour, req.profile, req.avoid);
+    // kostenlose Version: außerhalb des Heimatgebiets kommt die Paywall (stumm, solange LIMITS_LIVE aus ist)
+    const ok = await guardDrive(tour, req.profile, req.avoid, `rundtour:${tour.wegpunkte.map((w) => w.join(',')).join(';')}`);
+    if (!ok.go) {
+      if (ok.save && !savedId) saveResult();
+      return;
+    }
+    setActiveTour(ok.tour, req.profile, req.avoid);
     logSignal('losgefahren', tour, { mode: 'rundtour', profile: req.profile, suggested: true });
     router.push('/navigation');
   };

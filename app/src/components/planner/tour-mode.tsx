@@ -29,6 +29,7 @@ import { ActionBar } from '@/components/ui/action-bar';
 import { LoadingButton, type LoadStage } from '@/components/ui/loading-button';
 import { AppText } from '@/components/ui/text';
 import { Colors, Motion, Shadow } from '@/constants/theme';
+import { guardDrive } from '@/lib/drive-guard';
 import { setActiveTour } from '@/lib/active-tour';
 import { shareTourLink } from '@/lib/share-link';
 import { exportTour } from '@/lib/route-file';
@@ -324,7 +325,17 @@ export function TourMode({
       if (id) router.push({ pathname: '/gruppe/neu', params: { tour: id } });
       return;
     }
-    setActiveTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, firstProfile, avoid);
+    const named = { ...routeTour, name: plan.name.trim() || routeTour.name };
+    // kostenlose Version: außerhalb des Heimatgebiets kommt die Paywall (stumm, solange LIMITS_LIVE aus ist)
+    const ok = await guardDrive(named, firstProfile, avoid, `route:${plan.cloudId ?? named.name}`);
+    if (!ok.go) {
+      if (ok.save && (plan.dirty || !plan.cloudId)) {
+        await plan.save(curves, firstProfile, avoid);
+        showToast('Unter Touren gespeichert');
+      }
+      return;
+    }
+    setActiveTour(ok.tour, firstProfile, avoid);
     logSignal('losgefahren', routeTour, { mode: 'route', profile: firstProfile, suggested: false });
     router.push('/navigation');
   };

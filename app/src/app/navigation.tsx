@@ -2,6 +2,7 @@
  * Navigationsscreen: Karte vollflächig, oben das nächste Manöver, unten Ankunft und Steuerung.
  * Läuft außerhalb der Tabs im Vollbild. Die Logik kommt aus useNavigation (src/lib/navigation).
  */
+import { askMembership } from '@/lib/paywall';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
@@ -127,6 +128,26 @@ export default function NavigationScreen() {
   useEffect(() => () => void disconnectFunk(), []);
   const [msgOpen, setMsgOpen] = useState(false);
   const funk = useFunk();
+  // Funk ohne Mitgliedschaft (Koray 14.11.): nie eine Paywall während der Fahrt. Über 10 km/h nur eine Zeile,
+  // das Blatt kommt beim nächsten Halt. Im Stand sofort.
+  const [funkAskLater, setFunkAskLater] = useState(false);
+  const funkLocked = () => {
+    if ((state.speedKmh ?? 0) > 10) {
+      showToast('Funk gibt es mit Mitgliedschaft. Mehr beim nächsten Halt.');
+      setFunkAskLater(true);
+      return;
+    }
+    setFunkAskLater(false);
+    void askMembership('funk', {}, ride.rideId ?? 'solo');
+  };
+  useEffect(() => {
+    if (!funkAskLater || (state.speedKmh ?? 99) > 2) return;
+    const t = setTimeout(() => {
+      setFunkAskLater(false);
+      void askMembership('funk', {}, ride.rideId ?? 'solo');
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [funkAskLater, state.speedKmh, ride.rideId]);
   const driveSettings = useDriveSettings();
   // Karte "Zwischenziel überspringen" nach langem Druck auf das Manöver, schließt nach 6 s von selbst
   const [skipOpen, setSkipOpen] = useState(false);
@@ -1011,6 +1032,7 @@ export default function NavigationScreen() {
               voice={state.voice}
               group={withOthers}
               onFunk={inRide ? () => setMsgOpen(!msgOpen) : undefined}
+              talkLocked={withOthers && funk.status === 'gesperrt' ? funkLocked : undefined}
               talk={
                 withOthers && funk.status !== 'nicht' && funk.status !== 'gesperrt'
                   ? { talking: funk.talking, waiting: funk.waiting, disabled: funk.onlyLead && ride.myRole !== 'lead', onTalk: pushToTalk }

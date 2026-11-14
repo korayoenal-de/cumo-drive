@@ -6,6 +6,7 @@
 --  * Funk nur, wenn der Organisator der Fahrt die Mitgliedschaft hat; dann für die ganze Gruppe.
 --  * Das Heimatgebiet legt man einmal fest und kann es danach ein einziges Mal ändern (gegen Missbrauch).
 -- Die Mitgliedschaft (Test, Plan, Club) hebt alle Grenzen auf.
+-- Stumm bis public.limits_live() true liefert (Testphase).
 
 alter table public.profiles
   add column if not exists home_area_lat double precision,
@@ -117,11 +118,18 @@ end $$;
 revoke all on function public.set_home_area(double precision, double precision, text) from public, anon;
 grant execute on function public.set_home_area(double precision, double precision, text) to authenticated;
 
+-- Hauptschalter der kostenlosen Version (wie LIMITS_LIVE in app/src/lib/paywall.ts). Solange false, gelten
+-- die Grenzen nicht (Testphase, Koray 14.11.: eingebaut, aber stumm). Zum Scharfschalten neu anlegen mit true.
+create function public.limits_live() returns boolean
+language sql immutable as $$ select false $$;
+grant execute on function public.limits_live() to authenticated;
+
 -- Funk in einer Fahrt: dabei (Organisator oder zugesagt) und der Organisator hat die Mitgliedschaft
 create function public.ride_funk_allowed(r uuid) returns boolean
 language sql stable security definer set search_path = public as $$
   select public.can_chat(r)
-    and coalesce((public.entitlement_for((select x.owner from rides x where x.id = r)) ->> 'active')::boolean, false);
+    and (not public.limits_live()
+      or coalesce((public.entitlement_for((select x.owner from rides x where x.id = r)) ->> 'active')::boolean, false));
 $$;
 revoke all on function public.ride_funk_allowed(uuid) from public, anon;
 grant execute on function public.ride_funk_allowed(uuid) to authenticated;
