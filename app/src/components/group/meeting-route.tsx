@@ -18,7 +18,7 @@ import type { LatLon } from '@/lib/tour';
 
 type Way = 'schnell' | 'kurvig';
 
-async function here(): Promise<LatLon> {
+export async function here(): Promise<LatLon> {
   const perm = await Location.requestForegroundPermissionsAsync();
   if (perm.status !== 'granted') throw new Error('Für die Route brauchen wir deinen Standort.');
   const last = await Location.getLastKnownPositionAsync({ maxAge: 2 * 60 * 1000, requiredAccuracy: 200 }).catch(() => null);

@@ -35,6 +35,7 @@ import { useNavigation } from '@/lib/navigation';
 import { feedbackKey } from '@/lib/highlight-feedback';
 import { curveCue, sharpCurves } from '@/lib/navigation/curves';
 import { leadKm, paceNotes, paceText } from '@/lib/navigation/pace-notes';
+import { reportEta, sharingFor } from '@/lib/ride-day';
 import { closureLabel, closuresNear, closuresOnRoute } from '@/lib/road-closures';
 import { limitAt, loadSpeedZones, shownLimitAt, type SpeedZones } from '@/lib/navigation/speed-zones';
 import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigation/highlights';
@@ -697,6 +698,19 @@ export default function NavigationScreen() {
     // nur bei Wechsel des Limits, nicht bei jedem Meter
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, limitHere, limitEst]);
+  // Angepingt und Teilen gewählt (Koray 14.11.): jede Minute Ankunft in Minuten und Punkt an die Gruppe,
+  // bis man am Treffpunkt ist (dann "da") oder die Gruppe losfährt
+  const etaSent = useRef(0);
+  useEffect(() => {
+    if (!sharingFor() || status !== 'laeuft' || !state.position || !state.eta) return;
+    if (Date.now() - etaSent.current < 60000) return;
+    etaSent.current = Date.now();
+    void reportEta(Math.max(0, (state.eta.getTime() - Date.now()) / 60000), state.position);
+  }, [status, state.position, state.eta]);
+  useEffect(() => {
+    if (status === 'angekommen' && sharingFor() && state.position) void reportEta(0, state.position);
+  }, [status, state.position]);
+
   // Kurvenansagen wie ein Beifahrer, Stufe Einfach, nur auf Highlights (Koray 13.11., Schalter unter Fahren).
   // Abbiegehinweise, Highlight Ansage und Funk gehen vor; eine Kurve, die dann zu spät käme, entfällt.
   const paces = useMemo(
