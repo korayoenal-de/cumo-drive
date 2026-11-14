@@ -18,6 +18,7 @@
  */
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import {
+  Keyboard,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -73,6 +74,13 @@ type Props = {
 };
 
 export function MapSheet({ detent, onDetentChange, header, children, background, scrollRef, grabberLabel, lockScroll, hideBody, onScrollY, topReserve, smallTrim = 0 }: Props) {
+  // Blatt geht nach unten: Tastatur mit schließen, sonst bleibt sie über der Karte stehen
+  // (Koray 14.11.: nach der Suche unter Drivers stand die Tastatur allein auf der Karte)
+  const lastDetent = useRef(detent);
+  useEffect(() => {
+    if (detent < lastDetent.current) Keyboard.dismiss();
+    lastDetent.current = detent;
+  }, [detent]);
   const insets = useSafeAreaInsets();
   const win = useWindowDimensions();
   const [boxH, setBoxH] = useState(0);

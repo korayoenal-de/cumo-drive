@@ -9,7 +9,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, Keyboard, Linking, Pressable, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -195,6 +195,7 @@ export default function Community() {
   const meDriver = drivers?.find((d) => d.isMe) ?? null;
 
   const select = (id: string | null, fromList = false) => {
+    Keyboard.dismiss();
     selRef.current = id;
     setSelected(id);
     if (!id) {
@@ -237,6 +238,7 @@ export default function Community() {
 
   const switchSeg = (s: Seg) => {
     if (s === seg) return;
+    Keyboard.dismiss();
     setSeg(s);
     selRef.current = null;
     setSelected(null);
