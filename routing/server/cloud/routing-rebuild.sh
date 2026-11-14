@@ -192,7 +192,7 @@ set -euo pipefail
 exec 9>/run/cumo-setup.lock
 flock -n 9 || { echo "$(date -Is) Neuaufbau läuft schon, Abbruch" >> /opt/cumo-routing/setup.log; exit 0; }
 BASE=/opt/cumo-routing
-GH_VERSION=11.0
+GH_VERSION=11.1
 HEAP=24g
 REGIONS=(
   europe/dach-latest.osm.pbf
@@ -254,7 +254,7 @@ After=network-online.target
 [Service]
 User=cumo
 WorkingDirectory=/opt/cumo-routing
-ExecStart=/usr/bin/java -Xmx22g -XX:+ExitOnOutOfMemoryError -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
+ExecStart=/usr/bin/java -Xmx22g -XX:+ExitOnOutOfMemoryError -jar /opt/cumo-routing/bin/graphhopper-web-11.1.jar server config.yml
 Restart=always
 RestartSec=10
 

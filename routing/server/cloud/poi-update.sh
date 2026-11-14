@@ -264,7 +264,7 @@ cat > /opt/cumo-routing/setup-server.sh <<'CUMO_EOF'
 # Lädt die Kartendaten, fügt sie zusammen, baut den Graphen und startet GraphHopper neu.
 set -euo pipefail
 BASE=/opt/cumo-routing
-GH_VERSION=11.0
+GH_VERSION=11.1
 HEAP=24g
 REGIONS=(
   europe/dach-latest.osm.pbf
