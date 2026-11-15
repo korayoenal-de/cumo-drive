@@ -28,7 +28,7 @@ import { passState, usePassLive } from '@/lib/pass-live';
 import { PASSES, passPoint, passSummary, type Pass } from '@/lib/passes';
 import { buildTour, findPlace, FRESH_MS, locate, newSeed, PHASES, toPlanError, type PlanError, type PlanPhase, type Spot, type TourRequest } from '@/components/planner/create-tour';
 import { DirectionDial } from '@/components/planner/direction-dial';
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipRow } from '@/components/ui/chip';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { BACK_PILL_H, BackPill } from './back-pill';
@@ -926,7 +926,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           </Section>
 
           <Section label="Fahrstil">
-            <View style={styles.wrap}>
+            <ChipRow>
               {STYLE_PROFILES.map((id) => (
                 <Chip
                   key={id}
@@ -935,11 +935,11 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
                   onPress={() => setOver((o) => ({ ...o, profile: id }))}
                 />
               ))}
-            </View>
+            </ChipRow>
           </Section>
 
           <Section label="Richtung">
-            <View style={styles.wrap}>
+            <ChipRow>
               {eff.towardName && <Chip label={eff.towardName} active onPress={() => setOver((o) => ({ ...o, direction: 'zufall' }))} />}
               <Chip
                 label="Zufall"
@@ -954,11 +954,11 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
                   onPress={() => setOver((o) => ({ ...o, direction: d.id }))}
                 />
               ))}
-            </View>
+            </ChipRow>
           </Section>
 
           <Section label="Stopps">
-            <View style={styles.wrap}>
+            <ChipRow>
               {STOPS.map((s) => {
                 const active = eff.stops.includes(s.id);
                 return (
@@ -970,7 +970,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
                   />
                 );
               })}
-            </View>
+            </ChipRow>
           </Section>
 
           <VehiclePick />
@@ -1093,11 +1093,11 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
 
           {PROFILE_CHOICES.length > 1 && (
             <Section label="Profil">
-              <View style={styles.wrap}>
+              <ChipRow>
                 {PROFILE_CHOICES.map((p) => (
                   <Chip key={p.id} label={p.label} active={profile === p.id} onPress={() => setProfile(p.id)} />
                 ))}
-              </View>
+              </ChipRow>
             </Section>
           )}
 

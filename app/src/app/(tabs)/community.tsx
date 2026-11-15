@@ -22,7 +22,7 @@ import { MeetingRoute } from '@/components/group/meeting-route';
 import { refreshContacts, useContacts } from '@/lib/contacts';
 import { DateBlock, RideStatus } from '@/components/community/ride-bits';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipRow } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { ReportSheet } from '@/components/moderation/report-sheet';
 import { usePrivacy } from '@/components/settings/community-profile';
@@ -337,11 +337,11 @@ export default function Community() {
         {seg === 'routen' ? (
           <View style={styles.body}>
             <TextInput maxFontSizeMultiplier={1.2} value={q} onChangeText={setQ} placeholder="Tour, Fahrer, Ort oder PLZ suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Routen durchsuchen" returnKeyType="search" />
-            <View style={styles.wrap}>
+            <ChipRow>
               {SORTS.map((s) => (
                 <Chip key={s.id} label={s.label} active={sort === s.id} onPress={() => setSort(s.id)} />
               ))}
-            </View>
+            </ChipRow>
             {err && <AppText style={styles.error}>Community konnte nicht geladen werden: {err}</AppText>}
             {tours === null && !err && <ActivityIndicator color={Colors.muted} />}
             {tours?.length === 0 && (
@@ -852,7 +852,6 @@ const styles = StyleSheet.create({
   badgeDot: { position: 'absolute', top: -2, right: -4, width: 9, height: 9, borderRadius: 5, backgroundColor: Colors.signal, borderWidth: 1.5, borderColor: Colors.overlaySurface },
   badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 11, lineHeight: 13 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s, marginBottom: Spacing.xs },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   cardList: { paddingVertical: Spacing.m },
   main: { flex: 1, gap: 3, minHeight: 56, justifyContent: 'center' },

@@ -13,11 +13,11 @@ import Svg, { Path } from 'react-native-svg';
 
 import { PHASES, type PlanError, type PlanPhase } from '@/components/planner/create-tour';
 import { CAT_ICON, type Cat } from '@/components/planner/place-search';
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipRow } from '@/components/ui/chip';
 import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
-import { Colors, Motion } from '@/constants/theme';
+import { Colors, Motion, Spacing } from '@/constants/theme';
 import { formatKm, trimDecimals, type Warning } from '@/lib/tour';
 import { selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
 
@@ -39,11 +39,11 @@ export function VehiclePick() {
           <SecondaryButton label="Zur Garage" onSurface onPress={() => router.navigate('/einstellungen')} />
         </>
       ) : (
-        <View style={styles.wrap}>
+        <ChipRow bleed={Spacing.l}>
           {list.map((v) => (
             <Chip key={v.id} label={vehicleName(v) || 'Fahrzeug'} active={current?.id === v.id} onSurface onPress={() => void selectVehicle(v.id)} />
           ))}
-        </View>
+        </ChipRow>
       )}
     </View>
   );
@@ -373,7 +373,7 @@ export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned
           ))}
         </View>
       )}
-      <View style={styles.wrap}>
+      <ChipRow>
         {STOP_CHIPS.map((c) => (
           <Pressable
             key={c.id}
@@ -385,7 +385,7 @@ export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned
             <AppText style={styles.stopChipText}>{c.label}</AppText>
           </Pressable>
         ))}
-      </View>
+      </ChipRow>
       {busy ? <ActivityIndicator color={Colors.muted} /> : planned.length === 0 && <AppText variant="caption" muted>Sortiert nach Umweg, ein Tipp plant den Stopp an der richtigen Stelle ein.</AppText>}
     </Accordion>
   );

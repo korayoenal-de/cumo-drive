@@ -8,14 +8,14 @@ import { datum, fahrzeit, meta as fmtMeta, plaetze, strecke, wann } from '@/lib/
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { TypoTabs } from '@/components/planner/planner-parts';
 import { RouteThumb } from '@/components/tours/tour-bits';
 import { TourCard } from '@/components/tours/tour-card';
 import { DateBlock } from '@/components/community/ride-bits';
 import { clock, listAusfahrten, type Ausfahrt } from '@/lib/ausfahrten';
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipRow } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
@@ -242,18 +242,18 @@ export default function Touren() {
             />
             {/* Chips in einer Zeile, seitlich wischbar bis an den Rand (Koray 15.11.) */}
             {dirs.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipRow}>
+              <ChipRow>
                 <Chip label="Alle" active={folder === null} onPress={() => setFolder(null)} />
                 {dirs.map((d) => (
                   <Chip key={d} label={d} active={folder === d} onPress={() => setFolder(folder === d ? null : d)} />
                 ))}
-              </ScrollView>
+              </ChipRow>
             )}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipRow}>
+            <ChipRow>
               {SORTS.map((s) => (
                 <Chip key={s.id} label={s.label} active={sort === s.id} onPress={() => setSort(s.id)} />
               ))}
-            </ScrollView>
+            </ChipRow>
           </View>
 
           <View style={styles.list}>
@@ -331,12 +331,12 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
   return (
     <View style={styles.gapM}>
       {cars.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipRow}>
+        <ChipRow>
           <Chip label="Alle Fahrzeuge" active={car === null} onPress={() => setCar(null)} />
           {cars.map(([id, name]) => (
             <Chip key={id} label={name} active={car === id} onPress={() => setCar(car === id ? null : id)} />
           ))}
-        </ScrollView>
+        </ChipRow>
       )}
       {err && <AppText style={styles.dangerText}>{err}</AppText>}
       {list === null && !err && <ActivityIndicator color={Colors.muted} />}
@@ -408,8 +408,6 @@ const styles = StyleSheet.create({
   gapS: { gap: Spacing.s },
   gapM: { gap: Spacing.m },
   row: { flexDirection: 'row', gap: Spacing.s },
-  chipScroll: { marginHorizontal: -Spacing.xl, flexGrow: 0 },
-  chipRow: { flexDirection: 'row', gap: Spacing.s, paddingHorizontal: Spacing.xl },
   syncRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   list: { gap: Spacing.s },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
