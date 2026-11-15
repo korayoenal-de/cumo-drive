@@ -30,6 +30,10 @@ const OFF_ROUTE_MS = 8000;
 const REROUTE_GAP_MS = 20000;
 /** Ziel erreicht unter diesem Abstand */
 const ARRIVE_M = 40;
+/** so nah am gesetzten Zielpunkt gilt man als angekommen, auch neben der Straße */
+const ARRIVE_GOAL_M = 70;
+/** am Ende der Route schon abgebogen (Parkplatz): so weit darf man vom Linienende weg sein */
+const ARRIVE_PARK_M = 120;
 /** Takt der Simulation */
 const SIM_TICK_MS = 1000;
 
@@ -390,7 +394,12 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const covered =
         route.km < 2 ||
         (loop ? odoRef.current.km >= route.km * 0.7 : route.cumKm[Math.min(doneIndexRef.current, route.cumKm.length - 1)] > route.km * 0.7);
-      const arrived = toEndM < ARRIVE_M && pr.remainingKm < 0.3 && covered;
+      // Auch angekommen (Koray 15.11.: auf dem Parkplatz am Ziel wollte die Route noch weiter): nah am gesetzten
+      // Zielpunkt, oder am Ende der Route schon von der Straße abgebogen und langsam (Parkplatz, Einfahrt)
+      const goal = reqRef.current?.tour.wegpunkte?.[reqRef.current.tour.wegpunkte.length - 1];
+      const nearGoal = !!goal && haversine(fix.pos, goal) < ARRIVE_GOAL_M;
+      const parked = toEndM < ARRIVE_PARK_M && pr.remainingKm < 0.05 && snap.offM > OFF_ROUTE_M / 2 && (fix.speedKmh ?? 0) < 15;
+      const arrived = covered && pr.remainingKm < 0.3 && (toEndM < ARRIVE_M || nearGoal || parked);
 
       // Ankunftszeit: geplante Restzeit mal dem bisherigen Tempo. Gezählt wird nur fahrend auf der Route,
       // Pausen und Umwege verfälschen es nicht; ältere Kilometer verlieren an Gewicht (etwa 20 km Halbwertszeit),
