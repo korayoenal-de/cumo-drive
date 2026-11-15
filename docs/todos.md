@@ -4,6 +4,9 @@ Stand: 15. November 2026, 8:30 (gegen Code und Git Verlauf geprüft)
 
 ## Jetzt: wartet auf Koray
 
+* [ ] OSM: Relation 3931638 (nur geradeaus, B 47 in die Ampèrestraße) löschen, Rechtsabbiegen ist erlaubt (Koray 15.11., morgen am Rechner)
+* [ ] Entscheidung: Planer soll Abbiegeverbote beachten (GraphHopper turn costs, erst Server 2 testen)
+
 * [ ] **Datenbank Korrektur freigeben:** Einladungen zeigen eine Ausfahrt nach ihrem Ende nicht mehr als „Läuft jetzt“ (Tester Matthias 15.11.). Migration `20261115090000_einladungen_vorbei.sql` liegt lokal und ist lokal getestet; der Push auf main geht direkt in die Produktionsdatenbank und braucht dein OK
 * [ ] **Leinwände entscheiden:** „Nach der Fahrt“ (erst die Karte, Blatt in drei Höhen), „Navigation Bedienelemente“ (Kompass in CarPlay?), „Tour anpassen unterwegs“ (dürfen Mitfahrer ablehnen? als neue Tour speichern?)
 * [ ] **Build 29 im Auto testen:** Tempo und Tempolimit unten links in CarPlay, verdeckt die Plakette etwas?
