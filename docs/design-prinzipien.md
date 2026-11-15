@@ -168,3 +168,44 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 ## Namen (10.11.2026)
 - Der Tab heißt „Touren“ (früher Meine Touren), in allen Texten gleich: „Unter Touren gespeichert“, „Aus Touren entfernt“. „Routen“ ist der Reiter in der Community.
 - Tableiste mit eigenen Symbolen (`tab-icons.tsx`): Raster 24, Strich 1,8, aktiv gefüllt und 2,0.
+
+## Konsistenzprüfung 15.11.2026 (entschieden von Koray, Quiz „Design Entscheidungen“)
+
+Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab Commit 36a6e97.
+
+**Kerndaten**
+- Reihenfolge überall: Wann, Wo, Strecke, Fahrzeit, Fahrspaß, Plätze. Wann und Wo nur bei Ausfahrten, Plätze nur vor der Fahrt. Kennzahlen stehen direkt unter dem Titel, die Karte danach.
+- Eine Komponente `Kennzahlen` (`components/ui/kennzahlen.tsx`): Label 15 grau über dem Wert, Wert Archivo 22 in Versalien. Leitzahl 28 nur im Planer Ergebnis (`Stats` mit Erklärung des Werts).
+- Fahrspaß überall, wo eine Tour gezeigt wird, auch bei Ausfahrten (`lib/ride-fun.ts`). Vor der Fahrt keine Kurvenzahl; Kurven nur in der Fahrtstatistik, Kehren nur bei Pässen.
+- Formate aus `lib/format.ts`: Fahrzeit „2:57 h“ (Kennzahl „2:57 H“), unter einer Stunde „45 min“, nie Minuten über 60 und nie „2 h 57“. Strecke „148 km“, unter 10 km „8,4 km“. Termin in Zeilen „Heute 10:00“, „Morgen 10:00“, sonst „Fr 20. Nov. 10:00“, ausgeschrieben nur im Detail. „Uhr“ nur im Satz. Gespeichertes und Gefahrenes „12. Nov.“, aus anderen Jahren mit Jahr.
+- Werte in einer Zeile mit Mittelpunkt, Komma nur im Satz. Leere Werte fallen weg, kein Strich als Platzhalter.
+- Plätze aus Sicht der Teilnehmer als Plakette (`SeatsBadge`): „4 Plätze frei“ grün, „1 Platz frei“ gelb, „Ausgebucht“ grau.
+- Treffpunkt ist immer ein Ort, ohne Wahl der Ort am Start der Tour. In Zeilen „ab Gmund“. Rückkehr nur bei A nach B als „Ankunft in Imst“, bei Runden nicht.
+
+**Blätter und Aktionen**
+- Orange Zeile (`primary`) nur in Rückfragen mit klarer Empfehlung, etwa „Speichern und zurück“. Optionen zu einem Objekt und Auswahlblätter sind neutral, die Empfehlung steht oben.
+- Zweite Zeile (Hinweis) nur bei Auswahl zwischen Wegen, wenn andere etwas merken, und beim Umfang von Gefährlichem. Sonst keine. Gleiche Aktion, gleicher Text.
+- Teilen ist eine Zeile, die ein Auswahlblatt Link, GPX, KML öffnet (`components/tours/share-sheet.tsx`).
+- Verben: Löschen (für immer), Entfernen (nur hier weg), Verwerfen (nie gespeichert). Rückfragen immer als Frage.
+- Detailseiten tragen die Hauptaktion fest unten, eine je Phase. Ausfahrt: Route zum Treffpunkt, am Tag Jetzt losfahren, während der Fahrt Zur Navigation, danach Nochmal fahren.
+- Zurück überall als Pille mit Herkunft (`components/ui/back-link.tsx`), ohne bekannte Herkunft „Zurück“.
+
+**Icons**
+- SF Symbols in 16 (Text, Plaketten, Zurück, Schließen) und 20 (Zeilen, Blätter, runde Tasten), immer semibold. Ausnahmen: Sterne der Bewertung und Wetter 40, Manöver eigene Zeichnung.
+- Je Bedeutung ein Symbol: Link `link`, Teilen und GPX `square.and.arrow.up`, Kurvig Kurvenpfad, Veröffentlichen `globe`, Lead `person.line.dotted.person`.
+
+**Farben und Schrift**
+- `danger` #FF5A52 und `dangerTint` für Fehler und Endgültiges, die Bestätigung beim Löschen ist rot. Signal Orange bleibt der Hauptaktion und den Strecken.
+- Datumsblock neutral, nur heute in Orange.
+- Nebenzeilen und Hinweise 15 pt (`caption` Variante). 13 pt nur über `Type.caption` auf Karte, Plaketten und in der Tab Leiste.
+- Neue Tokens `textSoft`, `danger`, `dangerTint`; keine festen Farbwerte außerhalb von theme.ts außer Verkehrszeichen, Pegel Verlauf und Live Activity.
+
+**Glossar**
+- Tour: gespeichertes oder geplantes Objekt, auch in der Community (Reiter „Touren“). Runde: Tour mit gleichem Start und Ziel. Route: nur der Weg (Route zum Treffpunkt). Knopf im Planer „Tour erstellen“.
+- Strecke und Fahrzeit überall statt Länge und Dauer.
+- Highlight: kuratierte Strecke oder Pass mit Ansage. Traumstraße bleibt nur die Pegelstufe.
+- Kurven zählen alle Kurven einer Fahrt, Kehren nur Spitzkehren am Pass.
+- Ausfahrt: Termin mit Treffpunkt. Gruppenfahrt: gemeinsame Navigation mit Live Karte und Funk.
+- Organisator legt an, Lead führt und startet, Teilnehmer sind alle Leute einer Ausfahrt. Drivers nur als Community Reiter. Nachricht statt Anschreiben.
+- Lob am Ende: „Starke Runde!“ nur bei Runden, sonst „Angekommen in Imst“, zum Treffpunkt „Du bist am Treffpunkt“.
+
