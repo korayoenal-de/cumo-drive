@@ -54,7 +54,7 @@ export function MapPassActions({
       pointerEvents="box-none">
       <View style={styles.card}>
         <View style={styles.head}>
-          <SymbolView name="mountain.2.fill" size={18} tintColor={Colors.signal} />
+          <SymbolView weight="semibold" name="mountain.2.fill" size={20} tintColor={Colors.signal} />
           <View style={[styles.flex, pass.warn?.length ? styles.warned : null]}>
             {/* Warnung vor dem Hinzufügen: Label unter dem Namen, weitere Gründe darunter (Koray 12.11. abends) */}
             <AppText style={styles.name} numberOfLines={1}>

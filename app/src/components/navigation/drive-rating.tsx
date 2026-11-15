@@ -122,7 +122,7 @@ function Thumb({ up, on, name, onPress }: { up: boolean; on: boolean; name: stri
       onPressOut={() => s.set(withSpring(1, Motion.press))}
       onPress={onPress}>
       <Animated.View style={[styles.thumbBtn, on && { backgroundColor: up ? Colors.goodTint : Colors.signalTint }, anim]}>
-        <SymbolView name={up ? (on ? 'hand.thumbsup.fill' : 'hand.thumbsup') : on ? 'hand.thumbsdown.fill' : 'hand.thumbsdown'} size={20} tintColor={on ? tone : Colors.muted} />
+        <SymbolView weight="semibold" name={up ? (on ? 'hand.thumbsup.fill' : 'hand.thumbsup') : on ? 'hand.thumbsdown.fill' : 'hand.thumbsdown'} size={20} tintColor={on ? tone : Colors.muted} />
       </Animated.View>
     </Pressable>
   );

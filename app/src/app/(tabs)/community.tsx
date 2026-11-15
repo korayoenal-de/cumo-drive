@@ -6,6 +6,9 @@
  * Organisator nimmt an, danach Chat und am Tag die Gruppenfahrt.
  * Drivers (Koray 10.11.): Mitglieder an ihrem Wohnort, Fuhrpark und Anschreiben.
  */
+import { Kennzahlen, SeatsBadge } from '@/components/ui/kennzahlen';
+import { fahrzeit, meta as fmtMeta, strecke, wann } from '@/lib/format';
+import { useRideFun } from '@/lib/ride-fun';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -285,7 +288,7 @@ export default function Community() {
   const segControl = (
     <View style={styles.seg} accessibilityRole="tablist">
       <Animated.View pointerEvents="none" style={[styles.segThumb, thumbStyle]} />
-      <SegItem label="Routen" icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} onBox={onSegBox('routen')} ownFill={!thumbReady} />
+      <SegItem label="Touren" icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} onBox={onSegBox('routen')} ownFill={!thumbReady} />
       <SegItem label="Ausfahrten" icon="calendar" count={userId ? rides?.length ?? null : null} badge={openRequests + inviteCount} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} onBox={onSegBox('ausfahrten')} ownFill={!thumbReady} />
       <SegItem label="Drivers" icon="person.2" count={userId ? drivers?.length ?? null : null} badge={unread} on={seg === 'drivers'} onPress={() => switchSeg('drivers')} onBox={onSegBox('drivers')} ownFill={!thumbReady} />
     </View>
@@ -308,7 +311,7 @@ export default function Community() {
         )}
         {seg === 'ausfahrten' && userId && (
           <Pressable accessibilityRole="button" accessibilityLabel="Ausfahrt anlegen" hitSlop={4} onPress={() => router.push('/ausfahrt/neu')} style={styles.addBtn}>
-            <SymbolView name="plus" size={16} weight="bold" tintColor={Colors.text} />
+            <SymbolView name="plus" size={16} weight="semibold" tintColor={Colors.text} />
             <AppText style={styles.addText}>Anlegen</AppText>
           </Pressable>
         )}
@@ -333,7 +336,7 @@ export default function Community() {
         )}>
         {seg === 'routen' ? (
           <View style={styles.body}>
-            <TextInput maxFontSizeMultiplier={1.2} value={q} onChangeText={setQ} placeholder="Route, Fahrer, Ort oder PLZ suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Routen durchsuchen" returnKeyType="search" />
+            <TextInput maxFontSizeMultiplier={1.2} value={q} onChangeText={setQ} placeholder="Tour, Fahrer, Ort oder PLZ suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Routen durchsuchen" returnKeyType="search" />
             <View style={styles.wrap}>
               {SORTS.map((s) => (
                 <Chip key={s.id} label={s.label} active={sort === s.id} onPress={() => setSort(s.id)} />
@@ -471,7 +474,7 @@ function SegItem({ label, icon, count, badge, on, onPress, onBox, ownFill }: { o
         onPress={onPress}
         style={[styles.segItem, on && styles.segOn, on && ownFill && styles.segFill]}>
         <View>
-          <SymbolView name={icon} size={17} weight="bold" tintColor={on ? Colors.ground : Colors.muted} />
+          <SymbolView name={icon} size={20} weight="semibold" tintColor={on ? Colors.ground : Colors.muted} />
           {!on && !!badge && <View style={styles.badgeDot} />}
         </View>
         {on && (
@@ -525,10 +528,8 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
   const [fade] = useState(() => data == null);
   const km = Number(t.km);
   const author = t.author?.trim() || null;
-  const meta = useMemo(() => {
-    const date = new Date(t.published_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
-    return [`${formatKm(km, 0)} km`, t.curves ? `${t.curves} Kurven` : null, date].filter(Boolean).join('  ·  ');
-  }, [km, t.curves, t.published_at]);
+  // Meta Zeile wie überall: Strecke und Fahrzeit, Fahrspaß rechts (Konsistenzprüfung 15.11., K3, K9)
+  const meta = useMemo(() => fmtMeta(strecke(km), t.minutes ? fahrzeit(t.minutes) : null), [km, t.minutes]);
   const badge = mine ? <GoodBadge label="Von dir" /> : <FromBadge author={author} />;
 
   const open = async () => {
@@ -555,7 +556,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       // Bearbeitete Kopie nicht über das Lesezeichen löschen: die eigenen Änderungen gingen sonst verloren
       // (Koray 11.11.). Erkannt an der Länge, die nach dem Bearbeiten nicht mehr zum Original passt.
       if (!kept.published && Math.abs(kept.laenge_km - t.km) > 0.5) {
-        showToast('Du hast diese Route bearbeitet. Deine Fassung bleibt unter Touren.', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
+        showToast('Du hast diese Tour bearbeitet. Deine Fassung bleibt unter Touren.', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
         return;
       }
       try {
@@ -602,7 +603,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       onPress={() => void keep()}
       hitSlop={4}
       style={({ pressed }) => [styles.round, saved && styles.roundSaved, pressed && styles.pressed]}>
-      {busy === 'save' ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name={saved ? 'bookmark.fill' : 'bookmark'} size={19} tintColor={saved ? Colors.signal : Colors.text} weight="semibold" />}
+      {busy === 'save' ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name={saved ? 'bookmark.fill' : 'bookmark'} size={20} tintColor={saved ? Colors.signal : Colors.text} weight="semibold" />}
     </Pressable>
   );
 
@@ -610,9 +611,9 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
   const withdrawSheet = (
   <ConfirmSheet
     visible={confirm}
-    title="Möchtest du diese Route wirklich aus der Community nehmen?"
+    title="Möchtest du diese Tour wirklich aus der Community entfernen?"
     text="Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten."
-    confirmLabel="Herausnehmen"
+    confirmLabel="Entfernen"
     onConfirm={() => {
       setBusy('withdraw');
       withdrawCommunityTour(t.id)
@@ -632,21 +633,16 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
             <AppText style={styles.bigName} numberOfLines={2}>{t.name}</AppText>
             {badge}
           </View>
-          <FunMark score={data?.fun} />
           {bookmark}
         </View>
-        <View style={styles.metrics}>
-          <Metric label="Strecke" value={`${formatKm(km, 0)} KM`} />
-          {t.minutes ? <Metric label="Fahrzeit" value={`${Math.floor(t.minutes / 60)}:${String(t.minutes % 60).padStart(2, '0')} H`} /> : null}
-          {t.curves ? <Metric label="Kurven" value={String(t.curves)} /> : null}
-        </View>
+        <Kennzahlen km={km} minutes={t.minutes} fun={data?.fun} />
         {t.description ? <AppText style={styles.desc} numberOfLines={3}>{t.description}</AppText> : null}
         <Pressable accessibilityRole="button" onPress={() => void open()} style={styles.primary}>
           {busy === 'open' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Im Planer öffnen</AppText>}
         </Pressable>
         {!mine && (
           <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={styles.textBtn}>
-            <AppText style={styles.textBtnText}>Route melden</AppText>
+            <AppText style={styles.textBtnText}>Tour melden</AppText>
           </Pressable>
         )}
         {!mine && <ReportSheet visible={report} kind="tour" refId={t.id} onClose={() => setReport(false)} />}
@@ -777,8 +773,11 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
   const press = usePress();
   const open = () => router.push({ pathname: '/ausfahrt/[id]', params: { id: r.id } });
   const arr = arrival(r);
-  const where = r.meeting?.name ? `Treffpunkt ${r.meeting.name}` : r.roundTrip ? 'Rundtour' : null;
+  // Treffpunkt immer als Ort (K6); ohne gewählten Treffpunkt steht nichts statt „Rundtour“
+  const where = r.meeting?.name ? `ab ${r.meeting.name}` : null;
   const free = freeSeats(r);
+  const fun = useRideFun(r.id);
+  const status = !r.isOwner && !r.myStatus && free > 0 ? null : <RideStatus r={r} />;
 
   if (big) {
     return (
@@ -787,18 +786,14 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
           <DateBlock d={r.startsAt} />
           <View style={styles.flex}>
             <AppText style={styles.bigName} numberOfLines={2}>{r.name}</AppText>
-            <AppText variant="caption" muted numberOfLines={1}>{[`${clock(r.startsAt)} Uhr`, where].filter(Boolean).join('  ·  ')}</AppText>
+            <AppText muted numberOfLines={1}>{fmtMeta(wann(r.startsAt), where)}</AppText>
           </View>
         </View>
-        <View style={styles.metrics}>
-          {r.km != null && <Metric label="Strecke" value={`${formatKm(r.km, 0)} KM`} />}
-          {arr && <Metric label={r.roundTrip ? 'Zurück' : 'Ankunft'} value={clock(arr)} />}
-          <Metric label="Plätze" value={free > 0 ? `${free} FREI` : 'VOLL'} />
-        </View>
-        {!r.roundTrip && r.goalName ? <AppText variant="caption" muted>Ziel: {r.goalName}</AppText> : null}
+        <Kennzahlen km={r.km} minutes={r.minutes} fun={fun} />
+        {!r.roundTrip && arr ? <AppText muted>{`Ankunft etwa ${clock(arr)}${r.goalName ? ` in ${r.goalName}` : ''}`}</AppText> : null}
         <View style={styles.row}>
-          <AppText variant="caption" muted style={styles.flex} numberOfLines={1}>Organisiert von {r.isOwner ? 'dir' : r.ownerName}</AppText>
-          <RideStatus r={r} />
+          <AppText muted style={styles.flex} numberOfLines={1}>Organisiert von {r.isOwner ? 'dir' : r.ownerName}</AppText>
+          {status ?? <SeatsBadge free={free} />}
         </View>
         <Pressable accessibilityRole="button" onPress={open} style={styles.primary}>
           <AppText style={styles.primaryText}>{rideAction(r)}</AppText>
@@ -819,12 +814,13 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
         <DateBlock d={r.startsAt} />
         <View style={styles.main}>
           <AppText style={styles.name} numberOfLines={2}>{r.name}</AppText>
-          <AppText variant="caption" muted numberOfLines={1} style={styles.num}>
-            {[r.isOwner || r.myStatus === 'zugesagt' ? `${relDay(r.startsAt)}, ${clock(r.startsAt)} Uhr` : `${clock(r.startsAt)} Uhr`, r.km != null ? `${formatKm(r.km, 0)} km` : null, free > 0 ? `${free} frei` : 'voll'].filter(Boolean).join('  ·  ')}
+          <AppText muted numberOfLines={1} style={styles.num}>
+            {fmtMeta(wann(r.startsAt), r.km != null ? strecke(r.km) : null)}
           </AppText>
-          <AppText variant="caption" muted numberOfLines={1}>{where ?? `Von ${r.ownerName}`}</AppText>
+          <AppText muted numberOfLines={1}>{where ?? `Von ${r.ownerName}`}</AppText>
+          {status ?? <SeatsBadge free={free} />}
         </View>
-        <RideStatus r={r} />
+        <FunMark score={fun} reserve />
       </Pressable>
     </Animated.View>
   );

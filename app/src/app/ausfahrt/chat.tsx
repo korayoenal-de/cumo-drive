@@ -2,6 +2,8 @@
  * Chat einer Ausfahrt: Organisator und angenommene Mitfahrer. Neue Nachrichten kommen live
  * (Supabase Realtime), eigene stehen rechts in getöntem Orange.
  */
+import { meta as fmtMeta, wann } from '@/lib/format';
+import { BackLink } from '@/components/ui/back-link';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -13,7 +15,7 @@ import { Avatar } from '@/components/community/ride-bits';
 import { ReportSheet } from '@/components/moderation/report-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
-import { ausfahrtTeilnehmer, clock, listAusfahrten, sendNachricht, shortDate, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
+import { ausfahrtTeilnehmer, clock, listAusfahrten, sendNachricht, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { enablePush, setOpenChat } from '@/lib/push';
 
@@ -75,14 +77,12 @@ export default function AusfahrtChat() {
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.head, { paddingTop: insets.top + Spacing.s }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Zurück" hitSlop={4} onPress={back} style={styles.roundBtn}>
-          <SymbolView name="chevron.left" size={18} weight="semibold" tintColor={Colors.text} />
-        </Pressable>
+        <BackLink label="Ausfahrt" onPress={back} />
         <View style={styles.flex}>
           <AppText style={styles.title} numberOfLines={1}>{a?.name ?? 'Chat'}</AppText>
           {a && (
             <AppText variant="caption" muted numberOfLines={1}>
-              {shortDate(a.startsAt)}, {clock(a.startsAt)}  ·  {members.length} {members.length === 1 ? 'Teilnehmer' : 'Teilnehmer'}
+              {fmtMeta(wann(a.startsAt), `${members.length} Teilnehmer`)}
             </AppText>
           )}
         </View>
@@ -97,7 +97,7 @@ export default function AusfahrtChat() {
         {a?.meeting && (
           <View style={styles.pinned}>
             <SymbolView name="mappin.and.ellipse" size={16} weight="semibold" tintColor={Colors.signal} />
-            <AppText style={styles.pinnedText} numberOfLines={2}>Treffpunkt {a.meeting.name}, {clock(a.startsAt)} Uhr</AppText>
+            <AppText style={styles.pinnedText} numberOfLines={2}>Treffpunkt {a.meeting.name}, {clock(a.startsAt)}</AppText>
           </View>
         )}
         {list === null && !error && <ActivityIndicator color={Colors.muted} />}
@@ -124,7 +124,7 @@ export default function AusfahrtChat() {
             </Animated.View>
           );
         })}
-        <AppText variant="caption" muted style={styles.hint}>Am Tag der Ausfahrt startet der Organisator die Gruppenfahrt mit Live Positionen.</AppText>
+        <AppText variant="caption" muted style={styles.hint}>Am Tag der Ausfahrt startet die Lead die Gruppenfahrt mit Live Positionen.</AppText>
       </ScrollView>
 
       {sendErr && <AppText style={[styles.error, styles.sendErr]}>{sendErr}</AppText>}
@@ -140,7 +140,7 @@ export default function AusfahrtChat() {
           accessibilityLabel="Nachricht schreiben"
         />
         <Pressable accessibilityRole="button" accessibilityLabel="Senden" accessibilityState={{ disabled: !canSend }} disabled={!canSend} onPress={() => void send()} style={[styles.send, !canSend && styles.sendOff]}>
-          {sending ? <ActivityIndicator color={Colors.onSignal} /> : <SymbolView name="arrow.up" size={18} weight="bold" tintColor={Colors.onSignal} />}
+          {sending ? <ActivityIndicator color={Colors.onSignal} /> : <SymbolView name="arrow.up" size={20} weight="semibold" tintColor={Colors.onSignal} />}
         </Pressable>
       </View>
       <ReportSheet visible={!!report} kind="ride_message" refId={report?.ref ?? ''} userId={report?.userId} name={report?.name} onClose={() => setReport(null)} />

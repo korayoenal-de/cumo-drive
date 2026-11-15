@@ -110,7 +110,7 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
               tracksViewChanges={false}
               // näher heran, bis sich der Kreis auflöst
               onPress={() => map.current?.fitToCoordinates(withSpan(g.items.map((x) => x.p), 0.03).map(ll), { edgePadding: pad, animated: true })}
-              accessibilityLabel={`${n} ${kind === 'driver' ? 'Fahrer' : kind === 'route' ? 'Routen' : 'Ausfahrten'} hier, tippen zum Heranzoomen`}>
+              accessibilityLabel={`${n} ${kind === 'driver' ? 'Fahrer' : kind === 'route' ? 'Touren' : 'Ausfahrten'} hier, tippen zum Heranzoomen`}>
               <View style={[styles.cluster, n >= 10 && styles.clusterM, n >= 100 && styles.clusterL, kind === 'ausfahrt' && styles.clusterRide]}>
                 <AppText style={[styles.clusterText, kind === 'ausfahrt' && styles.clusterTextRide]}>{clusterLabel(n)}</AppText>
               </View>
@@ -176,7 +176,7 @@ function Pin({ pin, on }: { pin: CommunityPin; on: boolean }) {
             </View>
           </View>
         ) : (
-          <SymbolView name="point.topleft.down.to.point.bottomright.curvepath" size={13} weight="bold" tintColor={fg} />
+          <SymbolView name="point.topleft.down.to.point.bottomright.curvepath" size={16} weight="semibold" tintColor={fg} />
         )}
         <AppText style={[styles.label, { color: fg }]}>{pin.label}</AppText>
       </View>

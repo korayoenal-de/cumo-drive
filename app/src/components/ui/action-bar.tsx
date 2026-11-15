@@ -136,7 +136,7 @@ function MoreButton({ open, onOpen }: { open: boolean; onOpen: (a: Anchor) => vo
         ref.current?.measureInWindow((x: number, y: number, w: number, h: number) => onOpen({ top: y, bottom: y + h, right: x + w }))
       }
       style={({ pressed }) => [styles.round, styles.big, open && styles.roundOpen, pressed && styles.pressed]}>
-      <SymbolView name={open ? 'xmark' : 'ellipsis'} size={20} tintColor={Colors.text} weight="bold" />
+      <SymbolView name={open ? 'xmark' : 'ellipsis'} size={20} tintColor={Colors.text} weight="semibold" />
     </Pressable>
   );
 }

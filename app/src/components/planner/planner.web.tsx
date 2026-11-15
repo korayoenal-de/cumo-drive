@@ -795,7 +795,7 @@ export default function Planner() {
                         },
                       },
                       { key: 'close', label: 'Tour schließen', onPress: () => plan.reset() },
-                      { key: 'del', label: 'Route löschen', danger: true, onPress: () => setAskDelete(true) },
+                      { key: 'del', label: 'Tour löschen', danger: true, onPress: () => setAskDelete(true) },
                     ]
                   : [{ key: 'reset', label: 'Planung verwerfen', danger: true, onPress: () => plan.reset() }]),
               ]}
@@ -821,7 +821,7 @@ export default function Planner() {
         savedTour.published ? (
           <ConfirmSheet
             narrow={narrow}
-            title="Auch die veröffentlichte Route löschen?"
+            title="Auch die veröffentlichte Tour löschen?"
             text={`${savedTour.name} steht in der Community. Löschen nimmt sie auch dort heraus. Nur bei dir entfernen geht unter Touren.`}
             confirmLabel="Überall löschen"
             onClose={() => setAskDelete(false)}

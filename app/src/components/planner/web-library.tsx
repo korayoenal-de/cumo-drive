@@ -206,7 +206,7 @@ function DeleteSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
     return (
       <WebSheet
         narrow={props.narrow}
-        title="Auch die veröffentlichte Route löschen?"
+        title="Auch die veröffentlichte Tour löschen?"
         subtitle={`${t.name} steht in der Community. Du entscheidest, ob sie dort bleibt.`}
         onClose={props.onClose}
         rows={[

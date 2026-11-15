@@ -83,7 +83,7 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
       onPress={() => onPick(h.p, h.name)}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
       <View style={styles.icon}>
-        <SymbolView name={meta.icon} size={16} tintColor={Colors.signal} />
+        <SymbolView weight="semibold" name={meta.icon} size={16} tintColor={Colors.signal} />
       </View>
       <View style={styles.rowMain}>
         <AppText style={styles.name} numberOfLines={1}>
@@ -112,7 +112,7 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
             </AppText>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={onClose} style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
-            <SymbolView name="xmark" size={18} weight="semibold" tintColor={Colors.text} />
+            <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         </View>
         <View role="tablist" style={styles.tabs}>
@@ -207,19 +207,19 @@ export function OrtBadge({ p, withHotel, highlight, open }: { p: LatLon; withHot
   if (open) {
     return (
       <View style={[badge.box, badge.open]}>
-        <SymbolView name="chevron.up" size={14} tintColor={Colors.text} weight="bold" />
+        <SymbolView name="chevron.up" size={16} tintColor={Colors.text} weight="semibold" />
       </View>
     );
   }
   return (
     <View style={[badge.box, tint && badge.tint]}>
-      {withHotel && <SymbolView name="bed.double.fill" size={15} tintColor={c} />}
+      {withHotel && <SymbolView weight="semibold" name="bed.double.fill" size={16} tintColor={c} />}
       {tint ? (
         count != null && count > 0 ? <AppText style={badge.count}>{count}</AppText> : null
       ) : (
         <>
-          <SymbolView name="cup.and.saucer.fill" size={14} tintColor={c} />
-          <SymbolView name="fork.knife" size={14} tintColor={c} />
+          <SymbolView weight="semibold" name="cup.and.saucer.fill" size={16} tintColor={c} />
+          <SymbolView weight="semibold" name="fork.knife" size={16} tintColor={c} />
         </>
       )}
     </View>

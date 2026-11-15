@@ -23,8 +23,15 @@ export const Colors = {
   signalTint: 'rgba(226,70,28,0.14)',
   /** Hauptaktion noch inaktiv, etwa Losfahren während die Route berechnet wird (Koray 9.11.) */
   signalDeep: '#5C2212',
-  /** Text für Entfernen und Fehler auf signalTint (Design System stop-text) */
-  stopText: '#FF8A66',
+  /**
+   * Fehler und Gefährliches (Konsistenzprüfung 15.11., C1): eigenes Rot, klar getrennt vom Signal Orange.
+   * stopText bleibt als alter Name für denselben Wert.
+   */
+  danger: '#FF5A52',
+  stopText: '#FF5A52',
+  dangerTint: 'rgba(255,90,82,0.14)',
+  /** Heller Nebentext auf dunklen Plaketten (Plakette „Von …“, C2) */
+  textSoft: '#C9C9CD',
   goodTint: 'rgba(76,195,138,0.14)',
   warnTint: 'rgba(232,176,58,0.14)',
   /** Abdunkelung hinter Sheets und Menüs (vorher 0.35 bis 0.6) */

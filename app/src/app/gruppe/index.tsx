@@ -4,8 +4,8 @@
  * Namen einladen); Eingeladene sagen über die Einladung in der App zu und fahren mit.
  * Beitreten per Code gibt es in der App nicht mehr.
  */
+import { BackLink } from '@/components/ui/back-link';
 import { router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import * as Location from 'expo-location';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
@@ -24,22 +24,8 @@ import { createHandoff, fetchHandoff } from '@/lib/handoff';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 import { formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
 
-const ROLE_LABEL: Record<Role, string> = { lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' };
+const ROLE_LABEL: Record<Role, string> = { lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Teilnehmer' };
 const EMPTY_TOUR: Tour = { name: '', laenge_km: 0, wegpunkte: [], linie: [], warnungen: [] };
-
-/** Zurück: die Gruppenfahrt ist kein eigener Tab. */
-function BackLink() {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Zurück"
-      hitSlop={12}
-      onPress={() => (router.canGoBack() ? router.back() : router.navigate('/'))}
-      style={styles.back}>
-      <SymbolView name="chevron.left" size={18} weight="semibold" tintColor={Colors.text} />
-    </Pressable>
-  );
-}
 
 export default function Gruppe() {
   const ride = useRide();
@@ -55,7 +41,7 @@ function Start({ error }: { error: string | null }) {
       <AppText muted>Alle sehen sich live auf der Karte und schicken sich Kurznachrichten. Sprechfunk folgt.</AppText>
       <View style={styles.card}>
         <AppText variant="label">So geht es</AppText>
-        <AppText>Öffne eine gespeicherte Tour unter Touren, tippe auf Losfahren und dann auf Als Gruppe fahren. Dort lädst du bis zu 5 Mitfahrer mit ihrem Namen ein.</AppText>
+        <AppText>Öffne eine gespeicherte Tour unter Touren, tippe auf Losfahren und dann auf Als Gruppe fahren. Dort lädst du bis zu 5 Teilnehmer mit ihrem Namen ein.</AppText>
         <AppText muted>Wurdest du eingeladen, erscheint die Einladung unten über den Tabs. Nach der Zusage fährst du mit einem Tipp mit.</AppText>
         <Pressable accessibilityRole="button" onPress={() => router.navigate('/touren')} style={[styles.secondary, styles.secondaryOnSurface]}>
           <AppText style={styles.secondaryText}>Zu Touren</AppText>
@@ -225,7 +211,7 @@ function Active() {
       <ConfirmSheet
         visible={askOpen}
         title={ask === 'end' ? 'Möchtest du die Fahrt wirklich für alle beenden?' : 'Möchtest du die Fahrt wirklich verlassen?'}
-        text={ask === 'end' ? 'Alle Mitfahrer verlieren die Live Karte und den Funk.' : 'Die Gruppe sieht dich dann nicht mehr auf der Karte. Du kannst später wieder mitfahren.'}
+        text={ask === 'end' ? 'Alle Teilnehmer verlieren die Live Karte und den Funk.' : 'Die Gruppe sieht dich dann nicht mehr auf der Karte. Du kannst später wieder mitfahren.'}
         confirmLabel={ask === 'end' ? 'Beenden' : 'Verlassen'}
         onConfirm={() => (ask === 'end' ? void end() : void leaveRide())}
         onClose={() => setAsk(null)}
@@ -261,7 +247,6 @@ function MemberRow({ m, me, myPos, now, canAssign }: { m: Member; me: boolean; m
 }
 
 const styles = StyleSheet.create({
-  back: { alignSelf: 'flex-start', width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },

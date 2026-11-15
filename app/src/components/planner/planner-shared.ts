@@ -1,6 +1,7 @@
 /**
  * Gemeinsame Typen und Helfer des Planers: Punkte, Etappenprofile, Ortsvorschläge, Pass Abgleich.
  */
+import { fahrzeit } from '@/lib/format';
 import { useEffect, useMemo, useState } from 'react';
 
 import { passPoint, type Pass } from '@/lib/passes';
@@ -127,7 +128,5 @@ export type Mode = 'beschreiben' | 'rundtour' | 'tour';
 
 /** Fahrzeit kompakt für große Zahlen, damit sie in eine Zeile passt: 2:11 h oder 45 min. */
 export function bigDuration(min: number): string {
-  const m = Math.round(min);
-  if (m < 60) return `${m} min`;
-  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')} h`;
+  return fahrzeit(min);
 }

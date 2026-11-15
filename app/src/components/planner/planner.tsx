@@ -903,7 +903,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             </AppText>
           )}
 
-          <Section label="Dauer">
+          <Section label="Fahrzeit">
             <View style={styles.durRow}>
               {DURATIONS.map((d) => {
                 const active = eff.minutes === d.minutes && !eff.km;
@@ -1054,11 +1054,11 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             </View>
           </Section>
 
-          <Section label="Länge">
+          <Section label="Wie lang?">
             <View style={styles.card}>
               <View style={styles.wrap}>
-                <Chip label="Kilometer" active={lengthBy === 'km'} onSurface onPress={() => setLengthBy('km')} />
-                <Chip label="Dauer" active={lengthBy === 'dauer'} onSurface onPress={() => setLengthBy('dauer')} />
+                <Chip label="Strecke" active={lengthBy === 'km'} onSurface onPress={() => setLengthBy('km')} />
+                <Chip label="Fahrzeit" active={lengthBy === 'dauer'} onSurface onPress={() => setLengthBy('dauer')} />
               </View>
               <View style={styles.stepper}>
                 <StepButton

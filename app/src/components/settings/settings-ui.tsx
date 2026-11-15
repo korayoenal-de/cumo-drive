@@ -2,7 +2,7 @@
  * Bausteine der Einstellungen (Entwurf "Einstellungen neu", Koray 10.11.): Gruppen mit grauem Label,
  * Zeilen in einer getönten Fläche, Wert rechts und Pfeil, Unterseiten mit Zurück zu Einstellungen.
  */
-import { router } from 'expo-router';
+import { BackLink } from '@/components/ui/back-link';
 import { SymbolView } from 'expo-symbols';
 import { Children, isValidElement, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
@@ -16,15 +16,7 @@ export function SubScreen({ title, children }: { title: string; children: ReactN
   const insets = useSafeAreaInsets();
   return (
     <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: insets.bottom + Spacing.xxxl }]} keyboardShouldPersistTaps="handled">
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Zurück zu Einstellungen"
-        hitSlop={4}
-        onPress={() => (router.canGoBack() ? router.back() : router.navigate('/einstellungen'))}
-        style={styles.back}>
-        <SymbolView name="chevron.left" size={15} weight="bold" tintColor={Colors.text} />
-        <AppText style={styles.backText}>Einstellungen</AppText>
-      </Pressable>
+      <BackLink label="Einstellungen" fallback="/einstellungen" />
       <AppText variant="display" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {title}
       </AppText>
@@ -62,7 +54,7 @@ export function Row({ title, value, onPress, danger, chevron = !!onPress, a11yHi
           {value}
         </AppText>
       ) : null}
-      {chevron && <SymbolView name="chevron.right" size={13} weight="bold" tintColor="#5E5E63" />}
+      {chevron && <SymbolView name="chevron.right" size={16} weight="semibold" tintColor={Colors.faint} />}
     </Pressable>
   );
 }
@@ -81,8 +73,6 @@ export function SwitchRow({ title, value, onChange }: { title: string; value: bo
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
   content: { paddingHorizontal: Spacing.l, gap: Spacing.xl },
-  back: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingLeft: 12, paddingRight: 16, borderRadius: 22, backgroundColor: Colors.surface },
-  backText: { fontFamily: Fonts.bold, fontSize: Type.body },
   group: { gap: Spacing.s },
   groupLabel: { paddingHorizontal: 4, fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   box: { backgroundColor: Colors.surface, borderRadius: Radius.l, overflow: 'hidden' },

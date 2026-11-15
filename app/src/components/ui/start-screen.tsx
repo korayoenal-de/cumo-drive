@@ -266,8 +266,8 @@ function Sky({ width, height, still }: { width: number; height: number; still: b
       <Svg width={size} height={size}>
         <Defs>
           <LinearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0.15" stopColor="#252528" />
-            <Stop offset="0.5" stopColor="#151517" />
+            <Stop offset="0.15" stopColor={Colors.surface2} />
+            <Stop offset="0.5" stopColor={Colors.surface} />
             <Stop offset="0.85" stopColor={Colors.ground} />
           </LinearGradient>
         </Defs>

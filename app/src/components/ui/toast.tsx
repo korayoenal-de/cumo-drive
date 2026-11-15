@@ -27,7 +27,7 @@ export function ToastHost() {
         accessibilityLiveRegion="polite"
         accessibilityRole="alert"
         style={styles.toast}>
-        <SymbolView name={error ? 'exclamationmark.circle.fill' : 'checkmark.circle.fill'} size={20} tintColor={error ? Colors.signal : Colors.good} />
+        <SymbolView weight="semibold" name={error ? 'exclamationmark.circle.fill' : 'checkmark.circle.fill'} size={20} tintColor={error ? Colors.signal : Colors.good} />
         <Pressable accessibilityRole="button" accessibilityLabel={`${t.text}, schließen`} onPress={hideToast} style={styles.flex}>
           <AppText style={styles.text} numberOfLines={2}>
             {t.text}

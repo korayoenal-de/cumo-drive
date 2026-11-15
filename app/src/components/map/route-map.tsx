@@ -803,7 +803,7 @@ function WarnCard({ top, klasse, name, reasons, onClose }: { top: number; klasse
         {reasons.length > 0 && <AppText style={styles.warnCardText}>{reasons.map(trimDecimals).join(', ')}</AppText>}
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel="Hinweis schließen" hitSlop={12} onPress={onClose} style={styles.warnCardClose}>
-        <SymbolView name="xmark" size={14} weight="semibold" tintColor={Colors.muted} />
+        <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.muted} />
       </Pressable>
     </Animated.View>
   );
@@ -864,7 +864,7 @@ function OtherMarker({ o }: { o: OtherDriver }) {
       coordinate={region as unknown as LatLng}
       anchor={{ x: 0.5, y: 0.5 }}
       title={o.name}
-      description={`${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[o.role]}${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}`}
+      description={`${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Teilnehmer' }[o.role]}${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}`}
       zIndex={30}
       tracksViewChanges={false}>
       <View style={[styles.other, { borderColor: o.own ? Colors.muted : o.off ? Colors.warn : ROLE_COLOR[o.role] }, o.off && !o.own && styles.otherOff, faded && styles.otherStale]}>

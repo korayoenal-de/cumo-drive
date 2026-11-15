@@ -39,7 +39,7 @@ export function CustomColorButton({ value, custom, onPick }: { value: string; cu
         }}
         style={[styles.ring, custom && styles.ringOn]}>
         <View style={[styles.dot, custom ? { backgroundColor: value } : styles.dotEmpty]}>
-          <SymbolView name={custom ? 'pencil' : 'eyedropper'} size={15} tintColor={custom ? Colors.ground : Colors.text} weight="semibold" />
+          <SymbolView name={custom ? 'pencil' : 'eyedropper'} size={16} tintColor={custom ? Colors.ground : Colors.text} weight="semibold" />
         </View>
       </Pressable>
       <OptionsSheet visible={open} title="Sonderfarbe" subtitle="Hexwert deiner Lackfarbe, etwa #8A9A5B" onClose={() => setOpen(false)}>

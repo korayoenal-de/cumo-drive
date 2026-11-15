@@ -2,6 +2,8 @@
  * Navigationsscreen: Karte vollflächig, oben das nächste Manöver, unten Ankunft und Steuerung.
  * Läuft außerhalb der Tabs im Vollbild. Die Logik kommt aus useNavigation (src/lib/navigation).
  */
+import { tourFun } from '@/lib/fun-score';
+import { fahrzeit, meta as fmtMeta, strecke } from '@/lib/format';
 import { setRideStatus } from '@/lib/group/invites';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router, type Href } from 'expo-router';
@@ -20,7 +22,7 @@ import { FunkBanner, HighlightCard, HighlightStrip, LeadHaltPill, StopAlert } fr
 import { BigButton, BottomBar, InfoCard, LANES_SHOW_M, laneSymbol, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Radius, Spacing, Type } from '@/constants/theme';
 import { setActiveTour, useActiveTour } from '@/lib/active-tour';
 import { getEditOrigin, requestEditBack } from '@/lib/edit-tour';
 import { PACE_NOTES_RELEASED, setDriveSetting, useDriveSettings } from '@/lib/drive-settings';
@@ -70,6 +72,9 @@ const TOP_BASE_H = 200;
 export default function NavigationScreen() {
   useKeepAwake();
   const active = useActiveTour();
+  // Fahrspaß vor dem Start wie im Planer (Konsistenzprüfung 15.11., K1)
+  const activeTour = active?.tour ?? null;
+  const funScore = useMemo(() => (activeTour ? (tourFun(flatten(activeTour).map((x) => x.p))?.score ?? null) : null), [activeTour]);
   const insets = useSafeAreaInsets();
   const win = useWindowDimensions();
   const [secret, setSecret] = useState(false);
@@ -998,6 +1003,13 @@ export default function NavigationScreen() {
     );
   }
 
+  // Lob passend zur Fahrt (Konsistenzprüfung 15.11., W7): Runde, A nach B oder Weg zum Treffpunkt
+  const wp = active.tour.wegpunkte;
+  const toMeeting = active.tour.name.startsWith('Zum Treffpunkt');
+  const isRound = wp.length > 1 && haversine(wp[0], wp[wp.length - 1]) < 3000;
+  const goalName = active.tour.namen?.[active.tour.namen.length - 1];
+  const congrats = toMeeting ? 'Du bist am Treffpunkt' : isRound ? 'Starke Runde!' : goalName ? `Angekommen in ${goalName}` : 'Angekommen';
+
   return (
     <View style={styles.root}>
       <RouteMap
@@ -1234,8 +1246,7 @@ export default function NavigationScreen() {
                   {active.tour.name}
                 </AppText>
                 <AppText variant="caption" muted>
-                  {formatKm(route?.km ?? active.tour.laenge_km, 0)} km
-                  {active.tour.minutes ? `, etwa ${Math.round(active.tour.minutes)} min` : ''}
+                  {fmtMeta(strecke(route?.km ?? active.tour.laenge_km), active.tour.minutes ? fahrzeit(active.tour.minutes) : null, funScore != null && funScore >= 0 ? `Fahrspaß ${funScore}` : null)}
                 </AppText>
               </Pressable>
               {far && !noEntryChoice && (
@@ -1327,7 +1338,7 @@ export default function NavigationScreen() {
           <ScrollView style={{ maxHeight: win.height - insets.top - Spacing.l }} contentContainerStyle={styles.pad} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <InfoCard tone="good">
               <AppText variant="label">Angekommen</AppText>
-              <AppText style={styles.congrats}>Starke Runde!</AppText>
+              <AppText style={styles.congrats}>{congrats}</AppText>
               <AppText muted>
                 {formatKm(drivenKm || route?.km || active.tour.laenge_km)} km gefahren auf {active.tour.name}.
               </AppText>
@@ -1355,6 +1366,7 @@ export default function NavigationScreen() {
         title="Möchtest du die Strecke der Gruppe wirklich verlassen?"
         text="Du fährst dann deine eigene Route. Die Gruppe sieht dich weiter auf der Karte und erfährt davon."
         confirmLabel="Eigene Route"
+        danger={false}
         onConfirm={goOwn}
         onClose={() => setConfirmOwn(false)}
       />
@@ -1377,30 +1389,29 @@ function SavedNote({ saved }: { saved: string | null }) {
   );
 }
 
+/** Fahrtstatistik nach der Fahrt (Konsistenzprüfung 15.11., K10, T2): Label über dem Wert wie überall, ohne leere Zellen */
 function StatsGrid({ st }: { st: RideStats }) {
-  const h = Math.floor(st.movingMin / 60);
-  const m = Math.round(st.movingMin % 60);
-  const items: [string, string][] = [
-    [formatKm(st.km, st.km < 10 ? 1 : 0), 'km'],
-    [h ? `${h}:${String(m).padStart(2, '0')} h` : `${m} min`, 'Fahrzeit in Bewegung'],
-    [`${Math.round(st.avgKmh)} km/h`, 'Schnitt'],
-    [st.maxKmh ? `${Math.round(st.maxKmh.value)} km/h` : '–', 'Spitze'],
-    [st.maxLatG ? fmtG(st.maxLatG.value) : '–', st.maxLatG ? `Querbeschleunigung, Kurve ${st.maxLatG.side}` : 'Querbeschleunigung'],
-    [st.maxBrakeG ? fmtG(st.maxBrakeG.value) : '–', 'Stärkste Bremsung'],
-    [st.maxAccelG ? fmtG(st.maxAccelG.value) : '–', 'Stärkste Beschleunigung'],
-    [String(st.curves), 'Kurven'],
+  const items: [string, string | null][] = [
+    ['Strecke', strecke(st.km)],
+    ['Fahrzeit', fahrzeit(st.movingMin)],
+    ['Schnitt', `${Math.round(st.avgKmh)} km/h`],
+    ['Spitze', st.maxKmh ? `${Math.round(st.maxKmh.value)} km/h` : null],
+    [st.maxLatG ? `Quer, Kurve ${st.maxLatG.side}` : 'Quer', st.maxLatG ? fmtG(st.maxLatG.value) : null],
+    ['Stärkste Bremsung', st.maxBrakeG ? fmtG(st.maxBrakeG.value) : null],
+    ['Stärkste Beschleunigung', st.maxAccelG ? fmtG(st.maxAccelG.value) : null],
+    ['Kurven', String(st.curves)],
   ];
   return (
     <View style={styles.statsGrid}>
-      {items.map(([v, l]) => (
-        <View key={l} style={styles.statCell}>
-          <AppText style={styles.statValue}>{v}</AppText>
-          <AppText variant="caption" muted>
-            {l}
-          </AppText>
-        </View>
-      ))}
-      <AppText variant="caption" muted style={styles.statNote}>
+      {items
+        .filter((x): x is [string, string] => x[1] != null)
+        .map(([l, v]) => (
+          <View key={l} style={styles.statCell}>
+            <AppText style={styles.statLabel}>{l}</AppText>
+            <AppText style={styles.statValue}>{v}</AppText>
+          </View>
+        ))}
+      <AppText muted style={styles.statNote}>
         Aus den GPS Daten berechnet, die Spitzenwerte sind auf der Karte markiert.
       </AppText>
     </View>
@@ -1410,7 +1421,8 @@ function StatsGrid({ st }: { st: RideStats }) {
 const styles = StyleSheet.create({
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: Spacing.m },
   statCell: { width: '50%', gap: 2, paddingRight: Spacing.s },
-  statValue: { fontFamily: Fonts.display, fontSize: 22, fontVariant: ['tabular-nums'] },
+  statLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
+  statValue: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, textTransform: 'uppercase', fontVariant: ['tabular-nums'] },
   statNote: { width: '100%' },
   root: { flex: 1, backgroundColor: Colors.ground },
   pad: { paddingHorizontal: Spacing.l },

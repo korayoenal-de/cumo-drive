@@ -66,7 +66,7 @@ export function WeatherMarkers({ items, onPress }: { items: Item[]; onPress: (it
               onPress={() => onPress(it)}
               tracksViewChanges={false}>
               <View style={styles.plaque} accessibilityLabel={`${it.pass.name}: ${Math.round(w.temp)} Grad${reason ? `, ${reason}` : ''}`}>
-                <SymbolView name={w.symbol as never} size={12} weight="semibold" type="monochrome" tintColor={reason ? Colors.warn : Colors.muted} />
+                <SymbolView name={w.symbol as never} size={16} weight="semibold" type="monochrome" tintColor={reason ? Colors.warn : Colors.muted} />
                 <AppText style={styles.plaqueText}>{fmtTemp(w.temp)}</AppText>
               </View>
             </Marker>
@@ -94,7 +94,7 @@ export function WeatherSheet({ item, onClose }: { item: Item | null; onClose: ()
       {w && (
         <View style={styles.sheet}>
           <View style={styles.big}>
-            <SymbolView name={w.symbol as never} size={40} type="multicolor" tintColor={Colors.text} />
+            <SymbolView weight="semibold" name={w.symbol as never} size={40} type="multicolor" tintColor={Colors.text} />
             <AppText style={styles.temp}>{fmtTemp(w.temp)}</AppText>
             <AppText style={styles.cond} numberOfLines={2}>
               gefühlt {fmtTemp(w.feels)}
@@ -102,7 +102,7 @@ export function WeatherSheet({ item, onClose }: { item: Item | null; onClose: ()
           </View>
           {reason && (
             <View style={styles.reason}>
-              <SymbolView name="exclamationmark.triangle.fill" size={16} tintColor={Colors.warn} />
+              <SymbolView weight="semibold" name="exclamationmark.triangle.fill" size={16} tintColor={Colors.warn} />
               <AppText style={styles.reasonText}>
                 {reason === 'kalt' ? `Oben nur ${Math.round(w.temp)} Grad.` : reason === 'Regen' ? 'Regen wahrscheinlich, nasse Kehren.' : reason === 'Schnee' ? 'Schnee möglich.' : reason === 'Sturmböen' ? `Böen bis ${Math.round(w.gust)} km/h.` : 'Glätte möglich.'}
               </AppText>

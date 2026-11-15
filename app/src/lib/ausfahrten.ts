@@ -305,8 +305,9 @@ const MON = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'Augu
 
 export const weekday = (d: Date) => WD[d.getDay()];
 export const clock = (d: Date) => `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-/** Sa 14.11. */
-export const shortDate = (d: Date) => `${WD[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1}.`;
+/** Sa 14. Nov. (Konsistenzprüfung 15.11., K8) */
+export const shortDate = (d: Date) => `${WD[d.getDay()]} ${d.getDate()}. ${MON_SHORT[d.getMonth()]}`;
+const MON_SHORT = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
 /** Samstag, 14. November */
 export const longDate = (d: Date) => `${WD_LONG[d.getDay()]}, ${d.getDate()}. ${MON[d.getMonth()]}`;
 export const monthYear = (d: Date) => `${MON[d.getMonth()]} ${d.getFullYear()}`;

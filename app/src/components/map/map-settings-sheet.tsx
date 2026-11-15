@@ -48,7 +48,7 @@ export function MapLayersButton({ style }: { style?: object }) {
             name="square.3.layers.3d"
             size={22}
             tintColor={Colors.text}
-            weight="medium"
+            weight="semibold"
           />
         </Animated.View>
       </Pressable>
@@ -129,9 +129,9 @@ function MapSettingsBody({ onClose }: { onClose: () => void }) {
         >
           <SymbolView
             name="xmark"
-            size={15}
+            size={16}
             tintColor={Colors.text}
-            weight="bold"
+            weight="semibold"
           />
         </Pressable>
       </View>
@@ -171,9 +171,9 @@ function MapSettingsBody({ onClose }: { onClose: () => void }) {
                 <View style={styles.rowIcon}>
                   <SymbolView
                     name={l.icon}
-                    size={17}
+                    size={20}
                     tintColor={Colors.text}
-                    weight="medium"
+                    weight="semibold"
                   />
                 </View>
                 <View style={styles.flex}>

@@ -127,7 +127,7 @@ export function CommunityPanel(props: {
           props.onSelect(null);
         }}
         options={[
-          { id: 'routen', label: 'Routen' },
+          { id: 'routen', label: 'Touren' },
           { id: 'ausfahrten', label: 'Ausfahrten', badge: openRequests || undefined },
           { id: 'drivers', label: 'Drivers' },
         ]}
@@ -135,7 +135,7 @@ export function CommunityPanel(props: {
       {seg === 'routen' ? (
         <>
           <span style={S.metricLabel}>Routen zum Nachfahren{tours ? `, ${tours.length}` : ''}</span>
-          <input aria-label="Routen durchsuchen" placeholder="Route, Fahrer oder Beschreibung suchen" value={q} onChange={(e) => setQ(e.target.value)} style={{ ...S.search, height: 52 }} />
+          <input aria-label="Touren durchsuchen" placeholder="Tour, Fahrer oder Beschreibung suchen" value={q} onChange={(e) => setQ(e.target.value)} style={{ ...S.search, height: 52 }} />
           <div style={S.chips}>
             {SORTS.map((s) => (
               <Chip key={s.id} on={sort === s.id} onClick={() => setSort(s.id)}>
@@ -346,7 +346,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
     if (kept) {
       // eigene Änderungen nicht über das Lesezeichen löschen
       if (kept.edited || (!kept.published && Math.abs(kept.laenge_km - Number(t.km)) > 0.5)) {
-        showToast('Du hast diese Route bearbeitet. Deine Fassung bleibt unter Touren.');
+        showToast('Du hast diese Tour bearbeitet. Deine Fassung bleibt unter Touren.');
         return;
       }
       try {
@@ -443,9 +443,9 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
       {ask ? (
         <ConfirmSheet
           narrow
-          title="Möchtest du diese Route wirklich aus der Community nehmen?"
+          title="Möchtest du diese Tour wirklich aus der Community entfernen?"
           text="Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten."
-          confirmLabel="Herausnehmen"
+          confirmLabel="Entfernen"
           busy={saving}
           onClose={() => setAsk(false)}
           onConfirm={() => {

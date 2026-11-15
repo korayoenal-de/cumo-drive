@@ -134,7 +134,7 @@ function ProfileCard({ userId, cars }: { userId: string; cars: number }) {
           </View>
         )}
       </View>
-      <SymbolView name="chevron.right" size={15} weight="bold" tintColor={Colors.muted} />
+      <SymbolView name="chevron.right" size={16} weight="semibold" tintColor={Colors.muted} />
     </Pressable>
   );
 }

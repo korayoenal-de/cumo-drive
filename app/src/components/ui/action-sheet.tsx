@@ -148,6 +148,7 @@ export function ConfirmSheet({
   confirmLabel,
   onConfirm,
   onClose,
+  danger = true,
 }: {
   visible: boolean;
   /** als Frage: "Möchtest du diese Tour wirklich löschen?" */
@@ -156,6 +157,8 @@ export function ConfirmSheet({
   confirmLabel: string;
   onConfirm: () => void;
   onClose: () => void;
+  /** Endgültiges bestätigt rot (Konsistenzprüfung 15.11., C1); false für Rückfragen wie „Trotzdem losfahren“ */
+  danger?: boolean;
 }) {
   return (
     <OptionsSheet visible={visible} title={title} subtitle={text} onClose={onClose}>
@@ -169,9 +172,9 @@ export function ConfirmSheet({
             onClose();
             onConfirm();
           }}
-          style={({ pressed }) => [styles.confirm, pressed && styles.itemPressed]}>
+          style={({ pressed }) => [styles.confirm, danger && styles.confirmDanger, pressed && styles.itemPressed]}>
           <AppText style={styles.confirmText}>{confirmLabel}</AppText>
-          <SymbolView name="chevron.right" size={14} weight="bold" tintColor={Colors.onSignal} />
+          <SymbolView name="chevron.right" size={16} weight="semibold" tintColor={Colors.onSignal} />
         </Pressable>
       </View>
     </OptionsSheet>
@@ -199,7 +202,7 @@ const styles = StyleSheet.create({
   subtitle: { fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: 21, color: Colors.muted },
   list: { gap: Spacing.xs },
   item: { minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m },
-  itemDanger: { marginTop: Spacing.s, backgroundColor: Colors.signalTint },
+  itemDanger: { marginTop: Spacing.s, backgroundColor: Colors.dangerTint },
   itemPressed: { backgroundColor: Colors.line },
   itemPrimary: { borderRadius: Radius.pill, backgroundColor: Colors.signal, marginBottom: Spacing.s },
   primaryPressed: { opacity: 0.88 },
@@ -212,5 +215,6 @@ const styles = StyleSheet.create({
   cancel: { flex: 1, height: 56, alignItems: 'center', justifyContent: 'center' },
   cancelText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.text },
   confirm: { flex: 1.3, height: Size.button, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, backgroundColor: Colors.signal },
+  confirmDanger: { backgroundColor: Colors.danger },
   confirmText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
 });

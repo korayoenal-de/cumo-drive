@@ -4,6 +4,7 @@
  * Jede gespeicherte Tour ist eine Karte mit Mini Streckenbild: Tippen öffnet sie im Planer (dort
  * losfahren, als Gruppe fahren, ändern und speichern), daneben nur Teilen und Löschen.
  */
+import { datum, fahrzeit, meta as fmtMeta, plaetze, strecke, wann } from '@/lib/format';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -52,7 +53,7 @@ function Upcoming() {
       <AppText style={styles.upLabel}>Anstehend</AppText>
       {rides.map((a) => {
         const state = a.isOwner
-          ? `${a.taken} von ${a.maxMembers} Fahrzeugen${a.openRequests ? `, ${a.openRequests} ${a.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : ''}`
+          ? fmtMeta(plaetze(Math.max(0, a.maxMembers - a.taken)).text, a.openRequests ? `${a.openRequests} ${a.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : null)
           : a.myStatus === 'eingeladen'
             ? `Einladung von ${a.ownerName}`
             : a.myStatus === 'angefragt'
@@ -68,12 +69,12 @@ function Upcoming() {
             <DateBlock d={a.startsAt} />
             <View style={styles.flex}>
               <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
-              <AppText variant="caption" muted numberOfLines={1}>{clock(a.startsAt)}{a.meeting?.name ? ` ab ${a.meeting.name}` : ''}</AppText>
-              <AppText variant="caption" style={a.myStatus === 'eingeladen' || a.openRequests ? styles.upAttn : styles.upMuted} numberOfLines={1}>{state}</AppText>
+              <AppText muted numberOfLines={1}>{fmtMeta(wann(a.startsAt), a.meeting?.name ? `ab ${a.meeting.name}` : null, a.km != null ? strecke(a.km) : null)}</AppText>
+              <AppText style={a.myStatus === 'eingeladen' || a.openRequests ? styles.upAttn : styles.upMuted} numberOfLines={1}>{state}</AppText>
             </View>
             {!a.isPublic && (
               <View style={styles.privat}>
-                <SymbolView name="lock.fill" size={11} weight="bold" tintColor={Colors.text} />
+                <SymbolView name="lock.fill" size={16} weight="semibold" tintColor={Colors.text} />
                 <AppText style={styles.privatText}>Privat</AppText>
               </View>
             )}
@@ -114,8 +115,8 @@ function PastRides() {
             <DateBlock d={a.startedAt ?? a.startsAt} />
             <View style={styles.flex}>
               <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
-              <AppText variant="caption" muted numberOfLines={1}>{a.km != null ? `${Math.round(a.km)} km` : ''}{a.meeting?.name ? `${a.km != null ? ' ab ' : 'Ab '}${a.meeting.name}` : ''}</AppText>
-              <AppText variant="caption" style={a.startedAt ? styles.upMuted : styles.upAttn} numberOfLines={1}>{state}</AppText>
+              <AppText muted numberOfLines={1}>{fmtMeta(a.km != null ? strecke(a.km) : null, a.meeting?.name ? `ab ${a.meeting.name}` : null)}</AppText>
+              <AppText style={a.startedAt ? styles.upMuted : styles.upAttn} numberOfLines={1}>{state}</AppText>
             </View>
           </Pressable>
         );
@@ -128,7 +129,7 @@ const SORTS: { id: SortKey; label: string }[] = [
   { id: 'neu', label: 'Neueste' },
   { id: 'spass', label: 'Fahrspaß' },
   { id: 'name', label: 'Name' },
-  { id: 'laenge', label: 'Länge' },
+  { id: 'laenge', label: 'Strecke' },
 ];
 
 /** Tour im Planer öffnen: dort steht sie auf der Karte, mit Losfahren und Gruppe. */
@@ -345,13 +346,11 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
       )}
       {shown.length > 0 && (
         <AppText style={styles.total}>
-          {formatKm(totalKm, 0)} km in {shown.length} {shown.length === 1 ? 'Tour' : 'Touren'}
+          {strecke(totalKm)} in {shown.length} {shown.length === 1 ? 'Fahrt' : 'Fahrten'}
         </AppText>
       )}
       <View style={styles.list}>
         {shown.map((d) => {
-          const h = Math.floor(d.moving_min / 60);
-          const m = d.moving_min % 60;
           const line = tracks[d.id];
           return (
             <DriveCard key={d.id} line={line} label={d.name} onOpen={line ? () => openDrive(d, line) : undefined}>
@@ -360,20 +359,10 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
                   <AppText style={[styles.name, styles.flex]} numberOfLines={1}>
                     {d.name}
                   </AppText>
-                  <AppText variant="caption" muted>
-                    {new Date(d.started_at).toLocaleDateString('de-DE')}
-                  </AppText>
+                  <AppText muted>{datum(new Date(d.started_at))}</AppText>
                 </View>
-                <AppText variant="caption" muted>
-                  {[
-                    `${formatKm(Number(d.km), 0)} km`,
-                    h ? `${h}:${String(m).padStart(2, '0')} h` : `${m} min`,
-                    d.curves ? `${d.curves} Kurven` : null,
-                    d.max_lat_g ? `quer ${fmtG(Number(d.max_lat_g))}` : null,
-                    d.vehicle_name,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
+                <AppText muted>
+                  {fmtMeta(strecke(Number(d.km)), fahrzeit(d.moving_min), d.curves ? `${d.curves} Kurven` : null, d.max_lat_g ? `quer ${fmtG(Number(d.max_lat_g))}` : null, d.vehicle_name)}
                 </AppText>
               </View>
             </DriveCard>
@@ -429,7 +418,7 @@ const styles = StyleSheet.create({
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
   secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  danger: { backgroundColor: Colors.signalTint },
+  danger: { backgroundColor: Colors.dangerTint },
   disabled: { opacity: 0.4 },
   segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: 3 },
   segItem: { flex: 1, height: Size.chip, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
@@ -456,7 +445,7 @@ const styles = StyleSheet.create({
   itemNote: { paddingHorizontal: Spacing.xs, paddingVertical: Spacing.xs },
   dangerSolid: { backgroundColor: Colors.signal },
   onSignal: { color: Colors.onSignal },
-  confirm: { gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.signalTint },
+  confirm: { gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.dangerTint },
   total: { fontFamily: Fonts.semibold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
   dangerText: { color: Colors.signal },
 });

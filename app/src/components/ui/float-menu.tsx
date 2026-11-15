@@ -71,6 +71,6 @@ const styles = StyleSheet.create({
   pressed: { backgroundColor: Colors.line },
   text: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
   dangerWrap: { marginTop: Spacing.s },
-  danger: { backgroundColor: Colors.signalTint },
+  danger: { backgroundColor: Colors.dangerTint },
   dangerText: { color: Colors.stopText },
 });

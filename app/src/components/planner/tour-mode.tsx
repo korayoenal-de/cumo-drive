@@ -2,6 +2,7 @@
  * Oberfläche der Route im Planer: Punktliste mit Suchfeld und Anfasser, Etappen mit Profil und
  * Pass Vorschlägen, Vermeiden, Ergebnis der Route. Der Zustand kommt aus use-tour-plan.ts.
  */
+import { ShareSheet } from '@/components/tours/share-sheet';
 import { router } from 'expo-router';
 import { type ComponentRef, useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
@@ -306,6 +307,7 @@ export function TourMode({
   // Solo oder Gruppe, im Schalter der Hauptaktion. Als Gruppe wird die Tour vorher gespeichert,
   // denn Mitfahrer lädt man zu einer Tour aus Meine Touren ein.
   const [askDelete, setAskDelete] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);
   // Zurücksetzen leert nur das Formular; ohne Rückfrage, aber mit Rückgängig im Toast
   const resetForm = () => {
@@ -494,7 +496,7 @@ export function TourMode({
                 setOrtOpen(id);
               }}
               style={({ pressed }) => [styles.ortBtn, kind !== 'via' && styles.ortBtnZiel, pressed && { opacity: 0.75 }]}>
-              <SymbolView name={kind === 'via' ? 'cup.and.saucer.fill' : 'bed.double.fill'} size={18} tintColor={kind === 'via' ? Colors.text : Colors.signal} />
+              <SymbolView weight="semibold" name={kind === 'via' ? 'cup.and.saucer.fill' : 'bed.double.fill'} size={20} tintColor={kind === 'via' ? Colors.text : Colors.signal} />
             </Pressable>
           )}
           {p && <MoreButton label={`Aktionen für ${role} ${nameOf(p)}`} onPress={(v) => openMenu(kind, index, p, v)} />}
@@ -746,7 +748,7 @@ export function TourMode({
         </View>
       </Accordion>
 
-      {pts.length >= 2 && !routeTour && !busy && <PrimaryButton label="Route planen" onPress={() => plan.planNow(profile, avoid)} />}
+      {pts.length >= 2 && !routeTour && !busy && <PrimaryButton label="Tour erstellen" onPress={() => plan.planNow(profile, avoid)} />}
 
       {group && routeTour && <GroupBlock savedId={plan.cloudId} />}
 
@@ -799,29 +801,8 @@ export function TourMode({
             // Speichern als sekundärer Knopf, solange die Tour neu oder geändert ist (Konzept 7.11.)
             save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => { if (plan.saving) return; if (!plan.cloudId) setNaming(true); else void plan.save(curves, firstProfile, avoid); } } : undefined}
             more={[
-              {
-                key: 'link',
-                icon: 'square.and.arrow.up',
-                label: 'Link teilen',
-                hint: 'Andere öffnen die Route direkt in CUMO DRIVE',
-                onPress: () =>
-                  void shareTourLink(
-                    {
-                      ...routeTour,
-                      name: plan.name.trim() || routeTour.name,
-                      // echte Punkte mit Namen und Profil je Etappe, damit der Empfänger sie so sieht
-                      namen: routeTour.wegpunkte.map((p) => plan.names[keyOf(p)] ?? ''),
-                      etappen: routeTour.wegpunkte.slice(1).map((_, i) => plan.legProfile(i, profile)),
-                    },
-                    firstProfile,
-                  ).catch(() => undefined),
-              },
-              {
-                key: 'gpx',
-                icon: 'doc.text',
-                label: 'Als GPX teilen',
-                onPress: () => void exportTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, 'gpx').catch(() => undefined),
-              },
+              // Link und GPX als eine Zeile „Teilen“ wie in Touren (Konsistenzprüfung 15.11., O3)
+              { key: 'share', icon: 'square.and.arrow.up', label: 'Teilen', onPress: () => setSharing(true) },
               ...(plan.cloudId ? [{ key: 'rename', icon: 'pencil' as const, label: 'Umbenennen', onPress: () => setRenaming(true) }] : []),
               // Duplizieren (Koray 10.11.): Kopie anlegen und gleich im Planer öffnen, das Original bleibt
               ...(plan.cloudId
@@ -830,7 +811,6 @@ export function TourMode({
                       key: 'dup',
                       icon: 'plus.square.on.square' as const,
                       label: 'Duplizieren',
-                      hint: 'Du bearbeitest danach die Kopie',
                       onPress: () => {
                         const c = plan.cloudId ? duplicateTour(plan.cloudId) : null;
                         if (!c) return;
@@ -844,12 +824,33 @@ export function TourMode({
               // Gespeicherte Tour schließen: leert den Planer, die Tour bleibt in Meine Touren (Koray 8.11.)
               ...(plan.cloudId ? [{ key: 'close', icon: 'xmark.circle' as const, label: 'Tour schließen', hint: 'Bleibt unter Touren', onPress: resetForm }] : []),
               plan.cloudId
-                ? { key: 'delete', icon: 'trash', label: 'Route löschen', danger: true, onPress: () => setAskDelete(true) }
+                ? { key: 'delete', icon: 'trash', label: 'Tour löschen', danger: true, onPress: () => setAskDelete(true) }
                 : { key: 'reset', icon: 'arrow.counterclockwise', label: 'Planung verwerfen', danger: true, onPress: resetForm },
             ]}>
             {!session && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
           </ActionBar>
         ) : null}
+        {routeTour && (
+          <ShareSheet
+            visible={sharing}
+            title={plan.name.trim() || routeTour.name}
+            onLink={() =>
+              void shareTourLink(
+                {
+                  ...routeTour,
+                  name: plan.name.trim() || routeTour.name,
+                  // echte Punkte mit Namen und Profil je Etappe, damit der Empfänger sie so sieht
+                  namen: routeTour.wegpunkte.map((p) => plan.names[keyOf(p)] ?? ''),
+                  etappen: routeTour.wegpunkte.slice(1).map((_, i) => plan.legProfile(i, profile)),
+                },
+                firstProfile,
+              ).catch(() => undefined)
+            }
+            onGpx={() => void exportTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, 'gpx').catch(() => undefined)}
+            onKml={() => void exportTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, 'kml').catch(() => undefined)}
+            onClose={() => setSharing(false)}
+          />
+        )}
         {routeTour && (
           <DeleteTourSheet tour={savedTour} visible={askDelete} onClose={() => setAskDelete(false)} onDeleted={plan.reset} />
         )}
@@ -873,7 +874,7 @@ function MoreButton({ label, onPress }: { label: string; onPress: (v: ViewRef | 
       hitSlop={4}
       onPress={() => onPress(ref.current)}
       style={({ pressed }) => [styles.more, pressed && { backgroundColor: Colors.line }]}>
-      <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="bold" />
+      <SymbolView name="ellipsis" size={20} tintColor={Colors.text} weight="semibold" />
     </Pressable>
   );
 }
@@ -887,7 +888,7 @@ function SwipeDelete({ progress, label, onPress }: { progress: SharedValue<numbe
   return (
     <Animated.View style={[styles.swipeDeleteWrap, fade]}>
       <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.swipeDelete, pressed && { opacity: 0.8 }]}>
-        <SymbolView name="trash.fill" size={18} tintColor={Colors.onSignal} weight="semibold" />
+        <SymbolView name="trash.fill" size={20} tintColor={Colors.onSignal} weight="semibold" />
         <AppText style={styles.swipeDeleteText}>Löschen</AppText>
       </Pressable>
     </Animated.View>

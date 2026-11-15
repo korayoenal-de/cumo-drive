@@ -91,7 +91,7 @@ export function LaneRow({ lanes }: { lanes: Lane[] }) {
       accessibilityLabel={`Spur ${use.join(' und ')} von ${lanes.length}, von links gezählt`}>
       {lanes.map((l, i) => (
         <View key={i} style={[styles.lane, l.use && styles.laneUse]}>
-          <SymbolView name={laneSymbol(l.dirs)} size={20} weight="bold" tintColor={l.use ? Colors.text : l.ok ? Colors.muted : Colors.line} />
+          <SymbolView name={laneSymbol(l.dirs)} size={20} weight="semibold" tintColor={l.use ? Colors.text : l.ok ? Colors.muted : Colors.line} />
         </View>
       ))}
     </View>
@@ -244,7 +244,7 @@ export function BottomBar({
                   a.run();
                 }}
                 style={({ pressed }) => [styles.pill, a.signal && styles.pillSignal, pressed && styles.pressed]}>
-                <SymbolView name={a.icon} size={16} tintColor={a.signal ? Colors.onSignal : Colors.text} />
+                <SymbolView weight="semibold" name={a.icon} size={16} tintColor={a.signal ? Colors.onSignal : Colors.text} />
                 <AppText style={[styles.pillText, a.signal && { color: Colors.onSignal }]}>{a.label}</AppText>
               </Pressable>
             </Animated.View>
@@ -309,7 +309,7 @@ export function BottomBar({
             <SymbolView
               name={menu ? 'xmark' : paused ? 'play.fill' : 'point.topleft.down.to.point.bottomright.curvepath.fill'}
               size={menu ? 18 : 17}
-              weight="bold"
+              weight="semibold"
               tintColor={menu ? Colors.ground : Colors.onSignal}
             />
           </Pressable>

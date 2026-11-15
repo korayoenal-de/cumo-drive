@@ -35,11 +35,14 @@ export function RideStatus({ r }: { r: Ausfahrt }) {
   );
 }
 
+/** Datumsblock neutral, nur heute in Signal Orange (Konsistenzprüfung 15.11., C3) */
 export function DateBlock({ d }: { d: Date }) {
+  const now = new Date();
+  const today = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
   return (
-    <View style={styles.date} accessible={false}>
-      <AppText style={styles.dateWd}>{weekday(d).toUpperCase()}</AppText>
-      <AppText style={styles.dateDay}>{d.getDate()}</AppText>
+    <View style={[styles.date, today && styles.dateToday]} accessible={false}>
+      <AppText style={[styles.dateWd, today && styles.dateSignal]}>{weekday(d).toUpperCase()}</AppText>
+      <AppText style={[styles.dateDay, today && styles.dateSignal]}>{d.getDate()}</AppText>
     </View>
   );
 }
@@ -89,7 +92,9 @@ const styles = StyleSheet.create({
   tagSignal: { backgroundColor: Colors.signalTint },
   tagMuted: { backgroundColor: Colors.surface2 },
   tagText: { fontFamily: Fonts.bold, fontSize: Type.caption },
-  date: { width: 52, borderRadius: Radius.m, backgroundColor: Colors.signalTint, alignItems: 'center', paddingVertical: 6 },
-  dateWd: { fontFamily: Fonts.bold, fontSize: 12, lineHeight: 14, color: Colors.signal },
-  dateDay: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, color: Colors.signal },
+  date: { width: 52, borderRadius: Radius.m, backgroundColor: Colors.surface2, alignItems: 'center', paddingVertical: 6 },
+  dateToday: { backgroundColor: Colors.signalTint },
+  dateWd: { fontFamily: Fonts.bold, fontSize: 13, lineHeight: 16, color: Colors.muted },
+  dateDay: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, color: Colors.text },
+  dateSignal: { color: Colors.signal },
 });

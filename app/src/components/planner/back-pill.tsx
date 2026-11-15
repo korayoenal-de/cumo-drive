@@ -51,7 +51,7 @@ export function BackPill({ label, top, onPress, status }: { label?: string | nul
       {mode === 'back' && (
         <Pressable accessibilityRole="button" accessibilityLabel={`Zurück zu ${label}`} hitSlop={4} onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} style={styles.pill}>
           <Animated.View key="back" entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)} style={styles.row}>
-            <SymbolView name="chevron.left" size={15} weight="bold" tintColor="#FFFFFF" />
+            <SymbolView name="chevron.left" size={16} weight="semibold" tintColor={Colors.text} />
             <AppText style={styles.text} numberOfLines={1}>
               {label}
             </AppText>
@@ -83,7 +83,7 @@ export function BackPill({ label, top, onPress, status }: { label?: string | nul
               {status.text}
             </AppText>
             <View style={styles.sep} />
-            <SymbolView name="arrow.uturn.backward" size={14} weight="bold" tintColor={Colors.signal} />
+            <SymbolView name="arrow.uturn.backward" size={16} weight="semibold" tintColor={Colors.signal} />
             <AppText style={[styles.text, styles.undo]}>Rückgängig</AppText>
           </Animated.View>
         </Pressable>
@@ -127,11 +127,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingLeft: Spacing.m,
     paddingRight: Spacing.l,
-    backgroundColor: 'rgba(11,11,12,0.86)',
+    backgroundColor: Colors.overlay,
     overflow: 'hidden',
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s - 2, maxWidth: '100%' },
-  text: { fontFamily: Fonts.bold, fontSize: 16, color: '#FFFFFF' },
+  text: { fontFamily: Fonts.bold, fontSize: 16, color: Colors.text },
   warn: { color: Colors.warn },
   shrink: { flexShrink: 1 },
   undo: { color: Colors.signal },

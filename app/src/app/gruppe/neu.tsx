@@ -198,7 +198,7 @@ export default function GruppeNeu() {
           {saved.name}
         </AppText>
         <AppText muted>
-          {formatKm(saved.laenge_km, 0)} km. Lade bis zu {max - 1} Mitfahrer mit ihrem Namen ein. Sie sehen die Einladung in der App und sagen zu oder ab.
+          {formatKm(saved.laenge_km, 0)} km. Lade bis zu {max - 1} Teilnehmer mit ihrem Namen ein. Sie sehen die Einladung in der App und sagen zu oder ab.
         </AppText>
       </View>
 
@@ -229,7 +229,7 @@ export default function GruppeNeu() {
       </View>
 
       <View style={styles.card}>
-        <AppText variant="label">Mitfahrer einladen</AppText>
+        <AppText variant="label">Teilnehmer einladen</AppText>
         <TextInput maxFontSizeMultiplier={1.2}
           value={query}
           onChangeText={setQuery}
@@ -240,7 +240,7 @@ export default function GruppeNeu() {
           autoCorrect={false}
           returnKeyType="search"
           style={[styles.input, full && styles.disabled]}
-          accessibilityLabel="Mitfahrer mit Namen suchen"
+          accessibilityLabel="Teilnehmer mit Namen suchen"
         />
         {searching && <ActivityIndicator color={Colors.muted} />}
         {!q && mine.length > 0 && !full && <AppText variant="caption" muted>Deine Kontakte</AppText>}

@@ -61,7 +61,7 @@ export function MeetingRoute({ to, place, primary = false }: { to: LatLon; place
         title="Route zum Treffpunkt"
         subtitle={place}
         items={[
-          { key: 'schnell', icon: 'bolt.fill', label: 'Schnell', hint: 'Am schnellsten hin', primary: true, onPress: () => void go('schnell') },
+          { key: 'schnell', icon: 'bolt.fill', label: 'Schnell', hint: 'Am schnellsten hin', onPress: () => void go('schnell') },
           { key: 'kurvig', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Kurvig', hint: 'Schon auf dem Weg schöne Strecken', onPress: () => void go('kurvig') },
         ]}
         onClose={() => setOpen(false)}

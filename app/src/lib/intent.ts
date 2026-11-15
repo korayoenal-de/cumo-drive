@@ -6,6 +6,7 @@
  * Später ersetzt ein Sprachmodell auf unserem Server diesen Parser; die Ausgabe (TourWish)
  * bleibt gleich, damit das Formular nicht umgebaut werden muss.
  */
+import { fahrzeit } from './format';
 import type { Direction } from './roundtrip';
 import type { Profile } from './tour';
 
@@ -106,11 +107,9 @@ export function parseWish(text: string): TourWish {
   return wish;
 }
 
+/** Fahrzeit im Text, einheitlich über lib/format (Konsistenzprüfung 15.11., K2) */
 export function formatMinutes(min: number): string {
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  if (h === 0) return `${m} min`;
-  return m ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`;
+  return fahrzeit(min);
 }
 
 /** Ziellänge in km aus Wunsch und Profil. */

@@ -137,7 +137,7 @@ export function LeadHaltPill({ onAnnounce }: { onAnnounce: (r: StopReason) => vo
         onPress={() => setOpen(!open)}
         style={({ pressed }) => [styles.haltPill, pressed && styles.pressed]}>
         {open ? (
-          <SymbolView name="xmark" size={14} weight="bold" tintColor={Colors.ground} />
+          <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.ground} />
         ) : (
           <View style={styles.haltDot}>
             <View style={styles.haltSquare} />
@@ -170,7 +170,7 @@ export function FunkBanner({ funk }: { funk: FunkState }) {
   const text = mine ? 'Du sprichst' : funk.speaker ? `${funk.speaker.name} spricht` : 'Funk getrennt, verbinde neu';
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} accessibilityLiveRegion="polite" accessibilityLabel={text} style={[styles.funkBanner, mine && styles.funkMine, !mine && !funk.speaker && styles.funkLost]}>
-      <SymbolView name={funk.speaker || mine ? 'waveform' : 'wifi.exclamationmark'} size={20} weight="bold" tintColor={mine ? Colors.onSignal : funk.speaker ? Colors.good : Colors.ground} />
+      <SymbolView name={funk.speaker || mine ? 'waveform' : 'wifi.exclamationmark'} size={20} weight="semibold" tintColor={mine ? Colors.onSignal : funk.speaker ? Colors.good : Colors.ground} />
       <AppText style={[styles.funkText, mine && { color: Colors.onSignal }, !mine && !funk.speaker && { color: Colors.ground }]} numberOfLines={1}>
         {text}
       </AppText>

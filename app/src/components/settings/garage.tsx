@@ -59,7 +59,7 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
                   </View>
                 )}
                 <Pressable accessibilityRole="button" accessibilityLabel={`Optionen für ${vehicleName(v) || 'Fahrzeug'}`} onPress={() => setMenu(v)} hitSlop={6} style={styles.more}>
-                  <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="medium" />
+                  <SymbolView name="ellipsis" size={20} tintColor={Colors.text} weight="semibold" />
                 </Pressable>
               </View>
               {drives && (
@@ -81,12 +81,12 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
         items={
           menu
             ? [
-                ...(current?.id !== menu.id ? [{ key: 'cur', icon: 'checkmark.circle' as const, label: 'Als aktuell wählen', hint: 'Damit fährst du ab jetzt', onPress: () => void selectVehicle(menu.id) }] : []),
-                { key: 'edit', icon: 'pencil' as const, label: 'Bearbeiten', hint: 'Marke und Modell, Form und Farbe', onPress: () => setEdit(menu) },
+                ...(current?.id !== menu.id ? [{ key: 'cur', icon: 'checkmark.circle' as const, label: 'Als aktuell wählen', onPress: () => void selectVehicle(menu.id) }] : []),
+                { key: 'edit', icon: 'pencil' as const, label: 'Bearbeiten', onPress: () => setEdit(menu) },
                 carLookFor(menu)
                   ? { key: 'sym', icon: 'location.north.fill' as const, label: 'Pfeil auf der Karte', hint: 'Statt deines Autos wieder den Pfeil zeigen', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'pfeil' }) }
                   : { key: 'sym', icon: 'car.fill' as const, label: 'Auto auf der Karte', hint: 'Form und Farbe wählst du beim Bearbeiten', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'auto' }).then(() => showToast('Dein Auto fährt jetzt auf der Karte mit')) },
-                { key: 'del', icon: 'trash' as const, label: 'Fahrzeug löschen', danger: true, onPress: () => setAsk(menu) },
+                { key: 'del', icon: 'trash' as const, label: 'Fahrzeug löschen', hint: 'Gefahrene Touren bleiben erhalten', danger: true, onPress: () => setAsk(menu) },
               ]
             : []
         }
@@ -206,6 +206,6 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.4 },
   padH: { paddingHorizontal: Spacing.l },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
-  danger: { backgroundColor: Colors.signalTint },
+  danger: { backgroundColor: Colors.dangerTint },
   dangerText: { color: Colors.signal },
 });

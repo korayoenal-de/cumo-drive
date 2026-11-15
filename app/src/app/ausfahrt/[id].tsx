@@ -4,6 +4,9 @@
  * Teilnehmer und Organisator, am Tag Gruppenfahrt starten. Der Organisator sieht offene Anfragen
  * mit Profil und nimmt an oder lehnt ab.
  */
+import { BackLink } from '@/components/ui/back-link';
+import { Kennzahlen, SeatsBadge } from '@/components/ui/kennzahlen';
+import { useRideFun } from '@/lib/ride-fun';
 import { saveTour, syncLibrary } from '@/lib/library';
 import { supabase } from '@/lib/supabase';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -34,6 +37,9 @@ import { useRide } from '@/lib/group/ride';
 import { declineInvite, inviteToRide, removeFromRide, respondInvite, rideOverview, type RideMemberRow } from '@/lib/group/invites';
 import { findProfiles, type FoundProfile } from '@/lib/profile';
 import { formatKm, type LatLon, type Profile, type Tour } from '@/lib/tour';
+
+/** Platz unter dem Inhalt für die feste Leiste unten */
+const BAR_SPACE = 96;
 
 type Full = { tour: Tour & { minutes?: number }; profile: Profile };
 
@@ -124,7 +130,7 @@ export default function AusfahrtDetail() {
     }, [load]),
   );
 
-  const startKey = a && !a.meeting?.name && a.start ? `${a.start[0]},${a.start[1]}` : null;
+  const startKey = a && a.start ? `${a.start[0]},${a.start[1]}` : null;
   useEffect(() => {
     if (!startKey) return;
     const [la, lo] = startKey.split(',').map(Number);
@@ -136,6 +142,8 @@ export default function AusfahrtDetail() {
       live = false;
     };
   }, [startKey]);
+
+  const funScore = useRideFun(id);
 
   useEffect(() => {
     if (!id) return;
@@ -190,7 +198,7 @@ export default function AusfahrtDetail() {
     // Einladungslink: Eckdaten und Anfrage; der Organisator nimmt an (Koray 13.11.)
     return (
       <View style={[styles.root, { paddingTop: insets.top + Spacing.s, paddingHorizontal: Spacing.xl, gap: Spacing.l }]}>
-        <BackButton onPress={back} />
+        <BackLink onPress={back} />
         <AppText style={styles.kicker}>{linked.ownerName} lädt dich ein</AppText>
         <AppText variant="display">{linked.name}</AppText>
         <AppText style={styles.value}>{longDate(linked.startsAt)}, {clock(linked.startsAt)}{linked.km ? `  ·  ${formatKm(linked.km, 0)} km` : ''}</AppText>
@@ -221,7 +229,7 @@ export default function AusfahrtDetail() {
   if (a === null) {
     return (
       <View style={[styles.root, { paddingTop: insets.top + Spacing.s, paddingHorizontal: Spacing.xl, gap: Spacing.l }]}>
-        <BackButton onPress={back} />
+        <BackLink onPress={back} />
         <AppText variant="display">Ausfahrt</AppText>
         <AppText muted>{session ? 'Diese Ausfahrt gibt es nicht mehr.' : 'Melde dich an, um Ausfahrten zu sehen.'}</AppText>
         {(err ?? loadErr) && <AppText style={styles.error}>{err ?? loadErr}</AppText>}
@@ -298,20 +306,23 @@ export default function AusfahrtDetail() {
   else if (!a.myStatus && free > 0 && !asking) main = { label: 'Mitfahren anfragen', onPress: () => setAsking(true) };
   else if (asking) main = { label: 'Anfrage senden', onPress: () => void run('ask', async () => { await requestAusfahrt(a.id, msg, myVehicleLabel() || null); setAsking(false); }) };
 
+  // Ohne andere Hauptaktion ist die Route zum Treffpunkt die Hauptaktion, auch Tage vorher (Koray 15.11.)
+  const routeMain = !main && !over && joined && !!meetAt && !inThisRide && !(meArrived && a.rideStatus === 'geplant');
+
   return (
     <View style={styles.root}>
-      <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: inviting ? winH * 0.6 : Spacing.xxxl }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets>
+      <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: inviting ? winH * 0.6 : Spacing.xxxl + BAR_SPACE }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets>
         <View style={styles.topRow}>
-          <BackButton onPress={back} />
+          <BackLink onPress={back} />
           <View style={styles.flex} />
           {joined && (
             <Pressable accessibilityRole="button" accessibilityLabel="Chat öffnen" hitSlop={4} onPress={openChat} style={styles.roundBtn}>
-              <SymbolView name="bubble.left.and.bubble.right" size={18} weight="semibold" tintColor={Colors.text} />
+              <SymbolView name="bubble.left.and.bubble.right" size={20} weight="semibold" tintColor={Colors.text} />
             </Pressable>
           )}
           {/* Seltenes im Blatt (Koray 14.11.): Ändern, Lead, Absagen, Melden */}
           <Pressable accessibilityRole="button" accessibilityLabel="Weitere Aktionen" hitSlop={4} onPress={() => setMore(true)} style={styles.roundBtn}>
-            <SymbolView name="ellipsis" size={18} weight="bold" tintColor={Colors.text} />
+            <SymbolView name="ellipsis" size={20} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         </View>
 
@@ -325,6 +336,14 @@ export default function AusfahrtDetail() {
           )}
           <AppText variant="display">{a.name}</AppText>
         </View>
+
+        {/* Kennzahlen direkt unter dem Titel, Reihe wie im Planer (Konsistenzprüfung 15.11., K1, K4) */}
+        <Kennzahlen
+          km={a.km}
+          minutes={drove && a.endedAt && a.startedAt ? Math.round((a.endedAt.getTime() - a.startedAt.getTime()) / 60000) : a.minutes}
+          fun={funScore}
+          extra={drove && members.length > 0 ? [{ label: 'Autos', value: String(members.length) }] : []}
+        />
 
         <View style={styles.fields}>
           <Pressable accessibilityRole="button" disabled={over || !isLead || a.rideStatus !== 'geplant'} accessibilityHint={isLead && !over ? 'Abfahrt ändern' : undefined} onPress={() => setTimeSheet(true)} style={styles.field}>
@@ -360,7 +379,7 @@ export default function AusfahrtDetail() {
           {over ? null : joined && meArrived && a.rideStatus === 'geplant' && !inThisRide ? (
             <View style={styles.hereCard} accessibilityRole="summary">
               <View style={styles.hereIcon}>
-                <SymbolView name="checkmark" size={20} weight="bold" tintColor={Colors.ground} />
+                <SymbolView name="checkmark" size={20} weight="semibold" tintColor={Colors.ground} />
               </View>
               <View style={styles.flex}>
                 <AppText style={styles.hereTitle}>Du bist am Treffpunkt</AppText>
@@ -370,7 +389,7 @@ export default function AusfahrtDetail() {
               </View>
             </View>
           ) : (
-            joined && meetAt && !inThisRide && <MeetingRoute to={meetAt} place={meetingName} primary={!main} />
+            joined && meetAt && !inThisRide && !!main && <MeetingRoute to={meetAt} place={meetingName} />
           )}
           {/* Runde: keine Zeile „Wieder am Treffpunkt“ mehr (Koray 15.11.) */}
           {arr && !over && !a.roundTrip && (
@@ -391,15 +410,6 @@ export default function AusfahrtDetail() {
             <RoutePreview tour={full.tour} height={180} />
           </View>
         )}
-
-        <View style={styles.metrics}>
-          {a.km != null && <Metric label="Strecke" value={`${formatKm(a.km, 0)} KM`} />}
-          {(() => {
-            const mins = drove && a.endedAt && a.startedAt ? Math.round((a.endedAt.getTime() - a.startedAt.getTime()) / 60000) : a.minutes;
-            return mins != null ? <Metric label="Fahrzeit" value={`${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')} H`} /> : null;
-          })()}
-          {drove && members.length > 0 && <Metric label="Autos" value={String(members.length)} />}
-        </View>
 
         {a.note ? (
           <View style={styles.note}>
@@ -450,18 +460,14 @@ export default function AusfahrtDetail() {
           }}>
           {/* Plätze stehen bei den Teilnehmern, rechtsbündig; der letzte freie Platz in Gelb (Koray 14.11.) */}
           <View style={styles.row}>
-            <AppText variant="title" style={styles.flex}>{drove ? 'Dabei gewesen' : 'Teilnehmer'}</AppText>
-            {!over && <View style={[styles.tag, free > 1 ? styles.tagGood : free === 1 ? styles.tagWarn : styles.tagMuted]}>
-              <AppText style={[styles.tagText, { color: free > 1 ? Colors.good : free === 1 ? Colors.warn : Colors.muted }]}>
-                {free > 0 ? `${free} von ${a.maxMembers - 1} Plätzen frei` : 'Ausgebucht'}
-              </AppText>
-            </View>}
+            <AppText variant="title" style={styles.flex}>Teilnehmer</AppText>
+            {!over && <SeatsBadge free={free} />}
           </View>
           {members.map((m) => {
             const d = dayOf(m.userId);
             const self = me === m.userId;
             const pinged = d?.pingedAt && now - d.pingedAt.getTime() < 30 * 60000 ? Math.max(1, Math.round((now - d.pingedAt.getTime()) / 60000)) : null;
-            const sub = [d?.isLead && !m.isOwner ? 'leitet' : m.isOwner ? 'organisiert' : null, dayMode && !d?.arrived && pinged ? `angepingt vor ${pinged} min` : m.vehicle].filter(Boolean).join('  ·  ') || 'Mitfahrer';
+            const sub = [d?.isLead && !m.isOwner ? 'Lead' : m.isOwner ? 'Organisator' : null, dayMode && !d?.arrived && pinged ? `angepingt vor ${pinged} min` : m.vehicle].filter(Boolean).join('  ·  ') || 'Mitfahrer';
             return (
               <Pressable key={m.userId} accessibilityRole="button" disabled={self} onPress={() => setPerson({ userId: m.userId, name: m.name, invited: false })} style={styles.member}>
                 <Avatar name={m.name} userId={m.userId} />
@@ -476,7 +482,7 @@ export default function AusfahrtDetail() {
                     <AppText style={styles.eta}>in {d.etaMin} min</AppText>
                   ) : isLead && !self ? (
                     <Pressable accessibilityRole="button" accessibilityLabel={`${m.name} anpingen`} onPress={() => void run(`ping-${m.userId}`, () => pingMember(a.id, m.userId))} style={styles.pingBtn}>
-                      {busy === `ping-${m.userId}` ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="bell" size={15} weight="semibold" tintColor={Colors.text} />}
+                      {busy === `ping-${m.userId}` ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="bell" size={16} weight="semibold" tintColor={Colors.text} />}
                       <AppText style={styles.pingText}>Anpingen</AppText>
                     </Pressable>
                   ) : null)}
@@ -508,9 +514,9 @@ export default function AusfahrtDetail() {
           {!over && a.isOwner && free > 0 && !inviting && (
             <Pressable accessibilityRole="button" onPress={() => setInviting(true)} style={styles.member}>
               <View style={styles.addCircle}>
-                <SymbolView name="plus" size={18} weight="semibold" tintColor={Colors.text} />
+                <SymbolView name="plus" size={20} weight="semibold" tintColor={Colors.text} />
               </View>
-              <AppText style={styles.name}>Fahrer einladen</AppText>
+              <AppText style={styles.name}>Teilnehmer einladen</AppText>
             </Pressable>
           )}
           {a.isOwner && inviting && (
@@ -570,12 +576,6 @@ export default function AusfahrtDetail() {
 
         {err && <AppText style={styles.error}>{err}</AppText>}
 
-        {main && (
-          <Pressable accessibilityRole="button" onPress={main.onPress} disabled={!!busy || main.disabled} style={[styles.primary, main.disabled && styles.disabled]}>
-            {busy === 'ask' || busy === 'start' || busy === 'yes' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{main.label}</AppText>}
-          </Pressable>
-        )}
-        {main?.hint && <AppText variant="caption" muted style={styles.center}>{main.hint}</AppText>}
         {asking && (
           <Pressable accessibilityRole="button" onPress={() => setAsking(false)} style={styles.textBtn}>
             <AppText style={styles.textBtnText}>Abbrechen</AppText>
@@ -583,6 +583,23 @@ export default function AusfahrtDetail() {
         )}
 
       </ScrollView>
+
+      {/* Hauptaktion fest unten, eine je Phase (Konsistenzprüfung 15.11., O5): vorher Route zum Treffpunkt,
+          am Tag Jetzt losfahren, während der Fahrt Zur Navigation, danach Nochmal fahren */}
+      {(main || routeMain) && (
+        <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.m }]}>
+          {main ? (
+            <>
+              <Pressable accessibilityRole="button" onPress={main.onPress} disabled={!!busy || main.disabled} style={[styles.primary, main.disabled && styles.disabled]}>
+                {busy === 'ask' || busy === 'start' || busy === 'yes' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{main.label}</AppText>}
+              </Pressable>
+              {main.hint && <AppText muted style={styles.center}>{main.hint}</AppText>}
+            </>
+          ) : (
+            meetAt && <MeetingRoute to={meetAt} place={meetingName} primary />
+          )}
+        </View>
+      )}
       {!a.isOwner && <ReportSheet visible={report} kind="ausfahrt" refId={a.id} onClose={() => setReport(false)} />}
       {/* ⋯ Weitere Aktionen (Koray 14.11.): Ändern, Lead, Absagen rot unten */}
       <ActionSheet
@@ -596,7 +613,7 @@ export default function AusfahrtDetail() {
               ] as SheetItem[])
             : []),
           ...(a.isOwner && a.rideStatus === 'geplant' && members.length > 1 ? ([{ key: 'lead', icon: 'person.line.dotted.person', label: 'Lead übergeben', hint: 'Wer die Lead hat, startet die Ausfahrt', onPress: () => setLeadSheet(true) }] as SheetItem[]) : []),
-          ...(canTakeLead ? ([{ key: 'take', icon: 'flag.checkered', label: 'Lead übernehmen', hint: `${a.ownerName} ist noch nicht gestartet`, onPress: () => void run('take', () => takeLead(a.id)) }] as SheetItem[]) : []),
+          ...(canTakeLead ? ([{ key: 'take', icon: 'person.line.dotted.person', label: 'Lead übernehmen', hint: `${a.ownerName} ist noch nicht gestartet`, onPress: () => void run('take', () => takeLead(a.id)) }] as SheetItem[]) : []),
           ...(!a.isOwner ? ([{ key: 'melden', icon: 'exclamationmark.bubble', label: 'Ausfahrt melden', onPress: () => setReport(true) }] as SheetItem[]) : []),
           ...((a.myStatus === 'angefragt' || a.myStatus === 'eingeladen' || (a.myStatus === 'zugesagt' && !a.isOwner) || a.isOwner) && !inThisRide
             ? ([
@@ -605,6 +622,8 @@ export default function AusfahrtDetail() {
                   icon: 'xmark.circle',
                   danger: true,
                   label: a.isOwner ? 'Ausfahrt absagen' : a.myStatus === 'angefragt' ? 'Anfrage zurückziehen' : a.myStatus === 'eingeladen' ? 'Absagen' : 'Doch nicht mitfahren',
+                  // Gefährliches nennt die Folge (Konsistenzprüfung 15.11., O2)
+                  hint: a.isOwner ? 'Alle Teilnehmer bekommen eine Mitteilung' : `${a.ownerName} bekommt eine Mitteilung`,
                   onPress: () => setConfirm(true),
                 },
               ] as SheetItem[])
@@ -630,6 +649,7 @@ export default function AusfahrtDetail() {
                         icon: 'person.crop.circle.badge.xmark',
                         danger: true,
                         label: person.invited ? 'Einladung zurückziehen' : 'Aus der Ausfahrt nehmen',
+                        hint: `${person.name} bekommt eine Mitteilung`,
                         onPress: () => void run(`rm-${person.userId}`, () => removeFromRide(a.id, person.userId)),
                       },
                     ] as SheetItem[])
@@ -646,7 +666,7 @@ export default function AusfahrtDetail() {
         subtitle={`Jetzt ${clock(a.startsAt)}. Alle bekommen eine Mitteilung.`}
         items={[-30, -15, 15, 30, 60].map((d) => {
           const t = new Date(a.startsAt.getTime() + d * 60000);
-          return { key: `t${d}`, icon: d < 0 ? 'arrow.uturn.backward' : 'arrow.uturn.forward', label: `${clock(t)} Uhr`, hint: d < 0 ? `${-d} Minuten früher` : `${d} Minuten später`, onPress: () => void run('zeit', () => changeRide(a.id, t, null)) } as SheetItem;
+          return { key: `t${d}`, icon: d < 0 ? 'arrow.uturn.backward' : 'arrow.uturn.forward', label: clock(t), hint: d < 0 ? `${-d} Minuten früher` : `${d} Minuten später`, onPress: () => void run('zeit', () => changeRide(a.id, t, null)) } as SheetItem;
         })}
         onClose={() => setTimeSheet(false)}
       />
@@ -667,7 +687,7 @@ export default function AusfahrtDetail() {
                 await changeRide(a.id, null, { name, lat: p[0], lon: p[1] });
               }),
           },
-          ...(a.start ? ([{ key: 'start', icon: 'flag', label: 'Start der Tour', onPress: () => void run('ort', () => changeRide(a.id, null, { name: 'Start der Tour', lat: a.start![0], lon: a.start![1] })) }] as SheetItem[]) : []),
+          ...(a.start ? ([{ key: 'start', icon: 'flag', label: startName ? `${startName}, Start der Tour` : 'Start der Tour', onPress: () => void run('ort', () => changeRide(a.id, null, { name: startName ?? 'Start der Tour', lat: a.start![0], lon: a.start![1] })) }] as SheetItem[]) : []),
         ]}
         onClose={() => setPlaceSheet(false)}
       />
@@ -684,9 +704,10 @@ export default function AusfahrtDetail() {
       {/* Starten, obwohl noch nicht alle da sind: einmal nachfragen */}
       <ConfirmSheet
         visible={startAsk}
-        title="Noch nicht alle da"
+        title="Möchtest du ohne alle losfahren?"
         text={`${missing.map((m) => { const d = dayOf(m.userId); return d?.etaMin != null ? `${m.name} in ${d.etaMin} min` : `${m.name} noch nicht da`; }).join(', ')}. Wer fehlt, bekommt eine Mitteilung und wird direkt zur Gruppe geführt.`}
         confirmLabel="Trotzdem losfahren"
+        danger={false}
         onConfirm={() => void startGroup()}
         onClose={() => setStartAsk(false)}
       />
@@ -700,7 +721,7 @@ export default function AusfahrtDetail() {
             key: 'teilen',
             icon: 'location.fill',
             label: 'Teilen und hinfahren',
-            primary: true,
+            hint: 'Die Gruppe sieht deinen Standort bis zur Ankunft',
             onPress: () =>
               void run('teilen', async () => {
                 if (!meetAt) return;
@@ -708,7 +729,7 @@ export default function AusfahrtDetail() {
                 await navigateToMeeting(meetAt, meetingName, 'schnell');
               }),
           },
-          { key: 'ohne', icon: 'figure.wave', label: 'Fahrt ohne mich los', onPress: () => void run('ohne', () => sendNachricht(a.id, 'Fahrt ohne mich los, ich komme nicht rechtzeitig.')) },
+          { key: 'ohne', icon: 'figure.wave', label: 'Fahrt ohne mich los', hint: 'Schickt eine Nachricht an die Gruppe', onPress: () => void run('ohne', () => sendNachricht(a.id, 'Fahrt ohne mich los, ich komme nicht rechtzeitig.')) },
           { key: 'chat', icon: 'bubble.left', label: 'Nachricht', onPress: openChat },
         ]}
         onClose={() => setPingOpen(false)}
@@ -785,7 +806,7 @@ function InviteBox({ exclude, onInvite, busyId, contacts, onPlaced, onClose, onL
           accessibilityLabel="Fahrer zum Einladen suchen"
         />
         <Pressable accessibilityRole="button" accessibilityLabel="Einladen schließen" hitSlop={4} onPress={onClose} style={styles.roundBtn}>
-          <SymbolView name="xmark" size={14} weight="bold" tintColor={Colors.text} />
+          <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.text} />
         </Pressable>
       </View>
       {!n && mine.length > 0 && <AppText style={styles.label}>Deine Kontakte</AppText>}
@@ -814,7 +835,7 @@ function InviteBox({ exclude, onInvite, busyId, contacts, onPlaced, onClose, onL
         );
       })}
       <Pressable accessibilityRole="button" accessibilityHint="Wer den Link öffnet, fragt an. Du nimmst an." onPress={onLink} style={styles.linkRow}>
-        <SymbolView name="square.and.arrow.up" size={17} weight="semibold" tintColor={Colors.text} />
+        <SymbolView name="square.and.arrow.up" size={20} weight="semibold" tintColor={Colors.text} />
         <AppText style={styles.secondaryText}>Link teilen, etwa in WhatsApp</AppText>
       </Pressable>
       <AppText variant="caption" muted>Die Einladung ist eine Anfrage. Erst nach der Zusage sind Funk und Live Karte dabei.</AppText>
@@ -822,22 +843,7 @@ function InviteBox({ exclude, onInvite, busyId, contacts, onPlaced, onClose, onL
   );
 }
 
-function BackButton({ onPress }: { onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel="Zurück" hitSlop={4} onPress={onPress} style={styles.roundBtn}>
-      <SymbolView name="chevron.left" size={18} weight="semibold" tintColor={Colors.text} />
-    </Pressable>
-  );
-}
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.metric}>
-      <AppText style={styles.label}>{label}</AppText>
-      <AppText style={styles.metricValue}>{value}</AppText>
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   selfStart: { alignSelf: 'flex-start' },
@@ -849,6 +855,7 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: Spacing.xl, gap: Spacing.xl },
   flex: { flex: 1 },
+  bar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: Spacing.m, paddingHorizontal: Spacing.xl, gap: Spacing.s, backgroundColor: Colors.ground },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   change: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   here: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.good },
