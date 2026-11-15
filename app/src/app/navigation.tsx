@@ -14,6 +14,7 @@ import { RouteMap } from '@/components/map/route-map';
 import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM, symbolFor } from '@/components/navigation/maneuver-geometry';
 import { DriveRatingCard, type DrivenHighlight } from '@/components/navigation/drive-rating';
+import { NavCompass } from '@/components/navigation/nav-compass';
 import { SpeedBadge, useStanding } from '@/components/navigation/speed-badge';
 import { FunkBanner, HighlightCard, HighlightStrip, LeadHaltPill, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, LANES_SHOW_M, laneSymbol, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
@@ -22,7 +23,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { getEditOrigin, requestEditBack } from '@/lib/edit-tour';
-import { PACE_NOTES_RELEASED, useDriveSettings } from '@/lib/drive-settings';
+import { PACE_NOTES_RELEASED, setDriveSetting, useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
 import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetTour, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
@@ -920,6 +921,7 @@ export default function NavigationScreen() {
         showUser
         position={state.position}
         heading={state.heading}
+        northUp={driveSettings.northUp}
         speedKmh={state.speedKmh}
         others={others}
         pins={pins}
@@ -1060,11 +1062,20 @@ export default function NavigationScreen() {
       <View style={[styles.bottom, !running && { paddingBottom: insets.bottom + Spacing.m }]} pointerEvents="box-none">
         {running && (
           <>
-            {(driveSettings.speed || brakeHint) && (
-              <View style={styles.leadWrap}>
+            {/* Tempopille und Kompass in einer Reihe (Koray 15.11.): der Kompass bleibt immer, auch ohne Tempo */}
+            <View style={[styles.leadWrap, styles.speedRow]} pointerEvents="box-none">
+              {(driveSettings.speed || brakeHint) && (
                 <SpeedBadge speedKmh={state.speedKmh} limit={limitHere} estimated={shownLimit?.estimated} hint={brakeHint} showSpeed={driveSettings.speed} />
-              </View>
-            )}
+              )}
+              <NavCompass
+                heading={state.heading}
+                northUp={driveSettings.northUp}
+                onToggle={() => {
+                  haptic('punkt');
+                  setDriveSetting('northUp', !driveSettings.northUp);
+                }}
+              />
+            </View>
             {inRide && msgOpen && (
               <View style={styles.msgSheet}>
                 <AppText variant="label">An die Gruppe</AppText>
@@ -1389,6 +1400,7 @@ const styles = StyleSheet.create({
   },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   leadWrap: { paddingHorizontal: Spacing.m, paddingBottom: Spacing.s },
+  speedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   skipCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.m, paddingLeft: Spacing.l },
   skipTitle: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   planCard: { gap: Spacing.s, backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.l },
