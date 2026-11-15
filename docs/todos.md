@@ -113,7 +113,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 ## Apple und Builds
 
 * Einzelperson, Team ID N9DX399W33, Bundle ID de.rallycumo.drive, Runtime 1.1.0
-* In TestFlight bis Build 29 (14.11.: CarPlay Tempo und Tempolimit); Expo Starter Plan
+* In TestFlight bis Build 30 (15.11.: CarPlay Tempo oben und mittig, Ankunft dunkel); Expo Starter Plan
+* Gesammelt für Build 31 (Koray 15.11.: erst weitere Themen sammeln): CarPlay Tempo Fläche mit CarPlay Rundung, Schild 44 pt, dreistellige Limits passen (Commit 2e1f1e8)
 * OTA nur nach Korays OK aus einem sauberen Arbeitsstand ohne .env
 * GitHub Secret EXPO_TOKEN fehlt, der Workflow eas-update.yml scheitert deshalb (Koray trägt es selbst ein)
 
