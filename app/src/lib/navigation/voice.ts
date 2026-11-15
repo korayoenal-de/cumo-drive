@@ -241,7 +241,21 @@ function getAudio(): AudioModule | null {
 type Spoken = { text: string; rank: SpeechRank; dead: boolean };
 let queue: Spoken[] = [];
 let releaseTimer: ReturnType<typeof setTimeout> | null = null;
+/**
+ * Funk an: die Tonsitzung gehört dem Funk (Aufnehmen und Abspielen). Die Ansagen dürfen sie dann weder auf
+ * "nur abspielen" umstellen noch abschalten, sonst ist das Mikrofon tot und der Funk stumm (Koray 15.11.:
+ * beide verbunden, aber keine Tonspur kam beim Server an).
+ */
+let heldByFunk = false;
+export function holdAudioSession(on: boolean) {
+  heldByFunk = on;
+  if (on && releaseTimer) {
+    clearTimeout(releaseTimer);
+    releaseTimer = null;
+  }
+}
 function audioOn() {
+  if (heldByFunk) return;
   const a = getAudio();
   if (!a) return;
   if (releaseTimer) clearTimeout(releaseTimer);
@@ -250,12 +264,13 @@ function audioOn() {
   void a.setIsAudioActiveAsync(true).catch(() => {});
 }
 function audioOff() {
+  if (heldByFunk) return;
   const a = getAudio();
   if (!a) return;
   // kurz warten, falls gleich die nächste Ansage kommt
   if (releaseTimer) clearTimeout(releaseTimer);
   releaseTimer = setTimeout(() => {
-    if (queue.length > 0) return;
+    if (queue.length > 0 || heldByFunk) return;
     void a.setIsAudioActiveAsync(false).catch(() => {});
   }, 1500);
 }

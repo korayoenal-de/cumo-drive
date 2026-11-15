@@ -154,6 +154,8 @@ export default function NavigationScreen() {
       showToast(`Funk gerade nicht verfügbar${funk.error ? ` (${funk.error.slice(0, 80)})` : ''}. Wir versuchen es weiter.`);
     }
     if (funk.status === 'an') funkQuietSaid.current = false;
+    // Mikrofon ging nicht auf (Koray 15.11.): sagen statt still "Du sprichst" zu zeigen
+    if (funk.status === 'an' && funk.error) showToast(`Funk: ${funk.error.slice(0, 80)}`);
   }, [funk.status, funk.error]);
   const driveSettings = useDriveSettings();
   // Karte "Zwischenziel überspringen" nach langem Druck auf das Manöver, schließt nach 6 s von selbst

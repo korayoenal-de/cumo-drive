@@ -12,6 +12,7 @@ import { NativeModules } from 'react-native';
 import { useSyncExternalStore } from 'react';
 
 import { bbLog } from '@/lib/navigation/blackbox';
+import { holdAudioSession } from '@/lib/navigation/voice';
 import { supabase } from '@/lib/supabase';
 
 /** ruht: mehrere Versuche ohne Erfolg, die App versucht es nur noch alle zwei Minuten (Koray 14.11.) */
@@ -111,6 +112,7 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
     }
     if (current !== rideId || g !== gen) return;
 
+    holdAudioSession(true);
     await rn.AudioSession.configureAudio({ ios: { defaultOutput: 'speaker' } });
     await rn.AudioSession.startAudioSession();
 
@@ -153,10 +155,13 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
     try {
       const t = await lk.createLocalAudioTrack({ echoCancellation: true, noiseSuppression: true, autoGainControl: true });
       await t.mute();
-      if (room === r) await r.localParticipant.publishTrack(t, { source: lk.Track.Source.Microphone });
-      else t.stop();
-    } catch {
-      /* dann öffnet das erste Drücken das Mikrofon */
+      if (room === r) {
+        await r.localParticipant.publishTrack(t, { source: lk.Track.Source.Microphone });
+        bbLog('funk', ['mikro bereit']);
+      } else t.stop();
+    } catch (e) {
+      // dann öffnet das erste Drücken das Mikrofon
+      bbLog('funk', ['mikro vorbereiten', e instanceof Error ? e.message.slice(0, 200) : String(e)]);
     }
   } catch (e) {
     if (current !== rideId || g !== gen) return;
@@ -186,16 +191,24 @@ async function teardown() {
   current = null;
   if (r) await r.disconnect().catch(() => undefined);
   if (r && rn) await rn.AudioSession.stopAudioSession().catch(() => undefined);
+  holdAudioSession(false);
 }
 
 async function startTalking() {
   if (!room) return;
   set({ talking: true, waiting: false });
   try {
-    await room.localParticipant.setMicrophoneEnabled(true);
+    // hängt das Öffnen, nicht ewig "Du sprichst" zeigen
+    await Promise.race([
+      room.localParticipant.setMicrophoneEnabled(true),
+      new Promise((_, no) => setTimeout(() => no(new Error('Mikrofon reagiert nicht.')), 6000)),
+    ]);
+    bbLog('funk', ['sendet']);
     if (!wantTalk) await stopTalking();
   } catch (e) {
-    set({ talking: false, error: e instanceof Error ? e.message : 'Mikrofon nicht verfügbar.' });
+    const msg = e instanceof Error ? e.message : 'Mikrofon nicht verfügbar.';
+    bbLog('funk', ['sprechen fehler', msg.slice(0, 200)]);
+    set({ talking: false, error: msg });
   }
 }
 async function stopTalking() {
