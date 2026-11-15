@@ -263,6 +263,9 @@ export function navigationSpeaking(): boolean {
 
 function defaultSpeak(text: string, rank: SpeechRank = 0) {
   try {
+    // Navigationsansagen haben immer Vorrang (Koray 15.11.): läuft gerade nur ein Hinweis (Kurve, Bremsen,
+    // Highlight), wird er abgebrochen statt die Abbiegeansage hinter sich warten zu lassen
+    if (rank === 1 && speaking > navQueued) defaultStop();
     speaking++;
     if (rank === 1) navQueued++;
     audioOn();

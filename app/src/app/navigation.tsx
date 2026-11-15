@@ -788,6 +788,7 @@ export default function NavigationScreen() {
     [driveSettings.paceNotes, route, hl],
   );
   const paceNext = useRef({ list: paces, i: 0 });
+  const paceSaidAt = useRef(0);
   useEffect(() => {
     if (!paces.length || status !== 'laeuft' || offTour || atKm == null) return;
     const p = paceNext.current;
@@ -808,8 +809,24 @@ export default function NavigationScreen() {
     if (inRide && (funk.talking || funk.speaker)) return;
     if (state.distToNextM != null && state.distToNextM < 250) return;
     if (Date.now() - hlSaidAt.current < 6000) return;
+    paceSaidAt.current = Date.now();
     controls.say(t.text);
   }, [paces, status, offTour, atKm, state.speedKmh, state.distToNextM, inRide, funk.talking, funk.speaker, controls]);
+
+  // Bremsempfehlung auch per Stimme (Koray 15.11.: Tester vermisste Warnungen). Einmal je Kurve oder Kette, nur
+  // der Anfang einer Kette ("3 Kehren folgen"), nie "jetzt". Abbiegehinweise haben Vorrang: leise Stufe 0, nicht
+  // kurz vor einem Manöver, nicht während Funk, Highlight oder einer Kurvenansage.
+  const brakeSaid = useRef<number | null>(null);
+  const brakeKey = cue && cue.big !== 'JETZT' && !/ VON /.test(cue.big) ? Math.round(cue.startKm * 1000) : null;
+  useEffect(() => {
+    if (brakeKey == null || !cue || brakeSaid.current === brakeKey) return;
+    brakeSaid.current = brakeKey;
+    if (inRide && (funk.talking || funk.speaker)) return;
+    if (state.distToNextM != null && state.distToNextM < 300) return;
+    if (Date.now() - hlSaidAt.current < 6000 || Date.now() - paceSaidAt.current < 8000) return;
+    controls.say(cue.a11y);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brakeKey]);
 
   // Problem melden: ein Tipp während der Fahrt, die letzten vier Minuten gehen mit
   const reportProblem = () => {

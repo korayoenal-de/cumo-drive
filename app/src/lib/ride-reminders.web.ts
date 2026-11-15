@@ -19,3 +19,8 @@ export async function approachMinutes(r: Ausfahrt, home: LatLon | null): Promise
 }
 export const departAt = (r: Ausfahrt, minutes: number) => new Date(r.startsAt.getTime() - (minutes + 15) * 60000);
 export async function syncRideReminders(_rides: Ausfahrt[], _home: LatLon | null) {}
+
+/** Web: kein Standort für Erinnerungen */
+export async function currentSpot(): Promise<LatLon | null> {
+  return null;
+}

@@ -27,7 +27,7 @@ import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, relDay, shortDate, type Ausfahrt } from '@/lib/ausfahrten';
-import { approachMinutes, departAt, syncRideReminders } from '@/lib/ride-reminders';
+import { approachMinutes, departAt, syncRideReminders, currentSpot } from '@/lib/ride-reminders';
 import { useSession } from '@/lib/auth';
 import { kmBetween, listConversations, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
 import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
@@ -723,12 +723,14 @@ function RideSections({ rides }: { rides: Ausfahrt[] }) {
   );
 }
 
-/** Heute oder morgen: Losfahrzeit aus der Anfahrt vom Wohnort, Treffpunkt und Route dorthin */
+/** Heute oder morgen: Losfahrzeit aus der Anfahrt, Treffpunkt und Route dorthin. Heute vom aktuellen Standort
+ *  (Tester 15.11.), morgen vom Wohnort, sonst gibt es noch keinen sinnvollen Ausgangspunkt. */
 function SoonCard({ r, home }: { r: Ausfahrt; home: LatLon | null }) {
   const [min, setMin] = useState<number | null>(null);
   useEffect(() => {
     let live = true;
-    void approachMinutes(r, home).then((m) => live && setMin(m));
+    const today = relDay(r.startsAt) === 'Heute';
+    void (today ? currentSpot() : Promise.resolve(home)).then((from) => approachMinutes(r, from)).then((m) => live && setMin(m));
     return () => {
       live = false;
     };
