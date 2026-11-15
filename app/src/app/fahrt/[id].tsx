@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { RoutePreview } from '@/components/planner/route-preview';
+import { RouteMap } from '@/components/map/route-map';
 import { BackLink } from '@/components/ui/back-link';
 import { Kennzahlen } from '@/components/ui/kennzahlen';
 import { AppText } from '@/components/ui/text';
@@ -20,7 +20,7 @@ import { BAD_REASONS, getDrive, scoreWord, type DriveDetail } from '@/lib/drives
 import { datum, meta } from '@/lib/format';
 import { openDriveInPlanner } from '@/lib/open-drive';
 import { fmtG } from '@/lib/ride-stats';
-import type { Tour } from '@/lib/tour';
+import type { LatLon, Tour } from '@/lib/tour';
 
 const OLD_RATING: Record<number, string> = { 1: 'Nicht gut', 2: 'Gut', 3: 'Sensationell' };
 
@@ -52,6 +52,17 @@ export default function FahrtScreen() {
     [d],
   );
 
+  // Orte der Spitzenwerte (ab 15.11. gespeichert), wie nach der Fahrt in der Navigation
+  const pins = useMemo(() => {
+    const k = d?.peaks;
+    if (!k) return [];
+    const out: { id: string; p: LatLon; label: string; title: string }[] = [];
+    if (k.spitze) out.push({ id: 'v', p: k.spitze.p, label: `${Math.round(k.spitze.v)} km/h`, title: 'Höchstgeschwindigkeit' });
+    if (k.quer) out.push({ id: 'q', p: k.quer.p, label: fmtG(k.quer.v), title: 'Größte Querbeschleunigung' });
+    if (k.bremsung) out.push({ id: 'b', p: k.bremsung.p, label: `−${fmtG(k.bremsung.v)}`, title: 'Stärkste Bremsung' });
+    return out;
+  }, [d]);
+
   const stats: [string, string | null][] = d
     ? [
         ['Schnitt', d.avg_kmh != null ? `${Math.round(Number(d.avg_kmh))} km/h` : null],
@@ -78,12 +89,15 @@ export default function FahrtScreen() {
               </AppText>
               <AppText muted>{meta(datum(new Date(d.started_at)), d.vehicle_name)}</AppText>
             </View>
+            {/* Regel Konsistenzprüfung 15.11.: Kennzahlen direkt unter dem Titel, die Karte danach */}
+            <Kennzahlen km={Number(d.km)} minutes={d.moving_min} />
+            {/* echte Karte statt Strichbild (Koray 15.11.), mit den Orten der Spitzenwerte */}
             {tour && (
               <View style={styles.preview}>
-                <RoutePreview tour={tour} height={220} />
+                <RouteMap tour={tour} pins={pins} style={StyleSheet.absoluteFill} edgePadding={{ top: 48, right: 32, bottom: 32, left: 32 }} />
               </View>
             )}
-            <Kennzahlen km={Number(d.km)} minutes={d.moving_min} />
+            {pins.length > 0 && <AppText muted>Die Spitzenwerte sind auf der Karte markiert.</AppText>}
             {stats.some((s) => s[1] != null) && (
               <View style={styles.grid}>
                 {stats
@@ -122,7 +136,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { paddingHorizontal: Spacing.xl, gap: Spacing.xl },
   gapXs: { gap: Spacing.xs },
-  preview: { borderRadius: Radius.l, overflow: 'hidden', backgroundColor: Colors.surface },
+  preview: { height: 280, borderRadius: Radius.l, overflow: 'hidden', backgroundColor: Colors.surface },
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: Spacing.m },
   cell: { width: '50%', gap: 2, paddingRight: Spacing.s },
   label: { fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: Leading.body, color: Colors.muted },

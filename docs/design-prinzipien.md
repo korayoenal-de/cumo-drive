@@ -209,3 +209,15 @@ Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab C
 - Organisator legt an, Lead führt und startet, Teilnehmer sind alle Leute einer Ausfahrt. Drivers nur als Community Reiter. Nachricht statt Anschreiben.
 - Lob am Ende: „Starke Runde!“ nur bei Runden, sonst „Angekommen in Imst“, zum Treffpunkt „Du bist am Treffpunkt“.
 
+## Pflicht für jede Neuerung (Koray 15.11.2026)
+
+Jede neue Funktion, jeder neue Screen und jede Änderung folgt dem Design System und den Regeln oben, vor allem der Konsistenzprüfung vom 15.11. So bleibt die App konsistent und neue Funktionen werden ordentlich eingebunden. Vor dem Commit prüfen:
+
+1. Bausteine wiederverwenden statt nachbauen: `Kennzahlen`, `SeatsBadge`, `BackLink`, `ActionSheet` und `ConfirmSheet`, `ShareSheet`, `Chip` und `ChipRow`, `Screen`, `MapSheet`, Formate aus `lib/format.ts`, Farben und Maße nur aus `constants/theme.ts`.
+2. Kerndaten in der festen Reihenfolge, Kennzahlen direkt unter dem Titel, die Karte danach.
+3. Eine Hauptaktion je Ansicht, auf Detailseiten fest unten; Optionen zu einem Objekt im Blatt, Gefährliches rot unten mit Rückfrage als Frage.
+4. Wörter aus dem Glossar (Tour, Runde, Route, Strecke, Fahrzeit, Highlight, Teilnehmer, Organisator, Lead, Löschen, Entfernen, Verwerfen), Du Form, keine Gedankenstriche.
+5. Icons 16 oder 20 semibold, ein Symbol je Bedeutung; Typografie Mittelweg; Hinweise 15 pt.
+6. Bewegung mit den Motion Tokens, gezielt statt überall.
+7. Mit Kartenbezug immer CarPlay mitdenken.
+8. Weicht etwas bewusst ab: hier als Ausnahme mit Datum und Grund eintragen, nicht still abweichen.
