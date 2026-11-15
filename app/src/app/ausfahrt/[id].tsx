@@ -52,6 +52,8 @@ export default function AusfahrtDetail() {
   const [inviting, setInviting] = useState(false);
   const [requests, setRequests] = useState<Anfrage[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  /** Fehler beim Laden; sichtbar nur, solange die Ausfahrt noch nicht da ist */
+  const [loadErr, setLoadErr] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const [msg, setMsg] = useState('');
@@ -68,6 +70,8 @@ export default function AusfahrtDetail() {
   const [startAsk, setStartAsk] = useState(false);
   const [pingOpen, setPingOpen] = useState(ping === '1');
   const [leadSheet, setLeadSheet] = useState(false);
+  // Ohne gewählten Treffpunkt: Ortsname des Tourstarts statt „Start der Tour“ (Koray 15.11.)
+  const [startName, setStartName] = useState<string | null>(null);
   // Einladen (TestFlight Review 13.11.): das Feld rollt nach oben, darunter bleibt Platz für vier bis fünf Vorschläge
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const sectionY = useRef(0);
@@ -83,6 +87,7 @@ export default function AusfahrtDetail() {
       const all = await listAusfahrten();
       const found = all.find((x) => x.id === id) ?? null;
       setA(found);
+      setLoadErr(null);
       if (!found) {
         if (k) setLinked(await rideByLink(id, k).catch(() => null));
         return;
@@ -101,7 +106,9 @@ export default function AusfahrtDetail() {
         setDeclines(await ausfahrtAbsagen(id));
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e));
+      // Stilles Neuladen alle 30 s (Koray 15.11.): steht die Ausfahrt schon da, bleibt ein abgebrochener
+      // Abruf unsichtbar; nur wenn noch nichts geladen ist, zeigen wir einen verständlichen Hinweis
+      setLoadErr(friendly(e));
       setA((x) => x ?? null);
     }
   }, [id, k]);
@@ -116,6 +123,19 @@ export default function AusfahrtDetail() {
       return () => clearInterval(t);
     }, [load]),
   );
+
+  const startKey = a && !a.meeting?.name && a.start ? `${a.start[0]},${a.start[1]}` : null;
+  useEffect(() => {
+    if (!startKey) return;
+    const [la, lo] = startKey.split(',').map(Number);
+    let live = true;
+    reverseName([la, lo])
+      .then((n) => live && n !== 'Standort' && setStartName(n))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [startKey]);
 
   useEffect(() => {
     if (!id) return;
@@ -194,7 +214,7 @@ export default function AusfahrtDetail() {
         ) : (
           <AppText muted>Die Ausfahrt ist schon voll.</AppText>
         )}
-        {err && <AppText style={styles.error}>{err}</AppText>}
+        {(err ?? loadErr) && <AppText style={styles.error}>{err ?? loadErr}</AppText>}
       </View>
     );
   }
@@ -204,7 +224,7 @@ export default function AusfahrtDetail() {
         <BackButton onPress={back} />
         <AppText variant="display">Ausfahrt</AppText>
         <AppText muted>{session ? 'Diese Ausfahrt gibt es nicht mehr.' : 'Melde dich an, um Ausfahrten zu sehen.'}</AppText>
-        {err && <AppText style={styles.error}>{err}</AppText>}
+        {(err ?? loadErr) && <AppText style={styles.error}>{err ?? loadErr}</AppText>}
       </View>
     );
   }
@@ -213,7 +233,7 @@ export default function AusfahrtDetail() {
   const free = freeSeats(a);
   const inThisRide = ride.rideId === a.id && (ride.status === 'aktiv' || ride.status === 'verbinde');
   const joined = a.isOwner || a.myStatus === 'zugesagt';
-  const meetingName = a.meeting?.name || 'Start der Tour';
+  const meetingName = a.meeting?.name || startName || 'Start der Tour';
 
   const meetAt: LatLon | null = a.meeting ? [a.meeting.lat, a.meeting.lon] : a.start;
 
@@ -269,6 +289,9 @@ export default function AusfahrtDetail() {
     main = startOpen
       ? { label: 'Jetzt losfahren', onPress: tryStart }
       : { label: 'Jetzt losfahren', onPress: () => undefined, disabled: true, hint: `Ab ${clock(new Date(a.startsAt.getTime() - START_WINDOW_MS))} möglich, 2 Stunden vor der Abfahrt` };
+  // Route zum Treffpunkt ist für alle Dabei die Hauptaktion, auch Tage vorher (Koray 15.11.: man kann früher los);
+  // Einladen bleibt als Zeile bei den Teilnehmern
+  else if (joined && meetAt) main = null;
   else if (a.isOwner && free > 0 && !inviting) main = { label: 'Einladen', onPress: () => setInviting(true) };
   else if (joined) main = null;
   else if (a.myStatus === 'eingeladen') main = { label: 'Zusagen', onPress: () => void run('yes', () => respondInvite(a.id, true, myVehicleLabel() || null)) };
@@ -347,12 +370,13 @@ export default function AusfahrtDetail() {
               </View>
             </View>
           ) : (
-            joined && meetAt && !inThisRide && <MeetingRoute to={meetAt} place={meetingName} />
+            joined && meetAt && !inThisRide && <MeetingRoute to={meetAt} place={meetingName} primary={!main} />
           )}
-          {arr && !over && (
+          {/* Runde: keine Zeile „Wieder am Treffpunkt“ mehr (Koray 15.11.) */}
+          {arr && !over && !a.roundTrip && (
             <View style={styles.fieldPlain}>
               <View style={styles.flex}>
-                <AppText style={styles.label}>{a.roundTrip ? 'Wieder am Treffpunkt' : 'Ankunft'}</AppText>
+                <AppText style={styles.label}>Ankunft</AppText>
                 <AppText style={styles.value}>
                   etwa {clock(arr)}
                   {!a.roundTrip && a.goalName ? ` in ${a.goalName}` : ''}
@@ -879,3 +903,9 @@ const styles = StyleSheet.create({
   textBtnText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   error: { color: Colors.stopText, fontFamily: Fonts.semibold },
 });
+
+/** Netzfehler in Du Form statt „fetch failed: Abgebrochen“ */
+function friendly(e: unknown): string {
+  const m = e instanceof Error ? e.message : String(e);
+  return /fetch|network|abgebrochen|cancel|timed out|offline/i.test(m) ? 'Keine Verbindung. Wir versuchen es gleich nochmal.' : m;
+}
