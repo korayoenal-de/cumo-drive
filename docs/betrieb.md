@@ -1,6 +1,6 @@
 # CUMO DRIVE Betrieb: Leistung, Sicherung, Verfügbarkeit
 
-Stand: 12. November 2026. Geschrieben von Claude nach Korays Auftrag vom 12.11. (Unabhängigkeit, zweiter Server).
+Stand: 15. November 2026 (Abschnitt 9 neu: Valhalla, Neuaufbau, Aktualität). Geschrieben von Claude nach Korays Auftrag vom 12.11. (Unabhängigkeit, zweiter Server).
 Messwerte stammen vom 12.11. und sind Momentaufnahmen.
 
 ## Aufbau
@@ -83,7 +83,7 @@ Die frühere Angabe „etwa eine Stunde“ war falsch. Gemessen am Protokoll vom
 
 Überwachung (monitor.sh, jede Minute, Stand 13.11.): eigener Dienst, Partner, Stopps des Partners, Ortssuche, eigener Valhalla (sobald /opt/valhalla/ready existiert), alle 10 Minuten eine echte Route, gescheiterte Abläufe (Neuaufbau, Ortssuche, Sicherung, Valhalla), Platte ab 85 Prozent, Speicher unter 2 GB. Auf dem Server mit /etc/cumo-primary zusätzlich die Datenbank (Supabase) und um 8 Uhr eine Tagesmeldung. Zustandswechsel stehen in setup.log; mit einer Adresse in /etc/cumo-notify (ntfy Kanal) geht eine Nachricht aufs Handy. Vorher lief keine Meldung: der Zähler scheiterte an Leerzeichen im Dateinamen.
 
-Valhalla (Server 2, /opt/valhalla, Docker): Neubau dienstags 3:00 über cumo-valhalla-update.timer (valhalla-update.sh), währenddessen fragt die App den öffentlichen Valhalla.
+Valhalla (Server 2, /opt/valhalla, Docker): Neubau dienstags 3:00 über cumo-valhalla-update.timer (valhalla-update.sh), währenddessen fragt die App den öffentlichen Valhalla. Details in Abschnitt 9.
 
 Schwachstellen, die bleiben:
 
@@ -142,6 +142,32 @@ Offen: Linien kodiert übertragen (points_encoded) spart etwa zwei Drittel der A
 * Schlüssel: Koray (eigener), Claude (claude-cumo-drive), dazu je ein Schlüssel von Server zu Server für Kopie und Sicherung in beide Richtungen.
 * GraphHopper und Photon hören nur lokal, erreichbar nur über den Webserver.
 * Geheimnisse liegen nicht auf den Servern (kein Supabase Schlüssel, kein TomTom Schlüssel).
+
+## 9. Stand 15. November 2026
+
+### Eigener Valhalla (Server 2)
+
+* Seit 14.11. abends nutzt die App den eigenen Valhalla auf Server 2 (Caddy `/valhalla/*` auf 127.0.0.1:8002). FOSSGIS bleibt Notfall in der App; die Einstellung für FOSSGIS liegt als `/etc/caddy/Caddyfile.fossgis`.
+* Bild `ghcr.io/valhalla/valhalla-scripted:latest` (3.9.1, gleiche Version wie FOSSGIS). Gebaut wird in einem eigenen Lauf, danach startet ein Behälter, der nur ausliefert (sonst baute jeder Neustart alles neu).
+* **Ländergrenzen:** Unsere Karte besteht aus Ausschnitten, darin fehlten Frankreich und Italien in `admins.sqlite`. Ohne Land nahm Valhalla Linksverkehr an und zählte Kreisverkehrsausfahrten falsch. `valhalla-admins.sh` baut die Grenzen aus den vollständigen Geofabrik Länderdateien (Frankreich, Italien) plus unserer Karte, alle 28 Tage oder wenn ein Land fehlt, und tauscht erst nach Prüfung aller Länder.
+* **Freigabe nur nach Prüfung:** `valhalla-check.py` prüft nach jedem Bau Land und Rechtsverkehr in DE, AT, CH, IT, FR, SI und den Kreisverkehr bei Obernai („1. Ausfahrt“). Erst dann wird `/opt/valhalla/ready` gesetzt.
+
+### Neuaufbau GraphHopper (Vorfall 15.11.)
+
+* Server 1 lief seit 14.11. mit GraphHopper 11.1 (Sicherheitsupdate), beide Server.
+* Am 15.11. scheiterte der Neuaufbau: Die Kartenteile hatten verschiedene Stände (DACH vom 13., Frankreich vom 14.11.), Grenzpunkte steckten doppelt in der Datei. Danach startete der alte Graph nicht, weil schon eine neue Kurvig Datei lag („Profiles do not match“); Server 1 war etwa 5:42 bis 6:00 aus, die App plante über Server 2.
+* Behoben in `setup-server.sh`: nach dem Zusammenfügen `osmium time-filter` (behält je Objekt die neueste Version). Neue Profile liegen in `custom_models.next` und werden erst beim Tausch des Graphen übernommen, mit Rückweg. `rebuild-now.sh` enthält keine alte Kopie der Kurvig Datei mehr.
+* Kurvig seit 15.11.: Bundes und Landesstraßen nur außerorts abgewertet (Mörlenbach: vorher Abkürzung durch Nebenstraßen).
+
+### Aktualität (Überwachung 7 Uhr)
+
+`monitor.sh` meldet täglich um 7 Uhr: OSM Stand älter als 10 Tage, Graph älter als 9 Tage, Valhalla Kacheln älter als 9 Tage, Valhalla Version hinter der öffentlichen, Ortssuche oder Stopps älter als 40 Tage, inaktive Zeitpläne, neue GraphHopper Version.
+
+| Daten | Takt |
+|---|---|
+| Graph Server 1 / Server 2 | So 3 Uhr / Mo 3 Uhr |
+| Valhalla (Server 2) | Di 3 Uhr, Grenzen alle 28 Tage |
+| Ortssuche | Mi (Server 2) und Do (Server 1) 4 Uhr |
 
 ## Befehle
 
