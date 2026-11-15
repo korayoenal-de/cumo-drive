@@ -1,5 +1,6 @@
 /**
- * Eigene Symbole der Tableiste (Koray 10.11.): ein Raster (24), eine Strichstärke, gleiche optische Größe.
+ * Eigene Symbole der Tableiste (Koray 10.11.; seit 15.11. als Bilder in assets/tabs für die iOS Leiste, erzeugt mit
+ * scripts/tab-icons.js; bei Änderungen hier dort mitziehen und neu erzeugen): ein Raster (24), eine Strichstärke, gleiche optische Größe.
  * Die SF Symbole wichen in Größe und Strich voneinander ab, und beim Routen Symbol lag die Kurve zu nah an
  * den Kreisen. Aktiv: gefüllt und etwas kräftiger, wie bei den SF .fill Varianten.
  */
