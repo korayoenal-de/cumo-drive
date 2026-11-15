@@ -348,9 +348,8 @@ export default function Community() {
   });
   const shareItems: SheetItem[] = [
     ...shareable.map(tourItem),
-    ...(shareableAll.length > shareable.length
-      ? [{ key: 'alle', icon: 'list.bullet' as const, label: `Alle anzeigen (${shareableAll.length})`, onPress: () => setShareAll(true) }]
-      : []),
+    // immer da (Koray 15.11.): auch bei wenigen Touren der Weg zur ganzen Liste
+    { key: 'alle', icon: 'list.bullet' as const, label: 'Alle Touren', hint: `${shareableAll.length} ${shareableAll.length === 1 ? 'Tour' : 'Touren'} zum Teilen`, onPress: () => setShareAll(true) },
     { key: 'neu', icon: 'plus' as const, label: 'Neue Tour erstellen', hint: 'Im Planer, danach hier teilen', onPress: () => router.navigate('/') },
   ];
 
