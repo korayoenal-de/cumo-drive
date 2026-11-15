@@ -90,14 +90,17 @@ function Upcoming() {
   );
 }
 
-/** Vergangene Ausfahrten unter Gefahren (Koray 14.11.): Tippen öffnet den Rückblick mit Chat und Nochmal fahren */
+/**
+ * Vergangene Ausfahrten unter Gefahren (Koray 14.11.): Tippen öffnet den Rückblick mit Chat und Nochmal fahren.
+ * Nur wirklich gefahrene (Koray 15.11.): eine Ausfahrt, die nie gestartet wurde, gehört nicht unter Gefahren.
+ */
 function PastRides() {
   const [rides, setRides] = useState<Ausfahrt[]>([]);
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       listAusfahrten()
-        .then((l) => alive && setRides(l.filter((a) => a.isOver && (a.isOwner || a.myStatus === 'zugesagt')).sort((x, y) => y.startsAt.getTime() - x.startsAt.getTime())))
+        .then((l) => alive && setRides(l.filter((a) => a.isOver && !!a.startedAt && (a.isOwner || a.myStatus === 'zugesagt')).sort((x, y) => y.startsAt.getTime() - x.startsAt.getTime())))
         .catch(() => undefined);
       return () => {
         alive = false;
@@ -109,7 +112,7 @@ function PastRides() {
     <View style={styles.upcoming}>
       <AppText style={styles.upLabel}>Ausfahrten</AppText>
       {rides.map((a) => {
-        const state = a.startedAt ? (a.isOwner ? 'Du hast geführt' : `Mit ${a.ownerName}`) : 'Nicht gestartet';
+        const state = a.isOwner ? 'Du hast geführt' : `Mit ${a.ownerName}`;
         return (
           <Pressable
             key={a.id}
@@ -121,7 +124,7 @@ function PastRides() {
             <View style={styles.flex}>
               <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
               <AppText muted numberOfLines={1}>{fmtMeta(a.km != null ? strecke(a.km) : null, a.meeting?.name ? `ab ${a.meeting.name}` : null)}</AppText>
-              <AppText style={a.startedAt ? styles.upMuted : styles.upAttn} numberOfLines={1}>{state}</AppText>
+              <AppText style={styles.upMuted} numberOfLines={1}>{state}</AppText>
             </View>
           </Pressable>
         );
