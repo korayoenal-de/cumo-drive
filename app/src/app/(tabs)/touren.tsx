@@ -15,7 +15,11 @@ import { RouteThumb } from '@/components/tours/tour-bits';
 import { TourCard } from '@/components/tours/tour-card';
 import { DateBlock } from '@/components/community/ride-bits';
 import { clock, listAusfahrten, type Ausfahrt } from '@/lib/ausfahrten';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+
+import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { Chip, ChipRow } from '@/components/ui/chip';
+import { SwipeDelete } from '@/components/ui/swipe-delete';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
@@ -23,10 +27,11 @@ import { useSession } from '@/lib/auth';
 import { setEditTour } from '@/lib/edit-tour';
 import { backfillAuthors } from '@/lib/community';
 import { filterTours, folders, readLibrary, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
-import { getDriveTracks, listDrives, type Drive } from '@/lib/drives';
+import { deleteDrive, getDriveTracks, listDrives, type Drive } from '@/lib/drives';
 import { thumbShape } from '@/lib/route-thumb';
 import { fmtG } from '@/lib/ride-stats';
 import { importTourFile } from '@/lib/route-file';
+import { showToast } from '@/lib/toast';
 import { countCurves } from '@/lib/stats';
 import { flatten, formatKm, type LatLon } from '@/lib/tour';
 
@@ -278,6 +283,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
   const [list, setList] = useState<Drive[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [car, setCar] = useState<string | null>(null);
+  const [askDelete, setAskDelete] = useState<Drive | null>(null);
   const [tracks, setTracks] = useState<Record<string, LatLon[]>>({});
   // Spuren der obersten Fahrten nachladen: die Liste steht sofort, die Streckenbilder kommen dazu
   const firstIds = useMemo(() => (list ?? []).slice(0, TRACKS_FIRST).map((d) => d.id).join(','), [list]);
@@ -338,7 +344,24 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
         {shown.map((d) => {
           const line = tracks[d.id];
           return (
-            <DriveCard key={d.id} line={line} label={d.name} onOpen={() => router.push(`/fahrt/${d.id}` as Href)}>
+            // Von rechts nach links wischen zeigt Löschen, mit Rückfrage (Koray 15.11.)
+            <Swipeable
+              key={d.id}
+              friction={1.6}
+              rightThreshold={36}
+              overshootRight={false}
+              containerStyle={styles.swipeBox}
+              renderRightActions={(prog, _tr, m) => (
+                <SwipeDelete
+                  progress={prog}
+                  label={`Fahrt ${d.name} löschen`}
+                  onPress={() => {
+                    m.close();
+                    setAskDelete(d);
+                  }}
+                />
+              )}>
+            <DriveCard line={line} label={d.name} onOpen={() => router.push(`/fahrt/${d.id}` as Href)} onDelete={() => setAskDelete(d)}>
               <View style={[styles.rowMain, styles.flex]}>
                 <View style={styles.row}>
                   <AppText style={[styles.name, styles.flex]} numberOfLines={1}>
@@ -351,21 +374,41 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
                 </AppText>
               </View>
             </DriveCard>
+            </Swipeable>
           );
         })}
       </View>
+      <ConfirmSheet
+        visible={!!askDelete}
+        title="Möchtest du diese Fahrt wirklich löschen?"
+        text={askDelete ? `${askDelete.name}, ${datum(new Date(askDelete.started_at))}. Strecke, Statistik und Bewertung sind dann weg.` : undefined}
+        confirmLabel="Löschen"
+        onClose={() => setAskDelete(null)}
+        onConfirm={() => {
+          const d = askDelete;
+          setAskDelete(null);
+          if (!d) return;
+          setList((l) => (l ? l.filter((x) => x.id !== d.id) : l));
+          deleteDrive(d.id).catch((e: Error) => {
+            showToast(`Löschen hat nicht geklappt: ${e.message}`, { tone: 'error' });
+            listDrives().then(setList).catch(() => undefined);
+          });
+        }}
+      />
     </View>
   );
 }
 
 /** Karte einer Fahrt mit Mini Streckenbild; Tippen öffnet den Rückblick mit Statistik (Koray 15.11.) */
-function DriveCard({ line, label, onOpen, children }: { line?: LatLon[]; label: string; onOpen?: () => void; children: React.ReactNode }) {
+function DriveCard({ line, label, onOpen, onDelete, children }: { line?: LatLon[]; label: string; onOpen?: () => void; onDelete?: () => void; children: React.ReactNode }) {
   const shape = useMemo(() => (line ? thumbShape(line) : null), [line]);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={onOpen ? 'Zeigt Strecke, Statistik und Bewertung der Fahrt' : undefined}
+      accessibilityActions={onDelete ? [{ name: 'delete', label: 'Löschen' }] : undefined}
+      onAccessibilityAction={(e) => e.nativeEvent.actionName === 'delete' && onDelete?.()}
       disabled={!onOpen}
       onPress={onOpen}
       style={({ pressed }) => [styles.card, styles.driveRow, pressed && styles.pressed]}
@@ -386,6 +429,7 @@ const styles = StyleSheet.create({
   privat: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: Colors.surface2 },
   privatText: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
   driveRow: { flexDirection: 'row', alignItems: 'center' },
+  swipeBox: { borderRadius: Radius.l, overflow: 'hidden' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   importBtn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
