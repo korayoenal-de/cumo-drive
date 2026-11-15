@@ -61,6 +61,7 @@ export default function Community() {
   const insets = useSafeAreaInsets();
   const [seg, setSeg] = useState<Seg>('routen');
   const [shareOpen, setShareOpen] = useState(false);
+  const [shareAll, setShareAll] = useState(false);
   const [toPublish, setToPublish] = useState<SavedTour | null>(null);
   const myTours = useLibrary();
   const [tours, setTours] = useState<CommunityTour[] | null>(null);
@@ -332,19 +333,24 @@ export default function Community() {
     </View>
   );
 
-  // Eigene Touren zum Teilen: noch nicht veröffentlicht, nicht unverändert aus der Community, die neuesten zuerst
-  const shareable = myTours
+  // Eigene Touren zum Teilen: noch nicht veröffentlicht, nicht unverändert aus der Community, die neuesten zuerst.
+  // Vorschau mit den acht neuesten, „Alle anzeigen“ öffnet die ganze Liste (Koray 15.11.)
+  const shareableAll = myTours
     .filter((t) => !t.published && t.folder !== 'Community' && t.folder !== 'Gefahren')
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-    .slice(0, 8);
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const shareable = shareableAll.slice(0, 8);
+  const tourItem = (t: SavedTour): SheetItem => ({
+    key: t.id,
+    icon: 'bookmark',
+    label: t.name,
+    hint: fmtMeta(strecke(t.laenge_km), t.minutes ? fahrzeit(t.minutes) : null),
+    onPress: () => setToPublish(t),
+  });
   const shareItems: SheetItem[] = [
-    ...shareable.map((t) => ({
-      key: t.id,
-      icon: 'bookmark' as const,
-      label: t.name,
-      hint: fmtMeta(strecke(t.laenge_km), t.minutes ? fahrzeit(t.minutes) : null),
-      onPress: () => setToPublish(t),
-    })),
+    ...shareable.map(tourItem),
+    ...(shareableAll.length > shareable.length
+      ? [{ key: 'alle', icon: 'list.bullet' as const, label: `Alle anzeigen (${shareableAll.length})`, onPress: () => setShareAll(true) }]
+      : []),
     { key: 'neu', icon: 'plus' as const, label: 'Neue Tour erstellen', hint: 'Im Planer, danach hier teilen', onPress: () => router.navigate('/') },
   ];
 
@@ -357,6 +363,7 @@ export default function Community() {
         items={shareItems}
         onClose={() => setShareOpen(false)}
       />
+      <ActionSheet visible={shareAll} title="Alle deine Touren" subtitle="Welche soll andere nachfahren können?" items={shareableAll.map(tourItem)} onClose={() => setShareAll(false)} scroll />
       {toPublish && <PublishSheet key={toPublish.id} tour={toPublish} visible onClose={() => setToPublish(null)} onPublished={load} />}
       <MapSheet
         scrollRef={scroll}

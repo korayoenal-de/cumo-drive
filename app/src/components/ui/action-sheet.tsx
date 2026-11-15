@@ -106,9 +106,10 @@ export function OptionsSheet({ visible, title, subtitle, onClose, children, scro
   );
 }
 
-export function ActionSheet({ visible, title, subtitle, items, onClose }: { visible: boolean; title?: string; subtitle?: string; items: SheetItem[]; onClose: () => void }) {
+/** scroll: für lange Listen (etwa alle eigenen Touren), das Blatt scrollt dann */
+export function ActionSheet({ visible, title, subtitle, items, onClose, scroll = false }: { visible: boolean; title?: string; subtitle?: string; items: SheetItem[]; onClose: () => void; scroll?: boolean }) {
   return (
-    <OptionsSheet visible={visible} title={title} subtitle={subtitle} onClose={onClose}>
+    <OptionsSheet visible={visible} title={title} subtitle={subtitle} onClose={onClose} scroll={scroll}>
       <View style={styles.list} accessibilityRole="menu">
         {items.map((it) => (
           <Pressable
