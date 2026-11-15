@@ -325,6 +325,18 @@ export function RouteMap({
   const carStep = useRef(-1);
   const [carDeg, setCarDeg] = useState(0);
   const scheduleCarStep = useCallback((f: number) => setCarDeg(f * 10), []);
+  // Umschalten wirkt sofort, auch im Stand (Koray 15.11.: im Büro getippt, nichts passierte, weil die Kamera nur
+  // bei neuer Bewegung nachgeführt wird): Kamera drehen und das Auto passend zeigen
+  useEffect(() => {
+    const sh = shown.current;
+    if (!sh || !map.current) return;
+    if (northUp) {
+      const f = Math.round(sh.h / 10) % 36;
+      carStep.current = f;
+      setCarDeg(f * 10);
+    }
+    map.current.animateCamera({ center: ll(sh.p), heading: northUp ? 0 : sh.h }, { duration: 450 });
+  }, [northUp]);
   useEffect(() => {
     if (!position) return;
     const now = Date.now();
