@@ -153,13 +153,6 @@ export default function NavigationScreen() {
   const driveSettings = useDriveSettings();
   // Karte "Zwischenziel überspringen" nach langem Druck auf das Manöver, schließt nach 6 s von selbst
   const [skipOpen, setSkipOpen] = useState(false);
-  // Planung ansehen (Koray 8.11.): Karte zeigt kurz die ganze restliche Route, dazu die Ziele
-  const [overview, setOverview] = useState(0);
-  useEffect(() => {
-    if (!overview) return;
-    const t = setTimeout(() => setOverview(0), 12000);
-    return () => clearTimeout(t);
-  }, [overview]);
   useEffect(() => {
     if (!skipOpen) return;
     const t = setTimeout(() => setSkipOpen(false), 6000);
@@ -1011,8 +1004,6 @@ export default function NavigationScreen() {
         tour={mapTour}
         style={StyleSheet.absoluteFill}
         followUser={running}
-        overview={overview}
-        onOverviewEnd={() => setOverview(0)}
         showUser
         position={state.position}
         heading={state.heading}
@@ -1063,28 +1054,6 @@ export default function NavigationScreen() {
               </Animated.View>
             )}
           </Pressable>
-        )}
-        {running && overview > 0 && atKm != null && (
-          <Animated.View entering={softEnter()} exiting={FadeOut.duration(160)}>
-            <Pressable accessibilityRole="button" accessibilityHint="Antippen schließt die Übersicht" onPress={() => setOverview(0)} style={styles.planCard}>
-              <AppText style={styles.skipTitle}>Deine Planung</AppText>
-              {[
-                ...viaKms.map((k, i) => ({ k, name: active?.tour.namen?.[i + 1] || `Zwischenziel ${i + 1}`, ziel: false })),
-                { k: route?.km ?? 0, name: active?.tour.namen?.[(active?.tour.wegpunkte.length ?? 1) - 1] || 'Ziel', ziel: true },
-              ]
-                .filter((x) => x.k > atKm + 0.1)
-                .slice(0, 4)
-                .map((x, i) => (
-                  <View key={`${x.name}-${i}`} style={styles.planRow}>
-                    <View style={[styles.planDot, x.ziel && styles.planDotZiel]} />
-                    <AppText style={styles.planName} numberOfLines={1}>
-                      {x.name}
-                    </AppText>
-                    <AppText style={styles.planKm}>{`${formatKm(Math.max(0, x.k - atKm), 0)} km`}</AppText>
-                  </View>
-                ))}
-            </Pressable>
-          </Animated.View>
         )}
         {running && skipOpen && skipTarget && atKm != null && (
           <Animated.View entering={softEnter()} exiting={FadeOut.duration(160)} style={styles.skipCard}>
@@ -1507,12 +1476,6 @@ const styles = StyleSheet.create({
   speedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   skipCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.m, paddingLeft: Spacing.l },
   skipTitle: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
-  planCard: { gap: Spacing.s, backgroundColor: 'rgba(11,11,12,0.94)', borderRadius: Radius.l, padding: Spacing.l },
-  planRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 28 },
-  planDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: Colors.text },
-  planDotZiel: { backgroundColor: Colors.signal, borderColor: Colors.signal },
-  planName: { flex: 1, minWidth: 0, fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
-  planKm: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
   skipText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
   skipBtn: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   skipBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },

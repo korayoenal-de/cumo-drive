@@ -14,6 +14,7 @@ type SharingModule = typeof import('expo-sharing');
 
 function fs(): FsModule | null {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional, ältere Builds ohne das Paket
     return require('expo-file-system') as FsModule;
   } catch {
     return null;
@@ -21,6 +22,7 @@ function fs(): FsModule | null {
 }
 function sharing(): SharingModule | null {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional, ältere Builds ohne das Paket
     return require('expo-sharing') as SharingModule;
   } catch {
     return null;

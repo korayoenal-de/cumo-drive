@@ -222,6 +222,7 @@ let audio: AudioModule | null | undefined;
 function getAudio(): AudioModule | null {
   if (audio !== undefined) return audio;
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional, ältere Builds ohne das Paket
     audio = require('expo-audio') as AudioModule;
   } catch {
     audio = null; // ältere Builds ohne expo-audio
