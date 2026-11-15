@@ -599,7 +599,7 @@ final class CarSpeedView: UIView {
   private static let red = UIColor(red: 200 / 255, green: 30 / 255, blue: 30 / 255, alpha: 1)
   private static let text = UIColor(red: 244 / 255, green: 244 / 255, blue: 242 / 255, alpha: 1)
   private static let muted = UIColor(red: 154 / 255, green: 154 / 255, blue: 159 / 255, alpha: 1)
-  private let signSize: CGFloat = 40
+  private let signSize: CGFloat = 44
   /// rechts so viel Rand wie links, wenn kein Schild da ist (sonst steht das Tempo schief, Koray 15.11.)
   private var trailingPad: NSLayoutConstraint!
   private var leadingPad: NSLayoutConstraint!
@@ -607,7 +607,8 @@ final class CarSpeedView: UIView {
   override init(frame: CGRect) {
     super.init(frame: frame)
     backgroundColor = CarSpeedView.rest
-    layer.cornerRadius = 26
+    // gleiche Rundung wie die Flächen von CarPlay (Anweisung, Ankunft), nicht ganz rund (Koray 15.11.)
+    layer.cornerRadius = 12
     layer.masksToBounds = true
     value.font = .monospacedDigitSystemFont(ofSize: 24, weight: .heavy)
     value.textColor = CarSpeedView.text
@@ -623,6 +624,9 @@ final class CarSpeedView: UIView {
     speedCol.addArrangedSubview(unit)
     sign.font = .monospacedDigitSystemFont(ofSize: 17, weight: .heavy)
     sign.textAlignment = .center
+    // dreistellig (100, 120) passt sonst nicht in den roten Ring (Koray 15.11.)
+    sign.adjustsFontSizeToFitWidth = true
+    sign.minimumScaleFactor = 0.6
     sign.layer.cornerRadius = signSize / 2
     sign.layer.masksToBounds = true
     sign.translatesAutoresizingMaskIntoConstraints = false
@@ -658,6 +662,7 @@ final class CarSpeedView: UIView {
     if let limit {
       sign.isHidden = false
       sign.text = "\(limit)"
+      sign.font = .monospacedDigitSystemFont(ofSize: limit >= 100 ? 14 : 17, weight: .heavy)
       if estimated {
         sign.backgroundColor = UIColor(white: 0.32, alpha: 1)
         sign.textColor = CarSpeedView.text
@@ -665,7 +670,7 @@ final class CarSpeedView: UIView {
       } else {
         sign.backgroundColor = .white
         sign.textColor = .black
-        sign.layer.borderWidth = 5
+        sign.layer.borderWidth = 4.5
         sign.layer.borderColor = CarSpeedView.red.cgColor
       }
     } else {
