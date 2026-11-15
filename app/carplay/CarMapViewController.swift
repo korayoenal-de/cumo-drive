@@ -16,7 +16,7 @@ final class GroupAnnotation: MKPointAnnotation {
 
 final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private let map = MKMapView()
-  private let hint = UILabel()
+  private let hint = PaddedLabel()
   private var line: MKPolyline?
   private var casing: CasingPolyline?
   private var rejoin: RejoinPolyline?
@@ -103,9 +103,10 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     view.addSubview(hint)
     NSLayoutConstraint.activate([
       hint.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-      hint.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+      // mehr Luft nach unten und innen (Koray 15.11.: der Text klebte am Rand der Fläche)
+      hint.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -28),
       hint.widthAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -32),
-      hint.heightAnchor.constraint(greaterThanOrEqualToConstant: 48),
+      hint.heightAnchor.constraint(greaterThanOrEqualToConstant: 52),
     ])
     hint.isHidden = line != nil || !showsHint
 
@@ -701,5 +702,19 @@ final class CarSpeedView: UIView {
     let over = showSpeed && !estimated && limit != nil && v > (limit ?? 0) + 4
     backgroundColor = over ? CarSpeedView.warnBg : CarSpeedView.rest
     accessibilityLabel = [showSpeed ? "\(v) km/h" : nil, limit.map { "Limit \($0)" }].compactMap { $0 }.joined(separator: ", ")
+  }
+}
+
+/// Text mit Innenabstand, für Hinweise auf der Karte (UILabel selbst kennt keinen)
+final class PaddedLabel: UILabel {
+  var insets = UIEdgeInsets(top: 14, left: 22, bottom: 14, right: 22)
+  override func drawText(in rect: CGRect) { super.drawText(in: rect.inset(by: insets)) }
+  override var intrinsicContentSize: CGSize {
+    let s = super.intrinsicContentSize
+    return CGSize(width: s.width + insets.left + insets.right, height: s.height + insets.top + insets.bottom)
+  }
+  override func textRect(forBounds bounds: CGRect, limitedToNumberOfLines n: Int) -> CGRect {
+    let r = super.textRect(forBounds: bounds.inset(by: insets), limitedToNumberOfLines: n)
+    return r.inset(by: UIEdgeInsets(top: -insets.top, left: -insets.left, bottom: -insets.bottom, right: -insets.right))
   }
 }
