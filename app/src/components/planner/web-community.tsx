@@ -134,7 +134,7 @@ export function CommunityPanel(props: {
       />
       {seg === 'routen' ? (
         <>
-          <span style={S.metricLabel}>Routen zum Nachfahren{tours ? `, ${tours.length}` : ''}</span>
+          <span style={S.metricLabel}>Touren zum Nachfahren{tours ? `, ${tours.length}` : ''}</span>
           <input aria-label="Touren durchsuchen" placeholder="Tour, Fahrer oder Beschreibung suchen" value={q} onChange={(e) => setQ(e.target.value)} style={{ ...S.search, height: 52 }} />
           <div style={S.chips}>
             {SORTS.map((s) => (

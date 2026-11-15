@@ -26,7 +26,8 @@ import { Chip, ChipRow } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { ReportSheet } from '@/components/moderation/report-sheet';
 import { usePrivacy } from '@/components/settings/community-profile';
-import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
+import { PublishSheet } from '@/components/tours/tour-card';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, relDay, shortDate, type Ausfahrt } from '@/lib/ausfahrten';
@@ -34,7 +35,7 @@ import { approachMinutes, departAt, syncRideReminders, currentSpot } from '@/lib
 import { useSession } from '@/lib/auth';
 import { kmBetween, listConversations, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
 import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
-import { deleteTour, saveTour, syncLibrary, useLibrary } from '@/lib/library';
+import { deleteTour, saveTour, syncLibrary, useLibrary, type SavedTour } from '@/lib/library';
 import { showToast } from '@/lib/toast';
 import { requestCommunityLine, setListReach, useCommunityLine, useInReach } from '@/lib/community-lines';
 import { setEditTour } from '@/lib/edit-tour';
@@ -59,6 +60,9 @@ export default function Community() {
   const session = useSession();
   const insets = useSafeAreaInsets();
   const [seg, setSeg] = useState<Seg>('routen');
+  const [shareOpen, setShareOpen] = useState(false);
+  const [toPublish, setToPublish] = useState<SavedTour | null>(null);
+  const myTours = useLibrary();
   const [tours, setTours] = useState<CommunityTour[] | null>(null);
   const [rides, setRides] = useState<Ausfahrt[] | null>(null);
   const [drivers, setDrivers] = useState<Driver[] | null>(null);
@@ -297,7 +301,14 @@ export default function Community() {
   const header = (
     <View style={styles.head}>
       <View style={styles.headRow}>
-        <AppText style={styles.kicker}>{seg === 'routen' ? 'Routen zum Nachfahren' : seg === 'ausfahrten' ? 'Gemeinsame Ausfahrten' : 'Drivers'}</AppText>
+        <AppText style={styles.kicker}>{seg === 'routen' ? 'Touren zum Nachfahren' : seg === 'ausfahrten' ? 'Gemeinsame Ausfahrten' : 'Drivers'}</AppText>
+        {/* Eigene Tour teilen oder eine neue erstellen (Koray 15.11.), gleiche Form wie Anlegen und Nachrichten */}
+        {seg === 'routen' && userId && (
+          <Pressable accessibilityRole="button" accessibilityLabel="Tour teilen" hitSlop={4} onPress={() => setShareOpen(true)} style={styles.addBtn}>
+            <SymbolView name="plus" size={16} weight="semibold" tintColor={Colors.text} />
+            <AppText style={styles.addText}>Teilen</AppText>
+          </Pressable>
+        )}
         {seg === 'drivers' && userId && (
           <Pressable accessibilityRole="button" accessibilityLabel={`Nachrichten${unread ? `, ${unread} ungelesen` : ''}`} hitSlop={4} onPress={() => router.push('/nachrichten')} style={styles.addBtn}>
             <SymbolView name="bubble.left.and.bubble.right" size={16} weight="semibold" tintColor={Colors.text} />
@@ -321,13 +332,37 @@ export default function Community() {
     </View>
   );
 
+  // Eigene Touren zum Teilen: noch nicht veröffentlicht, nicht unverändert aus der Community, die neuesten zuerst
+  const shareable = myTours
+    .filter((t) => !t.published && t.folder !== 'Community' && t.folder !== 'Gefahren')
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, 8);
+  const shareItems: SheetItem[] = [
+    ...shareable.map((t) => ({
+      key: t.id,
+      icon: 'bookmark' as const,
+      label: t.name,
+      hint: fmtMeta(strecke(t.laenge_km), t.minutes ? fahrzeit(t.minutes) : null),
+      onPress: () => setToPublish(t),
+    })),
+    { key: 'neu', icon: 'plus' as const, label: 'Neue Tour erstellen', hint: 'Im Planer, danach hier teilen', onPress: () => router.navigate('/') },
+  ];
+
   return (
     <View style={styles.root}>
+      <ActionSheet
+        visible={shareOpen}
+        title="In der Community teilen"
+        subtitle={shareable.length ? 'Welche deiner Touren sollen andere nachfahren können?' : 'Du hast noch keine eigene Tour gespeichert.'}
+        items={shareItems}
+        onClose={() => setShareOpen(false)}
+      />
+      {toPublish && <PublishSheet key={toPublish.id} tour={toPublish} visible onClose={() => setToPublish(null)} onPublished={load} />}
       <MapSheet
         scrollRef={scroll}
         detent={detent}
         onDetentChange={setDetent}
-        grabberLabel={seg === 'routen' ? 'Liste der Routen' : seg === 'ausfahrten' ? 'Liste der Ausfahrten' : 'Liste der Drivers'}
+        grabberLabel={seg === 'routen' ? 'Liste der Touren' : seg === 'ausfahrten' ? 'Liste der Ausfahrten' : 'Liste der Drivers'}
         onScrollY={onScrollY}
         topReserve={topH + Spacing.s}
         header={header}
@@ -347,7 +382,7 @@ export default function Community() {
             {tours?.length === 0 && (
               <View style={styles.card}>
                 <AppText variant="title">Noch keine Routen veröffentlicht</AppText>
-                <AppText muted>Sei der Erste: Öffne eine Tour unter Touren und tippe auf Veröffentlichen.</AppText>
+                <AppText muted>Sei der Erste: Tippe oben auf Teilen und wähle eine deiner Touren.</AppText>
               </View>
             )}
             {nearNow && <AppText muted>Auch Routen mit Start im Umkreis von {NEAR_KM} km um {nearNow.name}</AppText>}

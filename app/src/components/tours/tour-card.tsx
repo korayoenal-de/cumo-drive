@@ -130,19 +130,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
         onKml={() => void exp('kml')}
         onClose={() => setSheet((s) => (s === 'share' ? null : s))}
       />
-      <OptionsSheet
-        visible={sheet === 'publish'}
-        title={t.published ? 'Aus der Community nehmen?' : 'In der Community veröffentlichen'}
-        subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : taken ? `Alle sehen Strecke, Tourname und deinen Namen. Dabei steht: ${creditLine(t)}` : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
-        onClose={() => setSheet(null)}>
-        <PublishForm
-          tour={t}
-          onDone={(text) => {
-            setSheet(null);
-            showToast(text);
-          }}
-        />
-      </OptionsSheet>
+      <PublishSheet tour={t} visible={sheet === 'publish'} onClose={() => setSheet(null)} />
       <NameDialog
         key={sheet === 'rename' ? 'offen' : 'zu'}
         visible={sheet === 'rename'}
@@ -167,6 +155,30 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
 function TourThumb({ tour }: { tour: SavedTour }) {
   const shape = useMemo(() => thumbShape(flatten(tour).map((x) => x.p)), [tour]);
   return <RouteThumb shape={shape} />;
+}
+
+/**
+ * Blatt zum Veröffentlichen oder Zurückziehen einer Tour. Aus der Tourkarte und aus der Community („Teilen“,
+ * Koray 15.11.), damit beides gleich aussieht und gleich funktioniert.
+ */
+export function PublishSheet({ tour: t, visible, onClose, onPublished }: { tour: SavedTour; visible: boolean; onClose: () => void; onPublished?: () => void }) {
+  const taken = fromCommunity(t);
+  return (
+    <OptionsSheet
+      visible={visible}
+      title={t.published ? 'Aus der Community nehmen?' : 'In der Community veröffentlichen'}
+      subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : taken ? `Alle sehen Strecke, Tourname und deinen Namen. Dabei steht: ${creditLine(t)}` : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
+      onClose={onClose}>
+      <PublishForm
+        tour={t}
+        onDone={(text) => {
+          onClose();
+          showToast(text);
+          onPublished?.();
+        }}
+      />
+    </OptionsSheet>
+  );
 }
 
 /** Veröffentlichen mit Name und kurzer Beschreibung, oder zurückziehen. */

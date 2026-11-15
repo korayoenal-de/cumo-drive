@@ -186,6 +186,7 @@ Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab C
 - Orange Zeile (`primary`) nur in Rückfragen mit klarer Empfehlung, etwa „Speichern und zurück“. Optionen zu einem Objekt und Auswahlblätter sind neutral, die Empfehlung steht oben.
 - Zweite Zeile (Hinweis) nur bei Auswahl zwischen Wegen, wenn andere etwas merken, und beim Umfang von Gefährlichem. Sonst keine. Gleiche Aktion, gleicher Text.
 - Teilen ist eine Zeile, die ein Auswahlblatt Link, GPX, KML öffnet (`components/tours/share-sheet.tsx`).
+- Ausnahme 15.11. (Koray): In der Community heißt der Knopf oben „+ Teilen“ und meint In der Community teilen (veröffentlichen). Er öffnet eine Auswahl der eigenen Touren plus „Neue Tour erstellen“; das Blatt zum Veröffentlichen ist dasselbe wie in der Tourkarte (`PublishSheet`). Knöpfe im Kopf der Community: Plus mit Verb (Anlegen, Teilen) oder Ziel (Nachrichten).
 - Verben: Löschen (für immer), Entfernen (nur hier weg), Verwerfen (nie gespeichert). Rückfragen immer als Frage.
 - Detailseiten tragen die Hauptaktion fest unten, eine je Phase. Ausfahrt: Route zum Treffpunkt, am Tag Jetzt losfahren, während der Fahrt Zur Navigation, danach Nochmal fahren.
 - Zurück überall als Pille mit Herkunft (`components/ui/back-link.tsx`), ohne bekannte Herkunft „Zurück“.
