@@ -234,10 +234,12 @@ function getAudio(): AudioModule | null {
 /**
  * Musik (Spotify, Apple Music) während der Ansage nur leiser stellen und danach wieder freigeben.
  * Ohne das hält iOS die Audiositzung der App aktiv und andere Apps pausieren dauerhaft.
+ *
+ * Warteschlange wie die von iOS: der erste Eintrag läuft gerade, die anderen warten in dieser Reihenfolge.
+ * Abgebrochene Einträge melden sich über onStopped noch einmal und werden dann ignoriert.
  */
-let speaking = 0;
-/** Wie viele Navigationsansagen gerade laufen oder warten */
-let navQueued = 0;
+type Spoken = { text: string; rank: SpeechRank; dead: boolean };
+let queue: Spoken[] = [];
 let releaseTimer: ReturnType<typeof setTimeout> | null = null;
 function audioOn() {
   const a = getAudio();
@@ -253,42 +255,49 @@ function audioOff() {
   // kurz warten, falls gleich die nächste Ansage kommt
   if (releaseTimer) clearTimeout(releaseTimer);
   releaseTimer = setTimeout(() => {
-    if (speaking > 0) return;
+    if (queue.length > 0) return;
     void a.setIsAudioActiveAsync(false).catch(() => {});
   }, 1500);
 }
 
 /** Läuft gerade eine Navigationsansage oder wartet eine? Dann wird nichts abgebrochen. */
 export function navigationSpeaking(): boolean {
-  return navQueued > 0;
+  return queue.some((x) => x.rank === 1);
+}
+
+function enqueue(item: Spoken) {
+  queue.push(item);
+  audioOn();
+  const done = () => {
+    if (item.dead) return;
+    item.dead = true;
+    queue = queue.filter((x) => x !== item);
+    if (!queue.length) audioOff();
+  };
+  Speech.speak(item.text, { language: 'de-DE', voice: chosenVoiceId(), rate: 1.0, volume: voiceVolume(), onDone: done, onStopped: done, onError: done });
 }
 
 function defaultSpeak(text: string, rank: SpeechRank = 0) {
   try {
-    // Navigationsansagen haben immer Vorrang (Koray 15.11.): läuft gerade nur ein Hinweis (Kurve, Bremsen,
-    // Highlight), wird er abgebrochen statt die Abbiegeansage hinter sich warten zu lassen
-    if (rank === 1 && speaking > navQueued) defaultStop();
-    speaking++;
-    if (rank === 1) navQueued++;
-    audioOn();
-    let finished = false;
-    const done = () => {
-      if (finished) return;
-      finished = true;
-      speaking = Math.max(0, speaking - 1);
-      if (rank === 1) navQueued = Math.max(0, navQueued - 1);
-      if (!speaking) audioOff();
-    };
-    Speech.speak(text, { language: 'de-DE', voice: chosenVoiceId(), rate: 1.0, volume: voiceVolume(), onDone: done, onStopped: done, onError: done });
+    // Navigationsansagen haben Vorrang (Koray 15.11.): läuft gerade ein Hinweis (Kurve, Bremsen, Highlight),
+    // wird er abgebrochen, statt die Abbiegeansage hinter sich warten zu lassen. Läuft gerade eine
+    // Navigationsansage, darf nichts sie abschneiden (Koray 15.11.: "abbiegen" endete nach "ab"): dann nur
+    // anhängen. Wartende Navigationsansagen überleben den Abbruch und kommen danach wieder dran.
+    if (rank === 1 && queue.length && queue[0].rank !== 1) {
+      const keep = queue.filter((x) => x.rank === 1).map((x) => x.text);
+      defaultStop();
+      for (const t of keep) enqueue({ text: t, rank: 1, dead: false });
+    }
+    enqueue({ text, rank, dead: false });
   } catch {
     // Sprachausgabe ist nicht wichtig genug, um die Navigation zu stören
   }
 }
 
 function defaultStop() {
+  for (const x of queue) x.dead = true;
+  queue = [];
   Speech.stop().catch(() => {});
-  speaking = 0;
-  navQueued = 0;
   audioOff();
 }
 
