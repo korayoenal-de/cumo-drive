@@ -475,7 +475,12 @@ export default function NavigationScreen() {
     };
   }, [navRoute, navRunning]);
   // In 10 m Schritten und genau ab der gefahrenen Stelle, sonst zieht ein Schweif hinter dem Auto her (Koray 8.11.)
-  const fineStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 100) : 0;
+  // Vorlauf (Koray 15.11.: die Linie zog noch oft nach): Das Auto wird zwischen zwei GPS Punkten mit seinem Tempo
+  // weitergeschoben, die Linie aber nur bei jedem Punkt gekürzt. Ohne Vorlauf lag ihr Anfang bis zu eine Sekunde
+  // Fahrt hinter dem Auto. Mit einer halben Sekunde Vorlauf liegt er immer unter dem Auto (vorne kurz nach einem
+  // Punkt, hinten kurz vor dem nächsten).
+  const lineLeadKm = Math.min(0.03, Math.max(0, ((state.speedKmh ?? 0) / 3.6) * 0.5) / 1000);
+  const fineStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm + lineLeadKm) * 100) : 0;
   // Akku (8.11.): nur ein kurzes Stück bis zur nächsten 2 km Marke wird alle 10 m neu gezeichnet, der Rest
   // bleibt dieselbe Linie und wird nur an jeder Marke getauscht. Vorher entstand alle 10 m die ganze Route neu.
   const block = Math.floor(fineStep / 200);

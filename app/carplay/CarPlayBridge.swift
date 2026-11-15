@@ -195,7 +195,13 @@ final class CarPlayBridge: NSObject {
 
   /// Bild auf den sichtbaren Inhalt zuschneiden (durchsichtigen Rand weg), mit etwas Luft
   private static func trimmed(_ img: UIImage) -> UIImage {
-    guard let cg = img.cgImage else { return img }
+    // Erst in ein Bitmap zeichnen: SF Symbole (Ersatz, wenn kein eigenes Symbol da ist, etwa Kreisverkehr mit
+    // Ausfahrt) und Vektorbilder haben kein cgImage und blieben sonst klein (Koray 15.11.: "nicht ganzheitlich")
+    let fmt = UIGraphicsImageRendererFormat()
+    fmt.scale = 3
+    let size = img.size.width > 0 && img.size.height > 0 ? img.size : CGSize(width: 28, height: 28)
+    let raster = UIGraphicsImageRenderer(size: size, format: fmt).image { _ in img.draw(in: CGRect(origin: .zero, size: size)) }
+    guard let cg = raster.cgImage else { return img }
     let w = cg.width, h = cg.height
     guard w > 0, h > 0 else { return img }
     var px = [UInt8](repeating: 0, count: w * h * 4)
@@ -218,7 +224,7 @@ final class CarPlayBridge: NSObject {
     let rect = CGRect(x: cx - side / 2, y: cy - side / 2, width: side, height: side).intersection(CGRect(x: 0, y: 0, width: w, height: h))
     // Zeilen im Puffer laufen von oben nach unten wie im CGImage
     guard let cut = cg.cropping(to: rect) else { return img }
-    return UIImage(cgImage: cut, scale: img.scale, orientation: img.imageOrientation).withRenderingMode(img.renderingMode)
+    return UIImage(cgImage: cut, scale: 3, orientation: .up).withRenderingMode(img.renderingMode)
   }
 
   /// then: das Manöver danach ("Dann" wie in der App), CarPlay zeigt es unter dem ersten, wenn Platz ist

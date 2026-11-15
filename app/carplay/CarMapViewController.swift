@@ -114,7 +114,8 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     view.addSubview(speedView)
     NSLayoutConstraint.activate([
       speedView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
-      speedView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+      // oben bündig mit der Anweisung von CarPlay (Koray 15.11.: stand 8 pt tiefer)
+      speedView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 2),
     ])
   }
 

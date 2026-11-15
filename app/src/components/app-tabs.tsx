@@ -4,14 +4,15 @@
  * wird die ganze Leiste weich um etwa 20 % kleiner, beim Hochscrollen wieder 100 %. Alle vier Tabs
  * bleiben immer sichtbar und erreichbar.
  *
- * Leiste aus Liquid Glass (GlassPanel), die Markierung des aktiven Tabs gleitet mit einer Feder.
+ * Leiste aus Liquid Glass (GlassPanel), die Markierung des aktiven Tabs gleitet mit einer Feder und hebt sich
+ * dabei als Glaslinse über die Symbole (Koray 15.11., wie WhatsApp).
  * Läuft eine Gruppenfahrt, steht darüber eine Zeile mit ihrem Stand, wie der Mini Player in Apple Music.
  */
 import { router } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
 import { useEffect, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { makeMutable, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { interpolate, makeMutable, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassPanel } from '@/components/ui/glass-panel';
@@ -27,6 +28,11 @@ import { expandTabBar, tabBarCompact as compact } from '@/lib/tab-bar';
 /** Stelle der Markierung in der Leiste (0 bis 3, dazwischen beim Gleiten); eine für alle Tabs */
 const tabPos = makeMutable(0);
 let tabPosPlaced = false;
+/**
+ * Linse beim Wechsel (Koray 15.11., Vorbild WhatsApp): Die Markierung hebt sich als größere, hellere Glaslinse
+ * über die Symbole, gleitet zum neuen Tab und setzt sich dort wieder ab. 0 liegt, 1 schwebt.
+ */
+const lens = makeMutable(0);
 
 const BAR_H = 64;
 const SHRINK = 0.2;
@@ -68,7 +74,20 @@ function Dock({ children }: { children?: ReactNode }) {
   });
   /** Breite eines Tabs, aus der Breite der Leiste */
   const tabW = useSharedValue(0);
-  const pillStyle = useAnimatedStyle(() => ({ width: tabW.get(), opacity: tabW.get() > 0 ? 1 : 0, transform: [{ translateX: tabPos.get() * tabW.get() }] }));
+  const pillStyle = useAnimatedStyle(() => ({
+    width: tabW.get(),
+    opacity: tabW.get() > 0 ? 1 - lens.get() : 0,
+    transform: [{ translateX: tabPos.get() * tabW.get() }],
+  }));
+  // Linse über den Symbolen: etwas breiter und deutlich höher als die Markierung, hell gerandet
+  const lensStyle = useAnimatedStyle(() => {
+    const l = lens.get();
+    return {
+      width: tabW.get(),
+      opacity: tabW.get() > 0 ? l : 0,
+      transform: [{ translateX: tabPos.get() * tabW.get() }, { scaleX: interpolate(l, [0, 1], [1, 1.1]) }, { scaleY: interpolate(l, [0, 1], [1, 1.3]) }],
+    };
+  });
   return (
     <View pointerEvents="box-none" style={[styles.dock, { paddingBottom: Math.max(insets.bottom - 6, Spacing.s) }]}>
       {active && <RideAccessory ride={ride} />}
@@ -76,6 +95,7 @@ function Dock({ children }: { children?: ReactNode }) {
         <GlassPanel style={styles.bar} fallback={Colors.overlaySurface} tint="rgba(11,11,12,0.5)">
           <Animated.View pointerEvents="none" style={[styles.pill, pillStyle]} />
           {children}
+          <Animated.View pointerEvents="none" style={[styles.pill, styles.lens, lensStyle]} />
         </GlassPanel>
       </Animated.View>
     </View>
@@ -86,15 +106,22 @@ type TabProps = TabTriggerSlotProps & { tab: (typeof TABS)[number] };
 
 function TabButton({ tab, isFocused, ref: _ref, ...rest }: TabProps) {
   const index = TABS.indexOf(tab);
+  /** das neue Symbol wächst unter der Linse kurz mit */
+  const iconScale = useSharedValue(1);
+  const iconStyle = useAnimatedStyle(() => ({ transform: [{ scale: iconScale.get() }] }));
   useEffect(() => {
     if (!isFocused) return;
     // Die Markierung gleitet zum neuen Tab (Koray 11.11., Regel „Auswahl gleitet“): eine Feder für jede
     // Entfernung, über drei Tabs also dreimal so schnell wie zum Nachbarn. Beim Start steht sie sofort richtig.
-    if (tabPosPlaced) tabPos.set(withSpring(index, Motion.snap));
-    else tabPos.set(index);
+    if (tabPosPlaced) {
+      tabPos.set(withSpring(index, Motion.snap));
+      // Linse hebt sich schnell, schwebt während des Gleitens und setzt sich mit der Feder ab
+      lens.set(withSequence(withTiming(1, { duration: 120 }), withTiming(1, { duration: 140 }), withSpring(0, Motion.snap)));
+      iconScale.set(withSequence(withTiming(1.16, { duration: 160 }), withSpring(1, Motion.press)));
+    } else tabPos.set(index);
     tabPosPlaced = true;
     expandTabBar();
-  }, [isFocused, index]);
+  }, [isFocused, index, iconScale]);
   return (
     <Pressable
       {...rest}
@@ -102,10 +129,10 @@ function TabButton({ tab, isFocused, ref: _ref, ...rest }: TabProps) {
       accessibilityLabel={tab.label}
       accessibilityState={{ selected: !!isFocused }}
       style={styles.tab}>
-      <View>
+      <Animated.View style={iconStyle}>
         <TabIcon name={tab.icon} on={!!isFocused} color={isFocused ? Colors.text : Colors.muted} size={24} />
         {tab.name === 'community' && <UnreadBubble />}
-      </View>
+      </Animated.View>
       {/* Leiste hat feste Höhe und vier feste Breiten: Systemschrift vergrößert hier nicht, lange Wörter schrumpfen leicht (Prüfung 11.11.) */}
       <AppText style={[styles.label, isFocused && styles.labelOn]} numberOfLines={1} maxFontSizeMultiplier={1} adjustsFontSizeToFit minimumFontScale={0.8}>
         {tab.label}
@@ -156,6 +183,7 @@ const styles = StyleSheet.create({
   bar: { height: BAR_H, borderRadius: BAR_H / 2, padding: Spacing.xs, flexDirection: 'row' },
   tab: { flex: 1, height: BAR_H - 8, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: (BAR_H - 8) / 2 },
   pill: { position: 'absolute', left: Spacing.xs, top: Spacing.xs, height: BAR_H - 8, backgroundColor: Colors.pressTint, borderRadius: (BAR_H - 8) / 2 },
+  lens: { backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.32)', boxShadow: '0 6px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25)' },
   label: { alignSelf: 'stretch', textAlign: 'center', paddingHorizontal: 2, fontFamily: Fonts.medium, fontSize: Type.caption, color: Colors.muted },
   labelOn: { fontFamily: Fonts.semibold, color: Colors.text },
   accessory: { height: 52, borderRadius: 26, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingHorizontal: Spacing.l },
