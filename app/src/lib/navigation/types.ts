@@ -114,6 +114,8 @@ export type NavState = {
 };
 
 export type NavControls = {
+  /** Tour anpassen unterwegs: neue Tour ohne Neustart übernehmen (quiet: nur merken, ohne neue Route) */
+  adopt: (next: NavRequest, opts?: { quiet?: boolean; say?: string }) => Promise<void>;
   start: () => Promise<void>;
   stop: () => void;
   /** Fahrt anhalten (true) oder fortsetzen (false) */

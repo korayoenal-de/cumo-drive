@@ -55,22 +55,26 @@ export type RideState = {
   stop: RideStop | null;
   /** Für den eigenen Halt: bei wie vielen der anderen angekommen (Koray 14.11.) */
   stopReach: { got: number; of: number } | null;
+  /** Neue Route der Lead unterwegs (Tour anpassen, Koray 15.11.): Übergabe Code und Zeitpunkt */
+  route: RideRoute | null;
   error: string | null;
 };
+
+export type RideRoute = { id: string; code: string; from: string; at: number };
 
 export const QUICK_MESSAGES = ['Bitte warten', 'Alles ok', 'Tankstopp', 'Pause', 'Achtung Polizei', 'Panne, bitte halten'];
 
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 const PROFILE_KEY = 'cumo.drive.fahrer.v1';
 
-let state: RideState = { status: 'aus', code: null, rideId: null, name: null, me: null, myRole: 'mitfahrer', members: [], messages: [], tourCode: null, stop: null, stopReach: null, error: null };
+let state: RideState = { status: 'aus', code: null, rideId: null, name: null, me: null, myRole: 'mitfahrer', members: [], messages: [], tourCode: null, stop: null, stopReach: null, route: null, error: null };
 
 /**
  * Zustellung mit Bestätigung (Koray 14.11.: ein Halt kam bei den anderen nicht an; wer im Funkloch war, soll
  * ihn bekommen, sobald er wieder Empfang hat). Halt und Kurznachrichten werden wiederholt, bis jedes Handy
  * den Empfang bestätigt hat, höchstens 10 Minuten lang. Empfänger erkennen Wiederholungen an der id.
  */
-type Pending = { event: 'msg' | 'stop'; payload: RideMsg | RideStop; acks: Set<string>; at: number };
+type Pending = { event: 'msg' | 'stop' | 'route'; payload: RideMsg | RideStop | RideRoute; acks: Set<string>; at: number };
 const pending = new Map<string, Pending>();
 const handledStops = new Set<string>();
 const RESEND_MS = 4000;
@@ -109,7 +113,7 @@ function resendTick() {
   updateStopReach();
 }
 
-function deliver(event: 'msg' | 'stop', payload: RideMsg | RideStop) {
+function deliver(event: 'msg' | 'stop' | 'route', payload: RideMsg | RideStop | RideRoute) {
   if (!channel) return;
   pending.set(payload.id, { event, payload, acks: new Set(), at: Date.now() });
   void channel.send({ type: 'broadcast', event, payload });
@@ -292,7 +296,7 @@ export async function startRide(rideId: string, role: Role, opts: { name: string
 function connect(topic: string, me: Me, role: Role, info: { code: string | null; rideId: string | null; name: string | null; tourCode: string | null }) {
   positions.clear();
   known.clear();
-  set({ status: 'verbinde', ...info, me, myRole: role, members: [], messages: [], stop: null, error: null });
+  set({ status: 'verbinde', ...info, me, myRole: role, members: [], messages: [], stop: null, route: null, error: null });
 
   const ch = supabase.channel(topic, { config: { broadcast: { self: false }, presence: { key: me.id } } });
   channel = ch;
@@ -330,6 +334,12 @@ function connect(topic: string, me: Me, role: Role, info: { code: string | null;
     if (!p) return;
     p.acks.add(a.by);
     if (p.event === 'stop') updateStopReach();
+  });
+  ch.on('broadcast', { event: 'route' }, ({ payload }) => {
+    const r = payload as RideRoute;
+    ack(r.id);
+    if (state.route?.id === r.id || (state.route && state.route.at > r.at)) return;
+    set({ route: r });
   });
   ch.on('broadcast', { event: 'tour' }, ({ payload }) => {
     const t = payload as { code: string };
@@ -428,7 +438,7 @@ export async function leaveRide() {
   handledStops.clear();
   if (resendTimer) clearInterval(resendTimer);
   resendTimer = null;
-  set({ status: 'aus', code: null, rideId: null, name: null, members: [], messages: [], tourCode: null, stop: null, stopReach: null, error: null, myRole: 'mitfahrer' });
+  set({ status: 'aus', code: null, rideId: null, name: null, members: [], messages: [], tourCode: null, stop: null, stopReach: null, route: null, error: null, myRole: 'mitfahrer' });
 }
 
 /** Lead beendet die Fahrt für alle: die anderen verlassen den Kanal. */
@@ -468,6 +478,14 @@ export function clearStop(forAll = false) {
   set({ stop: null, stopReach: null });
   pending.delete(s.id);
   if (forAll && channel) void channel.send({ type: 'broadcast', event: 'stop', payload: { id: s.id, clear: true } });
+}
+
+/** Lead hat unterwegs die Route geändert: neue Tour als Übergabe Code an alle, mit Wiederholung bis zur Bestätigung */
+export function shareRoute(code: string) {
+  if (!state.me || state.myRole !== 'lead') return;
+  const r: RideRoute = { id: `${state.me.id}-r-${Date.now()}`, code, from: state.me.id, at: Date.now() };
+  set({ route: r, tourCode: code });
+  deliver('route', r);
 }
 
 /** Lead teilt eine Tour (Übergabe Code aus handoff.ts) mit allen. */

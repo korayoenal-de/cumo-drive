@@ -165,7 +165,7 @@ export function BottomBar({
   onSimulate: () => void;
   /** Gruppenfahrt aktiv: Funk Knopf öffnet die Kurznachrichten */
   onFunk?: () => void;
-  /** Planung ansehen: ganze restliche Route mit allen Zielen (Koray 8.11.) */
+  /** Tour anpassen unterwegs (Koray 15.11., vorher Planung ansehen); nur allein oder als Lead */
   onOverview?: () => void;
   /** Nächstes Zwischenziel überspringen, schnellster Weg zum Ziel danach; Text etwa "Kolmbach überspringen" */
   skipLabel?: string;
@@ -208,9 +208,10 @@ export function BottomBar({
   const rest = paused ? 'Pausiert' : [formatRemaining(eta, now), km].filter(Boolean).join(' · ');
   const done = extra ? Math.max(0, Math.min(100, extra.donePct)) : null;
   const actions = [
-    ...(extraActions ?? []).map((a) => ({ ...a, signal: false })),
-    ...(onOverview ? [{ key: 'plan', label: 'Planung ansehen', icon: 'map.fill' as const, signal: false, run: onOverview }] : []),
+    // Reihenfolge (Koray 15.11.): Zwischenziel überspringen, Tour anpassen, dann der Rest, Beenden zuletzt
     ...(onSkip && skipLabel ? [{ key: 'skip', label: skipLabel, icon: 'forward.end.fill' as const, signal: false, run: onSkip }] : []),
+    ...(onOverview ? [{ key: 'plan', label: 'Tour anpassen', icon: 'point.topleft.down.to.point.bottomright.curvepath.fill' as const, signal: false, run: onOverview }] : []),
+    ...(extraActions ?? []).map((a) => ({ ...a, signal: false })),
     paused
       ? { key: 'weiter', label: 'Fortsetzen', icon: 'play.fill' as const, signal: false, run: () => onPause(false) }
       : { key: 'pause', label: 'Pausieren', icon: 'pause.fill' as const, signal: false, run: () => onPause(true) },

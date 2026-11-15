@@ -740,13 +740,51 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   // beim Verlassen des Screens alles aufräumen
   useEffect(() => cleanup, [cleanup]);
 
-  // andere Tour: laufende Navigation beenden
+  /**
+   * Tour anpassen unterwegs (Koray 15.11.): neue Tour ohne Neustart übernehmen. Ab der aktuellen Position am
+   * nächsten Punkt der neuen Tour einsteigen; Ansagen, Spur und Fahrtstatistik laufen weiter.
+   * quiet: nur die Tour merken, ohne neue Route (wer gerade eine eigene Route fährt).
+   */
+  const adoptedRef = useRef<NavRequest['tour'] | null>(null);
+  const adopt = useCallback(
+    async (next: NavRequest, opts?: { quiet?: boolean; say?: string }) => {
+      adoptedRef.current = next.tour;
+      reqRef.current = next;
+      const pos = posRef.current;
+      if (opts?.quiet || !pos || !activeRef.current) return;
+      abortRef.current?.abort();
+      reroutingRef.current = true;
+      lastRerouteRef.current = Date.now();
+      setState((s) => ({ ...s, status: 'neuberechnung' }));
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      try {
+        const { route } = await fetchNavRouteDetail({ ...next, entry: undefined }, pos.p, ctrl.signal);
+        if (!activeRef.current) return;
+        ignoredRef.current = 0;
+        doneIndexRef.current = 0;
+        setRoute(route);
+        setState((s) => ({ ...s, status: 'laeuft', route, error: undefined }));
+        if (opts?.say) voice().say(opts.say, true);
+      } catch (e) {
+        if (isAbort(e) || !activeRef.current) return;
+        setState((s) => ({ ...s, status: 'laeuft', error: friendly(e) }));
+      } finally {
+        reroutingRef.current = false;
+        offSinceRef.current = null;
+      }
+    },
+    [setRoute, voice],
+  );
+
+  // andere Tour: laufende Navigation beenden (außer sie wurde unterwegs übernommen)
   useEffect(() => {
     if (!activeRef.current) return;
+    if (req?.tour && req.tour === adoptedRef.current) return;
     cleanup();
     routeRef.current = null;
     setState((s) => ({ ...INITIAL, voice: s.voice }));
   }, [req?.tour, cleanup]);
 
-  return [state, { start, stop, pause, setVoice, say, simulate, skipTo, restore, choose, backToTour, setAutoFresh }];
+  return [state, { start, stop, pause, setVoice, say, simulate, skipTo, restore, choose, backToTour, setAutoFresh, adopt }];
 }

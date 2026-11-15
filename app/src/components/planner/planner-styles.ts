@@ -4,6 +4,10 @@ import { StyleSheet } from 'react-native';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
+  // Tour anpassen unterwegs: Verwerfen als ruhiger Text, Übernehmen als Hauptaktion (Koray 15.11.)
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
+  liveDiscard: { height: 56, paddingHorizontal: Spacing.l, justifyContent: 'center' },
+  liveDiscardText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   dragging: { zIndex: 10 },
   handle: { width: 40, height: 52, alignItems: 'center', justifyContent: 'center' },
   dimmed: { opacity: 0.3 },

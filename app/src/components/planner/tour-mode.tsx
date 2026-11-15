@@ -10,6 +10,7 @@ import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SymbolView } from 'expo-symbols';
 
 import { haptic } from '@/lib/haptics';
+import { applyLiveEdit, endLiveEdit } from '@/lib/live-edit';
 import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
 import { PASS_STATUS_URL, PASSES } from '@/lib/passes';
@@ -64,8 +65,10 @@ const LOAD_STAGES: Record<PlanStep, LoadStage> = {
 export type EditTarget = { kind: PointKind; index?: number; insert?: boolean };
 
 export function TourMode({
-  plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onDragChange, onListEdit, onShowPoint,
+  liveEdit = false, plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onDragChange, onListEdit, onShowPoint,
 }: {
+  /** Tour anpassen unterwegs: Übernehmen und Verwerfen statt Losfahren (Koray 15.11.) */
+  liveEdit?: boolean;
   plan: TourPlan;
   here: Spot | null;
   onHere: (s: Spot) => void;
@@ -752,6 +755,30 @@ export function TourMode({
       <View style={styles.actions}>
         {busy || (hold && !plan.error) ? (
           <LoadingButton stage={LOAD_STAGES[plan.step ?? lastStep]} done={!busy} />
+        ) : liveEdit ? (
+          <View style={styles.liveRow}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                endLiveEdit();
+                router.back();
+              }}
+              style={({ pressed }) => [styles.liveDiscard, pressed && { opacity: 0.7 }]}>
+              <AppText style={styles.liveDiscardText}>Verwerfen</AppText>
+            </Pressable>
+            <View style={styles.flex}>
+              <PrimaryButton
+                label="Übernehmen"
+                disabled={!routeTour || !plan.changed}
+                onPress={() => {
+                  if (!routeTour) return;
+                  haptic('losfahren');
+                  applyLiveEdit({ ...routeTour, name: plan.name.trim() || routeTour.name, namen: routeTour.wegpunkte.map((p) => plan.names[keyOf(p)] ?? ''), etappen: routeTour.wegpunkte.slice(1).map((_, i) => plan.legProfile(i, profile)) }, firstProfile, avoid);
+                  router.back();
+                }}
+              />
+            </View>
+          </View>
         ) : routeTour ? (
           <ActionBar
             sheetTitle={plan.name.trim() || 'Neue Tour'}

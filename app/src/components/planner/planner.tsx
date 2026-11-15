@@ -41,6 +41,7 @@ import { ActionSheet } from '@/components/ui/action-sheet';
 import { Colors, Motion, Spacing } from '@/constants/theme';
 import { cumoAvailable, prewarmRouting } from '@/lib/cumo-routing';
 import { onEditTour, setEditBackHandler, takeEditTour, useEditOrigin } from '@/lib/edit-tour';
+import { takeLiveEdit } from '@/lib/live-edit';
 import { countCurves } from '@/lib/stats';
 import { reverseName } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
@@ -153,7 +154,7 @@ type Stage =
   | { kind: 'result'; tour: PlannedTour; req: TourRequest; stops: Stop[] }
   | { kind: 'error'; error: PlanError; req?: TourRequest };
 
-export default function Planner() {
+export default function Planner({ liveEdit = false }: { /** Tour anpassen unterwegs, über der laufenden Navigation (Koray 15.11.) */ liveEdit?: boolean } = {}) {
   // Tour planen ist der erste Tab und beim Öffnen gewählt (Koray 8.11.)
   const [mode, setMode] = useState<Mode>('tour');
   const [view, setView] = useState<Stage>({ kind: 'form' });
@@ -254,10 +255,12 @@ export default function Planner() {
   const loadTour = tourPlan.load;
   useEffect(() => {
     const take = () => {
-      const t = takeEditTour();
+      // Unterwegs: nur der Rest der laufenden Tour, nie eine aus Meine Touren
+      const lv = liveEdit ? takeLiveEdit() : null;
+      const t = liveEdit ? lv?.tour ?? null : takeEditTour();
       if (!t) return;
       abort.current?.abort();
-      const p = normProfile(t.profile ?? profile);
+      const p = normProfile(lv?.profile ?? t.profile ?? profile);
       setView({ kind: 'form' });
       setMode('tour');
       setPending(null);
@@ -272,12 +275,14 @@ export default function Planner() {
     };
     // Vorgemerkt, bevor der Planer da war, oder später, während er schon offen ist
     const id = setTimeout(take, 0);
-    const off = onEditTour(take);
+    const off = liveEdit ? () => undefined : onEditTour(take);
     return () => {
       clearTimeout(id);
       off();
     };
-  }, [loadTour, profile, avoid]);
+    // unterwegs nur einmal beim Öffnen abholen
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadTour, liveEdit ? null : profile, liveEdit ? null : avoid, liveEdit]);
 
   /**
    * Runde anpassen (wie calimoto): als Route mit Start, Zwischenzielen und Ziel öffnen, die Strecke
@@ -726,7 +731,11 @@ export default function Planner() {
   // Kopf des Blatts: Modus oder Name der Tour, darunter Fortschritt oder Hinweis
   const header = (
     <>
-      {view.kind === 'form' && !scan ? (
+      {liveEdit && view.kind === 'form' && !scan ? (
+        <AppText variant="display" style={styles.headline} accessibilityRole="header">
+          Tour anpassen
+        </AppText>
+      ) : view.kind === 'form' && !scan ? (
         <TypoTabs
           value={mode === 'tour' ? 'route' : 'runde'}
           options={[
@@ -845,6 +854,7 @@ export default function Planner() {
 
       {mode === 'tour' ? (
         <TourMode
+          liveEdit={liveEdit}
           plan={tourPlan}
           here={here}
           onHere={setHere}

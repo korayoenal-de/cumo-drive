@@ -4,9 +4,9 @@
  */
 import { setRideStatus } from '@/lib/group/invites';
 import { useKeepAwake } from 'expo-keep-awake';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import * as Location from 'expo-location';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,7 +21,7 @@ import { BigButton, BottomBar, InfoCard, LANES_SHOW_M, laneSymbol, ManeuverCard,
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
-import { useActiveTour } from '@/lib/active-tour';
+import { setActiveTour, useActiveTour } from '@/lib/active-tour';
 import { getEditOrigin, requestEditBack } from '@/lib/edit-tour';
 import { PACE_NOTES_RELEASED, setDriveSetting, useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
@@ -48,7 +48,10 @@ import Animated, { FadeOut } from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
 import { elevationProfile } from '@/lib/stats';
 import { connectFunk, disconnectFunk, pushToTalk, setFunkListen, setOnlyLead, useFunk } from '@/lib/group/funk';
-import { announceStop, clearStop, endRideForAll, leaveRide, QUICK_MESSAGES, sendMessage, sendPosition, setOwnRoute, STOP_REASONS, useRide } from '@/lib/group/ride';
+import { announceStop, clearStop, endRideForAll, leaveRide, QUICK_MESSAGES, sendMessage, sendPosition, setOwnRoute, shareRoute, STOP_REASONS, useRide } from '@/lib/group/ride';
+import { createHandoff, fetchHandoff } from '@/lib/handoff';
+import { endLiveEdit, startLiveEdit } from '@/lib/live-edit';
+import { DEFAULT_AVOID } from '@/lib/valhalla';
 import { currentVehicle, useVehicles } from '@/lib/vehicle';
 import { VehiclePick } from '@/components/navigation/vehicle-pick';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
@@ -326,6 +329,98 @@ export default function NavigationScreen() {
     }
     return out;
   }, [state.route, active]);
+
+  /**
+   * Tour anpassen unterwegs (Koray 15.11.): Rest der Tour ab hier in den Planer legen (Start ist der Standort,
+   * dann die noch nicht erreichten Zwischenziele und das Ziel, die restliche Linie ohne Neuplanung). Übernehmen
+   * schaltet die Navigation ohne Neustart um; als Lead geht die neue Route an alle.
+   */
+  const adoptTour = useCallback(
+    (tour: NonNullable<typeof active>['tour'], profile: NonNullable<typeof active>['profile'], avoid: NonNullable<typeof active>['avoid'], say?: string, quiet?: boolean) => {
+      void controls.adopt({ tour, profile, avoid, entry: undefined }, { say, quiet });
+      setActiveTour(tour, profile, avoid);
+    },
+    [controls],
+  );
+  const startAdjust = () => {
+    const r = state.route;
+    const pos = state.position;
+    if (!active || !r || !pos || atKm == null) return;
+    const wp = active.tour.wegpunkte;
+    const names = active.tour.namen ?? [];
+    const legs = active.tour.etappen ?? [];
+    // Zwischenziele, die noch vor uns liegen (mit ihrem Namen und dem Profil der Etappe dorthin)
+    const ahead: { p: (typeof wp)[number]; name: string; leg: (typeof legs)[number] | null }[] = [];
+    let from = 0;
+    wp.slice(1, -1).forEach((w, j) => {
+      let best = from;
+      let bd = Infinity;
+      for (let i = from; i < r.shape.length; i++) {
+        const d = haversine(w, r.shape[i]);
+        if (d < bd) {
+          bd = d;
+          best = i;
+        }
+      }
+      if (bd < 500) from = best;
+      if (bd >= 500 || r.cumKm[best] > atKm + 0.2) ahead.push({ p: w, name: names[j + 1] ?? '', leg: legs[j] ?? null });
+    });
+    const ziel = wp[wp.length - 1];
+    const lastLeg = legs.length ? legs[legs.length - 1] : null;
+    let at = 0;
+    while (at < r.cumKm.length - 1 && r.cumKm[at] < atKm) at++;
+    const rest = r.shape.slice(Math.max(0, at - 1));
+    const now = new Date().toISOString();
+    startLiveEdit(
+      {
+        ...active.tour,
+        id: '',
+        folder: '',
+        createdAt: now,
+        updatedAt: now,
+        wegpunkte: [pos, ...ahead.map((a) => a.p), ziel],
+        namen: ['Dein Standort', ...ahead.map((a) => a.name), names[wp.length - 1] ?? ''],
+        etappen: [...ahead.map((a) => a.leg), lastLeg],
+        linie: rest.length > 1 ? [{ c: 'ok', p: rest }] : active.tour.linie,
+        laenge_km: Math.max(0, r.km - atKm),
+        minutes: Math.round(Math.max(0, r.km - atKm) / Math.max(1, r.km) * r.minutes),
+        warnungen: [],
+      },
+      active.profile,
+      active.avoid,
+      (tour, profile, avoid) => {
+        adoptTour(tour, profile, avoid, 'Neue Route übernommen.');
+        showToast('Neue Route übernommen');
+        if (inRide && ride.myRole === 'lead') {
+          void createHandoff(tour, profile, avoid)
+            .then((code) => shareRoute(code))
+            .catch(() => showToast('Die neue Route ging nicht an die Gruppe. Bitte nochmal versuchen.', { tone: 'error' }));
+        }
+      },
+    );
+    // die Route ist neu, die Typen der Routen kennen sie erst nach dem nächsten Start des Entwicklungsservers
+    router.push('/anpassen' as Href);
+  };
+  useEffect(() => endLiveEdit, []);
+  // Mitfahrer: die Lead hat die Route geändert; neue Tour laden und umschalten (eigene Route: nur merken)
+  const routeSeen = useRef<string | null>(null);
+  const [routeNote, setRouteNote] = useState<number>(0);
+  useEffect(() => {
+    const rc = ride.route;
+    if (!rc || !inRide || rc.from === ride.me?.id || routeSeen.current === rc.id) return;
+    routeSeen.current = rc.id;
+    void fetchHandoff(rc.code).then((h) => {
+      if (!h) return;
+      adoptTour(h.tour, h.profile, h.avoid ?? active?.avoid ?? DEFAULT_AVOID, 'Die Lead hat die Route geändert.', ownRoute);
+      setRouteNote(Date.now());
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ride.route?.id, inRide]);
+  useEffect(() => {
+    if (!routeNote) return;
+    const id = setTimeout(() => setRouteNote(0), 8000);
+    return () => clearTimeout(id);
+  }, [routeNote]);
 
   // Richtung beim Verlassen jedes Kreisverkehrs (die Ausfahrt Nummer allein kann täuschen)
   const turns = useMemo(() => {
@@ -1050,6 +1145,13 @@ export default function NavigationScreen() {
             <AppText style={styles.groupBackText}>‹ Zurück zur Gruppe</AppText>
           </Pressable>
         )}
+        {/* Mitfahrer: die Lead hat unterwegs die Route geändert (Tour anpassen, Koray 15.11.) */}
+        {running && routeNote > 0 && (
+          <Animated.View entering={softEnter()} exiting={FadeOut.duration(160)} style={styles.routeNote} accessibilityRole="alert">
+            <AppText style={styles.routeNoteTitle}>Die Lead hat die Route geändert</AppText>
+            <AppText style={styles.routeNoteText}>{`Neu bis ${active?.tour.namen?.[(active?.tour.wegpunkte.length ?? 1) - 1] || 'zum Ziel'}`}</AppText>
+          </Animated.View>
+        )}
         {/* Funk: wer gerade spricht (Funk Konzept, Koray 10.11.) */}
         {running && inRide && (funk.talking || funk.speaker || funk.status === 'getrennt') && <FunkBanner funk={funk} />}
         {/* Halt der Lead oben rechts, getrennt vom Funk (Funk Konzept, Koray 10.11.) */}
@@ -1139,7 +1241,7 @@ export default function NavigationScreen() {
               showSim={showSim}
               bottomInset={insets.bottom + Spacing.m}
               onEnd={close}
-              onOverview={() => setOverview(Date.now())}
+              onOverview={!inRide || ride.myRole === 'lead' ? startAdjust : undefined}
               skipLabel={skipTarget && !inRide ? `${active?.tour.namen?.[nextVia + 1] || 'Zwischenziel'} überspringen` : undefined}
               onSkip={skipTarget && !inRide ? () => void skip(skipTarget.index) : undefined}
               onVoice={() => controls.setVoice(!state.voice)}
@@ -1415,6 +1517,9 @@ const styles = StyleSheet.create({
   curve: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: Colors.overlay, borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
   groupBack: { alignSelf: 'flex-start', height: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.overlay, alignItems: 'center', justifyContent: 'center' },
   groupBackText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
+  routeNote: { alignSelf: 'stretch', gap: 2, backgroundColor: Colors.text, borderRadius: Radius.l, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m },
+  routeNoteTitle: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.ground },
+  routeNoteText: { fontFamily: Fonts.semibold, fontSize: 15, color: '#55555A' },
   offCard: { alignSelf: 'stretch', gap: Spacing.m, backgroundColor: Colors.overlay, borderRadius: Radius.l, padding: Spacing.m },
   offRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingHorizontal: Spacing.xs },
   offBtns: { flexDirection: 'row', gap: Spacing.s },
