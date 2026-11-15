@@ -14,7 +14,7 @@ import { RouteMap } from '@/components/map/route-map';
 import { formatClock, formatDistance } from '@/components/navigation/format';
 import { soonThresholdM, symbolFor } from '@/components/navigation/maneuver-geometry';
 import { DriveRatingCard, type DrivenHighlight } from '@/components/navigation/drive-rating';
-import { SpeedBadge } from '@/components/navigation/speed-badge';
+import { SpeedBadge, useStanding } from '@/components/navigation/speed-badge';
 import { FunkBanner, HighlightCard, HighlightStrip, LeadHaltPill, StopAlert } from '@/components/navigation/nav-alerts';
 import { BigButton, BottomBar, InfoCard, LANES_SHOW_M, laneSymbol, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
@@ -24,7 +24,7 @@ import { useActiveTour } from '@/lib/active-tour';
 import { getEditOrigin, requestEditBack } from '@/lib/edit-tour';
 import { PACE_NOTES_RELEASED, useDriveSettings } from '@/lib/drive-settings';
 import { showToast } from '@/lib/toast';
-import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
+import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetTour, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
 import { FUN_NAMES, toFunLevel } from '@/components/ui/fun-gauge';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
@@ -548,6 +548,9 @@ export default function NavigationScreen() {
       carPlayStop(state.status === 'angekommen');
       // Build 14: nach der Ankunft im Auto nach dem Fahrspaß fragen, Details später am iPhone
       if (state.status === 'angekommen') setTimeout(carPlayAskRating, 1500);
+      // Nach dem Ziel nicht wieder die eben gefahrene Tour mit "Los" anbieten (Koray 15.11.); das Auto zeigt die Karte,
+      // eine neue Tour kommt erst, wenn in der App oder im Auto eine gewählt wird
+      if (state.status === 'angekommen') carPlaySetTour(null);
     }
     cpWas.current = cpRunning;
   }, [cpRunning, state.status]);
@@ -749,9 +752,12 @@ export default function NavigationScreen() {
   // Tempo und Tempolimit im Auto wie unten links am iPhone (Tester Matthias 14.11.); nur bei Änderung senden
   const cpKmh = cpRunning && state.speedKmh != null ? Math.round(state.speedKmh) : null;
   const cpEst = !!shownLimit?.estimated;
+  // im Stand verschwindet die Plakette auch im Auto (wie am iPhone nach 2,5 s auf 0)
+  const cpStill = useStanding(cpKmh != null && cpKmh < 3);
+  const cpShownKmh = cpStill ? null : cpKmh;
   useEffect(() => {
-    carPlaySetSpeed(cpKmh, cpRunning ? limitHere : null, cpEst, driveSettings.speed);
-  }, [cpKmh, cpRunning, limitHere, cpEst, driveSettings.speed]);
+    carPlaySetSpeed(cpShownKmh, cpRunning ? limitHere : null, cpEst, driveSettings.speed);
+  }, [cpShownKmh, cpRunning, limitHere, cpEst, driveSettings.speed]);
   const limitEst = shownLimit?.estimated ?? false;
   // Blackbox: jedes angezeigte Tempolimit mit Stelle (Klassiker Tempolimit, Koray 12.11.)
   useEffect(() => {

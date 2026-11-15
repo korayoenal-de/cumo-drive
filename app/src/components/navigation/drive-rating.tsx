@@ -146,11 +146,11 @@ export function StarRating({ value, onChange }: { value: number | null; onChange
       <View style={styles.stars} accessibilityRole="adjustable" accessibilityValue={{ text: n ? `${n} von 5 Sternen, ${scoreWord(value!)}` : 'Noch nicht bewertet' }}>
         {[1, 2, 3, 4, 5].map((i) => (
           <Pressable key={i} accessibilityRole="button" accessibilityLabel={`${i} ${i === 1 ? 'Stern' : 'Sterne'}`} hitSlop={4} onPress={() => onChange(STAR_SCORE[i - 1])} style={({ pressed }) => [styles.star, pressed && { transform: [{ scale: Motion.pressScale }] }]}>
-            <SymbolView name={i <= n ? 'star.fill' : 'star'} size={40} weight="semibold" tintColor={i <= n ? Colors.signal : Colors.empty} />
+            <SymbolView name={i <= n ? 'star.fill' : 'star'} size={40} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         ))}
       </View>
-      <AppText style={[styles.word, n > 0 && styles.wordOn, styles.starWord]}>{n ? scoreWord(value!) : 'Tippe auf einen Stern'}</AppText>
+      <AppText style={[styles.word, styles.starWord]}>{n ? scoreWord(value!) : 'Tippe auf einen Stern'}</AppText>
     </View>
   );
 }
@@ -262,7 +262,8 @@ export function ScoreSlider({ value, onChange }: { value: number | null; onChang
 const styles = StyleSheet.create({
   stars: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: Spacing.s },
   star: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
-  starWord: { textAlign: 'center' },
+  // Sterne und Wort weiß (Koray 15.11.): auf der getönten Karte nach der Fahrt war Grau kaum lesbar
+  starWord: { textAlign: 'center', color: Colors.text },
   box: { gap: Spacing.m },
   title: { fontFamily: Fonts.semibold, fontSize: Type.title },
   head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },

@@ -65,6 +65,19 @@ export function SpeedBadge({ speedKmh, limit, estimated = false, hint, showSpeed
   const v = speedKmh != null && speedKmh >= 3 ? Math.round(speedKmh) : 0;
   const over = limit != null && !estimated && limit < 130 && v > limit + OVER_KMH;
 
+  // Im Stand (Koray 15.11.): nach 2,5 s auf 0 fährt die ganze Pille von links nach rechts zusammen und ist weg,
+  // beim Anfahren öffnet sie sich wieder. Ein Bremshinweis zeigt sie immer.
+  const standing = useStanding(v === 0);
+  const hidden = standing && !hint;
+  const vis = useSharedValue(hidden ? 0 : 1);
+  useEffect(() => {
+    vis.set(withTiming(hidden ? 0 : 1, { duration: reduced ? 150 : hidden ? 420 : 320, easing: EASE }));
+  }, [hidden, reduced, vis]);
+  const visStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(1, vis.get() * 1.6),
+    transform: reduced ? [] : [{ scaleX: 0.0001 + vis.get() * 0.9999 }],
+  }));
+
   // Breiten der beiden Ebenen, gemessen im Layout
   const [restW, setRestW] = useState(0);
   const [warnW, setWarnW] = useState(0);
@@ -183,7 +196,8 @@ export function SpeedBadge({ speedKmh, limit, estimated = false, hint, showSpeed
   const label = hint ? hint.a11y : `Tempo ${v} km/h${limit != null ? `, ${estimated ? 'geschätzt erlaubt' : 'erlaubt'} ${limit >= 130 ? 'unbegrenzt' : `${limit} km/h`}` : ''}${over ? ', zu schnell' : ''}`;
   const s = shown;
   return (
-    <Animated.View style={[styles.pill, pillStyle]} accessible accessibilityRole={hint ? 'alert' : undefined} accessibilityLabel={label} accessibilityLiveRegion="polite">
+    <Animated.View style={[styles.collapse, visStyle]} pointerEvents="none" importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'} accessibilityElementsHidden={hidden}>
+      <Animated.View style={[styles.pill, pillStyle]} accessible accessibilityRole={hint ? 'alert' : undefined} accessibilityLabel={label} accessibilityLiveRegion="polite">
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, sheenStyle]}>
         <Svg width="100%" height="100%">
           <Defs>
@@ -238,11 +252,28 @@ export function SpeedBadge({ speedKmh, limit, estimated = false, hint, showSpeed
           </Animated.View>
         </View>
       </View>
+      </Animated.View>
     </Animated.View>
   );
 }
 
+/** true, sobald der Wert 2,5 s lang anliegt; false sofort */
+export function useStanding(still: boolean) {
+  const [fired, setFired] = useState(false);
+  useEffect(() => {
+    if (!still) return;
+    const id = setTimeout(() => setFired(true), 2500);
+    return () => {
+      clearTimeout(id);
+      setFired(false);
+    };
+  }, [still]);
+  return still && fired;
+}
+
 const styles = StyleSheet.create({
+  // rechter Rand bleibt stehen, die Pille fährt von links nach rechts zusammen
+  collapse: { alignSelf: 'flex-start', transformOrigin: 'right' },
   pill: {
     alignSelf: 'flex-start',
     height: 56,
