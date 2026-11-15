@@ -373,3 +373,17 @@ describe('Wendeschleifen (Matthias 15.11.)', () => {
     assert.ok(s.km > before.km + 2, 'nach vorne gesprungen');
   });
 });
+
+describe('Restzeit aus den Zeiten der Anweisungen (Matthias 15.11.)', () => {
+  it('Ort langsam, Landstraße schnell, statt gleichmäßig verteilt', async () => {
+    const { minutesAlong, minutesAt } = await import('../navigation/route');
+    // 10 km Landstraße in 6 min, dann 2 km Ort in 6 min
+    const cumKm = [0, 5, 10, 11, 12];
+    const cumMin = minutesAlong([{ idx: 0, time: 360 }, { idx: 2, time: 360 }, { idx: 4, time: 0 }], cumKm)!;
+    assert.deepEqual(cumMin.map((x) => +x.toFixed(2)), [0, 3, 6, 9, 12]);
+    const r = { cumKm, cumMin, km: 12, minutes: 12 };
+    // 2 km vor dem Ziel (am Ortseingang): noch 6 min, gleichmäßig verteilt wären es nur 2
+    assert.equal(+(12 - minutesAt(r, 10)).toFixed(2), 6);
+    assert.equal(+minutesAt({ cumKm, km: 12, minutes: 12 }, 10).toFixed(2), 10);
+  });
+});

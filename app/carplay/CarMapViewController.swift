@@ -465,7 +465,25 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     // weit weg von der Linie (Abweichung): nichts ändern
     guard bestD < 80 else { return }
     routeIdx = best
-    let f = CGFloat(routeCum[best] / total)
+    // Genau an der Stelle des Autos abschneiden, nicht am nächsten Stützpunkt (Matthias 15.11.: "weiße Linie
+    // bleibt"): auf langen geraden Stücken liegen die Punkte weit auseinander, die Linie blieb hinter dem Auto
+    // stehen, bis der nächste Punkt erreicht war. Darum auf das Stück davor oder danach projizieren.
+    var along = routeCum[best]
+    let kLon = 111_320 * cos(c.latitude * .pi / 180)
+    func project(_ i: Int) -> (Double, Double)? {
+      guard i >= 0, i + 1 < routeCoords.count else { return nil }
+      let a = routeCoords[i], b = routeCoords[i + 1]
+      let bx = (b.longitude - a.longitude) * kLon, by = (b.latitude - a.latitude) * 111_320
+      let px = (c.longitude - a.longitude) * kLon, py = (c.latitude - a.latitude) * 111_320
+      let len2 = bx * bx + by * by
+      guard len2 > 0 else { return nil }
+      let t = max(0, min(1, (px * bx + py * by) / len2))
+      let dx = px - t * bx, dy = py - t * by
+      return (routeCum[i] + t * (routeCum[i + 1] - routeCum[i]), dx * dx + dy * dy)
+    }
+    let cands = [project(best), project(best - 1)].compactMap { $0 }
+    if let p = cands.min(by: { $0.1 < $1.1 }) { along = p.0 }
+    let f = CGFloat(along / total)
     for r in [lineRenderer, casingRenderer].compactMap({ $0 }) {
       r.strokeStart = f
       r.setNeedsDisplay()

@@ -604,6 +604,48 @@ function toManeuver(m: VManeuver & { idx: number }, cumKm: number[]): Maneuver {
   };
 }
 
+/**
+ * Minuten ab Start je Shape Punkt: jede Anweisung bringt ihre Zeit mit (Valhalla, Ort langsam, Landstraße
+ * schnell), verteilt nach km über ihr Stück bis zur nächsten Anweisung. Null, wenn Zeiten fehlen.
+ */
+export function minutesAlong(raw: { idx: number; time?: number }[], cumKm: number[]): number[] | undefined {
+  const ms = raw.filter((m) => typeof m.time === 'number' && m.time >= 0).sort((a, b) => a.idx - b.idx);
+  if (ms.length < 2 || cumKm.length < 2) return undefined;
+  const out = new Array<number>(cumKm.length).fill(0);
+  let acc = 0;
+  let filled = 0;
+  for (let k = 0; k < ms.length; k++) {
+    const a = Math.max(0, Math.min(cumKm.length - 1, ms[k].idx));
+    const b = k + 1 < ms.length ? Math.max(a, Math.min(cumKm.length - 1, ms[k + 1].idx)) : cumKm.length - 1;
+    for (let i = filled; i < a; i++) out[i] = acc;
+    const len = cumKm[b] - cumKm[a];
+    const min = (ms[k].time ?? 0) / 60;
+    for (let i = a; i <= b; i++) out[i] = acc + (len > 0 ? (min * (cumKm[i] - cumKm[a])) / len : 0);
+    acc += min;
+    filled = b + 1;
+  }
+  for (let i = filled; i < cumKm.length; i++) out[i] = acc;
+  return out[out.length - 1] > 0 ? out : undefined;
+}
+
+/** Minuten ab Start bis zur Stelle km (aus cumMin, sonst gleichmäßig verteilt) */
+export function minutesAt(route: { cumKm: number[]; cumMin?: number[]; km: number; minutes: number }, km: number): number {
+  const c = route.cumMin;
+  if (!c || c.length !== route.cumKm.length) return route.km > 0 ? (route.minutes * km) / route.km : 0;
+  const ck = route.cumKm;
+  let lo = 0;
+  let hi = ck.length - 1;
+  if (km <= ck[0]) return c[0];
+  if (km >= ck[hi]) return c[hi];
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (ck[mid] <= km) lo = mid;
+    else hi = mid;
+  }
+  const seg = ck[hi] - ck[lo];
+  return c[lo] + (seg > 0 ? ((c[hi] - c[lo]) * (km - ck[lo])) / seg : 0);
+}
+
 function isRoundTrip(line: LatLon[]): boolean {
   return line.length > 2 && haversine(line[0], line[line.length - 1]) < 300;
 }
@@ -627,8 +669,9 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
       const out = toManeuver(m, cumKm);
       return isDestination(m.type) ? { ...out, text: 'Start der Tour erreicht.', speech: 'Du bist am Start der Tour.' } : out;
     });
+    const cumMin = minutesAlong(lead.maneuvers, cumKm);
     return {
-      route: { shape: lead.shape, cumKm, maneuvers, km: cumKm[cumKm.length - 1], minutes: lead.seconds / 60, source: 'valhalla' },
+      route: { shape: lead.shape, cumKm, maneuvers, km: cumKm[cumKm.length - 1], minutes: lead.seconds / 60, source: 'valhalla', ...(cumMin ? { cumMin } : {}) },
       tourStartIndex: lead.shape.length - 1,
     };
   }
@@ -676,17 +719,19 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
     raw = tour.maneuvers;
   }
 
+  const cumKm = cumulativeKm(shape);
+  const cumMin = minutesAlong(raw, cumKm);
+
   // Ausfahrt aus dem Kreisverkehr steckt schon in der Einfahrt Anweisung
   raw = raw.filter((m) => m.type !== 27);
 
-  const cumKm = cumulativeKm(shape);
   const maneuvers = raw.map((m) => {
     const out = toManeuver(m, cumKm);
     return m.type === -1 ? { ...out, kind: 'zwischenziel' as const } : out;
   });
   const km = cumKm[cumKm.length - 1];
   return {
-    route: { shape, cumKm, maneuvers, km, minutes: seconds / 60, source: 'valhalla' },
+    route: { shape, cumKm, maneuvers, km, minutes: seconds / 60, source: 'valhalla', ...(cumMin ? { cumMin } : {}) },
     tourStartIndex,
   };
 }
@@ -808,14 +853,28 @@ export async function rejoinNavRoute(
   const remainKm = current.km - current.cumKm[j0];
   const nearEnd = remainKm <= NEAR_END_TOUR_KM || (haversine(from, end) / 1000 <= NEAR_END_AIR_KM && remainKm <= NEAR_END_MAX_KM);
   let j = nearEnd ? shape.length - 1 : j0 < shape.length - 1 && current.km - current.cumKm[j0] >= 0.05 ? await bestRejoin(current, j0, from, heading, req, signal) : j0;
+  // Gegen Ende der Tour (Matthias 15.11.: "möchte bis 800 m vor Ende immer wieder zurückfahren"): ist man direkt
+  // genauso schnell am Ziel wie über den Rest der Tour, geht es direkt hin. Nur im letzten Fünftel oder den letzten
+  // 10 km, damit eine Rundtour am Anfang nicht abgekürzt wird.
+  if (!nearEnd && j < shape.length - 1 && remainKm <= Math.max(NEAR_END_MAX_KM, current.km * 0.2)) {
+    try {
+      const [tJ, tEnd] = await timesTo(from, heading, [shape[j], end], req, signal);
+      const total = current.cumMin?.length ? current.cumMin[current.cumMin.length - 1] : current.minutes;
+      const viaTour = tJ != null ? tJ / 60 + Math.max(0, total - minutesAt(current, current.cumKm[j])) : null;
+      if (tEnd != null && viaTour != null && tEnd / 60 <= viaTour + 1) j = shape.length - 1;
+    } catch (e) {
+      if (signal?.aborted) throw e;
+    }
+  }
   if (j >= shape.length - 1 || current.km - current.cumKm[j] < 0.05) {
     // praktisch am Ziel: direkt dorthin
     // Am Ziel ist die Richtung egal, sonst erzwingt Valhalla eine Ankunft nach Norden
     const lead = await approach(from, end, null, req, signal, heading, fast);
     const cumKm = cumulativeKm(lead.shape);
     const maneuvers = lead.maneuvers.filter((m) => m.type !== 27).map((m) => toManeuver(m, cumKm));
+    const cumMin = minutesAlong(lead.maneuvers, cumKm);
     return {
-      route: { shape: lead.shape, cumKm, maneuvers, km: cumKm[cumKm.length - 1], minutes: lead.seconds / 60, source: 'valhalla' },
+      route: { shape: lead.shape, cumKm, maneuvers, km: cumKm[cumKm.length - 1], minutes: lead.seconds / 60, source: 'valhalla', ...(cumMin ? { cumMin } : {}) },
       tourStartIndex: 0,
     };
   }
@@ -859,6 +918,12 @@ export async function rejoinNavRoute(
       return { ...m, index, km: cumKm[Math.min(index, cumKm.length - 1)] };
     });
   const restShare = current.km > 0 ? (current.km - current.cumKm[j]) / current.km : 0;
+  // Zeiten: Rückweg aus seinen Anweisungen, dann der Rest der bisherigen Route mit ihren Zeiten
+  const leadMin = minutesAlong(lead.maneuvers, cumKm.slice(0, join + 1));
+  const cumMin =
+    leadMin && current.cumMin?.length === shape.length
+      ? [...leadMin, ...current.cumMin.slice(j + 1).map((x) => leadMin[join] + x - current.cumMin![j])]
+      : undefined;
   return {
     route: {
       shape: newShape,
@@ -868,6 +933,7 @@ export async function rejoinNavRoute(
       minutes: lead.seconds / 60 + current.minutes * restShare,
       source: 'valhalla',
       rejoinIndex: join,
+      ...(cumMin && cumMin.length === cumKm.length ? { cumMin } : {}),
     },
     tourStartIndex: join,
   };

@@ -12,7 +12,7 @@ import { carPlayCamera } from '../carplay';
 import { haversine, type LatLon } from '../tour';
 import { offlineRejoin } from './offline';
 import { replanFromHere } from './replan';
-import { fetchNavRouteDetail, rejoinNavRoute } from './route';
+import { fetchNavRouteDetail, minutesAt, rejoinNavRoute } from './route';
 import { pointAtKm, progress, snapToRoute } from './tracker';
 import type { NavControls, NavRequest, NavRoute, NavState, SkipUndo } from './types';
 import { edgesAlong, exitWord, forksIn, roundaboutByDirection, roundaboutExits, slice, withForks } from './junctions';
@@ -401,14 +401,16 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         const dt = fix.at - p.at;
         if (dkm > 0 && dkm < 1 && dt > 0 && dt < 30000 && (fix.speedKmh ?? 0) > 3) {
           const decay = Math.exp(-dkm / 30);
-          p.plan = p.plan * decay + (route.km > 0 ? (route.minutes * dkm) / route.km : 0);
+          p.plan = p.plan * decay + Math.max(0, minutesAt(route, snap.km) - minutesAt(route, p.km));
           p.real = p.real * decay + dt / 60000;
         }
       }
       paceRef.current = { at: fix.at, km: snap.km, plan: p?.plan ?? 0, real: p?.real ?? 0 };
       const pp = paceRef.current;
       const pace = pp.plan > 4 ? Math.min(1.8, Math.max(0.6, pp.real / pp.plan)) : 1;
-      const restMin = route.km > 0 ? route.minutes * (pr.remainingKm / route.km) * pace : 0;
+      // Restzeit aus den Zeiten der Anweisungen (Orte langsam), dann mit dem eigenen Tempo korrigiert
+      const total = route.cumMin?.length ? route.cumMin[route.cumMin.length - 1] : route.minutes;
+      const restMin = route.km > 0 ? Math.max(0, total - minutesAt(route, route.km - pr.remainingKm)) * pace : 0;
       const eta = new Date(fix.at + restMin * 60000);
 
       if (arrived) {

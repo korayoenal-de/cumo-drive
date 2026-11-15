@@ -76,6 +76,12 @@ export type NavRoute = {
   source: 'cumo' | 'valhalla';
   /** Nach einer Abweichung: bis zu diesem Index führt die Route zurück auf die Tour (gestrichelt) */
   rejoinIndex?: number;
+  /**
+   * Minuten ab Start für jeden Shape Punkt, aus den Zeiten der einzelnen Anweisungen (Matthias 15.11.: durch
+   * Schwetzingen in 2 min). Ohne sie wird die Fahrzeit gleichmäßig auf die km verteilt, Orte waren dann so schnell
+   * wie Landstraße. Fehlt bei Routen ohne Zeiten.
+   */
+  cumMin?: number[];
 };
 
 /**
