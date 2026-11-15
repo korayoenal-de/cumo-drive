@@ -5,7 +5,7 @@
  * losfahren, als Gruppe fahren, ändern und speichern), daneben nur Teilen und Löschen.
  */
 import { datum, fahrzeit, meta as fmtMeta, plaetze, strecke, wann } from '@/lib/format';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -28,7 +28,7 @@ import { thumbShape } from '@/lib/route-thumb';
 import { fmtG } from '@/lib/ride-stats';
 import { importTourFile } from '@/lib/route-file';
 import { countCurves } from '@/lib/stats';
-import { flatten, formatKm, type LatLon, type Tour } from '@/lib/tour';
+import { flatten, formatKm, type LatLon } from '@/lib/tour';
 
 /**
  * Anstehende Ausfahrten oben in Touren (Koray 13.11.): eigene und die, zu denen du eingeladen bist oder
@@ -273,22 +273,6 @@ export default function Touren() {
 /** Spuren so vieler Fahrten auf einmal laden (die obersten der Liste, weitere beim Blättern nicht nötig) */
 const TRACKS_FIRST = 30;
 
-/**
- * Gefahrene Strecke als ungespeicherte Tour im Planer (Tester Gregor 12.11.): dort steht sie auf der Karte,
- * mit dem Lesezeichen lässt sie sich speichern und später nochmal fahren.
- */
-function openDrive(d: Drive, line: LatLon[]) {
-  const tour: Tour = { name: d.name, laenge_km: 0, wegpunkte: [line[0], line[line.length - 1]], linie: [{ c: 'ok', p: line }], warnungen: [], geprueft: false };
-  const pts = flatten(tour);
-  tour.laenge_km = +pts[pts.length - 1].km.toFixed(1);
-  const now = new Date().toISOString();
-  setEditTour(
-    { ...tour, id: '', folder: 'Gefahren', createdAt: now, updatedAt: now, curves: d.curves ?? undefined, minutes: d.moving_min },
-    { label: 'Touren', href: '/touren' },
-  );
-  router.navigate('/');
-}
-
 /** Gefahrene Touren aus dem Konto, filterbar nach Fahrzeug. */
 function Drives({ loggedIn }: { loggedIn: boolean }) {
   const [list, setList] = useState<Drive[] | null>(null);
@@ -354,7 +338,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
         {shown.map((d) => {
           const line = tracks[d.id];
           return (
-            <DriveCard key={d.id} line={line} label={d.name} onOpen={line ? () => openDrive(d, line) : undefined}>
+            <DriveCard key={d.id} line={line} label={d.name} onOpen={() => router.push(`/fahrt/${d.id}` as Href)}>
               <View style={[styles.rowMain, styles.flex]}>
                 <View style={styles.row}>
                   <AppText style={[styles.name, styles.flex]} numberOfLines={1}>
@@ -374,14 +358,14 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
   );
 }
 
-/** Karte einer Fahrt mit Mini Streckenbild; Tippen zeigt die gefahrene Strecke auf der Karte */
+/** Karte einer Fahrt mit Mini Streckenbild; Tippen öffnet den Rückblick mit Statistik (Koray 15.11.) */
 function DriveCard({ line, label, onOpen, children }: { line?: LatLon[]; label: string; onOpen?: () => void; children: React.ReactNode }) {
   const shape = useMemo(() => (line ? thumbShape(line) : null), [line]);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityHint={onOpen ? 'Zeigt die gefahrene Strecke auf der Karte' : undefined}
+      accessibilityHint={onOpen ? 'Zeigt Strecke, Statistik und Bewertung der Fahrt' : undefined}
       disabled={!onOpen}
       onPress={onOpen}
       style={({ pressed }) => [styles.card, styles.driveRow, pressed && styles.pressed]}

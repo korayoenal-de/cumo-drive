@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Avatar } from '@/components/community/ride-bits';
+import { BackLink } from '@/components/ui/back-link';
 import { describeEntitlement } from '@/components/paywall/membership-section';
 import { resetPrivacy, usePrivacy } from '@/components/settings/community-profile';
 import { avoidSummary } from '@/components/planner/planner-parts';
@@ -31,7 +32,8 @@ import { syncVehicles, useVehicles, vehicleName } from '@/lib/vehicle';
 import { useVoiceChoice } from '@/lib/voice-settings';
 
 
-export default function Einstellungen() {
+/** inNav: während der Navigation als Blatt darüber geöffnet (Koray 15.11.), oben der Weg zurück zur Fahrt */
+export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {}) {
   const session = useSession();
   const { list, current } = useVehicles();
   const map = useMapSettings();
@@ -57,6 +59,7 @@ export default function Einstellungen() {
 
   return (
     <Screen>
+      {inNav && <BackLink label="Zur Navigation" onPress={() => router.back()} />}
       <AppText variant="display" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         Einstellungen
       </AppText>

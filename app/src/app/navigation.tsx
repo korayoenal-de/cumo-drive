@@ -1217,6 +1217,8 @@ export default function NavigationScreen() {
                   : undefined
               }
               extraActions={[
+                // zurück ins Menü, ohne die Fahrt zu beenden (Koray 15.11.): Blatt über der Navigation
+                { key: 'menu', label: 'Einstellungen', icon: 'gearshape.fill' as const, run: () => router.push('/menu' as Href) },
                 { key: 'melden', label: 'Problem melden', icon: 'exclamationmark.bubble.fill' as const, run: reportProblem },
                 ...(withOthers && funk.status !== 'nicht'
                   ? [

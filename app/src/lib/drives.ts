@@ -89,6 +89,27 @@ export async function listDrives(limit = 200): Promise<Drive[]> {
   return (data ?? []) as Drive[];
 }
 
+/** Eine Fahrt mit Spur und Bewertung, für den Rückblick (Koray 15.11.: Zusammenfassung gefahrener Touren) */
+export type DriveDetail = Drive & {
+  track: LatLon[];
+  rating: DriveRating | null;
+  rating_score: number | null;
+  rating_reasons: string[] | null;
+  rating_note: string | null;
+};
+
+export async function getDrive(id: string): Promise<DriveDetail | null> {
+  const { data, error } = await supabase
+    .from('drives')
+    .select('id,name,started_at,km,moving_min,avg_kmh,max_kmh,max_lat_g,max_brake_g,curves,vehicle_id,vehicle_name,track,rating,rating_score,rating_reasons,rating_note')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const d = data as Drive & { track: string | null; rating: DriveRating | null; rating_score: number | null; rating_reasons: string[] | null; rating_note: string | null };
+  return { ...d, track: d.track ? decode(d.track) : [] };
+}
+
 export async function deleteDrive(id: string) {
   const { error } = await supabase.from('drives').delete().eq('id', id);
   if (error) throw new Error(error.message);
