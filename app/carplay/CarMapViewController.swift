@@ -60,7 +60,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   /// Hinweis "Plane eine Tour" nur auf der Hauptkarte, nicht im Dashboard oder Kombiinstrument
   var showsHint = true
   private var groupPins: [String: GroupAnnotation] = [:]
-  /// Tempo und Tempolimit unten links (Build 29, Tester Matthias 14.11.), nur auf der Hauptkarte
+  /// Tempo und Tempolimit oben links neben der Anweisung (Koray 15.11., vorher unten), nur auf der Hauptkarte
   var showsSpeed = false
   private let speedView = CarSpeedView()
 
@@ -114,7 +114,7 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     view.addSubview(speedView)
     NSLayoutConstraint.activate([
       speedView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
-      speedView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+      speedView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
     ])
   }
 
@@ -600,6 +600,9 @@ final class CarSpeedView: UIView {
   private static let text = UIColor(red: 244 / 255, green: 244 / 255, blue: 242 / 255, alpha: 1)
   private static let muted = UIColor(red: 154 / 255, green: 154 / 255, blue: 159 / 255, alpha: 1)
   private let signSize: CGFloat = 40
+  /// rechts so viel Rand wie links, wenn kein Schild da ist (sonst steht das Tempo schief, Koray 15.11.)
+  private var trailingPad: NSLayoutConstraint!
+  private var leadingPad: NSLayoutConstraint!
 
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -635,9 +638,11 @@ final class CarSpeedView: UIView {
     stack.addArrangedSubview(sign)
     stack.translatesAutoresizingMaskIntoConstraints = false
     addSubview(stack)
+    trailingPad = stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6)
+    leadingPad = stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12)
     NSLayoutConstraint.activate([
-      stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-      stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
+      leadingPad,
+      trailingPad,
       stack.topAnchor.constraint(equalTo: topAnchor, constant: 6),
       stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
     ])
@@ -666,6 +671,9 @@ final class CarSpeedView: UIView {
     } else {
       sign.isHidden = true
     }
+    // nur Tempo: rundum 12, nur Schild: rundum 6, beides: links 12 rechts 6
+    trailingPad.constant = sign.isHidden ? -12 : -6
+    leadingPad.constant = speedCol.isHidden ? 6 : 12
     let over = showSpeed && !estimated && limit != nil && v > (limit ?? 0) + 4
     backgroundColor = over ? CarSpeedView.warnBg : CarSpeedView.rest
     accessibilityLabel = [showSpeed ? "\(v) km/h" : nil, limit.map { "Limit \($0)" }].compactMap { $0 }.joined(separator: ", ")

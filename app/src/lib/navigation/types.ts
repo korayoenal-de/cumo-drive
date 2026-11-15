@@ -61,6 +61,8 @@ export type Maneuver = {
   index: number;
   /** km ab Start der NavRoute */
   km: number;
+  /** Ende der Rückführung: wieder auf der Tour (Pfeil geradeaus, kein Ziel Symbol; Koray 15.11.) */
+  back?: true;
 };
 
 export type NavRoute = {

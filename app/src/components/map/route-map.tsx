@@ -335,7 +335,8 @@ export function RouteMap({
       carStep.current = f;
       setCarDeg(f * 10);
     }
-    map.current.animateCamera({ center: ll(sh.p), heading: northUp ? 0 : sh.h }, { duration: 450 });
+    // genordet heißt flach von oben wie eine Landkarte, nicht schräg (Koray 15.11.)
+    map.current.animateCamera({ center: ll(sh.p), heading: northUp ? 0 : sh.h, pitch: northUp ? 0 : 50 }, { duration: 450 });
   }, [northUp]);
   useEffect(() => {
     if (!position) return;
@@ -415,7 +416,7 @@ export function RouteMap({
             scheduleCarStep(f);
           }
         }
-        map.current?.setCamera({ center: ll(p), heading: ch, pitch: 50, zoom: 17 - z + uz, altitude: (500 + z * 600) * Math.pow(2, -uz) });
+        map.current?.setCamera({ center: ll(p), heading: ch, pitch: northUpRef.current ? 0 : 50, zoom: 17 - z + uz, altitude: (500 + z * 600) * Math.pow(2, -uz) });
       }
     };
     raf = requestAnimationFrame(tick);

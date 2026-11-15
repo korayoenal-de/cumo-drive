@@ -90,6 +90,7 @@ function lowerFirst(s: string): string {
 
 /** Kurze Ansage direkt am Manöver. */
 export function nowPhrase(m: Maneuver): string {
+  if (m.back) return 'Du bist wieder auf der Tour.';
   switch (m.kind) {
     case 'links':
       return 'Jetzt links abbiegen.';

@@ -845,7 +845,8 @@ export async function rejoinNavRoute(
     .filter((m) => !isDestination(m.type) && m.type !== 27)
     .map((m) => toManeuver(m, cumKm));
   const back: Maneuver = {
-    kind: 'zwischenziel',
+    kind: 'geradeaus',
+    back: true,
     text: 'Zurück auf der Tour. Der Tour folgen.',
     speech: 'Dann bist du zurück auf der Tour.',
     index: join,

@@ -170,6 +170,9 @@ final class CarPlayBridge: NSObject {
     t.hideTripPreviews()
     if trip == nil { trip = makeTrip() }
     guard let trip else { return }
+    // Ankunft unten wie die Anweisung oben dunkel (Koray 15.11.: unten hell); manche Systeme übernehmen den Stil
+    // erst, wenn er zur Fahrt noch einmal gesetzt wird
+    t.tripEstimateStyle = .dark
     session = t.startNavigationSession(for: trip)
     maneuverKey = nil
     maneuver = nil
