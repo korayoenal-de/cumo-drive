@@ -87,6 +87,8 @@ type Row = {
   ended_at?: string | null;
 };
 
+const PLACEHOLDER = /^(Start der Tour|Dein Standort|Aktueller Standort)?$/i;
+
 export async function listAusfahrten(): Promise<Ausfahrt[]> {
   const { data: s } = await supabase.auth.getSession();
   if (!s.session) return [];
@@ -101,7 +103,8 @@ export async function listAusfahrten(): Promise<Ausfahrt[]> {
       ownerName: r.owner_name ?? 'Fahrer',
       ownerCar: r.owner_car,
       startsAt: new Date(r.starts_at),
-      meeting: r.meeting_point && typeof r.meeting_point.lat === 'number' ? r.meeting_point : null,
+      // Platzhalter wie „Start der Tour“ zählen nicht als Name, die App zeigt dann den Ort (K6, Koray 15.11.)
+      meeting: r.meeting_point && typeof r.meeting_point.lat === 'number' ? { ...r.meeting_point, name: PLACEHOLDER.test(r.meeting_point.name?.trim() ?? '') ? '' : r.meeting_point.name } : null,
       note: r.note,
       km: num(r.km),
       minutes: num(r.minutes),

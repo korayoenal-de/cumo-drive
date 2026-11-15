@@ -130,7 +130,8 @@ export default function AusfahrtDetail() {
     }, [load]),
   );
 
-  const startKey = a && a.start ? `${a.start[0]},${a.start[1]}` : null;
+  // Ort zum Treffpunkt: aus dem Treffpunkt selbst, sonst aus dem Start der Tour
+  const startKey = a && a.meeting && !a.meeting.name ? `${a.meeting.lat},${a.meeting.lon}` : a && a.start ? `${a.start[0]},${a.start[1]}` : null;
   useEffect(() => {
     if (!startKey) return;
     const [la, lo] = startKey.split(',').map(Number);
