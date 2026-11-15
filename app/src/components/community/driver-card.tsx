@@ -270,8 +270,8 @@ function InviteSheet({ d, visible, onClose }: { d: Driver; visible: boolean; onC
     }
   };
   const items: SheetItem[] = [
-    ...(rides ?? []).map((a) => ({ key: a.id, icon: 'car.2' as const, label: a.name, hint: longDate(a.startsAt), onPress: () => void invite(a) })),
-    { key: 'neu', icon: 'plus' as const, label: 'Neue Ausfahrt erstellen', onPress: () => router.push('/ausfahrt/neu') },
+    ...(rides ?? []).map((a) => ({ key: a.id, icon: 'car.2' as const, group: 'ausfahrten', label: a.name, hint: longDate(a.startsAt), onPress: () => void invite(a) })),
+    { key: 'neu', icon: 'plus' as const, group: 'neu', label: 'Neue Ausfahrt erstellen', onPress: () => router.push('/ausfahrt/neu') },
   ];
   return (
     <ActionSheet
@@ -279,6 +279,7 @@ function InviteSheet({ d, visible, onClose }: { d: Driver; visible: boolean; onC
       title={`${d.name} einladen`}
       subtitle={rides === null ? 'Deine Ausfahrten werden geladen.' : rides.length ? 'Zu welcher Ausfahrt? Die Einladung ist eine Anfrage, Funk und Live Karte gibt es erst nach der Zusage.' : 'Du hast gerade keine Ausfahrt mit freiem Platz.'}
       items={items}
+      minForLines={1}
       onClose={onClose}
     />
   );

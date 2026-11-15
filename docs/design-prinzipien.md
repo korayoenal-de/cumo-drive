@@ -30,6 +30,15 @@ Regeln:
 * Ein Objekt hat genau einen Einstieg für Optionen: das Symbol ⋯ rechts. Die Fläche selbst öffnet das Objekt.
 * Optionen gleiten nicht mehr inline herein; Sheets und Ebenen erscheinen wie in 3 beschrieben.
 
+### Optionen gliedern (Koray 15.11.2026, Konzept „Gruppierung in Optionen“)
+Unser Blatt bleibt, wie es ist: keine Farbflächen, keine Kacheln oben, keine Überschriften über Themen, keine zweite Ebene. Neu ist nur die Trennlinie zwischen Themen, wie in den Menüs von iOS. Umgesetzt in `lib/sheet-groups.ts`, gilt für `ActionSheet`, das schwebende Menü (`FloatMenu`, Weiteres im Planer) und die Navigation (dort Abstand statt Linie, weil die Tasten einzeln über der Karte schweben).
+* Jeder Eintrag bekommt ein Thema (`group`). Reihenfolge: Fahren, Ändern, Teilen, Hilfe, zuletzt Gefahr.
+* Gefährliches steht immer zuletzt, rot, hinter einer Linie, ohne rote Fläche.
+* Bis drei harmlose Einträge: keine weitere Linie. Ab vier: Linie zwischen den Themen. Höchstens drei Linien je Blatt.
+* Inhaltslisten (Touren zum Teilen, Ausfahrten zum Einladen) trennen immer die Dinge von den Wegen (`minForLines={1}`).
+* Keine Linie in einer Auswahl (Abfahrt, Treffpunkt, Profil) und bei zwei gleichwertigen Wegen (Losfahren).
+* Linie: Haarlinie in `Colors.line`, 8 Abstand oben und unten, eingerückt wie die Zeilen.
+
 ## 3. Bewegung mit Federn (Bounce geregelt am 6.11.2026)
 * Alle Animationen nutzen `Motion` aus `theme.ts`. Keine linearen Übergänge.
 * Ebenen und Optionen (Bottom Sheets, schwebende Aktionen, Toasts, Listen) erscheinen ohne Feder: Auslaufkurve EASE_OUT, Sheets 300 ms, Optionen 260 ms, gestaffelt 45 ms (components/ui/motion.ts). Seit 6.11. nachmittags, weil die Federn dort noch nachwippten.
@@ -218,7 +227,7 @@ Jede neue Funktion, jeder neue Screen und jede Änderung folgt dem Design System
 
 1. Bausteine wiederverwenden statt nachbauen: `Kennzahlen`, `SeatsBadge`, `BackLink`, `ActionSheet` und `ConfirmSheet`, `ShareSheet`, `Chip` und `ChipRow`, `Screen`, `MapSheet`, Formate aus `lib/format.ts`, Farben und Maße nur aus `constants/theme.ts`.
 2. Kerndaten in der festen Reihenfolge, Kennzahlen direkt unter dem Titel, die Karte danach.
-3. Eine Hauptaktion je Ansicht, auf Detailseiten fest unten; Optionen zu einem Objekt im Blatt, Gefährliches rot unten mit Rückfrage als Frage.
+3. Eine Hauptaktion je Ansicht, auf Detailseiten fest unten; Optionen zu einem Objekt im Blatt, nach Themen gegliedert (`group`, siehe Optionen gliedern), Gefährliches rot unten hinter einer Linie mit Rückfrage als Frage.
 4. Wörter aus dem Glossar (Tour, Runde, Route, Strecke, Fahrzeit, Highlight, Teilnehmer, Organisator, Lead, Löschen, Entfernen, Verwerfen), Du Form, keine Gedankenstriche.
 5. Icons 16 oder 20 semibold, ein Symbol je Bedeutung; Typografie Mittelweg; Hinweise 15 pt.
 6. Bewegung mit den Motion Tokens, gezielt statt überall.

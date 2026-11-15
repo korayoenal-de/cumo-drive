@@ -16,13 +16,17 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { sheetEnter } from '@/components/ui/motion';
+import { groupRows } from '@/lib/sheet-groups';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type, Size } from '@/constants/theme';
 
 const AnimatedScroll = Animated.createAnimatedComponent(GHScrollView);
 
-/** primary: Hauptaktion des Blatts in Signal Orange (etwa Speichern und zurück), höchstens eine je Blatt */
-export type SheetItem = { key: string; icon: SFSymbol; label: string; hint?: string; danger?: boolean; primary?: boolean; busy?: boolean; onPress: () => void };
+/**
+ * primary: Hauptaktion des Blatts in Signal Orange (etwa Speichern und zurück), höchstens eine je Blatt.
+ * group: Thema des Eintrags (Fahren, Ändern, Teilen, Hilfe); zwischen Themen steht eine Linie (lib/sheet-groups.ts).
+ */
+export type SheetItem = { key: string; icon: SFSymbol; label: string; hint?: string; danger?: boolean; primary?: boolean; busy?: boolean; group?: string; onPress: () => void };
 
 /** Zeit, bis eine geschlossene Ebene weg ist; erst danach darf die nächste aufgehen (iOS zeigt sonst nichts) */
 export const SHEET_GONE_MS = 320;
@@ -106,14 +110,18 @@ export function OptionsSheet({ visible, title, subtitle, onClose, children, scro
   );
 }
 
-/** scroll: für lange Listen (etwa alle eigenen Touren), das Blatt scrollt dann */
-export function ActionSheet({ visible, title, subtitle, items, onClose, scroll = false }: { visible: boolean; title?: string; subtitle?: string; items: SheetItem[]; onClose: () => void; scroll?: boolean }) {
+/**
+ * scroll: für lange Listen (etwa alle eigenen Touren), das Blatt scrollt dann.
+ * minForLines: ab so vielen harmlosen Einträgen trennen Linien die Themen; Inhaltslisten setzen 1.
+ */
+export function ActionSheet({ visible, title, subtitle, items, onClose, scroll = false, minForLines }: { visible: boolean; title?: string; subtitle?: string; items: SheetItem[]; onClose: () => void; scroll?: boolean; minForLines?: number }) {
   return (
     <OptionsSheet visible={visible} title={title} subtitle={subtitle} onClose={onClose} scroll={scroll}>
       <View style={styles.list} accessibilityRole="menu">
-        {items.map((it) => (
+        {groupRows(items, minForLines).map(({ item: it, line }) => (
+          <View key={it.key} style={styles.gapXs}>
+          {line && <View style={styles.line} />}
           <Pressable
-            key={it.key}
             accessibilityRole="menuitem"
             accessibilityHint={it.hint}
             onPress={() => {
@@ -121,8 +129,8 @@ export function ActionSheet({ visible, title, subtitle, items, onClose, scroll =
               // Öffnet die Aktion selbst eine Ebene (Rückfrage, Teilen), erst nach dem Schließen
               setTimeout(it.onPress, SHEET_GONE_MS);
             }}
-            // Wie das schwebende Menü (Koray 8.11.): Zeilen ohne eigene Fläche, Symbol ohne Kreis, Löschen getönt
-            style={({ pressed }) => [styles.item, it.danger && styles.itemDanger, it.primary && styles.itemPrimary, pressed && (it.primary ? styles.primaryPressed : styles.itemPressed)]}>
+            // Zeilen ohne eigene Fläche, Symbol ohne Kreis; Gefährliches rot hinter einer Linie (Konzept 15.11.)
+            style={({ pressed }) => [styles.item, it.primary && styles.itemPrimary, pressed && (it.primary ? styles.primaryPressed : styles.itemPressed)]}>
             <View style={styles.icon}>
               <SymbolView name={it.icon} size={20} tintColor={it.danger ? Colors.stopText : it.primary ? Colors.onSignal : Colors.text} weight="semibold" />
             </View>
@@ -136,6 +144,7 @@ export function ActionSheet({ visible, title, subtitle, items, onClose, scroll =
             </View>
             {it.busy && <ActivityIndicator color={Colors.muted} />}
           </Pressable>
+          </View>
         ))}
       </View>
     </OptionsSheet>
@@ -203,7 +212,9 @@ const styles = StyleSheet.create({
   subtitle: { fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: 21, color: Colors.muted },
   list: { gap: Spacing.xs },
   item: { minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m },
-  itemDanger: { marginTop: Spacing.s, backgroundColor: Colors.dangerTint },
+  gapXs: { gap: Spacing.xs },
+  /** Trennlinie zwischen Themen, mit dem Abstand der Liste oben und unten 8 */
+  line: { height: StyleSheet.hairlineWidth, backgroundColor: Colors.line, marginHorizontal: Spacing.m, marginVertical: Spacing.xs },
   itemPressed: { backgroundColor: Colors.line },
   itemPrimary: { borderRadius: Radius.pill, backgroundColor: Colors.signal, marginBottom: Spacing.s },
   primaryPressed: { opacity: 0.88 },

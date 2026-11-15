@@ -143,9 +143,9 @@ export function Result({
         }}
         save={{ saved: !!savedId, onPress: () => void saveResult() }}
         more={[
-          { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Tour direkt in CUMO DRIVE', onPress: () => void shareTourLink({ ...tour, name: tour.name }, req.profile).catch(() => undefined) },
           { key: 'adjust', icon: 'pencil', label: 'Anpassen', onPress: onAdjust },
           { key: 'reroll', icon: 'dice', label: 'Neu würfeln', hint: 'Gleiche Länge und Richtung, andere Strecke', onPress: onReroll },
+          { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Tour direkt in CUMO DRIVE', onPress: () => void shareTourLink({ ...tour, name: tour.name }, req.profile).catch(() => undefined) },
           { key: 'back', icon: 'trash', label: 'Runde verwerfen', danger: true, confirm: 'Möchtest du diese Runde wirklich verwerfen?', onPress: onBack },
         ]}>
       </ActionBar>

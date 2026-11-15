@@ -801,9 +801,7 @@ export function TourMode({
             // Speichern als sekundärer Knopf, solange die Tour neu oder geändert ist (Konzept 7.11.)
             save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => { if (plan.saving) return; if (!plan.cloudId) setNaming(true); else void plan.save(curves, firstProfile, avoid); } } : undefined}
             more={[
-              // Link und GPX als eine Zeile „Teilen“ wie in Touren (Konsistenzprüfung 15.11., O3)
-              { key: 'share', icon: 'square.and.arrow.up', label: 'Teilen', onPress: () => setSharing(true) },
-              ...(plan.cloudId ? [{ key: 'rename', icon: 'pencil' as const, label: 'Umbenennen', onPress: () => setRenaming(true) }] : []),
+              ...(plan.cloudId ? [{ key: 'rename', icon: 'pencil' as const, label: 'Umbenennen', group: 'aendern', onPress: () => setRenaming(true) }] : []),
               // Duplizieren (Koray 10.11.): Kopie anlegen und gleich im Planer öffnen, das Original bleibt
               ...(plan.cloudId
                 ? [
@@ -811,6 +809,7 @@ export function TourMode({
                       key: 'dup',
                       icon: 'plus.square.on.square' as const,
                       label: 'Duplizieren',
+                      group: 'aendern',
                       onPress: () => {
                         const c = plan.cloudId ? duplicateTour(plan.cloudId) : null;
                         if (!c) return;
@@ -821,8 +820,11 @@ export function TourMode({
                     },
                   ]
                 : []),
+              // Gliederung wie die Tourkarte (Konzept 15.11.): Ändern, dann Teilen und Schließen, Rot zuletzt.
+              // Link und GPX als eine Zeile „Teilen“ wie in Touren (Konsistenzprüfung 15.11., O3)
+              { key: 'share', icon: 'square.and.arrow.up', label: 'Teilen', group: 'teilen', onPress: () => setSharing(true) },
               // Gespeicherte Tour schließen: leert den Planer, die Tour bleibt in Meine Touren (Koray 8.11.)
-              ...(plan.cloudId ? [{ key: 'close', icon: 'xmark.circle' as const, label: 'Tour schließen', hint: 'Bleibt unter Touren', onPress: resetForm }] : []),
+              ...(plan.cloudId ? [{ key: 'close', icon: 'xmark.circle' as const, label: 'Tour schließen', hint: 'Bleibt unter Touren', group: 'teilen', onPress: resetForm }] : []),
               plan.cloudId
                 ? { key: 'delete', icon: 'trash', label: 'Tour löschen', danger: true, onPress: () => setAskDelete(true) }
                 : { key: 'reset', icon: 'arrow.counterclockwise', label: 'Planung verwerfen', danger: true, onPress: resetForm },
