@@ -314,3 +314,62 @@ describe('Graue 100 (Koray 13.11.)', () => {
     assert.deepEqual(shownLimitAt({ ...z, endKm: [1, 2, 3] }, 1.5), { limit: 100, estimated: true });
   });
 });
+
+describe('Wendeschleifen (Matthias 15.11.)', () => {
+  // Straße mit getrennten Fahrbahnen nach Norden, Gegenfahrbahn 30 m östlich
+  const W = 8.43;
+  const E = 8.43 + 30 / (111320 * Math.cos((49.31 * Math.PI) / 180));
+  const leg = (lon: number, from: number, to: number): LatLon[] => {
+    const n = Math.max(2, Math.round(Math.abs(to - from) * 111320 / 20));
+    return Array.from({ length: n + 1 }, (_, i) => [from + ((to - from) * i) / n, lon] as LatLon);
+  };
+  /** Rampe als Halbkreis von einer Fahrbahn zur anderen, nach außen (Radius 120 m) */
+  const ramp = (lat: number, north: boolean): LatLon[] => {
+    const k = 111320 * Math.cos((lat * Math.PI) / 180);
+    const cx = (W + E) / 2;
+    const out: LatLon[] = [];
+    for (let a = 0; a <= 180; a += 10) {
+      const t = (a * Math.PI) / 180;
+      const dx = (north ? -1 : 1) * Math.cos(t) * (15 / k) - Math.sin(t) * (120 / k) * (north ? 1 : -1);
+      const dy = Math.sin(t) * (120 / 111320) * (north ? 1 : -1);
+      out.push([lat + dy, cx + dx]);
+    }
+    return out;
+  };
+  const wende: LatLon[] = [...leg(W, 49.3, 49.32), ...ramp(49.32, true), ...leg(E, 49.32, 49.31)];
+
+  it('findet die Wende am Kreuz und legt den Punkt auf der Gegenfahrbahn auf den Hinweg', async () => {
+    const { findUTurns, movePointsOffUTurns, unwantedUTurns } = await import('../uturn');
+    const t = findUTurns(wende);
+    assert.equal(t.length, 1);
+    assert.ok(haversine(t[0].tip, [49.321, (W + E) / 2]) < 150);
+    const pts: LatLon[] = [[49.3, W], [49.31, E], [49.4, W]];
+    assert.equal(unwantedUTurns(wende, pts).length, 1);
+    const moved = movePointsOffUTurns(pts, t)!;
+    assert.ok(moved);
+    assert.ok(Math.abs(moved[1][1] - W) < 1e-6, 'Punkt liegt jetzt auf der Fahrbahn nach Norden');
+    // Punkt an der Spitze: gewollt (Stich zum Café)
+    assert.equal(unwantedUTurns(wende, [[49.3, W], [49.3212, (W + E) / 2], [49.4, W]]).length, 0);
+  });
+
+  it('Spitzkehren und gerade Strecken sind keine Wende', async () => {
+    const { findUTurns } = await import('../uturn');
+    assert.equal(findUTurns(leg(W, 49.3, 49.35)).length, 0);
+    // Kehre mit auseinanderlaufenden Schenkeln
+    const a: LatLon[] = Array.from({ length: 40 }, (_, i) => [49.3 + i * 0.0002, W + i * 0.00005] as LatLon);
+    const b: LatLon[] = Array.from({ length: 40 }, (_, i) => [49.3078 - i * 0.0002, W + 0.0025 + i * 0.0002] as LatLon);
+    assert.equal(findUTurns([...a, ...b]).length, 0);
+  });
+
+  it('Navigation: wer die Wendeschleife auslässt, ist nicht abseits', () => {
+    // Tour: nach Norden, Wende am Kreuz, zurück zum Punkt, Wende im Süden, wieder nach Norden weiter
+    const shape: LatLon[] = [...wende, ...ramp(49.31, false), ...leg(W, 49.31, 49.34)];
+    const route: NavRoute = { shape, cumKm: cumulativeKm(shape), maneuvers: [], km: 0, minutes: 0, source: 'valhalla' };
+    route.km = route.cumKm[route.cumKm.length - 1];
+    const before = snapToRoute(route, [49.3195, W], -1, 0);
+    // geradeaus über das Kreuz weiter nach Norden statt in die Schleife
+    const s = snapToRoute(route, [49.3225, W], before.index, 0, 120);
+    assert.ok(s.offM < 10, `auf der Route, ${s.offM.toFixed(0)} m`);
+    assert.ok(s.km > before.km + 2, 'nach vorne gesprungen');
+  });
+});

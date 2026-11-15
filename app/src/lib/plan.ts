@@ -11,6 +11,7 @@ import { tourFun } from './fun-score';
 import { closureExclude, closureLabel, closuresNear, closuresOnRoute, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import { seamsOk, windowFor } from './plan-window';
+import { movePointsOffUTurns, unwantedUTurns, type UTurn } from './uturn';
 import { route, valhallaFetch, type Avoid } from './valhalla';
 
 /** Schritte beim Planen; traffic: Verkehrsmeldungen, compare: Varianten vergleichen (Rundtour) */
@@ -164,9 +165,30 @@ export async function planChecked(
   points = await snapEndsToStreet(points, signal);
   if (points !== asSet && points.some((p, i) => p !== asSet[i])) {
     const t = await planCheckedInner(name, points, profile, avoid, onStep, signal, snapMajor, hint);
-    return { ...t, wegpunkte: asSet };
+    return withUTurnWarnings({ ...t, wegpunkte: asSet }, points);
   }
-  return planCheckedInner(name, points, profile, avoid, onStep, signal, snapMajor, hint);
+  return withUTurnWarnings(await planCheckedInner(name, points, profile, avoid, onStep, signal, snapMajor, hint), points);
+}
+
+const uturnKm = (ts: UTurn[]) => ts.reduce((a, u) => a + u.km, 0);
+
+/**
+ * Wendeschleifen, die übrig bleiben, als Prüfhinweis an der Stelle (Matthias 15.11.): lieber sagen, dass die
+ * Route hier wendet, als still einen sinnlosen Loop zu fahren.
+ */
+function withUTurnWarnings(tour: PlannedTour, points: LatLon[]): PlannedTour {
+  const turns = unwantedUTurns(lineOf(tour), points);
+  if (!turns.length) return tour;
+  const extra: Warning[] = turns.map((u) => ({
+    klasse: 'pruefen',
+    start_km: +u.startKm.toFixed(1),
+    laenge_km: +u.km.toFixed(1),
+    name: 'Wendeschleife',
+    ort: '',
+    gruende: ['Die Route wendet hier und fährt denselben Weg zurück. Verschieb den Punkt davor auf die andere Straßenseite.'],
+    mitte: u.tip,
+  }));
+  return { ...tour, warnungen: [...tour.warnungen, ...extra].sort((a, b) => a.start_km - b.start_km) };
 }
 
 async function planCheckedInner(
@@ -181,7 +203,24 @@ async function planCheckedInner(
 ): Promise<PlannedTour> {
   // Pässe mit Warnung, die du herausgenommen hast (Doch umfahren): Passhöhe gesperrt, außer sie ist selbst ein Punkt
   const skip = avoidedPoints().filter((q) => !points.some((w) => haversine(w, q) < 400));
-  const first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, skip, true, hint);
+  let first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, skip, true, hint);
+  // Wendeschleife durch einen Punkt auf der Gegenfahrbahn (Matthias 15.11.): Punkt auf den Hinweg legen und
+  // neu rechnen. Die Tour behält die gesetzten Punkte, sonst gilt sie im Planer als veraltet.
+  const turns = unwantedUTurns(lineOf(first), points);
+  const moved = turns.length ? movePointsOffUTurns(points, turns) : null;
+  let usePts = points;
+  if (moved) {
+    onStep?.('fix');
+    try {
+      const again = await planCore(name, moved, first.direkt ? 'schnell' : profile, avoid, onStep, signal, snapMajor, skip, false, hint);
+      if (uturnKm(unwantedUTurns(lineOf(again), moved)) < uturnKm(turns) && again.laenge_km < first.laenge_km) {
+        first = { ...again, wegpunkte: points, ...(first.direkt ? { direkt: first.direkt } : {}) };
+        usePts = moved;
+      }
+    } catch (e) {
+      if (signal?.aborted) throw e;
+    }
+  }
   onStep?.('traffic');
   // Aktuelle Sperrungen aus Verkehrsmeldungen (Koray 8.11.): umplanen, was nicht geht als Warnung
   const closures = await closuresNear(lineOf(first), signal);
@@ -197,9 +236,10 @@ async function planCheckedInner(
       // Mit Frist: findet sich in FIX_BUDGET_MS kein Weg um die Sperrung, bleibt die erste Route mit Hinweis
       // (12.11.: das Umplanen um eine Wintersperre lief über eine Minute und blieb dann stehen)
       const again = await withBudget(signal, FIX_BUDGET_MS, (s) =>
-        planCore(name, points, first.direkt ? 'schnell' : profile, avoid, onStep, s, snapMajor, [...skip, ...ex], false, hint),
+        planCore(name, usePts, first.direkt ? 'schnell' : profile, avoid, onStep, s, snapMajor, [...skip, ...ex], false, hint),
       );
       if (first.direkt) again.direkt = first.direkt;
+      again.wegpunkte = points;
       const h2 = closuresOnRoute(lineOf(again), closures);
       if (h2.length < hits.length) {
         tour = again;
