@@ -305,7 +305,8 @@ const styles = StyleSheet.create({
   small: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.m },
   ring: { borderWidth: 3, borderRadius: 30, padding: 2 },
   ringSmall: { borderWidth: 2.5, borderRadius: 25, padding: 1.5 },
-  bigName: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, textTransform: 'uppercase' },
+  // Namen von Menschen normal geschrieben, Versalien nur für Tournamen, Überschriften und Kennzahlen (Koray 15.11.)
+  bigName: { fontFamily: Fonts.bold, fontSize: Type.metric, lineHeight: Leading.metric },
   name: { fontFamily: Fonts.semibold, fontSize: Type.title },
   label: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
   garage: { gap: Spacing.xs },

@@ -54,7 +54,8 @@ function IosTabs() {
       <NativeTabs.Trigger name="community" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/community.png'), selected: require('../../../assets/tabs/community-on.png') }} renderingMode="template" />
         <NativeTabs.Trigger.Label>Community</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Badge hidden={unread <= 0}>{unread > 9 ? '9+' : String(unread)}</NativeTabs.Trigger.Badge>
+        {/* ohne Neues gar keine Plakette (Koray 15.11.: "hidden" zeigte trotzdem eine 0) */}
+        {unread > 0 && <NativeTabs.Trigger.Badge>{unread > 9 ? '9+' : String(unread)}</NativeTabs.Trigger.Badge>}
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="einstellungen" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/einstellungen.png'), selected: require('../../../assets/tabs/einstellungen-on.png') }} renderingMode="template" />

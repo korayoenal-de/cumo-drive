@@ -197,6 +197,8 @@ Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab C
 **Farben und Schrift**
 - `danger` #FF5A52 und `dangerTint` für Fehler und Endgültiges, die Bestätigung beim Löschen ist rot. Signal Orange bleibt der Hauptaktion und den Strecken.
 - Datumsblock neutral, nur heute in Orange.
+- Namen von Menschen nie in Versalien, auch groß im Profil (Koray 15.11.); Versalien bleiben Tournamen, Überschriften und Kennzahlen.
+- Plaketten nur mit Inhalt: keine 0 (Koray 15.11.).
 - Nebenzeilen und Hinweise 15 pt (`caption` Variante). 13 pt nur über `Type.caption` auf Karte, Plaketten und in der Tab Leiste.
 - Neue Tokens `textSoft`, `danger`, `dangerTint`; keine festen Farbwerte außerhalb von theme.ts außer Verkehrszeichen, Pegel Verlauf und Live Activity.
 
