@@ -44,7 +44,7 @@ import { findHighlights, highlightSpeech, type Highlight } from '@/lib/navigatio
 import { warnLabel } from '@/lib/passes';
 import { predictPosition } from '@/lib/group/predict';
 import type { NavEntry, NavRequest, NavRoute } from '@/lib/navigation/types';
-import Animated, { FadeOut } from 'react-native-reanimated';
+import Animated, { FadeOut, LinearTransition } from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
 import { elevationProfile } from '@/lib/stats';
 import { connectFunk, disconnectFunk, pushToTalk, setFunkListen, setOnlyLead, useFunk } from '@/lib/group/funk';
@@ -1169,6 +1169,7 @@ export default function NavigationScreen() {
               {(driveSettings.speed || brakeHint) && (
                 <SpeedBadge speedKmh={state.speedKmh} limit={limitHere} estimated={shownLimit?.estimated} hint={brakeHint} showSpeed={driveSettings.speed} />
               )}
+              <Animated.View layout={LinearTransition.duration(280)}>
               <NavCompass
                 heading={state.heading}
                 northUp={driveSettings.northUp}
@@ -1177,6 +1178,7 @@ export default function NavigationScreen() {
                   setDriveSetting('northUp', !driveSettings.northUp);
                 }}
               />
+              </Animated.View>
             </View>
             {inRide && msgOpen && (
               <View style={styles.msgSheet}>

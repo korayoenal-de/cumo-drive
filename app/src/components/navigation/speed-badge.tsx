@@ -23,6 +23,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
@@ -70,8 +71,15 @@ export function SpeedBadge({ speedKmh, limit, estimated = false, hint, showSpeed
   const standing = useStanding(v === 0);
   const hidden = standing && !hint;
   const vis = useSharedValue(hidden ? 0 : 1);
+  // Ganz zusammengefahren: Platz freigeben, damit der Kompass nach links rutscht (Koray 15.11.)
+  const [gone, setGone] = useState(false);
   useEffect(() => {
-    vis.set(withTiming(hidden ? 0 : 1, { duration: reduced ? 150 : hidden ? 420 : 320, easing: EASE }));
+    vis.set(
+      withTiming(hidden ? 0 : 1, { duration: reduced ? 150 : hidden ? 420 : 320, easing: EASE }, (done) => {
+        // nach dem Zusammenfahren Platz freigeben, nach dem Öffnen den Merker zurücksetzen
+        if (done) scheduleOnRN(setGone, hidden);
+      }),
+    );
   }, [hidden, reduced, vis]);
   const visStyle = useAnimatedStyle(() => ({
     opacity: Math.min(1, vis.get() * 1.6),
@@ -190,8 +198,9 @@ export function SpeedBadge({ speedKmh, limit, estimated = false, hint, showSpeed
   const onRest = (e: LayoutChangeEvent) => setRestW(Math.ceil(e.nativeEvent.layout.width));
   const onWarn = (e: LayoutChangeEvent) => setWarnW(Math.ceil(e.nativeEvent.layout.width));
 
-  // Ohne Tempoanzeige gibt es die Plakette nur während eines Hinweises
+  // Ohne Tempoanzeige gibt es die Plakette nur während eines Hinweises; im Stand ganz weg
   if (!showSpeed && !hint && !shown) return null;
+  if (gone && hidden) return null;
 
   const label = hint ? hint.a11y : `Tempo ${v} km/h${limit != null ? `, ${estimated ? 'geschätzt erlaubt' : 'erlaubt'} ${limit >= 130 ? 'unbegrenzt' : `${limit} km/h`}` : ''}${over ? ', zu schnell' : ''}`;
   const s = shown;
