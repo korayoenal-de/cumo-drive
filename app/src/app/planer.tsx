@@ -7,6 +7,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Spacing } from '@/constants/theme';
 import { useAuthReady, useSession } from '@/lib/auth';
 import { loadRoadData, roadDataReady } from '@/lib/road-data';
+import { t } from '@/i18n';
 
 /** Vollflächiger Web Planer unter /planer (Desktop), nur mit Konto. Strecken und Pässe kommen nach der Anmeldung vom Server. */
 export default function PlanerSeite() {
@@ -31,9 +32,9 @@ export default function PlanerSeite() {
         <ActivityIndicator color={Colors.signal} />
       ) : (
         <>
-          <AppText muted>Strecken und Pässe konnten nicht geladen werden.</AppText>
+          <AppText muted>{t('Strecken und Pässe konnten nicht geladen werden.')}</AppText>
           <Pressable accessibilityRole="button" onPress={() => setData('laden')} style={styles.retry}>
-            <AppText style={{ color: Colors.signal }}>Nochmal versuchen</AppText>
+            <AppText style={{ color: Colors.signal }}>{t('Nochmal versuchen')}</AppText>
           </Pressable>
         </>
       )}

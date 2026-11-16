@@ -24,6 +24,7 @@ import { maxGroupVehicles, useEntitlement } from '@/lib/entitlement';
 import { formatMinutes } from '@/lib/intent';
 import { useLibrary, type SavedTour } from '@/lib/library';
 import { formatKm, haversine } from '@/lib/tour';
+import { t } from '@/i18n';
 
 const DAYS = 28;
 
@@ -130,8 +131,8 @@ export default function AusfahrtNeu() {
 
   const head = (
     <View style={styles.head}>
-      <AppText variant="display" style={styles.flex}>Ausfahrt</AppText>
-      <Pressable accessibilityRole="button" accessibilityLabel="Schließen" hitSlop={4} onPress={close} style={styles.roundBtn}>
+      <AppText variant="display" style={styles.flex}>{t('Ausfahrt')}</AppText>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('Schließen')} hitSlop={4} onPress={close} style={styles.roundBtn}>
         <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.text} />
       </Pressable>
     </View>
@@ -141,9 +142,9 @@ export default function AusfahrtNeu() {
     return (
       <View style={[styles.root, styles.pad, { paddingTop: insets.top + Spacing.s }]}>
         {head}
-        <AppText muted>Für Ausfahrten brauchst du ein Konto.</AppText>
+        <AppText muted>{t('Für Ausfahrten brauchst du ein Konto.')}</AppText>
         <Pressable accessibilityRole="button" onPress={() => router.push('/login')} style={styles.primary}>
-          <AppText style={styles.primaryText}>Anmelden</AppText>
+          <AppText style={styles.primaryText}>{t('Anmelden')}</AppText>
         </Pressable>
       </View>
     );
@@ -155,7 +156,7 @@ export default function AusfahrtNeu() {
 
         {/* Tour */}
         {tour && !picking ? (
-          <Pressable accessibilityRole="button" accessibilityHint="Andere Tour wählen" onPress={() => setPicking(true)} style={styles.tourCard}>
+          <Pressable accessibilityRole="button" accessibilityHint={t('Andere Tour wählen')} onPress={() => setPicking(true)} style={styles.tourCard}>
             <View style={styles.preview}>
               <RoutePreview tour={tour} height={120} />
             </View>
@@ -166,13 +167,13 @@ export default function AusfahrtNeu() {
                   {[`${formatKm(tour.laenge_km, 0)} km`, tour.minutes ? formatMinutes(Math.round(tour.minutes)) : null, 'aus Touren'].filter(Boolean).join('  ·  ')}
                 </AppText>
               </View>
-              <AppText style={styles.change}>Ändern</AppText>
+              <AppText style={styles.change}>{t('Ändern')}</AppText>
             </View>
           </Pressable>
         ) : (
           <View style={styles.section}>
-            <AppText style={styles.label}>Welche Tour fahrt ihr?</AppText>
-            {tours.length === 0 && <AppText muted>Speichere zuerst eine Tour unter Touren.</AppText>}
+            <AppText style={styles.label}>{t('Welche Tour fahrt ihr?')}</AppText>
+            {tours.length === 0 && <AppText muted>{t('Speichere zuerst eine Tour unter Touren.')}</AppText>}
             {tours.slice(0, 30).map((t) => (
               <Pressable
                 key={t.id}
@@ -198,7 +199,7 @@ export default function AusfahrtNeu() {
           <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.form}>
             {/* Abfahrt */}
             <View style={styles.section}>
-              <AppText style={styles.label}>Abfahrt</AppText>
+              <AppText style={styles.label}>{t('Abfahrt')}</AppText>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days}>
                 {Array.from({ length: DAYS }, (_, i) => {
                   const d = dayStart(i);
@@ -212,21 +213,21 @@ export default function AusfahrtNeu() {
                 })}
               </ScrollView>
               <View style={styles.stepper}>
-                <StepBtn icon="minus" label="15 Minuten früher" onPress={() => setMinutes((m) => Math.max(0, m - 15))} />
+                <StepBtn icon="minus" label={t('15 Minuten früher')} onPress={() => setMinutes((m) => Math.max(0, m - 15))} />
                 <View style={styles.stepVal}>
                   <AppText style={styles.metric}>{clock(startsAt)}</AppText>
-                  <AppText variant="caption" muted>Uhr</AppText>
+                  <AppText variant="caption" muted>{t('Uhr')}</AppText>
                 </View>
-                <StepBtn icon="plus" label="15 Minuten später" onPress={() => setMinutes((m) => Math.min(23 * 60 + 45, m + 15))} />
+                <StepBtn icon="plus" label={t('15 Minuten später')} onPress={() => setMinutes((m) => Math.min(23 * 60 + 45, m + 15))} />
               </View>
-              {tooSoon && <AppText variant="caption" style={styles.warn}>Die Abfahrt liegt zu knapp, wähle eine spätere Zeit.</AppText>}
+              {tooSoon && <AppText variant="caption" style={styles.warn}>{t('Die Abfahrt liegt zu knapp, wähle eine spätere Zeit.')}</AppText>}
             </View>
 
             {/* Treffpunkt */}
             <View style={styles.section}>
-              <AppText style={styles.label}>Treffpunkt</AppText>
-              <TextInput maxFontSizeMultiplier={1.2} value={meetingName} onChangeText={setMeeting} placeholder="Zum Beispiel Parkplatz am Start" placeholderTextColor={Colors.muted} maxLength={80} style={styles.input} accessibilityLabel="Treffpunkt" />
-              <AppText variant="caption" muted>Vorbelegt mit dem Start der Tour, frei änderbar.</AppText>
+              <AppText style={styles.label}>{t('Treffpunkt')}</AppText>
+              <TextInput maxFontSizeMultiplier={1.2} value={meetingName} onChangeText={setMeeting} placeholder={t('Zum Beispiel Parkplatz am Start')} placeholderTextColor={Colors.muted} maxLength={80} style={styles.input} accessibilityLabel={t('Treffpunkt')} />
+              <AppText variant="caption" muted>{t('Vorbelegt mit dem Start der Tour, frei änderbar.')}</AppText>
             </View>
 
             {/* Ziel und Ankunft */}
@@ -237,21 +238,21 @@ export default function AusfahrtNeu() {
               </View>
               {arr && goal && (
                 <View style={styles.alignEnd}>
-                  <AppText style={styles.label}>Ankunft</AppText>
+                  <AppText style={styles.label}>{t('Ankunft')}</AppText>
                   <AppText style={styles.value}>etwa {clock(arr)}</AppText>
                 </View>
               )}
             </View>
-            <AppText variant="caption" muted style={styles.under}>Aus der Tour berechnet, Pausen nicht eingerechnet.</AppText>
+            <AppText variant="caption" muted style={styles.under}>{t('Aus der Tour berechnet, Pausen nicht eingerechnet.')}</AppText>
 
             {/* Mitfahrer aus den Kontakten (Koray 13.11.); weitere lädst du danach ein oder per Link */}
             <View style={styles.section}>
               <View style={styles.rowBetween}>
-                <AppText style={styles.label}>Wer fährt mit</AppText>
+                <AppText style={styles.label}>{t('Wer fährt mit')}</AppText>
                 {picked.length > 0 && <AppText style={styles.label}>{picked.length} von {seats}</AppText>}
               </View>
               {friends.length === 0 ? (
-                <AppText variant="caption" muted>Nach dem Anlegen lädst du Fahrer ein oder teilst einen Link, etwa in WhatsApp.</AppText>
+                <AppText variant="caption" muted>{t('Nach dem Anlegen lädst du Fahrer ein oder teilst einen Link, etwa in WhatsApp.')}</AppText>
               ) : (
                 <>
                   {friends.map((c) => {
@@ -274,19 +275,19 @@ export default function AusfahrtNeu() {
                       </Pressable>
                     );
                   })}
-                  <AppText variant="caption" muted>Eingeladene sagen zu oder ab. Einen Link zum Teilen bekommst du nach dem Anlegen.</AppText>
+                  <AppText variant="caption" muted>{t('Eingeladene sagen zu oder ab. Einen Link zum Teilen bekommst du nach dem Anlegen.')}</AppText>
                 </>
               )}
             </View>
 
             {/* Sichtbarkeit: privat ist der Standard */}
             <View style={styles.section}>
-              <AppText style={styles.label}>Wer sieht die Ausfahrt</AppText>
+              <AppText style={styles.label}>{t('Wer sieht die Ausfahrt')}</AppText>
               <Pressable accessibilityRole="radio" accessibilityState={{ selected: !pub }} onPress={() => setPub(false)} style={[styles.option, !pub && styles.pickOn]}>
                 <View style={[styles.radio, !pub && styles.radioOn]} />
                 <View style={styles.flex}>
-                  <AppText style={styles.pickName}>Privat</AppText>
-                  <AppText variant="caption" muted>Nur du und deine Eingeladenen. Nicht in der Community.</AppText>
+                  <AppText style={styles.pickName}>{t('Privat')}</AppText>
+                  <AppText variant="caption" muted>{t('Nur du und deine Eingeladenen. Nicht in der Community.')}</AppText>
                 </View>
               </Pressable>
               <Pressable
@@ -296,7 +297,7 @@ export default function AusfahrtNeu() {
                 style={[styles.option, pub && styles.pickOn]}>
                 <View style={[styles.radio, pub && styles.radioOn]} />
                 <View style={styles.flex}>
-                  <AppText style={styles.pickName}>In der Community</AppText>
+                  <AppText style={styles.pickName}>{t('In der Community')}</AppText>
                   <AppText variant="caption" muted>{ent.active ? 'Alle sehen sie unter Ausfahrten und können anfragen.' : 'Mit der Mitgliedschaft, dazu mehr Plätze.'}</AppText>
                 </View>
               </Pressable>
@@ -304,22 +305,22 @@ export default function AusfahrtNeu() {
 
             {/* Plätze */}
             <View style={styles.section}>
-              <AppText style={styles.label}>Plätze für Teilnehmer</AppText>
+              <AppText style={styles.label}>{t('Plätze für Teilnehmer')}</AppText>
               <View style={styles.stepper}>
-                <StepBtn icon="minus" label="Ein Platz weniger" disabled={seats <= Math.max(1, picked.length)} onPress={() => setSeats(Math.max(1, picked.length, seats - 1))} />
+                <StepBtn icon="minus" label={t('Ein Platz weniger')} disabled={seats <= Math.max(1, picked.length)} onPress={() => setSeats(Math.max(1, picked.length, seats - 1))} />
                 <View style={styles.stepVal}>
                   <AppText style={styles.metric}>{seats}</AppText>
                   <AppText variant="caption" muted>{seats === 1 ? 'Platz' : 'Plätze'}</AppText>
                 </View>
-                <StepBtn icon="plus" label="Ein Platz mehr" disabled={seats >= maxSeats} onPress={() => setSeats(Math.min(maxSeats, seats + 1))} />
+                <StepBtn icon="plus" label={t('Ein Platz mehr')} disabled={seats >= maxSeats} onPress={() => setSeats(Math.min(maxSeats, seats + 1))} />
               </View>
-              {!ent.active && <AppText variant="caption" muted>Kostenfrei fahrt ihr zu dritt, du und zwei Teilnehmer. Mehr Plätze gibt es mit der Mitgliedschaft.</AppText>}
+              {!ent.active && <AppText variant="caption" muted>{t('Kostenfrei fahrt ihr zu dritt, du und zwei Teilnehmer. Mehr Plätze gibt es mit der Mitgliedschaft.')}</AppText>}
             </View>
 
             {/* Hinweis */}
             <View style={styles.section}>
-              <AppText style={styles.label}>Hinweis an die Teilnehmer (optional)</AppText>
-              <TextInput maxFontSizeMultiplier={1.2} value={note} onChangeText={setNote} placeholder="Zum Beispiel Mittag am Ziel, Rückweg frei" placeholderTextColor={Colors.muted} multiline maxLength={500} style={[styles.input, styles.inputMulti]} accessibilityLabel="Hinweis an Mitfahrer" />
+              <AppText style={styles.label}>{t('Hinweis an die Teilnehmer (optional)')}</AppText>
+              <TextInput maxFontSizeMultiplier={1.2} value={note} onChangeText={setNote} placeholder={t('Zum Beispiel Mittag am Ziel, Rückweg frei')} placeholderTextColor={Colors.muted} multiline maxLength={500} style={[styles.input, styles.inputMulti]} accessibilityLabel={t('Hinweis an Mitfahrer')} />
             </View>
 
             {err && <AppText style={styles.error}>{err}</AppText>}

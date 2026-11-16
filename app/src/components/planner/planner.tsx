@@ -68,6 +68,7 @@ import { PlaceSearch } from './place-search';
 import { styles } from './planner-styles';
 import { useTourPlan } from './use-tour-plan';
 import { TourMode } from './tour-mode';
+import { tr } from '@/i18n';
 
 
 /** Schritte beim ersten Planen in Tour planen, gleiche Wortwahl wie bei der Rundtour */
@@ -562,7 +563,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       setRoundStops(next);
       showToast(`${STOP_WORD[cat]} ${kmTxt} eingeplant`, {
         action: {
-          label: 'Rückgängig',
+          label: tr('Rückgängig'),
           onPress: () => {
             setView(cur);
             setRoundStops(before);
@@ -571,7 +572,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
         },
       });
     } catch {
-      showToast('Der Stopp ließ sich nicht einplanen', { tone: 'error' });
+      showToast(tr('Der Stopp ließ sich nicht einplanen'), { tone: 'error' });
     } finally {
       setAdding(false);
     }
@@ -589,7 +590,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       setRoundStops(rest);
       if (!rest.length) roundBase.current = null;
     } catch {
-      showToast('Der Stopp ließ sich nicht entfernen', { tone: 'error' });
+      showToast(tr('Der Stopp ließ sich nicht entfernen'), { tone: 'error' });
     } finally {
       setAdding(false);
     }
@@ -716,7 +717,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     setPending(null);
     setMapEdit(true);
     tourPlan.add('via', p, profile, avoid);
-    showToast('Neuer Punkt auf der Strecke. Halten und ziehen verschiebt sie.');
+    showToast(tr('Neuer Punkt auf der Strecke. Halten und ziehen verschiebt sie.'));
   }
 
   /** Tipp auf ein nummeriertes Zwischenziel: ist es ein Pass, dieselben Aktionen wie beim Pass, sonst Entfernen */
@@ -790,8 +791,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           value={mode === 'tour' ? 'route' : 'runde'}
           options={[
             // Namen wie bei calimoto, Tour planen zuerst (Koray 8.11.)
-            { id: 'route', label: 'Tour planen' },
-            { id: 'runde', label: 'Rundtour' },
+            { id: 'route', label: tr('Tour planen') },
+            { id: 'runde', label: tr('Rundtour') },
           ]}
           onChange={(v) => switchMode(v === 'route' ? 'tour' : lastRunde.current)}
         />
@@ -801,7 +802,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
         </AppText>
       ) : (
         // Beim Erstellen steht nur der Schritt im Kopf, ohne Tour wird erstellt darüber (Koray 9.11.)
-        view.kind === 'error' ? <AppText variant="label">Das hat nicht geklappt</AppText> : null
+        view.kind === 'error' ? <AppText variant="label">{tr('Das hat nicht geklappt')}</AppText> : null
       )}
       {scan ? (
         <View style={styles.workBox}>
@@ -812,7 +813,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
               {`${tourPlan.names[keyOf(tourPlan.pts[0])] ?? 'Start'} nach ${tourPlan.names[keyOf(tourPlan.pts[tourPlan.pts.length - 1])] ?? 'Ziel'}`}
             </AppText>
             <Pressable accessibilityRole="button" onPress={tourPlan.cancel} hitSlop={4} style={({ pressed }) => [styles.cancelChip, pressed && styles.pressedDim]}>
-              <AppText style={styles.cancelText}>Abbrechen</AppText>
+              <AppText style={styles.cancelText}>{tr('Abbrechen')}</AppText>
             </Pressable>
           </View>
         </View>
@@ -825,7 +826,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
               {radar?.phase === 'aufloesen' ? 'Fertig' : `Rundtour, ${roundKm} km`}
             </AppText>
             <Pressable accessibilityRole="button" onPress={cancel} hitSlop={4} style={({ pressed }) => [styles.cancelChip, pressed && styles.pressedDim]}>
-              <AppText style={styles.cancelText}>Abbrechen</AppText>
+              <AppText style={styles.cancelText}>{tr('Abbrechen')}</AppText>
             </Pressable>
           </View>
         </View>
@@ -943,16 +944,16 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             <TextInput maxFontSizeMultiplier={1.2}
               value={text}
               onChangeText={setText}
-              placeholder="Was willst du erleben?"
+              placeholder={tr('Was willst du erleben?')}
               placeholderTextColor={Colors.muted}
               multiline
               onFocus={expand}
               style={styles.freeText}
-              accessibilityLabel="Tourwunsch"
+              accessibilityLabel={tr('Tourwunsch')}
             />
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Spracheingabe"
+              accessibilityLabel={tr('Spracheingabe')}
               onPress={() => setMicHint((v) => !v)}
               style={styles.mic}>
               <MicIcon />
@@ -964,7 +965,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             </AppText>
           )}
 
-          <Section label="Fahrzeit">
+          <Section label={tr('Fahrzeit')}>
             <View style={styles.durRow}>
               {DURATIONS.map((d) => {
                 const active = eff.minutes === d.minutes && !eff.km;
@@ -986,7 +987,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             </View>
           </Section>
 
-          <Section label="Fahrstil">
+          <Section label={tr('Fahrstil')}>
             <ChipRow>
               {STYLE_PROFILES.map((id) => (
                 <Chip
@@ -999,11 +1000,11 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             </ChipRow>
           </Section>
 
-          <Section label="Richtung">
+          <Section label={tr('Richtung')}>
             <ChipRow>
               {eff.towardName && <Chip label={eff.towardName} active onPress={() => setOver((o) => ({ ...o, direction: 'zufall' }))} />}
               <Chip
-                label="Zufall"
+                label={tr('Zufall')}
                 active={!eff.towardName && (eff.direction ?? 'zufall') === 'zufall'}
                 onPress={() => setOver((o) => ({ ...o, direction: 'zufall' }))}
               />
@@ -1018,7 +1019,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             </ChipRow>
           </Section>
 
-          <Section label="Stopps">
+          <Section label={tr('Stopps')}>
             <ChipRow>
               {STOPS.map((s) => {
                 const active = eff.stops.includes(s.id);
@@ -1039,13 +1040,13 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           <View style={styles.understood}>
             <View style={styles.dot} />
             <View style={styles.flex}>
-              <AppText variant="label" style={styles.goodText}>Verstanden</AppText>
+              <AppText variant="label" style={styles.goodText}>{tr('Verstanden')}</AppText>
               <AppText>{understoodSentence(eff)}</AppText>
             </View>
           </View>
 
           <View style={styles.gapS}>
-            <PrimaryButton label="Tour erstellen" onPress={createFromWish} />
+            <PrimaryButton label={tr('Tour erstellen')} onPress={createFromWish} />
             <AppText variant="caption" muted>
               Stopps werden bald eingeplant, heute zeigen wir sie nur an.
             </AppText>
@@ -1053,7 +1054,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
         </>
       ) : (
         <>
-          <Section label="Start">
+          <Section label={tr('Start')}>
             <View style={styles.card}>
               <Pressable
                 accessibilityRole="button"
@@ -1065,9 +1066,9 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
                 style={styles.startRow}>
                 <Radio on={!picked} />
                 <View style={styles.flex}>
-                  <AppText variant="title">Aktueller Standort</AppText>
+                  <AppText variant="title">{tr('Aktueller Standort')}</AppText>
                   <AppText variant="caption" muted>
-                    {locating ? 'Standort wird bestimmt' : here ? here.name : locError ? locError.message : 'Wird beim Start bestimmt'}
+                    {locating ? 'Standort wird bestimmt' : here ? here.name : locError ? locError.message: tr('Wird beim Start bestimmt')}
                   </AppText>
                 </View>
                 {locating && <ActivityIndicator color={Colors.muted} />}
@@ -1075,9 +1076,9 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
               {locError && !picked && (
                 <View style={styles.wrap}>
                   {locError.kind === 'permission' || locError.kind === 'services' ? (
-                    <Chip label="Einstellungen öffnen" active={false} onSurface onPress={() => void Linking.openSettings()} />
+                    <Chip label={tr('Einstellungen öffnen')} active={false} onSurface onPress={() => void Linking.openSettings()} />
                   ) : null}
-                  <Chip label="Nochmal versuchen" active={false} onSurface onPress={() => void findHere()} />
+                  <Chip label={tr('Nochmal versuchen')} active={false} onSurface onPress={() => void findHere()} />
                 </View>
               )}
               {picked && (
@@ -1085,17 +1086,17 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
                   <Radio on />
                   <View style={styles.flex}>
                     <AppText variant="title">{picked.name}</AppText>
-                    <AppText variant="caption" muted>Gewählter Ort</AppText>
+                    <AppText variant="caption" muted>{tr('Gewählter Ort')}</AppText>
                   </View>
                 </View>
               )}
               <Pressable accessibilityRole="button" onPress={() => setShowSearch(true)} style={styles.linkBtn}>
-                <AppText style={styles.linkText}>Anderen Startort wählen</AppText>
+                <AppText style={styles.linkText}>{tr('Anderen Startort wählen')}</AppText>
               </Pressable>
               <PlaceSearch
                 visible={showSearch}
                 role="Start der Runde"
-                placeholder="Wo geht es los?"
+                placeholder={tr('Wo geht es los?')}
                 current={picked?.name ?? ''}
                 near={here?.p}
                 here={here?.p}
@@ -1115,11 +1116,11 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             </View>
           </Section>
 
-          <Section label="Wie lang?">
+          <Section label={tr('Wie lang?')}>
             <View style={styles.card}>
               <View style={styles.wrap}>
-                <Chip label="Strecke" active={lengthBy === 'km'} onSurface onPress={() => setLengthBy('km')} />
-                <Chip label="Fahrzeit" active={lengthBy === 'dauer'} onSurface onPress={() => setLengthBy('dauer')} />
+                <Chip label={tr('Strecke')} active={lengthBy === 'km'} onSurface onPress={() => setLengthBy('km')} />
+                <Chip label={tr('Fahrzeit')} active={lengthBy === 'dauer'} onSurface onPress={() => setLengthBy('dauer')} />
               </View>
               <View style={styles.stepper}>
                 <StepButton
@@ -1148,12 +1149,12 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             </View>
           </Section>
 
-          <Section label="Richtung">
+          <Section label={tr('Richtung')}>
             <DirectionDial value={direction} onChange={setDirection} onDragChange={setDragging} />
           </Section>
 
           {PROFILE_CHOICES.length > 1 && (
-            <Section label="Profil">
+            <Section label={tr('Profil')}>
               <ChipRow>
                 {PROFILE_CHOICES.map((p) => (
                   <Chip key={p.id} label={p.label} active={profile === p.id} onPress={() => setProfile(p.id)} />
@@ -1162,26 +1163,26 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             </Section>
           )}
 
-          <Accordion label="Vermeiden" summary={avoidSummary(avoid)}>
+          <Accordion label={tr('Vermeiden')} summary={avoidSummary(avoid)}>
             <View style={styles.card}>
               <Toggle
-                label="Gesperrte Straßen"
-                note="Wir planen um gesperrte Straßen herum."
+                label={tr('Gesperrte Straßen')}
+                note={tr('Wir planen um gesperrte Straßen herum.')}
                 value={avoid.closures}
                 onChange={(v) => setAvoid((a) => ({ ...a, closures: v }))}
               />
-              <Toggle label="Fähren" value={avoid.ferries} onChange={(v) => setAvoid((a) => ({ ...a, ferries: v }))} />
-              <Toggle label="Maut" value={avoid.tolls} onChange={(v) => setAvoid((a) => ({ ...a, tolls: v }))} />
+              <Toggle label={tr('Fähren')} value={avoid.ferries} onChange={(v) => setAvoid((a) => ({ ...a, ferries: v }))} />
+              <Toggle label={tr('Maut')} value={avoid.tolls} onChange={(v) => setAvoid((a) => ({ ...a, tolls: v }))} />
               <Toggle
-                label="Rauer Belag"
-                note="Kopfsteinpflaster und schlechter Asphalt."
+                label={tr('Rauer Belag')}
+                note={tr('Kopfsteinpflaster und schlechter Asphalt.')}
                 value={avoid.rough}
                 onChange={(v) => setAvoid((a) => ({ ...a, rough: v }))}
               />
             </View>
           </Accordion>
 
-          <PrimaryButton label="Tour erstellen" onPress={createRoundTrip} />
+          <PrimaryButton label={tr('Tour erstellen')} onPress={createRoundTrip} />
         </>
       )}
     </>
@@ -1292,7 +1293,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             onPress={() => goBack()}
             status={
               adjustBusy
-                ? { kind: 'busy', text: 'Strecke wird angepasst' }
+                ? { kind: 'busy', text: tr('Strecke wird angepasst') }
                 : listBusy
                   ? { kind: 'busy', text: listPill ?? 'Route wird berechnet' }
                 : adjustDone
@@ -1349,7 +1350,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     <AskFeedbackSheet rounds={askRounds} onDone={() => setAskRounds(null)} />
     <ActionSheet
       visible={askKeep}
-      title="Änderungen behalten?"
+      title={tr('Änderungen behalten?')}
       subtitle={`Du hast ${tourPlan.name.trim() || 'die Tour'} verändert.`}
       onClose={() => setAskKeep(false)}
       items={[
@@ -1357,13 +1358,13 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           ? [
               // Gleiche Zeilen wie die Rückfrage beim Speichern, ohne orange Taste (Koray 16.11.)
               tourPlan.cloudId
-                ? { key: 'save', icon: 'checkmark' as const, label: 'Aktuelle Tour überschreiben', busy: tourPlan.saving, onPress: () => void keepAndLeave(false) }
-                : { key: 'save', icon: 'checkmark' as const, label: 'Speichern', busy: tourPlan.saving, onPress: () => void keepAndLeave(false) },
+                ? { key: 'save', icon: 'checkmark' as const, label: tr('Aktuelle Tour überschreiben'), busy: tourPlan.saving, onPress: () => void keepAndLeave(false) }
+                : { key: 'save', icon: 'checkmark' as const, label: tr('Speichern'), busy: tourPlan.saving, onPress: () => void keepAndLeave(false) },
               // Ungespeicherte Kopie (Community): Speichern legt ohnehin eine neue Tour an
-              ...(tourPlan.cloudId ? [{ key: 'copy', icon: 'plus' as const, label: 'Als neue Tour speichern', onPress: () => void keepAndLeave(true) }] : []),
+              ...(tourPlan.cloudId ? [{ key: 'copy', icon: 'plus' as const, label: tr('Als neue Tour speichern'), onPress: () => void keepAndLeave(true) }] : []),
             ]
           : []),
-        { key: 'discard', icon: 'arrow.uturn.backward' as const, label: 'Änderungen verwerfen', danger: true, onPress: leave },
+        { key: 'discard', icon: 'arrow.uturn.backward' as const, label: tr('Änderungen verwerfen'), danger: true, onPress: leave },
       ]}
     />
     <FunSheet

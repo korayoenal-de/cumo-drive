@@ -12,6 +12,7 @@ import { Colors, Fonts, Radius, Spacing, Type } from "@/constants/theme";
 import { PROFILES } from "@/lib/tour";
 import { appLink, decodeTour, extractCode } from "@/lib/share-code";
 import { isShortCode, resolveShareCode } from "@/lib/share-link";
+import { t } from '@/i18n';
 
 const subscribe = (cb: () => void) => {
   if (typeof window === "undefined") return () => undefined;
@@ -69,17 +70,17 @@ export default function SharedTour() {
                 window.location.href = appLink(code);
               }}
             >
-              <AppText style={styles.primaryText}>In CUMO DRIVE öffnen</AppText>
+              <AppText style={styles.primaryText}>{t('In CUMO DRIVE öffnen')}</AppText>
             </Pressable>
             <AppText variant="caption" muted>
               Öffnet die Route in deiner CUMO DRIVE App. Sie plant die Strecke neu, prüft sie mit dem Etappen Check und legt sie in den Planer. Dort speicherst du sie mit dem Lesezeichen.
             </AppText>
           </>
         ) : short && full === undefined ? (
-          <AppText muted>Tour wird geladen</AppText>
+          <AppText muted>{t('Tour wird geladen')}</AppText>
         ) : (
           <>
-            <AppText variant="title">Kein gültiger Tour Code.</AppText>
+            <AppText variant="title">{t('Kein gültiger Tour Code.')}</AppText>
             <AppText muted>
               Im Web Planer bei einer Tour auf „An die App senden“ klicken und
               den neuen QR Code scannen.
@@ -90,7 +91,7 @@ export default function SharedTour() {
           accessibilityRole="link"
           onPress={() => Linking.openURL("/planer")}
         >
-          <AppText style={styles.link}>Zum Web Planer</AppText>
+          <AppText style={styles.link}>{t('Zum Web Planer')}</AppText>
         </Pressable>
       </View>
     </View>

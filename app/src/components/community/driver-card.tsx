@@ -22,6 +22,7 @@ import { inviteToRide } from '@/lib/group/invites';
 import { showToast } from '@/lib/toast';
 import { type Driver } from '@/lib/drivers';
 import { useIsBlocked } from '@/lib/moderation';
+import { t } from '@/i18n';
 
 /** Wagenfarbe des ersten Autos als Ring um den Kreis, sonst weiß */
 export const ringColor = (d: Driver) => d.garage?.find((g) => g.look)?.look?.color ?? Colors.text;
@@ -48,7 +49,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
         showToast(now === 'kontakt' ? `${d.name} ist jetzt dein Kontakt.` : `Anfrage an ${d.name} geschickt.`);
       }
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });
+      showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
     } finally {
       setContactBusy(false);
     }
@@ -64,7 +65,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
           </View>
           <View style={styles.flex}>
             <AppText style={styles.bigName} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
-            {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>Hat heute Geburtstag</AppText> : null}
+            {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>{t('Hat heute Geburtstag')}</AppText> : null}
             <AppText variant="caption" muted numberOfLines={1}>
               {[d.age != null ? `${d.age} Jahre` : null, d.homeName ?? 'Wohnort nicht angegeben', d.memberSince ? `dabei seit ${monthYear(d.memberSince)}` : null].filter(Boolean).join('  ·  ')}
             </AppText>
@@ -73,7 +74,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
         {d.bio ? <AppText style={styles.bio}>{d.bio}</AppText> : null}
         {d.garage && d.garage.length > 0 ? (
           <View style={styles.garage}>
-            <AppText style={styles.label}>Fuhrpark</AppText>
+            <AppText style={styles.label}>{t('Fuhrpark')}</AppText>
             {d.garage.map((g, i) => (
               <View key={`${g.name}-${i}`} style={styles.car}>
                 {g.look ? <CarSprite look={g.look} frame={frameFor(215)} size={44} /> : <SymbolView name="car.side" size={20} weight="semibold" tintColor={Colors.muted} />}
@@ -83,18 +84,18 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
           </View>
         ) : d.car ? (
           <View style={styles.garage}>
-            <AppText style={styles.label}>Fährt</AppText>
+            <AppText style={styles.label}>{t('Fährt')}</AppText>
             <AppText style={styles.carName}>{d.car}</AppText>
           </View>
         ) : null}
         {canWrite ? (
           <Pressable accessibilityRole="button" onPress={() => write(d)} style={styles.primary}>
-            <AppText style={styles.primaryText}>Nachricht</AppText>
+            <AppText style={styles.primaryText}>{t('Nachricht')}</AppText>
           </Pressable>
         ) : !d.isMe ? (
           <AppText variant="caption" muted>{d.name} möchte keine Nachrichten bekommen.</AppText>
         ) : (
-          <AppText variant="caption" muted>So sehen dich andere. Wohnort, Nachrichten und Fuhrpark stellst du in den Einstellungen ein.</AppText>
+          <AppText variant="caption" muted>{t('So sehen dich andere. Wohnort, Nachrichten und Fuhrpark stellst du in den Einstellungen ein.')}</AppText>
         )}
         {!d.isMe && (
           <View style={styles.actions}>
@@ -115,7 +116,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
             </Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} zur Gruppenfahrt einladen`} onPress={() => setInviteOpen(true)} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
               <SymbolView name="car.2" size={20} weight="semibold" tintColor={Colors.text} />
-              <AppText style={styles.secondaryText}>Einladen</AppText>
+              <AppText style={styles.secondaryText}>{t('Einladen')}</AppText>
             </Pressable>
           </View>
         )}
@@ -123,10 +124,10 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
         {!d.isMe && (
           <View style={styles.quiet}>
             <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={styles.quietBtn}>
-              <AppText style={styles.quietText}>Melden</AppText>
+              <AppText style={styles.quietText}>{t('Melden')}</AppText>
             </Pressable>
             <Pressable accessibilityRole="button" onPress={() => setBlock(true)} style={styles.quietBtn}>
-              <AppText style={styles.quietText}>Blockieren</AppText>
+              <AppText style={styles.quietText}>{t('Blockieren')}</AppText>
             </Pressable>
           </View>
         )}
@@ -144,7 +145,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
       </View>
       <View style={styles.flex}>
         <AppText style={styles.name} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
-        {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>Hat heute Geburtstag</AppText> : null}
+        {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>{t('Hat heute Geburtstag')}</AppText> : null}
         {meta ? <AppText variant="caption" muted numberOfLines={1}>{meta}</AppText> : null}
       </View>
       {!d.isMe && status !== 'kontakt' && <ContactButton d={d} status={status} />}
@@ -170,7 +171,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
 /** Häkchen am Bild für bestätigte Kontakte */
 function ContactCheck() {
   return (
-    <View style={styles.check} accessibilityLabel="Kontakt">
+    <View style={styles.check} accessibilityLabel={t('Kontakt')}>
       <SymbolView name="checkmark" size={16} weight="semibold" tintColor={Colors.ground} />
     </View>
   );
@@ -188,7 +189,7 @@ function ContactButton({ d, status }: { d: Driver; status: Contact['status'] | n
         if (now === 'kontakt') showToast(`${d.name} ist jetzt dein Kontakt.`);
       }
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });
+      showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -196,7 +197,7 @@ function ContactButton({ d, status }: { d: Driver; status: Contact['status'] | n
   if (status === 'angefragt') {
     return (
       <Pressable accessibilityRole="button" accessibilityLabel={`Anfrage an ${d.name} zurückziehen`} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.pending}>
-        {busy ? <ActivityIndicator color={Colors.muted} /> : <AppText style={styles.pendingText}>Angefragt</AppText>}
+        {busy ? <ActivityIndicator color={Colors.muted} /> : <AppText style={styles.pendingText}>{t('Angefragt')}</AppText>}
       </Pressable>
     );
   }
@@ -218,7 +219,7 @@ export function ContactRequests({ list }: { list: Contact[] | null }) {
       await answerContact(c.id, yes);
       if (yes) showToast(`${c.name} ist jetzt dein Kontakt.`);
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });
+      showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
     } finally {
       setBusy(null);
     }
@@ -237,7 +238,7 @@ export function ContactRequests({ list }: { list: Contact[] | null }) {
             {busy === c.id + false ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.muted} />}
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel={`Anfrage von ${c.name} annehmen`} disabled={!!busy} onPress={() => void answer(c, true)} style={styles.accept}>
-            {busy === c.id + true ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.acceptText}>Annehmen</AppText>}
+            {busy === c.id + true ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.acceptText}>{t('Annehmen')}</AppText>}
           </Pressable>
         </View>
       ))}
@@ -266,12 +267,12 @@ function InviteSheet({ d, visible, onClose }: { d: Driver; visible: boolean; onC
       await inviteToRide(a.id, d.id);
       showToast(`${d.name} ist zu ${a.name} eingeladen.`);
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });
+      showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
     }
   };
   const items: SheetItem[] = [
     ...(rides ?? []).map((a) => ({ key: a.id, icon: 'car.2' as const, label: a.name, hint: longDate(a.startsAt), onPress: () => void invite(a) })),
-    { key: 'neu', icon: 'plus' as const, label: 'Neue Ausfahrt erstellen', onPress: () => router.push('/ausfahrt/neu') },
+    { key: 'neu', icon: 'plus' as const, label: t('Neue Ausfahrt erstellen'), onPress: () => router.push('/ausfahrt/neu') },
   ];
   return (
     <ActionSheet

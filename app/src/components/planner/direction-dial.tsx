@@ -13,6 +13,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
 import { DIRECTIONS, type Direction } from '@/lib/roundtrip';
+import { t } from '@/i18n';
 
 const SIZE = 260;
 const C = SIZE / 2;
@@ -132,7 +133,7 @@ export function DirectionDial({
         onLayout={(e: LayoutChangeEvent) => setW(Math.min(SIZE, e.nativeEvent.layout.width))}
         accessible
         accessibilityRole="adjustable"
-        accessibilityLabel="Richtung der Runde"
+        accessibilityLabel={t('Richtung der Runde')}
         accessibilityValue={{ text: label }}
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}>
@@ -162,10 +163,10 @@ export function DirectionDial({
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ selected: value === 'zufall' }}
-          accessibilityLabel="Zufällige Richtung"
+          accessibilityLabel={t('Zufällige Richtung')}
           onPress={() => onChange('zufall')}
           style={[styles.center, { width: 92 * scale, height: 92 * scale, borderRadius: 46 * scale }, value === 'zufall' && styles.centerOn]}>
-          <AppText style={[styles.centerText, value === 'zufall' && styles.centerTextOn]}>Zufall</AppText>
+          <AppText style={[styles.centerText, value === 'zufall' && styles.centerTextOn]}>{t('Zufall')}</AppText>
         </Pressable>
       </View>
       </GestureDetector>

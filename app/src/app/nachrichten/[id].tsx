@@ -20,6 +20,7 @@ import { clock, shortDate } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { listDrivers, sendDirect, useDirectChat, type Driver } from '@/lib/drivers';
 import { enablePush, setOpenChat } from '@/lib/push';
+import { t } from '@/i18n';
 
 export default function Unterhaltung() {
   const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
@@ -76,7 +77,7 @@ export default function Unterhaltung() {
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.head, { paddingTop: insets.top + Spacing.s }]}>
-        <BackLink label="Nachrichten" fallback="/nachrichten" />
+        <BackLink label={t('Nachrichten')} fallback="/nachrichten" />
         <Avatar name={title} userId={id} size={36} />
         <View style={styles.flex}>
           <AppText style={styles.title} numberOfLines={1}>{title}</AppText>
@@ -84,7 +85,7 @@ export default function Unterhaltung() {
             <AppText variant="caption" muted numberOfLines={1}>{[partner.car, partner.homeName ?? null].filter(Boolean).join('  ·  ')}</AppText>
           ) : null}
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Mehr" hitSlop={4} onPress={() => setMenu(true)} style={styles.round}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('Mehr')} hitSlop={4} onPress={() => setMenu(true)} style={styles.round}>
           <SymbolView name="ellipsis" size={20} weight="semibold" tintColor={Colors.text} />
         </Pressable>
       </View>
@@ -128,8 +129,8 @@ export default function Unterhaltung() {
       {sendErr && <AppText style={[styles.error, styles.padH]}>{sendErr}</AppText>}
       {canWrite ? (
         <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.s }]}>
-          <TextInput maxFontSizeMultiplier={1.2} value={text} onChangeText={setText} placeholder="Nachricht" placeholderTextColor={Colors.muted} multiline maxLength={1000} style={styles.input} accessibilityLabel="Nachricht schreiben" />
-          <Pressable accessibilityRole="button" accessibilityLabel="Senden" accessibilityState={{ disabled: !ok }} disabled={!ok} onPress={() => void send()} style={[styles.send, !ok && styles.sendOff]}>
+          <TextInput maxFontSizeMultiplier={1.2} value={text} onChangeText={setText} placeholder={t('Nachricht')} placeholderTextColor={Colors.muted} multiline maxLength={1000} style={styles.input} accessibilityLabel={t('Nachricht schreiben')} />
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Senden')} accessibilityState={{ disabled: !ok }} disabled={!ok} onPress={() => void send()} style={[styles.send, !ok && styles.sendOff]}>
             {sending ? <ActivityIndicator color={Colors.onSignal} /> : <SymbolView name="arrow.up" size={20} weight="semibold" tintColor={Colors.onSignal} />}
           </Pressable>
         </View>
@@ -143,8 +144,8 @@ export default function Unterhaltung() {
         title={title}
         onClose={() => setMenu(false)}
         items={[
-          { key: 'melden', icon: 'exclamationmark.bubble', label: `${title} melden`, hint: 'Einzelne Nachricht: lange drücken', onPress: () => { setMenu(false); setTimeout(() => setReport({ kind: 'profile', ref: id ?? '' }), SHEET_GONE_MS); } },
-          { key: 'blockieren', icon: 'hand.raised', label: `${title} blockieren`, hint: 'Ihr könnt euch keine Nachrichten mehr schreiben', danger: true, onPress: () => { setMenu(false); setTimeout(() => setBlock(true), SHEET_GONE_MS); } },
+          { key: 'melden', icon: 'exclamationmark.bubble', label: `${title} melden`, hint: t('Einzelne Nachricht: lange drücken'), onPress: () => { setMenu(false); setTimeout(() => setReport({ kind: 'profile', ref: id ?? '' }), SHEET_GONE_MS); } },
+          { key: 'blockieren', icon: 'hand.raised', label: `${title} blockieren`, hint: t('Ihr könnt euch keine Nachrichten mehr schreiben'), danger: true, onPress: () => { setMenu(false); setTimeout(() => setBlock(true), SHEET_GONE_MS); } },
         ]}
       />
       <ReportSheet visible={!!report} kind={report?.kind ?? 'profile'} refId={report?.ref ?? ''} userId={id} name={title} onClose={() => setReport(null)} />

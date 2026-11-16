@@ -12,15 +12,16 @@ import { Colors, Radius, Spacing } from '@/constants/theme';
 import { Toggle } from './web-parts';
 import { BODY, C } from './web-shared';
 import { XIcon } from './web-ui';
+import { t } from '@/i18n';
 
 type LayerKey = 'warnings' | 'passes' | 'passesAll' | 'myTours' | 'drives';
 
 const LAYERS: { key: LayerKey; label: string; note: string }[] = [
-  { key: 'warnings', label: 'Gefahrenstellen', note: 'Gesperrte und zu prüfende Stellen auf der Route' },
-  { key: 'passes', label: 'Pässe in der Nähe von Start und Ziel', note: 'Bis 50 km um deine Tour, orange die Ikonen' },
-  { key: 'passesAll', label: 'Alle Pässe anzeigen', note: 'Auch weit weg von deiner Tour' },
-  { key: 'myTours', label: 'Gespeicherte Touren', note: 'Als feine Linien' },
-  { key: 'drives', label: 'Gefahrene Strecken', note: 'Deine Fahrten in Grün, so siehst du, was noch fehlt' },
+  { key: 'warnings', label: t('Gefahrenstellen'), note: 'Gesperrte und zu prüfende Stellen auf der Route' },
+  { key: 'passes', label: t('Pässe in der Nähe von Start und Ziel'), note: 'Bis 50 km um deine Tour, orange die Ikonen' },
+  { key: 'passesAll', label: t('Alle Pässe anzeigen'), note: 'Auch weit weg von deiner Tour' },
+  { key: 'myTours', label: t('Gespeicherte Touren'), note: 'Als feine Linien' },
+  { key: 'drives', label: t('Gefahrene Strecken'), note: 'Deine Fahrten in Grün, so siehst du, was noch fehlt' },
 ];
 
 export function MapSettingsButton(props: { top: number; right: number }) {
@@ -43,7 +44,7 @@ export function MapSettingsButton(props: { top: number; right: number }) {
   return (
     <div ref={box} style={{ position: 'absolute', top: props.top, right: props.right, zIndex: 12 }}>
       <button
-        aria-label="Karteneinstellungen"
+        aria-label={t('Karteneinstellungen')}
         aria-expanded={open}
         onClick={() => setOpen(!open)}
         style={{ width: 44, height: 44, borderRadius: 22, border: 'none', background: Colors.overlay, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
@@ -55,16 +56,16 @@ export function MapSettingsButton(props: { top: number; right: number }) {
       {open ? (
         <div
           role="dialog"
-          aria-label="Karte"
+          aria-label={t('Karte')}
           style={{ position: 'absolute', top: 52, right: 0, width: 340, maxWidth: 'calc(100vw - 32px)', maxHeight: '70vh', overflowY: 'auto', boxSizing: 'border-box', background: Colors.overlaySurface, borderRadius: Radius.l, padding: Spacing.l, display: 'flex', flexDirection: 'column', gap: Spacing.l, color: C.text, fontFamily: BODY, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={{ flex: 1, font: `900 22px Archivo_900Black, Archivo, sans-serif`, textTransform: 'uppercase' }}>Karte</span>
-            <button aria-label="Schließen" onClick={() => setOpen(false)} style={{ width: 44, height: 44, borderRadius: 22, border: 'none', background: C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ flex: 1, font: `900 22px Archivo_900Black, Archivo, sans-serif`, textTransform: 'uppercase' }}>{t('Karte')}</span>
+            <button aria-label={t('Schließen')} onClick={() => setOpen(false)} style={{ width: 44, height: 44, borderRadius: 22, border: 'none', background: C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <XIcon />
             </button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.s }}>
-            <span style={{ font: `600 15px ${BODY}`, color: C.muted }}>Auf der Karte</span>
+            <span style={{ font: `600 15px ${BODY}`, color: C.muted }}>{t('Auf der Karte')}</span>
             {LAYERS.filter((l) => l.key !== 'passesAll' || st.passes).map((l) => (
               <Toggle key={l.key} id={`ly-${l.key}`} on={!!st[l.key]} label={l.label} note={l.note} onChange={(v) => setMapSettings({ [l.key]: v })} />
             ))}

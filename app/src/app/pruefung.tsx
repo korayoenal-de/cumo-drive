@@ -13,6 +13,7 @@ import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { shortDate } from '@/lib/ausfahrten';
 import { adminReports, adminResolve, KIND_LABEL, reasonLabel, type AdminReport } from '@/lib/moderation';
 import { showToast } from '@/lib/toast';
+import { t } from '@/i18n';
 
 type Act = 'ok' | 'entfernt' | 'gesperrt';
 
@@ -38,17 +39,17 @@ export default function Pruefung() {
       showToast(act === 'ok' ? 'Als in Ordnung markiert' : act === 'entfernt' ? 'Inhalt entfernt' : 'Konto gesperrt');
       load();
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Das hat nicht geklappt.', { tone: 'error' });
+      showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
     } finally {
       setBusy(null);
     }
   };
 
   return (
-    <SubScreen title="Prüfung">
+    <SubScreen title={t('Prüfung')}>
       {list === null && !err && <ActivityIndicator color={Colors.muted} />}
       {err && <AppText style={styles.error}>{err}</AppText>}
-      {list?.length === 0 && <AppText muted>Keine offenen Meldungen.</AppText>}
+      {list?.length === 0 && <AppText muted>{t('Keine offenen Meldungen.')}</AppText>}
       {list?.map((r) => (
         <View key={r.id} style={styles.card}>
           <View style={styles.row}>
@@ -66,13 +67,13 @@ export default function Pruefung() {
           {r.note && r.kind !== 'hinweis' ? <AppText muted>Notiz von {r.reporterName ?? 'Melder'}: {r.note}</AppText> : null}
           <View style={styles.actions}>
             <Pressable accessibilityRole="button" disabled={busy === r.id} onPress={() => void resolve(r, 'ok')} style={styles.btn}>
-              {busy === r.id ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.btnText}>In Ordnung</AppText>}
+              {busy === r.id ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.btnText}>{t('In Ordnung')}</AppText>}
             </Pressable>
             <Pressable accessibilityRole="button" onPress={() => setAsk({ r, act: 'entfernt' })} style={styles.btn}>
-              <AppText style={styles.btnText}>Entfernen</AppText>
+              <AppText style={styles.btnText}>{t('Entfernen')}</AppText>
             </Pressable>
             <Pressable accessibilityRole="button" onPress={() => setAsk({ r, act: 'gesperrt' })} style={[styles.btn, styles.danger]}>
-              <AppText style={[styles.btnText, styles.dangerText]}>Sperren</AppText>
+              <AppText style={[styles.btnText, styles.dangerText]}>{t('Sperren')}</AppText>
             </Pressable>
           </View>
         </View>
@@ -90,10 +91,10 @@ export default function Pruefung() {
           maxFontSizeMultiplier={1.2}
           value={why}
           onChangeText={(t) => setWhy(t.slice(0, 300))}
-          placeholder="Begründung (optional, sonst der Grund der Meldung)"
+          placeholder={t('Begründung (optional, sonst der Grund der Meldung)')}
           placeholderTextColor={Colors.muted}
           style={styles.input}
-          accessibilityLabel="Begründung"
+          accessibilityLabel={t('Begründung')}
         />
       )}
     </SubScreen>

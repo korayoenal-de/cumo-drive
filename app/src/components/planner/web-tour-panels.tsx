@@ -21,6 +21,7 @@ import { Colors, Spacing } from '@/constants/theme';
 import { BODY, C, type PlannedTour } from './web-shared';
 import { Chip, Gauge, Section } from './web-parts';
 import { S } from './web-styles';
+import { t } from '@/i18n';
 
 /**
  * QR Code für die App. Bevorzugt ein kurzer Übergabe Code über Supabase (die App bekommt die
@@ -50,10 +51,10 @@ export function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid; o
   const current = qr && qr.tour === tour ? qr : null;
   return (
     <div style={S.overlay} onClick={props.onClose}>
-      <div role="dialog" aria-modal="true" aria-label="An die App senden" style={{ ...S.dialog, width: 400 }} onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label={t('An die App senden')} style={{ ...S.dialog, width: 400 }} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-          <span style={{ ...S.metricValue, fontSize: 22 }}>An die App senden</span>
-          <button aria-label="Schließen" style={S.closeBtn} onClick={props.onClose}>
+          <span style={{ ...S.metricValue, fontSize: 22 }}>{t('An die App senden')}</span>
+          <button aria-label={t('Schließen')} style={S.closeBtn} onClick={props.onClose}>
             ×
           </button>
         </div>
@@ -89,7 +90,7 @@ export function StopsPanel(props: { tour: PlannedTour; busy: boolean; onAdd: (p:
 
   const cur = res?.key === key ? res : null;
   return (
-    <Section title="Unterwegs einplanen">
+    <Section title={t('Unterwegs einplanen')}>
       <div style={S.chips}>
         {STOP_KINDS.map((k) => (
           <Chip key={k.id} on={kind === k.id} onClick={() => setKind(kind === k.id ? null : k.id)}>
@@ -98,7 +99,7 @@ export function StopsPanel(props: { tour: PlannedTour; busy: boolean; onAdd: (p:
         ))}
       </div>
       {kind && <p style={S.muted}>{STOP_KINDS.find((k) => k.id === kind)?.hint}</p>}
-      {kind && !cur && <p style={S.muted}>Wird gesucht …</p>}
+      {kind && !cur && <p style={S.muted}>{t('Wird gesucht …')}</p>}
       {cur?.error && <p style={S.muted}>Gerade nicht erreichbar ({cur.error}). Versuch es gleich noch mal.</p>}
       {cur?.hits && cur.hits.length === 0 && (
         <p style={S.muted}>{kind === 'mittag' || kind === 'kaffee' ? 'Hier haben wir noch keine Empfehlung. Jedes andere Lokal findest du über die Suche bei den Punkten.' : 'Nichts direkt an der Strecke gefunden.'}</p>
@@ -155,8 +156,8 @@ export function AddHighlight(props: {
   }, [props.pts, props.taken, searching]);
   const hits = searching ? searchPasses(PASSES, q, 6) : [];
   return (
-    <Section title="Highlights/Pässe" aside={!searching && rows.length ? 'auf deinen Etappen' : undefined}>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Pass suchen, zum Beispiel Stelvio" style={S.search} aria-label="Pass suchen" />
+    <Section title={t('Highlights/Pässe')} aside={!searching && rows.length ? 'auf deinen Etappen' : undefined}>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Pass suchen, zum Beispiel Stelvio')} style={S.search} aria-label={t('Pass suchen')} />
       {searching ? (
         hits.length ? (
           <ol style={S.passList}>
@@ -180,7 +181,7 @@ export function AddHighlight(props: {
             ))}
           </ol>
         ) : (
-          <p style={S.muted}>Kein Pass gefunden.</p>
+          <p style={S.muted}>{t('Kein Pass gefunden.')}</p>
         )
       ) : rows.length ? (
         <ol style={S.passList}>
@@ -199,7 +200,7 @@ export function AddHighlight(props: {
           ))}
         </ol>
       ) : (
-        <p style={S.muted}>Auf deinen Etappen liegt kein Highlight mit gutem Bogen. Such einen Pass über das Feld.</p>
+        <p style={S.muted}>{t('Auf deinen Etappen liegt kein Highlight mit gutem Bogen. Such einen Pass über das Feld.')}</p>
       )}
     </Section>
   );
@@ -217,8 +218,8 @@ export function AddPass(props: { near: { pass: Pass; dKm: number }[]; live: Map<
   const searching = q.trim().length >= 2;
   const hits: { pass: Pass; dKm: number | null }[] = searching ? searchPasses(PASSES, q, 5).map((pass) => ({ pass, dKm: null })) : props.near;
   return (
-    <Section title="Pässe einbauen" aside={!searching && props.near.length ? 'in der Nähe' : undefined}>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Pass suchen, zum Beispiel Stelvio" style={S.search} aria-label="Pass suchen" />
+    <Section title={t('Pässe einbauen')} aside={!searching && props.near.length ? 'in der Nähe' : undefined}>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Pass suchen, zum Beispiel Stelvio')} style={S.search} aria-label={t('Pass suchen')} />
       {hits.length ? (
         <ol style={S.passList}>
           {hits.map(({ pass, dKm }) => (
@@ -283,12 +284,12 @@ export function Gallery(props: {
       <div style={S.lightbox} role="dialog" aria-label={`Foto ${i + 1} von ${g.photos.length}`} onClick={() => props.onChange({ g, i: null })}>
         <img src={photoUrl(ph)} alt={`${title}, ${photoDate(ph)}`} style={S.lightboxImg} onClick={(e) => e.stopPropagation()} />
         <div style={S.lightboxBar} onClick={(e) => e.stopPropagation()}>
-          <button style={S.lbBtn} onClick={() => props.onChange({ g, i: (i - 1 + g.photos.length) % g.photos.length })} aria-label="Vorheriges Foto">‹</button>
+          <button style={S.lbBtn} onClick={() => props.onChange({ g, i: (i - 1 + g.photos.length) % g.photos.length })} aria-label={t('Vorheriges Foto')}>‹</button>
           <span>
             {title}, {photoDate(ph)} · {i + 1} / {g.photos.length}
           </span>
-          <button style={S.lbBtn} onClick={() => props.onChange({ g, i: (i + 1) % g.photos.length })} aria-label="Nächstes Foto">›</button>
-          <button style={S.lbBtn} onClick={() => props.onChange({ g, i: null })} aria-label="Schließen">×</button>
+          <button style={S.lbBtn} onClick={() => props.onChange({ g, i: (i + 1) % g.photos.length })} aria-label={t('Nächstes Foto')}>›</button>
+          <button style={S.lbBtn} onClick={() => props.onChange({ g, i: null })} aria-label={t('Schließen')}>×</button>
         </div>
       </div>
     );
@@ -306,7 +307,7 @@ export function Gallery(props: {
           <button style={{ ...S.secondaryOnSurface, flex: 'none', padding: '0 14px' }} disabled={!props.canAdd} onClick={() => props.onAddVia(g.p)}>
             Als Zwischenziel einfügen
           </button>
-          <button aria-label="Galerie schließen" style={S.iconBtn} onClick={() => props.onChange(null)}>
+          <button aria-label={t('Galerie schließen')} style={S.iconBtn} onClick={() => props.onChange(null)}>
             ×
           </button>
         </div>

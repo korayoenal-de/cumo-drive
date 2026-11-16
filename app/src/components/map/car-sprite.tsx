@@ -17,29 +17,30 @@ import Animated, { Easing, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, wi
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import type { Vehicle } from '@/lib/vehicle';
+import { t } from '@/i18n';
 
 export type CarForm = 'coupe' | 'coupe-fluegel' | 'cabrio' | 'fastback' | 'limousine' | 'kombi' | 'gelaende';
 export type CarLook = { form: CarForm; color: string };
 
 export const CAR_FORMS: { id: CarForm; label: string }[] = [
-  { id: 'coupe', label: 'Coupé' },
-  { id: 'coupe-fluegel', label: 'Coupé mit Flügel' },
-  { id: 'cabrio', label: 'Cabrio' },
-  { id: 'fastback', label: 'Fastback' },
-  { id: 'limousine', label: 'Limousine' },
+  { id: 'coupe', label: t('Coupé') },
+  { id: 'coupe-fluegel', label: t('Coupé mit Flügel') },
+  { id: 'cabrio', label: t('Cabrio') },
+  { id: 'fastback', label: t('Fastback') },
+  { id: 'limousine', label: t('Limousine') },
   // Kombi folgt später (Koray 9.11.): Bilder liegen bereit, in der Auswahl noch ausgeblendet
-  { id: 'gelaende', label: 'Geländewagen' },
+  { id: 'gelaende', label: t('Geländewagen') },
 ];
 
 export const CAR_COLORS: { id: string; label: string }[] = [
-  { id: '#C4161C', label: 'Rot' },
-  { id: '#E2461C', label: 'Orange' },
-  { id: '#F2C230', label: 'Gelb' },
-  { id: '#2F7D4F', label: 'Grün' },
-  { id: '#2457C5', label: 'Blau' },
-  { id: '#B9BDC2', label: 'Silber' },
-  { id: '#F1F1EE', label: 'Weiß' },
-  { id: '#26272A', label: 'Schwarz' },
+  { id: '#C4161C', label: t('Rot') },
+  { id: '#E2461C', label: t('Orange') },
+  { id: '#F2C230', label: t('Gelb') },
+  { id: '#2F7D4F', label: t('Grün') },
+  { id: '#2457C5', label: t('Blau') },
+  { id: '#B9BDC2', label: t('Silber') },
+  { id: '#F1F1EE', label: t('Weiß') },
+  { id: '#26272A', label: t('Schwarz') },
 ];
 
 export const DEFAULT_LOOK: CarLook = { form: 'coupe', color: '#C4161C' };
@@ -110,7 +111,7 @@ export function CarPreview({ look, size, bare, spin = 0 }: { look: CarLook; size
   return (
     <GestureHandlerRootView>
       <GestureDetector gesture={pan}>
-        <View style={bare ? styles.stageBare : styles.stage} accessible accessibilityRole="image" accessibilityLabel="Dein Auto auf der Karte, zum Drehen seitlich ziehen">
+        <View style={bare ? styles.stageBare : styles.stage} accessible accessibilityRole="image" accessibilityLabel={t('Dein Auto auf der Karte, zum Drehen seitlich ziehen')}>
           <CarSprite look={look} frame={frameFor(heading)} size={size} />
         </View>
       </GestureDetector>
@@ -134,7 +135,7 @@ function SwipeHint() {
   }, [x]);
   const finger = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));
   return (
-    <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(300)} pointerEvents="none" style={styles.hint} accessibilityLiveRegion="polite" accessibilityLabel="Zum Drehen seitlich ziehen">
+    <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(300)} pointerEvents="none" style={styles.hint} accessibilityLiveRegion="polite" accessibilityLabel={t('Zum Drehen seitlich ziehen')}>
       <Svg width={150} height={30} viewBox="0 0 150 30">
         <Path d="M20 22 C 55 4, 95 4, 130 22" fill="none" stroke={Colors.text} strokeWidth={2.5} strokeLinecap="round" strokeDasharray="2 7" />
         <Path d="M122 14l9 8-11 4" fill="none" stroke={Colors.text} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
@@ -145,7 +146,7 @@ function SwipeHint() {
         </Svg>
       </Animated.View>
       <View style={styles.hintPill}>
-        <AppText style={styles.hintText}>Ziehen zum Drehen</AppText>
+        <AppText style={styles.hintText}>{t('Ziehen zum Drehen')}</AppText>
       </View>
     </Animated.View>
   );

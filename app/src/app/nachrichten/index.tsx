@@ -13,6 +13,7 @@ import { Colors, Fonts, Size, Spacing, Type, Radius } from '@/constants/theme';
 import { clock, shortDate } from '@/lib/ausfahrten';
 import { listConversations, refreshUnread, type Conversation } from '@/lib/drivers';
 import { enablePush } from '@/lib/push';
+import { t } from '@/i18n';
 
 const when = (d: Date) => (d.toDateString() === new Date().toDateString() ? clock(d) : shortDate(d));
 
@@ -42,15 +43,15 @@ export default function Nachrichten() {
   return (
     <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: insets.bottom + Spacing.xxxl }]}>
       <View style={styles.head}>
-        <BackLink label="Community" fallback="/community" />
+        <BackLink label={t('Community')} fallback="/community" />
       </View>
-      <AppText variant="display">Nachrichten</AppText>
+      <AppText variant="display">{t('Nachrichten')}</AppText>
       {list === null && !err && <ActivityIndicator color={Colors.muted} />}
       {err && <AppText style={styles.error}>{err}</AppText>}
       {list?.length === 0 && (
         <View style={styles.card}>
-          <AppText variant="title">Noch keine Nachrichten</AppText>
-          <AppText muted>Unter Community, Drivers findest du andere Mitglieder und kannst sie anschreiben.</AppText>
+          <AppText variant="title">{t('Noch keine Nachrichten')}</AppText>
+          <AppText muted>{t('Unter Community, Drivers findest du andere Mitglieder und kannst sie anschreiben.')}</AppText>
         </View>
       )}
       {list?.map((c) => (

@@ -20,6 +20,7 @@ import { roundaboutTurn } from './roundabout';
 import { townAfter, wantsToward, withToward } from './toward';
 import { bbGps, bbLog, bbRoute, bbStart, bbStop } from './blackbox';
 import { createVoiceGuide, speakText, type VoiceGuide } from './voice';
+import { t } from '@/i18n';
 
 const KEEP_AWAKE_TAG = 'cumo-navigation';
 /** Abstand zur Route, ab dem man als abgewichen gilt */
@@ -301,7 +302,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const t0 = Date.now();
       bbLog('reroute', [mode, fresh ? 'neu' : 'zurueck', 'start']);
       // "Route wird neu berechnet" sagt nichts und schnitt Ansagen ab (Koray 14.11.): nur noch bei neuer Route
-      if (fresh) voice().say('Neue Route ab hier.');
+      if (fresh) voice().say(t('Neue Route ab hier.'));
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       try {
@@ -424,7 +425,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
 
       if (arrived) {
         arrivedRef.current = true;
-        voice().say('Du bist am Ziel.', true);
+        voice().say(t('Du bist am Ziel.'), true);
         subRef.current?.remove();
         subRef.current = null;
         stopSim();
@@ -711,7 +712,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     reroutingRef.current = true;
     lastRerouteRef.current = Date.now();
     setState((s) => ({ ...s, status: 'neuberechnung' }));
-    voice().say('Zurück zur Tour der Gruppe.', true);
+    voice().say(t('Zurück zur Tour der Gruppe.'), true);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {

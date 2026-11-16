@@ -11,6 +11,7 @@ import { AppText } from '@/components/ui/text';
 import { WarnLabel } from '@/components/ui/warn-label';
 import { Colors, Fonts, Motion, Spacing, Type } from '@/constants/theme';
 import { warnRest, type Pass } from '@/lib/passes';
+import { t } from '@/i18n';
 
 export type PassAction = 'via' | 'start' | 'ziel' | 'remove';
 
@@ -37,14 +38,14 @@ export function MapPassActions({
 }) {
   const sub = role ? `${note} · ${role} der Route` : detourKm != null ? `${note} · Umweg grob ${detourKm} km` : note;
   const primary: { a: PassAction; label: string } = role
-    ? { a: 'remove', label: 'Aus der Route entfernen' }
+    ? { a: 'remove', label: t('Aus der Route entfernen') }
     : complete
-      ? { a: 'via', label: 'Zur Route hinzufügen' }
+      ? { a: 'via', label: t('Zur Route hinzufügen') }
       : empty
-        ? { a: 'start', label: 'Als Start' }
-        : { a: 'ziel', label: 'Als Ziel' };
+        ? { a: 'start', label: t('Als Start') }
+        : { a: 'ziel', label: t('Als Ziel') };
   // Bei fertiger Route verlängert das neue Ziel die Tour, das alte wird Zwischenziel
-  const secondary: { a: PassAction; label: string } | null = role ? null : complete ? { a: 'ziel', label: 'Als neues Ziel' } : empty ? { a: 'ziel', label: 'Als Ziel' } : null;
+  const secondary: { a: PassAction; label: string } | null = role ? null : complete ? { a: 'ziel', label: t('Als neues Ziel') } : empty ? { a: 'ziel', label: t('Als Ziel') } : null;
   return (
     <Animated.View
       key={pass.id}
@@ -140,7 +141,7 @@ export function MapPointActions({ label, name, role, bottom, onRemove }: { label
           </View>
         </View>
         <Pressable accessibilityRole="button" onPress={onRemove} style={({ pressed }) => [styles.btn, styles.btnQuiet, pressed && styles.pressed]}>
-          <AppText style={styles.btnText}>Aus der Route entfernen</AppText>
+          <AppText style={styles.btnText}>{t('Aus der Route entfernen')}</AppText>
         </Pressable>
       </View>
     </Animated.View>

@@ -24,6 +24,7 @@ import { selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
 import { bigDuration, type Mode, type PointKind } from './planner-shared';
 import { styles } from './planner-styles';
 import { cleanPlace } from '@/lib/warning-dedupe';
+import { t } from '@/i18n';
 
 
 /** Fahrzeug für diese Tour (optional): die gefahrenen km landen bei diesem Auto. */
@@ -31,13 +32,13 @@ export function VehiclePick() {
   const { list, current } = useVehicles();
   return (
     <View style={styles.card}>
-      <AppText variant="label">Fahrzeug</AppText>
+      <AppText variant="label">{t('Fahrzeug')}</AppText>
       {list.length === 0 ? (
         <>
           <AppText variant="caption" muted>
             Noch kein Fahrzeug in der Garage. Leg es unter Einstellungen an, dann landen Kilometer und Touren beim richtigen Auto.
           </AppText>
-          <SecondaryButton label="Zur Garage" onSurface onPress={() => router.navigate('/einstellungen')} />
+          <SecondaryButton label={t('Zur Garage')} onSurface onPress={() => router.navigate('/einstellungen')} />
         </>
       ) : (
         <ChipRow bleed={Spacing.l}>
@@ -292,7 +293,7 @@ export function Progress({ phase, done, onCancel }: { phase: PlanPhase; done: Pl
       <AppText variant="caption" muted>
         Wir prüfen jede Straße auf Sperrungen, Feldwege und rauen Belag. Das dauert meist unter einer Minute.
       </AppText>
-      <SecondaryButton label="Abbrechen" onPress={onCancel} />
+      <SecondaryButton label={t('Abbrechen')} onPress={onCancel} />
     </View>
   );
 }
@@ -317,18 +318,18 @@ export function ErrorCard({
   return (
     <View style={styles.gapL}>
       <View style={[styles.card, styles.errorCard]}>
-        <AppText variant="label" style={styles.signalText}>Das hat nicht geklappt</AppText>
+        <AppText variant="label" style={styles.signalText}>{t('Das hat nicht geklappt')}</AppText>
         <AppText variant="title">{error.message}</AppText>
         <AppText variant="caption" muted>{help[error.kind]}</AppText>
       </View>
       {(error.kind === 'permission' || error.kind === 'services') && (
-        <PrimaryButton label="Einstellungen öffnen" onPress={() => void Linking.openSettings()} />
+        <PrimaryButton label={t('Einstellungen öffnen')} onPress={() => void Linking.openSettings()} />
       )}
       {(error.kind === 'network' || error.kind === 'routing' || error.kind === 'position') && (
         <PrimaryButton label={error.kind === 'routing' ? 'Neu würfeln' : 'Nochmal versuchen'} onPress={onRetry} />
       )}
-      {needsPlace && <SecondaryButton label="Startort von Hand wählen" onPress={onUsePlace} />}
-      <SecondaryButton label="Runde verwerfen" onPress={onBack} />
+      {needsPlace && <SecondaryButton label={t('Startort von Hand wählen')} onPress={onUsePlace} />}
+      <SecondaryButton label={t('Runde verwerfen')} onPress={onBack} />
     </View>
   );
 }
@@ -337,11 +338,11 @@ export function ErrorCard({
 export type PlannedStop = { key: string; name: string; detail: string; cat: Exclude<Cat, 'alle'> };
 
 const STOP_CHIPS: { id: Exclude<Cat, 'alle'>; label: string }[] = [
-  { id: 'tank', label: 'Tanken' },
-  { id: 'mittag', label: 'Essen' },
-  { id: 'aussicht', label: 'Aussicht' },
+  { id: 'tank', label: t('Tanken') },
+  { id: 'mittag', label: t('Essen') },
+  { id: 'aussicht', label: t('Aussicht') },
   // gleiche Namen wie die Reiter der Ortssuche (CATS in place-search.tsx), Koray 10.11.
-  { id: 'pass', label: 'Highlights/Pässe' },
+  { id: 'pass', label: t('Highlights/Pässe') },
 ];
 
 /**
@@ -351,7 +352,7 @@ const STOP_CHIPS: { id: Exclude<Cat, 'alle'>; label: string }[] = [
 export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned?: PlannedStop[]; busy?: boolean; onOpen: (cat: Exclude<Cat, 'alle'>) => void; onRemove?: (key: string) => void }) {
   return (
     <Accordion
-      label="Unterwegs einplanen"
+      label={t('Unterwegs einplanen')}
       summary={planned.length ? (planned.length === 1 ? '1 Stopp' : `${planned.length} Stopps`) : 'Tanken, Essen, Aussicht'}
       defaultOpen={planned.length > 0}>
       {planned.length > 0 && (
@@ -387,7 +388,7 @@ export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned
           </Pressable>
         ))}
       </ChipRow>
-      {busy ? <ActivityIndicator color={Colors.muted} /> : planned.length === 0 && <AppText variant="caption" muted>Sortiert nach Umweg, ein Tipp plant den Stopp an der richtigen Stelle ein.</AppText>}
+      {busy ? <ActivityIndicator color={Colors.muted} /> : planned.length === 0 && <AppText variant="caption" muted>{t('Sortiert nach Umweg, ein Tipp plant den Stopp an der richtigen Stelle ein.')}</AppText>}
     </Accordion>
   );
 }
@@ -398,8 +399,8 @@ export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned
  */
 export function Stats({ km, minutes, curves, fun, onFun, delta }: { km: number; minutes: number; curves: number; fun?: TourFun | null; onFun?: () => void; delta?: number | null }) {
   const items = [
-    { id: 'km', value: `${formatKm(km, 0)} km`, label: 'Strecke' },
-    { id: 'zeit', value: bigDuration(minutes), label: 'Fahrzeit' },
+    { id: 'km', value: `${formatKm(km, 0)} km`, label: t('Strecke') },
+    { id: 'zeit', value: bigDuration(minutes), label: t('Fahrzeit') },
   ];
   return (
     <View style={styles.stats}>
@@ -413,11 +414,11 @@ export function Stats({ km, minutes, curves, fun, onFun, delta }: { km: number; 
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Fahrspaß ${fun.score} von 100, ${TOUR_FUN_NAMES[fun.level]}${delta != null ? `, ${delta >= 0 ? 'besser' : 'schlechter'} als die vorige Runde um ${Math.abs(delta)}` : ''}`}
-          accessibilityHint="Zeigt, wie der Wert entsteht"
+          accessibilityHint={t('Zeigt, wie der Wert entsteht')}
           onPress={onFun}
           style={({ pressed }) => [styles.flex, pressed && styles.pressedDim]}>
           <View style={styles.funLabelRow}>
-            <AppText style={styles.statLabel}>Fahrspaß</AppText>
+            <AppText style={styles.statLabel}>{t('Fahrspaß')}</AppText>
             {delta != null && (
               <AppText style={[styles.funDelta, { color: delta >= 0 ? Colors.good : Colors.muted }]}>{delta >= 0 ? `+${delta}` : `−${Math.abs(delta)}`}</AppText>
             )}
@@ -431,7 +432,7 @@ export function Stats({ km, minutes, curves, fun, onFun, delta }: { km: number; 
         </Pressable>
       ) : (
         <View style={styles.flex}>
-          <AppText style={styles.statLabel}>Kurven</AppText>
+          <AppText style={styles.statLabel}>{t('Kurven')}</AppText>
           <AppText style={styles.statBig} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{String(curves)}</AppText>
         </View>
       )}
@@ -561,7 +562,7 @@ export function DragHandle({ label, onStart, onMove, onEnd }: { label: string; o
   }, []);
   /* eslint-enable react-hooks/refs */
   return (
-    <View {...pan.panHandlers} accessible accessibilityLabel={label} accessibilityHint="Kurz halten, dann nach oben oder unten ziehen" style={styles.handle}>
+    <View {...pan.panHandlers} accessible accessibilityLabel={label} accessibilityHint={t('Kurz halten, dann nach oben oder unten ziehen')} style={styles.handle}>
       <SymbolView name="line.3.horizontal" size={20} tintColor={holding ? Colors.signal : Colors.muted} weight="semibold" />
     </View>
   );
@@ -657,10 +658,10 @@ export function DragArea({
 export function GroupBlock({ savedId }: { savedId: string | null }) {
   return (
     <View style={styles.card}>
-      <AppText variant="label">Gruppe</AppText>
-      <AppText>Fahrt diese Runde zusammen, mit bis zu 5 Teilnehmern.</AppText>
+      <AppText variant="label">{t('Gruppe')}</AppText>
+      <AppText>{t('Fahrt diese Runde zusammen, mit bis zu 5 Teilnehmern.')}</AppText>
       {savedId ? (
-        <SecondaryButton label="Teilnehmer einladen" onSurface onPress={() => router.push({ pathname: '/gruppe/neu', params: { tour: savedId } })} />
+        <SecondaryButton label={t('Teilnehmer einladen')} onSurface onPress={() => router.push({ pathname: '/gruppe/neu', params: { tour: savedId } })} />
       ) : (
         <AppText variant="caption" muted>
           Speichere die Tour zuerst. Danach lädst du die Teilnehmer mit ihrem Namen ein.

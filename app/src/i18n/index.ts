@@ -119,3 +119,6 @@ export function noteT(de: string): string {
   if (/pass/i.test(de)) return DICT[lang]['Passstraße'] ?? de;
   return DICT[lang]['Kurvenstrecke'] ?? de;
 }
+
+/** Gleich wie t, für Dateien, in denen t schon ein anderer Name ist */
+export const tr = t;

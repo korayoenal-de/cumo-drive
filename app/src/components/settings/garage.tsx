@@ -14,6 +14,7 @@ import { CustomColorButton } from '@/components/garage/custom-color';
 import { CAR_COLORS, CarStagePicker, CarSprite, carLookFor, DEFAULT_LOOK, frameFor } from '@/components/map/car-sprite';
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
+import { t } from '@/i18n';
 
 /** Garage: alle Fahrzeuge, das aktuelle ist markiert; Tippen öffnet das Formular. */
 export function Garage({ drives }: { drives: Drive[] | null }) {
@@ -33,7 +34,7 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
     <View style={styles.gapM}>
       {list.length === 0 && !edit && (
         <View style={styles.card}>
-          <AppText muted>Leg deine Fahrzeuge an. Vor jeder Fahrt wählst du, womit du fährst, dann landen Kilometer und Touren beim richtigen Auto.</AppText>
+          <AppText muted>{t('Leg deine Fahrzeuge an. Vor jeder Fahrt wählst du, womit du fährst, dann landen Kilometer und Touren beim richtigen Auto.')}</AppText>
         </View>
       )}
       {list.map((v) =>
@@ -41,10 +42,10 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
           <VehicleForm key={v.id} value={edit} onChange={setEdit} onDone={() => setEdit(null)} />
         ) : (
           <View key={v.id} style={styles.card}>
-            <Pressable accessibilityRole="button" accessibilityHint="Fahrzeug bearbeiten" onPress={() => setEdit(v)} style={styles.gapS}>
+            <Pressable accessibilityRole="button" accessibilityHint={t('Fahrzeug bearbeiten')} onPress={() => setEdit(v)} style={styles.gapS}>
               <View style={styles.row}>
                 {carLookFor(v) && (
-                  <View accessibilityLabel="Fährt als eigenes Symbol auf der Karte">
+                  <View accessibilityLabel={t('Fährt als eigenes Symbol auf der Karte')}>
                     <CarSprite look={carLookFor(v)!} frame={frameFor(215)} size={48} />
                   </View>
                 )}
@@ -81,12 +82,12 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
         items={
           menu
             ? [
-                ...(current?.id !== menu.id ? [{ key: 'cur', icon: 'checkmark.circle' as const, label: 'Als aktuell wählen', onPress: () => void selectVehicle(menu.id) }] : []),
-                { key: 'edit', icon: 'pencil' as const, label: 'Bearbeiten', onPress: () => setEdit(menu) },
+                ...(current?.id !== menu.id ? [{ key: 'cur', icon: 'checkmark.circle' as const, label: t('Als aktuell wählen'), onPress: () => void selectVehicle(menu.id) }] : []),
+                { key: 'edit', icon: 'pencil' as const, label: t('Bearbeiten'), onPress: () => setEdit(menu) },
                 carLookFor(menu)
-                  ? { key: 'sym', icon: 'location.north.fill' as const, label: 'Pfeil auf der Karte', hint: 'Statt deines Autos wieder den Pfeil zeigen', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'pfeil' }) }
-                  : { key: 'sym', icon: 'car.fill' as const, label: 'Auto auf der Karte', hint: 'Form und Farbe wählst du beim Bearbeiten', onPress: () => void saveVehicle({ ...menu, mapSymbol: 'auto' }).then(() => showToast('Dein Auto fährt jetzt auf der Karte mit')) },
-                { key: 'del', icon: 'trash' as const, label: 'Fahrzeug löschen', hint: 'Gefahrene Touren bleiben erhalten', danger: true, onPress: () => setAsk(menu) },
+                  ? { key: 'sym', icon: 'location.north.fill' as const, label: t('Pfeil auf der Karte'), hint: t('Statt deines Autos wieder den Pfeil zeigen'), onPress: () => void saveVehicle({ ...menu, mapSymbol: 'pfeil' }) }
+                  : { key: 'sym', icon: 'car.fill' as const, label: t('Auto auf der Karte'), hint: t('Form und Farbe wählst du beim Bearbeiten'), onPress: () => void saveVehicle({ ...menu, mapSymbol: 'auto' }).then(() => showToast(t('Dein Auto fährt jetzt auf der Karte mit'))) },
+                { key: 'del', icon: 'trash' as const, label: t('Fahrzeug löschen'), hint: t('Gefahrene Touren bleiben erhalten'), danger: true, onPress: () => setAsk(menu) },
               ]
             : []
         }
@@ -94,12 +95,12 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
       />
       <ConfirmSheet
         visible={!!ask}
-        title="Möchtest du dieses Fahrzeug wirklich löschen?"
+        title={t('Möchtest du dieses Fahrzeug wirklich löschen?')}
         text="Gefahrene Touren bleiben erhalten."
-        confirmLabel="Löschen"
+        confirmLabel={t('Löschen')}
         onConfirm={() => {
           if (ask) void deleteVehicle(ask.id);
-          showToast('Fahrzeug gelöscht');
+          showToast(t('Fahrzeug gelöscht'));
         }}
         onClose={() => setAsk(null)}
       />
@@ -107,7 +108,7 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
       {!edit && (
         // kein Hauptweg der Seite, daher Zweittaste (UI Konsistenz Check 9.11.)
         <Pressable accessibilityRole="button" onPress={() => setEdit(newVehicle())} style={styles.secondary}>
-          <AppText style={styles.secondaryText}>Fahrzeug hinzufügen</AppText>
+          <AppText style={styles.secondaryText}>{t('Fahrzeug hinzufügen')}</AppText>
         </Pressable>
       )}
       {drives && unassigned.length > 0 && (
@@ -132,13 +133,13 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
         // roh anzeigen: vehicleName schneidet Leerzeichen am Ende ab, dann ließ sich kein Leerzeichen tippen (Tester Joe 10.11.)
         value={value.brand ? vehicleName(value) : value.model}
         onChangeText={(t) => set({ brand: '', model: t })}
-        placeholder="Marke und Modell, etwa Porsche 911 GT3"
+        placeholder={t('Marke und Modell, etwa Porsche 911 GT3')}
         placeholderTextColor={Colors.muted}
         style={styles.input}
-        accessibilityLabel="Marke und Modell"
+        accessibilityLabel={t('Marke und Modell')}
       />
       {/* Kartensymbol: Form und Lack, Vorschau zum Drehen (Koray 9.11., Platzhalter Modelle) */}
-      <AppText variant="title">Auf der Karte</AppText>
+      <AppText variant="title">{t('Auf der Karte')}</AppText>
       <CarStagePicker look={value.look ?? DEFAULT_LOOK} onForm={(form) => set({ look: { ...(value.look ?? DEFAULT_LOOK), form }, mapSymbol: 'auto' })} />
       <View style={styles.dots}>
         {CAR_COLORS.map((c) => {
@@ -170,10 +171,10 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
             onDone();
           }}
           style={[styles.primary, styles.flex]}>
-          <AppText style={styles.primaryText}>Speichern</AppText>
+          <AppText style={styles.primaryText}>{t('Speichern')}</AppText>
         </Pressable>
         <Pressable accessibilityRole="button" onPress={onDone} style={[styles.secondary, styles.flex]}>
-          <AppText style={styles.secondaryText}>Abbrechen</AppText>
+          <AppText style={styles.secondaryText}>{t('Abbrechen')}</AppText>
         </Pressable>
       </View>
     </View>

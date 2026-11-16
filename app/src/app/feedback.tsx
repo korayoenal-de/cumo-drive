@@ -12,6 +12,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { FEEDBACK_AREAS, sendFeedback, type FeedbackArea } from '@/lib/feedback';
 import { showToast } from '@/lib/toast';
+import { t } from '@/i18n';
 
 export default function Feedback() {
   const [area, setArea] = useState<FeedbackArea | null>(null);
@@ -26,19 +27,19 @@ export default function Feedback() {
     setBusy(true);
     try {
       await sendFeedback(area ?? 'sonstiges', note);
-      showToast('Danke! Wir schauen es uns an.');
+      showToast(t('Danke! Wir schauen es uns an.'));
       router.back();
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Senden hat nicht geklappt.', { tone: 'error' });
+      showToast(e instanceof Error ? e.message: t('Senden hat nicht geklappt.'), { tone: 'error' });
       setBusy(false);
     }
   };
 
   return (
-    <SubScreen title="Feedback" scrollRef={scroll}>
-      <AppText muted>Was ist dir aufgefallen? Jede Meldung wird geprüft, und du erfährst, wenn es eine Lösung gibt.</AppText>
+    <SubScreen title={t('Feedback')} scrollRef={scroll}>
+      <AppText muted>{t('Was ist dir aufgefallen? Jede Meldung wird geprüft, und du erfährst, wenn es eine Lösung gibt.')}</AppText>
       <View style={styles.block}>
-        <AppText style={styles.label}>Worum geht es?</AppText>
+        <AppText style={styles.label}>{t('Worum geht es?')}</AppText>
         <View style={styles.chips}>
           {FEEDBACK_AREAS.map((a) => (
             <Chip key={a.id} label={a.label} active={area === a.id} onPress={() => setArea(area === a.id ? null : a.id)} />
@@ -46,22 +47,22 @@ export default function Feedback() {
         </View>
       </View>
       <View style={styles.block}>
-        <AppText style={styles.label}>Was genau?</AppText>
+        <AppText style={styles.label}>{t('Was genau?')}</AppText>
         <TextInput
           maxFontSizeMultiplier={1.2}
           value={note}
           onChangeText={setNote}
           onFocus={showSend}
-          placeholder="Zum Beispiel: Rundtour ab Bensheim fährt bei Jugenheim hin und zurück"
+          placeholder={t('Zum Beispiel: Rundtour ab Bensheim fährt bei Jugenheim hin und zurück')}
           placeholderTextColor={Colors.muted}
           maxLength={1000}
           multiline
           style={styles.input}
-          accessibilityLabel="Was dir aufgefallen ist, freier Text"
+          accessibilityLabel={t('Was dir aufgefallen ist, freier Text')}
         />
       </View>
       <Pressable accessibilityRole="button" accessibilityState={{ disabled: !ready }} disabled={!ready} onPress={() => void send()} style={[styles.primary, !ready && styles.disabled]}>
-        {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Senden</AppText>}
+        {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Senden')}</AppText>}
       </Pressable>
     </SubScreen>
   );

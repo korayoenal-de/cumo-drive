@@ -12,6 +12,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { TOUR_FUN_NAMES, TOUR_FUN_STEPS, type FunFacet, type TourFun } from '@/lib/fun-score';
 import type { LatLon } from '@/lib/tour';
+import { t } from '@/i18n';
 
 export function FunPill({ fun, onPress, active, best, hint = 'Zeigt, wie der Wert entsteht' }: { fun: TourFun; onPress: () => void; active?: boolean; best?: boolean; hint?: string }) {
   return (
@@ -57,8 +58,8 @@ export type RouteCheck = { tone: 'good' | 'warn' | 'none'; text: string };
 
 /** Zusammenfassung der Prüfung aus den Warnungen einer Tour */
 export function routeCheck(warnings: number, checked: boolean): RouteCheck {
-  if (!checked) return { tone: 'none', text: 'Diese Strecke ist noch nicht für Sportwagen geprüft.' };
-  if (!warnings) return { tone: 'good', text: 'Für Sportwagen geprüft, keine Engstellen oder Sperrungen.' };
+  if (!checked) return { tone: 'none', text: t('Diese Strecke ist noch nicht für Sportwagen geprüft.') };
+  if (!warnings) return { tone: 'good', text: t('Für Sportwagen geprüft, keine Engstellen oder Sperrungen.') };
   return { tone: 'warn', text: `Für Sportwagen geprüft. ${warnings === 1 ? 'Eine Stelle solltest' : `${warnings} Stellen solltest`} du kennen, sie stehen unter der Route.` };
 }
 
@@ -127,13 +128,13 @@ export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0, line
             <View style={[styles.rowMain, styles.total]}>
               <AppText style={[styles.pts, styles.signal]}>{fun.score}</AppText>
               <AppText style={[styles.facetLabel, styles.flex]}>{TOUR_FUN_NAMES[fun.level]}</AppText>
-              <AppText style={styles.muted}>von 100</AppText>
+              <AppText style={styles.muted}>{t('von 100')}</AppText>
             </View>
           </View>
 
           {/* Unterwegs: Höhenprofil und Prüfung untereinander (Koray 8.11.) */}
           <View style={styles.section}>
-            <AppText style={styles.muted}>Unterwegs</AppText>
+            <AppText style={styles.muted}>{t('Unterwegs')}</AppText>
             {line && line.length > 1 && <ElevationChart line={line} onSurface />}
             {check && (
               <View style={[styles.check, { backgroundColor: check.tone === 'good' ? Colors.goodTint : check.tone === 'warn' ? Colors.warnTint : Colors.surface2 }]}>

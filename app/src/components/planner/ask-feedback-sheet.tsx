@@ -13,6 +13,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ASK_REASONS, askDismissed, sendAsk, type AskRound } from '@/lib/ask-feedback';
 import { showToast } from '@/lib/toast';
+import { t } from '@/i18n';
 
 export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null; onDone: () => void }) {
   const [reason, setReason] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null
       setDone(true);
     } catch (e) {
       setBusy(false);
-      showToast(e instanceof Error ? e.message : 'Senden hat nicht geklappt.', { tone: 'error' });
+      showToast(e instanceof Error ? e.message: t('Senden hat nicht geklappt.'), { tone: 'error' });
     }
   };
   const pick = (id: string) => {
@@ -70,8 +71,8 @@ export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null
             <SymbolView name="checkmark" size={20} weight="bold" tintColor={Colors.good} />
           </View>
           <View style={styles.thanksText}>
-            <AppText style={styles.thanksTitle}>Danke, ist angekommen</AppText>
-            <AppText muted>Wir sagen dir Bescheid, wenn es besser ist.</AppText>
+            <AppText style={styles.thanksTitle}>{t('Danke, ist angekommen')}</AppText>
+            <AppText muted>{t('Wir sagen dir Bescheid, wenn es besser ist.')}</AppText>
           </View>
         </View>
       ) : (
@@ -87,13 +88,13 @@ export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null
                 maxFontSizeMultiplier={1.2}
                 value={text}
                 onChangeText={setText}
-                placeholder="Was hat dir gefehlt?"
+                placeholder={t('Was hat dir gefehlt?')}
                 placeholderTextColor={Colors.muted}
                 maxLength={500}
                 multiline
                 autoFocus
                 style={styles.input}
-                accessibilityLabel="Was dir gefehlt hat, freier Text"
+                accessibilityLabel={t('Was dir gefehlt hat, freier Text')}
               />
               <Pressable
                 accessibilityRole="button"
@@ -101,14 +102,14 @@ export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null
                 disabled={busy || text.trim().length < 3}
                 onPress={() => void send('anderes', text)}
                 style={[styles.primary, (busy || text.trim().length < 3) && styles.disabled]}>
-                {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Senden</AppText>}
+                {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Senden')}</AppText>}
               </Pressable>
             </>
           ) : busy ? (
             <ActivityIndicator color={Colors.muted} />
           ) : (
             <Pressable accessibilityRole="button" onPress={close} style={styles.hide}>
-              <AppText style={styles.hideText}>Ausblenden</AppText>
+              <AppText style={styles.hideText}>{t('Ausblenden')}</AppText>
             </Pressable>
           )}
         </View>

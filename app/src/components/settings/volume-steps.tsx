@@ -12,6 +12,7 @@ import { Colors, Motion } from '@/constants/theme';
 import { setDriveSetting, useDriveSettings } from '@/lib/drive-settings';
 import { haptic } from '@/lib/haptics';
 import { chosenVoiceId, playSample } from '@/lib/voice-settings';
+import { t } from '@/i18n';
 
 const STEPS = [0.2, 0.4, 0.6, 0.8, 1];
 const LABEL = ['Sehr leise', 'Leise', 'Mittel', 'Laut', 'Volle Lautstärke'];
@@ -55,7 +56,7 @@ export function VolumeSteps({ height = 44 }: { height?: number }) {
     <View
       accessible
       accessibilityRole="adjustable"
-      accessibilityLabel="Lautstärke der Ansagen"
+      accessibilityLabel={t('Lautstärke der Ansagen')}
       accessibilityValue={{ text: LABEL[cur] }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => {

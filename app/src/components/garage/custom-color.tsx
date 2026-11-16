@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { t } from '@/i18n';
 
 /** #RGB oder #RRGGBB, mit oder ohne Raute; zurück als #RRGGBB in Großbuchstaben oder null */
 export function normHex(raw: string): string | null {
@@ -42,7 +43,7 @@ export function CustomColorButton({ value, custom, onPick }: { value: string; cu
           <SymbolView name={custom ? 'pencil' : 'eyedropper'} size={16} tintColor={custom ? Colors.ground : Colors.text} weight="semibold" />
         </View>
       </Pressable>
-      <OptionsSheet visible={open} title="Sonderfarbe" subtitle="Hexwert deiner Lackfarbe, etwa #8A9A5B" onClose={() => setOpen(false)}>
+      <OptionsSheet visible={open} title={t('Sonderfarbe')} subtitle={t('Hexwert deiner Lackfarbe, etwa #8A9A5B')} onClose={() => setOpen(false)}>
         <View style={styles.body}>
           <View style={styles.row}>
             <View style={[styles.preview, { backgroundColor: hex ?? Colors.surface2 }]} />
@@ -58,12 +59,12 @@ export function CustomColorButton({ value, custom, onPick }: { value: string; cu
               placeholder="#RRGGBB"
               placeholderTextColor={Colors.muted}
               style={[styles.input, styles.flex]}
-              accessibilityLabel="Hexwert der Farbe"
+              accessibilityLabel={t('Hexwert der Farbe')}
             />
           </View>
-          {!!text && !hex && <AppText variant="caption" muted>Sechs Zeichen aus 0 bis 9 und A bis F, etwa #8A9A5B</AppText>}
+          {!!text && !hex && <AppText variant="caption" muted>{t('Sechs Zeichen aus 0 bis 9 und A bis F, etwa #8A9A5B')}</AppText>}
           <Pressable accessibilityRole="button" accessibilityState={{ disabled: !hex }} onPress={pick} style={({ pressed }) => [styles.primary, !hex && styles.disabled, pressed && hex && styles.pressed]}>
-            <AppText style={[styles.primaryText, !hex && styles.disabledText]}>Farbe übernehmen</AppText>
+            <AppText style={[styles.primaryText, !hex && styles.disabledText]}>{t('Farbe übernehmen')}</AppText>
           </Pressable>
         </View>
       </OptionsSheet>

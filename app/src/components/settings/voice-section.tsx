@@ -38,6 +38,7 @@ import {
   useVoiceChoice,
   type VoiceOption,
 } from "@/lib/voice-settings";
+import { t } from '@/i18n';
 
 export function VoiceSection() {
   const choice = useVoiceChoice();
@@ -63,15 +64,15 @@ export function VoiceSection() {
 
   return (
     <View style={styles.gapM}>
-      <AppText variant="label">Ansagen</AppText>
+      <AppText variant="label">{t('Ansagen')}</AppText>
       <Pressable
         accessibilityRole="button"
-        accessibilityHint="Stimme der Ansagen wählen"
+        accessibilityHint={t('Stimme der Ansagen wählen')}
         onPress={() => setOpen(true)}
         style={({ pressed }) => [styles.card, pressed && styles.pressed]}
       >
         <View style={styles.flex}>
-          <AppText style={styles.label}>Stimme</AppText>
+          <AppText style={styles.label}>{t('Stimme')}</AppText>
           <AppText style={styles.value} numberOfLines={1}>
             {choice?.name ?? "Standardstimme"}
           </AppText>
@@ -86,7 +87,7 @@ export function VoiceSection() {
 
       <View style={[styles.card, styles.volumeCard]}>
         <View style={styles.flex}>
-          <AppText style={styles.label}>Lautstärke</AppText>
+          <AppText style={styles.label}>{t('Lautstärke')}</AppText>
           <AppText style={styles.value}>{volumeLabel(drive.volume)}</AppText>
         </View>
         <View style={styles.volume}>
@@ -101,7 +102,7 @@ export function VoiceSection() {
 
       <View style={styles.card}>
         <View style={styles.flex}>
-          <AppText style={styles.label}>Tempo in der Navigation</AppText>
+          <AppText style={styles.label}>{t('Tempo in der Navigation')}</AppText>
           <AppText style={styles.value}>
             Dein Tempo und das erlaubte Tempo
           </AppText>
@@ -112,7 +113,7 @@ export function VoiceSection() {
           trackColor={{ false: Colors.line, true: Colors.signal }}
           thumbColor={Colors.text}
           ios_backgroundColor={Colors.line}
-          accessibilityLabel="Tempo in der Navigation zeigen"
+          accessibilityLabel={t('Tempo in der Navigation zeigen')}
         />
       </View>
 
@@ -120,7 +121,7 @@ export function VoiceSection() {
         <>
           <View style={styles.card}>
             <View style={styles.flex}>
-              <AppText style={styles.label}>Kurvenansagen</AppText>
+              <AppText style={styles.label}>{t('Kurvenansagen')}</AppText>
               <AppText style={styles.value}>
                 Auf Highlights wie ein Beifahrer
               </AppText>
@@ -131,7 +132,7 @@ export function VoiceSection() {
               trackColor={{ false: Colors.line, true: Colors.signal }}
               thumbColor={Colors.text}
               ios_backgroundColor={Colors.line}
-              accessibilityLabel="Kurvenansagen auf Highlights"
+              accessibilityLabel={t('Kurvenansagen auf Highlights')}
             />
           </View>
           <AppText variant="caption" muted style={styles.volumeHint}>
@@ -144,8 +145,8 @@ export function VoiceSection() {
 
       <OptionsSheet
         visible={open}
-        title="Stimme der Ansagen"
-        subtitle="Antippen zum Wählen und Probehören."
+        title={t('Stimme der Ansagen')}
+        subtitle={t('Antippen zum Wählen und Probehören.')}
         onClose={close}
       >
         {!voices ? (
@@ -202,7 +203,7 @@ function Row({
     <Pressable
       accessibilityRole="radio"
       accessibilityState={{ selected: active }}
-      accessibilityHint="Wählen und Hörprobe abspielen"
+      accessibilityHint={t('Wählen und Hörprobe abspielen')}
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,

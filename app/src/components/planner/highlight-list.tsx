@@ -20,6 +20,7 @@ import { cumulativeKm } from '@/lib/navigation/route';
 import { passState, usePassLive } from '@/lib/pass-live';
 import { PASSES, TIER_LABEL, warnLabel, warnRest } from '@/lib/passes';
 import type { LatLon, Tour } from '@/lib/tour';
+import { t } from '@/i18n';
 
 const KIND_LABEL: Record<string, string> = {
   pass: 'Pass',
@@ -82,7 +83,7 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
                     onAvoid();
                   }}
                   style={({ pressed }) => [styles.avoid, pressed && styles.pressed]}>
-                  <AppText style={styles.avoidText}>Auslassen</AppText>
+                  <AppText style={styles.avoidText}>{t('Auslassen')}</AppText>
                 </Pressable>
               ) : null}
             </Animated.View>
@@ -102,7 +103,7 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
                 onAvoid();
               }}
               style={({ pressed }) => [styles.avoidBack, pressed && styles.pressed]}>
-              <AppText style={styles.avoidBackText}>Wieder einplanen</AppText>
+              <AppText style={styles.avoidBackText}>{t('Wieder einplanen')}</AppText>
             </Pressable>
           </View>
         ))}
@@ -137,11 +138,11 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
   }, [h, line, cum, len]);
 
   const facts: { label: string; value: string }[] = [
-    { label: 'Strecke', value: `${len} km` },
-    ...(h.hairpins >= 3 ? [{ label: 'Kehren', value: String(h.hairpins) }] : []),
-    ...(h.ele ? [{ label: 'Höhe', value: `${h.ele.toLocaleString('de-DE')} m` }] : []),
-    ...(h.climbM ? [{ label: 'Anstieg', value: `${Math.round(h.climbM).toLocaleString('de-DE')} m` }] : []),
-    { label: 'Auf der Route', value: `ab km ${Math.round(h.startKm)}` },
+    { label: t('Strecke'), value: `${len} km` },
+    ...(h.hairpins >= 3 ? [{ label: t('Kehren'), value: String(h.hairpins) }] : []),
+    ...(h.ele ? [{ label: t('Höhe'), value: `${h.ele.toLocaleString('de-DE')} m` }] : []),
+    ...(h.climbM ? [{ label: t('Anstieg'), value: `${Math.round(h.climbM).toLocaleString('de-DE')} m` }] : []),
+    { label: t('Auf der Route'), value: `ab km ${Math.round(h.startKm)}` },
   ];
   const kind = [KIND_LABEL[h.kind] ?? 'Strecke', pass ? TIER_LABEL[pass.tier] : h.note, pass?.region].filter(Boolean).join(' · ');
 
@@ -156,7 +157,7 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Schließen"
+          accessibilityLabel={t('Schließen')}
           onPress={onClose}
           style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
           <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
@@ -199,15 +200,15 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
         ) : (
           pass?.car_note && (
             <View style={styles.note}>
-              <AppText style={styles.noteTitle}>Für Sportwagen</AppText>
+              <AppText style={styles.noteTitle}>{t('Für Sportwagen')}</AppText>
               <AppText style={styles.noteText}>{pass.car_note}</AppText>
             </View>
           )
         )}
-        {pass?.toll && <AppText style={styles.sub}>Mautpflichtig.</AppText>}
+        {pass?.toll && <AppText style={styles.sub}>{t('Mautpflichtig.')}</AppText>}
         {!!pass?.source && (
           <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(pass.source)} style={styles.link}>
-            <AppText style={styles.linkText}>Mehr dazu</AppText>
+            <AppText style={styles.linkText}>{t('Mehr dazu')}</AppText>
           </Pressable>
         )}
       </ScrollView>

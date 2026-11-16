@@ -29,6 +29,7 @@ import { useRouteWeather, WeatherMarkers, WeatherSheet } from '@/components/map/
 
 import { POS_INTERVAL_MS, predictPosition } from '@/lib/group/predict';
 import { CLASS_LINE, ROLE_COLOR, sampleLine, tourWarnings, type OtherDriver, type RouteMapProps } from './route-map-shared';
+import { t } from '@/i18n';
 
 export type { RouteMapProps } from './route-map-shared';
 
@@ -787,8 +788,8 @@ export function RouteMap({
       {compassTop != null && Math.abs(((camHeading % 360) + 360) % 360) > 2 && Math.abs(((camHeading % 360) + 360) % 360) < 358 && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Kompass"
-          accessibilityHint="Antippen dreht die Karte nach Norden"
+          accessibilityLabel={t('Kompass')}
+          accessibilityHint={t('Antippen dreht die Karte nach Norden')}
           onPress={() => {
             map.current?.animateCamera({ heading: 0 }, { duration: 350 });
             setCamHeading(0);
@@ -812,7 +813,7 @@ export function RouteMap({
             onOverviewEnd?.();
           }}
           style={styles.recenter}>
-          <AppText style={styles.recenterText}>Zentrieren</AppText>
+          <AppText style={styles.recenterText}>{t('Zentrieren')}</AppText>
         </Pressable>
       )}
     </View>
@@ -837,7 +838,7 @@ function WarnCard({ top, klasse, name, reasons, onClose }: { top: number; klasse
         <AppText style={styles.warnCardTitle}>{name ? `${title}: ${name}` : title}</AppText>
         {reasons.length > 0 && <AppText style={styles.warnCardText}>{reasons.map(trimDecimals).join(', ')}</AppText>}
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel="Hinweis schließen" hitSlop={12} onPress={onClose} style={styles.warnCardClose}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('Hinweis schließen')} hitSlop={12} onPress={onClose} style={styles.warnCardClose}>
         <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.muted} />
       </Pressable>
     </Animated.View>

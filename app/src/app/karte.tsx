@@ -14,6 +14,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { formatKm } from '@/lib/tour';
+import { t } from '@/i18n';
 
 export default function KarteScreen() {
   const active = useActiveTour();
@@ -23,9 +24,9 @@ export default function KarteScreen() {
   if (!active) {
     return (
       <View style={[styles.empty, { paddingTop: insets.top + Spacing.xl }]}>
-        <AppText variant="title">Keine Tour gewählt.</AppText>
-        <AppText muted>Erstelle zuerst eine Tour im Tab Planen.</AppText>
-        <RoundButton label="Schließen" onPress={() => router.back()} />
+        <AppText variant="title">{t('Keine Tour gewählt.')}</AppText>
+        <AppText muted>{t('Erstelle zuerst eine Tour im Tab Planen.')}</AppText>
+        <RoundButton label={t('Schließen')} onPress={() => router.back()} />
       </View>
     );
   }
@@ -52,13 +53,13 @@ export default function KarteScreen() {
             {formatKm(tour.laenge_km, 0)} km{warnings.length ? `, ${warnings.length} Warnungen` : ', ohne Warnungen'}
           </AppText>
         </View>
-        <RoundButton label="Schließen" onPress={() => router.back()} />
+        <RoundButton label={t('Schließen')} onPress={() => router.back()} />
       </View>
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + Spacing.m }]}>
         {warnings.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-            <WarnChip label="Ganze Tour" active={focus == null} onPress={() => setFocus(null)} />
+            <WarnChip label={t('Ganze Tour')} active={focus == null} onPress={() => setFocus(null)} />
             {warnings.map(({ w, index }) => (
               <WarnChip
                 key={index}
@@ -77,7 +78,7 @@ export default function KarteScreen() {
             router.replace('/navigation');
           }}
           style={({ pressed }) => [styles.go, pressed && styles.pressed]}>
-          <AppText style={styles.goText}>Losfahren</AppText>
+          <AppText style={styles.goText}>{t('Losfahren')}</AppText>
         </Pressable>
       </View>
     </View>

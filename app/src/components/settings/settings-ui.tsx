@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { t } from '@/i18n';
 
 /** Unterseite: Zurück Pille oben links, großer Titel, scrollender Inhalt. */
 export function SubScreen({ title, children, scrollRef }: { title: string; children: ReactNode; scrollRef?: RefObject<ScrollViewInstance | null> }) {
@@ -23,7 +24,7 @@ export function SubScreen({ title, children, scrollRef }: { title: string; child
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive"
       automaticallyAdjustKeyboardInsets>
-      <BackLink label="Einstellungen" fallback="/einstellungen" />
+      <BackLink label={t('Einstellungen')} fallback="/einstellungen" />
       <AppText variant="display" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {title}
       </AppText>

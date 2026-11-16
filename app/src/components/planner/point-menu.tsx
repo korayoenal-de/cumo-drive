@@ -10,6 +10,7 @@ import Animated from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme';
+import { t } from '@/i18n';
 
 export type PointAction = 'start' | 'ziel' | 'karte' | 'entfernen';
 
@@ -24,10 +25,10 @@ export type PointMenuState = {
 };
 
 export const LABEL: Record<PointAction, { text: string; icon: SFSymbol }> = {
-  start: { text: 'Als Start setzen', icon: 'smallcircle.filled.circle' },
-  ziel: { text: 'Als Ziel setzen', icon: 'flag' },
-  karte: { text: 'Auf der Karte zeigen', icon: 'mappin.and.ellipse' },
-  entfernen: { text: 'Entfernen', icon: 'trash' },
+  start: { text: t('Als Start setzen'), icon: 'smallcircle.filled.circle' },
+  ziel: { text: t('Als Ziel setzen'), icon: 'flag' },
+  karte: { text: t('Auf der Karte zeigen'), icon: 'mappin.and.ellipse' },
+  entfernen: { text: t('Entfernen'), icon: 'trash' },
 };
 
 const ITEM_H = 52;
@@ -44,7 +45,7 @@ export function PointMenu({ menu, onPick, onClose }: { menu: PointMenuState | nu
   const top = below ? menu.bottom + Spacing.xs : Math.max(24, menu.top - Spacing.xs - h);
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel="Menü schließen" />
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('Menü schließen')} />
       <View style={[styles.menu, { top, right: Spacing.xl }]} accessibilityViewIsModal accessibilityLabel={`Aktionen für ${menu.name}`}>
         {main.map((a, i) => (
           <Animated.View key={a} entering={softEnter(i)}>

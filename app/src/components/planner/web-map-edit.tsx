@@ -14,6 +14,7 @@ import { Colors } from '@/constants/theme';
 
 import { type MapInstance } from './map-web';
 import { BODY, C } from './web-shared';
+import { t } from '@/i18n';
 
 type Pt = { x: number; y: number };
 type LayerEvent = { point: Pt; lngLat: { lat: number; lng: number }; features?: { properties: Record<string, unknown> }[]; preventDefault: () => void; originalEvent?: Event };
@@ -221,7 +222,7 @@ export function AdjustChip(props: { state: AdjustState | null; onDone: () => voi
       <style>{`@keyframes cdChipIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}`}</style>
       <span style={{ color: shown.warn ? C.warn : '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown.text}</span>
       <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.18)' }} />
-      <span style={{ color: C.signal, whiteSpace: 'nowrap' }}>↶ Rückgängig</span>
+      <span style={{ color: C.signal, whiteSpace: 'nowrap' }}>{t('↶ Rückgängig')}</span>
     </button>
   );
 }

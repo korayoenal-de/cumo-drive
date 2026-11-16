@@ -35,6 +35,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { TAB_BAR_SPACE } from '@/components/ui/screen';
 import { reportScroll } from '@/lib/tab-bar';
 import { Colors, Radius, Shadow, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 /** 0 klein (nur der Kopf), 1 halb, 2 groß */
 export type Detent = 0 | 1 | 2;
@@ -252,9 +253,9 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
             accessible
             accessibilityRole="adjustable"
             accessibilityLabel={grabberLabel}
-            accessibilityHint="Wischen nach oben oder unten ändert die Höhe"
+            accessibilityHint={t('Wischen nach oben oder unten ändert die Höhe')}
             accessibilityValue={{ text: DETENT_NAME[detent] }}
-            accessibilityActions={[{ name: 'increment', label: 'Größer' }, { name: 'decrement', label: 'Kleiner' }, { name: 'activate' }]}
+            accessibilityActions={[{ name: 'increment', label: t('Größer') }, { name: 'decrement', label: t('Kleiner') }, { name: 'activate' }]}
             onAccessibilityAction={onAction}
             style={styles.grabberZone}>
             <View style={styles.grabber} />

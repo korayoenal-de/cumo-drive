@@ -18,6 +18,7 @@ import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/c
 import { ausfahrtTeilnehmer, clock, listAusfahrten, sendNachricht, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { enablePush, setOpenChat } from '@/lib/push';
+import { t } from '@/i18n';
 
 export default function AusfahrtChat() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -77,7 +78,7 @@ export default function AusfahrtChat() {
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.head, { paddingTop: insets.top + Spacing.s }]}>
-        <BackLink label="Ausfahrt" onPress={back} />
+        <BackLink label={t('Ausfahrt')} onPress={back} />
         <View style={styles.flex}>
           <AppText style={styles.title} numberOfLines={1}>{a?.name ?? 'Chat'}</AppText>
           {a && (
@@ -102,7 +103,7 @@ export default function AusfahrtChat() {
         )}
         {list === null && !error && <ActivityIndicator color={Colors.muted} />}
         {error && <AppText style={styles.error}>{error}</AppText>}
-        {list?.length === 0 && <AppText muted style={styles.empty}>Noch keine Nachrichten. Sag Hallo und stimm dich mit der Gruppe ab.</AppText>}
+        {list?.length === 0 && <AppText muted style={styles.empty}>{t('Noch keine Nachrichten. Sag Hallo und stimm dich mit der Gruppe ab.')}</AppText>}
         {list?.map((m, i) => {
           const mine = m.userId === me;
           const prev = list[i - 1];
@@ -124,7 +125,7 @@ export default function AusfahrtChat() {
             </Animated.View>
           );
         })}
-        <AppText variant="caption" muted style={styles.hint}>Am Tag der Ausfahrt startet die Lead die Gruppenfahrt mit Live Positionen.</AppText>
+        <AppText variant="caption" muted style={styles.hint}>{t('Am Tag der Ausfahrt startet die Lead die Gruppenfahrt mit Live Positionen.')}</AppText>
       </ScrollView>
 
       {sendErr && <AppText style={[styles.error, styles.sendErr]}>{sendErr}</AppText>}
@@ -132,14 +133,14 @@ export default function AusfahrtChat() {
         <TextInput maxFontSizeMultiplier={1.2}
           value={text}
           onChangeText={setText}
-          placeholder="Nachricht"
+          placeholder={t('Nachricht')}
           placeholderTextColor={Colors.muted}
           multiline
           maxLength={1000}
           style={styles.input}
-          accessibilityLabel="Nachricht schreiben"
+          accessibilityLabel={t('Nachricht schreiben')}
         />
-        <Pressable accessibilityRole="button" accessibilityLabel="Senden" accessibilityState={{ disabled: !canSend }} disabled={!canSend} onPress={() => void send()} style={[styles.send, !canSend && styles.sendOff]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('Senden')} accessibilityState={{ disabled: !canSend }} disabled={!canSend} onPress={() => void send()} style={[styles.send, !canSend && styles.sendOff]}>
           {sending ? <ActivityIndicator color={Colors.onSignal} /> : <SymbolView name="arrow.up" size={20} weight="semibold" tintColor={Colors.onSignal} />}
         </Pressable>
       </View>

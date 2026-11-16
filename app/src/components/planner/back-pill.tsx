@@ -25,6 +25,7 @@ import Animated, {
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Shadow, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 /** Höhe der Pille, damit Plaketten darunter Platz finden */
 export const BACK_PILL_H = 44;
@@ -84,7 +85,7 @@ export function BackPill({ label, top, onPress, status }: { label?: string | nul
             </AppText>
             <View style={styles.sep} />
             <SymbolView name="arrow.uturn.backward" size={16} weight="semibold" tintColor={Colors.signal} />
-            <AppText style={[styles.text, styles.undo]}>Rückgängig</AppText>
+            <AppText style={[styles.text, styles.undo]}>{t('Rückgängig')}</AppText>
           </Animated.View>
         </Pressable>
       )}

@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { sheetEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type, Size } from '@/constants/theme';
+import { t } from '@/i18n';
 
 const AnimatedScroll = Animated.createAnimatedComponent(GHScrollView);
 
@@ -73,7 +74,7 @@ export function OptionsSheet({ visible, title, subtitle, onClose, children, scro
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <GestureHandlerRootView style={styles.flex}>
         <KeyboardAvoidingView behavior="padding" style={styles.flex}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={onClose} style={styles.backdrop} />
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Schließen')} onPress={onClose} style={styles.backdrop} />
           <GestureDetector gesture={pan}>
             {/* außen das Ziehen, innen das Hereinfahren: beide nutzen transform */}
             <Animated.View style={[styles.dragWrap, dragStyle]}>
@@ -165,7 +166,7 @@ export function ConfirmSheet({
     <OptionsSheet visible={visible} title={title} subtitle={text} onClose={onClose}>
       <View style={styles.confirmRow}>
         <Pressable accessibilityRole="button" onPress={onClose} style={({ pressed }) => [styles.cancel, pressed && styles.itemPressed]}>
-          <AppText style={styles.cancelText}>Abbrechen</AppText>
+          <AppText style={styles.cancelText}>{t('Abbrechen')}</AppText>
         </Pressable>
         <Pressable
           accessibilityRole="button"

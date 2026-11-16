@@ -24,6 +24,7 @@ import { AddHighlight, StopsPanel } from './web-tour-panels';
 import { BODY, C } from './web-shared';
 import { S } from './web-styles';
 import { XIcon } from './web-ui';
+import { t } from '@/i18n';
 
 type Edit = { kind: PointKind; index?: number; insert?: boolean } | null;
 
@@ -122,7 +123,7 @@ export function RoutePanel(props: {
           ) : (
             <button
               style={{ ...S.wpName, height: 52, background: C.surface, borderRadius: Radius.m, padding: '0 14px', boxSizing: 'border-box', width: '100%' }}
-              title="Klick ändert den Ort"
+              title={t('Klick ändert den Ort')}
               aria-label={`${role} ${nameOf(p)}, ändern`}
               disabled={!!drag}
               onClick={() => {
@@ -141,7 +142,7 @@ export function RoutePanel(props: {
                 role="button"
                 tabIndex={0}
                 aria-label={`${role} verschieben`}
-                title="Ziehen ändert die Reihenfolge"
+                title={t('Ziehen ändert die Reihenfolge')}
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = 'move';
                   setDrag({ from: slot, to: slot });
@@ -222,7 +223,7 @@ export function RoutePanel(props: {
             id={`einfuegen-${i}`}
             autoFocus
             near={a ?? undefined}
-            placeholder="Zwischenziel suchen"
+            placeholder={t('Zwischenziel suchen')}
             onPick={(x) => pick({ kind: 'via', index: i, insert: true }, x.p, x.name)}
             onBlurEmpty={() => setEdit(null)}
           />
@@ -239,7 +240,7 @@ export function RoutePanel(props: {
       {routeTour ? (
         <textarea
           id="tour-name"
-          aria-label="Tourname"
+          aria-label={t('Tourname')}
           value={plan.name}
           rows={Math.min(4, Math.max(1, Math.ceil(plan.name.length / 18)))}
           maxLength={120}
@@ -255,7 +256,7 @@ export function RoutePanel(props: {
 
       <section style={S.section} onDragOver={onDragOver} onDrop={onDrop}>
         <div style={{ ...S.sectionHead, alignItems: 'center' }}>
-          <span style={S.label}>Route</span>
+          <span style={S.label}>{t('Route')}</span>
           {pts.length ? (
             <button
               style={{ ...S.link, fontSize: 15, textDecoration: 'none', color: C.muted }}
@@ -286,13 +287,13 @@ export function RoutePanel(props: {
             Start und Ziel tauschen
           </button>
         ) : null}
-        {!pts.length ? <p style={S.muted}>Oder klick auf die Karte: der erste Punkt wird der Start, der zweite das Ziel.</p> : null}
+        {!pts.length ? <p style={S.muted}>{t('Oder klick auf die Karte: der erste Punkt wird der Start, der zweite das Ziel.')}</p> : null}
       </section>
 
       {plan.roadWarn ? <p style={{ ...S.muted, color: C.warn }}>{plan.roadWarn}</p> : null}
       {plan.error ? (
         <div style={{ ...S.error, margin: 0, display: 'flex', flexDirection: 'column', gap: Spacing.s }}>
-          <b>Das hat nicht geklappt</b>
+          <b>{t('Das hat nicht geklappt')}</b>
           <span>{plan.error}</span>
           {pts.length >= 2 ? (
             <button style={{ ...S.secondary, flex: 'none', alignSelf: 'flex-start' }} onClick={() => plan.planNow(profile, avoid)}>
@@ -313,7 +314,7 @@ export function RoutePanel(props: {
 
       <div>
         {routeTour ? (
-          <Accordion label="Highlights/Pässe" summary="Pässe und Highlights auf deinen Etappen">
+          <Accordion label={t('Highlights/Pässe')} summary="Pässe und Highlights auf deinen Etappen">
             <AddHighlight
               pts={pts}
               taken={new Set(pts.map((p) => plan.names[keyOf(p)]).filter(Boolean))}
@@ -324,7 +325,7 @@ export function RoutePanel(props: {
                 if (c.line && c.line.length > 2) {
                   const snap = plan.snapshot();
                   const replaced = plan.insertRoad(leg, c.line, profile, avoid, c.name);
-                  if (replaced) showToast(`${c.name} ersetzt ${replaced}, es lag nur 2 km davor`, { action: { label: 'Rückgängig', onPress: () => plan.restore(snap) } });
+                  if (replaced) showToast(`${c.name} ersetzt ${replaced}, es lag nur 2 km davor`, { action: { label: t('Rückgängig'), onPress: () => plan.restore(snap) } });
                 } else plan.insertAt(leg, c.p, profile, avoid, c.name);
               }}
               onAddPass={(pass) => {
@@ -335,7 +336,7 @@ export function RoutePanel(props: {
           </Accordion>
         ) : null}
         {routeTour ? (
-          <Accordion label="Unterwegs einplanen" summary="Tanken, Essen, Aussicht">
+          <Accordion label={t('Unterwegs einplanen')} summary="Tanken, Essen, Aussicht">
             <StopsPanel
               tour={routeTour}
               busy={busy}
@@ -346,7 +347,7 @@ export function RoutePanel(props: {
             />
           </Accordion>
         ) : null}
-        <Accordion label="Vermeiden" summary={avoidText}>
+        <Accordion label={t('Vermeiden')} summary={avoidText}>
           {(
             [
               ['closures', 'Gesperrte Straßen', 'Wir planen um gesperrte Straßen herum.'],

@@ -11,13 +11,14 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { placesNear, type NearPlace } from '@/lib/stops-along';
 import { formatKm, type LatLon } from '@/lib/tour';
+import { t } from '@/i18n';
 
 
 export type NearKind = 'hotel' | 'kaffee' | 'mittag';
 
 const KINDS: { id: NearKind; label: string; one: string; plural: string; icon: 'bed.double.fill' | 'cup.and.saucer.fill' | 'fork.knife' }[] = [
-  { id: 'hotel', label: 'Hotel', one: 'Hotel', plural: 'Hotels', icon: 'bed.double.fill' },
-  { id: 'mittag', label: 'Essen', one: 'Restaurant', plural: 'Restaurants', icon: 'fork.knife' },
+  { id: 'hotel', label: t('Hotel'), one: 'Hotel', plural: 'Hotels', icon: 'bed.double.fill' },
+  { id: 'mittag', label: t('Essen'), one: 'Restaurant', plural: 'Restaurants', icon: 'fork.knife' },
 ];
 
 /** Treffer je Ort und Art, damit Öffnen und Schließen nicht neu lädt */
@@ -111,7 +112,7 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
               {role}
             </AppText>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={onClose} style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Schließen')} onPress={onClose} style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
             <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         </View>
@@ -135,7 +136,7 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
         {list === undefined ? (
           <ActivityIndicator color={Colors.muted} style={styles.loading} />
         ) : list === 'fehler' ? (
-          <AppText style={[styles.muted, styles.pad]}>Lässt sich gerade nicht laden.</AppText>
+          <AppText style={[styles.muted, styles.pad]}>{t('Lässt sich gerade nicht laden.')}</AppText>
         ) : list.length === 0 ? (
           <AppText style={[styles.muted, styles.pad]}>
             {kind === 'hotel' ? `Keine ${meta.plural} in der Nähe.` : `Hier haben wir noch keine empfohlenen ${meta.plural}. Über die Suche findest du jedes ${meta.one}.`}

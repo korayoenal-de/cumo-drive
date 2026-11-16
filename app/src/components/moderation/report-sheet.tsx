@@ -11,6 +11,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { blockUser, REASONS, reportContent, type ReportKind, type ReportReason } from '@/lib/moderation';
 import { showToast } from '@/lib/toast';
+import { t } from '@/i18n';
 
 export function ReportSheet(props: {
   visible: boolean;
@@ -54,7 +55,7 @@ export function ReportSheet(props: {
     }
   };
   return (
-    <OptionsSheet visible={visible} title="Was stimmt hier nicht?" subtitle="Deine Meldung bleibt anonym. Wir sehen uns den Inhalt an und entfernen ihn, wenn er gegen die Regeln verstößt." onClose={close}>
+    <OptionsSheet visible={visible} title={t('Was stimmt hier nicht?')} subtitle={t('Deine Meldung bleibt anonym. Wir sehen uns den Inhalt an und entfernen ihn, wenn er gegen die Regeln verstößt.')} onClose={close}>
       <View style={styles.wrap}>
         <View style={styles.chips}>
           {REASONS.map((r) => (
@@ -65,11 +66,11 @@ export function ReportSheet(props: {
           maxFontSizeMultiplier={1.2}
           value={note}
           onChangeText={(t) => setNote(t.slice(0, 500))}
-          placeholder="Was sollen wir wissen? (optional)"
+          placeholder={t('Was sollen wir wissen? (optional)')}
           placeholderTextColor={Colors.muted}
           multiline
           style={styles.input}
-          accessibilityLabel="Notiz zur Meldung"
+          accessibilityLabel={t('Notiz zur Meldung')}
         />
         {err && <AppText style={styles.err}>{err}</AppText>}
         <Pressable
@@ -78,7 +79,7 @@ export function ReportSheet(props: {
           disabled={!reason || busy}
           onPress={() => void send()}
           style={({ pressed }) => [styles.primary, !reason && styles.primaryOff, pressed && styles.pressed]}>
-          {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Melden</AppText>}
+          {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Melden')}</AppText>}
         </Pressable>
       </View>
     </OptionsSheet>
@@ -92,7 +93,7 @@ export function BlockSheet({ visible, userId, name, onClose, onDone }: { visible
       visible={visible}
       title={`Möchtest du ${name} blockieren?`}
       text={`${name} kann dir dann nicht mehr schreiben und ihr seht euch nicht mehr unter Drivers. ${name} erfährt davon nichts. Aufheben kannst du das in den Einstellungen.`}
-      confirmLabel="Blockieren"
+      confirmLabel={t('Blockieren')}
       onClose={onClose}
       onConfirm={() => {
         blockUser(userId)

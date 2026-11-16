@@ -13,6 +13,7 @@ import { ActionSheet, SHEET_GONE_MS, ConfirmSheet, type SheetItem } from '@/comp
 import { FloatMenu, type Anchor } from '@/components/ui/float-menu';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { t } from '@/i18n';
 
 
 /** Schalter Solo oder Gruppe: Breite des aktiven und des inaktiven Felds, Abstand dazwischen */
@@ -78,13 +79,13 @@ export function ActionBar({
         <View style={styles.row}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Speichern"
-            accessibilityHint="Unter Touren ablegen"
+            accessibilityLabel={t('Speichern')}
+            accessibilityHint={t('Unter Touren ablegen')}
             accessibilityState={{ busy: save.busy }}
             disabled={save.busy}
             onPress={save.onPress}
             style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
-            {save.busy ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>Speichern</AppText>}
+            {save.busy ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>{t('Speichern')}</AppText>}
           </Pressable>
           {moreBtn}
         </View>
@@ -98,7 +99,7 @@ export function ActionBar({
       {children}
       <FloatMenu
         anchor={anchor}
-        label="Weitere Aktionen"
+        label={t('Weitere Aktionen')}
         items={more.map((it) => ({ key: it.key, label: it.label, icon: it.icon, danger: it.danger }))}
         onPick={(key) => {
           setAnchor(null);

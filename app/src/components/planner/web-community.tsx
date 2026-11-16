@@ -25,16 +25,17 @@ import { Chip, Gauge, Metric } from './web-parts';
 import { BODY, C } from './web-shared';
 import { S } from './web-styles';
 import { Badge, ConfirmSheet, Field, FromBadge, pillBtn, RouteThumb, Segmented, ViewTitle } from './web-ui';
+import { tr } from '@/i18n';
 
 export type Seg = 'routen' | 'ausfahrten' | 'drivers';
 export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt' | 'driver'; p: LatLon; label: string; ring?: string };
 
 type Sort = 'neu' | 'kurven' | 'kurz' | 'lang';
 const SORTS: { id: Sort; label: string }[] = [
-  { id: 'neu', label: 'Neueste' },
-  { id: 'kurven', label: 'Kurvigste' },
-  { id: 'kurz', label: 'Kurz' },
-  { id: 'lang', label: 'Lang' },
+  { id: 'neu', label: tr('Neueste') },
+  { id: 'kurven', label: tr('Kurvigste') },
+  { id: 'kurz', label: tr('Kurz') },
+  { id: 'lang', label: tr('Lang') },
 ];
 
 const ringColor = (d: Driver) => d.garage?.find((g) => g.look)?.look?.color ?? C.text;
@@ -118,24 +119,24 @@ export function CommunityPanel(props: {
 
   return (
     <div style={S.stack}>
-      <ViewTitle>Community</ViewTitle>
+      <ViewTitle>{tr('Community')}</ViewTitle>
       <Segmented
-        label="Bereich der Community"
+        label={tr('Bereich der Community')}
         value={seg}
         onChange={(v) => {
           setSeg(v);
           props.onSelect(null);
         }}
         options={[
-          { id: 'routen', label: 'Touren' },
-          { id: 'ausfahrten', label: 'Ausfahrten', badge: openRequests || undefined },
-          { id: 'drivers', label: 'Drivers' },
+          { id: 'routen', label: tr('Touren') },
+          { id: 'ausfahrten', label: tr('Ausfahrten'), badge: openRequests || undefined },
+          { id: 'drivers', label: tr('Drivers') },
         ]}
       />
       {seg === 'routen' ? (
         <>
           <span style={S.metricLabel}>Touren zum Nachfahren{tours ? `, ${tours.length}` : ''}</span>
-          <input aria-label="Touren durchsuchen" placeholder="Tour, Fahrer oder Beschreibung suchen" value={q} onChange={(e) => setQ(e.target.value)} style={{ ...S.search, height: 52 }} />
+          <input aria-label={tr('Touren durchsuchen')} placeholder={tr('Tour, Fahrer oder Beschreibung suchen')} value={q} onChange={(e) => setQ(e.target.value)} style={{ ...S.search, height: 52 }} />
           <div style={S.chips}>
             {SORTS.map((s) => (
               <Chip key={s.id} on={sort === s.id} onClick={() => setSort(s.id)}>
@@ -144,9 +145,9 @@ export function CommunityPanel(props: {
             ))}
           </div>
           {err ? <p style={S.errorText}>Community konnte nicht geladen werden: {err}</p> : null}
-          {tours === null && !err ? <p style={S.muted}>Wird geladen …</p> : null}
-          {tours?.length === 0 ? <EmptyCard title="Noch keine Routen veröffentlicht" text="Sei der Erste: Öffne Touren und veröffentliche eine Tour über das Menü ⋯." /> : null}
-          {tours && tours.length > 0 && !shownTours.length ? <p style={S.muted}>Keine Route passt zur Suche.</p> : null}
+          {tours === null && !err ? <p style={S.muted}>{tr('Wird geladen …')}</p> : null}
+          {tours?.length === 0 ? <EmptyCard title={tr('Noch keine Routen veröffentlicht')} text="Sei der Erste: Öffne Touren und veröffentliche eine Tour über das Menü ⋯." /> : null}
+          {tours && tours.length > 0 && !shownTours.length ? <p style={S.muted}>{tr('Keine Route passt zur Suche.')}</p> : null}
           {shownTours.map((t) => (
             <RouteCard
               key={t.id}
@@ -161,7 +162,7 @@ export function CommunityPanel(props: {
                   // Herkunft mitgeben: gespeichert gilt sie als Community Tour (wie in der App)
                   props.onOpenTour({ ...full.tour, name: t.name, author: t.author?.trim() || undefined, communityId: t.id }, full.profile);
                 } catch (e) {
-                  showToast(e instanceof Error ? e.message : 'Die Route ließ sich nicht laden.', { tone: 'error' });
+                  showToast(e instanceof Error ? e.message: tr('Die Route ließ sich nicht laden.'), { tone: 'error' });
                 }
               }}
             />
@@ -169,9 +170,9 @@ export function CommunityPanel(props: {
         </>
       ) : seg === 'ausfahrten' ? (
         <>
-          <span style={S.metricLabel}>Gemeinsame Ausfahrten</span>
-          {rides === null ? <p style={S.muted}>Wird geladen …</p> : null}
-          {rides?.length === 0 ? <EmptyCard title="Noch keine Ausfahrten geplant" text="Eine Ausfahrt mit Zeit, Treffpunkt und freien Plätzen legst du in der App unter Community an." /> : null}
+          <span style={S.metricLabel}>{tr('Gemeinsame Ausfahrten')}</span>
+          {rides === null ? <p style={S.muted}>{tr('Wird geladen …')}</p> : null}
+          {rides?.length === 0 ? <EmptyCard title={tr('Noch keine Ausfahrten geplant')} text="Eine Ausfahrt mit Zeit, Treffpunkt und freien Plätzen legst du in der App unter Community an." /> : null}
           {(rides ?? []).map((r) => (
             <RideCard
               key={r.id}
@@ -185,7 +186,7 @@ export function CommunityPanel(props: {
               onRoute={async () => {
                 const res = await ausfahrtTour(r.id).catch(() => null);
                 if (res) props.onOpenTour({ ...res.tour, name: r.name }, res.profile);
-                else showToast('Die Route der Ausfahrt ließ sich nicht laden.', { tone: 'error' });
+                else showToast(tr('Die Route der Ausfahrt ließ sich nicht laden.'), { tone: 'error' });
               }}
             />
           ))}
@@ -193,18 +194,18 @@ export function CommunityPanel(props: {
       ) : (
         <>
           <span style={S.metricLabel}>Drivers{drivers ? `, ${drivers.length}` : ''}</span>
-          {drivers === null ? <p style={S.muted}>Wird geladen …</p> : null}
+          {drivers === null ? <p style={S.muted}>{tr('Wird geladen …')}</p> : null}
           {me && !me.home ? (
             <div style={{ ...card, gap: Spacing.m }}>
-              <b style={{ font: `700 17px ${BODY}` }}>Zeig dich auf der Karte</b>
-              <span style={S.muted}>Trag deinen Wohnort in den Einstellungen ein. Andere sehen dich dann dort, nur als Ortsmitte.</span>
+              <b style={{ font: `700 17px ${BODY}` }}>{tr('Zeig dich auf der Karte')}</b>
+              <span style={S.muted}>{tr('Trag deinen Wohnort in den Einstellungen ein. Andere sehen dich dann dort, nur als Ortsmitte.')}</span>
               <button style={{ ...S.secondaryOnSurface, flex: 'none', alignSelf: 'flex-start' }} onClick={props.onSettings}>
                 Wohnort angeben
               </button>
             </div>
           ) : null}
-          <input aria-label="Drivers durchsuchen" placeholder="Name, Ort oder Auto suchen" value={dq} onChange={(e) => setDq(e.target.value)} style={{ ...S.search, height: 52 }} />
-          {drivers && !shownDrivers.length ? <p style={S.muted}>Kein Mitglied passt zur Suche.</p> : null}
+          <input aria-label={tr('Drivers durchsuchen')} placeholder={tr('Name, Ort oder Auto suchen')} value={dq} onChange={(e) => setDq(e.target.value)} style={{ ...S.search, height: 52 }} />
+          {drivers && !shownDrivers.length ? <p style={S.muted}>{tr('Kein Mitglied passt zur Suche.')}</p> : null}
           {shownDrivers.map((d) => (
             <DriverCard
               key={d.id}
@@ -260,7 +261,7 @@ function WebReport(props: { kind: ReportKind; refId: string; userId?: string | n
     try {
       await reportContent(props.kind, props.refId, reason, note);
       setSent(true);
-      showToast('Danke, wir schauen es uns an');
+      showToast(tr('Danke, wir schauen es uns an'));
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
     } finally {
@@ -282,17 +283,17 @@ function WebReport(props: { kind: ReportKind; refId: string; userId?: string | n
           onClick={() =>
             void blockUser(props.userId!)
               .then(() => showToast(`${props.name ?? 'Person'} blockiert`))
-              .catch(() => showToast('Das hat nicht geklappt', { tone: 'error' }))
+              .catch(() => showToast(tr('Das hat nicht geklappt'), { tone: 'error' }))
           }>
           Blockieren
         </button>
       </div>
     ) : (
-      <span style={S.muted}>Gemeldet. Danke!</span>
+      <span style={S.muted}>{tr('Gemeldet. Danke!')}</span>
     );
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, background: C.ground }}>
-      <span style={S.metricLabel}>Was stimmt hier nicht?</span>
+      <span style={S.metricLabel}>{tr('Was stimmt hier nicht?')}</span>
       <div style={S.chips}>
         {REASONS.map((r) => (
           <Chip key={r.v} on={reason === r.v} onClick={() => setReason(r.v)}>
@@ -300,7 +301,7 @@ function WebReport(props: { kind: ReportKind; refId: string; userId?: string | n
           </Chip>
         ))}
       </div>
-      <Field id={`melden-${props.refId}`} label="Notiz (freiwillig)" value={note} onChange={setNote} area max={500} />
+      <Field id={`melden-${props.refId}`} label={tr('Notiz (freiwillig)')} value={note} onChange={setNote} area max={500} />
       {err ? <span style={{ ...S.muted, color: C.warn }}>{err}</span> : null}
       <div style={{ display: 'flex', gap: Spacing.s }}>
         <button type="button" style={{ ...pillBtn, background: C.surface2, color: C.text }} onClick={() => setOpen(false)}>
@@ -346,7 +347,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
     if (kept) {
       // eigene Änderungen nicht über das Lesezeichen löschen
       if (kept.edited || (!kept.published && Math.abs(kept.laenge_km - Number(t.km)) > 0.5)) {
-        showToast('Du hast diese Tour bearbeitet. Deine Fassung bleibt unter Touren.');
+        showToast(tr('Du hast diese Tour bearbeitet. Deine Fassung bleibt unter Touren.'));
         return;
       }
       try {
@@ -358,7 +359,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
             ? {}
             : {
                 action: {
-                  label: 'Rückgängig',
+                  label: tr('Rückgängig'),
                   onPress: () => {
                     saveTour(kept, kept.folder);
                     void syncLibrary();
@@ -367,14 +368,14 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
               },
         );
       } catch {
-        showToast('Das hat nicht geklappt', { tone: 'error' });
+        showToast(tr('Das hat nicht geklappt'), { tone: 'error' });
       }
       return;
     }
     setSaving(true);
     copyCommunityTour(t)
-      .then(() => showToast('Unter Touren gespeichert'))
-      .catch(() => showToast('Speichern hat nicht geklappt', { tone: 'error' }))
+      .then(() => showToast(tr('Unter Touren gespeichert')))
+      .catch(() => showToast(tr('Speichern hat nicht geklappt'), { tone: 'error' }))
       .finally(() => setSaving(false));
   };
   return (
@@ -389,7 +390,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
           <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ font: `700 17px/22px ${BODY}`, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.name}</span>
             <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{meta}</span>
-            {props.mine ? <Badge tone="good">Von dir</Badge> : <FromBadge author={author} />}
+            {props.mine ? <Badge tone="good">{tr('Von dir')}</Badge> : <FromBadge author={author} />}
           </span>
         </button>
         <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flex: 'none', minWidth: 36 }} aria-label={fun != null && fun >= 0 ? `Fahrspaß ${fun} von 100, ${TOUR_FUN_NAMES[tourFunLevel(fun)]}` : undefined}>
@@ -405,7 +406,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
         {props.mine ? (
           <button
             aria-label={`${t.name} ist veröffentlicht. Aus der Community nehmen`}
-            title="Aus der Community nehmen"
+            title={tr('Aus der Community nehmen')}
             disabled={saving}
             onClick={() => setAsk(true)}
             style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: 'rgba(76,195,138,0.14)', color: C.good, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -429,9 +430,9 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
       {props.selected ? (
         <>
           <div style={S.metrics}>
-            <Metric label="Strecke" value={`${formatKm(Number(t.km), 0)} km`} />
-            {t.minutes ? <Metric label="Fahrzeit" value={bigDuration(t.minutes)} /> : null}
-            {t.curves ? <Metric label="Kurven" value={String(t.curves)} /> : null}
+            <Metric label={tr('Strecke')} value={`${formatKm(Number(t.km), 0)} km`} />
+            {t.minutes ? <Metric label={tr('Fahrzeit')} value={bigDuration(t.minutes)} /> : null}
+            {t.curves ? <Metric label={tr('Kurven')} value={String(t.curves)} /> : null}
           </div>
           {t.description ? <p style={{ ...S.muted, color: C.text, margin: 0 }}>{t.description}</p> : null}
           <button style={{ ...S.primary, height: 52 }} onClick={props.onOpen}>
@@ -443,9 +444,9 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
       {ask ? (
         <ConfirmSheet
           narrow
-          title="Möchtest du diese Tour wirklich aus der Community entfernen?"
+          title={tr('Möchtest du diese Tour wirklich aus der Community entfernen?')}
           text="Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten."
-          confirmLabel="Entfernen"
+          confirmLabel={tr('Entfernen')}
           busy={saving}
           onClose={() => setAsk(false)}
           onConfirm={() => {
@@ -453,10 +454,10 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
             withdrawCommunityTour(t.id)
               .then(() => {
                 setAsk(false);
-                showToast('Aus der Community genommen');
+                showToast(tr('Aus der Community genommen'));
                 props.onWithdrawn(t.id);
               })
-              .catch(() => showToast('Das hat nicht geklappt', { tone: 'error' }))
+              .catch(() => showToast(tr('Das hat nicht geklappt'), { tone: 'error' }))
               .finally(() => setSaving(false));
           }}
         />
@@ -511,9 +512,9 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
         <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.l, paddingTop: Spacing.s }}>
           <span style={S.metricLabel}>{longDate(r.startsAt)}, organisiert von {r.isOwner ? 'dir' : r.ownerName}{r.ownerCar ? ` (${r.ownerCar})` : ''}</span>
           <div style={S.metrics}>
-            {r.km != null ? <Metric label="Strecke" value={`${formatKm(r.km, 0)} km`} /> : null}
+            {r.km != null ? <Metric label={tr('Strecke')} value={`${formatKm(r.km, 0)} km`} /> : null}
             {arr ? <Metric label={r.roundTrip ? 'Zurück' : 'Ankunft'} value={clock(arr)} /> : null}
-            <Metric label="Plätze" value={free > 0 ? `${free} frei` : 'voll'} />
+            <Metric label={tr('Plätze')} value={free > 0 ? `${free} frei` : 'voll'} />
           </div>
           {!r.roundTrip && r.goalName ? <span style={S.muted}>Ziel: {r.goalName}</span> : null}
           {r.note ? <p style={{ ...S.muted, color: C.text }}>{r.note}</p> : null}
@@ -534,7 +535,7 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
                 const v = currentVehicle();
                 void act(() => requestAusfahrt(r.id, msg, v ? vehicleName(v) : null), 'Anfrage gesendet');
               }}>
-              <Field id={`anfrage-${r.id}`} label="Nachricht an den Organisator (optional)" placeholder="Kurz zu dir und deinem Auto" value={msg} onChange={setMsg} area max={300} />
+              <Field id={`anfrage-${r.id}`} label={tr('Nachricht an den Organisator (optional)')} placeholder={tr('Kurz zu dir und deinem Auto')} value={msg} onChange={setMsg} area max={300} />
               <div style={{ display: 'flex', gap: Spacing.s }}>
                 <button type="button" style={{ ...pillBtn, background: C.ground, color: C.text }} onClick={() => setAsking(false)}>
                   Abbrechen
@@ -562,11 +563,11 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
 
 function rideStatus(r: Ausfahrt): { text: string; tone: 'good' | 'signal' | 'muted' } | null {
   if (r.isOwner) return { text: r.openRequests ? `${r.openRequests} ${r.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : 'Deine Ausfahrt', tone: r.openRequests ? 'signal' : 'muted' };
-  if (r.myStatus === 'zugesagt') return { text: 'Du bist dabei', tone: 'good' };
-  if (r.myStatus === 'eingeladen') return { text: 'Eingeladen', tone: 'signal' };
-  if (r.myStatus === 'angefragt') return { text: 'Angefragt', tone: 'muted' };
-  if (r.myStatus === 'abgelehnt') return { text: 'Abgelehnt', tone: 'muted' };
-  if (freeSeats(r) === 0) return { text: 'Ausgebucht', tone: 'muted' };
+  if (r.myStatus === 'zugesagt') return { text: tr('Du bist dabei'), tone: 'good' };
+  if (r.myStatus === 'eingeladen') return { text: tr('Eingeladen'), tone: 'signal' };
+  if (r.myStatus === 'angefragt') return { text: tr('Angefragt'), tone: 'muted' };
+  if (r.myStatus === 'abgelehnt') return { text: tr('Abgelehnt'), tone: 'muted' };
+  if (freeSeats(r) === 0) return { text: tr('Ausgebucht'), tone: 'muted' };
   return null;
 }
 
@@ -594,7 +595,7 @@ function DriverCard(props: { d: Driver; km: number | null; selected: boolean; on
         <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.m, paddingTop: Spacing.s }}>
           {d.garage && d.garage.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={S.metricLabel}>Garage</span>
+              <span style={S.metricLabel}>{tr('Garage')}</span>
               {d.garage.map((g, i) => (
                 <span key={i} style={{ font: `600 15px ${BODY}` }}>
                   {g.name}
@@ -602,7 +603,7 @@ function DriverCard(props: { d: Driver; km: number | null; selected: boolean; on
               ))}
             </div>
           ) : null}
-          {d.birthdayToday ? <span style={{ ...S.metricLabel, color: C.text, fontWeight: 700 }}>Hat heute Geburtstag</span> : null}
+          {d.birthdayToday ? <span style={{ ...S.metricLabel, color: C.text, fontWeight: 700 }}>{tr('Hat heute Geburtstag')}</span> : null}
           {d.age != null ? <span style={S.metricLabel}>{d.age} Jahre</span> : null}
           {d.memberSince ? <span style={S.metricLabel}>Dabei seit {d.memberSince.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</span> : null}
           {!d.isMe ? (

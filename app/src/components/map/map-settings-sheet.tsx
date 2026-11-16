@@ -27,6 +27,7 @@ import {
   useMapSettings,
   type MapSettings,
 } from '@/lib/map-settings';
+import { t } from '@/i18n';
 
 export function MapLayersButton({ style }: { style?: object }) {
   const [open, setOpen] = useState(false);
@@ -36,7 +37,7 @@ export function MapLayersButton({ style }: { style?: object }) {
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Karteneinstellungen"
+        accessibilityLabel={t('Karteneinstellungen')}
         onPressIn={() => s.set(withSpring(Motion.pressScale, Motion.press))}
         onPressOut={() => s.set(withSpring(1, Motion.snap))}
         onPress={() => setOpen(true)}
@@ -78,37 +79,37 @@ const LAYERS: { key: LayerKey; icon: SFSymbol; label: string; note: string }[] =
     {
       key: 'warnings',
       icon: 'exclamationmark.triangle',
-      label: 'Gefahrenstellen',
+      label: t('Gefahrenstellen'),
       note: 'Gesperrte und zu prüfende Stellen auf der Route',
     },
     {
       key: 'weather',
       icon: 'cloud.sun',
-      label: 'Wetter',
+      label: t('Wetter'),
       note: 'An den Pässen der Route, zur Ankunft',
     },
     {
       key: 'passes',
       icon: 'mountain.2',
-      label: 'Pässe in der Nähe von Start und Ziel',
+      label: t('Pässe in der Nähe von Start und Ziel'),
       note: 'Bis 50 km um deine Tour, orange die Ikonen',
     },
     {
       key: 'passesAll',
       icon: 'globe.europe.africa',
-      label: 'Alle Pässe anzeigen',
+      label: t('Alle Pässe anzeigen'),
       note: 'Auch weit weg von deiner Tour',
     },
     {
       key: 'myTours',
       icon: 'bookmark',
-      label: 'Gespeicherte Touren',
+      label: t('Gespeicherte Touren'),
       note: 'Als feine Linien',
     },
     {
       key: 'drives',
       icon: 'flag.checkered',
-      label: 'Gefahrene Strecken',
+      label: t('Gefahrene Strecken'),
       note: 'Deine Fahrten in Grün, so siehst du, was noch fehlt',
     },
   ];
@@ -119,10 +120,10 @@ function MapSettingsBody({ onClose }: { onClose: () => void }) {
   return (
     <View style={styles.sheet}>
       <View style={styles.head}>
-        <AppText style={styles.title}>Karte</AppText>
+        <AppText style={styles.title}>{t('Karte')}</AppText>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Schließen"
+          accessibilityLabel={t('Schließen')}
           onPress={onClose}
           hitSlop={8}
           style={styles.close}
@@ -137,7 +138,7 @@ function MapSettingsBody({ onClose }: { onClose: () => void }) {
       </View>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.group}>
-          <AppText style={styles.label}>Darstellung</AppText>
+          <AppText style={styles.label}>{t('Darstellung')}</AppText>
           <View style={styles.styles} accessibilityRole="radiogroup">
             {MAP_STYLES.map((m) => {
               const on = st.style === m.id;
@@ -164,7 +165,7 @@ function MapSettingsBody({ onClose }: { onClose: () => void }) {
         </View>
 
         <View style={styles.group}>
-          <AppText style={styles.label}>Auf der Karte</AppText>
+          <AppText style={styles.label}>{t('Auf der Karte')}</AppText>
           <View style={styles.card}>
             {LAYERS.filter((l) => l.key !== 'passesAll' || st.passes).map((l, i) => (
               <View key={l.key} style={[styles.row, i > 0 && styles.rowLine]}>

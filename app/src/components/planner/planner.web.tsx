@@ -72,6 +72,7 @@ import { Accordion, Brand, Status, TypoTabs } from './web-parts';
 import { FunDialog } from './web-fun';
 import { ConfirmSheet, MoreMenu, useNarrow } from './web-ui';
 import { S } from './web-styles';
+import { t } from '@/i18n';
 
 type Area = 'planen' | 'touren' | 'community' | 'einstellungen';
 type PlanMode = 'tour' | 'rundtour';
@@ -754,7 +755,7 @@ export default function Planner() {
                 style={S.primary}
                 onClick={() => {
                   setEdited(true);
-                  void plan.save(curvesRoute, profile, avoid, autoName(plan), { quiet: true }).then(() => showToast('Unter Touren gespeichert, auch in der App'));
+                  void plan.save(curvesRoute, profile, avoid, autoName(plan), { quiet: true }).then(() => showToast(t('Unter Touren gespeichert, auch in der App')));
                 }}>
                 Unter Touren speichern
               </button>
@@ -777,8 +778,8 @@ export default function Planner() {
                       },
                       profile,
                     )
-                      .then(() => showToast('Link kopiert'))
-                      .catch(() => showToast('Kopieren hat nicht geklappt', { tone: 'error' })),
+                      .then(() => showToast(t('Link kopiert')))
+                      .catch(() => showToast(t('Kopieren hat nicht geklappt'), { tone: 'error' })),
                 },
                 { key: 'gpx', label: 'Als GPX herunterladen', onPress: () => void exportTour({ ...routeTour, name: routeName }, 'gpx') },
                 { key: 'kml', label: 'Als KML herunterladen', onPress: () => void exportTour({ ...routeTour, name: routeName }, 'kml') },

@@ -18,6 +18,7 @@ import { ManeuverIcon, MicIcon, SpeakerIcon } from './maneuver-icon';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { VolumeSteps, volumeLabel } from '@/components/settings/volume-steps';
 import { useDriveSettings } from '@/lib/drive-settings';
+import { t } from '@/i18n';
 
 /**
  * Zustands Karten über der Karte: Colors.signalTint und Colors.goodTint auf Ground verrechnet,
@@ -52,7 +53,7 @@ export function ManeuverCard({ maneuver, distM, then, soon = false, footer, turn
       {maneuver.lanes && distM != null && distM < LANES_SHOW_M ? <LaneRow lanes={maneuver.lanes} /> : null}
       {then && (
         <View style={styles.then}>
-          <AppText variant="caption" muted>Dann</AppText>
+          <AppText variant="caption" muted>{t('Dann')}</AppText>
           <ManeuverIcon kind={then.kind} exit={then.exit} turn={thenTurn} size={22} color={Colors.muted} />
           <AppText variant="caption" muted numberOfLines={1} style={styles.flex}>{then.text}</AppText>
         </View>
@@ -210,12 +211,12 @@ export function BottomBar({
   const actions = [
     // Reihenfolge (Koray 15.11.): Zwischenziel überspringen, Tour anpassen, dann der Rest, Beenden zuletzt
     ...(onSkip && skipLabel ? [{ key: 'skip', label: skipLabel, icon: 'forward.end.fill' as const, signal: false, run: onSkip }] : []),
-    ...(onOverview ? [{ key: 'plan', label: 'Tour anpassen', icon: 'point.topleft.down.to.point.bottomright.curvepath.fill' as const, signal: false, run: onOverview }] : []),
+    ...(onOverview ? [{ key: 'plan', label: t('Tour anpassen'), icon: 'point.topleft.down.to.point.bottomright.curvepath.fill' as const, signal: false, run: onOverview }] : []),
     ...(extraActions ?? []).map((a) => ({ ...a, signal: false })),
     paused
-      ? { key: 'weiter', label: 'Fortsetzen', icon: 'play.fill' as const, signal: false, run: () => onPause(false) }
-      : { key: 'pause', label: 'Pausieren', icon: 'pause.fill' as const, signal: false, run: () => onPause(true) },
-    { key: 'ende', label: 'Fahrt beenden', icon: 'stop.fill' as const, signal: true, run: onEnd },
+      ? { key: 'weiter', label: t('Fortsetzen'), icon: 'play.fill' as const, signal: false, run: () => onPause(false) }
+      : { key: 'pause', label: t('Pausieren'), icon: 'pause.fill' as const, signal: false, run: () => onPause(true) },
+    { key: 'ende', label: t('Fahrt beenden'), icon: 'stop.fill' as const, signal: true, run: onEnd },
   ];
 
   return (
@@ -224,7 +225,7 @@ export function BottomBar({
         <View style={[styles.menu, { bottom: '100%' }]} pointerEvents="box-none">
           <Animated.View entering={softEnter(0)} style={styles.volPanel}>
             <View style={styles.volHead}>
-              <AppText style={styles.pillText}>Lautstärke</AppText>
+              <AppText style={styles.pillText}>{t('Lautstärke')}</AppText>
               <AppText variant="caption" muted>{volumeLabel(volume)}</AppText>
             </View>
             <View style={styles.volSteps}>
@@ -254,7 +255,7 @@ export function BottomBar({
       <GlassPanel overflow style={[styles.bar, { paddingBottom: bottomInset }]} fallback="rgba(11,11,12,0.96)">
         {funkHint && (
           <View style={styles.funkHint}>
-            <AppText variant="caption">Funk folgt bald.</AppText>
+            <AppText variant="caption">{t('Funk folgt bald.')}</AppText>
           </View>
         )}
         <View style={styles.barRow}>
@@ -278,7 +279,7 @@ export function BottomBar({
           {group && !talk && (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Funk"
+              accessibilityLabel={t('Funk')}
               onPress={() => (onFunk ? onFunk() : setFunkHint(true))}
               style={({ pressed }) => [styles.funk, pressed && styles.pressed]}>
               <MicIcon />
@@ -288,7 +289,7 @@ export function BottomBar({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={voice ? 'Ansagen aus' : 'Ansagen an'}
-            accessibilityHint="Lange drücken für die Lautstärke"
+            accessibilityHint={t('Lange drücken für die Lautstärke')}
             onPress={() => (vol ? setVol(0) : onVoice())}
             onLongPress={() => {
               haptic('abheben');
@@ -336,7 +337,7 @@ export function BottomBar({
         </View>
         {showSim && (
           <Pressable accessibilityRole="button" onPress={onSimulate} style={styles.sim}>
-            <AppText variant="caption" muted>Simulieren</AppText>
+            <AppText variant="caption" muted>{t('Simulieren')}</AppText>
           </Pressable>
         )}
       </GlassPanel>

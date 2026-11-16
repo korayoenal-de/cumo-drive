@@ -14,6 +14,7 @@ import Svg, { Defs, Mask, Rect, Circle } from 'react-native-svg';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import type { Crop, Picked } from '@/lib/avatars';
+import { t } from '@/i18n';
 
 const MAX_ZOOM = 5;
 
@@ -89,7 +90,7 @@ export function AvatarCropper({ photo, onCancel, onDone }: { photo: Picked | nul
     <Modal visible={!!photo} animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
       <GestureHandlerRootView style={styles.root}>
         <GestureDetector gesture={gesture}>
-          <View style={styles.stage} accessible accessibilityLabel="Ausschnitt für dein Profilfoto. Mit zwei Fingern vergrößern, mit einem verschieben.">
+          <View style={styles.stage} accessible accessibilityLabel={t('Ausschnitt für dein Profilfoto. Mit zwei Fingern vergrößern, mit einem verschieben.')}>
             {photo ? (
               <Animated.View style={[{ position: 'absolute', left: (W - w * base) / 2, top: top + (D - h * base) / 2, width: w * base, height: h * base }, img]}>
                 <Image source={{ uri: photo.uri }} style={StyleSheet.absoluteFill} contentFit="fill" />
@@ -109,20 +110,20 @@ export function AvatarCropper({ photo, onCancel, onDone }: { photo: Picked | nul
           </View>
         </GestureDetector>
         <View style={[styles.head, { paddingTop: insets.top + Spacing.m }]} pointerEvents="none">
-          <AppText style={styles.title}>Ausschnitt wählen</AppText>
+          <AppText style={styles.title}>{t('Ausschnitt wählen')}</AppText>
           <AppText variant="caption" muted>
             Mit zwei Fingern vergrößern, mit einem verschieben.
           </AppText>
         </View>
         <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.l }]}>
           <Pressable accessibilityRole="button" onPress={onCancel} style={({ pressed }) => [styles.btn, styles.btnQuiet, pressed && styles.pressed]}>
-            <AppText style={styles.btnText}>Abbrechen</AppText>
+            <AppText style={styles.btnText}>{t('Abbrechen')}</AppText>
           </Pressable>
           <Pressable
             accessibilityRole="button"
             onPress={() => finish(scale.get(), tx.get(), ty.get())}
             style={({ pressed }) => [styles.btn, styles.btnMain, pressed && styles.pressed]}>
-            <AppText style={[styles.btnText, styles.btnMainText]}>Fertig</AppText>
+            <AppText style={[styles.btnText, styles.btnMainText]}>{t('Fertig')}</AppText>
           </Pressable>
         </View>
       </GestureHandlerRootView>

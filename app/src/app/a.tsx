@@ -11,6 +11,7 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { parseRideLink } from '@/lib/ausfahrten';
+import { t } from '@/i18n';
 
 const subscribe = (cb: () => void) => {
   if (typeof window === 'undefined') return () => undefined;
@@ -32,9 +33,9 @@ export default function RideInvite() {
         {link ? (
           <>
             <View style={{ gap: 6 }}>
-              <AppText variant="caption" muted>Einladung</AppText>
-              <AppText variant="display" style={styles.title}>Fahr mit</AppText>
-              <AppText muted>Du bist zu einer privaten Ausfahrt eingeladen. In der App siehst du Termin und Organisator und fragst an.</AppText>
+              <AppText variant="caption" muted>{t('Einladung')}</AppText>
+              <AppText variant="display" style={styles.title}>{t('Fahr mit')}</AppText>
+              <AppText muted>{t('Du bist zu einer privaten Ausfahrt eingeladen. In der App siehst du Termin und Organisator und fragst an.')}</AppText>
             </View>
             <Pressable
               accessibilityRole="link"
@@ -42,14 +43,14 @@ export default function RideInvite() {
               onPress={() => {
                 window.location.href = `cumodrive://ausfahrt/${link.id}?k=${link.key}`;
               }}>
-              <AppText style={styles.primaryText}>In CUMO DRIVE öffnen</AppText>
+              <AppText style={styles.primaryText}>{t('In CUMO DRIVE öffnen')}</AppText>
             </Pressable>
-            <AppText variant="caption" muted>Noch keine App? CUMO DRIVE gibt es gerade als Testversion für iPhone über den CUMO DRIVERS CLUB.</AppText>
+            <AppText variant="caption" muted>{t('Noch keine App? CUMO DRIVE gibt es gerade als Testversion für iPhone über den CUMO DRIVERS CLUB.')}</AppText>
           </>
         ) : (
           <>
-            <AppText variant="title">Dieser Link ist unvollständig.</AppText>
-            <AppText muted>Bitte lass dir den Link der Ausfahrt nochmal schicken.</AppText>
+            <AppText variant="title">{t('Dieser Link ist unvollständig.')}</AppText>
+            <AppText muted>{t('Bitte lass dir den Link der Ausfahrt nochmal schicken.')}</AppText>
           </>
         )}
       </View>

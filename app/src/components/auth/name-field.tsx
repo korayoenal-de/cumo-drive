@@ -8,6 +8,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { cleanName, NAME_MAX, nameAvailable, nameProblem } from '@/lib/profile';
+import { t } from '@/i18n';
 
 export type NameCheck = { state: 'leer' | 'ungueltig' | 'pruefe' | 'frei' | 'vergeben' | 'fehler' | 'gleich'; message: string | null };
 
@@ -35,9 +36,9 @@ export function useNameCheck(raw: string, current?: string | null): NameCheck {
   if (!name) return { state: 'leer', message: null };
   if (problem) return { state: 'ungueltig', message: problem };
   if (same) return { state: 'gleich', message: null };
-  if (result?.name !== name) return { state: 'pruefe', message: 'Prüfe, ob der Name frei ist …' };
-  if (result.available === null) return { state: 'fehler', message: 'Konnte nicht prüfen, ob der Name frei ist. Netz prüfen.' };
-  return result.available ? { state: 'frei', message: 'Der Name ist frei.' } : { state: 'vergeben', message: 'Diesen Namen hat schon jemand.' };
+  if (result?.name !== name) return { state: 'pruefe', message: t('Prüfe, ob der Name frei ist …') };
+  if (result.available === null) return { state: 'fehler', message: t('Konnte nicht prüfen, ob der Name frei ist. Netz prüfen.') };
+  return result.available ? { state: 'frei', message: t('Der Name ist frei.') } : { state: 'vergeben', message: t('Diesen Namen hat schon jemand.') };
 }
 
 export function NameField({ value, onChange, check, onSurface }: { value: string; onChange: (v: string) => void; check: NameCheck; onSurface?: boolean }) {
@@ -47,7 +48,7 @@ export function NameField({ value, onChange, check, onSurface }: { value: string
       <TextInput maxFontSizeMultiplier={1.2}
         value={value}
         onChangeText={onChange}
-        placeholder="Name, so sehen dich die anderen"
+        placeholder={t('Name, so sehen dich die anderen')}
         placeholderTextColor={Colors.muted}
         autoCapitalize="words"
         autoCorrect={false}
@@ -55,8 +56,8 @@ export function NameField({ value, onChange, check, onSurface }: { value: string
         textContentType="username"
         maxLength={NAME_MAX + 5}
         style={[styles.input, onSurface && styles.inputOnSurface]}
-        accessibilityLabel="Name"
-        accessibilityHint="Andere finden dich unter diesem Namen und laden dich zu Gruppenfahrten ein. Mindestens 3 Zeichen."
+        accessibilityLabel={t('Name')}
+        accessibilityHint={t('Andere finden dich unter diesem Namen und laden dich zu Gruppenfahrten ein. Mindestens 3 Zeichen.')}
       />
       {check.message && check.state !== 'leer' ? (
         <AppText variant="caption" style={tone} accessibilityLiveRegion="polite">

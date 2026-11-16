@@ -14,6 +14,7 @@ import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/
 import { ageOf, birthDigits, loadPrivacy, parseBirthday, savePrivacy, type BirthdayShow, type Privacy } from '@/lib/drivers';
 import { haptic } from '@/lib/haptics';
 import { searchTowns, type Place } from '@/lib/geocode';
+import { t } from '@/i18n';
 
 /**
  * Eigene Privatsphäre, für alle Ansichten geteilt (Profilkarte, Schalter, Profil Seite): ein Wechsel
@@ -102,10 +103,10 @@ export function HomeField({ p, save }: { p: Privacy; save: (patch: Partial<Priva
       {!editing ? (
         <View style={styles.row}>
           <View style={styles.flex}>
-            <AppText variant="caption" muted>Wohnort</AppText>
+            <AppText variant="caption" muted>{t('Wohnort')}</AppText>
             <AppText style={styles.value} numberOfLines={1}>{p.homeName ?? 'Noch nicht angegeben'}</AppText>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Wohnort ändern" onPress={() => { setQ(''); setFound([]); setEditing(true); }} style={styles.secondary}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Wohnort ändern')} onPress={() => { setQ(''); setFound([]); setEditing(true); }} style={styles.secondary}>
             <AppText style={styles.secondaryText}>{p.homeName ? 'Ändern' : 'Anlegen'}</AppText>
           </Pressable>
         </View>
@@ -115,14 +116,14 @@ export function HomeField({ p, save }: { p: Privacy; save: (patch: Partial<Priva
             <TextInput maxFontSizeMultiplier={1.2}
               value={q}
               onChangeText={setQ}
-              placeholder="Ort, zum Beispiel Bad Dürkheim"
+              placeholder={t('Ort, zum Beispiel Bad Dürkheim')}
               placeholderTextColor={Colors.muted}
               autoFocus
               autoCorrect={false}
               style={[styles.input, styles.flex]}
-              accessibilityLabel="Wohnort suchen"
+              accessibilityLabel={t('Wohnort suchen')}
             />
-            <Pressable accessibilityRole="button" accessibilityLabel="Abbrechen" hitSlop={4} onPress={() => setEditing(false)} style={styles.round}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('Abbrechen')} hitSlop={4} onPress={() => setEditing(false)} style={styles.round}>
               <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.text} />
             </Pressable>
           </View>
@@ -148,12 +149,12 @@ export function HomeField({ p, save }: { p: Privacy; save: (patch: Partial<Priva
                 void save({ homeName: null, home: null });
               }}
               style={styles.textBtn}>
-              <AppText style={styles.textBtnText}>Wohnort entfernen</AppText>
+              <AppText style={styles.textBtnText}>{t('Wohnort entfernen')}</AppText>
             </Pressable>
           )}
         </Animated.View>
       )}
-      <AppText variant="caption" muted>Andere Mitglieder sehen dich unter Drivers an diesem Ort, nur als Ortsmitte, nie mit Adresse oder Live Standort.</AppText>
+      <AppText variant="caption" muted>{t('Andere Mitglieder sehen dich unter Drivers an diesem Ort, nur als Ortsmitte, nie mit Adresse oder Live Standort.')}</AppText>
     </View>
   );
 }
@@ -184,7 +185,7 @@ function FieldHead({ label, onClose }: { label: string; onClose: () => void }) {
   return (
     <View style={styles.row}>
       <AppText variant="caption" muted style={styles.flex}>{label}</AppText>
-      <Pressable accessibilityRole="button" accessibilityLabel="Verwerfen" hitSlop={4} onPress={onClose} style={styles.round}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('Verwerfen')} hitSlop={4} onPress={onClose} style={styles.round}>
         <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.text} />
       </Pressable>
     </View>
@@ -202,17 +203,17 @@ function FieldFoot(props: { canSave: boolean; onSave: () => void; removeTitle?: 
         disabled={!canSave}
         onPress={onSave}
         style={({ pressed }) => [styles.primary, styles.flex, !canSave && styles.primaryOff, pressed && styles.pressed]}>
-        <AppText style={styles.primaryText}>Speichern</AppText>
+        <AppText style={styles.primaryText}>{t('Speichern')}</AppText>
       </Pressable>
       {removeTitle ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Entfernen" onPress={() => setAsk(true)} style={({ pressed }) => [styles.trash, pressed && styles.pressed]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('Entfernen')} onPress={() => setAsk(true)} style={({ pressed }) => [styles.trash, pressed && styles.pressed]}>
           <SymbolView name="trash" size={20} weight="semibold" tintColor={Colors.muted} />
         </Pressable>
       ) : null}
       <ConfirmSheet
         visible={ask}
         title={removeTitle ?? ''}
-        confirmLabel="Entfernen"
+        confirmLabel={t('Entfernen')}
         onConfirm={() => {
           setAsk(false);
           onRemove();
@@ -230,20 +231,20 @@ export function BioField({ p, save }: { p: Privacy; save: (patch: Partial<Privac
     setDraft(p.bio ?? '');
     setOpen(false);
   };
-  if (!open) return <FieldRow label="Über mich" value={p.bio} lines={4} onOpen={() => setOpen(true)} />;
+  if (!open) return <FieldRow label={t('Über mich')} value={p.bio} lines={4} onOpen={() => setOpen(true)} />;
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.edit}>
-      <FieldHead label="Über mich" onClose={close} />
+      <FieldHead label={t('Über mich')} onClose={close} />
       <TextInput
         maxFontSizeMultiplier={1.2}
         value={draft}
         onChangeText={(t) => setDraft(t.slice(0, 160))}
-        placeholder="Kurz, zum Beispiel deine Lieblingsstrecke"
+        placeholder={t('Kurz, zum Beispiel deine Lieblingsstrecke')}
         placeholderTextColor={Colors.muted}
         autoFocus
         multiline
         style={[styles.input, styles.bio]}
-        accessibilityLabel="Über mich"
+        accessibilityLabel={t('Über mich')}
       />
       <AppText variant="caption" muted style={styles.count}>{draft.length} von 160</AppText>
       <FieldFoot
@@ -273,9 +274,9 @@ const SEGS = [
   { from: 4, len: 4, ph: 'JJJJ' },
 ] as const;
 const SHOW: { v: BirthdayShow; label: string }[] = [
-  { v: 'age', label: 'Alter' },
-  { v: 'birthday', label: 'Nur Geburtstag' },
-  { v: 'none', label: 'Nichts' },
+  { v: 'age', label: t('Alter') },
+  { v: 'birthday', label: t('Nur Geburtstag') },
+  { v: 'none', label: t('Nichts') },
 ];
 
 export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<Privacy>) => Promise<void> }) {
@@ -317,7 +318,7 @@ export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<P
     const sees = p.birthdayShow === 'age' ? (age != null ? `${age} Jahre` : null) : p.birthdayShow === 'birthday' ? 'nur am Geburtstag' : 'nichts';
     return (
       <FieldRow
-        label="Geburtstag"
+        label={t('Geburtstag')}
         value={p.birthDate ? `${saved.slice(0, 2)}.${saved.slice(2, 4)}.${saved.slice(4)}` : null}
         sub={p.birthDate && sees ? `Drivers sieht: ${sees}` : null}
         onOpen={openUp}
@@ -327,11 +328,11 @@ export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<P
 
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.edit}>
-      <FieldHead label="Geburtstag" onClose={() => setOpen(false)} />
+      <FieldHead label={t('Geburtstag')} onClose={() => setOpen(false)} />
       <Pressable
         onPress={() => input.current?.focus()}
         accessibilityRole="button"
-        accessibilityLabel="Geburtstag eingeben, Tag, Monat, Jahr"
+        accessibilityLabel={t('Geburtstag eingeben, Tag, Monat, Jahr')}
         style={styles.dateRow}>
         {SEGS.map((sg, i) => {
           const part = digits.slice(sg.from, sg.from + sg.len);
@@ -359,15 +360,15 @@ export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<P
           maxLength={8}
           caretHidden
           style={styles.hidden}
-          accessibilityLabel="Geburtstag, acht Ziffern"
+          accessibilityLabel={t('Geburtstag, acht Ziffern')}
         />
       </Pressable>
       {hint ? (
         <AppText variant="caption" style={styles.hint}>{hint}</AppText>
       ) : (
-        <AppText variant="caption" muted>Das Datum selbst sieht niemand.</AppText>
+        <AppText variant="caption" muted>{t('Das Datum selbst sieht niemand.')}</AppText>
       )}
-      <AppText variant="caption" muted>Sichtbar in Drivers</AppText>
+      <AppText variant="caption" muted>{t('Sichtbar in Drivers')}</AppText>
       <View style={styles.chips}>
         {SHOW.map((o) => (
           <Chip key={o.v} label={o.label} active={show === o.v} onSurface onPress={() => setShow(o.v)} />

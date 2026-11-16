@@ -10,6 +10,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { elevationProfile, type ElevationProfile } from '@/lib/stats';
 import { formatKm, type LatLon } from '@/lib/tour';
+import { t } from '@/i18n';
 
 /** Lädt das Höhenprofil zur Linie, null solange es lädt oder fehlt. */
 export function useElevation(line: LatLon[]): { data: ElevationProfile | null; error: boolean } {
@@ -59,7 +60,7 @@ export function ElevationChart({ line, onKm, onSurface }: { line: LatLon[]; onKm
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <AppText variant="label">Höhenprofil</AppText>
+        <AppText variant="label">{t('Höhenprofil')}</AppText>
         <AppText variant="caption" muted style={styles.num}>
           {!ready
             ? 'wird geladen'

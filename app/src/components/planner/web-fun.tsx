@@ -11,6 +11,7 @@ import { Colors } from '@/constants/theme';
 import { ElevationChart, Gauge } from './web-parts';
 import { C } from './web-shared';
 import { S } from './web-styles';
+import { t } from '@/i18n';
 
 const TONES = ['#E2461C', '#EF6A43', '#F48D6C', '#F7B29A'];
 
@@ -54,7 +55,7 @@ export function FunDialog(props: {
   }, [props]);
   return (
     <div style={S.overlay} onClick={props.onClose}>
-      <div role="dialog" aria-modal="true" aria-label="So entsteht der Fahrspaß Wert" style={S.dialog} onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label={t('So entsteht der Fahrspaß Wert')} style={S.dialog} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <Gauge level={fun.level} size={48} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
@@ -64,7 +65,7 @@ export function FunDialog(props: {
             </span>
             <span style={S.metricLabel}>{props.name}</span>
           </div>
-          <button aria-label="Schließen" style={S.closeBtn} onClick={props.onClose}>
+          <button aria-label={t('Schließen')} style={S.closeBtn} onClick={props.onClose}>
             ×
           </button>
         </div>
@@ -102,12 +103,12 @@ export function FunDialog(props: {
           <div style={{ ...S.billRow, borderBottom: 'none', cursor: 'default' }}>
             <span style={{ ...S.billPts, color: C.signal }}>{fun.score}</span>
             <span style={{ flex: 1, fontWeight: 700, fontSize: 17 }}>{TOUR_FUN_NAMES[fun.level]}</span>
-            <span style={S.metricLabel}>von 100</span>
+            <span style={S.metricLabel}>{t('von 100')}</span>
           </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <span style={S.metricLabel}>Unterwegs</span>
+          <span style={S.metricLabel}>{t('Unterwegs')}</span>
           {props.elev && props.elev.km.length > 2 ? <ElevationChart e={props.elev} onHoverKm={props.onHoverKm} /> : null}
           {props.check ? (
             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 14, borderRadius: 14, background: props.check.tone === 'good' ? Colors.goodTint : props.check.tone === 'warn' ? Colors.warnTint : C.surface2 }}>

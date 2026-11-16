@@ -54,15 +54,15 @@ import { keyOf, type PendingPoint, type PointKind, profileWord, samePts } from '
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
 import { uniqueWarnings } from '@/lib/warning-dedupe';
-import { t } from '@/i18n';
+import { tr } from '@/i18n';
 
 /** Laden im Losfahren Knopf (Koray 9.11.): geschätzter Fortschritt je Schritt der Planung */
 const LOAD_STAGES: Record<PlanStep, LoadStage> = {
-  route: { label: 'Route wird berechnet', from: 0, to: 62, tau: 2500 },
-  traffic: { label: 'Verkehrsmeldungen prüfen', from: 62, to: 85, tau: 1500 },
-  compare: { label: 'Beste Variante wählen', from: 62, to: 90, tau: 1500 },
-  check: { label: 'Strecke wird geprüft', from: 62, to: 90, tau: 1500 },
-  fix: { label: 'Sperrungen werden umfahren', from: 90, to: 97, tau: 2000 },
+  route: { label: tr('Route wird berechnet'), from: 0, to: 62, tau: 2500 },
+  traffic: { label: tr('Verkehrsmeldungen prüfen'), from: 62, to: 85, tau: 1500 },
+  compare: { label: tr('Beste Variante wählen'), from: 62, to: 90, tau: 1500 },
+  check: { label: tr('Strecke wird geprüft'), from: 62, to: 90, tau: 1500 },
+  fix: { label: tr('Sperrungen werden umfahren'), from: 90, to: 97, tau: 2000 },
 };
 
 
@@ -258,11 +258,11 @@ export function TourMode({
   const headSlots: Slot[] = !edit
     ? []
     : [
-        { key: 'start', kind: 'start', label: 'Start', value: plan.start ? nameOf(plan.start) : null, active: edit.kind === 'start' },
+        { key: 'start', kind: 'start', label: tr('Start'), value: plan.start ? nameOf(plan.start) : null, active: edit.kind === 'start' },
         ...(edit.kind === 'via'
           ? [{ key: 'via', kind: 'via' as const, index: edit.index, insert: edit.insert, label: editRole, value: editPoint ? nameOf(editPoint) : null, active: true }]
           : []),
-        { key: 'ziel', kind: 'ziel', label: 'Ziel', value: plan.ziel ? nameOf(plan.ziel) : null, active: edit.kind === 'ziel' },
+        { key: 'ziel', kind: 'ziel', label: tr('Ziel'), value: plan.ziel ? nameOf(plan.ziel) : null, active: edit.kind === 'ziel' },
       ];
   const search = (
     <PlaceSearch
@@ -292,7 +292,7 @@ export function TourMode({
         const snap = plan.snapshot();
         const replaced = plan.insertRoad(edit.index ?? plan.vias.length, line, profile, avoid, name);
         setEdit(null);
-        if (replaced) showToast(`${name} ersetzt ${replaced}, es lag nur 2 km davor`, { action: { label: 'Rückgängig', onPress: () => plan.restore(snap) } });
+        if (replaced) showToast(`${name} ersetzt ${replaced}, es lag nur 2 km davor`, { action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) } });
       }}
       slots={headSlots}
       onSwitch={(sl) => openEdit({ kind: sl.kind, index: sl.index, insert: sl.insert })}
@@ -321,7 +321,7 @@ export function TourMode({
     const wasSaved = !!plan.cloudId;
     plan.reset();
     showToast(wasSaved ? 'Planer geleert, die Tour bleibt unter Touren' : 'Planung zurückgesetzt', {
-      action: { label: 'Rückgängig', onPress: () => plan.restore(snap) },
+      action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) },
     });
   };
   // Löschen entfernt die geöffnete, gespeicherte Tour aus Meine Touren (mit Rückfrage, bei veröffentlichten mit Wahl)
@@ -344,11 +344,11 @@ export function TourMode({
     if (ride && t) {
       showToast(`${name} aktualisiert. Deine Ausfahrt fährt noch die alte Fassung.`, {
         action: {
-          label: 'Übernehmen',
+          label: tr('Übernehmen'),
           onPress: () =>
             void setRideTour(ride.id, t, t.profile ?? firstProfile, avoid)
-              .then(() => showToast('Die Ausfahrt fährt jetzt die neue Fassung.'))
-              .catch(() => showToast('Das hat nicht geklappt.', { tone: 'error' })),
+              .then(() => showToast(tr('Die Ausfahrt fährt jetzt die neue Fassung.')))
+              .catch(() => showToast(tr('Das hat nicht geklappt.'), { tone: 'error' })),
         },
       });
     } else showToast(`${name} aktualisiert`);
@@ -432,7 +432,7 @@ export function TourMode({
     const kindAt = m.idx === 0 ? 'start' : m.idx === n - 1 ? 'ziel' : 'via';
     if (a === 'entfernen') {
       plan.removeAt(m.idx, profile, avoid);
-      showToast(`${m.name} entfernt`, { action: { label: 'Rückgängig', onPress: () => plan.restore(snap) } });
+      showToast(`${m.name} entfernt`, { action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) } });
       return;
     }
     // Start und Ziel tauschen, Zwischenziel an den Anfang oder ans Ende (nichts geht verloren)
@@ -653,14 +653,14 @@ export function TourMode({
       {pending && !pending.pass && (
         <View style={[styles.card, styles.pendingCard]}>
           <View style={styles.flex}>
-            <AppText variant="label">Neuer Punkt</AppText>
+            <AppText variant="label">{tr('Neuer Punkt')}</AppText>
             <AppText variant="title">{pending.name ?? `${pending.p[0].toFixed(4)}, ${pending.p[1].toFixed(4)}`}</AppText>
           </View>
           <View style={styles.wrap}>
-            <SmallButton label="Als Start" onPress={() => addPending('start')} />
-            {plan.complete && <SmallButton label="Als Zwischenziel" onPress={() => addPending('via')} />}
+            <SmallButton label={tr('Als Start')} onPress={() => addPending('start')} />
+            {plan.complete && <SmallButton label={tr('Als Zwischenziel')} onPress={() => addPending('via')} />}
             <SmallButton label={plan.complete ? 'Als neues Ziel' : 'Als Ziel'} onPress={() => addPending('ziel')} strong />
-            <SmallButton label="Abbrechen" onPress={() => setPending(null)} />
+            <SmallButton label={tr('Abbrechen')} onPress={() => setPending(null)} />
           </View>
         </View>
       )}
@@ -673,13 +673,13 @@ export function TourMode({
           </AppText>
           {plan.dirty && (
             <View style={tourStyles.badge}>
-              <AppText style={tourStyles.badgeText}>Geändert</AppText>
+              <AppText style={tourStyles.badgeText}>{tr('Geändert')}</AppText>
             </View>
           )}
         </View>
       )}
 
-      <Section label="Route" action={pts.length ? { label: 'Zurücksetzen', onPress: resetForm } : undefined}>
+      <Section label={tr('Route')} action={pts.length ? { label: tr('Zurücksetzen'), onPress: resetForm } : undefined}>
         <View>
           {slots.map((p, i) => {
             const kind: PointKind = i === 0 ? 'start' : i === slots.length - 1 ? 'ziel' : 'via';
@@ -706,7 +706,7 @@ export function TourMode({
           })}
           {plan.complete && (
             <Pressable accessibilityRole="button" onPress={() => plan.swap(profile, avoid)} style={styles.linkBtn}>
-              <AppText style={styles.linkText}>Start und Ziel tauschen</AppText>
+              <AppText style={styles.linkText}>{tr('Start und Ziel tauschen')}</AppText>
             </Pressable>
           )}
         </View>
@@ -714,9 +714,9 @@ export function TourMode({
 
       {plan.error && (
         <View style={[styles.card, styles.errorCard]}>
-          <AppText variant="label" style={styles.signalText}>Das hat nicht geklappt</AppText>
+          <AppText variant="label" style={styles.signalText}>{tr('Das hat nicht geklappt')}</AppText>
           <AppText>{plan.error}</AppText>
-          {pts.length >= 2 && <SecondaryButton label="Nochmal versuchen" onSurface onPress={() => plan.planNow(profile, avoid)} />}
+          {pts.length >= 2 && <SecondaryButton label={tr('Nochmal versuchen')} onSurface onPress={() => plan.planNow(profile, avoid)} />}
         </View>
       )}
 
@@ -740,8 +740,8 @@ export function TourMode({
           <NameDialog
             key={renaming ? 'r-offen' : 'r-zu'}
             visible={renaming}
-            title="Tour umbenennen"
-            subtitle="Der neue Name gilt auch im Konto, im Web Planer und in der Community."
+            title={tr('Tour umbenennen')}
+            subtitle={tr('Der neue Name gilt auch im Konto, im Web Planer und in der Community.')}
             initial={plan.name.trim() || routeTour.name || 'Neue Tour'}
             onCancel={() => setRenaming(false)}
             onSave={(n) => {
@@ -784,18 +784,18 @@ export function TourMode({
             onClose={() => setStopCat(null)}
             route={line}
             routeMinutes={routeTour?.minutes}
-            stopsOnly={stopCat ? { title: 'Unterwegs einplanen', subtitle: `${plan.name.trim() || 'Neue Tour'} · ${Math.round(total)} km`, cat: stopCat } : undefined}
+            stopsOnly={stopCat ? { title: tr('Unterwegs einplanen'), subtitle: `${plan.name.trim() || 'Neue Tour'} · ${Math.round(total)} km`, cat: stopCat } : undefined}
             onPickStop={(p, name, km) => {
               const snap = plan.snapshot();
               setStopCat(null);
               pickStop(p, name, km);
-              showToast(`${name} bei km ${Math.round(km)} eingeplant`, { action: { label: 'Rückgängig', onPress: () => plan.restore(snap) } });
+              showToast(`${name} bei km ${Math.round(km)} eingeplant`, { action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) } });
             }}
           />
         </>
       )}
 
-      <Accordion label="Vermeiden" summary={avoidSummary(avoid)}>
+      <Accordion label={tr('Vermeiden')} summary={avoidSummary(avoid)}>
         <View style={styles.card}>
           {(
             [
@@ -821,7 +821,7 @@ export function TourMode({
         </View>
       </Accordion>
 
-      {pts.length >= 2 && !routeTour && !busy && <PrimaryButton label="Tour erstellen" onPress={() => plan.planNow(profile, avoid)} />}
+      {pts.length >= 2 && !routeTour && !busy && <PrimaryButton label={tr('Tour erstellen')} onPress={() => plan.planNow(profile, avoid)} />}
 
       {group && routeTour && <GroupBlock savedId={plan.cloudId} />}
 
@@ -839,11 +839,11 @@ export function TourMode({
                 router.back();
               }}
               style={({ pressed }) => [styles.liveDiscard, pressed && { opacity: 0.7 }]}>
-              <AppText style={styles.liveDiscardText}>Verwerfen</AppText>
+              <AppText style={styles.liveDiscardText}>{tr('Verwerfen')}</AppText>
             </Pressable>
             <View style={styles.flex}>
               <PrimaryButton
-                label="Übernehmen"
+                label={tr('Übernehmen')}
                 disabled={!routeTour || !plan.changed}
                 onPress={() => {
                   if (!routeTour) return;
@@ -858,34 +858,34 @@ export function TourMode({
           <ActionBar
             sheetTitle={plan.name.trim() || 'Neue Tour'}
             primary={{
-              label: 'Losfahren',
+              label: tr('Losfahren'),
               onPress: () => {
                 haptic('losfahren');
                 void drive(false);
               },
             }}
             choose={{
-              title: t('Wie fährst du?'),
+              title: tr('Wie fährst du?'),
               items: [
-                { key: 'solo', icon: 'car.fill', label: t('Allein losfahren'), hint: t('Die Navigation startet sofort'), onPress: () => void drive(false) },
-                { key: 'gruppe', icon: 'person.2.fill', label: t('Als Gruppe fahren'), hint: t('Bis zu 6 Autos, du lädst sie im nächsten Schritt ein'), onPress: () => void drive(true) },
+                { key: 'solo', icon: 'car.fill', label: tr('Allein losfahren'), hint: tr('Die Navigation startet sofort'), onPress: () => void drive(false) },
+                { key: 'gruppe', icon: 'person.2.fill', label: tr('Als Gruppe fahren'), hint: tr('Bis zu 6 Autos, du lädst sie im nächsten Schritt ein'), onPress: () => void drive(true) },
               ],
             }}
             // Speichern als sekundärer Knopf, solange die Tour neu oder geändert ist (Konzept 7.11.)
             save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => { if (plan.saving) return; if (!plan.cloudId) setNaming(true); else setAskOverwrite(true); } } : undefined}
             more={[
               // Duplizieren entfällt (Koray 16.11.): Varianten entstehen beim Speichern über „Als neue Tour speichern“
-              ...(plan.cloudId && plan.dirty ? [{ key: 'revert', icon: 'arrow.uturn.backward' as const, label: 'Änderungen verwerfen', onPress: revert }] : []),
+              ...(plan.cloudId && plan.dirty ? [{ key: 'revert', icon: 'arrow.uturn.backward' as const, label: tr('Änderungen verwerfen'), onPress: revert }] : []),
               // Link und GPX als eine Zeile „Teilen“ wie in Touren (Konsistenzprüfung 15.11., O3)
-              { key: 'share', icon: 'square.and.arrow.up', label: 'Teilen', onPress: () => setSharing(true) },
-              ...(plan.cloudId ? [{ key: 'rename', icon: 'pencil' as const, label: 'Umbenennen', onPress: () => setRenaming(true) }] : []),
+              { key: 'share', icon: 'square.and.arrow.up', label: tr('Teilen'), onPress: () => setSharing(true) },
+              ...(plan.cloudId ? [{ key: 'rename', icon: 'pencil' as const, label: tr('Umbenennen'), onPress: () => setRenaming(true) }] : []),
               // Gespeicherte Tour schließen: leert den Planer, die Tour bleibt in Meine Touren (Koray 8.11.)
-              ...(plan.cloudId ? [{ key: 'close', icon: 'xmark.circle' as const, label: 'Tour schließen', hint: 'Bleibt unter Touren', onPress: resetForm }] : []),
+              ...(plan.cloudId ? [{ key: 'close', icon: 'xmark.circle' as const, label: tr('Tour schließen'), hint: tr('Bleibt unter Touren'), onPress: resetForm }] : []),
               plan.cloudId
-                ? { key: 'delete', icon: 'trash', label: 'Tour löschen', danger: true, onPress: () => setAskDelete(true) }
-                : { key: 'reset', icon: 'arrow.counterclockwise', label: 'Planung verwerfen', danger: true, onPress: resetForm },
+                ? { key: 'delete', icon: 'trash', label: tr('Tour löschen'), danger: true, onPress: () => setAskDelete(true) }
+                : { key: 'reset', icon: 'arrow.counterclockwise', label: tr('Planung verwerfen'), danger: true, onPress: resetForm },
             ]}>
-            {!session && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
+            {!session && <AppText variant="caption" muted>{tr('Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.')}</AppText>}
           </ActionBar>
         ) : null}
         {routeTour && (
@@ -920,12 +920,12 @@ export function TourMode({
             subtitle={overwriteNote}
             onClose={() => setAskOverwrite(false)}
             items={[
-              { key: 'over', icon: 'checkmark', label: 'Aktuelle Tour überschreiben', onPress: () => void overwrite() },
-              { key: 'neu', icon: 'plus', label: 'Als neue Tour speichern', onPress: () => void saveAsNew() },
+              { key: 'over', icon: 'checkmark', label: tr('Aktuelle Tour überschreiben'), onPress: () => void overwrite() },
+              { key: 'neu', icon: 'plus', label: tr('Als neue Tour speichern'), onPress: () => void saveAsNew() },
             ]}
           />
         )}
-        {!routeTour && !busy && !hold && pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
+        {!routeTour && !busy && !hold && pts.length > 0 && <SecondaryButton label={tr('Neue Tour beginnen')} onPress={plan.reset} />}
       </View>
       )}
     </>
@@ -960,7 +960,7 @@ function SwipeDelete({ progress, label, onPress }: { progress: SharedValue<numbe
     <Animated.View style={[styles.swipeDeleteWrap, fade]}>
       <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.swipeDelete, pressed && { opacity: 0.8 }]}>
         <SymbolView name="trash.fill" size={20} tintColor={Colors.onSignal} weight="semibold" />
-        <AppText style={styles.swipeDeleteText}>Löschen</AppText>
+        <AppText style={styles.swipeDeleteText}>{tr('Löschen')}</AppText>
       </Pressable>
     </Animated.View>
   );

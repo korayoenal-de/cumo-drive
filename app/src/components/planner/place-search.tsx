@@ -33,6 +33,7 @@ import { highlightsForLeg, passLevel, type Leg } from '@/lib/highlight-candidate
 import { LocationIcon, PointSymbol } from './planner-parts';
 import type { PointKind } from './planner-shared';
 import { usePlaceSuggest } from './planner-shared';
+import { t } from '@/i18n';
 
 type Props = {
   visible: boolean;
@@ -80,14 +81,14 @@ export type Slot = { key: string; kind: PointKind; index?: number; insert?: bool
 
 export type Cat = 'alle' | StopKind | 'pass';
 const CATS: { id: Cat; label: string; placeholder: string }[] = [
-  { id: 'alle', label: 'Alle', placeholder: '' },
-  { id: 'tank', label: 'Tanken', placeholder: 'Marke, etwa Shell' },
+  { id: 'alle', label: t('Alle'), placeholder: '' },
+  { id: 'tank', label: t('Tanken'), placeholder: t('Marke, etwa Shell') },
   // Café gibt es nicht mehr als eigene Auswahl: einen Kaffee bekommt man in jedem Restaurant (Koray 11.11.)
-  { id: 'mittag', label: 'Essen', placeholder: 'Restaurant suchen' },
-  { id: 'aussicht', label: 'Aussicht', placeholder: 'Aussichtspunkt suchen' },
-  { id: 'hotel', label: 'Hotel', placeholder: 'Hotel suchen' },
+  { id: 'mittag', label: t('Essen'), placeholder: t('Restaurant suchen') },
+  { id: 'aussicht', label: t('Aussicht'), placeholder: t('Aussichtspunkt suchen') },
+  { id: 'hotel', label: t('Hotel'), placeholder: t('Hotel suchen') },
   // Highlights statt Pässe (Koray 8.11.): Pässe und kuratierte Strecken wie die Juhöhe
-  { id: 'pass', label: 'Highlights/Pässe', placeholder: 'Highlight suchen, etwa Stilfser Joch' },
+  { id: 'pass', label: t('Highlights/Pässe'), placeholder: t('Highlight suchen, etwa Stilfser Joch') },
 ];
 export const CAT_ICON: Record<Exclude<Cat, 'alle'>, 'fuelpump.fill' | 'cup.and.saucer.fill' | 'fork.knife' | 'binoculars.fill' | 'bed.double.fill' | 'mountain.2.fill'> = {
   tank: 'fuelpump.fill',
@@ -226,8 +227,8 @@ function SearchBody({
     return () => ctrl.abort();
   }, [hotelMode, currentP, nearKind, nearFound]);
   const NEAR_TABS = [
-    { id: 'hotel' as const, label: 'Hotel', plural: 'Hotels', icon: 'bed.double.fill' as const },
-    { id: 'mittag' as const, label: 'Essen', plural: 'Restaurants', icon: 'fork.knife' as const },
+    { id: 'hotel' as const, label: t('Hotel'), plural: 'Hotels', icon: 'bed.double.fill' as const },
+    { id: 'mittag' as const, label: t('Essen'), plural: 'Restaurants', icon: 'fork.knife' as const },
   ].filter((t) => nearHotel || t.id !== 'hotel');
   const nearTab = NEAR_TABS.find((t) => t.id === nearKind)!;
   // nur beim Einfügen (noch kein Name im Feld), nicht beim Ändern eines bestehenden Zwischenziels
@@ -331,7 +332,7 @@ function SearchBody({
                 </View>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Schließen"
+                  accessibilityLabel={t('Schließen')}
                   onPress={onClose}
                   style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
                   <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
@@ -347,10 +348,10 @@ function SearchBody({
                   returnKeyType="search"
                   autoCorrect={false}
                   style={styles.input}
-                  accessibilityLabel="In dieser Kategorie suchen"
+                  accessibilityLabel={t('In dieser Kategorie suchen')}
                 />
                 {query.length > 0 && (
-                  <Pressable accessibilityRole="button" accessibilityLabel="Eingabe löschen" onPress={() => setQuery('')} hitSlop={8}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={t('Eingabe löschen')} onPress={() => setQuery('')} hitSlop={8}>
                     <SymbolView weight="semibold" name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
                   </Pressable>
                 )}
@@ -381,7 +382,7 @@ function SearchBody({
               />
               {suggest.searching && <ActivityIndicator color={Colors.muted} />}
               {query.length > 0 && (
-                <Pressable accessibilityRole="button" accessibilityLabel="Eingabe löschen" onPress={() => setQuery('')} hitSlop={8}>
+                <Pressable accessibilityRole="button" accessibilityLabel={t('Eingabe löschen')} onPress={() => setQuery('')} hitSlop={8}>
                   <SymbolView weight="semibold" name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
                 </Pressable>
               )}
@@ -403,7 +404,7 @@ function SearchBody({
               </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Suche schließen"
+              accessibilityLabel={t('Suche schließen')}
               onPress={onClose}
               style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
               <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
@@ -430,14 +431,14 @@ function SearchBody({
               />
               {suggest.searching && <ActivityIndicator color={Colors.muted} />}
               {query.length > 0 && (
-                <Pressable accessibilityRole="button" accessibilityLabel="Eingabe löschen" onPress={() => setQuery('')} hitSlop={8}>
+                <Pressable accessibilityRole="button" accessibilityLabel={t('Eingabe löschen')} onPress={() => setQuery('')} hitSlop={8}>
                   <SymbolView weight="semibold" name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
                 </Pressable>
               )}
                 </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Suche schließen"
+              accessibilityLabel={t('Suche schließen')}
               onPress={onClose}
               style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
               <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
@@ -539,9 +540,9 @@ function SearchBody({
             catLoading ? (
               <ActivityIndicator color={Colors.muted} style={styles.loading} />
             ) : catNoRoute ? (
-              <AppText style={styles.empty}>Sobald die Route steht, siehst du hier Stopps an der Strecke.</AppText>
+              <AppText style={styles.empty}>{t('Sobald die Route steht, siehst du hier Stopps an der Strecke.')}</AppText>
             ) : catRows === 'fehler' ? (
-              <AppText style={styles.empty}>Die Stopps lassen sich gerade nicht laden. Versuch es gleich noch einmal.</AppText>
+              <AppText style={styles.empty}>{t('Die Stopps lassen sich gerade nicht laden. Versuch es gleich noch einmal.')}</AppText>
             ) : catRows && catRows.length === 0 ? (
               <View style={styles.section}>
                 <AppText style={styles.empty}>
@@ -555,7 +556,7 @@ function SearchBody({
                 </AppText>
                 {scale < 3 && (
                   <Pressable accessibilityRole="button" onPress={() => setScale(3)} style={({ pressed }) => [styles.widen, pressed && styles.pressed]}>
-                    <AppText style={styles.widenText}>Korridor erweitern</AppText>
+                    <AppText style={styles.widenText}>{t('Korridor erweitern')}</AppText>
                   </Pressable>
                 )}
               </View>
@@ -564,7 +565,7 @@ function SearchBody({
                 {/* Konzept A3 (Koray 8.11.): eine Liste nach Kilometern, rechts groß "in X km" und die ungefähre
                     Ankunft; nur ein echter Umweg bekommt eine Plakette, "0 min" und "Direkt an der Strecke" entfallen */}
                 {cat === 'mittag' && (
-                  <AppText style={styles.recNote}>Unsere Empfehlungen: mit Parkplatz und gut für Sportwagen. Jedes andere Lokal findest du unter Alle.</AppText>
+                  <AppText style={styles.recNote}>{t('Unsere Empfehlungen: mit Parkplatz und gut für Sportwagen. Jedes andere Lokal findest du unter Alle.')}</AppText>
                 )}
                 <View style={styles.group}>
                   {[...(catRows ?? [])]
@@ -622,14 +623,14 @@ function SearchBody({
                 </View>
                 {scale < 3 && (
                   <Pressable accessibilityRole="button" onPress={() => setScale(3)} style={({ pressed }) => [styles.widenLink, pressed && styles.pressed]}>
-                    <AppText style={styles.widenLinkText}>Korridor erweitern</AppText>
+                    <AppText style={styles.widenLinkText}>{t('Korridor erweitern')}</AppText>
                   </Pressable>
                 )}
               </>
             )
           ) : hits ? (
             hits.length === 0 && !suggest.searching ? (
-              <AppText style={styles.empty}>Nichts gefunden. Versuch es mit dem Ortsnamen.</AppText>
+              <AppText style={styles.empty}>{t('Nichts gefunden. Versuch es mit dem Ortsnamen.')}</AppText>
             ) : (
               <View style={styles.group}>{hits.map((h, i) => row(h, i, h.detail.startsWith('Pass,') ? 'pass' : 'place'))}</View>
             )
@@ -640,7 +641,7 @@ function SearchBody({
                 <>
               {recent.length > 0 && (
                 <View style={styles.section}>
-                  <AppText style={styles.label}>Zuletzt gewählt</AppText>
+                  <AppText style={styles.label}>{t('Zuletzt gewählt')}</AppText>
                   <View style={styles.group}>{recent.map((r, i) => row(r, i, 'recent'))}</View>
                 </View>
               )}
@@ -651,7 +652,7 @@ function SearchBody({
                   onPress={() => !locating && onHere()}
                   style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
                   <View style={styles.icon}>{locating ? <ActivityIndicator color={Colors.signal} /> : <LocationIcon />}</View>
-                  <AppText style={[styles.name, styles.rowMain]}>Mein Standort</AppText>
+                  <AppText style={[styles.name, styles.rowMain]}>{t('Mein Standort')}</AppText>
                 </Pressable>
               </View>
               {!!message && <AppText style={styles.message}>{message}</AppText>}
@@ -666,14 +667,14 @@ function SearchBody({
                   onPress={() => !locating && onHere()}
                   style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
                   <View style={styles.icon}>{locating ? <ActivityIndicator color={Colors.signal} /> : <LocationIcon />}</View>
-                  <AppText style={[styles.name, styles.rowMain]}>Mein Standort</AppText>
+                  <AppText style={[styles.name, styles.rowMain]}>{t('Mein Standort')}</AppText>
                 </Pressable>
               </View>
               )}
               {!!message && <AppText style={styles.message}>{message}</AppText>}
               {recent.length > 0 && (
                 <View style={styles.section}>
-                  <AppText style={styles.label}>Zuletzt gewählt</AppText>
+                  <AppText style={styles.label}>{t('Zuletzt gewählt')}</AppText>
                   <View style={styles.group}>{recent.map((r, i) => row(r, i, 'recent'))}</View>
                 </View>
               )}

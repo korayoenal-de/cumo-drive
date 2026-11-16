@@ -24,6 +24,7 @@ import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Rect, Stop } f
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { Colors, Fonts } from '@/constants/theme';
+import { tr } from '@/i18n';
 
 /* Bühne wie im Konzept: 390 × 844, auf den Bildschirm gezogen (füllt, schneidet notfalls an) */
 const VW = 390;
@@ -332,9 +333,9 @@ export function StartScreen({ ready, onDone }: { ready: boolean; onDone: () => v
   const textSize = TEXT_SIZE * scale;
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, styles.root, rootStyle]} accessibilityLabel="CUMO DRIVE wird geladen" accessibilityRole="image">
+    <Animated.View style={[StyleSheet.absoluteFill, styles.root, rootStyle]} accessibilityLabel={tr('CUMO DRIVE wird geladen')} accessibilityRole="image">
       <Sky width={width} height={height} still={reduced} />
-      <Pressable style={StyleSheet.absoluteFill} onPress={skip} accessibilityRole="button" accessibilityLabel="Startanimation überspringen">
+      <Pressable style={StyleSheet.absoluteFill} onPress={skip} accessibilityRole="button" accessibilityLabel={tr('Startanimation überspringen')}>
         <Svg width={width} height={height} viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="xMidYMid slice">
           <Defs>
             <RadialGradient id="glow" cx="50%" cy="50%" r="50%">

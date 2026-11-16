@@ -29,7 +29,7 @@ import { GroupBlock, Stats, StopsPlanner, Warnings, type PlannedStop } from './p
 import { PlaceSearch, type Cat } from './place-search';
 import { styles } from './planner-styles';
 import { uniqueWarnings } from '@/lib/warning-dedupe';
-import { t } from '@/i18n';
+import { tr } from '@/i18n';
 
 
 export function Result({
@@ -67,7 +67,7 @@ export function Result({
     const t = saveTour({ ...tour, curves, profile: req.profile }, '', savedId ?? undefined);
     setSaved({ tour, id: t.id });
     void syncLibrary();
-    showToast('Unter Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
+    showToast(tr('Unter Touren gespeichert'), { action: { label: tr('Ansehen'), onPress: () => router.navigate('/touren') } });
     return t.id;
   };
   const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);
@@ -116,7 +116,7 @@ export function Result({
         onHere={() => undefined}
         onClose={() => setStopCat(null)}
         route={line}
-        stopsOnly={stopCat ? { title: 'Unterwegs einplanen', subtitle: `${tour.name} · ${Math.round(total)} km`, cat: stopCat } : undefined}
+        stopsOnly={stopCat ? { title: tr('Unterwegs einplanen'), subtitle: `${tour.name} · ${Math.round(total)} km`, cat: stopCat } : undefined}
         onPickStop={(p, name, km) => {
           const c = stopCat!;
           setStopCat(null);
@@ -130,25 +130,25 @@ export function Result({
       <ActionBar
         sheetTitle={tour.name}
         primary={{
-          label: 'Losfahren',
+          label: tr('Losfahren'),
           onPress: () => {
             haptic('losfahren');
             drive(false);
           },
         }}
         choose={{
-          title: t('Wie fährst du?'),
+          title: tr('Wie fährst du?'),
           items: [
-            { key: 'solo', icon: 'car.fill', label: t('Allein losfahren'), hint: t('Die Navigation startet sofort'), onPress: () => drive(false) },
-            { key: 'gruppe', icon: 'person.2.fill', label: t('Als Gruppe fahren'), hint: t('Bis zu 6 Autos, du lädst sie im nächsten Schritt ein'), onPress: () => drive(true) },
+            { key: 'solo', icon: 'car.fill', label: tr('Allein losfahren'), hint: tr('Die Navigation startet sofort'), onPress: () => drive(false) },
+            { key: 'gruppe', icon: 'person.2.fill', label: tr('Als Gruppe fahren'), hint: tr('Bis zu 6 Autos, du lädst sie im nächsten Schritt ein'), onPress: () => drive(true) },
           ],
         }}
         save={{ saved: !!savedId, onPress: () => void saveResult() }}
         more={[
-          { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Tour direkt in CUMO DRIVE', onPress: () => void shareTourLink({ ...tour, name: tour.name }, req.profile).catch(() => undefined) },
-          { key: 'adjust', icon: 'pencil', label: 'Anpassen', onPress: onAdjust },
-          { key: 'reroll', icon: 'dice', label: 'Neu würfeln', hint: 'Gleiche Länge und Richtung, andere Strecke', onPress: onReroll },
-          { key: 'back', icon: 'trash', label: 'Runde verwerfen', danger: true, confirm: 'Möchtest du diese Runde wirklich verwerfen?', onPress: () => onBack(!!savedId) },
+          { key: 'link', icon: 'square.and.arrow.up', label: tr('Link teilen'), hint: tr('Andere öffnen die Tour direkt in CUMO DRIVE'), onPress: () => void shareTourLink({ ...tour, name: tour.name }, req.profile).catch(() => undefined) },
+          { key: 'adjust', icon: 'pencil', label: tr('Anpassen'), onPress: onAdjust },
+          { key: 'reroll', icon: 'dice', label: tr('Neu würfeln'), hint: tr('Gleiche Länge und Richtung, andere Strecke'), onPress: onReroll },
+          { key: 'back', icon: 'trash', label: tr('Runde verwerfen'), danger: true, confirm: tr('Möchtest du diese Runde wirklich verwerfen?'), onPress: () => onBack(!!savedId) },
         ]}>
       </ActionBar>
     </View>
@@ -163,7 +163,7 @@ function RollChips({ rolls, idx, onPick }: { rolls: (TourFun | null)[]; idx: num
   });
   return (
     <View style={styles.gapS}>
-      <AppText variant="caption" muted>Deine Runden</AppText>
+      <AppText variant="caption" muted>{tr('Deine Runden')}</AppText>
       <View style={styles.rollRow}>
         {rolls.map((f, i) =>
           f ? <FunPill key={i} fun={f} active={i === idx} best={i === best} hint={`Runde ${i + 1} anzeigen`} onPress={() => onPick(i)} /> : null,

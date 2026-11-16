@@ -34,6 +34,7 @@ import { importTourFile } from '@/lib/route-file';
 import { showToast } from '@/lib/toast';
 import { countCurves } from '@/lib/stats';
 import { flatten, formatKm, type LatLon } from '@/lib/tour';
+import { tr } from '@/i18n';
 
 /**
  * Anstehende Ausfahrten oben in Touren (Koray 13.11.): eigene und die, zu denen du eingeladen bist oder
@@ -55,7 +56,7 @@ function Upcoming() {
   if (!rides.length) return null;
   return (
     <View style={styles.upcoming}>
-      <AppText style={styles.upLabel}>Anstehend</AppText>
+      <AppText style={styles.upLabel}>{tr('Anstehend')}</AppText>
       {rides.map((a) => {
         const state = a.isOwner
           ? fmtMeta(plaetze(Math.max(0, a.maxMembers - a.taken)).text, a.openRequests ? `${a.openRequests} ${a.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : null)
@@ -80,7 +81,7 @@ function Upcoming() {
             {!a.isPublic && (
               <View style={styles.privat}>
                 <SymbolView name="lock.fill" size={16} weight="semibold" tintColor={Colors.text} />
-                <AppText style={styles.privatText}>Privat</AppText>
+                <AppText style={styles.privatText}>{tr('Privat')}</AppText>
               </View>
             )}
           </Pressable>
@@ -110,7 +111,7 @@ function PastRides() {
   if (!rides.length) return null;
   return (
     <View style={styles.upcoming}>
-      <AppText style={styles.upLabel}>Ausfahrten</AppText>
+      <AppText style={styles.upLabel}>{tr('Ausfahrten')}</AppText>
       {rides.map((a) => {
         const state = a.isOwner ? 'Du hast geführt' : `Mit ${a.ownerName}`;
         return (
@@ -134,10 +135,10 @@ function PastRides() {
 }
 
 const SORTS: { id: SortKey; label: string }[] = [
-  { id: 'neu', label: 'Neueste' },
-  { id: 'spass', label: 'Fahrspaß' },
-  { id: 'name', label: 'Name' },
-  { id: 'laenge', label: 'Strecke' },
+  { id: 'neu', label: tr('Neueste') },
+  { id: 'spass', label: tr('Fahrspaß') },
+  { id: 'name', label: tr('Name') },
+  { id: 'laenge', label: tr('Strecke') },
 ];
 
 /** Tour im Planer öffnen: dort steht sie auf der Karte, mit Losfahren und Gruppe. */
@@ -186,10 +187,10 @@ export default function Touren() {
     <Screen>
       {/* Import als Symbol neben der Überschrift statt großem Knopf (Koray 8.11.) */}
       <View style={styles.titleRow}>
-        <AppText variant="display" style={styles.flex} numberOfLines={1} adjustsFontSizeToFit>Touren</AppText>
+        <AppText variant="display" style={styles.flex} numberOfLines={1} adjustsFontSizeToFit>{tr('Touren')}</AppText>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="GPX oder KML importieren"
+          accessibilityLabel={tr('GPX oder KML importieren')}
           onPress={() => void importFile()}
           hitSlop={6}
           style={({ pressed }) => [styles.importBtn, pressed && { opacity: 0.75 }]}>
@@ -204,8 +205,8 @@ export default function Touren() {
       <TypoTabs
         value={tab}
         options={[
-          { id: 'gespeichert', label: 'Gespeichert' },
-          { id: 'gefahren', label: 'Gefahren' },
+          { id: 'gespeichert', label: tr('Gespeichert') },
+          { id: 'gefahren', label: tr('Gefahren') },
         ]}
         onChange={setTab}
       />
@@ -230,10 +231,10 @@ export default function Touren() {
 
       {list.length === 0 ? (
         <View style={styles.card}>
-          <AppText variant="title">Noch keine Tour gespeichert</AppText>
-          <AppText muted>Plan eine Tour oder eine Rundtour und tippe auf Speichern. Dann landet sie hier.</AppText>
+          <AppText variant="title">{tr('Noch keine Tour gespeichert')}</AppText>
+          <AppText muted>{tr('Plan eine Tour oder eine Rundtour und tippe auf Speichern. Dann landet sie hier.')}</AppText>
           <Pressable accessibilityRole="button" onPress={() => router.navigate('/')} style={styles.primary}>
-            <AppText style={styles.primaryText}>Tour planen</AppText>
+            <AppText style={styles.primaryText}>{tr('Tour planen')}</AppText>
           </Pressable>
         </View>
       ) : (
@@ -242,16 +243,16 @@ export default function Touren() {
             <TextInput maxFontSizeMultiplier={1.2}
               value={q}
               onChangeText={setQ}
-              placeholder="Touren durchsuchen"
+              placeholder={tr('Touren durchsuchen')}
               placeholderTextColor={Colors.muted}
               style={styles.search}
-              accessibilityLabel="Touren durchsuchen"
+              accessibilityLabel={tr('Touren durchsuchen')}
               returnKeyType="search"
             />
             {/* Chips in einer Zeile, seitlich wischbar bis an den Rand (Koray 15.11.) */}
             {dirs.length > 0 && (
               <ChipRow>
-                <Chip label="Alle" active={folder === null} onPress={() => setFolder(null)} />
+                <Chip label={tr('Alle')} active={folder === null} onPress={() => setFolder(null)} />
                 {dirs.map((d) => (
                   <Chip key={d} label={d} active={folder === d} onPress={() => setFolder(folder === d ? null : d)} />
                 ))}
@@ -265,7 +266,7 @@ export default function Touren() {
           </View>
 
           <View style={styles.list}>
-            {shown.length === 0 && <AppText muted>Keine Tour passt zur Suche.</AppText>}
+            {shown.length === 0 && <AppText muted>{tr('Keine Tour passt zur Suche.')}</AppText>}
             {shown.map((t) => (
               <TourCard key={t.id} tour={t} onOpen={openTour} />
             ))}
@@ -314,8 +315,8 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
   if (!loggedIn)
     return (
       <View style={styles.card}>
-        <AppText variant="title">Fahrten mit Konto</AppText>
-        <AppText muted>Melde dich unter Einstellungen an. Dann landet nach jeder Navigation die Fahrtstatistik hier, sortiert nach Fahrzeug.</AppText>
+        <AppText variant="title">{tr('Fahrten mit Konto')}</AppText>
+        <AppText muted>{tr('Melde dich unter Einstellungen an. Dann landet nach jeder Navigation die Fahrtstatistik hier, sortiert nach Fahrzeug.')}</AppText>
       </View>
     );
   const cars = [...new Map((list ?? []).filter((d) => d.vehicle_id).map((d) => [d.vehicle_id as string, d.vehicle_name || 'Fahrzeug'])).entries()];
@@ -325,7 +326,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
     <View style={styles.gapM}>
       {cars.length > 0 && (
         <ChipRow>
-          <Chip label="Alle Fahrzeuge" active={car === null} onPress={() => setCar(null)} />
+          <Chip label={tr('Alle Fahrzeuge')} active={car === null} onPress={() => setCar(null)} />
           {cars.map(([id, name]) => (
             <Chip key={id} label={name} active={car === id} onPress={() => setCar(car === id ? null : id)} />
           ))}
@@ -335,7 +336,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
       {list === null && !err && <ActivityIndicator color={Colors.muted} />}
       {list?.length === 0 && (
         <View style={styles.card}>
-          <AppText muted>Noch keine Fahrt gespeichert. Nach jeder Navigation landet die Fahrtstatistik hier.</AppText>
+          <AppText muted>{tr('Noch keine Fahrt gespeichert. Nach jeder Navigation landet die Fahrtstatistik hier.')}</AppText>
         </View>
       )}
       {shown.length > 0 && (
@@ -383,9 +384,9 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
       </View>
       <ConfirmSheet
         visible={!!askDelete}
-        title="Möchtest du diese Fahrt wirklich löschen?"
+        title={tr('Möchtest du diese Fahrt wirklich löschen?')}
         text={askDelete ? `${askDelete.name}, ${datum(new Date(askDelete.started_at))}. Strecke, Statistik und Bewertung sind dann weg.` : undefined}
-        confirmLabel="Löschen"
+        confirmLabel={tr('Löschen')}
         onClose={() => setAskDelete(null)}
         onConfirm={() => {
           const d = askDelete;
@@ -410,7 +411,7 @@ function DriveCard({ line, label, onOpen, onDelete, children }: { line?: LatLon[
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={onOpen ? 'Zeigt Strecke, Statistik und Bewertung der Fahrt' : undefined}
-      accessibilityActions={onDelete ? [{ name: 'delete', label: 'Löschen' }] : undefined}
+      accessibilityActions={onDelete ? [{ name: 'delete', label: tr('Löschen') }] : undefined}
       onAccessibilityAction={(e) => e.nativeEvent.actionName === 'delete' && onDelete?.()}
       disabled={!onOpen}
       onPress={onOpen}

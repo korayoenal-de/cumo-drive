@@ -21,6 +21,7 @@ import { datum, meta } from '@/lib/format';
 import { openDriveInPlanner } from '@/lib/open-drive';
 import { fmtG } from '@/lib/ride-stats';
 import type { LatLon, Tour } from '@/lib/tour';
+import { t } from '@/i18n';
 
 const OLD_RATING: Record<number, string> = { 1: 'Nicht gut', 2: 'Gut', 3: 'Sensationell' };
 
@@ -57,9 +58,9 @@ export default function FahrtScreen() {
     const k = d?.peaks;
     if (!k) return [];
     const out: { id: string; p: LatLon; label: string; title: string }[] = [];
-    if (k.spitze) out.push({ id: 'v', p: k.spitze.p, label: `${Math.round(k.spitze.v)} km/h`, title: 'Höchstgeschwindigkeit' });
-    if (k.quer) out.push({ id: 'q', p: k.quer.p, label: fmtG(k.quer.v), title: 'Größte Querbeschleunigung' });
-    if (k.bremsung) out.push({ id: 'b', p: k.bremsung.p, label: `−${fmtG(k.bremsung.v)}`, title: 'Stärkste Bremsung' });
+    if (k.spitze) out.push({ id: 'v', p: k.spitze.p, label: `${Math.round(k.spitze.v)} km/h`, title: t('Höchstgeschwindigkeit') });
+    if (k.quer) out.push({ id: 'q', p: k.quer.p, label: fmtG(k.quer.v), title: t('Größte Querbeschleunigung') });
+    if (k.bremsung) out.push({ id: 'b', p: k.bremsung.p, label: `−${fmtG(k.bremsung.v)}`, title: t('Stärkste Bremsung') });
     return out;
   }, [d]);
 
@@ -78,7 +79,7 @@ export default function FahrtScreen() {
   return (
     <View style={[styles.flex, { backgroundColor: Colors.ground }]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: insets.bottom + 120 }]}>
-        <BackLink label="Touren" fallback="/touren" />
+        <BackLink label={t('Touren')} fallback="/touren" />
         {err && <AppText muted>{err}</AppText>}
         {!d && !err && <ActivityIndicator color={Colors.muted} />}
         {d && (
@@ -97,7 +98,7 @@ export default function FahrtScreen() {
                 <RouteMap tour={tour} pins={pins} style={StyleSheet.absoluteFill} edgePadding={{ top: 48, right: 32, bottom: 32, left: 32 }} />
               </View>
             )}
-            {pins.length > 0 && <AppText muted>Die Spitzenwerte sind auf der Karte markiert.</AppText>}
+            {pins.length > 0 && <AppText muted>{t('Die Spitzenwerte sind auf der Karte markiert.')}</AppText>}
             {stats.some((s) => s[1] != null) && (
               <View style={styles.grid}>
                 {stats
@@ -112,7 +113,7 @@ export default function FahrtScreen() {
             )}
             {rating && (
               <View style={styles.card}>
-                <AppText style={styles.label}>Deine Bewertung</AppText>
+                <AppText style={styles.label}>{t('Deine Bewertung')}</AppText>
                 <AppText variant="title">{rating}</AppText>
                 {reasons.length > 0 && <AppText muted>{reasons.join(', ')}</AppText>}
                 {d.rating_note ? <AppText muted>{d.rating_note}</AppText> : null}
@@ -123,8 +124,8 @@ export default function FahrtScreen() {
       </ScrollView>
       {d && d.track.length > 1 && (
         <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.m }]}>
-          <Pressable accessibilityRole="button" accessibilityHint="Zeigt die Strecke im Planer, dort kannst du sie speichern und nochmal fahren" onPress={() => openDriveInPlanner(d, d.track)} style={({ pressed }) => [styles.primary, pressed && styles.pressed]}>
-            <AppText style={styles.primaryText}>Im Planer öffnen</AppText>
+          <Pressable accessibilityRole="button" accessibilityHint={t('Zeigt die Strecke im Planer, dort kannst du sie speichern und nochmal fahren')} onPress={() => openDriveInPlanner(d, d.track)} style={({ pressed }) => [styles.primary, pressed && styles.pressed]}>
+            <AppText style={styles.primaryText}>{t('Im Planer öffnen')}</AppText>
           </Pressable>
         </View>
       )}

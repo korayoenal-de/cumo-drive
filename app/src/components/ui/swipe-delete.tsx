@@ -9,6 +9,7 @@ import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Type } from '@/constants/theme';
+import { t } from '@/i18n';
 
 export function SwipeDelete({ progress, label, onPress, radius = Radius.l }: { progress: SharedValue<number>; label: string; onPress: () => void; radius?: number }) {
   const fade = useAnimatedStyle(() => ({ opacity: interpolate(progress.get(), [0, 0.2], [0, 1], 'clamp') }));
@@ -16,7 +17,7 @@ export function SwipeDelete({ progress, label, onPress, radius = Radius.l }: { p
     <Animated.View style={[styles.wrap, fade]}>
       <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.btn, { borderRadius: radius - 2 }, pressed && styles.pressed]}>
         <SymbolView name="trash.fill" size={20} tintColor={Colors.text} weight="semibold" />
-        <AppText style={styles.text}>Löschen</AppText>
+        <AppText style={styles.text}>{t('Löschen')}</AppText>
       </Pressable>
     </Animated.View>
   );

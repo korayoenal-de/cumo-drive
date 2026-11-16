@@ -12,6 +12,7 @@ import Svg, { Polygon } from 'react-native-svg';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import type { LegalDoc } from '@/content/legal';
+import { t } from '@/i18n';
 
 const MARK = [
   '12.00,16.20 7.29,22.09 16.71,22.09',
@@ -48,8 +49,8 @@ export function LegalPage({ doc, description, other }: { doc: LegalDoc; descript
               <AppText style={styles.logoText}>CUMO DRIVE</AppText>
             </Pressable>
             {!web && (
-              <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={home} style={({ pressed }) => [styles.quiet, pressed && styles.pressed]}>
-                <AppText style={styles.quietText}>Schließen</AppText>
+              <Pressable accessibilityRole="button" accessibilityLabel={t('Schließen')} onPress={home} style={({ pressed }) => [styles.quiet, pressed && styles.pressed]}>
+                <AppText style={styles.quietText}>{t('Schließen')}</AppText>
               </Pressable>
             )}
           </View>

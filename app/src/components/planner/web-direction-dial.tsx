@@ -8,6 +8,7 @@ import { useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { DIRECTIONS, type Direction } from '@/lib/roundtrip';
 
 import { BODY, C } from './web-shared';
+import { t } from '@/i18n';
 
 const SIZE = 260;
 const M = SIZE / 2;
@@ -52,7 +53,7 @@ export function WebDirectionDial(props: { value: Direction; onChange: (d: Direct
       <div
         role="slider"
         tabIndex={0}
-        aria-label="Richtung der Runde"
+        aria-label={t('Richtung der Runde')}
         aria-valuetext={label}
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight' || e.key === 'ArrowUp') step(1);
@@ -110,7 +111,7 @@ export function WebDirectionDial(props: { value: Direction; onChange: (d: Direct
         </svg>
         <button
           aria-pressed={value === 'zufall'}
-          aria-label="Zufällige Richtung"
+          aria-label={t('Zufällige Richtung')}
           onClick={() => onChange('zufall')}
           style={{
             position: 'absolute', left: '50%', top: '50%', width: '35%', aspectRatio: '1', transform: 'translate(-50%, -50%)', borderRadius: '50%', border: 'none', cursor: 'pointer',

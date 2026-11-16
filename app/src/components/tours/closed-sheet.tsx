@@ -14,6 +14,7 @@ import type { ClosureHit } from '@/lib/road-closures';
 import { showToast } from '@/lib/toast';
 import { formatKm, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
+import { t } from '@/i18n';
 
 type Alt = { tour: PlannedTour; dropped: number };
 type State = { tour: Tour; hits: ClosureHit[]; alt: Alt | null | false; go: (t: Tour, around: boolean) => void };
@@ -45,24 +46,24 @@ export function useClosedCheck(): { check: (tour: Tour, profile: Profile, avoid:
   const sheet = s ? (
     <ActionSheet
       visible
-      title="Gerade gesperrt"
+      title={t('Gerade gesperrt')}
       subtitle={`${closureLabels(s.hits).join('. ')}. Wie möchtest du fahren?`}
       onClose={() => setS(null)}
       items={[
         {
           key: 'um',
           icon: 'arrow.triangle.branch',
-          label: 'Umfahren',
+          label: t('Umfahren'),
           primary: !!s.alt,
           busy: s.alt === null,
           hint: s.alt === null ? 'Die Umfahrung wird geplant' : s.alt === false ? 'Keine Umfahrung gefunden' : aroundHint(s.alt, s.tour.laenge_km),
           onPress: () => {
             const a = s.alt;
             if (a) s.go({ ...a.tour, name: s.tour.name }, true);
-            else if (a === null) showToast('Die Umfahrung wird noch geplant, gleich nochmal tippen.');
+            else if (a === null) showToast(t('Die Umfahrung wird noch geplant, gleich nochmal tippen.'));
           },
         },
-        { key: 'wie', icon: 'car.fill', label: 'Wie geplant fahren', hint: 'Nur wenn die Straße doch offen ist', onPress: () => s.go(s.tour, false) },
+        { key: 'wie', icon: 'car.fill', label: t('Wie geplant fahren'), hint: t('Nur wenn die Straße doch offen ist'), onPress: () => s.go(s.tour, false) },
       ]}
     />
   ) : null;

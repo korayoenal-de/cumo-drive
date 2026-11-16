@@ -32,6 +32,7 @@ import { cleanName, findProfiles, useMyProfile, type FoundProfile } from '@/lib/
 import { refreshContacts, useContacts } from '@/lib/contacts';
 import { formatKm, type Tour } from '@/lib/tour';
 import { useVehicles } from '@/lib/vehicle';
+import { t } from '@/i18n';
 
 const STATUS_LABEL: Record<InviteStatus, string> = { eingeladen: 'Eingeladen', zugesagt: 'Zugesagt', abgesagt: 'Abgesagt' };
 
@@ -126,7 +127,7 @@ export default function GruppeNeu() {
       <Screen>
         <BackLink />
         <AppText variant="display">{'Gruppen\nfahrt'}</AppText>
-        <AppText muted>Diese Tour gibt es nicht mehr unter Touren. Wähle dort eine Tour und tippe auf Losfahren, dann Als Gruppe fahren.</AppText>
+        <AppText muted>{t('Diese Tour gibt es nicht mehr unter Touren. Wähle dort eine Tour und tippe auf Losfahren, dann Als Gruppe fahren.')}</AppText>
     </Screen>
     );
   }
@@ -202,7 +203,7 @@ export default function GruppeNeu() {
     <Screen>
       <BackLink />
       <View style={styles.gapS}>
-        <AppText variant="label">Gruppenfahrt</AppText>
+        <AppText variant="label">{t('Gruppenfahrt')}</AppText>
         <AppText variant="display" numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.6}>
           {saved.name}
         </AppText>
@@ -213,7 +214,7 @@ export default function GruppeNeu() {
 
       <View style={styles.card}>
         <View style={styles.rowBetween}>
-          <AppText variant="label">Teilnehmer</AppText>
+          <AppText variant="label">{t('Teilnehmer')}</AppText>
           <AppText variant="caption" muted accessibilityLabel={`${taken} von ${max} Fahrzeugen`}>
             {taken} von {max}
           </AppText>
@@ -238,7 +239,7 @@ export default function GruppeNeu() {
       </View>
 
       <View style={styles.card}>
-        <AppText variant="label">Teilnehmer einladen</AppText>
+        <AppText variant="label">{t('Teilnehmer einladen')}</AppText>
         <TextInput maxFontSizeMultiplier={1.2}
           value={query}
           onChangeText={setQuery}
@@ -249,10 +250,10 @@ export default function GruppeNeu() {
           autoCorrect={false}
           returnKeyType="search"
           style={[styles.input, full && styles.disabled]}
-          accessibilityLabel="Teilnehmer mit Namen suchen"
+          accessibilityLabel={t('Teilnehmer mit Namen suchen')}
         />
         {searching && <ActivityIndicator color={Colors.muted} />}
-        {!q && mine.length > 0 && !full && <AppText variant="caption" muted>Deine Kontakte</AppText>}
+        {!q && mine.length > 0 && !full && <AppText variant="caption" muted>{t('Deine Kontakte')}</AppText>}
         {suggestions.map((p) => (
           <View key={p.id} style={styles.suggestion}>
             <View style={styles.flex}>
@@ -271,7 +272,7 @@ export default function GruppeNeu() {
               disabled={!!busy || full}
               onPress={() => void invite(p)}
               style={[styles.smallBtn, (!!busy || full) && styles.disabled]}>
-              {busy === p.id ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.smallBtnText}>Einladen</AppText>}
+              {busy === p.id ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.smallBtnText}>{t('Einladen')}</AppText>}
             </Pressable>
           </View>
         ))}
@@ -291,7 +292,7 @@ export default function GruppeNeu() {
 
       <View style={styles.gapS}>
         <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void start()} style={[styles.primary, !!busy && styles.disabled]}>
-          {busy === 'start' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Gruppenfahrt starten</AppText>}
+          {busy === 'start' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Gruppenfahrt starten')}</AppText>}
         </Pressable>
         <AppText variant="caption" muted>
           Du fährst vorne. Wer zugesagt hat, kann jederzeit dazukommen und sieht dich live auf der Karte.
@@ -306,11 +307,11 @@ function BackLink() {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Zurück"
+      accessibilityLabel={t('Zurück')}
       hitSlop={12}
       onPress={() => (router.canGoBack() ? router.back() : router.navigate('/touren'))}
       style={styles.back}>
-      <AppText style={styles.backText}>‹ Zurück</AppText>
+      <AppText style={styles.backText}>{t('‹ Zurück')}</AppText>
     </Pressable>
   );
 }

@@ -35,7 +35,7 @@ import { StartScreen } from '@/components/ui/start-screen';
 import { preloadOnStart } from '@/lib/preload';
 import { PushHandler } from '@/lib/push';
 import { startRoutingAuth } from '@/lib/routing-auth';
-import { loadLang } from '@/i18n';
+import { loadLang , t } from '@/i18n';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -131,30 +131,30 @@ export default function RootLayout() {
       <EntitlementGate>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.ground } }}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="planer" options={{ title: 'CUMO DRIVE Planer' }} />
-        <Stack.Screen name="login" options={{ title: 'Login' }} />
-        <Stack.Screen name="registrieren" options={{ title: 'Registrieren' }} />
-        <Stack.Screen name="t" options={{ title: 'CUMO DRIVE Tour' }} />
-        <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', title: 'Tour holen' }} />
-        <Stack.Screen name="karte" options={{ presentation: 'fullScreenModal', title: 'Karte' }} />
+        <Stack.Screen name="planer" options={{ title: t('CUMO DRIVE Planer') }} />
+        <Stack.Screen name="login" options={{ title: t('Login') }} />
+        <Stack.Screen name="registrieren" options={{ title: t('Registrieren') }} />
+        <Stack.Screen name="t" options={{ title: t('CUMO DRIVE Tour') }} />
+        <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', title: t('Tour holen') }} />
+        <Stack.Screen name="karte" options={{ presentation: 'fullScreenModal', title: t('Karte') }} />
         <Stack.Screen
           name="navigation"
-          options={{ presentation: 'fullScreenModal', title: 'Navigation', gestureEnabled: false }}
+          options={{ presentation: 'fullScreenModal', title: t('Navigation'), gestureEnabled: false }}
         />
         {/* Einstellungen unterwegs als Blatt über der Navigation, die darunter weiterläuft (Koray 15.11.) */}
-        <Stack.Screen name="menu" options={{ presentation: 'modal', title: 'Einstellungen' }} />
+        <Stack.Screen name="menu" options={{ presentation: 'modal', title: t('Einstellungen') }} />
         {/* Tour anpassen unterwegs: der Planer über der laufenden Navigation (Koray 15.11.) */}
-        <Stack.Screen name="anpassen" options={{ presentation: 'fullScreenModal', title: 'Tour anpassen', gestureEnabled: false }} />
-        <Stack.Screen name="profil" options={{ title: 'Profil' }} />
-        <Stack.Screen name="garage" options={{ title: 'Garage' }} />
-        <Stack.Screen name="fahrt/[id]" options={{ title: 'Fahrt' }} />
-        <Stack.Screen name="ansagen" options={{ title: 'Fahren' }} />
-        <Stack.Screen name="mitgliedschaft" options={{ presentation: 'fullScreenModal', title: 'Mitgliedschaft' }} />
-        <Stack.Screen name="ausfahrt/[id]" options={{ title: 'Ausfahrt' }} />
-        <Stack.Screen name="ausfahrt/chat" options={{ title: 'Chat der Ausfahrt' }} />
-        <Stack.Screen name="nachrichten/index" options={{ title: 'Nachrichten' }} />
-        <Stack.Screen name="nachrichten/[id]" options={{ title: 'Unterhaltung' }} />
-        <Stack.Screen name="ausfahrt/neu" options={{ presentation: 'fullScreenModal', title: 'Ausfahrt anlegen' }} />
+        <Stack.Screen name="anpassen" options={{ presentation: 'fullScreenModal', title: t('Tour anpassen'), gestureEnabled: false }} />
+        <Stack.Screen name="profil" options={{ title: t('Profil') }} />
+        <Stack.Screen name="garage" options={{ title: t('Garage') }} />
+        <Stack.Screen name="fahrt/[id]" options={{ title: t('Fahrt') }} />
+        <Stack.Screen name="ansagen" options={{ title: t('Fahren') }} />
+        <Stack.Screen name="mitgliedschaft" options={{ presentation: 'fullScreenModal', title: t('Mitgliedschaft') }} />
+        <Stack.Screen name="ausfahrt/[id]" options={{ title: t('Ausfahrt') }} />
+        <Stack.Screen name="ausfahrt/chat" options={{ title: t('Chat der Ausfahrt') }} />
+        <Stack.Screen name="nachrichten/index" options={{ title: t('Nachrichten') }} />
+        <Stack.Screen name="nachrichten/[id]" options={{ title: t('Unterhaltung') }} />
+        <Stack.Screen name="ausfahrt/neu" options={{ presentation: 'fullScreenModal', title: t('Ausfahrt anlegen') }} />
       </Stack>
       </EntitlementGate>
       <RideBanner />

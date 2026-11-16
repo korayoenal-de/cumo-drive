@@ -30,6 +30,7 @@ import { enablePush, pushStatus, type PushStatus } from '@/lib/push';
 import { showToast } from '@/lib/toast';
 import { syncVehicles, useVehicles, vehicleName } from '@/lib/vehicle';
 import { useVoiceChoice } from '@/lib/voice-settings';
+import { t } from '@/i18n';
 
 
 /** inNav: während der Navigation als Blatt darüber geöffnet (Koray 15.11.), oben der Weg zurück zur Fahrt */
@@ -59,7 +60,7 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
 
   return (
     <Screen>
-      {inNav && <BackLink label="Zur Navigation" onPress={() => router.back()} />}
+      {inNav && <BackLink label={t('Zur Navigation')} onPress={() => router.back()} />}
       <AppText variant="display" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         Einstellungen
       </AppText>
@@ -67,30 +68,30 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
       {/* Hinweise mit Begründung nach Entfernen oder Sperren (Koray 12.11.) */}
       {moderation.notices.map((n) => (
         <View key={n.id} style={styles.notice}>
-          <AppText style={styles.noticeTitle}>Hinweis von Cumo Drive</AppText>
+          <AppText style={styles.noticeTitle}>{t('Hinweis von Cumo Drive')}</AppText>
           <AppText style={styles.noticeText}>{n.body}</AppText>
           <Pressable accessibilityRole="button" onPress={() => void noticeSeen(n.id).then(moderation.reload)} style={styles.noticeBtn}>
-            <AppText style={styles.noticeBtnText}>Verstanden</AppText>
+            <AppText style={styles.noticeBtnText}>{t('Verstanden')}</AppText>
           </Pressable>
         </View>
       ))}
 
-      <Group label="Fahrzeuge">
-        <Row title="Garage" value={cars} onPress={() => router.push('/garage')} />
-        {list.length > 1 && <Row title="Für neue Fahrten" value={current ? vehicleName(current) || 'Ohne Namen' : 'Keins'} onPress={() => router.push('/garage')} />}
+      <Group label={t('Fahrzeuge')}>
+        <Row title={t('Garage')} value={cars} onPress={() => router.push('/garage')} />
+        {list.length > 1 && <Row title={t('Für neue Fahrten')} value={current ? vehicleName(current) || 'Ohne Namen' : 'Keins'} onPress={() => router.push('/garage')} />}
       </Group>
 
-      <Group label="Fahren">
-        <Row title="Stimme und Ansagen" value={voice?.name ?? 'Standard'} onPress={() => router.push('/ansagen')} />
-        <Row title="Vermeiden" value={avoidSummary(avoid)} onPress={() => router.push('/ansagen')} />
-        <Row title="Kartendarstellung" value={MAP_STYLES.find((s) => s.id === map.style)?.label ?? 'Standard'} onPress={() => router.push('/ansagen')} />
+      <Group label={t('Fahren')}>
+        <Row title={t('Stimme und Ansagen')} value={voice?.name ?? 'Standard'} onPress={() => router.push('/ansagen')} />
+        <Row title={t('Vermeiden')} value={avoidSummary(avoid)} onPress={() => router.push('/ansagen')} />
+        <Row title={t('Kartendarstellung')} value={MAP_STYLES.find((s) => s.id === map.style)?.label ?? 'Standard'} onPress={() => router.push('/ansagen')} />
       </Group>
 
       {session && <CommunityGroup />}
 
       {session && (
-        <Group label="Mitgliedschaft">
-          <Row title="Dein Plan" value={describeEntitlement(ent).title} onPress={() => router.push('/mitgliedschaft')} />
+        <Group label={t('Mitgliedschaft')}>
+          <Row title={t('Dein Plan')} value={describeEntitlement(ent).title} onPress={() => router.push('/mitgliedschaft')} />
         </Group>
       )}
 
@@ -98,18 +99,18 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
 
       {/* Prüfbereich nur für Admins, unten über Rechtliches (Koray 14.11.) */}
       {moderation.mod?.admin && (
-        <Group label="Prüfung" hint="Gemeldete Inhalte ansehen, entfernen oder Konten sperren.">
-          <Row title="Prüfbereich" value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : 'Nichts offen'} onPress={() => router.push('/pruefung')} />
+        <Group label={t('Prüfung')} hint={t('Gemeldete Inhalte ansehen, entfernen oder Konten sperren.')}>
+          <Row title={t('Prüfbereich')} value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : 'Nichts offen'} onPress={() => router.push('/pruefung')} />
         </Group>
       )}
 
-      <Group label="Hilfe" hint="Fehler, Wünsche, falsche Strecken: jede Meldung wird geprüft.">
-        <Row title="Feedback geben" onPress={() => router.push('/feedback')} />
+      <Group label={t('Hilfe')} hint={t('Fehler, Wünsche, falsche Strecken: jede Meldung wird geprüft.')}>
+        <Row title={t('Feedback geben')} onPress={() => router.push('/feedback')} />
       </Group>
 
-      <Group label="Rechtliches">
-        <Row title="Datenschutz" onPress={() => router.push('/datenschutz')} />
-        <Row title="Nutzungsbedingungen" onPress={() => router.push('/agb')} />
+      <Group label={t('Rechtliches')}>
+        <Row title={t('Datenschutz')} onPress={() => router.push('/datenschutz')} />
+        <Row title={t('Nutzungsbedingungen')} onPress={() => router.push('/agb')} />
       </Group>
 
       {version ? <AppText style={styles.version}>Cumo Drive {version}</AppText> : null}
@@ -171,20 +172,20 @@ function CommunityGroup() {
     } else void Linking.openSettings();
   };
   return (
-    <Group label="Community" hint={err ?? (p?.visible === false ? 'Du bist in der Community ausgeblendet. Gruppenfahrten und bestehende Unterhaltungen bleiben.' : 'Andere sehen deinen Namen, Wohnort und auf Wunsch deine Garage.')}>
-      <SwitchRow title="In Community sichtbar" value={p?.visible ?? true} onChange={(v) => void save({ visible: v })} />
+    <Group label={t('Community')} hint={err ?? (p?.visible === false ? 'Du bist in der Community ausgeblendet. Gruppenfahrten und bestehende Unterhaltungen bleiben.' : 'Andere sehen deinen Namen, Wohnort und auf Wunsch deine Garage.')}>
+      <SwitchRow title={t('In Community sichtbar')} value={p?.visible ?? true} onChange={(v) => void save({ visible: v })} />
       <SwitchRow
-        title="Nachrichten erlauben"
+        title={t('Nachrichten erlauben')}
         value={p?.allowMessages ?? true}
         onChange={(v) => {
           void save({ allowMessages: v });
           if (v) void enablePush(true).then(() => pushStatus().then(setPush));
         }}
       />
-      {push !== 'nicht' && <SwitchRow title="Mitteilungen bei Nachrichten" value={push === 'an'} onChange={(v) => void togglePush(v)} />}
-      <SwitchRow title="Einladungen nur von Kontakten" value={p?.invitesContactsOnly ?? false} onChange={(v) => void save({ invitesContactsOnly: v })} />
-      <SwitchRow title="Garage im Profil zeigen" value={p?.showGarage ?? true} onChange={(v) => void save({ showGarage: v })} />
-      <Row title="Blockierte Drivers" onPress={() => router.push('/blockiert')} />
+      {push !== 'nicht' && <SwitchRow title={t('Mitteilungen bei Nachrichten')} value={push === 'an'} onChange={(v) => void togglePush(v)} />}
+      <SwitchRow title={t('Einladungen nur von Kontakten')} value={p?.invitesContactsOnly ?? false} onChange={(v) => void save({ invitesContactsOnly: v })} />
+      <SwitchRow title={t('Garage im Profil zeigen')} value={p?.showGarage ?? true} onChange={(v) => void save({ showGarage: v })} />
+      <Row title={t('Blockierte Drivers')} onPress={() => router.push('/blockiert')} />
     </Group>
   );
 }
@@ -197,18 +198,18 @@ function Account({ email }: { email: string }) {
     try {
       await deleteAccount();
       clearLocalTours();
-      showToast('Dein Konto ist gelöscht.');
+      showToast(t('Dein Konto ist gelöscht.'));
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Löschen hat nicht geklappt.', { tone: 'error' });
+      showToast(e instanceof Error ? e.message: t('Löschen hat nicht geklappt.'), { tone: 'error' });
     } finally {
       setBusy(false);
     }
   };
   return (
     <>
-      <Group label="Konto" hint="Touren, Fahrten und Fahrzeuge liegen in deinem Konto und im Web Planer.">
-        <Row title="E-Mail" value={email} />
-        <Row title="Abmelden" onPress={() => {
+      <Group label={t('Konto')} hint={t('Touren, Fahrten und Fahrzeuge liegen in deinem Konto und im Web Planer.')}>
+        <Row title={t('E-Mail')} value={email} />
+        <Row title={t('Abmelden')} onPress={() => {
           resetPrivacy();
           void signOut();
         }} />
@@ -216,9 +217,9 @@ function Account({ email }: { email: string }) {
       </Group>
       <ConfirmSheet
         visible={ask}
-        title="Möchtest du dein Konto wirklich löschen?"
+        title={t('Möchtest du dein Konto wirklich löschen?')}
         text="Touren, Fahrten, Fahrzeuge, Bewertungen und dein Name werden endgültig gelöscht, auch in der Community. Das lässt sich nicht rückgängig machen. Ein Abo kündigst du separat in den Einstellungen deiner Apple ID."
-        confirmLabel="Löschen"
+        confirmLabel={t('Löschen')}
         onConfirm={() => void remove()}
         onClose={() => setAsk(false)}
       />
@@ -245,35 +246,35 @@ function Login() {
   const ready = !!email.trim() && pw.length > 0 && !busy;
   return (
     <View style={styles.card}>
-      <AppText muted>Mit Konto findest du deine Touren auch im Web Planer, kannst Touren veröffentlichen und deine Fahrten werden gespeichert.</AppText>
+      <AppText muted>{t('Mit Konto findest du deine Touren auch im Web Planer, kannst Touren veröffentlichen und deine Fahrten werden gespeichert.')}</AppText>
       <TextInput maxFontSizeMultiplier={1.2}
         value={email}
         onChangeText={setEmail}
-        placeholder="E-Mail"
+        placeholder={t('E-Mail')}
         placeholderTextColor={Colors.muted}
         autoCapitalize="none"
         autoComplete="email"
         keyboardType="email-address"
         style={styles.input}
-        accessibilityLabel="E-Mail"
+        accessibilityLabel={t('E-Mail')}
       />
       <TextInput maxFontSizeMultiplier={1.2}
         value={pw}
         onChangeText={setPw}
-        placeholder="Passwort, mindestens 8 Zeichen"
+        placeholder={t('Passwort, mindestens 8 Zeichen')}
         placeholderTextColor={Colors.muted}
         secureTextEntry
         autoComplete="password"
         style={styles.input}
-        accessibilityLabel="Passwort"
+        accessibilityLabel={t('Passwort')}
       />
       {err && <AppText style={styles.error}>{err}</AppText>}
       <View style={styles.row}>
         <Pressable accessibilityRole="button" disabled={!ready} onPress={() => run(signIn)} style={[styles.primary, styles.grow, !ready && styles.disabled]}>
-          {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Anmelden</AppText>}
+          {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Anmelden')}</AppText>}
         </Pressable>
         <Pressable accessibilityRole="button" disabled={!ready} onPress={() => run(signUp)} style={[styles.secondary, styles.grow, !ready && styles.disabled]}>
-          <AppText style={styles.secondaryText}>Registrieren</AppText>
+          <AppText style={styles.secondaryText}>{t('Registrieren')}</AppText>
         </Pressable>
       </View>
     </View>

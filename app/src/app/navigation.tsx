@@ -59,6 +59,7 @@ import { currentVehicle, useVehicles } from '@/lib/vehicle';
 import { VehiclePick } from '@/components/navigation/vehicle-pick';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
+import { t } from '@/i18n';
 
 /** So lange ersetzt die Highlight Ansage die Routenführung */
 // Ansage Karte: 12 s (Koray 16.11.: 5 s war zu kurz); ein nahes Manöver hat immer Vorrang (showHlCard)
@@ -392,11 +393,11 @@ export default function NavigationScreen() {
       active.avoid,
       (tour, profile, avoid) => {
         adoptTour(tour, profile, avoid, 'Neue Route übernommen.');
-        showToast('Neue Route übernommen');
+        showToast(t('Neue Route übernommen'));
         if (inRide && ride.myRole === 'lead') {
           void createHandoff(tour, profile, avoid)
             .then((code) => shareRoute(code))
-            .catch(() => showToast('Die neue Route ging nicht an die Gruppe. Bitte nochmal versuchen.', { tone: 'error' }));
+            .catch(() => showToast(t('Die neue Route ging nicht an die Gruppe. Bitte nochmal versuchen.'), { tone: 'error' }));
         }
       },
     );
@@ -571,9 +572,9 @@ export default function NavigationScreen() {
   const pins = useMemo(() => {
     if (!shownStats) return undefined;
     const out = [];
-    if (shownStats.maxKmh) out.push({ id: 'v', p: shownStats.maxKmh.p, label: `${Math.round(shownStats.maxKmh.value)} km/h`, title: 'Höchstgeschwindigkeit' });
-    if (shownStats.maxLatG) out.push({ id: 'q', p: shownStats.maxLatG.p, label: fmtG(shownStats.maxLatG.value), title: 'Größte Querbeschleunigung' });
-    if (shownStats.maxBrakeG) out.push({ id: 'b', p: shownStats.maxBrakeG.p, label: `−${fmtG(shownStats.maxBrakeG.value)}`, title: 'Stärkste Bremsung' });
+    if (shownStats.maxKmh) out.push({ id: 'v', p: shownStats.maxKmh.p, label: `${Math.round(shownStats.maxKmh.value)} km/h`, title: t('Höchstgeschwindigkeit') });
+    if (shownStats.maxLatG) out.push({ id: 'q', p: shownStats.maxLatG.p, label: fmtG(shownStats.maxLatG.value), title: t('Größte Querbeschleunigung') });
+    if (shownStats.maxBrakeG) out.push({ id: 'b', p: shownStats.maxBrakeG.p, label: `−${fmtG(shownStats.maxBrakeG.value)}`, title: t('Stärkste Bremsung') });
     return out;
   }, [shownStats]);
 
@@ -614,8 +615,8 @@ export default function NavigationScreen() {
     setSkipOpen(false);
     // schnellster Weg zum Ziel danach, dort weiter auf der Tour (Koray 8.11.)
     const undo = await controls.skipTo(index, true);
-    if (undo) showToast('Zwischenziel übersprungen', { action: { label: 'Rückgängig', onPress: () => controls.restore(undo) } });
-    else showToast('Überspringen hat gerade nicht geklappt.', { tone: 'error' });
+    if (undo) showToast(t('Zwischenziel übersprungen'), { action: { label: t('Rückgängig'), onPress: () => controls.restore(undo) } });
+    else showToast(t('Überspringen hat gerade nicht geklappt.'), { tone: 'error' });
   };
 
   // Live Activity: nächstes Manöver auf Sperrbildschirm, Dynamic Island und CarPlay Dashboard
@@ -794,7 +795,7 @@ export default function NavigationScreen() {
     setOwnRouteState(true);
     setOwnRoute(true);
     controls.choose('fresh');
-    controls.say('Du fährst jetzt deine eigene Route. Die Gruppe sieht dich weiter auf der Karte.');
+    controls.say(t('Du fährst jetzt deine eigene Route. Die Gruppe sieht dich weiter auf der Karte.'));
   };
   // Sammelpunkt (Martin 11.11.): Halt der Lead mit Ort, sonst die Lead selbst, wenn sie vor einem fährt.
   // Ziel ist die Stelle der Tour dort; der Weg dahin ist der schnellste, danach geht es auf der Tour weiter.
@@ -1007,9 +1008,9 @@ export default function NavigationScreen() {
     return (
       <View style={[styles.root, styles.pad, { paddingTop: insets.top + Spacing.xl }]}>
         <InfoCard>
-          <AppText variant="title">Keine Tour gewählt.</AppText>
-          <AppText muted>Erstelle zuerst eine Tour im Tab Planen und tippe auf Losfahren.</AppText>
-          <BigButton label="Schließen" kind="ghost" onPress={close} />
+          <AppText variant="title">{t('Keine Tour gewählt.')}</AppText>
+          <AppText muted>{t('Erstelle zuerst eine Tour im Tab Planen und tippe auf Losfahren.')}</AppText>
+          <BigButton label={t('Schließen')} kind="ghost" onPress={close} />
         </InfoCard>
       </View>
     );
@@ -1056,11 +1057,11 @@ export default function NavigationScreen() {
             onLongPress={() => skipTarget && !inRide && setSkipOpen(true)}
             delayLongPress={400}
             accessibilityHint={skipTarget && !inRide ? 'Lange drücken, um das nächste Zwischenziel zu überspringen' : undefined}
-            accessibilityActions={skipTarget && !inRide ? [{ name: 'skip', label: 'Nächstes Zwischenziel überspringen' }] : undefined}
+            accessibilityActions={skipTarget && !inRide ? [{ name: 'skip', label: t('Nächstes Zwischenziel überspringen') }] : undefined}
             onAccessibilityAction={() => skipTarget && void skip(skipTarget.index)}>
             {showHlCard ? (
               <Animated.View key={`hl-${showHlCard.id}`} entering={softEnter()} exiting={FadeOut.duration(160)}>
-                <Pressable accessibilityRole="button" accessibilityHint="Antippen schließt die Ansage" onPress={() => setHlShow(null)}>
+                <Pressable accessibilityRole="button" accessibilityHint={t('Antippen schließt die Ansage')} onPress={() => setHlShow(null)}>
                   <HighlightCard h={showHlCard} distM={showHlCard === nextHl ? hlDistM : 0} />
                 </Pressable>
               </Animated.View>
@@ -1082,13 +1083,13 @@ export default function NavigationScreen() {
         {running && skipOpen && skipTarget && atKm != null && (
           <Animated.View entering={softEnter()} exiting={FadeOut.duration(160)} style={styles.skipCard}>
             <View style={styles.flex}>
-              <AppText style={styles.skipTitle}>Nächstes Zwischenziel überspringen</AppText>
+              <AppText style={styles.skipTitle}>{t('Nächstes Zwischenziel überspringen')}</AppText>
               <AppText style={styles.skipText} numberOfLines={1}>
                 {`Noch ${formatKm(Math.max(0, viaKms[nextVia] - atKm), 0)} km, danach direkt ${skipTarget.toZiel ? 'zum Ziel' : 'zum nächsten Zwischenziel'}`}
               </AppText>
             </View>
             <Pressable accessibilityRole="button" onPress={() => void skip(skipTarget.index)} style={({ pressed }) => [styles.skipBtn, pressed && { opacity: 0.85 }]}>
-              <AppText style={styles.skipBtnText}>Überspringen</AppText>
+              <AppText style={styles.skipBtnText}>{t('Überspringen')}</AppText>
             </Pressable>
           </Animated.View>
         )}
@@ -1135,13 +1136,13 @@ export default function NavigationScreen() {
         {/* Eigene Route in der Gruppe: leise zurück zur gemeinsamen Tour (Koray 11.11.) */}
         {running && withOthers && ownRoute && status !== 'neuberechnung' && (
           <Pressable accessibilityRole="button" onPress={backToGroup} style={({ pressed }) => [styles.groupBack, pressed && styles.offPressed]}>
-            <AppText style={styles.groupBackText}>‹ Zurück zur Gruppe</AppText>
+            <AppText style={styles.groupBackText}>{t('‹ Zurück zur Gruppe')}</AppText>
           </Pressable>
         )}
         {/* Mitfahrer: die Lead hat unterwegs die Route geändert (Tour anpassen, Koray 15.11.) */}
         {running && routeNote > 0 && (
           <Animated.View entering={softEnter()} exiting={FadeOut.duration(160)} style={styles.routeNote} accessibilityRole="alert">
-            <AppText style={styles.routeNoteTitle}>Die Lead hat die Route geändert</AppText>
+            <AppText style={styles.routeNoteTitle}>{t('Die Lead hat die Route geändert')}</AppText>
             <AppText style={styles.routeNoteText}>{`Neu bis ${active?.tour.namen?.[(active?.tour.wegpunkte.length ?? 1) - 1] || 'zum Ziel'}`}</AppText>
           </Animated.View>
         )}
@@ -1175,7 +1176,7 @@ export default function NavigationScreen() {
             </View>
             {inRide && msgOpen && (
               <View style={styles.msgSheet}>
-                <AppText variant="label">An die Gruppe</AppText>
+                <AppText variant="label">{t('An die Gruppe')}</AppText>
                 <View style={styles.msgChips}>
                   {QUICK_MESSAGES.map((m) => (
                     <Pressable
@@ -1223,11 +1224,11 @@ export default function NavigationScreen() {
               }
               extraActions={[
                 // zurück ins Menü, ohne die Fahrt zu beenden (Koray 15.11.): Blatt über der Navigation
-                { key: 'menu', label: 'Einstellungen', icon: 'gearshape.fill' as const, run: () => router.push('/menu' as Href) },
-                { key: 'melden', label: 'Problem melden', icon: 'exclamationmark.bubble.fill' as const, run: reportProblem },
+                { key: 'menu', label: t('Einstellungen'), icon: 'gearshape.fill' as const, run: () => router.push('/menu' as Href) },
+                { key: 'melden', label: t('Problem melden'), icon: 'exclamationmark.bubble.fill' as const, run: reportProblem },
                 ...(withOthers && funk.status !== 'nicht'
                   ? [
-                      { key: 'msg', label: 'Kurznachricht an die Gruppe', icon: 'bubble.left.fill' as const, run: () => setMsgOpen(true) },
+                      { key: 'msg', label: t('Kurznachricht an die Gruppe'), icon: 'bubble.left.fill' as const, run: () => setMsgOpen(true) },
                       { key: 'hoeren', label: funk.listen ? 'Funk stumm' : 'Funk hören', icon: (funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill') as 'speaker.slash.fill', run: () => setFunkListen(!funk.listen) },
                       ...(ride.myRole === 'lead'
                         ? [{ key: 'nurlead', label: funk.onlyLead ? 'Alle dürfen sprechen' : 'Nur die Lead spricht', icon: 'person.wave.2.fill' as const, run: () => setOnlyLead(!funk.onlyLead) }]
@@ -1256,7 +1257,7 @@ export default function NavigationScreen() {
           <View style={styles.pad}>
             <InfoCard>
               <Pressable onLongPress={() => setSecret(true)} delayLongPress={800}>
-                <AppText variant="label">Bereit</AppText>
+                <AppText variant="label">{t('Bereit')}</AppText>
                 <AppText style={styles.tourName} numberOfLines={2}>
                   {active.tour.name}
                 </AppText>
@@ -1276,13 +1277,13 @@ export default function NavigationScreen() {
                   [
                     {
                       id: 'einsteigen',
-                      label: 'Einsteigen',
-                      hint: 'Schnell auf die Tour, möglichst nah am Anfang',
+                      label: t('Einsteigen'),
+                      hint: t('Schnell auf die Tour, möglichst nah am Anfang'),
                     },
                     {
                       id: 'start',
-                      label: 'Über den Startpunkt fahren',
-                      hint: 'Schnellster Weg zum Start, dann die ganze Tour',
+                      label: t('Über den Startpunkt fahren'),
+                      hint: t('Schnellster Weg zum Start, dann die ganze Tour'),
                     },
                   ] as { id: NavEntry; label: string; hint: string }[]
                 ).map((o) => (
@@ -1312,15 +1313,15 @@ export default function NavigationScreen() {
               {vehicles.list.length > 0 && (
                 <VehiclePick list={vehicles.list} current={vehicles.current ?? null} />
               )}
-              <BigButton label="Start" onPress={() => void controls.start()} />
+              <BigButton label={t('Start')} onPress={() => void controls.start()} />
               <View style={styles.row}>
                 <View style={styles.flex}>
-                  <BigButton label="Schließen" kind="ghost" onPress={close} />
+                  <BigButton label={t('Schließen')} kind="ghost" onPress={close} />
                 </View>
                 {showSim && (
                   <View style={styles.flex}>
                     <BigButton
-                      label="Simulieren"
+                      label={t('Simulieren')}
                       kind="ghost"
                       onPress={() => {
                         simulated.current = true;
@@ -1338,14 +1339,14 @@ export default function NavigationScreen() {
         {summary && (
           <ScrollView style={{ maxHeight: win.height - insets.top - Spacing.l }} contentContainerStyle={styles.pad} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <InfoCard>
-              <AppText variant="label">Fahrt beendet</AppText>
+              <AppText variant="label">{t('Fahrt beendet')}</AppText>
               <AppText style={styles.tourName} numberOfLines={2}>
                 {active.tour.name}
               </AppText>
               <StatsGrid st={summary} />
               {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} preset={cpScore} />}
               <SavedNote saved={saved} />
-              <BigButton label="Fertig" onPress={done} />
+              <BigButton label={t('Fertig')} onPress={done} />
             </InfoCard>
           </ScrollView>
         )}
@@ -1353,7 +1354,7 @@ export default function NavigationScreen() {
         {status === 'angekommen' && (
           <ScrollView style={{ maxHeight: win.height - insets.top - Spacing.l }} contentContainerStyle={styles.pad} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <InfoCard tone="good">
-              <AppText variant="label">Angekommen</AppText>
+              <AppText variant="label">{t('Angekommen')}</AppText>
               <AppText style={styles.congrats}>{congrats}</AppText>
               <AppText muted>
                 {formatKm(drivenKm || route?.km || active.tour.laenge_km)} km gefahren auf {active.tour.name}.
@@ -1361,7 +1362,7 @@ export default function NavigationScreen() {
               {arrivedStats && <StatsGrid st={arrivedStats} />}
               {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} preset={cpScore} />}
               <SavedNote saved={saved} />
-              <BigButton label="Fertig" onPress={done} />
+              <BigButton label={t('Fertig')} onPress={done} />
             </InfoCard>
           </ScrollView>
         )}
@@ -1369,19 +1370,19 @@ export default function NavigationScreen() {
         {status === 'fehler' && (
           <View style={styles.pad}>
             <InfoCard tone="signal">
-              <AppText variant="label">Navigation gestoppt</AppText>
+              <AppText variant="label">{t('Navigation gestoppt')}</AppText>
               <AppText>{state.error || 'Die Route konnte nicht geladen werden.'}</AppText>
-              <BigButton label="Nochmal" onPress={() => void controls.start()} />
-              <BigButton label="Schließen" kind="ghost" onPress={close} />
+              <BigButton label={t('Nochmal')} onPress={() => void controls.start()} />
+              <BigButton label={t('Schließen')} kind="ghost" onPress={close} />
             </InfoCard>
           </View>
         )}
       </View>
       <ConfirmSheet
         visible={confirmOwn}
-        title="Möchtest du die Strecke der Gruppe wirklich verlassen?"
+        title={t('Möchtest du die Strecke der Gruppe wirklich verlassen?')}
         text="Du fährst dann deine eigene Route. Die Gruppe sieht dich weiter auf der Karte und erfährt davon."
-        confirmLabel="Eigene Route"
+        confirmLabel={t('Eigene Route')}
         danger={false}
         onConfirm={goOwn}
         onClose={() => setConfirmOwn(false)}

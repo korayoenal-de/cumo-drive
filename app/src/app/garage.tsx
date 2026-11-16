@@ -8,6 +8,7 @@ import { Garage } from '@/components/settings/garage';
 import { SubScreen } from '@/components/settings/settings-ui';
 import { useSession } from '@/lib/auth';
 import { listDrives, type Drive } from '@/lib/drives';
+import { t } from '@/i18n';
 
 export default function GarageScreen() {
   const session = useSession();
@@ -21,7 +22,7 @@ export default function GarageScreen() {
     }, [session]),
   );
   return (
-    <SubScreen title="Garage">
+    <SubScreen title={t('Garage')}>
       <Garage drives={session ? drives : null} />
     </SubScreen>
   );

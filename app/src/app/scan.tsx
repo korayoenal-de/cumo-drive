@@ -17,6 +17,7 @@ import { setEditTour } from '@/lib/edit-tour';
 import { decodeTour, extractCode } from '@/lib/share-code';
 import { isShortCode, resolveShareCode } from '@/lib/share-link';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
+import { t } from '@/i18n';
 
 const STEP_TEXT: Record<PlanStep, string> = {
   route: 'Strecke wird berechnet',
@@ -42,7 +43,7 @@ export default function ScanScreen() {
     const raw = extractCode(r.data);
     if (isHandoffCode(raw)) {
       handled.current = true;
-      setStatus({ kind: 'busy', text: 'Tour wird geladen', name: 'Tour vom Planer' });
+      setStatus({ kind: 'busy', text: t('Tour wird geladen'), name: 'Tour vom Planer' });
       try {
         const h = await fetchHandoff(raw);
         if (!h) throw new Error('Der Code ist abgelaufen. Im Planer einen neuen erzeugen.');
@@ -50,7 +51,7 @@ export default function ScanScreen() {
         router.replace('/karte');
       } catch (e) {
         handled.current = false;
-        setStatus({ kind: 'error', text: e instanceof Error ? e.message : 'Die Tour konnte nicht geladen werden.' });
+        setStatus({ kind: 'error', text: e instanceof Error ? e.message: t('Die Tour konnte nicht geladen werden.') });
       }
       return;
     }
@@ -58,18 +59,18 @@ export default function ScanScreen() {
     let full = raw;
     if (isShortCode(raw)) {
       handled.current = true;
-      setStatus({ kind: 'busy', text: 'Link wird geladen', name: 'Geteilte Tour' });
+      setStatus({ kind: 'busy', text: t('Link wird geladen'), name: 'Geteilte Tour' });
       try {
         full = await resolveShareCode(raw);
       } catch (e) {
         handled.current = false;
-        setStatus({ kind: 'error', text: e instanceof Error ? e.message : 'Der Link konnte nicht geladen werden.' });
+        setStatus({ kind: 'error', text: e instanceof Error ? e.message: t('Der Link konnte nicht geladen werden.') });
         return;
       }
     }
     const shared = decodeTour(full);
     if (!shared) {
-      setStatus({ kind: 'error', text: 'Das ist kein CUMO DRIVE Code. Im Web Planer auf „An die App senden“ klicken.' });
+      setStatus({ kind: 'error', text: t('Das ist kein CUMO DRIVE Code. Im Web Planer auf „An die App senden“ klicken.') });
       return;
     }
     handled.current = true;
@@ -94,7 +95,7 @@ export default function ScanScreen() {
     } catch (e) {
       if (ctrl.signal.aborted) return;
       handled.current = false;
-      setStatus({ kind: 'error', text: e instanceof Error ? e.message : 'Die Tour konnte nicht geplant werden.' });
+      setStatus({ kind: 'error', text: e instanceof Error ? e.message: t('Die Tour konnte nicht geplant werden.') });
     }
   };
 
@@ -122,16 +123,16 @@ export default function ScanScreen() {
       ) : null}
 
       <View style={[styles.top, { paddingTop: insets.top + Spacing.m }]}>
-        <AppText variant="title">Tour vom Planer holen</AppText>
+        <AppText variant="title">{t('Tour vom Planer holen')}</AppText>
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.close}>
-          <AppText style={styles.closeText}>Schließen</AppText>
+          <AppText style={styles.closeText}>{t('Schließen')}</AppText>
         </Pressable>
       </View>
 
       <View style={styles.center}>
         {!permission ? null : !permission.granted ? (
           <View style={styles.card}>
-            <AppText>Zum Scannen braucht die App die Kamera.</AppText>
+            <AppText>{t('Zum Scannen braucht die App die Kamera.')}</AppText>
             <Pressable
               accessibilityRole="button"
               style={styles.primary}
@@ -157,11 +158,11 @@ export default function ScanScreen() {
           <View style={styles.card}>
             <AppText>{status.text}</AppText>
             <Pressable accessibilityRole="button" style={styles.primary} onPress={retry}>
-              <AppText style={styles.primaryText}>Nochmal scannen</AppText>
+              <AppText style={styles.primaryText}>{t('Nochmal scannen')}</AppText>
             </Pressable>
           </View>
         ) : status.kind === 'scan' && permission?.granted ? (
-          <AppText style={styles.hint}>Im Web Planer auf cumodrive.de bei der Tour „An die App senden“ klicken und den Code hier ins Bild halten.</AppText>
+          <AppText style={styles.hint}>{t('Im Web Planer auf cumodrive.de bei der Tour „An die App senden“ klicken und den Code hier ins Bild halten.')}</AppText>
         ) : null}
       </View>
     </View>

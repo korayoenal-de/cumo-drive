@@ -11,6 +11,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { signOut } from '@/lib/auth';
 import { setDisplayName } from '@/lib/profile';
+import { t } from '@/i18n';
 
 export function NameScreen() {
   const insets = useSafeAreaInsets();
@@ -41,16 +42,16 @@ export function NameScreen() {
             CUMO DRIVE
           </AppText>
           <AppText variant="display">{'Wie sollen\ndich andere\nsehen?'}</AppText>
-          <AppText muted>Unter diesem Namen laden dich andere zu Gruppenfahrten ein, und er steht bei dir auf der Karte. Du kannst ihn später in den Einstellungen ändern.</AppText>
+          <AppText muted>{t('Unter diesem Namen laden dich andere zu Gruppenfahrten ein, und er steht bei dir auf der Karte. Du kannst ihn später in den Einstellungen ändern.')}</AppText>
         </View>
         <View style={styles.gapM}>
           <NameField value={name} onChange={setName} check={check} />
           {err && <AppText style={styles.error}>{err}</AppText>}
           <Pressable accessibilityRole="button" disabled={!ready} onPress={() => void submit()} style={[styles.primary, !ready && styles.disabled]}>
-            {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Weiter</AppText>}
+            {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Weiter')}</AppText>}
           </Pressable>
           <Pressable accessibilityRole="button" onPress={() => void signOut()} style={styles.switch}>
-            <AppText muted>Abmelden</AppText>
+            <AppText muted>{t('Abmelden')}</AppText>
           </Pressable>
         </View>
       </ScrollView>

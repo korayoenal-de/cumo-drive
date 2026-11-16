@@ -33,6 +33,7 @@ import { thumbShape } from '@/lib/route-thumb';
 import { shareTourLink } from '@/lib/share-link';
 import { showToast } from '@/lib/toast';
 import { flatten } from '@/lib/tour';
+import { tr } from '@/i18n';
 
 const SPRING = Motion.press;
 const LAYOUT = SOFT_LAYOUT;
@@ -50,7 +51,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
     try {
       await exportTour(t, f);
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Export hat nicht geklappt.', { tone: 'error' });
+      showToast(e instanceof Error ? e.message: tr('Export hat nicht geklappt.'), { tone: 'error' });
     }
   };
   // Aus der Community gespeichert (Koray 11.11.): Umbenennen gilt nur bei dir, Entfernen statt Löschen, und
@@ -59,11 +60,11 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
   const items: SheetItem[] = [
     // Ausfahrt aus der Tour planen, privat als Standard (Koray 13.11.)
     // Neutral ohne Hinweis (Konsistenzprüfung 15.11., O1): Orange gibt es nur in Rückfragen
-    { key: 'ride', icon: 'calendar.badge.plus', label: 'Ausfahrt planen', onPress: () => router.push({ pathname: '/ausfahrt/neu', params: { tour: t.id } }) },
-    { key: 'rename', icon: 'pencil', label: 'Umbenennen', hint: taken ? 'Nur bei dir, in der Community bleibt der Name' : undefined, onPress: () => setSheet('rename') },
+    { key: 'ride', icon: 'calendar.badge.plus', label: tr('Ausfahrt planen'), onPress: () => router.push({ pathname: '/ausfahrt/neu', params: { tour: t.id } }) },
+    { key: 'rename', icon: 'pencil', label: tr('Umbenennen'), hint: taken ? 'Nur bei dir, in der Community bleibt der Name' : undefined, onPress: () => setSheet('rename') },
     // Duplizieren entfällt (Koray 16.11.): Varianten entstehen im Planer über „Als neue Tour speichern“
     // Link, GPX und KML als eine Zeile (O3)
-    { key: 'share', icon: 'square.and.arrow.up', label: 'Teilen', onPress: () => setSheet('share') },
+    { key: 'share', icon: 'square.and.arrow.up', label: tr('Teilen'), onPress: () => setSheet('share') },
     ...(taken && !t.edited
       ? []
       : [
@@ -76,8 +77,8 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
           },
         ]),
     taken
-      ? { key: 'del', icon: 'bookmark.slash', label: 'Aus Touren entfernen', hint: 'In der Community bleibt sie erhalten', danger: true, onPress: () => setSheet('delete') }
-      : { key: 'del', icon: 'trash', label: 'Tour löschen', hint: 'Vom Gerät und aus deinem Konto', danger: true, onPress: () => setSheet('delete') },
+      ? { key: 'del', icon: 'bookmark.slash', label: tr('Aus Touren entfernen'), hint: tr('In der Community bleibt sie erhalten'), danger: true, onPress: () => setSheet('delete') }
+      : { key: 'del', icon: 'trash', label: tr('Tour löschen'), hint: tr('Vom Gerät und aus deinem Konto'), danger: true, onPress: () => setSheet('delete') },
   ];
 
   return (
@@ -86,7 +87,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${t.name}, ${meta}`}
-          accessibilityHint="Öffnet die Tour auf der Karte, dort startest du die Fahrt"
+          accessibilityHint={tr('Öffnet die Tour auf der Karte, dort startest du die Fahrt')}
           onPress={() => onOpen(t)}
           onPressIn={() => scale.set(withSpring(Motion.pressScale, SPRING))}
           onPressOut={() => scale.set(withSpring(1, SPRING))}
@@ -100,7 +101,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
               {meta}
             </AppText>
             {t.published ? (
-              <GoodBadge label="In der Community" />
+              <GoodBadge label={tr('In der Community')} />
             ) : t.author || t.folder === 'Community' ? (
               // Aus der Community übernommen (Koray 10.11., Variante A): grau, mit Initiale des Absenders
               <FromBadge author={t.author} />
@@ -126,15 +127,15 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
       <NameDialog
         key={sheet === 'rename' ? 'offen' : 'zu'}
         visible={sheet === 'rename'}
-        title="Tour umbenennen"
-        subtitle="Der neue Name gilt auch im Konto, im Web Planer und in der Community."
+        title={tr('Tour umbenennen')}
+        subtitle={tr('Der neue Name gilt auch im Konto, im Web Planer und in der Community.')}
         initial={t.name}
         onCancel={() => setSheet(null)}
         onSave={(n) => {
           setSheet(null);
           if (n !== t.name) {
             renameTour(t.id, n);
-            showToast('Umbenannt');
+            showToast(tr('Umbenannt'));
           }
         }}
       />
@@ -212,7 +213,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
     return (
       <View style={styles.form}>
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => unpublishTour(tour), 'Aus der Community genommen')} style={({ pressed }) => [styles.primary, pressed && styles.itemPressed]}>
-          {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Aus der Community nehmen</AppText>}
+          {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{tr('Aus der Community nehmen')}</AppText>}
         </Pressable>
         {msg && <AppText variant="caption" style={styles.danger}>{msg}</AppText>}
       </View>
@@ -221,34 +222,34 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
   return (
     <View style={styles.form}>
       <View style={styles.labeled}>
-        <AppText style={styles.fieldLabel}>Name der Tour</AppText>
-        <TextInput maxFontSizeMultiplier={1.2} value={title} onChangeText={setTitle} placeholder="Name der Tour" placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel="Name der Tour" maxLength={120} />
+        <AppText style={styles.fieldLabel}>{tr('Name der Tour')}</AppText>
+        <TextInput maxFontSizeMultiplier={1.2} value={title} onChangeText={setTitle} placeholder={tr('Name der Tour')} placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel={tr('Name der Tour')} maxLength={120} />
       </View>
       <View style={styles.labeled}>
-        <AppText style={styles.fieldLabel}>Dein Name als Fahrer</AppText>
+        <AppText style={styles.fieldLabel}>{tr('Dein Name als Fahrer')}</AppText>
         <TextInput maxFontSizeMultiplier={1.2}
           value={shownAuthor}
           onChangeText={(v) => {
             setTouched(true);
             setAuthor(v);
           }}
-          placeholder="So erscheinst du in der Community"
+          placeholder={tr('So erscheinst du in der Community')}
           placeholderTextColor={Colors.muted}
           style={styles.field}
-          accessibilityLabel="Dein Name als Fahrer"
+          accessibilityLabel={tr('Dein Name als Fahrer')}
           maxLength={60}
         />
       </View>
-      <AppText style={styles.fieldLabel}>Beschreibung (optional)</AppText>
+      <AppText style={styles.fieldLabel}>{tr('Beschreibung (optional)')}</AppText>
       <TextInput maxFontSizeMultiplier={1.2}
         value={desc}
         onChangeText={setDesc}
-        placeholder="Was macht die Tour aus? Beste Abschnitte, Stopps, Tageszeit"
+        placeholder={tr('Was macht die Tour aus? Beste Abschnitte, Stopps, Tageszeit')}
         placeholderTextColor={Colors.muted}
         style={[styles.field, styles.area]}
         multiline
         maxLength={500}
-        accessibilityLabel="Beschreibung"
+        accessibilityLabel={tr('Beschreibung')}
       />
       <Pressable accessibilityRole="button" disabled={!can} onPress={() =>
           void run(async () => {
@@ -258,7 +259,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
             await publishTour({ ...tour, name: name || tour.name }, shownAuthor, desc);
           }, 'In der Community veröffentlicht')
         } style={({ pressed }) => [styles.primary, !can && styles.disabled, pressed && styles.itemPressed]}>
-        {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Veröffentlichen</AppText>}
+        {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{tr('Veröffentlichen')}</AppText>}
       </Pressable>
       {msg && <AppText variant="caption" style={styles.danger}>{msg}</AppText>}
     </View>

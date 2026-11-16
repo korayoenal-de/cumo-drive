@@ -10,6 +10,7 @@ import { thumbShape, type ThumbShape } from '@/lib/route-thumb';
 import { flatten, type Tour } from '@/lib/tour';
 
 import { BODY, C, DISPLAY } from './web-shared';
+import { tr } from '@/i18n';
 
 const EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
@@ -68,7 +69,7 @@ export function WebSheet(props: { title: string; subtitle?: string; rows?: Sheet
             <span style={{ font: `700 17px/22px ${BODY}` }}>{props.title}</span>
             {props.subtitle ? <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted }}>{props.subtitle}</span> : null}
           </div>
-          <button aria-label="Schließen" onClick={onClose} style={roundBtn}>
+          <button aria-label={tr('Schließen')} onClick={onClose} style={roundBtn}>
             <XIcon />
           </button>
         </div>

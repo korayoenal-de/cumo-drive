@@ -18,6 +18,7 @@ import { type Avoid } from '@/lib/valhalla';
 import { showToast } from '@/lib/toast';
 
 import { fitLegs, keyOf, type LegProfile, type PointKind } from './planner-shared';
+import { t } from '@/i18n';
 
 
 export type TourPlan = ReturnType<typeof useTourPlan>;
@@ -408,7 +409,7 @@ export function useTourPlan(onPlanned?: () => void) {
       if (asName != null) setName(asName);
       void syncLibrary();
       setSaveMsg(null);
-      if (!opts?.quiet) showToast('Unter Touren gespeichert', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
+      if (!opts?.quiet) showToast(t('Unter Touren gespeichert'), { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
       return saved.id;
     } catch (e) {
       setSaveMsg(null);

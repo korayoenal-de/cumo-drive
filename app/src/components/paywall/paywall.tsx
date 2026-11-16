@@ -13,6 +13,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { CONTACT_EMAIL, PRICES, type PlanId, type Price } from '@/lib/entitlement';
 import { purchase, restorePurchases } from '@/lib/purchase';
+import { t } from '@/i18n';
 
 const BENEFITS = [
   'Kurvige Touren planen',
@@ -49,7 +50,7 @@ export function Paywall({
         if (mode === 'voluntary') onClose?.();
       } else if (!r.cancelled) setNote({ text: r.message, good: false });
     } catch {
-      setNote({ text: 'Das hat nicht geklappt. Bitte später noch einmal versuchen.', good: false });
+      setNote({ text: t('Das hat nicht geklappt. Bitte später noch einmal versuchen.'), good: false });
     } finally {
       setBusy(null);
     }
@@ -59,7 +60,7 @@ export function Paywall({
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       {onClose && (
         <View style={styles.topBar}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={onClose} hitSlop={12} style={styles.close}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Schließen')} onPress={onClose} hitSlop={12} style={styles.close}>
             <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         </View>
@@ -100,12 +101,12 @@ export function Paywall({
           </Pressable>
           {note && <AppText style={[styles.note, note.good && styles.noteGood]}>{note.text}</AppText>}
           <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void run('restore')} style={styles.secondary}>
-            {busy === 'restore' ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>Käufe wiederherstellen</AppText>}
+            {busy === 'restore' ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>{t('Käufe wiederherstellen')}</AppText>}
           </Pressable>
         </View>
 
         <View style={styles.clubBox}>
-          <AppText style={styles.clubTitle}>Für Clubs und Veranstalter: CUMO DRIVE Club bis 20 Fahrzeuge, auf Rechnung</AppText>
+          <AppText style={styles.clubTitle}>{t('Für Clubs und Veranstalter: CUMO DRIVE Club bis 20 Fahrzeuge, auf Rechnung')}</AppText>
           <AppText variant="caption" muted>
             Mitglieder eines aktiven Clubs brauchen keinen eigenen Plan. Schreib uns an
           </AppText>
@@ -137,9 +138,9 @@ export function Paywall({
 }
 
 const LEGAL_LINKS = [
-  { label: 'Nutzungsbedingungen', url: 'https://cumodrive.de/agb' },
-  { label: 'Apple Lizenzvertrag', url: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/' },
-  { label: 'Datenschutz', url: 'https://cumodrive.de/datenschutz' },
+  { label: t('Nutzungsbedingungen'), url: 'https://cumodrive.de/agb' },
+  { label: t('Apple Lizenzvertrag'), url: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/' },
+  { label: t('Datenschutz'), url: 'https://cumodrive.de/datenschutz' },
 ];
 
 function PlanCard({ price, selected, onPress }: { price: Price; selected: boolean; onPress: () => void }) {

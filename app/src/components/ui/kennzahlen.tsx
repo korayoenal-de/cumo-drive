@@ -11,6 +11,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Radius, Spacing, Type } from '@/constants/theme';
 import { tourFunLevel, TOUR_FUN_NAMES } from '@/lib/fun-score';
 import { fahrzeit, plaetze, strecke } from '@/lib/format';
+import { t } from '@/i18n';
 
 export type Kennzahl = { label: string; value: string };
 
@@ -19,11 +20,11 @@ export function Kennzahlen({ km, minutes, fun, extra = [] }: { km?: number | nul
   const level = showFun ? tourFunLevel(fun) : null;
   return (
     <View style={styles.row}>
-      {km != null && <Cell label="Strecke" value={strecke(km)} />}
-      {minutes != null && minutes > 0 && <Cell label="Fahrzeit" value={fahrzeit(minutes)} />}
+      {km != null && <Cell label={t('Strecke')} value={strecke(km)} />}
+      {minutes != null && minutes > 0 && <Cell label={t('Fahrzeit')} value={fahrzeit(minutes)} />}
       {showFun && level && (
         <View style={styles.cell} accessible accessibilityLabel={`Fahrspaß ${fun} von 100, ${TOUR_FUN_NAMES[level]}`}>
-          <AppText style={styles.label}>Fahrspaß</AppText>
+          <AppText style={styles.label}>{t('Fahrspaß')}</AppText>
           <View style={styles.funRow}>
             <FunGauge level={level} size={20} />
             <AppText style={styles.value}>{String(fun)}</AppText>

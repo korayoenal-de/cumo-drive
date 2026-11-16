@@ -10,6 +10,7 @@ import { Spacing, Type } from '@/constants/theme';
 
 import { C, DISPLAY } from './web-shared';
 import { S } from './web-styles';
+import { t } from '@/i18n';
 
 /* ---------- Bausteine ---------- */
 
@@ -151,7 +152,7 @@ export function ElevationChart(props: { e: ElevationProfile; onHoverKm: (km: num
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.xs }}>
       <div style={S.sectionHead}>
-        <span style={S.label}>Höhenprofil</span>
+        <span style={S.label}>{t('Höhenprofil')}</span>
         <span style={S.small}>{idx >= 0 ? `km ${Math.round(e.km[idx])}: ${Math.round(e.m[idx])} m` : `${lo} bis ${hi} m`}</span>
       </div>
       <svg
@@ -229,10 +230,10 @@ export function Gauge(props: { level: number; size?: number; label?: string }) {
 /** Marke oben links: Logo und CUMO DRIVE wie im Startscreen */
 export function Brand() {
   return (
-    <a href="/" style={S.brandLink} aria-label="CUMO DRIVE Startseite">
+    <a href="/" style={S.brandLink} aria-label={t('CUMO DRIVE Startseite')}>
       <Gauge level={5} size={26} />
       <span style={S.brand}>
-        CUMO <span style={{ color: C.signal }}>DRIVE</span>
+        CUMO <span style={{ color: C.signal }}>{t('DRIVE')}</span>
       </span>
     </a>
   );

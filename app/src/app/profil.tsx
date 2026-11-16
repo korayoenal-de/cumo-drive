@@ -23,6 +23,7 @@ import { shownBirthday } from '@/lib/drivers';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
 import { useVehicles, vehicleName } from '@/lib/vehicle';
 import { carLookFor } from '@/components/map/car-sprite';
+import { t } from '@/i18n';
 
 export default function Profil() {
   const session = useSession();
@@ -32,16 +33,16 @@ export default function Profil() {
 
   if (!session) {
     return (
-      <SubScreen title="Profil">
-        <AppText muted>Melde dich an, um dein Profil anzulegen.</AppText>
+      <SubScreen title={t('Profil')}>
+        <AppText muted>{t('Melde dich an, um dein Profil anzulegen.')}</AppText>
       </SubScreen>
     );
   }
   return (
-    <SubScreen title="Profil">
+    <SubScreen title={t('Profil')}>
       <PhotoField userId={session.user.id} name={profile?.displayName ?? '?'} />
       <View style={styles.gapS}>
-        <AppText style={styles.label}>So sehen dich andere</AppText>
+        <AppText style={styles.label}>{t('So sehen dich andere')}</AppText>
         <View style={styles.card}>
           <DisplayName />
           {p ? (
@@ -56,13 +57,13 @@ export default function Profil() {
           ) : (
             <ActivityIndicator color={Colors.muted} />
           )}
-          {busy && <AppText variant="caption" muted>Wird gespeichert</AppText>}
+          {busy && <AppText variant="caption" muted>{t('Wird gespeichert')}</AppText>}
           {err && <AppText style={styles.error}>{err}</AppText>}
         </View>
       </View>
       {p && (
         <View style={styles.gapS}>
-          <AppText style={styles.label}>Vorschau in Drivers</AppText>
+          <AppText style={styles.label}>{t('Vorschau in Drivers')}</AppText>
           <DriverCard
             big
             d={{
@@ -126,9 +127,9 @@ function PhotoField({ userId, name }: { userId: string; name: string }) {
   };
   // Optionen zum Foto im Bottom Sheet (Design Prinzipien: Optionen zu einem Objekt), Entfernen unten rot mit Rückfrage
   const items: SheetItem[] = [
-    { key: 'library', icon: 'photo.on.rectangle', label: 'Aus deinen Fotos', onPress: () => void run('library') },
-    { key: 'camera', icon: 'camera', label: 'Foto aufnehmen', onPress: () => void run('camera') },
-    ...(url ? [{ key: 'remove', icon: 'trash' as const, label: 'Foto entfernen', hint: 'Dann zeigen wir deine Initialen', danger: true, onPress: () => setAsk(true) }] : []),
+    { key: 'library', icon: 'photo.on.rectangle', label: t('Aus deinen Fotos'), onPress: () => void run('library') },
+    { key: 'camera', icon: 'camera', label: t('Foto aufnehmen'), onPress: () => void run('camera') },
+    ...(url ? [{ key: 'remove', icon: 'trash' as const, label: t('Foto entfernen'), hint: t('Dann zeigen wir deine Initialen'), danger: true, onPress: () => setAsk(true) }] : []),
   ];
   return (
     <View style={styles.photo}>
@@ -143,9 +144,9 @@ function PhotoField({ userId, name }: { userId: string; name: string }) {
           <SymbolView name="camera.fill" size={16} weight="semibold" tintColor={Colors.onSignal} />
         </View>
       </Pressable>
-      {!url && <AppText variant="caption" muted>Tippe auf den Kreis, um ein Foto zu setzen.</AppText>}
+      {!url && <AppText variant="caption" muted>{t('Tippe auf den Kreis, um ein Foto zu setzen.')}</AppText>}
       {msg && <AppText style={styles.error}>{msg}</AppText>}
-      <ActionSheet visible={open} title="Profilfoto" items={items} onClose={() => setOpen(false)} />
+      <ActionSheet visible={open} title={t('Profilfoto')} items={items} onClose={() => setOpen(false)} />
       <AvatarCropper
         photo={photo}
         onCancel={() => setPhoto(null)}
@@ -157,9 +158,9 @@ function PhotoField({ userId, name }: { userId: string; name: string }) {
       />
       <ConfirmSheet
         visible={ask}
-        title="Möchtest du dein Profilfoto wirklich entfernen?"
+        title={t('Möchtest du dein Profilfoto wirklich entfernen?')}
         text="Andere sehen dann wieder deine Initialen."
-        confirmLabel="Entfernen"
+        confirmLabel={t('Entfernen')}
         onConfirm={() => {
           setAsk(false);
           void run('remove');
@@ -205,8 +206,8 @@ function DisplayName() {
             {current ?? 'Noch kein Name'}
           </AppText>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Namen ändern" onPress={() => setDraft(current ?? '')} style={[styles.secondary, styles.padH]}>
-          <AppText style={styles.secondaryText}>Ändern</AppText>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('Namen ändern')} onPress={() => setDraft(current ?? '')} style={[styles.secondary, styles.padH]}>
+          <AppText style={styles.secondaryText}>{t('Ändern')}</AppText>
         </Pressable>
       </View>
     );
@@ -217,10 +218,10 @@ function DisplayName() {
       {err && <AppText style={styles.error}>{err}</AppText>}
       <View style={styles.row}>
         <Pressable accessibilityRole="button" disabled={busy || check.state !== 'frei'} onPress={() => void save()} style={[styles.primary, styles.grow, (busy || check.state !== 'frei') && styles.disabled]}>
-          {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Speichern</AppText>}
+          {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Speichern')}</AppText>}
         </Pressable>
         <Pressable accessibilityRole="button" onPress={() => setDraft(null)} style={[styles.secondary, styles.grow]}>
-          <AppText style={styles.secondaryText}>Abbrechen</AppText>
+          <AppText style={styles.secondaryText}>{t('Abbrechen')}</AppText>
         </Pressable>
       </View>
     </View>

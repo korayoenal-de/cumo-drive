@@ -15,6 +15,7 @@ import { setActiveTour } from '@/lib/active-tour';
 import { avoidSetting } from '@/lib/avoid-settings';
 import { planChecked } from '@/lib/plan';
 import type { LatLon } from '@/lib/tour';
+import { t } from '@/i18n';
 
 type Way = 'schnell' | 'kurvig';
 
@@ -53,16 +54,16 @@ export function MeetingRoute({ to, place, primary = false }: { to: LatLon; place
   };
   return (
     <View style={styles.box}>
-      <Pressable accessibilityRole="button" accessibilityHint="Fragt nach Schnell oder Kurvig und startet die Navigation ab deinem Standort" disabled={busy} onPress={() => setOpen(true)} style={({ pressed }) => [styles.btn, primary && styles.btnPrimary, pressed && styles.pressed]}>
-        {busy ? <ActivityIndicator color={primary ? Colors.onSignal : Colors.text} /> : <AppText style={[styles.btnText, primary && styles.btnTextPrimary]}>Route zum Treffpunkt</AppText>}
+      <Pressable accessibilityRole="button" accessibilityHint={t('Fragt nach Schnell oder Kurvig und startet die Navigation ab deinem Standort')} disabled={busy} onPress={() => setOpen(true)} style={({ pressed }) => [styles.btn, primary && styles.btnPrimary, pressed && styles.pressed]}>
+        {busy ? <ActivityIndicator color={primary ? Colors.onSignal : Colors.text} /> : <AppText style={[styles.btnText, primary && styles.btnTextPrimary]}>{t('Route zum Treffpunkt')}</AppText>}
       </Pressable>
       <ActionSheet
         visible={open}
-        title="Route zum Treffpunkt"
+        title={t('Route zum Treffpunkt')}
         subtitle={place}
         items={[
-          { key: 'schnell', icon: 'bolt.fill', label: 'Schnell', hint: 'Am schnellsten hin', onPress: () => void go('schnell') },
-          { key: 'kurvig', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Kurvig', hint: 'Schon auf dem Weg schöne Strecken', onPress: () => void go('kurvig') },
+          { key: 'schnell', icon: 'bolt.fill', label: t('Schnell'), hint: t('Am schnellsten hin'), onPress: () => void go('schnell') },
+          { key: 'kurvig', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: t('Kurvig'), hint: t('Schon auf dem Weg schöne Strecken'), onPress: () => void go('kurvig') },
         ]}
         onClose={() => setOpen(false)}
       />

@@ -32,6 +32,7 @@ import { StopsPanel } from './web-tour-panels';
 import { BODY, C, STEP_TEXT } from './web-shared';
 import { S } from './web-styles';
 import { ConfirmSheet, MoreMenu } from './web-ui';
+import { tr } from '@/i18n';
 
 export const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
 const MIN_STEPS = [60, 90, 120, 180, 240, 300, 420];
@@ -132,7 +133,7 @@ export function useRoundTrip(opts: { setBusy: (s: string | null) => void; setErr
       const t = saveTour({ ...cur.tour, curves: countCurves(flatten(cur.tour).map((x) => x.p)), profile: cur.req.profile }, '', st.savedId ?? undefined);
       setSt((s) => ({ ...s, savedId: t.id, savedFor: cur.tour }));
       void syncLibrary();
-      showToast('Unter Touren gespeichert, auch in der App');
+      showToast(tr('Unter Touren gespeichert, auch in der App'));
     },
     /** Stopp einplanen, die Runde bleibt eine Runde (spliceStop wie in der App) */
     addStop: async (p: LatLon) => {
@@ -143,9 +144,9 @@ export function useRoundTrip(opts: { setBusy: (s: string | null) => void; setErr
         const item: Roll = { ...cur, tour: t, fun: tourFun(flatten(t).map((x) => x.p)) };
         setSt((s) => ({ ...s, rolls: s.rolls.map((r, i) => (i === s.idx ? item : r)), savedFor: null, savedId: s.savedId }));
         onShow(t);
-        showToast('Stopp eingeplant');
+        showToast(tr('Stopp eingeplant'));
       } catch {
-        showToast('Der Stopp ließ sich nicht einplanen', { tone: 'error' });
+        showToast(tr('Der Stopp ließ sich nicht einplanen'), { tone: 'error' });
       } finally {
         setBusy(null);
       }
@@ -200,7 +201,7 @@ export function RoundTripPanel(props: {
 
   return (
     <div style={S.stack}>
-      <Section title="Start">
+      <Section title={tr('Start')}>
         {start ? (
           <div style={S.startRow}>
             <span>{start.name}</span>
@@ -223,12 +224,12 @@ export function RoundTripPanel(props: {
                 Kartenmitte
               </button>
             </div>
-            <PlaceSearch placeholder="Startort suchen" onPick={(p) => setStart({ p: p.p, name: p.name })} />
+            <PlaceSearch placeholder={tr('Startort suchen')} onPick={(p) => setStart({ p: p.p, name: p.name })} />
             {locError ? <p style={S.errorText}>{locError}</p> : null}
           </div>
         )}
       </Section>
-      <Section title="Länge">
+      <Section title={tr('Länge')}>
         <div style={{ background: C.surface, borderRadius: 20, padding: Spacing.l, display: 'flex', flexDirection: 'column', gap: Spacing.m }}>
           <div style={S.chips}>
             <Chip on={lengthBy === 'km'} onSurface onClick={() => setLengthBy('km')}>
@@ -241,7 +242,7 @@ export function RoundTripPanel(props: {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <button
               style={stepBtn}
-              aria-label="Kürzer"
+              aria-label={tr('Kürzer')}
               disabled={lengthBy === 'km' ? kmIdx === 0 : minIdx === 0}
               onClick={() => (lengthBy === 'km' ? setKmIdx((i) => Math.max(0, i - 1)) : setMinIdx((i) => Math.max(0, i - 1)))}>
               −
@@ -252,7 +253,7 @@ export function RoundTripPanel(props: {
             </div>
             <button
               style={stepBtn}
-              aria-label="Länger"
+              aria-label={tr('Länger')}
               disabled={lengthBy === 'km' ? kmIdx === KM_STEPS.length - 1 : minIdx === MIN_STEPS.length - 1}
               onClick={() => (lengthBy === 'km' ? setKmIdx((i) => Math.min(KM_STEPS.length - 1, i + 1)) : setMinIdx((i) => Math.min(MIN_STEPS.length - 1, i + 1)))}>
               +
@@ -260,11 +261,11 @@ export function RoundTripPanel(props: {
           </div>
         </div>
       </Section>
-      <Section title="Richtung" aside={dir === 'zufall' ? 'Zufall' : DIRECTIONS.find((d) => d.id === dir)?.label}>
+      <Section title={tr('Richtung')} aside={dir === 'zufall' ? 'Zufall' : DIRECTIONS.find((d) => d.id === dir)?.label}>
         <WebDirectionDial value={dir} onChange={setDir} />
       </Section>
       {PROFILE_CHOICES.length > 1 && (
-        <Section title="Profil">
+        <Section title={tr('Profil')}>
           <div style={S.chips}>
             {PROFILE_CHOICES.map((p) => (
               <Chip key={p.id} on={props.profile === p.id} onClick={() => props.setProfile(p.id)}>
@@ -275,11 +276,11 @@ export function RoundTripPanel(props: {
         </Section>
       )}
       <div>
-        <Accordion label="Vermeiden" summary={avoidText}>
-          <Toggle id="rt-closures" on={props.avoid.closures} label="Gesperrte Straßen" note="Wir planen um gesperrte Straßen herum." onChange={(v) => props.setAvoid({ ...props.avoid, closures: v })} />
-          <Toggle id="rt-ferries" on={props.avoid.ferries} label="Fähren" onChange={(v) => props.setAvoid({ ...props.avoid, ferries: v })} />
-          <Toggle id="rt-tolls" on={props.avoid.tolls} label="Maut" onChange={(v) => props.setAvoid({ ...props.avoid, tolls: v })} />
-          <Toggle id="rt-rough" on={props.avoid.rough} label="Rauer Belag" note="Kopfsteinpflaster und schlechter Asphalt." onChange={(v) => props.setAvoid({ ...props.avoid, rough: v })} />
+        <Accordion label={tr('Vermeiden')} summary={avoidText}>
+          <Toggle id="rt-closures" on={props.avoid.closures} label={tr('Gesperrte Straßen')} note={tr('Wir planen um gesperrte Straßen herum.')} onChange={(v) => props.setAvoid({ ...props.avoid, closures: v })} />
+          <Toggle id="rt-ferries" on={props.avoid.ferries} label={tr('Fähren')} onChange={(v) => props.setAvoid({ ...props.avoid, ferries: v })} />
+          <Toggle id="rt-tolls" on={props.avoid.tolls} label={tr('Maut')} onChange={(v) => props.setAvoid({ ...props.avoid, tolls: v })} />
+          <Toggle id="rt-rough" on={props.avoid.rough} label={tr('Rauer Belag')} note={tr('Kopfsteinpflaster und schlechter Asphalt.')} onChange={(v) => props.setAvoid({ ...props.avoid, rough: v })} />
         </Accordion>
       </div>
       <button
@@ -327,7 +328,7 @@ export function RoundResult(props: {
       {cur.req.note ? <p style={{ ...S.muted, color: C.warn }}>{cur.req.note}</p> : null}
       {round.state.note ? <StatusLine tone="warn" text={round.state.note} /> : null}
       {rolls.length > 1 ? (
-        <Section title="Deine Runden">
+        <Section title={tr('Deine Runden')}>
           <div style={S.chips}>
             {rolls.map((r, i) =>
               r.fun ? (
@@ -347,7 +348,7 @@ export function RoundResult(props: {
       ) : null}
       <ResultDetails tour={cur.tour} line={props.line} onFly={props.onFly} onHoverKm={props.onHoverKm} elev={props.elev} onAvoid={round.replan} />
       <div>
-        <Accordion label="Unterwegs einplanen" summary="Tanken, Essen, Aussicht">
+        <Accordion label={tr('Unterwegs einplanen')} summary="Tanken, Essen, Aussicht">
           <StopsPanel tour={cur.tour} busy={props.busy} onAdd={(p) => void round.addStop(p)} />
         </Accordion>
       </div>
@@ -362,13 +363,13 @@ export function RoundResult(props: {
           </button>
         )}
         <MoreMenu
-          label="Weitere Aktionen"
+          label={tr('Weitere Aktionen')}
           up
           items={[
-            { key: 'adjust', label: 'Anpassen', onPress: () => props.onAdjust(cur.tour, cur.req.profile) },
-            { key: 'gpx', label: 'Als GPX herunterladen', onPress: () => void exportTour(cur.tour, 'gpx') },
-            { key: 'kml', label: 'Als KML herunterladen', onPress: () => void exportTour(cur.tour, 'kml') },
-            { key: 'drop', label: 'Runde verwerfen', danger: true, onPress: () => setAsk(true) },
+            { key: 'adjust', label: tr('Anpassen'), onPress: () => props.onAdjust(cur.tour, cur.req.profile) },
+            { key: 'gpx', label: tr('Als GPX herunterladen'), onPress: () => void exportTour(cur.tour, 'gpx') },
+            { key: 'kml', label: tr('Als KML herunterladen'), onPress: () => void exportTour(cur.tour, 'kml') },
+            { key: 'drop', label: tr('Runde verwerfen'), danger: true, onPress: () => setAsk(true) },
           ]}
         />
       </div>
@@ -378,9 +379,9 @@ export function RoundResult(props: {
       {ask ? (
         <ConfirmSheet
           narrow={props.narrow}
-          title="Möchtest du diese Runde wirklich verwerfen?"
+          title={tr('Möchtest du diese Runde wirklich verwerfen?')}
           text="Gespeicherte Runden bleiben unter Touren."
-          confirmLabel="Verwerfen"
+          confirmLabel={tr('Verwerfen')}
           onClose={() => setAsk(false)}
           onConfirm={() => {
             setAsk(false);

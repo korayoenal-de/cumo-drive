@@ -16,18 +16,19 @@ import { Section, Toggle } from './web-parts';
 import { BODY, C, DISPLAY } from './web-shared';
 import { S } from './web-styles';
 import { ConfirmSheet, Field, MoreMenu, pillBtn, ViewTitle, WebSheet, XIcon } from './web-ui';
+import { t } from '@/i18n';
 
 export function SettingsPanel(props: { narrow: boolean }) {
   return (
     <div style={S.stack}>
-      <ViewTitle>Einstellungen</ViewTitle>
-      <Section title="Konto">
+      <ViewTitle>{t('Einstellungen')}</ViewTitle>
+      <Section title={t('Konto')}>
         <AccountBox />
       </Section>
-      <Section title="Community Profil">
+      <Section title={t('Community Profil')}>
         <CommunityProfileWeb />
       </Section>
-      <Section title="Garage">
+      <Section title={t('Garage')}>
         <GarageWeb narrow={props.narrow} />
       </Section>
     </div>
@@ -76,13 +77,13 @@ function CommunityProfileWeb() {
       setBusy(false);
     }
   };
-  if (!p) return <p style={S.muted}>Wird geladen …</p>;
+  if (!p) return <p style={S.muted}>{t('Wird geladen …')}</p>;
   return (
     <div style={box}>
       {!editing ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.m }}>
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={S.metricLabel}>Wohnort</span>
+            <span style={S.metricLabel}>{t('Wohnort')}</span>
             <span style={{ font: `700 17px ${BODY}` }}>{p.homeName ?? 'Noch nicht angegeben'}</span>
           </div>
           <button
@@ -98,8 +99,8 @@ function CommunityProfileWeb() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.s }}>
           <div style={{ display: 'flex', gap: Spacing.s, alignItems: 'center' }}>
-            <input autoFocus aria-label="Wohnort suchen" placeholder="Ort, zum Beispiel Bad Dürkheim" value={q} onChange={(e) => setQ(e.target.value)} style={{ ...S.search, height: 52, background: C.surface2 }} />
-            <button aria-label="Abbrechen" onClick={() => setEditing(false)} style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <input autoFocus aria-label={t('Wohnort suchen')} placeholder={t('Ort, zum Beispiel Bad Dürkheim')} value={q} onChange={(e) => setQ(e.target.value)} style={{ ...S.search, height: 52, background: C.surface2 }} />
+            <button aria-label={t('Abbrechen')} onClick={() => setEditing(false)} style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <XIcon />
             </button>
           </div>
@@ -129,12 +130,12 @@ function CommunityProfileWeb() {
           ) : null}
         </div>
       )}
-      <span style={S.muted}>Andere Mitglieder sehen dich unter Drivers an diesem Ort, nur als Ortsmitte, nie mit Adresse oder Live Standort.</span>
+      <span style={S.muted}>{t('Andere Mitglieder sehen dich unter Drivers an diesem Ort, nur als Ortsmitte, nie mit Adresse oder Live Standort.')}</span>
       <BirthdayWeb key={`geb${p.birthDate ?? ''}`} p={p} onSave={(patch) => void save(patch)} />
-      <Toggle id="pv-msg" on={p.allowMessages} label="Andere dürfen mich anschreiben" onChange={(v) => void save({ allowMessages: v })} />
-      <Toggle id="pv-inv" on={p.invitesContactsOnly} label="Einladungen nur von Kontakten" onChange={(v) => void save({ invitesContactsOnly: v })} />
-      <Toggle id="pv-garage" on={p.showGarage} label="Andere sehen meinen Fuhrpark" onChange={(v) => void save({ showGarage: v })} />
-      {busy ? <span style={S.muted}>Wird gespeichert</span> : null}
+      <Toggle id="pv-msg" on={p.allowMessages} label={t('Andere dürfen mich anschreiben')} onChange={(v) => void save({ allowMessages: v })} />
+      <Toggle id="pv-inv" on={p.invitesContactsOnly} label={t('Einladungen nur von Kontakten')} onChange={(v) => void save({ invitesContactsOnly: v })} />
+      <Toggle id="pv-garage" on={p.showGarage} label={t('Andere sehen meinen Fuhrpark')} onChange={(v) => void save({ showGarage: v })} />
+      {busy ? <span style={S.muted}>{t('Wird gespeichert')}</span> : null}
       {err ? <span style={S.errorText}>{err}</span> : null}
     </div>
   );
@@ -146,7 +147,7 @@ function GarageWeb(props: { narrow: boolean }) {
   const [del, setDel] = useState<Vehicle | null>(null);
   return (
     <div style={box}>
-      {!list.length ? <span style={S.muted}>Noch kein Fahrzeug. Mit Breite und Bodenfreiheit prüfen wir Engstellen und Schwellen für dein Auto.</span> : null}
+      {!list.length ? <span style={S.muted}>{t('Noch kein Fahrzeug. Mit Breite und Bodenfreiheit prüfen wir Engstellen und Schwellen für dein Auto.')}</span> : null}
       {list.map((v) => {
         const on = current?.id === v.id;
         const facts = [v.widthM ? `${String(v.widthM).replace('.', ',')} m breit` : null, v.clearanceCm ? `${v.clearanceCm} cm Bodenfreiheit` : null, v.rangeKm ? `${v.rangeKm} km Reichweite` : null].filter(Boolean).join(', ');
@@ -169,8 +170,8 @@ function GarageWeb(props: { narrow: boolean }) {
               label={`Optionen für ${vehicleName(v) || 'Fahrzeug'}`}
               onSurface
               items={[
-                { key: 'edit', label: 'Bearbeiten', onPress: () => setEdit(v) },
-                { key: 'del', label: 'Fahrzeug löschen', danger: true, onPress: () => setDel(v) },
+                { key: 'edit', label: t('Bearbeiten'), onPress: () => setEdit(v) },
+                { key: 'del', label: t('Fahrzeug löschen'), danger: true, onPress: () => setDel(v) },
               ]}
             />
           </div>
@@ -183,14 +184,14 @@ function GarageWeb(props: { narrow: boolean }) {
       {del ? (
         <ConfirmSheet
           narrow={props.narrow}
-          title="Möchtest du dieses Fahrzeug wirklich löschen?"
+          title={t('Möchtest du dieses Fahrzeug wirklich löschen?')}
           text={`${vehicleName(del) || 'Fahrzeug'} verschwindet aus deiner Garage, auch in der App.`}
-          confirmLabel="Löschen"
+          confirmLabel={t('Löschen')}
           onClose={() => setDel(null)}
           onConfirm={() => {
             void deleteVehicle(del.id);
             setDel(null);
-            showToast('Fahrzeug gelöscht');
+            showToast(t('Fahrzeug gelöscht'));
           }}
         />
       ) : null}
@@ -213,21 +214,21 @@ function VehicleSheet(props: { v: Vehicle; narrow: boolean; onClose: () => void 
   const [range, setRange] = useState(str(v.rangeKm));
   const isNew = !v.model && !v.brand;
   return (
-    <WebSheet narrow={props.narrow} title={isNew ? 'Fahrzeug hinzufügen' : 'Fahrzeug bearbeiten'} subtitle="Gilt auch in der App, Breite und Bodenfreiheit fließen in den Etappen Check." onClose={props.onClose}>
+    <WebSheet narrow={props.narrow} title={isNew ? 'Fahrzeug hinzufügen' : 'Fahrzeug bearbeiten'} subtitle={t('Gilt auch in der App, Breite und Bodenfreiheit fließen in den Etappen Check.')} onClose={props.onClose}>
       <form
         style={{ display: 'flex', flexDirection: 'column', gap: Spacing.l }}
         onSubmit={(e) => {
           e.preventDefault();
           void saveVehicle({ ...v, brand: brand.trim() || undefined, model: model.trim(), widthM: num(width), clearanceCm: num(clear), rangeKm: num(range) });
           props.onClose();
-          showToast('Fahrzeug gespeichert');
+          showToast(t('Fahrzeug gespeichert'));
         }}>
-        <Field id="v-brand" label="Marke" placeholder="Zum Beispiel Porsche" value={brand} onChange={setBrand} max={40} />
-        <Field id="v-model" label="Modell" placeholder="Zum Beispiel 911 GTS" value={model} onChange={setModel} max={60} />
+        <Field id="v-brand" label={t('Marke')} placeholder={t('Zum Beispiel Porsche')} value={brand} onChange={setBrand} max={40} />
+        <Field id="v-model" label={t('Modell')} placeholder={t('Zum Beispiel 911 GTS')} value={model} onChange={setModel} max={60} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: Spacing.s }}>
-          <Field id="v-width" label="Breite in m" placeholder="1,85" value={width} onChange={setWidth} max={5} />
-          <Field id="v-clear" label="Boden in cm" placeholder="10" value={clear} onChange={setClear} max={3} />
-          <Field id="v-range" label="Reichweite km" placeholder="450" value={range} onChange={setRange} max={4} />
+          <Field id="v-width" label={t('Breite in m')} placeholder="1,85" value={width} onChange={setWidth} max={5} />
+          <Field id="v-clear" label={t('Boden in cm')} placeholder="10" value={clear} onChange={setClear} max={3} />
+          <Field id="v-range" label={t('Reichweite km')} placeholder="450" value={range} onChange={setRange} max={4} />
         </div>
         <button type="submit" style={{ ...pillBtn, flex: 'none', background: C.signal, color: '#fff' }} disabled={!model.trim() && !brand.trim()}>
           Fertig
@@ -262,7 +263,7 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.m }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={S.metricLabel}>Geburtstag</span>
+          <span style={S.metricLabel}>{t('Geburtstag')}</span>
           <span style={{ font: `700 17px ${BODY}`, color: p.birthDate ? C.text : C.muted }}>{p.birthDate ? fmt(saved) : 'Nicht angegeben'}</span>
           {p.birthDate && sees ? <span style={S.muted}>Drivers sieht: {sees}</span> : null}
         </div>
@@ -281,8 +282,8 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.s }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.s }}>
-        <label htmlFor="pv-geb" style={{ ...S.metricLabel, flex: 1 }}>Geburtstag</label>
-        <button aria-label="Verwerfen" onClick={() => setOpen(false)} style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <label htmlFor="pv-geb" style={{ ...S.metricLabel, flex: 1 }}>{t('Geburtstag')}</label>
+        <button aria-label={t('Verwerfen')} onClick={() => setOpen(false)} style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <XIcon />
         </button>
       </div>
@@ -292,14 +293,14 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
         inputMode="numeric"
         autoComplete="bday"
         value={fmt(digits)}
-        placeholder="TT.MM.JJJJ"
+        placeholder={t('TT.MM.JJJJ')}
         onChange={(e) => setDigits(e.target.value.replace(/[^0-9]/g, '').slice(0, 8))}
         onKeyDown={(e) => e.key === 'Enter' && doSave()}
         style={{ ...S.search, height: 52, background: C.surface2, maxWidth: 220, font: `400 22px ${DISPLAY}`, letterSpacing: '0.04em', fontVariantNumeric: 'tabular-nums' }}
       />
       <span style={hint ? S.errorText : S.muted}>{hint ?? 'Das Datum selbst sieht niemand.'}</span>
-      <span style={S.metricLabel}>Sichtbar in Drivers</span>
-      <div style={S.chips} role="radiogroup" aria-label="Sichtbar in Drivers">
+      <span style={S.metricLabel}>{t('Sichtbar in Drivers')}</span>
+      <div style={S.chips} role="radiogroup" aria-label={t('Sichtbar in Drivers')}>
         {SHOW_WEB.map((o) => {
           const on = show === o.v;
           return (
@@ -320,7 +321,7 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
         </button>
         {p.birthDate ? (
           <button
-            aria-label="Geburtstag entfernen"
+            aria-label={t('Geburtstag entfernen')}
             onClick={() => setAsk(true)}
             style={{ width: 52, height: 52, flex: 'none', borderRadius: 26, border: 'none', background: C.surface2, color: C.muted, cursor: 'pointer', font: `600 15px ${BODY}` }}>
             <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
@@ -332,8 +333,8 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
       {ask ? (
         <ConfirmSheet
           narrow
-          title="Möchtest du deinen Geburtstag entfernen?"
-          confirmLabel="Entfernen"
+          title={t('Möchtest du deinen Geburtstag entfernen?')}
+          confirmLabel={t('Entfernen')}
           onClose={() => setAsk(false)}
           onConfirm={() => {
             setAsk(false);
@@ -347,7 +348,7 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
 }
 
 const SHOW_WEB: { v: BirthdayShow; label: string }[] = [
-  { v: 'age', label: 'Alter' },
-  { v: 'birthday', label: 'Nur Geburtstag' },
-  { v: 'none', label: 'Nichts' },
+  { v: 'age', label: t('Alter') },
+  { v: 'birthday', label: t('Nur Geburtstag') },
+  { v: 'none', label: t('Nichts') },
 ];

@@ -17,6 +17,7 @@ import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { passesAlong, PASSES, type Pass } from '@/lib/passes';
 import { flatten, haversine, type LatLon, type Tour } from '@/lib/tour';
 import { fmtTemp, passWeather, weatherAttribution, weatherAvailable, weatherReason, type PassWeather } from '@/lib/weather';
+import { t } from '@/i18n';
 
 type Item = { pass: Pass; km: number; at: number; w: PassWeather | null };
 
@@ -120,14 +121,14 @@ export function WeatherSheet({ item, onClose }: { item: Item | null; onClose: ()
             </View>
           )}
           <View style={styles.grid}>
-            <Cell label="Regen" value={`${Math.round(w.precipChance * 100)} %`} />
-            <Cell label="Wind" value={`${Math.round(w.wind)} km/h`} />
-            <Cell label="Böen" value={w.gust ? `${Math.round(w.gust)} km/h` : 'keine'} />
+            <Cell label={t('Regen')} value={`${Math.round(w.precipChance * 100)} %`} />
+            <Cell label={t('Wind')} value={`${Math.round(w.wind)} km/h`} />
+            <Cell label={t('Böen')} value={w.gust ? `${Math.round(w.gust)} km/h` : 'keine'} />
           </View>
           {attr && (
             <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(attr.legalUrl)} style={styles.attr}>
               {attr.markDark ? <Image source={{ uri: attr.markDark }} style={styles.mark} resizeMode="contain" accessibilityLabel={attr.name} /> : <AppText style={styles.attrText}>{attr.name}</AppText>}
-              <AppText style={styles.attrText}>Datenquellen</AppText>
+              <AppText style={styles.attrText}>{t('Datenquellen')}</AppText>
             </Pressable>
           )}
         </View>

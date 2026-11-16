@@ -27,6 +27,7 @@ import { formatDistance } from './format';
 import type { NavSymbol } from './maneuver-geometry';
 import { NavSymbolIcon } from './maneuver-icon';
 import { FUN_NAMES, FunGauge, toFunLevel } from '@/components/ui/fun-gauge';
+import { t } from '@/i18n';
 
 const HIGHLIGHT_SYMBOL: Record<Highlight['kind'], NavSymbol> = { pass: 'passhoehe', rallye: 'kehre', strecke: 'kehre', aussicht: 'aussicht', bergrennen: 'kehre' };
 
@@ -95,7 +96,7 @@ export function StopAlert({ stop, distM, mine, reach, onDismiss, onCancel }: { s
         <AppText variant="caption" style={styles.stopKicker}>
           {mine ? (reach && reach.of > 0 ? (reach.got >= reach.of ? `Bei allen angekommen` : `Bei ${reach.got} von ${reach.of} angekommen`) : 'An die Gruppe gesendet') : `${stop.name} hält gleich an`}
         </AppText>
-        <AppText style={styles.stopTitle}>{mine ? r.label : 'Gleich anhalten'}</AppText>
+        <AppText style={styles.stopTitle}>{mine ? r.label: t('Gleich anhalten')}</AppText>
         <AppText style={styles.stopText}>
           {r.title}
           {!mine && d && distM! > 30 ? `, Lead ist ${d.value} ${d.unit} vor dir.` : '.'}
@@ -107,7 +108,7 @@ export function StopAlert({ stop, distM, mine, reach, onDismiss, onCancel }: { s
         </Pressable>
         {mine && (
           <Pressable accessibilityRole="button" onPress={onCancel} style={({ pressed }) => [styles.stopBtn, styles.flex, pressed && styles.pressed]}>
-            <AppText style={styles.stopBtnText}>Zurücknehmen</AppText>
+            <AppText style={styles.stopBtnText}>{t('Zurücknehmen')}</AppText>
           </Pressable>
         )}
       </View>

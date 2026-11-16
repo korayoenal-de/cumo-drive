@@ -27,6 +27,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { tr } from '@/i18n';
 
 /** Spielraum, bevor die Fläche einfärbt (Tachoabweichung) */
 const OVER_KMH = 4;
@@ -226,7 +227,7 @@ export function SpeedBadge({ speedKmh, limit, estimated = false, hint, showSpeed
           <>
             <Animated.View style={[styles.speed, spdStyle]}>
               <AppText style={[styles.value, over && !hint && styles.valueOver]}>{v}</AppText>
-              <AppText style={styles.unit}>km/h</AppText>
+              <AppText style={styles.unit}>{tr('km/h')}</AppText>
             </Animated.View>
             {limit != null && (
               <Animated.View style={[styles.sign, limit >= 130 && styles.signFree, estimated && styles.signGuess, signStyle]}>

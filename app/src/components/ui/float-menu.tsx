@@ -10,6 +10,7 @@ import Animated from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme';
+import { t } from '@/i18n';
 
 export type FloatItem = { key: string; label: string; icon: SFSymbol; danger?: boolean };
 /** Lage der Taste im Fenster */
@@ -41,7 +42,7 @@ export function FloatMenu({
   const right = Math.max(Spacing.l, win.width - anchor.right);
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel="Menü schließen" />
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('Menü schließen')} />
       <View style={[styles.menu, { top, right }]} accessibilityViewIsModal accessibilityLabel={label}>
         {main.map((it, i) => (
           <Animated.View key={it.key} entering={softEnter(i)}>

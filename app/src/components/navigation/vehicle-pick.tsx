@@ -12,6 +12,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
 import { selectVehicle, vehicleName, type Vehicle } from '@/lib/vehicle';
+import { t } from '@/i18n';
 
 function Car({ v, size }: { v: Vehicle; size: number }) {
   const look = carLookFor(v);
@@ -32,7 +33,7 @@ export function VehiclePick({ list, current }: { list: Vehicle[]; current: Vehic
       <View style={styles.row}>
         <Car v={cur} size={44} />
         <View style={styles.flex}>
-          <AppText variant="caption" muted>Du fährst</AppText>
+          <AppText variant="caption" muted>{t('Du fährst')}</AppText>
           <AppText style={styles.name} numberOfLines={1}>{vehicleName(cur) || 'Fahrzeug'}</AppText>
         </View>
         {others.length > 0 && (

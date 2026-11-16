@@ -11,6 +11,7 @@ import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { signIn } from '@/lib/auth';
 import { signUpWithName } from '@/lib/profile';
+import { t } from '@/i18n';
 
 /** Im Browser (/login, /registrieren) schmal und mittig, mit Logo zurück zur Startseite. */
 const WEB = Platform.OS === 'web';
@@ -50,7 +51,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             </AppText>
           </Pressable>
           <AppText variant="display">{mode === 'login' ? 'Willkommen\nzurück' : 'Konto\nanlegen'}</AppText>
-          <AppText muted>Kurvige Touren planen, in der Gruppe fahren und jede Fahrt festhalten. Deine Touren liegen in deinem Konto, in der App und im Web Planer.</AppText>
+          <AppText muted>{t('Kurvige Touren planen, in der Gruppe fahren und jede Fahrt festhalten. Deine Touren liegen in deinem Konto, in der App und im Web Planer.')}</AppText>
         </View>
 
         <View style={styles.gapM}>
@@ -58,7 +59,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
           <TextInput maxFontSizeMultiplier={1.2}
             value={email}
             onChangeText={setEmail}
-            placeholder="E-Mail"
+            placeholder={t('E-Mail')}
             placeholderTextColor={Colors.muted}
             autoCapitalize="none"
             autoComplete="email"
@@ -66,7 +67,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             keyboardType="email-address"
             returnKeyType="next"
             style={styles.input}
-            accessibilityLabel="E-Mail"
+            accessibilityLabel={t('E-Mail')}
           />
           <TextInput maxFontSizeMultiplier={1.2}
             value={pw}
@@ -79,7 +80,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             returnKeyType="go"
             onSubmitEditing={() => void submit()}
             style={styles.input}
-            accessibilityLabel="Passwort"
+            accessibilityLabel={t('Passwort')}
           />
           {err && <AppText style={styles.error}>{err}</AppText>}
           <Pressable accessibilityRole="button" disabled={!ready} onPress={() => void submit()} style={[styles.primary, !ready && styles.disabled]}>

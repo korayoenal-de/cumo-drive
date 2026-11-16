@@ -10,6 +10,7 @@ import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { formatUntil, PRICES, refreshEntitlement, useEntitlement, type Entitlement } from '@/lib/entitlement';
 
 import { TrialBadge } from './entitlement-gate';
+import { t } from '@/i18n';
 
 export function describeEntitlement(e: Entitlement): { title: string; text: string } {
   const until = formatUntil(e.until);
@@ -23,10 +24,10 @@ export function describeEntitlement(e: Entitlement): { title: string; text: stri
     return { title: e.clubName ?? 'Club', text: `Über deinen Club, gültig bis ${until}. Gruppen bis ${e.maxVehicles} Fahrzeuge.` };
   }
   if (e.source === 'plan') {
-    return { title: 'Plan aktiv', text: `Gültig bis ${until}.` };
+    return { title: t('Plan aktiv'), text: `Gültig bis ${until}.` };
   }
   return {
-    title: 'Testphase',
+    title: t('Testphase'),
     text: `Alles frei bis ${until}. Danach ab ${PRICES[0].perMonthText ?? PRICES[0].priceText} weiter.`,
   };
 }
@@ -41,7 +42,7 @@ export function MembershipSection() {
   const d = describeEntitlement(e);
   return (
     <View style={styles.gapM}>
-      <AppText variant="label">Mitgliedschaft</AppText>
+      <AppText variant="label">{t('Mitgliedschaft')}</AppText>
       <View style={styles.card}>
         {e.loading ? (
           <ActivityIndicator color={Colors.muted} />
@@ -57,7 +58,7 @@ export function MembershipSection() {
           </View>
         )}
         <Pressable accessibilityRole="button" onPress={() => router.push('/mitgliedschaft')} style={styles.secondary}>
-          <AppText style={styles.secondaryText}>Mitgliedschaft ansehen</AppText>
+          <AppText style={styles.secondaryText}>{t('Mitgliedschaft ansehen')}</AppText>
         </Pressable>
       </View>
     </View>

@@ -16,6 +16,7 @@ import { LogoFill } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { BAD_REASONS, SCORE_WEAK, rateDriveScore, scoreWord, type HighlightVote } from '@/lib/drives';
+import { t } from '@/i18n';
 
 export type DrivenHighlight = { key: string; name: string; kind: 'pass' | 'strecke' };
 
@@ -65,7 +66,7 @@ export function DriveRatingCard({ driveId, highlights = [], preset = null }: { d
       <StarRating value={score} onChange={setScore} />
       {weak && (
         <View style={styles.box}>
-          <AppText style={styles.title}>Was hat dir nicht gefallen?</AppText>
+          <AppText style={styles.title}>{t('Was hat dir nicht gefallen?')}</AppText>
           <View style={styles.chips}>
             {BAD_REASONS.map((r) => (
               <Chip key={r.id} label={r.label} active={reasons.includes(r.id)} onPress={() => toggle(r.id)} />
@@ -74,18 +75,18 @@ export function DriveRatingCard({ driveId, highlights = [], preset = null }: { d
           <TextInput maxFontSizeMultiplier={1.2}
             value={note}
             onChangeText={setNote}
-            placeholder="Wo genau? Zum Beispiel: Ortsdurchfahrt nach dem Pass"
+            placeholder={t('Wo genau? Zum Beispiel: Ortsdurchfahrt nach dem Pass')}
             placeholderTextColor={Colors.muted}
             maxLength={500}
             multiline
             style={styles.input}
-            accessibilityLabel="Was hat dir nicht gefallen, freier Text"
+            accessibilityLabel={t('Was hat dir nicht gefallen, freier Text')}
           />
         </View>
       )}
       {highlights.length > 0 && (
         <View style={styles.hlBox}>
-          <AppText style={styles.title}>Deine Highlights</AppText>
+          <AppText style={styles.title}>{t('Deine Highlights')}</AppText>
           {highlights.map((h) => (
             <View key={h.key} style={styles.hlRow}>
               <View style={styles.hlText}>
@@ -142,7 +143,7 @@ export function StarRating({ value, onChange }: { value: number | null; onChange
   const n = starsFor(value);
   return (
     <View style={styles.box}>
-      <AppText style={styles.title}>Wie fandest du die Tour?</AppText>
+      <AppText style={styles.title}>{t('Wie fandest du die Tour?')}</AppText>
       <View style={styles.stars} accessibilityRole="adjustable" accessibilityValue={{ text: n ? `${n} von 5 Sternen, ${scoreWord(value!)}` : 'Noch nicht bewertet' }}>
         {[1, 2, 3, 4, 5].map((i) => (
           <Pressable key={i} accessibilityRole="button" accessibilityLabel={`${i} ${i === 1 ? 'Stern' : 'Sterne'}`} hitSlop={4} onPress={() => onChange(STAR_SCORE[i - 1])} style={({ pressed }) => [styles.star, pressed && { transform: [{ scale: Motion.pressScale }] }]}>
@@ -226,7 +227,7 @@ export function ScoreSlider({ value, onChange }: { value: number | null; onChang
 
   return (
     <View style={styles.box}>
-      <AppText style={styles.title}>Wie fandest du die Tour?</AppText>
+      <AppText style={styles.title}>{t('Wie fandest du die Tour?')}</AppText>
       <View style={styles.head}>
         <LogoFill progress={p} size={44} />
         <View style={styles.headText}>
@@ -239,7 +240,7 @@ export function ScoreSlider({ value, onChange }: { value: number | null; onChang
           <View
             accessible
             accessibilityRole="adjustable"
-            accessibilityLabel="Wie fandest du die Tour, 0 bis 100"
+            accessibilityLabel={t('Wie fandest du die Tour, 0 bis 100')}
             accessibilityValue={{ text: value != null ? `${value}, ${scoreWord(value)}` : 'Noch nicht bewertet' }}
             accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
             onAccessibilityAction={onAction}
@@ -252,8 +253,8 @@ export function ScoreSlider({ value, onChange }: { value: number | null; onChang
         </GestureDetector>
       </GestureHandlerRootView>
       <View style={styles.ends}>
-        <AppText style={styles.end}>Enttäuschend</AppText>
-        <AppText style={styles.end}>Sensationell</AppText>
+        <AppText style={styles.end}>{t('Enttäuschend')}</AppText>
+        <AppText style={styles.end}>{t('Sensationell')}</AppText>
       </View>
     </View>
   );

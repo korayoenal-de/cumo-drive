@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { t } from '@/i18n';
 
 export function NameDialog({ visible, initial, onCancel, onSave, title = 'Tour speichern', subtitle = 'Unter diesem Namen findest du sie im Tab Touren.' }: { visible: boolean; initial: string; onCancel: () => void; onSave: (name: string) => void; title?: string; subtitle?: string }) {
   // beim Öffnen neu eingehängt (key), daher reicht der Startwert
@@ -24,13 +25,13 @@ export function NameDialog({ visible, initial, onCancel, onSave, title = 'Tour s
           selectTextOnFocus
           returnKeyType="done"
           onSubmitEditing={save}
-          placeholder="Name der Tour"
+          placeholder={t('Name der Tour')}
           placeholderTextColor={Colors.muted}
           style={styles.input}
-          accessibilityLabel="Name der Tour"
+          accessibilityLabel={t('Name der Tour')}
         />
         <Pressable accessibilityRole="button" onPress={save} style={({ pressed }) => [styles.primary, pressed && styles.pressed]}>
-          <AppText style={styles.primaryText}>Speichern</AppText>
+          <AppText style={styles.primaryText}>{t('Speichern')}</AppText>
         </Pressable>
       </View>
     </OptionsSheet>

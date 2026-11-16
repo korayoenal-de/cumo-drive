@@ -14,6 +14,7 @@ import { Spacing } from '@/constants/theme';
 import { C } from './web-shared';
 import { Chip } from './web-parts';
 import { S } from './web-styles';
+import { t } from '@/i18n';
 
 /** Gruppenfahrt im Web: starten oder beitreten, Mitfahrer live auf der Karte, Kurznachrichten. */
 export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; isSample: boolean }) {
@@ -30,8 +31,8 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
     const canShare = !props.isSample && props.tour.linie.length > 0;
     return (
       <div style={S.groupBox}>
-        <p style={{ margin: 0 }}>Alle Mitfahrer sehen sich live auf der Karte, in der App und hier im Planer. Sprechfunk folgt.</p>
-        <input id="grp-name" aria-label="Dein Name" placeholder="Dein Name" value={name} onChange={(e) => setName(e.target.value)} style={{ ...S.search, height: 44, background: C.surface2 }} />
+        <p style={{ margin: 0 }}>{t('Alle Mitfahrer sehen sich live auf der Karte, in der App und hier im Planer. Sprechfunk folgt.')}</p>
+        <input id="grp-name" aria-label={t('Dein Name')} placeholder={t('Dein Name')} value={name} onChange={(e) => setName(e.target.value)} style={{ ...S.search, height: 44, background: C.surface2 }} />
         <button
           style={S.primary}
           disabled={busy || !name.trim()}
@@ -44,7 +45,7 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
           {canShare ? 'Fahrt mit dieser Tour starten' : 'Fahrt starten'}
         </button>
         <div style={S.btnRow}>
-          <input id="grp-code" aria-label="Fahrtcode" placeholder="Fahrtcode" value={code} onChange={(e) => setCode(normalizeCode(e.target.value))} style={{ ...S.search, height: 44, flex: 1, background: C.surface2, letterSpacing: 4, textTransform: 'uppercase' }} />
+          <input id="grp-code" aria-label={t('Fahrtcode')} placeholder={t('Fahrtcode')} value={code} onChange={(e) => setCode(normalizeCode(e.target.value))} style={{ ...S.search, height: 44, flex: 1, background: C.surface2, letterSpacing: 4, textTransform: 'uppercase' }} />
           <button style={{ ...S.secondaryOnSurface, flex: 'none' }} disabled={busy || !name.trim() || code.length !== 6} onClick={() => void joinRide(code, name, 'Planer')}>
             Beitreten
           </button>
@@ -163,10 +164,10 @@ export function AccountBox() {
         e.preventDefault();
         void run(signIn);
       }}>
-      <b>Konto</b>
-      <span style={S.small}>Ohne Konto bleiben Touren nur in diesem Browser. Mit Konto stehen sie auch in der App.</span>
-      <input id="acc-email" type="email" autoComplete="email" aria-label="E-Mail" placeholder="E-Mail" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...S.search, height: 44, background: C.surface2 }} />
-      <input id="acc-pw" type="password" autoComplete="current-password" aria-label="Passwort" placeholder="Passwort, mindestens 8 Zeichen" value={pw} onChange={(e) => setPw(e.target.value)} style={{ ...S.search, height: 44, background: C.surface2 }} />
+      <b>{t('Konto')}</b>
+      <span style={S.small}>{t('Ohne Konto bleiben Touren nur in diesem Browser. Mit Konto stehen sie auch in der App.')}</span>
+      <input id="acc-email" type="email" autoComplete="email" aria-label={t('E-Mail')} placeholder={t('E-Mail')} value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...S.search, height: 44, background: C.surface2 }} />
+      <input id="acc-pw" type="password" autoComplete="current-password" aria-label={t('Passwort')} placeholder={t('Passwort, mindestens 8 Zeichen')} value={pw} onChange={(e) => setPw(e.target.value)} style={{ ...S.search, height: 44, background: C.surface2 }} />
       {err ? <span style={{ ...S.small, color: C.signal }}>{err}</span> : null}
       <div style={S.btnRow}>
         <button type="submit" style={S.primary} disabled={busy || !email || !pw}>

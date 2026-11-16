@@ -24,6 +24,7 @@ import { useSession } from '@/lib/auth';
 import { declineInvite, myInvites, respondInvite, type MyInvite } from '@/lib/group/invites';
 import { useRide } from '@/lib/group/ride';
 import { myVehicleLabel, rideAlong } from '@/lib/group/start';
+import { t } from '@/i18n';
 
 const POLL_MS = 60000;
 
@@ -107,7 +108,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
       showToast(starts && relDay(starts) !== 'Heute' && relDay(starts) !== 'Morgen' ? 'Du bist dabei. Wir erinnern dich am Vortag.' : 'Du bist dabei.');
       onChanged?.();
     } catch (e) {
-      setErr({ id: inv.rideId, text: e instanceof Error ? e.message : 'Das hat nicht geklappt.' });
+      setErr({ id: inv.rideId, text: e instanceof Error ? e.message: t('Das hat nicht geklappt.') });
     } finally {
       setBusy(null);
     }
@@ -119,22 +120,22 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
     try {
       await declineInvite(inv.rideId, why);
       setInvites(invites.filter((i) => i.rideId !== inv.rideId));
-      showToast('Abgesagt', {
+      showToast(t('Abgesagt'), {
         action: {
-          label: 'Rückgängig',
+          label: t('Rückgängig'),
           onPress: () =>
             void respondInvite(inv.rideId, true, myVehicleLabel())
               .then(() => {
                 refreshInvites();
                 onChanged?.();
-                showToast('Du bist wieder dabei.');
+                showToast(t('Du bist wieder dabei.'));
               })
               .catch((e: Error) => showToast(e.message, { tone: 'error' })),
         },
       });
       onChanged?.();
     } catch (e) {
-      setErr({ id: inv.rideId, text: e instanceof Error ? e.message : 'Das hat nicht geklappt.' });
+      setErr({ id: inv.rideId, text: e instanceof Error ? e.message: t('Das hat nicht geklappt.') });
     } finally {
       setBusy(null);
     }
@@ -147,7 +148,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
       await rideAlong(inv.rideId);
       router.push('/navigation');
     } catch (e) {
-      setErr({ id: inv.rideId, text: e instanceof Error ? e.message : 'Mitfahren hat nicht geklappt.' });
+      setErr({ id: inv.rideId, text: e instanceof Error ? e.message: t('Mitfahren hat nicht geklappt.') });
     } finally {
       setBusy(null);
     }
@@ -167,12 +168,12 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
             <Animated.View key={inv.rideId} entering={FadeIn.duration(Motion.enter)} style={styles.card} accessibilityRole="summary">
               <View style={styles.live}>
                 <View style={styles.dot} />
-                <AppText style={styles.liveText}>Läuft jetzt</AppText>
+                <AppText style={styles.liveText}>{t('Läuft jetzt')}</AppText>
               </View>
               <AppText style={styles.bigName} numberOfLines={2}>{inv.name}</AppText>
               <AppText muted>{fmtMeta(`Lead ${inv.ownerName}`, km != null ? strecke(km) : null)}</AppText>
               {err?.id === inv.rideId && <AppText style={styles.error}>{err.text}</AppText>}
-              <Btn label="Jetzt mitfahren" primary busy={isBusy} disabled={!!busy} onPress={() => void join(inv)} />
+              <Btn label={t('Jetzt mitfahren')} primary busy={isBusy} disabled={!!busy} onPress={() => void join(inv)} />
             </Animated.View>
           );
         }
@@ -190,9 +191,9 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
             ) : null}
             {err?.id === inv.rideId && <AppText style={styles.error}>{err.text}</AppText>}
             <View style={styles.row}>
-              <Btn label="Zusagen" primary busy={isBusy} disabled={!!busy} onPress={() => void accept(inv)} />
+              <Btn label={t('Zusagen')} primary busy={isBusy} disabled={!!busy} onPress={() => void accept(inv)} />
               <Btn
-                label="Absagen"
+                label={t('Absagen')}
                 disabled={!!busy}
                 onPress={() => {
                   setReason(null);
@@ -215,9 +216,9 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
             ))}
           </View>
           <View style={styles.row}>
-            <Btn label="Abbrechen" onPress={() => setDecline(null)} />
+            <Btn label={t('Abbrechen')} onPress={() => setDecline(null)} />
             <Btn
-              label="Absagen"
+              label={t('Absagen')}
               primary
               onPress={() => {
                 const inv = decline;

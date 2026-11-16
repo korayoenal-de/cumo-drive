@@ -23,6 +23,7 @@ import { endRideForAll, leaveRide, QUICK_MESSAGES, sendMessage, setRole, shareTo
 import { createHandoff, fetchHandoff } from '@/lib/handoff';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 import { formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
+import { t } from '@/i18n';
 
 const ROLE_LABEL: Record<Role, string> = { lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Teilnehmer' };
 const EMPTY_TOUR: Tour = { name: '', laenge_km: 0, wegpunkte: [], linie: [], warnungen: [] };
@@ -38,13 +39,13 @@ function Start({ error }: { error: string | null }) {
     <Screen>
       <BackLink />
       <AppText variant="display">{'Gruppen\nfahrt'}</AppText>
-      <AppText muted>Alle sehen sich live auf der Karte und schicken sich Kurznachrichten. Sprechfunk folgt.</AppText>
+      <AppText muted>{t('Alle sehen sich live auf der Karte und schicken sich Kurznachrichten. Sprechfunk folgt.')}</AppText>
       <View style={styles.card}>
-        <AppText variant="label">So geht es</AppText>
-        <AppText>Öffne eine gespeicherte Tour unter Touren, tippe auf Losfahren und dann auf Als Gruppe fahren. Dort lädst du bis zu 5 Teilnehmer mit ihrem Namen ein.</AppText>
-        <AppText muted>Wurdest du eingeladen, erscheint die Einladung unten über den Tabs. Nach der Zusage fährst du mit einem Tipp mit.</AppText>
+        <AppText variant="label">{t('So geht es')}</AppText>
+        <AppText>{t('Öffne eine gespeicherte Tour unter Touren, tippe auf Losfahren und dann auf Als Gruppe fahren. Dort lädst du bis zu 5 Teilnehmer mit ihrem Namen ein.')}</AppText>
+        <AppText muted>{t('Wurdest du eingeladen, erscheint die Einladung unten über den Tabs. Nach der Zusage fährst du mit einem Tipp mit.')}</AppText>
         <Pressable accessibilityRole="button" onPress={() => router.navigate('/touren')} style={[styles.secondary, styles.secondaryOnSurface]}>
-          <AppText style={styles.secondaryText}>Zu Touren</AppText>
+          <AppText style={styles.secondaryText}>{t('Zu Touren')}</AppText>
         </Pressable>
       </View>
       {error && <AppText style={styles.error}>{error}</AppText>}
@@ -136,7 +137,7 @@ function Active() {
     <Screen>
       <BackLink />
       <View style={styles.gapXs}>
-        <AppText variant="label">Gruppenfahrt</AppText>
+        <AppText variant="label">{t('Gruppenfahrt')}</AppText>
         <AppText style={styles.title} numberOfLines={2}>
           {ride.name ?? (ride.code ? `Fahrt ${ride.code.toUpperCase()}` : active?.tour.name || 'Gruppenfahrt')}
         </AppText>
@@ -150,14 +151,14 @@ function Active() {
         <RouteMap tour={hasTour ? active!.tour : EMPTY_TOUR} others={others} showUser style={StyleSheet.absoluteFill} />
         {others.length === 0 && (
           <View style={styles.mapHint} pointerEvents="none">
-            <AppText variant="caption">Noch niemand sonst unterwegs.</AppText>
+            <AppText variant="caption">{t('Noch niemand sonst unterwegs.')}</AppText>
           </View>
         )}
       </View>
 
       {ride.tourCode && !isLead && (
         <Pressable accessibilityRole="button" onPress={loadTour} disabled={loadingTour} style={styles.primary}>
-          {loadingTour ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Tour der Lead übernehmen</AppText>}
+          {loadingTour ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Tour der Lead übernehmen')}</AppText>}
         </Pressable>
       )}
       {/* auch bei Fahrten mit Einladung darf die Lead eine neue Tour schicken (Simulation 10.11., G8) */}
@@ -171,13 +172,13 @@ function Active() {
             haptic('losfahren');
             router.push('/navigation');
           }} style={isLead || !ride.tourCode ? styles.primary : styles.secondary}>
-          <AppText style={isLead || !ride.tourCode ? styles.primaryText : styles.secondaryText}>Losfahren</AppText>
+          <AppText style={isLead || !ride.tourCode ? styles.primaryText : styles.secondaryText}>{t('Losfahren')}</AppText>
         </Pressable>
       )}
       {tourError && <AppText style={styles.error}>{tourError}</AppText>}
 
       <View style={styles.card}>
-        <AppText variant="label">Kurznachricht an alle</AppText>
+        <AppText variant="label">{t('Kurznachricht an alle')}</AppText>
         <View style={styles.chips}>
           {QUICK_MESSAGES.map((m) => (
             <Pressable key={m} accessibilityRole="button" onPress={() => sendMessage(m)} style={({ pressed }) => [styles.msgChip, pressed && styles.pressed]}>
@@ -193,7 +194,7 @@ function Active() {
       </View>
 
       <View style={styles.card}>
-        <AppText variant="label">In der Gruppe</AppText>
+        <AppText variant="label">{t('In der Gruppe')}</AppText>
         {ride.members.map((m) => (
           <MemberRow key={m.id} m={m} me={ride.me?.id === m.id} myPos={myPos} now={now} canAssign={isLead && m.id !== ride.me?.id} />
         ))}
@@ -201,11 +202,11 @@ function Active() {
 
       {isLead && ride.rideId && (
         <Pressable accessibilityRole="button" disabled={ending} onPress={() => setAsk('end')} style={styles.secondary}>
-          {ending ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>Fahrt für alle beenden</AppText>}
+          {ending ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>{t('Fahrt für alle beenden')}</AppText>}
         </Pressable>
       )}
       <Pressable accessibilityRole="button" onPress={() => setAsk('leave')} style={styles.leave}>
-        <AppText style={styles.leaveText}>Fahrt verlassen</AppText>
+        <AppText style={styles.leaveText}>{t('Fahrt verlassen')}</AppText>
       </Pressable>
       {/* Gefährliches fragt immer nach (Prinzip 2, Prüfung 11.11.): ein Fehltipp beendete sonst die Fahrt für alle */}
       <ConfirmSheet

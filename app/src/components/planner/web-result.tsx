@@ -23,20 +23,21 @@ import { FunPillWeb } from './web-fun';
 import { BODY, C, type PlannedTour } from './web-shared';
 import { S } from './web-styles';
 import { uniqueWarnings } from '@/lib/warning-dedupe';
+import { t } from '@/i18n';
 
 /** Kennzahlen: Strecke, Fahrzeit, Fahrspaß (ohne Fahrspaß die Kurven), wie Stats in der App */
 export function ResultStats(props: { tour: PlannedTour; curves: number; fun: TourFun | null; onFun: () => void; delta?: number | null }) {
   const { tour, fun } = props;
   return (
     <div style={S.metrics}>
-      <Metric label="Strecke" value={`${formatKm(tour.laenge_km, 0)} km`} />
-      <Metric label="Fahrzeit" value={tour.minutes ? bigDuration(tour.minutes) : '…'} />
+      <Metric label={t('Strecke')} value={`${formatKm(tour.laenge_km, 0)} km`} />
+      <Metric label={t('Fahrzeit')} value={tour.minutes ? bigDuration(tour.minutes) : '…'} />
       {fun ? (
         <Metric label={props.delta != null ? `Fahrspaß ${props.delta >= 0 ? `+${props.delta}` : `minus ${Math.abs(props.delta)}`}` : 'Fahrspaß'} value="">
           <FunPillWeb fun={fun} onOpen={props.onFun} />
         </Metric>
       ) : (
-        <Metric label="Kurven" value={String(props.curves)} />
+        <Metric label={t('Kurven')} value={String(props.curves)} />
       )}
     </div>
   );
