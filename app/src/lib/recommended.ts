@@ -7,8 +7,7 @@
  * Quelle: Korays Recherche, jeder Eintrag gegen OpenStreetMap geprüft (Name am Ort gefunden), Position aus OSM.
  * Daten in src/data/recommended-stops.json, Aufbereitung in routing/data/stops/README.md.
  */
-import RAW from '@/data/recommended-stops.json';
-
+import { onRoadData } from './road-data';
 import { haversine, type LatLon } from './tour';
 
 export type RecommendedStop = {
@@ -27,7 +26,12 @@ export type RecommendedStop = {
   land?: string;
 };
 
-export const RECOMMENDED: RecommendedStop[] = (RAW as unknown as { stops: RecommendedStop[] }).stops;
+export const RECOMMENDED: RecommendedStop[] = [];
+// In der App sofort aus dem Paket, im Web nach der Anmeldung (road-data.web.ts)
+onRoadData((d) => {
+  RECOMMENDED.length = 0;
+  RECOMMENDED.push(...(d.stops as RecommendedStop[]));
+});
 
 /** Empfehlungen einer Art im Umkreis um einen Punkt, nächste zuerst */
 export function recommendedNear(_kind: 'mittag' | 'kaffee', at: LatLon, radiusM: number): (RecommendedStop & { distM: number })[] {

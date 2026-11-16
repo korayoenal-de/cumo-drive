@@ -23,3 +23,7 @@ verify_jwt = true
 # Eingang der Rückmeldungen für Claudes Prüfläufe (Koray 16.11.): ohne JWT, Schutz über den Header x-feedback-key
 # (Edge Function Secret FEEDBACK_KEY, trägt Koray selbst ein). Lesen und Status setzen, sonst nichts.
 verify_jwt = false
+
+[functions.road-data]
+# Strecken, Pässe und Empfehlungen für den Web Planer (Koray 16.11.): nur mit Anmeldung, mit Fingerabdruck je Konto.
+verify_jwt = true

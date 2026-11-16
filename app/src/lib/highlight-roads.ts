@@ -10,9 +10,9 @@
  * Ansage: `say` ist der gesprochene Teil (in beiden Fahrtrichtungen passend) nach "beginnt" (In 500 Metern beginnt die alte Rallyestrecke Zotzenbach).
  * Ohne `say` wird "die {note} {name}" gesprochen, deshalb sind alle Notizen weiblich (Strecke, Straße).
  */
-import curatedData from '@/data/curated-roads.json';
 import type { WarnKey } from '@/lib/passes';
 
+import { onRoadData } from './road-data';
 import type { LatLon } from './tour';
 
 export type HighlightRoadKind = 'rallye' | 'strecke' | 'aussicht' | 'bergrennen';
@@ -519,8 +519,6 @@ type CuratedRoad = {
   warn?: WarnKey[];
 };
 
-const CURATED = curatedData as unknown as CuratedRoad[];
-
 const toRoad = ({ id, name, kind, note, line, level, warn }: CuratedRoad): HighlightRoad => ({ id, name, kind, note, line, level, ...(warn ? { warn } : {}) });
 
 /** Abstand eines Punkts zur Strecke a b in Metern (flache Näherung, reicht für 150 m). */
@@ -557,11 +555,19 @@ function coveredBy(road: CuratedRoad, others: HighlightRoad[]) {
 
 // Handgepflegte Strecken bleiben vorne, kuratierte Highlights nur dort, wo noch keine handgepflegte liegt
 const MANUAL_COUNT = HIGHLIGHT_ROADS.length;
-for (const r of CURATED) {
-  if (r.tier === 'highlight' && r.line.length > 1 && !coveredBy(r, HIGHLIGHT_ROADS.slice(0, MANUAL_COUNT))) {
-    HIGHLIGHT_ROADS.push(toRoad(r));
-  }
-}
 
 /** Strecken, die die Routenplanung bevorzugt, ohne sie anzukündigen (tier prefer). */
-export const PREFER_ROADS: HighlightRoad[] = CURATED.filter((r) => r.tier === 'prefer' && r.line.length > 1).map(toRoad);
+export const PREFER_ROADS: HighlightRoad[] = [];
+
+// Kuratierte Strecken: in der App sofort aus dem Paket, im Web nach der Anmeldung (road-data.web.ts)
+onRoadData((d) => {
+  const curated = d.curated as CuratedRoad[];
+  HIGHLIGHT_ROADS.length = MANUAL_COUNT;
+  for (const r of curated) {
+    if (r.tier === 'highlight' && r.line.length > 1 && !coveredBy(r, HIGHLIGHT_ROADS.slice(0, MANUAL_COUNT))) {
+      HIGHLIGHT_ROADS.push(toRoad(r));
+    }
+  }
+  PREFER_ROADS.length = 0;
+  PREFER_ROADS.push(...curated.filter((r) => r.tier === 'prefer' && r.line.length > 1).map(toRoad));
+});

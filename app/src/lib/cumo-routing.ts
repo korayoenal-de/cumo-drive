@@ -22,6 +22,7 @@ import { countCurves } from './stats';
 import { doubledStretch } from './doubled';
 import { haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import type { Avoid } from './valhalla';
+import { onRoadData } from './road-data';
 
 /** Fahrregionen als Fläche auf dem Server (aus, siehe model) */
 const SERVER_REGIONS = false;
@@ -541,6 +542,10 @@ type Seg = { a: number; b: number; km: number; c: CheckClass; why: string[]; min
  * (Tester 9.11.: K 31 Höningen nach Leistadt steht mit 2,8 m in der Karte, fährt sich aber gut).
  */
 let curatedGrid: Map<string, LatLon[]> | null = null;
+// Neu aufbauen, sobald die Daten (im Web nach der Anmeldung) da sind
+onRoadData(() => {
+  curatedGrid = null;
+});
 const cellOf = (p: LatLon) => `${Math.floor(p[0] * 100)},${Math.floor(p[1] * 70)}`;
 function onCurated(p: LatLon): boolean {
   if (!curatedGrid) {

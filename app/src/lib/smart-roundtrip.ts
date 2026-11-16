@@ -24,6 +24,7 @@ import { DIRECTIONS, hillyVia, loopPoints, roundTrip, type Direction } from './r
 import { countCurves } from './stats';
 import { flatten, haversine, type LatLon, type Profile } from './tour';
 import type { Avoid } from './valhalla';
+import { onRoadData } from './road-data';
 
 export type SmartRequest = {
   name: string;
@@ -695,6 +696,10 @@ async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Pr
  */
 const FAV_CELL = 0.002;
 let favGrid: Map<string, LatLon[]> | null = null;
+// Neu aufbauen, sobald die Daten (im Web nach der Anmeldung) da sind
+onRoadData(() => {
+  favGrid = null;
+});
 function nearFavPoint(p: LatLon): boolean {
   if (!favGrid) {
     favGrid = new Map();
