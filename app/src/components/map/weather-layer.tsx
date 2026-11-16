@@ -1,7 +1,7 @@
 /**
  * Ebene "Wetter" auf der Karte (Konzept Board 4, 6.11.2026): kleine Plaketten an den Pässen der Route
  * mit Temperatur und Symbol zur Ankunft. Seit 7.11. subtiler (Koray): dunkle, halbdurchsichtige Plakette
- * schräg rechts über dem Pass, damit Punkt und Nummer frei bleiben; ein Grund (weatherReason) färbt nur
+ * direkt über dem Pass (seit 16.11., vorher schräg rechts), damit Punkt und Nummer frei bleiben; ein Grund (weatherReason) färbt nur
  * das Symbol gelb, der Text dazu steht im Bottom Sheet. Antippen öffnet ein
  * Bottom Sheet mit Regen, Wind und Böen, dazu Apples Pflichthinweis zu den Datenquellen.
  * Ankunft = jetzt plus geplante Fahrzeit bis zum Pass, weil die Tour noch kein Datum hat.
@@ -60,10 +60,10 @@ export function WeatherMarkers({ items, onPress }: { items: Item[]; onPress: (it
             <Marker
               key={`wetter-${it.pass.id}-${Math.round(w.temp)}-${reason ?? ''}`}
               coordinate={{ latitude: it.pass.lat, longitude: it.pass.lon }}
-              // schräg rechts oberhalb, so bleiben Passpunkt und Routennummer (Kreis mit etwa 20 pt Radius) frei.
+              // direkt über dem Punkt, so bleiben Passpunkt und Routennummer (Kreis mit etwa 13 pt Radius) frei und die Zuordnung klar.
               // Apple Karten kennt anchor nicht, dort zählt centerOffset in Punkten (Koray 16.11.: Plakette lag unter der Nummer)
               anchor={{ x: -0.32, y: 1.35 }}
-              centerOffset={{ x: 42, y: -36 }}
+              centerOffset={{ x: 0, y: -30 }}
               zIndex={9}
               onPress={() => onPress(it)}
               tracksViewChanges={false}>
