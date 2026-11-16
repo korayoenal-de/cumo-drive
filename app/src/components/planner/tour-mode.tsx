@@ -663,15 +663,12 @@ export function TourMode({
         </View>
       )}
 
-      {/* Detailansicht einer gespeicherten Tour (Koray 16.11.): Name antippen benennt um, Plakette bei Änderung */}
+      {/* Detailansicht einer gespeicherten Tour (Koray 16.11.): Name mit Plakette bei Änderung; Umbenennen im ⋯ */}
       {plan.cloudId && routeTour && (
         <View style={tourStyles.nameRow}>
-          <Pressable accessibilityRole="button" accessibilityLabel={`${plan.name.trim() || routeTour.name}, umbenennen`} onPress={() => setRenaming(true)} style={({ pressed }) => [tourStyles.nameBtn, pressed && tourStyles.pressed]}>
-            <AppText variant="title" numberOfLines={2} style={tourStyles.nameText}>
-              {plan.name.trim() || routeTour.name}
-            </AppText>
-            <SymbolView name="pencil" size={16} weight="semibold" tintColor={Colors.muted} />
-          </Pressable>
+          <AppText variant="title" numberOfLines={2} style={tourStyles.nameText} accessibilityRole="header">
+            {plan.name.trim() || routeTour.name}
+          </AppText>
           {plan.dirty && (
             <View style={tourStyles.badge}>
               <AppText style={tourStyles.badgeText}>Geändert</AppText>
@@ -969,9 +966,7 @@ function SwipeDelete({ progress, label, onPress }: { progress: SharedValue<numbe
 
 const tourStyles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.s },
-  nameBtn: { flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 44 },
   nameText: { flexShrink: 1, fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30 },
-  pressed: { opacity: 0.7 },
   badge: { paddingHorizontal: Spacing.s + 2, paddingVertical: Spacing.xs, borderRadius: Radius.pill, backgroundColor: Colors.warnTint },
   badgeText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
 });

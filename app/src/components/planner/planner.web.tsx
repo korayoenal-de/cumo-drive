@@ -30,7 +30,7 @@ import { photoGroupsGeoJson, usePhotoGroups, type PhotoGroup } from '@/lib/photo
 import { PASSES, passesAlong, passesGeoJson, passPoint, passSummary, warnSpeech, type Pass } from '@/lib/passes';
 import { copyTourLink } from '@/lib/share-link';
 import { exportTour } from '@/lib/route-file';
-import { deleteTour, duplicateTour } from '@/lib/library';
+import { deleteTour, readLibrary } from '@/lib/library';
 import { showToast } from '@/lib/toast';
 import { Colors } from '@/constants/theme';
 
@@ -784,15 +784,17 @@ export default function Planner() {
                 { key: 'kml', label: 'Als KML herunterladen', onPress: () => void exportTour({ ...routeTour, name: routeName }, 'kml') },
                 ...(plan.cloudId
                   ? [
+                      // Duplizieren entfällt (Koray 16.11.); im Web speichert der Planer laufend, darum hier als Aktion
                       {
-                        key: 'dup',
-                        label: 'Duplizieren',
-                        onPress: () => {
-                          const c = plan.cloudId ? duplicateTour(plan.cloudId) : null;
-                          if (!c) return;
-                          openTour(c);
-                          showToast(`${c.name} angelegt, du bearbeitest jetzt die Kopie`);
-                        },
+                        key: 'neu',
+                        label: 'Als neue Tour speichern',
+                        onPress: () =>
+                          void plan.save(curvesRoute, profile, avoid, undefined, { asCopy: true, quiet: true }).then((id) => {
+                            const c = id ? readLibrary().find((x) => x.id === id) : null;
+                            if (!c) return;
+                            openTour(c);
+                            showToast(`${c.name} gespeichert, du bearbeitest jetzt die neue Tour`);
+                          }),
                       },
                       { key: 'close', label: 'Tour schließen', onPress: () => plan.reset() },
                       { key: 'del', label: 'Tour löschen', danger: true, onPress: () => setAskDelete(true) },

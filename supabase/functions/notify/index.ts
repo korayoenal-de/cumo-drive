@@ -15,7 +15,7 @@ type Event =
   | { type: 'ride_start'; ride: string; actor?: string | null }
   | { type: 'contact'; to: string; actor: string; state: 'pending' | 'accepted' }
   | { type: 'ride_ping'; ride: string; to: string; actor: string }
-  | { type: 'ride_changed'; ride: string; actor: string; what: 'zeit' | 'ort' | 'beides' }
+  | { type: 'ride_changed'; ride: string; actor: string; what: 'zeit' | 'ort' | 'beides' | 'strecke' }
   | { type: 'ride_lead'; ride: string; actor: string; to?: string; taken?: boolean };
 
 type Note = { user: string; title: string; body: string; data: { url: string; chat?: string; type: string } };
@@ -158,7 +158,7 @@ async function rideDay(e: Extract<Event, { type: 'ride_ping' | 'ride_changed' | 
   const { data: members } = await db.from('ride_members').select('user_id').eq('ride_id', r.id).eq('status', 'zugesagt').limit(200);
   const all = ((members ?? []) as { user_id: string }[]).map((x) => x.user_id).filter((u) => u !== e.actor);
   if (e.type === 'ride_changed') {
-    const body = e.what === 'zeit' ? `Neue Abfahrt: ${clock} Uhr.` : e.what === 'ort' ? `Neuer Treffpunkt: ${place}.` : `Neu: ${place}, ${clock} Uhr.`;
+    const body = e.what === 'strecke' ? 'Die Strecke ist neu, schau sie dir vor der Abfahrt an.' : e.what === 'zeit' ? `Neue Abfahrt: ${clock} Uhr.` : e.what === 'ort' ? `Neuer Treffpunkt: ${place}.` : `Neu: ${place}, ${clock} Uhr.`;
     return all.map((user) => ({ user, title: r.name, body: short(`${who}: ${body}`), data: { url, type: 'ride_changed' } }));
   }
   if (e.taken) return all.map((user) => ({ user, title: r.name, body: short(`${who} leitet jetzt die Ausfahrt.`), data: { url, type: 'ride_lead' } }));
