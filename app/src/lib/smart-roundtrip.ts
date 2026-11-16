@@ -251,7 +251,26 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
             const kept = t.wegpunkte.filter((w, i) => i === 0 || i === t.wegpunkte.length - 1 || !closedAt.some((q) => haversine(q, w) < 1500));
             const pts = kept.length > 2 ? kept : viaAlong(t, req.start, closedAt);
             if (pts.length < 3) return { t, hits: uniqueHits(hits) };
-            const again = await cumoPlan(req.name, pts, req.profile, req.avoid, signal, ex);
+            let again = await cumoPlan(req.name, pts, req.profile, req.avoid, signal, ex);
+            // Liegt ein Stützpunkt vor der Sperrung, fährt die Umplanung bis zu ihm hinein und auf demselben Weg
+            // zurück (Koray 16.11.: 1,4 km Stich bei Jugenheim, Stützpunkt 1,9 km vor der Sperrung der K 144).
+            // despur lief schon vorher, also hier noch einmal: Stützpunkte am Stich weglassen und neu rechnen.
+            // Höchstens zweimal (Jugenheim: 3,0 km Stich, nach dem ersten Mal 0,28 km bei Michelstadt)
+            let use = pts;
+            for (let round = 0; round < 2; round++) {
+              const spur = spurOf(again);
+              if (spur.km < 0.2 || use.length <= 3) break;
+              const near = (w: LatLon) => spur.points.some((q) => haversine(q, w) < 3000);
+              const fewer = use.filter((w, i) => i === 0 || i === use.length - 1 || !near(w));
+              if (fewer.length >= use.length || fewer.length <= 2) break;
+              const tryIt = await cumoPlan(req.name, fewer, req.profile, req.avoid, signal, ex).catch((e) => {
+                if (signal?.aborted) throw e;
+                return null;
+              });
+              if (!tryIt || spurKm(tryIt) >= spur.km - 0.1 || tryIt.laenge_km < t.laenge_km * 0.8) break;
+              again = tryIt;
+              use = fewer;
+            }
             const leftHits = closuresOnRoute(flatten(again).map((x) => x.p), closures);
             const left = uniqueHits(leftHits);
             // nur nehmen, wenn die Runde ihre Länge behält
