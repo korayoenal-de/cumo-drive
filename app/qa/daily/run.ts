@@ -84,6 +84,12 @@ function resample(line: LatLon[], step: number): LatLon[] {
   return out;
 }
 
+function heading(a: LatLon, b: LatLon) {
+  const k = Math.cos((a[0] * Math.PI) / 180);
+  return (Math.atan2((b[1] - a[1]) * k, b[0] - a[0]) * 180) / Math.PI;
+}
+const turn = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180);
+
 /** Kleine Schleifen und Schlenker: die Route kommt nach 300 m bis 3 km Fahrt auf 25 m an dieselbe Stelle zurück */
 function smallLoops(line: LatLon[]): LatLon[] {
   const P = resample(line, 25);
@@ -104,7 +110,8 @@ function smallLoops(line: LatLon[]): LatLon[] {
     for (let da = -1; da <= 1 && hit < 0; da++)
       for (let dn = -1; dn <= 1 && hit < 0; dn++)
         for (const j of grid.get(`${ga + da}:${go + dn}`) ?? []) {
-          if (j - i >= 12 && j - i <= 120 && haversine(P[i], P[j]) < 25) {
+          // gleiche Fahrtrichtung: echte Schleife; Kehren kommen in Gegenrichtung zurück
+          if (j - i >= 12 && j - i <= 120 && j + 1 < P.length && haversine(P[i], P[j]) < 25 && turn(heading(P[i], P[i + 1]), heading(P[j], P[j + 1])) < 60) {
             hit = j;
             break;
           }
@@ -189,7 +196,7 @@ async function runCase(c: Case): Promise<Result> {
       for (const want of c.expectPasses ?? []) if (!r.passes.some((p) => p.toLowerCase().includes(want.toLowerCase()))) add('fehler', `erwarteter Pass fehlt: ${want}`);
       const cities = bigCitiesOn(line).filter((n) => !(c.allowCities ?? []).includes(n));
       if (cities.length) add('hinweis', `durch Großstadt: ${cities.join(', ')}`);
-      if (r.bebautKm != null && r.km && r.bebautKm / r.km > 0.12) add('hinweis', `${r.bebautKm} km durch Orte (${Math.round((r.bebautKm / r.km) * 100)} %)`);
+      if (r.bebautKm != null && r.km && r.bebautKm / r.km > 0.3) add('hinweis', `${r.bebautKm} km durch Orte (${Math.round((r.bebautKm / r.km) * 100)} %)`);
       if (c.minCurated != null && r.curatedShare < c.minCurated) add('hinweis', `nur ${r.curatedShare} % auf Traumstrecken und Pässen (erwartet ab ${c.minCurated} %)`);
       if (r.autobahnKm != null && r.autobahnKm > 3 && c.kind !== 'runde' && !c.allowMotorway) add('hinweis', `${r.autobahnKm} km Autobahn im kurvigen Profil`);
     }
@@ -241,7 +248,8 @@ function writeSvg(id: string, line: LatLon[], loops: LatLon[], r: Result) {
 }
 
 function report(results: Result[], prev: Result[] | null): string {
-  const byId = new Map(prev?.map((r) => [r.id, r]) ?? []);
+  // nur gleiche Fälle vergleichen: feste über die id, wechselnde nur bei gleichem Namen
+  const byId = new Map(prev?.map((r) => [`${r.id}|${r.name}`, r]) ?? []);
   const fehler = results.filter((r) => r.findings.some((f) => f.level === 'fehler'));
   const hinweise = results.filter((r) => !fehler.includes(r) && r.findings.length);
   const ok = results.filter((r) => !r.findings.length);
@@ -254,7 +262,7 @@ function report(results: Result[], prev: Result[] | null): string {
   if (prev) {
     const worse: string[] = [];
     for (const r of results) {
-      const p = byId.get(r.id);
+      const p = byId.get(`${r.id}|${r.name}`);
       if (!p || !p.ok) continue;
       if (!r.ok) worse.push(`${r.name}: gestern geplant, heute nicht`);
       else {

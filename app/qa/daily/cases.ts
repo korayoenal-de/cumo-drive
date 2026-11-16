@@ -45,6 +45,7 @@ const ORTE: Record<string, LatLon> = {
   Brixen: [46.7154, 11.6563],
   Corvara: [46.5497, 11.8726],
   Bormio: [46.4669, 10.3705],
+  Prad: [46.6187, 10.5933],
   'Ponte di Legno': [46.2595, 10.5095],
   Livigno: [46.5386, 10.1357],
   Andermatt: [46.6356, 8.5939],
@@ -105,7 +106,7 @@ export const FIXED: Case[] = [
   route('p-brixen-cortina', 'Brixen nach Cortina', 'paesse', ['Brixen', 'Cortina'], 'kurvig', { minCurated: 25 }),
   route('p-sellaronda', 'Sellaronda', 'paesse', ['Corvara', 'Grödner Joch', 'Sellajoch', 'Pordoijoch', 'Campolongopass', 'Corvara'], 'kurvig', { expectPasses: ['Grödner', 'Sella', 'Pordoi', 'Campolongo'], minCurated: 50 }),
   route('p-fuenf-dolomiten', 'Fünf Pässe Dolomiten', 'viele', ['Corvara', 'Grödner Joch', 'Sellajoch', 'Pordoijoch', 'Falzarego', 'Giau', 'Cortina'], 'kurvig', { expectPasses: ['Grödner', 'Sella', 'Pordoi', 'Falzarego', 'Giau'], minCurated: 50 }),
-  route('p-stelvio-gavia', 'Stilfser Joch und Gavia', 'paesse', ['Bormio', 'Stilfser Joch', 'Bormio', 'Gavia', 'Ponte di Legno'], 'kurvig', { expectPasses: ['Stilfser', 'Gavia'], maxDetour: 4 }),
+  route('p-stelvio-gavia', 'Stilfser Joch und Gavia', 'paesse', ['Prad', 'Stilfser Joch', 'Bormio', 'Gavia', 'Ponte di Legno'], 'kurvig', { expectPasses: ['Stilfser', 'Gavia'], maxDetour: 4 }),
   route('p-livigno', 'Bormio nach Livigno', 'paesse', ['Bormio', 'Livigno'], 'kurvig', { expectPasses: ['Foscagno'] }),
   route('p-gfs', 'Grimsel Furka Susten', 'paesse', ['Andermatt', 'Furkapass', 'Grimselpass', 'Sustenpass', 'Andermatt'], 'kurvig', { expectPasses: ['Furka', 'Grimsel', 'Susten'], minCurated: 50 }),
   route('p-galibier', 'Valloire nach Briançon', 'paesse', ['Valloire', 'Briançon'], 'kurvig', { expectPasses: ['Galibier'] }),
@@ -119,7 +120,7 @@ export const FIXED: Case[] = [
   route('t-schwarzwald', 'Schwarzwaldhochstraße', 'strecke', ['Baden-Baden', 'Freudenstadt'], 'kurvig', { minCurated: 40 }),
   route('t-vogesen', 'Route des Crêtes', 'strecke', ['Munster', 'Thann'], 'kurvig', { minCurated: 30 }),
   // Anfahrt schnell, dann kurvig
-  { ...route('m-muc-tirol', 'München schnell, dann kurvig nach Tirol', 'gemischt', ['München', 'Garmisch', 'Innsbruck'], 'kurvig'), profiles: ['schnell', 'kurvig'], allowMotorway: true } as Case,
+  { ...route('m-muc-tirol', 'München schnell, dann kurvig nach Tirol', 'gemischt', ['München', 'Garmisch', 'Innsbruck'], 'kurvig'), profiles: ['schnell', 'kurvig'], allowMotorway: true, allowCities: ['München', 'Innsbruck'] } as Case,
   // Rundtouren, kurz und lang
   { kind: 'runde', id: 'r-bensheim-120', name: 'Rundtour Bensheim 120 km', group: 'runde', profile: 'kurvig', start: O('Bensheim'), km: 120, direction: 'O', seed: 1, minCurated: 15 },
   { kind: 'runde', id: 'r-corvara-100', name: 'Rundtour Corvara 100 km', group: 'runde', profile: 'kurvig', start: O('Corvara'), km: 100, direction: 'S', seed: 1, minCurated: 30 },
