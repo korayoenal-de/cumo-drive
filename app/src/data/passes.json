@@ -7895,5 +7895,135 @@
       "steil",
       "kehren"
     ]
+  },
+  {
+    "id": "pragelpass",
+    "name": "Pragelpass",
+    "names": [
+      "Pragel"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Schwyz und Glarus",
+    "lat": 46.99936,
+    "lon": 8.8695,
+    "ele": 1550,
+    "tier": "bekannt",
+    "hairpins": null,
+    "winter_closed": true,
+    "closed_months": "Nov bis Mai",
+    "toll": false,
+    "car_note": "Sehr schmal. Am Wochenende Abschnitt Richisau bis Kantonsgrenze für Motorfahrzeuge gesperrt, vorher prüfen",
+    "source": "https://de.wikipedia.org/wiki/Pragelpass",
+    "warn": [
+      "schmal"
+    ]
+  },
+  {
+    "id": "passwang",
+    "name": "Passwang",
+    "names": [
+      "Passwangpass"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Solothurner Jura",
+    "lat": 47.35774,
+    "lon": 7.65613,
+    "ele": 968,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Passwang"
+  },
+  {
+    "id": "col-de-la-tourne",
+    "name": "Col de la Tourne",
+    "names": [
+      "La Tourne"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Neuenburger Jura",
+    "lat": 46.98398,
+    "lon": 6.77948,
+    "ele": 1171,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://fr.wikipedia.org/wiki/Col_de_la_Tourne"
+  },
+  {
+    "id": "col-de-champex",
+    "name": "Col de Champex",
+    "names": [
+      "Champex"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Wallis",
+    "lat": 46.03181,
+    "lon": 7.10679,
+    "ele": 1500,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/Champex"
+  },
+  {
+    "id": "st-luzisteig",
+    "name": "St. Luzisteig",
+    "names": [
+      "Luziensteig",
+      "Sankt Luzisteig"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Graubünden",
+    "lat": 47.0296,
+    "lon": 9.52819,
+    "ele": 717,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://de.wikipedia.org/wiki/St._Luzisteig"
+  },
+  {
+    "id": "petra-felix",
+    "name": "Pétra Félix",
+    "names": [
+      "Petra Felix"
+    ],
+    "country": [
+      "CH"
+    ],
+    "region": "Waadtländer Jura",
+    "lat": 46.65854,
+    "lon": 6.34896,
+    "ele": 1151,
+    "tier": "mittel",
+    "hairpins": null,
+    "winter_closed": false,
+    "closed_months": null,
+    "toll": false,
+    "car_note": null,
+    "source": "https://www.openstreetmap.org"
   }
 ]

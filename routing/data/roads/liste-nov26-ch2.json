@@ -1,0 +1,762 @@
+[
+ {
+  "id": "ch-chaux-de-fonds-biaufond",
+  "name": "La Chaux-de-Fonds nach Les Bois über Biaufond",
+  "country": "CH",
+  "region": "Neuenburger und Freiberger Jura",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "168"
+  ],
+  "from": {
+   "name": "La Chaux-de-Fonds",
+   "lat": 47.10313,
+   "lon": 6.83258
+  },
+  "to": {
+   "name": "Les Bois",
+   "lat": 47.17631,
+   "lon": 6.90491
+  },
+  "via": [
+   {
+    "name": "Biaufond",
+    "lat": 47.16381,
+    "lon": 6.85875
+   }
+  ],
+  "length_km": 20,
+  "quality": 4,
+  "caveats": "Kurz vor Biaufond Abzweig nach Frankreich (D 464), nicht Teil der Strecke; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-vuiteboeuf-sainte-croix",
+  "name": "Vuiteboeuf nach Sainte-Croix",
+  "country": "CH",
+  "region": "Waadtländer Jura",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "151"
+  ],
+  "from": {
+   "name": "Vuiteboeuf",
+   "lat": 46.80739,
+   "lon": 6.54938
+  },
+  "to": {
+   "name": "Sainte-Croix",
+   "lat": 46.82252,
+   "lon": 6.50093
+  },
+  "via": [],
+  "length_km": 10,
+  "quality": 4,
+  "caveats": "Pass Col des Étroits liegt dahinter (vorhanden); Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-col-de-la-croix-ju",
+  "name": "Saint-Ursanne nach Courgenay über den Col de la Croix",
+  "country": "CH",
+  "region": "Jura",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Saint-Ursanne",
+   "lat": 47.3646,
+   "lon": 7.15395
+  },
+  "to": {
+   "name": "Courgenay",
+   "lat": 47.40454,
+   "lon": 7.1243
+  },
+  "via": [
+   {
+    "name": "Col de la Croix",
+    "lat": 47.37286,
+    "lon": 7.14135
+   }
+  ],
+  "length_km": 9,
+  "quality": 4,
+  "caveats": "Nur auf der Kantonsstraße ziehen, Nebenwege meiden; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-gibswil-turbenthal",
+  "name": "Gibswil nach Turbenthal über Sternenberg",
+  "country": "CH",
+  "region": "Zürcher Oberland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "806"
+  ],
+  "from": {
+   "name": "Gibswil",
+   "lat": 47.313,
+   "lon": 8.91323
+  },
+  "to": {
+   "name": "Turbenthal",
+   "lat": 47.43681,
+   "lon": 8.84852
+  },
+  "via": [
+   {
+    "name": "Bauma",
+    "lat": 47.36776,
+    "lon": 8.87929
+   },
+   {
+    "name": "Sternenberg",
+    "lat": 47.38708,
+    "lon": 8.91139
+   },
+   {
+    "name": "Sitzberg",
+    "lat": 47.4242,
+    "lon": 8.9116
+   }
+  ],
+  "length_km": 31,
+  "quality": 4,
+  "caveats": "Teils Nebenstraße, Breite prüfen; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-wattwil-st-peterzell",
+  "name": "Wattwil nach St. Peterzell über Hemberg",
+  "country": "CH",
+  "region": "Toggenburg",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Wattwil",
+   "lat": 47.30045,
+   "lon": 9.0871
+  },
+  "to": {
+   "name": "St. Peterzell",
+   "lat": 47.31769,
+   "lon": 9.17631
+  },
+  "via": [
+   {
+    "name": "Hemberg",
+    "lat": 47.30044,
+    "lon": 9.1756
+   }
+  ],
+  "length_km": 13,
+  "quality": 4,
+  "caveats": "Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-ilanz-bonaduz",
+  "name": "Ilanz nach Bonaduz über Versam",
+  "country": "CH",
+  "region": "Graubünden",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Ilanz",
+   "lat": 46.77303,
+   "lon": 9.20335
+  },
+  "to": {
+   "name": "Bonaduz",
+   "lat": 46.81132,
+   "lon": 9.39844
+  },
+  "via": [
+   {
+    "name": "Valendas",
+    "lat": 46.78742,
+    "lon": 9.28159
+   },
+   {
+    "name": "Versam",
+    "lat": 46.79284,
+    "lon": 9.33643
+   }
+  ],
+  "length_km": 21,
+  "quality": 4,
+  "caveats": "Ortsdurchfahrten Valendas und Versam kurz; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-goumois-saignelegier",
+  "name": "Goumois nach Saignelégier",
+  "country": "CH",
+  "region": "Freiberge",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "248"
+  ],
+  "from": {
+   "name": "Goumois",
+   "lat": 47.26148,
+   "lon": 6.95209
+  },
+  "to": {
+   "name": "Saignelégier",
+   "lat": 47.2558,
+   "lon": 6.99636
+  },
+  "via": [],
+  "length_km": 8,
+  "quality": 3,
+  "caveats": "Grenzübergang Goumois; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-soulce-cernay-trevillers",
+  "name": "Soulce-Cernay nach Trévillers",
+  "country": "FR",
+  "region": "Doubs",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "D 437"
+  ],
+  "from": {
+   "name": "Soulce-Cernay",
+   "lat": 47.32406,
+   "lon": 6.85737
+  },
+  "to": {
+   "name": "Trévillers",
+   "lat": 47.28102,
+   "lon": 6.86708
+  },
+  "via": [
+   {
+    "name": "Les Plains-et-Grands-Essarts",
+    "lat": 47.30255,
+    "lon": 6.89273
+   }
+  ],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "Departementsstraßen, Belag prüfen; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-scheltenpass",
+  "name": "Scheltenpass",
+  "country": "CH",
+  "region": "Solothurner Jura",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Mervelier",
+   "lat": 47.34382,
+   "lon": 7.4985
+  },
+  "to": {
+   "name": "Ramiswil",
+   "lat": 47.3455,
+   "lon": 7.65813
+  },
+  "via": [
+   {
+    "name": "Scheltenpass",
+    "lat": 47.33584,
+    "lon": 7.58182
+   }
+  ],
+  "length_km": 16,
+  "quality": 3,
+  "caveats": "Ehemalige Militärstraße, 3 bis 5 m laut Community, Breite prüfen; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-souboz-le-fuet",
+  "name": "Souboz nach Le Fuet über Bellelay",
+  "country": "CH",
+  "region": "Berner Jura",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Souboz",
+   "lat": 47.27383,
+   "lon": 7.24295
+  },
+  "to": {
+   "name": "Le Fuet",
+   "lat": 47.2436,
+   "lon": 7.18216
+  },
+  "via": [
+   {
+    "name": "Sornetan",
+    "lat": 47.27412,
+    "lon": 7.21549
+   },
+   {
+    "name": "Bellelay",
+    "lat": 47.26323,
+    "lon": 7.16676
+   }
+  ],
+  "length_km": 17,
+  "quality": 3,
+  "caveats": "Verlauf aus Kartenpunkten nur zur Hälfte bestätigt, Anker beim Ziehen prüfen; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-erschwil-liesberg",
+  "name": "Erschwil nach Liesberg über Grindel",
+  "country": "CH",
+  "region": "Laufental",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Erschwil",
+   "lat": 47.37354,
+   "lon": 7.54166
+  },
+  "to": {
+   "name": "Liesberg",
+   "lat": 47.40386,
+   "lon": 7.43147
+  },
+  "via": [
+   {
+    "name": "Grindel",
+    "lat": 47.3817,
+    "lon": 7.50262
+   },
+   {
+    "name": "Bärschwil",
+    "lat": 47.38202,
+    "lon": 7.47309
+   }
+  ],
+  "length_km": 19,
+  "quality": 3,
+  "caveats": "Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-erlinsbach-rothenfluh",
+  "name": "Erlinsbach nach Rothenfluh über die Saalhöhe",
+  "country": "CH",
+  "region": "Aargauer und Basler Jura",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Erlinsbach",
+   "lat": 47.39679,
+   "lon": 8.00803
+  },
+  "to": {
+   "name": "Rothenfluh",
+   "lat": 47.46089,
+   "lon": 7.9146
+  },
+  "via": [
+   {
+    "name": "Saalhöhe",
+    "lat": 47.4284,
+    "lon": 7.98667
+   },
+   {
+    "name": "Kienberg",
+    "lat": 47.43965,
+    "lon": 7.96714
+   },
+   {
+    "name": "Anwil",
+    "lat": 47.45274,
+    "lon": 7.9425
+   }
+  ],
+  "length_km": 19,
+  "quality": 3,
+  "caveats": "Ortsanteil an der Grenze, Ortsdurchfahrten beim Ziehen meiden; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-haslen-waldstatt",
+  "name": "Haslen nach Waldstatt über Hundwil",
+  "country": "CH",
+  "region": "Appenzell",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Haslen",
+   "lat": 47.36801,
+   "lon": 9.36774
+  },
+  "to": {
+   "name": "Waldstatt",
+   "lat": 47.35634,
+   "lon": 9.28384
+  },
+  "via": [
+   {
+    "name": "Hundwil",
+    "lat": 47.36567,
+    "lon": 9.31827
+   }
+  ],
+  "length_km": 16,
+  "quality": 3,
+  "caveats": "Verlauf aus Kartenpunkten nur zu gut einem Drittel bestätigt, Anker beim Ziehen prüfen; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-dietfurt-hoffeld",
+  "name": "Dietfurt nach Hoffeld über die Wasserfluh",
+  "country": "CH",
+  "region": "Toggenburg",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Dietfurt",
+   "lat": 47.34613,
+   "lon": 9.08116
+  },
+  "to": {
+   "name": "Hoffeld",
+   "lat": 47.36337,
+   "lon": 9.17285
+  },
+  "via": [
+   {
+    "name": "Wasserfluh",
+    "lat": 47.32558,
+    "lon": 9.11314
+   }
+  ],
+  "length_km": 16,
+  "quality": 3,
+  "caveats": "Nur Teilstück ohne Ortsdurchfahrt; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-rehetobel-buehler",
+  "name": "Rehetobel nach Bühler über Trogen",
+  "country": "CH",
+  "region": "Appenzell",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Rehetobel",
+   "lat": 47.42668,
+   "lon": 9.48045
+  },
+  "to": {
+   "name": "Bühler",
+   "lat": 47.3744,
+   "lon": 9.42338
+  },
+  "via": [
+   {
+    "name": "Trogen",
+    "lat": 47.40799,
+    "lon": 9.46506
+   }
+  ],
+  "length_km": 16,
+  "quality": 3,
+  "caveats": "Nur Teilstück ohne Ortsdurchfahrt; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-wasen-luederenalp",
+  "name": "Wasen nach Bärau über die Lüderenalp",
+  "country": "CH",
+  "region": "Emmental",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Wasen im Emmental",
+   "lat": 47.0429,
+   "lon": 7.79443
+  },
+  "to": {
+   "name": "Bärau",
+   "lat": 46.93237,
+   "lon": 7.81123
+  },
+  "via": [
+   {
+    "name": "Lüderenalp",
+    "lat": 47.00256,
+    "lon": 7.825
+   }
+  ],
+  "length_km": 19,
+  "quality": 3,
+  "caveats": "Überwiegend Nebenstraße, 3 bis 5 m laut Community, Breite prüfen; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-roethenbach-bowil",
+  "name": "Röthenbach nach Bowil über Chuderhüsi",
+  "country": "CH",
+  "region": "Emmental",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Röthenbach im Emmental",
+   "lat": 46.8537,
+   "lon": 7.74355
+  },
+  "to": {
+   "name": "Bowil",
+   "lat": 46.89306,
+   "lon": 7.69496
+  },
+  "via": [
+   {
+    "name": "Chuderhüsi",
+    "lat": 46.86987,
+    "lon": 7.72653
+   }
+  ],
+  "length_km": 9,
+  "quality": 3,
+  "caveats": "Überwiegend Nebenstraße, Breite prüfen; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-surava-wiesen",
+  "name": "Surava nach Wiesen über Alvaneu",
+  "country": "CH",
+  "region": "Graubünden",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Surava",
+   "lat": 46.66549,
+   "lon": 9.61255
+  },
+  "to": {
+   "name": "Wiesen",
+   "lat": 46.70369,
+   "lon": 9.7137
+  },
+  "via": [
+   {
+    "name": "Alvaneu Dorf",
+    "lat": 46.67874,
+    "lon": 9.647
+   },
+   {
+    "name": "Schmitten",
+    "lat": 46.68764,
+    "lon": 9.67286
+   }
+  ],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-kemptthal-eidberg",
+  "name": "Kemptthal nach Eidberg über Kyburg",
+  "country": "CH",
+  "region": "Winterthur",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Kemptthal",
+   "lat": 47.4523,
+   "lon": 8.70521
+  },
+  "to": {
+   "name": "Eidberg",
+   "lat": 47.47412,
+   "lon": 8.79458
+  },
+  "via": [
+   {
+    "name": "Kyburg",
+    "lat": 47.45709,
+    "lon": 8.74434
+   }
+  ],
+  "length_km": 13,
+  "quality": 3,
+  "caveats": "Stadtnah, Verkehr; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-plaffeien-schwarzenburg",
+  "name": "Plaffeien nach Schwarzenburg über Guggersbach",
+  "country": "CH",
+  "region": "Sense und Gantrisch",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Plaffeien",
+   "lat": 46.74145,
+   "lon": 7.28651
+  },
+  "to": {
+   "name": "Schwarzenburg",
+   "lat": 46.81792,
+   "lon": 7.34119
+  },
+  "via": [
+   {
+    "name": "Guggersbach",
+    "lat": 46.76252,
+    "lon": 7.30269
+   }
+  ],
+  "length_km": 14,
+  "quality": 3,
+  "caveats": "Kurz, etwa 10 km; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-sottens-lucens",
+  "name": "Sottens nach Lucens",
+  "country": "CH",
+  "region": "Jorat",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Sottens",
+   "lat": 46.65548,
+   "lon": 6.74215
+  },
+  "to": {
+   "name": "Lucens",
+   "lat": 46.70845,
+   "lon": 6.83898
+  },
+  "via": [],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "Verlauf aus Kartenpunkten nicht ganz bestätigt, Anker beim Ziehen prüfen; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "ch-kiffis-lucelle",
+  "name": "Raedersdorf nach Lucelle über Kiffis",
+  "country": "FR",
+  "region": "Sundgau Jura",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "D 21B"
+  ],
+  "from": {
+   "name": "Raedersdorf",
+   "lat": 47.475,
+   "lon": 7.36614
+  },
+  "to": {
+   "name": "Lucelle",
+   "lat": 47.42151,
+   "lon": 7.24655
+  },
+  "via": [
+   {
+    "name": "Kiffis",
+    "lat": 47.4409,
+    "lon": 7.35784
+   }
+  ],
+  "length_km": 10,
+  "quality": 3,
+  "caveats": "Departementsstraße, Breite prüfen; Linie neu aus OSM ziehen, Breite und Ortsdurchfahrten prüfen",
+  "sources": [
+   "Recherche Schweiz, Nov 2026 (nur Orte und Straßennummern); Orte über Nominatim"
+  ]
+ }
+]

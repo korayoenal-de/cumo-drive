@@ -1340,19 +1340,9 @@
     },
     "via": [
       {
-        "name": "Unterschächen",
-        "lat": 46.86311,
-        "lon": 8.77035
-      },
-      {
         "name": "Klausenpass",
         "lat": 46.86819,
         "lon": 8.85544
-      },
-      {
-        "name": "Urnerboden",
-        "lat": 46.88949,
-        "lon": 8.90176
       }
     ],
     "length_km": 61,
@@ -2396,13 +2386,7 @@
       "lat": 46.86819,
       "lon": 8.85544
     },
-    "via": [
-      {
-        "name": "Urnerboden",
-        "lat": 46.88949,
-        "lon": 8.90176
-      }
-    ],
+    "via": [],
     "length_km": 21.5,
     "facts": "1922 bis 1934, 21,5 km, 136 Kurven, 1237 Hm, Rekord Caracciola 1934",
     "quality": 5,
