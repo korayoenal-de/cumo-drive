@@ -207,7 +207,7 @@ Jede Ansicht wird an den Regeln in docs/design-prinzipien.md gemessen (gespiegel
 
 JavaScript Änderungen gehen per OTA Update in Minuten aufs Handy; neue native Pakete und CarPlay brauchen einen neuen TestFlight Build. Native Pakete werden im Code so geladen, dass ältere Builds dieselben Updates ohne Absturz bekommen.
 
-* Kanal preview, Runtime 1.1.0. OTA nur aus einem sauberen Arbeitsstand ohne .env: `eas update --channel preview --environment preview`
+* Kanal preview, Runtime 1.1.0. OTA nur aus einem sauberen Arbeitsstand ohne .env: `eas update --channel preview --environment preview --platform ios` (nur iOS: Android gibt es noch nicht, der Web Planer kommt nicht per OTA; spart gut die Hälfte der Zeit, Messung 16.11.)
 * Builds: `eas build --platform ios --profile preview --auto-submit`, Expo Starter Plan seit 10.11.
 * Apple: Einzelperson, Team ID N9DX399W33, Bundle ID de.rallycumo.drive; Push Schlüssel und Profil mit Push seit 10.11.
 * Code: privates Repo github.com/korayoenal-de/cumo-drive, Branch main; jede Änderung wird committet und gepusht
