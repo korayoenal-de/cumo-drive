@@ -16,10 +16,10 @@ import { purchase, restorePurchases } from '@/lib/purchase';
 import { t } from '@/i18n';
 
 const BENEFITS = [
-  'Kurvige Touren planen',
-  'Gruppenfahrten bis 6 Fahrzeuge',
-  'Navigation mit Ansagen und Live Activity',
-  'Fahrten und Statistik je Fahrzeug',
+  t('Kurvige Touren planen'),
+  t('Gruppenfahrten bis 6 Fahrzeuge'),
+  t('Navigation mit Ansagen und Live Activity'),
+  t('Fahrten und Statistik je Fahrzeug'),
 ];
 
 export type PaywallMode = 'expired' | 'voluntary';
@@ -46,7 +46,7 @@ export function Paywall({
     try {
       const r = kind === 'buy' ? await purchase(selected) : await restorePurchases();
       if (r.ok) {
-        setNote({ text: kind === 'buy' ? 'Danke, deine Mitgliedschaft ist aktiv.' : 'Deine Mitgliedschaft ist wieder da.', good: true });
+        setNote({ text: kind === 'buy' ? t('Danke, deine Mitgliedschaft ist aktiv.') : t('Deine Mitgliedschaft ist wieder da.'), good: true });
         if (mode === 'voluntary') onClose?.();
       } else if (!r.cancelled) setNote({ text: r.message, good: false });
     } catch {
@@ -71,12 +71,12 @@ export function Paywall({
             CUMO DRIVE
           </AppText>
           <AppText variant="display" style={styles.headline}>
-            {mode === 'expired' ? 'Deine Testphase ist vorbei' : 'CUMO DRIVE Mitgliedschaft'}
+            {mode === 'expired' ? t('Deine Testphase ist vorbei') : 'CUMO DRIVE Mitgliedschaft'}
           </AppText>
           <AppText muted>
             {mode === 'expired'
-              ? 'Wähle einen Plan, um weiter Touren zu planen und gemeinsam zu fahren. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.'
-              : 'Alles für kurvige Touren und Gruppenfahrten in einer Mitgliedschaft.'}
+              ? t('Wähle einen Plan, um weiter Touren zu planen und gemeinsam zu fahren. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.')
+              : t('Alles für kurvige Touren und Gruppenfahrten in einer Mitgliedschaft.')}
           </AppText>
         </View>
 
@@ -97,7 +97,7 @@ export function Paywall({
 
         <View style={styles.gapS}>
           <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void run('buy')} style={[styles.primary, !!busy && styles.disabled]}>
-            {busy === 'buy' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Weiter mit {plan.name}</AppText>}
+            {busy === 'buy' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Weiter mit ')}{plan.name}</AppText>}
           </Pressable>
           {note && <AppText style={[styles.note, note.good && styles.noteGood]}>{note.text}</AppText>}
           <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void run('restore')} style={styles.secondary}>
@@ -108,7 +108,7 @@ export function Paywall({
         <View style={styles.clubBox}>
           <AppText style={styles.clubTitle}>{t('Für Clubs und Veranstalter: CUMO DRIVE Club bis 20 Fahrzeuge, auf Rechnung')}</AppText>
           <AppText variant="caption" muted>
-            Mitglieder eines aktiven Clubs brauchen keinen eigenen Plan. Schreib uns an
+            {t('Mitglieder eines aktiven Clubs brauchen keinen eigenen Plan. Schreib uns an')}
           </AppText>
           <AppText selectable style={styles.mail}>
             {CONTACT_EMAIL}
@@ -117,7 +117,7 @@ export function Paywall({
 
         <View style={styles.gapS}>
           <AppText variant="caption" muted>
-            Woche, Monat und Jahr verlängern sich automatisch, wenn du nicht spätestens 24 Stunden vor Ablauf in den Einstellungen deiner Apple ID kündigst. Der Saison Pass gilt 6 Monate und endet von selbst.
+            {t('Woche, Monat und Jahr verlängern sich automatisch, wenn du nicht spätestens 24 Stunden vor Ablauf in den Einstellungen deiner Apple ID kündigst. Der Saison Pass gilt 6 Monate und endet von selbst.')}
           </AppText>
           {/* Pflicht bei Abos (App Store Regel 3.1.2): Nutzungsbedingungen, Apple EULA und Datenschutz */}
           <View style={styles.legal}>
@@ -158,13 +158,13 @@ function PlanCard({ price, selected, onPress }: { price: Price; selected: boolea
           {price.highlight && (
             <View style={styles.pill}>
               <AppText variant="caption" style={styles.pillText}>
-                Bester Preis
+                {t('Bester Preis')}
               </AppText>
             </View>
           )}
         </View>
         <AppText variant="caption" muted>
-          {price.perMonthText ?? (price.renews ? 'Abo, jederzeit kündbar' : 'Kein Abo')}
+          {price.perMonthText ?? (price.renews ? t('Abo, jederzeit kündbar') : t('Kein Abo'))}
         </AppText>
       </View>
       <View style={styles.priceCol}>

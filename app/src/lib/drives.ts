@@ -4,6 +4,7 @@
 import type { RideStats, Sample } from './ride-stats';
 import { supabase } from './supabase';
 import { haversine, type LatLon } from './tour';
+import { t } from '@/i18n';
 
 export type Drive = {
   id: string;
@@ -136,14 +137,14 @@ export type DriveRating = 1 | 2 | 3;
 
 /** Gründe bei "nicht gut", gespeichert als Kennung */
 export const BAD_REASONS = [
-  { id: 'verkehr', label: 'Viel Verkehr' },
-  { id: 'orte', label: 'Zu viele Orte' },
-  { id: 'belag', label: 'Schlechter Belag' },
-  { id: 'langweilig', label: 'Zu wenig Kurven' },
-  { id: 'eng', label: 'Zu eng' },
-  { id: 'sperrung', label: 'Baustelle oder Sperrung' },
-  { id: 'navigation', label: 'Navigation' },
-  { id: 'anderes', label: 'Anderes' },
+  { id: 'verkehr', label: t('Viel Verkehr') },
+  { id: 'orte', label: t('Zu viele Orte') },
+  { id: 'belag', label: t('Schlechter Belag') },
+  { id: 'langweilig', label: t('Zu wenig Kurven') },
+  { id: 'eng', label: t('Zu eng') },
+  { id: 'sperrung', label: t('Baustelle oder Sperrung') },
+  { id: 'navigation', label: t('Navigation') },
+  { id: 'anderes', label: t('Anderes') },
 ] as const;
 
 export async function rateDrive(id: string, rating: DriveRating, reasons?: string[], note?: string) {
@@ -154,11 +155,11 @@ export async function rateDrive(id: string, rating: DriveRating, reasons?: strin
 /** Gesamtnote 0 bis 100 (stufenlos, Koray 8.11.): Wörter für den Regler, Gründe unter 40 */
 export const SCORE_WEAK = 40;
 export function scoreWord(v: number): string {
-  if (v < 15) return 'Enttäuschend';
-  if (v < SCORE_WEAK) return 'Nicht gut';
+  if (v < 15) return t('Enttäuschend');
+  if (v < SCORE_WEAK) return t('Nicht gut');
   if (v < 60) return 'Okay';
   if (v < 80) return 'Gut';
-  if (v < 95) return 'Richtig gut';
+  if (v < 95) return t('Richtig gut');
   return 'Sensationell';
 }
 

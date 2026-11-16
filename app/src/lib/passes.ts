@@ -5,7 +5,7 @@
 import { onRoadData } from './road-data';
 import { bearingTo, destination } from './roundtrip';
 import { haversine, type LatLon } from './tour';
-import { getLang, t } from '@/i18n';
+import { getLang, t, tr } from '@/i18n';
 
 export type PassTier = 'ikone' | 'bekannt' | 'mittel';
 
@@ -32,14 +32,14 @@ export type Pass = {
 export type WarnKey = 'einspurig' | 'schmal' | 'ausgesetzt' | 'kehren' | 'ampel' | 'einbahn' | 'pflaster' | 'steil';
 
 export const WARN_LABEL: Record<WarnKey, string> = {
-  einspurig: 'Einspurig',
-  schmal: 'Sehr schmal',
-  ausgesetzt: 'Ausgesetzt',
-  kehren: 'Enge Kehren',
-  ampel: 'Ampelregelung',
-  einbahn: 'Einbahn im Stundentakt',
-  pflaster: 'Langes Pflaster',
-  steil: 'Sehr steil',
+  einspurig: t('Einspurig'),
+  schmal: tr('Sehr schmal'),
+  ausgesetzt: t('Ausgesetzt'),
+  kehren: tr('Enge Kehren'),
+  ampel: t('Ampelregelung'),
+  einbahn: tr('Einbahn im Stundentakt'),
+  pflaster: tr('Langes Pflaster'),
+  steil: tr('Sehr steil'),
 };
 
 const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
@@ -63,7 +63,7 @@ export function warnSpeech(w?: readonly WarnKey[] | null): string {
   return all.length === 1 ? `${all[0]}.` : `${all.slice(0, -1).join(', ')} ${t('und')} ${all[all.length - 1]}.`;
 }
 
-export const TIER_LABEL: Record<PassTier, string> = { ikone: 'Ikone', bekannt: 'Bekannt', mittel: 'Geheimtipp' };
+export const TIER_LABEL: Record<PassTier, string> = { ikone: t('Ikone'), bekannt: t('Bekannt'), mittel: t('Geheimtipp') };
 export const TIER_WEIGHT: Record<PassTier, number> = { ikone: 3, bekannt: 2, mittel: 1 };
 
 export const passPoint = (p: Pass): LatLon => [p.lat, p.lon];
@@ -193,7 +193,7 @@ export function closedAlong(list: Pass[], line: LatLon[], month: number): Pass[]
 /** Text für den Hinweis, zum Beispiel "Stilfser Joch (Nov bis Mai) und Gavia". */
 export function closedNote(closed: Pass[]): string {
   const names = closed.map((p) => (p.closed_months ? `${p.name} (${p.closed_months})` : p.name));
-  return names.length > 1 ? `${names.slice(0, -1).join(', ')} und ${names[names.length - 1]}` : names[0] ?? '';
+  return names.length > 1 ? tr('{v0} und {v1}', { v0: names.slice(0, -1).join(', '), v1: names[names.length - 1] }) : names[0] ?? '';
 }
 
 /** Übersicht mit aktuellem Status, bis wir eine eigene Live Quelle haben. */
@@ -214,7 +214,7 @@ export function passSummary(p: Pass, month?: number, stateNote?: string): string
   if (p.toll) parts.push('Maut');
   if (stateNote !== undefined) {
     if (stateNote) parts.push(stateNote);
-  } else if (month !== undefined && likelyClosed(p, month)) parts.push(p.closed_months ? `gesperrt ${p.closed_months}` : 'im Winter wohl gesperrt');
+  } else if (month !== undefined && likelyClosed(p, month)) parts.push(p.closed_months ? t('gesperrt {closed_months}', { closed_months: p.closed_months }) : tr('im Winter wohl gesperrt'));
   return parts.join(', ');
 }
 
@@ -288,15 +288,35 @@ export function passLoopVia(
 }
 
 /**
- * Name des Passes in der App Sprache (Koray 16.11.): Italienisch bei Pässen in Italien mit italienischem Namen,
- * zweisprachig in Südtirol und den Dolomiten (zuerst der Name der Sprache, dann der andere), sonst wie gehabt.
+ * Name des Passes in der App Sprache (Koray 16.11.).
+ * Italienisch: italienischer Name, wo es einen gibt; in Südtirol und den Dolomiten zweisprachig (zuerst
+ * der italienische). Englisch: übliche englische Form, „Stelvio Pass“, „Grimsel Pass“; französische und
+ * österreichische Namen bleiben („Col du Galibier“, „Timmelsjoch“).
  */
 const ITALIAN = /^(Passo|Colle|Forcella|Giogo|Sella|Valico|Monte)\b/;
 export function localPassName(p: Pass): string {
   const lang = getLang();
-  if (lang === 'de' || !p.country.includes('IT')) return p.name;
+  if (lang === 'de') return p.name;
   const it = p.names.find((n) => ITALIAN.test(n));
-  if (!it) return p.name;
-  // deutscher Hauptname und italienischer Name: zweisprachiges Gebiet, beide nennen
-  return ITALIAN.test(p.name) ? p.name : `${it}, ${p.name}`;
+  if (lang === 'it') {
+    if (!it) return p.name;
+    // deutscher Hauptname und italienischer Name in Italien: zweisprachiges Gebiet, beide nennen
+    if (p.country.includes('IT')) return ITALIAN.test(p.name) ? p.name : `${it}, ${p.name}`;
+    return it;
+  }
+  // Grenzpässe mit Österreich behalten den deutschen Namen (Timmelsjoch), so steht es auch auf englischen Karten
+  const italian = p.country.includes('IT') && !p.country.includes('AT') ? (ITALIAN.test(p.name) ? p.name : it) : undefined;
+  return englishPassName(p.name, italian);
+}
+
+/** Englische Form: aus „Passo dello Stelvio“ wird „Stelvio Pass“, aus „Grimselpass“ „Grimsel Pass“ */
+export function englishPassName(name: string, italian?: string): string {
+  if (italian && /^Passo\b/.test(italian)) {
+    const core = italian.replace(/^Passo\s+(?:(?:del|dello|della|dei|degli|delle|di)\s+|d['’]\s*)?/i, '');
+    if (core) return `${core.charAt(0).toUpperCase()}${core.slice(1)} Pass`;
+  }
+  if (italian) return italian;
+  const compound = /^([A-ZÄÖÜ][a-zäöüß]+)pass\b(.*)$/.exec(name);
+  if (compound) return `${compound[1]} Pass${compound[2]}`;
+  return name.replace('Großglockner Hochalpenstraße', 'Grossglockner High Alpine Road');
 }

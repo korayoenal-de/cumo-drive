@@ -120,10 +120,10 @@ export function tourFun(line: LatLon[]): TourFun | null {
   const fluss = clamp(1 - straight * 1.5);
 
   const facet = {
-    kurven: { id: 'kurven', label: 'Kurven', share: kurven, value: `kurvig auf ${Math.round(curvyShare * 100)} %`, text: 'Wie viel und wie eng die Straße kurvt, Kehren zählen mehr.' },
-    traum: { id: 'traum', label: 'Highlights', share: traum, value: `${Math.round(roadShare * 100)} % der Tour`, text: 'Anteil auf kuratierten Strecken aus unserer Datenbank.' },
-    paesse: { id: 'paesse', label: 'Pässe', share: paesse, value: passes.length === 1 ? '1 Pass' : `${passes.length} Pässe`, text: 'Pässe an der Strecke, Ikonen zählen mehr als Geheimtipps.' },
-    fluss: { id: 'fluss', label: 'Fluss', share: fluss, value: `${Math.round(straight * 100)} % Geraden`, text: 'Abzug für lange Geraden ohne Kurven.' },
+    kurven: { id: 'kurven', label: t('Kurven'), share: kurven, value: t('kurvig auf {v0} %', { v0: Math.round(curvyShare * 100) }), text: t('Wie viel und wie eng die Straße kurvt, Kehren zählen mehr.') },
+    traum: { id: 'traum', label: 'Highlights', share: traum, value: t('{v0} % der Tour', { v0: Math.round(roadShare * 100) }), text: t('Anteil auf kuratierten Strecken aus unserer Datenbank.') },
+    paesse: { id: 'paesse', label: t('Pässe'), share: paesse, value: passes.length === 1 ? t('1 Pass') : t('{length} Pässe', { length: passes.length }), text: t('Pässe an der Strecke, Ikonen zählen mehr als Geheimtipps.') },
+    fluss: { id: 'fluss', label: t('Fluss'), share: fluss, value: `${Math.round(straight * 100)} % Geraden`, text: t('Abzug für lange Geraden ohne Kurven.') },
   } as const;
   // Pässe sind ein Bonus: Mittelgebirge wie Odenwald, Pfälzer Wald oder Schwarzwald haben keine richtigen
   // Pässe und machen trotzdem Spaß (Koray 8.11.). Ohne Pässe zählen nur die übrigen drei Teile, mit Pässen

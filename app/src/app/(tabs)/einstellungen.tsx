@@ -55,14 +55,14 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
     }, [session]),
   );
 
-  const cars = list.length === 0 ? 'Noch keins' : list.length === 1 ? '1 Fahrzeug' : `${list.length} Fahrzeuge`;
+  const cars = list.length === 0 ? t('Noch keins') : list.length === 1 ? '1 Fahrzeug' : `${list.length} Fahrzeuge`;
   const version = Constants.expoConfig?.version ?? '';
 
   return (
     <Screen>
       {inNav && <BackLink label={t('Zur Navigation')} onPress={() => router.back()} />}
       <AppText variant="display" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-        Einstellungen
+        {t('Einstellungen')}
       </AppText>
       {session ? <ProfileCard userId={session.user.id} cars={list.length} /> : <Login />}
       {/* Hinweise mit Begründung nach Entfernen oder Sperren (Koray 12.11.) */}
@@ -78,7 +78,7 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
 
       <Group label={t('Fahrzeuge')}>
         <Row title={t('Garage')} value={cars} onPress={() => router.push('/garage')} />
-        {list.length > 1 && <Row title={t('Für neue Fahrten')} value={current ? vehicleName(current) || 'Ohne Namen' : 'Keins'} onPress={() => router.push('/garage')} />}
+        {list.length > 1 && <Row title={t('Für neue Fahrten')} value={current ? vehicleName(current) || t('Ohne Namen') : 'Keins'} onPress={() => router.push('/garage')} />}
       </Group>
 
       <Group label={t('Fahren')}>
@@ -101,7 +101,7 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
       {/* Prüfbereich nur für Admins, unten über Rechtliches (Koray 14.11.) */}
       {moderation.mod?.admin && (
         <Group label={t('Prüfung')} hint={t('Gemeldete Inhalte ansehen, entfernen oder Konten sperren.')}>
-          <Row title={t('Prüfbereich')} value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : 'Nichts offen'} onPress={() => router.push('/pruefung')} />
+          <Row title={t('Prüfbereich')} value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : t('Nichts offen')} onPress={() => router.push('/pruefung')} />
         </Group>
       )}
 
@@ -126,20 +126,20 @@ function ProfileCard({ userId, cars }: { userId: string; cars: number }) {
   useFocusEffect(useCallback(() => refreshAvatar(userId), [userId]));
   const { p } = usePrivacy();
   const name = profile?.displayName ?? null;
-  const meta = [p?.homeName ?? 'Wohnort fehlt', cars ? (cars === 1 ? '1 Fahrzeug' : `${cars} Fahrzeuge`) : null].filter(Boolean).join(' · ');
+  const meta = [p?.homeName ?? t('Wohnort fehlt'), cars ? (cars === 1 ? '1 Fahrzeug' : `${cars} Fahrzeuge`) : null].filter(Boolean).join(' · ');
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`Profil bearbeiten, ${name ?? 'noch kein Name'}`} onPress={() => router.push('/profil')} style={({ pressed }) => [styles.profile, pressed && styles.pressed]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('Profil bearbeiten, {v0}', { v0: name ?? t('noch kein Name') })} onPress={() => router.push('/profil')} style={({ pressed }) => [styles.profile, pressed && styles.pressed]}>
       <Avatar name={name ?? '?'} userId={userId} size={64} />
       <View style={styles.flex}>
         <AppText style={styles.profileName} numberOfLines={1}>
-          {name ?? 'Noch kein Name'}
+          {name ?? t('Noch kein Name')}
         </AppText>
         <AppText style={styles.profileMeta} numberOfLines={1}>
           {meta}
         </AppText>
         {p && (
           <View style={[styles.tag, p.visible ? styles.tagGood : styles.tagMuted]}>
-            <AppText style={[styles.tagText, { color: p.visible ? Colors.good : Colors.muted }]}>{!p.visible ? 'Nicht in der Community' : p.homeName ? 'Sichtbar in der Community' : 'In der Community, ohne Karte'}</AppText>
+            <AppText style={[styles.tagText, { color: p.visible ? Colors.good : Colors.muted }]}>{!p.visible ? t('Nicht in der Community') : p.homeName ? t('Sichtbar in der Community') : t('In der Community, ohne Karte')}</AppText>
           </View>
         )}
       </View>
@@ -173,7 +173,7 @@ function CommunityGroup() {
     } else void Linking.openSettings();
   };
   return (
-    <Group label={t('Community')} hint={err ?? (p?.visible === false ? 'Du bist in der Community ausgeblendet. Gruppenfahrten und bestehende Unterhaltungen bleiben.' : 'Andere sehen deinen Namen, Wohnort und auf Wunsch deine Garage.')}>
+    <Group label={t('Community')} hint={err ?? (p?.visible === false ? t('Du bist in der Community ausgeblendet. Gruppenfahrten und bestehende Unterhaltungen bleiben.') : t('Andere sehen deinen Namen, Wohnort und auf Wunsch deine Garage.'))}>
       <SwitchRow title={t('In Community sichtbar')} value={p?.visible ?? true} onChange={(v) => void save({ visible: v })} />
       <SwitchRow
         title={t('Nachrichten erlauben')}
@@ -214,12 +214,12 @@ function Account({ email }: { email: string }) {
           resetPrivacy();
           void signOut();
         }} />
-        <Row title={busy ? 'Konto wird gelöscht' : 'Konto löschen'} danger chevron={false} onPress={busy ? undefined : () => setAsk(true)} />
+        <Row title={busy ? t('Konto wird gelöscht') : t('Konto löschen')} danger chevron={false} onPress={busy ? undefined : () => setAsk(true)} />
       </Group>
       <ConfirmSheet
         visible={ask}
         title={t('Möchtest du dein Konto wirklich löschen?')}
-        text="Touren, Fahrten, Fahrzeuge, Bewertungen und dein Name werden endgültig gelöscht, auch in der Community. Das lässt sich nicht rückgängig machen. Ein Abo kündigst du separat in den Einstellungen deiner Apple ID."
+        text={t('Touren, Fahrten, Fahrzeuge, Bewertungen und dein Name werden endgültig gelöscht, auch in der Community. Das lässt sich nicht rückgängig machen. Ein Abo kündigst du separat in den Einstellungen deiner Apple ID.')}
         confirmLabel={t('Löschen')}
         onConfirm={() => void remove()}
         onClose={() => setAsk(false)}
@@ -239,7 +239,7 @@ function Login() {
     try {
       await fn(email, pw);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : t('Das hat nicht geklappt.'));
     } finally {
       setBusy(false);
     }

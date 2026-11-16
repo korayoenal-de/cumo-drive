@@ -28,7 +28,7 @@ export function NameScreen() {
     try {
       await setDisplayName(name);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : t('Das hat nicht geklappt.'));
     } finally {
       setBusy(false);
     }
@@ -41,7 +41,7 @@ export function NameScreen() {
           <AppText variant="caption" style={styles.brand}>
             CUMO DRIVE
           </AppText>
-          <AppText variant="display">{'Wie sollen\ndich andere\nsehen?'}</AppText>
+          <AppText variant="display">{t('Wie sollen\ndich andere\nsehen?')}</AppText>
           <AppText muted>{t('Unter diesem Namen laden dich andere zu Gruppenfahrten ein, und er steht bei dir auf der Karte. Du kannst ihn später in den Einstellungen ändern.')}</AppText>
         </View>
         <View style={styles.gapM}>

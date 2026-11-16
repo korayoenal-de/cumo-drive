@@ -12,6 +12,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import type { ThumbShape } from '@/lib/route-thumb';
+import { t } from '@/i18n';
 
 export const THUMB = 56;
 
@@ -46,7 +47,7 @@ export function GoodBadge({ label }: { label: string }) {
 /** Graue Plakette mit Initiale des Absenders (Koray 10.11., Variante A); ohne Namen „Aus der Community“ */
 export function FromBadge({ author }: { author?: string | null }) {
   const name = author?.trim();
-  const label = name ? `Von ${name}` : 'Aus der Community';
+  const label = name ? t('Von {name}', { name }) : t('Aus der Community');
   return (
     <View style={styles.fromBadge} accessible accessibilityLabel={label}>
       <View style={styles.fromInitial}>
@@ -62,7 +63,7 @@ export function FunMark({ score, reserve }: { score: number | null | undefined; 
   if (score == null || score < 0) return reserve ? <View style={styles.fun} /> : null;
   const level = tourFunLevel(score);
   return (
-    <View style={styles.fun} accessible accessibilityLabel={`Fahrspaß ${score} von 100, ${TOUR_FUN_NAMES[level]}`}>
+    <View style={styles.fun} accessible accessibilityLabel={t('Fahrspaß {score} von 100, {v1}', { score, v1: TOUR_FUN_NAMES[level] })}>
       <FunGauge level={level} size={20} />
       <AppText style={styles.funText}>{score}</AppText>
     </View>

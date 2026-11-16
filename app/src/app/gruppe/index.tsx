@@ -19,13 +19,13 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { setActiveTour, useActiveTour } from '@/lib/active-tour';
 import { setRideStatus } from '@/lib/group/invites';
-import { endRideForAll, leaveRide, QUICK_MESSAGES, sendMessage, setRole, shareTour, useRide, type Member, type Role } from '@/lib/group/ride';
+import { endRideForAll, leaveRide, QUICK_MESSAGES, quickText, sendMessage, setRole, shareTour, useRide, type Member, type Role } from '@/lib/group/ride';
 import { createHandoff, fetchHandoff } from '@/lib/handoff';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 import { formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
-import { t } from '@/i18n';
+import { numberLocale, t, tr } from '@/i18n';
 
-const ROLE_LABEL: Record<Role, string> = { lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Teilnehmer' };
+const ROLE_LABEL: Record<Role, string> = { lead: tr('Lead'), schluss: tr('Schlusslicht'), mitfahrer: tr('Teilnehmer') };
 const EMPTY_TOUR: Tour = { name: '', laenge_km: 0, wegpunkte: [], linie: [], warnungen: [] };
 
 export default function Gruppe() {
@@ -94,7 +94,7 @@ function Active() {
       setActiveTour(h.tour, h.profile, h.avoid ?? DEFAULT_AVOID);
       router.push('/karte');
     } catch (e) {
-      setTourError(e instanceof Error ? e.message : 'Die Tour konnte nicht geladen werden.');
+      setTourError(e instanceof Error ? e.message : tr('Die Tour konnte nicht geladen werden.'));
     } finally {
       setLoadingTour(false);
     }
@@ -106,7 +106,7 @@ function Active() {
     try {
       shareTour(await createHandoff(active.tour, active.profile, active.avoid));
     } catch (e) {
-      setTourError(e instanceof Error ? e.message : 'Die Tour konnte nicht geteilt werden.');
+      setTourError(e instanceof Error ? e.message : tr('Die Tour konnte nicht geteilt werden.'));
     } finally {
       setLoadingTour(false);
     }
@@ -139,11 +139,11 @@ function Active() {
       <View style={styles.gapXs}>
         <AppText variant="label">{t('Gruppenfahrt')}</AppText>
         <AppText style={styles.title} numberOfLines={2}>
-          {ride.name ?? (ride.code ? `Fahrt ${ride.code.toUpperCase()}` : active?.tour.name || 'Gruppenfahrt')}
+          {ride.name ?? (ride.code ? tr('Fahrt {v0}', { v0: ride.code.toUpperCase() }) : active?.tour.name || tr('Gruppenfahrt'))}
         </AppText>
         <AppText variant="caption" muted>
-          Du bist {ROLE_LABEL[ride.myRole]}
-          {ride.status === 'verbinde' ? ', verbinde …' : `, ${ride.members.length} in der Gruppe`}
+          {tr('Du bist ')}{ROLE_LABEL[ride.myRole]}
+          {ride.status === 'verbinde' ? ', verbinde …' : tr(', {length} in der Gruppe', { length: ride.members.length })}
         </AppText>
       </View>
 
@@ -164,7 +164,7 @@ function Active() {
       {/* auch bei Fahrten mit Einladung darf die Lead eine neue Tour schicken (Simulation 10.11., G8) */}
       {isLead && hasTour && !ride.tourCode && (
         <Pressable accessibilityRole="button" onPress={shareActiveTour} disabled={loadingTour} style={styles.secondary}>
-          <AppText style={styles.secondaryText}>Tour „{active!.tour.name}“ mit allen teilen</AppText>
+          <AppText style={styles.secondaryText}>{tr('Tour „')}{active!.tour.name}{tr('“ mit allen teilen')}</AppText>
         </Pressable>
       )}
       {hasTour && (
@@ -182,13 +182,13 @@ function Active() {
         <View style={styles.chips}>
           {QUICK_MESSAGES.map((m) => (
             <Pressable key={m} accessibilityRole="button" onPress={() => sendMessage(m)} style={({ pressed }) => [styles.msgChip, pressed && styles.pressed]}>
-              <AppText style={styles.msgChipText}>{m}</AppText>
+              <AppText style={styles.msgChipText}>{quickText(m)}</AppText>
             </Pressable>
           ))}
         </View>
         {ride.messages.slice(0, 5).map((m) => (
           <AppText key={m.id} variant="caption" muted={m.from === ride.me?.id}>
-            {new Date(m.at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} {m.from === ride.me?.id ? 'Du' : m.name}: {m.text}
+            {new Date(m.at).toLocaleTimeString(numberLocale(), { hour: '2-digit', minute: '2-digit' })} {m.from === ride.me?.id ? t('Du') : m.name}: {quickText(m.text)}
           </AppText>
         ))}
       </View>
@@ -211,9 +211,9 @@ function Active() {
       {/* Gefährliches fragt immer nach (Prinzip 2, Prüfung 11.11.): ein Fehltipp beendete sonst die Fahrt für alle */}
       <ConfirmSheet
         visible={askOpen}
-        title={ask === 'end' ? 'Möchtest du die Fahrt wirklich für alle beenden?' : 'Möchtest du die Fahrt wirklich verlassen?'}
-        text={ask === 'end' ? 'Alle Teilnehmer verlieren die Live Karte und den Funk.' : 'Die Gruppe sieht dich dann nicht mehr auf der Karte. Du kannst später wieder mitfahren.'}
-        confirmLabel={ask === 'end' ? 'Beenden' : 'Verlassen'}
+        title={ask === 'end' ? tr('Möchtest du die Fahrt wirklich für alle beenden?') : tr('Möchtest du die Fahrt wirklich verlassen?')}
+        text={ask === 'end' ? tr('Alle Teilnehmer verlieren die Live Karte und den Funk.') : tr('Die Gruppe sieht dich dann nicht mehr auf der Karte. Du kannst später wieder mitfahren.')}
+        confirmLabel={ask === 'end' ? tr('Beenden') : tr('Verlassen')}
         onConfirm={() => (ask === 'end' ? void end() : void leaveRide())}
         onClose={() => setAsk(null)}
       />
@@ -233,14 +233,14 @@ function MemberRow({ m, me, myPos, now, canAssign }: { m: Member; me: boolean; m
           {me ? ' (du)' : ''}
         </AppText>
         <AppText variant="caption" muted>
-          {[ROLE_LABEL[m.role], m.car, dist != null ? `${formatKm(dist, dist < 10 ? 1 : 0)} km entfernt` : null, ago == null ? 'noch keine Position' : ago > 60 ? `vor ${Math.round(ago / 60)} min` : null]
+          {[ROLE_LABEL[m.role], m.car, dist != null ? tr('{v0} km entfernt', { v0: formatKm(dist, dist < 10 ? 1 : 0) }) : null, ago == null ? tr('noch keine Position') : ago > 60 ? tr('vor {v0} min', { v0: Math.round(ago / 60) }) : null]
             .filter(Boolean)
             .join(', ')}
         </AppText>
       </View>
       {canAssign && (
         <Pressable accessibilityRole="button" onPress={() => setRole(m.id, m.role === 'schluss' ? 'mitfahrer' : 'schluss')} style={styles.roleBtn}>
-          <AppText variant="caption">{m.role === 'schluss' ? 'Kein Schluss' : 'Schlusslicht'}</AppText>
+          <AppText variant="caption">{m.role === 'schluss' ? tr('Kein Schluss') : tr('Schlusslicht')}</AppText>
         </Pressable>
       )}
     </View>

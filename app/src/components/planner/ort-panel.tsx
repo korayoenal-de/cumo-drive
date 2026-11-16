@@ -80,7 +80,7 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
     <Pressable
       key={h.id}
       accessibilityRole="button"
-      accessibilityLabel={`${h.name}, ${formatKm(h.distM / 1000)} Kilometer entfernt, als neuen Ort setzen`}
+      accessibilityLabel={t('{name}, {v1} Kilometer entfernt, als neuen Ort setzen', { name: h.name, v1: formatKm(h.distM / 1000) })}
       onPress={() => onPick(h.p, h.name)}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
       <View style={styles.icon}>
@@ -139,7 +139,7 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
           <AppText style={[styles.muted, styles.pad]}>{t('Lässt sich gerade nicht laden.')}</AppText>
         ) : list.length === 0 ? (
           <AppText style={[styles.muted, styles.pad]}>
-            {kind === 'hotel' ? `Keine ${meta.plural} in der Nähe.` : `Hier haben wir noch keine empfohlenen ${meta.plural}. Über die Suche findest du jedes ${meta.one}.`}
+            {kind === 'hotel' ? t('Keine {plural} in der Nähe.', { plural: meta.plural }) : t('Hier haben wir noch keine empfohlenen {plural}. Über die Suche findest du jedes {one}.', { plural: meta.plural, one: meta.one })}
           </AppText>
         ) : (
           // Schlicht aufgelistet, die Zahl steht in der Überschrift (Koray 9.11.)
@@ -148,7 +148,7 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
             <AppText style={styles.label}>
               {kind === 'hotel'
                 ? `${list.length} ${list.length === 1 ? meta.one : meta.plural} in ${name}`
-                : `${list.length} ${list.length === 1 ? 'empfohlenes Restaurant' : `empfohlene ${meta.plural}`} in ${name}`}
+                : `${list.length} ${list.length === 1 ? t('empfohlenes Restaurant') : t('empfohlene {plural}', { plural: meta.plural })} in ${name}`}
             </AppText>
             <View style={styles.group}>{list.map(row)}</View>
           </View>

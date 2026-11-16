@@ -46,7 +46,7 @@ export function PointMenu({ menu, onPick, onClose }: { menu: PointMenuState | nu
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('Menü schließen')} />
-      <View style={[styles.menu, { top, right: Spacing.xl }]} accessibilityViewIsModal accessibilityLabel={`Aktionen für ${menu.name}`}>
+      <View style={[styles.menu, { top, right: Spacing.xl }]} accessibilityViewIsModal accessibilityLabel={t('Aktionen für {name}', { name: menu.name })}>
         {main.map((a, i) => (
           <Animated.View key={a} entering={softEnter(i)}>
             <Pressable accessibilityRole="button" onPress={() => onPick(a)} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>

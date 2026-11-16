@@ -16,6 +16,7 @@ import { clock, type Ausfahrt } from './ausfahrten';
 import { pushStatus } from './push';
 import type { LatLon } from './tour';
 import { DEFAULT_AVOID, route } from './valhalla';
+import { t } from '@/i18n';
 
 const PREFIX = 'ride-';
 
@@ -112,8 +113,8 @@ export async function syncRideReminders(rides: Ausfahrt[], _home?: LatLon | null
       identifier: `${PREFIX}${r.id}-los`,
       content:
         min != null
-          ? { title: `In 15 Minuten losfahren: ${r.name}`, body: `Von deinem Standort etwa ${min} Minuten zum Treffpunkt, Start ${clock(r.startsAt)} Uhr${where}.`, data }
-          : { title: `Heute ${clock(r.startsAt)} Uhr: ${r.name}`, body: `Treffpunkt${where || ' am Start der Tour'}. Tippe für deine Anfahrt.`, data },
+          ? { title: t('In 15 Minuten losfahren: {name}', { name: r.name }), body: t('Von deinem Standort etwa {min} Minuten zum Treffpunkt, Start {v1} Uhr{where}.', { min, v1: clock(r.startsAt), where }), data }
+          : { title: t('Heute {v0} Uhr: {name}', { v0: clock(r.startsAt), name: r.name }), body: t('Treffpunkt{v0}. Tippe für deine Anfahrt.', { v0: where || ' am Start der Tour' }), data },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
     });
   }

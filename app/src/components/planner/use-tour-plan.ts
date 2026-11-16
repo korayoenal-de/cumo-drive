@@ -18,7 +18,7 @@ import { type Avoid } from '@/lib/valhalla';
 import { showToast } from '@/lib/toast';
 
 import { fitLegs, keyOf, type LegProfile, type PointKind } from './planner-shared';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 
 export type TourPlan = ReturnType<typeof useTourPlan>;
@@ -97,7 +97,7 @@ export function useTourPlan(onPlanned?: () => void) {
   const [ziel, setZiel] = useState<LatLon | null>(null);
   const [legProfiles, setLegProfiles] = useState<LegProfile[]>([null]);
   const [names, setNames] = useState<Record<string, string>>({});
-  const [name, setName] = useState('Neue Tour');
+  const [name, setName] = useState(tr('Neue Tour'));
   const [planned, setPlanned] = useState<PlannedTour | null>(null);
   const [step, setStep] = useState<PlanStep | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -163,7 +163,7 @@ export function useTourPlan(onPlanned?: () => void) {
       if (!r) continue;
       const probe = r.line.filter((_, i) => i % 2 === 0);
       const hit = probe.filter((q) => line.some((x) => haversine(x, q) < 150)).length;
-      if (probe.length && hit / probe.length < 0.7) return `${r.name} liegt nur zum Teil auf deiner Route. Verschieb den Punkt davor oder danach etwas.`;
+      if (probe.length && hit / probe.length < 0.7) return tr('{name} liegt nur zum Teil auf deiner Route. Verschieb den Punkt davor oder danach etwas.', { name: r.name });
     }
     return null;
   }
@@ -218,7 +218,7 @@ export function useTourPlan(onPlanned?: () => void) {
           xProf.push(profiles[i]);
         }
       });
-      const nm = tourName.trim() || 'Neue Tour';
+      const nm = tourName.trim() || tr('Neue Tour');
       const onStep = (st: PlanStep) => !ctrl.signal.aborted && setStep(st);
       // herausgenommene Pässe gehören zum Schlüssel: ändert sich die Liste, wird nichts wiederverwendet
       const avoidKey = `${JSON.stringify(avoid)}|${avoidedKey()}`;
@@ -245,7 +245,7 @@ export function useTourPlan(onPlanned?: () => void) {
       if (ctrl.signal.aborted) return;
       const err = toPlanError(e, ctrl.signal);
       setPlanned(null);
-      setError(err.kind === 'network' ? err.message : 'Für diese Punkte hat der Routenplaner keine Strecke gefunden. Verschieb einen Punkt etwas oder nimm ein anderes Profil.');
+      setError(err.kind === 'network' ? err.message : tr('Für diese Punkte hat der Routenplaner keine Strecke gefunden. Verschieb einen Punkt etwas oder nimm ein anderes Profil.'));
     } finally {
       if (abort.current === ctrl) setStep(null);
     }
@@ -391,7 +391,7 @@ export function useTourPlan(onPlanned?: () => void) {
         if (!opts.quiet) showToast(`${copy.name} gespeichert`);
         return copy.id;
       } catch (e) {
-        showToast(`Speichern hat nicht geklappt: ${e instanceof Error ? e.message : String(e)}`, { tone: 'error' });
+        showToast(tr('Speichern hat nicht geklappt: {v0}', { v0: e instanceof Error ? e.message : String(e) }), { tone: 'error' });
         return null;
       }
     }
@@ -409,12 +409,12 @@ export function useTourPlan(onPlanned?: () => void) {
       if (asName != null) setName(asName);
       void syncLibrary();
       setSaveMsg(null);
-      if (!opts?.quiet) showToast(t('Unter Touren gespeichert'), { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
+      if (!opts?.quiet) showToast(t('Unter Touren gespeichert'), { action: { label: tr('Ansehen'), onPress: () => router.navigate('/touren') } });
       return saved.id;
     } catch (e) {
       setSaveMsg(null);
       if (opts?.quiet) throw e;
-      showToast(`Speichern hat nicht geklappt: ${e instanceof Error ? e.message : String(e)}`, { tone: 'error' });
+      showToast(tr('Speichern hat nicht geklappt: {v0}', { v0: e instanceof Error ? e.message : String(e) }), { tone: 'error' });
       return null;
     } finally {
       setSaving(false);
@@ -437,7 +437,7 @@ export function useTourPlan(onPlanned?: () => void) {
     setLoaded(null);
     setFolder('');
     setSaveMsg(null);
-    setName('Neue Tour');
+    setName(tr('Neue Tour'));
     // Tour geschlossen: auch die Herkunft der Zurück Navigation vergessen
     clearEditOrigin();
   }

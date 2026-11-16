@@ -16,7 +16,7 @@ import { Section, Toggle } from './web-parts';
 import { BODY, C, DISPLAY } from './web-shared';
 import { S } from './web-styles';
 import { ConfirmSheet, Field, MoreMenu, pillBtn, ViewTitle, WebSheet, XIcon } from './web-ui';
-import { t } from '@/i18n';
+import { decimal, t, tr } from '@/i18n';
 
 export function SettingsPanel(props: { narrow: boolean }) {
   return (
@@ -72,7 +72,7 @@ function CommunityProfileWeb() {
       await savePrivacy(patch);
     } catch (e) {
       setP(prev);
-      setErr(e instanceof Error ? e.message : 'Speichern hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : tr('Speichern hat nicht geklappt.'));
     } finally {
       setBusy(false);
     }
@@ -84,7 +84,7 @@ function CommunityProfileWeb() {
         <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.m }}>
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <span style={S.metricLabel}>{t('Wohnort')}</span>
-            <span style={{ font: `700 17px ${BODY}` }}>{p.homeName ?? 'Noch nicht angegeben'}</span>
+            <span style={{ font: `700 17px ${BODY}` }}>{p.homeName ?? tr('Noch nicht angegeben')}</span>
           </div>
           <button
             style={{ ...S.secondaryOnSurface, flex: 'none' }}
@@ -93,7 +93,7 @@ function CommunityProfileWeb() {
               setFound([]);
               setEditing(true);
             }}>
-            {p.homeName ? 'Ändern' : 'Anlegen'}
+            {p.homeName ? tr('Ändern') : tr('Anlegen')}
           </button>
         </div>
       ) : (
@@ -125,7 +125,7 @@ function CommunityProfileWeb() {
                 setEditing(false);
                 void save({ homeName: null, home: null });
               }}>
-              Wohnort entfernen
+              {tr('Wohnort entfernen')}
             </button>
           ) : null}
         </div>
@@ -150,7 +150,7 @@ function GarageWeb(props: { narrow: boolean }) {
       {!list.length ? <span style={S.muted}>{t('Noch kein Fahrzeug. Mit Breite und Bodenfreiheit prüfen wir Engstellen und Schwellen für dein Auto.')}</span> : null}
       {list.map((v) => {
         const on = current?.id === v.id;
-        const facts = [v.widthM ? `${String(v.widthM).replace('.', ',')} m breit` : null, v.clearanceCm ? `${v.clearanceCm} cm Bodenfreiheit` : null, v.rangeKm ? `${v.rangeKm} km Reichweite` : null].filter(Boolean).join(', ');
+        const facts = [v.widthM ? tr('{w} m breit', { w: decimal(String(v.widthM)) }) : null, v.clearanceCm ? tr('{clearanceCm} cm Bodenfreiheit', { clearanceCm: v.clearanceCm }) : null, v.rangeKm ? tr('{rangeKm} km Reichweite', { rangeKm: v.rangeKm }) : null].filter(Boolean).join(', ');
         return (
           <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: Spacing.m }}>
             <button
@@ -162,12 +162,12 @@ function GarageWeb(props: { narrow: boolean }) {
                 {on ? <span style={{ width: 10, height: 10, borderRadius: 5, background: C.signal }} /> : null}
               </span>
               <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                <span style={{ font: `700 17px ${BODY}` }}>{vehicleName(v) || 'Fahrzeug'}</span>
+                <span style={{ font: `700 17px ${BODY}` }}>{vehicleName(v) || tr('Fahrzeug')}</span>
                 {facts ? <span style={{ font: `600 15px ${BODY}`, color: C.muted }}>{facts}</span> : null}
               </span>
             </button>
             <MoreMenu
-              label={`Optionen für ${vehicleName(v) || 'Fahrzeug'}`}
+              label={tr('Optionen für {v0}', { v0: vehicleName(v) || tr('Fahrzeug') })}
               onSurface
               items={[
                 { key: 'edit', label: t('Bearbeiten'), onPress: () => setEdit(v) },
@@ -178,14 +178,14 @@ function GarageWeb(props: { narrow: boolean }) {
         );
       })}
       <button style={{ ...S.secondaryOnSurface, flex: 'none', alignSelf: 'flex-start' }} onClick={() => setEdit(newVehicle())}>
-        Fahrzeug hinzufügen
+        {tr('Fahrzeug hinzufügen')}
       </button>
       {edit ? <VehicleSheet v={edit} narrow={props.narrow} onClose={() => setEdit(null)} /> : null}
       {del ? (
         <ConfirmSheet
           narrow={props.narrow}
           title={t('Möchtest du dieses Fahrzeug wirklich löschen?')}
-          text={`${vehicleName(del) || 'Fahrzeug'} verschwindet aus deiner Garage, auch in der App.`}
+          text={tr('{v0} verschwindet aus deiner Garage, auch in der App.', { v0: vehicleName(del) || tr('Fahrzeug') })}
           confirmLabel={t('Löschen')}
           onClose={() => setDel(null)}
           onConfirm={() => {
@@ -214,7 +214,7 @@ function VehicleSheet(props: { v: Vehicle; narrow: boolean; onClose: () => void 
   const [range, setRange] = useState(str(v.rangeKm));
   const isNew = !v.model && !v.brand;
   return (
-    <WebSheet narrow={props.narrow} title={isNew ? 'Fahrzeug hinzufügen' : 'Fahrzeug bearbeiten'} subtitle={t('Gilt auch in der App, Breite und Bodenfreiheit fließen in den Etappen Check.')} onClose={props.onClose}>
+    <WebSheet narrow={props.narrow} title={isNew ? tr('Fahrzeug hinzufügen') : tr('Fahrzeug bearbeiten')} subtitle={t('Gilt auch in der App, Breite und Bodenfreiheit fließen in den Etappen Check.')} onClose={props.onClose}>
       <form
         style={{ display: 'flex', flexDirection: 'column', gap: Spacing.l }}
         onSubmit={(e) => {
@@ -231,7 +231,7 @@ function VehicleSheet(props: { v: Vehicle; narrow: boolean; onClose: () => void 
           <Field id="v-range" label={t('Reichweite km')} placeholder="450" value={range} onChange={setRange} max={4} />
         </div>
         <button type="submit" style={{ ...pillBtn, flex: 'none', background: C.signal, color: '#fff' }} disabled={!model.trim() && !brand.trim()}>
-          Fertig
+          {tr('Fertig')}
         </button>
       </form>
     </WebSheet>
@@ -252,7 +252,7 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
   const hint = parsed && 'hint' in parsed ? parsed.hint : null;
   const canSave = !!iso && (digits !== saved || show !== p.birthdayShow);
   const age = ageOf(p.birthDate);
-  const sees = p.birthdayShow === 'age' ? (age != null ? `${age} Jahre` : null) : p.birthdayShow === 'birthday' ? 'nur am Geburtstag' : 'nichts';
+  const sees = p.birthdayShow === 'age' ? (age != null ? `${age} Jahre` : null) : p.birthdayShow === 'birthday' ? tr('nur am Geburtstag') : 'nichts';
   const doSave = () => {
     if (!canSave || !iso) return;
     setOpen(false);
@@ -264,8 +264,8 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
       <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.m }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span style={S.metricLabel}>{t('Geburtstag')}</span>
-          <span style={{ font: `700 17px ${BODY}`, color: p.birthDate ? C.text : C.muted }}>{p.birthDate ? fmt(saved) : 'Nicht angegeben'}</span>
-          {p.birthDate && sees ? <span style={S.muted}>Drivers sieht: {sees}</span> : null}
+          <span style={{ font: `700 17px ${BODY}`, color: p.birthDate ? C.text : C.muted }}>{p.birthDate ? fmt(saved) : tr('Nicht angegeben')}</span>
+          {p.birthDate && sees ? <span style={S.muted}>{tr('Drivers sieht: ')}{sees}</span> : null}
         </div>
         <button
           style={{ ...S.secondaryOnSurface, flex: 'none' }}
@@ -274,7 +274,7 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
             setShow(p.birthdayShow);
             setOpen(true);
           }}>
-          {p.birthDate ? 'Ändern' : 'Anlegen'}
+          {p.birthDate ? tr('Ändern') : tr('Anlegen')}
         </button>
       </div>
     );
@@ -298,7 +298,7 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
         onKeyDown={(e) => e.key === 'Enter' && doSave()}
         style={{ ...S.search, height: 52, background: C.surface2, maxWidth: 220, font: `400 22px ${DISPLAY}`, letterSpacing: '0.04em', fontVariantNumeric: 'tabular-nums' }}
       />
-      <span style={hint ? S.errorText : S.muted}>{hint ?? 'Das Datum selbst sieht niemand.'}</span>
+      <span style={hint ? S.errorText : S.muted}>{hint ?? tr('Das Datum selbst sieht niemand.')}</span>
       <span style={S.metricLabel}>{t('Sichtbar in Drivers')}</span>
       <div style={S.chips} role="radiogroup" aria-label={t('Sichtbar in Drivers')}>
         {SHOW_WEB.map((o) => {
@@ -317,7 +317,7 @@ function BirthdayWeb(props: { p: Privacy; onSave: (patch: Partial<Privacy>) => v
       </div>
       <div style={{ display: 'flex', gap: Spacing.s, alignItems: 'center' }}>
         <button disabled={!canSave} onClick={doSave} style={{ ...S.primary, opacity: canSave ? 1 : 0.4, cursor: canSave ? 'pointer' : 'default' }}>
-          Speichern
+          {tr('Speichern')}
         </button>
         {p.birthDate ? (
           <button

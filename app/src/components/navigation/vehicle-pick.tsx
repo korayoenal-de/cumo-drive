@@ -34,16 +34,16 @@ export function VehiclePick({ list, current }: { list: Vehicle[]; current: Vehic
         <Car v={cur} size={44} />
         <View style={styles.flex}>
           <AppText variant="caption" muted>{t('Du fährst')}</AppText>
-          <AppText style={styles.name} numberOfLines={1}>{vehicleName(cur) || 'Fahrzeug'}</AppText>
+          <AppText style={styles.name} numberOfLines={1}>{vehicleName(cur) || t('Fahrzeug')}</AppText>
         </View>
         {others.length > 0 && (
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ expanded: open }}
-            accessibilityLabel={open ? 'Fahrzeugwahl schließen' : 'Fahrzeug wechseln'}
+            accessibilityLabel={open ? t('Fahrzeugwahl schließen') : t('Fahrzeug wechseln')}
             onPress={() => setOpen((o) => !o)}
             style={({ pressed }) => [styles.btn, pressed && styles.pressed]}>
-            <AppText style={styles.btnText}>{open ? 'Fertig' : 'Wechseln'}</AppText>
+            <AppText style={styles.btnText}>{open ? t('Fertig') : t('Wechseln')}</AppText>
           </Pressable>
         )}
       </View>
@@ -60,7 +60,7 @@ export function VehiclePick({ list, current }: { list: Vehicle[]; current: Vehic
               }}
               style={({ pressed }) => [styles.option, pressed && styles.pressed]}>
               <Car v={v} size={36} />
-              <AppText style={styles.optionText} numberOfLines={1}>{vehicleName(v) || 'Fahrzeug'}</AppText>
+              <AppText style={styles.optionText} numberOfLines={1}>{vehicleName(v) || t('Fahrzeug')}</AppText>
             </Pressable>
           </Animated.View>
         ))}

@@ -7,6 +7,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 
 import { signUp } from './auth';
 import { supabase } from './supabase';
+import { t } from '@/i18n';
 
 export type MyProfile = { id: string; displayName: string | null; car: string | null };
 export type FoundProfile = { id: string; displayName: string; car: string | null };
@@ -23,9 +24,9 @@ export function cleanName(n: string): string {
 /** Fehlertext für einen Namen, oder null wenn er die Form erfüllt (frei ist er damit noch nicht). */
 export function nameProblem(raw: string): string | null {
   const n = cleanName(raw);
-  if (n.length < NAME_MIN) return `Der Name braucht mindestens ${NAME_MIN} Zeichen.`;
-  if (n.length > NAME_MAX) return `Der Name hat höchstens ${NAME_MAX} Zeichen.`;
-  if (!NAME_RE.test(n)) return 'Erlaubt sind Buchstaben, Ziffern, Leerzeichen, Punkt und Unterstrich.';
+  if (n.length < NAME_MIN) return t('Der Name braucht mindestens {NAME_MIN} Zeichen.', { NAME_MIN });
+  if (n.length > NAME_MAX) return t('Der Name hat höchstens {NAME_MAX} Zeichen.', { NAME_MAX });
+  if (!NAME_RE.test(n)) return t('Erlaubt sind Buchstaben, Ziffern, Leerzeichen, Punkt und Unterstrich.');
   return null;
 }
 

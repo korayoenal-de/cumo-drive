@@ -11,6 +11,7 @@ import { searchAddress } from '@/lib/address-search';
 import { type PlanStep } from '@/lib/plan';
 import { resample } from '@/lib/stats';
 import { haversine, PROFILES, type LatLon, type Profile, type Tour } from '@/lib/tour';
+import { tr } from '@/i18n';
 
 export const WARN = Colors.warn;
 
@@ -99,11 +100,11 @@ export function roughDetourKm(pts: LatLon[], p: LatLon): number | null {
 /* Tour von Hand */
 
 export const STEP_TEXT: Record<PlanStep, string> = {
-  route: 'Route wird berechnet',
-  traffic: 'Verkehrsmeldungen werden geprüft',
-  compare: 'Beste Variante wird gewählt',
-  check: 'Etappen Check läuft',
-  fix: 'Gesperrte Stellen werden umfahren',
+  route: tr('Route wird berechnet'),
+  traffic: tr('Verkehrsmeldungen werden geprüft'),
+  compare: tr('Beste Variante wird gewählt'),
+  check: tr('Etappen Check läuft'),
+  fix: tr('Gesperrte Stellen werden umfahren'),
 };
 
 export const keyOf = (p: LatLon) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`;

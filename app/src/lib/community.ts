@@ -7,6 +7,7 @@ import { dropLocalTour, fromCommunity, markUnpublished, patchTour, saveTour, syn
 import { logSignal } from './signals';
 import { supabase } from './supabase';
 import type { Profile } from './tour';
+import { tr } from '@/i18n';
 
 export type CommunityTour = {
   id: string;
@@ -41,7 +42,7 @@ export const loadCommunityTour = loadCloudTour;
 /** Fester Zusatz, wenn eine abgewandelte Community Route veröffentlicht wird: die Herkunft bleibt sichtbar */
 export function creditLine(t: Pick<SavedTour, 'author' | 'folder' | 'published'>): string | null {
   if (!fromCommunity(t)) return null;
-  return t.author ? `Nach einer Route von ${t.author}.` : 'Nach einer Route aus der Community.';
+  return t.author ? tr('Nach einer Route von {author}.', { author: t.author }) : tr('Nach einer Route aus der Community.');
 }
 
 export async function publishTour(t: SavedTour, author: string, description: string): Promise<string> {

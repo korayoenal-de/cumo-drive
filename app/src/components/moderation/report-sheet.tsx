@@ -11,7 +11,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { blockUser, REASONS, reportContent, type ReportKind, type ReportReason } from '@/lib/moderation';
 import { showToast } from '@/lib/toast';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 export function ReportSheet(props: {
   visible: boolean;
@@ -43,13 +43,13 @@ export function ReportSheet(props: {
       setTimeout(
         () =>
           showToast(
-            'Danke, wir schauen es uns an.',
-            userId ? { action: { label: `${name ?? 'Fahrer'} blockieren`, onPress: () => void blockUser(userId).then(() => showToast(`${name ?? 'Fahrer'} ist blockiert`)) } } : {},
+            tr('Danke, wir schauen es uns an.'),
+            userId ? { action: { label: `${name ?? tr('Fahrer')} blockieren`, onPress: () => void blockUser(userId).then(() => showToast(tr('{v0} ist blockiert', { v0: name ?? tr('Fahrer') }))) } } : {},
           ),
         SHEET_GONE_MS,
       );
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : tr('Das hat nicht geklappt.'));
     } finally {
       setBusy(false);
     }
@@ -91,14 +91,14 @@ export function BlockSheet({ visible, userId, name, onClose, onDone }: { visible
   return (
     <ConfirmSheet
       visible={visible}
-      title={`Möchtest du ${name} blockieren?`}
-      text={`${name} kann dir dann nicht mehr schreiben und ihr seht euch nicht mehr unter Drivers. ${name} erfährt davon nichts. Aufheben kannst du das in den Einstellungen.`}
+      title={tr('Möchtest du {name} blockieren?', { name })}
+      text={tr('{name} kann dir dann nicht mehr schreiben und ihr seht euch nicht mehr unter Drivers. {name2} erfährt davon nichts. Aufheben kannst du das in den Einstellungen.', { name, name2: name })}
       confirmLabel={t('Blockieren')}
       onClose={onClose}
       onConfirm={() => {
         blockUser(userId)
           .then(() => {
-            setTimeout(() => showToast(`${name} ist blockiert`), SHEET_GONE_MS);
+            setTimeout(() => showToast(tr('{name} ist blockiert', { name })), SHEET_GONE_MS);
             onDone?.();
           })
           .catch((e: Error) => showToast(e.message, { tone: 'error' }));

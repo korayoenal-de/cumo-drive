@@ -51,16 +51,16 @@ export default function SharedTour() {
           <>
             <View style={{ gap: 6 }}>
               <AppText variant="caption" muted>
-                Geteilte Tour
+                {t('Geteilte Tour')}
               </AppText>
               <AppText variant="display" style={styles.title}>
                 {tour.name}
               </AppText>
               <AppText muted>
-                Profil{" "}
+                {t('Profil')}{" "}
                 {PROFILES.find((p) => p.id === tour.profile)?.label ??
                   tour.profile}
-                , {tour.waypoints ? `${tour.waypoints.length} Punkte` : `${tour.points.length} Stützpunkte`}
+                , {tour.waypoints ? `${tour.waypoints.length} Punkte` : t('{length} Stützpunkte', { length: tour.points.length })}
               </AppText>
             </View>
             <Pressable
@@ -73,7 +73,7 @@ export default function SharedTour() {
               <AppText style={styles.primaryText}>{t('In CUMO DRIVE öffnen')}</AppText>
             </Pressable>
             <AppText variant="caption" muted>
-              Öffnet die Route in deiner CUMO DRIVE App. Sie plant die Strecke neu, prüft sie mit dem Etappen Check und legt sie in den Planer. Dort speicherst du sie mit dem Lesezeichen.
+              {t('Öffnet die Route in deiner CUMO DRIVE App. Sie plant die Strecke neu, prüft sie mit dem Etappen Check und legt sie in den Planer. Dort speicherst du sie mit dem Lesezeichen.')}
             </AppText>
           </>
         ) : short && full === undefined ? (
@@ -82,8 +82,7 @@ export default function SharedTour() {
           <>
             <AppText variant="title">{t('Kein gültiger Tour Code.')}</AppText>
             <AppText muted>
-              Im Web Planer bei einer Tour auf „An die App senden“ klicken und
-              den neuen QR Code scannen.
+              {t('Im Web Planer bei einer Tour auf „An die App senden“ klicken und den neuen QR Code scannen.')}
             </AppText>
           </>
         )}

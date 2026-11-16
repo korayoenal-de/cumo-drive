@@ -9,6 +9,7 @@ import { photonFetch } from '../photon';
 import { haversine, type LatLon } from '../tour';
 import { pointAtKm } from './tracker';
 import type { Maneuver, ManeuverKind, NavRoute } from './types';
+import { t } from '@/i18n';
 
 /** So weit voraus wird ein Ort gesucht, in diesen Schritten */
 const PROBE_KM = [1.2, 2.8, 4.5, 7, 10];
@@ -16,21 +17,21 @@ const PROBE_KM = [1.2, 2.8, 4.5, 7, 10];
 const ON_ROUTE_M = 1200;
 
 const BASE: Partial<Record<ManeuverKind, string>> = {
-  links: 'Links abbiegen',
-  rechts: 'Rechts abbiegen',
-  leicht_links: 'Leicht links halten',
-  leicht_rechts: 'Leicht rechts halten',
-  scharf_links: 'Scharf links abbiegen',
-  scharf_rechts: 'Scharf rechts abbiegen',
-  links_halten: 'Links halten',
-  rechts_halten: 'Rechts halten',
+  links: t('Links abbiegen'),
+  rechts: t('Rechts abbiegen'),
+  leicht_links: t('Leicht links halten'),
+  leicht_rechts: t('Leicht rechts halten'),
+  scharf_links: t('Scharf links abbiegen'),
+  scharf_rechts: t('Scharf rechts abbiegen'),
+  links_halten: t('Links halten'),
+  rechts_halten: t('Rechts halten'),
   abfahrt: 'Abfahren',
-  abfahrt_links: 'Links abfahren',
-  abfahrt_rechts: 'Rechts abfahren',
+  abfahrt_links: t('Links abfahren'),
+  abfahrt_rechts: t('Rechts abfahren'),
   auffahrt: 'Auffahren',
-  auffahrt_links: 'Links auffahren',
-  auffahrt_rechts: 'Rechts auffahren',
-  kreisverkehr: 'In den Kreisverkehr',
+  auffahrt_links: t('Links auffahren'),
+  auffahrt_rechts: t('Rechts auffahren'),
+  kreisverkehr: t('In den Kreisverkehr'),
 };
 
 /** Braucht dieses Manöver einen Ort? Nicht, wenn der Wegweiser schon einen nennt */
@@ -96,8 +97,8 @@ export function withToward(m: Maneuver, town: string): Maneuver {
     return {
       ...m,
       toward: town,
-      text: `Kreisverkehr, ${m.exit}. Ausfahrt Richtung ${town}`,
-      speech: `In den Kreisverkehr fahren und die ${m.exit}. Ausfahrt nehmen, Richtung ${town}.`,
+      text: t('Kreisverkehr, {exit}. Ausfahrt Richtung {town}', { exit: m.exit, town }),
+      speech: t('In den Kreisverkehr fahren und die {exit}. Ausfahrt nehmen, Richtung {town}.', { exit: m.exit, town }),
     };
   }
   return { ...m, toward: town, text: `${base} Richtung ${town}`, speech: `${base}, Richtung ${town}.` };

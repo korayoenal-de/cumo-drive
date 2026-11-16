@@ -15,7 +15,7 @@ import { setActiveTour } from '@/lib/active-tour';
 import { avoidSetting } from '@/lib/avoid-settings';
 import { planChecked } from '@/lib/plan';
 import type { LatLon } from '@/lib/tour';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 type Way = 'schnell' | 'kurvig';
 
@@ -31,8 +31,8 @@ export async function here(): Promise<LatLon> {
 export async function navigateToMeeting(to: LatLon, place: string, way: Way): Promise<void> {
   const from = await here();
   const avoid = avoidSetting();
-  const t = await planChecked(`Zum Treffpunkt ${place}`, [from, to], way, avoid);
-  setActiveTour({ ...t, name: `Zum Treffpunkt ${place}`, namen: ['Dein Standort', place] }, way, avoid);
+  const t = await planChecked(tr('Zum Treffpunkt {place}', { place }), [from, to], way, avoid);
+  setActiveTour({ ...t, name: tr('Zum Treffpunkt {place}', { place }), namen: [tr('Dein Standort'), place] }, way, avoid);
   router.push('/navigation');
 }
 
@@ -47,7 +47,7 @@ export function MeetingRoute({ to, place, primary = false }: { to: LatLon; place
     try {
       await navigateToMeeting(to, place, way);
     } catch (e) {
-      setErr(e instanceof Error && e.message.length < 120 ? e.message : 'Die Route ließ sich gerade nicht planen. Bitte nochmal versuchen.');
+      setErr(e instanceof Error && e.message.length < 120 ? e.message : tr('Die Route ließ sich gerade nicht planen. Bitte nochmal versuchen.'));
     } finally {
       setBusy(false);
     }

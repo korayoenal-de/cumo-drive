@@ -14,7 +14,7 @@ import { CustomColorButton } from '@/components/garage/custom-color';
 import { CAR_COLORS, CarStagePicker, CarSprite, carLookFor, DEFAULT_LOOK, frameFor } from '@/components/map/car-sprite';
 import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { showToast } from '@/lib/toast';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 /** Garage: alle Fahrzeuge, das aktuelle ist markiert; Tippen öffnet das Formular. */
 export function Garage({ drives }: { drives: Drive[] | null }) {
@@ -50,16 +50,16 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
                   </View>
                 )}
                 <AppText style={[styles.name, styles.flex]} numberOfLines={1}>
-                  {vehicleName(v) || 'Fahrzeug ohne Namen'}
+                  {vehicleName(v) || tr('Fahrzeug ohne Namen')}
                 </AppText>
                 {current?.id === v.id && (
                   <View style={styles.badge}>
                     <AppText variant="caption" style={styles.badgeText}>
-                      Aktuell
+                      {tr('Aktuell')}
                     </AppText>
                   </View>
                 )}
-                <Pressable accessibilityRole="button" accessibilityLabel={`Optionen für ${vehicleName(v) || 'Fahrzeug'}`} onPress={() => setMenu(v)} hitSlop={6} style={styles.more}>
+                <Pressable accessibilityRole="button" accessibilityLabel={tr('Optionen für {v0}', { v0: vehicleName(v) || tr('Fahrzeug') })} onPress={() => setMenu(v)} hitSlop={6} style={styles.more}>
                   <SymbolView name="ellipsis" size={20} tintColor={Colors.text} weight="semibold" />
                 </Pressable>
               </View>
@@ -67,7 +67,7 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
                 <AppText style={styles.stat}>
                   {(() => {
                     const s = statsFor(v);
-                    return s.n ? `${formatKm(s.km, 0)} km in ${s.n} ${s.n === 1 ? 'Tour' : 'Touren'}` : 'Noch keine Fahrt mit diesem Auto';
+                    return s.n ? (s.n === 1 ? tr('{km} km in 1 Tour', { km: formatKm(s.km, 0) }) : tr('{km} km in {n} Touren', { km: formatKm(s.km, 0), n: s.n })) : tr('Noch keine Fahrt mit diesem Auto');
                   })()}
                 </AppText>
               )}
@@ -77,7 +77,7 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
       )}
       <ActionSheet
         visible={!!menu}
-        title={menu?.model.trim() || 'Fahrzeug'}
+        title={menu?.model.trim() || tr('Fahrzeug')}
         subtitle={undefined}
         items={
           menu
@@ -96,7 +96,7 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
       <ConfirmSheet
         visible={!!ask}
         title={t('Möchtest du dieses Fahrzeug wirklich löschen?')}
-        text="Gefahrene Touren bleiben erhalten."
+        text={tr('Gefahrene Touren bleiben erhalten.')}
         confirmLabel={t('Löschen')}
         onConfirm={() => {
           if (ask) void deleteVehicle(ask.id);
@@ -117,7 +117,7 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
             unassigned.reduce((s, d) => s + Number(d.km), 0),
             0,
           )}{' '}
-          km aus {unassigned.length} früheren {unassigned.length === 1 ? 'Fahrt' : 'Fahrten'} ohne Fahrzeug.
+          {tr('km aus ')}{unassigned.length}{tr(' früheren ')}{unassigned.length === 1 ? tr('Fahrt') : tr('Fahrten')}{tr(' ohne Fahrzeug.')}
         </AppText>
       )}
     </View>

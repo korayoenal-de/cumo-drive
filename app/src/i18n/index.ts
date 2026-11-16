@@ -78,10 +78,10 @@ export function useLang(): Lang {
 }
 
 /** Übersetzen; der deutsche Text ist Schlüssel und Rückfall */
-export function t(de: string, vars?: Record<string, string | number>): string {
+export function t(de: string, vars?: Record<string, string | number | null | undefined>): string {
   const raw = lang === 'de' ? de : (DICT[lang][de] ?? de);
   if (!vars) return raw;
-  return raw.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+  return raw.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k] ?? '') : m));
 }
 
 /** Für Tests: Sprache direkt setzen, ohne Speichern */
@@ -110,3 +110,8 @@ export function noteT(de: string): string {
 
 /** Gleich wie t, für Dateien, in denen t schon ein anderer Name ist */
 export const tr = t;
+
+/** Dezimalzeichen der Sprache: 2,5 (de, it) oder 2.5 (en) */
+export function decimal(s: string): string {
+  return lang === 'en' ? s : s.replace('.', ',');
+}

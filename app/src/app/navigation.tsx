@@ -51,7 +51,7 @@ import Animated, { FadeOut, LinearTransition } from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
 import { elevationProfile } from '@/lib/stats';
 import { connectFunk, disconnectFunk, pushToTalk, setFunkListen, setOnlyLead, useFunk } from '@/lib/group/funk';
-import { announceStop, clearStop, endRideForAll, leaveRide, QUICK_MESSAGES, sendMessage, sendPosition, setOwnRoute, shareRoute, STOP_REASONS, useRide } from '@/lib/group/ride';
+import { announceStop, clearStop, endRideForAll, leaveRide, QUICK_MESSAGES, quickText, sendMessage, sendPosition, setOwnRoute, shareRoute, STOP_REASONS, useRide } from '@/lib/group/ride';
 import { createHandoff, fetchHandoff } from '@/lib/handoff';
 import { endLiveEdit, startLiveEdit } from '@/lib/live-edit';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
@@ -59,7 +59,8 @@ import { currentVehicle, useVehicles } from '@/lib/vehicle';
 import { VehiclePick } from '@/components/navigation/vehicle-pick';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
+import { closureNameT } from '@/lib/warning-dedupe';
 
 /** So lange ersetzt die Highlight Ansage die Routenführung */
 // Ansage Karte: 12 s (Koray 16.11.: 5 s war zu kurz); ein nahes Manöver hat immer Vorrang (showHlCard)
@@ -109,7 +110,7 @@ export default function NavigationScreen() {
   const far = toStartKm != null && toStartKm > 30;
   // Keine Wahl Einsteigen oder Startpunkt (Koray 14.11.): bei der Anfahrt zum Treffpunkt und wenn man schon
   // am Start steht (höchstens 300 m, etwa mit "Aktuelle Position" als Start)
-  const noEntryChoice = (toStartKm != null && toStartKm <= 0.3) || !!active?.tour.name.startsWith('Zum Treffpunkt');
+  const noEntryChoice = (toStartKm != null && toStartKm <= 0.3) || !!active?.tour.name.startsWith(tr('Zum Treffpunkt {place}', { place: '' }).trim());
   const [entryTouched, setEntryTouched] = useState(false);
   // weit weg: über den Startpunkt in die ganze Tour (nur zum Start navigieren ist kein Anwendungsfall, Koray 6.11.)
   const effEntry: NavEntry = noEntryChoice ? 'start' : entryTouched ? entry : far ? 'start' : entry;
@@ -154,7 +155,7 @@ export default function NavigationScreen() {
     if (funk.status === 'ruht' && !funkQuietSaid.current) {
       funkQuietSaid.current = true;
       // in der Testphase mit Grund, damit Tester ihn melden können
-      showToast(`Funk gerade nicht verfügbar${funk.error ? ` (${funk.error.slice(0, 80)})` : ''}. Wir versuchen es weiter.`);
+      showToast(tr('Funk gerade nicht verfügbar{v0}. Wir versuchen es weiter.', { v0: funk.error ? ` (${funk.error.slice(0, 80)})` : '' }));
     }
     if (funk.status === 'an') funkQuietSaid.current = false;
     // Mikrofon ging nicht auf (Koray 15.11.): sagen statt still "Du sprichst" zu zeigen
@@ -248,7 +249,7 @@ export default function NavigationScreen() {
     setHlShow({ id: nextHl.id, until: Date.now() + HL_SHOW_MS });
     controls.say(highlightSpeech(nextHl, hlDistM));
     const len = Math.max(1, Math.round(nextHl.endKm - nextHl.startKm));
-    const where = hlDistM > 150 ? `In ${Math.round(hlDistM / 100) * 100} m` : 'Jetzt';
+    const where = hlDistM > 150 ? tr('In {v0} m', { v0: Math.round(hlDistM / 100) * 100 }) : tr('Jetzt');
     // CarPlay: Warnung als erstes Wort der Unterzeile, Text wie am Telefon (Konzept 12.11.)
     const warn = warnLabel(nextHl.warn);
     carPlayAlert(nextHl.name, `${warn ? `${warn} · ` : ''}${where}, ${len} km${nextHl.hairpins >= 3 ? `, ${nextHl.hairpins} Kehren` : ''}`, `fun-${toFunLevel(nextHl.level)}`);
@@ -274,7 +275,7 @@ export default function NavigationScreen() {
     if (!stop || myStop || saidStop.current === stop.id) return;
     saidStop.current = stop.id;
     const r = STOP_REASONS.find((x) => x.id === stop.reason) ?? STOP_REASONS[0];
-    controls.say(`Achtung. ${r.title}. Bitte gleich anhalten.`);
+    controls.say(tr('Achtung. {title}. Bitte gleich anhalten.', { title: r.title }));
   }, [stop, myStop, controls]);
   // angekommen: Overlay nach einer Minute am Haltepunkt von selbst weg
   useEffect(() => {
@@ -382,7 +383,7 @@ export default function NavigationScreen() {
         createdAt: now,
         updatedAt: now,
         wegpunkte: [pos, ...ahead.map((a) => a.p), ziel],
-        namen: ['Dein Standort', ...ahead.map((a) => a.name), names[wp.length - 1] ?? ''],
+        namen: [tr('Dein Standort'), ...ahead.map((a) => a.name), names[wp.length - 1] ?? ''],
         etappen: [...ahead.map((a) => a.leg), lastLeg],
         linie: rest.length > 1 ? [{ c: 'ok', p: rest }] : active.tour.linie,
         laenge_km: Math.max(0, r.km - atKm),
@@ -392,7 +393,7 @@ export default function NavigationScreen() {
       active.profile,
       active.avoid,
       (tour, profile, avoid) => {
-        adoptTour(tour, profile, avoid, 'Neue Route übernommen.');
+        adoptTour(tour, profile, avoid, tr('Neue Route übernommen.'));
         showToast(t('Neue Route übernommen'));
         if (inRide && ride.myRole === 'lead') {
           void createHandoff(tour, profile, avoid)
@@ -414,7 +415,7 @@ export default function NavigationScreen() {
     routeSeen.current = rc.id;
     void fetchHandoff(rc.code).then((h) => {
       if (!h) return;
-      adoptTour(h.tour, h.profile, h.avoid ?? active?.avoid ?? DEFAULT_AVOID, 'Die Lead hat die Route geändert.', ownRoute);
+      adoptTour(h.tour, h.profile, h.avoid ?? active?.avoid ?? DEFAULT_AVOID, tr('Die Lead hat die Route geändert.'), ownRoute);
       setRouteNote(Date.now());
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -465,9 +466,9 @@ export default function NavigationScreen() {
       for (const c of list) {
         if (toldClosed.current.has(c.id)) continue;
         toldClosed.current.add(c.id);
-        const km = c.km < 1 ? 'gleich' : `in ${formatKm(c.km)}`;
-        showToast(`${c.label}, ${km}. Laut Verkehrsmeldung, bitte umfahren.`, { tone: 'error' });
-        carPlayAlert('Gesperrt laut Verkehrsmeldung', `${c.label.replace(/^Gesperrt:? ?/, '')} ${km}`.trim());
+        const km = c.km < 1 ? tr('gleich') : tr('in {km}', { km: formatKm(c.km) });
+        showToast(tr('{label}, {km}. Laut Verkehrsmeldung, bitte umfahren.', { label: closureNameT(c.label), km }), { tone: 'error' });
+        carPlayAlert(tr('Gesperrt laut Verkehrsmeldung'), `${closureNameT(c.label.replace(/^Gesperrt:? ?/, ''))} ${km}`.trim());
       }
     };
     void run();
@@ -502,7 +503,7 @@ export default function NavigationScreen() {
     const warnungen = closed.length
       ? [
           ...active.tour.warnungen,
-          ...closed.map((c) => ({ klasse: 'raus' as const, start_km: 0, laenge_km: 0, name: c.label, ort: '', gruende: ['Gesperrt laut Verkehrsmeldung'], mitte: c.mitte })),
+          ...closed.map((c) => ({ klasse: 'raus' as const, start_km: 0, laenge_km: 0, name: c.label, ort: '', gruende: [tr('Gesperrt laut Verkehrsmeldung')], mitte: c.mitte })),
         ]
       : active.tour.warnungen;
     if (!farLine) return { ...active.tour, warnungen, linie: [{ c: 'ok', p: ahead }] };
@@ -706,7 +707,7 @@ export default function NavigationScreen() {
     if (lost) {
       carPlayUpdate({
         key: `abseits-${state.status}`,
-        text: state.status === 'neuberechnung' ? 'Abseits der Tour. Der Weg zurück wird berechnet.' : 'Abseits der Tour. Fahr zurück auf die orange Linie.',
+        text: state.status === 'neuberechnung' ? tr('Abseits der Tour. Der Weg zurück wird berechnet.') : tr('Abseits der Tour. Fahr zurück auf die orange Linie.'),
         symbol: 'arrow.uturn.backward',
         icon: '',
         distM: state.offRouteM ?? 0,
@@ -726,7 +727,7 @@ export default function NavigationScreen() {
     carPlayUpdate({
       key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}${soon ? '-on' : ''}${rejoin > 20 ? '-zurueck' : ''}${lanes ? '-spur' : ''}`,
       ...(lanes ? { lanes } : {}),
-      text: rejoin > 20 ? `Zurück zur Tour: ${m.text}` : m.text,
+      text: rejoin > 20 ? tr('Zurück zur Tour: {text}', { text: m.text }) : m.text,
       symbol: symbolForKind(m.kind, m.exit),
       icon: `${icon(state.next)}${soon ? '-on' : ''}`,
       ...(t ? { thenText: t.text, thenSymbol: symbolForKind(t.kind, t.exit), thenIcon: icon(state.next + 1) } : {}),
@@ -742,7 +743,7 @@ export default function NavigationScreen() {
   useEffect(() => {
     if (!cpOff || Date.now() - cpOffAt.current < 60000) return;
     cpOffAt.current = Date.now();
-    carPlayAlert('Abseits der Tour', 'Wir führen dich zurück auf die Route.');
+    carPlayAlert(tr('Abseits der Tour'), tr('Wir führen dich zurück auf die Route.'));
   }, [cpOff]);
   // "Los" auf dem Autodisplay: sofort starten, sobald die Navigation bereit ist. Auch nach einem Fehler
   // (Tester Matthias 14.11.: in der Tiefgarage ohne Netz scheiterte der Start, CarPlay konnte nicht neu anstoßen)
@@ -818,7 +819,7 @@ export default function NavigationScreen() {
     }
     // nur, wenn der Punkt nah an der Tour und vor einem liegt
     if (best < 0 || bd > 2000 || route.cumKm[best] - doneKm < 0.3) return null;
-    return { index: best, label: stop?.p ? 'Zum Halt der Lead' : 'Zur Lead aufschließen', speech: stop?.p ? 'Ich führe dich zum Halt der Gruppe.' : 'Ich führe dich zur Lead.' };
+    return { index: best, label: stop?.p ? tr('Zum Halt der Lead') : tr('Zur Lead aufschließen'), speech: stop?.p ? tr('Ich führe dich zum Halt der Gruppe.') : tr('Ich führe dich zur Lead.') };
   })();
   const goMeet = () => {
     if (!meet) return;
@@ -954,7 +955,7 @@ export default function NavigationScreen() {
     bbLog('report', context);
     void sendNavReport({ p: state.position, context, log: bbSnapshot(240) })
       .catch(() => false)
-      .then((ok) => showToast(ok ? 'Danke, die Stelle ist gemerkt.' : 'Gemerkt, die Stelle steht im Protokoll der Fahrt.'));
+      .then((ok) => showToast(ok ? tr('Danke, die Stelle ist gemerkt.') : tr('Gemerkt, die Stelle steht im Protokoll der Fahrt.')));
   };
   // Nächstes Zwischenziel überspringen: Ziel ist das Zwischenziel danach, sonst das Ende der Route
   const nextVia = atKm != null ? viaKms.findIndex((k) => k > atKm + 0.1) : -1;
@@ -968,7 +969,7 @@ export default function NavigationScreen() {
   const drivenKm = route ? Math.max(0, (startKm ?? route.km) - (state.remainingKm ?? 0)) : 0;
 
   // CarPlay Build 14: Menü Mehr (Überspringen, Pause), Bremshinweis und Gruppe auf dem Autodisplay
-  const cpSkipLabel = skipTarget && !inRide ? `${active?.tour.namen?.[nextVia + 1] || 'Zwischenziel'} überspringen` : '';
+  const cpSkipLabel = skipTarget && !inRide ? tr('{v0} überspringen', { v0: active?.tour.namen?.[nextVia + 1] || 'Zwischenziel' }) : '';
   useEffect(() => {
     if (cpRunning) carPlaySetMenu(cpSkipLabel, state.status === 'pausiert');
   }, [cpRunning, cpSkipLabel, state.status]);
@@ -998,7 +999,7 @@ export default function NavigationScreen() {
         name: o.name,
         lat: q[0],
         lon: q[1],
-        detail: state.position ? `${formatKm(haversine(state.position, o.p) / 1000)} km entfernt${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}` : undefined,
+        detail: state.position ? tr('{v0} km entfernt{v1}', { v0: formatKm(haversine(state.position, o.p) / 1000), v1: o.own ? tr(', eigener Weg') : o.off ? tr(', abseits der Tour') : '' }) : undefined,
         };
       }),
     );
@@ -1018,10 +1019,10 @@ export default function NavigationScreen() {
 
   // Lob passend zur Fahrt (Konsistenzprüfung 15.11., W7): Runde, A nach B oder Weg zum Treffpunkt
   const wp = active.tour.wegpunkte;
-  const toMeeting = active.tour.name.startsWith('Zum Treffpunkt');
+  const toMeeting = active.tour.name.startsWith(tr('Zum Treffpunkt {place}', { place: '' }).trim());
   const isRound = wp.length > 1 && haversine(wp[0], wp[wp.length - 1]) < 3000;
   const goalName = active.tour.namen?.[active.tour.namen.length - 1];
-  const congrats = toMeeting ? 'Du bist am Treffpunkt' : isRound ? 'Starke Runde!' : goalName ? `Angekommen in ${goalName}` : 'Angekommen';
+  const congrats = toMeeting ? tr('Du bist am Treffpunkt') : isRound ? tr('Starke Runde!') : goalName ? tr('Angekommen in {goalName}', { goalName }) : tr('Angekommen');
 
   return (
     <View style={styles.root}>
@@ -1056,7 +1057,7 @@ export default function NavigationScreen() {
           <Pressable
             onLongPress={() => skipTarget && !inRide && setSkipOpen(true)}
             delayLongPress={400}
-            accessibilityHint={skipTarget && !inRide ? 'Lange drücken, um das nächste Zwischenziel zu überspringen' : undefined}
+            accessibilityHint={skipTarget && !inRide ? tr('Lange drücken, um das nächste Zwischenziel zu überspringen') : undefined}
             accessibilityActions={skipTarget && !inRide ? [{ name: 'skip', label: t('Nächstes Zwischenziel überspringen') }] : undefined}
             onAccessibilityAction={() => skipTarget && void skip(skipTarget.index)}>
             {showHlCard ? (
@@ -1085,7 +1086,7 @@ export default function NavigationScreen() {
             <View style={styles.flex}>
               <AppText style={styles.skipTitle}>{t('Nächstes Zwischenziel überspringen')}</AppText>
               <AppText style={styles.skipText} numberOfLines={1}>
-                {`Noch ${formatKm(Math.max(0, viaKms[nextVia] - atKm), 0)} km, danach direkt ${skipTarget.toZiel ? 'zum Ziel' : 'zum nächsten Zwischenziel'}`}
+                {tr('Noch {v0} km, danach direkt {v1}', { v0: formatKm(Math.max(0, viaKms[nextVia] - atKm), 0), v1: skipTarget.toZiel ? tr('zum Ziel') : tr('zum nächsten Zwischenziel') })}
               </AppText>
             </View>
             <Pressable accessibilityRole="button" onPress={() => void skip(skipTarget.index)} style={({ pressed }) => [styles.skipBtn, pressed && { opacity: 0.85 }]}>
@@ -1100,8 +1101,8 @@ export default function NavigationScreen() {
               <View style={styles.offDash} />
               <AppText style={styles.offText} numberOfLines={1}>
                 {rejoinM != null && rejoinM > 20 && status !== 'neuberechnung'
-                  ? `Abseits der Tour, zurück in ${formatDistance(rejoinM).value} ${formatDistance(rejoinM).unit}`
-                  : 'Abseits der Tour'}
+                  ? tr('Abseits der Tour, zurück in {value} {unit}', { value: formatDistance(rejoinM).value, unit: formatDistance(rejoinM).unit })
+                  : tr('Abseits der Tour')}
               </AppText>
             </View>
             {/* Selbst wählen statt warten (Martin 11.11.): wer nicht umdrehen kann, nimmt gleich eine neue Route.
@@ -1116,17 +1117,17 @@ export default function NavigationScreen() {
               <View style={styles.offBtns}>
                 <Pressable accessibilityRole="button" onPress={() => controls.choose('rejoin')} style={({ pressed }) => [styles.offBtn, pressed && styles.offPressed]}>
                   <AppText style={styles.offBtnText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-                    Zurück zur Tour
+                    {tr('Zurück zur Tour')}
                   </AppText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={withOthers ? 'Eigene Route, verlässt die Strecke der Gruppe' : 'Neue Route ab hier'}
+                  accessibilityLabel={withOthers ? tr('Eigene Route, verlässt die Strecke der Gruppe') : tr('Neue Route ab hier')}
                   onPress={chooseOwn}
                   style={({ pressed }) => [styles.offBtn, styles.offBtnMain, pressed && styles.offPressed]}>
                   {/* kurze Wörter: zwei Tasten nebeneinander haben je nur etwa 140 pt (Prüfung 11.11.) */}
                   <AppText style={[styles.offBtnText, styles.offBtnMainText]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-                    {withOthers ? 'Eigene Route' : 'Neue Route'}
+                    {withOthers ? tr('Eigene Route') : tr('Neue Route')}
                   </AppText>
                 </Pressable>
               </View>
@@ -1143,7 +1144,7 @@ export default function NavigationScreen() {
         {running && routeNote > 0 && (
           <Animated.View entering={softEnter()} exiting={FadeOut.duration(160)} style={styles.routeNote} accessibilityRole="alert">
             <AppText style={styles.routeNoteTitle}>{t('Die Lead hat die Route geändert')}</AppText>
-            <AppText style={styles.routeNoteText}>{`Neu bis ${active?.tour.namen?.[(active?.tour.wegpunkte.length ?? 1) - 1] || 'zum Ziel'}`}</AppText>
+            <AppText style={styles.routeNoteText}>{tr('Neu bis {v0}', { v0: active?.tour.namen?.[(active?.tour.wegpunkte.length ?? 1) - 1] || tr('zum Ziel') })}</AppText>
           </Animated.View>
         )}
         {/* Funk: wer gerade spricht (Funk Konzept, Koray 10.11.) */}
@@ -1188,7 +1189,7 @@ export default function NavigationScreen() {
                       }}
                       style={({ pressed }) => [styles.msgChip, pressed && { opacity: 0.7 }]}
                     >
-                      <AppText style={styles.msgChipText}>{m}</AppText>
+                      <AppText style={styles.msgChipText}>{quickText(m)}</AppText>
                     </Pressable>
                   ))}
                 </View>
@@ -1217,7 +1218,7 @@ export default function NavigationScreen() {
                       waiting: funk.waiting,
                       // ruht nach mehreren Fehlversuchen: ruhig grau statt Banner (Koray 14.11.)
                       disabled: funk.status === 'ruht' || (funk.onlyLead && ride.myRole !== 'lead'),
-                      label: funk.status === 'ruht' ? 'Kein Funk' : undefined,
+                      label: funk.status === 'ruht' ? tr('Kein Funk') : undefined,
                       onTalk: pushToTalk,
                     }
                   : undefined
@@ -1229,9 +1230,9 @@ export default function NavigationScreen() {
                 ...(withOthers && funk.status !== 'nicht'
                   ? [
                       { key: 'msg', label: t('Kurznachricht an die Gruppe'), icon: 'bubble.left.fill' as const, run: () => setMsgOpen(true) },
-                      { key: 'hoeren', label: funk.listen ? 'Funk stumm' : 'Funk hören', icon: (funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill') as 'speaker.slash.fill', run: () => setFunkListen(!funk.listen) },
+                      { key: 'hoeren', label: funk.listen ? tr('Funk stumm') : tr('Funk hören'), icon: (funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill') as 'speaker.slash.fill', run: () => setFunkListen(!funk.listen) },
                       ...(ride.myRole === 'lead'
-                        ? [{ key: 'nurlead', label: funk.onlyLead ? 'Alle dürfen sprechen' : 'Nur die Lead spricht', icon: 'person.wave.2.fill' as const, run: () => setOnlyLead(!funk.onlyLead) }]
+                        ? [{ key: 'nurlead', label: funk.onlyLead ? tr('Alle dürfen sprechen') : tr('Nur die Lead spricht'), icon: 'person.wave.2.fill' as const, run: () => setOnlyLead(!funk.onlyLead) }]
                         : []),
                     ]
                   : []),
@@ -1240,7 +1241,7 @@ export default function NavigationScreen() {
               bottomInset={insets.bottom + Spacing.m}
               onEnd={close}
               onOverview={!inRide || ride.myRole === 'lead' ? startAdjust : undefined}
-              skipLabel={skipTarget && !inRide ? `${active?.tour.namen?.[nextVia + 1] || 'Zwischenziel'} überspringen` : undefined}
+              skipLabel={skipTarget && !inRide ? tr('{v0} überspringen', { v0: active?.tour.namen?.[nextVia + 1] || 'Zwischenziel' }) : undefined}
               onSkip={skipTarget && !inRide ? () => void skip(skipTarget.index) : undefined}
               onVoice={() => controls.setVoice(!state.voice)}
               onSecret={() => setSecret(true)}
@@ -1262,13 +1263,12 @@ export default function NavigationScreen() {
                   {active.tour.name}
                 </AppText>
                 <AppText variant="caption" muted>
-                  {fmtMeta(strecke(route?.km ?? active.tour.laenge_km), active.tour.minutes ? fahrzeit(active.tour.minutes) : null, funScore != null && funScore >= 0 ? `Fahrspaß ${funScore}` : null)}
+                  {fmtMeta(strecke(route?.km ?? active.tour.laenge_km), active.tour.minutes ? fahrzeit(active.tour.minutes) : null, funScore != null && funScore >= 0 ? tr('Fahrspaß {funScore}', { funScore }) : null)}
                 </AppText>
               </Pressable>
               {far && !noEntryChoice && (
                 <AppText style={styles.farNote}>
-                  Der Start ist {Math.round(toStartKm!).toLocaleString('de-DE')} km entfernt. Erst zum Start fahren oder unterwegs
-                  einsteigen?
+                  {tr('Der Start ist ')}{Math.round(toStartKm!).toLocaleString('de-DE')}{tr(' km entfernt. Erst zum Start fahren oder unterwegs einsteigen?')}
                 </AppText>
               )}
               {!noEntryChoice && (
@@ -1357,7 +1357,7 @@ export default function NavigationScreen() {
               <AppText variant="label">{t('Angekommen')}</AppText>
               <AppText style={styles.congrats}>{congrats}</AppText>
               <AppText muted>
-                {formatKm(drivenKm || route?.km || active.tour.laenge_km)} km gefahren auf {active.tour.name}.
+                {formatKm(drivenKm || route?.km || active.tour.laenge_km)}{tr(' km gefahren auf ')}{active.tour.name}.
               </AppText>
               {arrivedStats && <StatsGrid st={arrivedStats} />}
               {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} preset={cpScore} />}
@@ -1371,7 +1371,7 @@ export default function NavigationScreen() {
           <View style={styles.pad}>
             <InfoCard tone="signal">
               <AppText variant="label">{t('Navigation gestoppt')}</AppText>
-              <AppText>{state.error || 'Die Route konnte nicht geladen werden.'}</AppText>
+              <AppText>{state.error || tr('Die Route konnte nicht geladen werden.')}</AppText>
               <BigButton label={t('Nochmal')} onPress={() => void controls.start()} />
               <BigButton label={t('Schließen')} kind="ghost" onPress={close} />
             </InfoCard>
@@ -1381,7 +1381,7 @@ export default function NavigationScreen() {
       <ConfirmSheet
         visible={confirmOwn}
         title={t('Möchtest du die Strecke der Gruppe wirklich verlassen?')}
-        text="Du fährst dann deine eigene Route. Die Gruppe sieht dich weiter auf der Karte und erfährt davon."
+        text={tr('Du fährst dann deine eigene Route. Die Gruppe sieht dich weiter auf der Karte und erfährt davon.')}
         confirmLabel={t('Eigene Route')}
         danger={false}
         onConfirm={goOwn}
@@ -1393,10 +1393,10 @@ export default function NavigationScreen() {
 
 function SavedNote({ saved }: { saved: string | null }) {
   const text: Record<string, string> = {
-    ok: 'Im Konto gespeichert, du findest die Fahrt unter Touren, Gefahren.',
-    fehler: 'Speichern hat nicht geklappt. Prüfe die Verbindung.',
-    simulation: 'Simulation, wird nicht gespeichert.',
-    ohne_konto: 'Melde dich unter Einstellungen an, dann werden deine Fahrten gespeichert.',
+    ok: tr('Im Konto gespeichert, du findest die Fahrt unter Touren, Gefahren.'),
+    fehler: tr('Speichern hat nicht geklappt. Prüfe die Verbindung.'),
+    simulation: tr('Simulation, wird nicht gespeichert.'),
+    ohne_konto: tr('Melde dich unter Einstellungen an, dann werden deine Fahrten gespeichert.'),
   };
   if (!saved || !text[saved]) return null;
   return (
@@ -1409,14 +1409,14 @@ function SavedNote({ saved }: { saved: string | null }) {
 /** Fahrtstatistik nach der Fahrt (Konsistenzprüfung 15.11., K10, T2): Label über dem Wert wie überall, ohne leere Zellen */
 function StatsGrid({ st }: { st: RideStats }) {
   const items: [string, string | null][] = [
-    ['Strecke', strecke(st.km)],
-    ['Fahrzeit', fahrzeit(st.movingMin)],
+    [tr('Strecke'), strecke(st.km)],
+    [tr('Fahrzeit'), fahrzeit(st.movingMin)],
     ['Schnitt', `${Math.round(st.avgKmh)} km/h`],
     ['Spitze', st.maxKmh ? `${Math.round(st.maxKmh.value)} km/h` : null],
     [st.maxLatG ? `Quer, Kurve ${st.maxLatG.side}` : 'Quer', st.maxLatG ? fmtG(st.maxLatG.value) : null],
-    ['Stärkste Bremsung', st.maxBrakeG ? fmtG(st.maxBrakeG.value) : null],
-    ['Stärkste Beschleunigung', st.maxAccelG ? fmtG(st.maxAccelG.value) : null],
-    ['Kurven', String(st.curves)],
+    [tr('Stärkste Bremsung'), st.maxBrakeG ? fmtG(st.maxBrakeG.value) : null],
+    [tr('Stärkste Beschleunigung'), st.maxAccelG ? fmtG(st.maxAccelG.value) : null],
+    [tr('Kurven'), String(st.curves)],
   ];
   return (
     <View style={styles.statsGrid}>
@@ -1429,7 +1429,7 @@ function StatsGrid({ st }: { st: RideStats }) {
           </View>
         ))}
       <AppText muted style={styles.statNote}>
-        Aus den GPS Daten berechnet, die Spitzenwerte sind auf der Karte markiert.
+        {tr('Aus den GPS Daten berechnet, die Spitzenwerte sind auf der Karte markiert.')}
       </AppText>
     </View>
   );

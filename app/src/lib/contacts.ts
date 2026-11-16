@@ -7,6 +7,7 @@
 import { useSyncExternalStore } from 'react';
 
 import { supabase } from './supabase';
+import { tr } from '@/i18n';
 
 /** kontakt: bestätigt; angefragt: du hast gefragt; anfrage: die andere Person fragt dich */
 export type ContactStatus = 'kontakt' | 'angefragt' | 'anfrage';
@@ -31,7 +32,7 @@ const subscribe = (f: () => void) => {
 const snapshot = () => state;
 
 function fail(message: string): never {
-  throw new Error(/^[A-ZÄÖÜ][^\n]*$/.test(message) && !/violat|permission|function|relation|column|JWT/i.test(message) ? message : 'Das hat nicht geklappt. Bitte nochmal versuchen.');
+  throw new Error(/^[A-ZÄÖÜ][^\n]*$/.test(message) && !/violat|permission|function|relation|column|JWT/i.test(message) ? message : tr('Das hat nicht geklappt. Bitte nochmal versuchen.'));
 }
 
 /** Kontakte neu laden (beim Öffnen von Drivers und nach jeder Änderung) */

@@ -16,7 +16,7 @@ import { LogoFill } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { BAD_REASONS, SCORE_WEAK, rateDriveScore, scoreWord, type HighlightVote } from '@/lib/drives';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 export type DrivenHighlight = { key: string; name: string; kind: 'pass' | 'strecke' };
 
@@ -93,7 +93,7 @@ export function DriveRatingCard({ driveId, highlights = [], preset = null }: { d
                 <AppText style={styles.hlName} numberOfLines={1}>
                   {h.name}
                 </AppText>
-                <AppText style={styles.hlKind}>{h.kind === 'pass' ? 'Pass' : 'Strecke'}</AppText>
+                <AppText style={styles.hlKind}>{h.kind === 'pass' ? tr('Pass') : tr('Strecke')}</AppText>
               </View>
               <Thumb up on={votes[h.key] === 1} name={h.name} onPress={() => vote(h.key, 1)} />
               <Thumb up={false} on={votes[h.key] === -1} name={h.name} onPress={() => vote(h.key, -1)} />
@@ -102,7 +102,7 @@ export function DriveRatingCard({ driveId, highlights = [], preset = null }: { d
         </View>
       )}
       <AppText style={styles.foot}>
-        {score != null ? 'Danke! Damit lernt der Fahrspaß Pegel, welche Strecken wirklich begeistern.' : 'Deine Bewertung hilft, die besten Strecken für alle zu finden.'}
+        {score != null ? tr('Danke! Damit lernt der Fahrspaß Pegel, welche Strecken wirklich begeistern.') : tr('Deine Bewertung hilft, die besten Strecken für alle zu finden.')}
       </AppText>
     </View>
   );
@@ -117,7 +117,7 @@ function Thumb({ up, on, name, onPress }: { up: boolean; on: boolean; name: stri
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
-      accessibilityLabel={`${name}: ${up ? 'hat mir gefallen' : 'hat mir nicht gefallen'}`}
+      accessibilityLabel={`${name}: ${up ? tr('hat mir gefallen') : tr('hat mir nicht gefallen')}`}
       hitSlop={4}
       onPressIn={() => s.set(withSpring(0.88, Motion.press))}
       onPressOut={() => s.set(withSpring(1, Motion.press))}
@@ -144,14 +144,14 @@ export function StarRating({ value, onChange }: { value: number | null; onChange
   return (
     <View style={styles.box}>
       <AppText style={styles.title}>{t('Wie fandest du die Tour?')}</AppText>
-      <View style={styles.stars} accessibilityRole="adjustable" accessibilityValue={{ text: n ? `${n} von 5 Sternen, ${scoreWord(value!)}` : 'Noch nicht bewertet' }}>
+      <View style={styles.stars} accessibilityRole="adjustable" accessibilityValue={{ text: n ? tr('{n} von 5 Sternen, {v1}', { n, v1: scoreWord(value!) }) : tr('Noch nicht bewertet') }}>
         {[1, 2, 3, 4, 5].map((i) => (
           <Pressable key={i} accessibilityRole="button" accessibilityLabel={`${i} ${i === 1 ? 'Stern' : 'Sterne'}`} hitSlop={4} onPress={() => onChange(STAR_SCORE[i - 1])} style={({ pressed }) => [styles.star, pressed && { transform: [{ scale: Motion.pressScale }] }]}>
             <SymbolView name={i <= n ? 'star.fill' : 'star'} size={40} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         ))}
       </View>
-      <AppText style={[styles.word, styles.starWord]}>{n ? scoreWord(value!) : 'Tippe auf einen Stern'}</AppText>
+      <AppText style={[styles.word, styles.starWord]}>{n ? scoreWord(value!) : tr('Tippe auf einen Stern')}</AppText>
     </View>
   );
 }
@@ -232,7 +232,7 @@ export function ScoreSlider({ value, onChange }: { value: number | null; onChang
         <LogoFill progress={p} size={44} />
         <View style={styles.headText}>
           <AppText style={[styles.big, shown == null && styles.bigOff]}>{shown != null ? shown : '–'}</AppText>
-          <AppText style={[styles.word, shown != null && styles.wordOn]}>{shown != null ? scoreWord(shown) : 'Zieh den Regler'}</AppText>
+          <AppText style={[styles.word, shown != null && styles.wordOn]}>{shown != null ? scoreWord(shown) : tr('Zieh den Regler')}</AppText>
         </View>
       </View>
       <GestureHandlerRootView>
@@ -241,7 +241,7 @@ export function ScoreSlider({ value, onChange }: { value: number | null; onChang
             accessible
             accessibilityRole="adjustable"
             accessibilityLabel={t('Wie fandest du die Tour, 0 bis 100')}
-            accessibilityValue={{ text: value != null ? `${value}, ${scoreWord(value)}` : 'Noch nicht bewertet' }}
+            accessibilityValue={{ text: value != null ? `${value}, ${scoreWord(value)}` : tr('Noch nicht bewertet') }}
             accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
             onAccessibilityAction={onAction}
             onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)}

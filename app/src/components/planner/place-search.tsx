@@ -33,7 +33,7 @@ import { highlightsForLeg, passLevel, type Leg } from '@/lib/highlight-candidate
 import { LocationIcon, PointSymbol } from './planner-parts';
 import type { PointKind } from './planner-shared';
 import { usePlaceSuggest } from './planner-shared';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 type Props = {
   visible: boolean;
@@ -187,7 +187,7 @@ function SearchBody({
     return c;
   }, [route]);
   /** Zwischenziel: Mein Standort braucht es dort nicht, nur bei Start und Ziel (Koray 8.11.) */
-  const isVia = role.startsWith('Zwischenziel');
+  const isVia = role.startsWith('Zwischenziel') || role.startsWith(tr('Zwischenziel'));
   // Liegen Pässe auf dem Weg oder in der Nähe (dieselben 8 km wie die Liste), die noch kein Punkt der Route sind,
   // steht Pässe direkt hinter Alle und ist beim neuen Zwischenziel vorausgewählt (Koray 8.11.)
   const taken = useMemo(() => new Set((slots ?? []).map((sl) => sl.value).filter(Boolean)), [slots]);
@@ -269,7 +269,7 @@ function SearchBody({
       q.length >= 2
         ? searchPasses(PASSES, q, 3).map((x) => ({
             name: x.name,
-            detail: `Pass, ${passSummary(x, undefined, passState(x, live).note)}, ${x.region}`,
+            detail: tr('Pass, {v0}, {region}', { v0: passSummary(x, undefined, passState(x, live).note), region: x.region }),
             p: passPoint(x),
           }))
         : [],
@@ -378,7 +378,7 @@ function SearchBody({
                 autoCorrect={false}
                 onSubmitEditing={() => (hits?.[0] ? pick(hits[0]) : cat === 'alle' && query === current && onClose())}
                 style={styles.input}
-                accessibilityLabel={`${role}: Ort oder Pass suchen`}
+                accessibilityLabel={tr('{role}: Ort oder Pass suchen', { role })}
               />
               {suggest.searching && <ActivityIndicator color={Colors.muted} />}
               {query.length > 0 && (
@@ -390,11 +390,11 @@ function SearchBody({
                       ) : (
                         <Pressable
                           accessibilityRole="button"
-                          accessibilityLabel={`${sl.label} ${sl.value ? `ändern, jetzt ${sl.value}` : 'wählen'}`}
+                          accessibilityLabel={`${sl.label} ${sl.value ? tr('ändern, jetzt {value}', { value: sl.value }) : tr('wählen')}`}
                           onPress={() => onSwitch?.(sl)}
                           style={({ pressed }) => [styles.field, pressed && styles.pressed]}>
                           <AppText style={[styles.slotText, !sl.value && styles.slotEmpty]} numberOfLines={1}>
-                            {sl.value ?? (sl.kind === 'ziel' ? 'Ziel wählen' : sl.kind === 'start' ? 'Start wählen' : sl.label)}
+                            {sl.value ?? (sl.kind === 'ziel' ? tr('Ziel wählen') : sl.kind === 'start' ? tr('Start wählen') : sl.label)}
                           </AppText>
                         </Pressable>
                       )}
@@ -427,7 +427,7 @@ function SearchBody({
                 autoCorrect={false}
                 onSubmitEditing={() => (hits?.[0] ? pick(hits[0]) : cat === 'alle' && query === current && onClose())}
                 style={styles.input}
-                accessibilityLabel={`${role}: Ort oder Pass suchen`}
+                accessibilityLabel={tr('{role}: Ort oder Pass suchen', { role })}
               />
               {suggest.searching && <ActivityIndicator color={Colors.muted} />}
               {query.length > 0 && (
@@ -501,20 +501,20 @@ function SearchBody({
             hotels === null ? (
               <ActivityIndicator color={Colors.muted} style={styles.loading} />
             ) : hotels === 'fehler' ? (
-              <AppText style={styles.empty}>Die {nearTab.plural} lassen sich gerade nicht laden. Versuch es gleich noch einmal.</AppText>
+              <AppText style={styles.empty}>{tr('Die ')}{nearTab.plural}{tr(' lassen sich gerade nicht laden. Versuch es gleich noch einmal.')}</AppText>
             ) : hotels.length === 0 ? (
               <AppText style={styles.empty}>
-                {nearKind === 'hotel' ? `Rund um ${current} gibt es keine ${nearTab.plural} mit Namen in der Karte.` : `Rund um ${current} haben wir noch keine empfohlenen ${nearTab.plural}. Über die Suche findest du jedes Lokal.`}
+                {nearKind === 'hotel' ? tr('Rund um {current} gibt es keine {plural} mit Namen in der Karte.', { current, plural: nearTab.plural }) : tr('Rund um {current} haben wir noch keine empfohlenen {plural}. Über die Suche findest du jedes Lokal.', { current, plural: nearTab.plural })}
               </AppText>
             ) : (
               <View style={styles.section}>
-                <AppText style={styles.groupLabel}>{nearKind === 'hotel' ? `${nearTab.plural} in der Nähe von ${current}` : `Empfohlene ${nearTab.plural} in der Nähe von ${current}`}</AppText>
+                <AppText style={styles.groupLabel}>{nearKind === 'hotel' ? tr('{plural} in der Nähe von {current}', { plural: nearTab.plural, current }) : tr('Empfohlene {plural} in der Nähe von {current}', { plural: nearTab.plural, current })}</AppText>
                 <View style={styles.group}>
                   {hotels.slice(0, 20).map((r) => (
                     <Pressable
                       key={r.key}
                       accessibilityRole="button"
-                      accessibilityLabel={`${r.name}, ${r.detail}, ${formatKm(r.offM / 1000)} Kilometer entfernt`}
+                      accessibilityLabel={tr('{name}, {detail}, {v2} Kilometer entfernt', { name: r.name, detail: r.detail, v2: formatKm(r.offM / 1000) })}
                       onPress={() => {
                         rememberPlace({ name: r.name, detail: r.detail, p: r.p });
                         onPick(r.p, r.name);
@@ -548,11 +548,11 @@ function SearchBody({
                 <AppText style={styles.empty}>
                   {cat === 'mittag'
                     ? q
-                      ? `„${q}“ ist nicht unter unseren Empfehlungen. Unter Alle findest du jedes Lokal.`
-                      : 'Hier haben wir noch keine Empfehlung. Unter Alle findest du jedes Lokal.'
+                      ? tr('„{q}“ ist nicht unter unseren Empfehlungen. Unter Alle findest du jedes Lokal.', { q })
+                      : tr('Hier haben wir noch keine Empfehlung. Unter Alle findest du jedes Lokal.')
                     : q
-                      ? `Nichts zu „${q}“ nah an der Route.`
-                      : 'Nah an der Route gibt es hier nichts.'}
+                      ? tr('Nichts zu „{q}“ nah an der Route.', { q })
+                      : tr('Nah an der Route gibt es hier nichts.')}
                 </AppText>
                 {scale < 3 && (
                   <Pressable accessibilityRole="button" onPress={() => setScale(3)} style={({ pressed }) => [styles.widen, pressed && styles.pressed]}>
@@ -579,7 +579,7 @@ function SearchBody({
                         <Pressable
                           key={r.key}
                           accessibilityRole="button"
-                          accessibilityLabel={`${r.name}${showKm ? `, in ${Math.round(r.km)} Kilometern` : ''}${near0 ? '' : `, ${min} Minuten Umweg`}`}
+                          accessibilityLabel={`${r.name}${showKm ? `, in ${Math.round(r.km)} Kilometern` : ''}${near0 ? '' : tr(', {min} Minuten Umweg', { min })}`}
                           onPress={() => {
                             rememberPlace({ name: r.name, detail: r.detail, p: r.p });
                             if (r.line && onPickRoad) onPickRoad(r.line, r.name);
@@ -613,8 +613,8 @@ function SearchBody({
                           {/* rechts: km und darunter der Umweg als Plakette, ohne Uhrzeit (Koray 10.11.) */}
                           {(showKm || !near0) && (
                             <View style={styles.kmBox}>
-                              {showKm && <AppText style={styles.kmBig}>{`in ${Math.round(r.km)} km`}</AppText>}
-                              {!near0 && <AppText accessibilityLabel={`Umweg ${min} Minuten`} style={styles.detourTag}>{`+${min} min`}</AppText>}
+                              {showKm && <AppText style={styles.kmBig}>{tr('in {v0} km', { v0: Math.round(r.km) })}</AppText>}
+                              {!near0 && <AppText accessibilityLabel={tr('Umweg {min} Minuten', { min })} style={styles.detourTag}>{`+${min} min`}</AppText>}
                             </View>
                           )}
                         </Pressable>
@@ -632,7 +632,7 @@ function SearchBody({
             hits.length === 0 && !suggest.searching ? (
               <AppText style={styles.empty}>{t('Nichts gefunden. Versuch es mit dem Ortsnamen.')}</AppText>
             ) : (
-              <View style={styles.group}>{hits.map((h, i) => row(h, i, h.detail.startsWith('Pass,') ? 'pass' : 'place'))}</View>
+              <View style={styles.group}>{hits.map((h, i) => row(h, i, h.detail.startsWith(tr('Pass') + ',') ? 'pass' : 'place'))}</View>
             )
           ) : (
             <>
@@ -648,7 +648,7 @@ function SearchBody({
               <View style={styles.group}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={locating ? 'Standort wird bestimmt' : 'Mein Standort'}
+                  accessibilityLabel={locating ? tr('Standort wird bestimmt') : tr('Mein Standort')}
                   onPress={() => !locating && onHere()}
                   style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
                   <View style={styles.icon}>{locating ? <ActivityIndicator color={Colors.signal} /> : <LocationIcon />}</View>
@@ -663,7 +663,7 @@ function SearchBody({
               <View style={styles.group}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={locating ? 'Standort wird bestimmt' : 'Mein Standort'}
+                  accessibilityLabel={locating ? tr('Standort wird bestimmt') : tr('Mein Standort')}
                   onPress={() => !locating && onHere()}
                   style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
                   <View style={styles.icon}>{locating ? <ActivityIndicator color={Colors.signal} /> : <LocationIcon />}</View>

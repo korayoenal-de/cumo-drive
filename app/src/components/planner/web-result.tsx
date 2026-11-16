@@ -23,7 +23,7 @@ import { FunPillWeb } from './web-fun';
 import { BODY, C, type PlannedTour } from './web-shared';
 import { S } from './web-styles';
 import { uniqueWarnings } from '@/lib/warning-dedupe';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 /** Kennzahlen: Strecke, Fahrzeit, Fahrspaß (ohne Fahrspaß die Kurven), wie Stats in der App */
 export function ResultStats(props: { tour: PlannedTour; curves: number; fun: TourFun | null; onFun: () => void; delta?: number | null }) {
@@ -33,7 +33,7 @@ export function ResultStats(props: { tour: PlannedTour; curves: number; fun: Tou
       <Metric label={t('Strecke')} value={`${formatKm(tour.laenge_km, 0)} km`} />
       <Metric label={t('Fahrzeit')} value={tour.minutes ? bigDuration(tour.minutes) : '…'} />
       {fun ? (
-        <Metric label={props.delta != null ? `Fahrspaß ${props.delta >= 0 ? `+${props.delta}` : `minus ${Math.abs(props.delta)}`}` : 'Fahrspaß'} value="">
+        <Metric label={props.delta != null ? tr('Fahrspaß {v0}', { v0: props.delta >= 0 ? `+${props.delta}` : tr('minus {v0}', { v0: Math.abs(props.delta) }) }) : tr('Fahrspaß')} value="">
           <FunPillWeb fun={fun} onOpen={props.onFun} />
         </Metric>
       ) : (
@@ -54,7 +54,7 @@ export function ResultDetails(props: { tour: PlannedTour; line: LatLon[]; onFly:
       {hint ? (
         <a href={PASS_STATUS_URL} target="_blank" rel="noreferrer" style={{ ...S.winterNote, textDecoration: 'none' }}>
           <b style={{ fontSize: 15 }}>{hint.title}</b>
-          <span style={{ fontSize: 15 }}>{hint.text} Klick für den aktuellen Passstatus.</span>
+          <span style={{ fontSize: 15 }}>{hint.text}{tr(' Klick für den aktuellen Passstatus.')}</span>
         </a>
       ) : null}
       <HighlightsWeb line={props.line} onFly={props.onFly} onAvoid={props.onAvoid} />
@@ -83,7 +83,7 @@ export function useElevation(line: LatLon[]): ElevationProfile | null {
   return st && st.line === line ? st.data : null;
 }
 
-const KIND_LABEL: Record<string, string> = { pass: 'Pass', rallye: 'Rallyestrecke', bergrennen: 'Bergrennstrecke', aussicht: 'Aussichtsstrecke', strecke: 'Traumstrecke' };
+const KIND_LABEL: Record<string, string> = { pass: tr('Pass'), rallye: tr('Rallyestrecke'), bergrennen: tr('Bergrennstrecke'), aussicht: tr('Aussichtsstrecke'), strecke: 'Traumstrecke' };
 
 /**
  * Highlights nach Fahrspaß Pegel gerankt; Klick klappt die Details an Ort und Stelle auf. Pässe mit Warnung
@@ -105,7 +105,7 @@ export function HighlightsWeb(props: { line: LatLon[]; onFly: (p: LatLon) => voi
     return props.line[Math.max(0, i)];
   };
   return (
-    <Section title={`Highlights auf der Strecke (${list.length})`}>
+    <Section title={tr('Highlights auf der Strecke ({length})', { length: list.length })}>
       <div style={{ background: C.surface, borderRadius: Radius.l, padding: Spacing.xs, display: 'flex', flexDirection: 'column' }}>
         {list.map((h) => {
           const lv = toFunLevel(h.level);
@@ -128,28 +128,28 @@ export function HighlightsWeb(props: { line: LatLon[]; onFly: (p: LatLon) => voi
                   <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`km ${Math.round(h.startKm)} · ${highlightFacts(h)}`}</span>
                 </span>
                 <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 72 }}>
-                  <Gauge level={lv} size={28} label={`Fahrspaß ${FUN_NAMES[lv]}`} />
+                  <Gauge level={lv} size={28} label={tr('Fahrspaß {v0}', { v0: FUN_NAMES[lv] })} />
                   <span style={{ font: `700 13px ${BODY}`, color: C.muted }}>{FUN_NAMES[lv]}</span>
                 </span>
               </button>
               {isOpen ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.s, padding: '8px 12px 14px', font: `500 15px/21px ${BODY}`, color: C.muted }}>
-                  <span style={{ color: C.text, fontWeight: 600 }}>{[KIND_LABEL[h.kind] ?? 'Strecke', pass ? TIER_LABEL[pass.tier] : h.note, pass?.region].filter(Boolean).join(' · ')}</span>
+                  <span style={{ color: C.text, fontWeight: 600 }}>{[KIND_LABEL[h.kind] ?? tr('Strecke'), pass ? TIER_LABEL[pass.tier] : h.note, pass?.region].filter(Boolean).join(' · ')}</span>
                   <span>
                     {[`${Math.max(1, Math.round(h.endKm - h.startKm))} km`, h.hairpins >= 3 ? `${h.hairpins} Kehren` : null, h.ele ? `${h.ele.toLocaleString('de-DE')} m hoch` : null, `ab km ${Math.round(h.startKm)}`].filter(Boolean).join(', ')}
                   </span>
                   {h.race ? <span><b style={{ color: C.text }}>{h.race.name}.</b> {h.race.note}</span> : null}
                   {pass && (pass.winter_closed || state?.closed) ? (
-                    <span style={{ color: C.warn }}>{[state?.closed ? 'Gerade gesperrt.' : 'Wintersperre.', state?.note, pass.closed_months ? `Meist gesperrt ${pass.closed_months}.` : null].filter(Boolean).join(' ')}</span>
+                    <span style={{ color: C.warn }}>{[state?.closed ? tr('Gerade gesperrt.') : 'Wintersperre.', state?.note, pass.closed_months ? tr('Meist gesperrt {closed_months}.', { closed_months: pass.closed_months }) : null].filter(Boolean).join(' ')}</span>
                   ) : null}
                   {h.warn?.length ? (
                     <span style={{ color: C.warn, fontWeight: 700 }}>{[warnSpeech(h.warn), pass?.car_note ? `${pass.car_note}.` : null].filter(Boolean).join(' ')}</span>
                   ) : pass?.car_note ? (
-                    <span>Für Sportwagen: {pass.car_note}</span>
+                    <span>{tr('Für Sportwagen: ')}{pass.car_note}</span>
                   ) : null}
                   {pass?.source ? (
                     <a href={pass.source} target="_blank" rel="noreferrer" style={{ color: C.signal, fontWeight: 700, textDecoration: 'none' }}>
-                      Mehr dazu
+                      {tr('Mehr dazu')}
                     </a>
                   ) : null}
                 </div>
@@ -162,7 +162,7 @@ export function HighlightsWeb(props: { line: LatLon[]; onFly: (p: LatLon) => voi
                     onAvoid();
                   }}
                   style={AVOID_BTN}>
-                  Auslassen
+                  {tr('Auslassen')}
                 </button>
               ) : null}
             </div>
@@ -173,13 +173,13 @@ export function HighlightsWeb(props: { line: LatLon[]; onFly: (p: LatLon) => voi
             <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: Spacing.m, minHeight: 52, padding: '4px 10px' }}>
               <span style={{ flex: 1, minWidth: 0, font: `600 15px ${BODY}`, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${a.name} ausgelassen`}</span>
               <button
-                aria-label={`${a.name} wieder einplanen`}
+                aria-label={tr('{name} wieder einplanen', { name: a.name })}
                 onClick={() => {
                   allowPass(a.id);
                   onAvoid();
                 }}
                 style={{ ...AVOID_BTN, alignSelf: 'center', margin: 0 }}>
-                Wieder einplanen
+                {tr('Wieder einplanen')}
               </button>
             </div>
           ))}
@@ -207,7 +207,7 @@ export function WarningsWeb(props: { warnings: Warning[]; checked: boolean; onFl
             key={i}
             onClick={() => props.onFly(w.mitte)}
             style={{ display: 'flex', alignItems: 'flex-start', gap: Spacing.m, padding: '10px 10px', border: 'none', borderRadius: Radius.m, background: 'transparent', color: C.text, cursor: 'pointer', textAlign: 'left', font: `500 15px/21px ${BODY}` }}>
-            <span aria-label={w.klasse === 'raus' ? 'Sperrung' : 'Warnung'} style={{ ...S.dot, width: 10, height: 10, borderRadius: 5, marginTop: 6, background: w.klasse === 'raus' ? C.signal : C.warn }} />
+            <span aria-label={w.klasse === 'raus' ? tr('Sperrung') : tr('Warnung')} style={{ ...S.dot, width: 10, height: 10, borderRadius: 5, marginTop: 6, background: w.klasse === 'raus' ? C.signal : C.warn }} />
             <span style={{ flex: 1 }}>{warningText(w)}</span>
           </button>
         ))}

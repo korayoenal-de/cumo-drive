@@ -13,6 +13,7 @@ import { patchTour, type SavedTour } from './library';
 import { supabase } from './supabase';
 import { unpackTour, type Packed } from './tour-pack';
 import type { LatLon, Profile, Tour } from './tour';
+import { tr } from '@/i18n';
 
 export type MemberStatus = 'eingeladen' | 'zugesagt' | 'abgesagt' | 'angefragt' | 'abgelehnt';
 
@@ -65,7 +66,7 @@ export type Nachricht = { id: number; userId: string; body: string; createdAt: D
 
 function fail(message: string): never {
   // Meldungen aus den Funktionen sind deutsch, technische Fehler bekommen einen Standardtext
-  throw new Error(/^[A-ZÄÖÜ][^\n]*$/.test(message) && !/violat|permission|function|relation|column|JWT/i.test(message) ? message : 'Das hat nicht geklappt. Bitte nochmal versuchen.');
+  throw new Error(/^[A-ZÄÖÜ][^\n]*$/.test(message) && !/violat|permission|function|relation|column|JWT/i.test(message) ? message : tr('Das hat nicht geklappt. Bitte nochmal versuchen.'));
 }
 
 const num = (v: unknown): number | null => (v == null || v === '' ? null : Number(v));
@@ -100,7 +101,7 @@ export async function listAusfahrten(): Promise<Ausfahrt[]> {
     return {
       id: r.id,
       name: r.name,
-      ownerName: r.owner_name ?? 'Fahrer',
+      ownerName: r.owner_name ?? tr('Fahrer'),
       ownerCar: r.owner_car,
       startsAt: new Date(r.starts_at),
       // Platzhalter wie „Start der Tour“ zählen nicht als Name, die App zeigt dann den Ort (K6, Koray 15.11.)
@@ -141,17 +142,17 @@ export type Absage = { userId: string; name: string; reason: string | null };
 export async function ausfahrtAbsagen(id: string): Promise<Absage[]> {
   const { data, error } = await supabase.rpc('ride_declines', { ride: id });
   if (error) return [];
-  return ((data ?? []) as { user_id: string; display_name: string | null; reason: string | null }[]).map((r) => ({ userId: r.user_id, name: r.display_name ?? 'Fahrer', reason: r.reason }));
+  return ((data ?? []) as { user_id: string; display_name: string | null; reason: string | null }[]).map((r) => ({ userId: r.user_id, name: r.display_name ?? tr('Fahrer'), reason: r.reason }));
 }
 
 /** „Heute“, „Morgen“, „in 3 Tagen“, „in 2 Wochen“ */
 export function relDay(d: Date, now = new Date()): string {
   const day = (x: Date) => Math.floor(new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime() / 86400000);
   const n = day(d) - day(now);
-  if (n <= 0) return 'Heute';
-  if (n === 1) return 'Morgen';
-  if (n < 14) return `in ${n} Tagen`;
-  return `in ${Math.round(n / 7)} Wochen`;
+  if (n <= 0) return tr('Heute');
+  if (n === 1) return tr('Morgen');
+  if (n < 14) return tr('in {n} Tagen', { n });
+  return tr('in {v0} Wochen', { v0: Math.round(n / 7) });
 }
 
 export async function ausfahrtTeilnehmer(id: string): Promise<Teilnehmer[]> {
@@ -159,7 +160,7 @@ export async function ausfahrtTeilnehmer(id: string): Promise<Teilnehmer[]> {
   if (error) fail(error.message);
   return ((data ?? []) as { user_id: string; display_name: string | null; vehicle: string | null; is_owner: boolean }[]).map((r) => ({
     userId: r.user_id,
-    name: r.display_name ?? 'Fahrer',
+    name: r.display_name ?? tr('Fahrer'),
     vehicle: r.vehicle,
     isOwner: r.is_owner,
   }));
@@ -224,7 +225,7 @@ export async function rideByLink(id: string, key: string): Promise<LinkedRide | 
   const { data, error } = await supabase.rpc('ride_by_link', { ride: id, k: key });
   if (error) fail(error.message);
   const r = ((data ?? []) as { id: string; name: string; owner_name: string | null; starts_at: string; km: number | string | null; max_members: number; taken: number; ride_status: Ausfahrt['rideStatus'] }[])[0];
-  return r ? { id: r.id, name: r.name, ownerName: r.owner_name ?? 'Fahrer', startsAt: new Date(r.starts_at), km: num(r.km), free: Math.max(0, r.max_members - r.taken), rideStatus: r.ride_status } : null;
+  return r ? { id: r.id, name: r.name, ownerName: r.owner_name ?? tr('Fahrer'), startsAt: new Date(r.starts_at), km: num(r.km), free: Math.max(0, r.max_members - r.taken), rideStatus: r.ride_status } : null;
 }
 
 export async function withdrawAusfahrt(id: string) {
@@ -237,7 +238,7 @@ export async function listAnfragen(id: string): Promise<Anfrage[]> {
   if (error) fail(error.message);
   return ((data ?? []) as { user_id: string; display_name: string | null; vehicle: string | null; message: string | null; requested_at: string; member_since: string | null; drives: number; drive_km: number | string }[]).map((r) => ({
     userId: r.user_id,
-    name: r.display_name ?? 'Fahrer',
+    name: r.display_name ?? tr('Fahrer'),
     vehicle: r.vehicle,
     message: r.message,
     requestedAt: new Date(r.requested_at),
@@ -304,13 +305,13 @@ export function useNachrichten(id: string | undefined) {
 
 const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const WD_LONG = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
-const MON = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const MON = ['Januar', 'Februar', tr('März'), 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
 export const weekday = (d: Date) => WD[d.getDay()];
 export const clock = (d: Date) => `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
 /** Sa 14. Nov. (Konsistenzprüfung 15.11., K8) */
 export const shortDate = (d: Date) => `${WD[d.getDay()]} ${d.getDate()}. ${MON_SHORT[d.getMonth()]}`;
-const MON_SHORT = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
+const MON_SHORT = ['Jan.', 'Feb.', tr('März'), 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
 /** Samstag, 14. November */
 export const longDate = (d: Date) => `${WD_LONG[d.getDay()]}, ${d.getDate()}. ${MON[d.getMonth()]}`;
 export const monthYear = (d: Date) => `${MON[d.getMonth()]} ${d.getFullYear()}`;

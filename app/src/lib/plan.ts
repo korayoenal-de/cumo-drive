@@ -15,6 +15,7 @@ import { flatten, haversine, type CheckClass, type LatLon, type Profile, type To
 import { seamsOk, windowFor } from './plan-window';
 import { movePointsOffUTurns, unwantedUTurns, type UTurn } from './uturn';
 import { route, valhallaFetch, type Avoid } from './valhalla';
+import { tr } from '@/i18n';
 
 /** Schritte beim Planen; traffic: Verkehrsmeldungen, compare: Varianten vergleichen (Rundtour) */
 export type PlanStep = 'route' | 'traffic' | 'check' | 'fix' | 'compare';
@@ -39,8 +40,8 @@ export type PlannedTour = Tour & {
 /** Hinweis für die Route, wenn kurvig nichts Besseres fand (Koray 7.11.: dann ist der direkte Weg okay) */
 export function directNote(n: number | undefined, legs: number): string | null {
   if (!n) return null;
-  if (n >= legs) return 'Hier gibt es keine kurvigere Strecke. Du fährst den direkten Weg.';
-  return n === 1 ? 'Auf einer Etappe gibt es keine kurvigere Strecke, dort fährst du den direkten Weg.' : `Auf ${n} Etappen gibt es keine kurvigere Strecke, dort fährst du den direkten Weg.`;
+  if (n >= legs) return tr('Hier gibt es keine kurvigere Strecke. Du fährst den direkten Weg.');
+  return n === 1 ? tr('Auf einer Etappe gibt es keine kurvigere Strecke, dort fährst du den direkten Weg.') : tr('Auf {n} Etappen gibt es keine kurvigere Strecke, dort fährst du den direkten Weg.', { n });
 }
 
 /**

@@ -20,6 +20,7 @@ import { Platform } from 'react-native';
 
 import { refreshUnread, useUnreadMessages } from './drivers';
 import { supabase } from './supabase';
+import { tr } from '@/i18n';
 
 const TOKEN_KEY = 'cumo.push-token';
 /** Nur Ziele in der App, die eine Mitteilung öffnen darf */
@@ -81,7 +82,7 @@ async function register(ask: boolean): Promise<boolean> {
     }
     if (!perm.granted && perm.ios?.status !== IosAuthorizationStatus.PROVISIONAL) return false;
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', { name: 'Nachrichten', importance: AndroidImportance.HIGH, lightColor: '#E2461C' });
+      await Notifications.setNotificationChannelAsync('default', { name: tr('Nachrichten'), importance: AndroidImportance.HIGH, lightColor: '#E2461C' });
     }
     const projectId = (Constants.expoConfig?.extra?.eas as { projectId?: string } | undefined)?.projectId ?? Constants.easConfig?.projectId;
     if (!projectId) return false;

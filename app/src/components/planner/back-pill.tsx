@@ -50,11 +50,11 @@ export function BackPill({ label, top, onPress, status }: { label?: string | nul
       layout={LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)}
       style={[styles.wrap, { top, maxWidth: win.width - Spacing.l - 76 }, anim]}>
       {mode === 'back' && (
-        <Pressable accessibilityRole="button" accessibilityLabel={`Zurück zu ${label}`} hitSlop={4} onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} style={styles.pill}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('Zurück zu {label}', { label: label ? t(label) : '' })} hitSlop={4} onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} style={styles.pill}>
           <Animated.View key="back" entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)} style={styles.row}>
             <SymbolView name="chevron.left" size={16} weight="semibold" tintColor={Colors.text} />
             <AppText style={styles.text} numberOfLines={1}>
-              {label}
+              {label ? t(label) : label}
             </AppText>
           </Animated.View>
         </Pressable>
@@ -73,7 +73,7 @@ export function BackPill({ label, top, onPress, status }: { label?: string | nul
       {status?.kind === 'done' && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${status.text}. Rückgängig`}
+          accessibilityLabel={t('{text}. Rückgängig', { text: status.text })}
           hitSlop={4}
           onPress={status.onUndo}
           onPressIn={pressIn}

@@ -54,7 +54,7 @@ export default function Unterhaltung() {
       .catch(() => undefined);
   }, [id]);
 
-  const title = partner?.name ?? name ?? 'Fahrer';
+  const title = partner?.name ?? name ?? t('Fahrer');
   const theyWrote = !!list?.some((m) => m.sender === id);
   const canWrite = partner ? partner.allowMessages || theyWrote : true;
 
@@ -99,7 +99,7 @@ export default function Unterhaltung() {
         keyboardDismissMode="interactive">
         {list === null && !error && <ActivityIndicator color={Colors.muted} />}
         {error && <AppText style={styles.error}>{error}</AppText>}
-        {list?.length === 0 && <AppText muted style={styles.center}>Schreib {title} die erste Nachricht.</AppText>}
+        {list?.length === 0 && <AppText muted style={styles.center}>{t('Schreib ')}{title}{t(' die erste Nachricht.')}</AppText>}
         {list?.map((m, i) => {
           const mine = m.sender === me;
           const prev = list[i - 1];
@@ -111,7 +111,7 @@ export default function Unterhaltung() {
                 disabled={mine}
                 delayLongPress={350}
                 onLongPress={() => setReport({ kind: 'direct_message', ref: String(m.id) })}
-                accessibilityHint={mine ? undefined : 'Lange drücken, um die Nachricht zu melden'}
+                accessibilityHint={mine ? undefined : t('Lange drücken, um die Nachricht zu melden')}
                 style={mine ? styles.alignEnd : styles.alignStart}>
                 <Animated.View entering={FadeInDown.duration(Motion.enter)} style={[styles.bubble, mine ? styles.mine : styles.other]}>
                   <AppText style={styles.body}>{m.body}</AppText>
@@ -136,7 +136,7 @@ export default function Unterhaltung() {
         </View>
       ) : (
         <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.m }]}>
-          <AppText muted style={styles.flex}>{title} möchte gerade keine Nachrichten bekommen.</AppText>
+          <AppText muted style={styles.flex}>{title}{t(' möchte gerade keine Nachrichten bekommen.')}</AppText>
         </View>
       )}
       <ActionSheet

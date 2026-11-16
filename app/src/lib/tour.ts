@@ -2,6 +2,7 @@
  * Touren Datenmodell und Hilfsfunktionen (GPX lesen und schreiben, Abschnitte berechnen).
  * Plattformunabhängig, GPX und KML werden ohne DOMParser gelesen.
  */
+import { getLang, t } from '@/i18n';
 
 export type LatLon = [number, number];
 export type CheckClass = 'ok' | 'pruefen' | 'raus';
@@ -36,10 +37,10 @@ export type Tour = {
 export type Profile = 'kurvig' | 'paesse' | 'entspannt' | 'schnell';
 
 export const PROFILES: { id: Profile; label: string }[] = [
-  { id: 'kurvig', label: 'Kurvig' },
-  { id: 'paesse', label: 'Kurvig' },
-  { id: 'entspannt', label: 'Entspannt' },
-  { id: 'schnell', label: 'Schnell' },
+  { id: 'kurvig', label: t('Kurvig') },
+  { id: 'paesse', label: t('Kurvig') },
+  { id: 'entspannt', label: t('Entspannt') },
+  { id: 'schnell', label: t('Schnell') },
 ];
 
 /**
@@ -203,7 +204,7 @@ function nameOf(text: string, fallback: string): string {
 
 /** Erkennt GPX oder KML am Inhalt. */
 export function parseRouteFile(text: string, fileName: string): Tour {
-  const base = fileName.replace(/\.(gpx|kml|xml)$/i, '') || 'Importierte Tour';
+  const base = fileName.replace(/\.(gpx|kml|xml)$/i, '') || t('Importierte Tour');
   if (/<kml\b/i.test(text)) return parseKml(text, base);
   if (/<gpx\b/i.test(text)) return parseGpx(text, base);
   throw new Error('Das ist keine GPX oder KML Datei.');
@@ -265,7 +266,8 @@ ${marks}
 }
 
 export function formatKm(km: number, digits = 1): string {
-  return km.toFixed(digits).replace('.', ',');
+  // Dezimalpunkt im Englischen, sonst Komma
+  return getLang() === 'en' ? km.toFixed(digits) : km.toFixed(digits).replace('.', ',');
 }
 
 /** Lange Kommazahlen in Texten auf höchstens zwei Stellen kürzen ("3,3000000000000003 m" zu "3,3 m", Koray 10.11.) */

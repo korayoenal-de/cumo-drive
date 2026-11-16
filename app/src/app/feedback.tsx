@@ -53,7 +53,7 @@ export default function Feedback() {
           value={note}
           onChangeText={setNote}
           onFocus={showSend}
-          placeholder={t('Zum Beispiel: Rundtour ab Bensheim fährt bei Jugenheim hin und zurück')}
+          placeholder={t('Zum Beispiel: Rundtour ab München fährt bei Jugenheim hin und zurück')}
           placeholderTextColor={Colors.muted}
           maxLength={1000}
           multiline

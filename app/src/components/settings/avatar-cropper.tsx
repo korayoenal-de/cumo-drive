@@ -112,7 +112,7 @@ export function AvatarCropper({ photo, onCancel, onDone }: { photo: Picked | nul
         <View style={[styles.head, { paddingTop: insets.top + Spacing.m }]} pointerEvents="none">
           <AppText style={styles.title}>{t('Ausschnitt wählen')}</AppText>
           <AppText variant="caption" muted>
-            Mit zwei Fingern vergrößern, mit einem verschieben.
+            {t('Mit zwei Fingern vergrößern, mit einem verschieben.')}
           </AppText>
         </View>
         <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.l }]}>

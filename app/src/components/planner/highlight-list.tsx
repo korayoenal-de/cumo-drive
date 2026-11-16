@@ -23,11 +23,11 @@ import type { LatLon, Tour } from '@/lib/tour';
 import { t } from '@/i18n';
 
 const KIND_LABEL: Record<string, string> = {
-  pass: 'Pass',
-  rallye: 'Rallyestrecke',
-  bergrennen: 'Bergrennstrecke',
-  aussicht: 'Aussichtsstrecke',
-  strecke: 'Strecke',
+  pass: t('Pass'),
+  rallye: t('Rallyestrecke'),
+  bergrennen: t('Bergrennstrecke'),
+  aussicht: t('Aussichtsstrecke'),
+  strecke: t('Strecke'),
 };
 
 /**
@@ -45,7 +45,7 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
   if (!list.length && !(onAvoid && avoided.length)) return null;
   return (
     <View style={styles.wrap}>
-      <AppText variant="label">{`Highlights auf der Strecke (${list.length})`}</AppText>
+      <AppText variant="label">{t('Highlights auf der Strecke ({length})', { length: list.length })}</AppText>
       {list.length > 0 && (
       <View style={styles.card}>
         {list.map((h, i) => {
@@ -54,7 +54,7 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
             <Animated.View key={h.id} entering={softEnter(i)}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`${h.name}, ${FUN_NAMES[lv]}${h.warn?.length ? `, Warnung: ${warnLabel(h.warn)}` : ''}, Details öffnen`}
+                accessibilityLabel={t('{name}, {v1}{v2}, Details öffnen', { name: h.name, v1: FUN_NAMES[lv], v2: h.warn?.length ? `, Warnung: ${warnLabel(h.warn)}` : '' })}
                 onPress={() => setOpen(h)}
                 style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
                 <View style={[styles.flex, h.warn?.length ? styles.warned : null]}>
@@ -97,7 +97,7 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
             <AppText style={[styles.sub, styles.flex]} numberOfLines={1}>{`${a.name} ausgelassen`}</AppText>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${a.name} wieder einplanen`}
+              accessibilityLabel={t('{name} wieder einplanen', { name: a.name })}
               onPress={() => {
                 allowPass(a.id);
                 onAvoid();
@@ -115,14 +115,14 @@ export function HighlightList({ line, onAvoid }: { line: LatLon[]; onAvoid?: () 
 }
 
 /** Zweite Ebene: Abschnitt auf der Karte, Pegel groß, Daten als Kennzahlen, bei Pässen Sperre und Quelle. */
-const MONTHS: Record<string, string> = { Jan: 'Januar', Feb: 'Februar', Mär: 'März', Apr: 'April', Mai: 'Mai', Jun: 'Juni', Jul: 'Juli', Aug: 'August', Sep: 'September', Okt: 'Oktober', Nov: 'November', Dez: 'Dezember' };
+const MONTHS: Record<string, string> = { Jan: 'Januar', Feb: 'Februar', Mär: t('März'), Apr: 'April', Mai: 'Mai', Jun: 'Juni', Jul: 'Juli', Aug: 'August', Sep: 'September', Okt: 'Oktober', Nov: 'November', Dez: 'Dezember' };
 /** "Okt bis Jun" wird "Oktober bis Juni" */
 const monthsLong = (s: string) => s.replace(/\b(Jan|Feb|Mär|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)\b/g, (m) => MONTHS[m] ?? m);
 
 /** Titel des Sperrhinweises (Koray 13.11.): "Gesperrt bis 1. April", sonst "Gerade gesperrt" oder "Wintersperre" */
 function closedTitle(state: ReturnType<typeof passState> | null): string {
-  if (state?.closed && state.until) return `Gesperrt bis ${new Date(state.until).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}`;
-  return state?.closed ? 'Gerade gesperrt' : 'Wintersperre';
+  if (state?.closed && state.until) return t('Gesperrt bis {v0}', { v0: new Date(state.until).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' }) });
+  return state?.closed ? t('Gerade gesperrt') : 'Wintersperre';
 }
 
 function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon[]; cum: number[]; onClose: () => void }) {
@@ -144,14 +144,14 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
     ...(h.climbM ? [{ label: t('Anstieg'), value: `${Math.round(h.climbM).toLocaleString('de-DE')} m` }] : []),
     { label: t('Auf der Route'), value: `ab km ${Math.round(h.startKm)}` },
   ];
-  const kind = [KIND_LABEL[h.kind] ?? 'Strecke', pass ? TIER_LABEL[pass.tier] : h.note, pass?.region].filter(Boolean).join(' · ');
+  const kind = [KIND_LABEL[h.kind] ?? t('Strecke'), pass ? TIER_LABEL[pass.tier] : h.note, pass?.region].filter(Boolean).join(' · ');
 
   return (
     <View style={styles.screen}>
       <View style={styles.mapBox}>
         <RouteMap tour={part} interactive={false} style={StyleSheet.absoluteFill} />
         {/* Fahrspaß Pegel als kleine Plakette neben dem X (Koray 13.11.: schwebte vorher ohne Bezug unter dem Titel) */}
-        <View style={styles.levelPill} accessible accessibilityLabel={`Fahrspaß ${FUN_NAMES[lv]}`}>
+        <View style={styles.levelPill} accessible accessibilityLabel={t('Fahrspaß {v0}', { v0: FUN_NAMES[lv] })}>
           <FunGauge level={lv} size={24} animate={lv >= 5} />
           <AppText style={styles.levelPillText}>{FUN_NAMES[lv]}</AppText>
         </View>
@@ -189,7 +189,7 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
         {pass && (pass.winter_closed || state?.closed) && (
           <View style={[styles.note, state?.closed && styles.noteWarn]}>
             <AppText style={styles.noteTitle}>{closedTitle(state)}</AppText>
-            {pass.closed_months ? <AppText style={styles.noteText}>{`Meist gesperrt von ${monthsLong(pass.closed_months)}.`}</AppText> : null}
+            {pass.closed_months ? <AppText style={styles.noteText}>{t('Meist gesperrt von {v0}.', { v0: monthsLong(pass.closed_months) })}</AppText> : null}
           </View>
         )}
         {h.warn?.length ? (

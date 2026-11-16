@@ -24,7 +24,7 @@ export default function Blockiert() {
     try {
       await unblockUser(b.userId);
       setList((l) => l?.filter((x) => x.userId !== b.userId) ?? l);
-      showToast(`${b.name} ist nicht mehr blockiert`);
+      showToast(t('{name} ist nicht mehr blockiert', { name: b.name }));
     } catch (e) {
       showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
     } finally {
@@ -42,7 +42,7 @@ export default function Blockiert() {
           <View key={b.userId} style={styles.row}>
             <Avatar name={b.name} userId={b.userId} size={40} />
             <AppText style={styles.name} numberOfLines={1}>{b.name}</AppText>
-            <Pressable accessibilityRole="button" accessibilityLabel={`${b.name} nicht mehr blockieren`} onPress={() => void lift(b)} style={styles.btn}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('{name} nicht mehr blockieren', { name: b.name })} onPress={() => void lift(b)} style={styles.btn}>
               {busy === b.userId ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.btnText}>{t('Aufheben')}</AppText>}
             </Pressable>
           </View>

@@ -8,6 +8,7 @@
  */
 import { countCurves } from './stats';
 import { haversine, type LatLon } from './tour';
+import { decimal } from '@/i18n';
 
 export type Sample = { t: number; p: LatLon; v: number | null; h: number | null };
 export type Peak = { value: number; p: LatLon };
@@ -102,4 +103,4 @@ export function rideStats(samples: Sample[]): RideStats | null {
   };
 }
 
-export const fmtG = (g: number) => `${g.toFixed(2).replace('.', ',')} g`;
+export const fmtG = (g: number) => `${decimal(g.toFixed(2))} g`;

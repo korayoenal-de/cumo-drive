@@ -17,11 +17,11 @@ import { t } from '@/i18n';
 type LayerKey = 'warnings' | 'passes' | 'passesAll' | 'myTours' | 'drives';
 
 const LAYERS: { key: LayerKey; label: string; note: string }[] = [
-  { key: 'warnings', label: t('Gefahrenstellen'), note: 'Gesperrte und zu prüfende Stellen auf der Route' },
-  { key: 'passes', label: t('Pässe in der Nähe von Start und Ziel'), note: 'Bis 50 km um deine Tour, orange die Ikonen' },
-  { key: 'passesAll', label: t('Alle Pässe anzeigen'), note: 'Auch weit weg von deiner Tour' },
-  { key: 'myTours', label: t('Gespeicherte Touren'), note: 'Als feine Linien' },
-  { key: 'drives', label: t('Gefahrene Strecken'), note: 'Deine Fahrten in Grün, so siehst du, was noch fehlt' },
+  { key: 'warnings', label: t('Gefahrenstellen'), note: t('Gesperrte und zu prüfende Stellen auf der Route') },
+  { key: 'passes', label: t('Pässe in der Nähe von Start und Ziel'), note: t('Bis 50 km um deine Tour, orange die Ikonen') },
+  { key: 'passesAll', label: t('Alle Pässe anzeigen'), note: t('Auch weit weg von deiner Tour') },
+  { key: 'myTours', label: t('Gespeicherte Touren'), note: t('Als feine Linien') },
+  { key: 'drives', label: t('Gefahrene Strecken'), note: t('Deine Fahrten in Grün, so siehst du, was noch fehlt') },
 ];
 
 export function MapSettingsButton(props: { top: number; right: number }) {

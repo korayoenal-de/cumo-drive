@@ -61,7 +61,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
     // Ausfahrt aus der Tour planen, privat als Standard (Koray 13.11.)
     // Neutral ohne Hinweis (Konsistenzprüfung 15.11., O1): Orange gibt es nur in Rückfragen
     { key: 'ride', icon: 'calendar.badge.plus', label: tr('Ausfahrt planen'), onPress: () => router.push({ pathname: '/ausfahrt/neu', params: { tour: t.id } }) },
-    { key: 'rename', icon: 'pencil', label: tr('Umbenennen'), hint: taken ? 'Nur bei dir, in der Community bleibt der Name' : undefined, onPress: () => setSheet('rename') },
+    { key: 'rename', icon: 'pencil', label: tr('Umbenennen'), hint: taken ? tr('Nur bei dir, in der Community bleibt der Name') : undefined, onPress: () => setSheet('rename') },
     // Duplizieren entfällt (Koray 16.11.): Varianten entstehen im Planer über „Als neue Tour speichern“
     // Link, GPX und KML als eine Zeile (O3)
     { key: 'share', icon: 'square.and.arrow.up', label: tr('Teilen'), onPress: () => setSheet('share') },
@@ -71,8 +71,8 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
           {
             key: 'pub',
             icon: (t.published ? 'eye.slash' : 'globe') as SheetItem['icon'],
-            label: t.published ? 'Aus der Community nehmen' : taken ? 'Deine Variante veröffentlichen' : 'In der Community veröffentlichen',
-            hint: t.published ? 'Andere sehen die Tour dann nicht mehr' : taken ? (creditLine(t) ?? '').replace(/\.$/, '') : 'Andere können die Tour finden und fahren',
+            label: t.published ? tr('Aus der Community nehmen') : taken ? tr('Deine Variante veröffentlichen') : tr('In der Community veröffentlichen'),
+            hint: t.published ? tr('Andere sehen die Tour dann nicht mehr') : taken ? (creditLine(t) ?? '').replace(/\.$/, '') : tr('Andere können die Tour finden und fahren'),
             onPress: () => setSheet('publish'),
           },
         ]),
@@ -109,7 +109,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
           </View>
         </Pressable>
         <FunMark score={t.fun} />
-        <Pressable accessibilityRole="button" accessibilityLabel={`Optionen für ${t.name}`} onPress={() => setSheet('menu')} hitSlop={4} style={({ pressed }) => [styles.round, pressed && styles.itemPressed]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={tr('Optionen für {name}', { name: t.name })} onPress={() => setSheet('menu')} hitSlop={4} style={({ pressed }) => [styles.round, pressed && styles.itemPressed]}>
           <SymbolView name="ellipsis" size={20} tintColor={Colors.text} weight="semibold" />
         </Pressable>
       </View>
@@ -159,8 +159,8 @@ export function PublishSheet({ tour: t, visible, onClose, onPublished }: { tour:
   return (
     <OptionsSheet
       visible={visible}
-      title={t.published ? 'Aus der Community nehmen?' : 'In der Community veröffentlichen'}
-      subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : taken ? `Alle sehen Strecke, Tourname und deinen Namen. Dabei steht: ${creditLine(t)}` : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
+      title={t.published ? tr('Aus der Community nehmen?') : tr('In der Community veröffentlichen')}
+      subtitle={t.published ? tr('Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.') : taken ? tr('Alle sehen Strecke, Tourname und deinen Namen. Dabei steht: {v0}', { v0: creditLine(t) }) : tr('Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.')}
       onClose={onClose}>
       <PublishForm
         tour={t}
@@ -206,13 +206,13 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
   if (!session)
     return (
       <AppText variant="caption" muted style={styles.note}>
-        Zum Veröffentlichen meldest du dich unter Einstellungen an.
+        {tr('Zum Veröffentlichen meldest du dich unter Einstellungen an.')}
       </AppText>
     );
   if (tour.published)
     return (
       <View style={styles.form}>
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => unpublishTour(tour), 'Aus der Community genommen')} style={({ pressed }) => [styles.primary, pressed && styles.itemPressed]}>
+        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => unpublishTour(tour), tr('Aus der Community genommen'))} style={({ pressed }) => [styles.primary, pressed && styles.itemPressed]}>
           {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{tr('Aus der Community nehmen')}</AppText>}
         </Pressable>
         {msg && <AppText variant="caption" style={styles.danger}>{msg}</AppText>}
@@ -257,7 +257,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
             const name = title.replace(/\s+/g, ' ').trim();
             if (name && name !== tour.name) renameTour(tour.id, name);
             await publishTour({ ...tour, name: name || tour.name }, shownAuthor, desc);
-          }, 'In der Community veröffentlicht')
+          }, tr('In der Community veröffentlicht'))
         } style={({ pressed }) => [styles.primary, !can && styles.disabled, pressed && styles.itemPressed]}>
         {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{tr('Veröffentlichen')}</AppText>}
       </Pressable>

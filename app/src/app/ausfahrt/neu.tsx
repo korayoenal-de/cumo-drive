@@ -24,7 +24,7 @@ import { maxGroupVehicles, useEntitlement } from '@/lib/entitlement';
 import { formatMinutes } from '@/lib/intent';
 import { useLibrary, type SavedTour } from '@/lib/library';
 import { formatKm, haversine } from '@/lib/tour';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 const DAYS = 28;
 
@@ -99,10 +99,10 @@ export default function AusfahrtNeu() {
       live = false;
     };
   }, [firstKey]);
-  const startName = tour ? (usable ?? placeName ?? 'Start der Tour') : '';
+  const startName = tour ? (usable ?? placeName ?? tr('Start der Tour')) : '';
   const meetingName = meeting ?? startName;
   const roundTrip = tour ? tour.wegpunkte.length > 1 && haversine(tour.wegpunkte[0], tour.wegpunkte[tour.wegpunkte.length - 1]) < 3 : false;
-  const goal = tour && !roundTrip ? tour.namen?.[tour.namen.length - 1] || 'Ziel der Tour' : null;
+  const goal = tour && !roundTrip ? tour.namen?.[tour.namen.length - 1] || tr('Ziel der Tour') : null;
   const arr = tour?.minutes ? new Date(startsAt.getTime() + tour.minutes * 60000) : null;
   const tooSoon = startsAt.getTime() < now + 30 * 60000;
 
@@ -111,7 +111,7 @@ export default function AusfahrtNeu() {
   const publish = async () => {
     if (!tour || busy) return;
     if (tooSoon) {
-      setErr('Die Abfahrt muss mindestens 30 Minuten in der Zukunft liegen.');
+      setErr(tr('Die Abfahrt muss mindestens 30 Minuten in der Zukunft liegen.'));
       return;
     }
     setBusy(true);
@@ -164,7 +164,7 @@ export default function AusfahrtNeu() {
               <View style={styles.flex}>
                 <AppText style={styles.tourName} numberOfLines={2}>{tour.name}</AppText>
                 <AppText variant="caption" muted>
-                  {[`${formatKm(tour.laenge_km, 0)} km`, tour.minutes ? formatMinutes(Math.round(tour.minutes)) : null, 'aus Touren'].filter(Boolean).join('  ·  ')}
+                  {[`${formatKm(tour.laenge_km, 0)} km`, tour.minutes ? formatMinutes(Math.round(tour.minutes)) : null, tr('aus Touren')].filter(Boolean).join('  ·  ')}
                 </AppText>
               </View>
               <AppText style={styles.change}>{t('Ändern')}</AppText>
@@ -205,8 +205,8 @@ export default function AusfahrtNeu() {
                   const d = dayStart(i);
                   const on = i === day;
                   return (
-                    <Pressable key={i} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={i === 0 ? 'Heute' : i === 1 ? 'Morgen' : shortDate(d)} onPress={() => setDay(i)} style={[styles.day, on && styles.dayOn]}>
-                      <AppText style={[styles.dayWd, on && styles.dayTextOn]}>{i === 0 ? 'Heute' : i === 1 ? 'Morgen' : shortDate(d).split(' ')[0]}</AppText>
+                    <Pressable key={i} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={i === 0 ? tr('Heute') : i === 1 ? tr('Morgen') : shortDate(d)} onPress={() => setDay(i)} style={[styles.day, on && styles.dayOn]}>
+                      <AppText style={[styles.dayWd, on && styles.dayTextOn]}>{i === 0 ? tr('Heute') : i === 1 ? tr('Morgen') : shortDate(d).split(' ')[0]}</AppText>
                       <AppText style={[styles.dayNum, on && styles.dayTextOn]}>{d.getDate()}.{d.getMonth() + 1}.</AppText>
                     </Pressable>
                   );
@@ -233,8 +233,8 @@ export default function AusfahrtNeu() {
             {/* Ziel und Ankunft */}
             <View style={styles.info}>
               <View style={styles.flex}>
-                <AppText style={styles.label}>{goal ? 'Ziel' : 'Rundtour'}</AppText>
-                <AppText style={styles.value}>{goal ?? 'zurück zum Treffpunkt'}</AppText>
+                <AppText style={styles.label}>{goal ? tr('Ziel') : tr('Rundtour')}</AppText>
+                <AppText style={styles.value}>{goal ?? tr('zurück zum Treffpunkt')}</AppText>
               </View>
               {arr && goal && (
                 <View style={styles.alignEnd}>
@@ -298,7 +298,7 @@ export default function AusfahrtNeu() {
                 <View style={[styles.radio, pub && styles.radioOn]} />
                 <View style={styles.flex}>
                   <AppText style={styles.pickName}>{t('In der Community')}</AppText>
-                  <AppText variant="caption" muted>{ent.active ? 'Alle sehen sie unter Ausfahrten und können anfragen.' : 'Mit der Mitgliedschaft, dazu mehr Plätze.'}</AppText>
+                  <AppText variant="caption" muted>{ent.active ? tr('Alle sehen sie unter Ausfahrten und können anfragen.') : tr('Mit der Mitgliedschaft, dazu mehr Plätze.')}</AppText>
                 </View>
               </Pressable>
             </View>
@@ -310,7 +310,7 @@ export default function AusfahrtNeu() {
                 <StepBtn icon="minus" label={t('Ein Platz weniger')} disabled={seats <= Math.max(1, picked.length)} onPress={() => setSeats(Math.max(1, picked.length, seats - 1))} />
                 <View style={styles.stepVal}>
                   <AppText style={styles.metric}>{seats}</AppText>
-                  <AppText variant="caption" muted>{seats === 1 ? 'Platz' : 'Plätze'}</AppText>
+                  <AppText variant="caption" muted>{seats === 1 ? tr('Platz') : tr('Plätze')}</AppText>
                 </View>
                 <StepBtn icon="plus" label={t('Ein Platz mehr')} disabled={seats >= maxSeats} onPress={() => setSeats(Math.min(maxSeats, seats + 1))} />
               </View>
@@ -325,9 +325,9 @@ export default function AusfahrtNeu() {
 
             {err && <AppText style={styles.error}>{err}</AppText>}
             <Pressable accessibilityRole="button" onPress={() => void publish()} disabled={busy} style={[styles.primary, tooSoon && styles.primaryOff]}>
-              {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{pub ? 'Ausfahrt veröffentlichen' : 'Ausfahrt anlegen'}</AppText>}
+              {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{pub ? tr('Ausfahrt veröffentlichen') : tr('Ausfahrt anlegen')}</AppText>}
             </Pressable>
-            <AppText variant="caption" muted style={styles.center}>{pub ? 'Für alle mit Konto in der Community sichtbar, mit Treffpunkt und Zeit.' : 'Privat: in der Community steht sie nicht.'}</AppText>
+            <AppText variant="caption" muted style={styles.center}>{pub ? tr('Für alle mit Konto in der Community sichtbar, mit Treffpunkt und Zeit.') : tr('Privat: in der Community steht sie nicht.')}</AppText>
           </Animated.View>
         )}
       </ScrollView>

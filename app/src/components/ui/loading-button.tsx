@@ -10,6 +10,7 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from '
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Type } from '@/constants/theme';
+import { t } from '@/i18n';
 
 /** Bereich je Schritt: von, bis, Zeitkonstante in ms (nähert sich dem Ende, ohne es zu erreichen) */
 export type LoadStage = { label: string; from: number; to: number; tau: number };
@@ -51,7 +52,7 @@ export function LoadingButton({ stage, done }: { stage: LoadStage; done?: boolea
       style={styles.box}>
       <Animated.View style={[styles.fill, fillStyle]} />
       <View style={styles.row}>
-        <AppText style={styles.label} numberOfLines={1}>{done ? 'Losfahren' : stage.label}</AppText>
+        <AppText style={styles.label} numberOfLines={1}>{done ? t('Losfahren') : stage.label}</AppText>
         {!done && <AppText style={styles.pct}>{pct} %</AppText>}
       </View>
     </View>

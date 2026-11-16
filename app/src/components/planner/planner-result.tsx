@@ -95,7 +95,7 @@ export function Result({
         <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PASS_STATUS_URL)} style={styles.winter}>
           <AppText style={styles.winterTitle}>{hint.title}</AppText>
           <AppText variant="caption" style={styles.winterText}>
-            {hint.text} Tippen für den aktuellen Passstatus.
+            {hint.text}{tr(' Tippen für den aktuellen Passstatus.')}
           </AppText>
         </Pressable>
       )}
@@ -166,7 +166,7 @@ function RollChips({ rolls, idx, onPick }: { rolls: (TourFun | null)[]; idx: num
       <AppText variant="caption" muted>{tr('Deine Runden')}</AppText>
       <View style={styles.rollRow}>
         {rolls.map((f, i) =>
-          f ? <FunPill key={i} fun={f} active={i === idx} best={i === best} hint={`Runde ${i + 1} anzeigen`} onPress={() => onPick(i)} /> : null,
+          f ? <FunPill key={i} fun={f} active={i === idx} best={i === best} hint={tr('Runde {v0} anzeigen', { v0: i + 1 })} onPress={() => onPick(i)} /> : null,
         )}
       </View>
     </View>

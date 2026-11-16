@@ -23,7 +23,7 @@ export function Kennzahlen({ km, minutes, fun, extra = [] }: { km?: number | nul
       {km != null && <Cell label={t('Strecke')} value={strecke(km)} />}
       {minutes != null && minutes > 0 && <Cell label={t('Fahrzeit')} value={fahrzeit(minutes)} />}
       {showFun && level && (
-        <View style={styles.cell} accessible accessibilityLabel={`Fahrspaß ${fun} von 100, ${TOUR_FUN_NAMES[level]}`}>
+        <View style={styles.cell} accessible accessibilityLabel={t('Fahrspaß {fun} von 100, {v1}', { fun, v1: TOUR_FUN_NAMES[level] })}>
           <AppText style={styles.label}>{t('Fahrspaß')}</AppText>
           <View style={styles.funRow}>
             <FunGauge level={level} size={20} />

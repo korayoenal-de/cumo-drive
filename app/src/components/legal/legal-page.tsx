@@ -12,7 +12,7 @@ import Svg, { Polygon } from 'react-native-svg';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import type { LegalDoc } from '@/content/legal';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 const MARK = [
   '12.00,16.20 7.29,22.09 16.71,22.09',
@@ -33,14 +33,14 @@ export function LegalPage({ doc, description, other }: { doc: LegalDoc; descript
       {/* Head nur im Web: in der App zeigt expo-router sonst einen Hinweis zur Handoff Herkunft (Koray 10.11.) */}
       {web && (
         <Head>
-          <title>{`${doc.headTitle ?? doc.title} | Cumo Drive`}</title>
+          <title>{tr('{v0} | Cumo Drive', { v0: doc.headTitle ?? doc.title })}</title>
           <meta name="description" content={description} />
         </Head>
       )}
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + Spacing.l, paddingBottom: insets.bottom + Spacing.xxxl }]}>
         <View style={styles.col}>
           <View style={styles.head}>
-            <Pressable accessibilityRole="link" accessibilityLabel={web ? 'Zur Startseite' : 'Schließen'} onPress={home} style={styles.logo}>
+            <Pressable accessibilityRole="link" accessibilityLabel={web ? tr('Zur Startseite') : tr('Schließen')} onPress={home} style={styles.logo}>
               <Svg width={26} height={26} viewBox="0 0 24 24">
                 {MARK.map((pts) => (
                   <Polygon key={pts} points={pts} fill={Colors.signal} />

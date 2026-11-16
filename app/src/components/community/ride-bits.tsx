@@ -10,23 +10,24 @@ import { AppText } from '@/components/ui/text';
 import { useAvatar } from '@/lib/avatars';
 import { Colors, Fonts, Leading, Radius, Type } from '@/constants/theme';
 import { freeSeats, initials, weekday, type Ausfahrt } from '@/lib/ausfahrten';
+import { t } from '@/i18n';
 
 /** Status als getönte Plakette */
 export function RideStatus({ r }: { r: Ausfahrt }) {
   let text: string | null = null;
   let tone: 'good' | 'signal' | 'muted' = 'muted';
   if (r.isOwner) {
-    text = r.openRequests ? `${r.openRequests} ${r.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : 'Deine Ausfahrt';
+    text = r.openRequests ? `${r.openRequests} ${r.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : t('Deine Ausfahrt');
     tone = r.openRequests ? 'signal' : 'muted';
   } else if (r.myStatus === 'zugesagt') {
-    text = 'Du bist dabei';
+    text = t('Du bist dabei');
     tone = 'good';
   } else if (r.myStatus === 'eingeladen') {
-    text = 'Eingeladen';
+    text = t('Eingeladen');
     tone = 'signal';
-  } else if (r.myStatus === 'angefragt') text = 'Angefragt';
-  else if (r.myStatus === 'abgelehnt') text = 'Abgelehnt';
-  else if (freeSeats(r) === 0) text = 'Ausgebucht';
+  } else if (r.myStatus === 'angefragt') text = t('Angefragt');
+  else if (r.myStatus === 'abgelehnt') text = t('Abgelehnt');
+  else if (freeSeats(r) === 0) text = t('Ausgebucht');
   if (!text) return null;
   return (
     <View style={[styles.tag, tone === 'good' ? styles.tagGood : tone === 'signal' ? styles.tagSignal : styles.tagMuted]}>
@@ -76,7 +77,7 @@ export function Avatar({ name, userId, size = 44, busy = false }: { name: string
       )}
       {spin && (
         <View style={[StyleSheet.absoluteFill, styles.spinner]}>
-          <ActivityIndicator size={size >= 80 ? 'large' : 'small'} color={Colors.text} accessibilityLabel={busy ? 'Foto wird hochgeladen' : 'Foto lädt'} />
+          <ActivityIndicator size={size >= 80 ? 'large' : 'small'} color={Colors.text} accessibilityLabel={busy ? t('Foto wird hochgeladen') : t('Foto lädt')} />
         </View>
       )}
     </View>

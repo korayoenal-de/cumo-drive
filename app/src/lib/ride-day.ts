@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 
 import { supabase } from './supabase';
 import { haversine, type LatLon } from './tour';
+import { tr } from '@/i18n';
 
 export const ARRIVED_M = 300;
 export const START_WINDOW_MS = 2 * 3600 * 1000;
@@ -17,7 +18,7 @@ export const DAY_BEFORE_MS = 4 * 3600 * 1000;
 export type DayRow = { userId: string; arrived: boolean; etaMin: number | null; at: LatLon | null; pingedAt: Date | null; isLead: boolean };
 
 function fail(message: string): never {
-  throw new Error(/^[A-ZÄÖÜ]/.test(message) && !/violat|permission|function|relation|column|JWT/i.test(message) ? message : 'Das hat nicht geklappt. Bitte nochmal versuchen.');
+  throw new Error(/^[A-ZÄÖÜ]/.test(message) && !/violat|permission|function|relation|column|JWT/i.test(message) ? message : tr('Das hat nicht geklappt. Bitte nochmal versuchen.'));
 }
 
 async function call(fn: string, args: Record<string, unknown>) {

@@ -68,14 +68,14 @@ export default function Profil() {
             big
             d={{
               id: session.user.id,
-              name: profile?.displayName ?? 'Noch kein Name',
+              name: profile?.displayName ?? t('Noch kein Name'),
               car: null,
               homeName: p.homeName,
               bio: p.bio,
               ...shownBirthday(p),
               home: p.home,
               allowMessages: p.allowMessages,
-              garage: list.map((v) => ({ name: vehicleName(v) || 'Fahrzeug', look: carLookFor(v) ?? null })),
+              garage: list.map((v) => ({ name: vehicleName(v) || t('Fahrzeug'), look: carLookFor(v) ?? null })),
               memberSince: null,
               isMe: true,
             }}
@@ -135,7 +135,7 @@ function PhotoField({ userId, name }: { userId: string; name: string }) {
     <View style={styles.photo}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={url ? 'Profilfoto ändern' : 'Profilfoto hinzufügen'}
+        accessibilityLabel={url ? t('Profilfoto ändern') : t('Profilfoto hinzufügen')}
         disabled={busy}
         onPress={() => setOpen(true)}
         style={({ pressed }) => [styles.photoBtn, pressed && styles.pressed]}>
@@ -159,7 +159,7 @@ function PhotoField({ userId, name }: { userId: string; name: string }) {
       <ConfirmSheet
         visible={ask}
         title={t('Möchtest du dein Profilfoto wirklich entfernen?')}
-        text="Andere sehen dann wieder deine Initialen."
+        text={t('Andere sehen dann wieder deine Initialen.')}
         confirmLabel={t('Entfernen')}
         onConfirm={() => {
           setAsk(false);
@@ -189,7 +189,7 @@ function DisplayName() {
       await setDisplayName(draft);
       setDraft(null);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : t('Das hat nicht geklappt.'));
     } finally {
       setBusy(false);
     }
@@ -200,10 +200,10 @@ function DisplayName() {
       <View style={styles.row}>
         <View style={styles.grow}>
           <AppText variant="caption" muted>
-            Dein Name
+            {t('Dein Name')}
           </AppText>
           <AppText style={styles.name} numberOfLines={1}>
-            {current ?? 'Noch kein Name'}
+            {current ?? t('Noch kein Name')}
           </AppText>
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel={t('Namen ändern')} onPress={() => setDraft(current ?? '')} style={[styles.secondary, styles.padH]}>

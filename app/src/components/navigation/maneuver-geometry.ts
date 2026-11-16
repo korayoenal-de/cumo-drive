@@ -8,6 +8,7 @@
  * zentriert, so wirken alle gleich groß. Varianten für links entstehen durch Spiegeln.
  */
 import type { ManeuverKind } from '../../lib/navigation/types';
+import { tr } from '@/i18n';
 
 export type { ManeuverKind };
 
@@ -46,44 +47,44 @@ export type NavSymbol =
 
 export const SYMBOL_NAMES: Record<Exclude<NavSymbol, RoundaboutSymbol>, string> = {
   start: 'Start',
-  ziel: 'Ziel',
+  ziel: tr('Ziel'),
   zwischenziel: 'Zwischenziel',
   geradeaus: 'Geradeaus',
-  leicht_links: 'Leicht links',
+  leicht_links: tr('Leicht links'),
   links: 'Links',
-  scharf_links: 'Scharf links',
-  leicht_rechts: 'Leicht rechts',
+  scharf_links: tr('Scharf links'),
+  leicht_rechts: tr('Leicht rechts'),
   rechts: 'Rechts',
-  scharf_rechts: 'Scharf rechts',
+  scharf_rechts: tr('Scharf rechts'),
   wenden: 'Wenden',
   kreisverkehr: 'Kreisverkehr',
   auffahrt: 'Auffahrt',
-  abfahrt: 'Abfahrt',
-  rechts_halten: 'Rechts halten',
-  links_halten: 'Links halten',
-  einfaedeln_rechts: 'Einfädeln rechts',
-  einfaedeln_links: 'Einfädeln links',
-  auffahrt_rechts: 'Auffahrt rechts',
-  auffahrt_links: 'Auffahrt links',
-  abfahrt_rechts: 'Abfahrt rechts',
-  abfahrt_links: 'Abfahrt links',
-  wenden_links: 'Wenden links',
-  wenden_rechts: 'Wenden rechts',
+  abfahrt: tr('Abfahrt'),
+  rechts_halten: tr('Rechts halten'),
+  links_halten: tr('Links halten'),
+  einfaedeln_rechts: tr('Einfädeln rechts'),
+  einfaedeln_links: tr('Einfädeln links'),
+  auffahrt_rechts: tr('Auffahrt rechts'),
+  auffahrt_links: tr('Auffahrt links'),
+  abfahrt_rechts: tr('Abfahrt rechts'),
+  abfahrt_links: tr('Abfahrt links'),
+  wenden_links: tr('Wenden links'),
+  wenden_rechts: tr('Wenden rechts'),
   kreisverkehr_1: 'Kreisverkehr 1. Ausfahrt',
   kreisverkehr_2: 'Kreisverkehr 2. Ausfahrt',
   kreisverkehr_3: 'Kreisverkehr 3. Ausfahrt',
   kreisverkehr_4: 'Kreisverkehr 4. Ausfahrt',
   kreisverkehr_5: 'Kreisverkehr 5. Ausfahrt',
-  kreisverkehr_verlassen: 'Kreisverkehr verlassen',
-  faehre_an_bord: 'Fähre an Bord',
-  faehre_verlassen: 'Fähre verlassen',
-  ziel_links: 'Ziel links',
-  ziel_rechts: 'Ziel rechts',
+  kreisverkehr_verlassen: tr('Kreisverkehr verlassen'),
+  faehre_an_bord: tr('Fähre an Bord'),
+  faehre_verlassen: tr('Fähre verlassen'),
+  ziel_links: tr('Ziel links'),
+  ziel_rechts: tr('Ziel rechts'),
   kehre: 'Kehre',
-  passhoehe: 'Passhöhe',
-  sperrung: 'Sperrung',
-  engstelle: 'Engstelle',
-  tankstelle: 'Tankstelle Super Plus',
+  passhoehe: tr('Passhöhe'),
+  sperrung: tr('Sperrung'),
+  engstelle: tr('Engstelle'),
+  tankstelle: tr('Tankstelle Super Plus'),
   aussicht: 'Aussichtspunkt',
   sammelpunkt: 'Sammelpunkt',
   blitzer: 'Blitzer',
@@ -96,7 +97,7 @@ export const SYMBOL_NAMES: Record<Exclude<NavSymbol, RoundaboutSymbol>, string> 
 export type RoundDir = 'r' | 'hr' | 'g' | 'hl' | 'l' | 'w';
 export type RoundaboutSymbol = `kreisverkehr_${RoundDir}_${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7}`;
 export const ROUND_DIR_ANGLE: Record<RoundDir, number> = { r: 90, hr: 40, g: 0, hl: -40, l: -90, w: -140 };
-const ROUND_DIR_NAME: Record<RoundDir, string> = { r: 'rechts', hr: 'halbrechts', g: 'geradeaus', hl: 'halblinks', l: 'links', w: 'zurück' };
+const ROUND_DIR_NAME: Record<RoundDir, string> = { r: tr('rechts'), hr: tr('halbrechts'), g: tr('geradeaus'), hl: tr('halblinks'), l: tr('links'), w: tr('zurück') };
 
 /** Alle Symbole mit Namen, auch die Kreisverkehr Richtungen (für die Bilder in CarPlay) */
 export const ALL_SYMBOL_NAMES: Record<NavSymbol, string> = (() => {

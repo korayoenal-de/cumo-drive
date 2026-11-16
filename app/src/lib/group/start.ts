@@ -9,13 +9,14 @@ import { currentVehicle, vehicleName } from '../vehicle';
 import { DEFAULT_AVOID } from '../valhalla';
 import { loadRideTour, rideOverview } from './invites';
 import { startRide, type Role } from './ride';
+import { tr } from '@/i18n';
 
 function myCar(): string {
   return (() => { const v = currentVehicle(); return v ? vehicleName(v) : ''; })() || myProfile()?.car || '';
 }
 
 function myName(): string {
-  return myProfile()?.displayName ?? 'Fahrer';
+  return myProfile()?.displayName ?? tr('Fahrer');
 }
 
 /** Eigene Fahrzeugbezeichnung für Einladungen und Zusagen. */

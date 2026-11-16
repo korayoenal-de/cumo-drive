@@ -13,6 +13,7 @@ import { signOut, useSession } from '@/lib/auth';
 import { useEntitlement } from '@/lib/entitlement';
 
 import { Paywall } from './paywall';
+import { t } from '@/i18n';
 
 export function EntitlementGate({ children }: { children: ReactNode }) {
   const session = useSession();
@@ -24,7 +25,7 @@ export function EntitlementGate({ children }: { children: ReactNode }) {
       footer={
         <Pressable accessibilityRole="button" onPress={() => void signOut()} style={styles.signOut}>
           <AppText muted style={styles.signOutText}>
-            Abmelden
+            {t('Abmelden')}
           </AppText>
         </Pressable>
       }
@@ -36,7 +37,7 @@ export function EntitlementGate({ children }: { children: ReactNode }) {
 export function TrialBadge() {
   const e = useEntitlement();
   if (e.loading || !e.active || e.source !== 'test' || !e.until) return null;
-  const text = e.daysLeft <= 1 ? 'Test noch 1 Tag' : `Test noch ${e.daysLeft} Tage`;
+  const text = e.daysLeft <= 1 ? t('Test noch 1 Tag') : t('Test noch {daysLeft} Tage', { daysLeft: e.daysLeft });
   const urgent = e.daysLeft <= 3;
   return (
     <View style={[styles.pill, urgent && styles.pillUrgent]} accessibilityLabel={text}>

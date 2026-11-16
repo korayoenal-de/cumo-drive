@@ -74,7 +74,7 @@ export function VoiceSection() {
         <View style={styles.flex}>
           <AppText style={styles.label}>{t('Stimme')}</AppText>
           <AppText style={styles.value} numberOfLines={1}>
-            {choice?.name ?? "Standardstimme"}
+            {choice?.name ?? t('Standardstimme')}
           </AppText>
         </View>
         <SymbolView
@@ -95,16 +95,14 @@ export function VoiceSection() {
         </View>
       </View>
       <AppText variant="caption" muted style={styles.volumeHint}>
-        Im Verhältnis zur Lautstärke des iPhones. Während der Hörprobe regeln
-        die Tasten des iPhones die Ansagen insgesamt. In der Navigation
-        erreichst du das auch mit langem Druck auf den Lautsprecher.
+        {t('Im Verhältnis zur Lautstärke des iPhones. Während der Hörprobe regeln die Tasten des iPhones die Ansagen insgesamt. In der Navigation erreichst du das auch mit langem Druck auf den Lautsprecher.')}
       </AppText>
 
       <View style={styles.card}>
         <View style={styles.flex}>
           <AppText style={styles.label}>{t('Tempo in der Navigation')}</AppText>
           <AppText style={styles.value}>
-            Dein Tempo und das erlaubte Tempo
+            {t('Dein Tempo und das erlaubte Tempo')}
           </AppText>
         </View>
         <Switch
@@ -123,7 +121,7 @@ export function VoiceSection() {
             <View style={styles.flex}>
               <AppText style={styles.label}>{t('Kurvenansagen')}</AppText>
               <AppText style={styles.value}>
-                Auf Highlights wie ein Beifahrer
+                {t('Auf Highlights wie ein Beifahrer')}
               </AppText>
             </View>
             <Switch
@@ -136,9 +134,7 @@ export function VoiceSection() {
             />
           </View>
           <AppText variant="caption" muted style={styles.volumeHint}>
-            Auf Pässen und Highlights sagt die Stimme jede Kurve an: links
-            leicht, rechts mittel, links scharf, Kehre. Sie beschreibt die Kurve
-            und nennt kein Tempo.
+            {t('Auf Pässen und Highlights sagt die Stimme jede Kurve an: links leicht, rechts mittel, links scharf, Kehre. Sie beschreibt die Kurve und nennt kein Tempo.')}
           </AppText>
         </>
       )}
@@ -158,7 +154,7 @@ export function VoiceSection() {
           >
             <Row
               name="Standardstimme"
-              detail="Wie im iPhone eingestellt"
+              detail={t('Wie im iPhone eingestellt')}
               active={!choice}
               onPress={() => pick(null)}
             />
@@ -173,15 +169,13 @@ export function VoiceSection() {
             ))}
             {voices.length === 0 && (
               <AppText style={styles.hint}>
-                Auf diesem Gerät ist keine deutsche Stimme installiert.
+                {t('Auf diesem Gerät ist keine deutsche Stimme installiert.')}
               </AppText>
             )}
           </ScrollView>
         )}
         <AppText style={styles.hint}>
-          Natürlicher klingen die Stimmen „Erweitert“ und „Premium“. Du lädst
-          sie im iPhone unter Einstellungen, Bedienungshilfen, Gesprochene
-          Inhalte, Stimmen, Deutsch.
+          {t('Natürlicher klingen die Stimmen „Erweitert“ und „Premium“. Du lädst sie im iPhone unter Einstellungen, Bedienungshilfen, Gesprochene Inhalte, Stimmen, Deutsch.')}
         </AppText>
       </OptionsSheet>
     </View>

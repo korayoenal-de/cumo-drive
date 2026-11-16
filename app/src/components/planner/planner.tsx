@@ -76,8 +76,8 @@ const phaseIndex = (p: PlanPhase | PlanStep) => Math.max(0, PHASES.findIndex((x)
 
 /** Wort für den Toast nach dem Einplanen */
 /** Neu würfeln ohne gute Alternative (Koray 10.11.) */
-const NO_MORE_ROLLS = 'Eine bessere Runde gibt es hier gerade nicht. Probier eine andere Richtung oder Länge.';
-const STOP_WORD: Record<PlannedStop['cat'], string> = { tank: 'Tankstopp', kaffee: 'Kaffeepause', mittag: 'Mittagspause', aussicht: 'Aussichtspunkt', hotel: 'Übernachtung', pass: 'Pass' };
+const NO_MORE_ROLLS = tr('Eine bessere Runde gibt es hier gerade nicht. Probier eine andere Richtung oder Länge.');
+const STOP_WORD: Record<PlannedStop['cat'], string> = { tank: 'Tankstopp', kaffee: 'Kaffeepause', mittag: 'Mittagspause', aussicht: 'Aussichtspunkt', hotel: tr('Übernachtung'), pass: 'Pass' };
 
 
 
@@ -87,24 +87,24 @@ const DURATIONS: { minutes: number; big: string; unit: string }[] = [
   { minutes: 60, big: '1', unit: 'h' },
   { minutes: 120, big: '2', unit: 'h' },
   { minutes: 180, big: '3', unit: 'h' },
-  { minutes: 270, big: '½', unit: 'Tag' },
-  { minutes: 420, big: '1', unit: 'Tag' },
+  { minutes: 270, big: '½', unit: tr('Tag') },
+  { minutes: 420, big: '1', unit: tr('Tag') },
 ];
 
 const STYLE_PROFILES: Profile[] = ['kurvig', 'entspannt'];
-const PROFILE_WORD: Record<Profile, string> = { kurvig: 'kurvig', paesse: 'kurvig', entspannt: 'entspannt', schnell: 'zügig' };
+const PROFILE_WORD: Record<Profile, string> = { kurvig: 'kurvig', paesse: 'kurvig', entspannt: 'entspannt', schnell: tr('zügig') };
 
 const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
 const MIN_STEPS = [60, 90, 120, 180, 240, 300, 420];
 
 function dirPhrase(d: Direction): string {
-  if (d === 'zufall') return 'in zufälliger Richtung';
-  return `Richtung ${DIRECTIONS.find((x) => x.id === d)!.label}`;
+  if (d === 'zufall') return tr('in zufälliger Richtung');
+  return tr('Richtung {dir}', { dir: DIRECTIONS.find((x) => x.id === d)!.label });
 }
 
 function joinDe(items: string[]): string {
   if (items.length < 2) return items.join('');
-  return `${items.slice(0, -1).join(', ')} und ${items[items.length - 1]}`;
+  return tr('{v0} und {v1}', { v0: items.slice(0, -1).join(', '), v1: items[items.length - 1] });
 }
 
 /** Wunsch aus Freitext und Chips zusammenführen; Chips haben Vorrang. */
@@ -140,12 +140,12 @@ function effectiveWish(wish: TourWish, o: Overrides): Effective {
 
 function understoodSentence(e: Effective): string {
   const km = targetKm(e, e.profile);
-  const parts: string[] = [`Rundtour ab ${e.startName ?? 'deinem Standort'}`];
+  const parts: string[] = [tr('Rundtour ab {v0}', { v0: e.startName ?? 'deinem Standort' })];
   if (e.km) parts.push(`${e.km} km`);
   else if (e.minutes) parts.push(`${formatMinutes(e.minutes)} (etwa ${km} km)`);
-  else parts.push(`etwa ${km} km`);
+  else parts.push(tr('etwa {km} km', { km }));
   parts.push(PROFILE_WORD[e.profile]);
-  if (e.towardName) parts.push(`Richtung ${e.towardName}`);
+  if (e.towardName) parts.push(tr('Richtung {towardName}', { towardName: e.towardName }));
   else parts.push(dirPhrase(e.direction ?? 'zufall'));
   let s = parts.join(', ') + '.';
   if (e.stops.length) s += ` Stopps: ${joinDe(e.stops.map((id) => STOPS.find((x) => x.id === id)!.label))}.`;
@@ -463,7 +463,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       if (!lengthFits(tour.laenge_km, req.km) && !ctrl.signal.aborted) {
         step('compare');
         const back = await outAndBack(
-          { name: `Rundtour ab ${req.start.name}`, start: req.start.p, km: req.km, direction: req.direction, bearing: req.bearing, profile: req.profile, avoid: req.avoid },
+          { name: tr('Rundtour ab {name}', { name: req.start.name }), start: req.start.p, km: req.km, direction: req.direction, bearing: req.bearing, profile: req.profile, avoid: req.avoid },
           ctrl.signal,
         ).catch((e) => {
           if (ctrl.signal.aborted) throw e;
@@ -525,20 +525,20 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     const e = eff;
     void run(async (signal) => {
       const start: Spot = e.startName
-        ? await findPlace(e.startName, here?.p, 'Den Startort', signal).then((p) => ({ p: p.p, name: p.name }))
+        ? await findPlace(e.startName, here?.p, tr('Den Startort'), signal).then((p) => ({ p: p.p, name: p.name }))
         : here ?? (await locate(signal));
       let bearing: number | undefined;
       let km = targetKm(e, e.profile);
       let note: string | undefined;
       if (!e.direction && e.towardName) {
-        const target = await findPlace(e.towardName, start.p, 'Die Region', signal);
+        const target = await findPlace(e.towardName, start.p, tr('Die Region'), signal);
         bearing = bearingTo(start.p, target.p);
         // Eine Runde kommt etwa 40 % ihrer Länge weit. Liegt die Region weiter weg, wird die Runde länger,
         // sonst führt sie nur in die Richtung und kommt nie an.
         const distKm = haversine(start.p, target.p) / 1000;
         const needKm = Math.min(600, Math.round((distKm * 2.6) / 10) * 10);
         if (needKm > km) {
-          note = `${target.name ?? e.towardName} liegt etwa ${Math.round(distKm)} km entfernt, die Runde ist deshalb länger als gewünscht.`;
+          note = tr('{v0} liegt etwa {v1} km entfernt, die Runde ist deshalb länger als gewünscht.', { v0: target.name ?? e.towardName, v1: Math.round(distKm) });
           km = needKm;
         }
       }
@@ -578,7 +578,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       const t = await spliceStop(cur.tour, p, cur.req.profile, cur.req.avoid);
       if (!roundBase.current) roundBase.current = cur.tour;
       setView({ ...cur, tour: t });
-      const kmTxt = `bei km ${Math.round(km)}`;
+      const kmTxt = tr('bei km {v0}', { v0: Math.round(km) });
       const next = [...before, { key: `${p[0]},${p[1]}`, name, detail: kmTxt, cat, p }];
       setRoundStops(next);
       showToast(`${STOP_WORD[cat]} ${kmTxt} eingeplant`, {
@@ -686,7 +686,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       if (now && now !== before.snap.planned) {
         const d = before.km != null ? Math.round(now.laenge_km - before.km) : 0;
         const spur = spurKm(now);
-        const text = spur >= 0.3 ? `${formatKm(spur, 1)} km hin und zurück` : d === 0 ? 'Angepasst' : `${d > 0 ? '+' : '−'}${Math.abs(d)} km`;
+        const text = spur >= 0.3 ? tr('{v0} km hin und zurück', { v0: formatKm(spur, 1) }) : d === 0 ? tr('Angepasst') : `${d > 0 ? '+' : '−'}${Math.abs(d)} km`;
         setAdjustDone({ text, tone: spur >= 0.3 ? 'warn' : undefined, snap: before.snap });
       }
     }
@@ -714,7 +714,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   const mapTour: Tour = view.kind === 'result' ? view.tour : inTour ? (routeTour ?? (adjustBusy && staleTour ? staleTour : draftTour)) : EMPTY_TOUR;
   const names = tourPlan.names;
   const pins = useMemo(
-    () => (inTour ? tourPts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: names[keyOf(p)] ?? `Zwischenziel ${i + 1}` })) : undefined),
+    () => (inTour ? tourPts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: names[keyOf(p)] ?? tr('Zwischenziel {v0}', { v0: i + 1 }) })) : undefined),
     [inTour, tourPts, names],
   );
   /** Punkt Aktion Auf der Karte zeigen */
@@ -793,7 +793,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   const passOverlay = inTour && pending?.pass ? pending.pass : null;
   const passRoleIdx = passOverlay ? passIndex(tourPts, passOverlay) : -1;
   const passRole =
-    passRoleIdx < 0 ? null : passRoleIdx === 0 ? 'Start' : passRoleIdx === tourPts.length - 1 && tourPlan.complete ? 'Ziel' : `Zwischenziel ${passRoleIdx}`;
+    passRoleIdx < 0 ? null : passRoleIdx === 0 ? 'Start' : passRoleIdx === tourPts.length - 1 && tourPlan.complete ? tr('Ziel') : tr('Zwischenziel {passRoleIdx}', { passRoleIdx });
 
   function onMapLongPress(p: LatLon) {
     haptic('punkt');
@@ -827,7 +827,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     <>
       {liveEdit && view.kind === 'form' && !scan ? (
         <AppText variant="display" style={styles.headline} accessibilityRole="header">
-          Tour anpassen
+          {tr('Tour anpassen')}
         </AppText>
       ) : view.kind === 'form' && !scan ? (
         <TypoTabs
@@ -853,7 +853,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           <ProgressBar step={phaseIndex(tourPlan.step ?? 'route')} expectMs={8000} />
           <View style={styles.summary}>
             <AppText variant="title" style={styles.flex} numberOfLines={1}>
-              {`${tourPlan.names[keyOf(tourPlan.pts[0])] ?? 'Start'} nach ${tourPlan.names[keyOf(tourPlan.pts[tourPlan.pts.length - 1])] ?? 'Ziel'}`}
+              {`${tourPlan.names[keyOf(tourPlan.pts[0])] ?? 'Start'} nach ${tourPlan.names[keyOf(tourPlan.pts[tourPlan.pts.length - 1])] ?? tr('Ziel')}`}
             </AppText>
             <Pressable accessibilityRole="button" onPress={tourPlan.cancel} hitSlop={4} style={({ pressed }) => [styles.cancelChip, pressed && styles.pressedDim]}>
               <AppText style={styles.cancelText}>{tr('Abbrechen')}</AppText>
@@ -866,7 +866,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           <ProgressBar step={phaseIndex(view.phase)} expectMs={12000} done={radar?.phase === 'aufloesen'} doneMs={REVEAL_MS - 300} />
           <View style={styles.summary}>
             <AppText variant="title" style={styles.flex} numberOfLines={1}>
-              {radar?.phase === 'aufloesen' ? 'Fertig' : `Rundtour, ${roundKm} km`}
+              {radar?.phase === 'aufloesen' ? tr('Fertig') : `Rundtour, ${roundKm} km`}
             </AppText>
             <Pressable accessibilityRole="button" onPress={cancel} hitSlop={4} style={({ pressed }) => [styles.cancelChip, pressed && styles.pressedDim]}>
               <AppText style={styles.cancelText}>{tr('Abbrechen')}</AppText>
@@ -878,14 +878,14 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           {view.kind === 'error'
             ? view.error.message
             : view.kind === 'result'
-              ? `${PROFILE_WORD[view.req.profile]}, ${view.req.towardName ? `Richtung ${view.req.towardName}` : dirPhrase(view.req.direction)}${roundStops.length ? `, mit ${roundStops.length} ${roundStops.length === 1 ? 'Stopp' : 'Stopps'}` : ''}`
+              ? `${PROFILE_WORD[view.req.profile]}, ${view.req.towardName ? tr('Richtung {towardName}', { towardName: view.req.towardName }) : dirPhrase(view.req.direction)}${roundStops.length ? tr(', mit {length} {v1}', { length: roundStops.length, v1: roundStops.length === 1 ? tr('Stopp') : tr('Stopps') }) : ''}`
               : mode === 'tour'
                 ? tourPts.length
-                  ? 'Lange drücken setzt einen Punkt, Punkte halten und ziehen.'
-                  : 'Start, Ziel und Zwischenziele frei setzen.'
+                  ? tr('Lange drücken setzt einen Punkt, Punkte halten und ziehen.')
+                  : tr('Start, Ziel und Zwischenziele frei setzen.')
                 : mode === 'beschreiben'
-                  ? 'Beschreib deine Runde in einem Satz, wir planen sie.'
-                  : `Länge und Richtung wählen, zurück geht es zum Start (${picked?.name ?? here?.name ?? 'dein Standort'}).`}
+                  ? tr('Beschreib deine Runde in einem Satz, wir planen sie.')
+                  : tr('Länge und Richtung wählen, zurück geht es zum Start ({v0}).', { v0: picked?.name ?? here?.name ?? 'dein Standort' })}
         </AppText>
       )}
     </>
@@ -1004,7 +1004,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           </View>
           {micHint && (
             <AppText variant="caption" muted>
-              Spracheingabe folgt bald. Bis dahin einfach tippen, zum Beispiel: 2 Stunden kurvig in den Odenwald mit Kaffee.
+              {tr('Spracheingabe folgt bald. Bis dahin einfach tippen, zum Beispiel: 2 Stunden kurvig in den Schwarzwald mit Kaffee.')}
             </AppText>
           )}
 
@@ -1017,12 +1017,12 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
                     key={d.minutes}
                     accessibilityRole="button"
                     accessibilityState={{ selected: active }}
-                    accessibilityLabel={d.unit === 'Tag' ? (d.big === '½' ? 'Halber Tag' : 'Tag') : `${d.big} Stunden`}
+                    accessibilityLabel={d.unit === 'Tag' ? (d.big === '½' ? tr('Halber Tag') : tr('Tag')) : `${d.big} Stunden`}
                     onPress={() => setOver((o) => ({ ...o, minutes: active ? null : d.minutes }))}
                     style={[styles.durTile, active && styles.tileOn]}>
                     <AppText style={[styles.durBig, active && styles.onSignal]}>{d.big}</AppText>
                     <AppText variant="caption" style={active ? styles.onSignal : styles.mutedText}>
-                      {d.unit === 'Tag' && d.big === '½' ? 'Halber Tag' : d.unit}
+                      {d.unit === 'Tag' && d.big === '½' ? tr('Halber Tag') : d.unit}
                     </AppText>
                   </Pressable>
                 );
@@ -1091,7 +1091,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           <View style={styles.gapS}>
             <PrimaryButton label={tr('Tour erstellen')} onPress={createFromWish} />
             <AppText variant="caption" muted>
-              Stopps werden bald eingeplant, heute zeigen wir sie nur an.
+              {tr('Stopps werden bald eingeplant, heute zeigen wir sie nur an.')}
             </AppText>
           </View>
         </>
@@ -1111,7 +1111,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
                 <View style={styles.flex}>
                   <AppText variant="title">{tr('Aktueller Standort')}</AppText>
                   <AppText variant="caption" muted>
-                    {locating ? 'Standort wird bestimmt' : here ? here.name : locError ? locError.message: tr('Wird beim Start bestimmt')}
+                    {locating ? tr('Standort wird bestimmt') : here ? here.name : locError ? locError.message: tr('Wird beim Start bestimmt')}
                   </AppText>
                 </View>
                 {locating && <ActivityIndicator color={Colors.muted} />}
@@ -1138,7 +1138,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
               </Pressable>
               <PlaceSearch
                 visible={showSearch}
-                role="Start der Runde"
+                role={tr('Start der Runde')}
                 placeholder={tr('Wo geht es los?')}
                 current={picked?.name ?? ''}
                 near={here?.p}
@@ -1176,7 +1176,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
                     {lengthBy === 'km' ? KM_STEPS[kmIdx] : formatMinutes(MIN_STEPS[minIdx])}
                   </AppText>
                   <AppText variant="caption" muted>
-                    {lengthBy === 'km' ? 'km' : `etwa ${roundKm} km`}
+                    {lengthBy === 'km' ? 'km' : tr('etwa {roundKm} km', { roundKm })}
                   </AppText>
                 </View>
                 <StepButton
@@ -1287,7 +1287,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       onDetentChange={setDetent}
       scrollRef={scroll}
       lockScroll={dragging}
-      grabberLabel="Planer Höhe ändern"
+      grabberLabel={tr('Planer Höhe ändern')}
       hideBody={!!scan}
       smallTrim={scan || view.kind === 'working' ? 24 : 0}
       header={header}
@@ -1338,7 +1338,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
               adjustBusy
                 ? { kind: 'busy', text: tr('Strecke wird angepasst') }
                 : listBusy
-                  ? { kind: 'busy', text: listPill ?? 'Route wird berechnet' }
+                  ? { kind: 'busy', text: listPill ?? tr('Route wird berechnet') }
                 : adjustDone
                   ? {
                       kind: 'done',
@@ -1363,8 +1363,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           {inTour && selVia != null && !passOverlay && tourPts.slice(1, -1)[selVia] && (
             <MapPointActions
               label={String(selVia + 1)}
-              name={tourPlan.names[keyOf(tourPts.slice(1, -1)[selVia])] ?? `Zwischenziel ${selVia + 1}`}
-              role={`Zwischenziel ${selVia + 1}`}
+              name={tourPlan.names[keyOf(tourPts.slice(1, -1)[selVia])] ?? tr('Zwischenziel {v0}', { v0: selVia + 1 })}
+              role={tr('Zwischenziel {v0}', { v0: selVia + 1 })}
               bottom={covered + Spacing.m}
               onRemove={() => {
                 setMapEdit(true);
@@ -1401,7 +1401,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     <ActionSheet
       visible={askKeep}
       title={tr('Änderungen behalten?')}
-      subtitle={`Du hast ${tourPlan.name.trim() || 'die Tour'} verändert.`}
+      subtitle={tr('Du hast {v0} verändert.', { v0: tourPlan.name.trim() || 'die Tour' })}
       onClose={() => setAskKeep(false)}
       items={[
         ...(routeTour

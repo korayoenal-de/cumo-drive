@@ -14,7 +14,7 @@ import { Colors } from '@/constants/theme';
 
 import { type MapInstance } from './map-web';
 import { BODY, C } from './web-shared';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 type Pt = { x: number; y: number };
 type LayerEvent = { point: Pt; lngLat: { lat: number; lng: number }; features?: { properties: Record<string, unknown> }[]; preventDefault: () => void; originalEvent?: Event };
@@ -186,9 +186,9 @@ export type AdjustState =
 
 /** Ergebnistext nach einer Änderung auf der Karte, wie in der App */
 export function adjustText(beforeKm: number | null, nowKm: number, spurKmNow: number): { text: string; warn: boolean } {
-  if (spurKmNow >= 0.3) return { text: `${formatKm(spurKmNow, 1)} km hin und zurück`, warn: true };
+  if (spurKmNow >= 0.3) return { text: tr('{v0} km hin und zurück', { v0: formatKm(spurKmNow, 1) }), warn: true };
   const d = beforeKm != null ? Math.round(nowKm - beforeKm) : 0;
-  return { text: d === 0 ? 'Angepasst' : `${d > 0 ? '+' : '−'}${Math.abs(d)} km`, warn: false };
+  return { text: d === 0 ? tr('Angepasst') : `${d > 0 ? '+' : '−'}${Math.abs(d)} km`, warn: false };
 }
 
 /** Hinweis oben links über der Karte: erst Laden, dann Ergebnis mit Rückgängig (7 s bei Warnung, sonst 5 s) */
@@ -210,7 +210,7 @@ export function AdjustChip(props: { state: AdjustState | null; onDone: () => voi
       <div style={base} role="status" aria-live="polite">
         <style>{`@keyframes cdChipIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}@keyframes cdPulse{0%,100%{opacity:1}50%{opacity:.35}}@keyframes cdBar{from{width:6%}to{width:92%}}`}</style>
         <span style={{ width: 8, height: 8, borderRadius: 4, background: C.signal, animation: 'cdPulse 1.04s infinite' }} />
-        Strecke wird angepasst
+        {tr('Strecke wird angepasst')}
         <span style={{ position: 'absolute', left: 0, bottom: 0, height: 3, background: C.signal, animation: 'cdBar 7s cubic-bezier(0.22,1,0.36,1) forwards' }} />
       </div>
     );
@@ -218,7 +218,7 @@ export function AdjustChip(props: { state: AdjustState | null; onDone: () => voi
     <button
       style={{ ...base, border: 'none', cursor: 'pointer' }}
       onClick={shown.onUndo}
-      aria-label={`${shown.text}. Rückgängig`}>
+      aria-label={tr('{text}. Rückgängig', { text: shown.text })}>
       <style>{`@keyframes cdChipIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}`}</style>
       <span style={{ color: shown.warn ? C.warn : '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown.text}</span>
       <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.18)' }} />

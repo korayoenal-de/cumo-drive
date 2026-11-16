@@ -14,15 +14,15 @@ import type { ClosureHit } from '@/lib/road-closures';
 import { showToast } from '@/lib/toast';
 import { formatKm, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID, type Avoid } from '@/lib/valhalla';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 type Alt = { tour: PlannedTour; dropped: number };
 type State = { tour: Tour; hits: ClosureHit[]; alt: Alt | null | false; go: (t: Tour, around: boolean) => void };
 
 /** Kurzer Hinweis zur Umfahrung, für Blatt und Autodisplay */
 export function aroundHint(alt: Alt, planned: number): string {
-  const skip = alt.dropped ? `, ohne ${alt.dropped === 1 ? 'das Zwischenziel' : `${alt.dropped} Zwischenziele`} an der Sperrung` : '';
-  return `${formatKm(alt.tour.laenge_km, 0)} km statt ${formatKm(planned, 0)} km${skip}`;
+  const skip = alt.dropped ? tr(', ohne {v0} an der Sperrung', { v0: alt.dropped === 1 ? 'das Zwischenziel' : `${alt.dropped} Zwischenziele` }) : '';
+  return tr('{v0} km statt {v1} km{skip}', { v0: formatKm(alt.tour.laenge_km, 0), v1: formatKm(planned, 0), skip });
 }
 
 /**
@@ -47,7 +47,7 @@ export function useClosedCheck(): { check: (tour: Tour, profile: Profile, avoid:
     <ActionSheet
       visible
       title={t('Gerade gesperrt')}
-      subtitle={`${closureLabels(s.hits).join('. ')}. Wie möchtest du fahren?`}
+      subtitle={tr('{v0}. Wie möchtest du fahren?', { v0: closureLabels(s.hits).join('. ') })}
       onClose={() => setS(null)}
       items={[
         {
@@ -56,7 +56,7 @@ export function useClosedCheck(): { check: (tour: Tour, profile: Profile, avoid:
           label: t('Umfahren'),
           primary: !!s.alt,
           busy: s.alt === null,
-          hint: s.alt === null ? 'Die Umfahrung wird geplant' : s.alt === false ? 'Keine Umfahrung gefunden' : aroundHint(s.alt, s.tour.laenge_km),
+          hint: s.alt === null ? tr('Die Umfahrung wird geplant') : s.alt === false ? tr('Keine Umfahrung gefunden') : aroundHint(s.alt, s.tour.laenge_km),
           onPress: () => {
             const a = s.alt;
             if (a) s.go({ ...a.tour, name: s.tour.name }, true);

@@ -302,7 +302,7 @@ function enqueue(item: Spoken) {
     queue = queue.filter((x) => x !== item);
     if (!queue.length) audioOff();
   };
-  Speech.speak(item.text, { language: SPEECH_LANG[getLang()], voice: getLang() === 'de' ? chosenVoiceId() : undefined, rate: 1.0, volume: voiceVolume(), onDone: done, onStopped: done, onError: done });
+  Speech.speak(item.text, { language: SPEECH_LANG[getLang()], voice: chosenVoiceId(), rate: 1.0, volume: voiceVolume(), onDone: done, onStopped: done, onError: done });
 }
 
 function defaultSpeak(text: string, rank: SpeechRank = 0) {

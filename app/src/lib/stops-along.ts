@@ -14,6 +14,7 @@ import { routingHeaders } from './routing-auth';
 import { photonFetch } from './photon';
 import { haversine, type LatLon } from './tour';
 import type { Stop } from './intent';
+import { tr } from '@/i18n';
 
 export type StopKind = Extract<Stop, 'tank' | 'aussicht' | 'mittag' | 'kaffee' | 'hotel'>;
 
@@ -34,10 +35,10 @@ export type StopHit = {
 };
 
 export const STOP_KINDS: { id: StopKind; label: string; hint: string }[] = [
-  { id: 'tank', label: 'Super Plus', hint: 'Tankstellen mit 98 Oktan oder Marken mit Super Plus' },
-  { id: 'aussicht', label: 'Aussicht', hint: 'Aussichtspunkte mit Parkplatz in der Nähe' },
-  { id: 'mittag', label: 'Essen', hint: 'Unsere Empfehlungen: Restaurants mit Parkplatz, gut für Sportwagen. Einen Kaffee gibt es dort auch.' },
-  { id: 'hotel', label: 'Hotel', hint: 'Hotels, Gasthöfe und Pensionen nahe der Strecke' },
+  { id: 'tank', label: tr('Super Plus'), hint: tr('Tankstellen mit 98 Oktan oder Marken mit Super Plus') },
+  { id: 'aussicht', label: tr('Aussicht'), hint: tr('Aussichtspunkte mit Parkplatz in der Nähe') },
+  { id: 'mittag', label: tr('Essen'), hint: tr('Unsere Empfehlungen: Restaurants mit Parkplatz, gut für Sportwagen. Einen Kaffee gibt es dort auch.') },
+  { id: 'hotel', label: tr('Hotel'), hint: tr('Hotels, Gasthöfe und Pensionen nahe der Strecke') },
 ];
 
 /** Suchradius um die Route je Art, in Metern. */
@@ -114,13 +115,13 @@ function describe(kind: StopKind, t: Record<string, string>, name?: string): str
     if (t.opening_hours === '24/7') parts.push('24 h');
     return parts.filter(Boolean).join(' · ');
   }
-  if (kind === 'aussicht') return [t.ele ? `${t.ele} m` : null, 'Parkplatz in der Nähe'].filter(Boolean).join(', ');
+  if (kind === 'aussicht') return [t.ele ? `${t.ele} m` : null, tr('Parkplatz in der Nähe')].filter(Boolean).join(', ');
   if (kind === 'hotel') {
     const type = { hotel: 'Hotel', guest_house: 'Pension', motel: 'Motel', chalet: 'Chalet' }[t.tourism ?? ''] ?? 'Unterkunft';
     const stars = Number.parseInt(t.stars ?? '', 10);
     return [type, stars > 0 && stars <= 5 ? `${stars} Sterne` : null].filter(Boolean).join(', ');
   }
-  return [t.cuisine?.split(';')[0]?.replace(/_/g, ' '), t.opening_hours === '24/7' ? 'immer offen' : null].filter(Boolean).join(', ');
+  return [t.cuisine?.split(';')[0]?.replace(/_/g, ' '), t.opening_hours === '24/7' ? tr('immer offen') : null].filter(Boolean).join(', ');
 }
 
 const defaultName: Record<StopKind, string> = { tank: 'Tankstelle', aussicht: 'Aussichtspunkt', mittag: 'Restaurant', kaffee: 'Café', hotel: 'Hotel' };
@@ -336,7 +337,7 @@ export async function stopsAlong(kind: StopKind, line: LatLon[], signal?: AbortS
       if (signal?.aborted) throw e;
     }
   }
-  throw new Error(`${STOP_KINDS.find((k) => k.id === kind)?.label ?? 'Stopps'} lassen sich gerade nicht laden. Versuch es gleich noch einmal.`);
+  throw new Error(`${STOP_KINDS.find((k) => k.id === kind)?.label ?? tr('Stopps')} lassen sich gerade nicht laden. Versuch es gleich noch einmal.`);
 }
 
 /**

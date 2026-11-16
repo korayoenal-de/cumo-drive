@@ -61,10 +61,10 @@ function Upcoming() {
         const state = a.isOwner
           ? fmtMeta(plaetze(Math.max(0, a.maxMembers - a.taken)).text, a.openRequests ? `${a.openRequests} ${a.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : null)
           : a.myStatus === 'eingeladen'
-            ? `Einladung von ${a.ownerName}`
+            ? tr('Einladung von {ownerName}', { ownerName: a.ownerName })
             : a.myStatus === 'angefragt'
-              ? 'Angefragt, wartet auf Antwort'
-              : `Mit ${a.ownerName}`;
+              ? tr('Angefragt, wartet auf Antwort')
+              : tr('Mit {ownerName}', { ownerName: a.ownerName });
         return (
           <Pressable
             key={a.id}
@@ -75,7 +75,7 @@ function Upcoming() {
             <DateBlock d={a.startsAt} />
             <View style={styles.flex}>
               <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
-              <AppText muted numberOfLines={1}>{fmtMeta(wann(a.startsAt), a.meeting?.name ? `ab ${a.meeting.name}` : null, a.km != null ? strecke(a.km) : null)}</AppText>
+              <AppText muted numberOfLines={1}>{fmtMeta(wann(a.startsAt), a.meeting?.name ? tr('ab {name}', { name: a.meeting.name }) : null, a.km != null ? strecke(a.km) : null)}</AppText>
               <AppText style={a.myStatus === 'eingeladen' || a.openRequests ? styles.upAttn : styles.upMuted} numberOfLines={1}>{state}</AppText>
             </View>
             {!a.isPublic && (
@@ -113,7 +113,7 @@ function PastRides() {
     <View style={styles.upcoming}>
       <AppText style={styles.upLabel}>{tr('Ausfahrten')}</AppText>
       {rides.map((a) => {
-        const state = a.isOwner ? 'Du hast geführt' : `Mit ${a.ownerName}`;
+        const state = a.isOwner ? tr('Du hast geführt') : tr('Mit {ownerName}', { ownerName: a.ownerName });
         return (
           <Pressable
             key={a.id}
@@ -124,7 +124,7 @@ function PastRides() {
             <DateBlock d={a.startedAt ?? a.startsAt} />
             <View style={styles.flex}>
               <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
-              <AppText muted numberOfLines={1}>{fmtMeta(a.km != null ? strecke(a.km) : null, a.meeting?.name ? `ab ${a.meeting.name}` : null)}</AppText>
+              <AppText muted numberOfLines={1}>{fmtMeta(a.km != null ? strecke(a.km) : null, a.meeting?.name ? tr('ab {name}', { name: a.meeting.name }) : null)}</AppText>
               <AppText style={styles.upMuted} numberOfLines={1}>{state}</AppText>
             </View>
           </Pressable>
@@ -168,7 +168,7 @@ export default function Touren() {
       setImportMsg(`${saved.name} importiert, ${formatKm(saved.laenge_km, 0)} km.`);
       if (session) void syncLibrary();
     } catch (e) {
-      setImportMsg(e instanceof Error ? e.message : 'Import hat nicht geklappt.');
+      setImportMsg(e instanceof Error ? e.message : tr('Import hat nicht geklappt.'));
     }
   };
 
@@ -223,7 +223,7 @@ export default function Touren() {
         <View style={styles.syncRow}>
           {sync.running && <ActivityIndicator color={Colors.muted} />}
           <AppText variant="caption" muted style={styles.flex}>
-            {sync.running ? 'Wird mit deinem Konto abgeglichen' : `Abgleich hat nicht geklappt: ${sync.error}`}
+            {sync.running ? tr('Wird mit deinem Konto abgeglichen') : tr('Abgleich hat nicht geklappt: {error}', { error: sync.error })}
           </AppText>
         </View>
       )}
@@ -319,7 +319,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
         <AppText muted>{tr('Melde dich unter Einstellungen an. Dann landet nach jeder Navigation die Fahrtstatistik hier, sortiert nach Fahrzeug.')}</AppText>
       </View>
     );
-  const cars = [...new Map((list ?? []).filter((d) => d.vehicle_id).map((d) => [d.vehicle_id as string, d.vehicle_name || 'Fahrzeug'])).entries()];
+  const cars = [...new Map((list ?? []).filter((d) => d.vehicle_id).map((d) => [d.vehicle_id as string, d.vehicle_name || tr('Fahrzeug')])).entries()];
   const shown = (list ?? []).filter((d) => !car || d.vehicle_id === car);
   const totalKm = shown.reduce((s, d) => s + Number(d.km), 0);
   return (
@@ -341,7 +341,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
       )}
       {shown.length > 0 && (
         <AppText style={styles.total}>
-          {strecke(totalKm)} in {shown.length} {shown.length === 1 ? 'Fahrt' : 'Fahrten'}
+          {strecke(totalKm)} in {shown.length} {shown.length === 1 ? tr('Fahrt') : tr('Fahrten')}
         </AppText>
       )}
       <View style={styles.list}>
@@ -358,7 +358,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
               renderRightActions={(prog, _tr, m) => (
                 <SwipeDelete
                   progress={prog}
-                  label={`Fahrt ${d.name} löschen`}
+                  label={tr('Fahrt {name} löschen', { name: d.name })}
                   onPress={() => {
                     m.close();
                     setAskDelete(d);
@@ -374,7 +374,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
                   <AppText muted>{datum(new Date(d.started_at))}</AppText>
                 </View>
                 <AppText muted>
-                  {fmtMeta(strecke(Number(d.km)), fahrzeit(d.moving_min), d.curves ? `${d.curves} Kurven` : null, d.max_lat_g ? `quer ${fmtG(Number(d.max_lat_g))}` : null, d.vehicle_name)}
+                  {fmtMeta(strecke(Number(d.km)), fahrzeit(d.moving_min), d.curves ? `${d.curves} Kurven` : null, d.max_lat_g ? tr('quer {v0}', { v0: fmtG(Number(d.max_lat_g)) }) : null, d.vehicle_name)}
                 </AppText>
               </View>
             </DriveCard>
@@ -385,7 +385,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
       <ConfirmSheet
         visible={!!askDelete}
         title={tr('Möchtest du diese Fahrt wirklich löschen?')}
-        text={askDelete ? `${askDelete.name}, ${datum(new Date(askDelete.started_at))}. Strecke, Statistik und Bewertung sind dann weg.` : undefined}
+        text={askDelete ? tr('{name}, {v1}. Strecke, Statistik und Bewertung sind dann weg.', { name: askDelete.name, v1: datum(new Date(askDelete.started_at)) }) : undefined}
         confirmLabel={tr('Löschen')}
         onClose={() => setAskDelete(null)}
         onConfirm={() => {
@@ -394,7 +394,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
           if (!d) return;
           setList((l) => (l ? l.filter((x) => x.id !== d.id) : l));
           deleteDrive(d.id).catch((e: Error) => {
-            showToast(`Löschen hat nicht geklappt: ${e.message}`, { tone: 'error' });
+            showToast(tr('Löschen hat nicht geklappt: {message}', { message: e.message }), { tone: 'error' });
             listDrives().then(setList).catch(() => undefined);
           });
         }}
@@ -410,7 +410,7 @@ function DriveCard({ line, label, onOpen, onDelete, children }: { line?: LatLon[
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityHint={onOpen ? 'Zeigt Strecke, Statistik und Bewertung der Fahrt' : undefined}
+      accessibilityHint={onOpen ? tr('Zeigt Strecke, Statistik und Bewertung der Fahrt') : undefined}
       accessibilityActions={onDelete ? [{ name: 'delete', label: tr('Löschen') }] : undefined}
       onAccessibilityAction={(e) => e.nativeEvent.actionName === 'delete' && onDelete?.()}
       disabled={!onOpen}

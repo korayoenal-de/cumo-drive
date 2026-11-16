@@ -203,7 +203,7 @@ export function SpeedBadge({ speedKmh, limit, estimated = false, hint, showSpeed
   if (!showSpeed && !hint && !shown) return null;
   if (gone && hidden) return null;
 
-  const label = hint ? hint.a11y : `Tempo ${v} km/h${limit != null ? `, ${estimated ? 'geschätzt erlaubt' : 'erlaubt'} ${limit >= 130 ? 'unbegrenzt' : `${limit} km/h`}` : ''}${over ? ', zu schnell' : ''}`;
+  const label = hint ? hint.a11y : tr('Tempo {v} km/h{v1}{v2}', { v, v1: limit != null ? `, ${estimated ? tr('geschätzt erlaubt') : 'erlaubt'} ${limit >= 130 ? 'unbegrenzt' : `${limit} km/h`}` : '', v2: over ? tr(', zu schnell') : '' });
   const s = shown;
   return (
     <Animated.View style={[styles.collapse, visStyle]} pointerEvents="none" importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'} accessibilityElementsHidden={hidden}>

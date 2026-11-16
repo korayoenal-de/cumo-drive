@@ -10,16 +10,17 @@ import type { Direction } from '@/lib/roundtrip';
 import { smartRoundTrip } from '@/lib/smart-roundtrip';
 import type { LatLon, Profile } from '@/lib/tour';
 import type { Avoid } from '@/lib/valhalla';
+import { t } from '@/i18n';
 
 export type PlanPhase = 'start' | 'route' | 'compare' | 'traffic' | 'check' | 'fix';
 
 export const PHASES: { id: PlanPhase; label: string }[] = [
-  { id: 'start', label: 'Startort bestimmen' },
-  { id: 'route', label: 'Route berechnen' },
-  { id: 'compare', label: 'Beste Runde wählen' },
-  { id: 'traffic', label: 'Verkehrsmeldungen prüfen' },
-  { id: 'check', label: 'Prüfen' },
-  { id: 'fix', label: 'Gesperrte Stellen umfahren' },
+  { id: 'start', label: t('Startort bestimmen') },
+  { id: 'route', label: t('Route berechnen') },
+  { id: 'compare', label: t('Beste Runde wählen') },
+  { id: 'traffic', label: t('Verkehrsmeldungen prüfen') },
+  { id: 'check', label: t('Prüfen') },
+  { id: 'fix', label: t('Gesperrte Stellen umfahren') },
 ];
 
 export type PlanErrorKind = 'permission' | 'services' | 'position' | 'notfound' | 'network' | 'routing' | 'aborted';
@@ -61,11 +62,11 @@ export async function locate(signal?: AbortSignal, maxAgeMs = 5 * 60 * 1000): Pr
     perm = await Location.requestForegroundPermissionsAsync();
   }
   if (perm.status !== Location.PermissionStatus.GRANTED) {
-    throw new PlanError('permission', 'Du hast den Standort nicht freigegeben. Ohne ihn wissen wir nicht, wo die Rundtour starten soll.');
+    throw new PlanError('permission', t('Du hast den Standort nicht freigegeben. Ohne ihn wissen wir nicht, wo die Rundtour starten soll.'));
   }
   const enabled = await Location.hasServicesEnabledAsync().catch(() => true);
   if (!enabled) {
-    throw new PlanError('services', 'Die Ortungsdienste deines Handys sind aus.');
+    throw new PlanError('services', t('Die Ortungsdienste deines Handys sind aus.'));
   }
   let pos: Location.LocationObject | null = null;
   try {
@@ -74,7 +75,7 @@ export async function locate(signal?: AbortSignal, maxAgeMs = 5 * 60 * 1000): Pr
   } catch {
     pos = null;
   }
-  if (!pos) throw new PlanError('position', 'Dein Standort ließ sich gerade nicht bestimmen.');
+  if (!pos) throw new PlanError('position', t('Dein Standort ließ sich gerade nicht bestimmen.'));
   const p: LatLon = [pos.coords.latitude, pos.coords.longitude];
   const name = await reverseName(p, signal);
   return { p, name };
@@ -119,7 +120,7 @@ export async function findPlace(q: string, near: LatLon | undefined, what: strin
   const region = findRegion(q);
   if (region) return { name: region.name, detail: 'Region', p: region.p };
   const hits = await searchTowns(q, near, signal);
-  if (!hits.length) throw new PlanError('notfound', `${what} "${q}" haben wir nicht gefunden.`);
+  if (!hits.length) throw new PlanError('notfound', t('{what} "{q}" haben wir nicht gefunden.', { what, q }));
   return hits[0];
 }
 
@@ -138,7 +139,7 @@ export async function buildTour(
 ): Promise<PlannedTour> {
   return smartRoundTrip(
     {
-      name: `Rundtour ab ${req.start.name}`,
+      name: t('Rundtour ab {name}', { name: req.start.name }),
       start: req.start.p,
       km: req.km,
       direction: req.direction,
@@ -159,13 +160,13 @@ export function toPlanError(e: unknown, signal?: AbortSignal): PlanError {
   if (signal?.aborted || (e instanceof Error && e.name === 'AbortError')) return new PlanError('aborted', 'Abgebrochen.');
   const msg = e instanceof Error ? e.message : String(e);
   if (/network request failed|failed to fetch|networkerror|load failed|timed? ?out/i.test(msg) || e instanceof TypeError) {
-    return new PlanError('network', 'Der Routenplaner ist gerade nicht erreichbar.');
+    return new PlanError('network', t('Der Routenplaner ist gerade nicht erreichbar.'));
   }
   if (msg.startsWith('Routenplaner')) {
-    return new PlanError('routing', 'Für diese Einstellungen hat der Routenplaner keine passende Runde gefunden.');
+    return new PlanError('routing', t('Für diese Einstellungen hat der Routenplaner keine passende Runde gefunden.'));
   }
   if (msg.startsWith('Ortssuche')) {
-    return new PlanError('network', 'Die Ortssuche ist gerade nicht erreichbar.');
+    return new PlanError('network', t('Die Ortssuche ist gerade nicht erreichbar.'));
   }
-  return new PlanError('routing', 'Beim Planen ist etwas schiefgegangen.');
+  return new PlanError('routing', t('Beim Planen ist etwas schiefgegangen.'));
 }

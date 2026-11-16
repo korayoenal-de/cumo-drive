@@ -35,7 +35,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
       if (mode === 'login') await signIn(email, pw);
       else await signUpWithName(email, pw, name);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : t('Das hat nicht geklappt.'));
     } finally {
       setBusy(false);
     }
@@ -50,7 +50,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
               CUMO DRIVE
             </AppText>
           </Pressable>
-          <AppText variant="display">{mode === 'login' ? 'Willkommen\nzurück' : 'Konto\nanlegen'}</AppText>
+          <AppText variant="display">{mode === 'login' ? t('Willkommen\nzurück') : 'Konto\nanlegen'}</AppText>
           <AppText muted>{t('Kurvige Touren planen, in der Gruppe fahren und jede Fahrt festhalten. Deine Touren liegen in deinem Konto, in der App und im Web Planer.')}</AppText>
         </View>
 
@@ -72,7 +72,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
           <TextInput maxFontSizeMultiplier={1.2}
             value={pw}
             onChangeText={setPw}
-            placeholder={mode === 'register' ? 'Passwort, mindestens 8 Zeichen' : 'Passwort'}
+            placeholder={mode === 'register' ? t('Passwort, mindestens 8 Zeichen') : t('Passwort')}
             placeholderTextColor={Colors.muted}
             secureTextEntry
             autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
@@ -84,7 +84,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
           />
           {err && <AppText style={styles.error}>{err}</AppText>}
           <Pressable accessibilityRole="button" disabled={!ready} onPress={() => void submit()} style={[styles.primary, !ready && styles.disabled]}>
-            {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{mode === 'login' ? 'Anmelden' : 'Registrieren'}</AppText>}
+            {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{mode === 'login' ? t('Anmelden') : t('Registrieren')}</AppText>}
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -94,8 +94,8 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             }}
             style={styles.switch}>
             <AppText muted>
-              {mode === 'login' ? 'Noch kein Konto? ' : 'Schon ein Konto? '}
-              <AppText style={styles.link}>{mode === 'login' ? 'Registrieren' : 'Anmelden'}</AppText>
+              {mode === 'login' ? t('Noch kein Konto? ') : t('Schon ein Konto? ')}
+              <AppText style={styles.link}>{mode === 'login' ? t('Registrieren') : t('Anmelden')}</AppText>
             </AppText>
           </Pressable>
         </View>

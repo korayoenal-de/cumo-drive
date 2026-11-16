@@ -9,7 +9,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 /** #RGB oder #RRGGBB, mit oder ohne Raute; zurück als #RRGGBB in Großbuchstaben oder null */
 export function normHex(raw: string): string | null {
@@ -32,7 +32,7 @@ export function CustomColorButton({ value, custom, onPick }: { value: string; cu
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={custom ? `Sonderfarbe ${value}, ändern` : 'Sonderfarbe eingeben'}
+        accessibilityLabel={custom ? tr('Sonderfarbe {value}, ändern', { value }) : tr('Sonderfarbe eingeben')}
         accessibilityState={{ selected: custom }}
         onPress={() => {
           setText(custom ? value : '');

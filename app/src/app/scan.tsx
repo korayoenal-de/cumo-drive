@@ -17,14 +17,14 @@ import { setEditTour } from '@/lib/edit-tour';
 import { decodeTour, extractCode } from '@/lib/share-code';
 import { isShortCode, resolveShareCode } from '@/lib/share-link';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 const STEP_TEXT: Record<PlanStep, string> = {
-  route: 'Strecke wird berechnet',
-  traffic: 'Verkehrsmeldungen werden geprüft',
-  compare: 'Beste Variante wird gewählt',
-  check: 'Etappen Check läuft',
-  fix: 'Gesperrte Stücke werden umfahren',
+  route: tr('Strecke wird berechnet'),
+  traffic: tr('Verkehrsmeldungen werden geprüft'),
+  compare: tr('Beste Variante wird gewählt'),
+  check: tr('Etappen Check läuft'),
+  fix: tr('Gesperrte Stücke werden umfahren'),
 };
 
 export default function ScanScreen() {
@@ -43,7 +43,7 @@ export default function ScanScreen() {
     const raw = extractCode(r.data);
     if (isHandoffCode(raw)) {
       handled.current = true;
-      setStatus({ kind: 'busy', text: t('Tour wird geladen'), name: 'Tour vom Planer' });
+      setStatus({ kind: 'busy', text: t('Tour wird geladen'), name: tr('Tour vom Planer') });
       try {
         const h = await fetchHandoff(raw);
         if (!h) throw new Error('Der Code ist abgelaufen. Im Planer einen neuen erzeugen.');
@@ -59,7 +59,7 @@ export default function ScanScreen() {
     let full = raw;
     if (isShortCode(raw)) {
       handled.current = true;
-      setStatus({ kind: 'busy', text: t('Link wird geladen'), name: 'Geteilte Tour' });
+      setStatus({ kind: 'busy', text: t('Link wird geladen'), name: tr('Geteilte Tour') });
       try {
         full = await resolveShareCode(raw);
       } catch (e) {
@@ -83,7 +83,7 @@ export default function ScanScreen() {
         shared.points,
         shared.profile,
         DEFAULT_AVOID,
-        (s) => setStatus({ kind: 'busy', text: STEP_TEXT[s] ?? 'Einen Moment', name: shared.name }),
+        (s) => setStatus({ kind: 'busy', text: STEP_TEXT[s] ?? tr('Einen Moment'), name: shared.name }),
         ctrl.signal,
       );
       // wie bei der Community: ungespeicherte Kopie im Planer, das Lesezeichen legt sie unter Geteilt ab
@@ -137,7 +137,7 @@ export default function ScanScreen() {
               accessibilityRole="button"
               style={styles.primary}
               onPress={() => (permission.canAskAgain ? requestPermission() : Linking.openSettings())}>
-              <AppText style={styles.primaryText}>{permission.canAskAgain ? 'Kamera erlauben' : 'Einstellungen öffnen'}</AppText>
+              <AppText style={styles.primaryText}>{permission.canAskAgain ? tr('Kamera erlauben') : tr('Einstellungen öffnen')}</AppText>
             </Pressable>
           </View>
         ) : status.kind === 'busy' ? (

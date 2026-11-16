@@ -17,7 +17,7 @@ export function DeleteTourSheet({ tour, visible, onClose, onDeleted }: { tour: S
   const everywhere = () => {
     deleteTour(tour.id);
     onClose();
-    showToast(tour.published ? 'Tour gelöscht, auch in der Community' : 'Tour gelöscht');
+    showToast(tour.published ? t('Tour gelöscht, auch in der Community') : t('Tour gelöscht'));
     onDeleted?.();
   };
   const onlyMine = async () => {
@@ -40,7 +40,7 @@ export function DeleteTourSheet({ tour, visible, onClose, onDeleted }: { tour: S
       <ActionSheet
         visible={visible}
         title={t('Auch die veröffentlichte Tour löschen?')}
-        subtitle={`${tour.name} steht in der Community. Du entscheidest, ob sie dort bleibt.`}
+        subtitle={t('{name} steht in der Community. Du entscheidest, ob sie dort bleibt.', { name: tour.name })}
         onClose={onClose}
         items={[
           { key: 'mine', icon: 'bookmark.slash', label: t('Nur bei mir löschen'), hint: t('In der Community bleibt sie für andere sichtbar'), busy, onPress: () => void onlyMine() },
@@ -55,7 +55,7 @@ export function DeleteTourSheet({ tour, visible, onClose, onDeleted }: { tour: S
       <ConfirmSheet
         visible={visible}
         title={t('Möchtest du diese Tour wirklich aus Touren entfernen?')}
-        text={tour.edited ? `${tour.name} mit deinen Änderungen verschwindet. Das Original bleibt in der Community.` : `${tour.name} bleibt in der Community erhalten.`}
+        text={tour.edited ? t('{name} mit deinen Änderungen verschwindet. Das Original bleibt in der Community.', { name: tour.name }) : t('{name} bleibt in der Community erhalten.', { name: tour.name })}
         confirmLabel={t('Entfernen')}
         onConfirm={() => {
           deleteTour(tour.id);
@@ -70,7 +70,7 @@ export function DeleteTourSheet({ tour, visible, onClose, onDeleted }: { tour: S
     <ConfirmSheet
       visible={visible}
       title={t('Möchtest du diese Tour wirklich löschen?')}
-      text={`${tour.name} verschwindet vom Gerät und aus deinem Konto.`}
+      text={t('{name} verschwindet vom Gerät und aus deinem Konto.', { name: tour.name })}
       confirmLabel={t('Löschen')}
       onConfirm={() => {
         deleteTour(tour.id);

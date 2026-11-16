@@ -96,7 +96,7 @@ export function RoutePanel(props: {
   function pointRow(slot: number, p: LatLon | null) {
     const kind: PointKind = slot === 0 ? 'start' : slot === slots.length - 1 ? 'ziel' : 'via';
     const viaIdx = kind === 'via' ? slot - 1 : undefined;
-    const role = kind === 'start' ? 'Start' : kind === 'ziel' ? 'Ziel' : `Zwischenziel ${slot}`;
+    const role = kind === 'start' ? 'Start' : kind === 'ziel' ? t('Ziel') : t('Zwischenziel {slot}', { slot });
     const editing = edit && !edit.insert && edit.kind === kind && (kind !== 'via' || edit.index === viaIdx);
     const label = kind === 'start' ? 'S' : kind === 'ziel' ? 'Z' : String(slot);
     const dropHere = drag && drag.from !== slot && drag.to === slot;
@@ -116,7 +116,7 @@ export function RoutePanel(props: {
               near={p ?? props.near}
               initial={p ? nameOf(p) : undefined}
               autoFocus={!!editing}
-              placeholder={kind === 'start' ? 'Wo geht es los?' : kind === 'ziel' ? 'Wohin geht es?' : 'Zwischenziel suchen'}
+              placeholder={kind === 'start' ? t('Wo geht es los?') : kind === 'ziel' ? t('Wohin geht es?') : t('Zwischenziel suchen')}
               onPick={(x) => pick({ kind, index: viaIdx }, x.p, x.name)}
               onBlurEmpty={editing ? () => setEdit(null) : undefined}
             />
@@ -124,7 +124,7 @@ export function RoutePanel(props: {
             <button
               style={{ ...S.wpName, height: 52, background: C.surface, borderRadius: Radius.m, padding: '0 14px', boxSizing: 'border-box', width: '100%' }}
               title={t('Klick ändert den Ort')}
-              aria-label={`${role} ${nameOf(p)}, ändern`}
+              aria-label={t('{role} {v1}, ändern', { role, v1: nameOf(p) })}
               disabled={!!drag}
               onClick={() => {
                 setEdit({ kind, index: viaIdx });
@@ -183,14 +183,14 @@ export function RoutePanel(props: {
         {ready ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.s, flexWrap: 'wrap' }}>
             <button
-              aria-label={`Zwischenziel auf Etappe ${i + 1} einfügen`}
+              aria-label={t('Zwischenziel auf Etappe {v0} einfügen', { v0: i + 1 })}
               aria-pressed={inserting}
               onClick={() => setEdit(inserting ? null : { kind: 'via', index: i, insert: true })}
               style={{ width: 44, height: 44, borderRadius: 22, border: 'none', background: inserting ? C.text : C.surface, color: inserting ? C.ground : C.text, cursor: 'pointer', font: `700 20px ${BODY}` }}>
               +
             </button>
             <button
-              aria-label={`Profil der Etappe ${i + 1}: ${profileWord(lp)}, ändern`}
+              aria-label={t('Profil der Etappe {v0}: {v1}, ändern', { v0: i + 1, v1: profileWord(lp) })}
               aria-expanded={choosing}
               onClick={() => setLegMenu(choosing ? null : i)}
               style={{ height: 44, padding: '0 16px', borderRadius: 22, border: 'none', background: choosing ? C.surface2 : C.surface, color: C.text, cursor: 'pointer', font: `600 15px ${BODY}` }}>
@@ -232,7 +232,7 @@ export function RoutePanel(props: {
     );
   }
 
-  const avoidText = [avoid.closures && 'Sperrungen', avoid.rough && 'rauer Belag', avoid.ferries && 'Fähren', avoid.tolls && 'Maut'].filter(Boolean).join(', ') || 'Nichts';
+  const avoidText = [avoid.closures && t('Sperrungen'), avoid.rough && t('rauer Belag'), avoid.ferries && t('Fähren'), avoid.tolls && t('Maut')].filter(Boolean).join(', ') || t('Nichts');
   const note = routeTour ? directNote(routeTour.direkt, Math.max(1, pts.length - 1)) : null;
 
   return (
@@ -264,7 +264,7 @@ export function RoutePanel(props: {
                 props.touch();
                 plan.reset();
               }}>
-              Zurücksetzen
+              {t('Zurücksetzen')}
             </button>
           ) : null}
         </div>
@@ -284,7 +284,7 @@ export function RoutePanel(props: {
               props.touch();
               plan.swap(profile, avoid);
             }}>
-            Start und Ziel tauschen
+            {t('Start und Ziel tauschen')}
           </button>
         ) : null}
         {!pts.length ? <p style={S.muted}>{t('Oder klick auf die Karte: der erste Punkt wird der Start, der zweite das Ziel.')}</p> : null}
@@ -297,7 +297,7 @@ export function RoutePanel(props: {
           <span>{plan.error}</span>
           {pts.length >= 2 ? (
             <button style={{ ...S.secondary, flex: 'none', alignSelf: 'flex-start' }} onClick={() => plan.planNow(profile, avoid)}>
-              Nochmal versuchen
+              {t('Nochmal versuchen')}
             </button>
           ) : null}
         </div>
@@ -314,7 +314,7 @@ export function RoutePanel(props: {
 
       <div>
         {routeTour ? (
-          <Accordion label={t('Highlights/Pässe')} summary="Pässe und Highlights auf deinen Etappen">
+          <Accordion label={t('Highlights/Pässe')} summary={t('Pässe und Highlights auf deinen Etappen')}>
             <AddHighlight
               pts={pts}
               taken={new Set(pts.map((p) => plan.names[keyOf(p)]).filter(Boolean))}
@@ -325,7 +325,7 @@ export function RoutePanel(props: {
                 if (c.line && c.line.length > 2) {
                   const snap = plan.snapshot();
                   const replaced = plan.insertRoad(leg, c.line, profile, avoid, c.name);
-                  if (replaced) showToast(`${c.name} ersetzt ${replaced}, es lag nur 2 km davor`, { action: { label: t('Rückgängig'), onPress: () => plan.restore(snap) } });
+                  if (replaced) showToast(t('{name} ersetzt {replaced}, es lag nur 2 km davor', { name: c.name, replaced }), { action: { label: t('Rückgängig'), onPress: () => plan.restore(snap) } });
                 } else plan.insertAt(leg, c.p, profile, avoid, c.name);
               }}
               onAddPass={(pass) => {
@@ -350,10 +350,10 @@ export function RoutePanel(props: {
         <Accordion label={t('Vermeiden')} summary={avoidText}>
           {(
             [
-              ['closures', 'Gesperrte Straßen', 'Wir planen um gesperrte Straßen herum.'],
-              ['ferries', 'Fähren', undefined],
-              ['tolls', 'Maut', undefined],
-              ['rough', 'Rauer Belag', 'Kopfsteinpflaster und schlechter Asphalt.'],
+              ['closures', t('Gesperrte Straßen'), t('Wir planen um gesperrte Straßen herum.')],
+              ['ferries', t('Fähren'), undefined],
+              ['tolls', t('Maut'), undefined],
+              ['rough', t('Rauer Belag'), t('Kopfsteinpflaster und schlechter Asphalt.')],
             ] as const
           ).map(([key, label, n]) => (
             <Toggle
@@ -377,7 +377,7 @@ export function RoutePanel(props: {
       </div>
       {pts.length >= 2 && !routeTour && !busy && !plan.error ? (
         <button style={S.primary} onClick={() => plan.planNow(profile, avoid)}>
-          Tour erstellen
+          {t('Tour erstellen')}
         </button>
       ) : null}
     </div>

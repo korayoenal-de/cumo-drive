@@ -23,7 +23,7 @@ import { selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
 
 import { bigDuration, type Mode, type PointKind } from './planner-shared';
 import { styles } from './planner-styles';
-import { cleanPlace } from '@/lib/warning-dedupe';
+import { cleanPlace, closureNameT, reasonT } from '@/lib/warning-dedupe';
 import { t } from '@/i18n';
 
 
@@ -36,14 +36,14 @@ export function VehiclePick() {
       {list.length === 0 ? (
         <>
           <AppText variant="caption" muted>
-            Noch kein Fahrzeug in der Garage. Leg es unter Einstellungen an, dann landen Kilometer und Touren beim richtigen Auto.
+            {t('Noch kein Fahrzeug in der Garage. Leg es unter Einstellungen an, dann landen Kilometer und Touren beim richtigen Auto.')}
           </AppText>
           <SecondaryButton label={t('Zur Garage')} onSurface onPress={() => router.navigate('/einstellungen')} />
         </>
       ) : (
         <ChipRow bleed={Spacing.l}>
           {list.map((v) => (
-            <Chip key={v.id} label={vehicleName(v) || 'Fahrzeug'} active={current?.id === v.id} onSurface onPress={() => void selectVehicle(v.id)} />
+            <Chip key={v.id} label={vehicleName(v) || t('Fahrzeug')} active={current?.id === v.id} onSurface onPress={() => void selectVehicle(v.id)} />
           ))}
         </ChipRow>
       )}
@@ -176,7 +176,7 @@ export function Accordion({ label, summary, defaultOpen = false, children }: { l
 
 /** Kurzfassung der Vermeiden Schalter für die zugeklappte Kopfzeile */
 export function avoidSummary(a: { closures: boolean; ferries: boolean; tolls: boolean; rough: boolean }): string {
-  const on = [a.closures && 'Sperrungen', a.ferries && 'Fähren', a.tolls && 'Maut', a.rough && 'rauer Belag'].filter(Boolean) as string[];
+  const on = [a.closures && t('Sperrungen'), a.ferries && t('Fähren'), a.tolls && t('Maut'), a.rough && t('rauer Belag')].filter(Boolean) as string[];
   return on.length ? on.join(', ') : 'nichts';
 }
 
@@ -227,7 +227,7 @@ export function StepButton({ kind, disabled, onPress }: { kind: 'plus' | 'minus'
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={kind === 'plus' ? 'Länger' : 'Kürzer'}
+      accessibilityLabel={kind === 'plus' ? t('Länger') : t('Kürzer')}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
@@ -291,7 +291,7 @@ export function Progress({ phase, done, onCancel }: { phase: PlanPhase; done: Pl
         })}
       </View>
       <AppText variant="caption" muted>
-        Wir prüfen jede Straße auf Sperrungen, Feldwege und rauen Belag. Das dauert meist unter einer Minute.
+        {t('Wir prüfen jede Straße auf Sperrungen, Feldwege und rauen Belag. Das dauert meist unter einer Minute.')}
       </AppText>
       <SecondaryButton label={t('Abbrechen')} onPress={onCancel} />
     </View>
@@ -305,13 +305,13 @@ export function ErrorCard({
 }) {
   const help: Record<PlanError['kind'], string> = {
     permission: mode === 'beschreiben'
-      ? 'Gib den Standort in den Einstellungen frei oder schreib den Start dazu, zum Beispiel "ab Bensheim".'
-      : 'Gib den Standort in den Einstellungen frei oder such dir unter Start einen Ort aus.',
-    services: 'Schalte die Ortung in den Einstellungen ein oder wähle einen Startort von Hand.',
-    position: 'Geh kurz ins Freie und versuch es nochmal, oder wähle einen Startort von Hand.',
-    notfound: 'Prüf die Schreibweise oder nimm einen größeren Ort in der Nähe.',
-    network: 'Prüf deine Internetverbindung. Der Dienst ist manchmal kurz überlastet, ein zweiter Versuch hilft oft.',
-    routing: 'Probier eine andere Länge, Richtung oder würfle neu.',
+      ? t('Gib den Standort in den Einstellungen frei oder schreib den Start dazu, zum Beispiel "ab München".')
+      : t('Gib den Standort in den Einstellungen frei oder such dir unter Start einen Ort aus.'),
+    services: t('Schalte die Ortung in den Einstellungen ein oder wähle einen Startort von Hand.'),
+    position: t('Geh kurz ins Freie und versuch es nochmal, oder wähle einen Startort von Hand.'),
+    notfound: t('Prüf die Schreibweise oder nimm einen größeren Ort in der Nähe.'),
+    network: t('Prüf deine Internetverbindung. Der Dienst ist manchmal kurz überlastet, ein zweiter Versuch hilft oft.'),
+    routing: t('Probier eine andere Länge, Richtung oder würfle neu.'),
     aborted: '',
   };
   const needsPlace = error.kind === 'permission' || error.kind === 'services' || error.kind === 'position';
@@ -326,7 +326,7 @@ export function ErrorCard({
         <PrimaryButton label={t('Einstellungen öffnen')} onPress={() => void Linking.openSettings()} />
       )}
       {(error.kind === 'network' || error.kind === 'routing' || error.kind === 'position') && (
-        <PrimaryButton label={error.kind === 'routing' ? 'Neu würfeln' : 'Nochmal versuchen'} onPress={onRetry} />
+        <PrimaryButton label={error.kind === 'routing' ? t('Neu würfeln') : t('Nochmal versuchen')} onPress={onRetry} />
       )}
       {needsPlace && <SecondaryButton label={t('Startort von Hand wählen')} onPress={onUsePlace} />}
       <SecondaryButton label={t('Runde verwerfen')} onPress={onBack} />
@@ -380,7 +380,7 @@ export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned
           <Pressable
             key={c.id}
             accessibilityRole="button"
-            accessibilityLabel={`${c.label} unterwegs einplanen`}
+            accessibilityLabel={t('{label} unterwegs einplanen', { label: c.label })}
             onPress={() => onOpen(c.id)}
             style={({ pressed }) => [styles.stopChip, pressed && styles.pressedSoft]}>
             <SymbolView weight="semibold" name={CAT_ICON[c.id]} size={16} tintColor={Colors.signal} />
@@ -413,7 +413,7 @@ export function Stats({ km, minutes, curves, fun, onFun, delta }: { km: number; 
       {fun ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Fahrspaß ${fun.score} von 100, ${TOUR_FUN_NAMES[fun.level]}${delta != null ? `, ${delta >= 0 ? 'besser' : 'schlechter'} als die vorige Runde um ${Math.abs(delta)}` : ''}`}
+          accessibilityLabel={t('Fahrspaß {score} von 100, {v1}{v2}', { score: fun.score, v1: TOUR_FUN_NAMES[fun.level], v2: delta != null ? `, ${delta >= 0 ? t('besser als die vorige Runde um {n}', { n: Math.abs(delta) }) : t('schlechter als die vorige Runde um {n}', { n: Math.abs(delta) })}` : '' })}
           accessibilityHint={t('Zeigt, wie der Wert entsteht')}
           onPress={onFun}
           style={({ pressed }) => [styles.flex, pressed && styles.pressedDim]}>
@@ -440,8 +440,8 @@ export function Stats({ km, minutes, curves, fun, onFun, delta }: { km: number; 
   );
 }
 
-export const TRUST_CLEAN = 'Für Sportwagen geprüft, keine Engstellen oder Sperrungen.';
-export const TRUST_WITH_WARNINGS = 'Für Sportwagen geprüft. Diese Stellen solltest du kennen.';
+export const TRUST_CLEAN = t('Für Sportwagen geprüft, keine Engstellen oder Sperrungen.');
+export const TRUST_WITH_WARNINGS = t('Für Sportwagen geprüft. Diese Stellen solltest du kennen.');
 
 /** Eine kurze Zeile, dass die Strecke geprüft ist, statt der internen Check Darstellung. */
 export function TrustLine({ text = TRUST_CLEAN }: { text?: string }) {
@@ -458,20 +458,20 @@ export function reasonText(raw: string): string {
   // ältere gespeicherte Touren: lange Kommazahlen aus der Karte auf höchstens zwei Stellen kürzen
   const r = trimDecimals(raw);
   const narrow = /^Engstelle (.+) m$/.exec(r);
-  if (narrow) return `${narrow[1]} m breit`;
+  if (narrow) return reasonT(`${narrow[1]} m breit`);
   const slim = /^schmal, (.+) m, (.+)$/.exec(r);
-  if (slim) return `${slim[1]} m breit, ${slim[2]}`;
-  return r;
+  if (slim && !/laut Karte/.test(r)) return reasonT(`${slim[1]} m breit, ${slim[2]}`);
+  return reasonT(r);
 }
 
 /** Warnung als eigenständiger Satz: Art, Kilometer, Straße und Grund. */
 export function warningText(w: Warning): string {
   const narrow = w.gruende.some((r) => r.startsWith('Engstelle') || r.startsWith('schmal') || /m breit$/.test(r));
-  const kind = w.klasse === 'raus' ? 'Gesperrt' : narrow ? 'Engstelle' : 'Achtung';
-  const parts = [`${kind} bei km ${Math.round(w.start_km)}`];
+  const kind = w.klasse === 'raus' ? t('Gesperrt') : narrow ? t('Engstelle') : t('Achtung');
+  const parts = [t('{kind} bei km {km}', { kind, km: Math.round(w.start_km) })];
   // Sperrung (Koray 16.11.): "Gesperrt" nur einmal im Satz, Ortszusätze in Klammern weg
   const closure = /^Gesperrt\b/i.test(w.name);
-  const name = closure ? cleanPlace(w.name.replace(/^Gesperrt:?\s*/i, '')) : w.name;
+  const name = closure ? closureNameT(cleanPlace(w.name.replace(/^Gesperrt:?\s*/i, ''))) : w.name;
   if (name) parts.push(name);
   parts.push(...w.gruende.filter((r) => !(closure && /^\W*(gesperrt|vollsperrung|stra(ß|ss)e gesperrt|road closed|closed)\W*$/i.test(r))).map(reasonText));
   return parts.join(', ');
@@ -480,7 +480,7 @@ export function warningText(w: Warning): string {
 /** Warnungen der Strecke: Punkt in Warn oder Signalfarbe, daneben ein Satz, der für sich steht. */
 export function Warnings({ warnings, checked }: { warnings: Warning[]; checked: boolean }) {
   return (
-    <Section label={`Warnungen (${warnings.length})`}>
+    <Section label={t('Warnungen ({n})', { n: warnings.length })}>
       {checked && <TrustLine text={TRUST_WITH_WARNINGS} />}
       <View style={styles.card}>
         {warnings.map((w, i) => (
@@ -488,7 +488,7 @@ export function Warnings({ warnings, checked }: { warnings: Warning[]; checked: 
             <View
               accessible
               accessibilityRole="image"
-              accessibilityLabel={w.klasse === 'raus' ? 'Sperrung' : 'Warnung'}
+              accessibilityLabel={w.klasse === 'raus' ? t('Sperrung') : t('Warnung')}
               style={[styles.warnDot, w.klasse === 'raus' && styles.dotStop]}
             />
             <AppText style={styles.flex}>{warningText(w)}</AppText>
@@ -646,7 +646,7 @@ export function DragArea({
       accessible
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityHint={hint ?? 'Tippen zum Ändern, halten und ziehen zum Verschieben'}
+      accessibilityHint={hint ?? t('Tippen zum Ändern, halten und ziehen zum Verschieben')}
       onAccessibilityTap={() => cb.current.onTap()}
       style={[style, holding && { opacity: 0.96 }]}>
       {children}
@@ -664,7 +664,7 @@ export function GroupBlock({ savedId }: { savedId: string | null }) {
         <SecondaryButton label={t('Teilnehmer einladen')} onSurface onPress={() => router.push({ pathname: '/gruppe/neu', params: { tour: savedId } })} />
       ) : (
         <AppText variant="caption" muted>
-          Speichere die Tour zuerst. Danach lädst du die Teilnehmer mit ihrem Namen ein.
+          {t('Speichere die Tour zuerst. Danach lädst du die Teilnehmer mit ihrem Namen ein.')}
         </AppText>
       )}
     </View>

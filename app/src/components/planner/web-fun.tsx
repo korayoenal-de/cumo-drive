@@ -26,7 +26,7 @@ function facetPoints(fun: TourFun): number[] {
 
 export function FunPillWeb(props: { fun: TourFun; onOpen: () => void }) {
   return (
-    <button style={S.funPill} onClick={props.onOpen} aria-label={`Fahrspaß ${props.fun.score} von 100, ${TOUR_FUN_NAMES[props.fun.level]}. Zeigt, wie der Wert entsteht`}>
+    <button style={S.funPill} onClick={props.onOpen} aria-label={t('Fahrspaß {score} von 100, {v1}. Zeigt, wie der Wert entsteht', { score: props.fun.score, v1: TOUR_FUN_NAMES[props.fun.level] })}>
       <Gauge level={props.fun.level} size={22} />
       <span style={S.metricValue}>{props.fun.score}</span>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2" aria-hidden>

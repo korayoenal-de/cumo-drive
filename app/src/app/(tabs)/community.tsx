@@ -303,7 +303,7 @@ export default function Community() {
   const header = (
     <View style={styles.head}>
       <View style={styles.headRow}>
-        <AppText style={styles.kicker}>{seg === 'routen' ? 'Touren zum Nachfahren' : seg === 'ausfahrten' ? 'Gemeinsame Ausfahrten' : 'Drivers'}</AppText>
+        <AppText style={styles.kicker}>{seg === 'routen' ? tr('Touren zum Nachfahren') : seg === 'ausfahrten' ? tr('Gemeinsame Ausfahrten') : 'Drivers'}</AppText>
         {/* Eigene Tour teilen oder eine neue erstellen (Koray 15.11.), gleiche Form wie Anlegen und Nachrichten */}
         {seg === 'routen' && userId && (
           <Pressable accessibilityRole="button" accessibilityLabel={tr('Tour teilen')} hitSlop={4} onPress={() => setShareOpen(true)} style={styles.addBtn}>
@@ -350,7 +350,7 @@ export default function Community() {
   const shareItems: SheetItem[] = [
     ...shareable.map(tourItem),
     // immer da (Koray 15.11.): auch bei wenigen Touren der Weg zur ganzen Liste
-    { key: 'alle', icon: 'list.bullet' as const, label: tr('Alle Touren'), hint: `${shareableAll.length} ${shareableAll.length === 1 ? 'Tour' : 'Touren'} zum Teilen`, onPress: () => setShareAll(true) },
+    { key: 'alle', icon: 'list.bullet' as const, label: tr('Alle Touren'), hint: shareableAll.length === 1 ? tr('1 Tour zum Teilen') : tr('{n} Touren zum Teilen', { n: shareableAll.length }), onPress: () => setShareAll(true) },
     { key: 'neu', icon: 'plus' as const, label: tr('Neue Tour erstellen'), hint: tr('Im Planer, danach hier teilen'), onPress: () => router.navigate('/') },
   ];
 
@@ -359,7 +359,7 @@ export default function Community() {
       <ActionSheet
         visible={shareOpen}
         title={tr('In der Community teilen')}
-        subtitle={shareable.length ? 'Welche deiner Touren sollen andere nachfahren können?' : 'Du hast noch keine eigene Tour gespeichert.'}
+        subtitle={shareable.length ? tr('Welche deiner Touren sollen andere nachfahren können?') : tr('Du hast noch keine eigene Tour gespeichert.')}
         items={shareItems}
         onClose={() => setShareOpen(false)}
       />
@@ -369,7 +369,7 @@ export default function Community() {
         scrollRef={scroll}
         detent={detent}
         onDetentChange={setDetent}
-        grabberLabel={seg === 'routen' ? 'Liste der Touren' : seg === 'ausfahrten' ? 'Liste der Ausfahrten' : 'Liste der Drivers'}
+        grabberLabel={seg === 'routen' ? tr('Liste der Touren') : seg === 'ausfahrten' ? tr('Liste der Ausfahrten') : tr('Liste der Drivers')}
         onScrollY={onScrollY}
         topReserve={topH + Spacing.s}
         header={header}
@@ -384,7 +384,7 @@ export default function Community() {
                 <Chip key={s.id} label={s.label} active={sort === s.id} onPress={() => setSort(s.id)} />
               ))}
             </ChipRow>
-            {err && <AppText style={styles.error}>Community konnte nicht geladen werden: {err}</AppText>}
+            {err && <AppText style={styles.error}>{tr('Community konnte nicht geladen werden: ')}{err}</AppText>}
             {tours === null && !err && <ActivityIndicator color={Colors.muted} />}
             {tours?.length === 0 && (
               <View style={styles.card}>
@@ -392,8 +392,8 @@ export default function Community() {
                 <AppText muted>{tr('Sei der Erste: Tippe oben auf Teilen und wähle eine deiner Touren.')}</AppText>
               </View>
             )}
-            {nearNow && <AppText muted>Auch Routen mit Start im Umkreis von {NEAR_KM} km um {nearNow.name}</AppText>}
-            {tours && tours.length > 0 && shownTours.length === 0 && <AppText muted>{nearNow ? `Keine Route startet im Umkreis von ${NEAR_KM} km um ${nearNow.name}.` : 'Keine Route passt zur Suche.'}</AppText>}
+            {nearNow && <AppText muted>{tr('Auch Routen mit Start im Umkreis von ')}{NEAR_KM} km um {nearNow.name}</AppText>}
+            {tours && tours.length > 0 && shownTours.length === 0 && <AppText muted>{nearNow ? tr('Keine Route startet im Umkreis von {NEAR_KM} km um {name}.', { NEAR_KM, name: nearNow.name }) : tr('Keine Route passt zur Suche.')}</AppText>}
             {shownTours
               .filter((t) => t.id !== selected)
               .map((t) => (
@@ -429,8 +429,8 @@ export default function Community() {
                 )}
                 <ContactRequests list={contacts.list} />
                 <View style={styles.dsegRow}>
-                  <Chip label={`Alle ${others}`} active={dseg === 'alle'} onPress={() => setDseg('alle')} />
-                  <Chip label={`Kontakte ${contactCount}`} active={dseg === 'kontakte'} onPress={() => setDseg('kontakte')} />
+                  <Chip label={tr('Alle {others}', { others })} active={dseg === 'alle'} onPress={() => setDseg('alle')} />
+                  <Chip label={tr('Kontakte {contactCount}', { contactCount })} active={dseg === 'kontakte'} onPress={() => setDseg('kontakte')} />
                 </View>
                 {dseg === 'kontakte' && contactCount === 0 ? (
                   <View style={styles.card}>
@@ -441,9 +441,9 @@ export default function Community() {
                     </Pressable>
                   </View>
                 ) : (
-                  <TextInput maxFontSizeMultiplier={1.2} value={dq} onChangeText={setDq} placeholder={dseg === 'kontakte' ? 'Kontakte durchsuchen' : 'Name, Ort oder Auto suchen'} placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel={dseg === 'kontakte' ? 'Kontakte durchsuchen' : 'Drivers durchsuchen'} returnKeyType="search" />
+                  <TextInput maxFontSizeMultiplier={1.2} value={dq} onChangeText={setDq} placeholder={dseg === 'kontakte' ? tr('Kontakte durchsuchen') : tr('Name, Ort oder Auto suchen')} placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel={dseg === 'kontakte' ? tr('Kontakte durchsuchen') : tr('Drivers durchsuchen')} returnKeyType="search" />
                 )}
-                {shownDrivers.length === 0 && (dseg === 'alle' || contactCount > 0) && <AppText muted>{dseg === 'kontakte' ? 'Kein Kontakt passt zur Suche.' : 'Kein Mitglied passt zur Suche.'}</AppText>}
+                {shownDrivers.length === 0 && (dseg === 'alle' || contactCount > 0) && <AppText muted>{dseg === 'kontakte' ? tr('Kein Kontakt passt zur Suche.') : tr('Kein Mitglied passt zur Suche.')}</AppText>}
                 {shownDrivers.map((d) => (
                   <View
                     key={d.id}
@@ -511,7 +511,7 @@ function SegItem({ label, icon, count, badge, on, onPress, onBox, ownFill }: { o
       <Pressable
         accessibilityRole="tab"
         accessibilityState={{ selected: on }}
-        accessibilityLabel={`${label}${count != null ? `, ${count}` : ''}${badge ? `, ${badge} offene Anfragen` : ''}`}
+        accessibilityLabel={`${label}${count != null ? `, ${count}` : ''}${badge ? tr(', {badge} offene Anfragen', { badge }) : ''}`}
         hitSlop={4}
         onPress={onPress}
         style={[styles.segItem, on && styles.segOn, on && ownFill && styles.segFill]}>
@@ -629,7 +629,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
   const bookmark = mine ? (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${t.name} ist veröffentlicht. Aus der Community nehmen`}
+      accessibilityLabel={tr('{name} ist veröffentlicht. Aus der Community nehmen', { name: t.name })}
       onPress={() => {
         if (!busy) setConfirm(true);
       }}
@@ -640,7 +640,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
   ) : (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={saved ? `${t.name} aus Touren entfernen` : `${t.name} unter Touren speichern`}
+      accessibilityLabel={saved ? tr('{name} aus Touren entfernen', { name: t.name }) : tr('{name} unter Touren speichern', { name: t.name })}
       accessibilityState={{ selected: saved, busy: busy === 'save' }}
       onPress={() => void keep()}
       hitSlop={4}
@@ -654,7 +654,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
   <ConfirmSheet
     visible={confirm}
     title={tr('Möchtest du diese Tour wirklich aus der Community entfernen?')}
-    text="Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten."
+    text={tr('Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten.')}
     confirmLabel={tr('Entfernen')}
     onConfirm={() => {
       setBusy('withdraw');
@@ -710,7 +710,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       <View style={styles.tourRow}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${t.name}, ${meta}, ${mine ? 'von dir' : author ? `von ${author}` : 'aus der Community'}`}
+          accessibilityLabel={`${t.name}, ${meta}, ${mine ? tr('von dir') : author ? tr('von {author}', { author }) : tr('aus der Community')}`}
           accessibilityHint={tr('Öffnet die Route auf der Karte, dort startest du die Fahrt')}
           onPress={() => void open()}
           onPressIn={press.onPressIn}
@@ -774,7 +774,7 @@ function SoonCard({ r, home }: { r: Ausfahrt; home: LatLon | null }) {
     };
   }, [r, home]);
   const to = r.meeting ? ([r.meeting.lat, r.meeting.lon] as LatLon) : r.start;
-  const place = r.meeting?.name || 'Start der Tour';
+  const place = r.meeting?.name || tr('Start der Tour');
   const others = Math.max(0, r.taken - 1);
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.card}>
@@ -787,7 +787,7 @@ function SoonCard({ r, home }: { r: Ausfahrt; home: LatLon | null }) {
         <Metric label={tr('Treffpunkt')} value={clock(r.startsAt)} />
         {min != null && <Metric label={tr('Anfahrt')} value={min >= 60 ? `${Math.floor(min / 60)}:${String(min % 60).padStart(2, '0')} H` : `${min} MIN`} />}
       </View>
-      <AppText muted>{[place, r.isOwner ? 'du organisierst' : `${r.ownerName}${others > 1 ? ` und ${others - 1} weitere` : ''}`].join('  ·  ')}</AppText>
+      <AppText muted>{[place, r.isOwner ? tr('du organisierst') : `${r.ownerName}${others > 1 ? tr(' und {v0} weitere', { v0: others - 1 }) : ''}`].join('  ·  ')}</AppText>
       {/* eigene Navigation, Schnell voreingestellt (Koray 14.11.: nie Apple Karten oder Google Maps) */}
       {to ? <MeetingRoute to={to} place={place} /> : null}
     </Animated.View>
@@ -804,11 +804,11 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function rideAction(r: Ausfahrt): string {
-  if (r.isOwner) return r.openRequests ? (r.openRequests === 1 ? 'Anfrage ansehen' : `${r.openRequests} Anfragen ansehen`) : 'Ausfahrt ansehen';
-  if (r.myStatus === 'zugesagt') return 'Zur Ausfahrt';
-  if (r.myStatus === 'angefragt') return 'Anfrage ansehen';
-  if (r.myStatus === 'eingeladen') return 'Einladung ansehen';
-  return freeSeats(r) > 0 ? 'Mitfahren anfragen' : 'Ausfahrt ansehen';
+  if (r.isOwner) return r.openRequests ? (r.openRequests === 1 ? tr('Anfrage ansehen') : tr('{openRequests} Anfragen ansehen', { openRequests: r.openRequests })) : tr('Ausfahrt ansehen');
+  if (r.myStatus === 'zugesagt') return tr('Zur Ausfahrt');
+  if (r.myStatus === 'angefragt') return tr('Anfrage ansehen');
+  if (r.myStatus === 'eingeladen') return tr('Einladung ansehen');
+  return freeSeats(r) > 0 ? tr('Mitfahren anfragen') : tr('Ausfahrt ansehen');
 }
 
 function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
@@ -816,7 +816,7 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
   const open = () => router.push({ pathname: '/ausfahrt/[id]', params: { id: r.id } });
   const arr = arrival(r);
   // Treffpunkt immer als Ort (K6); ohne gewählten Treffpunkt steht nichts statt „Rundtour“
-  const where = r.meeting?.name ? `ab ${r.meeting.name}` : null;
+  const where = r.meeting?.name ? tr('ab {name}', { name: r.meeting.name }) : null;
   const free = freeSeats(r);
   const fun = useRideFun(r.id);
   const status = !r.isOwner && !r.myStatus && free > 0 ? null : <RideStatus r={r} />;
@@ -832,9 +832,9 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
           </View>
         </View>
         <Kennzahlen km={r.km} minutes={r.minutes} fun={fun} />
-        {!r.roundTrip && arr ? <AppText muted>{`Ankunft etwa ${clock(arr)}${r.goalName ? ` in ${r.goalName}` : ''}`}</AppText> : null}
+        {!r.roundTrip && arr ? <AppText muted>{tr('Ankunft etwa {v0}{v1}', { v0: clock(arr), v1: r.goalName ? ` in ${r.goalName}` : '' })}</AppText> : null}
         <View style={styles.row}>
-          <AppText muted style={styles.flex} numberOfLines={1}>Organisiert von {r.isOwner ? 'dir' : r.ownerName}</AppText>
+          <AppText muted style={styles.flex} numberOfLines={1}>{tr('Organisiert von ')}{r.isOwner ? 'dir' : r.ownerName}</AppText>
           {status ?? <SeatsBadge free={free} />}
         </View>
         <Pressable accessibilityRole="button" onPress={open} style={styles.primary}>
@@ -848,7 +848,7 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
     <Animated.View style={press.style}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${r.name}, ${shortDate(r.startsAt)} ${clock(r.startsAt)} Uhr${r.km != null ? `, ${formatKm(r.km, 0)} km` : ''}, ${free} Plätze frei`}
+        accessibilityLabel={tr('{name}, {v1} {v2} Uhr{v3}, {free} Plätze frei', { name: r.name, v1: shortDate(r.startsAt), v2: clock(r.startsAt), v3: r.km != null ? `, ${formatKm(r.km, 0)} km` : '', free })}
         onPress={open}
         onPressIn={press.onPressIn}
         onPressOut={press.onPressOut}
@@ -859,7 +859,7 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
           <AppText muted numberOfLines={1} style={styles.num}>
             {fmtMeta(wann(r.startsAt), r.km != null ? strecke(r.km) : null)}
           </AppText>
-          <AppText muted numberOfLines={1}>{where ?? `Von ${r.ownerName}`}</AppText>
+          <AppText muted numberOfLines={1}>{where ?? tr('Von {ownerName}', { ownerName: r.ownerName })}</AppText>
           {status ?? <SeatsBadge free={free} />}
         </View>
         <FunMark score={fun} reserve />

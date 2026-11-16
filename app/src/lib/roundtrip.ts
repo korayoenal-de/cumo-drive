@@ -8,18 +8,19 @@
  */
 import { route, valhallaFetch, type Avoid } from './valhalla';
 import type { LatLon, Profile } from './tour';
+import { t } from '@/i18n';
 
 export type Direction = 'N' | 'NO' | 'O' | 'SO' | 'S' | 'SW' | 'W' | 'NW' | 'zufall';
 
 export const DIRECTIONS: { id: Direction; label: string; bearing: number }[] = [
-  { id: 'N', label: 'Norden', bearing: 0 },
-  { id: 'NO', label: 'Nordosten', bearing: 45 },
-  { id: 'O', label: 'Osten', bearing: 90 },
-  { id: 'SO', label: 'Südosten', bearing: 135 },
-  { id: 'S', label: 'Süden', bearing: 180 },
-  { id: 'SW', label: 'Südwesten', bearing: 225 },
-  { id: 'W', label: 'Westen', bearing: 270 },
-  { id: 'NW', label: 'Nordwesten', bearing: 315 },
+  { id: 'N', label: t('Norden'), bearing: 0 },
+  { id: 'NO', label: t('Nordosten'), bearing: 45 },
+  { id: 'O', label: t('Osten'), bearing: 90 },
+  { id: 'SO', label: t('Südosten'), bearing: 135 },
+  { id: 'S', label: t('Süden'), bearing: 180 },
+  { id: 'SW', label: t('Südwesten'), bearing: 225 },
+  { id: 'W', label: t('Westen'), bearing: 270 },
+  { id: 'NW', label: t('Nordwesten'), bearing: 315 },
 ];
 
 export type RoundTripRequest = {

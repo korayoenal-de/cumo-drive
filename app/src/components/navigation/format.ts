@@ -2,6 +2,7 @@
  * Anzeige Formate für die Navigation (deutsch, Komma als Dezimalzeichen).
  */
 import { fahrzeit } from '@/lib/format';
+import { decimal } from '@/i18n';
 
 /** Distanz bis zum Manöver: "40 m", "400 m", ab 1000 m "1,2 km", ab 10 km "12 km". */
 export function formatDistance(m: number | null): { value: string; unit: string } {
@@ -11,7 +12,7 @@ export function formatDistance(m: number | null): { value: string; unit: string 
     return { value: String(Math.max(0, Math.round(m / step) * step)), unit: 'm' };
   }
   const km = m / 1000;
-  if (km < 10) return { value: km.toFixed(1).replace('.', ','), unit: 'km' };
+  if (km < 10) return { value: decimal(km.toFixed(1)), unit: 'km' };
   return { value: String(Math.round(km)), unit: 'km' };
 }
 

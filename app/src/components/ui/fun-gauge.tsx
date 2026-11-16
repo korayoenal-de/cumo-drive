@@ -23,7 +23,7 @@ import Animated, {
 import Svg, { Path } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 export type FunLevel = 1 | 2 | 3 | 4 | 5;
 
@@ -88,7 +88,7 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export function FunGauge({ level, size = 20, animate = false }: { level: FunLevel; size?: number; animate?: boolean }) {
   const reduced = useReducedMotion();
-  const label = `Fahrspaß ${FUN_NAMES[level]}, ${level} von 5`;
+  const label = tr('Fahrspaß {v0}, {level} von 5', { v0: FUN_NAMES[level], level });
   if (animate && level === 5 && !reduced) return <LegendGauge size={size} label={label} />;
   const n = FILLED[level];
   // Kleine Logos (unter 24 pt) ohne graue Flächen, nur die orangen Segmente (Koray 7.11.)
@@ -191,7 +191,7 @@ export function LogoProgress({ step, done = false, size = 36 }: { step: number; 
   }, [step, done, reduced, n, turn]);
   const spin = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get() * STEP}deg` }] }));
   return (
-    <Animated.View style={[{ width: size, height: size }, spin]} accessible accessibilityRole="progressbar" accessibilityLabel={`Fortschritt, Schritt ${Math.min(4, step + 1)} von 4`}>
+    <Animated.View style={[{ width: size, height: size }, spin]} accessible accessibilityRole="progressbar" accessibilityLabel={tr('Fortschritt, Schritt {v0} von 4', { v0: Math.min(4, step + 1) })}>
       <Svg width={size} height={size} viewBox="0 0 24 24">
         {SEGS.map((d, i) => (
           <Path key={`b${i}`} d={d} fill={OFF} />
@@ -213,7 +213,7 @@ function FillSeg({ d, index, n }: { d: string; index: number; n: SharedValue<num
  * Ladeanzeige im Stil der App (Koray 8.11.): das Logo mit grauen Segmenten, darüber läuft ein oranger
  * Schweif im Uhrzeigersinn ab 6 Uhr. Ohne Bewegung (reduzierte Bewegung) drei feste orange Segmente.
  */
-export function LogoSpinner({ size = 28, label = 'Lädt' }: { size?: number; label?: string }) {
+export function LogoSpinner({ size = 28, label = tr('Lädt') }: { size?: number; label?: string }) {
   const reduced = useReducedMotion();
   const t = useSharedValue(0);
   useEffect(() => {

@@ -7,6 +7,7 @@ import { useSyncExternalStore } from 'react';
 
 import { likelyClosed, type Pass } from './passes';
 import { supabase } from './supabase';
+import { t } from '@/i18n';
 
 export type LiveRow = { pass_id: string; state: 'offen' | 'gesperrt'; until: string | null; info: string | null; checked_at: string };
 export type PassState = { closed: boolean; source: 'live' | 'regel'; until: string | null; note: string };
@@ -58,23 +59,23 @@ export function passState(p: Pass, live: Map<string, LiveRow> | null, month = ne
   const r = live?.get(p.id);
   if (r) {
     if (r.state === 'offen') return { closed: false, source: 'live', until: null, note: 'offen' };
-    return { closed: true, source: 'live', until: r.until, note: r.until ? `gesperrt bis ${fmtDate(r.until)}` : 'gesperrt' };
+    return { closed: true, source: 'live', until: r.until, note: r.until ? t('gesperrt bis {v0}', { v0: fmtDate(r.until) }) : 'gesperrt' };
   }
   const closed = likelyClosed(p, month);
-  return { closed, source: 'regel', until: null, note: closed ? (p.closed_months ? `meist zu ${p.closed_months}` : 'im Winter meist zu') : '' };
+  return { closed, source: 'regel', until: null, note: closed ? (p.closed_months ? t('meist zu {closed_months}', { closed_months: p.closed_months }) : t('im Winter meist zu')) : '' };
 }
 
 /** Hinweis für eine Tour: Titel und Text zu den gesperrten Pässen auf der Strecke, oder null. */
 export function closedHint(list: Pass[], live: Map<string, LiveRow> | null): { title: string; text: string } | null {
   const st = list.map((p) => ({ p, s: passState(p, live) })).filter((x) => x.s.closed);
   if (!st.length) return null;
-  const join = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} und ${xs[xs.length - 1]}` : xs[0]);
+  const join = (xs: string[]) => (xs.length > 1 ? t('{v0} und {v1}', { v0: xs.slice(0, -1).join(', '), v1: xs[xs.length - 1] }) : xs[0]);
   const liveClosed = st.filter((x) => x.s.source === 'live');
   const ruled = st.filter((x) => x.s.source === 'regel');
   const parts: string[] = [];
   if (liveClosed.length)
-    parts.push(`Laut aktueller Verkehrsmeldung gesperrt: ${join(liveClosed.map((x) => (x.s.until ? `${x.p.name} (${x.s.note})` : x.p.name)))}.`);
-  if (ruled.length) parts.push(`${join(ruled.map((x) => x.p.name))} ${ruled.length > 1 ? 'sind' : 'ist'} um diese Jahreszeit meist zu.`);
-  parts.push('Planen und speichern geht trotzdem, vor der Fahrt den Status prüfen.');
-  return { title: liveClosed.length ? 'Pass gesperrt' : 'Wintersperre möglich', text: parts.join(' ') };
+    parts.push(t('Laut aktueller Verkehrsmeldung gesperrt: {v0}.', { v0: join(liveClosed.map((x) => (x.s.until ? `${x.p.name} (${x.s.note})` : x.p.name))) }));
+  if (ruled.length) parts.push(ruled.length > 1 ? t('{names} sind um diese Jahreszeit meist zu.', { names: join(ruled.map((x) => x.p.name)) }) : t('{names} ist um diese Jahreszeit meist zu.', { names: join(ruled.map((x) => x.p.name)) }));
+  parts.push(t('Planen und speichern geht trotzdem, vor der Fahrt den Status prüfen.'));
+  return { title: liveClosed.length ? t('Pass gesperrt') : t('Wintersperre möglich'), text: parts.join(' ') };
 }

@@ -7,6 +7,7 @@ import { useSyncExternalStore } from 'react';
 
 import { forgetPush } from './push';
 import { supabase } from './supabase';
+import { t } from '@/i18n';
 
 let session: Session | null = null;
 /** true, sobald die gespeicherte Sitzung gelesen ist (vorher weiß man nicht, ob angemeldet) */
@@ -51,12 +52,12 @@ export function useAuthReady(): boolean {
 }
 
 function german(msg: string): string {
-  if (/invalid login credentials/i.test(msg)) return 'E-Mail oder Passwort stimmt nicht.';
-  if (/already registered|already exists/i.test(msg)) return 'Diese E-Mail ist schon registriert. Bitte anmelden.';
-  if (/password should be at least|weak password/i.test(msg)) return 'Das Passwort braucht mindestens 8 Zeichen.';
-  if (/email not confirmed/i.test(msg)) return 'Die E-Mail ist noch nicht bestätigt. In Supabase „Confirm email“ ausschalten oder die Mail bestätigen.';
-  if (/rate limit/i.test(msg)) return 'Zu viele Versuche. Bitte kurz warten.';
-  if (/invalid.*email|unable to validate email/i.test(msg)) return 'Das sieht nicht nach einer gültigen E-Mail aus.';
+  if (/invalid login credentials/i.test(msg)) return t('E-Mail oder Passwort stimmt nicht.');
+  if (/already registered|already exists/i.test(msg)) return t('Diese E-Mail ist schon registriert. Bitte anmelden.');
+  if (/password should be at least|weak password/i.test(msg)) return t('Das Passwort braucht mindestens 8 Zeichen.');
+  if (/email not confirmed/i.test(msg)) return t('Die E-Mail ist noch nicht bestätigt. Bitte bestätige sie über die Mail, die wir dir geschickt haben.');
+  if (/rate limit/i.test(msg)) return t('Zu viele Versuche. Bitte kurz warten.');
+  if (/invalid.*email|unable to validate email/i.test(msg)) return t('Das sieht nicht nach einer gültigen E-Mail aus.');
   return msg;
 }
 

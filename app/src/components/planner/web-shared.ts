@@ -2,6 +2,7 @@
 import { type PlanStep } from '@/lib/plan';
 import { type Tour } from '@/lib/tour';
 import { Colors } from '@/constants/theme';
+import { t } from '@/i18n';
 
 export const C = {
   ground: Colors.ground, surface: Colors.surface, surface2: Colors.surface2, line: Colors.line, text: Colors.text,
@@ -13,10 +14,10 @@ export const BODY = 'Inter_400Regular, Inter, system-ui, sans-serif';
 export type PlannedTour = Tour & { minutes?: number; fixes?: number };
 
 export const STEP_TEXT: Record<PlanStep, string> = {
-  route: 'Route wird berechnet',
-  traffic: 'Verkehrsmeldungen werden geprüft',
-  compare: 'Beste Variante wird gewählt',
-  check: 'Etappen Check läuft',
-  fix: 'Gesperrte Stellen werden umfahren',
+  route: t('Route wird berechnet'),
+  traffic: t('Verkehrsmeldungen werden geprüft'),
+  compare: t('Beste Variante wird gewählt'),
+  check: t('Etappen Check läuft'),
+  fix: t('Gesperrte Stellen werden umfahren'),
 };
 

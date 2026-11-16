@@ -24,7 +24,7 @@ import { useSession } from '@/lib/auth';
 import { declineInvite, myInvites, respondInvite, type MyInvite } from '@/lib/group/invites';
 import { useRide } from '@/lib/group/ride';
 import { myVehicleLabel, rideAlong } from '@/lib/group/start';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 const POLL_MS = 60000;
 
@@ -105,7 +105,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
       setInvites(invites.map((i) => (i.rideId === inv.rideId ? { ...i, myStatus: 'zugesagt' } : i)));
       haptic('ablegen');
       const starts = inv.startsAt ? new Date(inv.startsAt) : null;
-      showToast(starts && relDay(starts) !== 'Heute' && relDay(starts) !== 'Morgen' ? 'Du bist dabei. Wir erinnern dich am Vortag.' : 'Du bist dabei.');
+      showToast(starts && relDay(starts) !== 'Heute' && relDay(starts) !== 'Morgen' ? tr('Du bist dabei. Wir erinnern dich am Vortag.') : tr('Du bist dabei.'));
       onChanged?.();
     } catch (e) {
       setErr({ id: inv.rideId, text: e instanceof Error ? e.message: t('Das hat nicht geklappt.') });
@@ -162,7 +162,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
         const starts = r?.startsAt ?? (inv.startsAt ? new Date(inv.startsAt) : null);
         const km = r?.km ?? inv.km;
         const isBusy = busy === inv.rideId;
-        const line = fmtMeta(starts ? wann(starts) : null, r?.meeting?.name ? `ab ${r.meeting.name}` : null);
+        const line = fmtMeta(starts ? wann(starts) : null, r?.meeting?.name ? tr('ab {name}', { name: r.meeting.name }) : null);
         if (!open) {
           return (
             <Animated.View key={inv.rideId} entering={FadeIn.duration(Motion.enter)} style={styles.card} accessibilityRole="summary">
@@ -171,7 +171,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
                 <AppText style={styles.liveText}>{t('Läuft jetzt')}</AppText>
               </View>
               <AppText style={styles.bigName} numberOfLines={2}>{inv.name}</AppText>
-              <AppText muted>{fmtMeta(`Lead ${inv.ownerName}`, km != null ? strecke(km) : null)}</AppText>
+              <AppText muted>{fmtMeta(tr('Lead {ownerName}', { ownerName: inv.ownerName }), km != null ? strecke(km) : null)}</AppText>
               {err?.id === inv.rideId && <AppText style={styles.error}>{err.text}</AppText>}
               <Btn label={t('Jetzt mitfahren')} primary busy={isBusy} disabled={!!busy} onPress={() => void join(inv)} />
             </Animated.View>
@@ -182,7 +182,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
             <View style={styles.head}>
               {starts ? <DateBlock d={starts} /> : null}
               <View style={styles.flex}>
-                <AppText muted>{inv.ownerName} lädt dich ein</AppText>
+                <AppText muted>{inv.ownerName}{tr(' lädt dich ein')}</AppText>
                 <AppText style={styles.title} numberOfLines={2}>{inv.name}</AppText>
               </View>
             </View>
@@ -206,13 +206,13 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
       })}
       <OptionsSheet
         visible={!!decline}
-        title={decline?.startsAt ? `Möchtest du für ${weekdayLong(new Date(decline.startsAt))} absagen?` : 'Möchtest du absagen?'}
-        subtitle={`${decline?.ownerName ?? 'Der Veranstalter'} sieht deine Absage. Wenn du magst, sag kurz warum.`}
+        title={decline?.startsAt ? tr('Möchtest du für {v0} absagen?', { v0: weekdayLong(new Date(decline.startsAt)) }) : tr('Möchtest du absagen?')}
+        subtitle={tr('{v0} sieht deine Absage. Wenn du magst, sag kurz warum.', { v0: decline?.ownerName ?? 'Der Veranstalter' })}
         onClose={() => setDecline(null)}>
         <View style={styles.sheet}>
           <View style={styles.chips}>
             {DECLINE_REASONS.map((x) => (
-              <Chip key={x} label={x} active={reason === x} onSurface onPress={() => setReason(reason === x ? null : x)} />
+              <Chip key={x} label={tr(x)} active={reason === x} onSurface onPress={() => setReason(reason === x ? null : x)} />
             ))}
           </View>
           <View style={styles.row}>

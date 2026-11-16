@@ -35,12 +35,12 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { TAB_BAR_SPACE } from '@/components/ui/screen';
 import { reportScroll } from '@/lib/tab-bar';
 import { Colors, Radius, Shadow, Spacing } from '@/constants/theme';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 /** 0 klein (nur der Kopf), 1 halb, 2 groß */
 export type Detent = 0 | 1 | 2;
 
-const DETENT_NAME = ['klein', 'halb', 'groß'] as const;
+const DETENT_NAME = ['klein', 'halb', tr('groß')] as const;
 const MEDIUM = 0.6;
 const LARGE = 0.92;
 /** Geschätzte Kopfhöhe samt Griff, bis sie gemessen ist */

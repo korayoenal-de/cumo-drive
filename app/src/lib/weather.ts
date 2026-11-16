@@ -9,6 +9,7 @@ import { useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 
 import type { Pass } from './passes';
+import { tr } from '@/i18n';
 
 export type PassWeather = {
   temp: number;
@@ -77,7 +78,7 @@ export async function passWeather(list: { pass: Pass; at: number }[]): Promise<M
         if (r?.ok) cache.set(keyOf(x.pass.id, x.at), { ...r, at: (r.time ?? x.at / 1000) * 1000 });
       });
       if (okCount) setStatus({ state: 'ok' });
-      else setStatus({ state: 'fehler', msg: res.find((r) => r?.error)?.error ?? 'keine Vorhersage erhalten' });
+      else setStatus({ state: 'fehler', msg: res.find((r) => r?.error)?.error ?? tr('keine Vorhersage erhalten') });
     } catch (e) {
       setStatus({ state: 'fehler', msg: (e as Error).message });
       return out;
@@ -94,7 +95,7 @@ export async function weatherAttribution() {
   try {
     attributionCache = await native.attribution();
   } catch {
-    attributionCache = { legalUrl: 'https://weatherkit.apple.com/legal-attribution.html', name: 'Apple Wetter' };
+    attributionCache = { legalUrl: 'https://weatherkit.apple.com/legal-attribution.html', name: tr('Apple Wetter') };
   }
   return attributionCache;
 }

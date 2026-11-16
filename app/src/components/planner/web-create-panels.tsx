@@ -37,9 +37,9 @@ import { tr } from '@/i18n';
 export const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
 const MIN_STEPS = [60, 90, 120, 180, 240, 300, 420];
 /** Neu würfeln ohne gute Alternative (wie in der App, Koray 10.11.) */
-export const NO_MORE_ROLLS = 'Eine bessere Runde gibt es hier gerade nicht. Probier eine andere Richtung oder Länge.';
+export const NO_MORE_ROLLS = tr('Eine bessere Runde gibt es hier gerade nicht. Probier eine andere Richtung oder Länge.');
 
-const PHASE_TEXT: Record<PlanPhase, string> = { ...STEP_TEXT, start: 'Startort wird bestimmt' };
+const PHASE_TEXT: Record<PlanPhase, string> = { ...STEP_TEXT, start: tr('Startort wird bestimmt') };
 
 export type Roll = { tour: LibPlannedTour; req: TourRequest; fun: TourFun | null };
 export type RoundState = { rolls: Roll[]; idx: number; savedId: string | null; savedFor: LibPlannedTour | null; note: string | null };
@@ -138,7 +138,7 @@ export function useRoundTrip(opts: { setBusy: (s: string | null) => void; setErr
     /** Stopp einplanen, die Runde bleibt eine Runde (spliceStop wie in der App) */
     addStop: async (p: LatLon) => {
       if (!cur) return;
-      setBusy('Stopp wird eingeplant');
+      setBusy(tr('Stopp wird eingeplant'));
       try {
         const t = await spliceStop(cur.tour, p, cur.req.profile, cur.req.avoid);
         const item: Roll = { ...cur, tour: t, fun: tourFun(flatten(t).map((x) => x.p)) };
@@ -183,7 +183,7 @@ export function RoundTripPanel(props: {
   const useLocation = () => {
     setLocError(null);
     if (!navigator.geolocation) {
-      setLocError('Dein Browser gibt keinen Standort heraus. Wähle den Start über die Suche.');
+      setLocError(tr('Dein Browser gibt keinen Standort heraus. Wähle den Start über die Suche.'));
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -191,12 +191,12 @@ export function RoundTripPanel(props: {
         const p: LatLon = [pos.coords.latitude, pos.coords.longitude];
         setStart({ p, name: await reverseName(p) });
       },
-      () => setLocError('Standort nicht freigegeben. Erlaube ihn im Browser oder wähle den Start über die Suche.'),
+      () => setLocError(tr('Standort nicht freigegeben. Erlaube ihn im Browser oder wähle den Start über die Suche.')),
       { enableHighAccuracy: false, timeout: 10000 },
     );
   };
 
-  const avoidText = [props.avoid.closures && 'Sperrungen', props.avoid.rough && 'rauer Belag', props.avoid.ferries && 'Fähren', props.avoid.tolls && 'Maut'].filter(Boolean).join(', ') || 'Nichts';
+  const avoidText = [props.avoid.closures && tr('Sperrungen'), props.avoid.rough && tr('rauer Belag'), props.avoid.ferries && tr('Fähren'), props.avoid.tolls && tr('Maut')].filter(Boolean).join(', ') || tr('Nichts');
   const stepBtn = { width: 52, height: 52, borderRadius: 26, border: 'none', background: C.surface2, color: C.text, font: `700 22px ${BODY}`, cursor: 'pointer' } as const;
 
   return (
@@ -206,14 +206,14 @@ export function RoundTripPanel(props: {
           <div style={S.startRow}>
             <span>{start.name}</span>
             <button style={{ ...S.link, fontSize: 15 }} onClick={() => setStart(null)}>
-              ändern
+              {tr('ändern')}
             </button>
           </div>
         ) : (
           <div style={S.stackTight}>
             <div style={S.btnRow}>
               <button style={S.secondary} onClick={useLocation}>
-                Mein Standort
+                {tr('Mein Standort')}
               </button>
               <button
                 style={S.secondary}
@@ -221,7 +221,7 @@ export function RoundTripPanel(props: {
                   const c = props.center();
                   if (c) setStart({ p: c, name: await reverseName(c) });
                 }}>
-                Kartenmitte
+                {tr('Kartenmitte')}
               </button>
             </div>
             <PlaceSearch placeholder={tr('Startort suchen')} onPick={(p) => setStart({ p: p.p, name: p.name })} />
@@ -233,10 +233,10 @@ export function RoundTripPanel(props: {
         <div style={{ background: C.surface, borderRadius: 20, padding: Spacing.l, display: 'flex', flexDirection: 'column', gap: Spacing.m }}>
           <div style={S.chips}>
             <Chip on={lengthBy === 'km'} onSurface onClick={() => setLengthBy('km')}>
-              Kilometer
+              {tr('Kilometer')}
             </Chip>
             <Chip on={lengthBy === 'dauer'} onSurface onClick={() => setLengthBy('dauer')}>
-              Dauer
+              {tr('Dauer')}
             </Chip>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -249,7 +249,7 @@ export function RoundTripPanel(props: {
             </button>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
               <span style={{ ...S.metricValue, fontSize: 30 }}>{lengthBy === 'km' ? KM_STEPS[kmIdx] : formatMinutes(MIN_STEPS[minIdx])}</span>
-              <span style={S.metricLabel}>{lengthBy === 'km' ? 'km' : `etwa ${km} km`}</span>
+              <span style={S.metricLabel}>{lengthBy === 'km' ? 'km' : tr('etwa {km} km', { km })}</span>
             </div>
             <button
               style={stepBtn}
@@ -261,7 +261,7 @@ export function RoundTripPanel(props: {
           </div>
         </div>
       </Section>
-      <Section title={tr('Richtung')} aside={dir === 'zufall' ? 'Zufall' : DIRECTIONS.find((d) => d.id === dir)?.label}>
+      <Section title={tr('Richtung')} aside={dir === 'zufall' ? tr('Zufall') : DIRECTIONS.find((d) => d.id === dir)?.label}>
         <WebDirectionDial value={dir} onChange={setDir} />
       </Section>
       {PROFILE_CHOICES.length > 1 && (
@@ -287,7 +287,7 @@ export function RoundTripPanel(props: {
         style={S.primary}
         disabled={props.busy || !start}
         onClick={() => start && props.onCreate({ start: { p: start.p, name: start.name }, km, direction: dir, profile: props.profile, avoid: props.avoid })}>
-        {start ? 'Tour erstellen' : 'Erst Start wählen'}
+        {start ? tr('Tour erstellen') : tr('Erst Start wählen')}
       </button>
     </div>
   );
@@ -313,7 +313,7 @@ export function RoundResult(props: {
   const prev = round.state.idx > 0 ? rolls[round.state.idx - 1].fun : null;
   const delta = cur.fun && prev ? cur.fun.score - prev.score : null;
   const saved = round.state.savedFor === cur.tour;
-  const dirWord = cur.req.direction === 'zufall' ? 'in zufälliger Richtung' : `Richtung ${DIRECTIONS.find((d) => d.id === cur.req.direction)?.label}`;
+  const dirWord = cur.req.direction === 'zufall' ? tr('in zufälliger Richtung') : tr('Richtung {label}', { label: DIRECTIONS.find((d) => d.id === cur.req.direction)?.label });
   let best = -1;
   rolls.forEach((r, i) => {
     if (r.fun && (best < 0 || r.fun.score > (rolls[best]?.fun?.score ?? -1))) best = i;
@@ -335,7 +335,7 @@ export function RoundResult(props: {
                 <button
                   key={i}
                   aria-pressed={i === round.state.idx}
-                  aria-label={`Runde ${i + 1} anzeigen, Fahrspaß ${r.fun.score}, ${TOUR_FUN_NAMES[r.fun.level]}`}
+                  aria-label={tr('Runde {v0} anzeigen, Fahrspaß {score}, {v2}', { v0: i + 1, score: r.fun.score, v2: TOUR_FUN_NAMES[r.fun.level] })}
                   onClick={() => round.pick(i)}
                   style={{ ...(i === round.state.idx ? S.chipOn : S.chip), display: 'flex', alignItems: 'center', gap: 6, boxShadow: i === best ? `inset 0 0 0 2px ${C.signal}` : undefined }}>
                   <Gauge level={r.fun.level} size={18} />
@@ -355,11 +355,11 @@ export function RoundResult(props: {
       <div style={{ display: 'flex', gap: Spacing.s, alignItems: 'center' }}>
         {saved ? (
           <span style={{ flex: 1 }}>
-            <StatusLine tone="good" text="Gespeichert, in der App unter Touren." />
+            <StatusLine tone="good" text={tr('Gespeichert, in der App unter Touren.')} />
           </span>
         ) : (
           <button style={S.primary} disabled={props.busy} onClick={round.save}>
-            Speichern
+            {tr('Speichern')}
           </button>
         )}
         <MoreMenu
@@ -374,13 +374,13 @@ export function RoundResult(props: {
         />
       </div>
       <button style={{ ...S.secondary, flex: 'none' }} disabled={props.busy} onClick={round.reroll}>
-        Neu würfeln
+        {tr('Neu würfeln')}
       </button>
       {ask ? (
         <ConfirmSheet
           narrow={props.narrow}
           title={tr('Möchtest du diese Runde wirklich verwerfen?')}
-          text="Gespeicherte Runden bleiben unter Touren."
+          text={tr('Gespeicherte Runden bleiben unter Touren.')}
           confirmLabel={tr('Verwerfen')}
           onClose={() => setAsk(false)}
           onConfirm={() => {

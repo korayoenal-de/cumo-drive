@@ -36,7 +36,7 @@ export function MapPassActions({
   bottom: number;
   onAction: (a: PassAction) => void;
 }) {
-  const sub = role ? `${note} · ${role} der Route` : detourKm != null ? `${note} · Umweg grob ${detourKm} km` : note;
+  const sub = role ? t('{note} · {role} der Route', { note, role }) : detourKm != null ? t('{note} · Umweg grob {detourKm} km', { note, detourKm }) : note;
   const primary: { a: PassAction; label: string } = role
     ? { a: 'remove', label: t('Aus der Route entfernen') }
     : complete

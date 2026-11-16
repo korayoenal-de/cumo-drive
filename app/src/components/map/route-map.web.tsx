@@ -9,6 +9,7 @@ import { Pressable, View, type GestureResponderEvent } from 'react-native';
 import { projectTour, RoutePreview } from '@/components/planner/route-preview';
 
 import type { RouteMapProps } from './route-map-shared';
+import { t } from '@/i18n';
 
 export type { RouteMapProps } from './route-map-shared';
 
@@ -34,7 +35,7 @@ export function RouteMap({ tour, style, onLongPress }: RouteMapProps) {
     onLongPress(proj.toLatLon(x, y));
   };
   return (
-    <Pressable style={style} onLayout={onLayout} onLongPress={handleLongPress} accessibilityLabel="Karte, lange drücken setzt einen Punkt">
+    <Pressable style={style} onLayout={onLayout} onLongPress={handleLongPress} accessibilityLabel={t('Karte, lange drücken setzt einen Punkt')}>
       {preview}
     </Pressable>
   );

@@ -4,6 +4,7 @@
  * Format: "cumo1:" + base64url(JSON), Stützpunkte als Polyline mit 5 Nachkommastellen.
  */
 import { flatten, haversine, type LatLon, type Profile, type Tour } from './tour';
+import { tr } from '@/i18n';
 
 const PREFIX = 'cumo1:';
 
@@ -160,7 +161,7 @@ export function decodeTour(code: string): SharedTour | null {
     if (points.length < 2) return null;
     const waypoints = d.w ? decodePolyline(d.w, 1e5) : undefined;
     return {
-      name: d.n || 'Tour vom Planer',
+      name: d.n || tr('Tour vom Planer'),
       profile: d.p ?? 'kurvig',
       points,
       ...(waypoints && waypoints.length >= 2 ? { waypoints, names: d.m, legs: d.e } : {}),

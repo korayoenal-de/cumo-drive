@@ -19,6 +19,7 @@ import { Colors, Fonts, Shadow } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { clusterPins, type Region } from '@/lib/map-cluster';
 import type { LatLon } from '@/lib/tour';
+import { tr } from '@/i18n';
 
 export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt' | 'driver'; p: LatLon; label: string; count?: number; ring?: string };
 
@@ -211,7 +212,7 @@ function PinMarker({ pin, on, stage, onSelect }: { pin: CommunityPin; on: boolea
       zIndex={on ? 50 : pin.kind === 'route' ? 10 : 20}
       tracksViewChanges={track}
       onPress={() => onSelect(pin.id)}
-      accessibilityLabel={pin.kind === 'route' ? `Route, ${pin.label}` : pin.kind === 'driver' ? `Fahrer ${pin.label}` : `Ausfahrt am ${pin.label}`}>
+      accessibilityLabel={pin.kind === 'route' ? tr('Route, {label}', { label: pin.label }) : pin.kind === 'driver' ? tr('Fahrer {label}', { label: pin.label }) : tr('Ausfahrt am {label}', { label: pin.label })}>
       {look === 'weit' ? <PinDot pin={pin} /> : look === 'region' ? <PinIcon pin={pin} /> : <Pin pin={pin} on={on} />}
     </Marker>
   );

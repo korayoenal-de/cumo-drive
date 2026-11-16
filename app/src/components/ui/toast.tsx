@@ -12,6 +12,7 @@ import { TAB_BAR_SPACE } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 import { hideToast, useToast } from '@/lib/toast';
+import { tr } from '@/i18n';
 
 export function ToastHost() {
   const t = useToast();
@@ -28,7 +29,7 @@ export function ToastHost() {
         accessibilityRole="alert"
         style={styles.toast}>
         <SymbolView weight="semibold" name={error ? 'exclamationmark.circle.fill' : 'checkmark.circle.fill'} size={20} tintColor={error ? Colors.signal : Colors.good} />
-        <Pressable accessibilityRole="button" accessibilityLabel={`${t.text}, schließen`} onPress={hideToast} style={styles.flex}>
+        <Pressable accessibilityRole="button" accessibilityLabel={tr('{text}, schließen', { text: t.text })} onPress={hideToast} style={styles.flex}>
           <AppText style={styles.text} numberOfLines={2}>
             {t.text}
           </AppText>

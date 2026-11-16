@@ -12,6 +12,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useSyncExternalStore } from 'react';
 
 import { SUPABASE_URL, supabase } from './supabase';
+import { t } from '@/i18n';
 
 const SIZE = 512;
 const MAX_BYTES = 1024 * 1024;
@@ -172,9 +173,9 @@ export type Picked = { uri: string; width: number; height: number };
  */
 export async function pickPhoto(source: 'library' | 'camera'): Promise<Picked | PickResult> {
   const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return { ok: false, message: 'Melde dich an, um ein Foto zu setzen.' };
+  if (!u.user) return { ok: false, message: t('Melde dich an, um ein Foto zu setzen.') };
   const perm = source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!perm.granted) return { ok: false, message: source === 'camera' ? 'Ohne Zugriff auf die Kamera geht es nicht. Du kannst ihn in den iPhone Einstellungen erlauben.' : 'Ohne Zugriff auf deine Fotos geht es nicht. Du kannst ihn in den iPhone Einstellungen erlauben.' };
+  if (!perm.granted) return { ok: false, message: source === 'camera' ? t('Ohne Zugriff auf die Kamera geht es nicht. Du kannst ihn in den iPhone Einstellungen erlauben.') : t('Ohne Zugriff auf deine Fotos geht es nicht. Du kannst ihn in den iPhone Einstellungen erlauben.') };
   const own = canCrop();
   // Mit eigenem Zuschnitt rechnet iOS das Foto nicht erst um (HEIC zu JPEG, Kompression): das dauerte bei großen
   // Fotos mehrere Sekunden (Koray 13.11.); verkleinert wird danach ohnehin auf 512 Pixel
@@ -190,15 +191,15 @@ export async function pickPhoto(source: 'library' | 'camera'): Promise<Picked | 
 /** Zuschneiden, verkleinern, hochladen und die Fassung erhöhen */
 export async function uploadAvatar(uri: string, crop?: Crop): Promise<PickResult> {
   const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return { ok: false, message: 'Melde dich an, um ein Foto zu setzen.' };
+  if (!u.user) return { ok: false, message: t('Melde dich an, um ein Foto zu setzen.') };
   const small = (await shrink(uri, crop)) ?? uri;
   const bytes = await new File(small).bytes();
-  if (bytes.byteLength > MAX_BYTES) return { ok: false, message: 'Das Foto ist zu groß. Mit dem nächsten App Update wird es automatisch verkleinert.' };
+  if (bytes.byteLength > MAX_BYTES) return { ok: false, message: t('Das Foto ist zu groß. Mit dem nächsten App Update wird es automatisch verkleinert.') };
   const { error } = await supabase.storage.from('avatars').upload(`${u.user.id}.jpg`, bytes, { contentType: 'image/jpeg', upsert: true, cacheControl: '3600' });
-  if (error) return { ok: false, message: 'Das Foto ließ sich nicht hochladen. Versuch es gleich noch einmal.' };
+  if (error) return { ok: false, message: t('Das Foto ließ sich nicht hochladen. Versuch es gleich noch einmal.') };
   const v = Math.floor(Date.now() / 1000);
   const { error: e2 } = await supabase.from('profiles').update({ avatar_v: v }).eq('id', u.user.id);
-  if (e2) return { ok: false, message: 'Das Foto ist hochgeladen, aber noch nicht gespeichert. Versuch es gleich noch einmal.' };
+  if (e2) return { ok: false, message: t('Das Foto ist hochgeladen, aber noch nicht gespeichert. Versuch es gleich noch einmal.') };
   known.set(u.user.id, v);
   fetchedAt.set(u.user.id, Date.now());
   localFile.set(u.user.id, small);
@@ -215,7 +216,7 @@ export async function removeAvatar(): Promise<PickResult> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return { ok: false };
   const { error } = await supabase.from('profiles').update({ avatar_v: null }).eq('id', u.user.id);
-  if (error) return { ok: false, message: 'Das Foto ließ sich nicht entfernen.' };
+  if (error) return { ok: false, message: t('Das Foto ließ sich nicht entfernen.') };
   await supabase.storage.from('avatars').remove([`${u.user.id}.jpg`]).catch(() => undefined);
   known.set(u.user.id, null);
   localFile.delete(u.user.id);

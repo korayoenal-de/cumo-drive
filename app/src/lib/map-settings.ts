@@ -4,6 +4,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
+import { t } from '@/i18n';
 
 export type MapStyle = 'standard' | 'satellit' | '3d';
 
@@ -26,8 +27,8 @@ export type MapSettings = {
 };
 
 export const MAP_STYLES: { id: MapStyle; label: string }[] = [
-  { id: 'standard', label: 'Standard' },
-  { id: 'satellit', label: 'Satellit' },
+  { id: 'standard', label: t('Standard') },
+  { id: 'satellit', label: t('Satellit') },
   { id: '3d', label: '3D Satellit' },
 ];
 

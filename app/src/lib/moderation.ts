@@ -5,6 +5,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { supabase } from './supabase';
+import { tr } from '@/i18n';
 
 export type ReportKind = 'direct_message' | 'ride_message' | 'profile' | 'tour' | 'ausfahrt';
 /** Im Prüfbereich zusätzlich: stille Hinweise des Servers (Stufe 2, 13.11.), nicht zum Melden */
@@ -12,15 +13,15 @@ export type AdminKind = ReportKind | 'hinweis';
 export type ReportReason = 'illegal' | 'spam' | 'belaestigung' | 'betrug' | 'anderes';
 
 export const REASONS: { v: ReportReason; label: string }[] = [
-  { v: 'illegal', label: 'Illegales, etwa Drogen' },
-  { v: 'spam', label: 'Spam oder Werbung' },
-  { v: 'belaestigung', label: 'Belästigung' },
-  { v: 'betrug', label: 'Betrug' },
-  { v: 'anderes', label: 'Anderes' },
+  { v: 'illegal', label: tr('Illegales, etwa Drogen') },
+  { v: 'spam', label: tr('Spam oder Werbung') },
+  { v: 'belaestigung', label: tr('Belästigung') },
+  { v: 'betrug', label: tr('Betrug') },
+  { v: 'anderes', label: tr('Anderes') },
 ];
-export const reasonLabel = (r: string) => (r === 'automatisch' ? 'Hinweis vom Server' : (REASONS.find((x) => x.v === r)?.label ?? r));
+export const reasonLabel = (r: string) => (r === 'automatisch' ? tr('Hinweis vom Server') : (REASONS.find((x) => x.v === r)?.label ?? r));
 
-const msg = (e: { message: string }) => (/function|relation|column|JWT|permission/i.test(e.message) ? 'Das hat nicht geklappt. Bitte nochmal versuchen.' : e.message);
+const msg = (e: { message: string }) => (/function|relation|column|JWT|permission/i.test(e.message) ? tr('Das hat nicht geklappt. Bitte nochmal versuchen.') : e.message);
 
 export async function reportContent(kind: ReportKind, ref: string, reason: ReportReason, note?: string) {
   const { error } = await supabase.rpc('report_content', { kind, ref, reason, note: note?.trim() || null });
@@ -45,7 +46,7 @@ export async function listBlocks(): Promise<Blocked[]> {
   if (error) throw new Error(msg(error));
   const l = ((data ?? []) as { user_id: string; display_name: string | null; created_at: string }[]).map((r) => ({
     userId: r.user_id,
-    name: r.display_name ?? 'Fahrer',
+    name: r.display_name ?? tr('Fahrer'),
     since: new Date(r.created_at),
   }));
   blockedIds = new Set(l.map((b) => b.userId));
@@ -143,10 +144,10 @@ export async function adminResolve(id: number, action: 'ok' | 'entfernt' | 'gesp
 }
 
 export const KIND_LABEL: Record<AdminKind, string> = {
-  direct_message: 'Private Nachricht',
-  ride_message: 'Nachricht im Chat einer Ausfahrt',
-  profile: 'Profil',
-  tour: 'Tour in der Community',
-  ausfahrt: 'Ausfahrt',
-  hinweis: 'Auffälliges Verhalten',
+  direct_message: tr('Private Nachricht'),
+  ride_message: tr('Nachricht im Chat einer Ausfahrt'),
+  profile: tr('Profil'),
+  tour: tr('Tour in der Community'),
+  ausfahrt: tr('Ausfahrt'),
+  hinweis: tr('Auffälliges Verhalten'),
 };

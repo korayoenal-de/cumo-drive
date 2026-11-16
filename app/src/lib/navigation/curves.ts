@@ -8,6 +8,7 @@
  */
 import { resample } from '../stats';
 import type { LatLon } from '../tour';
+import { t } from '@/i18n';
 
 export type SharpCurve = {
   /** km ab Start der Route, an dem die Kurve beginnt */
@@ -139,9 +140,9 @@ export function curveAhead(curves: SharpCurve[], atKm: number): SharpCurve | nul
 }
 
 export function curveLabel(c: SharpCurve): string {
-  if (c.kind === 'kehre') return c.dir === 'links' ? 'Kehre links' : 'Kehre rechts';
-  if (c.kind === 'kurve') return `${c.dir === 'links' ? 'Linkskurve' : 'Rechtskurve'}, etwa ${c.vmax} km/h`;
-  return c.dir === 'links' ? 'Scharfe Linkskurve' : 'Scharfe Rechtskurve';
+  if (c.kind === 'kehre') return c.dir === 'links' ? t('Kehre links') : t('Kehre rechts');
+  if (c.kind === 'kurve') return c.dir === 'links' ? t('Linkskurve, etwa {v} km/h', { v: c.vmax }) : t('Rechtskurve, etwa {v} km/h', { v: c.vmax });
+  return c.dir === 'links' ? t('Scharfe Linkskurve') : t('Scharfe Rechtskurve');
 }
 
 /** Abstand, unter dem Kurven als Kette zählen, und Mindestzahl an Kehren für die Zusammenfassung */
@@ -184,15 +185,15 @@ export function curveCue(curves: SharpCurve[], atKm: number, speedKmh?: number |
   const inChain = kehren >= CHAIN_MIN;
   if (dKm > warnKm(c, speedKmh) && !(inChain && i > s)) return null;
   const m = Math.round(dKm * 1000);
-  const dir = c.dir === 'links' ? 'links' : 'rechts';
+  const dir = c.dir === 'links' ? t('links') : t('rechts');
   if (inChain) {
     const n = chain.length;
     const k = i - s;
     if (k === 0 && m > 0) {
-      return { big: `${n} KEHREN`, label: `folgen, erste in ${up10(m)} m`, icon: 'serp', a11y: `${n} Kehren folgen, erste in ${up10(m)} Metern`, startKm: c.startKm, kind: c.kind, vmax: c.vmax };
+      return { big: t('{n} KEHREN', { n }), label: t('folgen, erste in {v0} m', { v0: up10(m) }), icon: 'serp', a11y: t('{n} Kehren folgen, erste in {v1} Metern', { n, v1: up10(m) }), startKm: c.startKm, kind: c.kind, vmax: c.vmax };
     }
-    const where = m > 0 ? `in ${up10(m)} m` : 'jetzt';
-    return { big: `${k + 1} VON ${n}`, label: `Kehre ${dir} ${where}`, icon: c.dir === 'links' ? 'hairL' : 'hairR', a11y: `Kehre ${k + 1} von ${n}, ${dir} ${where}`, startKm: c.startKm, kind: c.kind, vmax: c.vmax };
+    const where = m > 0 ? t('in {v0} m', { v0: up10(m) }) : t('jetzt');
+    return { big: t('{k} VON {n}', { k: k + 1, n }), label: t('Kehre {dir} {where}', { dir, where }), icon: c.dir === 'links' ? 'hairL' : 'hairR', a11y: t('Kehre {v0} von {n}, {dir} {where}', { v0: k + 1, n, dir, where }), startKm: c.startKm, kind: c.kind, vmax: c.vmax };
   }
   const label = curveLabel(c);
   const icon = c.kind === 'kehre' ? (c.dir === 'links' ? 'hairL' : 'hairR') : c.dir === 'links' ? 'left' : 'right';

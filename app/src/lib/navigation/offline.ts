@@ -6,13 +6,14 @@
  */
 import { haversine, type LatLon } from '../tour';
 import type { Maneuver, NavRoute } from './types';
+import { decimal, t } from '@/i18n';
 
 /** So weit voraus auf der Tour wird die Stelle zum Zurückkommen gesucht */
 const AHEAD_KM = 5;
 /** Umweg auf der Tour zählt so viel wie Luftlinie: lieber etwas weiter vorne einsteigen als zurück */
 const ALONG_WEIGHT = 0.25;
 
-const DIRS = ['Norden', 'Nordosten', 'Osten', 'Südosten', 'Süden', 'Südwesten', 'Westen', 'Nordwesten'];
+const DIRS = ['Norden', 'Nordosten', 'Osten', 'Südosten', 'Süden', 'Südwesten', 'Westen', 'Nordwesten'].map((d) => t(d));
 
 export function compass(a: LatLon, b: LatLon): string {
   const k = Math.cos((a[0] * Math.PI) / 180);
@@ -21,7 +22,7 @@ export function compass(a: LatLon, b: LatLon): string {
 }
 
 function words(m: number): string {
-  if (m >= 950) return `${String(Math.round(m / 100) / 10).replace('.', ',')} km`;
+  if (m >= 950) return `${decimal(String(Math.round(m / 100) / 10))} km`;
   return `${Math.max(50, Math.round(m / 50) * 50)} m`;
 }
 
@@ -49,12 +50,12 @@ export function offlineRejoin(current: NavRoute, doneIndex: number, pos: LatLon)
   const dir = compass(pos, target);
   const lead: Maneuver = {
     kind: 'geradeaus',
-    text: `Kein Netz. Zurück zur Tour: ${words(air)} Richtung ${dir}`,
-    speech: `Kein Netz. Die Tour liegt ${words(air).replace('km', 'Kilometer').replace(' m', ' Meter')} Richtung ${dir}.`,
+    text: t('Kein Netz. Zurück zur Tour: {v0} Richtung {dir}', { v0: words(air), dir }),
+    speech: t('Kein Netz. Die Tour liegt {v0} Richtung {dir}.', { v0: words(air).replace('km', t('Kilometer')).replace(' m', ' Meter'), dir }),
     index: 0,
     km: 0,
   };
-  const back: Maneuver = { kind: 'geradeaus', back: true, text: 'Zurück auf der Tour. Der Tour folgen.', speech: 'Dann bist du zurück auf der Tour.', index: 1, km: newCum[1] };
+  const back: Maneuver = { kind: 'geradeaus', back: true, text: t('Zurück auf der Tour. Der Tour folgen.'), speech: t('Dann bist du zurück auf der Tour.'), index: 1, km: newCum[1] };
   const rest = current.maneuvers
     .filter((m) => m.index > best && m.kind !== 'start')
     .map((m) => {

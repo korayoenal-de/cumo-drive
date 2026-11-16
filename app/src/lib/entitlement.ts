@@ -9,6 +9,7 @@ import { useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
 import { supabase } from './supabase';
+import { t } from '@/i18n';
 
 export type EntitlementSource = 'test' | 'plan' | 'club';
 
@@ -47,17 +48,17 @@ export type Price = {
 
 /** Private Pläne, Reihenfolge wie auf der Paywall. Gruppen privat bis 6 Fahrzeuge. */
 export const PRICES: Price[] = [
-  { id: 'jahr', name: 'Jahr', amount: 59.99, priceText: '59,99 €', periodText: 'pro Jahr', perMonthText: '5,00 € im Monat', renews: true, days: 365, highlight: true },
-  { id: 'monat', name: 'Monat', amount: 14.99, priceText: '14,99 €', periodText: 'pro Monat', perMonthText: null, renews: true, days: 30, highlight: false },
-  { id: 'woche', name: 'Woche', amount: 7.99, priceText: '7,99 €', periodText: 'pro Woche', perMonthText: null, renews: true, days: 7, highlight: false },
-  { id: 'saison', name: 'Saison Pass', amount: 49, priceText: '49 €', periodText: 'einmalig für 6 Monate', perMonthText: null, renews: false, days: 183, highlight: false },
+  { id: 'jahr', name: 'Jahr', amount: 59.99, priceText: '59,99 €', periodText: t('pro Jahr'), perMonthText: t('5,00 € im Monat'), renews: true, days: 365, highlight: true },
+  { id: 'monat', name: 'Monat', amount: 14.99, priceText: '14,99 €', periodText: t('pro Monat'), perMonthText: null, renews: true, days: 30, highlight: false },
+  { id: 'woche', name: 'Woche', amount: 7.99, priceText: '7,99 €', periodText: t('pro Woche'), perMonthText: null, renews: true, days: 7, highlight: false },
+  { id: 'saison', name: t('Saison Pass'), amount: 49, priceText: '49 €', periodText: t('einmalig für 6 Monate'), perMonthText: null, renews: false, days: 183, highlight: false },
 ];
 
 /** Club Angebote laufen auf Rechnung außerhalb der App und werden vom Betreiber zugewiesen. */
 export const CLUB_OFFERS = [
-  { id: 'club_s', name: 'Club S', priceText: '490 € pro Jahr', maxVehicles: 12 },
-  { id: 'club_l', name: 'Club L', priceText: '890 € pro Jahr', maxVehicles: 20 },
-  { id: 'event', name: 'Event Pass', priceText: '149 € für eine Tour, 7 Tage', maxVehicles: 20 },
+  { id: 'club_s', name: 'Club S', priceText: t('490 € pro Jahr'), maxVehicles: 12 },
+  { id: 'club_l', name: 'Club L', priceText: t('890 € pro Jahr'), maxVehicles: 20 },
+  { id: 'event', name: t('Event Pass'), priceText: t('149 € für eine Tour, 7 Tage'), maxVehicles: 20 },
 ] as const;
 
 export const CONTACT_EMAIL = 'kontakt@rallycumo.de';

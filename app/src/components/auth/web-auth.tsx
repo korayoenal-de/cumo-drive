@@ -8,6 +8,7 @@ import { Platform, View } from 'react-native';
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { Colors } from '@/constants/theme';
 import { useAuthReady, useSession } from '@/lib/auth';
+import { t } from '@/i18n';
 
 export function WebAuth({ mode }: { mode: 'login' | 'register' }) {
   const session = useSession();
@@ -17,7 +18,7 @@ export function WebAuth({ mode }: { mode: 'login' | 'register' }) {
     <View style={{ flex: 1, backgroundColor: Colors.ground }}>
       {Platform.OS === 'web' && (
         <Head>
-          <title>{mode === 'login' ? 'Login | Cumo Drive' : 'Registrieren | Cumo Drive'}</title>
+          <title>{mode === 'login' ? t('Login | Cumo Drive') : t('Registrieren | Cumo Drive')}</title>
           <meta name="robots" content="noindex" />
         </Head>
       )}

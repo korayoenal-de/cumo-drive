@@ -9,6 +9,7 @@ import { supabase } from '../supabase';
 import type { Profile, Tour } from '../tour';
 import type { Avoid } from '../valhalla';
 import type { Role } from './ride';
+import { tr } from '@/i18n';
 
 export type InviteStatus = 'eingeladen' | 'zugesagt' | 'abgesagt';
 
@@ -37,7 +38,7 @@ export const DEFAULT_MAX_MEMBERS = 6;
 
 function fail(message: string): never {
   // Meldungen aus den Funktionen sind schon deutsch, technische Fehler bekommen einen Standardtext
-  throw new Error(/^[A-ZÄÖÜ][^\n]*$/.test(message) && !/violat|permission|function|relation|column/i.test(message) ? message : 'Das hat nicht geklappt. Bitte nochmal versuchen.');
+  throw new Error(/^[A-ZÄÖÜ][^\n]*$/.test(message) && !/violat|permission|function|relation|column/i.test(message) ? message : tr('Das hat nicht geklappt. Bitte nochmal versuchen.'));
 }
 
 /** Nur die Tourdaten, ohne Felder aus Meine Touren (ID, Ordner, Abgleich). */
@@ -92,7 +93,7 @@ export async function rideOverview(rideId: string): Promise<RideMemberRow[]> {
   if (error) fail(error.message);
   return ((data ?? []) as { user_id: string; display_name: string | null; vehicle: string | null; status: InviteStatus; role: Role; is_owner: boolean }[]).map((r) => ({
     userId: r.user_id,
-    name: r.display_name ?? 'Fahrer',
+    name: r.display_name ?? tr('Fahrer'),
     vehicle: r.vehicle,
     status: r.status,
     role: r.role,

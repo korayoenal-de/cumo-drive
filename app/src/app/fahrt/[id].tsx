@@ -23,7 +23,7 @@ import { fmtG } from '@/lib/ride-stats';
 import type { LatLon, Tour } from '@/lib/tour';
 import { t } from '@/i18n';
 
-const OLD_RATING: Record<number, string> = { 1: 'Nicht gut', 2: 'Gut', 3: 'Sensationell' };
+const OLD_RATING: Record<number, string> = { 1: t('Nicht gut'), 2: 'Gut', 3: t('Sensationell') };
 
 export default function FahrtScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,7 +37,7 @@ export default function FahrtScreen() {
       .then((x) => {
         if (!live) return;
         if (x) setD(x);
-        else setErr('Diese Fahrt gibt es nicht mehr.');
+        else setErr(t('Diese Fahrt gibt es nicht mehr.'));
       })
       .catch((e: Error) => live && setErr(e.message));
     return () => {
@@ -68,9 +68,9 @@ export default function FahrtScreen() {
     ? [
         ['Schnitt', d.avg_kmh != null ? `${Math.round(Number(d.avg_kmh))} km/h` : null],
         ['Spitze', d.max_kmh != null ? `${Math.round(Number(d.max_kmh))} km/h` : null],
-        ['Kurven', d.curves != null ? String(d.curves) : null],
-        ['Quer in Kurven', d.max_lat_g != null ? fmtG(Number(d.max_lat_g)) : null],
-        ['Stärkste Bremsung', d.max_brake_g != null ? fmtG(Number(d.max_brake_g)) : null],
+        [t('Kurven'), d.curves != null ? String(d.curves) : null],
+        [t('Quer in Kurven'), d.max_lat_g != null ? fmtG(Number(d.max_lat_g)) : null],
+        [t('Stärkste Bremsung'), d.max_brake_g != null ? fmtG(Number(d.max_brake_g)) : null],
       ]
     : [];
   const rating = d ? (d.rating_score != null ? scoreWord(d.rating_score) : d.rating ? OLD_RATING[d.rating] : null) : null;

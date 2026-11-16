@@ -29,7 +29,8 @@ import { useRouteWeather, WeatherMarkers, WeatherSheet } from '@/components/map/
 
 import { POS_INTERVAL_MS, predictPosition } from '@/lib/group/predict';
 import { CLASS_LINE, ROLE_COLOR, sampleLine, tourWarnings, type OtherDriver, type RouteMapProps } from './route-map-shared';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
+import { closureNameT, reasonT } from '@/lib/warning-dedupe';
 
 export type { RouteMapProps } from './route-map-shared';
 
@@ -605,7 +606,7 @@ export function RouteMap({
           <Marker
             coordinate={ll(ziel)}
             anchor={{ x: 0.5, y: 0.5 }}
-            title={onDragPoint ? undefined : 'Ziel'}
+            title={onDragPoint ? undefined : tr('Ziel')}
             draggable={!!onDragPoint}
             onDragStart={() => {
               haptic('abheben');
@@ -625,7 +626,7 @@ export function RouteMap({
           <Marker
             coordinate={ll(start)}
             anchor={{ x: 0.5, y: 0.5 }}
-            title={onDragPoint && !roundTrip ? undefined : roundTrip ? 'Start und Ziel' : 'Start'}
+            title={onDragPoint && !roundTrip ? undefined : roundTrip ? tr('Start und Ziel') : tr('Start')}
             draggable={!!onDragPoint && !roundTrip}
             onDragStart={() => {
               haptic('abheben');
@@ -650,7 +651,7 @@ export function RouteMap({
             }}
             coordinate={ll(w.mitte)}
             anchor={{ x: 0.5, y: 0.5 }}
-            accessibilityLabel={w.name || (w.klasse === 'raus' ? 'Gesperrt' : 'Prüfen')}
+            accessibilityLabel={w.name || (w.klasse === 'raus' ? tr('Gesperrt') : tr('Prüfen'))}
             onPress={() => {
               setOpenWarn(index);
               onPressWarning?.(index);
@@ -828,15 +829,15 @@ function WarnCard({ top, klasse, name, reasons, onClose }: { top: number; klasse
     v.set(withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) }));
   }, [v]);
   const anim = useAnimatedStyle(() => ({ opacity: v.get(), transform: [{ translateY: (1 - v.get()) * -8 }] }));
-  const title = klasse === 'raus' ? 'Gesperrt' : 'Prüfen';
+  const title = klasse === 'raus' ? tr('Gesperrt') : tr('Prüfen');
   return (
     <Animated.View style={[styles.warnCard, { top }, anim]} accessibilityLiveRegion="polite">
       <View style={[styles.warnCardDot, { backgroundColor: CLASS_LINE[klasse].color }]}>
         <AppText style={styles.warnText}>!</AppText>
       </View>
       <View style={styles.warnCardBody}>
-        <AppText style={styles.warnCardTitle}>{name ? `${title}: ${name}` : title}</AppText>
-        {reasons.length > 0 && <AppText style={styles.warnCardText}>{reasons.map(trimDecimals).join(', ')}</AppText>}
+        <AppText style={styles.warnCardTitle}>{name ? `${title}: ${closureNameT(name.replace(/^Gesperrt:?\s*/i, ''))}` : title}</AppText>
+        {reasons.length > 0 && <AppText style={styles.warnCardText}>{reasons.map((r) => reasonT(trimDecimals(r))).join(', ')}</AppText>}
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel={t('Hinweis schließen')} hitSlop={12} onPress={onClose} style={styles.warnCardClose}>
         <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.muted} />
@@ -900,7 +901,7 @@ function OtherMarker({ o }: { o: OtherDriver }) {
       coordinate={region as unknown as LatLng}
       anchor={{ x: 0.5, y: 0.5 }}
       title={o.name}
-      description={`${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Teilnehmer' }[o.role]}${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}`}
+      description={`${{ lead: tr('Lead'), schluss: tr('Schlusslicht'), mitfahrer: tr('Teilnehmer') }[o.role]}${o.own ? tr(', eigener Weg') : o.off ? tr(', abseits der Tour') : ''}`}
       zIndex={30}
       tracksViewChanges={false}>
       <View style={[styles.other, { borderColor: o.own ? Colors.muted : o.off ? Colors.warn : ROLE_COLOR[o.role] }, o.off && !o.own && styles.otherOff, faded && styles.otherStale]}>

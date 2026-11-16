@@ -15,6 +15,7 @@ import { closedOnTour, closureLabels, planAround } from '@/lib/plan';
 import { aroundHint } from '@/components/tours/closed-sheet';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 import { avoidSetting } from '@/lib/avoid-settings';
+import { tr } from '@/i18n';
 
 /** Höchstens so viele Touren im Auto (CarPlay kürzt Listen je nach Auto ohnehin) */
 const MAX_TOURS = 24;
@@ -30,7 +31,7 @@ export function carTourItems(list: SavedTour[]): CarTourItem[] {
     return {
       id: t.id,
       name: t.name,
-      detail: `${Math.round(t.laenge_km)} km${has ? `, Fahrspaß ${t.fun}` : ''}`,
+      detail: `${Math.round(t.laenge_km)} km${has ? tr(', Fahrspaß {fun}', { fun: t.fun }) : ''}`,
       fun: has ? tourFunLevel(t.fun!) : 0,
     };
   });
@@ -45,7 +46,7 @@ export function fillCarTourFun(list: SavedTour[]) {
 export function startSavedTour(id: string) {
   const t = readLibrary().find((x) => x.id === id);
   if (!t) {
-    carPlayHint('Tour nicht gefunden', 'Sie ist nicht mehr gespeichert.');
+    carPlayHint(tr('Tour nicht gefunden'), tr('Sie ist nicht mehr gespeichert.'));
     return;
   }
   const profile = normProfile(t.profile) ?? 'kurvig';
@@ -63,25 +64,25 @@ async function startChecked(t: SavedTour, profile: ReturnType<typeof normProfile
     return;
   }
   const label = closureLabels(hits).join('. ');
-  carPlayHint('Gerade gesperrt', `${label}. Die Umfahrung wird geplant.`);
+  carPlayHint(tr('Gerade gesperrt'), tr('{label}. Die Umfahrung wird geplant.', { label }));
   try {
     const alt = await planAround(t, hits, profile, DEFAULT_AVOID);
     setActiveTour({ ...alt.tour, name: t.name }, profile, DEFAULT_AVOID);
-    carPlayHint('Gerade gesperrt', `${label}. Wir fahren außen herum: ${aroundHint(alt, t.laenge_km)}.`);
+    carPlayHint(tr('Gerade gesperrt'), tr('{label}. Wir fahren außen herum: {v1}.', { label, v1: aroundHint(alt, t.laenge_km) }));
   } catch {
     setActiveTour(t, profile, DEFAULT_AVOID);
-    carPlayHint('Gerade gesperrt', `${label}. Keine Umfahrung gefunden, die Route führt dort entlang.`);
+    carPlayHint(tr('Gerade gesperrt'), tr('{label}. Keine Umfahrung gefunden, die Route führt dort entlang.', { label }));
   }
 }
 
 /** Kurze Gründe fürs Autodisplay statt der langen Texte aus dem Planer */
 const SHORT: Record<PlanErrorKind, string> = {
-  permission: 'Der Standort ist nicht freigegeben.',
-  services: 'Die Ortungsdienste sind aus.',
-  position: 'Dein Standort ist gerade nicht bestimmbar.',
-  network: 'Der Routenplaner ist nicht erreichbar.',
-  notfound: 'Keine passende Runde gefunden.',
-  routing: 'Keine passende Runde gefunden.',
+  permission: tr('Der Standort ist nicht freigegeben.'),
+  services: tr('Die Ortungsdienste sind aus.'),
+  position: tr('Dein Standort ist gerade nicht bestimmbar.'),
+  network: tr('Der Routenplaner ist nicht erreichbar.'),
+  notfound: tr('Keine passende Runde gefunden.'),
+  routing: tr('Keine passende Runde gefunden.'),
   aborted: '',
 };
 
@@ -108,7 +109,7 @@ export async function planCarRound(km: number) {
     // abgebrochen (im Auto oder durch eine neue Runde): das Autodisplay weiß es schon
     if (ctrl.signal.aborted) return;
     const kind = toPlanError(e, ctrl.signal).kind;
-    carPlayEndPlanning(SHORT[kind] || 'Beim Planen ist etwas schiefgegangen.');
+    carPlayEndPlanning(SHORT[kind] || tr('Beim Planen ist etwas schiefgegangen.'));
   } finally {
     if (running === ctrl) running = null;
   }

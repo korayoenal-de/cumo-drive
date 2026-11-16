@@ -14,11 +14,11 @@ import { TOUR_FUN_NAMES, TOUR_FUN_STEPS, type FunFacet, type TourFun } from '@/l
 import type { LatLon } from '@/lib/tour';
 import { t } from '@/i18n';
 
-export function FunPill({ fun, onPress, active, best, hint = 'Zeigt, wie der Wert entsteht' }: { fun: TourFun; onPress: () => void; active?: boolean; best?: boolean; hint?: string }) {
+export function FunPill({ fun, onPress, active, best, hint = t('Zeigt, wie der Wert entsteht') }: { fun: TourFun; onPress: () => void; active?: boolean; best?: boolean; hint?: string }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Fahrspaß ${fun.score} von 100, ${TOUR_FUN_NAMES[fun.level]}`}
+      accessibilityLabel={t('Fahrspaß {score} von 100, {v1}', { score: fun.score, v1: TOUR_FUN_NAMES[fun.level] })}
       accessibilityHint={hint}
       accessibilityState={{ selected: !!active }}
       onPress={onPress}
@@ -34,7 +34,7 @@ export function FunPill({ fun, onPress, active, best, hint = 'Zeigt, wie der Wer
 export function FunDelta({ delta }: { delta: number }) {
   const up = delta >= 0;
   return (
-    <View style={[styles.delta, up ? styles.deltaUp : styles.deltaDown]} accessibilityLabel={`${up ? 'besser' : 'schlechter'} als die vorige Runde um ${Math.abs(delta)}`}>
+    <View style={[styles.delta, up ? styles.deltaUp : styles.deltaDown]} accessibilityLabel={up ? t('besser als die vorige Runde um {n}', { n: Math.abs(delta) }) : t('schlechter als die vorige Runde um {n}', { n: Math.abs(delta) })}>
       <AppText style={[styles.deltaText, { color: up ? Colors.good : Colors.muted }]}>{up ? `+${delta}` : `−${Math.abs(delta)}`}</AppText>
     </View>
   );
@@ -60,7 +60,7 @@ export type RouteCheck = { tone: 'good' | 'warn' | 'none'; text: string };
 export function routeCheck(warnings: number, checked: boolean): RouteCheck {
   if (!checked) return { tone: 'none', text: t('Diese Strecke ist noch nicht für Sportwagen geprüft.') };
   if (!warnings) return { tone: 'good', text: t('Für Sportwagen geprüft, keine Engstellen oder Sperrungen.') };
-  return { tone: 'warn', text: `Für Sportwagen geprüft. ${warnings === 1 ? 'Eine Stelle solltest' : `${warnings} Stellen solltest`} du kennen, sie stehen unter der Route.` };
+  return { tone: 'warn', text: warnings === 1 ? t('Für Sportwagen geprüft. Eine Stelle solltest du kennen, sie steht unter der Route.') : t('Für Sportwagen geprüft. {n} Stellen solltest du kennen, sie stehen unter der Route.', { n: warnings }) };
 }
 
 /** twiceKm: km, die auf derselben Straße zurück gefahren werden (Route); ab 1 km ein Hinweis */
@@ -84,7 +84,7 @@ export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0, line
             </View>
           </View>
           <View style={styles.stackWrap}>
-            <View style={styles.stack} accessible accessibilityLabel={`${fun.score} von 100 Punkten`}>
+            <View style={styles.stack} accessible accessibilityLabel={t('{score} von 100 Punkten', { score: fun.score })}>
               {pts.map((p, i) => (p > 0 ? <View key={i} style={{ width: `${p}%`, backgroundColor: TONES[i] }} /> : null))}
             </View>
             <View style={styles.ticks}>
@@ -104,7 +104,7 @@ export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0, line
                   key={f.id}
                   accessibilityRole="button"
                   accessibilityState={{ expanded: isOpen }}
-                  accessibilityLabel={`${f.label}, plus ${pts[i]} von ${Math.round(f.weight * 100)}, ${f.value}`}
+                  accessibilityLabel={t('{label}, plus {v1} von {v2}, {value}', { label: f.label, v1: pts[i], v2: Math.round(f.weight * 100), value: f.value })}
                   onPress={() => setOpen(isOpen ? null : f.id)}
                   style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
                   <View style={styles.rowMain}>
@@ -146,7 +146,7 @@ export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0, line
               <View style={[styles.check, { backgroundColor: Colors.warnTint }]}>
                 <View style={[styles.checkDot, { backgroundColor: Colors.warn }]} />
                 <AppText style={[styles.checkText, styles.flex]}>
-                  {Math.round(twiceKm)} km fährst du zweimal, auf derselben Straße zurück. Ein anderes Zwischenziel oder eine andere Reihenfolge ändert das oft.
+                  {Math.round(twiceKm)}{t(' km fährst du zweimal, auf derselben Straße zurück. Ein anderes Zwischenziel oder eine andere Reihenfolge ändert das oft.')}
                 </AppText>
               </View>
             )}

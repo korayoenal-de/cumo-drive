@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
 import { supabase } from './supabase';
+import { t } from '@/i18n';
 
 export type Fuel = 'super_plus' | 'super' | 'diesel' | 'elektro';
 
@@ -30,10 +31,10 @@ export type Vehicle = {
 };
 
 export const FUELS: { id: Fuel; label: string }[] = [
-  { id: 'super_plus', label: 'Super Plus' },
+  { id: 'super_plus', label: t('Super Plus') },
   { id: 'super', label: 'Super' },
-  { id: 'diesel', label: 'Diesel' },
-  { id: 'elektro', label: 'Elektro' },
+  { id: 'diesel', label: t('Diesel') },
+  { id: 'elektro', label: t('Elektro') },
 ];
 
 export const newVehicle = (): Vehicle => ({ id: Math.random().toString(36).slice(2, 10), model: '', widthM: null, clearanceCm: null, rangeKm: null, fuel: 'super_plus' });

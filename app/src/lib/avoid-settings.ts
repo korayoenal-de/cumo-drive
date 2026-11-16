@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useSyncExternalStore } from 'react';
 
 import { DEFAULT_AVOID, type Avoid } from './valhalla';
+import { t } from '@/i18n';
 
 const KEY = 'cumo.drive.vermeiden.v1';
 let state: Avoid = DEFAULT_AVOID;
@@ -55,8 +56,8 @@ export function useAvoid(): [Avoid, (v: Avoid | ((a: Avoid) => Avoid)) => void] 
 }
 
 export const AVOID_OPTIONS: readonly (readonly [keyof Avoid, string, string | undefined])[] = [
-  ['closures', 'Gesperrte Straßen', 'Wir planen um gesperrte Straßen herum.'],
-  ['ferries', 'Fähren', undefined],
-  ['tolls', 'Maut', undefined],
-  ['rough', 'Rauer Belag', 'Kopfsteinpflaster und schlechter Asphalt.'],
+  ['closures', t('Gesperrte Straßen'), t('Wir planen um gesperrte Straßen herum.')],
+  ['ferries', t('Fähren'), undefined],
+  ['tolls', t('Maut'), undefined],
+  ['rough', t('Rauer Belag'), t('Kopfsteinpflaster und schlechter Asphalt.')],
 ];

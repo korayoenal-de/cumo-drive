@@ -8,7 +8,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { cleanName, NAME_MAX, nameAvailable, nameProblem } from '@/lib/profile';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 export type NameCheck = { state: 'leer' | 'ungueltig' | 'pruefe' | 'frei' | 'vergeben' | 'fehler' | 'gleich'; message: string | null };
 
@@ -65,7 +65,7 @@ export function NameField({ value, onChange, check, onSurface }: { value: string
         </AppText>
       ) : (
         <AppText variant="caption" muted>
-          Andere finden dich unter diesem Namen. Mindestens 3 Zeichen, einmalig.
+          {tr('Andere finden dich unter diesem Namen. Mindestens 3 Zeichen, einmalig.')}
         </AppText>
       )}
     </View>

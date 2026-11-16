@@ -20,7 +20,7 @@ import { roundaboutTurn } from './roundabout';
 import { townAfter, wantsToward, withToward } from './toward';
 import { bbGps, bbLog, bbRoute, bbStart, bbStop } from './blackbox';
 import { createVoiceGuide, speakText, type VoiceGuide } from './voice';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 const KEEP_AWAKE_TAG = 'cumo-navigation';
 /** Abstand zur Route, ab dem man als abgewichen gilt */
@@ -79,9 +79,9 @@ const PARALLEL_DEG = 25;
 function friendly(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
   if (/Routenplaner|Netzverbindung|Tour/.test(msg)) return msg;
-  if (/network|fetch|Netz/i.test(msg)) return 'Keine Verbindung zum Routenplaner. Bitte die Netzverbindung prüfen.';
-  if (/location|Standort|position/i.test(msg)) return 'Der Standort ist gerade nicht verfügbar. Bitte Ortungsdienste prüfen.';
-  return `Die Navigation konnte nicht starten (${msg}).`;
+  if (/network|fetch|Netz/i.test(msg)) return tr('Keine Verbindung zum Routenplaner. Bitte die Netzverbindung prüfen.');
+  if (/location|Standort|position/i.test(msg)) return tr('Der Standort ist gerade nicht verfügbar. Bitte Ortungsdienste prüfen.');
+  return tr('Die Navigation konnte nicht starten ({msg}).', { msg });
 }
 
 function isAbort(e: unknown): boolean {
@@ -482,7 +482,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const start = useCallback(async () => {
     const r = reqRef.current;
     if (!r) {
-      setState((s) => ({ ...s, status: 'fehler', error: 'Es ist keine Tour ausgewählt.' }));
+      setState((s) => ({ ...s, status: 'fehler', error: tr('Es ist keine Tour ausgewählt.') }));
       return;
     }
     cleanup();
@@ -500,7 +500,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         setState((s) => ({
           ...s,
           status: 'fehler',
-          error: 'Ohne Standort geht keine Navigation. Bitte in den Einstellungen den Standortzugriff für Expo Go erlauben.',
+          error: tr('Ohne Standort geht keine Navigation. Bitte in den Einstellungen den Standortzugriff für Expo Go erlauben.'),
         }));
         return;
       }
@@ -540,7 +540,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
           });
         },
         (reason) => {
-          if (activeRef.current) setState((s) => ({ ...s, error: `Standort Fehler: ${reason}` }));
+          if (activeRef.current) setState((s) => ({ ...s, error: tr('Standort Fehler: {reason}', { reason }) }));
         },
       );
       if (!activeRef.current) {
@@ -635,7 +635,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       }
       const r = reqRef.current;
       if (!r) {
-        setState((s) => ({ ...s, status: 'fehler', error: 'Es ist keine Tour ausgewählt.' }));
+        setState((s) => ({ ...s, status: 'fehler', error: tr('Es ist keine Tour ausgewählt.') }));
         return;
       }
       cleanup();
@@ -664,7 +664,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
 
   /** Zwischenziel überspringen: wie eine Neuberechnung, aber zurück auf die Route erst ab index */
   const skipTo = useCallback(
-    async (index: number, fast = false, speech = 'Das nächste Zwischenziel wird übersprungen.'): Promise<SkipUndo | null> => {
+    async (index: number, fast = false, speech = tr('Das nächste Zwischenziel wird übersprungen.')): Promise<SkipUndo | null> => {
       const r = reqRef.current;
       const current = routeRef.current;
       const pos = posRef.current;

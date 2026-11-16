@@ -63,7 +63,7 @@ export function ElevationChart({ line, onKm, onSurface }: { line: LatLon[]; onKm
         <AppText variant="label">{t('Höhenprofil')}</AppText>
         <AppText variant="caption" muted style={styles.num}>
           {!ready
-            ? 'wird geladen'
+            ? t('wird geladen')
             : idx >= 0
               ? `km ${formatKm(e.km[idx], 0)}, ${Math.round(e.m[idx])} m`
               : `${e.up} m hoch, ${e.down} m runter`}
@@ -81,7 +81,7 @@ export function ElevationChart({ line, onKm, onSurface }: { line: LatLon[]; onKm
         onResponderTerminate={release}
         accessible
         accessibilityRole="image"
-        accessibilityLabel={ready ? `Höhenprofil von ${Math.round(e.min)} bis ${Math.round(e.max)} Meter, ${e.up} Meter Anstieg` : 'Höhenprofil wird geladen'}>
+        accessibilityLabel={ready ? t('Höhenprofil von {v0} bis {v1} Meter, {up} Meter Anstieg', { v0: Math.round(e.min), v1: Math.round(e.max), up: e.up }) : t('Höhenprofil wird geladen')}>
         {w > 0 && d ? (
           <Svg width={w} height={H}>
             <Path d={`${d} L${w},${H} L0,${H} Z`} fill={onSurface ? Colors.line : Colors.surface2} />
@@ -93,7 +93,7 @@ export function ElevationChart({ line, onKm, onSurface }: { line: LatLon[]; onKm
       {ready && (
         <View style={styles.head}>
           <AppText variant="caption" muted style={styles.num}>{`${Math.round(e.min)} m`}</AppText>
-          <AppText variant="caption" muted style={styles.num}>{`höchster Punkt ${Math.round(e.max)} m`}</AppText>
+          <AppText variant="caption" muted style={styles.num}>{t('höchster Punkt {v0} m', { v0: Math.round(e.max) })}</AppText>
         </View>
       )}
     </View>

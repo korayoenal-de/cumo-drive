@@ -13,7 +13,7 @@ import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { shortDate } from '@/lib/ausfahrten';
 import { adminReports, adminResolve, KIND_LABEL, reasonLabel, type AdminReport } from '@/lib/moderation';
 import { showToast } from '@/lib/toast';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 type Act = 'ok' | 'entfernt' | 'gesperrt';
 
@@ -36,7 +36,7 @@ export default function Pruefung() {
     try {
       await adminResolve(r.id, act, why);
       setWhy('');
-      showToast(act === 'ok' ? 'Als in Ordnung markiert' : act === 'entfernt' ? 'Inhalt entfernt' : 'Konto gesperrt');
+      showToast(act === 'ok' ? tr('Als in Ordnung markiert') : act === 'entfernt' ? tr('Inhalt entfernt') : tr('Konto gesperrt'));
       load();
     } catch (e) {
       showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
@@ -56,15 +56,15 @@ export default function Pruefung() {
             <AppText style={styles.kicker}>{reasonLabel(r.reason)}</AppText>
             <AppText variant="caption" muted>{shortDate(r.createdAt)}</AppText>
           </View>
-          <AppText muted>{KIND_LABEL[r.kind]} von {r.targetName ?? 'unbekannt'}{r.targetReports > 1 ? `, ${r.targetReports} Meldungen insgesamt` : ''}{r.targetBanned ? ', schon gesperrt' : ''}</AppText>
+          <AppText muted>{KIND_LABEL[r.kind]} von {r.targetName ?? 'unbekannt'}{r.targetReports > 1 ? tr(', {targetReports} Meldungen insgesamt', { targetReports: r.targetReports }) : ''}{r.targetBanned ? tr(', schon gesperrt') : ''}</AppText>
           {/* stiller Hinweis des Servers: welches Muster, darunter ein Beispiel (Stufe 2, 13.11.) */}
           {r.kind === 'hinweis' && r.note ? <AppText style={styles.btnText}>{r.note}</AppText> : null}
           <View style={[styles.snap, (r.kind === 'profile' || r.kind === 'hinweis') && styles.snapRow]}>
             {/* gemeldetes Profil: auch das Foto zeigen, Entfernen nimmt es mit weg */}
             {(r.kind === 'profile' || r.kind === 'hinweis') && r.target ? <Avatar name={r.targetName ?? '?'} userId={r.target} size={56} /> : null}
-            <AppText style={[styles.snapText, styles.flex]}>{r.snapshot ?? 'Kein Inhalt gespeichert'}</AppText>
+            <AppText style={[styles.snapText, styles.flex]}>{r.snapshot ?? tr('Kein Inhalt gespeichert')}</AppText>
           </View>
-          {r.note && r.kind !== 'hinweis' ? <AppText muted>Notiz von {r.reporterName ?? 'Melder'}: {r.note}</AppText> : null}
+          {r.note && r.kind !== 'hinweis' ? <AppText muted>{tr('Notiz von ')}{r.reporterName ?? tr('Melder')}: {r.note}</AppText> : null}
           <View style={styles.actions}>
             <Pressable accessibilityRole="button" disabled={busy === r.id} onPress={() => void resolve(r, 'ok')} style={styles.btn}>
               {busy === r.id ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.btnText}>{t('In Ordnung')}</AppText>}
@@ -80,9 +80,9 @@ export default function Pruefung() {
       ))}
       <ConfirmSheet
         visible={!!ask}
-        title={ask?.act === 'gesperrt' ? `Möchtest du ${ask.r.targetName ?? 'dieses Konto'} sperren?` : 'Möchtest du diesen Inhalt entfernen?'}
-        text={ask?.act === 'gesperrt' ? 'Der Inhalt wird entfernt, das Konto kann nicht mehr schreiben und verschwindet aus der Community. Die Person bekommt einen Hinweis mit Begründung.' : 'Die Person bekommt einen Hinweis mit Begründung.'}
-        confirmLabel={ask?.act === 'gesperrt' ? 'Sperren' : 'Entfernen'}
+        title={ask?.act === 'gesperrt' ? tr('Möchtest du {v0} sperren?', { v0: ask.r.targetName ?? 'dieses Konto' }) : tr('Möchtest du diesen Inhalt entfernen?')}
+        text={ask?.act === 'gesperrt' ? tr('Der Inhalt wird entfernt, das Konto kann nicht mehr schreiben und verschwindet aus der Community. Die Person bekommt einen Hinweis mit Begründung.') : tr('Die Person bekommt einen Hinweis mit Begründung.')}
+        confirmLabel={ask?.act === 'gesperrt' ? tr('Sperren') : tr('Entfernen')}
         onConfirm={() => ask && void resolve(ask.r, ask.act)}
         onClose={() => setAsk(null)}
       />

@@ -11,6 +11,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius } from '@/constants/theme';
+import { t } from '@/i18n';
 
 const EASE = Easing.bezier(0.22, 1, 0.36, 1);
 const SIZE = 56;
@@ -36,7 +37,7 @@ export function NavCompass({ heading, northUp, onToggle }: { /** Fahrtrichtung i
       first.current = false;
       return;
     }
-    setLabel(northUp ? 'Norden oben' : 'Fahrtrichtung oben');
+    setLabel(northUp ? t('Norden oben') : t('Fahrtrichtung oben'));
     const id = setTimeout(() => setLabel(null), 2000);
     return () => clearTimeout(id);
   }, [northUp]);
@@ -46,8 +47,8 @@ export function NavCompass({ heading, northUp, onToggle }: { /** Fahrtrichtung i
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ selected: northUp }}
-        accessibilityLabel={northUp ? 'Kompass, Karte genordet' : 'Kompass, Karte in Fahrtrichtung'}
-        accessibilityHint={northUp ? 'Antippen dreht die Karte wieder in Fahrtrichtung' : 'Antippen nordet die Karte'}
+        accessibilityLabel={northUp ? t('Kompass, Karte genordet') : t('Kompass, Karte in Fahrtrichtung')}
+        accessibilityHint={northUp ? t('Antippen dreht die Karte wieder in Fahrtrichtung') : t('Antippen nordet die Karte')}
         onPress={onToggle}
         style={({ pressed }) => [styles.btn, pressed && { transform: [{ scale: Motion.pressScale }] }]}>
         <View style={[styles.dial, northUp && styles.dialOn]}>

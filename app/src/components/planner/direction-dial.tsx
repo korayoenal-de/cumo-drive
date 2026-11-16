@@ -13,7 +13,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
 import { DIRECTIONS, type Direction } from '@/lib/roundtrip';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 const SIZE = 260;
 const C = SIZE / 2;
@@ -122,7 +122,7 @@ export function DirectionDial({
   };
 
   const knob = deg != null ? pt(deg, R) : null;
-  const label = value === 'zufall' ? 'Zufall' : cur!.label;
+  const label = value === 'zufall' ? tr('Zufall') : cur!.label;
 
   return (
     <View style={styles.wrap}>
@@ -171,7 +171,7 @@ export function DirectionDial({
       </View>
       </GestureDetector>
       <AppText variant="caption" muted style={styles.caption}>
-        {value === 'zufall' ? 'Die Runde führt in eine zufällige Richtung. Knopf auf dem Ring ziehen für eine feste Richtung.' : `Die Runde führt Richtung ${label}.`}
+        {value === 'zufall' ? tr('Die Runde führt in eine zufällige Richtung. Knopf auf dem Ring ziehen für eine feste Richtung.') : tr('Die Runde führt Richtung {label}.', { label })}
       </AppText>
     </View>
   );

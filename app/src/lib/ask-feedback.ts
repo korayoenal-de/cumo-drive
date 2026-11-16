@@ -9,6 +9,7 @@ import type { TourRequest } from '@/components/planner/create-tour';
 import type { PlannedTour } from './plan';
 import { sendFeedback } from './feedback';
 import { flatten } from './tour';
+import { t } from '@/i18n';
 
 const KEY = 'cumo.ask-feedback.v1';
 const DAY = 24 * 60 * 60 * 1000;
@@ -18,12 +19,12 @@ export const ASK_AFTER_ROLLS = 3;
 export const ASK_DELAY_MS = 1500;
 
 export const ASK_REASONS: { id: string; label: string }[] = [
-  { id: 'laenge', label: 'Zu kurz oder zu lang' },
-  { id: 'kurven', label: 'Zu wenig kurvig' },
-  { id: 'orte', label: 'Zu viele Orte' },
-  { id: 'richtung', label: 'Falsche Richtung' },
-  { id: 'strassen', label: 'Straßen ungeeignet' },
-  { id: 'anderes', label: 'Etwas anderes' },
+  { id: 'laenge', label: t('Zu kurz oder zu lang') },
+  { id: 'kurven', label: t('Zu wenig kurvig') },
+  { id: 'orte', label: t('Zu viele Orte') },
+  { id: 'richtung', label: t('Falsche Richtung') },
+  { id: 'strassen', label: t('Straßen ungeeignet') },
+  { id: 'anderes', label: t('Etwas anderes') },
 ];
 
 type Memo = { dismissed: number; quietUntil: number };
@@ -69,11 +70,11 @@ export type AskRound = { tour: PlannedTour; req: TourRequest };
  * den Wegpunkten gehen nur die Stützpunkte unterwegs mit, nie Start und Ziel.
  */
 export async function sendAsk(reasonId: string, text: string, rounds: AskRound[]): Promise<void> {
-  const reason = ASK_REASONS.find((r) => r.id === reasonId)?.label ?? 'Etwas anderes';
+  const reason = ASK_REASONS.find((r) => r.id === reasonId)?.label ?? t('Etwas anderes');
   const r2 = (x: number) => Math.round(x * 100) / 100;
   const last = rounds.slice(-5);
   const req = last[last.length - 1]?.req;
-  const note = text.trim() ? `${reason}: ${text.trim()}` : `Rundtour verworfen: ${reason}`;
+  const note = text.trim() ? `${reason}: ${text.trim()}` : t('Rundtour verworfen: {reason}', { reason });
   await sendFeedback('planen', note, {
     art: 'rundtour_verworfen',
     grund: reasonId,

@@ -12,10 +12,11 @@
  * 5. Danach refreshEntitlement() aufrufen, damit die App den neuen Stand sieht.
  */
 import { getEntitlement, refreshEntitlement, type PlanId } from './entitlement';
+import { t } from '@/i18n';
 
 export type PurchaseResult = { ok: true } | { ok: false; cancelled?: boolean; message: string };
 
-const NOT_YET = 'Käufe sind bald möglich. In der Testphase ist alles frei.';
+const NOT_YET = t('Käufe sind bald möglich. In der Testphase ist alles frei.');
 
 export async function purchase(planId: PlanId): Promise<PurchaseResult> {
   void planId;

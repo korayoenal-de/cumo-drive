@@ -20,6 +20,7 @@ import { useSyncExternalStore } from 'react';
 
 import { supabase } from '../supabase';
 import type { LatLon } from '../tour';
+import { tr } from '@/i18n';
 
 export type Role = 'lead' | 'schluss' | 'mitfahrer';
 export type Me = { id: string; name: string; car: string };
@@ -28,11 +29,11 @@ export type RideMsg = { id: string; from: string; name: string; text: string; at
 /** Gründe für eine zentrale Halt Ansage der Lead */
 export type StopReason = 'sammeln' | 'parkplatz' | 'tanken' | 'pause' | 'foto';
 export const STOP_REASONS: { id: StopReason; label: string; title: string }[] = [
-  { id: 'sammeln', label: 'Sammeln', title: 'Wir sammeln uns, bitte aufschließen' },
-  { id: 'parkplatz', label: 'Parkplatz', title: 'Wir fahren gleich auf einen Parkplatz' },
-  { id: 'tanken', label: 'Tanken', title: 'Wir fahren gleich zum Tanken' },
-  { id: 'pause', label: 'Pause', title: 'Gleich machen wir Pause' },
-  { id: 'foto', label: 'Fotostopp', title: 'Gleich halten wir für Fotos' },
+  { id: 'sammeln', label: tr('Sammeln'), title: tr('Wir sammeln uns, bitte aufschließen') },
+  { id: 'parkplatz', label: tr('Parkplatz'), title: tr('Wir fahren gleich auf einen Parkplatz') },
+  { id: 'tanken', label: tr('Tanken'), title: tr('Wir fahren gleich zum Tanken') },
+  { id: 'pause', label: tr('Pause'), title: tr('Gleich machen wir Pause') },
+  { id: 'foto', label: tr('Fotostopp'), title: tr('Gleich halten wir für Fotos') },
 ];
 /** Halt Ansage: wo die Lead war, als sie getippt hat, und warum */
 export type RideStop = { id: string; from: string; name: string; reason: StopReason; p: LatLon | null; at: number };
@@ -62,7 +63,11 @@ export type RideState = {
 
 export type RideRoute = { id: string; code: string; from: string; at: number };
 
+/** Kurznachrichten gehen deutsch über die Leitung; jedes Handy zeigt sie in seiner Sprache (quickText). */
 export const QUICK_MESSAGES = ['Bitte warten', 'Alles ok', 'Tankstopp', 'Pause', 'Achtung Polizei', 'Panne, bitte halten'];
+export function quickText(s: string): string {
+  return QUICK_MESSAGES.includes(s) ? tr(s) : s;
+}
 
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 const PROFILE_KEY = 'cumo.drive.fahrer.v1';
@@ -225,7 +230,7 @@ async function startWatching() {
   if (watch) return;
   const perm = await Location.requestForegroundPermissionsAsync();
   if (!perm.granted) {
-    set({ error: 'Ohne Standort sehen dich die anderen nicht auf der Karte.' });
+    set({ error: tr('Ohne Standort sehen dich die anderen nicht auf der Karte.') });
     return;
   }
   watch = await Location.watchPositionAsync({ accuracy: Location.Accuracy.High, timeInterval: 3000, distanceInterval: 10 }, (loc) => {
@@ -273,7 +278,7 @@ export function setOwnRoute(on: boolean) {
   ownRoute = on;
   const me = state.me;
   if (!me) return;
-  sendMessage(on ? `${me.name} fährt eine eigene Route` : `${me.name} ist wieder auf der Tour`);
+  sendMessage(on ? tr('{name} fährt eine eigene Route', { name: me.name }) : tr('{name} ist wieder auf der Tour', { name: me.name }));
   const cur = positions.get(me.id);
   if (cur) {
     positions.set(me.id, { ...cur, own: on });
@@ -289,10 +294,10 @@ export async function joinRide(code: string, name: string, car: string, role: Ro
   await leaveRide();
   const c = normalizeCode(code);
   if (c.length !== 6) {
-    set({ status: 'fehler', error: 'Der Fahrtcode hat 6 Zeichen.' });
+    set({ status: 'fehler', error: tr('Der Fahrtcode hat 6 Zeichen.') });
     return;
   }
-  const me: Me = { id: Math.random().toString(36).slice(2, 10), name: name.trim() || 'Fahrer', car: car.trim() };
+  const me: Me = { id: Math.random().toString(36).slice(2, 10), name: name.trim() || tr('Fahrer'), car: car.trim() };
   await saveProfile(me.name, me.car);
   connect(`ride-${c}`, me, role, { code: c, rideId: null, name: null, tourCode });
 }
@@ -306,10 +311,10 @@ export async function startRide(rideId: string, role: Role, opts: { name: string
   await leaveRide();
   const { data } = await supabase.auth.getUser();
   if (!data.user) {
-    set({ status: 'fehler', error: 'Bitte anmelden, um mitzufahren.' });
+    set({ status: 'fehler', error: tr('Bitte anmelden, um mitzufahren.') });
     return;
   }
-  const me: Me = { id: data.user.id, name: opts.name.trim() || 'Fahrer', car: opts.car.trim() };
+  const me: Me = { id: data.user.id, name: opts.name.trim() || tr('Fahrer'), car: opts.car.trim() };
   connect(`ride-${rideId}`, me, role, { code: null, rideId, name: opts.rideName ?? null, tourCode: null });
 }
 
@@ -370,7 +375,7 @@ function connect(topic: string, me: Me, role: Role, info: { code: string | null;
     // alle erfahren, wer die Fahrt beendet hat (Koray 14.11.), Zeile und Ansage über das Gruppenbanner
     const name = known.get(id)?.name;
     if (name && id !== state.me?.id) {
-      const m: RideMsg = { id: `bye-${id}-${Date.now()}`, from: 'system', name, text: 'hat die Fahrt beendet', at: Date.now() };
+      const m: RideMsg = { id: `bye-${id}-${Date.now()}`, from: 'system', name, text: tr('hat die Fahrt beendet'), at: Date.now() };
       set({ messages: [m, ...state.messages].slice(0, 30) });
     }
     known.delete(id);
@@ -382,7 +387,7 @@ function connect(topic: string, me: Me, role: Role, info: { code: string | null;
   });
   ch.on('broadcast', { event: 'ende' }, () => {
     // Lead hat die Fahrt für alle beendet
-    void leaveRide().then(() => set({ error: 'Die Lead hat die Gruppenfahrt beendet.' }));
+    void leaveRide().then(() => set({ error: tr('Die Lead hat die Gruppenfahrt beendet.') }));
   });
   ch.on('broadcast', { event: 'role' }, ({ payload }) => {
     const r = payload as { id: string; role: Role };
@@ -401,7 +406,7 @@ function connect(topic: string, me: Me, role: Role, info: { code: string | null;
       // Wer beim Beenden oder beim Rollenwechsel kein Netz hatte, hat das Broadcast verpasst (Simulation G6, G12)
       if (state.rideId) void syncWithRide(state.rideId);
     } else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') {
-      set({ status: 'fehler', error: 'Keine Verbindung zur Gruppe. Netz prüfen und nochmal versuchen.' });
+      set({ status: 'fehler', error: tr('Keine Verbindung zur Gruppe. Netz prüfen und nochmal versuchen.') });
     }
   });
 }
@@ -416,7 +421,7 @@ async function syncWithRide(rideId: string) {
     if (state.rideId !== rideId) return;
     if ((data as { status?: string } | null)?.status === 'beendet') {
       await leaveRide();
-      set({ error: 'Die Lead hat die Gruppenfahrt beendet.' });
+      set({ error: tr('Die Lead hat die Gruppenfahrt beendet.') });
       return;
     }
     const me = state.me;

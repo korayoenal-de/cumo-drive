@@ -7,6 +7,8 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 
+import { _setLangForTest } from '../../i18n';
+
 import { arrowsAlong, doubledStretch, offsetRight, splitDoubled } from '../doubled';
 import { decodeTour, encodeTour, extractCode } from '../share-code';
 import { flatten, haversine, type LatLon, type Tour } from '../tour';
@@ -17,6 +19,9 @@ import { pointAtKm, snapToRoute } from '../navigation/tracker';
 import type { NavRoute } from '../navigation/types';
 import { PASSES, passesAlong } from '../passes';
 import { closureExclude, onPassRoad } from '../road-closures';
+
+// Die Texte der Tests sind deutsch; der Rechner hier läuft oft auf Englisch
+_setLangForTest('de');
 
 /** Gerade Linie nach Osten ab Heppenheim, n Punkte im Abstand von etwa stepM Metern */
 function eastLine(n: number, stepM = 50, start: LatLon = [49.64, 8.63]): LatLon[] {

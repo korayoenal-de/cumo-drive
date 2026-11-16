@@ -99,7 +99,7 @@ export function ConfirmSheet(props: { title: string; text?: string; confirmLabel
     <WebSheet title={props.title} subtitle={props.text} onClose={props.onClose} narrow={props.narrow}>
       <div style={{ display: 'flex', gap: Spacing.s }}>
         <button style={{ ...pillBtn, background: C.surface2, color: C.text }} onClick={props.onClose}>
-          Abbrechen
+          {tr('Abbrechen')}
         </button>
         <button style={{ ...pillBtn, background: C.signal, color: '#fff' }} disabled={props.busy} onClick={props.onConfirm}>
           {props.confirmLabel}
@@ -236,7 +236,7 @@ export function FromBadge(props: { author?: string | null }) {
   return (
     <span style={{ alignSelf: 'flex-start', maxWidth: '100%', display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px 3px 3px', borderRadius: Radius.pill, background: C.surface2, boxSizing: 'border-box' }}>
       <span aria-hidden style={{ width: 18, height: 18, flex: 'none', borderRadius: 9, background: '#3A3A40', color: C.text, font: `700 10px/18px ${BODY}`, textAlign: 'center' }}>{(name || 'C').charAt(0).toUpperCase()}</span>
-      <span style={{ font: `700 13px/16px ${BODY}`, color: '#C9C9CD', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name ? `Von ${name}` : 'Aus der Community'}</span>
+      <span style={{ font: `700 13px/16px ${BODY}`, color: '#C9C9CD', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name ? tr('Von {name}', { name }) : tr('Aus der Community')}</span>
     </span>
   );
 }

@@ -6,26 +6,27 @@
 import { useEffect, useState } from 'react';
 
 import type { PlanPhase } from './create-tour';
+import { tr } from '@/i18n';
 
 const DWELL = 1200;
 
 function textFor(phase: PlanPhase, mode: 'tour' | 'runde', ms: number, found: number): string {
   switch (phase) {
     case 'start':
-      return 'Standort bestimmen';
+      return tr('Standort bestimmen');
     case 'compare':
-      return 'Beste Runde wählen';
+      return tr('Beste Runde wählen');
     case 'traffic':
-      return 'Verkehrsmeldungen prüfen';
+      return tr('Verkehrsmeldungen prüfen');
     case 'check':
-      return 'Straßen prüfen';
+      return tr('Straßen prüfen');
     case 'fix':
-      return 'Sperrung umfahren';
+      return tr('Sperrung umfahren');
     default:
-      if (mode === 'runde') return ms < 3000 ? 'Varianten berechnen' : ms < 7000 ? 'Highlights einbauen' : 'Breite und Belag prüfen';
-      if (ms < 3400) return 'Highlights entlang der Route suchen';
-      if (ms < 6000 && found > 0) return found === 1 ? '1 Highlight auf dem Weg' : `${found} Highlights auf dem Weg`;
-      return ms < 10000 ? 'Kurvige Straßen berechnen' : 'Breite und Belag prüfen';
+      if (mode === 'runde') return ms < 3000 ? tr('Varianten berechnen') : ms < 7000 ? tr('Highlights einbauen') : tr('Breite und Belag prüfen');
+      if (ms < 3400) return tr('Highlights entlang der Route suchen');
+      if (ms < 6000 && found > 0) return found === 1 ? tr('1 Highlight auf dem Weg') : tr('{found} Highlights auf dem Weg', { found });
+      return ms < 10000 ? tr('Kurvige Straßen berechnen') : tr('Breite und Belag prüfen');
   }
 }
 

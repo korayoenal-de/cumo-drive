@@ -8,7 +8,7 @@ import { useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { DIRECTIONS, type Direction } from '@/lib/roundtrip';
 
 import { BODY, C } from './web-shared';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 const SIZE = 260;
 const M = SIZE / 2;
@@ -46,7 +46,7 @@ export function WebDirectionDial(props: { value: Direction; onChange: (d: Direct
     onChange(DIRECTIONS[(i + n + 8) % 8].id);
   };
   const knob = deg != null ? pt(deg, R) : null;
-  const label = value === 'zufall' ? 'Zufall' : cur!.label;
+  const label = value === 'zufall' ? tr('Zufall') : cur!.label;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -117,11 +117,11 @@ export function WebDirectionDial(props: { value: Direction; onChange: (d: Direct
             position: 'absolute', left: '50%', top: '50%', width: '35%', aspectRatio: '1', transform: 'translate(-50%, -50%)', borderRadius: '50%', border: 'none', cursor: 'pointer',
             background: value === 'zufall' ? C.signal : C.surface, color: value === 'zufall' ? '#FFFFFF' : C.text, font: `700 15px ${BODY}`,
           }}>
-          Zufall
+          {tr('Zufall')}
         </button>
       </div>
       <span style={{ font: `600 13px ${BODY}`, color: C.muted, textAlign: 'center' }}>
-        {value === 'zufall' ? 'Die Runde führt in eine zufällige Richtung. Knopf auf dem Ring ziehen für eine feste Richtung.' : `Die Runde führt Richtung ${label}.`}
+        {value === 'zufall' ? tr('Die Runde führt in eine zufällige Richtung. Knopf auf dem Ring ziehen für eine feste Richtung.') : tr('Die Runde führt Richtung {label}.', { label })}
       </span>
     </div>
   );

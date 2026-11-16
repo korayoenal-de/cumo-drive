@@ -7,6 +7,7 @@ import { learnedLevel } from './highlight-feedback';
 import { defaultLevel, HIGHLIGHT_ROADS, type HighlightRoad } from './highlight-roads';
 import { PASSES, passPoint, type Pass } from './passes';
 import { haversine, type LatLon } from './tour';
+import { tr } from '@/i18n';
 
 export type Leg = { a: LatLon; b: LatLon };
 export type HighlightCandidate = {
@@ -149,7 +150,7 @@ export function highlightsForLeg(leg: Leg, corridorM: number): HighlightCandidat
     const extra = (haversine(a, entry) + len / ROAD + haversine(exit, b) - direct) / 1000;
     const dir = fwd ? r.line : [...r.line].reverse();
     const line = trimEnds(dir, 250);
-    out.push({ key: r.id, name: r.name, detail: `Strecke, ${Math.round(len / 1000)} km`, p: line[0], exit: line[line.length - 1], line, extraMin: minutes(extra), road: r, level: learnedLevel(`road:${r.id}`, r.level ?? defaultLevel(r.kind)) });
+    out.push({ key: r.id, name: r.name, detail: tr('Strecke, {v0} km', { v0: Math.round(len / 1000) }), p: line[0], exit: line[line.length - 1], line, extraMin: minutes(extra), road: r, level: learnedLevel(`road:${r.id}`, r.level ?? defaultLevel(r.kind)) });
   }
   // gleicher Name als Pass und als Strecke (etwa Juhöhe): die Strecke behalten
   const roads = new Set(out.filter((c) => c.road).map((c) => c.name));

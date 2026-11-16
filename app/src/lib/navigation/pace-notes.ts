@@ -13,6 +13,7 @@
  *  - Kehre: mindestens 140 Grad auf höchstens 120 m
  * Weiter als 220 m zählt als gerade, unter 25 Grad Richtungswechsel ebenso.
  */
+import { getLang, tr } from '@/i18n';
 import { resample } from '../stats';
 import type { LatLon } from '../tour';
 
@@ -140,8 +141,17 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Eine Kurve als Wörter: „links mittel“, „Kehre rechts“ */
 export function noteWords(n: PaceNote): string {
-  return n.grade === 'kehre' ? `Kehre ${n.dir}` : `${n.dir} ${n.grade}`;
+  const lang = getLang();
+  if (lang === 'de') return n.grade === 'kehre' ? `Kehre ${n.dir}` : `${n.dir} ${n.grade}`;
+  // Beifahrer Sprache je Sprache: „left medium“, „hairpin right“, „sinistra media“, „tornante destra“
+  const w = PACE_WORDS[lang];
+  return n.grade === 'kehre' ? `${w.kehre} ${w[n.dir]}` : `${w[n.dir]} ${w[n.grade]}`;
 }
+
+const PACE_WORDS: Record<'en' | 'it', Record<PaceGrade | PaceNote['dir'], string>> = {
+  en: { links: 'left', rechts: 'right', leicht: 'easy', mittel: 'medium', scharf: 'sharp', kehre: 'hairpin' },
+  it: { links: 'sinistra', rechts: 'destra', leicht: 'leggera', mittel: 'media', scharf: 'stretta', kehre: 'tornante' },
+};
 
 /**
  * Text der Ansage ab Kurve i und wie viele Kurven er abdeckt. Höchstens zwei Kurven je Ansage,
@@ -150,7 +160,7 @@ export function noteWords(n: PaceNote): string {
 export function paceText(notes: PaceNote[], i: number): { text: string; count: number } {
   const a = notes[i];
   const b = notes[i + 1];
-  if (b && b.startKm - a.endKm <= THEN_GAP_KM) return { text: `${cap(noteWords(a))}, dann ${noteWords(b)}`, count: 2 };
+  if (b && b.startKm - a.endKm <= THEN_GAP_KM) return { text: `${cap(noteWords(a))}, ${tr('dann')} ${noteWords(b)}`, count: 2 };
   return { text: cap(noteWords(a)), count: 1 };
 }
 

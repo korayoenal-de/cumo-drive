@@ -14,6 +14,7 @@
 import { valhallaFetch, decodePolyline6 } from '../valhalla';
 import { haversine, type LatLon } from '../tour';
 import type { Maneuver, NavRoute } from './types';
+import { tr } from '@/i18n';
 
 type XEdge = { driveability?: string; use?: string; road_class?: string; begin_heading?: number };
 export type VEdge = {
@@ -102,20 +103,20 @@ export function roundaboutExits(edges: VEdge[]): { all: number; real: number } |
 export function exitWord(turn: number | null | undefined): string | null {
   if (turn == null) return null;
   const a = Math.abs(turn);
-  if (a < 40) return 'geradeaus';
-  if (a > 150) return 'zurück';
-  return turn > 0 ? 'rechts' : 'links';
+  if (a < 40) return tr('geradeaus');
+  if (a > 150) return tr('zurück');
+  return turn > 0 ? tr('rechts') : tr('links');
 }
 
 /** Kreisverkehr mit unsicherer Zahl: Richtung statt Ausfahrt (Text, Ansage, Symbol ohne Zahl) */
 export function roundaboutByDirection(m: Maneuver, word: string): Maneuver {
-  const where = m.street ? ` auf ${m.street}` : '';
-  const how = word === 'zurück' ? 'ganz herum und zurück' : word;
+  const where = m.street ? tr(' auf {street}', { street: m.street }) : '';
+  const how = word === tr('zurück') ? tr('ganz herum und zurück') : word;
   return {
     ...m,
     exit: undefined,
-    text: `Im Kreisverkehr ${how}${where}`,
-    speech: `In den Kreisverkehr fahren und ${how} wieder hinaus${where ? `,${where}` : ''}.`,
+    text: tr('Im Kreisverkehr {how}{where}', { how, where }),
+    speech: tr('In den Kreisverkehr fahren und {how} wieder hinaus{v1}.', { how, v1: where ? `,${where}` : '' }),
   };
 }
 
@@ -174,7 +175,7 @@ export function withForks(route: NavRoute, forks: Fork[], fromIndex: number, toI
     if (best < 0 || bd > 30) continue;
     const km = route.cumKm[best];
     if (route.maneuvers.some((m) => Math.abs(m.km - km) * 1000 < COVERED_M) || add.some((m) => Math.abs(m.km - km) * 1000 < COVERED_M)) continue;
-    const head = f.keep === 'links' ? 'Links halten' : 'Rechts halten';
+    const head = f.keep === 'links' ? tr('Links halten') : tr('Rechts halten');
     add.push({
       kind: f.keep === 'links' ? 'links_halten' : 'rechts_halten',
       text: head,

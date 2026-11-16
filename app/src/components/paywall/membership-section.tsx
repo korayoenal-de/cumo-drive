@@ -16,19 +16,19 @@ export function describeEntitlement(e: Entitlement): { title: string; text: stri
   const until = formatUntil(e.until);
   if (!e.active) {
     return {
-      title: e.source === 'plan' ? 'Plan abgelaufen' : 'Testphase vorbei',
-      text: until ? `Abgelaufen am ${until}. Wähle einen Plan, um weiterzufahren.` : 'Wähle einen Plan, um weiterzufahren.',
+      title: e.source === 'plan' ? t('Plan abgelaufen') : t('Testphase vorbei'),
+      text: until ? t('Abgelaufen am {until}. Wähle einen Plan, um weiterzufahren.', { until }) : t('Wähle einen Plan, um weiterzufahren.'),
     };
   }
   if (e.source === 'club') {
-    return { title: e.clubName ?? 'Club', text: `Über deinen Club, gültig bis ${until}. Gruppen bis ${e.maxVehicles} Fahrzeuge.` };
+    return { title: e.clubName ?? t('Club'), text: t('Über deinen Club, gültig bis {until}. Gruppen bis {maxVehicles} Fahrzeuge.', { until, maxVehicles: e.maxVehicles }) };
   }
   if (e.source === 'plan') {
-    return { title: t('Plan aktiv'), text: `Gültig bis ${until}.` };
+    return { title: t('Plan aktiv'), text: t('Gültig bis {until}.', { until }) };
   }
   return {
     title: t('Testphase'),
-    text: `Alles frei bis ${until}. Danach ab ${PRICES[0].perMonthText ?? PRICES[0].priceText} weiter.`,
+    text: t('Alles frei bis {until}. Danach ab {v1} weiter.', { until, v1: PRICES[0].perMonthText ?? PRICES[0].priceText }),
   };
 }
 

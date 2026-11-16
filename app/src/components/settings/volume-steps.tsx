@@ -15,8 +15,8 @@ import { chosenVoiceId, playSample } from '@/lib/voice-settings';
 import { t } from '@/i18n';
 
 const STEPS = [0.2, 0.4, 0.6, 0.8, 1];
-const LABEL = ['Sehr leise', 'Leise', 'Mittel', 'Laut', 'Volle Lautstärke'];
-const PROBE = 'In 300 Metern rechts abbiegen.';
+const LABEL = [t('Sehr leise'), 'Leise', 'Mittel', 'Laut', t('Volle Lautstärke')];
+const PROBE = t('In 300 Metern rechts abbiegen.');
 
 export function stepOf(v: number): number {
   let best = 0;

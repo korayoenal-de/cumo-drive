@@ -46,7 +46,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
       if (status === 'kontakt' || status === 'angefragt') await removeContact(d.id);
       else {
         const now = await requestContact(d.id);
-        showToast(now === 'kontakt' ? `${d.name} ist jetzt dein Kontakt.` : `Anfrage an ${d.name} geschickt.`);
+        showToast(now === 'kontakt' ? t('{name} ist jetzt dein Kontakt.', { name: d.name }) : t('Anfrage an {name} geschickt.', { name: d.name }));
       }
     } catch (e) {
       showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
@@ -67,7 +67,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
             <AppText style={styles.bigName} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
             {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>{t('Hat heute Geburtstag')}</AppText> : null}
             <AppText variant="caption" muted numberOfLines={1}>
-              {[d.age != null ? `${d.age} Jahre` : null, d.homeName ?? 'Wohnort nicht angegeben', d.memberSince ? `dabei seit ${monthYear(d.memberSince)}` : null].filter(Boolean).join('  ·  ')}
+              {[d.age != null ? `${d.age} Jahre` : null, d.homeName ?? t('Wohnort nicht angegeben'), d.memberSince ? t('dabei seit {v0}', { v0: monthYear(d.memberSince) }) : null].filter(Boolean).join('  ·  ')}
             </AppText>
           </View>
         </View>
@@ -93,7 +93,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
             <AppText style={styles.primaryText}>{t('Nachricht')}</AppText>
           </Pressable>
         ) : !d.isMe ? (
-          <AppText variant="caption" muted>{d.name} möchte keine Nachrichten bekommen.</AppText>
+          <AppText variant="caption" muted>{d.name}{t(' möchte keine Nachrichten bekommen.')}</AppText>
         ) : (
           <AppText variant="caption" muted>{t('So sehen dich andere. Wohnort, Nachrichten und Fuhrpark stellst du in den Einstellungen ein.')}</AppText>
         )}
@@ -101,7 +101,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
           <View style={styles.actions}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={status === 'kontakt' ? `${d.name} aus Kontakten entfernen` : status === 'angefragt' ? `Anfrage an ${d.name} zurückziehen` : `${d.name} zu Kontakten hinzufügen`}
+              accessibilityLabel={status === 'kontakt' ? t('{name} aus Kontakten entfernen', { name: d.name }) : status === 'angefragt' ? t('Anfrage an {name} zurückziehen', { name: d.name }) : t('{name} zu Kontakten hinzufügen', { name: d.name })}
               disabled={contactBusy}
               onPress={() => void contactAction()}
               style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
@@ -110,11 +110,11 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
               ) : (
                 <>
                   <SymbolView name={status === 'kontakt' ? 'person.crop.circle.badge.checkmark' : status === 'angefragt' ? 'clock' : 'person.badge.plus'} size={20} weight="semibold" tintColor={status === 'angefragt' ? Colors.muted : Colors.text} />
-                  <AppText style={[styles.secondaryText, status === 'angefragt' && { color: Colors.muted }]}>{status === 'kontakt' ? 'Kontakt' : status === 'angefragt' ? 'Angefragt' : status === 'anfrage' ? 'Bestätigen' : 'Zu Kontakten'}</AppText>
+                  <AppText style={[styles.secondaryText, status === 'angefragt' && { color: Colors.muted }]}>{status === 'kontakt' ? t('Kontakt') : status === 'angefragt' ? t('Angefragt') : status === 'anfrage' ? t('Bestätigen') : t('Zu Kontakten')}</AppText>
                 </>
               )}
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} zur Gruppenfahrt einladen`} onPress={() => setInviteOpen(true)} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('{name} zur Gruppenfahrt einladen', { name: d.name })} onPress={() => setInviteOpen(true)} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
               <SymbolView name="car.2" size={20} weight="semibold" tintColor={Colors.text} />
               <AppText style={styles.secondaryText}>{t('Einladen')}</AppText>
             </Pressable>
@@ -152,7 +152,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
       {(canWrite || unread > 0) && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={unread ? `${unread} ungelesene ${unread === 1 ? 'Nachricht' : 'Nachrichten'} von ${d.name}` : `${d.name} anschreiben`}
+          accessibilityLabel={unread ? t('{unread} ungelesene {v1} von {name}', { unread, v1: unread === 1 ? t('Nachricht') : t('Nachrichten'), name: d.name }) : `${d.name} anschreiben`}
           hitSlop={4}
           onPress={() => write(d)}
           style={[styles.round, unread > 0 && styles.roundUnread]}>
@@ -186,7 +186,7 @@ function ContactButton({ d, status }: { d: Driver; status: Contact['status'] | n
       if (status === 'angefragt') await removeContact(d.id);
       else {
         const now = await requestContact(d.id);
-        if (now === 'kontakt') showToast(`${d.name} ist jetzt dein Kontakt.`);
+        if (now === 'kontakt') showToast(t('{name} ist jetzt dein Kontakt.', { name: d.name }));
       }
     } catch (e) {
       showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
@@ -196,13 +196,13 @@ function ContactButton({ d, status }: { d: Driver; status: Contact['status'] | n
   };
   if (status === 'angefragt') {
     return (
-      <Pressable accessibilityRole="button" accessibilityLabel={`Anfrage an ${d.name} zurückziehen`} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.pending}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('Anfrage an {name} zurückziehen', { name: d.name })} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.pending}>
         {busy ? <ActivityIndicator color={Colors.muted} /> : <AppText style={styles.pendingText}>{t('Angefragt')}</AppText>}
       </Pressable>
     );
   }
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} zu Kontakten hinzufügen`} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.round}>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('{name} zu Kontakten hinzufügen', { name: d.name })} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.round}>
       {busy ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="plus" size={20} weight="semibold" tintColor={Colors.text} />}
     </Pressable>
   );
@@ -217,7 +217,7 @@ export function ContactRequests({ list }: { list: Contact[] | null }) {
     setBusy(c.id + yes);
     try {
       await answerContact(c.id, yes);
-      if (yes) showToast(`${c.name} ist jetzt dein Kontakt.`);
+      if (yes) showToast(t('{name} ist jetzt dein Kontakt.', { name: c.name }));
     } catch (e) {
       showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
     } finally {
@@ -226,7 +226,7 @@ export function ContactRequests({ list }: { list: Contact[] | null }) {
   };
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.card}>
-      <AppText variant="title">{asks.length === 1 ? 'Kontaktanfrage' : `${asks.length} Kontaktanfragen`}</AppText>
+      <AppText variant="title">{asks.length === 1 ? t('Kontaktanfrage') : `${asks.length} Kontaktanfragen`}</AppText>
       {asks.map((c) => (
         <View key={c.id} style={styles.row}>
           <Avatar name={c.name} userId={c.id} size={40} />
@@ -234,10 +234,10 @@ export function ContactRequests({ list }: { list: Contact[] | null }) {
             <AppText style={styles.name} numberOfLines={1}>{c.name}</AppText>
             {c.car ? <AppText variant="caption" muted numberOfLines={1}>{c.car}</AppText> : null}
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Anfrage von ${c.name} ablehnen`} hitSlop={4} disabled={!!busy} onPress={() => void answer(c, false)} style={styles.round}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Anfrage von {name} ablehnen', { name: c.name })} hitSlop={4} disabled={!!busy} onPress={() => void answer(c, false)} style={styles.round}>
             {busy === c.id + false ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.muted} />}
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Anfrage von ${c.name} annehmen`} disabled={!!busy} onPress={() => void answer(c, true)} style={styles.accept}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Anfrage von {name} annehmen', { name: c.name })} disabled={!!busy} onPress={() => void answer(c, true)} style={styles.accept}>
             {busy === c.id + true ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.acceptText}>{t('Annehmen')}</AppText>}
           </Pressable>
         </View>
@@ -265,7 +265,7 @@ function InviteSheet({ d, visible, onClose }: { d: Driver; visible: boolean; onC
   const invite = async (a: Ausfahrt) => {
     try {
       await inviteToRide(a.id, d.id);
-      showToast(`${d.name} ist zu ${a.name} eingeladen.`);
+      showToast(t('{name} ist zu {name2} eingeladen.', { name: d.name, name2: a.name }));
     } catch (e) {
       showToast(e instanceof Error ? e.message: t('Das hat nicht geklappt.'), { tone: 'error' });
     }
@@ -278,7 +278,7 @@ function InviteSheet({ d, visible, onClose }: { d: Driver; visible: boolean; onC
     <ActionSheet
       visible={visible}
       title={`${d.name} einladen`}
-      subtitle={rides === null ? 'Deine Ausfahrten werden geladen.' : rides.length ? 'Zu welcher Ausfahrt? Die Einladung ist eine Anfrage, Funk und Live Karte gibt es erst nach der Zusage.' : 'Du hast gerade keine Ausfahrt mit freiem Platz.'}
+      subtitle={rides === null ? t('Deine Ausfahrten werden geladen.') : rides.length ? t('Zu welcher Ausfahrt? Die Einladung ist eine Anfrage, Funk und Live Karte gibt es erst nach der Zusage.') : t('Du hast gerade keine Ausfahrt mit freiem Platz.')}
       items={items}
       onClose={onClose}
     />

@@ -7,15 +7,16 @@ import * as Updates from 'expo-updates';
 import { Platform } from 'react-native';
 
 import { supabase } from './supabase';
+import { t } from '@/i18n';
 
 export type FeedbackArea = 'planen' | 'navigation' | 'karte' | 'community' | 'sonstiges';
 
 export const FEEDBACK_AREAS: { id: FeedbackArea; label: string }[] = [
-  { id: 'planen', label: 'Planen' },
-  { id: 'navigation', label: 'Navigation' },
-  { id: 'karte', label: 'Karte' },
+  { id: 'planen', label: t('Planen') },
+  { id: 'navigation', label: t('Navigation') },
+  { id: 'karte', label: t('Karte') },
   { id: 'community', label: 'Community' },
-  { id: 'sonstiges', label: 'Sonstiges' },
+  { id: 'sonstiges', label: t('Sonstiges') },
 ];
 
 /** App Version plus Update, damit klar ist, welcher Stand gemeldet hat (zum Beispiel "1.1.0 · 01a1e3ff") */
@@ -36,5 +37,5 @@ export async function sendFeedback(area: FeedbackArea, note: string, extra?: Rec
     p_note: note.trim(),
     p_context: { ...extra, version: appVersion(), os: `${Platform.OS} ${Platform.Version}` },
   });
-  if (error) throw new Error(error.message || 'Senden hat nicht geklappt.');
+  if (error) throw new Error(error.message || t('Senden hat nicht geklappt.'));
 }

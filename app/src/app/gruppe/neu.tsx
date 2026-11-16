@@ -32,9 +32,9 @@ import { cleanName, findProfiles, useMyProfile, type FoundProfile } from '@/lib/
 import { refreshContacts, useContacts } from '@/lib/contacts';
 import { formatKm, type Tour } from '@/lib/tour';
 import { useVehicles } from '@/lib/vehicle';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
-const STATUS_LABEL: Record<InviteStatus, string> = { eingeladen: 'Eingeladen', zugesagt: 'Zugesagt', abgesagt: 'Abgesagt' };
+const STATUS_LABEL: Record<InviteStatus, string> = { eingeladen: tr('Eingeladen'), zugesagt: tr('Zugesagt'), abgesagt: tr('Abgesagt') };
 
 type RideRef = { id: string; maxMembers: number };
 
@@ -144,7 +144,7 @@ export default function GruppeNeu() {
   const invite = async (p: FoundProfile) => {
     if (busy) return;
     if (full) {
-      setErr(`Die Gruppe ist voll, höchstens ${max} Fahrzeuge inklusive dir.`);
+      setErr(tr('Die Gruppe ist voll, höchstens {max} Fahrzeuge inklusive dir.', { max }));
       return;
     }
     setBusy(p.id);
@@ -155,7 +155,7 @@ export default function GruppeNeu() {
       setQuery('');
       await refresh(r.id);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Einladen hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : tr('Einladen hat nicht geklappt.'));
     } finally {
       setBusy(null);
     }
@@ -169,7 +169,7 @@ export default function GruppeNeu() {
       await removeFromRide(ride.id, m.userId);
       await refresh(ride.id);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Entfernen hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : tr('Entfernen hat nicht geklappt.'));
     } finally {
       setBusy(null);
     }
@@ -190,13 +190,13 @@ export default function GruppeNeu() {
       await startAsLead(r.id, saved.name, around ? { ...saved, ...t, name: saved.name } : saved, saved.profile ?? 'kurvig');
       router.push('/navigation');
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Die Fahrt konnte nicht starten.');
+      setErr(e instanceof Error ? e.message : tr('Die Fahrt konnte nicht starten.'));
     } finally {
       setBusy(null);
     }
   };
 
-  const myName = profile?.displayName ?? 'Du';
+  const myName = profile?.displayName ?? tr('Du');
   const myCar = current?.model.trim() || profile?.car || null;
 
   return (
@@ -208,18 +208,18 @@ export default function GruppeNeu() {
           {saved.name}
         </AppText>
         <AppText muted>
-          {formatKm(saved.laenge_km, 0)} km. Lade bis zu {max - 1} Teilnehmer mit ihrem Namen ein. Sie sehen die Einladung in der App und sagen zu oder ab.
+          {formatKm(saved.laenge_km, 0)}{tr(' km. Lade bis zu ')}{max - 1}{tr(' Teilnehmer mit ihrem Namen ein. Sie sehen die Einladung in der App und sagen zu oder ab.')}
         </AppText>
       </View>
 
       <View style={styles.card}>
         <View style={styles.rowBetween}>
           <AppText variant="label">{t('Teilnehmer')}</AppText>
-          <AppText variant="caption" muted accessibilityLabel={`${taken} von ${max} Fahrzeugen`}>
+          <AppText variant="caption" muted accessibilityLabel={tr('{taken} von {max} Fahrzeugen', { taken, max })}>
             {taken} von {max}
           </AppText>
         </View>
-        <MemberLine name={`${myName} (du)`} vehicle={myCar} badge="Lead" tone="lead" />
+        <MemberLine name={tr('{myName} (du)', { myName })} vehicle={myCar} badge="Lead" tone="lead" />
         {others.map((m) => (
           <MemberLine
             key={m.userId}
@@ -233,7 +233,7 @@ export default function GruppeNeu() {
         ))}
         {others.length === 0 && (
           <AppText variant="caption" muted>
-            Noch niemand eingeladen. Such unten nach dem Namen.
+            {tr('Noch niemand eingeladen. Such unten nach dem Namen.')}
           </AppText>
         )}
       </View>
@@ -243,7 +243,7 @@ export default function GruppeNeu() {
         <TextInput maxFontSizeMultiplier={1.2}
           value={query}
           onChangeText={setQuery}
-          placeholder={full ? 'Die Gruppe ist voll' : 'Name suchen'}
+          placeholder={full ? tr('Die Gruppe ist voll') : tr('Name suchen')}
           editable={!full}
           placeholderTextColor={Colors.muted}
           autoCapitalize="none"
@@ -278,12 +278,12 @@ export default function GruppeNeu() {
         ))}
         {q.length >= 2 && !searching && suggestions.length === 0 && (
           <AppText variant="caption" muted>
-            Niemand mit diesem Namen gefunden.
+            {tr('Niemand mit diesem Namen gefunden.')}
           </AppText>
         )}
         {q.length > 0 && q.length < 2 && (
           <AppText variant="caption" muted>
-            Ab 2 Buchstaben kommen Vorschläge.
+            {tr('Ab 2 Buchstaben kommen Vorschläge.')}
           </AppText>
         )}
       </View>
@@ -295,7 +295,7 @@ export default function GruppeNeu() {
           {busy === 'start' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Gruppenfahrt starten')}</AppText>}
         </Pressable>
         <AppText variant="caption" muted>
-          Du fährst vorne. Wer zugesagt hat, kann jederzeit dazukommen und sieht dich live auf der Karte.
+          {tr('Du fährst vorne. Wer zugesagt hat, kann jederzeit dazukommen und sieht dich live auf der Karte.')}
         </AppText>
       </View>
       {closed.sheet}
@@ -340,7 +340,7 @@ function MemberLine({
           {name}
         </AppText>
         <AppText variant="caption" muted numberOfLines={1}>
-          {vehicle || 'Fahrzeug unbekannt'}
+          {vehicle || tr('Fahrzeug unbekannt')}
         </AppText>
       </View>
       <View style={[styles.badge, badgeStyle]}>

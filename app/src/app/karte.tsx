@@ -50,7 +50,7 @@ export default function KarteScreen() {
         <View style={styles.titleCard}>
           <AppText variant="title" numberOfLines={1}>{tour.name}</AppText>
           <AppText variant="caption" muted>
-            {formatKm(tour.laenge_km, 0)} km{warnings.length ? `, ${warnings.length} Warnungen` : ', ohne Warnungen'}
+            {formatKm(tour.laenge_km, 0)} km{warnings.length ? `, ${warnings.length} Warnungen` : t(', ohne Warnungen')}
           </AppText>
         </View>
         <RoundButton label={t('Schließen')} onPress={() => router.back()} />
@@ -64,7 +64,7 @@ export default function KarteScreen() {
               <WarnChip
                 key={index}
                 color={CLASS_LINE[w.klasse].color}
-                label={`km ${formatKm(w.start_km)} ${w.name || (w.klasse === 'raus' ? 'gesperrt' : 'prüfen')}`}
+                label={`km ${formatKm(w.start_km)} ${w.name || (w.klasse === 'raus' ? 'gesperrt' : t('prüfen'))}`}
                 active={focus === index}
                 onPress={() => setFocus(index)}
               />

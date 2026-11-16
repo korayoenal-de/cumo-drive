@@ -80,7 +80,7 @@ export default function AusfahrtChat() {
       <View style={[styles.head, { paddingTop: insets.top + Spacing.s }]}>
         <BackLink label={t('Ausfahrt')} onPress={back} />
         <View style={styles.flex}>
-          <AppText style={styles.title} numberOfLines={1}>{a?.name ?? 'Chat'}</AppText>
+          <AppText style={styles.title} numberOfLines={1}>{a?.name ?? t('Chat')}</AppText>
           {a && (
             <AppText variant="caption" muted numberOfLines={1}>
               {fmtMeta(wann(a.startsAt), `${members.length} Teilnehmer`)}
@@ -98,7 +98,7 @@ export default function AusfahrtChat() {
         {a?.meeting && (
           <View style={styles.pinned}>
             <SymbolView name="mappin.and.ellipse" size={16} weight="semibold" tintColor={Colors.signal} />
-            <AppText style={styles.pinnedText} numberOfLines={2}>Treffpunkt {a.meeting.name}, {clock(a.startsAt)}</AppText>
+            <AppText style={styles.pinnedText} numberOfLines={2}>{t('Treffpunkt ')}{a.meeting.name}, {clock(a.startsAt)}</AppText>
           </View>
         )}
         {list === null && !error && <ActivityIndicator color={Colors.muted} />}
@@ -108,7 +108,7 @@ export default function AusfahrtChat() {
           const mine = m.userId === me;
           const prev = list[i - 1];
           const first = !prev || prev.userId !== m.userId;
-          const name = names.get(m.userId) ?? 'Fahrer';
+          const name = names.get(m.userId) ?? t('Fahrer');
           return (
             <Animated.View key={m.id} entering={FadeInDown.duration(Motion.enter)} style={[styles.msgRow, mine && styles.msgRowMine, !first && styles.msgFollow]}>
               {!mine && (first ? <Avatar name={name} userId={m.userId} size={32} /> : <View style={styles.avatarGap} />)}
@@ -116,7 +116,7 @@ export default function AusfahrtChat() {
                 disabled={mine}
                 delayLongPress={350}
                 onLongPress={() => setReport({ ref: String(m.id), userId: m.userId, name })}
-                accessibilityHint={mine ? undefined : 'Lange drücken, um die Nachricht zu melden'}
+                accessibilityHint={mine ? undefined : t('Lange drücken, um die Nachricht zu melden')}
                 style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
                 {!mine && first && <AppText style={styles.author}>{name}</AppText>}
                 <AppText style={styles.body}>{m.body}</AppText>

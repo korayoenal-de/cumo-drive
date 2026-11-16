@@ -131,7 +131,7 @@ function MoreButton({ open, onOpen }: { open: boolean; onOpen: (a: Anchor) => vo
     <Pressable
       ref={ref}
       accessibilityRole="button"
-      accessibilityLabel={open ? 'Weitere Aktionen schließen' : 'Weitere Aktionen'}
+      accessibilityLabel={open ? t('Weitere Aktionen schließen') : t('Weitere Aktionen')}
       hitSlop={4}
       onPress={() =>
         ref.current?.measureInWindow((x: number, y: number, w: number, h: number) => onOpen({ top: y, bottom: y + h, right: x + w }))

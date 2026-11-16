@@ -8,18 +8,19 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Type } from '@/constants/theme';
+import { t } from '@/i18n';
 
-export function BackLink({ label = 'Zurück', fallback = '/', onPress }: { label?: string; fallback?: Href; onPress?: () => void }) {
+export function BackLink({ label = t('Zurück'), fallback = '/', onPress }: { label?: string; fallback?: Href; onPress?: () => void }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label === 'Zurück' ? 'Zurück' : `Zurück zu ${label}`}
+      accessibilityLabel={label === 'Zurück' || label === t('Zurück') ? t('Zurück') : t('Zurück zu {label}', { label: t(label) })}
       hitSlop={4}
       onPress={onPress ?? (() => (router.canGoBack() ? router.back() : router.navigate(fallback)))}
       style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
       <SymbolView name="chevron.left" size={16} weight="semibold" tintColor={Colors.text} />
       <AppText style={styles.text} numberOfLines={1}>
-        {label}
+        {t(label)}
       </AppText>
     </Pressable>
   );

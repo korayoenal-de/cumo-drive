@@ -77,7 +77,7 @@ export function WeatherMarkers({ items, onPress }: { items: Item[]; onPress: (it
               zIndex={9}
               onPress={() => onPress(it)}
               tracksViewChanges={false}>
-              <View style={styles.plaque} accessibilityLabel={`${it.pass.name}: ${Math.round(w.temp)} Grad${reason ? `, ${reason}` : ''}`}>
+              <View style={styles.plaque} accessibilityLabel={`${t('{name}: {temp} Grad', { name: it.pass.name, temp: Math.round(w.temp) })}${reason ? `, ${t(reason)}` : ''}`}>
                 <SymbolView name={w.symbol as never} size={16} weight="semibold" type="monochrome" tintColor={reason ? Colors.warn : Colors.muted} />
                 <AppText style={styles.plaqueText}>{fmtTemp(w.temp)}</AppText>
               </View>
@@ -101,7 +101,7 @@ export function WeatherSheet({ item, onClose }: { item: Item | null; onClose: ()
     <OptionsSheet
       visible={!!item}
       title={item?.pass.name}
-      subtitle={item ? `${item.pass.ele.toLocaleString('de-DE')} m, wenn du jetzt losfährst gegen ${clock(item.at)}` : undefined}
+      subtitle={item ? t('{v0} m, wenn du jetzt losfährst gegen {v1}', { v0: item.pass.ele.toLocaleString('de-DE'), v1: clock(item.at) }) : undefined}
       onClose={onClose}>
       {w && (
         <View style={styles.sheet}>
@@ -109,14 +109,14 @@ export function WeatherSheet({ item, onClose }: { item: Item | null; onClose: ()
             <SymbolView weight="semibold" name={w.symbol as never} size={40} type="multicolor" tintColor={Colors.text} />
             <AppText style={styles.temp}>{fmtTemp(w.temp)}</AppText>
             <AppText style={styles.cond} numberOfLines={2}>
-              gefühlt {fmtTemp(w.feels)}
+              {t('gefühlt ')}{fmtTemp(w.feels)}
             </AppText>
           </View>
           {reason && (
             <View style={styles.reason}>
               <SymbolView weight="semibold" name="exclamationmark.triangle.fill" size={16} tintColor={Colors.warn} />
               <AppText style={styles.reasonText}>
-                {reason === 'kalt' ? `Oben nur ${Math.round(w.temp)} Grad.` : reason === 'Regen' ? 'Regen wahrscheinlich, nasse Kehren.' : reason === 'Schnee' ? 'Schnee möglich.' : reason === 'Sturmböen' ? `Böen bis ${Math.round(w.gust)} km/h.` : 'Glätte möglich.'}
+                {reason === 'kalt' ? t('Oben nur {v0} Grad.', { v0: Math.round(w.temp) }) : reason === 'Regen' ? t('Regen wahrscheinlich, nasse Kehren.') : reason === 'Schnee' ? t('Schnee möglich.') : reason === 'Sturmböen' ? t('Böen bis {v0} km/h.', { v0: Math.round(w.gust) }) : t('Glätte möglich.')}
               </AppText>
             </View>
           )}

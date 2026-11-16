@@ -18,7 +18,7 @@ import { AppText } from '@/components/ui/text';
 import { WarnLabel, ZigzagIcon } from '@/components/ui/warn-label';
 import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
 import type { FunkState } from '@/lib/group/funk';
-import { STOP_REASONS, type RideMsg, type RideStop, type StopReason } from '@/lib/group/ride';
+import { quickText, STOP_REASONS, type RideMsg, type RideStop, type StopReason } from '@/lib/group/ride';
 import { highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { warnRest, warnSpeech } from '@/lib/passes';
 import { formatKm } from '@/lib/tour';
@@ -35,7 +35,7 @@ export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
   const d = formatDistance(Math.max(0, distM));
   return (
     <GlassPanel style={styles.card} fallback={Colors.overlay}>
-      <View style={styles.row} accessible accessibilityRole="alert" accessibilityLabel={`${distM > 50 ? `In ${d.value} ${d.unit === 'm' ? 'Metern' : 'Kilometern'}` : 'Jetzt'} ${h.name}, ${highlightFacts(h)}${h.warn?.length ? `. Warnung: ${warnSpeech(h.warn)}` : ''}`}>
+      <View style={styles.row} accessible accessibilityRole="alert" accessibilityLabel={`${distM > 50 ? `In ${d.value} ${d.unit === 'm' ? 'Metern' : 'Kilometern'}` : t('Jetzt')} ${h.name}, ${highlightFacts(h)}${h.warn?.length ? `. Warnung: ${warnSpeech(h.warn)}` : ''}`}>
         <NavSymbolIcon symbol={HIGHLIGHT_SYMBOL[h.kind]} size={44} soon />
         <View style={styles.flex}>
           <AppText variant="caption" style={styles.kicker}>
@@ -68,7 +68,7 @@ export function HighlightStrip({ h, atKm, onPress }: { h: Highlight; atKm: numbe
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Auf ${h.name}, noch ${formatKm(rest, 1)} Kilometer. Antippen zeigt die Ansage`}
+      accessibilityLabel={t('Auf {name}, noch {v1} Kilometer. Antippen zeigt die Ansage', { name: h.name, v1: formatKm(rest, 1) })}
       onPress={onPress}
       style={styles.strip}>
       <View style={styles.stripRow}>
@@ -94,17 +94,17 @@ export function StopAlert({ stop, distM, mine, reach, onDismiss, onCancel }: { s
     <GlassPanel style={[styles.card, styles.stop]} fallback="rgba(90,30,14,0.97)" tint="rgba(150,45,15,0.75)">
       <View accessible accessibilityRole="alert" style={styles.gapS}>
         <AppText variant="caption" style={styles.stopKicker}>
-          {mine ? (reach && reach.of > 0 ? (reach.got >= reach.of ? `Bei allen angekommen` : `Bei ${reach.got} von ${reach.of} angekommen`) : 'An die Gruppe gesendet') : `${stop.name} hält gleich an`}
+          {mine ? (reach && reach.of > 0 ? (reach.got >= reach.of ? t('Bei allen angekommen') : t('Bei {got} von {of} angekommen', { got: reach.got, of: reach.of })) : t('An die Gruppe gesendet')) : t('{name} hält gleich an', { name: stop.name })}
         </AppText>
         <AppText style={styles.stopTitle}>{mine ? r.label: t('Gleich anhalten')}</AppText>
         <AppText style={styles.stopText}>
           {r.title}
-          {!mine && d && distM! > 30 ? `, Lead ist ${d.value} ${d.unit} vor dir.` : '.'}
+          {!mine && d && distM! > 30 ? t(', Lead ist {value} {unit} vor dir.', { value: d.value, unit: d.unit }) : '.'}
         </AppText>
       </View>
       <View style={styles.row}>
         <Pressable accessibilityRole="button" onPress={onDismiss} style={({ pressed }) => [styles.stopBtn, styles.flex, pressed && styles.pressed]}>
-          <AppText style={styles.stopBtnText}>{mine ? 'Ausblenden' : 'Verstanden'}</AppText>
+          <AppText style={styles.stopBtnText}>{mine ? t('Ausblenden') : t('Verstanden')}</AppText>
         </Pressable>
         {mine && (
           <Pressable accessibilityRole="button" onPress={onCancel} style={({ pressed }) => [styles.stopBtn, styles.flex, pressed && styles.pressed]}>
@@ -132,7 +132,7 @@ export function LeadHaltPill({ onAnnounce }: { onAnnounce: (r: StopReason) => vo
     <View style={styles.haltWrap} pointerEvents="box-none">
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={open ? 'Gründe schließen' : 'Halt an die Gruppe ansagen'}
+        accessibilityLabel={open ? t('Gründe schließen') : t('Halt an die Gruppe ansagen')}
         accessibilityState={{ expanded: open }}
         hitSlop={4}
         onPress={() => setOpen(!open)}
@@ -144,14 +144,14 @@ export function LeadHaltPill({ onAnnounce }: { onAnnounce: (r: StopReason) => vo
             <View style={styles.haltSquare} />
           </View>
         )}
-        <AppText style={styles.haltText}>{open ? 'Schließen' : 'Halt'}</AppText>
+        <AppText style={styles.haltText}>{open ? t('Schließen') : t('Halt')}</AppText>
       </Pressable>
       {open &&
         STOP_REASONS.map((r, i) => (
           <Animated.View key={r.id} entering={FadeIn.delay(i * 45).duration(Motion.enter)}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Halt ansagen: ${r.label}`}
+              accessibilityLabel={t('Halt ansagen: {label}', { label: r.label })}
               onPress={() => {
                 onAnnounce(r.id);
                 setOpen(false);
@@ -168,7 +168,7 @@ export function LeadHaltPill({ onAnnounce }: { onAnnounce: (r: StopReason) => vo
 /** Funk Banner oben: ich spreche (orange), ein anderer spricht (mit Name) oder der Funk ist kurz getrennt. */
 export function FunkBanner({ funk }: { funk: FunkState }) {
   const mine = funk.talking;
-  const text = mine ? 'Du sprichst' : funk.speaker ? `${funk.speaker.name} spricht` : 'Funk getrennt, verbinde neu';
+  const text = mine ? t('Du sprichst') : funk.speaker ? `${funk.speaker.name} spricht` : t('Funk getrennt, verbinde neu');
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} accessibilityLiveRegion="polite" accessibilityLabel={text} style={[styles.funkBanner, mine && styles.funkMine, !mine && !funk.speaker && styles.funkLost]}>
       <SymbolView name={funk.speaker || mine ? 'waveform' : 'wifi.exclamationmark'} size={20} weight="semibold" tintColor={mine ? Colors.onSignal : funk.speaker ? Colors.good : Colors.ground} />
@@ -186,7 +186,7 @@ export function MessageToast({ msg }: { msg: RideMsg }) {
         <AppText variant="caption" muted>
           {msg.name}
         </AppText>
-        <AppText style={styles.toastText}>{msg.text}</AppText>
+        <AppText style={styles.toastText}>{quickText(msg.text)}</AppText>
       </View>
     </GlassPanel>
   );

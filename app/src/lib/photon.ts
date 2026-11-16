@@ -5,6 +5,7 @@
  */
 import { CUMO_ROUTING_SERVERS } from './cumo-routing';
 import { routingHeaders } from './routing-auth';
+import { tr } from '@/i18n';
 
 const PUBLIC = 'https://photon.komoot.io';
 // zuerst Server 2, dann Server 1, jeweils erst unter cumodrive.de, dann unter sslip (16.11.)
@@ -46,7 +47,7 @@ async function ask(base: string, pathAndQuery: string, signal: AbortSignal | und
     if (!res.ok) throw new PhotonError(`Ortssuche: Fehler ${res.status}`, res.status === 404 ? 'missing' : 'other');
     return res;
   } catch (e) {
-    if (timedOut) throw new PhotonError('Ortssuche antwortet nicht', 'timeout');
+    if (timedOut) throw new PhotonError(tr('Ortssuche antwortet nicht'), 'timeout');
     throw e;
   } finally {
     clearTimeout(t);

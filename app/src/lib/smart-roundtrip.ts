@@ -25,6 +25,7 @@ import { countCurves } from './stats';
 import { flatten, haversine, type LatLon, type Profile } from './tour';
 import type { Avoid } from './valhalla';
 import { onRoadData } from './road-data';
+import { tr } from '@/i18n';
 
 export type SmartRequest = {
   name: string;
@@ -831,7 +832,7 @@ export async function outAndBack(req: SmartRequest, signal?: AbortSignal): Promi
     .slice(0, 8);
   const planned = await Promise.all(
     best.map((t) =>
-      planChecked(`Hin und zurück: ${t.name}`, [req.start, t.p, req.start], req.profile, req.avoid, undefined, signal)
+      planChecked(tr('Hin und zurück: {name}', { name: t.name }), [req.start, t.p, req.start], req.profile, req.avoid, undefined, signal)
         .then((tour) => ({ t, tour }))
         .catch((e) => {
           if (signal?.aborted) throw e;

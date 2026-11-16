@@ -14,7 +14,7 @@ import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/
 import { ageOf, birthDigits, loadPrivacy, parseBirthday, savePrivacy, type BirthdayShow, type Privacy } from '@/lib/drivers';
 import { haptic } from '@/lib/haptics';
 import { searchTowns, type Place } from '@/lib/geocode';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 /**
  * Eigene Privatsphäre, für alle Ansichten geteilt (Profilkarte, Schalter, Profil Seite): ein Wechsel
@@ -64,7 +64,7 @@ export function usePrivacy() {
       await savePrivacy(patch);
     } catch (e) {
       setShared(prev);
-      setErr(e instanceof Error ? e.message : 'Speichern hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : tr('Speichern hat nicht geklappt.'));
     } finally {
       setBusy(false);
     }
@@ -104,10 +104,10 @@ export function HomeField({ p, save }: { p: Privacy; save: (patch: Partial<Priva
         <View style={styles.row}>
           <View style={styles.flex}>
             <AppText variant="caption" muted>{t('Wohnort')}</AppText>
-            <AppText style={styles.value} numberOfLines={1}>{p.homeName ?? 'Noch nicht angegeben'}</AppText>
+            <AppText style={styles.value} numberOfLines={1}>{p.homeName ?? tr('Noch nicht angegeben')}</AppText>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel={t('Wohnort ändern')} onPress={() => { setQ(''); setFound([]); setEditing(true); }} style={styles.secondary}>
-            <AppText style={styles.secondaryText}>{p.homeName ? 'Ändern' : 'Anlegen'}</AppText>
+            <AppText style={styles.secondaryText}>{p.homeName ? tr('Ändern') : tr('Anlegen')}</AppText>
           </Pressable>
         </View>
       ) : (
@@ -171,11 +171,11 @@ function FieldRow(props: { label: string; value: string | null; sub?: string | n
     <View style={styles.row}>
       <View style={styles.flex}>
         <AppText variant="caption" muted>{label}</AppText>
-        <AppText style={[styles.value, !value && styles.valueEmpty]} numberOfLines={lines}>{value ?? 'Nicht angegeben'}</AppText>
+        <AppText style={[styles.value, !value && styles.valueEmpty]} numberOfLines={lines}>{value ?? tr('Nicht angegeben')}</AppText>
         {sub ? <AppText variant="caption" muted>{sub}</AppText> : null}
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`${label} ${value ? 'ändern' : 'anlegen'}`} onPress={onOpen} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
-        <AppText style={styles.secondaryText}>{value ? 'Ändern' : 'Anlegen'}</AppText>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${label} ${value ? tr('ändern') : 'anlegen'}`} onPress={onOpen} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
+        <AppText style={styles.secondaryText}>{value ? tr('Ändern') : tr('Anlegen')}</AppText>
       </Pressable>
     </View>
   );
@@ -246,14 +246,14 @@ export function BioField({ p, save }: { p: Privacy; save: (patch: Partial<Privac
         style={[styles.input, styles.bio]}
         accessibilityLabel={t('Über mich')}
       />
-      <AppText variant="caption" muted style={styles.count}>{draft.length} von 160</AppText>
+      <AppText variant="caption" muted style={styles.count}>{draft.length}{tr(' von 160')}</AppText>
       <FieldFoot
         canSave={draft.trim() !== (p.bio ?? '')}
         onSave={() => {
           setOpen(false);
           void save({ bio: draft.trim() || null });
         }}
-        removeTitle={p.bio ? 'Möchtest du deinen Text unter Über mich entfernen?' : null}
+        removeTitle={p.bio ? tr('Möchtest du deinen Text unter Über mich entfernen?') : null}
         onRemove={() => {
           setDraft('');
           setOpen(false);
@@ -315,12 +315,12 @@ export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<P
 
   if (!open) {
     const age = ageOf(p.birthDate);
-    const sees = p.birthdayShow === 'age' ? (age != null ? `${age} Jahre` : null) : p.birthdayShow === 'birthday' ? 'nur am Geburtstag' : 'nichts';
+    const sees = p.birthdayShow === 'age' ? (age != null ? `${age} Jahre` : null) : p.birthdayShow === 'birthday' ? tr('nur am Geburtstag') : 'nichts';
     return (
       <FieldRow
         label={t('Geburtstag')}
         value={p.birthDate ? `${saved.slice(0, 2)}.${saved.slice(2, 4)}.${saved.slice(4)}` : null}
-        sub={p.birthDate && sees ? `Drivers sieht: ${sees}` : null}
+        sub={p.birthDate && sees ? tr('Drivers sieht: {sees}', { sees }) : null}
         onOpen={openUp}
       />
     );
@@ -381,7 +381,7 @@ export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<P
           setOpen(false);
           void save({ birthDate: iso, birthdayShow: show });
         }}
-        removeTitle={p.birthDate ? 'Möchtest du deinen Geburtstag entfernen?' : null}
+        removeTitle={p.birthDate ? tr('Möchtest du deinen Geburtstag entfernen?') : null}
         onRemove={() => {
           setDigits('');
           setOpen(false);

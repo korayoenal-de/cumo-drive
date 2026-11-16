@@ -237,7 +237,7 @@ export function TourMode({
         throw e;
       });
       onHere(spot);
-      pick(spot.p, spot.name ?? 'Mein Standort');
+      pick(spot.p, spot.name ?? tr('Mein Standort'));
     } catch (e) {
       setLocMsg(toPlanError(e).message);
     } finally {
@@ -253,7 +253,7 @@ export function TourMode({
   const legA = edit?.insert && edit.index != null ? legSlots[edit.index] : null;
   const legB = edit?.insert && edit.index != null ? legSlots[edit.index + 1] : null;
   const editLeg = legA && legB ? { a: legA, b: legB } : undefined;
-  const editRole = !edit ? '' : edit.kind === 'start' ? 'Start' : edit.kind === 'ziel' ? 'Ziel' : `Zwischenziel ${(edit.index ?? plan.vias.length) + 1}`;
+  const editRole = !edit ? '' : edit.kind === 'start' ? 'Start' : edit.kind === 'ziel' ? tr('Ziel') : tr('Zwischenziel {v0}', { v0: (edit.index ?? plan.vias.length) + 1 });
   // Routenkopf der Suche: Start, das bearbeitete Zwischenziel, Ziel (Variante B)
   const headSlots: Slot[] = !edit
     ? []
@@ -268,7 +268,7 @@ export function TourMode({
     <PlaceSearch
       visible={!!edit}
       role={editRole}
-      placeholder={edit?.kind === 'start' ? 'Wo geht es los?' : edit?.kind === 'ziel' ? 'Wohin soll es gehen?' : 'Ort oder Pass für das Zwischenziel'}
+      placeholder={edit?.kind === 'start' ? tr('Wo geht es los?') : edit?.kind === 'ziel' ? tr('Wohin soll es gehen?') : tr('Ort oder Pass für das Zwischenziel')}
       current={editName}
       currentP={editPoint ?? undefined}
       initialNear={nearPreset}
@@ -292,7 +292,7 @@ export function TourMode({
         const snap = plan.snapshot();
         const replaced = plan.insertRoad(edit.index ?? plan.vias.length, line, profile, avoid, name);
         setEdit(null);
-        if (replaced) showToast(`${name} ersetzt ${replaced}, es lag nur 2 km davor`, { action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) } });
+        if (replaced) showToast(tr('{name} ersetzt {replaced}, es lag nur 2 km davor', { name, replaced }), { action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) } });
       }}
       slots={headSlots}
       onSwitch={(sl) => openEdit({ kind: sl.kind, index: sl.index, insert: sl.insert })}
@@ -320,7 +320,7 @@ export function TourMode({
     const snap = plan.snapshot();
     const wasSaved = !!plan.cloudId;
     plan.reset();
-    showToast(wasSaved ? 'Planer geleert, die Tour bleibt unter Touren' : 'Planung zurückgesetzt', {
+    showToast(wasSaved ? tr('Planer geleert, die Tour bleibt unter Touren') : tr('Planung zurückgesetzt'), {
       action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) },
     });
   };
@@ -342,7 +342,7 @@ export function TourMode({
     const name = t?.name ?? plan.name.trim();
     const ride = await findPlannedRide(id).catch(() => null);
     if (ride && t) {
-      showToast(`${name} aktualisiert. Deine Ausfahrt fährt noch die alte Fassung.`, {
+      showToast(tr('{name} aktualisiert. Deine Ausfahrt fährt noch die alte Fassung.', { name }), {
         action: {
           label: tr('Übernehmen'),
           onPress: () =>
@@ -365,10 +365,10 @@ export function TourMode({
 
   /** Satz unter der Rückfrage: wen das Überschreiben noch betrifft */
   const overwriteNote = savedTour?.published
-    ? 'Auch die veröffentlichte Tour in der Community ändert sich.'
+    ? tr('Auch die veröffentlichte Tour in der Community ändert sich.')
     : savedTour?.author
-      ? `Nur deine Fassung ändert sich, das Original von ${savedTour.author} bleibt.`
-      : 'Die gespeicherte Fassung wird durch deine Änderungen ersetzt.';
+      ? tr('Nur deine Fassung ändert sich, das Original von {author} bleibt.', { author: savedTour.author })
+      : tr('Die gespeicherte Fassung wird durch deine Änderungen ersetzt.');
   // Allein oder als Gruppe: Abfrage beim Druck auf Losfahren (Koray 7.11.)
   /** Sperrung auf der Tour beim Losfahren: warnen und Umfahrung zeigen (Koray 16.11.) */
   const closed = useClosedCheck();
@@ -447,14 +447,14 @@ export function TourMode({
   /** Eine Zeile der Punktliste: die ganze Fläche tippen (ändern) oder halten und ziehen (verschieben), ⋯ für Aktionen. */
   function pointRow(id: string, kind: PointKind, p: LatLon | null, index: number | undefined, slot: number) {
     const viaNo = (index ?? 0) + 1;
-    const role = kind === 'start' ? 'Start' : kind === 'ziel' ? 'Ziel' : `Zwischenziel ${viaNo}`;
+    const role = kind === 'start' ? 'Start' : kind === 'ziel' ? tr('Ziel') : tr('Zwischenziel {viaNo}', { viaNo });
     const canDrag = !!p && plan.complete;
     const body = (
       <>
         <PointSymbol kind={kind} label={String(viaNo)} />
         <View style={styles.pointMain}>
           <AppText variant="title" numberOfLines={1} style={!p && styles.slotPlaceholder}>
-            {p ? nameOf(p) : kind === 'start' ? 'Start wählen' : 'Ziel wählen'}
+            {p ? nameOf(p) : kind === 'start' ? tr('Start wählen') : tr('Ziel wählen')}
           </AppText>
         </View>
       </>
@@ -474,7 +474,7 @@ export function TourMode({
           renderRightActions={(prog, _tr, m) => (
             <SwipeDelete
               progress={prog}
-              label={`${role} löschen`}
+              label={tr('{role} löschen', { role })}
               onPress={() => {
                 m.close();
                 if (p) runAction({ idx: idxOf(kind, index), name: nameOf(p) }, 'entfernen');
@@ -530,7 +530,7 @@ export function TourMode({
           ) : (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${role} ${p ? `ändern, jetzt ${nameOf(p)}` : 'wählen'}`}
+              accessibilityLabel={`${role} ${p ? tr('ändern, jetzt {v0}', { v0: nameOf(p) }) : tr('wählen')}`}
               onPress={() => {
                 setNearPreset(undefined);
                 openEdit({ kind, index });
@@ -544,7 +544,7 @@ export function TourMode({
           {p && (kind !== 'start' || isLoop) && (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={kind === 'via' ? `Café, Essen und Hotels in ${nameOf(p)}` : `Hotels in ${nameOf(p)}`}
+              accessibilityLabel={kind === 'via' ? tr('Café, Essen und Hotels in {v0}', { v0: nameOf(p) }) : tr('Hotels in {v0}', { v0: nameOf(p) })}
               hitSlop={4}
               onPress={() => {
                 setLegMenu(null);
@@ -554,7 +554,7 @@ export function TourMode({
               <SymbolView weight="semibold" name={kind === 'via' ? 'cup.and.saucer.fill' : 'bed.double.fill'} size={20} tintColor={kind === 'via' ? Colors.text : Colors.signal} />
             </Pressable>
           )}
-          {p && <MoreButton label={`Aktionen für ${role} ${nameOf(p)}`} onPress={(v) => openMenu(kind, index, p, v)} />}
+          {p && <MoreButton label={tr('Aktionen für {role} {v1}', { role, v1: nameOf(p) })} onPress={(v) => openMenu(kind, index, p, v)} />}
         </Animated.View>
         </Swipeable>
         </View>
@@ -598,7 +598,7 @@ export function TourMode({
             <View style={styles.legControls}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Zwischenziel auf Etappe ${i + 1} einfügen`}
+                accessibilityLabel={tr('Zwischenziel auf Etappe {v0} einfügen', { v0: i + 1 })}
                 onPress={() => openEdit({ kind: 'via', index: i, insert: true })}
                 style={({ pressed }) => [styles.plusBtn, inserting && styles.plusBtnOn, pressed && styles.pressed]}>
                 <View style={styles.plusH} />
@@ -606,7 +606,7 @@ export function TourMode({
               </Pressable>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Profil der Etappe ${i + 1}: ${profileWord(lp)}, ändern`}
+                accessibilityLabel={tr('Profil der Etappe {v0}: {v1}, ändern', { v0: i + 1, v1: profileWord(lp) })}
                 accessibilityState={{ expanded: choosing }}
                 onPress={() => {
                   setLegMenu(choosing ? null : i);
@@ -659,7 +659,7 @@ export function TourMode({
           <View style={styles.wrap}>
             <SmallButton label={tr('Als Start')} onPress={() => addPending('start')} />
             {plan.complete && <SmallButton label={tr('Als Zwischenziel')} onPress={() => addPending('via')} />}
-            <SmallButton label={plan.complete ? 'Als neues Ziel' : 'Als Ziel'} onPress={() => addPending('ziel')} strong />
+            <SmallButton label={plan.complete ? tr('Als neues Ziel') : tr('Als Ziel')} onPress={() => addPending('ziel')} strong />
             <SmallButton label={tr('Abbrechen')} onPress={() => setPending(null)} />
           </View>
         </View>
@@ -729,7 +729,7 @@ export function TourMode({
           <NameDialog
             key={naming ? 'offen' : 'zu'}
             visible={naming}
-            initial={plan.name.trim() && plan.name !== 'Neue Tour' ? plan.name.trim() : routeTour.name || 'Neue Tour'}
+            initial={plan.name.trim() && plan.name !== tr('Neue Tour') ? plan.name.trim() : routeTour.name || tr('Neue Tour')}
             onCancel={() => setNaming(false)}
             onSave={(n) => {
               setNaming(false);
@@ -742,7 +742,7 @@ export function TourMode({
             visible={renaming}
             title={tr('Tour umbenennen')}
             subtitle={tr('Der neue Name gilt auch im Konto, im Web Planer und in der Community.')}
-            initial={plan.name.trim() || routeTour.name || 'Neue Tour'}
+            initial={plan.name.trim() || routeTour.name || tr('Neue Tour')}
             onCancel={() => setRenaming(false)}
             onSave={(n) => {
               setRenaming(false);
@@ -753,14 +753,14 @@ export function TourMode({
               }
             }}
           />
-          <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} check={routeCheck(warnings.length, routeTour.geprueft !== false)} twiceKm={twiceKm} line={line} />
+          <FunSheet fun={fun} name={routeTour.name || tr('Deine Route')} visible={funOpen} onClose={() => setFunOpen(false)} check={routeCheck(warnings.length, routeTour.geprueft !== false)} twiceKm={twiceKm} line={line} />
 
 
           {hint && (
             <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PASS_STATUS_URL)} style={styles.winter}>
               <AppText style={styles.winterTitle}>{hint.title}</AppText>
               <AppText variant="caption" style={styles.winterText}>
-                {hint.text} Tippen für den aktuellen Passstatus.
+                {hint.text}{tr(' Tippen für den aktuellen Passstatus.')}
               </AppText>
             </Pressable>
           )}
@@ -784,12 +784,12 @@ export function TourMode({
             onClose={() => setStopCat(null)}
             route={line}
             routeMinutes={routeTour?.minutes}
-            stopsOnly={stopCat ? { title: tr('Unterwegs einplanen'), subtitle: `${plan.name.trim() || 'Neue Tour'} · ${Math.round(total)} km`, cat: stopCat } : undefined}
+            stopsOnly={stopCat ? { title: tr('Unterwegs einplanen'), subtitle: `${plan.name.trim() || tr('Neue Tour')} · ${Math.round(total)} km`, cat: stopCat } : undefined}
             onPickStop={(p, name, km) => {
               const snap = plan.snapshot();
               setStopCat(null);
               pickStop(p, name, km);
-              showToast(`${name} bei km ${Math.round(km)} eingeplant`, { action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) } });
+              showToast(tr('{name} bei km {v1} eingeplant', { name, v1: Math.round(km) }), { action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) } });
             }}
           />
         </>
@@ -799,10 +799,10 @@ export function TourMode({
         <View style={styles.card}>
           {(
             [
-              ['closures', 'Gesperrte Straßen', 'Wir planen um gesperrte Straßen herum.'],
-              ['ferries', 'Fähren', undefined],
-              ['tolls', 'Maut', undefined],
-              ['rough', 'Rauer Belag', 'Kopfsteinpflaster und schlechter Asphalt.'],
+              ['closures', tr('Gesperrte Straßen'), tr('Wir planen um gesperrte Straßen herum.')],
+              ['ferries', tr('Fähren'), undefined],
+              ['tolls', tr('Maut'), undefined],
+              ['rough', tr('Rauer Belag'), tr('Kopfsteinpflaster und schlechter Asphalt.')],
             ] as const
           ).map(([key, label, note]) => (
             <Toggle
@@ -856,7 +856,7 @@ export function TourMode({
           </View>
         ) : routeTour ? (
           <ActionBar
-            sheetTitle={plan.name.trim() || 'Neue Tour'}
+            sheetTitle={plan.name.trim() || tr('Neue Tour')}
             primary={{
               label: tr('Losfahren'),
               onPress: () => {
@@ -916,7 +916,7 @@ export function TourMode({
         {routeTour && (
           <ActionSheet
             visible={askOverwrite}
-            title={`Möchtest du ${savedTour?.name ?? (plan.name.trim() || routeTour.name)} überschreiben?`}
+            title={tr('Möchtest du {v0} überschreiben?', { v0: savedTour?.name ?? (plan.name.trim() || routeTour.name) })}
             subtitle={overwriteNote}
             onClose={() => setAskOverwrite(false)}
             items={[

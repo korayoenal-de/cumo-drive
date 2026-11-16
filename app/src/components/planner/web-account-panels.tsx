@@ -8,13 +8,13 @@ import { signIn, signOut, signUp, useSession } from '@/lib/auth';
 import { syncLibrary, useSyncState } from '@/lib/library';
 import { type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
-import { createRide, joinRide, leaveRide, loadProfile, normalizeCode, QUICK_MESSAGES, sendMessage, setRole, useRide } from '@/lib/group/ride';
+import { createRide, joinRide, leaveRide, loadProfile, normalizeCode, QUICK_MESSAGES, quickText, sendMessage, setRole, useRide } from '@/lib/group/ride';
 import { Spacing } from '@/constants/theme';
 
 import { C } from './web-shared';
 import { Chip } from './web-parts';
 import { S } from './web-styles';
-import { t } from '@/i18n';
+import { numberLocale, t } from '@/i18n';
 
 /** Gruppenfahrt im Web: starten oder beitreten, Mitfahrer live auf der Karte, Kurznachrichten. */
 export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; isSample: boolean }) {
@@ -42,12 +42,12 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
             await createRide(name, 'Planer', tc);
             setBusy(false);
           }}>
-          {canShare ? 'Fahrt mit dieser Tour starten' : 'Fahrt starten'}
+          {canShare ? t('Fahrt mit dieser Tour starten') : t('Fahrt starten')}
         </button>
         <div style={S.btnRow}>
           <input id="grp-code" aria-label={t('Fahrtcode')} placeholder={t('Fahrtcode')} value={code} onChange={(e) => setCode(normalizeCode(e.target.value))} style={{ ...S.search, height: 44, flex: 1, background: C.surface2, letterSpacing: 4, textTransform: 'uppercase' }} />
           <button style={{ ...S.secondaryOnSurface, flex: 'none' }} disabled={busy || !name.trim() || code.length !== 6} onClick={() => void joinRide(code, name, 'Planer')}>
-            Beitreten
+            {t('Beitreten')}
           </button>
         </div>
         {ride.error ? <span style={{ ...S.small, color: C.signal }}>{ride.error}</span> : null}
@@ -65,16 +65,16 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
           style={S.link}
           onClick={() => {
             navigator.clipboard
-              ?.writeText(`Fahr mit bei CUMO DRIVE. Code ${ride.code!.toUpperCase()} in der App unter Planen, Gruppe, eingeben oder öffnen: ${link}`)
+              ?.writeText(t('Fahr mit bei CUMO DRIVE. Code {v0} in der App unter Planen, Gruppe, eingeben oder öffnen: {link}', { v0: ride.code!.toUpperCase(), link }))
               .then(() => setCopied(true))
               .catch(() => setCopied(false));
           }}>
-          {copied ? 'Einladung kopiert' : 'Einladung kopieren'}
+          {copied ? t('Einladung kopiert') : t('Einladung kopieren')}
         </button>
       </div>
       <span style={S.small}>
-        {ride.status === 'verbinde' ? 'Verbinde …' : `${ride.members.length} in der Gruppe, du bist ${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[ride.myRole]}`}
-        {ride.tourCode ? ', Tour geteilt' : ''}
+        {ride.status === 'verbinde' ? 'Verbinde …' : t('{length} in der Gruppe, du bist {v1}', { length: ride.members.length, v1: { lead: t('Lead'), schluss: t('Schlusslicht'), mitfahrer: t('Mitfahrer') }[ride.myRole] })}
+        {ride.tourCode ? t(', Tour geteilt') : ''}
       </span>
       <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: Spacing.xs }}>
         {ride.members.map((mb) => (
@@ -83,11 +83,11 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
             <span style={{ flex: 1 }}>
               {mb.name}
               {mb.id === ride.me?.id ? ' (du)' : ''}
-              <span style={S.small}> {mb.car}{mb.p ? '' : ', noch keine Position'}</span>
+              <span style={S.small}> {mb.car}{mb.p ? '' : t(', noch keine Position')}</span>
             </span>
             {ride.myRole === 'lead' && mb.id !== ride.me?.id ? (
               <button style={S.link} onClick={() => setRole(mb.id, mb.role === 'schluss' ? 'mitfahrer' : 'schluss')}>
-                {mb.role === 'schluss' ? 'Kein Schluss' : 'Schlusslicht'}
+                {mb.role === 'schluss' ? t('Kein Schluss') : t('Schlusslicht')}
               </button>
             ) : null}
           </li>
@@ -96,17 +96,17 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
       <div style={S.chips}>
         {QUICK_MESSAGES.map((m) => (
           <Chip key={m} on={false} onSurface onClick={() => sendMessage(m)}>
-            {m}
+            {quickText(m)}
           </Chip>
         ))}
       </div>
       {ride.messages.slice(0, 5).map((m) => (
         <span key={m.id} style={S.small}>
-          {new Date(m.at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} {m.from === ride.me?.id ? 'Du' : m.name}: {m.text}
+          {new Date(m.at).toLocaleTimeString(numberLocale(), { hour: '2-digit', minute: '2-digit' })} {m.from === ride.me?.id ? t('Du') : m.name}: {quickText(m.text)}
         </span>
       ))}
       <button style={S.link} onClick={() => void leaveRide()}>
-        Fahrt verlassen
+        {t('Fahrt verlassen')}
       </button>
     </div>
   );
@@ -130,18 +130,18 @@ export function AccountBox() {
       <div style={S.accountBox}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: Spacing.s, alignItems: 'center' }}>
           <span>
-            Angemeldet als <b>{session.user.email}</b>
+            {t('Angemeldet als ')}<b>{session.user.email}</b>
           </span>
           <button style={S.link} onClick={() => void signOut()}>
-            Abmelden
+            {t('Abmelden')}
           </button>
         </div>
         <span style={sync.error ? { ...S.small, color: C.signal } : S.small}>
           {sync.running
-            ? 'Touren werden abgeglichen …'
+            ? t('Touren werden abgeglichen …')
             : sync.error
-              ? `Abgleich fehlgeschlagen: ${sync.error}`
-              : 'Deine Touren liegen im Konto und erscheinen in der App unter Touren.'}
+              ? t('Abgleich fehlgeschlagen: {error}', { error: sync.error })
+              : t('Deine Touren liegen im Konto und erscheinen in der App unter Touren.')}
         </span>
       </div>
     );
@@ -171,10 +171,10 @@ export function AccountBox() {
       {err ? <span style={{ ...S.small, color: C.signal }}>{err}</span> : null}
       <div style={S.btnRow}>
         <button type="submit" style={S.primary} disabled={busy || !email || !pw}>
-          Anmelden
+          {t('Anmelden')}
         </button>
         <button type="button" style={S.secondaryOnSurface} disabled={busy || !email || !pw} onClick={() => void run(signUp)}>
-          Registrieren
+          {t('Registrieren')}
         </button>
       </div>
     </form>

@@ -135,7 +135,7 @@ export function CommunityPanel(props: {
       />
       {seg === 'routen' ? (
         <>
-          <span style={S.metricLabel}>Touren zum Nachfahren{tours ? `, ${tours.length}` : ''}</span>
+          <span style={S.metricLabel}>{tr('Touren zum Nachfahren')}{tours ? `, ${tours.length}` : ''}</span>
           <input aria-label={tr('Touren durchsuchen')} placeholder={tr('Tour, Fahrer oder Beschreibung suchen')} value={q} onChange={(e) => setQ(e.target.value)} style={{ ...S.search, height: 52 }} />
           <div style={S.chips}>
             {SORTS.map((s) => (
@@ -144,9 +144,9 @@ export function CommunityPanel(props: {
               </Chip>
             ))}
           </div>
-          {err ? <p style={S.errorText}>Community konnte nicht geladen werden: {err}</p> : null}
+          {err ? <p style={S.errorText}>{tr('Community konnte nicht geladen werden: ')}{err}</p> : null}
           {tours === null && !err ? <p style={S.muted}>{tr('Wird geladen …')}</p> : null}
-          {tours?.length === 0 ? <EmptyCard title={tr('Noch keine Routen veröffentlicht')} text="Sei der Erste: Öffne Touren und veröffentliche eine Tour über das Menü ⋯." /> : null}
+          {tours?.length === 0 ? <EmptyCard title={tr('Noch keine Routen veröffentlicht')} text={tr('Sei der Erste: Öffne Touren und veröffentliche eine Tour über das Menü ⋯.')} /> : null}
           {tours && tours.length > 0 && !shownTours.length ? <p style={S.muted}>{tr('Keine Route passt zur Suche.')}</p> : null}
           {shownTours.map((t) => (
             <RouteCard
@@ -172,7 +172,7 @@ export function CommunityPanel(props: {
         <>
           <span style={S.metricLabel}>{tr('Gemeinsame Ausfahrten')}</span>
           {rides === null ? <p style={S.muted}>{tr('Wird geladen …')}</p> : null}
-          {rides?.length === 0 ? <EmptyCard title={tr('Noch keine Ausfahrten geplant')} text="Eine Ausfahrt mit Zeit, Treffpunkt und freien Plätzen legst du in der App unter Community an." /> : null}
+          {rides?.length === 0 ? <EmptyCard title={tr('Noch keine Ausfahrten geplant')} text={tr('Eine Ausfahrt mit Zeit, Treffpunkt und freien Plätzen legst du in der App unter Community an.')} /> : null}
           {(rides ?? []).map((r) => (
             <RideCard
               key={r.id}
@@ -200,7 +200,7 @@ export function CommunityPanel(props: {
               <b style={{ font: `700 17px ${BODY}` }}>{tr('Zeig dich auf der Karte')}</b>
               <span style={S.muted}>{tr('Trag deinen Wohnort in den Einstellungen ein. Andere sehen dich dann dort, nur als Ortsmitte.')}</span>
               <button style={{ ...S.secondaryOnSurface, flex: 'none', alignSelf: 'flex-start' }} onClick={props.onSettings}>
-                Wohnort angeben
+                {tr('Wohnort angeben')}
               </button>
             </div>
           ) : null}
@@ -263,7 +263,7 @@ function WebReport(props: { kind: ReportKind; refId: string; userId?: string | n
       setSent(true);
       showToast(tr('Danke, wir schauen es uns an'));
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : tr('Das hat nicht geklappt.'));
     } finally {
       setBusy(false);
     }
@@ -271,13 +271,13 @@ function WebReport(props: { kind: ReportKind; refId: string; userId?: string | n
   if (!open)
     return (
       <button style={{ ...S.link, fontSize: 15, alignSelf: 'flex-start', color: C.muted }} onClick={() => setOpen(true)}>
-        Melden
+        {tr('Melden')}
       </button>
     );
   if (sent)
     return props.userId ? (
       <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.m, flexWrap: 'wrap' }}>
-        <span style={S.muted}>Gemeldet. Möchtest du {props.name ?? 'diese Person'} auch blockieren?</span>
+        <span style={S.muted}>{tr('Gemeldet. Möchtest du ')}{props.name ?? tr('diese Person')}{tr(' auch blockieren?')}</span>
         <button
           style={{ ...S.link, fontSize: 15 }}
           onClick={() =>
@@ -285,7 +285,7 @@ function WebReport(props: { kind: ReportKind; refId: string; userId?: string | n
               .then(() => showToast(`${props.name ?? 'Person'} blockiert`))
               .catch(() => showToast(tr('Das hat nicht geklappt'), { tone: 'error' }))
           }>
-          Blockieren
+          {tr('Blockieren')}
         </button>
       </div>
     ) : (
@@ -305,10 +305,10 @@ function WebReport(props: { kind: ReportKind; refId: string; userId?: string | n
       {err ? <span style={{ ...S.muted, color: C.warn }}>{err}</span> : null}
       <div style={{ display: 'flex', gap: Spacing.s }}>
         <button type="button" style={{ ...pillBtn, background: C.surface2, color: C.text }} onClick={() => setOpen(false)}>
-          Abbrechen
+          {tr('Abbrechen')}
         </button>
         <button type="button" style={{ ...pillBtn, background: reason ? C.signal : C.surface2, color: reason ? '#fff' : C.muted }} disabled={!reason || busy} onClick={() => void send()}>
-          {busy ? 'Wird gemeldet' : 'Melden'}
+          {busy ? tr('Wird gemeldet') : tr('Melden')}
         </button>
       </div>
     </div>
@@ -354,7 +354,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
         if (kept.published) await removeKeepPublished(kept);
         else deleteTour(kept.id);
         showToast(
-          'Aus Touren entfernt',
+          tr('Aus Touren entfernt'),
           kept.published
             ? {}
             : {
@@ -383,7 +383,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
       <div style={{ display: 'flex', alignItems: 'center', gap: Spacing.m }}>
         <button
           aria-expanded={props.selected}
-          aria-label={`${t.name}, ${meta}, ${props.mine ? 'von dir' : author ? `von ${author}` : 'aus der Community'}`}
+          aria-label={`${t.name}, ${meta}, ${props.mine ? tr('von dir') : author ? tr('von {author}', { author }) : tr('aus der Community')}`}
           onClick={props.onSelect}
           style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: Spacing.m, textAlign: 'left', background: 'transparent', border: 'none', padding: 0, color: C.text, cursor: 'pointer' }}>
           <RouteThumb shape={data?.thumb ?? null} />
@@ -393,7 +393,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
             {props.mine ? <Badge tone="good">{tr('Von dir')}</Badge> : <FromBadge author={author} />}
           </span>
         </button>
-        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flex: 'none', minWidth: 36 }} aria-label={fun != null && fun >= 0 ? `Fahrspaß ${fun} von 100, ${TOUR_FUN_NAMES[tourFunLevel(fun)]}` : undefined}>
+        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flex: 'none', minWidth: 36 }} aria-label={fun != null && fun >= 0 ? tr('Fahrspaß {fun} von 100, {v1}', { fun, v1: TOUR_FUN_NAMES[tourFunLevel(fun)] }) : undefined}>
           {fun != null && fun >= 0 ? (
             <>
               <Gauge level={tourFunLevel(fun)} size={20} />
@@ -405,7 +405,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
             Klick fragt, ob die Route aus der Community soll (wie in der App) */}
         {props.mine ? (
           <button
-            aria-label={`${t.name} ist veröffentlicht. Aus der Community nehmen`}
+            aria-label={tr('{name} ist veröffentlicht. Aus der Community nehmen', { name: t.name })}
             title={tr('Aus der Community nehmen')}
             disabled={saving}
             onClick={() => setAsk(true)}
@@ -416,9 +416,9 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
             </svg>
           </button>
         ) : <button
-          aria-label={kept ? `${t.name} aus Touren entfernen` : `${t.name} unter Touren speichern`}
+          aria-label={kept ? tr('{name} aus Touren entfernen', { name: t.name }) : tr('{name} unter Touren speichern', { name: t.name })}
           aria-pressed={!!kept}
-          title={kept ? 'Aus Touren entfernen' : 'Unter Touren speichern'}
+          title={kept ? tr('Aus Touren entfernen') : tr('Unter Touren speichern')}
           disabled={saving}
           onClick={() => void keep()}
           style={{ width: 44, height: 44, flex: 'none', borderRadius: 22, border: 'none', background: kept ? '#3A1C12' : props.selected ? C.surface : C.surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -436,7 +436,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
           </div>
           {t.description ? <p style={{ ...S.muted, color: C.text, margin: 0 }}>{t.description}</p> : null}
           <button style={{ ...S.primary, height: 52 }} onClick={props.onOpen}>
-            Im Planer öffnen
+            {tr('Im Planer öffnen')}
           </button>
           {!props.mine ? <WebReport kind="tour" refId={t.id} userId={t.owner} name={author} /> : null}
         </>
@@ -445,7 +445,7 @@ const RouteCard = memo(function RouteCard(props: { t: CommunityTour; mine: boole
         <ConfirmSheet
           narrow
           title={tr('Möchtest du diese Tour wirklich aus der Community entfernen?')}
-          text="Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten."
+          text={tr('Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten.')}
           confirmLabel={tr('Entfernen')}
           busy={saving}
           onClose={() => setAsk(false)}
@@ -470,7 +470,7 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
   const { r } = props;
   const arr = arrival(r);
   const free = freeSeats(r);
-  const where = r.meeting?.name ? `Treffpunkt ${r.meeting.name}` : r.roundTrip ? 'Rundtour' : null;
+  const where = r.meeting?.name ? tr('Treffpunkt {name}', { name: r.meeting.name }) : r.roundTrip ? tr('Rundtour') : null;
   const [asking, setAsking] = useState(false);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
@@ -486,7 +486,7 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
       setAsking(false);
       props.onChanged();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Das hat nicht geklappt.');
+      setErr(e instanceof Error ? e.message : tr('Das hat nicht geklappt.'));
     } finally {
       setBusy(false);
     }
@@ -495,7 +495,7 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
     <div style={{ ...card, background: props.selected ? C.surface2 : C.surface }}>
       <button
         aria-expanded={props.selected}
-        aria-label={`${r.name}, ${shortDate(r.startsAt)} ${clock(r.startsAt)} Uhr, ${free} Plätze frei`}
+        aria-label={tr('{name}, {v1} {v2} Uhr, {free} Plätze frei', { name: r.name, v1: shortDate(r.startsAt), v2: clock(r.startsAt), free })}
         onClick={props.onSelect}
         style={{ display: 'flex', gap: Spacing.m, alignItems: 'center', textAlign: 'left', background: 'transparent', border: 'none', padding: 0, color: C.text, cursor: 'pointer' }}>
         <span style={{ width: 56, flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0', borderRadius: Radius.m, background: C.ground }}>
@@ -510,21 +510,21 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
       </button>
       {props.selected ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.l, paddingTop: Spacing.s }}>
-          <span style={S.metricLabel}>{longDate(r.startsAt)}, organisiert von {r.isOwner ? 'dir' : r.ownerName}{r.ownerCar ? ` (${r.ownerCar})` : ''}</span>
+          <span style={S.metricLabel}>{longDate(r.startsAt)}{tr(', organisiert von ')}{r.isOwner ? 'dir' : r.ownerName}{r.ownerCar ? ` (${r.ownerCar})` : ''}</span>
           <div style={S.metrics}>
             {r.km != null ? <Metric label={tr('Strecke')} value={`${formatKm(r.km, 0)} km`} /> : null}
-            {arr ? <Metric label={r.roundTrip ? 'Zurück' : 'Ankunft'} value={clock(arr)} /> : null}
+            {arr ? <Metric label={r.roundTrip ? tr('Zurück') : tr('Ankunft')} value={clock(arr)} /> : null}
             <Metric label={tr('Plätze')} value={free > 0 ? `${free} frei` : 'voll'} />
           </div>
           {!r.roundTrip && r.goalName ? <span style={S.muted}>Ziel: {r.goalName}</span> : null}
           {r.note ? <p style={{ ...S.muted, color: C.text }}>{r.note}</p> : null}
           <button style={{ ...S.secondaryOnSurface, flex: 'none', alignSelf: 'flex-start' }} onClick={props.onRoute}>
-            Route im Planer ansehen
+            {tr('Route im Planer ansehen')}
           </button>
           {!r.isOwner ? <WebReport kind="ausfahrt" refId={r.id} name={r.ownerName} /> : null}
           {canAsk && !asking ? (
             <button style={{ ...S.primary, flex: 'none' }} onClick={() => setAsking(true)}>
-              Mitfahren anfragen
+              {tr('Mitfahren anfragen')}
             </button>
           ) : null}
           {asking ? (
@@ -533,27 +533,27 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
               onSubmit={(e) => {
                 e.preventDefault();
                 const v = currentVehicle();
-                void act(() => requestAusfahrt(r.id, msg, v ? vehicleName(v) : null), 'Anfrage gesendet');
+                void act(() => requestAusfahrt(r.id, msg, v ? vehicleName(v) : null), tr('Anfrage gesendet'));
               }}>
               <Field id={`anfrage-${r.id}`} label={tr('Nachricht an den Organisator (optional)')} placeholder={tr('Kurz zu dir und deinem Auto')} value={msg} onChange={setMsg} area max={300} />
               <div style={{ display: 'flex', gap: Spacing.s }}>
                 <button type="button" style={{ ...pillBtn, background: C.ground, color: C.text }} onClick={() => setAsking(false)}>
-                  Abbrechen
+                  {tr('Abbrechen')}
                 </button>
                 <button type="submit" style={{ ...pillBtn, background: C.signal, color: '#fff' }} disabled={busy}>
-                  Anfrage senden
+                  {tr('Anfrage senden')}
                 </button>
               </div>
             </form>
           ) : null}
           {r.myStatus === 'angefragt' ? (
-            <button style={{ ...S.link, fontSize: 15 }} disabled={busy} onClick={() => void act(() => withdrawAusfahrt(r.id), 'Anfrage zurückgezogen')}>
-              Anfrage zurückziehen
+            <button style={{ ...S.link, fontSize: 15 }} disabled={busy} onClick={() => void act(() => withdrawAusfahrt(r.id), tr('Anfrage zurückgezogen'))}>
+              {tr('Anfrage zurückziehen')}
             </button>
           ) : null}
           {err ? <span style={S.errorText}>{err}</span> : null}
           <span style={appHint}>
-            {r.isOwner ? 'Anfragen beantworten, Teilnehmer und Chat findest du in der App unter Community.' : 'Den Chat der Ausfahrt und die Teilnehmer findest du in der App unter Community.'}
+            {r.isOwner ? tr('Anfragen beantworten, Teilnehmer und Chat findest du in der App unter Community.') : tr('Den Chat der Ausfahrt und die Teilnehmer findest du in der App unter Community.')}
           </span>
         </div>
       ) : null}
@@ -562,7 +562,7 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
 }
 
 function rideStatus(r: Ausfahrt): { text: string; tone: 'good' | 'signal' | 'muted' } | null {
-  if (r.isOwner) return { text: r.openRequests ? `${r.openRequests} ${r.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : 'Deine Ausfahrt', tone: r.openRequests ? 'signal' : 'muted' };
+  if (r.isOwner) return { text: r.openRequests ? `${r.openRequests} ${r.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : tr('Deine Ausfahrt'), tone: r.openRequests ? 'signal' : 'muted' };
   if (r.myStatus === 'zugesagt') return { text: tr('Du bist dabei'), tone: 'good' };
   if (r.myStatus === 'eingeladen') return { text: tr('Eingeladen'), tone: 'signal' };
   if (r.myStatus === 'angefragt') return { text: tr('Angefragt'), tone: 'muted' };
@@ -573,7 +573,7 @@ function rideStatus(r: Ausfahrt): { text: string; tone: 'good' | 'signal' | 'mut
 
 function DriverCard(props: { d: Driver; km: number | null; selected: boolean; onSelect: () => void }) {
   const { d } = props;
-  const sub = [d.homeName, props.km != null ? `${Math.round(props.km)} km entfernt` : null].filter(Boolean).join(', ');
+  const sub = [d.homeName, props.km != null ? tr('{v0} km entfernt', { v0: Math.round(props.km) }) : null].filter(Boolean).join(', ');
   return (
     <div style={{ ...card, background: props.selected ? C.surface2 : C.surface }}>
       <button
@@ -588,7 +588,7 @@ function DriverCard(props: { d: Driver; km: number | null; selected: boolean; on
             {d.name}
             {d.isMe ? ' (du)' : ''}
           </span>
-          <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted }}>{[d.car, sub].filter(Boolean).join('  ·  ') || 'Ohne Wohnort'}</span>
+          <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted }}>{[d.car, sub].filter(Boolean).join('  ·  ') || tr('Ohne Wohnort')}</span>
         </span>
       </button>
       {props.selected ? (
@@ -604,10 +604,10 @@ function DriverCard(props: { d: Driver; km: number | null; selected: boolean; on
             </div>
           ) : null}
           {d.birthdayToday ? <span style={{ ...S.metricLabel, color: C.text, fontWeight: 700 }}>{tr('Hat heute Geburtstag')}</span> : null}
-          {d.age != null ? <span style={S.metricLabel}>{d.age} Jahre</span> : null}
-          {d.memberSince ? <span style={S.metricLabel}>Dabei seit {d.memberSince.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</span> : null}
+          {d.age != null ? <span style={S.metricLabel}>{d.age}{tr(' Jahre')}</span> : null}
+          {d.memberSince ? <span style={S.metricLabel}>{tr('Dabei seit ')}{d.memberSince.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</span> : null}
           {!d.isMe ? (
-            <span style={appHint}>{d.allowMessages ? 'Nachrichten an Drivers schreibst du in der App unter Community.' : 'Dieser Driver möchte gerade keine Nachrichten bekommen.'}</span>
+            <span style={appHint}>{d.allowMessages ? tr('Nachrichten an Drivers schreibst du in der App unter Community.') : tr('Dieser Driver möchte gerade keine Nachrichten bekommen.')}</span>
           ) : null}
           {!d.isMe ? <WebReport kind="profile" refId={d.id} userId={d.id} name={d.name} /> : null}
         </div>

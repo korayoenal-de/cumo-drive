@@ -30,7 +30,7 @@ import { flatten, haversine, type LatLon, type Tour } from '../tour';
 import { cumoAvailable, cumoPlan } from '../cumo-routing';
 import { valhallaFetch, costingFor, decodePolyline6 } from '../valhalla';
 import type { Lane, Maneuver, ManeuverKind, NavRequest, NavRoute } from './types';
-import { getLang, t } from '@/i18n';
+import { getLang, t, tr } from '@/i18n';
 
 /** Mindestabstand der Punkte nach dem Ausdünnen in Metern */
 const THIN_M = 40;
@@ -392,7 +392,7 @@ async function withoutInventedUturn(first: VTrip, shape: { lat: number; lon: num
 /**
  * Ein Stück der Linie abgleichen. Valhalla hört an einer Stelle, die es nicht zuordnen kann (etwa eine
  * Wende auf einer Nebenfahrbahn), mit einem "via" auf und liefert nur den Teil davor. Dann geht es ab
- * dieser Stelle weiter, bis die ganze Linie abgedeckt ist (Rundtour ab Bensheim, 6.11.: nur 1,2 von 54 km).
+ * dieser Stelle weiter, bis die ganze Linie abgedeckt ist (Rundtour ab München, 6.11.: nur 1,2 von 54 km).
  */
 async function traceChunk(points: LatLon[], req: NavRequest, signal?: AbortSignal): Promise<Piece> {
   let from = 0;
@@ -673,7 +673,7 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
     const cumKm = cumulativeKm(lead.shape);
     const maneuvers = lead.maneuvers.map((m) => {
       const out = toManeuver(m, cumKm);
-      return isDestination(m.type) ? { ...out, text: 'Start der Tour erreicht.', speech: 'Du bist am Start der Tour.' } : out;
+      return isDestination(m.type) ? { ...out, text: tr('Start der Tour erreicht.'), speech: tr('Du bist am Start der Tour.') } : out;
     });
     const cumMin = minutesAlong(lead.maneuvers, cumKm);
     return {
@@ -912,7 +912,7 @@ export async function rejoinNavRoute(
   const back: Maneuver = {
     kind: 'geradeaus',
     back: true,
-    text: 'Zurück auf der Tour. Der Tour folgen.',
+    text: tr('Zurück auf der Tour. Der Tour folgen.'),
     speech: t('Dann bist du zurück auf der Tour.'),
     index: join,
     km: cumKm[join],

@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
-import { useRide, type RideMsg } from '@/lib/group/ride';
+import { quickText, useRide, type RideMsg } from '@/lib/group/ride';
 
 export function RideBanner() {
   const ride = useRide();
@@ -23,7 +23,7 @@ export function RideBanner() {
     seen.current = latest.id;
     if (latest.from === ride.me?.id) return;
     const t0 = setTimeout(() => setShown(latest), 0);
-    speakText(`${latest.name}: ${latest.text}`);
+    speakText(`${latest.name}: ${quickText(latest.text)}`);
     const t1 = setTimeout(() => setShown((s) => (s?.id === latest.id ? null : s)), 8000);
     return () => {
       clearTimeout(t0);
@@ -37,7 +37,7 @@ export function RideBanner() {
       <AppText variant="label" style={styles.from}>
         {shown.name}
       </AppText>
-      <AppText style={styles.text}>{shown.text}</AppText>
+      <AppText style={styles.text}>{quickText(shown.text)}</AppText>
     </Pressable>
   );
 }

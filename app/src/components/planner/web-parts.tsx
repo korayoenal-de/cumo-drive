@@ -10,7 +10,7 @@ import { Spacing, Type } from '@/constants/theme';
 
 import { C, DISPLAY } from './web-shared';
 import { S } from './web-styles';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 /* ---------- Bausteine ---------- */
 
@@ -26,7 +26,7 @@ export function PlaceSearch(props: { near?: LatLon; placeholder: string; onPick:
     const t = setTimeout(() => {
       const passHits: Place[] = searchPasses(PASSES, q, 3).map((p) => ({
         name: p.name,
-        detail: `Pass, ${passSummary(p, undefined, passState(p, live).note)}, ${p.region}`,
+        detail: tr('Pass, {v0}, {region}', { v0: passSummary(p, undefined, passState(p, live).note), region: p.region }),
         p: passPoint(p),
       }));
       // Städte und Gemeinden zuerst, damit "Heppenheim" die Stadt ist und nicht der Ortsteil von Worms
@@ -159,7 +159,7 @@ export function ElevationChart(props: { e: ElevationProfile; onHoverKm: (km: num
         viewBox={`0 0 ${W} ${H}`}
         style={{ width: '100%', height: 'auto', background: C.surface, borderRadius: 10, cursor: 'crosshair' }}
         role="img"
-        aria-label={`Höhenprofil von ${e.min} bis ${e.max} Meter`}
+        aria-label={tr('Höhenprofil von {min} bis {max} Meter', { min: e.min, max: e.max })}
         onMouseMove={(ev) => {
           const r = (ev.currentTarget as SVGSVGElement).getBoundingClientRect();
           const km = ((ev.clientX - r.left) / r.width) * maxKm;
@@ -197,7 +197,7 @@ export function Status(props: { text: string; onCancel: () => void }) {
       <span style={S.spinner} />
       <span style={{ flex: 1 }}>{props.text}</span>
       <button style={S.link} onClick={props.onCancel}>
-        Abbrechen
+        {tr('Abbrechen')}
       </button>
     </div>
   );

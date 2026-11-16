@@ -72,7 +72,7 @@ import { Accordion, Brand, Status, TypoTabs } from './web-parts';
 import { FunDialog } from './web-fun';
 import { ConfirmSheet, MoreMenu, useNarrow } from './web-ui';
 import { S } from './web-styles';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 type Area = 'planen' | 'touren' | 'community' | 'einstellungen';
 type PlanMode = 'tour' | 'rundtour';
@@ -80,8 +80,8 @@ type PlanMode = 'tour' | 'rundtour';
 type MapMenu = { x: number; y: number; p: LatLon; pass?: Pass; wp?: number } | null;
 
 const AREAS: { id: Area; label: string }[] = [
-  { id: 'planen', label: 'Planen' },
-  { id: 'touren', label: 'Touren' },
+  { id: 'planen', label: tr('Planen') },
+  { id: 'touren', label: tr('Touren') },
   { id: 'community', label: 'Community' },
 ];
 
@@ -321,7 +321,7 @@ export default function Planner() {
         .filter((x) => x.p)
         .map((x) => ({
           type: 'Feature',
-          properties: { initial: x.name.slice(0, 1).toUpperCase(), name: x.id === ride.me?.id ? 'Du' : x.name, role: x.role, stale: !x.seenAt || now - x.seenAt > 60000 },
+          properties: { initial: x.name.slice(0, 1).toUpperCase(), name: x.id === ride.me?.id ? tr('Du') : x.name, role: x.role, stale: !x.seenAt || now - x.seenAt > 60000 },
           geometry: { type: 'Point', coordinates: [x.p![1], x.p![0]] },
         })),
     });
@@ -539,16 +539,16 @@ export default function Planner() {
       showToast((e as Error).message, { tone: 'error' });
       return;
     }
-    setBusy('Etappen Check läuft');
+    setBusy(tr('Etappen Check läuft'));
     try {
       const l = flatten(parsed).map((x) => x.p);
-      const c = await checkLine(l, (d, n) => setBusy(`Etappen Check läuft (${d} von ${n})`), undefined, true);
+      const c = await checkLine(l, (d, n) => setBusy(tr('Etappen Check läuft ({d} von {n})', { d, n })), undefined, true);
       const saved = saveTour({ ...parsed, ...c, geprueft: true, curves: countCurves(l) }, '');
       void syncLibrary();
       showToast(`${saved.name} importiert`);
       openTour(saved);
     } catch (e) {
-      showToast(`Import hat nicht geklappt: ${(e as Error).message}`, { tone: 'error' });
+      showToast(tr('Import hat nicht geklappt: {message}', { message: (e as Error).message }), { tone: 'error' });
     } finally {
       setBusy(null);
     }
@@ -557,7 +557,7 @@ export default function Planner() {
 
   const step = plan.step ? STEP_TEXT[plan.step] : busy;
   const savedTour = library.find((t) => t.id === plan.cloudId) ?? null;
-  const routeName = plan.name.trim() || routeTour?.name || 'Neue Tour';
+  const routeName = plan.name.trim() || routeTour?.name || tr('Neue Tour');
 
   /* ---------- Darstellung ---------- */
   const mapPane = (
@@ -567,7 +567,7 @@ export default function Planner() {
       <MapSettingsButton top={12} right={12} />
       {photosOnRoute.length && area === 'planen' ? (
         <button style={showPhotos ? S.photoToggleOn : S.photoToggle} onClick={() => setShowPhotos(!showPhotos)} aria-pressed={showPhotos}>
-          Fotospots an der Strecke ({photosOnRoute.length})
+          {tr('Fotospots an der Strecke (')}{photosOnRoute.length})
         </button>
       ) : null}
       {gallery ? (
@@ -582,7 +582,7 @@ export default function Planner() {
         />
       ) : null}
       {area === 'planen' && mode === 'tour' && !plan.step && !narrow ? (
-        <div style={S.hint}>{plan.complete ? 'Punkte und Linie lassen sich greifen und ziehen. Klick fragt nach der Rolle eines neuen Punkts.' : 'Klick setzt einen Punkt, Rechtsklick öffnet alle Optionen'}</div>
+        <div style={S.hint}>{plan.complete ? tr('Punkte und Linie lassen sich greifen und ziehen. Klick fragt nach der Rolle eines neuen Punkts.') : tr('Klick setzt einen Punkt, Rechtsklick öffnet alle Optionen')}</div>
       ) : null}
       {area === 'planen' && mode === 'tour' ? <AdjustChip state={adjusting ? { kind: 'busy' } : adjustDone} onDone={clearDone} /> : null}
       {menu ? <MapMenuCard menu={menu} plan={plan} live={live} photoGroups={photoGroups} onGallery={(g) => setGallery({ g, i: null })} onClose={() => setMenu(null)} onAdd={(k, p, n) => void addPoint(k, p, n)} onRemoveAt={(idx) => {
@@ -621,7 +621,7 @@ export default function Planner() {
             <button
               aria-pressed={area === 'einstellungen'}
               aria-label="Einstellungen"
-              title="Einstellungen"
+              title={tr('Einstellungen')}
               onClick={() => setArea('einstellungen')}
               style={{ width: 44, height: 44, borderRadius: 22, border: 'none', background: area === 'einstellungen' ? C.surface2 : C.surface, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden fill="none" stroke={area === 'einstellungen' ? C.text : C.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -636,8 +636,8 @@ export default function Planner() {
           <TypoTabs
             value={mode}
             options={[
-              { id: 'tour', label: 'Tour planen' },
-              { id: 'rundtour', label: 'Rundtour' },
+              { id: 'tour', label: tr('Tour planen') },
+              { id: 'rundtour', label: tr('Rundtour') },
             ]}
             onChange={(v) => setMode(v)}
           />
@@ -669,7 +669,7 @@ export default function Planner() {
               />
               {routeTour ? (
                 <div style={{ marginTop: 18 }}>
-                  <Accordion label="Gruppenfahrt" summary="Code für die Gruppe, Live Positionen">
+                  <Accordion label={tr('Gruppenfahrt')} summary={tr('Code für die Gruppe, Live Positionen')}>
                     <GroupPanel tour={routeTour} profile={profile} avoid={avoid} isSample={false} />
                   </Accordion>
                 </div>
@@ -704,7 +704,7 @@ export default function Planner() {
               <LibraryPanel currentId={plan.cloudId} onOpen={openTour} onPlan={() => setArea('planen')} narrow={narrow} />
               <div style={{ marginTop: 18 }}>
                 <button style={{ ...S.link, color: C.muted }} disabled={!!busy} onClick={() => fileRef.current?.click()}>
-                  GPX oder KML importieren
+                  {tr('GPX oder KML importieren')}
                 </button>
                 {busy ? <p style={S.muted}>{busy}</p> : null}
               </div>
@@ -743,11 +743,11 @@ export default function Planner() {
             {plan.cloudId || edited ? (
               <span style={{ flex: 1, minWidth: 0 }}>
                 {saveState === 'error' ? (
-                  <StatusLine tone="warn" text="Speichern hat nicht geklappt, wir versuchen es bei der nächsten Änderung erneut." />
+                  <StatusLine tone="warn" text={tr('Speichern hat nicht geklappt, wir versuchen es bei der nächsten Änderung erneut.')} />
                 ) : plan.dirty || saveState === 'saving' ? (
-                  <StatusLine tone="muted" text="Wird gespeichert …" />
+                  <StatusLine tone="muted" text={tr('Wird gespeichert …')} />
                 ) : (
-                  <StatusLine tone="good" text="Gespeichert, in der App unter Touren." />
+                  <StatusLine tone="good" text={tr('Gespeichert, in der App unter Touren.')} />
                 )}
               </span>
             ) : (
@@ -757,16 +757,16 @@ export default function Planner() {
                   setEdited(true);
                   void plan.save(curvesRoute, profile, avoid, autoName(plan), { quiet: true }).then(() => showToast(t('Unter Touren gespeichert, auch in der App')));
                 }}>
-                Unter Touren speichern
+                {tr('Unter Touren speichern')}
               </button>
             )}
             <MoreMenu
-              label="Weitere Aktionen"
+              label={tr('Weitere Aktionen')}
               up
               items={[
                 {
                   key: 'link',
-                  label: 'Link kopieren',
+                  label: tr('Link kopieren'),
                   // kurzer Link wie in der App, mit echten Punkten, Namen und Profil je Etappe
                   onPress: () =>
                     void copyTourLink(
@@ -781,33 +781,33 @@ export default function Planner() {
                       .then(() => showToast(t('Link kopiert')))
                       .catch(() => showToast(t('Kopieren hat nicht geklappt'), { tone: 'error' })),
                 },
-                { key: 'gpx', label: 'Als GPX herunterladen', onPress: () => void exportTour({ ...routeTour, name: routeName }, 'gpx') },
-                { key: 'kml', label: 'Als KML herunterladen', onPress: () => void exportTour({ ...routeTour, name: routeName }, 'kml') },
+                { key: 'gpx', label: tr('Als GPX herunterladen'), onPress: () => void exportTour({ ...routeTour, name: routeName }, 'gpx') },
+                { key: 'kml', label: tr('Als KML herunterladen'), onPress: () => void exportTour({ ...routeTour, name: routeName }, 'kml') },
                 ...(plan.cloudId
                   ? [
                       // Duplizieren entfällt (Koray 16.11.); im Web speichert der Planer laufend, darum hier als Aktion
                       {
                         key: 'neu',
-                        label: 'Als neue Tour speichern',
+                        label: tr('Als neue Tour speichern'),
                         onPress: () =>
                           void plan.save(curvesRoute, profile, avoid, undefined, { asCopy: true, quiet: true }).then((id) => {
                             const c = id ? readLibrary().find((x) => x.id === id) : null;
                             if (!c) return;
                             openTour(c);
-                            showToast(`${c.name} gespeichert, du bearbeitest jetzt die neue Tour`);
+                            showToast(tr('{name} gespeichert, du bearbeitest jetzt die neue Tour', { name: c.name }));
                           }),
                       },
-                      { key: 'close', label: 'Tour schließen', onPress: () => plan.reset() },
-                      { key: 'del', label: 'Tour löschen', danger: true, onPress: () => setAskDelete(true) },
+                      { key: 'close', label: tr('Tour schließen'), onPress: () => plan.reset() },
+                      { key: 'del', label: tr('Tour löschen'), danger: true, onPress: () => setAskDelete(true) },
                     ]
-                  : [{ key: 'reset', label: 'Planung verwerfen', danger: true, onPress: () => plan.reset() }]),
+                  : [{ key: 'reset', label: tr('Planung verwerfen'), danger: true, onPress: () => plan.reset() }]),
               ]}
             />
           </div>
         ) : null}
         <div style={{ ...S.engine, padding: narrow ? '0 16px 12px' : S.engine.padding }}>
           <span style={{ ...S.dot, background: ownServer ? C.good : C.muted }} />
-          {ownServer === null ? 'Routing wird gesucht' : ownServer ? 'Eigener Routing Server' : 'Öffentliches Routing, eigener Server gerade nicht erreichbar'}
+          {ownServer === null ? tr('Routing wird gesucht') : ownServer ? tr('Eigener Routing Server') : tr('Öffentliches Routing, eigener Server gerade nicht erreichbar')}
         </div>
       </aside>
       {funOpen && fun ? (
@@ -824,18 +824,18 @@ export default function Planner() {
         savedTour.published ? (
           <ConfirmSheet
             narrow={narrow}
-            title="Auch die veröffentlichte Tour löschen?"
-            text={`${savedTour.name} steht in der Community. Löschen nimmt sie auch dort heraus. Nur bei dir entfernen geht unter Touren.`}
-            confirmLabel="Überall löschen"
+            title={tr('Auch die veröffentlichte Tour löschen?')}
+            text={tr('{name} steht in der Community. Löschen nimmt sie auch dort heraus. Nur bei dir entfernen geht unter Touren.', { name: savedTour.name })}
+            confirmLabel={tr('Überall löschen')}
             onClose={() => setAskDelete(false)}
             onConfirm={() => deleteSaved(savedTour, plan.reset, () => setAskDelete(false))}
           />
         ) : (
           <ConfirmSheet
             narrow={narrow}
-            title="Möchtest du diese Tour wirklich löschen?"
-            text={`${savedTour.name} verschwindet aus dem Web Planer, der App und deinem Konto.`}
-            confirmLabel="Löschen"
+            title={tr('Möchtest du diese Tour wirklich löschen?')}
+            text={tr('{name} verschwindet aus dem Web Planer, der App und deinem Konto.', { name: savedTour.name })}
+            confirmLabel={tr('Löschen')}
             onClose={() => setAskDelete(false)}
             onConfirm={() => deleteSaved(savedTour, plan.reset, () => setAskDelete(false))}
           />
@@ -847,23 +847,23 @@ export default function Planner() {
 
 /**
  * Name beim ersten automatischen Speichern: ohne eigenen Namen aus Start und Ziel (in der App fragt ein Dialog),
- * zum Beispiel "Heppenheim nach Hirschhorn" oder "Rundtour ab Bensheim". Danach bleibt der Name, wie er ist.
+ * zum Beispiel "Heppenheim nach Hirschhorn" oder "Rundtour ab München". Danach bleibt der Name, wie er ist.
  */
 function autoName(plan: ReturnType<typeof useTourPlan>): string | undefined {
   const n = plan.name.trim();
-  if (n && n !== 'Neue Tour') return undefined;
+  if (n && n !== tr('Neue Tour')) return undefined;
   const s = plan.start ? plan.names[keyOf(plan.start)] : null;
   const z = plan.ziel ? plan.names[keyOf(plan.ziel)] : null;
   if (!s || !z) return undefined;
   const short = (x: string) => x.split(',')[0].trim();
-  return plan.start && plan.ziel && haversine(plan.start, plan.ziel) < 1500 ? `Rundtour ab ${short(s)}` : `${short(s)} nach ${short(z)}`;
+  return plan.start && plan.ziel && haversine(plan.start, plan.ziel) < 1500 ? tr('Rundtour ab {v0}', { v0: short(s) }) : `${short(s)} nach ${short(z)}`;
 }
 
 function deleteSaved(t: SavedTour, reset: () => void, close: () => void) {
   deleteTour(t.id);
   close();
   reset();
-  showToast(t.published ? 'Tour gelöscht, auch in der Community' : 'Tour gelöscht');
+  showToast(t.published ? tr('Tour gelöscht, auch in der Community') : tr('Tour gelöscht'));
 }
 
 /** Schwebende Karte über der Karte: angetippter Pass oder neuer Punkt, Aktionen direkt auf die Route */
@@ -882,7 +882,7 @@ function MapMenuCard(props: {
   const { menu, plan } = props;
   const pass = menu.pass;
   const inRoute = pass ? passIndex(plan.pts, pass) >= 0 : menu.wp != null;
-  const wpRole = menu.wp == null ? null : menu.wp === 0 && plan.start ? 'Start' : menu.wp === plan.pts.length - 1 && plan.ziel ? 'Ziel' : `Zwischenziel ${plan.start ? menu.wp : menu.wp + 1}`;
+  const wpRole = menu.wp == null ? null : menu.wp === 0 && plan.start ? 'Start' : menu.wp === plan.pts.length - 1 && plan.ziel ? tr('Ziel') : tr('Zwischenziel {v0}', { v0: plan.start ? menu.wp : menu.wp + 1 });
   const known = menu.wp != null ? plan.names[keyOf(menu.p)] : undefined;
   const photos = pass ? (props.photoGroups ?? []).filter((g) => g.pass?.id === pass.id) : [];
   const [name, setName] = useState<string | null>(pass?.name ?? known ?? null);
@@ -905,7 +905,7 @@ function MapMenuCard(props: {
   return (
     <div style={{ ...S.menu, left, top: menu.y + 8 }} role="menu" onContextMenu={(e) => e.preventDefault()}>
       <div style={S.menuHead}>
-        <b>{pass ? pass.name : (name ?? 'Neuer Punkt')}</b>
+        <b>{pass ? pass.name : (name ?? tr('Neuer Punkt'))}</b>
         {wpRole ? <span style={S.dropDetail}>{wpRole}</span> : null}
         {pass ? <span style={S.dropDetail}>{passSummary(pass, undefined, passState(pass, props.live).note)}</span> : wpRole ? null : <span style={S.dropDetail}>{`${menu.p[0].toFixed(4)}, ${menu.p[1].toFixed(4)}`}</span>}
         {pass?.warn?.length ? <span style={{ ...S.dropDetail, color: C.warn, fontWeight: 700 }}>{warnSpeech(pass.warn)}</span> : null}
@@ -919,7 +919,7 @@ function MapMenuCard(props: {
             props.onGallery({ ...photos[0], photos: photos.flatMap((g) => g.photos) });
             props.onClose();
           }}>
-          Fotos ansehen ({photos.reduce((n, g) => n + g.photos.length, 0)})
+          {tr('Fotos ansehen (')}{photos.reduce((n, g) => n + g.photos.length, 0)})
         </button>
       ) : null}
       {inRoute ? (
@@ -931,25 +931,25 @@ function MapMenuCard(props: {
             if (menu.wp != null) props.onRemoveAt(menu.wp);
             else if (pass) props.onRemovePass(pass);
           }}>
-          Aus der Route entfernen
+          {tr('Aus der Route entfernen')}
         </button>
       ) : (
         <>
           {plan.complete ? (
             <button role="menuitem" style={S.menuItem} onClick={() => act('via')}>
-              {pass ? 'Zur Route hinzufügen' : 'Als Zwischenziel'}
+              {pass ? tr('Zur Route hinzufügen') : tr('Als Zwischenziel')}
             </button>
           ) : null}
           <button role="menuitem" style={S.menuItem} onClick={() => act('start')}>
-            Als Start
+            {tr('Als Start')}
           </button>
           <button role="menuitem" style={S.menuItem} onClick={() => act('ziel')}>
-            {plan.complete ? 'Als neues Ziel' : 'Als Ziel'}
+            {plan.complete ? tr('Als neues Ziel') : tr('Als Ziel')}
           </button>
         </>
       )}
       <button role="menuitem" style={S.menuItem} onClick={() => act('rundtour')}>
-        Rundtour von hier
+        {tr('Rundtour von hier')}
       </button>
     </div>
   );

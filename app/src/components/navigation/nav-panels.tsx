@@ -18,7 +18,7 @@ import { ManeuverIcon, MicIcon, SpeakerIcon } from './maneuver-icon';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { VolumeSteps, volumeLabel } from '@/components/settings/volume-steps';
 import { useDriveSettings } from '@/lib/drive-settings';
-import { t } from '@/i18n';
+import { decimal, t, tr } from '@/i18n';
 
 /**
  * Zustands Karten über der Karte: Colors.signalTint und Colors.goodTint auf Ground verrechnet,
@@ -89,7 +89,7 @@ export function LaneRow({ lanes }: { lanes: Lane[] }) {
     <View
       style={styles.lanes}
       accessible
-      accessibilityLabel={`Spur ${use.join(' und ')} von ${lanes.length}, von links gezählt`}>
+      accessibilityLabel={tr('Spur {v0} von {length}, von links gezählt', { v0: use.join(' und '), length: lanes.length })}>
       {lanes.map((l, i) => (
         <View key={i} style={[styles.lane, l.use && styles.laneUse]}>
           <SymbolView name={laneSymbol(l.dirs)} size={20} weight="semibold" tintColor={l.use ? Colors.text : l.ok ? Colors.muted : Colors.line} />
@@ -116,9 +116,9 @@ export function Recalculating({ first = false }: { first?: boolean }) {
       <View style={styles.row}>
         <ActivityIndicator color={Colors.text} />
         <View style={styles.flex}>
-          <AppText variant="title">{first ? 'Route wird geladen' : 'Route wird neu berechnet'}</AppText>
+          <AppText variant="title">{first ? tr('Route wird geladen') : tr('Route wird neu berechnet')}</AppText>
           <AppText variant="caption" muted>
-            {first ? 'Anweisungen für die Tour werden geholt.' : 'Du bist von der Tour abgewichen.'}
+            {first ? tr('Anweisungen für die Tour werden geholt.') : tr('Du bist von der Tour abgewichen.')}
           </AppText>
         </View>
       </View>
@@ -205,7 +205,7 @@ export function BottomBar({
     return () => clearTimeout(t);
   }, [menu]);
 
-  const km = remainingKm != null ? `${remainingKm.toFixed(remainingKm < 10 ? 1 : 0).replace('.', ',')} km` : '';
+  const km = remainingKm != null ? `${decimal(remainingKm.toFixed(remainingKm < 10 ? 1 : 0))} km` : '';
   const rest = paused ? 'Pausiert' : [formatRemaining(eta, now), km].filter(Boolean).join(' · ');
   const done = extra ? Math.max(0, Math.min(100, extra.donePct)) : null;
   const actions = [
@@ -259,7 +259,7 @@ export function BottomBar({
           </View>
         )}
         <View style={styles.barRow}>
-          <Pressable onLongPress={onSecret} delayLongPress={800} style={styles.etaBox} accessibilityLabel={`Ankunft ${formatClock(eta)}, ${rest}`}>
+          <Pressable onLongPress={onSecret} delayLongPress={800} style={styles.etaBox} accessibilityLabel={tr('Ankunft {v0}, {rest}', { v0: formatClock(eta), rest })}>
             <View style={styles.etaLine}>
               <AppText style={styles.eta}>{formatClock(eta) || '--:--'}</AppText>
               <AppText style={[styles.rest, paused && { color: Colors.warn }]} numberOfLines={1}>
@@ -267,7 +267,7 @@ export function BottomBar({
               </AppText>
             </View>
             {done != null && (
-              <View style={styles.track} accessibilityLabel={`${done} Prozent gefahren`}>
+              <View style={styles.track} accessibilityLabel={tr('{done} Prozent gefahren', { done })}>
                 <View style={[styles.fill, { width: `${done}%` }]} />
                 {extra!.viaPct.map((v) => (
                   <View key={v} style={[styles.via, { left: `${v}%` }, v <= done && styles.viaDone]} />
@@ -288,7 +288,7 @@ export function BottomBar({
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={voice ? 'Ansagen aus' : 'Ansagen an'}
+            accessibilityLabel={voice ? tr('Ansagen aus') : tr('Ansagen an')}
             accessibilityHint={t('Lange drücken für die Lautstärke')}
             onPress={() => (vol ? setVol(0) : onVoice())}
             onLongPress={() => {
@@ -304,7 +304,7 @@ export function BottomBar({
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={menu ? 'Schließen' : 'Route und Fahrt: Planung, Zwischenziel überspringen, Pause, Beenden'}
+            accessibilityLabel={menu ? tr('Schließen') : tr('Route und Fahrt: Planung, Zwischenziel überspringen, Pause, Beenden')}
             onPress={() => setMenu(!menu)}
             style={({ pressed }) => [styles.round, menu ? styles.roundOpen : styles.roundSignal, pressed && styles.pressed]}>
             <SymbolView
@@ -318,7 +318,7 @@ export function BottomBar({
           {group && talk && (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={talk.disabled ? 'Funk, gerade spricht nur die Lead' : talk.talking ? 'Du sprichst, loslassen zum Beenden' : 'Funk, gedrückt halten zum Sprechen'}
+              accessibilityLabel={talk.disabled ? tr('Funk, gerade spricht nur die Lead') : talk.talking ? tr('Du sprichst, loslassen zum Beenden') : tr('Funk, gedrückt halten zum Sprechen')}
               accessibilityState={{ selected: talk.talking, disabled: talk.disabled }}
               disabled={talk.disabled}
               onPressIn={() => {
@@ -331,7 +331,7 @@ export function BottomBar({
               }}
               style={[styles.talk, talk.talking && styles.talkOn, (talk.waiting || talk.disabled) && styles.talkWait]}>
               <MicIcon />
-              <AppText style={styles.talkText}>{talk.label ?? (talk.waiting ? 'Warten' : 'Funk')}</AppText>
+              <AppText style={styles.talkText}>{talk.label ?? (talk.waiting ? tr('Warten') : tr('Funk'))}</AppText>
             </Pressable>
           )}
         </View>

@@ -11,6 +11,7 @@ import type { CarLook } from '@/components/map/car-sprite';
 import { reverseName } from './geocode';
 import { supabase } from './supabase';
 import type { LatLon } from './tour';
+import { tr } from '@/i18n';
 
 export type GarageCar = { name: string; look: CarLook | null };
 
@@ -83,14 +84,14 @@ export function isBirthday(iso: string | null | undefined, now = new Date()): bo
  * Liefert JJJJ-MM-TT oder einen Hinweis.
  */
 export function parseBirthday(digits: string, now = new Date()): { iso: string } | { hint: string } {
-  if (digits.length < 8) return { hint: 'Bitte vollständig eingeben, zum Beispiel 14.03.1984.' };
+  if (digits.length < 8) return { hint: tr('Bitte vollständig eingeben, zum Beispiel 14.03.1984.') };
   const d = +digits.slice(0, 2), mo = +digits.slice(2, 4), y = +digits.slice(4, 8);
   const dt = new Date(y, mo - 1, d);
-  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return { hint: 'Dieses Datum gibt es nicht.' };
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return { hint: tr('Dieses Datum gibt es nicht.') };
   const iso = `${digits.slice(4, 8)}-${digits.slice(2, 4)}-${digits.slice(0, 2)}`;
   const a = ageOf(iso, now) ?? 0;
-  if (a < 16) return { hint: 'Drivers ist ab 16 Jahren.' };
-  if (a > 105 || y < 1920) return { hint: 'Bitte das Jahr prüfen.' };
+  if (a < 16) return { hint: tr('Drivers ist ab 16 Jahren.') };
+  if (a > 105 || y < 1920) return { hint: tr('Bitte das Jahr prüfen.') };
   return { iso };
 }
 
@@ -106,7 +107,7 @@ export function shownBirthday(p: Pick<Privacy, 'birthDate' | 'birthdayShow'>): {
 export const birthDigits = (iso: string | null) => (iso ? `${iso.slice(8, 10)}${iso.slice(5, 7)}${iso.slice(0, 4)}` : '');
 
 function fail(message: string): never {
-  throw new Error(/permission|violat|row-level/i.test(message) ? 'Dieser Fahrer möchte gerade keine Nachrichten bekommen.' : /function|relation|column|JWT/i.test(message) ? 'Das hat nicht geklappt. Bitte nochmal versuchen.' : message);
+  throw new Error(/permission|violat|row-level/i.test(message) ? 'Dieser Fahrer möchte gerade keine Nachrichten bekommen.' : /function|relation|column|JWT/i.test(message) ? tr('Das hat nicht geklappt. Bitte nochmal versuchen.') : message);
 }
 
 type DriverRow = {
@@ -211,7 +212,7 @@ export async function savePrivacy(p: Partial<Privacy>) {
   // birth_date ist für andere nicht lesbar, darum kein upsert (der bräuchte Leserechte), sondern ein update der eigenen Zeile
   if ('birthDate' in p) {
     const { error } = await supabase.from('profiles').update({ birth_date: p.birthDate ?? null }).eq('id', u.user.id);
-    if (error) fail(/check/i.test(error.message) ? 'Bitte das Datum prüfen.' : error.message);
+    if (error) fail(/check/i.test(error.message) ? tr('Bitte das Datum prüfen.') : error.message);
   }
 }
 
@@ -224,7 +225,7 @@ export async function listConversations(): Promise<Conversation[]> {
   if (error) fail(error.message);
   return ((data ?? []) as { partner: string; display_name: string | null; car: string | null; last_body: string; last_at: string; last_from_me: boolean; unread: number; can_reply: boolean }[]).map((r) => ({
     partner: r.partner,
-    name: r.display_name ?? 'Fahrer',
+    name: r.display_name ?? tr('Fahrer'),
     car: r.car,
     lastBody: r.last_body,
     lastAt: new Date(r.last_at),
@@ -272,7 +273,7 @@ export function useDirectChat(me: string | undefined, partner: string | undefine
         .limit(500);
       if (!alive) return;
       if (e) {
-        setError('Nachrichten konnten nicht geladen werden.');
+        setError(tr('Nachrichten konnten nicht geladen werden.'));
         return;
       }
       setList((data ?? []).map(toMsg));

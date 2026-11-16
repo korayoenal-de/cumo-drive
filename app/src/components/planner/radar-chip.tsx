@@ -8,10 +8,11 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Type } from '@/constants/theme';
 import { RADAR_MS } from '@/lib/radar';
+import { t } from '@/i18n';
 
 export function RadarChip({ count, top, found }: { count: number; top: number; found?: number }) {
   // beim Auflösen: was der Ring auf der fertigen Runde gefunden hat
-  const text = found != null ? `${found} kurvige ${found === 1 ? 'Abschnitt' : 'Abschnitte'} auf deiner Runde` : count === 0 ? 'Kurvige Straßen suchen' : count === 1 ? '1 Traumstrecke im Umkreis' : `${count} Traumstrecken im Umkreis`;
+  const text = found != null ? t('{found} kurvige {v1} auf deiner Runde', { found, v1: found === 1 ? 'Abschnitt' : 'Abschnitte' }) : count === 0 ? t('Kurvige Straßen suchen') : count === 1 ? t('1 Traumstrecke im Umkreis') : t('{count} Traumstrecken im Umkreis', { count });
   return (
     <View pointerEvents="none" style={[styles.wrap, { top }]}>
       <Animated.View entering={FadeIn.delay(found != null ? 400 : RADAR_MS * 0.6).duration(300)} exiting={FadeOut.duration(200)} style={styles.chip} accessibilityLiveRegion="polite">

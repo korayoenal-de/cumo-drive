@@ -49,7 +49,7 @@ export function LibraryPanel(props: { currentId: string | null; onOpen: (t: Save
           <b style={{ font: `700 17px ${BODY}` }}>{tr('Noch keine Tour gespeichert')}</b>
           <span style={S.muted}>{tr('Plan eine Tour oder eine Rundtour. Geplante Routen landen automatisch hier und in der App.')}</span>
           <button style={{ ...S.primary, flex: 'none' }} onClick={props.onPlan}>
-            Tour planen
+            {tr('Tour planen')}
           </button>
         </div>
       ) : (
@@ -58,7 +58,7 @@ export function LibraryPanel(props: { currentId: string | null; onOpen: (t: Save
           {fs.length ? (
             <div style={S.chips}>
               <Chip on={folder === null} onClick={() => setFolder(null)}>
-                Alle
+                {tr('Alle')}
               </Chip>
               {fs.map((f) => (
                 <Chip key={f} on={folder === f} onClick={() => setFolder(folder === f ? null : f)}>
@@ -109,7 +109,7 @@ function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTo
     <li style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: Spacing.m, padding: Spacing.m, borderRadius: Radius.l, background: props.current ? C.surface2 : C.surface }}>
       <button
         onClick={() => props.onOpen(t)}
-        aria-label={`${t.name}, ${meta}. Öffnet die Tour im Planer`}
+        aria-label={tr('{name}, {meta}. Öffnet die Tour im Planer', { name: t.name, meta })}
         style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: Spacing.m, background: 'transparent', border: 'none', padding: 0, color: C.text, cursor: 'pointer', textAlign: 'left' }}>
         <RouteThumb tour={t} />
         <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -119,13 +119,13 @@ function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTo
         </span>
       </button>
       {t.fun != null && t.fun >= 0 ? (
-        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flex: 'none' }} aria-label={`Fahrspaß ${t.fun} von 100, ${TOUR_FUN_NAMES[tourFunLevel(t.fun)]}`}>
+        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flex: 'none' }} aria-label={tr('Fahrspaß {fun} von 100, {v1}', { fun: t.fun, v1: TOUR_FUN_NAMES[tourFunLevel(t.fun)] })}>
           <Gauge level={tourFunLevel(t.fun)} size={20} />
           <span style={{ ...S.metricValue, fontSize: 17 }}>{t.fun}</span>
         </span>
       ) : null}
       <MoreMenu
-        label={`Optionen für ${t.name}`}
+        label={tr('Optionen für {name}', { name: t.name })}
         onSurface
         items={[
           { key: 'rename', label: tr('Umbenennen'), onPress: () => setSheet('rename') },
@@ -135,16 +135,16 @@ function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTo
           // aus der Community gespeichert (wie in der App, Koray 11.11.): Veröffentlichen erst nach einer Änderung der Strecke
           ...(taken && !t.edited
             ? []
-            : [{ key: 'pub', label: t.published ? 'Aus der Community nehmen' : taken ? 'Deine Variante veröffentlichen' : 'In der Community veröffentlichen', onPress: () => setSheet('publish') }]),
-          { key: 'del', label: taken ? 'Aus Touren entfernen' : 'Tour löschen', danger: true, onPress: () => setSheet('delete') },
+            : [{ key: 'pub', label: t.published ? tr('Aus der Community nehmen') : taken ? tr('Deine Variante veröffentlichen') : tr('In der Community veröffentlichen'), onPress: () => setSheet('publish') }]),
+          { key: 'del', label: taken ? tr('Aus Touren entfernen') : tr('Tour löschen'), danger: true, onPress: () => setSheet('delete') },
         ]}
       />
       {sheet === 'rename' ? <RenameSheet tour={t} narrow={props.narrow} onClose={() => setSheet(null)} /> : null}
       {sheet === 'publish' ? (
         <WebSheet
           narrow={props.narrow}
-          title={t.published ? 'Aus der Community nehmen?' : 'In der Community veröffentlichen'}
-          subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : taken ? `Alle sehen Strecke, Tourname und deinen Namen. Dabei steht: ${creditLine(t)}` : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
+          title={t.published ? tr('Aus der Community nehmen?') : tr('In der Community veröffentlichen')}
+          subtitle={t.published ? tr('Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.') : taken ? tr('Alle sehen Strecke, Tourname und deinen Namen. Dabei steht: {v0}', { v0: creditLine(t) }) : tr('Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.')}
           onClose={() => setSheet(null)}>
           <PublishForm
             tour={t}
@@ -174,7 +174,7 @@ function RenameSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
     <WebSheet
       narrow={props.narrow}
       title={tr('Tour umbenennen')}
-      subtitle={fromCommunity(props.tour) ? 'Der neue Name gilt nur bei dir. In der Community behält die Route ihren Namen.' : 'Der neue Name gilt auch im Konto, in der App und in der Community.'}
+      subtitle={fromCommunity(props.tour) ? tr('Der neue Name gilt nur bei dir. In der Community behält die Route ihren Namen.') : tr('Der neue Name gilt auch im Konto, in der App und in der Community.')}
       onClose={props.onClose}>
       <form
         style={{ display: 'flex', flexDirection: 'column', gap: Spacing.l }}
@@ -184,7 +184,7 @@ function RenameSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
         }}>
         <Field id="rename-tour" label={tr('Name der Tour')} value={name} onChange={setName} max={120} />
         <button type="submit" style={{ ...pillBtn, flex: 'none', background: C.signal, color: '#fff' }} disabled={!name.trim()}>
-          Fertig
+          {tr('Fertig')}
         </button>
       </form>
     </WebSheet>
@@ -200,7 +200,7 @@ function DeleteSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
       <WebSheet
         narrow={props.narrow}
         title={tr('Auch die veröffentlichte Tour löschen?')}
-        subtitle={`${t.name} steht in der Community. Du entscheidest, ob sie dort bleibt.`}
+        subtitle={tr('{name} steht in der Community. Du entscheidest, ob sie dort bleibt.', { name: t.name })}
         onClose={props.onClose}
         rows={[
           {
@@ -215,7 +215,7 @@ function DeleteSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
                   props.onClose();
                   showToast(tr('Aus Touren entfernt, in der Community bleibt sie'));
                 })
-                .catch((e: Error) => showToast(e.message || 'Das hat nicht geklappt.', { tone: 'error' }))
+                .catch((e: Error) => showToast(e.message || tr('Das hat nicht geklappt.'), { tone: 'error' }))
                 .finally(() => setBusy(false));
             },
           },
@@ -239,7 +239,7 @@ function DeleteSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
       <ConfirmSheet
         narrow={props.narrow}
         title={tr('Möchtest du diese Tour wirklich aus Touren entfernen?')}
-        text={t.edited ? `${t.name} mit deinen Änderungen verschwindet. Das Original bleibt in der Community.` : `${t.name} bleibt in der Community erhalten.`}
+        text={t.edited ? tr('{name} mit deinen Änderungen verschwindet. Das Original bleibt in der Community.', { name: t.name }) : tr('{name} bleibt in der Community erhalten.', { name: t.name })}
         confirmLabel={tr('Entfernen')}
         onClose={props.onClose}
         onConfirm={() => {
@@ -254,7 +254,7 @@ function DeleteSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
     <ConfirmSheet
       narrow={props.narrow}
       title={tr('Möchtest du diese Tour wirklich löschen?')}
-      text={`${t.name} verschwindet aus dem Web Planer, der App und deinem Konto.`}
+      text={tr('{name} verschwindet aus dem Web Planer, der App und deinem Konto.', { name: t.name })}
       confirmLabel={tr('Löschen')}
       onClose={props.onClose}
       onConfirm={() => {
@@ -297,8 +297,8 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
   if (tour.published)
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: Spacing.m }}>
-        <button style={{ ...pillBtn, flex: 'none', background: C.signal, color: '#fff' }} disabled={busy} onClick={() => void run(() => unpublishTour(tour), 'Aus der Community genommen')}>
-          Aus der Community nehmen
+        <button style={{ ...pillBtn, flex: 'none', background: C.signal, color: '#fff' }} disabled={busy} onClick={() => void run(() => unpublishTour(tour), tr('Aus der Community genommen'))}>
+          {tr('Aus der Community nehmen')}
         </button>
         {msg ? <span style={S.errorText}>{msg}</span> : null}
       </div>
@@ -314,7 +314,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
           const name = title.replace(/\s+/g, ' ').trim();
           if (name && name !== tour.name) renameTour(tour.id, name);
           await publishTour({ ...tour, name: name || tour.name }, shownAuthor, desc);
-        }, 'In der Community veröffentlicht');
+        }, tr('In der Community veröffentlicht'));
       }}>
       <Field id="pub-title" label={tr('Name der Tour')} value={title} onChange={setTitle} max={120} />
       <Field
@@ -330,7 +330,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
       />
       <Field id="pub-desc" label={tr('Beschreibung (optional)')} placeholder={tr('Was macht die Tour aus? Beste Abschnitte, Stopps, Tageszeit')} value={desc} onChange={setDesc} area max={500} />
       <button type="submit" style={{ ...pillBtn, flex: 'none', background: C.signal, color: '#fff' }} disabled={!can}>
-        Veröffentlichen
+        {tr('Veröffentlichen')}
       </button>
       {msg ? <span style={S.errorText}>{msg}</span> : null}
     </form>

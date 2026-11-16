@@ -20,6 +20,7 @@ import { holdAudioSession } from '@/lib/navigation/voice';
 import { supabase } from '@/lib/supabase';
 
 import { onFunkSignal, sendFunkSignal } from './ride';
+import { tr } from '@/i18n';
 
 /** ruht: mehrere Versuche ohne Erfolg, die App versucht es nur noch alle zwei Minuten (Koray 14.11.) */
 export type FunkStatus = 'nicht' | 'aus' | 'verbinde' | 'an' | 'getrennt' | 'fehler' | 'ruht';
@@ -184,7 +185,7 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
     r.on(lk.RoomEvent.ActiveSpeakersChanged, (speakers) => {
       const other = speakers.find((p) => p.identity !== r.localParticipant.identity);
       if (speakers.length) voice();
-      set({ speaker: other ? { id: other.identity, name: other.name || 'Fahrer' } : null });
+      set({ speaker: other ? { id: other.identity, name: other.name || tr('Fahrer') } : null });
       // Wartet jemand und der andere ist fertig: jetzt sprechen
       if (!other && wantTalk && !state.talking) void startTalking();
     });
@@ -240,7 +241,7 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
     }
   } catch (e) {
     if (current !== rideId || g !== gen) return;
-    const msg = e instanceof Error ? e.message : 'Funk nicht verfügbar.';
+    const msg = e instanceof Error ? e.message : tr('Funk nicht verfügbar.');
     bbLog('funk', ['fehler', tries, msg.slice(0, 200)]);
     // ohne Netz beim Verbinden: weiter versuchen statt aufgeben
     set({ status: state.status === 'ruht' ? 'ruht' : again ? 'getrennt' : 'fehler', error: msg });
@@ -283,7 +284,7 @@ async function startTalking() {
     bbLog('funk', ['sendet']);
     if (!wantTalk) await stopTalking();
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Mikrofon nicht verfügbar.';
+    const msg = e instanceof Error ? e.message : tr('Mikrofon nicht verfügbar.');
     bbLog('funk', ['sprechen fehler', msg.slice(0, 200)]);
     set({ talking: false, error: msg });
   }

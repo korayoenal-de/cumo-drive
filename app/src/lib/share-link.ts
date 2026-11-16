@@ -10,6 +10,7 @@ import { Share } from 'react-native';
 import { encodeTour, shareUrl } from './share-code';
 import { supabase } from './supabase';
 import { formatKm, type Profile, type Tour } from './tour';
+import { tr } from '@/i18n';
 
 export const SHORT_PREFIX = 's:';
 
@@ -41,7 +42,7 @@ export async function tourLinkText(tour: Tour, profile: Profile): Promise<string
   } catch {
     // ohne Netz oder Server: langer Link
   }
-  return `${tour.name}, ${formatKm(tour.laenge_km, 0)} km mit CUMO DRIVE\n${url}`;
+  return tr('{name}, {v1} km mit CUMO DRIVE\n{url}', { name: tour.name, v1: formatKm(tour.laenge_km, 0), url });
 }
 
 export async function shareTourLink(tour: Tour, profile: Profile): Promise<void> {

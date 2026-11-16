@@ -58,12 +58,12 @@ export function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid; o
             ×
           </button>
         </div>
-        {current ? <img src={current.url} alt="QR Code der Tour" style={S.qrImg} /> : <div style={{ ...S.qrImg, background: '#fff' }} />}
+        {current ? <img src={current.url} alt={t('QR Code der Tour')} style={S.qrImg} /> : <div style={{ ...S.qrImg, background: '#fff' }} />}
         <p style={{ ...S.muted, fontSize: 15 }}>
-          Mit der iPhone Kamera scannen, die Tour öffnet sich in Cumo Drive.{' '}
+          {t('Mit der iPhone Kamera scannen, die Tour öffnet sich in Cumo Drive.')}{' '}
           {current && !current.short
-            ? 'Ohne Verbindung zum Server enthält der Code nur Stützpunkte, die App plant die Strecke neu.'
-            : 'Die App übernimmt die Tour genau so, wie sie hier geplant ist.'}
+            ? t('Ohne Verbindung zum Server enthält der Code nur Stützpunkte, die App plant die Strecke neu.')
+            : t('Die App übernimmt die Tour genau so, wie sie hier geplant ist.')}
         </p>
       </div>
     </div>
@@ -100,9 +100,9 @@ export function StopsPanel(props: { tour: PlannedTour; busy: boolean; onAdd: (p:
       </div>
       {kind && <p style={S.muted}>{STOP_KINDS.find((k) => k.id === kind)?.hint}</p>}
       {kind && !cur && <p style={S.muted}>{t('Wird gesucht …')}</p>}
-      {cur?.error && <p style={S.muted}>Gerade nicht erreichbar ({cur.error}). Versuch es gleich noch mal.</p>}
+      {cur?.error && <p style={S.muted}>{t('Gerade nicht erreichbar (')}{cur.error}{t('). Versuch es gleich noch mal.')}</p>}
       {cur?.hits && cur.hits.length === 0 && (
-        <p style={S.muted}>{kind === 'mittag' || kind === 'kaffee' ? 'Hier haben wir noch keine Empfehlung. Jedes andere Lokal findest du über die Suche bei den Punkten.' : 'Nichts direkt an der Strecke gefunden.'}</p>
+        <p style={S.muted}>{kind === 'mittag' || kind === 'kaffee' ? t('Hier haben wir noch keine Empfehlung. Jedes andere Lokal findest du über die Suche bei den Punkten.') : t('Nichts direkt an der Strecke gefunden.')}</p>
       )}
       {cur?.hits && cur.hits.length > 0 && (
         <ol style={S.passList}>
@@ -111,11 +111,11 @@ export function StopsPanel(props: { tour: PlannedTour; busy: boolean; onAdd: (p:
               <span style={S.legKm}>km {Math.round(h.km)}</span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={S.passName}>{h.name}</span>
-                <span style={S.dropDetail}>{h.detail || 'direkt an der Route'}</span>
+                <span style={S.dropDetail}>{h.detail || t('direkt an der Route')}</span>
               </span>
-              {h.offM >= 150 ? <span style={detourTag} aria-label={`Umweg ${detourMin(h.offM)} Minuten`}>+{detourMin(h.offM)} min</span> : null}
+              {h.offM >= 150 ? <span style={detourTag} aria-label={t('Umweg {v0} Minuten', { v0: detourMin(h.offM) })}>+{detourMin(h.offM)} min</span> : null}
               <button style={{ ...S.secondary, flex: 'none', padding: '0 12px' }} disabled={props.busy} onClick={() => props.onAdd(h.p)}>
-                Einplanen
+                {t('Einplanen')}
               </button>
             </li>
           ))}
@@ -156,7 +156,7 @@ export function AddHighlight(props: {
   }, [props.pts, props.taken, searching]);
   const hits = searching ? searchPasses(PASSES, q, 6) : [];
   return (
-    <Section title={t('Highlights/Pässe')} aside={!searching && rows.length ? 'auf deinen Etappen' : undefined}>
+    <Section title={t('Highlights/Pässe')} aside={!searching && rows.length ? t('auf deinen Etappen') : undefined}>
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Pass suchen, zum Beispiel Stelvio')} style={S.search} aria-label={t('Pass suchen')} />
       {searching ? (
         hits.length ? (
@@ -175,7 +175,7 @@ export function AddHighlight(props: {
                     props.onAddPass(pass);
                     setQ('');
                   }}>
-                  Einbauen
+                  {t('Einbauen')}
                 </button>
               </li>
             ))}
@@ -187,14 +187,14 @@ export function AddHighlight(props: {
         <ol style={S.passList}>
           {rows.map(({ leg, c }) => (
             <li key={c.key} style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: Spacing.s }}>
-              <Gauge level={c.level} size={22} label={`Fahrspaß ${FUN_NAMES[c.level] ?? ''}`} />
+              <Gauge level={c.level} size={22} label={t('Fahrspaß {v0}', { v0: FUN_NAMES[c.level] ?? '' })} />
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={S.passName}>{c.name}</span>
-                <span style={S.dropDetail}>{[FUN_NAMES[c.level], c.detail, props.pts.length > 2 ? `Etappe ${leg + 1}` : null].filter(Boolean).join(', ')}</span>
+                <span style={S.dropDetail}>{[FUN_NAMES[c.level], c.detail, props.pts.length > 2 ? t('Etappe {v0}', { v0: leg + 1 }) : null].filter(Boolean).join(', ')}</span>
               </span>
               {c.extraMin > 2 ? <span style={detourTag}>+{c.extraMin} min</span> : null}
               <button style={{ ...S.secondary, flex: 'none', padding: '0 12px' }} disabled={props.busy} onClick={() => props.onAdd(leg, c)}>
-                Einbauen
+                {t('Einbauen')}
               </button>
             </li>
           ))}
@@ -218,7 +218,7 @@ export function AddPass(props: { near: { pass: Pass; dKm: number }[]; live: Map<
   const searching = q.trim().length >= 2;
   const hits: { pass: Pass; dKm: number | null }[] = searching ? searchPasses(PASSES, q, 5).map((pass) => ({ pass, dKm: null })) : props.near;
   return (
-    <Section title={t('Pässe einbauen')} aside={!searching && props.near.length ? 'in der Nähe' : undefined}>
+    <Section title={t('Pässe einbauen')} aside={!searching && props.near.length ? t('in der Nähe') : undefined}>
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Pass suchen, zum Beispiel Stelvio')} style={S.search} aria-label={t('Pass suchen')} />
       {hits.length ? (
         <ol style={S.passList}>
@@ -228,7 +228,7 @@ export function AddPass(props: { near: { pass: Pass; dKm: number }[]; live: Map<
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={S.passName}>{pass.name}</span>
                 <span style={S.dropDetail}>
-                  {[passSummary(pass, undefined, passState(pass, props.live).note), dKm != null ? `${formatKm(dKm, dKm < 10 ? 1 : 0)} km neben der Route` : null].filter(Boolean).join(', ')}
+                  {[passSummary(pass, undefined, passState(pass, props.live).note), dKm != null ? t('{v0} km neben der Route', { v0: formatKm(dKm, dKm < 10 ? 1 : 0) }) : null].filter(Boolean).join(', ')}
                 </span>
               </span>
               <button
@@ -238,13 +238,13 @@ export function AddPass(props: { near: { pass: Pass; dKm: number }[]; live: Map<
                   props.onAdd(pass);
                   setQ('');
                 }}>
-                Einbauen
+                {t('Einbauen')}
               </button>
             </li>
           ))}
         </ol>
       ) : (
-        <p style={S.muted}>{searching ? 'Kein Pass gefunden.' : 'Keine bekannten Pässe in der Nähe der Route.'}</p>
+        <p style={S.muted}>{searching ? t('Kein Pass gefunden.') : t('Keine bekannten Pässe in der Nähe der Route.')}</p>
       )}
     </Section>
   );
@@ -268,7 +268,7 @@ export function Gallery(props: {
       alive = false;
     };
   }, [g]);
-  const title = g.pass ? g.pass.name : place?.key === g.key ? `Fotospot bei ${place.name}` : 'Fotospot';
+  const title = g.pass ? g.pass.name : place?.key === g.key ? t('Fotospot bei {name}', { name: place.name }) : 'Fotospot';
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') props.onChange(i === null ? null : { g, i: null });
@@ -281,7 +281,7 @@ export function Gallery(props: {
   if (i !== null) {
     const ph = g.photos[i];
     return (
-      <div style={S.lightbox} role="dialog" aria-label={`Foto ${i + 1} von ${g.photos.length}`} onClick={() => props.onChange({ g, i: null })}>
+      <div style={S.lightbox} role="dialog" aria-label={t('Foto {v0} von {length}', { v0: i + 1, length: g.photos.length })} onClick={() => props.onChange({ g, i: null })}>
         <img src={photoUrl(ph)} alt={`${title}, ${photoDate(ph)}`} style={S.lightboxImg} onClick={(e) => e.stopPropagation()} />
         <div style={S.lightboxBar} onClick={(e) => e.stopPropagation()}>
           <button style={S.lbBtn} onClick={() => props.onChange({ g, i: (i - 1 + g.photos.length) % g.photos.length })} aria-label={t('Vorheriges Foto')}>‹</button>
@@ -300,12 +300,12 @@ export function Gallery(props: {
         <div>
           <b>{title}</b>
           <span style={{ ...S.dropDetail, marginLeft: Spacing.s }}>
-            {g.photos.length} {g.photos.length === 1 ? 'Foto' : 'Fotos'}, CUMO DRIVERS CLUB, {photoDate(g.photos[0])}
+            {g.photos.length} {g.photos.length === 1 ? t('Foto') : t('Fotos')}, CUMO DRIVERS CLUB, {photoDate(g.photos[0])}
           </span>
         </div>
         <div style={{ display: 'flex', gap: Spacing.s, alignItems: 'center', flexShrink: 0 }}>
           <button style={{ ...S.secondaryOnSurface, flex: 'none', padding: '0 14px' }} disabled={!props.canAdd} onClick={() => props.onAddVia(g.p)}>
-            Als Zwischenziel einfügen
+            {t('Als Zwischenziel einfügen')}
           </button>
           <button aria-label={t('Galerie schließen')} style={S.iconBtn} onClick={() => props.onChange(null)}>
             ×
@@ -314,7 +314,7 @@ export function Gallery(props: {
       </div>
       <div style={S.thumbs}>
         {g.photos.map((ph, k) => (
-          <button key={ph.id} style={S.thumbBtn} onClick={() => props.onChange({ g, i: k })} aria-label={`Foto ${k + 1} öffnen`}>
+          <button key={ph.id} style={S.thumbBtn} onClick={() => props.onChange({ g, i: k })} aria-label={t('Foto {v0} öffnen', { v0: k + 1 })}>
             <img src={thumbUrl(ph)} alt="" style={S.thumb} loading="lazy" />
           </button>
         ))}

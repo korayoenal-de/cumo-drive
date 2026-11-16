@@ -13,7 +13,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ASK_REASONS, askDismissed, sendAsk, type AskRound } from '@/lib/ask-feedback';
 import { showToast } from '@/lib/toast';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null; onDone: () => void }) {
   const [reason, setReason] = useState<string | null>(null);
@@ -62,8 +62,8 @@ export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null
   return (
     <OptionsSheet
       visible={!!rounds}
-      title={done ? undefined : 'Nichts Passendes dabei?'}
-      subtitle={done ? undefined : 'Sag uns kurz, woran es lag. Wir schauen uns deine Runden an.'}
+      title={done ? undefined : tr('Nichts Passendes dabei?')}
+      subtitle={done ? undefined : tr('Sag uns kurz, woran es lag. Wir schauen uns deine Runden an.')}
       onClose={close}>
       {done ? (
         <View style={styles.thanks} accessibilityLiveRegion="polite">
