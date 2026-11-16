@@ -90,7 +90,7 @@ const DURATIONS: { minutes: number; big: string; unit: string }[] = [
 ];
 
 const STYLE_PROFILES: Profile[] = ['kurvig', 'entspannt'];
-const PROFILE_WORD: Record<Profile, string> = { kurvig: 'kurvig', paesse: 'sehr kurvig', entspannt: 'entspannt', schnell: 'zügig' };
+const PROFILE_WORD: Record<Profile, string> = { kurvig: 'kurvig', paesse: 'kurvig', entspannt: 'entspannt', schnell: 'zügig' };
 
 const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
 const MIN_STEPS = [60, 90, 120, 180, 240, 300, 420];

@@ -2,7 +2,7 @@
  * Inhalt der Landingpage als HTML für den Web Build (statisch, damit Suchmaschinen alles lesen).
  * Gestaltung nach dem Entwurf vom 6.11. (Design Artefakt URTXEm5yCFeJkmvkhZbTWz), Inhalt auf dem Stand vom 13.11.2026 (Abläufe, Namen und Pegel wie in der App).
  * Bilder liegen unter public/landing. Drei Bildschirmfotos (schnelle-runde, route-paesse, meine-touren) stammen aus einem
- * älteren Stand und werden per CSS beschnitten: oben die alte Reiterleiste, unten Profil "Sehr kurvig" und ein Hinweistext.
+ * älteren Stand und werden per CSS beschnitten: oben die alte Reiterleiste, unten ein altes Profil und ein Hinweistext.
  * Login und Registrieren führen auf /login und /registrieren, der Web Planer auf /planer.
  *
  * Zahlen kommen aus den Daten im Repo (src/data/curated-roads.json, passes.json, regions.json), Preise aus

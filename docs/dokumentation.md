@@ -137,7 +137,7 @@ Die App plant über den eigenen GraphHopper Server mit Sportwagen Gewichtung. Is
 | Kurvig | Rundtour und Tour planen | bevorzugt Kurven, meidet Orte, distance_influence 5 |
 | Schnell | nur je Etappe in Tour planen | schnellster Weg, für Anfahrten |
 
-Sehr kurvig gibt es als Server Profil, in der App wurde es am 8.11. zugunsten eines Profils Kurvig entfernt.
+Ein Profil Sehr kurvig gibt es nicht mehr (gestrichen am 8.11.). Ältere Touren damit laufen automatisch als Kurvig.
 
 **Gewichtung im eigenen Server:** Kurvigkeit und Ortsdichte (Stadt und Wohngebiet abgewertet), Traumstrecken Bereich (außerhalb Priorität mal 0,7), Straßenbreite (unter 3 m raus, unter 4,5 m prüfen, Engstellen unter 1,9 m raus), Schotter und schlechter Belag gemieden, Vermeiden schaltbar.
 
