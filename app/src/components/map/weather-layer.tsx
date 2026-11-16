@@ -60,8 +60,10 @@ export function WeatherMarkers({ items, onPress }: { items: Item[]; onPress: (it
             <Marker
               key={`wetter-${it.pass.id}-${Math.round(w.temp)}-${reason ?? ''}`}
               coordinate={{ latitude: it.pass.lat, longitude: it.pass.lon }}
-              // schräg rechts oberhalb, so bleiben Passpunkt und Routennummer frei
+              // schräg rechts oberhalb, so bleiben Passpunkt und Routennummer (Kreis mit etwa 20 pt Radius) frei.
+              // Apple Karten kennt anchor nicht, dort zählt centerOffset in Punkten (Koray 16.11.: Plakette lag unter der Nummer)
               anchor={{ x: -0.32, y: 1.35 }}
+              centerOffset={{ x: 42, y: -36 }}
               zIndex={9}
               onPress={() => onPress(it)}
               tracksViewChanges={false}>
