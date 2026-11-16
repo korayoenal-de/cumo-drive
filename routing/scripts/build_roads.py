@@ -213,7 +213,10 @@ def short_note(e, kind):
 # ---------- Ablauf ----------
 entries = []
 for f in sorted(glob.glob(f'{SRC}/*.json')):
-    for e in json.load(open(f)):
+    data = json.load(open(f))
+    if not isinstance(data, list):  # auswahl.json enthält Entscheidungen, keine Strecken
+        continue
+    for e in data:
         e['_file'] = os.path.basename(f)
         entries.append(e)
 
