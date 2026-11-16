@@ -24,8 +24,8 @@ export type TourPlan = ReturnType<typeof useTourPlan>;
 
 /**
  * Zwischenziel mitten auf einer kuratierten Strecke, etwa eine Passhöhe (Koray 9.11., Hahntennjoch):
- * Ab dem Punkt wird die Strecke bis zum Ausstieg weitergefahren, in der Richtung, die besser zwischen den
- * Nachbarpunkten liegt. Den Weg zum Punkt wählt der Router (16.11., Sellajoch zum Pordoijoch).
+ * Die Route fährt über den Punkt hinaus ein Stück auf der Strecke weiter, in der Richtung, die besser zwischen
+ * den Nachbarpunkten liegt, statt zu wenden. Den Weg davor und danach wählt der Router (16.11., Sellajoch).
  * Sonst fährt der Router zur Passhöhe hinauf und auf demselben Weg wieder hinunter.
  * Nur Strecken bis 40 km, und nur wenn der Punkt nicht am Anfang oder Ende liegt.
  */
@@ -50,6 +50,19 @@ function crossingFor(p: LatLon, prev: LatLon, next: LatLon): LatLon[] | null {
   const fwd = haversine(prev, l[0]) + haversine(l[l.length - 1], next);
   const back = haversine(prev, l[l.length - 1]) + haversine(l[0], next);
   return fwd <= back ? l : [...l].reverse();
+}
+
+/** So weit über einen Pass hinaus wird die Strecke erzwungen: über die Passhöhe, nicht zurück */
+const PAST_M = 2000;
+
+/** Punkt der Linie etwa m Meter nach dem Index at (oder das Ende, wenn sie vorher aufhört) */
+function pastPoint(line: LatLon[], at: number, m: number): LatLon | null {
+  let d = 0;
+  for (let i = at + 1; i < line.length; i++) {
+    d += haversine(line[i - 1], line[i]);
+    if (d >= m) return line[i];
+  }
+  return at < line.length - 1 ? line[line.length - 1] : null;
 }
 
 /** Stützpunkte entlang einer Strecke: etwa alle 2,5 km und der Ausstieg, die ersten 1,5 km frei */
@@ -177,17 +190,18 @@ export function useTourPlan(onPlanned?: () => void) {
         const inner = i > 0 && i < points.length - 1;
         const cross = inner && !roads.current[keyOf(p)] ? crossingFor(p, points[i - 1], points[i + 1]) : null;
         if (cross) {
-          // Ab dem Punkt auf der Strecke weiter bis zum Ausstieg, damit die Route nicht denselben Weg zurückfährt.
-          // Den Weg hinauf wählt der Router selbst (Koray 16.11.: Pordoijoch nach dem Sellajoch führte erst
-          // hinunter nach Canazei, weil dort der Einstieg der Strecke liegt, und wieder hinauf)
+          // Nur ein Stück über den Punkt hinaus auf der Strecke weiter, damit die Route nicht denselben Weg
+          // zurückfährt. Wohin danach, entscheidet der nächste Punkt (Koray 16.11.: Sellajoch zum Pordoijoch
+          // führte erst bis Canazei, dem Ende der Strecke Sellajoch, und wieder hinauf)
           let at = 0;
           cross.forEach((q, k) => {
             if (haversine(q, p) < haversine(cross[at], p)) at = k;
           });
           xPts.push(p);
           xProf.push(profiles[i]);
-          for (const q of shapePoints(cross.slice(at))) {
-            xPts.push(q);
+          const beyond = pastPoint(cross, at, PAST_M);
+          if (beyond && haversine(beyond, points[i + 1]) > 1500) {
+            xPts.push(beyond);
             xProf.push(profiles[i]);
           }
           return;
