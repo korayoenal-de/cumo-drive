@@ -22,6 +22,7 @@ import { Metric, Section, ElevationChart, Gauge } from './web-parts';
 import { FunPillWeb } from './web-fun';
 import { BODY, C, type PlannedTour } from './web-shared';
 import { S } from './web-styles';
+import { uniqueWarnings } from '@/lib/warning-dedupe';
 
 /** Kennzahlen: Strecke, Fahrzeit, Fahrspaß (ohne Fahrspaß die Kurven), wie Stats in der App */
 export function ResultStats(props: { tour: PlannedTour; curves: number; fun: TourFun | null; onFun: () => void; delta?: number | null }) {
@@ -46,7 +47,7 @@ export function ResultDetails(props: { tour: PlannedTour; line: LatLon[]; onFly:
   const live = usePassLive();
   const passes = useMemo(() => passesAlong(PASSES, props.line), [props.line]);
   const hint = closedHint(passes.map((x) => x.pass), live);
-  const warnings = props.tour.warnungen.filter((w) => w.klasse !== 'ok');
+  const warnings = uniqueWarnings(props.tour.warnungen.filter((w) => w.klasse !== 'ok'), (w) => w);
   return (
     <>
       {hint ? (

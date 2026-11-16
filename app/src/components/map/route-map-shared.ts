@@ -7,6 +7,7 @@ import type { Pass } from '@/lib/passes';
 import type { Radar, Scan } from '@/lib/radar';
 import type { CheckClass, LatLon, Tour, Warning } from '@/lib/tour';
 import { Colors } from '@/constants/theme';
+import { uniqueWarnings } from '@/lib/warning-dedupe';
 
 export type RouteMapProps = {
   tour: Tour;
@@ -102,7 +103,10 @@ export const CLASS_LINE: Record<CheckClass, { color: string; width: number; z: n
 
 /** Warnungen, die auf der Karte erscheinen, mit ihrem Index in tour.warnungen. */
 export function tourWarnings(tour: Tour): { w: Warning; index: number }[] {
-  return tour.warnungen.map((w, index) => ({ w, index })).filter(({ w }) => w.klasse !== 'ok');
+  return uniqueWarnings(
+    tour.warnungen.map((w, index) => ({ w, index })).filter(({ w }) => w.klasse !== 'ok'),
+    (x) => x.w,
+  );
 }
 
 /** Höchstens max Punkte der Linie, gleichmäßig verteilt, zum Einpassen des Ausschnitts. */

@@ -28,6 +28,7 @@ import { showToast } from '@/lib/toast';
 import { GroupBlock, Stats, StopsPlanner, Warnings, type PlannedStop } from './planner-parts';
 import { PlaceSearch, type Cat } from './place-search';
 import { styles } from './planner-styles';
+import { uniqueWarnings } from '@/lib/warning-dedupe';
 
 
 export function Result({
@@ -51,7 +52,7 @@ export function Result({
   adding: boolean;
 }) {
   const total = tour.laenge_km;
-  const warnings = tour.warnungen.filter((w) => w.klasse !== 'ok');
+  const warnings = uniqueWarnings(tour.warnungen.filter((w) => w.klasse !== 'ok'), (w) => w);
   const line = useMemo(() => flatten(tour).map((x) => x.p), [tour]);
   // nur neu rechnen, wenn sich die Linie ändert (das Ergebnis rendert bei jeder Bewegung des Blatts)
   const passes = useMemo(() => passesAlong(PASSES, line), [line]);

@@ -6,6 +6,7 @@
  */
 import { PASSES } from './passes';
 import { haversine, type LatLon } from './tour';
+import { cleanPlace } from './warning-dedupe';
 
 export type Closure = { id: string; line: LatLon[]; from?: string; to?: string; text?: string; road?: string };
 /** Nur Fahrstreifen gesperrt, keine Vollsperrung (Koray 14.11., A5 Weinheim); zusätzlich zum Filter auf dem Server */
@@ -182,16 +183,19 @@ export function closuresOnRoute(route: LatLon[], closures: Closure[]): ClosureHi
     }
     flush();
   }
-  // Meldungen gibt es oft je Fahrtrichtung: dieselbe Stelle nur einmal (Koray 16.11., Pordoi doppelt in der Liste)
-  const seen = new Set<string>();
-  return out
-    .sort((a, b) => a.firstIndex - b.firstIndex)
-    .filter((h) => {
-      const k = `${Math.round(h.firstIndex / 10)}|${h.closure.road ?? ''}`;
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
+  // Meldungen gibt es oft je Fahrtrichtung: dieselbe Stelle nur einmal (Koray 16.11., Pordoi doppelt in der Liste).
+  // Gleich ist, was sich auf der Route überlappt und dieselbe Straße oder dieselben Orte nennt.
+  const kept: ClosureHit[] = [];
+  const pair = (c: Closure) => [cleanPlace(c.from ?? ''), cleanPlace(c.to ?? '')].sort().join('|');
+  for (const h of out.sort((a, b) => a.firstIndex - b.firstIndex)) {
+    const dup = kept.some((k) => {
+      const overlap = h.firstIndex <= k.firstIndex + k.points.length + 5 && k.firstIndex <= h.firstIndex + h.points.length + 5;
+      const same = (h.closure.road ?? '') === (k.closure.road ?? '') || pair(h.closure) === pair(k.closure);
+      return overlap && same;
     });
+    if (!dup) kept.push(h);
+  }
+  return kept;
 }
 
 /** Liegt ein Wegpunkt so nah an der gesperrten Straße, gilt sie als gewollt (Passhöhe als Ziel) */
@@ -235,6 +239,8 @@ export function closureExclude(hits: ClosureHit[], waypoints: LatLon[], passRoad
 
 /** Kurzer Text für Hinweise: "Gesperrt: B 39 zwischen X und Y" */
 export function closureLabel(c: Closure): string {
-  const where = c.from && c.to ? ` zwischen ${c.from} und ${c.to}` : c.from ? ` bei ${c.from}` : '';
+  const from = c.from ? cleanPlace(c.from) : '';
+  const to = c.to ? cleanPlace(c.to) : '';
+  const where = from && to ? ` zwischen ${from} und ${to}` : from ? ` bei ${from}` : '';
   return `Gesperrt${c.road ? `: ${c.road}` : ''}${where}`;
 }

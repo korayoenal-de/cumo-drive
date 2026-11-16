@@ -53,6 +53,7 @@ import { keyOf, type PendingPoint, type PointKind, profileWord, samePts } from '
 
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
+import { uniqueWarnings } from '@/lib/warning-dedupe';
 
 /** Laden im Losfahren Knopf (Koray 9.11.): geschätzter Fortschritt je Schritt der Planung */
 const LOAD_STAGES: Record<PlanStep, LoadStage> = {
@@ -304,7 +305,7 @@ export function TourMode({
   }
 
   const total = routeTour?.laenge_km ?? 0;
-  const warnings = routeTour ? routeTour.warnungen.filter((w) => w.klasse !== 'ok') : [];
+  const warnings = routeTour ? uniqueWarnings(routeTour.warnungen.filter((w) => w.klasse !== 'ok'), (w) => w) : [];
   // Für Navigation und Speichern: Profil der ersten Etappe (sonst das allgemeine)
   const firstProfile = plan.legProfile(plan.start ? 0 : 1, profile);
 

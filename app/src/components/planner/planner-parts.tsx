@@ -23,6 +23,7 @@ import { selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
 
 import { bigDuration, type Mode, type PointKind } from './planner-shared';
 import { styles } from './planner-styles';
+import { cleanPlace } from '@/lib/warning-dedupe';
 
 
 /** Fahrzeug für diese Tour (optional): die gefahrenen km landen bei diesem Auto. */
@@ -467,8 +468,11 @@ export function warningText(w: Warning): string {
   const narrow = w.gruende.some((r) => r.startsWith('Engstelle') || r.startsWith('schmal') || /m breit$/.test(r));
   const kind = w.klasse === 'raus' ? 'Gesperrt' : narrow ? 'Engstelle' : 'Achtung';
   const parts = [`${kind} bei km ${Math.round(w.start_km)}`];
-  if (w.name) parts.push(w.name);
-  parts.push(...w.gruende.map(reasonText));
+  // Sperrung (Koray 16.11.): "Gesperrt" nur einmal im Satz, Ortszusätze in Klammern weg
+  const closure = /^Gesperrt\b/i.test(w.name);
+  const name = closure ? cleanPlace(w.name.replace(/^Gesperrt:?\s*/i, '')) : w.name;
+  if (name) parts.push(name);
+  parts.push(...w.gruende.filter((r) => !(closure && /^\W*(gesperrt|vollsperrung|stra(ß|ss)e gesperrt|road closed|closed)\W*$/i.test(r))).map(reasonText));
   return parts.join(', ');
 }
 
