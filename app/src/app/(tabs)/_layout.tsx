@@ -17,6 +17,7 @@ import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { useUnreadMessages, useUnreadWatcher } from '@/lib/drivers';
 import { useRide, type RideState } from '@/lib/group/ride';
+import { t } from '@/i18n';
 
 export default function TabsLayout() {
   // Im Browser ohne Tableiste: dort steht unter / die Landingpage
@@ -45,21 +46,21 @@ function IosTabs() {
       {/* eigene Abstände der Ansichten bleiben (Screen, MapSheet), darum keine automatischen Einzüge */}
       <NativeTabs.Trigger name="index" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/planen.png'), selected: require('../../../assets/tabs/planen-on.png') }} renderingMode="template" />
-        <NativeTabs.Trigger.Label>Planen</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('Planen')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="touren" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/touren.png'), selected: require('../../../assets/tabs/touren-on.png') }} renderingMode="template" />
-        <NativeTabs.Trigger.Label>Touren</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('Touren')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="community" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/community.png'), selected: require('../../../assets/tabs/community-on.png') }} renderingMode="template" />
-        <NativeTabs.Trigger.Label>Community</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('Community')}</NativeTabs.Trigger.Label>
         {/* ohne Neues gar keine Plakette (Koray 15.11.: "hidden" zeigte trotzdem eine 0) */}
         {unread > 0 && <NativeTabs.Trigger.Badge>{unread > 9 ? '9+' : String(unread)}</NativeTabs.Trigger.Badge>}
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="einstellungen" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/einstellungen.png'), selected: require('../../../assets/tabs/einstellungen-on.png') }} renderingMode="template" />
-        <NativeTabs.Trigger.Label>Einstellungen</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('Einstellungen')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -70,9 +71,9 @@ function RideAccessory({ ride }: { ride: RideState }) {
   const placement = NativeTabs.BottomAccessory.usePlacement();
   const n = ride.members.length;
   const last = ride.messages[0];
-  const title = ride.status === 'verbinde' ? 'Gruppe verbindet' : `Gruppenfahrt, ${n} Fahrer`;
+  const title = ride.status === 'verbinde' ? t('Gruppe verbindet') : t('Gruppenfahrt, {n} Fahrer', { n });
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${title}, Gruppe öffnen`} onPress={() => router.push('/gruppe')} style={styles.accessory}>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('{title}, Gruppe öffnen', { title })} onPress={() => router.push('/gruppe')} style={styles.accessory}>
       <View style={styles.dot} />
       <View style={styles.flex}>
         <AppText style={styles.title} numberOfLines={1}>

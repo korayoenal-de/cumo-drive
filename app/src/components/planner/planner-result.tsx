@@ -29,6 +29,7 @@ import { GroupBlock, Stats, StopsPlanner, Warnings, type PlannedStop } from './p
 import { PlaceSearch, type Cat } from './place-search';
 import { styles } from './planner-styles';
 import { uniqueWarnings } from '@/lib/warning-dedupe';
+import { t } from '@/i18n';
 
 
 export function Result({
@@ -136,10 +137,10 @@ export function Result({
           },
         }}
         choose={{
-          title: 'Wie fährst du?',
+          title: t('Wie fährst du?'),
           items: [
-            { key: 'solo', icon: 'car.fill', label: 'Allein losfahren', hint: 'Die Navigation startet sofort', onPress: () => drive(false) },
-            { key: 'gruppe', icon: 'person.2.fill', label: 'Als Gruppe fahren', hint: 'Bis zu 6 Autos, du lädst sie im nächsten Schritt ein', onPress: () => drive(true) },
+            { key: 'solo', icon: 'car.fill', label: t('Allein losfahren'), hint: t('Die Navigation startet sofort'), onPress: () => drive(false) },
+            { key: 'gruppe', icon: 'person.2.fill', label: t('Als Gruppe fahren'), hint: t('Bis zu 6 Autos, du lädst sie im nächsten Schritt ein'), onPress: () => drive(true) },
           ],
         }}
         save={{ saved: !!savedId, onPress: () => void saveResult() }}

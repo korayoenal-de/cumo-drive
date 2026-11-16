@@ -13,6 +13,7 @@ import * as Speech from 'expo-speech';
 
 import type { Maneuver, NavRoute } from './types';
 import { chosenVoiceId } from '../voice-settings';
+import { getLang, SPEECH_LANG } from '@/i18n';
 
 type Stage = 'weit' | 'nah' | 'jetzt';
 
@@ -289,7 +290,7 @@ function enqueue(item: Spoken) {
     queue = queue.filter((x) => x !== item);
     if (!queue.length) audioOff();
   };
-  Speech.speak(item.text, { language: 'de-DE', voice: chosenVoiceId(), rate: 1.0, volume: voiceVolume(), onDone: done, onStopped: done, onError: done });
+  Speech.speak(item.text, { language: SPEECH_LANG[getLang()], voice: getLang() === 'de' ? chosenVoiceId() : undefined, rate: 1.0, volume: voiceVolume(), onDone: done, onStopped: done, onError: done });
 }
 
 function defaultSpeak(text: string, rank: SpeechRank = 0) {

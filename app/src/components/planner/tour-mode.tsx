@@ -54,6 +54,7 @@ import { keyOf, type PendingPoint, type PointKind, profileWord, samePts } from '
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
 import { uniqueWarnings } from '@/lib/warning-dedupe';
+import { t } from '@/i18n';
 
 /** Laden im Losfahren Knopf (Koray 9.11.): geschätzter Fortschritt je Schritt der Planung */
 const LOAD_STAGES: Record<PlanStep, LoadStage> = {
@@ -864,10 +865,10 @@ export function TourMode({
               },
             }}
             choose={{
-              title: 'Wie fährst du?',
+              title: t('Wie fährst du?'),
               items: [
-                { key: 'solo', icon: 'car.fill', label: 'Allein losfahren', hint: 'Die Navigation startet sofort', onPress: () => void drive(false) },
-                { key: 'gruppe', icon: 'person.2.fill', label: 'Als Gruppe fahren', hint: 'Bis zu 6 Autos, du lädst sie im nächsten Schritt ein', onPress: () => void drive(true) },
+                { key: 'solo', icon: 'car.fill', label: t('Allein losfahren'), hint: t('Die Navigation startet sofort'), onPress: () => void drive(false) },
+                { key: 'gruppe', icon: 'person.2.fill', label: t('Als Gruppe fahren'), hint: t('Bis zu 6 Autos, du lädst sie im nächsten Schritt ein'), onPress: () => void drive(true) },
               ],
             }}
             // Speichern als sekundärer Knopf, solange die Tour neu oder geändert ist (Konzept 7.11.)
