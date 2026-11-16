@@ -60,6 +60,9 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [ ] Web: MapLibre und Schriften selbst ausliefern statt unpkg und Google Fonts (Claude)
 * [ ] Web: Satellit (Esri) ausblenden, ist noch wählbar (Claude)
 * [ ] Funk: Minuten bei LiveKit beobachten (Claude)
+* [ ] Routing Server prüft das Konto Token (Caddy forward_auth, CORS für den Web Planer), danach Web mit Token (Claude, Zugang über Korays Mac)
+* [ ] Gewichtung fest in die Server Profile statt aus der App (mit dem Neuaufbau)
+* [ ] LiveKit Ship und Supabase Pro vor dem Start, mit Kostenalarm (Koray bestellt)
 * [ ] Supabase Pro bei echten Nutzern (Koray bestellt)
 * [ ] DNS für routing.cumodrive.de und Domain für den Web Planer (Koray)
 * [ ] Marke: angemeldet, noch nicht eingetragen; Widerspruchsfrist wegen der KUMO Marken bis drei Monate nach Veröffentlichung der Eintragung
@@ -67,7 +70,6 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 ## Als Nächstes (Claude)
 
 * [ ] Server 1 nach dem Neuaufbau vom 15.11. prüfen (Bereinigung, neue Kurvig Datei), Mörlenbach nachrechnen; Server 2 folgt Mo 3 Uhr
-* [ ] Funk: LiveKit liegt doppelt im App Paket (eine Fassung für unseren Code, eine für das iPhone Paket); auf eine Fassung zwingen, mit Gerätetest, könnte mit den Abbrüchen zusammenhängen
 * [ ] Erinnerung mit Standort „Immer“ (Variante c, Teil b): braucht expo-task-manager im nächsten Build
 * [ ] Tour anpassen: schmale Abbiegezeile oben im Planer, „Als neue Tour speichern“ nach der Fahrt
 * [ ] Kompass auch in CarPlay (wenn gewünscht, Build)
@@ -85,6 +87,14 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [ ] Liste der Gründungstester vor der Veröffentlichung
 * [ ] 3D Designer für die Fahrzeug Formen beauftragen (heute Kenney Car Kit, CC0)
 * [ ] CarPlay: Namen der Knöpfe, Rundtouren aus dem Auto automatisch speichern, Community Touren in der Liste im Auto
+
+## Erledigt am 16.11.
+
+* [x] App Store Connect: Deutsch als Primärsprache, Texte, 9 Bilder, Kategorie, Datenschutz URL; Vorlage für Datenschutz Fragebogen, Altersfreigabe und Prüfhinweise im Doc „App Store Angaben CUMO DRIVE“
+* [x] 32 neue Strecken (DE), Sperrungen nur einmal je Stelle, Zahlen auf Webseite und im Store als Schwellen
+* [x] Web: Strecken, Pässe und Empfehlungen nur nach Anmeldung (Edge Function road-data, Fingerabdruck je Konto)
+* [x] App schickt das Konto Token an die eigenen Server (Prüfung auf dem Server folgt, braucht Zugang über Koray)
+* [x] Funk ruht nach 10 Minuten Stille und weckt die Gruppe beim Drücken; Positionen nach Tempo; livekit-client nur einmal im Paket
 
 ## Erledigt am 13. bis 15.11.
 
