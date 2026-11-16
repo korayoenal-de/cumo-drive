@@ -11,10 +11,10 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { Avatar } from '@/components/community/ride-bits';
 import { useAvatar } from '@/lib/avatars';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts } from '@/constants/theme';
+import { Colors, Fonts, Shadow } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { clusterLabel, clusterPins, type Region } from '@/lib/map-cluster';
-import type { LatLon } from '@/lib/tour';
+import { haversine, type LatLon } from '@/lib/tour';
 
 export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt' | 'driver'; p: LatLon; label: string; count?: number; ring?: string };
 
@@ -54,7 +54,14 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
   const win = useWindowDimensions();
   // Ausschnitt der Karte: daraus ergibt sich, welche Pins zu einem Kreis mit Zahl werden (Koray 11.11.)
   const [region, setRegion] = useState<Region>(START);
-  const groups = useMemo(() => clusterPins(pins, region, win.width, 56, selected), [pins, region, win.width, selected]);
+  // Aufgefächerte Gruppe (Koray 16.11.): Pins am selben Ort, zum Beispiel zwei Touren mit gleichem Start, trennt auch
+  // das nächste Heranzoomen nicht. Antippen legt sie dann nebeneinander, statt endlos zu zoomen.
+  const [fan, setFan] = useState<{ ids: string[]; c: LatLon } | null>(null);
+  const groups = useMemo(() => {
+    const fanned = fan ? pins.filter((p) => fan.ids.includes(p.id)) : [];
+    const rest = fanned.length ? pins.filter((p) => !fan!.ids.includes(p.id)) : pins;
+    return { clusters: clusterPins(rest, region, win.width, 56, selected), fanned: fanned.length > 1 ? fanOut(fanned, fan!.c, region, win.width) : [] };
+  }, [pins, region, win.width, selected, fan]);
 
   // Alle Pins zeigen, wenn sich die Auswahl der Pins ändert (Routen oder Ausfahrten)
   useEffect(() => {
@@ -87,7 +94,10 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
       pitchEnabled={false}
       onPress={(e) => {
         // Tippen auf die freie Karte hebt die Auswahl auf, Tippen auf einen Pin nicht
-        if (e.nativeEvent.action !== 'marker-press') onSelect(null);
+        if (e.nativeEvent.action !== 'marker-press') {
+          onSelect(null);
+          setFan(null);
+        }
       }}
       onRegionChangeComplete={setRegion}
       initialRegion={START}>
@@ -97,7 +107,10 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
           <Polyline coordinates={line.map(ll)} strokeColor={Colors.signal} strokeWidth={5} lineCap="round" lineJoin="round" zIndex={2} />
         </>
       )}
-      {groups.map((g) => {
+      {groups.fanned.map((p) => (
+        <PinMarker key={`fan-${p.id}`} pin={p} on={p.id === selected} onSelect={onSelect} />
+      ))}
+      {groups.clusters.map((g) => {
         if (g.items.length > 1) {
           const n = g.items.length;
           const kind = g.items[0].kind;
@@ -109,10 +122,21 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
               zIndex={30}
               tracksViewChanges={false}
               // näher heran, bis sich der Kreis auflöst
-              onPress={() => map.current?.fitToCoordinates(withSpan(g.items.map((x) => x.p), 0.03).map(ll), { edgePadding: pad, animated: true })}
+              onPress={() => {
+                // Liegen die Pins so dicht, dass auch das Heranzoomen sie nicht trennt: auffächern
+                if (g.items.every((x) => haversine(x.p, g.p) < 400)) {
+                  setFan({ ids: g.items.map((x) => x.id), c: g.p });
+                  if (region.longitudeDelta > 0.3) map.current?.animateToRegion({ ...region, latitude: g.p[0], longitude: g.p[1], latitudeDelta: 0.3, longitudeDelta: 0.3 });
+                  return;
+                }
+                map.current?.fitToCoordinates(withSpan(g.items.map((x) => x.p), 0.03).map(ll), { edgePadding: pad, animated: true });
+              }}
               accessibilityLabel={`${n} ${kind === 'driver' ? 'Fahrer' : kind === 'route' ? 'Touren' : 'Ausfahrten'} hier, tippen zum Heranzoomen`}>
-              <View style={[styles.cluster, n >= 10 && styles.clusterM, n >= 100 && styles.clusterL, kind === 'ausfahrt' && styles.clusterRide]}>
-                <AppText style={[styles.clusterText, kind === 'ausfahrt' && styles.clusterTextRide]}>{clusterLabel(n)}</AppText>
+              {/* Rand für den Schatten: die Marke wird als Bild gezeichnet, ohne Rand schneidet sie ihn ab */}
+              <View style={styles.clusterRoom}>
+                <View style={[styles.cluster, n >= 10 && styles.clusterM, n >= 100 && styles.clusterL, kind === 'ausfahrt' && styles.clusterRide]}>
+                  <AppText style={[styles.clusterText, kind === 'ausfahrt' && styles.clusterTextRide]}>{clusterLabel(n)}</AppText>
+                </View>
               </View>
             </Marker>
           );
@@ -123,6 +147,27 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
       })}
     </MapView>
   );
+}
+
+/**
+ * Pins am selben Ort nebeneinander legen: Touren und Ausfahrten untereinander (die Pillen sind breit), Fahrer im
+ * Kreis. Abstände in Punkten, umgerechnet für den aktuellen Ausschnitt; die echte Lage zeigt die Strecke beim Antippen.
+ */
+function fanOut(items: CommunityPin[], c: LatLon, region: Region, widthPt: number): CommunityPin[] {
+  const perLon = widthPt / region.longitudeDelta;
+  const perLat = perLon / Math.cos((c[0] * Math.PI) / 180);
+  const n = items.length;
+  return items.map((p, i) => {
+    let dx = 0;
+    let dy = 0;
+    if (p.kind === 'driver') {
+      const a = (i / n) * 2 * Math.PI - Math.PI / 2;
+      const r = Math.max(30, n * 9);
+      dx = Math.cos(a) * r;
+      dy = Math.sin(a) * r;
+    } else dy = (i - (n - 1) / 2) * 40;
+    return { ...p, p: [c[0] - dy / perLat, c[1] + dx / perLon] as LatLon };
+  });
 }
 
 /**
@@ -189,7 +234,9 @@ const styles = StyleSheet.create({
   driver: { width: 38, height: 38, borderRadius: 19, borderWidth: 2.5, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   driverOn: { width: 46, height: 46, borderRadius: 23, borderWidth: 3, backgroundColor: Colors.surface },
   // Kreis mit Zahl für mehrere Pins an einer Stelle: hell, damit er sich von den einzelnen dunklen Pins abhebt
-  cluster: { minWidth: 40, height: 40, paddingHorizontal: 8, borderRadius: 20, backgroundColor: Colors.text, borderWidth: 3, borderColor: 'rgba(11,11,12,0.55)', alignItems: 'center', justifyContent: 'center' },
+  clusterRoom: { padding: 14 },
+  // Schatten statt grauer Kontur (Koray 16.11.), wie die schwebenden Knöpfe
+  cluster: { minWidth: 40, height: 40, paddingHorizontal: 8, borderRadius: 20, backgroundColor: Colors.text, boxShadow: Shadow.button, alignItems: 'center', justifyContent: 'center' },
   clusterM: { minWidth: 46, height: 46, borderRadius: 23 },
   clusterL: { minWidth: 54, height: 54, borderRadius: 27 },
   clusterRide: { backgroundColor: Colors.signal },
