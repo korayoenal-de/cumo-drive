@@ -81,6 +81,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [ ] Lead Blatt nach dem Prototyp, Vermeiden als feste Einstellung
 * [ ] Missbrauch Stufe 2, Lernen Stufe 2
 
+* [ ] Passseiten auf cumodrive.de (Entwurf separat im Artefakt). Regeln (Koray 16.11.): Seiten nur für bekannte Pässe und Ikonen, die ohnehin öffentlich sind; keine Seiten für Geheimtipps, bevorzugte Strecken und Korays Insider Strecken; Linie nur als gezeichnete Form ohne Koordinaten, Ansage nur in Worten; nirgends eine maschinenlesbare Liste aller Strecken
+
 ## Für Koray
 
 * [ ] Restliche sechs iPhone Screenshots für die Landingpage
@@ -94,6 +96,7 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [x] 32 neue Strecken (DE), Sperrungen nur einmal je Stelle, Zahlen auf Webseite und im Store als Schwellen
 * [x] Web: Strecken, Pässe und Empfehlungen nur nach Anmeldung (Edge Function road-data, Fingerabdruck je Konto)
 * [x] App schickt das Konto Token an die eigenen Server (Prüfung auf dem Server folgt, braucht Zugang über Koray)
+* [x] Schweiz: 20 Strecken, 6 Pässe (Pragel, Passwang, Tourne, Champex, Luzisteig, Pétra Félix); Klausen fällt weiter mit Schleife durch, Schleifenprüfung ansehen
 * [x] Funk ruht nach 10 Minuten Stille und weckt die Gruppe beim Drücken; Positionen nach Tempo; livekit-client nur einmal im Paket
 
 ## Erledigt am 13. bis 15.11.
