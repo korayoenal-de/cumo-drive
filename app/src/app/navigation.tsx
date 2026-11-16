@@ -546,6 +546,8 @@ export default function NavigationScreen() {
 
   // Gefahrene Tour einmal im Konto speichern (nicht bei Simulation, nicht ohne Konto)
   const simulated = useRef(false);
+  // Simulation läuft: Knopf ausblenden und Tempo nicht über dem Limit zeigen (saubere Bilder, Koray 16.11.)
+  const [simOn, setSimOn] = useState(false);
   const session = useSession();
   const [saved, setSaved] = useState<'nein' | 'ok' | 'fehler' | 'simulation' | 'ohne_konto' | null>(null);
   const savedFor = useRef<RideStats | null>(null);
@@ -1157,7 +1159,7 @@ export default function NavigationScreen() {
             {/* Tempopille und Kompass in einer Reihe (Koray 15.11.): der Kompass bleibt immer, auch ohne Tempo */}
             <View style={[styles.leadWrap, styles.speedRow]} pointerEvents="box-none">
               {(driveSettings.speed || brakeHint) && (
-                <SpeedBadge speedKmh={state.speedKmh} limit={limitHere} estimated={shownLimit?.estimated} hint={brakeHint} showSpeed={driveSettings.speed} />
+                <SpeedBadge speedKmh={simOn && limitHere != null && state.speedKmh != null ? Math.min(state.speedKmh, limitHere) : state.speedKmh} limit={limitHere} estimated={shownLimit?.estimated} hint={brakeHint} showSpeed={driveSettings.speed} />
               )}
               <Animated.View layout={LinearTransition.duration(280)}>
               <NavCompass
@@ -1232,7 +1234,7 @@ export default function NavigationScreen() {
                     ]
                   : []),
               ]}
-              showSim={showSim}
+              showSim={showSim && !simOn}
               bottomInset={insets.bottom + Spacing.m}
               onEnd={close}
               onOverview={!inRide || ride.myRole === 'lead' ? startAdjust : undefined}
@@ -1242,6 +1244,7 @@ export default function NavigationScreen() {
               onSecret={() => setSecret(true)}
               onSimulate={() => {
                 simulated.current = true;
+                setSimOn(true);
                 controls.simulate(true);
               }}
             />
@@ -1320,6 +1323,7 @@ export default function NavigationScreen() {
                       kind="ghost"
                       onPress={() => {
                         simulated.current = true;
+                setSimOn(true);
                         controls.simulate(true);
                       }}
                     />
