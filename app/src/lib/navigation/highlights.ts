@@ -9,7 +9,7 @@
  */
 import { learnedLevel } from '../highlight-feedback';
 import { defaultLevel, HIGHLIGHT_ROADS, type HighlightRoad } from '../highlight-roads';
-import { PASSES, passesAlong, warnSpeech, type Pass, type WarnKey } from '../passes';
+import { localPassName, PASSES, passesAlong, warnSpeech, type Pass, type WarnKey } from '../passes';
 import { resample, type ElevationProfile } from '../stats';
 import { haversine, type LatLon } from '../tour';
 import { getLang, noteT, numberLocale, t } from '@/i18n';
@@ -171,7 +171,7 @@ export function findHighlights(
     out.push({
       id: pass.id,
       kind: 'pass',
-      name: pass.name,
+      name: localPassName(pass),
       warn: pass.warn,
       startKm,
       endKm,

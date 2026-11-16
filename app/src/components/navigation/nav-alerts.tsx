@@ -39,7 +39,7 @@ export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
         <NavSymbolIcon symbol={HIGHLIGHT_SYMBOL[h.kind]} size={44} soon />
         <View style={styles.flex}>
           <AppText variant="caption" style={styles.kicker}>
-            {`${distM > 50 ? `In ${d.value} ${d.unit}` : 'Jetzt'} · ${FUN_NAMES[toFunLevel(h.level)]}`}
+            {`${distM > 50 ? t('In {v} {u}', { v: d.value, u: d.unit }) : t('Jetzt')} · ${FUN_NAMES[toFunLevel(h.level)]}`}
           </AppText>
           {/* Warnung als Label über dem Namen, weitere Gründe vor den Fakten (Konzept 12.11.) */}
           <WarnLabel warn={h.warn} />

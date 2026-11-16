@@ -8,11 +8,11 @@
  * Die Sprache folgt dem iPhone (Intl, ohne natives Modul) und lässt sich in den Einstellungen festlegen
  * (auf dem Gerät gespeichert). Ein Wechsel zeichnet die App neu (Schlüssel am Stamm in _layout).
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
 import en from './en.json';
 import it from './it.json';
+import { readChoice, writeChoice } from './store';
 
 export type Lang = 'de' | 'en' | 'it';
 export const LANGS: { id: Lang; label: string }[] = [
@@ -24,7 +24,6 @@ export const LANGS: { id: Lang; label: string }[] = [
 export const SPEECH_LANG: Record<Lang, string> = { de: 'de-DE', en: 'en-GB', it: 'it-IT' };
 
 const DICT: Record<Exclude<Lang, 'de'>, Record<string, string>> = { en, it };
-const KEY = 'cumo.sprache.v1';
 
 /** Sprache des Geräts: de, it, sonst Englisch (Deutsch auch für AT und CH) */
 export function deviceLang(locale?: string): Lang {
@@ -40,33 +39,22 @@ export function deviceLang(locale?: string): Lang {
   return base === 'de' ? 'de' : base === 'it' ? 'it' : 'en';
 }
 
-let lang: Lang = deviceLang();
+const valid = (v: string | null): v is Lang => v === 'de' || v === 'en' || v === 'it';
+const stored = readChoice();
 /** null: dem Gerät folgen */
-let chosen: Lang | null = null;
+let chosen: Lang | null = valid(stored) ? stored : null;
+let lang: Lang = chosen ?? deviceLang();
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
-/** Beim Start: gespeicherte Wahl laden */
-export async function loadLang(): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(KEY);
-    if (raw === 'de' || raw === 'en' || raw === 'it') {
-      chosen = raw;
-      if (raw !== lang) {
-        lang = raw;
-        emit();
-      }
-    }
-  } catch {
-    // Gerätesprache bleibt
-  }
-}
+/** Früher asynchron geladen; die Wahl liegt jetzt synchron vor (store.ts). Bleibt für den Aufruf beim Start. */
+export async function loadLang(): Promise<void> {}
 
 /** Sprache festlegen (null: dem Gerät folgen) */
 export function setLang(next: Lang | null): void {
   chosen = next;
   lang = next ?? deviceLang();
-  AsyncStorage.setItem(KEY, next ?? '').catch(() => undefined);
+  writeChoice(next);
   emit();
 }
 

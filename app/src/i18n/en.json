@@ -808,5 +808,22 @@
   "Überspringen hat gerade nicht geklappt.": "Skipping didn't work right now.",
   "‹ Zurück": "‹ Back",
   "‹ Zurück zur Gruppe": "‹ Back to the group",
-  "↶ Rückgängig": "↶ Undo"
+  "↶ Rückgängig": "↶ Undo",
+  "Die kürzeste Runde in diese Richtung hat {km} km.": "The shortest loop in this direction is {km} km.",
+  "Runde mit {km} km": "Loop of {km} km",
+  "Von hier keine Runde mit {km} km": "No {km} km loop from here",
+  "{km} km hin und zurück": "{km} km out and back",
+  "Über {name} und auf demselben Weg zurück": "Via {name} and back the same way",
+  "Die App startet neu, damit alle Texte wechseln.": "The app restarts so all texts switch.",
+  "Nett": "Nice",
+  "Lohnend": "Worth it",
+  "Stark": "Great",
+  "Traumstraße": "Dream road",
+  "Legende": "Legend",
+  "Gemütlich": "Easygoing",
+  "Schwungvoll": "Flowing",
+  "Kurvenreich": "Twisty",
+  "Spektakulär": "Spectacular",
+  "Legendär": "Legendary",
+  "In {v} {u}": "In {v} {u}"
 }

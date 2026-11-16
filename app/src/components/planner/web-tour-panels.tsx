@@ -208,7 +208,7 @@ export function AddHighlight(props: {
 
 /** grober Umweg hin und zurück bei 35 km/h, wie in der App */
 const detourMin = (offM: number) => Math.max(1, Math.round(((2 * offM) / 1000 / 35) * 60));
-const FUN_NAMES: Record<number, string> = { 1: 'Nett', 2: 'Lohnend', 3: 'Stark', 4: 'Traumstraße', 5: 'Legende' };
+const FUN_NAMES: Record<number, string> = { get 1() { return t('Nett'); }, get 2() { return t('Lohnend'); }, get 3() { return t('Stark'); }, get 4() { return t('Traumstraße'); }, get 5() { return t('Legende'); } };
 /** Umweg wie in der App: gelbe Plakette */
 const detourTag: React.CSSProperties = { flex: 'none', padding: '3px 8px', borderRadius: 10, background: 'rgba(232,176,58,0.16)', color: C.warn, font: `700 13px ${BODY}`, fontVariantNumeric: 'tabular-nums' };
 

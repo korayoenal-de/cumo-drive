@@ -10,18 +10,20 @@ import { hairpinKms, roadsAlong } from './navigation/highlights';
 import { passesAlong, PASSES, TIER_WEIGHT } from './passes';
 import { resample } from './stats';
 import { haversine, type LatLon } from './tour';
+import { t } from '@/i18n';
 
 /** Stand der Rechnung; gespeicherte Werte älterer Stände werden neu gerechnet */
 export const TOUR_FUN_VERSION = 2;
 
 export type TourFunLevel = 1 | 2 | 3 | 4 | 5;
 
+/** Namen der Stufen in der App Sprache (Getter, damit sie beim Lesen übersetzt werden) */
 export const TOUR_FUN_NAMES: Record<TourFunLevel, string> = {
-  1: 'Gemütlich',
-  2: 'Schwungvoll',
-  3: 'Kurvenreich',
-  4: 'Spektakulär',
-  5: 'Legendär',
+  get 1() { return t('Gemütlich'); },
+  get 2() { return t('Schwungvoll'); },
+  get 3() { return t('Kurvenreich'); },
+  get 4() { return t('Spektakulär'); },
+  get 5() { return t('Legendär'); },
 };
 
 /** Untergrenzen der Stufen 2 bis 5 */

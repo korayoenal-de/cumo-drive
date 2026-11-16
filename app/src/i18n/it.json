@@ -808,5 +808,22 @@
   "Überspringen hat gerade nicht geklappt.": "Salto non riuscito in questo momento.",
   "‹ Zurück": "‹ Indietro",
   "‹ Zurück zur Gruppe": "‹ Torna al gruppo",
-  "↶ Rückgängig": "↶ Annulla"
+  "↶ Rückgängig": "↶ Annulla",
+  "Die kürzeste Runde in diese Richtung hat {km} km.": "Il giro più corto in questa direzione è di {km} km.",
+  "Runde mit {km} km": "Giro ad anello di {km} km",
+  "Von hier keine Runde mit {km} km": "Da qui nessun giro di {km} km",
+  "{km} km hin und zurück": "{km} km andata e ritorno",
+  "Über {name} und auf demselben Weg zurück": "Via {name} e ritorno per la stessa strada",
+  "Die App startet neu, damit alle Texte wechseln.": "L'app si riavvia per cambiare tutti i testi.",
+  "Nett": "Piacevole",
+  "Lohnend": "Merita",
+  "Stark": "Notevole",
+  "Traumstraße": "Strada da sogno",
+  "Legende": "Leggenda",
+  "Gemütlich": "Tranquillo",
+  "Schwungvoll": "Scorrevole",
+  "Kurvenreich": "Tutto curve",
+  "Spektakulär": "Spettacolare",
+  "Legendär": "Leggendario",
+  "In {v} {u}": "Tra {v} {u}"
 }

@@ -5,7 +5,7 @@
 import { onRoadData } from './road-data';
 import { bearingTo, destination } from './roundtrip';
 import { haversine, type LatLon } from './tour';
-import { t } from '@/i18n';
+import { getLang, t } from '@/i18n';
 
 export type PassTier = 'ikone' | 'bekannt' | 'mittel';
 
@@ -285,4 +285,18 @@ export function passLoopVia(
     via.push(destination(start, first.km * 0.6, b + 55));
   }
   return { via, passes: chosen.map((x) => x.pass) };
+}
+
+/**
+ * Name des Passes in der App Sprache (Koray 16.11.): Italienisch bei Pässen in Italien mit italienischem Namen,
+ * zweisprachig in Südtirol und den Dolomiten (zuerst der Name der Sprache, dann der andere), sonst wie gehabt.
+ */
+const ITALIAN = /^(Passo|Colle|Forcella|Giogo|Sella|Valico|Monte)\b/;
+export function localPassName(p: Pass): string {
+  const lang = getLang();
+  if (lang === 'de' || !p.country.includes('IT')) return p.name;
+  const it = p.names.find((n) => ITALIAN.test(n));
+  if (!it) return p.name;
+  // deutscher Hauptname und italienischer Name: zweisprachiges Gebiet, beide nennen
+  return ITALIAN.test(p.name) ? p.name : `${it}, ${p.name}`;
 }

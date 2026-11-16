@@ -23,10 +23,18 @@ import Animated, {
 import Svg, { Path } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
+import { t } from '@/i18n';
 
 export type FunLevel = 1 | 2 | 3 | 4 | 5;
 
-export const FUN_NAMES: Record<FunLevel, string> = { 1: 'Nett', 2: 'Lohnend', 3: 'Stark', 4: 'Traumstraße', 5: 'Legende' };
+/** Stufen des Fahrspaß Pegels in der App Sprache (Getter, übersetzt beim Lesen) */
+export const FUN_NAMES: Record<FunLevel, string> = {
+  get 1() { return t('Nett'); },
+  get 2() { return t('Lohnend'); },
+  get 3() { return t('Stark'); },
+  get 4() { return t('Traumstraße'); },
+  get 5() { return t('Legende'); },
+};
 
 const N = 8;
 /** Stufen: 1, 3, 5, 7 und 8 von 8 Segmenten, Legende ist der volle Kreis */

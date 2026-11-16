@@ -636,11 +636,11 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   function lengthItems(c: { want: number; loop: PlannedTour; back: OutAndBack | null }) {
     // Empfehlung: hin und zurück, wenn es passt oder näher an der Wunschlänge liegt als die Runde
     const backFits = !!c.back && (lengthFits(c.back.laenge_km, c.want) || Math.abs(c.back.laenge_km - c.want) < Math.abs(c.loop.laenge_km - c.want));
-    const loopItem = { key: 'runde', icon: 'arrow.triangle.2.circlepath' as const, label: `Runde mit ${Math.round(c.loop.laenge_km)} km`, primary: !backFits, onPress: () => undefined };
+    const loopItem = { key: 'runde', icon: 'arrow.triangle.2.circlepath' as const, label: tr('Runde mit {km} km', { km: Math.round(c.loop.laenge_km) }), primary: !backFits, onPress: () => undefined };
     const backItem = c.back
-      ? [{ key: 'zurueck', icon: 'arrow.uturn.backward' as const, label: `${Math.round(c.back.laenge_km)} km hin und zurück`, hint: `Über ${c.back.target} und auf demselben Weg zurück`, primary: backFits, onPress: () => pickLength('zurueck', c) }]
+      ? [{ key: 'zurueck', icon: 'arrow.uturn.backward' as const, label: tr('{km} km hin und zurück', { km: Math.round(c.back.laenge_km) }), hint: tr('Über {name} und auf demselben Weg zurück', { name: c.back.target }), primary: backFits, onPress: () => pickLength('zurueck', c) }]
       : [];
-    const startItem = { key: 'start', icon: 'mappin.and.ellipse' as const, label: 'Anderen Startort wählen', onPress: () => pickLength('start', c) };
+    const startItem = { key: 'start', icon: 'mappin.and.ellipse' as const, label: tr('Anderen Startort wählen'), onPress: () => pickLength('start', c) };
     return [...(backFits ? [...backItem, loopItem] : [loopItem, ...backItem]), startItem];
   }
   function pickLength(key: 'zurueck' | 'start', c: { back: OutAndBack | null }) {
@@ -1393,8 +1393,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     <AskFeedbackSheet rounds={askRounds} onDone={() => setAskRounds(null)} />
     <ActionSheet
       visible={!!lengthChoice}
-      title={lengthChoice ? `Von hier keine Runde mit ${lengthChoice.want} km` : undefined}
-      subtitle={lengthChoice ? `Die kürzeste Runde in diese Richtung hat ${Math.round(lengthChoice.loop.laenge_km)} km.` : undefined}
+      title={lengthChoice ? tr('Von hier keine Runde mit {km} km', { km: lengthChoice.want }) : undefined}
+      subtitle={lengthChoice ? tr('Die kürzeste Runde in diese Richtung hat {km} km.', { km: Math.round(lengthChoice.loop.laenge_km) }) : undefined}
       onClose={() => setLengthChoice(null)}
       items={lengthChoice?.items ?? []}
     />

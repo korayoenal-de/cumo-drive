@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, AppState, Linking, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Avatar } from '@/components/community/ride-bits';
 import { BackLink } from '@/components/ui/back-link';
@@ -16,7 +16,7 @@ import { avoidSummary } from '@/components/planner/planner-parts';
 import { Group, Row, SwitchRow } from '@/components/settings/settings-ui';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { useAvoid } from '@/lib/avoid-settings';
 import { refreshAvatar } from '@/lib/avatars';
@@ -30,7 +30,7 @@ import { enablePush, pushStatus, type PushStatus } from '@/lib/push';
 import { showToast } from '@/lib/toast';
 import { syncVehicles, useVehicles, vehicleName } from '@/lib/vehicle';
 import { useVoiceChoice } from '@/lib/voice-settings';
-import { t } from '@/i18n';
+import { chosenLang, LANGS, setLang, t, useLang, type Lang } from '@/i18n';
 
 
 /** inNav: während der Navigation als Blatt darüber geöffnet (Koray 15.11.), oben der Weg zurück zur Fahrt */
@@ -85,6 +85,7 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
         <Row title={t('Stimme und Ansagen')} value={voice?.name ?? 'Standard'} onPress={() => router.push('/ansagen')} />
         <Row title={t('Vermeiden')} value={avoidSummary(avoid)} onPress={() => router.push('/ansagen')} />
         <Row title={t('Kartendarstellung')} value={MAP_STYLES.find((s) => s.id === map.style)?.label ?? 'Standard'} onPress={() => router.push('/ansagen')} />
+        <LanguageRow />
       </Group>
 
       {session && <CommunityGroup />}
@@ -308,3 +309,44 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.4 },
   error: { color: Colors.signal, fontFamily: Fonts.semibold },
 });
+
+/** Sprache der App (Koray 16.11.): folgt dem iPhone, hier selbst festlegen. Ein Wechsel startet die App neu. */
+function LanguageRow() {
+  const lang = useLang();
+  const [open, setOpen] = useState(false);
+  const chosen = chosenLang();
+  const label = chosen ? LANGS.find((l) => l.id === chosen)?.label : `${t('Wie das iPhone')} (${LANGS.find((l) => l.id === lang)?.label})`;
+  const pick = (next: Lang | null) => {
+    if (next === chosen) return;
+    setLang(next);
+    showToast(t('Die App startet neu, damit alle Texte wechseln.'));
+    setTimeout(() => void restartApp(), 900);
+  };
+  return (
+    <>
+      <Row title={t('Sprache')} value={label} onPress={() => setOpen(true)} />
+      <ActionSheet
+        visible={open}
+        title={t('Sprache')}
+        onClose={() => setOpen(false)}
+        items={[
+          { key: 'auto', icon: chosen === null ? 'checkmark' : 'iphone', label: t('Wie das iPhone'), onPress: () => pick(null) },
+          ...LANGS.map((l) => ({ key: l.id, icon: (chosen === l.id ? 'checkmark' : 'globe') as 'checkmark' | 'globe', label: l.label, onPress: () => pick(l.id) })),
+        ]}
+      />
+    </>
+  );
+}
+
+async function restartApp() {
+  if (Platform.OS === 'web') {
+    window.location.reload();
+    return;
+  }
+  try {
+    const Updates = await import('expo-updates');
+    await Updates.reloadAsync();
+  } catch {
+    // im Entwicklungsmodus ohne Updates: die Texte wechseln beim nächsten Start
+  }
+}
