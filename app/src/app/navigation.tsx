@@ -26,6 +26,7 @@ import { Colors, Fonts, Leading, Radius, Spacing, Type } from '@/constants/theme
 import { setActiveTour, useActiveTour } from '@/lib/active-tour';
 import { getEditOrigin, requestEditBack } from '@/lib/edit-tour';
 import { PACE_NOTES_RELEASED, setDriveSetting, useDriveSettings } from '@/lib/drive-settings';
+import { appVersion } from '@/lib/feedback';
 import { showToast } from '@/lib/toast';
 import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetTour, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
@@ -944,6 +945,7 @@ export default function NavigationScreen() {
       limitGeschaetzt: limitEst,
       abseits: state.offRouteM == null ? null : Math.round(state.offRouteM),
       status: state.status,
+      version: appVersion(),
     };
     bbLog('report', context);
     void sendNavReport({ p: state.position, context, log: bbSnapshot(240) })

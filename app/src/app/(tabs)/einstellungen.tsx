@@ -103,6 +103,10 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
         </Group>
       )}
 
+      <Group label="Hilfe" hint="Fehler, Wünsche, falsche Strecken: jede Meldung wird geprüft.">
+        <Row title="Feedback geben" onPress={() => router.push('/feedback')} />
+      </Group>
+
       <Group label="Rechtliches">
         <Row title="Datenschutz" onPress={() => router.push('/datenschutz')} />
         <Row title="Nutzungsbedingungen" onPress={() => router.push('/agb')} />
