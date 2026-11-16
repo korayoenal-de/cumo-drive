@@ -61,7 +61,8 @@ import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
 
 /** So lange ersetzt die Highlight Ansage die Routenführung */
-const HL_SHOW_MS = 5000;
+// Ansage Karte: 12 s (Koray 16.11.: 5 s war zu kurz); ein nahes Manöver hat immer Vorrang (showHlCard)
+const HL_SHOW_MS = 12000;
 /** Ab dieser Entfernung zeigt CarPlay das Manöversymbol in Signal Orange (statt der Animation auf dem iPhone) */
 const CP_SOON_M = 200;
 /** Ab so viel Abstand zur Route gilt man auf dem Autodisplay als abseits (wie in der App) */
