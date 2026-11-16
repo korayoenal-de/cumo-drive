@@ -88,6 +88,14 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [ ] Routing Server: Prüfung des Konto Tokens im Zählmodus einspielen (routing/server/cloud/auth/install.sh), dann Branch web-token zusammenführen und Web hochladen, dann sperren
 * [ ] Web Planer: Rückfrage bei nicht erreichbarer Rundtour Länge (wie in der App, Optionen A und B)
 
+## Sprachen (EN, IT seit 16.11. in der App)
+
+* [ ] Rechtstexte (Datenschutz, AGB) auf Englisch und Italienisch, anwaltliche Prüfung deckt alle Fassungen ab (Koray mit Anwalt, Entwurf Claude)
+* [ ] App Store je Sprache: Titel, Untertitel, Keywords, Beschreibung (Entwurf im Doc „App Store Angaben“), Screenshots auf Englisch und Italienisch
+* [ ] Testfahrt mit italienischer und englischer Stimme: Zahlen, Einheiten, Kehren, Passnamen (zweisprachig in Südtirol)
+* [ ] Kurznachrichten der Gruppe (QUICK_MESSAGES) und Landingpage übersetzen
+* [ ] Später: Meilen für UK und USA, Italien bleibt metrisch
+
 ## Für Koray
 
 * [ ] cumodriversclub.de und rallycumo.de liefern dieselben Seiten doppelt aus (Status 200, canonical auf rallycumo.de): eine Domain per 301 auf die andere weiterleiten (Koray schaut separat)
