@@ -1,0 +1,19 @@
+# Anmeldung an den eigenen Servern (Koray 16.11.). In jeden Site Block der Caddyfile als erste Zeile:
+#   import /etc/caddy/cumo-auth.caddy
+# Vorabfragen der Browser (CORS mit Authorization Kopf) beantwortet Caddy selbst. Gesundheit, Info und
+# die Metadaten der POI Kacheln bleiben offen (Überwachung, Serverwahl der App).
+@cumo_preflight method OPTIONS
+handle @cumo_preflight {
+	header Access-Control-Allow-Origin *
+	header Access-Control-Allow-Headers "authorization, content-type, content-encoding, x-client-info, apikey"
+	header Access-Control-Allow-Methods "GET, POST, OPTIONS"
+	header Access-Control-Max-Age 86400
+	respond 204
+}
+@cumo_needs_auth {
+	not method OPTIONS
+	not path /health /info /poi/v1/meta.json
+}
+forward_auth @cumo_needs_auth 127.0.0.1:9180 {
+	uri /check
+}

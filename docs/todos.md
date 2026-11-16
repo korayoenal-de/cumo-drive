@@ -54,11 +54,11 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [x] Zweiter Server läuft (Server 2, 13.140.213.114), Wechsel bei Ausfall oder Neuaufbau
 * [x] Eigene Ortssuche auf beiden Servern, öffentliches Photon nur noch Notfall (12.11.)
 * [x] Eigener Valhalla auf Server 2 (14.11.), mit vollständigen Ländergrenzen und Prüfung vor der Freigabe; FOSSGIS nur Notfall
-* [ ] GraphHopper Free (graphhopper.com) entfernen: noch in `lib/graphhopper.ts` für Rundtouren im Ersatzweg (Claude)
-* [ ] Höhenprofil aus dem eigenen GraphHopper statt Valhalla /height (Claude)
-* [ ] Stopps: Hotels und restliche Arten in die eigenen POI Kacheln, Overpass raus (noch in `lib/stops-along.ts`) (Claude)
+* [x] GraphHopper Free entfernt (Rundtour Bewertung lokal)
+* [x] Höhenprofil über den eigenen Valhalla (öffentlicher nur Notfall)
+* [x] Stopps nur aus eigenen POI Kacheln, Overpass raus (13.11.)
 * [ ] Web: MapLibre und Schriften selbst ausliefern statt unpkg und Google Fonts (Claude)
-* [ ] Web: Satellit (Esri) ausblenden, ist noch wählbar (Claude)
+* [x] Web: Satellit (Esri) ausgeblendet (13.11.)
 * [ ] Funk: Minuten bei LiveKit beobachten (Claude)
 * [ ] Routing Server prüft das Konto Token (Caddy forward_auth, CORS für den Web Planer), danach Web mit Token (Claude, Zugang über Korays Mac)
 * [ ] Gewichtung fest in die Server Profile statt aus der App (mit dem Neuaufbau)
