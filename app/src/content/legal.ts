@@ -12,7 +12,7 @@ export type LegalDoc = { title: string; headTitle?: string; lead: string; blocks
 const KONTAKT = 'kontakt@rallycumo.de';
 const IMPRESSUM = 'https://rallycumo.de/impressum/';
 
-export const STAND = 'Stand: 10. November 2026. Entwurf, die anwaltliche Prüfung steht noch aus.';
+export const STAND = 'Stand: 16. November 2026. Entwurf, die anwaltliche Prüfung steht noch aus.';
 
 export const DATENSCHUTZ: LegalDoc = {
   title: 'Datenschutz',
@@ -38,6 +38,7 @@ export const DATENSCHUTZ: LegalDoc = {
         'Profil und Community: Profilfoto, wenn du eins setzt (auf 512 Pixel verkleinert, für alle mit dem Link abrufbar, jederzeit entfernbar), Wohnort (für andere nur als Ortsmitte, nie als Adresse), der Text Über mich, ob du unter Drivers sichtbar bist, ob andere dich anschreiben dürfen und ob sie deinen Fuhrpark sehen. Dazu private Nachrichten, Ausfahrten mit Anfragen und Chat.',
         'Funk in der Gruppenfahrt: deine Stimme nur, solange du den Funk Knopf gedrückt hältst. Sie wird live an die anderen Teilnehmer übertragen und nicht aufgezeichnet oder gespeichert.',
         'Mitteilungen: wenn du sie erlaubst, ein Gerätekennzeichen für Push Mitteilungen bei Nachrichten, Einladungen und Anfragen.',
+        'Rückmeldungen: wenn du Problem melden drückst, die Position, was die App in dem Moment zeigte, die letzten Minuten der Fahrt und die App Version; wenn du eine Fahrt schwach bewertest, Note, Gründe und Notiz; wenn du Feedback in den Einstellungen schickst, Bereich, Text und App Version. Wir prüfen jede Rückmeldung, um Fehler zu beheben und die App zu verbessern (berechtigtes Interesse, Art. 6 Abs. 1 lit. f DSGVO), und sagen dir Bescheid, wenn deine Rückmeldung umgesetzt ist.',
         'Standort: während Planung und Navigation, um dich zu führen und Rundtouren ab deinem Standort zu planen. In einer Gruppenfahrt sehen die anderen Teilnehmer deine Position live, solange die Fahrt läuft.',
         'Kamera und Mikrofon: die Kamera nur, um einen QR Code aus dem Web Planer zu lesen; Bilder speichern wir nicht. Das Mikrofon nur für den Funk, solange du den Knopf drückst.',
         'Kauf: ob du ein Abo hast und wann es endet. Bezahldaten sieht nur Apple, wir nicht.',
@@ -76,6 +77,7 @@ export const DATENSCHUTZ: LegalDoc = {
       list: [
         'Konto, Touren, Fahrten und Fahrzeuge, bis du sie löschst oder dein Konto löschst.',
         'Einträge zur Nutzung der Planung höchstens 24 Monate, danach bleiben nur die zusammengefassten Werte je Straßenabschnitt.',
+        'Rückmeldungen und die Fahrtprotokolle aus Problem melden höchstens 12 Monate.',
         'Live Positionen der Gruppenfahrt werden nicht gespeichert, sondern nur während der Fahrt zwischen den Teilnehmern ausgetauscht.',
         'Server Protokolle höchstens 14 Tage.',
         'Rechnungsdaten von Club Lizenzen so lange, wie Handels und Steuerrecht es verlangen (bis zu 10 Jahre).',
@@ -84,7 +86,7 @@ export const DATENSCHUTZ: LegalDoc = {
     {
       h: '6. Konto löschen',
       p: [
-        'Du kannst dein Konto jederzeit in der App unter Einstellungen, Konto, Konto löschen entfernen. Dabei löschen wir Konto, Touren, Fahrten, Fahrzeuge, deine Bewertungen und die Einträge zur Nutzung der Planung. Veröffentlichte Community Touren verschwinden ebenfalls. Bereits zusammengefasste Auswertungen ohne Personenbezug bleiben bestehen. Ein Abo kündigst du getrennt davon in den Einstellungen deiner Apple ID.',
+        'Du kannst dein Konto jederzeit in der App unter Einstellungen, Konto, Konto löschen entfernen. Dabei löschen wir Konto, Touren, Fahrten, Fahrzeuge, deine Bewertungen, deine Rückmeldungen und die Einträge zur Nutzung der Planung. Veröffentlichte Community Touren verschwinden ebenfalls. Bereits zusammengefasste Auswertungen ohne Personenbezug bleiben bestehen. Ein Abo kündigst du getrennt davon in den Einstellungen deiner Apple ID.',
       ],
     },
     {

@@ -16,7 +16,8 @@ type Event =
   | { type: 'contact'; to: string; actor: string; state: 'pending' | 'accepted' }
   | { type: 'ride_ping'; ride: string; to: string; actor: string }
   | { type: 'ride_changed'; ride: string; actor: string; what: 'zeit' | 'ort' | 'beides' | 'strecke' }
-  | { type: 'ride_lead'; ride: string; actor: string; to?: string; taken?: boolean };
+  | { type: 'ride_lead'; ride: string; actor: string; to?: string; taken?: boolean }
+  | { type: 'feedback_done'; id: string; to: string; actor?: string | null };
 
 type Note = { user: string; title: string; body: string; data: { url: string; chat?: string; type: string } };
 
@@ -166,6 +167,16 @@ async function rideDay(e: Extract<Event, { type: 'ride_ping' | 'ride_changed' | 
   return [{ user: e.to, title: r.name, body: short(`${who} hat dir die Lead übergeben. Du startest die Ausfahrt.`), data: { url, type: 'ride_lead' } }];
 }
 
+/** Rückmeldung ist behoben und live (Koray 16.11.): Dank an den Fahrer, der sie geschickt hat */
+async function feedbackDone(e: Extract<Event, { type: 'feedback_done' }>): Promise<Note[]> {
+  if (typeof e.id !== 'string' || !e.to) return [];
+  const { data: f } = await db.from('feedback').select('owner,note,source').eq('id', e.id).maybeSingle();
+  if (!f?.owner || f.owner !== e.to) return [];
+  const what = f.source === 'melden' ? 'Deine Meldung aus der Fahrt' : f.source === 'bewertung' ? 'Dein Hinweis aus der Bewertung' : 'Dein Feedback';
+  const quote = typeof f.note === 'string' && f.note.trim() ? ` („${short(f.note, 60)}“)` : '';
+  return [{ user: f.owner, title: 'Danke, ist behoben', body: short(`${what}${quote} ist umgesetzt und in der App.`), data: { url: '/', type: 'feedback_done' } }];
+}
+
 async function notes(e: Event): Promise<Note[]> {
   let list: Note[] = [];
   if (e.type === 'dm' && Number.isSafeInteger(e.id)) list = await directMessage(e.id);
@@ -174,6 +185,7 @@ async function notes(e: Event): Promise<Note[]> {
   else if (e.type === 'ride_start') list = await rideStart(e);
   else if (e.type === 'contact') list = await contact(e);
   else if (e.type === 'ride_ping' || e.type === 'ride_changed' || e.type === 'ride_lead') list = await rideDay(e);
+  else if (e.type === 'feedback_done') list = await feedbackDone(e);
   // Wer etwas selbst ausgelöst hat, bekommt dazu keine Mitteilung
   return e.actor ? list.filter((n) => n.user !== e.actor) : list;
 }
