@@ -6,6 +6,7 @@
 import { snapEndsToStreet } from './street-snap';
 import { avoidedPoints } from './avoid-pass';
 import { checkLine } from './check';
+import { doubledStretch } from './doubled';
 import { cumoAvailable, cumoPlan, type PlanHint } from './cumo-routing';
 import { tourFun } from './fun-score';
 import { PASSES, passesAlong } from './passes';
@@ -182,6 +183,48 @@ export async function planChecked(
 const uturnKm = (ts: UTurn[]) => ts.reduce((a, u) => a + u.km, 0);
 
 /**
+ * Zwischenziele auf einer Passhöhe, an denen die Route wendet: Anfahrt und Weiterfahrt liegen auf den 4 km davor
+ * und danach übereinander. Liefert Punkte auf der Anfahrt (ab 600 m vor der Passhöhe), die beim Neuplanen
+ * gesperrt werden; leer, wenn die Route über die Pässe hinweg führt.
+ */
+export function passTurnbacks(line: LatLon[], points: LatLon[]): { k: number; ramp: LatLon[] }[] {
+  if (line.length < 3 || points.length < 3) return [];
+  const cum = [0];
+  for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + haversine(line[i - 1], line[i]));
+  const at = (m: number): LatLon => {
+    let i = 1;
+    while (i < cum.length - 1 && cum[i] < m) i++;
+    const f = cum[i] === cum[i - 1] ? 0 : (m - cum[i - 1]) / (cum[i] - cum[i - 1]);
+    const a = line[i - 1];
+    const b = line[i];
+    return [a[0] + (b[0] - a[0]) * Math.max(0, Math.min(1, f)), a[1] + (b[1] - a[1]) * Math.max(0, Math.min(1, f))];
+  };
+  const out: { k: number; ramp: LatLon[] }[] = [];
+  for (let wi = 1; wi < points.length - 1; wi++) {
+    const w = points[wi];
+    if (!PASSES.some((p) => haversine([p.lat, p.lon], w) < 500)) continue;
+    let k = 0;
+    for (let i = 1; i < line.length; i++) if (haversine(line[i], w) < haversine(line[k], w)) k = i;
+    if (haversine(line[k], w) > 800) continue;
+    const m = cum[k];
+    // Weiterfahrt nach 600 m bis 4 km: liegt sie auf der Anfahrt (gleiche Abstände vor der Passhöhe)?
+    let same = 0;
+    let n = 0;
+    for (let d = 600; d <= 4000 && m - d > 0 && m + d < cum[cum.length - 1]; d += 400) {
+      n++;
+      if (haversine(at(m - d), at(m + d)) < 80) same++;
+    }
+    if (n >= 3 && same / n >= 0.7) {
+      const ramp: LatLon[] = [];
+      // dicht genug, dass zwischen den gesperrten Quadraten (etwa 120 m) kein Weg durchrutscht
+      for (let d = 600; d <= 3000 && m - d > 0; d += 80) ramp.push(at(m - d));
+      out.push({ k: wi, ramp });
+    }
+  }
+  return out;
+}
+
+/**
  * Wendeschleifen, die übrig bleiben, als Prüfhinweis an der Stelle (Matthias 15.11.): lieber sagen, dass die
  * Route hier wendet, als still einen sinnlosen Loop zu fahren.
  */
@@ -225,6 +268,28 @@ async function planCheckedInner(
       if (uturnKm(unwantedUTurns(lineOf(again), moved)) < uturnKm(turns) && again.laenge_km < first.laenge_km) {
         first = { ...again, wegpunkte: points, ...(first.direkt ? { direkt: first.direkt } : {}) };
         usePts = moved;
+      }
+    } catch (e) {
+      if (signal?.aborted) throw e;
+    }
+  }
+  // Pass als Zwischenziel, aber hin und zurück auf derselben Rampe (Routen Check 16.11.: Falzarego, Giau, Cortina
+  // fuhr 9,6 km doppelt): die Anfahrt sperren und neu rechnen, dann führt die Route über den Pass hinweg
+  const turnbacks = passTurnbacks(lineOf(first), usePts);
+  if (turnbacks.length) {
+    onStep?.('fix');
+    try {
+      // bis zum Pass ohne die Rampe der Anfahrt, ab dem Pass wie gehabt: so führt die Route über den Pass
+      const { k, ramp } = turnbacks[0];
+      const prof = first.direkt ? 'schnell' : profile;
+      const [a, b] = await Promise.all([
+        planCore(name, usePts.slice(0, k + 1), prof, avoid, undefined, signal, snapMajor, [...skip, ...ramp], false, hint),
+        planCore(name, usePts.slice(k), prof, avoid, undefined, signal, snapMajor, skip, false, hint),
+      ]);
+      const again = mergeLegs(name, usePts, [a, b]);
+      // nur nehmen, wenn wirklich weniger doppelt gefahren wird (manche Reihenfolgen erzwingen eine Rampe zweimal)
+      if (doubledStretch(lineOf(again)).km < doubledStretch(lineOf(first)).km - 0.5 && again.laenge_km <= first.laenge_km * 1.5 + 10 && (again.km_je_klasse?.raus ?? 0) === 0) {
+        first = { ...again, wegpunkte: points, ...(first.direkt ? { direkt: first.direkt } : {}) };
       }
     } catch (e) {
       if (signal?.aborted) throw e;
