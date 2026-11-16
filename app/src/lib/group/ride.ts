@@ -150,6 +150,17 @@ function subscribe(l: () => void) {
   };
 }
 
+/** Funk Signale über den Kanal der Gruppe (Koray 16.11.): wer nach langer Stille spricht, weckt die anderen */
+export type FunkSignal = { wake: true; from: string };
+const funkListeners = new Set<(s: FunkSignal) => void>();
+export function onFunkSignal(cb: (s: FunkSignal) => void): () => void {
+  funkListeners.add(cb);
+  return () => funkListeners.delete(cb);
+}
+export function sendFunkSignal(): void {
+  if (channel && state.me) void channel.send({ type: 'broadcast', event: 'funk', payload: { wake: true, from: state.me.id } });
+}
+
 export function useRide(): RideState {
   return useSyncExternalStore(subscribe, () => state, () => state);
 }
@@ -231,13 +242,22 @@ async function startWatching() {
 
 /** Position senden (auch aus der Navigation oder Simulation nutzbar). */
 let lastPosAt = 0;
+let lastPosSpeed = -1;
+let lastPosOff = false;
 export function sendPosition(p: LatLon, heading: number | null, speedKmh: number | null, off = false) {
   const me = state.me;
   if (!channel || !me) return;
-  // höchstens alle 2 Sekunden, auch wenn GPS und Navigation beide senden
+  // Abstand nach Tempo (Koray 16.11., Kosten der Live Positionen): im Stand alle 30 s, auf der Autobahn alle 5 s,
+  // sonst alle 3 s. Fährt man los oder ändert sich off, sofort. Höchstens alle 2 s, auch wenn GPS und Navigation senden.
   const now = Date.now();
+  const v = speedKmh ?? -1;
+  const gap = v < 0 ? 3000 : v < 3 ? 30000 : v > 110 ? 5000 : 3000;
+  const startsMoving = lastPosSpeed >= 0 && lastPosSpeed < 3 && v >= 10;
   if (now - lastPosAt < 2000) return;
+  if (now - lastPosAt < gap && !startsMoving && off === lastPosOff) return;
   lastPosAt = now;
+  lastPosSpeed = v;
+  lastPosOff = off;
   positions.set(me.id, { p, heading, speedKmh, seenAt: Date.now(), off, own: ownRoute });
   rebuildMembers();
   void channel.send({ type: 'broadcast', event: 'pos', payload: { id: me.id, lat: p[0], lon: p[1], h: heading, v: speedKmh, off, own: ownRoute } });
@@ -356,6 +376,9 @@ function connect(topic: string, me: Me, role: Role, info: { code: string | null;
     known.delete(id);
     positions.delete(id);
     rebuildMembers();
+  });
+  ch.on('broadcast', { event: 'funk' }, ({ payload }) => {
+    for (const cb of funkListeners) cb(payload as FunkSignal);
   });
   ch.on('broadcast', { event: 'ende' }, () => {
     // Lead hat die Fahrt für alle beendet

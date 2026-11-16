@@ -5,6 +5,10 @@
  * gedrückt halten schaltet das Mikrofon an, loslassen wieder aus. Es spricht immer nur einer: wer drückt,
  * während ein anderer spricht, wartet und ist dran, sobald der andere loslässt (die Lead vor allen anderen).
  *
+ * Ruhe (Koray 16.11., Kosten): Nach 10 Minuten ohne Sprechen trennt sich der Funk und ruht. Wer dann drückt,
+ * weckt über den Kanal der Gruppe alle anderen; sein Mikrofon geht an, sobald jemand zuhört (höchstens 2,5 s).
+ * LiveKit rechnet nach verbundenen Minuten, auf einer Ausfahrt wird meist nur selten gesprochen.
+ *
  * Das native WebRTC Paket kommt erst mit Build 20. Ältere Builds bekommen dieselben JS Updates;
  * dort fehlt das Modul, dann ist Funk einfach nicht verfügbar statt die App abstürzen zu lassen.
  */
@@ -14,6 +18,8 @@ import { useSyncExternalStore } from 'react';
 import { bbLog } from '@/lib/navigation/blackbox';
 import { holdAudioSession } from '@/lib/navigation/voice';
 import { supabase } from '@/lib/supabase';
+
+import { onFunkSignal, sendFunkSignal } from './ride';
 
 /** ruht: mehrere Versuche ohne Erfolg, die App versucht es nur noch alle zwei Minuten (Koray 14.11.) */
 export type FunkStatus = 'nicht' | 'aus' | 'verbinde' | 'an' | 'getrennt' | 'fehler' | 'ruht';
@@ -58,6 +64,60 @@ let room: import('livekit-client').Room | null = null;
 let current: string | null = null;
 let isLead = false;
 let wantTalk = false;
+/** Funk ruht nach langer Stille: getrennt, aber die Fahrt bleibt gemerkt */
+const IDLE_MS = 10 * 60 * 1000;
+let asleep: { rideId: string } | null = null;
+let lastVoice = Date.now();
+/** Knopf gedrückt, während der Funk ruhte: nach dem Verbinden sprechen */
+let holdWhileWaking = false;
+let idleTimer: ReturnType<typeof setInterval> | null = null;
+let offSignal: (() => void) | null = null;
+
+function voice() {
+  lastVoice = Date.now();
+}
+
+/** Ruhen: Raum schließen, Anzeige bleibt an (Drücken weckt) */
+async function sleep() {
+  const rideId = current;
+  if (!rideId || !room || state.talking || state.speaker) return;
+  bbLog('funk', ['ruht nach Stille']);
+  gen += 1;
+  if (retry) clearTimeout(retry);
+  retry = null;
+  await teardown();
+  asleep = { rideId };
+  set({ status: 'an', talking: false, waiting: false, speaker: null });
+}
+
+/** Aufwachen: selbst gedrückt (andere wecken) oder von einem anderen geweckt */
+function wake(self: boolean) {
+  const a = asleep;
+  if (!a) return;
+  asleep = null;
+  voice();
+  if (self) sendFunkSignal();
+  bbLog('funk', [self ? 'weckt' : 'geweckt']);
+  void connectFunk(a.rideId, isLead, false);
+}
+
+function watchIdle() {
+  if (!idleTimer) {
+    idleTimer = setInterval(() => {
+      if (room && state.status === 'an' && !state.talking && !state.speaker && Date.now() - lastVoice > IDLE_MS) void sleep();
+    }, 30000);
+  }
+  if (!offSignal) offSignal = onFunkSignal(() => wake(false));
+}
+
+function stopWatchIdle() {
+  if (idleTimer) clearInterval(idleTimer);
+  idleTimer = null;
+  offSignal?.();
+  offSignal = null;
+  asleep = null;
+  holdWhileWaking = false;
+}
 /**
  * Von selbst wieder verbinden (12.11.): Nach einem langen Tunnel oder Funkloch gibt LiveKit auf und meldet
  * Disconnected. Bisher blieb der Funk dann für den Rest der Fahrt aus. Jetzt versuchen wir es erneut,
@@ -94,6 +154,9 @@ export function funkAvailable() {
 export async function connectFunk(rideId: string, lead: boolean, again = false) {
   isLead = lead;
   if (!lk || !rn || current === rideId) return;
+  asleep = null;
+  voice();
+  watchIdle();
   const g = gen;
   await teardown();
   if (g !== gen) return;
@@ -120,10 +183,12 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
     room = r;
     r.on(lk.RoomEvent.ActiveSpeakersChanged, (speakers) => {
       const other = speakers.find((p) => p.identity !== r.localParticipant.identity);
+      if (speakers.length) voice();
       set({ speaker: other ? { id: other.identity, name: other.name || 'Fahrer' } : null });
       // Wartet jemand und der andere ist fertig: jetzt sprechen
       if (!other && wantTalk && !state.talking) void startTalking();
     });
+    r.on(lk.RoomEvent.ParticipantConnected, voice);
     r.on(lk.RoomEvent.TrackSubscribed, (_t, pub) => {
       if (!state.listen) pub.setEnabled(false);
     });
@@ -163,6 +228,16 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
       // dann öffnet das erste Drücken das Mikrofon
       bbLog('funk', ['mikro vorbereiten', e instanceof Error ? e.message.slice(0, 200) : String(e)]);
     }
+    // Geweckt durch eigenes Drücken: kurz warten, bis jemand zuhört, dann sprechen
+    if (holdWhileWaking && room === r) {
+      const until = Date.now() + 2500;
+      while (room === r && holdWhileWaking && r.remoteParticipants.size === 0 && Date.now() < until) await new Promise((ok) => setTimeout(ok, 150));
+      if (room === r && holdWhileWaking) {
+        holdWhileWaking = false;
+        wantTalk = true;
+        void startTalking();
+      }
+    }
   } catch (e) {
     if (current !== rideId || g !== gen) return;
     const msg = e instanceof Error ? e.message : 'Funk nicht verfügbar.';
@@ -176,6 +251,7 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
 
 export async function disconnectFunk() {
   gen += 1;
+  stopWatchIdle();
   if (retry) clearTimeout(retry);
   retry = null;
   tries = 0;
@@ -196,6 +272,7 @@ async function teardown() {
 
 async function startTalking() {
   if (!room) return;
+  voice();
   set({ talking: true, waiting: false });
   try {
     // hängt das Öffnen, nicht ewig "Du sprichst" zeigen
@@ -219,6 +296,11 @@ async function stopTalking() {
 /** Funk Knopf gedrückt (true) oder losgelassen (false). */
 export function pushToTalk(on: boolean) {
   wantTalk = on;
+  if (asleep || holdWhileWaking) {
+    holdWhileWaking = on && !(state.onlyLead && !isLead);
+    if (on && asleep && holdWhileWaking) wake(true);
+    return;
+  }
   if (!room || state.status !== 'an') return;
   if (!on) {
     void stopTalking();
