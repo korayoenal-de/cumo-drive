@@ -71,6 +71,13 @@ Bewusst ohne Bewegung:
 * Touren mit Mini Streckenbild, Zahlen in Tabellenziffern, Status als getönte Plakette statt Text im Fließtext.
 * Zahlen gleich groß und auf einer Zeile, Einheiten klein daneben.
 
+### Pins nach Zoomstufe (Koray 16.11.2026, Leinwand „Pins nach Zoomstufe“)
+* Keine Kreise mit Zahl auf Karten. Jeder Pin bleibt einzeln, die Zoomstufe bestimmt, wie viel er zeigt.
+* Weit (mehr als 3 Grad Breite): Punkt, 12 pt. Region (0,6 bis 3 Grad): Symbol, 32 pt. Nah (unter 0,6 Grad): volle Marke. Heraus wechselt die Stufe erst bei 3,6 und 0,75 Grad.
+* Gewählt ist in jeder Stufe die volle Marke, hell und obenauf.
+* Orange nur für Ausfahrten. Touren hell, Fahrer mit Ring in Wagenfarbe.
+* Gleicher Start: in der Stufe Nah von selbst untereinander, in Weit und Region dürfen sich Pins überlappen. Schatten `Shadow.button` statt Kontur.
+
 ## 5. Typografie: Mittelweg (entschieden am 5.11.2026)
 * Versalien in Archivo Black nur für Tournamen und Überschriften der Ansicht sowie Kennzahlen (109 KM, 2:15 H, 47).
 * Buttons, Highlight Ansagen, Wegbeschreibung, Listen und Abschnittstitel normal geschrieben in Inter Bold.

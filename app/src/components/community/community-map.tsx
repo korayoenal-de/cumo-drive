@@ -2,6 +2,10 @@
  * Karte der Community (Koray 9.11.): Pins am Start jeder Route oder Ausfahrt.
  * Routen: dunkle Pins mit Streckensymbol und km. Ausfahrten: orange Pins mit Teilnehmerzahl und Datum.
  * Antippen wählt den Pin, die ganze Strecke erscheint auf der Karte.
+ *
+ * Seit 16.11. (Koray, Leinwand „Pins nach Zoomstufe“) ohne Kreise mit Zahl: jeder Pin bleibt einzeln, die Zoomstufe
+ * bestimmt, wie viel er zeigt. Weit ein Punkt, Region ein Symbol, nah die volle Marke; gewählt immer die volle.
+ * Orange nur für Ausfahrten, Touren hell, Fahrer mit Ring in Wagenfarbe.
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -13,14 +17,26 @@ import { useAvatar } from '@/lib/avatars';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Shadow } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
-import { clusterLabel, clusterPins, type Region } from '@/lib/map-cluster';
-import { haversine, type LatLon } from '@/lib/tour';
+import { clusterPins, type Region } from '@/lib/map-cluster';
+import type { LatLon } from '@/lib/tour';
 
 export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt' | 'driver'; p: LatLon; label: string; count?: number; ring?: string };
 
 const MAP_TYPE: Record<MapStyle, 'mutedStandard' | 'hybrid' | 'hybridFlyover'> = { standard: 'mutedStandard', satellit: 'hybrid', '3d': 'hybridFlyover' };
 const ll = (p: LatLon) => ({ latitude: p[0], longitude: p[1] });
 const START: Region = { latitude: 48.8, longitude: 9.2, latitudeDelta: 6, longitudeDelta: 6 };
+
+/** Zoomstufe der Pins nach Breite des Ausschnitts in Grad */
+export type PinStage = 'weit' | 'region' | 'nah';
+/**
+ * Mit Abstand zwischen hinein und heraus, damit es an der Grenze nicht flackert: hinein bei 3 und 0,6 Grad,
+ * heraus erst bei 3,6 und 0,75 Grad.
+ */
+export function stageFor(span: number, prev: PinStage): PinStage {
+  if (prev === 'weit') return span < 3 ? (span < 0.6 ? 'nah' : 'region') : 'weit';
+  if (prev === 'nah') return span > 0.75 ? (span > 3.6 ? 'weit' : 'region') : 'nah';
+  return span > 3.6 ? 'weit' : span < 0.6 ? 'nah' : 'region';
+}
 
 type Props = {
   pins: CommunityPin[];
@@ -52,16 +68,19 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
   const pad = { top: top + 30, right: 40, bottom: bottom + 30, left: 40 };
   const pinKey = pins.map((p) => p.id).join(',');
   const win = useWindowDimensions();
-  // Ausschnitt der Karte: daraus ergibt sich, welche Pins zu einem Kreis mit Zahl werden (Koray 11.11.)
   const [region, setRegion] = useState<Region>(START);
-  // Aufgefächerte Gruppe (Koray 16.11.): Pins am selben Ort, zum Beispiel zwei Touren mit gleichem Start, trennt auch
-  // das nächste Heranzoomen nicht. Antippen legt sie dann nebeneinander, statt endlos zu zoomen.
-  const [fan, setFan] = useState<{ ids: string[]; c: LatLon } | null>(null);
-  const groups = useMemo(() => {
-    const fanned = fan ? pins.filter((p) => fan.ids.includes(p.id)) : [];
-    const rest = fanned.length ? pins.filter((p) => !fan!.ids.includes(p.id)) : pins;
-    return { clusters: clusterPins(rest, region, win.width, 56, selected), fanned: fanned.length > 1 ? fanOut(fanned, fan!.c, region, win.width) : [] };
-  }, [pins, region, win.width, selected, fan]);
+  const [stage, setStage] = useState<PinStage>(stageFor(START.longitudeDelta, 'region'));
+  const onRegion = (r: Region) => {
+    setRegion(r);
+    setStage((prev) => stageFor(r.longitudeDelta, prev));
+  };
+  // Nur was im Ausschnitt liegt (mit Rand). In der Stufe Nah stehen Marken, die sich überdecken würden (gleicher
+  // Start, zum Beispiel große und kleine Sellaronda), von selbst untereinander. In Weit und Region dürfen sie sich
+  // überlappen, Punkte und Symbole bleiben klein und der Schatten trennt sie.
+  const shown = useMemo(() => {
+    const groups = clusterPins(pins, region, win.width, stage === 'nah' ? 30 : 4, selected);
+    return groups.flatMap((g) => (g.items.length > 1 && stage === 'nah' ? fanOut(g.items, g.p, region, win.width) : g.items));
+  }, [pins, region, win.width, selected, stage]);
 
   // Alle Pins zeigen, wenn sich die Auswahl der Pins ändert (Routen oder Ausfahrten)
   useEffect(() => {
@@ -94,12 +113,9 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
       pitchEnabled={false}
       onPress={(e) => {
         // Tippen auf die freie Karte hebt die Auswahl auf, Tippen auf einen Pin nicht
-        if (e.nativeEvent.action !== 'marker-press') {
-          onSelect(null);
-          setFan(null);
-        }
+        if (e.nativeEvent.action !== 'marker-press') onSelect(null);
       }}
-      onRegionChangeComplete={setRegion}
+      onRegionChangeComplete={onRegion}
       initialRegion={START}>
       {line && line.length > 1 && (
         <>
@@ -107,44 +123,9 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
           <Polyline coordinates={line.map(ll)} strokeColor={Colors.signal} strokeWidth={5} lineCap="round" lineJoin="round" zIndex={2} />
         </>
       )}
-      {groups.fanned.map((p) => (
-        <PinMarker key={`fan-${p.id}`} pin={p} on={p.id === selected} onSelect={onSelect} />
+      {shown.map((p) => (
+        <PinMarker key={p.id} pin={p} on={p.id === selected} stage={stage} onSelect={onSelect} />
       ))}
-      {groups.clusters.map((g) => {
-        if (g.items.length > 1) {
-          const n = g.items.length;
-          const kind = g.items[0].kind;
-          return (
-            <Marker
-              key={g.key}
-              coordinate={ll(g.p)}
-              anchor={{ x: 0.5, y: 0.5 }}
-              zIndex={30}
-              tracksViewChanges={false}
-              // näher heran, bis sich der Kreis auflöst
-              onPress={() => {
-                // Liegen die Pins so dicht, dass auch das Heranzoomen sie nicht trennt: auffächern
-                if (g.items.every((x) => haversine(x.p, g.p) < 400)) {
-                  setFan({ ids: g.items.map((x) => x.id), c: g.p });
-                  if (region.longitudeDelta > 0.3) map.current?.animateToRegion({ ...region, latitude: g.p[0], longitude: g.p[1], latitudeDelta: 0.3, longitudeDelta: 0.3 });
-                  return;
-                }
-                map.current?.fitToCoordinates(withSpan(g.items.map((x) => x.p), 0.03).map(ll), { edgePadding: pad, animated: true });
-              }}
-              accessibilityLabel={`${n} ${kind === 'driver' ? 'Fahrer' : kind === 'route' ? 'Touren' : 'Ausfahrten'} hier, tippen zum Heranzoomen`}>
-              {/* Rand für den Schatten: die Marke wird als Bild gezeichnet, ohne Rand schneidet sie ihn ab */}
-              <View style={styles.clusterRoom}>
-                <View style={[styles.cluster, n >= 10 && styles.clusterM, n >= 100 && styles.clusterL, kind === 'ausfahrt' && styles.clusterRide]}>
-                  <AppText style={[styles.clusterText, kind === 'ausfahrt' && styles.clusterTextRide]}>{clusterLabel(n)}</AppText>
-                </View>
-              </View>
-            </Marker>
-          );
-        }
-        const p = g.items[0];
-        const on = p.id === selected;
-        return <PinMarker key={p.id} pin={p} on={on} onSelect={onSelect} />;
-      })}
     </MapView>
   );
 }
@@ -174,7 +155,9 @@ function fanOut(items: CommunityPin[], c: LatLon, region: Region, widthPt: numbe
  * Eine Marke. Die Karte zeichnet Marken einmal als Bild (tracksViewChanges aus, sonst ruckelt sie); kommt das
  * Profilfoto später, baut ein neuer Schlüssel die Marke neu.
  */
-function PinMarker({ pin, on, onSelect }: { pin: CommunityPin; on: boolean; onSelect: (id: string | null) => void }) {
+function PinMarker({ pin, on, stage, onSelect }: { pin: CommunityPin; on: boolean; stage: PinStage; onSelect: (id: string | null) => void }) {
+  // gewählt zeigt immer alles
+  const look: PinStage = on ? 'nah' : stage;
   const photo = useAvatar(pin.kind === 'driver' ? pin.id : null);
   // kurz mitzeichnen, bis das Foto geladen ist, dann wieder als festes Bild
   const [settled, setSettled] = useState<string | null>(null);
@@ -186,15 +169,50 @@ function PinMarker({ pin, on, onSelect }: { pin: CommunityPin; on: boolean; onSe
   }, [photo]);
   return (
     <Marker
-      key={`${pin.id}-${on ? 1 : 0}-${photo ?? ''}`}
+      key={`${pin.id}-${look}-${on ? 1 : 0}-${photo ?? ''}`}
       coordinate={ll(pin.p)}
-      anchor={pin.kind === 'driver' ? { x: 0.5, y: 0.5 } : { x: 0.5, y: 1 }}
+      anchor={pin.kind === 'driver' || look !== 'nah' ? { x: 0.5, y: 0.5 } : { x: 0.5, y: 1 }}
       zIndex={on ? 50 : pin.kind === 'route' ? 10 : 20}
       tracksViewChanges={track}
       onPress={() => onSelect(pin.id)}
       accessibilityLabel={pin.kind === 'route' ? `Route, ${pin.label}` : pin.kind === 'driver' ? `Fahrer ${pin.label}` : `Ausfahrt am ${pin.label}`}>
-      <Pin pin={pin} on={on} />
+      {look === 'weit' ? <PinDot pin={pin} /> : look === 'region' ? <PinIcon pin={pin} /> : <Pin pin={pin} on={on} />}
     </Marker>
+  );
+}
+
+/** Weit: nur ein Punkt. Rand drumherum, damit der Schatten im Bild der Marke Platz hat. */
+function PinDot({ pin }: { pin: CommunityPin }) {
+  const bg = pin.kind === 'ausfahrt' ? Colors.signal : pin.kind === 'driver' ? (pin.ring ?? Colors.text) : Colors.text;
+  return (
+    <View style={styles.room}>
+      <View style={[styles.pinDot, { backgroundColor: bg }]} />
+    </View>
+  );
+}
+
+/** Region: ein Symbol, 32 pt. Tour mit Streckensymbol, Ausfahrt mit Teilnehmerzahl, Fahrer mit Foto. */
+function PinIcon({ pin }: { pin: CommunityPin }) {
+  if (pin.kind === 'driver') {
+    return (
+      <View style={styles.room}>
+        <View style={[styles.driverS, { borderColor: pin.ring ?? Colors.text }]}>
+          <Avatar name={pin.label} userId={pin.id} size={26} />
+        </View>
+      </View>
+    );
+  }
+  const ride = pin.kind === 'ausfahrt';
+  return (
+    <View style={styles.room}>
+      <View style={[styles.icon, ride && styles.iconRide]}>
+        {ride ? (
+          <AppText style={styles.iconCount}>{pin.count ?? ''}</AppText>
+        ) : (
+          <SymbolView name="point.topleft.down.to.point.bottomright.curvepath" size={16} weight="semibold" tintColor={Colors.text} />
+        )}
+      </View>
+    </View>
   );
 }
 
@@ -233,15 +251,13 @@ function Pin({ pin, on }: { pin: CommunityPin; on: boolean }) {
 const styles = StyleSheet.create({
   driver: { width: 38, height: 38, borderRadius: 19, borderWidth: 2.5, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   driverOn: { width: 46, height: 46, borderRadius: 23, borderWidth: 3, backgroundColor: Colors.surface },
-  // Kreis mit Zahl für mehrere Pins an einer Stelle: hell, damit er sich von den einzelnen dunklen Pins abhebt
-  clusterRoom: { padding: 14 },
-  // Schatten statt grauer Kontur (Koray 16.11.), wie die schwebenden Knöpfe
-  cluster: { minWidth: 40, height: 40, paddingHorizontal: 8, borderRadius: 20, backgroundColor: Colors.text, boxShadow: Shadow.button, alignItems: 'center', justifyContent: 'center' },
-  clusterM: { minWidth: 46, height: 46, borderRadius: 23 },
-  clusterL: { minWidth: 54, height: 54, borderRadius: 27 },
-  clusterRide: { backgroundColor: Colors.signal },
-  clusterText: { fontFamily: Fonts.extrabold, fontSize: 15, lineHeight: 18, color: Colors.ground, fontVariant: ['tabular-nums'] },
-  clusterTextRide: { color: Colors.onSignal },
+  // Rand für den Schatten: die Marke wird als Bild gezeichnet, ohne Rand schneidet sie ihn ab
+  room: { padding: 12 },
+  pinDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: Colors.ground, boxShadow: Shadow.button },
+  icon: { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.surface, boxShadow: Shadow.button, alignItems: 'center', justifyContent: 'center' },
+  iconRide: { backgroundColor: Colors.signal },
+  iconCount: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 14, lineHeight: 17, fontVariant: ['tabular-nums'] },
+  driverS: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', boxShadow: Shadow.button },
   wrap: { alignItems: 'center' },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 30, paddingHorizontal: 10, borderRadius: 15, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
   rideOn: { borderWidth: 2, borderColor: Colors.text },
