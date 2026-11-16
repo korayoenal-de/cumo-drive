@@ -34,6 +34,7 @@ import { endAllNavActivities } from '@/live/nav-live';
 import { StartScreen } from '@/components/ui/start-screen';
 import { preloadOnStart } from '@/lib/preload';
 import { PushHandler } from '@/lib/push';
+import { startRoutingAuth } from '@/lib/routing-auth';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -77,6 +78,7 @@ export default function RootLayout() {
   }, [intro, fontsDone, appReady]);
   useEffect(() => {
     preloadOnStart();
+    startRoutingAuth();
   }, []);
 
   // Verwaiste Live Activity aus einem früheren Start aufräumen (läuft eine Navigation, startet sie neu)

@@ -4,6 +4,7 @@
  * ein eigener Server bekommt höchstens 4 s, der öffentliche 7 s, damit ein Ausfall die Suche nicht endlos hängen lässt.
  */
 import { CUMO_ROUTING_SERVERS } from './cumo-routing';
+import { routingHeaders } from './routing-auth';
 
 const PUBLIC = 'https://photon.komoot.io';
 // zuerst Server 2, dann Server 1, jeweils erst unter cumodrive.de, dann unter sslip (16.11.)
@@ -41,7 +42,7 @@ async function ask(base: string, pathAndQuery: string, signal: AbortSignal | und
     ctrl.abort();
   }, timeoutMs);
   try {
-    const res = await fetch(`${base}${pathAndQuery}`, { signal: ctrl.signal });
+    const res = await fetch(`${base}${pathAndQuery}`, { signal: ctrl.signal, headers: routingHeaders() });
     if (!res.ok) throw new PhotonError(`Ortssuche: Fehler ${res.status}`, res.status === 404 ? 'missing' : 'other');
     return res;
   } catch (e) {

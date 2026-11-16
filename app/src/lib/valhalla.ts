@@ -4,6 +4,7 @@
  * Später ersetzt durch einen eigenen Server mit Sportwagen Profil.
  */
 import type { LatLon, Profile } from './tour';
+import { routingHeaders } from './routing-auth';
 
 /** Öffentlicher Valhalla (FOSSGIS): nur noch Notfall, höchstens eine Anfrage je Sekunde */
 export const VALHALLA_URL = 'https://valhalla1.openstreetmap.de';
@@ -24,7 +25,7 @@ export async function valhallaFetch(path: string, init: RequestInit): Promise<Re
   if (Date.now() >= ownDownUntil) {
     for (const base of OWN_VALHALLA) {
       try {
-        const res = await fetch(`${base}/${path}`, init);
+        const res = await fetch(`${base}/${path}`, { ...init, headers: { ...(init.headers as Record<string, string> | undefined), ...routingHeaders() } });
         if (res.status !== 404 && res.status < 500) return res;
       } catch (e) {
         if (init.signal?.aborted) throw e;

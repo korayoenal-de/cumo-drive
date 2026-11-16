@@ -23,6 +23,7 @@ import { doubledStretch } from './doubled';
 import { haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import type { Avoid } from './valhalla';
 import { onRoadData } from './road-data';
+import { routingHeaders } from './routing-auth';
 
 /** Fahrregionen als Fläche auf dem Server (aus, siehe model) */
 const SERVER_REGIONS = false;
@@ -316,7 +317,7 @@ async function sendTo(url: string, text: string, signal?: AbortSignal): Promise<
     try {
       const res = await fetch(`${url}/route`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(zip ? { 'Content-Encoding': 'gzip' } : {}) },
+        headers: { 'Content-Type': 'application/json', ...(zip ? { 'Content-Encoding': 'gzip' } : {}), ...routingHeaders() },
         body: zip ? gzipSync(strToU8(text), { level: 4 }) : text,
         signal: ctrl.signal,
       });

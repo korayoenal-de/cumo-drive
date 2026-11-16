@@ -10,6 +10,7 @@
  */
 import { RECOMMENDED, recommendedNear } from './recommended';
 import { CUMO_ROUTING_SERVERS, routingServerUrl } from './cumo-routing';
+import { routingHeaders } from './routing-auth';
 import { photonFetch } from './photon';
 import { haversine, type LatLon } from './tour';
 import type { Stop } from './intent';
@@ -49,7 +50,7 @@ const toRad = (d: number) => (d * Math.PI) / 180;
 function fetchWithTimeout(url: string, ms: number, init?: RequestInit): Promise<Response> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
-  return fetch(url, { ...init, signal: ctrl.signal }).finally(() => clearTimeout(t));
+  return fetch(url, { ...init, headers: { ...(init?.headers as Record<string, string> | undefined), ...routingHeaders() }, signal: ctrl.signal }).finally(() => clearTimeout(t));
 }
 
 // ---------- Strecke als Korridor ----------
