@@ -202,7 +202,8 @@ const styles = StyleSheet.create({
   title: { fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30, color: Colors.text },
   subtitle: { fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: 21, color: Colors.muted },
   list: { gap: Spacing.xs },
-  item: { minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m },
+  // Zeilenhöhe wie die Tasten (Koray 16.11.: minimal kleiner als 60, Option A)
+  item: { minHeight: Size.button, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m },
   itemDanger: { marginTop: Spacing.s, backgroundColor: Colors.dangerTint },
   itemPressed: { backgroundColor: Colors.line },
   itemPrimary: { borderRadius: Radius.pill, backgroundColor: Colors.signal, marginBottom: Spacing.s },
