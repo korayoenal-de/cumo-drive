@@ -273,8 +273,11 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
             }
             const leftHits = closuresOnRoute(flatten(again).map((x) => x.p), closures);
             const left = uniqueHits(leftHits);
-            // nur nehmen, wenn die Runde ihre Länge behält
-            const keepsLength = again.laenge_km >= t.laenge_km * 0.8 && again.laenge_km <= t.laenge_km * 1.3 + 5;
+            // nur nehmen, wenn die Runde ihre Länge behält, gemessen auch am Wunsch (Koray 16.11.: 100 km ab Corvara
+            // wurden um das gesperrte Pordoijoch 142 km). Länge geht vor: sonst bleibt die Runde mit Sperrung, und
+            // beim Losfahren kommt das Gesperrt Blatt mit der Umfahrung.
+            const keepsLength =
+              again.laenge_km >= t.laenge_km * 0.8 && again.laenge_km <= t.laenge_km * 1.3 + 5 && again.laenge_km <= req.km * 1.3 + 5;
             if (left < uniqueHits(hits) && keepsLength && (again.km_je_klasse?.raus ?? 0) === 0) {
               const n: SmartTour = { ...t, ...again, engine: 'cumo', curves: again.curves, score: t.score };
               passBonus.set(n, passBonus.get(t) ?? 0);
