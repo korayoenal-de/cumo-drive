@@ -51,6 +51,7 @@ import { type PlannedTour, type PlanStep } from '@/lib/plan';
 import { bearingTo, DIRECTIONS, type Direction } from '@/lib/roundtrip';
 import { spliceStop } from '@/lib/stop-splice';
 import { corridorSpots, curvyPieces, radarRadiusM, radarRoads, radarSpots, REVEAL_MS, type Radar, type Scan } from '@/lib/radar';
+import { loadResume, saveResume } from '@/lib/planner-resume';
 import { flatten, formatKm, haversine, normProfile, PROFILES, PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 import { clearAvoidedPasses } from '@/lib/avoid-pass';
@@ -286,6 +287,52 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     // unterwegs nur einmal beim Öffnen abholen
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadTour, liveEdit ? null : profile, liveEdit ? null : avoid, liveEdit]);
+
+  // Nach dem Schließen der App weiter, wo du warst (Koray 16.11.): Stand wiederherstellen, ohne neu zu planen.
+  // Kommt vorher schon eine Tour (Link, Touren, Community), gewinnt die.
+  type Snap = ReturnType<ReturnType<typeof useTourPlan>['snapshot']>;
+  type Round = { tour: PlannedTour; req: TourRequest; stops: Stop[] };
+  const resumed = useRef(false);
+  const latest = useRef({ pts: 0, kind: 'form' as Stage['kind'] });
+  useEffect(() => {
+    latest.current = { pts: tourPlan.pts.length, kind: view.kind };
+  });
+  const restoreTour = tourPlan.restore;
+  useEffect(() => {
+    if (liveEdit) return;
+    let gone = false;
+    void loadResume<Snap, Round>().then((r) => {
+      if (gone) return;
+      if (r && latest.current.pts === 0 && latest.current.kind === 'form') {
+        setProfile(normProfile(r.profile));
+        if (r.round) {
+          setMode('rundtour');
+          setView({ kind: 'result', tour: r.round.tour, req: r.round.req, stops: r.round.stops ?? [] });
+        } else if (r.tour) {
+          setMode(r.mode);
+          restoreTour(r.tour);
+        }
+      }
+      resumed.current = true;
+    });
+    return () => {
+      gone = true;
+    };
+    // nur beim Öffnen des Planers
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const lastSaved = useRef<unknown[]>([]);
+  useEffect(() => {
+    if (liveEdit || !resumed.current) return;
+    // Rechnen und Fehler nicht festhalten, der letzte gute Stand bleibt
+    if (view.kind === 'working' || view.kind === 'error') return;
+    const sig = [view, mode, tourPlan.pts, tourPlan.planned, tourPlan.name, tourPlan.cloudId, profile];
+    if (sig.length === lastSaved.current.length && sig.every((x, i) => x === lastSaved.current[i])) return;
+    lastSaved.current = sig;
+    if (view.kind === 'result') saveResume<Snap, Round>({ mode: 'rundtour', profile, round: { tour: view.tour, req: view.req, stops: view.stops } });
+    else if (tourPlan.pts.length) saveResume<Snap, Round>({ mode: mode === 'rundtour' ? 'rundtour' : 'tour', profile, tour: tourPlan.snapshot() });
+    else saveResume(null);
+  });
 
   /**
    * Runde anpassen (wie calimoto): als Route mit Start, Zwischenzielen und Ziel öffnen, die Strecke
