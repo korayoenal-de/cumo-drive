@@ -35,7 +35,7 @@ export function MapPassActions({
   bottom: number;
   onAction: (a: PassAction) => void;
 }) {
-  const sub = role ? `${note} · in der Route als ${role}` : detourKm != null ? `${note} · Umweg grob ${detourKm} km` : note;
+  const sub = role ? `${note} · ${role} der Route` : detourKm != null ? `${note} · Umweg grob ${detourKm} km` : note;
   const primary: { a: PassAction; label: string } = role
     ? { a: 'remove', label: 'Aus der Route entfernen' }
     : complete
@@ -61,7 +61,8 @@ export function MapPassActions({
               {pass.name}
             </AppText>
             <WarnLabel warn={pass.warn} />
-            <AppText style={styles.sub} numberOfLines={1}>
+            {/* zwei Zeilen: Höhe, Stufe, Sperrung und Rolle passen sonst nicht (Koray 16.11.) */}
+            <AppText style={styles.sub} numberOfLines={2}>
               {sub}
             </AppText>
             {warnRest(pass.warn) ? (
