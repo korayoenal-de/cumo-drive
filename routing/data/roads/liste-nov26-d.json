@@ -1,0 +1,1202 @@
+[
+ {
+  "id": "de-seebach-ottenhoefen",
+  "name": "Mummelsee nach Ottenhöfen",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "K 5370",
+   "K 5371"
+  ],
+  "from": {
+   "name": "Mummelsee",
+   "lat": 48.59786,
+   "lon": 8.20097
+  },
+  "to": {
+   "name": "Ottenhöfen im Schwarzwald",
+   "lat": 48.56584,
+   "lon": 8.15214
+  },
+  "via": [
+   {
+    "name": "Seebach",
+    "lat": 48.57624,
+    "lon": 8.17112
+   }
+  ],
+  "length_km": 14,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-brueck-liers",
+  "name": "Brück nach Liers",
+  "country": "DE",
+  "region": "Ahr",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "K 28",
+   "K 29",
+   "L 76"
+  ],
+  "from": {
+   "name": "Brück",
+   "lat": 50.4858,
+   "lon": 6.97093
+  },
+  "to": {
+   "name": "Liers",
+   "lat": 50.45692,
+   "lon": 6.94291
+  },
+  "via": [],
+  "length_km": 13,
+  "quality": 4,
+  "caveats": "Kreisstraßen, Breite prüfen",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-treis-karden-moersdorf",
+  "name": "Treis-Karden nach Mörsdorf",
+  "country": "DE",
+  "region": "Mosel und Hunsrück",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Moselaufstieg",
+  "roads": [
+   "L 202",
+   "L 204"
+  ],
+  "from": {
+   "name": "Treis-Karden",
+   "lat": 50.17543,
+   "lon": 7.30087
+  },
+  "to": {
+   "name": "Mörsdorf",
+   "lat": 50.10286,
+   "lon": 7.34434
+  },
+  "via": [],
+  "length_km": 13,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-muenstertal-schoenau",
+  "name": "Münstertal nach Schönau",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Bergstrecke",
+  "roads": [
+   "L 131",
+   "L 130"
+  ],
+  "from": {
+   "name": "Münstertal/Schwarzwald",
+   "lat": 47.85553,
+   "lon": 7.78298
+  },
+  "to": {
+   "name": "Schönau im Schwarzwald",
+   "lat": 47.78618,
+   "lon": 7.8934
+  },
+  "via": [],
+  "length_km": 20,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-kandel",
+  "name": "Kandel",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "highlight",
+  "note": "Bergstrecke",
+  "roads": [
+   "L 186",
+   "L 112"
+  ],
+  "from": {
+   "name": "Waldkirch",
+   "lat": 48.09394,
+   "lon": 7.96101
+  },
+  "to": {
+   "name": "St. Peter",
+   "lat": 48.01774,
+   "lon": 8.03585
+  },
+  "via": [
+   {
+    "name": "Kandel",
+    "lat": 48.06255,
+    "lon": 8.01132
+   }
+  ],
+  "length_km": 18,
+  "quality": 4,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-dhuenn-waldmuehle",
+  "name": "Dhünn nach Waldmühle",
+  "country": "DE",
+  "region": "Bergisches Land",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 409",
+   "L 161"
+  ],
+  "from": {
+   "name": "Dhünn",
+   "lat": 51.10963,
+   "lon": 7.25534
+  },
+  "to": {
+   "name": "Odenthal",
+   "lat": 51.03267,
+   "lon": 7.11715
+  },
+  "via": [],
+  "length_km": 16,
+  "quality": 3,
+  "caveats": "Ortsanteil hoch, nur Teilstück ohne Ortsdurchfahrt",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-ottenhoefen-waldulm",
+  "name": "Ottenhöfen nach Waldulm",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "K 5363",
+   "L 86",
+   "L 87"
+  ],
+  "from": {
+   "name": "Ottenhöfen im Schwarzwald",
+   "lat": 48.56584,
+   "lon": 8.15214
+  },
+  "to": {
+   "name": "Waldulm",
+   "lat": 48.58637,
+   "lon": 8.10281
+  },
+  "via": [
+   {
+    "name": "Sasbachwalden",
+    "lat": 48.61861,
+    "lon": 8.12802
+   }
+  ],
+  "length_km": 17,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-spiegelberg-aspach",
+  "name": "Spiegelberg nach Aspach",
+  "country": "DE",
+  "region": "Löwensteiner Berge",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Waldstrecke",
+  "roads": [
+   "L 1117"
+  ],
+  "from": {
+   "name": "Spiegelberg",
+   "lat": 49.03901,
+   "lon": 9.44705
+  },
+  "to": {
+   "name": "Aspach",
+   "lat": 48.98357,
+   "lon": 9.38811
+  },
+  "via": [],
+  "length_km": 17,
+  "quality": 3,
+  "caveats": "Breite prüfen",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-geschwend-todtmoos",
+  "name": "Geschwend nach Todtmoos",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 151",
+   "L 149"
+  ],
+  "from": {
+   "name": "Geschwend",
+   "lat": 47.80445,
+   "lon": 7.93897
+  },
+  "to": {
+   "name": "Todtmoos",
+   "lat": 47.73874,
+   "lon": 8.00136
+  },
+  "via": [],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-loewenstein-unterheinriet",
+  "name": "Löwenstein nach Unterheinriet",
+  "country": "DE",
+  "region": "Löwensteiner Berge",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 1111",
+   "L 1066"
+  ],
+  "from": {
+   "name": "Löwenstein",
+   "lat": 49.09531,
+   "lon": 9.38095
+  },
+  "to": {
+   "name": "Unterheinriet",
+   "lat": 49.08517,
+   "lon": 9.32338
+  },
+  "via": [],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "nur Teilstück ohne Ortsdurchfahrt",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-oberharmersbach-walke",
+  "name": "Oberharmersbach nach Walke",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [],
+  "from": {
+   "name": "Oberharmersbach",
+   "lat": 48.37277,
+   "lon": 8.12678
+  },
+  "to": {
+   "name": "Walke",
+   "lat": 48.34498,
+   "lon": 8.22591
+  },
+  "via": [],
+  "length_km": 16,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-renfrizhausen-haigerloch",
+  "name": "Renfrizhausen nach Haigerloch",
+  "country": "DE",
+  "region": "Oberer Neckar",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "K 5510",
+   "L 390",
+   "L 360"
+  ],
+  "from": {
+   "name": "Renfrizhausen",
+   "lat": 48.37117,
+   "lon": 8.70396
+  },
+  "to": {
+   "name": "Haigerloch",
+   "lat": 48.36752,
+   "lon": 8.79851
+  },
+  "via": [],
+  "length_km": 17,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-elisabethszell-ascha",
+  "name": "Elisabethszell nach Ascha",
+  "country": "DE",
+  "region": "Bayerischer Wald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Waldstrecke",
+  "roads": [
+   "SR 68",
+   "SR 13"
+  ],
+  "from": {
+   "name": "Elisabethszell",
+   "lat": 49.02659,
+   "lon": 12.75118
+  },
+  "to": {
+   "name": "Ascha",
+   "lat": 48.98933,
+   "lon": 12.62549
+  },
+  "via": [],
+  "length_km": 17,
+  "quality": 3,
+  "caveats": "Breite prüfen",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-wutach-behla",
+  "name": "Wutach nach Behla",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 171",
+   "K 5741"
+  ],
+  "from": {
+   "name": "Ewattingen",
+   "lat": 47.83847,
+   "lon": 8.44403
+  },
+  "to": {
+   "name": "Behla",
+   "lat": 47.89654,
+   "lon": 8.51462
+  },
+  "via": [],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-wuestenrot-spiegelberg",
+  "name": "Wüstenrot nach Spiegelberg",
+  "country": "DE",
+  "region": "Löwensteiner Berge",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Waldstrecke",
+  "roads": [
+   "K 1819",
+   "K 1821",
+   "L 1117"
+  ],
+  "from": {
+   "name": "Wüstenrot",
+   "lat": 49.0808,
+   "lon": 9.46056
+  },
+  "to": {
+   "name": "Spiegelberg",
+   "lat": 49.03901,
+   "lon": 9.44705
+  },
+  "via": [],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "Kreisstraßen, Breite prüfen",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-eppenrod-obernhof",
+  "name": "Eppenrod nach Obernhof",
+  "country": "DE",
+  "region": "Lahntal",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 325"
+  ],
+  "from": {
+   "name": "Eppenrod",
+   "lat": 50.4054,
+   "lon": 7.93058
+  },
+  "to": {
+   "name": "Obernhof",
+   "lat": 50.31694,
+   "lon": 7.85122
+  },
+  "via": [],
+  "length_km": 17,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-schiltach-reichenbach",
+  "name": "Schiltach über den Fohrenbühl",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Passstraße",
+  "roads": [
+   "K 5528",
+   "L 108"
+  ],
+  "from": {
+   "name": "Schiltach",
+   "lat": 48.29018,
+   "lon": 8.34363
+  },
+  "to": {
+   "name": "Reichenbach",
+   "lat": 48.21751,
+   "lon": 8.26273
+  },
+  "via": [
+   {
+    "name": "Fohrenbühl",
+    "lat": 48.2355,
+    "lon": 8.29519
+   }
+  ],
+  "length_km": 14,
+  "quality": 3,
+  "caveats": "Breite prüfen",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-bendorf-kleinmaischeid",
+  "name": "Bendorf nach Kleinmaischeid",
+  "country": "DE",
+  "region": "Westerwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "B 413"
+  ],
+  "from": {
+   "name": "Bendorf",
+   "lat": 50.42383,
+   "lon": 7.57329
+  },
+  "to": {
+   "name": "Kleinmaischeid",
+   "lat": 50.51397,
+   "lon": 7.60726
+  },
+  "via": [],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "nur Teilstück ohne Ortsdurchfahrt",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-hinzweiler-homberg",
+  "name": "Hinzweiler nach Homberg",
+  "country": "DE",
+  "region": "Nordpfälzer Bergland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 373",
+   "L 368",
+   "K 29"
+  ],
+  "from": {
+   "name": "Hinzweiler",
+   "lat": 49.5916,
+   "lon": 7.54748
+  },
+  "to": {
+   "name": "Homberg",
+   "lat": 49.65095,
+   "lon": 7.51551
+  },
+  "via": [],
+  "length_km": 13,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-schapbach-freudenstadt",
+  "name": "Schapbach nach Freudenstadt",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 404",
+   "L 96"
+  ],
+  "from": {
+   "name": "Bad Rippoldsau-Schapbach",
+   "lat": 48.40562,
+   "lon": 8.30687
+  },
+  "to": {
+   "name": "Freudenstadt",
+   "lat": 48.46377,
+   "lon": 8.41117
+  },
+  "via": [],
+  "length_km": 14,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-schiltach-reinerzau",
+  "name": "Schiltach nach Reinerzau",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 405"
+  ],
+  "from": {
+   "name": "Schiltach",
+   "lat": 48.29018,
+   "lon": 8.34363
+  },
+  "to": {
+   "name": "Reinerzau",
+   "lat": 48.35857,
+   "lon": 8.37225
+  },
+  "via": [],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-schriesheim-vorderheubach",
+  "name": "Schriesheim nach Vorderheubach",
+  "country": "DE",
+  "region": "Odenwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 536",
+   "K 4122",
+   "L 596"
+  ],
+  "from": {
+   "name": "Schriesheim",
+   "lat": 49.47722,
+   "lon": 8.69604
+  },
+  "to": {
+   "name": "Vorderheubach",
+   "lat": 49.48982,
+   "lon": 8.77665
+  },
+  "via": [],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-forbach-buehlertal",
+  "name": "Forbach nach Bühlertal",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Bergstrecke",
+  "roads": [
+   "L 80b",
+   "L 83"
+  ],
+  "from": {
+   "name": "Forbach",
+   "lat": 48.65361,
+   "lon": 8.33822
+  },
+  "to": {
+   "name": "Bühlertal",
+   "lat": 48.68689,
+   "lon": 8.18727
+  },
+  "via": [
+   {
+    "name": "Hundseck",
+    "lat": 48.64481,
+    "lon": 8.23095
+   }
+  ],
+  "length_km": 18,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-hohkeppel-duerscheid",
+  "name": "Hohkeppel nach Dürscheid",
+  "country": "DE",
+  "region": "Bergisches Land",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 298",
+   "K 24",
+   "L 299"
+  ],
+  "from": {
+   "name": "Hohkeppel",
+   "lat": 50.97999,
+   "lon": 7.31027
+  },
+  "to": {
+   "name": "Dürscheid",
+   "lat": 51.01073,
+   "lon": 7.21676
+  },
+  "via": [],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-samerberg-soellhuben",
+  "name": "Samerberg nach Söllhuben",
+  "country": "DE",
+  "region": "Chiemgau",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "RO 9"
+  ],
+  "from": {
+   "name": "Törwang",
+   "lat": 47.78159,
+   "lon": 12.21348
+  },
+  "to": {
+   "name": "Söllhuben",
+   "lat": 47.83351,
+   "lon": 12.25331
+  },
+  "via": [],
+  "length_km": 10,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-billings-gumpen",
+  "name": "Billings nach Gumpen",
+  "country": "DE",
+  "region": "Odenwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 3399",
+   "L 3102"
+  ],
+  "from": {
+   "name": "Billings",
+   "lat": 49.75518,
+   "lon": 8.79505
+  },
+  "to": {
+   "name": "Gumpen",
+   "lat": 49.692,
+   "lon": 8.81721
+  },
+  "via": [],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-siebenbach-kirchesch",
+  "name": "Siebenbach nach Kirchesch",
+  "country": "DE",
+  "region": "Eifel",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 10",
+   "L 83",
+   "K 15"
+  ],
+  "from": {
+   "name": "Siebenbach",
+   "lat": 50.37961,
+   "lon": 7.03704
+  },
+  "to": {
+   "name": "Kirchesch",
+   "lat": 50.3733,
+   "lon": 7.15486
+  },
+  "via": [],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-bechtheim-kettenbach",
+  "name": "Bechtheim nach Kettenbach",
+  "country": "DE",
+  "region": "Taunus",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 3031"
+  ],
+  "from": {
+   "name": "Bechtheim",
+   "lat": 50.27418,
+   "lon": 8.18757
+  },
+  "to": {
+   "name": "Kettenbach",
+   "lat": 50.24625,
+   "lon": 8.07852
+  },
+  "via": [],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-duerscheid-brombach",
+  "name": "Dürscheid nach Brombach",
+  "country": "DE",
+  "region": "Bergisches Land",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 298",
+   "L 284"
+  ],
+  "from": {
+   "name": "Dürscheid",
+   "lat": 51.01073,
+   "lon": 7.21676
+  },
+  "to": {
+   "name": "Brombach",
+   "lat": 50.97632,
+   "lon": 7.25735
+  },
+  "via": [],
+  "length_km": 10,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-blossersberg-unterrubendorf",
+  "name": "Blossersberg nach Unterrubendorf",
+  "country": "DE",
+  "region": "Bayerischer Wald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "St 2139"
+  ],
+  "from": {
+   "name": "Blossersberg",
+   "lat": 49.08377,
+   "lon": 12.90319
+  },
+  "to": {
+   "name": "Achslach",
+   "lat": 48.97284,
+   "lon": 12.91575
+  },
+  "via": [],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-eppingen-kleingartach",
+  "name": "Eppingen nach Kleingartach",
+  "country": "DE",
+  "region": "Stromberg",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 1110"
+  ],
+  "from": {
+   "name": "Eppingen",
+   "lat": 49.13695,
+   "lon": 8.90956
+  },
+  "to": {
+   "name": "Kleingartach",
+   "lat": 49.09935,
+   "lon": 8.97315
+  },
+  "via": [
+   {
+    "name": "Ottilienberg",
+    "lat": 49.11549,
+    "lon": 8.93082
+   }
+  ],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-gernsbach-reichental",
+  "name": "Gernsbach nach Reichental",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 76b"
+  ],
+  "from": {
+   "name": "Gernsbach",
+   "lat": 48.76364,
+   "lon": 8.33799
+  },
+  "to": {
+   "name": "Reichental",
+   "lat": 48.72993,
+   "lon": 8.39137
+  },
+  "via": [],
+  "length_km": 10,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-rotthausen-hulsberg",
+  "name": "Rotthausen nach Hulsberg",
+  "country": "DE",
+  "region": "Sauerland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 532"
+  ],
+  "from": {
+   "name": "Breckerfeld",
+   "lat": 51.26031,
+   "lon": 7.46678
+  },
+  "to": {
+   "name": "Halver",
+   "lat": 51.18744,
+   "lon": 7.49873
+  },
+  "via": [],
+  "length_km": 10,
+  "quality": 3,
+  "caveats": "Ortsanteil an der Grenze",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-thuernhofen-steinbuehl",
+  "name": "Thürnhofen nach Steinbühl",
+  "country": "DE",
+  "region": "Bayerischer Wald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Waldstrecke",
+  "roads": [
+   "St 2138"
+  ],
+  "from": {
+   "name": "Lam",
+   "lat": 49.19336,
+   "lon": 13.0377
+  },
+  "to": {
+   "name": "Lohberg",
+   "lat": 49.15853,
+   "lon": 13.10337
+  },
+  "via": [],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "Breite prüfen",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-oberschledorn-usseln",
+  "name": "Oberschledorn nach Usseln",
+  "country": "DE",
+  "region": "Upland",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 854",
+   "L 3436"
+  ],
+  "from": {
+   "name": "Oberschledorn",
+   "lat": 51.24915,
+   "lon": 8.71389
+  },
+  "to": {
+   "name": "Usseln",
+   "lat": 51.28158,
+   "lon": 8.66575
+  },
+  "via": [],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "Ortsanteil an der Grenze",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-spiekershausen-dahlheim",
+  "name": "Spiekershausen nach Dahlheim",
+  "country": "DE",
+  "region": "Nordhessen",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "K 212",
+   "K 222",
+   "L 533"
+  ],
+  "from": {
+   "name": "Spiekershausen",
+   "lat": 51.35009,
+   "lon": 9.56079
+  },
+  "to": {
+   "name": "Kaufungen",
+   "lat": 51.28358,
+   "lon": 9.61983
+  },
+  "via": [],
+  "length_km": 10,
+  "quality": 3,
+  "caveats": "Kreisstraßen, Breite prüfen",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-ahrweiler-koenigsfeld",
+  "name": "Ahrweiler nach Königsfeld",
+  "country": "DE",
+  "region": "Ahr",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "L 83"
+  ],
+  "from": {
+   "name": "Ahrweiler",
+   "lat": 50.54446,
+   "lon": 7.11867
+  },
+  "to": {
+   "name": "Königsfeld",
+   "lat": 50.49869,
+   "lon": 7.1769
+  },
+  "via": [],
+  "length_km": 11,
+  "quality": 3,
+  "caveats": "",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-bonndorf-wutach",
+  "name": "Bonndorf nach Wutach",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "K 6514",
+   "B 315"
+  ],
+  "from": {
+   "name": "Bonndorf im Schwarzwald",
+   "lat": 47.81902,
+   "lon": 8.34155
+  },
+  "to": {
+   "name": "Ewattingen",
+   "lat": 47.83847,
+   "lon": 8.44403
+  },
+  "via": [],
+  "length_km": 15,
+  "quality": 3,
+  "caveats": "eigene Linie, Breite prüfen",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ },
+ {
+  "id": "de-oberbeuern-gernsbach",
+  "name": "Oberbeuern nach Gernsbach",
+  "country": "DE",
+  "region": "Schwarzwald",
+  "kind": "strecke",
+  "tier": "prefer",
+  "note": "Kurvenstrecke",
+  "roads": [
+   "K 3701",
+   "L 78"
+  ],
+  "from": {
+   "name": "Oberbeuern",
+   "lat": 48.74037,
+   "lon": 8.27395
+  },
+  "to": {
+   "name": "Gernsbach",
+   "lat": 48.76364,
+   "lon": 8.33799
+  },
+  "via": [],
+  "length_km": 12,
+  "quality": 3,
+  "caveats": "nur auf Asphalt, Breite prüfen",
+  "sources": [
+   "Kuratierte Liste von Koray, Nov 2026; Orte über Nominatim"
+  ]
+ }
+]
