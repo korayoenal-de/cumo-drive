@@ -585,7 +585,10 @@ export function lanesOf(m: Pick<VManeuver, 'lanes'>): Lane[] | undefined {
 export function firstSentence(text: string): string {
   const i = text.search(/\.\s+Dann\b/);
   // Valhalla schreibt im Deutschen "nach Links abbiegen" groß
-  return (i > 0 ? text.slice(0, i + 1) : text).replace(/ nach (Links|Rechts)\b/g, (m) => m.toLowerCase());
+  return (i > 0 ? text.slice(0, i + 1) : text)
+    .replace(/ nach (Links|Rechts)\b/g, (m) => m.toLowerCase())
+    // und ohne Komma vor dem Infinitiv: "Rechts abbiegen um auf SS242 zu bleiben"
+    .replace(/([^,\s]) um (auf|in|zu) /g, '$1, um $2 ');
 }
 
 function toManeuver(m: VManeuver & { idx: number }, cumKm: number[]): Maneuver {
