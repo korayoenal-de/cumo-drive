@@ -291,7 +291,7 @@ function withClosureWarnings(tour: PlannedTour, hits: ClosureHit[]): PlannedTour
     laenge_km: +(h.points.length > 1 ? h.points.slice(1).reduce((a, p, i) => a + haversine(h.points[i], p), 0) / 1000 : 0.1).toFixed(1),
     name: closureLabel(h.closure),
     ort: h.closure.from ?? '',
-    gruende: [onPassRoad(h.closure.line) ? 'Passstraße gesperrt laut Verkehrsmeldung, meist Wintersperre' : 'Gesperrt laut Verkehrsmeldung', ...(h.closure.text ? [h.closure.text] : [])],
+    gruende: [onPassRoad(h.closure.line) ? 'Passstraße gesperrt laut Verkehrsmeldung, meist Wintersperre' : 'Gesperrt laut Verkehrsmeldung', ...(h.closure.text && h.closure.text !== 'Gesperrt' ? [h.closure.text] : [])],
     mitte: h.points[Math.floor(h.points.length / 2)],
   }));
   return { ...tour, warnungen: [...tour.warnungen, ...extra].sort((a, b) => a.start_km - b.start_km) };

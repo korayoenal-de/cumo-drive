@@ -21,14 +21,16 @@ import {
   respondInvite,
   rideOverview,
   setRideStatus,
+  setRideTour,
   type InviteStatus,
   type RideMemberRow,
 } from '@/lib/group/invites';
 import { startAsLead, myVehicleLabel } from '@/lib/group/start';
+import { useClosedCheck } from '@/components/tours/closed-sheet';
 import { useLibrary } from '@/lib/library';
 import { cleanName, findProfiles, useMyProfile, type FoundProfile } from '@/lib/profile';
 import { refreshContacts, useContacts } from '@/lib/contacts';
-import { formatKm } from '@/lib/tour';
+import { formatKm, type Tour } from '@/lib/tour';
 import { useVehicles } from '@/lib/vehicle';
 
 const STATUS_LABEL: Record<InviteStatus, string> = { eingeladen: 'Eingeladen', zugesagt: 'Zugesagt', abgesagt: 'Abgesagt' };
@@ -39,6 +41,8 @@ export default function GruppeNeu() {
   const params = useLocalSearchParams<{ tour?: string }>();
   const tourId = typeof params.tour === 'string' ? params.tour : undefined;
   const saved = useLibrary().find((t) => t.id === tourId) ?? null;
+  // Gerade gesperrt (Koray 16.11.): warnen, die Umfahrung gilt dann für die ganze Gruppe
+  const closed = useClosedCheck();
   const session = useSession();
   const profile = useMyProfile(session?.user.id);
   const { current } = useVehicles();
@@ -123,7 +127,7 @@ export default function GruppeNeu() {
         <BackLink />
         <AppText variant="display">{'Gruppen\nfahrt'}</AppText>
         <AppText muted>Diese Tour gibt es nicht mehr unter Touren. Wähle dort eine Tour und tippe auf Losfahren, dann Als Gruppe fahren.</AppText>
-      </Screen>
+    </Screen>
     );
   }
 
@@ -170,14 +174,19 @@ export default function GruppeNeu() {
     }
   };
 
-  const start = async () => {
-    if (busy) return;
+  const start = () => {
+    if (busy || !saved) return;
+    void closed.check(saved, saved.profile ?? 'kurvig', undefined, (t, around) => void go(t, around));
+  };
+  const go = async (t: Tour, around: boolean) => {
+    if (busy || !saved) return;
     setBusy('start');
     setErr(null);
     try {
       const r = await ensureRide();
+      if (around) await setRideTour(r.id, t, saved.profile ?? 'kurvig');
       await setRideStatus(r.id, 'laeuft');
-      await startAsLead(r.id, saved.name, saved, saved.profile ?? 'kurvig');
+      await startAsLead(r.id, saved.name, around ? { ...saved, ...t, name: saved.name } : saved, saved.profile ?? 'kurvig');
       router.push('/navigation');
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Die Fahrt konnte nicht starten.');
@@ -288,6 +297,7 @@ export default function GruppeNeu() {
           Du fährst vorne. Wer zugesagt hat, kann jederzeit dazukommen und sieht dich live auf der Karte.
         </AppText>
       </View>
+      {closed.sheet}
     </Screen>
   );
 }

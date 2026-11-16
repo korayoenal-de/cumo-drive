@@ -34,7 +34,9 @@ import { changeRide, checkArrived, DAY_BEFORE_MS, giveLead, pingMember, rideDay,
 import { refreshContacts, useContacts, type Contact } from '@/lib/contacts';
 import { myVehicleLabel, rideAlong, startAsLead } from '@/lib/group/start';
 import { useRide } from '@/lib/group/ride';
-import { declineInvite, inviteToRide, removeFromRide, respondInvite, rideOverview, type RideMemberRow } from '@/lib/group/invites';
+import { declineInvite, inviteToRide, removeFromRide, respondInvite, rideOverview, setRideTour, type RideMemberRow } from '@/lib/group/invites';
+import { useClosedCheck } from '@/components/tours/closed-sheet';
+import { showToast } from '@/lib/toast';
 import { findProfiles, type FoundProfile } from '@/lib/profile';
 import { formatKm, type LatLon, type Profile, type Tour } from '@/lib/tour';
 
@@ -53,6 +55,8 @@ export default function AusfahrtDetail() {
   const [a, setA] = useState<Ausfahrt | null | undefined>(undefined);
   const [linked, setLinked] = useState<LinkedRide | null>(null);
   const [full, setFull] = useState<Full | null>(null);
+  // Gerade gesperrt beim Start als Lead (Koray 16.11.): warnen, die Umfahrung gilt für die ganze Gruppe
+  const closed = useClosedCheck();
   const [members, setMembers] = useState<Teilnehmer[]>([]);
   const [invited, setInvited] = useState<RideMemberRow[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -258,13 +262,30 @@ export default function AusfahrtDetail() {
     router.push({ pathname: '/ausfahrt/neu', params: { tour: saved.id, invite: others.join(','), meetingName: a.meeting?.name ?? '' } });
   };
 
-  const startGroup = () =>
+  const startGroup = () => {
+    if (isLead && a.rideStatus !== 'laeuft' && full) {
+      void closed.check(full.tour, full.profile, undefined, (t, around) => launch(around ? t : null));
+      return;
+    }
+    launch(null);
+  };
+
+  /** around: Umfahrung einer Sperrung statt der Tour der Ausfahrt */
+  const launch = (around: Tour | null) =>
     run('start', async () => {
       await stopSharing();
       if (isLead && a.rideStatus !== 'laeuft') {
         if (!full) throw new Error('Die Tour lädt noch, bitte gleich nochmal.');
+        if (around) {
+          // Mitfahrer laden die Tour der Ausfahrt: die Umfahrung dort ablegen (darf nur der Organisator)
+          try {
+            await setRideTour(a.id, around, full.profile);
+          } catch {
+            showToast('Die Umfahrung gilt nur für dich, die anderen fahren wie geplant.');
+          }
+        }
         await startRideNow(a.id);
-        await startAsLead(a.id, a.name, { ...full.tour, name: a.name }, full.profile);
+        await startAsLead(a.id, a.name, { ...(around ?? full.tour), name: a.name }, full.profile);
       } else {
         await rideAlong(a.id);
       }
@@ -753,6 +774,7 @@ export default function AusfahrtDetail() {
         }
         onClose={() => setConfirm(false)}
       />
+      {closed.sheet}
     </View>
   );
 }

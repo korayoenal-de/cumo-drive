@@ -18,9 +18,8 @@ import { PASS_STATUS_URL, PASSES } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
-import { closedOnTour, closureLabels, directNote, planAround, type PlannedTour, type PlanStep } from '@/lib/plan';
-import { ActionSheet } from '@/components/ui/action-sheet';
-import type { ClosureHit } from '@/lib/road-closures';
+import { directNote, type PlanStep } from '@/lib/plan';
+import { useClosedCheck } from '@/components/tours/closed-sheet';
 import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 
 import { NameDialog } from '@/components/planner/name-dialog';
@@ -323,8 +322,8 @@ export function TourMode({
   const library = useLibrary();
   const savedTour = plan.cloudId ? library.find((x) => x.id === plan.cloudId) ?? null : null;
   // Allein oder als Gruppe: Abfrage beim Druck auf Losfahren (Koray 7.11.)
-  /** Sperrung auf der Tour beim Losfahren, mit der Umfahrung (null: wird geplant, false: keine gefunden) */
-  const [closed, setClosed] = useState<{ hits: ClosureHit[]; alt: { tour: PlannedTour; dropped: number } | null | false } | null>(null);
+  /** Sperrung auf der Tour beim Losfahren: warnen und Umfahrung zeigen (Koray 16.11.) */
+  const closed = useClosedCheck();
   const drive = async (asGroup = false) => {
     if (!routeTour) return;
     if (asGroup) {
@@ -333,12 +332,7 @@ export function TourMode({
       return;
     }
     // Gerade gesperrt (Koray 16.11.): ausdrücklich warnen und die Umfahrung zeigen, statt still loszufahren
-    const hits = await closedOnTour(routeTour).catch(() => [] as ClosureHit[]);
-    if (!hits.length) return startNav(routeTour);
-    setClosed({ hits, alt: null });
-    planAround(routeTour, hits, firstProfile, avoid)
-      .then((a) => setClosed((c) => (c ? { ...c, alt: a } : c)))
-      .catch(() => setClosed((c) => (c ? { ...c, alt: false } : c)));
+    await closed.check(routeTour, firstProfile, avoid, (t) => startNav(t));
   };
 
   const startNav = (t: Tour) => {
@@ -867,35 +861,7 @@ export function TourMode({
         {routeTour && (
           <DeleteTourSheet tour={savedTour} visible={askDelete} onClose={() => setAskDelete(false)} onDeleted={plan.reset} />
         )}
-        {routeTour && closed && (
-          <ActionSheet
-            visible
-            title="Gerade gesperrt"
-            subtitle={`${closureLabels(closed.hits).join('. ')}. Wie möchtest du fahren?`}
-            onClose={() => setClosed(null)}
-            items={[
-              {
-                key: 'um',
-                icon: 'arrow.triangle.branch',
-                label: 'Umfahren',
-                primary: !!closed.alt,
-                busy: closed.alt === null,
-                hint:
-                  closed.alt === null
-                    ? 'Die Umfahrung wird geplant'
-                    : closed.alt === false
-                      ? 'Keine Umfahrung gefunden'
-                      : `${formatKm(closed.alt.tour.laenge_km, 0)} km statt ${formatKm(routeTour.laenge_km, 0)} km${closed.alt.dropped ? `, ohne ${closed.alt.dropped === 1 ? 'das Zwischenziel' : `${closed.alt.dropped} Zwischenziele`} an der Sperrung` : ''}`,
-                onPress: () => {
-                  const a = closed.alt;
-                  if (a) startNav(a.tour);
-                  else if (a === null) showToast('Die Umfahrung wird noch geplant, gleich nochmal tippen.');
-                },
-              },
-              { key: 'wie', icon: 'car.fill', label: 'Wie geplant fahren', hint: 'Nur wenn die Straße doch offen ist', onPress: () => startNav(routeTour) },
-            ]}
-          />
-        )}
+        {closed.sheet}
         {!routeTour && !busy && !hold && pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
       </View>
       )}

@@ -182,7 +182,16 @@ export function closuresOnRoute(route: LatLon[], closures: Closure[]): ClosureHi
     }
     flush();
   }
-  return out.sort((a, b) => a.firstIndex - b.firstIndex);
+  // Meldungen gibt es oft je Fahrtrichtung: dieselbe Stelle nur einmal (Koray 16.11., Pordoi doppelt in der Liste)
+  const seen = new Set<string>();
+  return out
+    .sort((a, b) => a.firstIndex - b.firstIndex)
+    .filter((h) => {
+      const k = `${Math.round(h.firstIndex / 10)}|${h.closure.road ?? ''}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
 }
 
 /** Liegt ein Wegpunkt so nah an der gesperrten Straße, gilt sie als gewollt (Passhöhe als Ziel) */

@@ -11,6 +11,8 @@ import { tourFunLevel } from '@/lib/fun-score';
 import { readLibrary, type SavedTour } from '@/lib/library';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { normProfile } from '@/lib/tour';
+import { closedOnTour, closureLabels, planAround } from '@/lib/plan';
+import { aroundHint } from '@/components/tours/closed-sheet';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 import { avoidSetting } from '@/lib/avoid-settings';
 
@@ -46,7 +48,30 @@ export function startSavedTour(id: string) {
     carPlayHint('Tour nicht gefunden', 'Sie ist nicht mehr gespeichert.');
     return;
   }
-  setActiveTour(t, normProfile(t.profile) ?? 'kurvig', DEFAULT_AVOID);
+  const profile = normProfile(t.profile) ?? 'kurvig';
+  void startChecked(t, profile);
+}
+
+/**
+ * Gerade gesperrt (Koray 16.11.): Im Auto gibt es kein Blatt zum Wählen. Führt die Tour über eine gesperrte
+ * Straße, fährt die App die Umfahrung und sagt es auf dem Autodisplay; ohne Umfahrung bleibt die Tour mit Hinweis.
+ */
+async function startChecked(t: SavedTour, profile: ReturnType<typeof normProfile> & string) {
+  const hits = await closedOnTour(t).catch(() => []);
+  if (!hits.length) {
+    setActiveTour(t, profile, DEFAULT_AVOID);
+    return;
+  }
+  const label = closureLabels(hits).join('. ');
+  carPlayHint('Gerade gesperrt', `${label}. Die Umfahrung wird geplant.`);
+  try {
+    const alt = await planAround(t, hits, profile, DEFAULT_AVOID);
+    setActiveTour({ ...alt.tour, name: t.name }, profile, DEFAULT_AVOID);
+    carPlayHint('Gerade gesperrt', `${label}. Wir fahren außen herum: ${aroundHint(alt, t.laenge_km)}.`);
+  } catch {
+    setActiveTour(t, profile, DEFAULT_AVOID);
+    carPlayHint('Gerade gesperrt', `${label}. Keine Umfahrung gefunden, die Route führt dort entlang.`);
+  }
 }
 
 /** Kurze Gründe fürs Autodisplay statt der langen Texte aus dem Planer */
