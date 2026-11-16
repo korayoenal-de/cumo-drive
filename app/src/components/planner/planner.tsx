@@ -1224,6 +1224,11 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           overlayTop={origin ? BACK_PILL_H + Spacing.s : 0}
           pickedPassIds={inTour ? pickedPassIds : undefined}
           selectedPassId={passOverlay?.id ?? null}
+          // Kompass unter den Karteneinstellungen, nur solange das Blatt höchstens auf Mitte steht (Koray 16.11.)
+          compassTop={detent <= 1 ? insets.top + Spacing.s + 48 + Spacing.s : null}
+          // Pass oder Wegpunkt Aktionen schweben über dem Apple Logo: das Logo darüber setzen. Der Abstand zählt ab
+          // Unterkante der Karte (MapKit setzt das Logo dann fest, ohne mapPadding), die Aktionen sind etwa 130 pt hoch
+          legalBottom={passOverlay || selVia != null ? covered + 140 : null}
           flyTo={inTour ? flyTo : null}
           radar={view.kind === 'working' ? radar : null}
           scan={scan}

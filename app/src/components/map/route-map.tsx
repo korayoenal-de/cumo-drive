@@ -12,8 +12,9 @@ import MapView, { AnimatedRegion, Circle, Marker, Polyline, type LatLng } from '
 import { useIsFocused } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 import { arrowsAlong, offsetRight, splitDoubled } from '@/lib/doubled';
 import { listDriveTracks } from '@/lib/drives';
 import { useLibrary } from '@/lib/library';
@@ -77,6 +78,8 @@ export function RouteMap({
   overlayTop = 0,
   pickedPassIds,
   selectedPassId,
+  compassTop,
+  legalBottom,
   flyTo,
   radar,
   scan,
@@ -114,6 +117,8 @@ export function RouteMap({
   // Apple Maps meldet einen Tipp auf einen schon ausgewählten Marker nicht noch einmal: Pass Marker nach dem Tipp
   // wieder abwählen, sonst lässt sich derselbe Pass nur einmal antippen (Koray 8.11.)
   const passRefs = useRef(new Map<string, MapMarker | null>());
+  // Drehung der Kamera in Grad, für den Kompass im Planer
+  const [camHeading, setCamHeading] = useState(0);
   const focused = useIsFocused();
   // Offener Warnhinweis als eigene Karte über der Karte: bleibt stehen, bis man daneben tippt
   // (Tester 8.11.: die Apple Blase verschwand sofort wieder)
@@ -447,6 +452,8 @@ export function RouteMap({
       <MapView
         ref={map}
         mapPadding={mapPadding}
+        // Apple verlangt Logo und Rechtliche Hinweise sichtbar: über schwebenden Aktionen (Koray 16.11.)
+        legalLabelInsets={legalBottom != null ? { top: 0, left: 0, right: 0, bottom: legalBottom } : undefined}
         style={StyleSheet.absoluteFill}
         userInterfaceStyle="dark"
         mapType={MAP_TYPE[settings.style]}
@@ -468,6 +475,12 @@ export function RouteMap({
         onPanDrag={followUser && position ? () => setPaused((n) => n + 1) : undefined}
         onRegionChangeComplete={(r) => {
           if (boxH > 0) setMpp((r.latitudeDelta * 111320) / boxH);
+          // Drehung der Karte für den eigenen Kompass im Planer
+          if (compassTop != null)
+            void map.current
+              ?.getCamera()
+              .then((c) => setCamHeading(c.heading ?? 0))
+              .catch(() => undefined);
           // Radar: Startpunkt und Radius in Bildpunkten für den Ring über der Karte
           if (radar) measureRadar(r.latitudeDelta);
         }}
@@ -771,6 +784,26 @@ export function RouteMap({
 
       <WeatherSheet item={weatherOpen} onClose={() => setWeatherOpen(null)} />
 
+      {compassTop != null && Math.abs(((camHeading % 360) + 360) % 360) > 2 && Math.abs(((camHeading % 360) + 360) % 360) < 358 && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Kompass"
+          accessibilityHint="Antippen dreht die Karte nach Norden"
+          onPress={() => {
+            map.current?.animateCamera({ heading: 0 }, { duration: 350 });
+            setCamHeading(0);
+          }}
+          hitSlop={6}
+          style={({ pressed }) => [styles.compass, { top: compassTop }, pressed && { transform: [{ scale: 0.95 }] }]}>
+          <View style={{ transform: [{ rotate: `${-camHeading}deg` }] }}>
+            <Svg width={26} height={26} viewBox="0 0 30 30">
+              <Path d="M15 4 L19 15 L11 15 Z" fill={Colors.signal} />
+              <Path d="M15 26 L19 15 L11 15 Z" fill={Colors.muted} />
+            </Svg>
+          </View>
+        </Pressable>
+      )}
+
       {followUser && position && !following && (
         <Pressable
           accessibilityRole="button"
@@ -924,6 +957,8 @@ const styles = StyleSheet.create({
   // kleiner Pfeil (Dreieck nach oben, die Drehung gibt die Fahrtrichtung)
   arrow: { width: 0, height: 0, borderLeftWidth: 4, borderRightWidth: 4, borderBottomWidth: 7, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: Colors.ground },
   passDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: Colors.ground },
+  // wie der Knopf Karteneinstellungen (48 pt, deckend, Schatten nach unten), darunter rechts
+  compass: { position: 'absolute', right: Spacing.l, width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', boxShadow: Shadow.button },
   passPicked: { width: 18, height: 18, borderRadius: 9, borderWidth: 3, borderColor: Colors.signal },
   // gewählt: doppelt so groß, weißer Rand, Schatten; die Farbe der Stufe bleibt
   passSelected: { width: 26, height: 26, borderRadius: 13, borderWidth: 4, borderColor: Colors.text, boxShadow: '0 2px 8px rgba(0,0,0,0.55)' },

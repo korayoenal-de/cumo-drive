@@ -73,6 +73,10 @@ export type RouteMapProps = {
   pickedPassIds?: ReadonlySet<string>;
   /** Pass, dessen Aktionen gerade über der Karte schweben: groß, hell umrandet, obenauf (Koray 16.11.) */
   selectedPassId?: string | null;
+  /** Kompass unter dem Knopf Karteneinstellungen (Abstand von oben); null blendet ihn aus (Blatt höher als Mitte). Erscheint nur bei gedrehter Karte. */
+  compassTop?: number | null;
+  /** Etwas schwebt unten über der Karte (Pass Aktionen): Apple Logo und Rechtliche Hinweise darüber setzen, in Punkten ab Unterkante */
+  legalBottom?: number | null;
   /** Zu diesem Punkt fliegen; n wechselt bei jedem Aufruf */
   flyTo?: { p: LatLon; n: number } | null;
   /** Radar beim Erstellen einer Rundtour: Ring ab dem Start, Strecken im Umkreis leuchten auf */

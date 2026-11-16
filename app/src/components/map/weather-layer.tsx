@@ -15,7 +15,7 @@ import { OptionsSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { passesAlong, PASSES, type Pass } from '@/lib/passes';
-import { flatten, type Tour } from '@/lib/tour';
+import { flatten, haversine, type LatLon, type Tour } from '@/lib/tour';
 import { fmtTemp, passWeather, weatherAttribution, weatherAvailable, weatherReason, type PassWeather } from '@/lib/weather';
 
 type Item = { pass: Pass; km: number; at: number; w: PassWeather | null };
@@ -28,9 +28,18 @@ export function useRouteWeather(tour: Tour & { minutes?: number }, on: boolean):
     const line = flatten(tour).map((x) => x.p);
     const total = Math.max(1, tour.laenge_km);
     const minutes = tour.minutes ?? (total / 55) * 60;
-    return passesAlong(PASSES, line)
-      .slice(0, 12)
-      .map((x) => ({ pass: x.pass, km: x.km, inMin: minutes * (x.km / total) }));
+    // Plaketten dürfen sich nicht decken (Koray 16.11.): nicht direkt am Start oder Ziel (dort sitzt deren Marke) und
+    // nur eine je 3 km, sonst liegen etwa Falzarego und Valparola übereinander
+    const ends = [line[0], line[line.length - 1]].filter(Boolean);
+    const kept: { pass: Pass; km: number; inMin: number }[] = [];
+    for (const x of passesAlong(PASSES, line)) {
+      const p: LatLon = [x.pass.lat, x.pass.lon];
+      if (ends.some((e) => haversine(e, p) < 2000)) continue;
+      if (kept.some((k) => haversine([k.pass.lat, k.pass.lon], p) < 3000)) continue;
+      kept.push({ pass: x.pass, km: x.km, inMin: minutes * (x.km / total) });
+      if (kept.length >= 12) break;
+    }
+    return kept;
   }, [tour, on]);
   const [state, setState] = useState<{ along: typeof along; items: Item[] } | null>(null);
   useEffect(() => {
