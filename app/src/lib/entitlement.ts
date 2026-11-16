@@ -101,8 +101,35 @@ let started = false;
 let inflight: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
+/** Frischer Kauf in der App, bis der Webhook ihn auf dem Server bestätigt (höchstens 10 Minuten) */
+let localPurchase: { until: Date | null; at: number } | null = null;
+
+function withLocalPurchase(next: Entitlement): Entitlement {
+  if (!localPurchase || next.loading) return next;
+  if (Date.now() - localPurchase.at > 10 * 60 * 1000 || (next.active && (next.source === 'plan' || next.source === 'club'))) {
+    localPurchase = null;
+    return next;
+  }
+  const until = localPurchase.until;
+  return {
+    ...next,
+    active: true,
+    source: 'plan',
+    until,
+    daysLeft: until ? Math.max(0, Math.ceil((until.getTime() - Date.now()) / DAY)) : 0,
+    maxVehicles: Math.max(next.maxVehicles, PRIVATE_MAX_VEHICLES),
+  };
+}
+
+/** Nach einem Kauf über RevenueCat: sofort freischalten, der Server zieht kurz danach nach */
+export function markPurchased(plan: PlanId, until: Date | null) {
+  void plan;
+  localPurchase = { until, at: Date.now() };
+  set(state);
+}
+
 function set(next: Entitlement) {
-  state = next;
+  state = withLocalPurchase(next);
   for (const l of listeners) l();
 }
 

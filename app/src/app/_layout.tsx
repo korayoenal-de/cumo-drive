@@ -35,6 +35,7 @@ import { endAllNavActivities } from '@/live/nav-live';
 import { StartScreen } from '@/components/ui/start-screen';
 import { preloadOnStart } from '@/lib/preload';
 import { PushHandler } from '@/lib/push';
+import { startPurchases } from '@/lib/purchase';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -78,6 +79,8 @@ export default function RootLayout() {
   }, [intro, fontsDone, appReady]);
   useEffect(() => {
     preloadOnStart();
+    // Käufe (RevenueCat) folgen dem angemeldeten Konto
+    startPurchases();
   }, []);
 
   // Verwaiste Live Activity aus einem früheren Start aufräumen (läuft eine Navigation, startet sie neu)

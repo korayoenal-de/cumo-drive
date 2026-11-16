@@ -242,13 +242,13 @@ function Body({ kind, ctx }: { kind: PaywallKind; ctx: PaywallCtx }) {
             <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void run('restore')} hitSlop={6}>
               <AppText style={styles.fineLink}>{busy === 'restore' ? 'Einen Moment' : 'Käufe wiederherstellen'}</AppText>
             </Pressable>
-            <Pressable accessibilityRole="link" onPress={() => void Linking.openURL('https://drive.rallycumo.de/agb')} hitSlop={6}>
+            <Pressable accessibilityRole="link" onPress={() => void Linking.openURL('https://cumodrive.de/agb')} hitSlop={6}>
               <AppText style={styles.fineLink}>Bedingungen</AppText>
             </Pressable>
             <Pressable accessibilityRole="link" onPress={() => void Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')} hitSlop={6}>
               <AppText style={styles.fineLink}>Apple Lizenz</AppText>
             </Pressable>
-            <Pressable accessibilityRole="link" onPress={() => void Linking.openURL('https://drive.rallycumo.de/datenschutz')} hitSlop={6}>
+            <Pressable accessibilityRole="link" onPress={() => void Linking.openURL('https://cumodrive.de/datenschutz')} hitSlop={6}>
               <AppText style={styles.fineLink}>Datenschutz</AppText>
             </Pressable>
           </View>

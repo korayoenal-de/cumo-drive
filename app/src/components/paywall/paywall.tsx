@@ -137,9 +137,9 @@ export function Paywall({
 }
 
 const LEGAL_LINKS = [
-  { label: 'Nutzungsbedingungen', url: 'https://drive.rallycumo.de/agb' },
+  { label: 'Nutzungsbedingungen', url: 'https://cumodrive.de/agb' },
   { label: 'Apple Lizenzvertrag', url: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/' },
-  { label: 'Datenschutz', url: 'https://drive.rallycumo.de/datenschutz' },
+  { label: 'Datenschutz', url: 'https://cumodrive.de/datenschutz' },
 ];
 
 function PlanCard({ price, selected, onPress }: { price: Price; selected: boolean; onPress: () => void }) {
