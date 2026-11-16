@@ -1352,7 +1352,8 @@
     "sources": [
       "https://en.wikipedia.org/wiki/Klausen_Pass",
       "https://www.motorradundreisen.de/alpenpaesse/254_klausenpass.html"
-    ]
+    ],
+    "loop_ok": true
   },
   {
     "id": "ch-glaubenbergpass",
@@ -2393,7 +2394,8 @@
     "caveats": "Wintersperre, Kühe auf dem Urnerboden",
     "sources": [
       "https://de.wikipedia.org/wiki/Klausenrennen"
-    ]
+    ],
+    "loop_ok": true
   },
   {
     "id": "ch-valais-champex",

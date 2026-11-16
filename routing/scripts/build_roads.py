@@ -242,6 +242,8 @@ for n, e in enumerate(entries):
             break
         line = shape_of(data)
         probs = problems(line)
+        # Echte Kehrschleifen (Straße kreuzt sich selbst, etwa die Klausenstraße oberhalb Linthal) im Eintrag erlauben
+        if e.get('loop_ok'): probs = [x for x in probs if x[0] != 'schleife']
         if not probs:
             reason = None
             break
