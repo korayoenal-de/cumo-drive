@@ -249,7 +249,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       <h2 class="cd-h2">Motorrad Apps schicken dich über Feldwege. Wir nicht.</h2>
       <p class="cd-lead">Ein Sportwagen braucht andere Straßen als ein Motorrad. Unser eigener Routing Server gewichtet nach Kurven, Breite, Belag und Ortsdichte, und jede Etappe wird vor dem Losfahren gegen die Straßendaten geprüft.</p>
     </div>
-    <div class="cd-grid6">${featureCard('width', 'Zwei Autos passen vorbei', 'Schmale Straßen gern, aber unter 3 Metern Breite raus, bis 4,5 Meter als prüfen markiert.')}${featureCard('surface', 'Guter Belag', 'Kein Schotter, kein Feldweg. Kopfsteinpflaster und rauen Asphalt meidest du auf Wunsch.')}${featureCard('closed', 'Sperrungen umfahren', 'Aktuelle Straßensperrungen werden umfahren, nicht nur gemeldet. Wintersperren der Pässe siehst du vor der Fahrt.')}${featureCard('curve', 'Ohne Ortsdurchfahrten', 'Städte und Wohngebiete werden abgewertet, lange kurvige Landstraßen bevorzugt.')}${featureCard('city', 'Großstädte gemieden', 'Rund um große Städte gibt es selten gute Kurven. Die kurvige Planung macht einen Bogen darum.')}${featureCard('loop', 'Keine Stichstraßen', 'Kein Hin und zurück auf derselben Sackgasse. Stichstraßen werden herausgeplant, der Rückweg meidet den Hinweg.')}
+    <div class="cd-grid6">${featureCard('width', 'Zwei Autos passen vorbei', 'Schmale Straßen gern, aber unter 3 Metern Breite raus, bis 4,5 Meter als prüfen markiert.')}${featureCard('surface', 'Guter Belag', 'Kein Schotter, kein Feldweg. Kopfsteinpflaster und rauen Asphalt meidest du auf Wunsch.')}${featureCard('closed', 'Sperrungen umfahren', 'Ist eine Straße auf deiner Tour gerade gesperrt, warnt dich die App beim Losfahren und zeigt dir die Umfahrung. Wintersperren der Pässe siehst du schon beim Planen.')}${featureCard('curve', 'Ohne Ortsdurchfahrten', 'Städte und Wohngebiete werden abgewertet, lange kurvige Landstraßen bevorzugt.')}${featureCard('city', 'Großstädte gemieden', 'Rund um große Städte gibt es selten gute Kurven. Die kurvige Planung macht einen Bogen darum.')}${featureCard('loop', 'Keine Stichstraßen', 'Kein Hin und zurück auf derselben Sackgasse. Stichstraßen werden herausgeplant, der Rückweg meidet den Hinweg.')}
     </div>
   </div>
 </section>
@@ -356,13 +356,15 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
         <span class="cd-label">04  Gruppenfahrt</span>
         <h3 class="cd-h3">Solo oder Gruppe. Direkt im Losfahren Knopf.</h3>
-        <p class="cd-body">Lade bis zu fünf Mitfahrer mit ihrem Namen ein. Alle fahren dieselbe Route und sehen sich live auf der Karte. Über Funk sprichst du mit der Gruppe, Knopf halten und reden, immer einer nach dem anderen. Die Lead sagt Tankstopp oder Pause mit einem Tipp an, bei allen erscheint der Halt groß im Bild. Wer zurückfällt, schließt mit einem Tipp zum Halt der Lead auf, und wer eine eigene Route fährt, gibt der Gruppe automatisch Bescheid.</p>
+        <p class="cd-body">Lade bis zu fünf Mitfahrer mit ihrem Namen ein. Alle fahren dieselbe Route und sehen sich live auf der Karte. Über Funk sprichst du mit der Gruppe, Knopf halten und reden, immer einer nach dem anderen. Die Lead sagt Tankstopp oder Pause mit einem Tipp an, bei allen erscheint der Halt groß im Bild. Wer zurückfällt, schließt mit einem Tipp zum Halt der Lead auf, und wer eine eigene Route fährt, gibt der Gruppe automatisch Bescheid. Am Tag einer Ausfahrt siehst du, wer schon am Treffpunkt ist und wer noch unterwegs, pingst Nachzügler an und übergibst die Lead mit einem Tipp.</p>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <span class="cd-chip">Live Positionen</span>
           <span class="cd-chip">Halt ansagen</span>
           <span class="cd-chip">Kurznachrichten mit Ansage</span>
           <span class="cd-chip">Funk</span>
           <span class="cd-chip">Zum Halt aufschließen</span>
+          <span class="cd-chip">Wer ist am Treffpunkt</span>
+          <span class="cd-chip">Lead übergeben</span>
         </div>
       </div>
       <div class="cd-side" style="flex: 0 0 auto; width: 420px; max-width: 100%; display: flex; flex-direction: column; gap: 14px;">
@@ -425,11 +427,11 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">06  Touren</span>
       <h3 class="cd-h3">Jede Tour bleibt. Die besten teilst du.</h3>
-      <p class="cd-body">Geplante Touren liegen in deinem Konto, in der App und im Web Planer. Ein Tipp öffnet sie so, wie du sie gespeichert hast, ohne neu zu planen. Du benennst sie um, duplizierst sie, sortierst sie nach Fahrspaß und teilst sie als kurzen Link, der direkt in Cumo Drive öffnet, oder als GPX und KML für andere Navis. Touren aus anderen Apps importierst du genauso. Unter Gefahren findest du jede Fahrt wieder.</p>
+      <p class="cd-body">Geplante Touren liegen in deinem Konto, in der App und im Web Planer. Ein Tipp öffnet sie so, wie du sie gespeichert hast, ohne neu zu planen. Du änderst sie und überschreibst die alte Fassung oder speicherst sie als neue Tour, sortierst sie nach Fahrspaß und teilst sie als kurzen Link, der direkt in Cumo Drive öffnet, oder als GPX und KML für andere Navis. Touren aus anderen Apps importierst du genauso. Unter Gefahren findest du jede Fahrt wieder, mit Rückblick auf der Karte.</p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <span class="cd-chip">Link teilen</span>
         <span class="cd-chip">Nach Fahrspaß sortieren</span>
-        <span class="cd-chip">Duplizieren</span>
+        <span class="cd-chip">Überschreiben oder neu speichern</span>
         <span class="cd-chip">GPX und KML</span>
         <span class="cd-chip">In der Community veröffentlichen</span>
       </div>
@@ -439,7 +441,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div class="cd-card">
       <span class="cd-label">Nach der Fahrt</span>
       <div class="cd-title">Statistik für Autos</div>
-      <p class="cd-body" style="font-size: 16px;">Kilometer, Kurven, Querbeschleunigung und Schnitt, je Fahrzeug. Dazu deine Bewertung per Regler von Enttäuschend bis Sensationell und ein Daumen für jedes Highlight unterwegs.</p>
+      <p class="cd-body" style="font-size: 16px;">Kilometer, Kurven, Querbeschleunigung und Schnitt, je Fahrzeug. Dazu deine Bewertung per Regler von Enttäuschend bis Sensationell und ein Daumen für jedes Highlight unterwegs. Im Rückblick zeigt die Karte, wo Spitze, stärkste Bremsung und größte Querbeschleunigung waren.</p>
     </div>
     <div class="cd-card">
       <span class="cd-label">Garage</span>
