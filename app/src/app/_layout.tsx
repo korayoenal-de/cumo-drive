@@ -39,6 +39,9 @@ import { loadLang , t } from '@/i18n';
 
 SplashScreen.preventAutoHideAsync();
 
+/** So lange bleibt der Start ruhig, bis die grauen Berge gewachsen sind (der letzte steht nach etwa 1 s) */
+const START_QUIET_MS = 1100;
+
 const theme = {
   ...DarkTheme,
   colors: {
@@ -73,37 +76,48 @@ export default function RootLayout() {
   // Startanimation (nur in der App): sobald die Schriften da sind, löst sie den nativen Splash ab
   const [intro, setIntro] = useState(Platform.OS !== 'web');
   const introDone = useCallback(() => setIntro(false), []);
+  // Die App unter dem Startscreen erst aufbauen, wenn die grauen Berge stehen (Koray 16.11.: das Wachsen hakte,
+  // weil Karte, Abgleich und Vorladen genau in der ersten Sekunde Haupt und JS Thread belegten). Danach bleiben
+  // gut drei Sekunden, bis die Animation durch ist.
+  const [settled, setSettled] = useState(Platform.OS === 'web');
+  useEffect(() => {
+    if (settled) return;
+    const id = setTimeout(() => setSettled(true), START_QUIET_MS);
+    return () => clearTimeout(id);
+  }, [settled]);
   const appReady = fontsDone && (!needAuth || authReady);
   useEffect(() => {
     if (intro ? fontsDone : appReady) SplashScreen.hideAsync();
   }, [intro, fontsDone, appReady]);
   useEffect(() => {
-    preloadOnStart();
     startRoutingAuth();
     void loadLang();
   }, []);
 
-  // Verwaiste Live Activity aus einem früheren Start aufräumen (läuft eine Navigation, startet sie neu)
+  // Vorladen, Live Activity aufräumen und Highlight Bewertungen erst nach dem Wachsen der Berge
   useEffect(() => {
+    if (!settled) return;
+    preloadOnStart();
+    // Verwaiste Live Activity aus einem früheren Start aufräumen (läuft eine Navigation, startet sie neu)
     endAllNavActivities();
     // Summen der Highlight Bewertungen für den lernenden Pegel
     void loadHighlightFeedback();
-  }, []);
+  }, [settled]);
 
   // nach der Anmeldung Touren und Fahrzeuge mit dem Konto abgleichen
   const userId = session?.user.id;
   const profile = useMyProfile(userId);
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !settled) return;
     void syncLibrary();
     void syncVehicles();
-  }, [userId]);
+  }, [userId, settled]);
 
   if (!fontsDone) return null;
   const withIntro = (content: ReactNode) => (
     <>
-      {content}
-      {intro && <StartScreen ready={appReady} onDone={introDone} />}
+      {settled || !intro ? content : null}
+      {intro && <StartScreen ready={appReady && settled} onDone={introDone} />}
     </>
   );
   if (needAuth && !authReady) return withIntro(null);
