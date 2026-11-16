@@ -81,6 +81,7 @@ Bewusst ohne Bewegung:
 * Keine Kreise mit Zahl auf Karten. Jeder Pin bleibt einzeln, die Zoomstufe bestimmt, wie viel er zeigt.
 * Weit (mehr als 3 Grad Breite): Punkt, 12 pt. Region (0,6 bis 3 Grad): Symbol, 32 pt. Nah (unter 0,6 Grad): volle Marke. Heraus wechselt die Stufe erst bei 3,6 und 0,75 Grad.
 * Gewählt ist in jeder Stufe die volle Marke, hell und obenauf.
+* Pässe im Planer: gewählt (Aktionen schweben) wird der Punkt 26 pt groß mit weißem Rand und Schatten, Farbe der Stufe bleibt, obenauf (16.11.).
 * Orange nur für Ausfahrten. Touren hell, Fahrer mit Ring in Wagenfarbe.
 * Gleicher Start: Pins, die sich überdecken würden, liegen in jeder Stufe nebeneinander (Nah untereinander, Region und Weit in einer Reihe, Fahrer im Kreis). Sonst ist nur der oberste zu sehen und anzutippen (Koray 16.11.). Schatten `Shadow.button` statt Kontur.
 
