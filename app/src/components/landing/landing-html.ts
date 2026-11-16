@@ -345,8 +345,8 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div class="cd-two">
       <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
         <span class="cd-label">04  Gruppenfahrt</span>
-        <h3 class="cd-h3">Solo oder Gruppe. Direkt im Losfahren Knopf.</h3>
-        <p class="cd-body">Lade bis zu fünf Mitfahrer mit ihrem Namen ein. Alle fahren dieselbe Route und sehen sich live auf der Karte. Über Funk sprichst du mit der Gruppe, Knopf halten und reden, immer einer nach dem anderen. Die Lead sagt Tankstopp oder Pause mit einem Tipp an, bei allen erscheint der Halt groß im Bild. Wer zurückfällt, schließt mit einem Tipp zum Halt der Lead auf, und wer eine eigene Route fährt, gibt der Gruppe automatisch Bescheid. Am Tag einer Ausfahrt siehst du, wer schon am Treffpunkt ist und wer noch unterwegs, pingst Nachzügler an und übergibst die Lead mit einem Tipp.</p>
+        <h3 class="cd-h3">Solo oder Gruppe. Du entscheidest beim Losfahren.</h3>
+        <p class="cd-body">Tippe auf Losfahren und wähle Als Gruppe fahren. Dann lädst du bis zu fünf Mitfahrer mit ihrem Namen ein. Alle fahren dieselbe Route und sehen sich live auf der Karte. Über Funk sprichst du mit der Gruppe, Knopf halten und reden, immer einer nach dem anderen. Die Lead sagt Tankstopp oder Pause mit einem Tipp an, bei allen erscheint der Halt groß im Bild. Wer zurückfällt, schließt mit einem Tipp zum Halt der Lead auf, und wer eine eigene Route fährt, gibt der Gruppe automatisch Bescheid. Am Tag einer Ausfahrt siehst du, wer schon am Treffpunkt ist und wer noch unterwegs, pingst Nachzügler an und übergibst die Lead mit einem Tipp.</p>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <span class="cd-chip">Live Positionen</span>
           <span class="cd-chip">Halt ansagen</span>
@@ -358,6 +358,11 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
         </div>
       </div>
       <div class="cd-side" style="flex: 0 0 auto; width: 420px; max-width: 100%; display: flex; flex-direction: column; gap: 14px;">
+        <div class="cd-card" style="gap: 6px;" role="img" aria-label="Nach Losfahren fragt die App: Allein losfahren oder Als Gruppe fahren">
+          <span class="cd-title" style="font-size: 22px; margin-bottom: 6px;">Wie fährst du?</span>
+          <div style="display: flex; align-items: center; gap: 16px; padding: 12px 0;"><div style="flex: 0 0 28px; display: flex; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 6.6C5.6 5.4 6.7 4.6 8 4.6h8c1.3 0 2.4.8 2.8 2l1.4 4.2c1 .4 1.8 1.4 1.8 2.6v4.4c0 .7-.6 1.2-1.2 1.2H20v1c0 .8-.7 1.5-1.5 1.5h-1c-.8 0-1.5-.7-1.5-1.5v-1H8v1c0 .8-.7 1.5-1.5 1.5h-1C4.7 21.5 4 20.8 4 20v-1h-.8c-.7 0-1.2-.5-1.2-1.2v-4.4c0-1.2.7-2.2 1.8-2.6zM7.1 10.6h9.8l-1-3.1c-.1-.4-.5-.7-1-.7H9.1c-.5 0-.9.3-1 .7zM6.5 13.4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm11 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z" fill="#F4F4F2"></path></svg></div><div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font: 700 18px Inter, sans-serif; color: #F4F4F2;">Allein losfahren</span><span style="font: 500 15px Inter, sans-serif; color: #9A9A9F;">Die Navigation startet sofort</span></div></div>
+          <div style="display: flex; align-items: center; gap: 16px; padding: 12px 0;"><div style="flex: 0 0 28px; display: flex; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8" r="3.9" fill="#F4F4F2"></circle><path d="M1 20.4c0-4.1 3.3-6.5 7.5-6.5s7.5 2.4 7.5 6.5c0 .7-.5 1.1-1.1 1.1H2.1c-.6 0-1.1-.4-1.1-1.1z" fill="#F4F4F2"></path><circle cx="16.8" cy="8.6" r="3.2" fill="#F4F4F2"></circle><path d="M17.6 21.5h4.3c.6 0 1.1-.4 1.1-1 0-3.5-2.7-5.6-6.2-5.6-.6 0-1.2.1-1.7.2 1.6 1.4 2.5 3.4 2.5 5.6v.8z" fill="#F4F4F2"></path></svg></div><div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font: 700 18px Inter, sans-serif; color: #F4F4F2;">Als Gruppe fahren</span><span style="font: 500 15px Inter, sans-serif; color: #9A9A9F;">Bis zu 6 Autos, du lädst sie im nächsten Schritt ein</span></div></div>
+        </div>
         <div class="cd-card" style="gap: 14px;">
           <div style="display: flex; justify-content: space-between; align-items: baseline;"><span class="cd-title" style="font-size: 18px;">Mitfahrer</span><span class="cd-label">3 von 6</span></div>
           <div style="display: flex; gap: 14px; align-items: flex-start;">
@@ -365,13 +370,6 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
             <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 56px;"><div style="width: 52px; height: 52px; border-radius: 26px; background: #2C2C30; display: flex; align-items: center; justify-content: center; font: 700 17px Inter, sans-serif;">JM</div><span style="font: 600 13px Inter, sans-serif; color: #4CC38A;">dabei</span></div>
             <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 56px;"><div style="width: 52px; height: 52px; border-radius: 26px; background: #2C2C30; display: flex; align-items: center; justify-content: center; font: 700 17px Inter, sans-serif;">SK</div><span style="font: 600 13px Inter, sans-serif; color: #E8B03A;">eingeladen</span></div>
             <div style="width: 52px; height: 52px; border-radius: 26px; border: 2px dashed #3A3A3E; box-sizing: border-box; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v14M2 9h14" stroke="#F4F4F2" stroke-width="2.2" stroke-linecap="round"></path></svg></div>
-          </div>
-        </div>
-        <div style="height: 56px; border-radius: 28px; background: #E2461C; display: flex; align-items: center; box-sizing: border-box; padding-right: 6px;" role="img" aria-label="Losfahren mit Schalter Solo oder Gruppe, Gruppe gewählt">
-          <span style="flex-grow: 1; padding-left: 24px; font: 700 18px Inter, sans-serif; color: #FFFFFF;">Losfahren</span>
-          <div style="height: 44px; border-radius: 22px; box-sizing: border-box; padding: 4px; gap: 2px; display: flex; align-items: center; background: rgba(0,0,0,0.22);">
-            <div style="width: 40px; height: 36px; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4.5" fill="#FFFFFF"></circle><path d="M3.5 21c0-4.8 3.8-7.6 8.5-7.6s8.5 2.8 8.5 7.6c0 .8-.6 1.3-1.3 1.3H4.8c-.7 0-1.3-.5-1.3-1.3z" fill="#FFFFFF"></path></svg></div>
-            <div style="height: 36px; border-radius: 18px; padding: 0 14px 0 10px; box-sizing: border-box; background: #FFFFFF; display: flex; align-items: center; gap: 6px; font: 700 15px Inter, sans-serif; color: #E2461C;"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8" r="3.9" fill="#E2461C"></circle><path d="M1 20.4c0-4.1 3.3-6.5 7.5-6.5s7.5 2.4 7.5 6.5c0 .7-.5 1.1-1.1 1.1H2.1c-.6 0-1.1-.4-1.1-1.1z" fill="#E2461C"></path><circle cx="16.8" cy="8.6" r="3.2" fill="#E2461C"></circle><path d="M17.6 21.5h4.3c.6 0 1.1-.4 1.1-1 0-3.5-2.7-5.6-6.2-5.6-.6 0-1.2.1-1.7.2 1.6 1.4 2.5 3.4 2.5 5.6v.8z" fill="#E2461C"></path></svg>Gruppe</div>
           </div>
         </div>
       </div>
@@ -486,7 +484,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   <div style="display: flex; flex-direction: column; gap: 18px; max-width: 860px;">
     <span class="cd-label">Preise</span>
     <h2 class="cd-h2">Kostenlos starten. Dann so, wie du fährst.</h2>
-    <p class="cd-lead">Zum Start ist 30 Tage lang alles frei, wer später dazukommt, fährt 14 Tage mit vollem Umfang. Danach planst du ohne Plan weiter überall und fährst in deinem Heimatgebiet. Jeder Plan enthält alle Funktionen, auch Gruppenfahrten bis 6 Fahrzeuge. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.</p>
+    <p class="cd-lead">Zum Start ist 30 Tage lang alles frei, wer später dazukommt, fährt 14 Tage mit vollem Umfang. Danach planst du ohne Mitgliedschaft weiter überall und fährst in deinem Heimatgebiet. Jeder Plan enthält alle Funktionen, auch Gruppenfahrten bis 6 Fahrzeuge. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.</p>
   </div>
   <div class="cd-grid4">${priceCard('Jahr', '59,99 €', 'Entspricht 5 € im Monat. Abo, jederzeit kündbar.', true)}${priceCard('Saison Pass', '49 €', 'Einmalig für 6 Monate, kein Abo. Für die Monate, in denen das Auto aus der Garage darf.')}${priceCard('Monat', '14,99 €', 'Abo, jederzeit kündbar.')}${priceCard('Woche', '7,99 €', 'Für das Wochenende im Mietwagen oder die eine Tour im Urlaub. Abo, jederzeit kündbar.')}
   </div>
