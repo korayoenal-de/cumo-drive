@@ -37,7 +37,7 @@ import { usePillText } from './use-pill';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
-import { ActionSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
+import { ActionSheet, SHEET_GONE_MS, type SheetItem } from '@/components/ui/action-sheet';
 import { AskFeedbackSheet } from '@/components/planner/ask-feedback-sheet';
 import { ASK_AFTER_ROLLS, ASK_DELAY_MS, mayAsk, type AskRound } from '@/lib/ask-feedback';
 import { Colors, Motion, Spacing } from '@/constants/theme';
@@ -58,7 +58,7 @@ import { clearAvoidedPasses } from '@/lib/avoid-pass';
 import { useAvoid } from '@/lib/avoid-settings';
 
 import { type PlannedStop } from './planner-parts';
-import { noGoodAlternative, spurKm } from '@/lib/smart-roundtrip';
+import { lengthFits, noGoodAlternative, outAndBack, spurKm, type OutAndBack } from '@/lib/smart-roundtrip';
 import { logSignal } from '@/lib/signals';
 import { showToast } from '@/lib/toast';
 import { Accordion, avoidSummary, ErrorCard, MicIcon, PrimaryButton, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
@@ -219,6 +219,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   const [locError, setLocError] = useState<PlanError | null>(null);
   const [picked, setPicked] = useState<Spot | null>(null);
   const [showSearch, setShowSearch] = useState(false);
+  /** Wunschlänge nicht erreichbar (Koray 16.11., Optionen A und B): Runde in anderer Länge oder hin und zurück */
+  const [lengthChoice, setLengthChoice] = useState<{ want: number; loop: PlannedTour; back: OutAndBack | null; items: SheetItem[] } | null>(null);
   const [lengthBy, setLengthBy] = useState<'km' | 'dauer'>('km');
   const [kmIdx, setKmIdx] = useState(3);
   const [minIdx, setMinIdx] = useState(2);
@@ -455,6 +457,20 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           return;
         }
       }
+      // Keine Runde in der Wunschlänge (enge Täler wie Bonneval, Routen Check 16.11.): nicht still eine Riesenrunde
+      // zeigen, sondern hin und zurück zum schönsten Ziel rechnen und gleich fragen
+      let choice: { want: number; loop: PlannedTour; back: OutAndBack | null } | null = null;
+      if (!lengthFits(tour.laenge_km, req.km) && !ctrl.signal.aborted) {
+        step('compare');
+        const back = await outAndBack(
+          { name: `Rundtour ab ${req.start.name}`, start: req.start.p, km: req.km, direction: req.direction, bearing: req.bearing, profile: req.profile, avoid: req.avoid },
+          ctrl.signal,
+        ).catch((e) => {
+          if (ctrl.signal.aborted) throw e;
+          return null;
+        });
+        choice = { want: req.km, loop: tour, back };
+      }
       // Auflösen: der Ring findet die kurvigen Stücke der Route, dann zeichnet sich die Linie, danach das Ergebnis
       const line = flatten(tour).map((x) => x.p);
       if (!ctrl.signal.aborted && line.length > 1 && !reduceMotion) {
@@ -478,6 +494,10 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
         setView({ kind: 'result', tour, req, stops });
         setDetent(1);
         toTop();
+        if (choice) {
+          const c = choice;
+          setTimeout(() => setLengthChoice({ ...c, items: lengthItems(c) }), 400);
+        }
         shownLines.current = [...shownLines.current, flatten(tour).map((x) => x.p)].slice(-5);
         // die nächste Runde vorab rechnen, sobald das Ergebnis steht und die Karte zur Ruhe gekommen ist
         const shown = req;
@@ -610,6 +630,29 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       return;
     }
     void run(async () => req, lastStops.current, newSeed(), true);
+  }
+
+  /** Auswahl bei nicht erreichbarer Länge: Empfehlung oben (hin und zurück, wenn es zur Länge passt) */
+  function lengthItems(c: { want: number; loop: PlannedTour; back: OutAndBack | null }) {
+    // Empfehlung: hin und zurück, wenn es passt oder näher an der Wunschlänge liegt als die Runde
+    const backFits = !!c.back && (lengthFits(c.back.laenge_km, c.want) || Math.abs(c.back.laenge_km - c.want) < Math.abs(c.loop.laenge_km - c.want));
+    const loopItem = { key: 'runde', icon: 'arrow.triangle.2.circlepath' as const, label: `Runde mit ${Math.round(c.loop.laenge_km)} km`, primary: !backFits, onPress: () => undefined };
+    const backItem = c.back
+      ? [{ key: 'zurueck', icon: 'arrow.uturn.backward' as const, label: `${Math.round(c.back.laenge_km)} km hin und zurück`, hint: `Über ${c.back.target} und auf demselben Weg zurück`, primary: backFits, onPress: () => pickLength('zurueck', c) }]
+      : [];
+    const startItem = { key: 'start', icon: 'mappin.and.ellipse' as const, label: 'Anderen Startort wählen', onPress: () => pickLength('start', c) };
+    return [...(backFits ? [...backItem, loopItem] : [loopItem, ...backItem]), startItem];
+  }
+  function pickLength(key: 'zurueck' | 'start', c: { back: OutAndBack | null }) {
+    if (key === 'start') {
+      cancel();
+      setTimeout(() => setShowSearch(true), 50);
+      return;
+    }
+    const b = c.back;
+    if (!b) return;
+    setView((v) => (v.kind === 'result' ? { ...v, tour: b } : v));
+    shownLines.current = [...shownLines.current, flatten(b).map((x) => x.p)].slice(-5);
   }
 
   function cancel() {
@@ -1348,6 +1391,13 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     </MapSheet>
     </View>
     <AskFeedbackSheet rounds={askRounds} onDone={() => setAskRounds(null)} />
+    <ActionSheet
+      visible={!!lengthChoice}
+      title={lengthChoice ? `Von hier keine Runde mit ${lengthChoice.want} km` : undefined}
+      subtitle={lengthChoice ? `Die kürzeste Runde in diese Richtung hat ${Math.round(lengthChoice.loop.laenge_km)} km.` : undefined}
+      onClose={() => setLengthChoice(null)}
+      items={lengthChoice?.items ?? []}
+    />
     <ActionSheet
       visible={askKeep}
       title={tr('Änderungen behalten?')}

@@ -83,7 +83,14 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 * [ ] Passseiten auf cumodrive.de (Entwurf separat im Artefakt). Regeln (Koray 16.11.): Seiten nur für bekannte Pässe und Ikonen, die ohnehin öffentlich sind; keine Seiten für Geheimtipps, bevorzugte Strecken und Korays Insider Strecken; Linie nur als gezeichnete Form ohne Koordinaten, Ansage nur in Worten; nirgends eine maschinenlesbare Liste aller Strecken
 
+## Morgen (17.11.) mit Koray am Rechner
+
+* [ ] Routing Server: Prüfung des Konto Tokens im Zählmodus einspielen (routing/server/cloud/auth/install.sh), dann Branch web-token zusammenführen und Web hochladen, dann sperren
+* [ ] Web Planer: Rückfrage bei nicht erreichbarer Rundtour Länge (wie in der App, Optionen A und B)
+
 ## Für Koray
+
+* [ ] cumodriversclub.de und rallycumo.de liefern dieselben Seiten doppelt aus (Status 200, canonical auf rallycumo.de): eine Domain per 301 auf die andere weiterleiten (Koray schaut separat)
 
 * [ ] Restliche sechs iPhone Screenshots für die Landingpage
 * [ ] Liste der Gründungstester vor der Veröffentlichung
