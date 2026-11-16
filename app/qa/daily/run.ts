@@ -22,7 +22,7 @@ import { tourFun } from '../../src/lib/fun-score';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '../../src/lib/highlight-roads';
 import { PASSES, passesAlong } from '../../src/lib/passes';
 import { planLegs } from '../../src/lib/plan';
-import { smartRoundTrip } from '../../src/lib/smart-roundtrip';
+import { outAndBack, smartRoundTrip } from '../../src/lib/smart-roundtrip';
 import { flatten, haversine, type LatLon } from '../../src/lib/tour';
 import { DEFAULT_AVOID } from '../../src/lib/valhalla';
 import { buildCases, type Case } from './cases';
@@ -202,7 +202,12 @@ async function runCase(c: Case): Promise<Result> {
     }
     if (c.kind === 'runde') {
       const ratio = r.km / c.km;
-      if (ratio < 0.7 || r.km > c.km * 1.3 + 5) add('fehler', `Länge ${r.km} km statt ${c.km} km`);
+      if (ratio < 0.7 || r.km > c.km * 1.3 + 5) {
+        // Die App fragt dann und bietet hin und zurück an (Optionen A und B, 16.11.): gibt es das, ist es ein Hinweis
+        const back = await outAndBack({ name: c.name, start: c.start, km: c.km, direction: c.direction, profile: c.profile, avoid: DEFAULT_AVOID }).catch(() => null);
+        if (back && back.laenge_km >= c.km * 0.7 && back.laenge_km <= c.km * 1.3 + 5) add('hinweis', `Runde ${r.km} km statt ${c.km} km; die App bietet ${Math.round(back.laenge_km)} km hin und zurück über ${back.target} an`);
+        else add('fehler', `Länge ${r.km} km statt ${c.km} km${back ? `, hin und zurück nur mit ${Math.round(back.laenge_km)} km über ${back.target}` : ', kein Ziel für hin und zurück'}`);
+      }
     } else {
       const direct = lengthKm(c.points) || 1;
       if (c.profile === 'schnell') {

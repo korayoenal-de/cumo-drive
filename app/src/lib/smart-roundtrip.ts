@@ -789,3 +789,62 @@ async function favoriteLoops(req: SmartRequest, heading: number | undefined, see
   );
   return out.filter((t): t is NonNullable<typeof t> => t != null);
 }
+
+/* ---------- Wunschlänge nicht erreichbar (Koray 16.11.: Optionen A und B) ---------- */
+
+/** Passt die Runde zur Wunschlänge? 70 % bis 130 % plus 5 km */
+export function lengthFits(km: number, want: number): boolean {
+  return km >= want * 0.7 && km <= want * 1.3 + 5;
+}
+
+export type OutAndBack = SmartTour & { target: string };
+
+/**
+ * Hin und zurück zum schönsten Ziel in halber Länge (Option B): Sackgassen Täler wie Bonneval haben keine kurze
+ * Runde, Fahrer fahren dort ohnehin auf den Pass und zurück. Ziele sind Pässe und angesagte Traumstrecken in
+ * Reichweite; gewählt wird, was am besten zur Länge passt, bei gleicher Länge die höhere Stufe.
+ */
+export async function outAndBack(req: SmartRequest, signal?: AbortSignal): Promise<OutAndBack | null> {
+  const half = req.km / 2;
+  const air = (p: LatLon) => haversine(req.start, p) / 1000;
+  // Bergstraßen sind etwa 1,4 mal so lang wie die Luftlinie
+  const inReach = (p: LatLon) => {
+    const d = air(p) * 1.4;
+    return d >= half * 0.45 && d <= half * 1.25;
+  };
+  const skipped = new Set(avoidedPasses().map((a) => a.id));
+  const targets: { name: string; p: LatLon; weight: number }[] = [
+    ...PASSES.filter((p) => !skipped.has(p.id) && inReach([p.lat, p.lon])).map((p) => ({ name: p.name, p: [p.lat, p.lon] as LatLon, weight: TIER_WEIGHT[p.tier] })),
+    ...HIGHLIGHT_ROADS.filter((r) => r.line.length > 1).flatMap((r) => {
+      // das ferne Ende der Strecke ist das Ziel, so wird die ganze Strecke gefahren
+      const a = r.line[0];
+      const b = r.line[r.line.length - 1];
+      const far = air(a) > air(b) ? a : b;
+      return inReach(far) ? [{ name: r.name, p: far, weight: (r.level ?? 3) / 2 }] : [];
+    }),
+  ];
+  if (!targets.length) return null;
+  // nach Stufe und Nähe zur halben Länge, die besten acht rechnen
+  const best = targets
+    .map((t) => ({ ...t, fit: t.weight * 3 - Math.abs(air(t.p) * 1.4 - half) / Math.max(5, half * 0.1) }))
+    .sort((x, y) => y.fit - x.fit)
+    .slice(0, 8);
+  const planned = await Promise.all(
+    best.map((t) =>
+      planChecked(`Hin und zurück: ${t.name}`, [req.start, t.p, req.start], req.profile, req.avoid, undefined, signal)
+        .then((tour) => ({ t, tour }))
+        .catch((e) => {
+          if (signal?.aborted) throw e;
+          return null;
+        }),
+    ),
+  );
+  const ok = planned.filter((x): x is NonNullable<typeof x> => !!x && lengthFits(x.tour.laenge_km, req.km));
+  const pool = ok.length ? ok : planned.filter((x): x is NonNullable<typeof x> => !!x);
+  if (!pool.length) return null;
+  // passt die Länge: höhere Stufe gewinnt, dann die nähere Länge; sonst die nächste Länge
+  const off = (x: (typeof pool)[number]) => Math.abs(x.tour.laenge_km - req.km) / req.km;
+  const pick = ok.length ? pool.sort((x, y) => y.t.weight - x.t.weight || off(x) - off(y))[0] : pool.sort((x, y) => off(x) - off(y))[0];
+  const curves = countCurves(flatten(pick.tour).map((x) => x.p));
+  return { ...pick.tour, engine: 'cumo' as Engine, score: 0, curves, target: pick.t.name };
+}
