@@ -26,6 +26,10 @@ const MAP_TYPE: Record<MapStyle, 'mutedStandard' | 'hybrid' | 'hybridFlyover'> =
 const ll = (p: LatLon) => ({ latitude: p[0], longitude: p[1] });
 const START: Region = { latitude: 48.8, longitude: 9.2, latitudeDelta: 6, longitudeDelta: 6 };
 
+/** Ab diesem Abstand in Punkten überdecken sich zwei Pins der Stufe; Abstand beim Nebeneinanderlegen */
+const CELL: Record<PinStage, number> = { weit: 14, region: 34, nah: 30 };
+const GAP: Record<PinStage, number> = { weit: 18, region: 38, nah: 40 };
+
 /** Zoomstufe der Pins nach Breite des Ausschnitts in Grad */
 export type PinStage = 'weit' | 'region' | 'nah';
 /**
@@ -74,12 +78,12 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
     setRegion(r);
     setStage((prev) => stageFor(r.longitudeDelta, prev));
   };
-  // Nur was im Ausschnitt liegt (mit Rand). In der Stufe Nah stehen Marken, die sich überdecken würden (gleicher
-  // Start, zum Beispiel große und kleine Sellaronda), von selbst untereinander. In Weit und Region dürfen sie sich
-  // überlappen, Punkte und Symbole bleiben klein und der Schatten trennt sie.
+  // Nur was im Ausschnitt liegt (mit Rand). Pins, die sich überdecken würden (gleicher Start, zum Beispiel große und
+  // kleine Sellaronda und die 62 km Runde), liegen in jeder Stufe nebeneinander: sonst ist nur der oberste zu sehen und
+  // anzutippen (Koray 16.11., 12:00). Nah untereinander (die Marken sind breit), Region und Weit in einer Reihe.
   const shown = useMemo(() => {
-    const groups = clusterPins(pins, region, win.width, stage === 'nah' ? 30 : 4, selected);
-    return groups.flatMap((g) => (g.items.length > 1 && stage === 'nah' ? fanOut(g.items, g.p, region, win.width) : g.items));
+    const groups = clusterPins(pins, region, win.width, CELL[stage], selected);
+    return groups.flatMap((g) => (g.items.length > 1 ? fanOut(g.items, g.p, region, win.width, stage) : g.items));
   }, [pins, region, win.width, selected, stage]);
 
   // Alle Pins zeigen, wenn sich die Auswahl der Pins ändert (Routen oder Ausfahrten)
@@ -131,22 +135,26 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
 }
 
 /**
- * Pins am selben Ort nebeneinander legen: Touren und Ausfahrten untereinander (die Pillen sind breit), Fahrer im
- * Kreis. Abstände in Punkten, umgerechnet für den aktuellen Ausschnitt; die echte Lage zeigt die Strecke beim Antippen.
+ * Pins am selben Ort nebeneinander legen: in der Stufe Nah untereinander (die Marken sind breit), sonst in einer Reihe;
+ * Fahrer im Kreis. Abstände in Punkten, umgerechnet für den aktuellen Ausschnitt; die echte Lage zeigt die Strecke
+ * beim Antippen.
  */
-function fanOut(items: CommunityPin[], c: LatLon, region: Region, widthPt: number): CommunityPin[] {
+function fanOut(items: CommunityPin[], c: LatLon, region: Region, widthPt: number, stage: PinStage): CommunityPin[] {
   const perLon = widthPt / region.longitudeDelta;
   const perLat = perLon / Math.cos((c[0] * Math.PI) / 180);
   const n = items.length;
+  const gap = GAP[stage];
   return items.map((p, i) => {
     let dx = 0;
     let dy = 0;
-    if (p.kind === 'driver') {
+    const k = i - (n - 1) / 2;
+    if (p.kind === 'driver' && stage !== 'weit') {
       const a = (i / n) * 2 * Math.PI - Math.PI / 2;
-      const r = Math.max(30, n * 9);
+      const r = Math.max(gap * 0.8, (n * gap) / (2 * Math.PI));
       dx = Math.cos(a) * r;
       dy = Math.sin(a) * r;
-    } else dy = (i - (n - 1) / 2) * 40;
+    } else if (stage === 'nah') dy = k * gap;
+    else dx = k * gap;
     return { ...p, p: [c[0] - dy / perLat, c[1] + dx / perLon] as LatLon };
   });
 }
