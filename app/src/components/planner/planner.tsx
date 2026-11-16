@@ -1287,12 +1287,15 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       items={[
         ...(routeTour
           ? [
-              { key: 'save', icon: 'checkmark' as const, label: 'Speichern und zurück', primary: true, busy: tourPlan.saving, onPress: () => void keepAndLeave(false) },
+              // Gleiche Zeilen wie die Rückfrage beim Speichern, ohne orange Taste (Koray 16.11.)
+              tourPlan.cloudId
+                ? { key: 'save', icon: 'checkmark' as const, label: 'Aktuelle Tour überschreiben', busy: tourPlan.saving, onPress: () => void keepAndLeave(false) }
+                : { key: 'save', icon: 'checkmark' as const, label: 'Speichern', busy: tourPlan.saving, onPress: () => void keepAndLeave(false) },
               // Ungespeicherte Kopie (Community): Speichern legt ohnehin eine neue Tour an
-              ...(tourPlan.cloudId ? [{ key: 'copy', icon: 'plus.square.on.square' as const, label: 'Als Kopie speichern', hint: 'Das Original bleibt wie es war', onPress: () => void keepAndLeave(true) }] : []),
+              ...(tourPlan.cloudId ? [{ key: 'copy', icon: 'plus' as const, label: 'Als neue Tour speichern', onPress: () => void keepAndLeave(true) }] : []),
             ]
           : []),
-        { key: 'discard', icon: 'arrow.uturn.backward' as const, label: 'Verwerfen', danger: true, onPress: leave },
+        { key: 'discard', icon: 'arrow.uturn.backward' as const, label: 'Änderungen verwerfen', danger: true, onPress: leave },
       ]}
     />
     <FunSheet

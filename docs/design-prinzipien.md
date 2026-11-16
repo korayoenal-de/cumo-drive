@@ -30,6 +30,12 @@ Regeln:
 * Ein Objekt hat genau einen Einstieg für Optionen: das Symbol ⋯ rechts. Die Fläche selbst öffnet das Objekt.
 * Optionen gleiten nicht mehr inline herein; Sheets und Ebenen erscheinen wie in 3 beschrieben.
 
+### Gespeicherte Tour ändern (Koray 16.11.2026, Konzept „Tour ändern und überschreiben“)
+* Geöffnete Tour: Name oben im Planer, antippen benennt um und speichert sofort. Ändert sich die Strecke, steht „Geändert“ am Namen und Speichern erscheint als Zweittaste.
+* Speichern fragt als ganzer Satz „Möchtest du … überschreiben?“ mit zwei normalen Zeilen: „Aktuelle Tour überschreiben“, „Als neue Tour speichern“ (Name 2, Name 3). Keine orange Zeile, keine Beschreibungen. Der Satz darunter nennt, wen es noch betrifft (Community, Original).
+* Duplizieren gibt es nicht mehr; Varianten entstehen über „Als neue Tour speichern“. Im ⋯ des Planers steht bei Änderungen „Änderungen verwerfen“.
+* Hängt eine geplante Ausfahrt an der Tour, bietet der Toast nach dem Überschreiben „Übernehmen“ an.
+
 ## 3. Bewegung mit Federn (Bounce geregelt am 6.11.2026)
 * Alle Animationen nutzen `Motion` aus `theme.ts`. Keine linearen Übergänge.
 * Ebenen und Optionen (Bottom Sheets, schwebende Aktionen, Toasts, Listen) erscheinen ohne Feder: Auslaufkurve EASE_OUT, Sheets 300 ms, Optionen 260 ms, gestaffelt 45 ms (components/ui/motion.ts). Seit 6.11. nachmittags, weil die Federn dort noch nachwippten.

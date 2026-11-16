@@ -25,7 +25,7 @@ import { useSession } from '@/lib/auth';
 import { creditLine, publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
 import { NameDialog } from '@/components/planner/name-dialog';
-import { duplicateTour, fromCommunity, renameTour, type SavedTour } from '@/lib/library';
+import { fromCommunity, renameTour, type SavedTour } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
@@ -61,15 +61,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
     // Neutral ohne Hinweis (Konsistenzprüfung 15.11., O1): Orange gibt es nur in Rückfragen
     { key: 'ride', icon: 'calendar.badge.plus', label: 'Ausfahrt planen', onPress: () => router.push({ pathname: '/ausfahrt/neu', params: { tour: t.id } }) },
     { key: 'rename', icon: 'pencil', label: 'Umbenennen', hint: taken ? 'Nur bei dir, in der Community bleibt der Name' : undefined, onPress: () => setSheet('rename') },
-    {
-      key: 'dup',
-      icon: 'plus.square.on.square',
-      label: 'Duplizieren',
-      onPress: () => {
-        const c = duplicateTour(t.id);
-        if (c) showToast(`${c.name} angelegt`, { action: { label: 'Öffnen', onPress: () => onOpen(c) } });
-      },
-    },
+    // Duplizieren entfällt (Koray 16.11.): Varianten entstehen im Planer über „Als neue Tour speichern“
     // Link, GPX und KML als eine Zeile (O3)
     { key: 'share', icon: 'square.and.arrow.up', label: 'Teilen', onPress: () => setSheet('share') },
     ...(taken && !t.edited

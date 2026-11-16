@@ -7,7 +7,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { toPlanError } from '@/components/planner/create-tour';
 import { clearEditOrigin } from '@/lib/edit-tour';
-import { fromCommunity, saveTour, syncLibrary, type SavedTour } from '@/lib/library';
+import { fromCommunity, readLibrary, saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName } from '@/lib/geocode';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '@/lib/highlight-roads';
 import { avoidedKey, clearAvoidedPasses } from '@/lib/avoid-pass';
@@ -380,8 +380,12 @@ export function useTourPlan(onPlanned?: () => void) {
     if (opts?.asCopy) {
       try {
         const namen = pts.map((p) => names[keyOf(p)] ?? '');
-        const base0 = (nm.trim() || planned.name).replace(/\s+Kopie(\s+\d+)?$/, '');
-        const copy = saveTour({ ...planned, ...varied, name: `${base0} Kopie`.slice(0, 120), curves, profile, namen, etappen: legProfiles }, folder);
+        // Als neue Tour (Koray 16.11.): „Name 2“, „Name 3“ statt „Kopie“
+        const base0 = (nm.trim() || planned.name).replace(/\s+(Kopie(\s+\d+)?|\d+)$/, '');
+        const taken = new Set(readLibrary().map((t) => t.name));
+        let n = 2;
+        while (taken.has(`${base0} ${n}`)) n++;
+        const copy = saveTour({ ...planned, ...varied, name: `${base0} ${n}`.slice(0, 120), curves, profile, namen, etappen: legProfiles }, folder);
         void syncLibrary();
         if (!opts.quiet) showToast(`${copy.name} gespeichert`);
         return copy.id;
