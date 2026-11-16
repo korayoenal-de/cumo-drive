@@ -7,8 +7,8 @@ Messwerte stammen vom 12.11. und sind Momentaufnahmen.
 
 | Server | Adresse | Rolle |
 |---|---|---|
-| Server 1 (vmd211515) | 13.140.213.164, https://13-140-213-164.sslip.io | Routing (GraphHopper 11), POI Kacheln; Neuaufbau So 3 Uhr |
-| Server 2 (vmd212412) | 13.140.213.114, https://13-140-213-114.sslip.io | Routing, POI Kacheln, Ortssuche (Photon Europa, unter /photon); Neuaufbau Mo 3 Uhr; zusätzliche Gebiete Mittelitalien, Pyrenäen und Zentralmassiv (Koray 13.11.), Speicher beim Aufbau 30 GB, Landmarken zwei Profile gleichzeitig |
+| Server 1 (vmd211515) | 13.140.213.164, https://r1.cumodrive.de (Notfall https://13-140-213-164.sslip.io) | Routing (GraphHopper 11), POI Kacheln; Neuaufbau So 3 Uhr |
+| Server 2 (vmd212412) | 13.140.213.114, https://r2.cumodrive.de (Notfall https://13-140-213-114.sslip.io) | Routing, POI Kacheln, Ortssuche (Photon Europa, unter /photon); Neuaufbau Mo 3 Uhr; zusätzliche Gebiete Mittelitalien, Pyrenäen und Zentralmassiv (Koray 13.11.), Speicher beim Aufbau 30 GB, Landmarken zwei Profile gleichzeitig |
 
 Beide: Contabo Cloud VPS 12 (12 Kerne, 48 GB, 400 GB SSD), Ubuntu 24.04, Caddy davor (TLS, HTTP/2 und HTTP/3), Ordner /opt/cumo-routing.
 Skripte im Repo unter routing/server/cloud: setup-server.sh (Neuaufbau), betrieb.sh (Sicherung, Überwachung, Absicherung), harden.sh (Wächter).
@@ -75,7 +75,7 @@ Erste Sicherung in beide Richtungen am 12.11. von Hand geprüft. Offen: Supabase
 | Supabase weg | Planen und Navigieren gehen weiter (Touren lokal), Community, Abgleich und Gruppe pausieren | Supabase Statusseite |
 | LiveKit weg | Funk aus, Gruppenfahrt mit Live Positionen läuft weiter | Banner „Funk getrennt“ |
 | TomTom weg oder Kontingent leer | keine aktuellen Sperrungen, Planung läuft | Protokoll der Edge Function |
-| sslip.io weg | BEIDE Server nicht erreichbar, weil ihre Namen daran hängen | siehe Schwachstellen |
+| sslip.io weg | nichts, die App nutzt r1 und r2 unter cumodrive.de (seit 16.11.) | |
 
 ### Dauer des Neuaufbaus (korrigiert 12.11.)
 
@@ -87,7 +87,7 @@ Valhalla (Server 2, /opt/valhalla, Docker): Neubau dienstags 3:00 über cumo-val
 
 Schwachstellen, die bleiben:
 
-1. **Namen über sslip.io:** ein fremder Gratisdienst für die Namensauflösung beider Server. Lösung: eigene Namen (zum Beispiel r1 und r2 unter rallycumo.de oder cumodrive.de), sslip bleibt als Notfall in der Liste. Braucht zwei DNS Einträge von Koray.
+1. **Namen (erledigt 16.11.):** r1.cumodrive.de und r2.cumodrive.de (A Einträge bei DomainFactory, Caddy holt die Zertifikate). sslip bleibt als Notfall in der Liste der App. Neue Server: Namen im Caddyfile ergänzen (build_cloud_init.py nutzt noch routing.rallycumo.de und sslip).
 2. **Ein Anbieter, eine Region:** beide Server stehen bei Contabo in der EU. Fällt Contabo ganz aus, bleibt Valhalla als Notfall. Später: dritter Server bei einem anderen Anbieter.
 3. **Keine Nachricht aufs Handy,** solange /etc/cumo-notify leer ist.
 4. **Routing ist offen:** jeder, der die Adresse kennt, kann Routen abfragen. Heute unkritisch, später Drosselung je Adresse im Webserver.

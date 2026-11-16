@@ -6,7 +6,8 @@
 import { CUMO_ROUTING_SERVERS } from './cumo-routing';
 
 const PUBLIC = 'https://photon.komoot.io';
-const OWN = [...CUMO_ROUTING_SERVERS].reverse().map((u) => `${u}/photon`);
+// zuerst Server 2, dann Server 1, jeweils erst unter cumodrive.de, dann unter sslip (16.11.)
+const OWN = [1, 0, 3, 2].map((i) => CUMO_ROUTING_SERVERS[i]).filter(Boolean).map((u) => `${u}/photon`);
 const OWN_TIMEOUT_MS = 4000;
 /** Auch der öffentliche Dienst bekommt eine Frist: ohne sie drehte das Rad endlos, wenn er nicht antwortete (Koray 12.11.) */
 const PUBLIC_TIMEOUT_MS = 7000;

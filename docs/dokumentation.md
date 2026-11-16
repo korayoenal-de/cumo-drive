@@ -221,7 +221,7 @@ JavaScript Änderungen gehen per OTA Update in Minuten aufs Handy; neue native P
 | Software | GraphHopper 11, Ortsdichte mit 4 Threads, Landmarken mit 4 Threads |
 | Regionen | DACH, Norditalien, Elsass, Lothringen, Franche Comté, Rhône Alpes, PACA, Slowenien |
 | Neuaufbau | wöchentlich So 3 Uhr, Sperre gegen doppelten Lauf, Wächter auf /health (harden.sh); App plant solange über Valhalla |
-| Adresse | https://13-140-213-164.sslip.io (DNS routing.cumodrive.de steht aus) |
+| Adresse | https://r1.cumodrive.de und https://r2.cumodrive.de, Notfall über sslip.io |
 
 ### Externe Dienste und Kosten
 
