@@ -500,8 +500,7 @@ export function RouteMap({
               key={`pass-${ps.id}-${pickedPassIds?.has(ps.id) ? 'drin' : 'frei'}`}
               coordinate={ll(passPoint(ps))}
               anchor={{ x: 0.5, y: 0.5 }}
-              title={ps.name}
-              description={`${ps.ele.toLocaleString('de-DE')} m`}
+              // ohne title und description: sonst zeigt Apple Karten zusätzlich eine weiße Sprechblase über den Aktionen (Koray 16.11.)
               zIndex={pickedPassIds?.has(ps.id) ? 12 : 10}
               ref={(m) => {
                 passRefs.current.set(ps.id, m);
@@ -516,6 +515,7 @@ export function RouteMap({
               }
               tracksViewChanges={false}>
               <View
+                accessibilityLabel={`${ps.name}, ${ps.ele.toLocaleString('de-DE')} m`}
                 style={[styles.passDot, { backgroundColor: TIER_DOT[ps.tier] }, pickedPassIds?.has(ps.id) && styles.passPicked]}
               />
             </Marker>
