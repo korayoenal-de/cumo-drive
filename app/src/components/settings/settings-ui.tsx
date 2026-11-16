@@ -4,18 +4,25 @@
  */
 import { BackLink } from '@/components/ui/back-link';
 import { SymbolView } from 'expo-symbols';
-import { Children, isValidElement, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Children, isValidElement, type ReactNode, type RefObject } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 
 /** Unterseite: Zurück Pille oben links, großer Titel, scrollender Inhalt. */
-export function SubScreen({ title, children }: { title: string; children: ReactNode }) {
+export function SubScreen({ title, children, scrollRef }: { title: string; children: ReactNode; scrollRef?: RefObject<ScrollViewInstance | null> }) {
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: insets.bottom + Spacing.xxxl }]} keyboardShouldPersistTaps="handled">
+    // Tastatur schiebt den Inhalt mit, statt ihn zu verdecken (Koray 16.11.: Senden lag unter der Tastatur)
+    <ScrollView
+      ref={scrollRef}
+      style={styles.root}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: insets.bottom + Spacing.xxxl }]}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
+      automaticallyAdjustKeyboardInsets>
       <BackLink label="Einstellungen" fallback="/einstellungen" />
       <AppText variant="display" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {title}

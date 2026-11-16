@@ -3,8 +3,8 @@
  * Rückmeldungen, Claude prüft jede Meldung und bereitet eine Lösung vor. Eine Hauptaktion: Senden.
  */
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
 
 import { SubScreen } from '@/components/settings/settings-ui';
 import { Chip } from '@/components/ui/chip';
@@ -18,6 +18,9 @@ export default function Feedback() {
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const ready = note.trim().length >= 3 && !busy;
+  const scroll = useRef<ScrollViewInstance>(null);
+  // Beim Tippen Senden über der Tastatur halten
+  const showSend = () => setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 300);
 
   const send = async () => {
     setBusy(true);
@@ -32,7 +35,7 @@ export default function Feedback() {
   };
 
   return (
-    <SubScreen title="Feedback">
+    <SubScreen title="Feedback" scrollRef={scroll}>
       <AppText muted>Was ist dir aufgefallen? Jede Meldung wird geprüft, und du erfährst, wenn es eine Lösung gibt.</AppText>
       <View style={styles.block}>
         <AppText style={styles.label}>Worum geht es?</AppText>
@@ -48,6 +51,7 @@ export default function Feedback() {
           maxFontSizeMultiplier={1.2}
           value={note}
           onChangeText={setNote}
+          onFocus={showSend}
           placeholder="Zum Beispiel: Rundtour ab Bensheim fährt bei Jugenheim hin und zurück"
           placeholderTextColor={Colors.muted}
           maxLength={1000}
@@ -67,7 +71,7 @@ const styles = StyleSheet.create({
   block: { gap: Spacing.s },
   label: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
-  input: { minHeight: 120, maxHeight: 240, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.body, textAlignVertical: 'top' },
+  input: { minHeight: 104, maxHeight: 200, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.body, textAlignVertical: 'top' },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
   disabled: { opacity: 0.4 },
