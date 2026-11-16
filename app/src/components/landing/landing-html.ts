@@ -63,6 +63,7 @@ const ICON = {
   curve: '<path d="M4 20c2-6 6-3 8-8s6-5 8-8" stroke="#E2461C" stroke-width="2.2" fill="none" stroke-linecap="round"></path><circle cx="4" cy="20" r="1.6" fill="#E2461C"></circle><circle cx="20" cy="4" r="1.6" fill="#E2461C"></circle>',
   city: '<path d="M3 21h18M5 21V10l4-3v14M9 21V4h6v17M15 21V9h4v12" stroke="#E2461C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 3l18 18" stroke="#E2461C" stroke-width="2" stroke-linecap="round"></path>',
   loop: '<path d="M6 18a6 6 0 1 1 6-6v8" stroke="#E2461C" stroke-width="2.2" fill="none" stroke-linecap="round"></path><path d="M9 17l3 3 3-3" stroke="#E2461C" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>',
+  star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z" stroke="#E2461C" stroke-width="2" fill="none" stroke-linejoin="round"></path>',
   route: '<path d="M6 20c0-5 12-3 12-9S9 6 9 4" stroke="#E2461C" stroke-width="2.2" fill="none" stroke-linecap="round"></path><circle cx="6" cy="20" r="2" fill="#E2461C"></circle><circle cx="9" cy="4" r="2" fill="#E2461C"></circle>',
   calendar: '<rect x="3.5" y="5" width="17" height="15" rx="3" stroke="#E2461C" stroke-width="2" fill="none"></rect><path d="M3.5 10h17M8 3v4M16 3v4" stroke="#E2461C" stroke-width="2" stroke-linecap="round"></path>',
   people: '<circle cx="9" cy="8" r="3.5" stroke="#E2461C" stroke-width="2" fill="none"></circle><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" stroke="#E2461C" stroke-width="2" fill="none" stroke-linecap="round"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.4c2.1.7 3.5 2.6 3.5 5.6" stroke="#E2461C" stroke-width="2" fill="none" stroke-linecap="round"></path>',
@@ -101,9 +102,6 @@ const priceCard = (label: string, price: string, text: string, recommended = fal
         <p class="cd-body" style="font-size: 16px;">${text}</p>
       </div>`;
 
-const stat = (label: string, num: string) => `
-        <div style="display: flex; flex-direction: column; gap: 6px;"><span class="cd-label">${label}</span><span class="cd-num">${num}</span></div>`;
-
 const dataCard = (label: string, num: string, text: string) => `
       <div class="cd-card">
         <span class="cd-label">${label}</span>
@@ -139,7 +137,6 @@ a{color:#F4F4F2}a:hover{color:#FFFFFF}
 .cd-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .cd-grid6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .cd-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.cd-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
 .cd-steps{display:flex;flex-direction:column;gap:12px}
 .cd-step{display:flex;gap:18px;align-items:flex-start;background:#161618;border-radius:22px;padding:20px 22px}
 .cd-step b{font:900 22px/1.1 Archivo,'Arial Black',sans-serif;color:#E2461C;font-variant-numeric:tabular-nums;min-width:36px}
@@ -158,7 +155,6 @@ a{color:#F4F4F2}a:hover{color:#FFFFFF}
 }
 @media (max-width:620px){
   .cd-grid4,.cd-grid2,.cd-grid6{grid-template-columns:minmax(0,1fr)}
-  .cd-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cd-nav-links{display:none !important}
 }
 
@@ -226,12 +222,10 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 28px;">
       <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 16px; box-sizing: border-box; line-height: 1.3; border-radius: 18px; background: rgba(76,195,138,0.14); color: #4CC38A; font: 700 15px Inter, sans-serif;"><span style="width: 8px; height: 8px; border-radius: 4px; background: #4CC38A; flex-shrink: 0;"></span>Beta für iPhone und CarPlay, jetzt testen</span>
       <h1 class="cd-h1" style="font-size: clamp(52px, 5.6vw, 80px);">Kurven statt Kilometer.</h1>
-      <p class="cd-lead">Die Navi App für Sportwagen. Cumo Drive plant kurvige Touren für Autos, nicht für Motorräder: Breite, Belag und Sperrungen geprüft, Großstädte und Ortsdurchfahrten gemieden, Pässe und Traumstrecken mit Ansage und Fahrspaß Pegel. Allein, mit deiner Gruppe und Funk oder bei einer Ausfahrt aus der Community.</p>
+      <p class="cd-lead">Die Navi App für Sportwagen. Cumo Drive plant kurvige Touren für Autos: Breite, Belag und Sperrungen geprüft, Großstädte und Ortsdurchfahrten gemieden, Pässe und Traumstrecken mit Ansage und Fahrspaß Pegel. Allein, mit deiner Gruppe und Funk oder bei einer Ausfahrt aus der Community.</p>
       <div style="display: flex; gap: 12px; flex-wrap: wrap;">
         <a href="/registrieren" class="cd-btn cd-btn-signal">14 Tage kostenlos fahren</a>
         <a href="#planen" class="cd-btn cd-btn-surface">So funktioniert es</a>
-      </div>
-      <div class="cd-stats" style="padding-top: 20px;">${stat('Pässe', '363')}${stat('Traumstrecken', '439')}${stat('Fahrregionen', '94')}${stat('Fahrspaß Stufen', '5')}
       </div>
     </div>
     <div class="cd-phones" style="flex: 0 0 auto; position: relative; display: flex; gap: 28px; align-items: flex-end; justify-content: flex-end;">
@@ -246,10 +240,10 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   <div class="cd-wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 48px;">
     <div style="display: flex; flex-direction: column; gap: 18px; max-width: 860px;">
       <span class="cd-label">Für Autos gebaut</span>
-      <h2 class="cd-h2">Motorrad Apps schicken dich über Feldwege. Wir nicht.</h2>
-      <p class="cd-lead">Ein Sportwagen braucht andere Straßen als ein Motorrad. Unser eigener Routing Server gewichtet nach Kurven, Breite, Belag und Ortsdichte, und jede Etappe wird vor dem Losfahren gegen die Straßendaten geprüft.</p>
+      <h2 class="cd-h2">Kurven ja. Feldwege nie.</h2>
+      <p class="cd-lead">Ein Sportwagen braucht seine eigenen Straßen: kurvig, breit genug, mit gutem Belag und ohne Ortsdurchfahrten. Cumo Drive plant genau diese und prüft jede Etappe, bevor du losfährst.</p>
     </div>
-    <div class="cd-grid6">${featureCard('width', 'Zwei Autos passen vorbei', 'Schmale Straßen gern, aber unter 3 Metern Breite raus, bis 4,5 Meter als prüfen markiert.')}${featureCard('surface', 'Guter Belag', 'Kein Schotter, kein Feldweg. Kopfsteinpflaster und rauen Asphalt meidest du auf Wunsch.')}${featureCard('closed', 'Sperrungen umfahren', 'Ist eine Straße auf deiner Tour gerade gesperrt, warnt dich die App beim Losfahren und zeigt dir die Umfahrung. Wintersperren der Pässe siehst du schon beim Planen.')}${featureCard('curve', 'Ohne Ortsdurchfahrten', 'Städte und Wohngebiete werden abgewertet, lange kurvige Landstraßen bevorzugt.')}${featureCard('city', 'Großstädte gemieden', 'Rund um große Städte gibt es selten gute Kurven. Die kurvige Planung macht einen Bogen darum.')}${featureCard('loop', 'Keine Stichstraßen', 'Kein Hin und zurück auf derselben Sackgasse. Stichstraßen werden herausgeplant, der Rückweg meidet den Hinweg.')}
+    <div class="cd-grid6">${featureCard('width', 'Zwei Autos passen vorbei', 'Schmale Straßen gern, aber nur dort, wo zwei Autos aneinander vorbeikommen. Enge Stellen siehst du vor der Fahrt.')}${featureCard('surface', 'Guter Belag', 'Kein Schotter, kein Feldweg. Kopfsteinpflaster und rauen Asphalt meidest du auf Wunsch.')}${featureCard('closed', 'Sperrungen umfahren', 'Ist eine Straße auf deiner Tour gerade gesperrt, warnt dich die App beim Losfahren und zeigt dir die Umfahrung. Wintersperren der Pässe siehst du schon beim Planen.')}${featureCard('curve', 'Ohne Ortsdurchfahrten', 'Städte und Wohngebiete werden abgewertet, lange kurvige Landstraßen bevorzugt.')}${featureCard('city', 'Großstädte gemieden', 'Rund um große Städte gibt es selten gute Kurven. Die kurvige Planung macht einen Bogen darum.')}${featureCard('star', 'Traumstrecken zuerst', 'Hunderte von Fahrern recherchierte Strecken ziehen die Planung an. Liegt eine auf dem Weg, fährst du sie.')}
     </div>
   </div>
 </section>
@@ -309,8 +303,8 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">03  Navigation</span>
       <h3 class="cd-h3">„In 950 Metern beginnt der Jaufenpass. 20 Kehren.“</h3>
-      <p class="cd-body">Kurz vor jedem Highlight kommt die Ansage mit Karte und Pegel. Bei einer Legende läuft die Stern Animation. Dazu 42 eigene Abbiegesymbole, die sich vor dem Manöver aufbauen, Spurempfehlung, Kreisverkehre mit Richtung und Ansagen, die sich nach deinem Tempo richten. Im Tunnel läuft die Führung weiter, und fehlt unterwegs das Netz, zeigt dir die App trotzdem den Weg zurück zur Tour.</p>
-      <div class="cd-grid2" style="padding-top: 8px;">${smallCard('Kurven mit Ansage', 'Scharfe Kurven und Kehren 150 m vorher, nur außerorts ab 70 km/h.')}${smallCard('Ankunft nach deinem Tempo', 'Restzeit und Ankunft lernen laufend mit, wie du wirklich fährst.')}${smallCard('Pause mit einem Tipp', 'Für den Kaffee am Pass: Ansagen und Zeit stehen, bis du weiterfährst.')}${smallCard('Auf dem Sperrbildschirm', 'Die Live Activity zeigt das nächste Manöver, ohne dass du die App öffnest. Die Stimme der Ansagen wählst du mit Hörprobe.')}${smallCard('Tempo im Blick', 'Dein Tempo und das erlaubte Tempo unten links. Zu schnell färbt sich nur die Fläche, ohne Ton.')}${smallCard('Abschnitt auslassen', 'Lange auf das Manöver drücken, schon geht es direkt zum nächsten Zwischenziel. Rückgängig inklusive.')}${smallCard('Abseits der Tour', 'Verfahren? Eine gelbe Linie führt ohne Wenden zurück. Fährst du bewusst anders, wählst du Neue Route ab hier, und die Tour wird über die offenen Ziele neu geplant.')}${smallCard('Bremshinweis', 'Vor engen Kurven passend zu deinem Tempo, damit du nicht zu schnell hineinfährst.')}
+      <p class="cd-body">Kurz vor jedem Pass, jeder Bergrennstrecke und jeder Traumstraße kommt die Ansage mit Karte und Pegel. Bei den ganz großen Strecken merkst du schon an der Ansage, was dich erwartet. Im Tunnel läuft die Führung weiter, und fehlt unterwegs das Netz, findest du trotzdem zurück zur Tour.</p>
+      <div class="cd-grid2" style="padding-top: 8px;">${smallCard('Kurven mit Ansage', 'Scharfe Kurven und Kehren 150 m vorher, nur außerorts ab 70 km/h.')}${smallCard('Pause mit einem Tipp', 'Für den Kaffee am Pass: Ansagen und Zeit stehen, bis du weiterfährst.')}${smallCard('Auf dem Sperrbildschirm', 'Die Live Activity zeigt das nächste Manöver, ohne dass du die App öffnest.')}${smallCard('Abschnitt auslassen', 'Lange auf das Manöver drücken, schon geht es direkt zum nächsten Zwischenziel. Rückgängig inklusive.')}${smallCard('Abseits der Tour', 'Verfahren? Eine gelbe Linie führt ohne Wenden zurück. Fährst du bewusst anders, wählst du Neue Route ab hier, und die Tour wird über die offenen Ziele neu geplant.')}${smallCard('Bremshinweis', 'Vor engen Kurven passend zu deinem Tempo, damit du nicht zu schnell hineinfährst.')}
       </div>
     </div>
   </div>
@@ -321,7 +315,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   <div style="display: flex; flex-direction: column; gap: 20px; max-width: 760px;">
     <span class="cd-label">CarPlay</span>
     <h3 class="cd-h2">Die Kurven auf dem großen Display.</h3>
-    <p class="cd-lead">Plane auf dem iPhone, fahr mit CarPlay. Die Tour liegt als Linie auf der Karte im Auto, ein Tipp auf Los startet die Führung. Manöver, Restweg und Ankunft stehen im Blick, Pässe und Traumstrecken melden sich kurz vorher. CarPlay ist noch in Entwicklung und für Tester schon nutzbar.</p>
+    <p class="cd-lead">Plane auf dem iPhone, fahr mit CarPlay. Die Tour liegt als Linie auf der Karte im Auto, ein Tipp auf Los startet die Führung. Manöver, Restweg und Ankunft stehen im Blick, Pässe und Traumstrecken melden sich kurz vorher. CarPlay ist dabei, vorerst als Beta.</p>
   </div>
   <div class="cp-car" role="img" aria-label="CUMO DRIVE in CarPlay: Karte mit oranger Tour, Abbiegehinweis rechts auf die SS 44 in 800 m, Hinweis Jaufenpass in 600 m mit 20 Kehren, Ankunft 11:36">
     <div class="cp-screen">
@@ -345,7 +339,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       <div class="cp-alert" aria-hidden="true"><b>Jaufenpass</b><span>In 600 m, 20 Kehren</span></div>
     </div>
   </div>
-  <div class="cd-grid3">${smallCard('Vorschau mit Los', 'Die geplante Tour wartet schon auf dem Display, mit Strecke und Fahrzeit.')}${smallCard('Highlights im Blick', 'Pässe und Traumstrecken kommen als kurzer Hinweis, die Ansage hörst du über die Lautsprecher im Auto.')}${smallCard('iPhone und Auto im Gleichtakt', 'Starten, pausieren, beenden: Was du an einer Stelle tust, gilt an beiden.')}
+  <div class="cd-grid2">${smallCard('Vorschau mit Los', 'Die geplante Tour wartet schon auf dem Display, mit Strecke und Fahrzeit.')}${smallCard('Highlights im Blick', 'Pässe und Traumstrecken kommen als kurzer Hinweis, die Ansage hörst du über die Lautsprecher im Auto.')}
   </div>
 </section>
 
@@ -394,8 +388,8 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   <div class="cd-two">
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">05  Community</span>
-      <h3 class="cd-h3">Routen nachfahren. Ausfahrten finden. Fahrer kennenlernen.</h3>
-      <p class="cd-body">Die Community hat drei Bereiche. Unter Routen liegen veröffentlichte Touren zum Nachfahren, ein Tipp öffnet sie im Planer, das Original bleibt unberührt. Unter Ausfahrten verabredest du dich zu gemeinsamen Touren, Einladungen kommen als Mitteilung. Unter Drivers findest du Fahrer aus deiner Gegend, mit Profilfoto und Fuhrpark, und schreibst ihnen direkt, mit allen Gesprächen an einem Ort. Wer stört, den meldest oder blockierst du mit zwei Tipps.</p>
+      <h3 class="cd-h3">Touren nachfahren. Ausfahrten finden. Fahrer kennenlernen.</h3>
+      <p class="cd-body">Die Community hat drei Bereiche. Unter Touren zum Nachfahren liegen veröffentlichte Touren anderer Fahrer, ein Tipp öffnet sie im Planer. Unter Ausfahrten verabredest du dich zu gemeinsamen Touren, Einladungen kommen als Mitteilung. Unter Drivers findest du Fahrer aus deiner Gegend, mit Profilfoto und Fuhrpark, und schreibst ihnen direkt, mit allen Gesprächen an einem Ort. Wer stört, den meldest oder blockierst du mit zwei Tipps.</p>
     </div>
     <div class="cd-side" style="flex: 0 0 auto; width: 420px; max-width: 100%;">
       <div class="cd-ride" role="img" aria-label="Beispiel einer Ausfahrt: Sellaronda am Samstag um 9 Uhr, Treffpunkt Parkplatz am Start, noch 3 Plätze frei, mit Knopf Mitfahren anfragen">
@@ -413,7 +407,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       </div>
     </div>
   </div>
-  <div class="cd-grid3">${featureCard('route', 'Routen', 'Veröffentlichte Touren anderer Fahrer, etwa die Sellaronda groß und klein. Antippen öffnet eine Kopie im Planer, das Lesezeichen legt sie unter Touren ab. Deine abgewandelte Fassung teilst du mit Hinweis auf das Original.')}${featureCard('calendar', 'Ausfahrten', 'Gemeinsame Ausfahrten mit Termin, Treffpunkt und Plätzen. Du fragst an oder wirst eingeladen, der Organisator nimmt an, und im Chat klärt ihr den Rest.')}${featureCard('people', 'Drivers', 'Mitglieder mit ungefährem Wohnort auf der Karte und private Nachrichten. Was andere von dir sehen, auch deinen Fuhrpark, stellst du selbst ein.')}
+  <div class="cd-grid3">${featureCard('route', 'Touren zum Nachfahren', 'Veröffentlichte Touren anderer Fahrer, etwa die Sellaronda groß und klein. Antippen öffnet eine Kopie im Planer, das Lesezeichen legt sie unter Touren ab. Deine abgewandelte Fassung teilst du mit Hinweis auf das Original.')}${featureCard('calendar', 'Ausfahrten', 'Gemeinsame Ausfahrten mit Termin, Treffpunkt und Plätzen. Du fragst an oder wirst eingeladen, der Organisator nimmt an, und im Chat klärt ihr den Rest.')}${featureCard('people', 'Drivers', 'Mitglieder mit ungefährem Wohnort auf der Karte und private Nachrichten. Was andere von dir sehen, auch deinen Fuhrpark, stellst du selbst ein.')}
   </div>
 </section>
 
@@ -446,7 +440,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div class="cd-card">
       <span class="cd-label">Garage</span>
       <div class="cd-title">Mehrere Fahrzeuge</div>
-      <p class="cd-body" style="font-size: 16px;">Jedes Auto mit Marke, Modell, Form und Lackfarbe, auf Wunsch fährt es als Symbol auf der Karte mit. Vor der Fahrt wählst du, mit welchem du fährst, die Kilometer landen beim richtigen Auto.</p>
+      <p class="cd-body" style="font-size: 16px;">Jedes Auto mit Marke, Modell, Form und Lackfarbe, auf Wunsch fährt es als Symbol auf der Karte mit. Vor der Fahrt wählst du, mit welchem du fährst. Jedes Auto sammelt seine eigenen Touren und Kilometer.</p>
     </div>
   </div>
 </section>
@@ -477,14 +471,12 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   <div style="display: flex; flex-direction: column; gap: 18px; max-width: 860px;">
     <span class="cd-label">Datenqualität</span>
     <h2 class="cd-h2">Von Fahrern recherchiert, nicht vom Algorithmus geraten.</h2>
-    <p class="cd-lead">Eigener Routing Server mit Sportwagen Gewichtung, jede Woche neu gebaut. Dazu eine kuratierte Datenbank mit Quelle zu jedem Eintrag, auf die Straße gelegt und geprüft. Passstatus und Wintersperren werden laufend aktualisiert.</p>
+    <p class="cd-lead">Pässe, Traumstrecken und Fahrregionen in sechs Ländern, von Fahrern zusammengetragen und geprüft. Passstatus und Wintersperren werden laufend aktualisiert.</p>
   </div>
   <div class="cd-grid4">${dataCard('Pässe', '363', 'In drei Stufen: Ikone, Bekannt und Geheimtipp. Mit Höhe, Kehren, Maut und Wintersperre.')}${dataCard('Traumstrecken', '439', 'Bergrennen, Rallyeprüfungen und Panoramastraßen in Deutschland, Österreich, der Schweiz, Italien, Frankreich und Slowenien.')}${dataCard('Fahrregionen', '94', 'Gegenden, die als Ganzes zum Fahren gemacht sind, etwa Schwarzwald, Vogesen oder Dolomiten.')}${dataCard('Stopps an der Strecke', '130.000', 'Super Plus, Aussichtspunkte und Hotels, dazu ausgewählte Restaurants mit Parkplatz für Sportwagen, sortiert nach Umweg in Minuten.')}
   </div>
   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
     <span class="cd-chip" style="color: #9A9A9F;">Kartendaten © OpenStreetMap Mitwirkende</span>
-    <span class="cd-chip" style="color: #9A9A9F;">Routing auf eigenem Server</span>
-    <span class="cd-chip" style="color: #9A9A9F;">Jede Woche aktualisiert</span>
   </div>
 </section>
 
@@ -493,8 +485,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   <div class="cd-wrap" style="padding-top: 120px; padding-bottom: 120px;">
     <div class="cd-two">
       <div style="flex: 1 1 0; min-width: 0; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 32px; background: radial-gradient(120% 90% at 50% 40%, #241310 0%, #161618 60%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; padding: 32px; box-sizing: border-box;">
-        ${LOGO(148, ' style="max-width: 40%; height: auto;"')}
-        <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;"><span class="cd-chip">Rally Cumo Originale</span><span class="cd-chip">Vosges</span><span class="cd-chip">Black Forest</span></div>
+        <a href="https://www.cumodriversclub.de" rel="noopener" aria-label="CUMO DRIVERS CLUB, zur Website" style="display: block; width: 46%; max-width: 260px;"><img src="/landing/cdc-logo.svg" alt="Logo des CUMO DRIVERS CLUB" style="display: block; width: 100%; height: auto;"></a>
       </div>
       <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 22px;">
         <span class="cd-label">Aus dem CUMO DRIVERS CLUB</span>
@@ -515,17 +506,11 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   </div>
   <div class="cd-grid4">${priceCard('Jahr', '59,99 €', 'Entspricht 5 € im Monat. Abo, jederzeit kündbar.', true)}${priceCard('Saison Pass', '49 €', 'Einmalig für 6 Monate, kein Abo. Für die Monate, in denen das Auto aus der Garage darf.')}${priceCard('Monat', '14,99 €', 'Abo, jederzeit kündbar.')}${priceCard('Woche', '6,99 €', 'Für das Wochenende im Mietwagen oder die eine Tour im Urlaub. Abo, jederzeit kündbar.')}
   </div>
-  <div class="cd-grid2">
-    <div class="cd-card" style="background: transparent; box-shadow: inset 0 0 0 1px #232326;">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;"><span class="cd-h3" style="font-size: 28px;">Club S</span><span class="cd-title">Preis auf Anfrage</span></div>
-      <p class="cd-body" style="font-size: 16px;">Für Markenclubs und Stammtische: 12 Fahrzeuge, alle Mitglieder ohne eigenes Abo, gemeinsame Clubtouren.</p>
-    </div>
-    <div class="cd-card" style="background: transparent; box-shadow: inset 0 0 0 1px #232326;">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;"><span class="cd-h3" style="font-size: 28px;">Club L</span><span class="cd-title">Preis auf Anfrage</span></div>
-      <p class="cd-body" style="font-size: 16px;">Für Tourenveranstalter, Hotels und Autohäuser: 20 Fahrzeuge, Teilnehmer ohne eigenes Abo, eigene Touren für alle Mitfahrer.</p>
-    </div>
+  <div class="cd-card" style="background: transparent; box-shadow: inset 0 0 0 1px #232326;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;"><span class="cd-h3" style="font-size: 28px;">Business Account</span><span class="cd-title">Preis auf Anfrage</span></div>
+    <p class="cd-body" style="font-size: 16px;">Für Clubs, Tourenveranstalter, Hotels und Autohäuser.</p>
   </div>
-  <p class="cd-body" style="font-size: 15px; max-width: 80ch;">Clubs laufen auf Rechnung, schreib uns an <a href="mailto:kontakt@rallycumo.de">kontakt@rallycumo.de</a>. Woche, Monat und Jahr verlängern sich automatisch, wenn du nicht spätestens 24 Stunden vor Ablauf in den Einstellungen deiner Apple ID kündigst.</p>
+  <p class="cd-body" style="font-size: 15px; max-width: 80ch;">Business Accounts laufen auf Rechnung, schreib uns an <a href="mailto:kontakt@rallycumo.de">kontakt@rallycumo.de</a>. Woche, Monat und Jahr verlängern sich automatisch, wenn du nicht spätestens 24 Stunden vor Ablauf in den Einstellungen deiner Apple ID kündigst.</p>
 </section>
 
 <!-- Abschluss -->
