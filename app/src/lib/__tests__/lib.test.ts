@@ -16,6 +16,7 @@ import { edgeLimits, shownLimitAt } from '../navigation/speed-zones';
 import { pointAtKm, snapToRoute } from '../navigation/tracker';
 import type { NavRoute } from '../navigation/types';
 import { PASSES, passesAlong } from '../passes';
+import { closureExclude, onPassRoad } from '../road-closures';
 
 /** Gerade Linie nach Osten ab Heppenheim, n Punkte im Abstand von etwa stepM Metern */
 function eastLine(n: number, stepM = 50, start: LatLon = [49.64, 8.63]): LatLon[] {
@@ -385,5 +386,21 @@ describe('Restzeit aus den Zeiten der Anweisungen (Matthias 15.11.)', () => {
     // 2 km vor dem Ziel (am Ortseingang): noch 6 min, gleichmäßig verteilt wären es nur 2
     assert.equal(+(12 - minutesAt(r, 10)).toFixed(2), 6);
     assert.equal(+minutesAt({ cumKm, km: 12, minutes: 12 }, 10).toFixed(2), 10);
+  });
+});
+
+describe('Sperrungen auf Passstraßen', () => {
+  // Pordoijoch Richtung Arabba (TomTom 16.11.), etwa 1 km hinter der Passhöhe
+  const pordoi: LatLon[] = [[46.48296, 11.82199], [46.48305, 11.82599], [46.48407, 11.82874]];
+  const mannheim: LatLon[] = [[49.4875, 8.466], [49.489, 8.47]];
+  it('erkennt die Passstraße', () => {
+    assert.equal(onPassRoad(pordoi), true);
+    assert.equal(onPassRoad(mannheim), false);
+  });
+  it('im Planer nur Hinweis, unterwegs umfahren', () => {
+    const hits = [{ closure: { id: 'x', line: pordoi }, points: pordoi, firstIndex: 0 }];
+    const far: LatLon[] = [[46.6, 11.6], [46.4, 12.1]];
+    assert.equal(closureExclude(hits, far, 'hint').length, 0);
+    assert.equal(closureExclude(hits, far).length, 1);
   });
 });

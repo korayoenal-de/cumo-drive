@@ -770,6 +770,8 @@ export type PlanHint = {
   heading?: number | null;
   /** deutlich teurer, aber nicht verboten (das Stück der alten Tour, das die Fahrerin gerade umfährt) */
   penalize?: LatLon[];
+  /** Planen im Voraus (Planer): Sperrungen auf Passstraßen nur als Hinweis, nicht umfahren (Koray 16.11.) */
+  ahead?: boolean;
 };
 /** wird false, sobald der Server die Fahrtrichtung ablehnt */
 let headingOk = true;

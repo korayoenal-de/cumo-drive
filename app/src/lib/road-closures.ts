@@ -4,6 +4,7 @@
  * Kachel höchstens alle 10 Minuten. Hier: welche Kacheln eine Route berührt und wo sie gesperrte
  * Stücke trifft. Fällt der Dienst aus, plant und navigiert die App wie bisher.
  */
+import { PASSES } from './passes';
 import { haversine, type LatLon } from './tour';
 
 export type Closure = { id: string; line: LatLon[]; from?: string; to?: string; text?: string; road?: string };
@@ -186,6 +187,19 @@ export function closuresOnRoute(route: LatLon[], closures: Closure[]): ClosureHi
 
 /** Liegt ein Wegpunkt so nah an der gesperrten Straße, gilt sie als gewollt (Passhöhe als Ziel) */
 const WANTED_M = 1500;
+/** So nah an einer Passhöhe gilt eine Sperrung als Sperrung der Passstraße (meist Wintersperre) */
+const PASS_ROAD_M = 4000;
+
+/**
+ * Sperrung auf einer Passstraße (Koray 16.11.): nur Hinweis, nie umplanen. Grundregel: Wintersperren
+ * informieren, sie verhindern nie die Planung; eine Tour für den Sommer soll nicht um die Sperre herum führen.
+ */
+export function onPassRoad(line: LatLon[]): boolean {
+  if (!line.length) return false;
+  const lat = line[0][0];
+  const lon = line[0][1];
+  return PASSES.some((p) => Math.abs(p.lat - lat) < 0.1 && Math.abs(p.lon - lon) < 0.15 && line.some((q) => haversine(q, [p.lat, p.lon]) < PASS_ROAD_M));
+}
 
 /**
  * Punkte zum Ausschließen beim Neuplanen, nicht direkt an den Wegpunkten.
@@ -193,11 +207,18 @@ const WANTED_M = 1500;
  * Wintersperre), gibt es keinen anderen Weg dorthin. Dann wird nicht umgeplant, die Sperrung bleibt als
  * Hinweis an der Route: Wintersperren informieren, sie verhindern nie die Planung.
  */
-export function closureExclude(hits: ClosureHit[], waypoints: LatLon[]): LatLon[] {
+/** Liegt der Punkt an einer der gesperrten Straßen (dann ist er nicht zu erreichen) */
+export function onClosedRoad(p: LatLon, hits: ClosureHit[]): boolean {
+  return hits.some((h) => distToLine(p, h.closure.line) < WANTED_M);
+}
+
+/** passRoads 'hint': Sperrungen auf Passstraßen nicht umfahren (Planen im Voraus, nicht unterwegs) */
+export function closureExclude(hits: ClosureHit[], waypoints: LatLon[], passRoads: 'avoid' | 'hint' = 'avoid'): LatLon[] {
   const out: LatLon[] = [];
   for (const h of hits) {
     const mid = h.points[Math.floor(h.points.length / 2)];
     if (waypoints.some((w) => haversine(w, mid) < 300 || distToLine(w, h.closure.line) < WANTED_M)) continue;
+    if (passRoads === 'hint' && onPassRoad(h.closure.line)) continue;
     out.push(mid);
   }
   return out.slice(0, 20);

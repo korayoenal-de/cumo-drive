@@ -24,7 +24,8 @@ export type TourPlan = ReturnType<typeof useTourPlan>;
 
 /**
  * Zwischenziel mitten auf einer kuratierten Strecke, etwa eine Passhöhe (Koray 9.11., Hahntennjoch):
- * Die Strecke wird ganz durchfahren, in der Richtung, die besser zwischen den Nachbarpunkten liegt.
+ * Ab dem Punkt wird die Strecke bis zum Ausstieg weitergefahren, in der Richtung, die besser zwischen den
+ * Nachbarpunkten liegt. Den Weg zum Punkt wählt der Router (16.11., Sellajoch zum Pordoijoch).
  * Sonst fährt der Router zur Passhöhe hinauf und auf demselben Weg wieder hinunter.
  * Nur Strecken bis 40 km, und nur wenn der Punkt nicht am Anfang oder Ende liegt.
  */
@@ -176,10 +177,16 @@ export function useTourPlan(onPlanned?: () => void) {
         const inner = i > 0 && i < points.length - 1;
         const cross = inner && !roads.current[keyOf(p)] ? crossingFor(p, points[i - 1], points[i + 1]) : null;
         if (cross) {
-          // Strecke ganz durchfahren: Einstieg, Stützpunkte, Ausstieg statt nur des Punkts
-          xPts.push(cross[0]);
+          // Ab dem Punkt auf der Strecke weiter bis zum Ausstieg, damit die Route nicht denselben Weg zurückfährt.
+          // Den Weg hinauf wählt der Router selbst (Koray 16.11.: Pordoijoch nach dem Sellajoch führte erst
+          // hinunter nach Canazei, weil dort der Einstieg der Strecke liegt, und wieder hinauf)
+          let at = 0;
+          cross.forEach((q, k) => {
+            if (haversine(q, p) < haversine(cross[at], p)) at = k;
+          });
+          xPts.push(p);
           xProf.push(profiles[i]);
-          for (const q of shapePoints(cross)) {
+          for (const q of shapePoints(cross.slice(at))) {
             xPts.push(q);
             xProf.push(profiles[i]);
           }

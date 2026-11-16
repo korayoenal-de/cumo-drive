@@ -8,7 +8,7 @@ import { avoidedPoints } from './avoid-pass';
 import { checkLine } from './check';
 import { cumoAvailable, cumoPlan, type PlanHint } from './cumo-routing';
 import { tourFun } from './fun-score';
-import { closureExclude, closureLabel, closuresNear, closuresOnRoute, prefetchClosures, type ClosureHit } from './road-closures';
+import { closureExclude, closureLabel, closuresNear, closuresOnRoute, onClosedRoad, onPassRoad, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import { seamsOk, windowFor } from './plan-window';
 import { movePointsOffUTurns, unwantedUTurns, type UTurn } from './uturn';
@@ -227,7 +227,7 @@ async function planCheckedInner(
   if (!closures.length) return first;
   let tour = first;
   let hits = closuresOnRoute(lineOf(first), closures);
-  const ex = closureExclude(hits, points);
+  const ex = closureExclude(hits, points, hint?.ahead ? 'hint' : 'avoid');
   if (hits.length && ex.length) {
     onStep?.('fix');
     try {
@@ -285,12 +285,13 @@ function withClosureWarnings(tour: PlannedTour, hits: ClosureHit[]): PlannedTour
   const cum = [0];
   for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + haversine(line[i - 1], line[i]) / 1000);
   const extra: Warning[] = hits.map((h) => ({
-    klasse: 'raus',
+    // Passstraße: meist Wintersperre, die Route bleibt (prüfen statt raus, Koray 16.11.)
+    klasse: onPassRoad(h.closure.line) ? 'pruefen' : 'raus',
     start_km: +(cum[Math.min(h.firstIndex, cum.length - 1)] ?? 0).toFixed(1),
     laenge_km: +(h.points.length > 1 ? h.points.slice(1).reduce((a, p, i) => a + haversine(h.points[i], p), 0) / 1000 : 0.1).toFixed(1),
     name: closureLabel(h.closure),
     ort: h.closure.from ?? '',
-    gruende: ['Gesperrt laut Verkehrsmeldung', ...(h.closure.text ? [h.closure.text] : [])],
+    gruende: [onPassRoad(h.closure.line) ? 'Passstraße gesperrt laut Verkehrsmeldung, meist Wintersperre' : 'Gesperrt laut Verkehrsmeldung', ...(h.closure.text ? [h.closure.text] : [])],
     mitte: h.points[Math.floor(h.points.length / 2)],
   }));
   return { ...tour, warnungen: [...tour.warnungen, ...extra].sort((a, b) => a.start_km - b.start_km) };
@@ -456,6 +457,33 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
  * Haben alle Etappen dasselbe Profil, bleibt es bei einem einzigen Aufruf wie bisher.
  * Sonst wird jede Etappe nacheinander geplant und danach zusammengefügt.
  */
+/**
+ * Vor dem Losfahren (Koray 16.11.): Führt die Tour gerade über eine gesperrte Straße? Eine veröffentlichte Tour
+ * bleibt, wie sie ist (Wintersperren informieren), wer sie heute fährt, wird ausdrücklich gewarnt.
+ */
+export async function closedOnTour(t: Tour, signal?: AbortSignal): Promise<ClosureHit[]> {
+  const line = lineOf(t);
+  const closures = await closuresNear(line, signal);
+  return closures.length ? closuresOnRoute(line, closures) : [];
+}
+
+/**
+ * Die Umfahrung dazu: Punkte auf der gesperrten Straße fallen weg (sie sind nicht zu erreichen), der Rest wird
+ * um die Sperrung herum geplant. dropped: so viele Zwischenziele fallen weg.
+ */
+export async function planAround(t: Tour, hits: ClosureHit[], profile: Profile, avoid: Avoid, signal?: AbortSignal): Promise<{ tour: PlannedTour; dropped: number }> {
+  const pts = t.wegpunkte;
+  const keep = pts.filter((p, i) => i === 0 || i === pts.length - 1 || !onClosedRoad(p, hits));
+  const tour = await planChecked(t.name, keep, profile, { ...avoid, closures: true }, undefined, signal);
+  return { tour, dropped: pts.length - keep.length };
+}
+
+/** Labels der Sperrungen für Hinweise, ohne Doppelte */
+export const closureLabels = (hits: ClosureHit[]): string[] => [...new Set(hits.map((h) => closureLabel(h.closure)))];
+
+/** Der Planer plant im Voraus: Wintersperren auf Pässen informieren nur (Grundregel), unterwegs wird umfahren */
+const AHEAD: PlanHint = { ahead: true };
+
 export async function planLegs(
   name: string,
   points: LatLon[],
@@ -468,7 +496,7 @@ export async function planLegs(
   // Sperrungen schon jetzt holen, parallel zur Route (sonst wartet das Planen danach bis zu 6 s)
   prefetchClosures(points);
   if (points.length < 3 || profiles.every((p) => p === first)) {
-    const t = await planChecked(name, points, first, avoid, onStep, signal);
+    const t = await planChecked(name, points, first, avoid, onStep, signal, false, AHEAD);
     // in einem Stück geplant: gilt für alle Etappen
     const all = { ...t, legDirekt: points.slice(1).map(() => !!t.direkt) };
     return t.direkt ? { ...all, direkt: points.length - 1 } : all;
@@ -484,7 +512,7 @@ export async function planLegs(
   }
   const parts = await Promise.all(
     groups.map(async (g) => {
-      const t = await planChecked(name, points.slice(g.from, g.to + 1), g.profile, avoid, onStep, signal);
+      const t = await planChecked(name, points.slice(g.from, g.to + 1), g.profile, avoid, onStep, signal, false, AHEAD);
       const all = { ...t, legDirekt: Array.from({ length: g.to - g.from }, () => !!t.direkt) };
       return t.direkt ? { ...all, direkt: g.to - g.from } : all;
     }),
