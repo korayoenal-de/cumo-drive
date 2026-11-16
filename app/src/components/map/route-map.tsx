@@ -76,6 +76,7 @@ export function RouteMap({
   draft,
   overlayTop = 0,
   pickedPassIds,
+  selectedPassId,
   flyTo,
   radar,
   scan,
@@ -497,11 +498,11 @@ export function RouteMap({
           shownPasses.map((ps) => (
             <Marker
               // Zustand im Schlüssel: ohne tracksViewChanges zeichnet Apple Maps einen Marker sonst nicht neu
-              key={`pass-${ps.id}-${pickedPassIds?.has(ps.id) ? 'drin' : 'frei'}`}
+              key={`pass-${ps.id}-${pickedPassIds?.has(ps.id) ? 'drin' : 'frei'}-${selectedPassId === ps.id ? 'gewaehlt' : ''}`}
               coordinate={ll(passPoint(ps))}
               anchor={{ x: 0.5, y: 0.5 }}
               // ohne title und description: sonst zeigt Apple Karten zusätzlich eine weiße Sprechblase über den Aktionen (Koray 16.11.)
-              zIndex={pickedPassIds?.has(ps.id) ? 12 : 10}
+              zIndex={selectedPassId === ps.id ? 14 : pickedPassIds?.has(ps.id) ? 12 : 10}
               ref={(m) => {
                 passRefs.current.set(ps.id, m);
               }}
@@ -516,7 +517,7 @@ export function RouteMap({
               tracksViewChanges={false}>
               <View
                 accessibilityLabel={`${ps.name}, ${ps.ele.toLocaleString('de-DE')} m`}
-                style={[styles.passDot, { backgroundColor: TIER_DOT[ps.tier] }, pickedPassIds?.has(ps.id) && styles.passPicked]}
+                style={[styles.passDot, { backgroundColor: TIER_DOT[ps.tier] }, pickedPassIds?.has(ps.id) && styles.passPicked, selectedPassId === ps.id && !pickedPassIds?.has(ps.id) && styles.passSelected]}
               />
             </Marker>
           ))}
@@ -924,6 +925,8 @@ const styles = StyleSheet.create({
   arrow: { width: 0, height: 0, borderLeftWidth: 4, borderRightWidth: 4, borderBottomWidth: 7, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: Colors.ground },
   passDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: Colors.ground },
   passPicked: { width: 18, height: 18, borderRadius: 9, borderWidth: 3, borderColor: Colors.signal },
+  // gewählt: doppelt so groß, weißer Rand, Schatten; die Farbe der Stufe bleibt
+  passSelected: { width: 26, height: 26, borderRadius: 13, borderWidth: 4, borderColor: Colors.text, boxShadow: '0 2px 8px rgba(0,0,0,0.55)' },
   pin: { paddingHorizontal: Spacing.s, height: 26, borderRadius: 13, backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.signal, justifyContent: 'center' },
   pinText: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
   other: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.surface, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },

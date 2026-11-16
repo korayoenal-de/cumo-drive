@@ -1223,6 +1223,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           } : undefined}
           overlayTop={origin ? BACK_PILL_H + Spacing.s : 0}
           pickedPassIds={inTour ? pickedPassIds : undefined}
+          selectedPassId={passOverlay?.id ?? null}
           flyTo={inTour ? flyTo : null}
           radar={view.kind === 'working' ? radar : null}
           scan={scan}

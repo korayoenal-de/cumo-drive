@@ -71,6 +71,8 @@ export type RouteMapProps = {
   onPressMap?: () => void;
   /** Pässe, die schon als Punkt in der Planung stehen: sie erscheinen markiert */
   pickedPassIds?: ReadonlySet<string>;
+  /** Pass, dessen Aktionen gerade über der Karte schweben: groß, hell umrandet, obenauf (Koray 16.11.) */
+  selectedPassId?: string | null;
   /** Zu diesem Punkt fliegen; n wechselt bei jedem Aufruf */
   flyTo?: { p: LatLon; n: number } | null;
   /** Radar beim Erstellen einer Rundtour: Ring ab dem Start, Strecken im Umkreis leuchten auf */
