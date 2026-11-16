@@ -16,7 +16,7 @@ final class GroupAnnotation: MKPointAnnotation {
 
 final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private let map = MKMapView()
-  private let hint = UILabel()
+  private let hint = PaddedLabel()
   private var line: MKPolyline?
   private var casing: CasingPolyline?
   private var rejoin: RejoinPolyline?
@@ -60,6 +60,9 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   /// Hinweis "Plane eine Tour" nur auf der Hauptkarte, nicht im Dashboard oder Kombiinstrument
   var showsHint = true
   private var groupPins: [String: GroupAnnotation] = [:]
+  /// Tempo und Tempolimit oben links neben der Anweisung (Koray 15.11., vorher unten), nur auf der Hauptkarte
+  var showsSpeed = false
+  private let speedView = CarSpeedView()
 
   /// Signal Orange #E2461C
   private static let signal = UIColor(red: 226 / 255, green: 70 / 255, blue: 28 / 255, alpha: 1)
@@ -100,11 +103,29 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     view.addSubview(hint)
     NSLayoutConstraint.activate([
       hint.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-      hint.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+      // mehr Luft nach unten und innen (Koray 15.11.: der Text klebte am Rand der Fläche)
+      hint.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -28),
       hint.widthAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -32),
-      hint.heightAnchor.constraint(greaterThanOrEqualToConstant: 48),
+      hint.heightAnchor.constraint(greaterThanOrEqualToConstant: 52),
     ])
     hint.isHidden = line != nil || !showsHint
+
+    speedView.translatesAutoresizingMaskIntoConstraints = false
+    speedView.isHidden = true
+    view.addSubview(speedView)
+    NSLayoutConstraint.activate([
+      speedView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
+      // oben bündig mit der Anweisung von CarPlay (Koray 15.11.: mit 10 stand sie 8 pt tiefer, mit 2 etwa 4 pt zu hoch)
+      speedView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 6),
+    ])
+  }
+
+  /// Tempo (nil: ausblenden), Limit (nil: ohne Schild), geschätzt: graues Schild ohne roten Ring
+  func setSpeed(kmh: Double?, limit: Int?, estimated: Bool, showSpeed: Bool) {
+    loadViewIfNeeded()
+    guard showsSpeed, let kmh else { speedView.isHidden = true; return }
+    speedView.update(kmh: kmh, limit: limit, estimated: estimated, showSpeed: showSpeed)
+    speedView.isHidden = !showSpeed && limit == nil
   }
 
   /// Build 16: Hinweis ohne Tour, wenn das Autodisplay selbst Touren und Runden anbietet
@@ -445,7 +466,25 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     // weit weg von der Linie (Abweichung): nichts ändern
     guard bestD < 80 else { return }
     routeIdx = best
-    let f = CGFloat(routeCum[best] / total)
+    // Genau an der Stelle des Autos abschneiden, nicht am nächsten Stützpunkt (Matthias 15.11.: "weiße Linie
+    // bleibt"): auf langen geraden Stücken liegen die Punkte weit auseinander, die Linie blieb hinter dem Auto
+    // stehen, bis der nächste Punkt erreicht war. Darum auf das Stück davor oder danach projizieren.
+    var along = routeCum[best]
+    let kLon = 111_320 * cos(c.latitude * .pi / 180)
+    func project(_ i: Int) -> (Double, Double)? {
+      guard i >= 0, i + 1 < routeCoords.count else { return nil }
+      let a = routeCoords[i], b = routeCoords[i + 1]
+      let bx = (b.longitude - a.longitude) * kLon, by = (b.latitude - a.latitude) * 111_320
+      let px = (c.longitude - a.longitude) * kLon, py = (c.latitude - a.latitude) * 111_320
+      let len2 = bx * bx + by * by
+      guard len2 > 0 else { return nil }
+      let t = max(0, min(1, (px * bx + py * by) / len2))
+      let dx = px - t * bx, dy = py - t * by
+      return (routeCum[i] + t * (routeCum[i + 1] - routeCum[i]), dx * dx + dy * dy)
+    }
+    let cands = [project(best), project(best - 1)].compactMap { $0 }
+    if let p = cands.min(by: { $0.1 < $1.1 }) { along = p.0 }
+    let f = CGFloat(along / total)
     for r in [lineRenderer, casingRenderer].compactMap({ $0 }) {
       r.strokeStart = f
       r.setNeedsDisplay()
@@ -566,3 +605,116 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
 
 /// Eigenes Auto auf dem Autodisplay (Position aus der App)
 final class CarAnnotation: MKPointAnnotation {}
+
+/// Tempo Plakette wie in der App (speed-badge.tsx): dunkle Pille, Tempo groß mit km/h, rechts das Schild.
+/// Zu schnell tönt nur die Fläche (warn), ohne Ton und ohne Wertung. Mindestens 44 pt hoch.
+final class CarSpeedView: UIView {
+  private let value = UILabel()
+  private let unit = UILabel()
+  private let sign = UILabel()
+  private let stack = UIStackView()
+  private let speedCol = UIStackView()
+  private static let rest = UIColor(red: 22 / 255, green: 22 / 255, blue: 24 / 255, alpha: 0.94)
+  private static let warnBg = UIColor(red: 58 / 255, green: 44 / 255, blue: 15 / 255, alpha: 0.96)
+  private static let red = UIColor(red: 200 / 255, green: 30 / 255, blue: 30 / 255, alpha: 1)
+  private static let text = UIColor(red: 244 / 255, green: 244 / 255, blue: 242 / 255, alpha: 1)
+  private static let muted = UIColor(red: 154 / 255, green: 154 / 255, blue: 159 / 255, alpha: 1)
+  private let signSize: CGFloat = 44
+  /// rechts so viel Rand wie links, wenn kein Schild da ist (sonst steht das Tempo schief, Koray 15.11.)
+  private var trailingPad: NSLayoutConstraint!
+  private var leadingPad: NSLayoutConstraint!
+
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    backgroundColor = CarSpeedView.rest
+    // gleiche Rundung wie die Flächen von CarPlay (Anweisung, Ankunft), nicht ganz rund (Koray 15.11.)
+    layer.cornerRadius = 12
+    layer.masksToBounds = true
+    value.font = .monospacedDigitSystemFont(ofSize: 24, weight: .heavy)
+    value.textColor = CarSpeedView.text
+    value.textAlignment = .center
+    unit.text = "km/h"
+    unit.font = .systemFont(ofSize: 11, weight: .semibold)
+    unit.textColor = CarSpeedView.muted
+    unit.textAlignment = .center
+    speedCol.axis = .vertical
+    speedCol.alignment = .center
+    speedCol.spacing = -2
+    speedCol.addArrangedSubview(value)
+    speedCol.addArrangedSubview(unit)
+    sign.font = .monospacedDigitSystemFont(ofSize: 17, weight: .heavy)
+    sign.textAlignment = .center
+    // dreistellig (100, 120) passt sonst nicht in den roten Ring (Koray 15.11.)
+    sign.adjustsFontSizeToFitWidth = true
+    sign.minimumScaleFactor = 0.6
+    sign.layer.cornerRadius = signSize / 2
+    sign.layer.masksToBounds = true
+    sign.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      sign.widthAnchor.constraint(equalToConstant: signSize),
+      sign.heightAnchor.constraint(equalToConstant: signSize),
+      speedCol.widthAnchor.constraint(greaterThanOrEqualToConstant: 44),
+    ])
+    stack.axis = .horizontal
+    stack.alignment = .center
+    stack.spacing = 8
+    stack.addArrangedSubview(speedCol)
+    stack.addArrangedSubview(sign)
+    stack.translatesAutoresizingMaskIntoConstraints = false
+    addSubview(stack)
+    trailingPad = stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6)
+    leadingPad = stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12)
+    NSLayoutConstraint.activate([
+      leadingPad,
+      trailingPad,
+      stack.topAnchor.constraint(equalTo: topAnchor, constant: 6),
+      stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
+    ])
+    isAccessibilityElement = true
+  }
+
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+  func update(kmh: Double, limit: Int?, estimated: Bool, showSpeed: Bool) {
+    let v = Int(max(0, kmh).rounded())
+    value.text = "\(v)"
+    speedCol.isHidden = !showSpeed
+    if let limit {
+      sign.isHidden = false
+      sign.text = "\(limit)"
+      sign.font = .monospacedDigitSystemFont(ofSize: limit >= 100 ? 14 : 17, weight: .heavy)
+      if estimated {
+        sign.backgroundColor = UIColor(white: 0.32, alpha: 1)
+        sign.textColor = CarSpeedView.text
+        sign.layer.borderWidth = 0
+      } else {
+        sign.backgroundColor = .white
+        sign.textColor = .black
+        sign.layer.borderWidth = 4.5
+        sign.layer.borderColor = CarSpeedView.red.cgColor
+      }
+    } else {
+      sign.isHidden = true
+    }
+    // nur Tempo: rundum 12, nur Schild: rundum 6, beides: links 12 rechts 6
+    trailingPad.constant = sign.isHidden ? -12 : -6
+    leadingPad.constant = speedCol.isHidden ? 6 : 12
+    let over = showSpeed && !estimated && limit != nil && v > (limit ?? 0) + 4
+    backgroundColor = over ? CarSpeedView.warnBg : CarSpeedView.rest
+    accessibilityLabel = [showSpeed ? "\(v) km/h" : nil, limit.map { "Limit \($0)" }].compactMap { $0 }.joined(separator: ", ")
+  }
+}
+
+/// Text mit Innenabstand, für Hinweise auf der Karte (UILabel selbst kennt keinen)
+final class PaddedLabel: UILabel {
+  var insets = UIEdgeInsets(top: 14, left: 22, bottom: 14, right: 22)
+  override func drawText(in rect: CGRect) { super.drawText(in: rect.inset(by: insets)) }
+  override var intrinsicContentSize: CGSize {
+    let s = super.intrinsicContentSize
+    return CGSize(width: s.width + insets.left + insets.right, height: s.height + insets.top + insets.bottom)
+  }
+  override func textRect(forBounds bounds: CGRect, limitedToNumberOfLines n: Int) -> CGRect {
+    let r = super.textRect(forBounds: bounds.inset(by: insets), limitedToNumberOfLines: n)
+    return r.inset(by: UIEdgeInsets(top: -insets.top, left: -insets.left, bottom: -insets.bottom, right: -insets.right))
+  }
+}

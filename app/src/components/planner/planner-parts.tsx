@@ -13,11 +13,11 @@ import Svg, { Path } from 'react-native-svg';
 
 import { PHASES, type PlanError, type PlanPhase } from '@/components/planner/create-tour';
 import { CAT_ICON, type Cat } from '@/components/planner/place-search';
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipRow } from '@/components/ui/chip';
 import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
-import { Colors, Motion } from '@/constants/theme';
+import { Colors, Motion, Spacing } from '@/constants/theme';
 import { formatKm, trimDecimals, type Warning } from '@/lib/tour';
 import { selectVehicle, useVehicles, vehicleName } from '@/lib/vehicle';
 
@@ -39,11 +39,11 @@ export function VehiclePick() {
           <SecondaryButton label="Zur Garage" onSurface onPress={() => router.navigate('/einstellungen')} />
         </>
       ) : (
-        <View style={styles.wrap}>
+        <ChipRow bleed={Spacing.l}>
           {list.map((v) => (
             <Chip key={v.id} label={vehicleName(v) || 'Fahrzeug'} active={current?.id === v.id} onSurface onPress={() => void selectVehicle(v.id)} />
           ))}
-        </View>
+        </ChipRow>
       )}
     </View>
   );
@@ -160,7 +160,7 @@ export function Accordion({ label, summary, defaultOpen = false, children }: { l
           )}
         </View>
         <Animated.View style={[styles.accChevron, chevron]}>
-          <SymbolView name="chevron.down" size={15} weight="semibold" tintColor={Colors.muted} />
+          <SymbolView name="chevron.down" size={16} weight="semibold" tintColor={Colors.muted} />
         </Animated.View>
       </Pressable>
       {open && (
@@ -201,9 +201,9 @@ export function TypoTabs<T extends string>({
   );
 }
 
-export function PrimaryButton({ label, onPress }: { label: string; onPress: () => void }) {
+export function PrimaryButton({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.primary, pressed && styles.pressed]}>
+    <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.primary, pressed && styles.pressed, disabled && { opacity: 0.4 }]}>
       <AppText style={styles.primaryText}>{label}</AppText>
     </Pressable>
   );
@@ -327,7 +327,7 @@ export function ErrorCard({
         <PrimaryButton label={error.kind === 'routing' ? 'Neu würfeln' : 'Nochmal versuchen'} onPress={onRetry} />
       )}
       {needsPlace && <SecondaryButton label="Startort von Hand wählen" onPress={onUsePlace} />}
-      <SecondaryButton label="Tour verwerfen" onPress={onBack} />
+      <SecondaryButton label="Runde verwerfen" onPress={onBack} />
     </View>
   );
 }
@@ -358,7 +358,7 @@ export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned
           {planned.map((st) => (
             <View key={st.key} style={styles.stopRow}>
               <View style={styles.stopIcon}>
-                <SymbolView name={CAT_ICON[st.cat]} size={16} tintColor={Colors.signal} />
+                <SymbolView weight="semibold" name={CAT_ICON[st.cat]} size={16} tintColor={Colors.signal} />
               </View>
               <View style={styles.flex}>
                 <AppText variant="title" numberOfLines={1}>{st.name}</AppText>
@@ -366,14 +366,14 @@ export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned
               </View>
               {onRemove && (
                 <Pressable accessibilityRole="button" accessibilityLabel={`${st.name} entfernen`} onPress={() => !busy && onRemove(st.key)} hitSlop={6} style={styles.stopRemove}>
-                  <SymbolView name="xmark" size={13} weight="bold" tintColor={Colors.muted} />
+                  <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.muted} />
                 </Pressable>
               )}
             </View>
           ))}
         </View>
       )}
-      <View style={styles.wrap}>
+      <ChipRow>
         {STOP_CHIPS.map((c) => (
           <Pressable
             key={c.id}
@@ -381,11 +381,11 @@ export function StopsPlanner({ planned = [], busy, onOpen, onRemove }: { planned
             accessibilityLabel={`${c.label} unterwegs einplanen`}
             onPress={() => onOpen(c.id)}
             style={({ pressed }) => [styles.stopChip, pressed && styles.pressedSoft]}>
-            <SymbolView name={CAT_ICON[c.id]} size={15} tintColor={Colors.signal} />
+            <SymbolView weight="semibold" name={CAT_ICON[c.id]} size={16} tintColor={Colors.signal} />
             <AppText style={styles.stopChipText}>{c.label}</AppText>
           </Pressable>
         ))}
-      </View>
+      </ChipRow>
       {busy ? <ActivityIndicator color={Colors.muted} /> : planned.length === 0 && <AppText variant="caption" muted>Sortiert nach Umweg, ein Tipp plant den Stopp an der richtigen Stelle ein.</AppText>}
     </Accordion>
   );
@@ -558,7 +558,7 @@ export function DragHandle({ label, onStart, onMove, onEnd }: { label: string; o
   /* eslint-enable react-hooks/refs */
   return (
     <View {...pan.panHandlers} accessible accessibilityLabel={label} accessibilityHint="Kurz halten, dann nach oben oder unten ziehen" style={styles.handle}>
-      <SymbolView name="line.3.horizontal" size={17} tintColor={holding ? Colors.signal : Colors.muted} weight="semibold" />
+      <SymbolView name="line.3.horizontal" size={20} tintColor={holding ? Colors.signal : Colors.muted} weight="semibold" />
     </View>
   );
 }
@@ -654,12 +654,12 @@ export function GroupBlock({ savedId }: { savedId: string | null }) {
   return (
     <View style={styles.card}>
       <AppText variant="label">Gruppe</AppText>
-      <AppText>Fahrt diese Runde zusammen, mit bis zu 5 Mitfahrern.</AppText>
+      <AppText>Fahrt diese Runde zusammen, mit bis zu 5 Teilnehmern.</AppText>
       {savedId ? (
-        <SecondaryButton label="Mitfahrer einladen" onSurface onPress={() => router.push({ pathname: '/gruppe/neu', params: { tour: savedId } })} />
+        <SecondaryButton label="Teilnehmer einladen" onSurface onPress={() => router.push({ pathname: '/gruppe/neu', params: { tour: savedId } })} />
       ) : (
         <AppText variant="caption" muted>
-          Speichere die Tour zuerst. Danach lädst du die Mitfahrer mit ihrem Namen ein.
+          Speichere die Tour zuerst. Danach lädst du die Teilnehmer mit ihrem Namen ein.
         </AppText>
       )}
     </View>

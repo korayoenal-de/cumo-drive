@@ -12,7 +12,7 @@ import { carPlayCamera } from '../carplay';
 import { haversine, type LatLon } from '../tour';
 import { offlineRejoin } from './offline';
 import { replanFromHere } from './replan';
-import { fetchNavRouteDetail, rejoinNavRoute } from './route';
+import { fetchNavRouteDetail, minutesAt, rejoinNavRoute } from './route';
 import { pointAtKm, progress, snapToRoute } from './tracker';
 import type { NavControls, NavRequest, NavRoute, NavState, SkipUndo } from './types';
 import { edgesAlong, exitWord, forksIn, roundaboutByDirection, roundaboutExits, slice, withForks } from './junctions';
@@ -30,6 +30,10 @@ const OFF_ROUTE_MS = 8000;
 const REROUTE_GAP_MS = 20000;
 /** Ziel erreicht unter diesem Abstand */
 const ARRIVE_M = 40;
+/** so nah am gesetzten Zielpunkt gilt man als angekommen, auch neben der Straße */
+const ARRIVE_GOAL_M = 70;
+/** am Ende der Route schon abgebogen (Parkplatz): so weit darf man vom Linienende weg sein */
+const ARRIVE_PARK_M = 120;
 /** Takt der Simulation */
 const SIM_TICK_MS = 1000;
 
@@ -91,6 +95,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const routeRef = useRef<NavRoute | null>(null);
   const hintRef = useRef(-1);
   const doneIndexRef = useRef(0);
+  /** Tatsächlich gefahrene km auf dieser Route (GPS, ohne Sprünge), für Runden und die Ankunft */
+  const odoRef = useRef<{ km: number; last: LatLon | null }>({ km: 0, last: null });
   const offSinceRef = useRef<number | null>(null);
   const lastRerouteRef = useRef(0);
   const reroutingRef = useRef(false);
@@ -128,9 +134,9 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   const voice = useCallback(() => {
     // jede Ansage auch in die Blackbox
     if (!voiceRef.current)
-      voiceRef.current = createVoiceGuide((t) => {
+      voiceRef.current = createVoiceGuide((t, rank) => {
         bbLog('say', t);
-        speakText(t);
+        speakText(t, rank);
       });
     return voiceRef.current;
   }, []);
@@ -187,6 +193,7 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       // man bei einer Runde, deren Start gleich Ziel ist, sofort am Ende (Ziel erreicht).
       hintRef.current = 0;
       doneIndexRef.current = 0;
+      odoRef.current = { km: 0, last: null };
       offSinceRef.current = null;
       voice().reset();
     },
@@ -293,7 +300,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const fresh = mode === 'fresh' || (mode === 'auto' && ignoredRef.current >= 2 && autoFreshRef.current);
       const t0 = Date.now();
       bbLog('reroute', [mode, fresh ? 'neu' : 'zurueck', 'start']);
-      voice().say(fresh ? 'Neue Route ab hier.' : 'Route wird neu berechnet.', true);
+      // "Route wird neu berechnet" sagt nichts und schnitt Ansagen ab (Koray 14.11.): nur noch bei neuer Route
+      if (fresh) voice().say('Neue Route ab hier.');
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       try {
@@ -349,7 +357,20 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const dtS = last ? Math.max(0, (fix.at - last.at) / 1000) : 0;
       const maxAheadM = last && dtS > 0 && dtS < 30 ? Math.max(fix.speedKmh ?? 0, last.speedKmh ?? 0, 30) / 3.6 * dtS * 1.6 + 60 : undefined;
       // Fahrtrichtung nur bei Fahrt, im Stand ist der GPS Kurs Zufall
-      const snap = snapToRoute(route, fix.pos, hintRef.current, (fix.speedKmh ?? 0) >= 12 ? fix.heading : null, maxAheadM);
+      // Gefahrene Strecke mitzählen (nur echte, genaue Positionen, keine Sprünge über 1 km)
+      if (!fix.virtual && !bad) {
+        const o = odoRef.current;
+        if (o.last) {
+          const d = haversine(o.last, fix.pos) / 1000;
+          if (d < 1) o.km += d;
+        }
+        o.last = fix.pos;
+      }
+      // Runde (Start gleich Ziel): die Position darf nur so weit springen, wie man wirklich gefahren ist,
+      // plus Reserve für ausgelassene Stücke (Koray 14.11.: falsch abgebogen am Start, App hielt uns für fast am Ziel)
+      const loop = route.km > 5 && haversine(route.shape[0], route.shape[route.shape.length - 1]) < 500;
+      const maxKm = loop ? odoRef.current.km * 1.3 + 3 : undefined;
+      const snap = snapToRoute(route, fix.pos, hintRef.current, (fix.speedKmh ?? 0) >= 12 ? fix.heading : null, maxAheadM, maxKm);
       if (!fix.virtual) {
         drRef.current.last = { at: fix.at, km: snap.km, speedKmh: fix.speedKmh, offM: snap.offM };
         if (!bad && drRef.current.active) bbLog('dr', 'aus');
@@ -369,8 +390,16 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const end = route.shape[route.shape.length - 1];
       const toEndM = haversine(fix.pos, end);
       // angekommen erst, wenn man den größten Teil der Route gefahren ist (Runden enden am Start)
-      const covered = route.km < 2 || route.cumKm[Math.min(doneIndexRef.current, route.cumKm.length - 1)] > route.km * 0.6;
-      const arrived = toEndM < ARRIVE_M && pr.remainingKm < 0.3 && covered;
+      // Koray 14.11.: angekommen erst ab 70 % der Strecke; bei Runden zählt die wirklich gefahrene Strecke
+      const covered =
+        route.km < 2 ||
+        (loop ? odoRef.current.km >= route.km * 0.7 : route.cumKm[Math.min(doneIndexRef.current, route.cumKm.length - 1)] > route.km * 0.7);
+      // Auch angekommen (Koray 15.11.: auf dem Parkplatz am Ziel wollte die Route noch weiter): nah am gesetzten
+      // Zielpunkt, oder am Ende der Route schon von der Straße abgebogen und langsam (Parkplatz, Einfahrt)
+      const goal = reqRef.current?.tour.wegpunkte?.[reqRef.current.tour.wegpunkte.length - 1];
+      const nearGoal = !!goal && haversine(fix.pos, goal) < ARRIVE_GOAL_M;
+      const parked = toEndM < ARRIVE_PARK_M && pr.remainingKm < 0.05 && snap.offM > OFF_ROUTE_M / 2 && (fix.speedKmh ?? 0) < 15;
+      const arrived = covered && pr.remainingKm < 0.3 && (toEndM < ARRIVE_M || nearGoal || parked);
 
       // Ankunftszeit: geplante Restzeit mal dem bisherigen Tempo. Gezählt wird nur fahrend auf der Route,
       // Pausen und Umwege verfälschen es nicht; ältere Kilometer verlieren an Gewicht (etwa 20 km Halbwertszeit),
@@ -381,14 +410,16 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
         const dt = fix.at - p.at;
         if (dkm > 0 && dkm < 1 && dt > 0 && dt < 30000 && (fix.speedKmh ?? 0) > 3) {
           const decay = Math.exp(-dkm / 30);
-          p.plan = p.plan * decay + (route.km > 0 ? (route.minutes * dkm) / route.km : 0);
+          p.plan = p.plan * decay + Math.max(0, minutesAt(route, snap.km) - minutesAt(route, p.km));
           p.real = p.real * decay + dt / 60000;
         }
       }
       paceRef.current = { at: fix.at, km: snap.km, plan: p?.plan ?? 0, real: p?.real ?? 0 };
       const pp = paceRef.current;
       const pace = pp.plan > 4 ? Math.min(1.8, Math.max(0.6, pp.real / pp.plan)) : 1;
-      const restMin = route.km > 0 ? route.minutes * (pr.remainingKm / route.km) * pace : 0;
+      // Restzeit aus den Zeiten der Anweisungen (Orte langsam), dann mit dem eigenen Tempo korrigiert
+      const total = route.cumMin?.length ? route.cumMin[route.cumMin.length - 1] : route.minutes;
+      const restMin = route.km > 0 ? Math.max(0, total - minutesAt(route, route.km - pr.remainingKm)) * pace : 0;
       const eta = new Date(fix.at + restMin * 60000);
 
       if (arrived) {
@@ -571,7 +602,8 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
     [voice],
   );
 
-  const say = useCallback((text: string) => voice().say(text), [voice]);
+  // Hinweise aus der Navigation (Highlights, Gruppe): Rang 0, eine dringende Abbiegeansage darf sie abbrechen
+  const say = useCallback((text: string) => voice().say(text, false, 0), [voice]);
 
   /**
    * Simulation ohne GPS. Braucht eine Route; läuft noch keine, wird sie ab dem Tour Anfang
@@ -719,13 +751,51 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
   // beim Verlassen des Screens alles aufräumen
   useEffect(() => cleanup, [cleanup]);
 
-  // andere Tour: laufende Navigation beenden
+  /**
+   * Tour anpassen unterwegs (Koray 15.11.): neue Tour ohne Neustart übernehmen. Ab der aktuellen Position am
+   * nächsten Punkt der neuen Tour einsteigen; Ansagen, Spur und Fahrtstatistik laufen weiter.
+   * quiet: nur die Tour merken, ohne neue Route (wer gerade eine eigene Route fährt).
+   */
+  const adoptedRef = useRef<NavRequest['tour'] | null>(null);
+  const adopt = useCallback(
+    async (next: NavRequest, opts?: { quiet?: boolean; say?: string }) => {
+      adoptedRef.current = next.tour;
+      reqRef.current = next;
+      const pos = posRef.current;
+      if (opts?.quiet || !pos || !activeRef.current) return;
+      abortRef.current?.abort();
+      reroutingRef.current = true;
+      lastRerouteRef.current = Date.now();
+      setState((s) => ({ ...s, status: 'neuberechnung' }));
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      try {
+        const { route } = await fetchNavRouteDetail({ ...next, entry: undefined }, pos.p, ctrl.signal);
+        if (!activeRef.current) return;
+        ignoredRef.current = 0;
+        doneIndexRef.current = 0;
+        setRoute(route);
+        setState((s) => ({ ...s, status: 'laeuft', route, error: undefined }));
+        if (opts?.say) voice().say(opts.say, true);
+      } catch (e) {
+        if (isAbort(e) || !activeRef.current) return;
+        setState((s) => ({ ...s, status: 'laeuft', error: friendly(e) }));
+      } finally {
+        reroutingRef.current = false;
+        offSinceRef.current = null;
+      }
+    },
+    [setRoute, voice],
+  );
+
+  // andere Tour: laufende Navigation beenden (außer sie wurde unterwegs übernommen)
   useEffect(() => {
     if (!activeRef.current) return;
+    if (req?.tour && req.tour === adoptedRef.current) return;
     cleanup();
     routeRef.current = null;
     setState((s) => ({ ...INITIAL, voice: s.voice }));
   }, [req?.tour, cleanup]);
 
-  return [state, { start, stop, pause, setVoice, say, simulate, skipTo, restore, choose, backToTour, setAutoFresh }];
+  return [state, { start, stop, pause, setVoice, say, simulate, skipTo, restore, choose, backToTour, setAutoFresh, adopt }];
 }

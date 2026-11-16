@@ -5,6 +5,7 @@
  * ist erledigt: Karte und Zahl verschwinden, die Fahrt steht unter „Deine nächsten“, erinnert wird lokal.
  * Fragt beim Öffnen der App und danach jede Minute ab; Push kommt zusätzlich über notify.
  */
+import { meta as fmtMeta, strecke, wann } from '@/lib/format';
 import { router } from 'expo-router';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { ActivityIndicator, AppState, Pressable, StyleSheet, View } from 'react-native';
@@ -16,14 +17,13 @@ import { OptionsSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { Chip } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
-import { clock, relDay, type Ausfahrt } from '@/lib/ausfahrten';
+import { relDay, type Ausfahrt } from '@/lib/ausfahrten';
 import { haptic } from '@/lib/haptics';
 import { showToast } from '@/lib/toast';
 import { useSession } from '@/lib/auth';
 import { declineInvite, myInvites, respondInvite, type MyInvite } from '@/lib/group/invites';
 import { useRide } from '@/lib/group/ride';
 import { myVehicleLabel, rideAlong } from '@/lib/group/start';
-import { formatKm } from '@/lib/tour';
 
 const POLL_MS = 60000;
 
@@ -161,7 +161,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
         const starts = r?.startsAt ?? (inv.startsAt ? new Date(inv.startsAt) : null);
         const km = r?.km ?? inv.km;
         const isBusy = busy === inv.rideId;
-        const line = [starts ? `${relDay(starts)}, ${clock(starts)} Uhr` : null, r?.meeting?.name ? `Treffpunkt ${r.meeting.name}` : null].filter(Boolean).join(', ');
+        const line = fmtMeta(starts ? wann(starts) : null, r?.meeting?.name ? `ab ${r.meeting.name}` : null);
         if (!open) {
           return (
             <Animated.View key={inv.rideId} entering={FadeIn.duration(Motion.enter)} style={styles.card} accessibilityRole="summary">
@@ -170,7 +170,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
                 <AppText style={styles.liveText}>Läuft jetzt</AppText>
               </View>
               <AppText style={styles.bigName} numberOfLines={2}>{inv.name}</AppText>
-              <AppText muted>{inv.ownerName} fährt vorne{km != null ? `  ·  ${formatKm(km, 0)} km` : ''}</AppText>
+              <AppText muted>{fmtMeta(`Lead ${inv.ownerName}`, km != null ? strecke(km) : null)}</AppText>
               {err?.id === inv.rideId && <AppText style={styles.error}>{err.text}</AppText>}
               <Btn label="Jetzt mitfahren" primary busy={isBusy} disabled={!!busy} onPress={() => void join(inv)} />
             </Animated.View>
@@ -186,7 +186,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
               </View>
             </View>
             {line || km != null ? (
-              <AppText muted>{[line, km != null ? `${formatKm(km, 0)} km` : null].filter(Boolean).join('  ·  ')}</AppText>
+              <AppText muted>{fmtMeta(line, km != null ? strecke(km) : null)}</AppText>
             ) : null}
             {err?.id === inv.rideId && <AppText style={styles.error}>{err.text}</AppText>}
             <View style={styles.row}>

@@ -23,14 +23,16 @@ import {
   respondInvite,
   rideOverview,
   setRideStatus,
+  setRideTour,
   type InviteStatus,
   type RideMemberRow,
 } from '@/lib/group/invites';
 import { startAsLead, myVehicleLabel } from '@/lib/group/start';
+import { useClosedCheck } from '@/components/tours/closed-sheet';
 import { useLibrary } from '@/lib/library';
 import { cleanName, findProfiles, useMyProfile, type FoundProfile } from '@/lib/profile';
 import { refreshContacts, useContacts } from '@/lib/contacts';
-import { formatKm } from '@/lib/tour';
+import { formatKm, type Tour } from '@/lib/tour';
 import { useVehicles } from '@/lib/vehicle';
 
 const STATUS_LABEL: Record<InviteStatus, string> = { eingeladen: 'Eingeladen', zugesagt: 'Zugesagt', abgesagt: 'Abgesagt' };
@@ -41,6 +43,8 @@ export default function GruppeNeu() {
   const params = useLocalSearchParams<{ tour?: string }>();
   const tourId = typeof params.tour === 'string' ? params.tour : undefined;
   const saved = useLibrary().find((t) => t.id === tourId) ?? null;
+  // Gerade gesperrt (Koray 16.11.): warnen, die Umfahrung gilt dann für die ganze Gruppe
+  const closed = useClosedCheck();
   const session = useSession();
   const profile = useMyProfile(session?.user.id);
   const { current } = useVehicles();
@@ -125,7 +129,7 @@ export default function GruppeNeu() {
         <BackLink />
         <AppText variant="display">{'Gruppen\nfahrt'}</AppText>
         <AppText muted>Diese Tour gibt es nicht mehr unter Touren. Wähle dort eine Tour und tippe auf Losfahren, dann Als Gruppe fahren.</AppText>
-      </Screen>
+    </Screen>
     );
   }
 
@@ -172,17 +176,23 @@ export default function GruppeNeu() {
     }
   };
 
-  const start = async () => {
-    if (busy) return;
+  const start = () => {
+    if (busy || !saved) return;
+    void closed.check(saved, saved.profile ?? 'kurvig', undefined, (t, around) => void go(t, around));
+  };
+  const go = async (t: Tour, around: boolean) => {
+    if (busy || !saved) return;
     setBusy('start');
     setErr(null);
     try {
-      // Gruppenfahrt ohne Mitgliedschaft nur im Heimatgebiet (Koray 14.11.; stumm, solange LIMITS_LIVE aus ist)
-      const ok = await guardDrive(saved, saved.profile ?? 'kurvig', avoidSetting(), `gruppe:${saved.id}`);
+      // Gruppenfahrt ohne Mitgliedschaft nur im Heimatgebiet (Koray 14.11.; stumm, solange limitsLive() aus ist)
+      const base = around ? { ...saved, ...t, name: saved.name } : saved;
+      const ok = await guardDrive(base, saved.profile ?? 'kurvig', avoidSetting(), `gruppe:${saved.id}`);
       if (!ok.go) return;
       const r = await ensureRide();
+      if (around || ok.tour !== base) await setRideTour(r.id, ok.tour, saved.profile ?? 'kurvig');
       await setRideStatus(r.id, 'laeuft');
-      await startAsLead(r.id, saved.name, { ...saved, ...ok.tour }, saved.profile ?? 'kurvig');
+      await startAsLead(r.id, saved.name, { ...base, ...ok.tour, name: saved.name }, saved.profile ?? 'kurvig');
       router.push('/navigation');
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Die Fahrt konnte nicht starten.');
@@ -203,7 +213,7 @@ export default function GruppeNeu() {
           {saved.name}
         </AppText>
         <AppText muted>
-          {formatKm(saved.laenge_km, 0)} km. Lade bis zu {max - 1} Mitfahrer mit ihrem Namen ein. Sie sehen die Einladung in der App und sagen zu oder ab.
+          {formatKm(saved.laenge_km, 0)} km. Lade bis zu {max - 1} Teilnehmer mit ihrem Namen ein. Sie sehen die Einladung in der App und sagen zu oder ab.
         </AppText>
       </View>
 
@@ -234,7 +244,7 @@ export default function GruppeNeu() {
       </View>
 
       <View style={styles.card}>
-        <AppText variant="label">Mitfahrer einladen</AppText>
+        <AppText variant="label">Teilnehmer einladen</AppText>
         <TextInput maxFontSizeMultiplier={1.2}
           value={query}
           onChangeText={setQuery}
@@ -245,7 +255,7 @@ export default function GruppeNeu() {
           autoCorrect={false}
           returnKeyType="search"
           style={[styles.input, full && styles.disabled]}
-          accessibilityLabel="Mitfahrer mit Namen suchen"
+          accessibilityLabel="Teilnehmer mit Namen suchen"
         />
         {searching && <ActivityIndicator color={Colors.muted} />}
         {!q && mine.length > 0 && !full && <AppText variant="caption" muted>Deine Kontakte</AppText>}
@@ -293,6 +303,7 @@ export default function GruppeNeu() {
           Du fährst vorne. Wer zugesagt hat, kann jederzeit dazukommen und sieht dich live auf der Karte.
         </AppText>
       </View>
+      {closed.sheet}
     </Screen>
   );
 }

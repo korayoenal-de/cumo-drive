@@ -1,8 +1,8 @@
 /**
  * Nachrichten: Unterhaltungen mit anderen Fahrern, neueste oben, ungelesene mit Plakette.
  */
+import { BackLink } from '@/components/ui/back-link';
 import { router, useFocusEffect } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,9 +42,7 @@ export default function Nachrichten() {
   return (
     <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: insets.bottom + Spacing.xxxl }]}>
       <View style={styles.head}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Zurück" hitSlop={4} onPress={() => (router.canGoBack() ? router.back() : router.navigate('/community'))} style={styles.round}>
-          <SymbolView name="chevron.left" size={18} weight="semibold" tintColor={Colors.text} />
-        </Pressable>
+        <BackLink label="Community" fallback="/community" />
       </View>
       <AppText variant="display">Nachrichten</AppText>
       {list === null && !err && <ActivityIndicator color={Colors.muted} />}

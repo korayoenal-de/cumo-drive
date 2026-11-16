@@ -22,9 +22,9 @@ function textFor(phase: PlanPhase, mode: 'tour' | 'runde', ms: number, found: nu
     case 'fix':
       return 'Sperrung umfahren';
     default:
-      if (mode === 'runde') return ms < 3000 ? 'Varianten berechnen' : ms < 7000 ? 'Traumstrecken einbauen' : 'Breite und Belag prüfen';
-      if (ms < 3400) return 'Traumstrecken entlang der Route suchen';
-      if (ms < 6000 && found > 0) return found === 1 ? '1 Traumstrecke auf dem Weg' : `${found} Traumstrecken auf dem Weg`;
+      if (mode === 'runde') return ms < 3000 ? 'Varianten berechnen' : ms < 7000 ? 'Highlights einbauen' : 'Breite und Belag prüfen';
+      if (ms < 3400) return 'Highlights entlang der Route suchen';
+      if (ms < 6000 && found > 0) return found === 1 ? '1 Highlight auf dem Weg' : `${found} Highlights auf dem Weg`;
       return ms < 10000 ? 'Kurvige Straßen berechnen' : 'Breite und Belag prüfen';
   }
 }

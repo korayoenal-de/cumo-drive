@@ -15,7 +15,7 @@ export function describeEntitlement(e: Entitlement): { title: string; text: stri
   const until = formatUntil(e.until);
   if (!e.active) {
     return {
-      title: e.source === 'plan' ? 'Plan abgelaufen' : 'Testphase vorbei',
+      title: e.source === 'plan' ? 'Plan abgelaufen' : e.source === 'gruender' ? 'Gründungszeit vorbei' : 'Testphase vorbei',
       text: until ? `Abgelaufen am ${until}. Wähle einen Plan, um weiterzufahren.` : 'Wähle einen Plan, um weiterzufahren.',
     };
   }
@@ -24,6 +24,15 @@ export function describeEntitlement(e: Entitlement): { title: string; text: stri
   }
   if (e.source === 'plan') {
     return { title: 'Plan aktiv', text: `Gültig bis ${until}.` };
+  }
+  if (e.source === 'vorstart') {
+    return { title: 'Testphase', text: 'Bis zum Start ist alles frei. Danach fährst du als Gründungstester 12 Monate kostenlos.' };
+  }
+  if (e.source === 'gruender') {
+    return { title: 'Gründungstester', text: `Danke fürs Mittesten. Alles frei bis ${until}.` };
+  }
+  if (e.source === 'start') {
+    return { title: 'Zum Start frei', text: `Zum Start ist alles frei bis ${until}. Danach ab ${PRICES[0].perMonthText ?? PRICES[0].priceText} weiter.` };
   }
   return {
     title: 'Testphase',

@@ -78,7 +78,7 @@ export function VoiceSection() {
         </View>
         <SymbolView
           name="chevron.right"
-          size={14}
+          size={16}
           weight="semibold"
           tintColor={Colors.muted}
         />
@@ -135,7 +135,7 @@ export function VoiceSection() {
             />
           </View>
           <AppText variant="caption" muted style={styles.volumeHint}>
-            Auf Pässen und Traumstrecken sagt die Stimme jede Kurve an: links
+            Auf Pässen und Highlights sagt die Stimme jede Kurve an: links
             leicht, rechts mittel, links scharf, Kehre. Sie beschreibt die Kurve
             und nennt kein Tempo.
           </AppText>
@@ -214,7 +214,7 @@ function Row({
         <AppText style={styles.name}>{name}</AppText>
         <AppText style={styles.detail}>{detail}</AppText>
       </View>
-      <SymbolView
+      <SymbolView weight="semibold"
         name={active ? "checkmark.circle.fill" : "play.circle"}
         size={24}
         tintColor={active ? Colors.signal : Colors.muted}

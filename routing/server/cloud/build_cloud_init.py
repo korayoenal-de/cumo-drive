@@ -33,7 +33,7 @@ After=network-online.target
 [Service]
 User=cumo
 WorkingDirectory=/opt/cumo-routing
-ExecStart=/usr/bin/java -Xmx22g -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
+ExecStart=/usr/bin/java -Xmx22g -jar /opt/cumo-routing/bin/graphhopper-web-11.1.jar server config.yml
 Restart=always
 RestartSec=10
 

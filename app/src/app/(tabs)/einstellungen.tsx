@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Avatar } from '@/components/community/ride-bits';
+import { BackLink } from '@/components/ui/back-link';
 import { describeEntitlement } from '@/components/paywall/membership-section';
 import { resetPrivacy, usePrivacy } from '@/components/settings/community-profile';
 import { avoidSummary } from '@/components/planner/planner-parts';
@@ -17,7 +18,7 @@ import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { ActionSheet, ConfirmSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { here } from '@/components/group/meeting-route';
-import { askMembership, LIMITS_LIVE, previewPaywall, type PaywallKind } from '@/lib/paywall';
+import { askMembership, limitsLive, previewPaywall, type PaywallKind } from '@/lib/paywall';
 import { reverseName } from '@/lib/geocode';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { useAvoid } from '@/lib/avoid-settings';
@@ -43,7 +44,8 @@ const PAYWALL_PREVIEWS: { kind: PaywallKind; label: string; icon: 'map.fill' | '
   { kind: 'abgelaufen', label: 'G Abo abgelaufen, Ausfahrt geplant', icon: 'calendar.badge.exclamationmark' },
 ];
 
-export default function Einstellungen() {
+/** inNav: während der Navigation als Blatt darüber geöffnet (Koray 15.11.), oben der Weg zurück zur Fahrt */
+export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {}) {
   const session = useSession();
   const { list, current } = useVehicles();
   const map = useMapSettings();
@@ -85,6 +87,7 @@ export default function Einstellungen() {
 
   return (
     <Screen>
+      {inNav && <BackLink label="Zur Navigation" onPress={() => router.back()} />}
       <AppText variant="display" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         Einstellungen
       </AppText>
@@ -116,8 +119,8 @@ export default function Einstellungen() {
       {session && (
         <Group label="Mitgliedschaft">
           <Row title="Dein Plan" value={describeEntitlement(ent).title} onPress={() => router.push('/mitgliedschaft')} />
-          {/* kostenlose Version: Heimatgebiet, einmal änderbar (stumm, solange LIMITS_LIVE aus ist) */}
-          {LIMITS_LIVE && !ent.active && <Row title="Heimatgebiet" value={ent.home?.name ?? (ent.home ? 'Festgelegt' : 'Noch nicht festgelegt')} onPress={() => void changeHome()} />}
+          {/* kostenlose Version: Heimatgebiet, einmal änderbar (stumm, solange limitsLive() aus ist) */}
+          {limitsLive() && !ent.active && <Row title="Heimatgebiet" value={ent.home?.name ?? (ent.home ? 'Festgelegt' : 'Noch nicht festgelegt')} onPress={() => void changeHome()} />}
         </Group>
       )}
 
@@ -127,14 +130,14 @@ export default function Einstellungen() {
       {moderation.mod?.admin && (
         <Group label="Prüfung" hint="Gemeldete Inhalte ansehen, entfernen oder Konten sperren.">
           <Row title="Prüfbereich" value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : 'Nichts offen'} onPress={() => router.push('/pruefung')} />
-          <Row title="Paywalls ansehen" value={LIMITS_LIVE ? 'Aktiv' : 'Stumm'} onPress={() => setPaywallList(true)} />
+          <Row title="Paywalls ansehen" value={limitsLive() ? 'Aktiv' : 'Stumm'} onPress={() => setPaywallList(true)} />
         </Group>
       )}
       {moderation.mod?.admin && (
         <ActionSheet
           visible={paywallList}
           title="Paywalls ansehen"
-          subtitle={LIMITS_LIVE ? 'Die Grenzen gelten.' : 'Die Grenzen sind stumm. Hier nur zur Ansicht, ein Kauf ist noch nicht möglich.'}
+          subtitle={limitsLive() ? 'Die Grenzen gelten.' : 'Die Grenzen sind stumm. Hier nur zur Ansicht, ein Kauf ist noch nicht möglich.'}
           items={PAYWALL_PREVIEWS.map((x) => ({
             key: x.kind,
             icon: x.icon,
@@ -147,6 +150,10 @@ export default function Einstellungen() {
           onClose={() => setPaywallList(false)}
         />
       )}
+
+      <Group label="Hilfe" hint="Fehler, Wünsche, falsche Strecken: jede Meldung wird geprüft.">
+        <Row title="Feedback geben" onPress={() => router.push('/feedback')} />
+      </Group>
 
       <Group label="Rechtliches">
         <Row title="Datenschutz" onPress={() => router.push('/datenschutz')} />
@@ -182,7 +189,7 @@ function ProfileCard({ userId, cars }: { userId: string; cars: number }) {
           </View>
         )}
       </View>
-      <SymbolView name="chevron.right" size={15} weight="bold" tintColor={Colors.muted} />
+      <SymbolView name="chevron.right" size={16} weight="semibold" tintColor={Colors.muted} />
     </Pressable>
   );
 }

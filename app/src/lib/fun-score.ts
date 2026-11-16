@@ -119,7 +119,7 @@ export function tourFun(line: LatLon[]): TourFun | null {
 
   const facet = {
     kurven: { id: 'kurven', label: 'Kurven', share: kurven, value: `kurvig auf ${Math.round(curvyShare * 100)} %`, text: 'Wie viel und wie eng die Straße kurvt, Kehren zählen mehr.' },
-    traum: { id: 'traum', label: 'Traumstrecken', share: traum, value: `${Math.round(roadShare * 100)} % der Tour`, text: 'Anteil auf kuratierten Strecken aus unserer Datenbank.' },
+    traum: { id: 'traum', label: 'Highlights', share: traum, value: `${Math.round(roadShare * 100)} % der Tour`, text: 'Anteil auf kuratierten Strecken aus unserer Datenbank.' },
     paesse: { id: 'paesse', label: 'Pässe', share: paesse, value: passes.length === 1 ? '1 Pass' : `${passes.length} Pässe`, text: 'Pässe an der Strecke, Ikonen zählen mehr als Geheimtipps.' },
     fluss: { id: 'fluss', label: 'Fluss', share: fluss, value: `${Math.round(straight * 100)} % Geraden`, text: 'Abzug für lange Geraden ohne Kurven.' },
   } as const;

@@ -7,7 +7,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { toPlanError } from '@/components/planner/create-tour';
 import { clearEditOrigin } from '@/lib/edit-tour';
-import { fromCommunity, saveTour, syncLibrary, type SavedTour } from '@/lib/library';
+import { fromCommunity, readLibrary, saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName } from '@/lib/geocode';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '@/lib/highlight-roads';
 import { avoidedKey, clearAvoidedPasses } from '@/lib/avoid-pass';
@@ -24,7 +24,8 @@ export type TourPlan = ReturnType<typeof useTourPlan>;
 
 /**
  * Zwischenziel mitten auf einer kuratierten Strecke, etwa eine Passhöhe (Koray 9.11., Hahntennjoch):
- * Die Strecke wird ganz durchfahren, in der Richtung, die besser zwischen den Nachbarpunkten liegt.
+ * Die Route fährt über den Punkt hinaus ein Stück auf der Strecke weiter, in der Richtung, die besser zwischen
+ * den Nachbarpunkten liegt, statt zu wenden. Den Weg davor und danach wählt der Router (16.11., Sellajoch).
  * Sonst fährt der Router zur Passhöhe hinauf und auf demselben Weg wieder hinunter.
  * Nur Strecken bis 40 km, und nur wenn der Punkt nicht am Anfang oder Ende liegt.
  */
@@ -49,6 +50,19 @@ function crossingFor(p: LatLon, prev: LatLon, next: LatLon): LatLon[] | null {
   const fwd = haversine(prev, l[0]) + haversine(l[l.length - 1], next);
   const back = haversine(prev, l[l.length - 1]) + haversine(l[0], next);
   return fwd <= back ? l : [...l].reverse();
+}
+
+/** So weit über einen Pass hinaus wird die Strecke erzwungen: über die Passhöhe, nicht zurück */
+const PAST_M = 2000;
+
+/** Punkt der Linie etwa m Meter nach dem Index at (oder das Ende, wenn sie vorher aufhört) */
+function pastPoint(line: LatLon[], at: number, m: number): LatLon | null {
+  let d = 0;
+  for (let i = at + 1; i < line.length; i++) {
+    d += haversine(line[i - 1], line[i]);
+    if (d >= m) return line[i];
+  }
+  return at < line.length - 1 ? line[line.length - 1] : null;
 }
 
 /** Stützpunkte entlang einer Strecke: etwa alle 2,5 km und der Ausstieg, die ersten 1,5 km frei */
@@ -176,11 +190,21 @@ export function useTourPlan(onPlanned?: () => void) {
         const inner = i > 0 && i < points.length - 1;
         const cross = inner && !roads.current[keyOf(p)] ? crossingFor(p, points[i - 1], points[i + 1]) : null;
         if (cross) {
-          // Strecke ganz durchfahren: Einstieg, Stützpunkte, Ausstieg statt nur des Punkts
-          xPts.push(cross[0]);
+          // Nur ein Stück über den Punkt hinaus auf der Strecke weiter, damit die Route nicht denselben Weg
+          // zurückfährt. Wohin danach, entscheidet der nächste Punkt (Koray 16.11.: Sellajoch zum Pordoijoch
+          // führte erst bis Canazei, dem Ende der Strecke Sellajoch, und wieder hinauf)
+          let at = 0;
+          cross.forEach((q, k) => {
+            if (haversine(q, p) < haversine(cross[at], p)) at = k;
+          });
+          xPts.push(p);
           xProf.push(profiles[i]);
-          for (const q of shapePoints(cross)) {
-            xPts.push(q);
+          const beyond = pastPoint(cross, at, PAST_M);
+          // nur wenn es dort Richtung nächster Punkt weitergeht; zweigt er an der Passhöhe ab, entstünde ein Stich
+          // (Koray 16.11.: Falzarego, danach Valparola, fuhr erst 2 km Richtung Andraz hinunter und zurück)
+          const next = points[i + 1];
+          if (beyond && haversine(beyond, next) > 1500 && haversine(beyond, next) < haversine(p, next)) {
+            xPts.push(beyond);
             xProf.push(profiles[i]);
           }
           return;
@@ -356,8 +380,12 @@ export function useTourPlan(onPlanned?: () => void) {
     if (opts?.asCopy) {
       try {
         const namen = pts.map((p) => names[keyOf(p)] ?? '');
-        const base0 = (nm.trim() || planned.name).replace(/\s+Kopie(\s+\d+)?$/, '');
-        const copy = saveTour({ ...planned, ...varied, name: `${base0} Kopie`.slice(0, 120), curves, profile, namen, etappen: legProfiles }, folder);
+        // Als neue Tour (Koray 16.11.): „Name 2“, „Name 3“ statt „Kopie“
+        const base0 = (nm.trim() || planned.name).replace(/\s+(Kopie(\s+\d+)?|\d+)$/, '');
+        const taken = new Set(readLibrary().map((t) => t.name));
+        let n = 2;
+        while (taken.has(`${base0} ${n}`)) n++;
+        const copy = saveTour({ ...planned, ...varied, name: `${base0} ${n}`.slice(0, 120), curves, profile, namen, etappen: legProfiles }, folder);
         void syncLibrary();
         if (!opts.quiet) showToast(`${copy.name} gespeichert`);
         return copy.id;

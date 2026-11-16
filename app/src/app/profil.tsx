@@ -126,7 +126,7 @@ function PhotoField({ userId, name }: { userId: string; name: string }) {
   };
   // Optionen zum Foto im Bottom Sheet (Design Prinzipien: Optionen zu einem Objekt), Entfernen unten rot mit Rückfrage
   const items: SheetItem[] = [
-    { key: 'library', icon: 'photo.on.rectangle', label: 'Aus deinen Fotos', hint: 'Danach den Ausschnitt im Kreis wählen', onPress: () => void run('library') },
+    { key: 'library', icon: 'photo.on.rectangle', label: 'Aus deinen Fotos', onPress: () => void run('library') },
     { key: 'camera', icon: 'camera', label: 'Foto aufnehmen', onPress: () => void run('camera') },
     ...(url ? [{ key: 'remove', icon: 'trash' as const, label: 'Foto entfernen', hint: 'Dann zeigen wir deine Initialen', danger: true, onPress: () => setAsk(true) }] : []),
   ];
@@ -140,7 +140,7 @@ function PhotoField({ userId, name }: { userId: string; name: string }) {
         style={({ pressed }) => [styles.photoBtn, pressed && styles.pressed]}>
         <Avatar name={name} userId={userId} size={96} busy={busy} />
         <View style={styles.photoBadge}>
-          <SymbolView name="camera.fill" size={15} weight="bold" tintColor={Colors.onSignal} />
+          <SymbolView name="camera.fill" size={16} weight="semibold" tintColor={Colors.onSignal} />
         </View>
       </Pressable>
       {!url && <AppText variant="caption" muted>Tippe auf den Kreis, um ein Foto zu setzen.</AppText>}

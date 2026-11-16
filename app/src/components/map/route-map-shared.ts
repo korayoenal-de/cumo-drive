@@ -21,6 +21,8 @@ export type RouteMapProps = {
   followUser?: boolean;
   /** Fahrtrichtung in Grad, 0 ist Norden */
   heading?: number | null;
+  /** Mitfahren genordet: Kamera zeigt Norden oben, das Auto dreht sich (Koray 15.11.) */
+  northUp?: boolean;
   /** Warnung, zu der die Karte springen soll, Index in tour.warnungen */
   highlightIndex?: number | null;
   /** Position aus der Navigation (auch simuliert); ohne sie folgt nichts */

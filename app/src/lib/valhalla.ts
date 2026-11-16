@@ -12,7 +12,7 @@ export const VALHALLA_URL = 'https://valhalla1.openstreetmap.de';
  * Eigener Valhalla auf Server 2 (13.11.): aus derselben Karte wie unser GraphHopper, mit Höhendaten.
  * Antwortet er nicht (Neubau dienstags nachts, Ausfall), fragt die App 5 Minuten lang FOSSGIS.
  */
-const OWN_VALHALLA = ['https://13-140-213-114.sslip.io/valhalla'];
+const OWN_VALHALLA = ['https://r2.cumodrive.de/valhalla', 'https://13-140-213-114.sslip.io/valhalla'];
 const OWN_DOWN_MS = 5 * 60 * 1000;
 let ownDownUntil = 0;
 
@@ -32,7 +32,8 @@ export async function valhallaFetch(path: string, init: RequestInit): Promise<Re
     }
     ownDownUntil = Date.now() + OWN_DOWN_MS;
   }
-  return valhallaFetch(path, init);
+  // Notfall: öffentlicher Server (vorher rief sich die Funktion hier selbst auf, endlos; Koray 14.11.)
+  return fetch(`${VALHALLA_URL}/${path}`, init);
 }
 
 export type Avoid = {

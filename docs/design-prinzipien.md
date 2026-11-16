@@ -13,7 +13,7 @@ Jede Rückfrage, jedes Menü und jede Meldung nutzt genau eines dieser Muster. B
 | Muster | Wofür | Beispiele | Schließen |
 |---|---|---|---|
 | **Aufklappen an Ort und Stelle** | eine Wahl, die zum Inhalt gehört und klein bleibt | Profil einer Etappe, Vermeiden, Länge in km oder Dauer | Tippen auf dieselbe Stelle |
-| **Bottom Sheet mit Optionen** (`ActionSheet`) | Optionen zu einem Objekt, 2 bis 6 Zeilen, je Symbol, Name, Hinweis | Optionen einer Tour in Touren, Weiteres im Planer (Anpassen, Neu würfeln, Verwerfen), Optionen eines Fahrzeugs | Tipp daneben, Zeile wählen |
+| **Bottom Sheet mit Optionen** (`ActionSheet`) | Optionen zu einem Objekt, 2 bis 6 Zeilen, je Symbol, Name, Hinweis; Zeile mindestens 56 pt (`Size.button`), 4 pt Abstand (16.11.) | Optionen einer Tour in Touren, Weiteres im Planer (Anpassen, Neu würfeln, Verwerfen), Optionen eines Fahrzeugs | Tipp daneben, Zeile wählen |
 | **Rückfrage** (`ConfirmSheet`) | vor allem, was sich nicht rückgängig machen lässt | Tour löschen, Runde verwerfen, Fahrzeug löschen | Abbrechen oder Bestätigen |
 | **Bottom Sheet mit Inhalt** (`OptionsSheet`) | kurze Eingabe zu einem Objekt, höchstens zwei Felder | In der Community veröffentlichen | Tipp daneben, Fertig |
 | **Ebene** (Modal als Page Sheet) | eigene Aufgabe mit viel Inhalt oder Tastatur, Wischen nach unten schließt | Ortssuche, Highlight Details, Karteneinstellungen | Wischen, X oben |
@@ -29,6 +29,12 @@ Regeln:
 * Toasts nur für Erfolg und für Fehler ohne festen Ort (Export, Netz). Fehler mit Ort stehen am Ort.
 * Ein Objekt hat genau einen Einstieg für Optionen: das Symbol ⋯ rechts. Die Fläche selbst öffnet das Objekt.
 * Optionen gleiten nicht mehr inline herein; Sheets und Ebenen erscheinen wie in 3 beschrieben.
+
+### Gespeicherte Tour ändern (Koray 16.11.2026, Konzept „Tour ändern und überschreiben“)
+* Geöffnete Tour: Name oben im Planer, antippen benennt um und speichert sofort. Ändert sich die Strecke, steht „Geändert“ am Namen und Speichern erscheint als Zweittaste.
+* Speichern fragt als ganzer Satz „Möchtest du … überschreiben?“ mit zwei normalen Zeilen: „Aktuelle Tour überschreiben“, „Als neue Tour speichern“ (Name 2, Name 3). Keine orange Zeile, keine Beschreibungen. Der Satz darunter nennt, wen es noch betrifft (Community, Original).
+* Duplizieren gibt es nicht mehr; Varianten entstehen über „Als neue Tour speichern“. Im ⋯ des Planers steht bei Änderungen „Änderungen verwerfen“.
+* Hängt eine geplante Ausfahrt an der Tour, bietet der Toast nach dem Überschreiben „Übernehmen“ an.
 
 ## 3. Bewegung mit Federn (Bounce geregelt am 6.11.2026)
 * Alle Animationen nutzen `Motion` aus `theme.ts`. Keine linearen Übergänge.
@@ -64,6 +70,19 @@ Bewusst ohne Bewegung:
 ## 4. Inhalt zeigt sich selbst
 * Touren mit Mini Streckenbild, Zahlen in Tabellenziffern, Status als getönte Plakette statt Text im Fließtext.
 * Zahlen gleich groß und auf einer Zeile, Einheiten klein daneben.
+
+### Nachfrage nach dem Verwerfen (Koray 16.11.2026, Leinwand „Nachfrage nach dem Verwerfen“)
+* Nach drei Rundtouren ohne Speichern oder Losfahren und dann Verwerfen: 1,5 Sekunden später ein normales Optionsblatt „Nichts Passendes dabei?“ mit Gründen als Chips.
+* Ein Tipp auf einen Grund sendet sofort; nur „Etwas anderes“ öffnet ein Textfeld mit Senden als Hauptaktion. Danach kurz Danke, das Blatt geht von selbst.
+* Einmal pro Sitzung. Zweimal hintereinander weggeschoben: sieben Tage Ruhe. Nach dem Senden: 24 Stunden Ruhe. Nie in der Navigation oder in CarPlay.
+* Start nur gerundet (Ortsmitte), von den Wegpunkten nur die Stützpunkte unterwegs.
+
+### Pins nach Zoomstufe (Koray 16.11.2026, Leinwand „Pins nach Zoomstufe“)
+* Keine Kreise mit Zahl auf Karten. Jeder Pin bleibt einzeln, die Zoomstufe bestimmt, wie viel er zeigt.
+* Weit (mehr als 3 Grad Breite): Punkt, 12 pt. Region (0,6 bis 3 Grad): Symbol, 32 pt. Nah (unter 0,6 Grad): volle Marke. Heraus wechselt die Stufe erst bei 3,6 und 0,75 Grad.
+* Gewählt ist in jeder Stufe die volle Marke, hell und obenauf.
+* Orange nur für Ausfahrten. Touren hell, Fahrer mit Ring in Wagenfarbe.
+* Gleicher Start: Pins, die sich überdecken würden, liegen in jeder Stufe nebeneinander (Nah untereinander, Region und Weit in einer Reihe, Fahrer im Kreis). Sonst ist nur der oberste zu sehen und anzutippen (Koray 16.11.). Schatten `Shadow.button` statt Kontur.
 
 ## 5. Typografie: Mittelweg (entschieden am 5.11.2026)
 * Versalien in Archivo Black nur für Tournamen und Überschriften der Ansicht sowie Kennzahlen (109 KM, 2:15 H, 47).
@@ -168,3 +187,59 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 ## Namen (10.11.2026)
 - Der Tab heißt „Touren“ (früher Meine Touren), in allen Texten gleich: „Unter Touren gespeichert“, „Aus Touren entfernt“. „Routen“ ist der Reiter in der Community.
 - Tableiste mit eigenen Symbolen (`tab-icons.tsx`): Raster 24, Strich 1,8, aktiv gefüllt und 2,0.
+
+## Konsistenzprüfung 15.11.2026 (entschieden von Koray, Quiz „Design Entscheidungen“)
+
+Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab Commit 36a6e97.
+
+**Kerndaten**
+- Reihenfolge überall: Wann, Wo, Strecke, Fahrzeit, Fahrspaß, Plätze. Wann und Wo nur bei Ausfahrten, Plätze nur vor der Fahrt. Kennzahlen stehen direkt unter dem Titel, die Karte danach.
+- Eine Komponente `Kennzahlen` (`components/ui/kennzahlen.tsx`): Label 15 grau über dem Wert, Wert Archivo 22 in Versalien. Leitzahl 28 nur im Planer Ergebnis (`Stats` mit Erklärung des Werts).
+- Fahrspaß überall, wo eine Tour gezeigt wird, auch bei Ausfahrten (`lib/ride-fun.ts`). Vor der Fahrt keine Kurvenzahl; Kurven nur in der Fahrtstatistik, Kehren nur bei Pässen.
+- Formate aus `lib/format.ts`: Fahrzeit „2:57 h“ (Kennzahl „2:57 H“), unter einer Stunde „45 min“, nie Minuten über 60 und nie „2 h 57“. Strecke „148 km“, unter 10 km „8,4 km“. Termin in Zeilen „Heute 10:00“, „Morgen 10:00“, sonst „Fr 20. Nov. 10:00“, ausgeschrieben nur im Detail. „Uhr“ nur im Satz. Gespeichertes und Gefahrenes „12. Nov.“, aus anderen Jahren mit Jahr.
+- Werte in einer Zeile mit Mittelpunkt, Komma nur im Satz. Leere Werte fallen weg, kein Strich als Platzhalter.
+- Plätze aus Sicht der Teilnehmer als Plakette (`SeatsBadge`): „4 Plätze frei“ grün, „1 Platz frei“ gelb, „Ausgebucht“ grau.
+- Treffpunkt ist immer ein Ort, ohne Wahl der Ort am Start der Tour. In Zeilen „ab Gmund“. Rückkehr nur bei A nach B als „Ankunft in Imst“, bei Runden nicht.
+
+**Blätter und Aktionen**
+- Orange Zeile (`primary`) nur in Rückfragen mit klarer Empfehlung, etwa „Speichern und zurück“. Optionen zu einem Objekt und Auswahlblätter sind neutral, die Empfehlung steht oben.
+- Zweite Zeile (Hinweis) nur bei Auswahl zwischen Wegen, wenn andere etwas merken, und beim Umfang von Gefährlichem. Sonst keine. Gleiche Aktion, gleicher Text.
+- Teilen ist eine Zeile, die ein Auswahlblatt Link, GPX, KML öffnet (`components/tours/share-sheet.tsx`).
+- Ausnahme 15.11. (Koray): In der Community heißt der Knopf oben „+ Teilen“ und meint In der Community teilen (veröffentlichen). Er öffnet eine Auswahl der eigenen Touren plus „Neue Tour erstellen“; das Blatt zum Veröffentlichen ist dasselbe wie in der Tourkarte (`PublishSheet`). Knöpfe im Kopf der Community: Plus mit Verb (Anlegen, Teilen) oder Ziel (Nachrichten).
+- Verben: Löschen (für immer), Entfernen (nur hier weg), Verwerfen (nie gespeichert). Rückfragen immer als Frage.
+- Detailseiten tragen die Hauptaktion fest unten, eine je Phase. Ausfahrt: Route zum Treffpunkt, am Tag Jetzt losfahren, während der Fahrt Zur Navigation, danach Nochmal fahren.
+- Zurück überall als Pille mit Herkunft (`components/ui/back-link.tsx`), ohne bekannte Herkunft „Zurück“.
+
+**Icons**
+- SF Symbols in 16 (Text, Plaketten, Zurück, Schließen) und 20 (Zeilen, Blätter, runde Tasten), immer semibold. Ausnahmen: Sterne der Bewertung und Wetter 40, Manöver eigene Zeichnung.
+- Je Bedeutung ein Symbol: Link `link`, Teilen und GPX `square.and.arrow.up`, Kurvig Kurvenpfad, Veröffentlichen `globe`, Lead `person.line.dotted.person`.
+
+**Farben und Schrift**
+- `danger` #FF5A52 und `dangerTint` für Fehler und Endgültiges, die Bestätigung beim Löschen ist rot. Signal Orange bleibt der Hauptaktion und den Strecken.
+- Datumsblock neutral, nur heute in Orange.
+- Namen von Menschen nie in Versalien, auch groß im Profil (Koray 15.11.); Versalien bleiben Tournamen, Überschriften und Kennzahlen.
+- Plaketten nur mit Inhalt: keine 0 (Koray 15.11.).
+- Nebenzeilen und Hinweise 15 pt (`caption` Variante). 13 pt nur über `Type.caption` auf Karte, Plaketten und in der Tab Leiste.
+- Neue Tokens `textSoft`, `danger`, `dangerTint`; keine festen Farbwerte außerhalb von theme.ts außer Verkehrszeichen, Pegel Verlauf und Live Activity.
+
+**Glossar**
+- Tour: gespeichertes oder geplantes Objekt, auch in der Community (Reiter „Touren“). Runde: Tour mit gleichem Start und Ziel. Route: nur der Weg (Route zum Treffpunkt). Knopf im Planer „Tour erstellen“.
+- Strecke und Fahrzeit überall statt Länge und Dauer.
+- Highlight: kuratierte Strecke oder Pass mit Ansage. Traumstraße bleibt nur die Pegelstufe.
+- Kurven zählen alle Kurven einer Fahrt, Kehren nur Spitzkehren am Pass.
+- Ausfahrt: Termin mit Treffpunkt. Gruppenfahrt: gemeinsame Navigation mit Live Karte und Funk.
+- Organisator legt an, Lead führt und startet, Teilnehmer sind alle Leute einer Ausfahrt. Drivers nur als Community Reiter. Nachricht statt Anschreiben.
+- Lob am Ende: „Starke Runde!“ nur bei Runden, sonst „Angekommen in Imst“, zum Treffpunkt „Du bist am Treffpunkt“.
+
+## Pflicht für jede Neuerung (Koray 15.11.2026)
+
+Jede neue Funktion, jeder neue Screen und jede Änderung folgt dem Design System und den Regeln oben, vor allem der Konsistenzprüfung vom 15.11. So bleibt die App konsistent und neue Funktionen werden ordentlich eingebunden. Vor dem Commit prüfen:
+
+1. Bausteine wiederverwenden statt nachbauen: `Kennzahlen`, `SeatsBadge`, `BackLink`, `ActionSheet` und `ConfirmSheet`, `ShareSheet`, `Chip` und `ChipRow`, `Screen`, `MapSheet`, Formate aus `lib/format.ts`, Farben und Maße nur aus `constants/theme.ts`.
+2. Kerndaten in der festen Reihenfolge, Kennzahlen direkt unter dem Titel, die Karte danach.
+3. Eine Hauptaktion je Ansicht, auf Detailseiten fest unten; Optionen zu einem Objekt im Blatt, Gefährliches rot unten mit Rückfrage als Frage.
+4. Wörter aus dem Glossar (Tour, Runde, Route, Strecke, Fahrzeit, Highlight, Teilnehmer, Organisator, Lead, Löschen, Entfernen, Verwerfen), Du Form, keine Gedankenstriche.
+5. Icons 16 oder 20 semibold, ein Symbol je Bedeutung; Typografie Mittelweg; Hinweise 15 pt.
+6. Bewegung mit den Motion Tokens, gezielt statt überall.
+7. Mit Kartenbezug immer CarPlay mitdenken.
+8. Weicht etwas bewusst ab: hier als Ausnahme mit Datum und Grund eintragen, nicht still abweichen.

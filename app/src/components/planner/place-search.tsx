@@ -299,7 +299,7 @@ function SearchBody({
         onPress={() => pick(place)}
         style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
         <View style={styles.icon}>
-          <SymbolView
+          <SymbolView weight="semibold"
             name={icon === 'pass' ? 'mountain.2.fill' : icon === 'recent' ? 'clock' : 'mappin'}
             size={16}
             tintColor={icon === 'pass' ? Colors.signal : Colors.text}
@@ -334,11 +334,11 @@ function SearchBody({
                   accessibilityLabel="Schließen"
                   onPress={onClose}
                   style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
-                  <SymbolView name="xmark" size={18} weight="semibold" tintColor={Colors.text} />
+                  <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
                 </Pressable>
               </View>
               <View style={styles.field}>
-                <SymbolView name="magnifyingglass" size={18} tintColor={Colors.muted} />
+                <SymbolView weight="semibold" name="magnifyingglass" size={20} tintColor={Colors.muted} />
                 <TextInput maxFontSizeMultiplier={1.2}
                   value={query}
                   onChangeText={setQuery}
@@ -351,7 +351,7 @@ function SearchBody({
                 />
                 {query.length > 0 && (
                   <Pressable accessibilityRole="button" accessibilityLabel="Eingabe löschen" onPress={() => setQuery('')} hitSlop={8}>
-                    <SymbolView name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
+                    <SymbolView weight="semibold" name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
                   </Pressable>
                 )}
               </View>
@@ -382,7 +382,7 @@ function SearchBody({
               {suggest.searching && <ActivityIndicator color={Colors.muted} />}
               {query.length > 0 && (
                 <Pressable accessibilityRole="button" accessibilityLabel="Eingabe löschen" onPress={() => setQuery('')} hitSlop={8}>
-                  <SymbolView name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
+                  <SymbolView weight="semibold" name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
                 </Pressable>
               )}
                         </Animated.View>
@@ -406,7 +406,7 @@ function SearchBody({
               accessibilityLabel="Suche schließen"
               onPress={onClose}
               style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
-              <SymbolView name="xmark" size={18} weight="semibold" tintColor={Colors.text} />
+              <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
             </Pressable>
             </View>
           ) : (
@@ -414,7 +414,7 @@ function SearchBody({
               <AppText style={styles.role}>{role}</AppText>
               <View style={styles.searchRow}>
                 <View style={styles.field}>
-                  <SymbolView name="magnifyingglass" size={18} tintColor={Colors.muted} />
+                  <SymbolView weight="semibold" name="magnifyingglass" size={20} tintColor={Colors.muted} />
               <TextInput maxFontSizeMultiplier={1.2}
                 value={query}
                 onChangeText={setQuery}
@@ -431,7 +431,7 @@ function SearchBody({
               {suggest.searching && <ActivityIndicator color={Colors.muted} />}
               {query.length > 0 && (
                 <Pressable accessibilityRole="button" accessibilityLabel="Eingabe löschen" onPress={() => setQuery('')} hitSlop={8}>
-                  <SymbolView name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
+                  <SymbolView weight="semibold" name="xmark.circle.fill" size={20} tintColor={Colors.muted} />
                 </Pressable>
               )}
                 </View>
@@ -440,7 +440,7 @@ function SearchBody({
               accessibilityLabel="Suche schließen"
               onPress={onClose}
               style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
-              <SymbolView name="xmark" size={18} weight="semibold" tintColor={Colors.text} />
+              <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
             </Pressable>
               </View>
             </>
@@ -520,7 +520,7 @@ function SearchBody({
                       }}
                       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
                       <View style={[styles.icon, styles.iconTint]}>
-                        <SymbolView name={nearTab.icon} size={16} tintColor={Colors.signal} />
+                        <SymbolView weight="semibold" name={nearTab.icon} size={16} tintColor={Colors.signal} />
                       </View>
                       <View style={styles.rowMain}>
                         <AppText style={styles.name} numberOfLines={1}>

@@ -18,3 +18,8 @@ verify_jwt = false
 [functions.livekit-token]
 # Zugang zum Funk: nur mit Anmeldung, die Funktion prüft zusätzlich die Mitgliedschaft in der Fahrt.
 verify_jwt = true
+
+[functions.feedback-inbox]
+# Eingang der Rückmeldungen für Claudes Prüfläufe (Koray 16.11.): ohne JWT, Schutz über den Header x-feedback-key
+# (Edge Function Secret FEEDBACK_KEY, trägt Koray selbst ein). Lesen und Status setzen, sonst nichts.
+verify_jwt = false

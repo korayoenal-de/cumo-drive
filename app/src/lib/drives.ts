@@ -55,6 +55,7 @@ function thin(samples: Sample[]): LatLon[] {
 
 const r1 = (v: number | undefined | null) => (v == null ? null : Math.round(v * 10) / 10);
 const r2 = (v: number | undefined | null) => (v == null ? null : Math.round(v * 100) / 100);
+const r5 = (v: number) => Math.round(v * 1e5) / 1e5;
 
 export async function saveDrive(name: string, stats: RideStats, samples: Sample[], vehicle?: { id: string; model: string } | null, navLog?: unknown): Promise<string> {
   const row = {
@@ -71,9 +72,22 @@ export async function saveDrive(name: string, stats: RideStats, samples: Sample[
     track: encode(thin(samples)),
     ...(vehicle ? { vehicle_id: vehicle.id, vehicle_name: vehicle.model.slice(0, 80) || null } : {}),
   };
-  const withLog: Record<string, unknown> = navLog ? { ...row, nav_log: navLog } : row;
+  // Orte der Spitzenwerte für den Rückblick (Koray 15.11.)
+  const pk = (x: { value: number; p: LatLon } | null, extra: Record<string, unknown> = {}) => (x ? { v: r2(x.value), p: [r5(x.p[0]), r5(x.p[1])], ...extra } : undefined);
+  const peaks = {
+    spitze: pk(stats.maxKmh),
+    quer: pk(stats.maxLatG, stats.maxLatG ? { seite: stats.maxLatG.side } : {}),
+    bremsung: pk(stats.maxBrakeG),
+    beschleunigung: pk(stats.maxAccelG),
+  };
+  const withPeaks: Record<string, unknown> = { ...row, peaks };
+  const withLog: Record<string, unknown> = navLog ? { ...withPeaks, nav_log: navLog } : withPeaks;
   let { data, error } = await supabase.from('drives').insert(withLog).select('id').single();
-  // Spalte nav_log noch nicht da (Migration nicht eingespielt): ohne Blackbox speichern statt die Fahrt zu verlieren
+  // Spalte peaks oder nav_log noch nicht da (Migration nicht eingespielt): ohne sie speichern statt die Fahrt zu verlieren
+  if (error && /peaks/.test(error.message)) {
+    const noPeaks: Record<string, unknown> = navLog ? { ...row, nav_log: navLog } : row;
+    ({ data, error } = await supabase.from('drives').insert(noPeaks).select('id').single());
+  }
   if (error && navLog && /nav_log/.test(error.message)) ({ data, error } = await supabase.from('drives').insert(row).select('id').single());
   if (error) throw new Error(error.message);
   return (data as { id: string }).id;
@@ -87,6 +101,29 @@ export async function listDrives(limit = 200): Promise<Drive[]> {
     .limit(limit);
   if (error) throw new Error(error.message);
   return (data ?? []) as Drive[];
+}
+
+/** Eine Fahrt mit Spur und Bewertung, für den Rückblick (Koray 15.11.: Zusammenfassung gefahrener Touren) */
+export type DrivePeak = { v: number; p: LatLon; seite?: 'links' | 'rechts' };
+export type DriveDetail = Drive & {
+  track: LatLon[];
+  /** Orte der Spitzenwerte, erst ab 15.11. gespeichert */
+  peaks: { spitze?: DrivePeak; quer?: DrivePeak; bremsung?: DrivePeak; beschleunigung?: DrivePeak } | null;
+  rating: DriveRating | null;
+  rating_score: number | null;
+  rating_reasons: string[] | null;
+  rating_note: string | null;
+};
+
+export async function getDrive(id: string): Promise<DriveDetail | null> {
+  const cols = 'id,name,started_at,km,moving_min,avg_kmh,max_kmh,max_lat_g,max_brake_g,curves,vehicle_id,vehicle_name,track,rating,rating_score,rating_reasons,rating_note';
+  let { data, error } = await supabase.from('drives').select(`${cols},peaks`).eq('id', id).maybeSingle();
+  // ohne Spalte peaks (Migration noch nicht eingespielt): ohne Orte laden
+  if (error && /peaks/.test(error.message)) ({ data, error } = await supabase.from('drives').select(cols).eq('id', id).maybeSingle());
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const d = data as unknown as Drive & { track: string | null; rating: DriveRating | null; rating_score: number | null; rating_reasons: string[] | null; rating_note: string | null; peaks?: DriveDetail['peaks'] };
+  return { ...d, peaks: d.peaks ?? null, track: d.track ? decode(d.track) : [] };
 }
 
 export async function deleteDrive(id: string) {

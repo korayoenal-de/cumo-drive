@@ -1,7 +1,8 @@
 /**
  * Bausteine des Navigationsscreens: Manöver Karte oben, Leiste unten, Zustands Karten.
  */
-import { useEffect, useState, type ReactNode } from 'react';
+import { announceMenuOpen, useCloseOnOtherMenu } from '@/lib/navigation/open-menu';
+import { useEffect, useState, type ReactNode, useCallback } from 'react';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -90,7 +91,7 @@ export function LaneRow({ lanes }: { lanes: Lane[] }) {
       accessibilityLabel={`Spur ${use.join(' und ')} von ${lanes.length}, von links gezählt`}>
       {lanes.map((l, i) => (
         <View key={i} style={[styles.lane, l.use && styles.laneUse]}>
-          <SymbolView name={laneSymbol(l.dirs)} size={20} weight="bold" tintColor={l.use ? Colors.text : l.ok ? Colors.muted : Colors.line} />
+          <SymbolView name={laneSymbol(l.dirs)} size={20} weight="semibold" tintColor={l.use ? Colors.text : l.ok ? Colors.muted : Colors.line} />
         </View>
       ))}
     </View>
@@ -164,13 +165,13 @@ export function BottomBar({
   onSimulate: () => void;
   /** Gruppenfahrt aktiv: Funk Knopf öffnet die Kurznachrichten */
   onFunk?: () => void;
-  /** Planung ansehen: ganze restliche Route mit allen Zielen (Koray 8.11.) */
+  /** Tour anpassen unterwegs (Koray 15.11., vorher Planung ansehen); nur allein oder als Lead */
   onOverview?: () => void;
   /** Nächstes Zwischenziel überspringen, schnellster Weg zum Ziel danach; Text etwa "Kolmbach überspringen" */
   skipLabel?: string;
   onSkip?: () => void;
   /** Echter Funk (ab Build 20): gedrückt halten spricht. Ohne talk öffnet der Mikrofon Knopf die Kurznachrichten. */
-  talk?: { talking: boolean; waiting: boolean; disabled: boolean; onTalk: (on: boolean) => void };
+  talk?: { talking: boolean; waiting: boolean; disabled: boolean; onTalk: (on: boolean) => void; label?: string };
   /** Funk ohne Mitgliedschaft (kostenlose Version): Knopf sichtbar, grau mit Schloss; Antippen ruft das auf */
   talkLocked?: () => void;
   /** Zusätzliche Einträge im Menü, etwa Kurznachricht oder Funk hören */
@@ -178,7 +179,13 @@ export function BottomBar({
 }) {
   const now = useNow();
   const [funkHint, setFunkHint] = useState(false);
-  const [menu, setMenu] = useState(false);
+  const [menu, setMenuRaw] = useState(false);
+  const setMenu = useCallback((v: boolean) => {
+    if (v) announceMenuOpen('tour');
+    setMenuRaw(v);
+  }, []);
+  const closeMenu = useCallback(() => setMenuRaw(false), []);
+  useCloseOnOtherMenu('tour', closeMenu);
   // Lautstärke der Ansagen: langer Druck auf den Lautsprecher (Koray 12.11.), klappt nach 5 s von selbst zu
   const [vol, setVol] = useState(0);
   const { volume } = useDriveSettings();
@@ -195,7 +202,7 @@ export function BottomBar({
   // Aufgeklappte Aktionen klappen nach 4 Sekunden von selbst zu
   useEffect(() => {
     if (!menu) return;
-    const t = setTimeout(() => setMenu(false), 4000);
+    const t = setTimeout(() => setMenuRaw(false), 4000);
     return () => clearTimeout(t);
   }, [menu]);
 
@@ -203,9 +210,10 @@ export function BottomBar({
   const rest = paused ? 'Pausiert' : [formatRemaining(eta, now), km].filter(Boolean).join(' · ');
   const done = extra ? Math.max(0, Math.min(100, extra.donePct)) : null;
   const actions = [
-    ...(extraActions ?? []).map((a) => ({ ...a, signal: false })),
-    ...(onOverview ? [{ key: 'plan', label: 'Planung ansehen', icon: 'map.fill' as const, signal: false, run: onOverview }] : []),
+    // Reihenfolge (Koray 15.11.): Zwischenziel überspringen, Tour anpassen, dann der Rest, Beenden zuletzt
     ...(onSkip && skipLabel ? [{ key: 'skip', label: skipLabel, icon: 'forward.end.fill' as const, signal: false, run: onSkip }] : []),
+    ...(onOverview ? [{ key: 'plan', label: 'Tour anpassen', icon: 'point.topleft.down.to.point.bottomright.curvepath.fill' as const, signal: false, run: onOverview }] : []),
+    ...(extraActions ?? []).map((a) => ({ ...a, signal: false })),
     paused
       ? { key: 'weiter', label: 'Fortsetzen', icon: 'play.fill' as const, signal: false, run: () => onPause(false) }
       : { key: 'pause', label: 'Pausieren', icon: 'pause.fill' as const, signal: false, run: () => onPause(true) },
@@ -238,14 +246,14 @@ export function BottomBar({
                   a.run();
                 }}
                 style={({ pressed }) => [styles.pill, a.signal && styles.pillSignal, pressed && styles.pressed]}>
-                <SymbolView name={a.icon} size={16} tintColor={a.signal ? Colors.onSignal : Colors.text} />
+                <SymbolView weight="semibold" name={a.icon} size={16} tintColor={a.signal ? Colors.onSignal : Colors.text} />
                 <AppText style={[styles.pillText, a.signal && { color: Colors.onSignal }]}>{a.label}</AppText>
               </Pressable>
             </Animated.View>
           ))}
         </View>
       )}
-      <GlassPanel style={[styles.bar, { paddingBottom: bottomInset }]} fallback="rgba(11,11,12,0.96)">
+      <GlassPanel overflow style={[styles.bar, { paddingBottom: bottomInset }]} fallback="rgba(11,11,12,0.96)">
         {funkHint && (
           <View style={styles.funkHint}>
             <AppText variant="caption">Funk folgt bald.</AppText>
@@ -303,7 +311,7 @@ export function BottomBar({
             <SymbolView
               name={menu ? 'xmark' : paused ? 'play.fill' : 'point.topleft.down.to.point.bottomright.curvepath.fill'}
               size={menu ? 18 : 17}
-              weight="bold"
+              weight="semibold"
               tintColor={menu ? Colors.ground : Colors.onSignal}
             />
           </Pressable>
@@ -324,7 +332,7 @@ export function BottomBar({
               }}
               style={[styles.talk, talk.talking && styles.talkOn, (talk.waiting || talk.disabled) && styles.talkWait]}>
               <MicIcon />
-              <AppText style={styles.talkText}>{talk.waiting ? 'Warten' : 'Funk'}</AppText>
+              <AppText style={styles.talkText}>{talk.label ?? (talk.waiting ? 'Warten' : 'Funk')}</AppText>
             </Pressable>
           )}
           {group && !talk && talkLocked && (

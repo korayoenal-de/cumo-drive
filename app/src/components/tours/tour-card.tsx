@@ -7,6 +7,8 @@
  * im selben Sheet, Löschen fragt in einem ConfirmSheet nach, Erfolg meldet ein Toast.
  * Muster: docs/design-prinzipien.md, Abschnitt Ebenen und Rückmeldungen.
  */
+import { ShareSheet } from '@/components/tours/share-sheet';
+import { datum, fahrzeit, meta as fmtMeta, strecke } from '@/lib/format';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
@@ -23,26 +25,26 @@ import { useSession } from '@/lib/auth';
 import { creditLine, publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
 import { NameDialog } from '@/components/planner/name-dialog';
-import { duplicateTour, fromCommunity, renameTour, type SavedTour } from '@/lib/library';
+import { fromCommunity, renameTour, type SavedTour } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { ensureTourFun } from '@/lib/tour-fun-queue';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
 import { thumbShape } from '@/lib/route-thumb';
 import { shareTourLink } from '@/lib/share-link';
 import { showToast } from '@/lib/toast';
-import { flatten, formatKm } from '@/lib/tour';
+import { flatten } from '@/lib/tour';
 
 const SPRING = Motion.press;
 const LAYOUT = SOFT_LAYOUT;
 
 export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: SavedTour) => void }) {
-  const [sheet, setSheet] = useState<'menu' | 'publish' | 'delete' | 'rename' | null>(null);
+  const [sheet, setSheet] = useState<'menu' | 'share' | 'publish' | 'delete' | 'rename' | null>(null);
   const scale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 
   useEffect(() => ensureTourFun(t), [t]);
-  const date = new Date(t.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
-  const meta = [`${formatKm(t.laenge_km, 0)} km`, t.curves ? `${t.curves} Kurven` : null, date].filter(Boolean).join('  ·  ');
+  // Meta Zeile wie überall (Konsistenzprüfung 15.11., K3, K8): Strecke und Fahrzeit, Fahrspaß rechts
+  const meta = fmtMeta(strecke(t.laenge_km), t.minutes ? fahrzeit(t.minutes) : null, datum(new Date(t.updatedAt)));
 
   const exp = async (f: RouteFormat) => {
     try {
@@ -56,27 +58,18 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
   const taken = fromCommunity(t);
   const items: SheetItem[] = [
     // Ausfahrt aus der Tour planen, privat als Standard (Koray 13.11.)
-    { key: 'ride', icon: 'calendar.badge.plus', label: 'Ausfahrt planen', hint: 'Mit Termin, Treffpunkt und deinen Leuten', primary: true, onPress: () => router.push({ pathname: '/ausfahrt/neu', params: { tour: t.id } }) },
+    // Neutral ohne Hinweis (Konsistenzprüfung 15.11., O1): Orange gibt es nur in Rückfragen
+    { key: 'ride', icon: 'calendar.badge.plus', label: 'Ausfahrt planen', onPress: () => router.push({ pathname: '/ausfahrt/neu', params: { tour: t.id } }) },
     { key: 'rename', icon: 'pencil', label: 'Umbenennen', hint: taken ? 'Nur bei dir, in der Community bleibt der Name' : undefined, onPress: () => setSheet('rename') },
-    {
-      key: 'dup',
-      icon: 'plus.square.on.square',
-      label: 'Duplizieren',
-      hint: 'Kopie zum Abwandeln, das Original bleibt',
-      onPress: () => {
-        const c = duplicateTour(t.id);
-        if (c) showToast(`${c.name} angelegt`, { action: { label: 'Öffnen', onPress: () => onOpen(c) } });
-      },
-    },
-    { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Route direkt in CUMO DRIVE', onPress: () => void shareTourLink(t, t.profile ?? 'kurvig').catch(() => undefined) },
-    { key: 'gpx', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Als GPX teilen', hint: 'Für Garmin, TomTom und andere Navis', onPress: () => void exp('gpx') },
-    { key: 'kml', icon: 'map', label: 'Als KML teilen', hint: 'Für Google Earth und My Maps', onPress: () => void exp('kml') },
+    // Duplizieren entfällt (Koray 16.11.): Varianten entstehen im Planer über „Als neue Tour speichern“
+    // Link, GPX und KML als eine Zeile (O3)
+    { key: 'share', icon: 'square.and.arrow.up', label: 'Teilen', onPress: () => setSheet('share') },
     ...(taken && !t.edited
       ? []
       : [
           {
             key: 'pub',
-            icon: (t.published ? 'person.2.slash' : 'person.2') as SheetItem['icon'],
+            icon: (t.published ? 'eye.slash' : 'globe') as SheetItem['icon'],
             label: t.published ? 'Aus der Community nehmen' : taken ? 'Deine Variante veröffentlichen' : 'In der Community veröffentlichen',
             hint: t.published ? 'Andere sehen die Tour dann nicht mehr' : taken ? (creditLine(t) ?? '').replace(/\.$/, '') : 'Andere können die Tour finden und fahren',
             onPress: () => setSheet('publish'),
@@ -116,24 +109,20 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
         </Pressable>
         <FunMark score={t.fun} />
         <Pressable accessibilityRole="button" accessibilityLabel={`Optionen für ${t.name}`} onPress={() => setSheet('menu')} hitSlop={4} style={({ pressed }) => [styles.round, pressed && styles.itemPressed]}>
-          <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="medium" />
+          <SymbolView name="ellipsis" size={20} tintColor={Colors.text} weight="semibold" />
         </Pressable>
       </View>
 
       <ActionSheet visible={sheet === 'menu'} title={t.name} subtitle={meta} items={items} onClose={() => setSheet((s) => (s === 'menu' ? null : s))} />
-      <OptionsSheet
-        visible={sheet === 'publish'}
-        title={t.published ? 'Aus der Community nehmen?' : 'In der Community veröffentlichen'}
-        subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : taken ? `Alle sehen Strecke, Tourname und deinen Namen. Dabei steht: ${creditLine(t)}` : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
-        onClose={() => setSheet(null)}>
-        <PublishForm
-          tour={t}
-          onDone={(text) => {
-            setSheet(null);
-            showToast(text);
-          }}
-        />
-      </OptionsSheet>
+      <ShareSheet
+        visible={sheet === 'share'}
+        title={t.name}
+        onLink={() => void shareTourLink(t, t.profile ?? 'kurvig').catch(() => undefined)}
+        onGpx={() => void exp('gpx')}
+        onKml={() => void exp('kml')}
+        onClose={() => setSheet((s) => (s === 'share' ? null : s))}
+      />
+      <PublishSheet tour={t} visible={sheet === 'publish'} onClose={() => setSheet(null)} />
       <NameDialog
         key={sheet === 'rename' ? 'offen' : 'zu'}
         visible={sheet === 'rename'}
@@ -158,6 +147,30 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
 function TourThumb({ tour }: { tour: SavedTour }) {
   const shape = useMemo(() => thumbShape(flatten(tour).map((x) => x.p)), [tour]);
   return <RouteThumb shape={shape} />;
+}
+
+/**
+ * Blatt zum Veröffentlichen oder Zurückziehen einer Tour. Aus der Tourkarte und aus der Community („Teilen“,
+ * Koray 15.11.), damit beides gleich aussieht und gleich funktioniert.
+ */
+export function PublishSheet({ tour: t, visible, onClose, onPublished }: { tour: SavedTour; visible: boolean; onClose: () => void; onPublished?: () => void }) {
+  const taken = fromCommunity(t);
+  return (
+    <OptionsSheet
+      visible={visible}
+      title={t.published ? 'Aus der Community nehmen?' : 'In der Community veröffentlichen'}
+      subtitle={t.published ? 'Die Tour verschwindet aus der Community. Gespeichert bleibt sie bei dir.' : taken ? `Alle sehen Strecke, Tourname und deinen Namen. Dabei steht: ${creditLine(t)}` : 'Alle sehen Strecke, Tourname und deinen Namen. Zurückziehen geht jederzeit.'}
+      onClose={onClose}>
+      <PublishForm
+        tour={t}
+        onDone={(text) => {
+          onClose();
+          showToast(text);
+          onPublished?.();
+        }}
+      />
+    </OptionsSheet>
+  );
 }
 
 /** Veröffentlichen mit Name und kurzer Beschreibung, oder zurückziehen. */

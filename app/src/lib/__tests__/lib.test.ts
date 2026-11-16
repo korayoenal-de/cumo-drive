@@ -16,6 +16,7 @@ import { edgeLimits, shownLimitAt } from '../navigation/speed-zones';
 import { pointAtKm, snapToRoute } from '../navigation/tracker';
 import type { NavRoute } from '../navigation/types';
 import { PASSES, passesAlong } from '../passes';
+import { closureExclude, onPassRoad } from '../road-closures';
 
 /** Gerade Linie nach Osten ab Heppenheim, n Punkte im Abstand von etwa stepM Metern */
 function eastLine(n: number, stepM = 50, start: LatLon = [49.64, 8.63]): LatLon[] {
@@ -312,5 +313,94 @@ describe('Graue 100 (Koray 13.11.)', () => {
     const z = { endKm: [1, 1.2, 3], limit: [70, 100, 70], known: [true, false, true], loadedKm: 3 };
     assert.equal(shownLimitAt(z, 1.1), null);
     assert.deepEqual(shownLimitAt({ ...z, endKm: [1, 2, 3] }, 1.5), { limit: 100, estimated: true });
+  });
+});
+
+describe('Wendeschleifen (Matthias 15.11.)', () => {
+  // Straße mit getrennten Fahrbahnen nach Norden, Gegenfahrbahn 30 m östlich
+  const W = 8.43;
+  const E = 8.43 + 30 / (111320 * Math.cos((49.31 * Math.PI) / 180));
+  const leg = (lon: number, from: number, to: number): LatLon[] => {
+    const n = Math.max(2, Math.round(Math.abs(to - from) * 111320 / 20));
+    return Array.from({ length: n + 1 }, (_, i) => [from + ((to - from) * i) / n, lon] as LatLon);
+  };
+  /** Rampe als Halbkreis von einer Fahrbahn zur anderen, nach außen (Radius 120 m) */
+  const ramp = (lat: number, north: boolean): LatLon[] => {
+    const k = 111320 * Math.cos((lat * Math.PI) / 180);
+    const cx = (W + E) / 2;
+    const out: LatLon[] = [];
+    for (let a = 0; a <= 180; a += 10) {
+      const t = (a * Math.PI) / 180;
+      const dx = (north ? -1 : 1) * Math.cos(t) * (15 / k) - Math.sin(t) * (120 / k) * (north ? 1 : -1);
+      const dy = Math.sin(t) * (120 / 111320) * (north ? 1 : -1);
+      out.push([lat + dy, cx + dx]);
+    }
+    return out;
+  };
+  const wende: LatLon[] = [...leg(W, 49.3, 49.32), ...ramp(49.32, true), ...leg(E, 49.32, 49.31)];
+
+  it('findet die Wende am Kreuz und legt den Punkt auf der Gegenfahrbahn auf den Hinweg', async () => {
+    const { findUTurns, movePointsOffUTurns, unwantedUTurns } = await import('../uturn');
+    const t = findUTurns(wende);
+    assert.equal(t.length, 1);
+    assert.ok(haversine(t[0].tip, [49.321, (W + E) / 2]) < 150);
+    const pts: LatLon[] = [[49.3, W], [49.31, E], [49.4, W]];
+    assert.equal(unwantedUTurns(wende, pts).length, 1);
+    const moved = movePointsOffUTurns(pts, t)!;
+    assert.ok(moved);
+    assert.ok(Math.abs(moved[1][1] - W) < 1e-6, 'Punkt liegt jetzt auf der Fahrbahn nach Norden');
+    // Punkt an der Spitze: gewollt (Stich zum Café)
+    assert.equal(unwantedUTurns(wende, [[49.3, W], [49.3212, (W + E) / 2], [49.4, W]]).length, 0);
+  });
+
+  it('Spitzkehren und gerade Strecken sind keine Wende', async () => {
+    const { findUTurns } = await import('../uturn');
+    assert.equal(findUTurns(leg(W, 49.3, 49.35)).length, 0);
+    // Kehre mit auseinanderlaufenden Schenkeln
+    const a: LatLon[] = Array.from({ length: 40 }, (_, i) => [49.3 + i * 0.0002, W + i * 0.00005] as LatLon);
+    const b: LatLon[] = Array.from({ length: 40 }, (_, i) => [49.3078 - i * 0.0002, W + 0.0025 + i * 0.0002] as LatLon);
+    assert.equal(findUTurns([...a, ...b]).length, 0);
+  });
+
+  it('Navigation: wer die Wendeschleife auslässt, ist nicht abseits', () => {
+    // Tour: nach Norden, Wende am Kreuz, zurück zum Punkt, Wende im Süden, wieder nach Norden weiter
+    const shape: LatLon[] = [...wende, ...ramp(49.31, false), ...leg(W, 49.31, 49.34)];
+    const route: NavRoute = { shape, cumKm: cumulativeKm(shape), maneuvers: [], km: 0, minutes: 0, source: 'valhalla' };
+    route.km = route.cumKm[route.cumKm.length - 1];
+    const before = snapToRoute(route, [49.3195, W], -1, 0);
+    // geradeaus über das Kreuz weiter nach Norden statt in die Schleife
+    const s = snapToRoute(route, [49.3225, W], before.index, 0, 120);
+    assert.ok(s.offM < 10, `auf der Route, ${s.offM.toFixed(0)} m`);
+    assert.ok(s.km > before.km + 2, 'nach vorne gesprungen');
+  });
+});
+
+describe('Restzeit aus den Zeiten der Anweisungen (Matthias 15.11.)', () => {
+  it('Ort langsam, Landstraße schnell, statt gleichmäßig verteilt', async () => {
+    const { minutesAlong, minutesAt } = await import('../navigation/route');
+    // 10 km Landstraße in 6 min, dann 2 km Ort in 6 min
+    const cumKm = [0, 5, 10, 11, 12];
+    const cumMin = minutesAlong([{ idx: 0, time: 360 }, { idx: 2, time: 360 }, { idx: 4, time: 0 }], cumKm)!;
+    assert.deepEqual(cumMin.map((x) => +x.toFixed(2)), [0, 3, 6, 9, 12]);
+    const r = { cumKm, cumMin, km: 12, minutes: 12 };
+    // 2 km vor dem Ziel (am Ortseingang): noch 6 min, gleichmäßig verteilt wären es nur 2
+    assert.equal(+(12 - minutesAt(r, 10)).toFixed(2), 6);
+    assert.equal(+minutesAt({ cumKm, km: 12, minutes: 12 }, 10).toFixed(2), 10);
+  });
+});
+
+describe('Sperrungen auf Passstraßen', () => {
+  // Pordoijoch Richtung Arabba (TomTom 16.11.), etwa 1 km hinter der Passhöhe
+  const pordoi: LatLon[] = [[46.48296, 11.82199], [46.48305, 11.82599], [46.48407, 11.82874]];
+  const mannheim: LatLon[] = [[49.4875, 8.466], [49.489, 8.47]];
+  it('erkennt die Passstraße', () => {
+    assert.equal(onPassRoad(pordoi), true);
+    assert.equal(onPassRoad(mannheim), false);
+  });
+  it('im Planer nur Hinweis, unterwegs umfahren', () => {
+    const hits = [{ closure: { id: 'x', line: pordoi }, points: pordoi, firstIndex: 0 }];
+    const far: LatLon[] = [[46.6, 11.6], [46.4, 12.1]];
+    assert.equal(closureExclude(hits, far, 'hint').length, 0);
+    assert.equal(closureExclude(hits, far).length, 1);
   });
 });

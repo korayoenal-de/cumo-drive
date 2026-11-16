@@ -138,8 +138,13 @@ export default function RootLayout() {
           name="navigation"
           options={{ presentation: 'fullScreenModal', title: 'Navigation', gestureEnabled: false }}
         />
+        {/* Einstellungen unterwegs als Blatt über der Navigation, die darunter weiterläuft (Koray 15.11.) */}
+        <Stack.Screen name="menu" options={{ presentation: 'modal', title: 'Einstellungen' }} />
+        {/* Tour anpassen unterwegs: der Planer über der laufenden Navigation (Koray 15.11.) */}
+        <Stack.Screen name="anpassen" options={{ presentation: 'fullScreenModal', title: 'Tour anpassen', gestureEnabled: false }} />
         <Stack.Screen name="profil" options={{ title: 'Profil' }} />
         <Stack.Screen name="garage" options={{ title: 'Garage' }} />
+        <Stack.Screen name="fahrt/[id]" options={{ title: 'Fahrt' }} />
         <Stack.Screen name="ansagen" options={{ title: 'Fahren' }} />
         <Stack.Screen name="mitgliedschaft" options={{ presentation: 'fullScreenModal', title: 'Mitgliedschaft' }} />
         <Stack.Screen name="ausfahrt/[id]" options={{ title: 'Ausfahrt' }} />

@@ -3,6 +3,7 @@
  * damit sie sich am Schreibtisch testen lassen.
  */
 import { haversine, type LatLon } from '../tour';
+import { findUTurns } from '../uturn';
 import type { NavRoute } from './types';
 
 export type Snap = {
@@ -76,7 +77,7 @@ function segBearing(a: LatLon, b: LatLon): number {
   return ((Math.atan2((b[1] - a[1]) * k, b[0] - a[0]) * 180) / Math.PI + 360) % 360;
 }
 
-type Scored = Snap & { score: number };
+type Scored = Snap & { score: number; /** Winkel zwischen Fahrtrichtung und Abschnitt, null ohne Richtung */ hdiff: number | null };
 
 /**
  * Weiter voraus, als man seit der letzten Position gefahren sein kann, kostet zusätzlich 0,6 m je Meter
@@ -98,13 +99,14 @@ function searchRange(route: NavRoute, p: LatLon, from: number, to: number, refKm
       score += d < 0 ? Math.min(BACK_CAP_M, BACK_COST * Math.max(0, -d - BACK_FREE_M)) : Math.min(AHEAD_CAP_M, AHEAD_COST * Math.max(0, d - AHEAD_FREE_M));
       if (maxAheadM != null && d > maxAheadM) score += Math.min(IMPLAUSIBLE_CAP_M, IMPLAUSIBLE_COST * (d - maxAheadM));
     }
+    let hdiff: number | null = null;
     if (heading != null && pr.dist < bestScore) {
-      const diff = Math.abs(((segBearing(shape[i], shape[i + 1]) - heading + 540) % 360) - 180);
-      score += HEADING_COST * Math.max(0, diff - HEADING_FREE_DEG);
+      hdiff = Math.abs(((segBearing(shape[i], shape[i + 1]) - heading + 540) % 360) - 180);
+      score += HEADING_COST * Math.max(0, hdiff - HEADING_FREE_DEG);
     }
     if (score < bestScore) {
       bestScore = score;
-      best = { index: i, km, offM: pr.dist, point: pr.point, score };
+      best = { index: i, km, offM: pr.dist, point: pr.point, score, hdiff };
     }
   }
   return best;
@@ -133,8 +135,11 @@ export function indexAtKm(route: NavRoute, km: number): number {
  * maxAheadM: so weit kann man seit der letzten Position höchstens gekommen sein (Tempo mal Zeit plus Reserve).
  * Ohne Angabe gilt nur die allgemeine Vorliebe für den bisherigen Fortschritt.
  */
-export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, heading?: number | null, maxAheadM?: number): Snap {
+export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, heading?: number | null, maxAheadM?: number, maxKm?: number): Snap {
   const n = route.shape.length;
+  // maxKm (Runden, Koray 14.11.): weiter als bis hier darf die Position nicht springen. Wer am Start einer Runde
+  // in die falsche Richtung fährt, landet sonst auf dem Schlussstück und gilt als fast am Ziel.
+  const lastIdx = maxKm != null && maxKm < route.km ? Math.max(1, Math.min(n - 1, indexAtKm(route, maxKm))) : n - 1;
   if (n === 0) return { index: 0, km: 0, offM: Infinity, point: pos };
   if (n === 1) return { index: 0, km: 0, offM: haversine(route.shape[0], pos), point: route.shape[0] };
 
@@ -146,15 +151,29 @@ export function snapToRoute(route: NavRoute, pos: LatLon, hintIndex: number, hea
     // Bewertet wird mit Abstand plus Kosten für Richtung und Rücksprung, nicht nur mit dem Abstand:
     // sonst gewinnt auf Hin und Rückweg derselben Straße der falsche Durchgang.
     if (local && local.score <= LOCAL_OK_M) return strip(local);
-    const all = searchRange(route, pos, 0, n - 1, undefined, heading)!;
+    const all = searchRange(route, pos, 0, lastIdx, undefined, heading)!;
     if (local && all.score > local.score - GLOBAL_MARGIN_M) return strip(local);
     // Weit nach vorne oder zurück springen nur, wenn man wirklich nicht mehr in der Nähe ist. Sonst
     // springt man bei Runden (Ende liegt am Start) ans Ende und meldet Ziel erreicht, oder kurz vor dem
     // Ziel zurück an den Start und kommt nie an (QS 6.11.: GPS Ausreißer am Ende der Sellaronda).
-    if (local && local.offM < JUMP_KEEP_M && Math.abs(all.km - local.km) > 1) return strip(local);
+    if (local && local.offM < JUMP_KEEP_M && Math.abs(all.km - local.km) > 1 && !skippedLoop(route, local, all)) return strip(local);
     return strip(all);
   }
-  return strip(searchRange(route, pos, 0, n - 1, undefined, heading)!);
+  return strip(searchRange(route, pos, 0, lastIdx, undefined, heading)!);
+}
+
+/**
+ * Ausgelassene Wendeschleife (Matthias 15.11.): Die Route fährt an ein Kreuz, wendet und kommt auf der anderen
+ * Fahrbahn zurück. Wer die Schleife auslässt, fährt weiter, die Route liegt dort erst ein Stück später wieder.
+ * Dann nach vorne springen statt "Abseits der Tour", aber nur, wenn das übersprungene Stück wirklich eine Wende
+ * enthält: eine geplante Extrarunde lässt die Navigation nicht stillschweigend aus.
+ */
+const SKIP_LOOP_KM = 15;
+function skippedLoop(route: NavRoute, local: Scored, all: Scored): boolean {
+  if (!(all.km > local.km && all.km - local.km <= SKIP_LOOP_KM)) return false;
+  if (all.offM > 30 || all.hdiff == null || all.hdiff > 35) return false;
+  if ((local.hdiff ?? 0) < 90 && local.offM < 60) return false;
+  return findUTurns(route.shape.slice(local.index, all.index + 2)).length > 0;
 }
 
 function strip(s: Scored): Snap {

@@ -72,10 +72,10 @@ cat > /opt/cumo-routing/custom_models/kurvig.json <<'CUMO_EOF'
   "distance_influence": 5,
   "priority": [
     { "if": "max_width < 1.9", "multiply_by": "0" },
-    { "else_if": "max_width >= 2.5 && max_width < 3", "multiply_by": "0.1" },
-    { "else_if": "max_width >= 3 && max_width < 4.5", "multiply_by": "0.6" },
-    { "if": "road_class == PRIMARY", "multiply_by": "0.35" },
-    { "if": "road_class == SECONDARY", "multiply_by": "0.7" },
+    { "else_if": "max_width < 3", "multiply_by": "0.1" },
+    { "else_if": "max_width >= 3 && max_width < 4.5", "multiply_by": "0.85" },
+    { "if": "road_class == PRIMARY && urban_density == RURAL", "multiply_by": "0.35" },
+    { "if": "road_class == SECONDARY && urban_density == RURAL", "multiply_by": "0.7" },
     { "if": "road_class == RESIDENTIAL", "multiply_by": "0.5" },
     { "if": "curvature > 0.95", "multiply_by": "0.3" },
     { "else_if": "curvature > 0.85", "multiply_by": "0.6" }
@@ -187,7 +187,7 @@ cat > /opt/cumo-routing/setup-server.sh <<'CUMO_EOF'
 # Lädt die Kartendaten, fügt sie zusammen, baut den Graphen und startet GraphHopper neu.
 set -euo pipefail
 BASE=/opt/cumo-routing
-GH_VERSION=11.0
+GH_VERSION=11.1
 HEAP=24g
 REGIONS=(
   europe/dach-latest.osm.pbf
@@ -517,7 +517,7 @@ After=network-online.target
 [Service]
 User=cumo
 WorkingDirectory=/opt/cumo-routing
-ExecStart=/usr/bin/java -Xmx22g -jar /opt/cumo-routing/bin/graphhopper-web-11.0.jar server config.yml
+ExecStart=/usr/bin/java -Xmx22g -jar /opt/cumo-routing/bin/graphhopper-web-11.1.jar server config.yml
 Restart=always
 RestartSec=10
 

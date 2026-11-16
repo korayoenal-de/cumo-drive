@@ -2,7 +2,7 @@
  * Karte mit einer Tour. Heute react-native-maps (auf dem iPhone Apple Maps, läuft in Expo Go).
  * Später mit eigenem App Build MapLibre: dann wird nur diese Datei ersetzt, die Props bleiben.
  */
-import { useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
 import { AppState, Easing as RNEasing, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -51,6 +51,7 @@ export function RouteMap({
   onPressWarning,
   followUser = false,
   heading,
+  northUp = false,
   highlightIndex,
   position,
   speedKmh,
@@ -317,6 +318,26 @@ export function RouteMap({
   const userZoom = useSharedValue(0);
   const pinchBase = useSharedValue(0);
   const shown = useRef<{ p: LatLon; h: number } | null>(null);
+  const northUpRef = useRef(northUp);
+  useEffect(() => {
+    northUpRef.current = northUp;
+  }, [northUp]);
+  const carStep = useRef(-1);
+  const [carDeg, setCarDeg] = useState(0);
+  const scheduleCarStep = useCallback((f: number) => setCarDeg(f * 10), []);
+  // Umschalten wirkt sofort, auch im Stand (Koray 15.11.: im Büro getippt, nichts passierte, weil die Kamera nur
+  // bei neuer Bewegung nachgeführt wird): Kamera drehen und das Auto passend zeigen
+  useEffect(() => {
+    const sh = shown.current;
+    if (!sh || !map.current) return;
+    if (northUp) {
+      const f = Math.round(sh.h / 10) % 36;
+      carStep.current = f;
+      setCarDeg(f * 10);
+    }
+    // genordet heißt flach von oben wie eine Landkarte, nicht schräg (Koray 15.11.)
+    map.current.animateCamera({ center: ll(sh.p), heading: northUp ? 0 : sh.h, pitch: northUp ? 0 : 50 }, { duration: 450 });
+  }, [northUp]);
   useEffect(() => {
     if (!position) return;
     const now = Date.now();
@@ -386,7 +407,16 @@ export function RouteMap({
         zoomOut.current += (t - zoomOut.current) * 0.012;
         const z = zoomOut.current;
         const uz = userZoom.get();
-        map.current?.setCamera({ center: ll(p), heading: h, pitch: 50, zoom: 17 - z + uz, altitude: (500 + z * 600) * Math.pow(2, -uz) });
+        const ch = northUpRef.current ? 0 : h;
+        // genordet: das Auto zeigt seine Richtung über das passende Bild (in 10 Grad Schritten)
+        if (northUpRef.current) {
+          const f = Math.round(h / 10) % 36;
+          if (f !== carStep.current) {
+            carStep.current = f;
+            scheduleCarStep(f);
+          }
+        }
+        map.current?.setCamera({ center: ll(p), heading: ch, pitch: northUpRef.current ? 0 : 50, zoom: 17 - z + uz, altitude: (500 + z * 600) * Math.pow(2, -uz) });
       }
     };
     raf = requestAnimationFrame(tick);
@@ -715,10 +745,11 @@ export function RouteMap({
             },
           ]}>
           {carLook ? (
-            // Kamera folgt der Fahrtrichtung: das Auto zeigt sich schräg von hinten, wie bei Google (Koray 9.11.)
-            <CarSprite look={carLook} frame={frameFor(0)} size={CAR_3D} />
+            // Kamera folgt der Fahrtrichtung: das Auto zeigt sich schräg von hinten, wie bei Google (Koray 9.11.);
+            // genordet zeigt das Bild die Fahrtrichtung relativ zu Norden
+            <CarSprite look={carLook} frame={frameFor(northUp ? carDeg : 0)} size={CAR_3D} />
           ) : (
-            <View style={styles.me}>
+            <View style={[styles.me, northUp && { transform: [{ rotate: `${carDeg}deg` }] }]}>
               <View style={styles.meArrow} />
             </View>
           )}
@@ -773,7 +804,7 @@ function WarnCard({ top, klasse, name, reasons, onClose }: { top: number; klasse
         {reasons.length > 0 && <AppText style={styles.warnCardText}>{reasons.map(trimDecimals).join(', ')}</AppText>}
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel="Hinweis schließen" hitSlop={12} onPress={onClose} style={styles.warnCardClose}>
-        <SymbolView name="xmark" size={14} weight="semibold" tintColor={Colors.muted} />
+        <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.muted} />
       </Pressable>
     </Animated.View>
   );
@@ -834,7 +865,7 @@ function OtherMarker({ o }: { o: OtherDriver }) {
       coordinate={region as unknown as LatLng}
       anchor={{ x: 0.5, y: 0.5 }}
       title={o.name}
-      description={`${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Mitfahrer' }[o.role]}${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}`}
+      description={`${{ lead: 'Lead', schluss: 'Schlusslicht', mitfahrer: 'Teilnehmer' }[o.role]}${o.own ? ', eigener Weg' : o.off ? ', abseits der Tour' : ''}`}
       zIndex={30}
       tracksViewChanges={false}>
       <View style={[styles.other, { borderColor: o.own ? Colors.muted : o.off ? Colors.warn : ROLE_COLOR[o.role] }, o.off && !o.own && styles.otherOff, faded && styles.otherStale]}>

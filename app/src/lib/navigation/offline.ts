@@ -54,7 +54,7 @@ export function offlineRejoin(current: NavRoute, doneIndex: number, pos: LatLon)
     index: 0,
     km: 0,
   };
-  const back: Maneuver = { kind: 'zwischenziel', text: 'Zurück auf der Tour. Der Tour folgen.', speech: 'Dann bist du zurück auf der Tour.', index: 1, km: newCum[1] };
+  const back: Maneuver = { kind: 'geradeaus', back: true, text: 'Zurück auf der Tour. Der Tour folgen.', speech: 'Dann bist du zurück auf der Tour.', index: 1, km: newCum[1] };
   const rest = current.maneuvers
     .filter((m) => m.index > best && m.kind !== 'start')
     .map((m) => {

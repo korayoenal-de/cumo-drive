@@ -313,7 +313,7 @@ export function RoutePanel(props: {
 
       <div>
         {routeTour ? (
-          <Accordion label="Highlights/Pässe" summary="Pässe und Traumstrecken auf deinen Etappen">
+          <Accordion label="Highlights/Pässe" summary="Pässe und Highlights auf deinen Etappen">
             <AddHighlight
               pts={pts}
               taken={new Set(pts.map((p) => plan.names[keyOf(p)]).filter(Boolean))}
@@ -376,7 +376,7 @@ export function RoutePanel(props: {
       </div>
       {pts.length >= 2 && !routeTour && !busy && !plan.error ? (
         <button style={S.primary} onClick={() => plan.planNow(profile, avoid)}>
-          Route planen
+          Tour erstellen
         </button>
       ) : null}
     </div>

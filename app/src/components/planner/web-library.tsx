@@ -10,7 +10,7 @@ import { useSession } from '@/lib/auth';
 import { creditLine, publishTour, removeKeepPublished, unpublishTour } from '@/lib/community';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import { loadProfile } from '@/lib/group/ride';
-import { deleteTour, duplicateTour, filterTours, folders, fromCommunity, renameTour, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
+import { deleteTour, filterTours, folders, fromCommunity, renameTour, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
 import { copyTourLink } from '@/lib/share-link';
@@ -128,14 +128,6 @@ function TourRow(props: { tour: SavedTour; current: boolean; onOpen: (t: SavedTo
         onSurface
         items={[
           { key: 'rename', label: 'Umbenennen', onPress: () => setSheet('rename') },
-          {
-            key: 'dup',
-            label: 'Duplizieren',
-            onPress: () => {
-              const c = duplicateTour(t.id);
-              if (c) showToast(`${c.name} angelegt`, { action: { label: 'Öffnen', onPress: () => props.onOpen(c) } });
-            },
-          },
           { key: 'link', label: 'Link kopieren', onPress: copyLink },
           { key: 'gpx', label: 'Als GPX herunterladen', onPress: () => void exp('gpx') },
           { key: 'kml', label: 'Als KML herunterladen', onPress: () => void exp('kml') },
@@ -206,7 +198,7 @@ function DeleteSheet(props: { tour: SavedTour; narrow: boolean; onClose: () => v
     return (
       <WebSheet
         narrow={props.narrow}
-        title="Auch die veröffentlichte Route löschen?"
+        title="Auch die veröffentlichte Tour löschen?"
         subtitle={`${t.name} steht in der Community. Du entscheidest, ob sie dort bleibt.`}
         onClose={props.onClose}
         rows={[

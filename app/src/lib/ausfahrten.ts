@@ -41,6 +41,11 @@ export type Ausfahrt = {
   rideStatus: 'geplant' | 'laeuft' | 'beendet';
   /** in der Community sichtbar; sonst privat, nur für Organisator und Eingeladene (Koray 13.11.) */
   isPublic: boolean;
+  /** vorbei (Koray 14.11.): beendet, oder 3 Stunden nach der geplanten Rückkehr, spätestens Mitternacht */
+  isOver: boolean;
+  /** echte Fahrt: Start und Ende, wenn sie lief */
+  startedAt: Date | null;
+  endedAt: Date | null;
 };
 
 export type Anfrage = {
@@ -77,7 +82,12 @@ type Row = {
   end_lat: number | null; end_lon: number | null; goal_name: string | null; taken: number; max_members: number;
   my_status: MemberStatus | null; is_owner: boolean; open_requests: number; ride_status: Ausfahrt['rideStatus'];
   is_public?: boolean | null;
+  is_over?: boolean | null;
+  started_at?: string | null;
+  ended_at?: string | null;
 };
+
+const PLACEHOLDER = /^(Start der Tour|Dein Standort|Aktueller Standort)?$/i;
 
 export async function listAusfahrten(): Promise<Ausfahrt[]> {
   const { data: s } = await supabase.auth.getSession();
@@ -93,7 +103,8 @@ export async function listAusfahrten(): Promise<Ausfahrt[]> {
       ownerName: r.owner_name ?? 'Fahrer',
       ownerCar: r.owner_car,
       startsAt: new Date(r.starts_at),
-      meeting: r.meeting_point && typeof r.meeting_point.lat === 'number' ? r.meeting_point : null,
+      // Platzhalter wie „Start der Tour“ zählen nicht als Name, die App zeigt dann den Ort (K6, Koray 15.11.)
+      meeting: r.meeting_point && typeof r.meeting_point.lat === 'number' ? { ...r.meeting_point, name: PLACEHOLDER.test(r.meeting_point.name?.trim() ?? '') ? '' : r.meeting_point.name } : null,
       note: r.note,
       km: num(r.km),
       minutes: num(r.minutes),
@@ -109,6 +120,10 @@ export async function listAusfahrten(): Promise<Ausfahrt[]> {
       rideStatus: r.ride_status,
       // ältere Server ohne Spalte: dort kamen nur öffentliche Ausfahrten
       isPublic: r.is_public ?? true,
+      // ältere Server ohne Spalte: dort kamen nur anstehende Ausfahrten
+      isOver: r.is_over ?? false,
+      startedAt: r.started_at ? new Date(r.started_at) : null,
+      endedAt: r.ended_at ? new Date(r.ended_at) : null,
     };
   });
 }
@@ -293,8 +308,9 @@ const MON = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'Augu
 
 export const weekday = (d: Date) => WD[d.getDay()];
 export const clock = (d: Date) => `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-/** Sa 14.11. */
-export const shortDate = (d: Date) => `${WD[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1}.`;
+/** Sa 14. Nov. (Konsistenzprüfung 15.11., K8) */
+export const shortDate = (d: Date) => `${WD[d.getDay()]} ${d.getDate()}. ${MON_SHORT[d.getMonth()]}`;
+const MON_SHORT = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
 /** Samstag, 14. November */
 export const longDate = (d: Date) => `${WD_LONG[d.getDay()]}, ${d.getDate()}. ${MON[d.getMonth()]}`;
 export const monthYear = (d: Date) => `${MON[d.getMonth()]} ${d.getFullYear()}`;

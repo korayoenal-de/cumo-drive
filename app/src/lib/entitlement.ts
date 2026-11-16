@@ -10,7 +10,17 @@ import { AppState } from 'react-native';
 
 import { supabase } from './supabase';
 
-export type EntitlementSource = 'test' | 'plan' | 'club';
+/**
+ * Woher die Freigabe kommt (Koray 16.11.): vorstart (vor dem Release Tag, alles frei), gruender (Konto vor dem
+ * Release angelegt, 12 Monate ab Release), start (in den ersten 30 Tagen angelegt, frei bis Release plus 30 Tage),
+ * test (danach, 14 Tage ab Anlegen), plan (Kauf), club (auf Rechnung).
+ */
+export type EntitlementSource = 'vorstart' | 'gruender' | 'start' | 'test' | 'plan' | 'club';
+
+/** Freie Phase ohne Kauf, die irgendwann endet und auf die kostenlose Version fällt */
+export function isFreePhase(source: EntitlementSource) {
+  return source === 'start' || source === 'test' || source === 'gruender';
+}
 
 export type Entitlement = {
   /** true, bis der erste Stand für das angemeldete Konto da ist */
@@ -26,6 +36,8 @@ export type Entitlement = {
   clubName: string | null;
   /** Heimatgebiet der kostenlosen Version (Koray 14.11.), null solange nicht festgelegt */
   home: HomeArea | null;
+  /** Grenzen der kostenlosen Version gelten (ab dem Release Tag, vom Server) */
+  limits: boolean;
 };
 
 export type HomeArea = { lat: number; lon: number; name: string | null; changes: number; radiusKm: number };
@@ -53,7 +65,7 @@ export type Price = {
 export const PRICES: Price[] = [
   { id: 'jahr', name: 'Jahr', amount: 59.99, priceText: '59,99 €', periodText: 'pro Jahr', perMonthText: '5,00 € im Monat', renews: true, days: 365, highlight: true },
   { id: 'monat', name: 'Monat', amount: 14.99, priceText: '14,99 €', periodText: 'pro Monat', perMonthText: null, renews: true, days: 30, highlight: false },
-  { id: 'woche', name: 'Woche', amount: 6.99, priceText: '6,99 €', periodText: 'pro Woche', perMonthText: null, renews: true, days: 7, highlight: false },
+  { id: 'woche', name: 'Woche', amount: 7.99, priceText: '7,99 €', periodText: 'pro Woche', perMonthText: null, renews: true, days: 7, highlight: false },
   { id: 'saison', name: 'Saison Pass', amount: 49, priceText: '49 €', periodText: 'einmalig für 6 Monate', perMonthText: null, renews: false, days: 183, highlight: false },
 ];
 
@@ -78,8 +90,8 @@ export const HOME_RADIUS_KM = 150;
 
 const DAY = 24 * 60 * 60 * 1000;
 
-const LOADING: Entitlement = { loading: true, active: true, source: 'test', until: null, daysLeft: 0, maxVehicles: PRIVATE_MAX_VEHICLES, clubName: null, home: null };
-const SIGNED_OUT: Entitlement = { loading: false, active: false, source: 'test', until: null, daysLeft: 0, maxVehicles: 0, clubName: null, home: null };
+const LOADING: Entitlement = { loading: true, active: true, source: 'test', until: null, daysLeft: 0, maxVehicles: PRIVATE_MAX_VEHICLES, clubName: null, home: null, limits: false };
+const SIGNED_OUT: Entitlement = { loading: false, active: false, source: 'test', until: null, daysLeft: 0, maxVehicles: 0, clubName: null, home: null, limits: false };
 /** Erstes Laden ohne Netz: offen lassen, beim nächsten Fokus wird neu gefragt */
 const OFFLINE_OPEN: Entitlement = { ...LOADING, loading: false };
 
@@ -101,11 +113,13 @@ type Raw = {
   max_vehicles?: number;
   club_name?: string | null;
   home?: { lat: number; lon: number; name: string | null; changes: number; radius_km: number } | null;
+  limits?: boolean;
 };
 
 function parse(raw: Raw): Entitlement {
   const until = raw.until ? new Date(raw.until) : null;
-  const source: EntitlementSource = raw.source === 'plan' || raw.source === 'club' ? raw.source : 'test';
+  const known: EntitlementSource[] = ['plan', 'club', 'vorstart', 'gruender', 'start', 'test'];
+  const source: EntitlementSource = known.includes(raw.source as EntitlementSource) ? (raw.source as EntitlementSource) : 'test';
   return {
     loading: false,
     active: !!raw.active,
@@ -115,6 +129,7 @@ function parse(raw: Raw): Entitlement {
     maxVehicles: typeof raw.max_vehicles === 'number' ? raw.max_vehicles : 0,
     clubName: raw.club_name ?? null,
     home: raw.home ? { lat: raw.home.lat, lon: raw.home.lon, name: raw.home.name, changes: raw.home.changes, radiusKm: raw.home.radius_km || HOME_RADIUS_KM } : null,
+    limits: !!raw.limits,
   };
 }
 

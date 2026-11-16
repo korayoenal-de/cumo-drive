@@ -28,7 +28,7 @@ import { passState, usePassLive } from '@/lib/pass-live';
 import { PASSES, passPoint, passSummary, type Pass } from '@/lib/passes';
 import { buildTour, findPlace, FRESH_MS, locate, newSeed, PHASES, toPlanError, type PlanError, type PlanPhase, type Spot, type TourRequest } from '@/components/planner/create-tour';
 import { DirectionDial } from '@/components/planner/direction-dial';
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipRow } from '@/components/ui/chip';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { BACK_PILL_H, BackPill } from './back-pill';
@@ -37,10 +37,13 @@ import { usePillText } from './use-pill';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
-import { ActionSheet } from '@/components/ui/action-sheet';
+import { ActionSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
+import { AskFeedbackSheet } from '@/components/planner/ask-feedback-sheet';
+import { ASK_AFTER_ROLLS, ASK_DELAY_MS, mayAsk, type AskRound } from '@/lib/ask-feedback';
 import { Colors, Motion, Spacing } from '@/constants/theme';
 import { cumoAvailable, prewarmRouting } from '@/lib/cumo-routing';
 import { onEditTour, setEditBackHandler, takeEditTour, useEditOrigin } from '@/lib/edit-tour';
+import { takeLiveEdit } from '@/lib/live-edit';
 import { countCurves } from '@/lib/stats';
 import { reverseName } from '@/lib/geocode';
 import { formatMinutes, parseWish, STOPS, targetKm, type Stop, type TourWish } from '@/lib/intent';
@@ -153,10 +156,11 @@ type Stage =
   | { kind: 'result'; tour: PlannedTour; req: TourRequest; stops: Stop[] }
   | { kind: 'error'; error: PlanError; req?: TourRequest };
 
-export default function Planner() {
+export default function Planner({ liveEdit = false }: { /** Tour anpassen unterwegs, über der laufenden Navigation (Koray 15.11.) */ liveEdit?: boolean } = {}) {
   // Tour planen ist der erste Tab und beim Öffnen gewählt (Koray 8.11.)
   const [mode, setMode] = useState<Mode>('tour');
   const [view, setView] = useState<Stage>({ kind: 'form' });
+  const [askRounds, setAskRounds] = useState<AskRound[] | null>(null);
   const abort = useRef<AbortController | null>(null);
   /**
    * Nächste Runde vorab rechnen (10.11.): Kurz nachdem eine Rundtour steht, rechnet die App im Hintergrund
@@ -254,10 +258,12 @@ export default function Planner() {
   const loadTour = tourPlan.load;
   useEffect(() => {
     const take = () => {
-      const t = takeEditTour();
+      // Unterwegs: nur der Rest der laufenden Tour, nie eine aus Meine Touren
+      const lv = liveEdit ? takeLiveEdit() : null;
+      const t = liveEdit ? lv?.tour ?? null : takeEditTour();
       if (!t) return;
       abort.current?.abort();
-      const p = normProfile(t.profile ?? profile);
+      const p = normProfile(lv?.profile ?? t.profile ?? profile);
       setView({ kind: 'form' });
       setMode('tour');
       setPending(null);
@@ -272,12 +278,14 @@ export default function Planner() {
     };
     // Vorgemerkt, bevor der Planer da war, oder später, während er schon offen ist
     const id = setTimeout(take, 0);
-    const off = onEditTour(take);
+    const off = liveEdit ? () => undefined : onEditTour(take);
     return () => {
       clearTimeout(id);
       off();
     };
-  }, [loadTour, profile, avoid]);
+    // unterwegs nur einmal beim Öffnen abholen
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadTour, liveEdit ? null : profile, liveEdit ? null : avoid, liveEdit]);
 
   /**
    * Runde anpassen (wie calimoto): als Route mit Start, Zwischenzielen und Ziel öffnen, die Strecke
@@ -596,6 +604,10 @@ export default function Planner() {
   // oben in der Pille, dort ist der Blick (Koray 11.11.); die erste Planung einer neuen Tour hat ihren eigenen Scan
   const adjustBusy = (!!adjust?.busy || (mapEdit && !!tourPlan.planned)) && !!tourPlan.step && mode === 'tour' && view.kind === 'form';
   const inTour = view.kind === 'form' && mode === 'tour';
+  // Jede weitere Neuplanung aus der Liste (Punkte, Profil, Vermeiden) zeigt ihren Schritt ebenfalls oben auf der
+  // Karte (Koray 14.11.): Ist das Blatt klein oder der Knopf verdeckt, wirkte die App sonst hängengeblieben.
+  const listBusy = inTour && !!tourPlan.step && !scan && !adjustBusy;
+  const listPill = usePillText(listBusy ? tourPlan.step : null, 'tour', 0);
   const pill = usePillText(
     scan ? (tourPlan.step ?? null) : view.kind === 'working' ? view.phase : null,
     scan ? 'tour' : 'runde',
@@ -722,7 +734,11 @@ export default function Planner() {
   // Kopf des Blatts: Modus oder Name der Tour, darunter Fortschritt oder Hinweis
   const header = (
     <>
-      {view.kind === 'form' && !scan ? (
+      {liveEdit && view.kind === 'form' && !scan ? (
+        <AppText variant="display" style={styles.headline} accessibilityRole="header">
+          Tour anpassen
+        </AppText>
+      ) : view.kind === 'form' && !scan ? (
         <TypoTabs
           value={mode === 'tour' ? 'route' : 'runde'}
           options={[
@@ -826,7 +842,18 @@ export default function Planner() {
             const r = rolls[i];
             if (r) setView({ kind: 'result', tour: r.tour, req: r.req, stops: r.stops });
           }}
-          onBack={() => setView({ kind: 'form' })}
+          onBack={(saved) => {
+            // Drei Runden gesehen, nichts gespeichert: einmal freundlich nachfragen (Koray 16.11.)
+            const seen = rolls.map((r) => ({ tour: r.tour, req: r.req }));
+            setView({ kind: 'form' });
+            if (!saved && seen.length >= ASK_AFTER_ROLLS) {
+              setTimeout(() => {
+                void mayAsk().then((ok) => {
+                  if (ok) setAskRounds(seen);
+                });
+              }, ASK_DELAY_MS + SHEET_GONE_MS);
+            }
+          }}
           onAdjust={() => adjustRound(view.tour, view.req.profile)}
           adding={adding}
           planned={roundStops}
@@ -841,6 +868,7 @@ export default function Planner() {
 
       {mode === 'tour' ? (
         <TourMode
+          liveEdit={liveEdit}
           plan={tourPlan}
           here={here}
           onHere={setHere}
@@ -889,7 +917,7 @@ export default function Planner() {
             </AppText>
           )}
 
-          <Section label="Dauer">
+          <Section label="Fahrzeit">
             <View style={styles.durRow}>
               {DURATIONS.map((d) => {
                 const active = eff.minutes === d.minutes && !eff.km;
@@ -912,7 +940,7 @@ export default function Planner() {
           </Section>
 
           <Section label="Fahrstil">
-            <View style={styles.wrap}>
+            <ChipRow>
               {STYLE_PROFILES.map((id) => (
                 <Chip
                   key={id}
@@ -921,11 +949,11 @@ export default function Planner() {
                   onPress={() => setOver((o) => ({ ...o, profile: id }))}
                 />
               ))}
-            </View>
+            </ChipRow>
           </Section>
 
           <Section label="Richtung">
-            <View style={styles.wrap}>
+            <ChipRow>
               {eff.towardName && <Chip label={eff.towardName} active onPress={() => setOver((o) => ({ ...o, direction: 'zufall' }))} />}
               <Chip
                 label="Zufall"
@@ -940,11 +968,11 @@ export default function Planner() {
                   onPress={() => setOver((o) => ({ ...o, direction: d.id }))}
                 />
               ))}
-            </View>
+            </ChipRow>
           </Section>
 
           <Section label="Stopps">
-            <View style={styles.wrap}>
+            <ChipRow>
               {STOPS.map((s) => {
                 const active = eff.stops.includes(s.id);
                 return (
@@ -956,7 +984,7 @@ export default function Planner() {
                   />
                 );
               })}
-            </View>
+            </ChipRow>
           </Section>
 
           <VehiclePick />
@@ -1040,11 +1068,11 @@ export default function Planner() {
             </View>
           </Section>
 
-          <Section label="Länge">
+          <Section label="Wie lang?">
             <View style={styles.card}>
               <View style={styles.wrap}>
-                <Chip label="Kilometer" active={lengthBy === 'km'} onSurface onPress={() => setLengthBy('km')} />
-                <Chip label="Dauer" active={lengthBy === 'dauer'} onSurface onPress={() => setLengthBy('dauer')} />
+                <Chip label="Strecke" active={lengthBy === 'km'} onSurface onPress={() => setLengthBy('km')} />
+                <Chip label="Fahrzeit" active={lengthBy === 'dauer'} onSurface onPress={() => setLengthBy('dauer')} />
               </View>
               <View style={styles.stepper}>
                 <StepButton
@@ -1079,11 +1107,11 @@ export default function Planner() {
 
           {PROFILE_CHOICES.length > 1 && (
             <Section label="Profil">
-              <View style={styles.wrap}>
+              <ChipRow>
                 {PROFILE_CHOICES.map((p) => (
                   <Chip key={p.id} label={p.label} active={profile === p.id} onPress={() => setProfile(p.id)} />
                 ))}
-              </View>
+              </ChipRow>
             </Section>
           )}
 
@@ -1212,6 +1240,8 @@ export default function Planner() {
             status={
               adjustBusy
                 ? { kind: 'busy', text: 'Strecke wird angepasst' }
+                : listBusy
+                  ? { kind: 'busy', text: listPill ?? 'Route wird berechnet' }
                 : adjustDone
                   ? {
                       kind: 'done',
@@ -1263,6 +1293,7 @@ export default function Planner() {
       {body}
     </MapSheet>
     </View>
+    <AskFeedbackSheet rounds={askRounds} onDone={() => setAskRounds(null)} />
     <ActionSheet
       visible={askKeep}
       title="Änderungen behalten?"
@@ -1271,12 +1302,15 @@ export default function Planner() {
       items={[
         ...(routeTour
           ? [
-              { key: 'save', icon: 'checkmark' as const, label: 'Speichern und zurück', primary: true, busy: tourPlan.saving, onPress: () => void keepAndLeave(false) },
+              // Gleiche Zeilen wie die Rückfrage beim Speichern, ohne orange Taste (Koray 16.11.)
+              tourPlan.cloudId
+                ? { key: 'save', icon: 'checkmark' as const, label: 'Aktuelle Tour überschreiben', busy: tourPlan.saving, onPress: () => void keepAndLeave(false) }
+                : { key: 'save', icon: 'checkmark' as const, label: 'Speichern', busy: tourPlan.saving, onPress: () => void keepAndLeave(false) },
               // Ungespeicherte Kopie (Community): Speichern legt ohnehin eine neue Tour an
-              ...(tourPlan.cloudId ? [{ key: 'copy', icon: 'plus.square.on.square' as const, label: 'Als Kopie speichern', hint: 'Das Original bleibt wie es war', onPress: () => void keepAndLeave(true) }] : []),
+              ...(tourPlan.cloudId ? [{ key: 'copy', icon: 'plus' as const, label: 'Als neue Tour speichern', onPress: () => void keepAndLeave(true) }] : []),
             ]
           : []),
-        { key: 'discard', icon: 'arrow.uturn.backward' as const, label: 'Verwerfen', danger: true, onPress: leave },
+        { key: 'discard', icon: 'arrow.uturn.backward' as const, label: 'Änderungen verwerfen', danger: true, onPress: leave },
       ]}
     />
     <FunSheet

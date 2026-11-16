@@ -1,6 +1,6 @@
 /**
  * Darf ich diese Tour fahren? Prüfung vor jedem eigenen Losfahren (kostenlose Version, Koray 14.11.).
- * Mitglieder und alle, solange die Grenzen stumm sind (LIMITS_LIVE), fahren sofort.
+ * Mitglieder und alle, solange die Grenzen stumm sind (limitsLive()), fahren sofort.
  * Kostenlos: die ganze Strecke muss im Heimatgebiet liegen. Sonst kommt das Blatt „Fahr die ganze Runde“
  * mit den Auswegen „Bis zur Grenze fahren“ (die Tour wird am Rand neu geplant) und „Erst mal speichern“.
  * Wer mitfährt (Gruppe oder Ausfahrt eines anderen), wird hier nicht geprüft.
@@ -8,7 +8,7 @@
 import { canDrive, getEntitlement, setHomeArea } from './entitlement';
 import { reverseName } from './geocode';
 import { here } from '@/components/group/meeting-route';
-import { askMembership, LIMITS_LIVE } from './paywall';
+import { askMembership, limitsLive } from './paywall';
 import { planChecked } from './plan';
 import { showToast } from './toast';
 import { flatten, haversine, type LatLon, type Profile, type Tour } from './tour';
@@ -18,7 +18,7 @@ import type { Avoid } from './valhalla';
 export type DriveDecision = { go: true; tour: Tour } | { go: false; save?: boolean };
 
 export async function guardDrive(tour: Tour, profile: Profile, avoid: Avoid, onceKey: string): Promise<DriveDecision> {
-  if (!LIMITS_LIVE) return { go: true, tour };
+  if (!limitsLive()) return { go: true, tour };
   const line = flatten(tour).map((x) => x.p);
   let check = canDrive(line);
   if (check === 'kein_gebiet') {

@@ -17,7 +17,7 @@ function Car({ v, size }: { v: Vehicle; size: number }) {
   const look = carLookFor(v);
   return (
     <View style={[styles.car, { width: size * 1.2, height: size * 0.8 }]}>
-      {look ? <CarSprite look={look} frame={frameFor(215)} size={size} /> : <SymbolView name="car.side.fill" size={size * 0.55} tintColor={Colors.muted} />}
+      {look ? <CarSprite look={look} frame={frameFor(215)} size={size} /> : <SymbolView weight="semibold" name="car.side.fill" size={size * 0.55} tintColor={Colors.muted} />}
     </View>
   );
 }

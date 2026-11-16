@@ -2,21 +2,26 @@
  * Oberfläche der Route im Planer: Punktliste mit Suchfeld und Anfasser, Etappen mit Profil und
  * Pass Vorschlägen, Vermeiden, Ergebnis der Route. Der Zustand kommt aus use-tour-plan.ts.
  */
+import { ShareSheet } from '@/components/tours/share-sheet';
 import { router } from 'expo-router';
 import { type ComponentRef, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, Pressable, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SymbolView } from 'expo-symbols';
 
 import { haptic } from '@/lib/haptics';
+import { applyLiveEdit, endLiveEdit } from '@/lib/live-edit';
 import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
 import { PASS_STATUS_URL, PASSES } from '@/lib/passes';
 import { countCurves } from '@/lib/stats';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { tourFun } from '@/lib/fun-score';
-import { directNote } from '@/lib/plan';
+import { directNote, type PlanStep } from '@/lib/plan';
+import { useClosedCheck } from '@/components/tours/closed-sheet';
+import { ActionSheet } from '@/components/ui/action-sheet';
+import { findPlannedRide, setRideTour } from '@/lib/group/invites';
 import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 
 import { NameDialog } from '@/components/planner/name-dialog';
@@ -24,11 +29,11 @@ import { logSignal } from '@/lib/signals';
 import { showToast } from '@/lib/toast';
 import { getEditOrigin, setEditTour } from '@/lib/edit-tour';
 import { DeleteTourSheet } from '@/components/tours/delete-tour-sheet';
-import { duplicateTour, useLibrary } from '@/lib/library';
+import { readLibrary, useLibrary } from '@/lib/library';
 import { ActionBar } from '@/components/ui/action-bar';
 import { LoadingButton, type LoadStage } from '@/components/ui/loading-button';
 import { AppText } from '@/components/ui/text';
-import { Colors, Motion, Shadow } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 import { guardDrive } from '@/lib/drive-guard';
 import { setActiveTour } from '@/lib/active-tour';
 import { shareTourLink } from '@/lib/share-link';
@@ -36,7 +41,7 @@ import { exportTour } from '@/lib/route-file';
 import { useSession } from '@/lib/auth';
 import { doubledStretch } from '@/lib/doubled';
 import { routePasses } from '@/lib/route-edit';
-import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
+import { flatten, formatKm, haversine, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
 
 import { PlaceSearch, type Cat, type Slot } from './place-search';
@@ -46,7 +51,6 @@ import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
 import { Accordion, avoidSummary, DragArea, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, Warnings } from './planner-parts';
 import { keyOf, type PendingPoint, type PointKind, profileWord, samePts } from './planner-shared';
-import { type PlanStep } from '@/lib/plan';
 
 import { styles } from './planner-styles';
 import { type TourPlan } from './use-tour-plan';
@@ -65,8 +69,10 @@ const LOAD_STAGES: Record<PlanStep, LoadStage> = {
 export type EditTarget = { kind: PointKind; index?: number; insert?: boolean };
 
 export function TourMode({
-  plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onDragChange, onListEdit, onShowPoint,
+  liveEdit = false, plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onDragChange, onListEdit, onShowPoint,
 }: {
+  /** Tour anpassen unterwegs: Übernehmen und Verwerfen statt Losfahren (Koray 15.11.) */
+  liveEdit?: boolean;
   plan: TourPlan;
   here: Spot | null;
   onHere: (s: Spot) => void;
@@ -167,6 +173,8 @@ export function TourMode({
   /** Dialog Name vergeben beim ersten Speichern (Koray 8.11.) */
   const [naming, setNaming] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  /** Speichern einer geänderten gespeicherten Tour: überschreiben oder als neue Tour (Koray 16.11.) */
+  const [askOverwrite, setAskOverwrite] = useState(false);
   const editPoint = pointOf(edit);
   function removeEdited() {
     if (!edit) return;
@@ -304,6 +312,7 @@ export function TourMode({
   // Solo oder Gruppe, im Schalter der Hauptaktion. Als Gruppe wird die Tour vorher gespeichert,
   // denn Mitfahrer lädt man zu einer Tour aus Meine Touren ein.
   const [askDelete, setAskDelete] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);
   // Zurücksetzen leert nur das Formular; ohne Rückfrage, aber mit Rückgängig im Toast
   const resetForm = () => {
@@ -317,7 +326,51 @@ export function TourMode({
   // Löschen entfernt die geöffnete, gespeicherte Tour aus Meine Touren (mit Rückfrage, bei veröffentlichten mit Wahl)
   const library = useLibrary();
   const savedTour = plan.cloudId ? library.find((x) => x.id === plan.cloudId) ?? null : null;
+
+  /** Zur gespeicherten Fassung zurück */
+  const revert = () => {
+    const t = plan.cloudId ? readLibrary().find((x) => x.id === plan.cloudId) : null;
+    if (t) setEditTour(t, getEditOrigin());
+  };
+
+  /** Aktuelle Tour überschreiben; hängt eine geplante Ausfahrt daran, bietet der Toast an, sie nachzuziehen */
+  const overwrite = async () => {
+    const id = await plan.save(curves, firstProfile, avoid, undefined, { quiet: true }).catch(() => null);
+    if (!id) return;
+    const t = readLibrary().find((x) => x.id === id);
+    const name = t?.name ?? plan.name.trim();
+    const ride = await findPlannedRide(id).catch(() => null);
+    if (ride && t) {
+      showToast(`${name} aktualisiert. Deine Ausfahrt fährt noch die alte Fassung.`, {
+        action: {
+          label: 'Übernehmen',
+          onPress: () =>
+            void setRideTour(ride.id, t, t.profile ?? firstProfile, avoid)
+              .then(() => showToast('Die Ausfahrt fährt jetzt die neue Fassung.'))
+              .catch(() => showToast('Das hat nicht geklappt.', { tone: 'error' })),
+        },
+      });
+    } else showToast(`${name} aktualisiert`);
+  };
+
+  /** Als neue Tour speichern: die gespeicherte bleibt, der Planer zeigt danach die neue */
+  const saveAsNew = async () => {
+    const id = await plan.save(curves, firstProfile, avoid, undefined, { asCopy: true, quiet: true });
+    const c = id ? readLibrary().find((x) => x.id === id) : null;
+    if (!c) return;
+    showToast(`${c.name} gespeichert`);
+    setEditTour(c, getEditOrigin());
+  };
+
+  /** Satz unter der Rückfrage: wen das Überschreiben noch betrifft */
+  const overwriteNote = savedTour?.published
+    ? 'Auch die veröffentlichte Tour in der Community ändert sich.'
+    : savedTour?.author
+      ? `Nur deine Fassung ändert sich, das Original von ${savedTour.author} bleibt.`
+      : 'Die gespeicherte Fassung wird durch deine Änderungen ersetzt.';
   // Allein oder als Gruppe: Abfrage beim Druck auf Losfahren (Koray 7.11.)
+  /** Sperrung auf der Tour beim Losfahren: warnen und Umfahrung zeigen (Koray 16.11.) */
+  const closed = useClosedCheck();
   const drive = async (asGroup = false) => {
     if (!routeTour) return;
     if (asGroup) {
@@ -325,8 +378,13 @@ export function TourMode({
       if (id) router.push({ pathname: '/gruppe/neu', params: { tour: id } });
       return;
     }
-    const named = { ...routeTour, name: plan.name.trim() || routeTour.name };
-    // kostenlose Version: außerhalb des Heimatgebiets kommt die Paywall (stumm, solange LIMITS_LIVE aus ist)
+    // Gerade gesperrt (Koray 16.11.): ausdrücklich warnen und die Umfahrung zeigen, statt still loszufahren
+    await closed.check(routeTour, firstProfile, avoid, (t) => void startNav(t));
+  };
+
+  const startNav = async (t: Tour) => {
+    const named = { ...t, name: plan.name.trim() || routeTour?.name || t.name };
+    // kostenlose Version: außerhalb des Heimatgebiets kommt die Paywall (stumm, solange limitsLive() aus ist)
     const ok = await guardDrive(named, firstProfile, avoid, `route:${plan.cloudId ?? named.name}`);
     if (!ok.go) {
       if (ok.save && (plan.dirty || !plan.cloudId)) {
@@ -336,7 +394,7 @@ export function TourMode({
       return;
     }
     setActiveTour(ok.tour, firstProfile, avoid);
-    logSignal('losgefahren', routeTour, { mode: 'route', profile: firstProfile, suggested: false });
+    logSignal('losgefahren', t, { mode: 'route', profile: firstProfile, suggested: false });
     router.push('/navigation');
   };
 
@@ -502,7 +560,7 @@ export function TourMode({
                 setOrtOpen(id);
               }}
               style={({ pressed }) => [styles.ortBtn, kind !== 'via' && styles.ortBtnZiel, pressed && { opacity: 0.75 }]}>
-              <SymbolView name={kind === 'via' ? 'cup.and.saucer.fill' : 'bed.double.fill'} size={18} tintColor={kind === 'via' ? Colors.text : Colors.signal} />
+              <SymbolView weight="semibold" name={kind === 'via' ? 'cup.and.saucer.fill' : 'bed.double.fill'} size={20} tintColor={kind === 'via' ? Colors.text : Colors.signal} />
             </Pressable>
           )}
           {p && <MoreButton label={`Aktionen für ${role} ${nameOf(p)}`} onPress={(v) => openMenu(kind, index, p, v)} />}
@@ -616,6 +674,20 @@ export function TourMode({
         </View>
       )}
 
+      {/* Detailansicht einer gespeicherten Tour (Koray 16.11.): Name mit Plakette bei Änderung; Umbenennen im ⋯ */}
+      {plan.cloudId && routeTour && (
+        <View style={tourStyles.nameRow}>
+          <AppText variant="title" numberOfLines={2} style={tourStyles.nameText} accessibilityRole="header">
+            {plan.name.trim() || routeTour.name}
+          </AppText>
+          {plan.dirty && (
+            <View style={tourStyles.badge}>
+              <AppText style={tourStyles.badgeText}>Geändert</AppText>
+            </View>
+          )}
+        </View>
+      )}
+
       <Section label="Route" action={pts.length ? { label: 'Zurücksetzen', onPress: resetForm } : undefined}>
         <View>
           {slots.map((p, i) => {
@@ -683,7 +755,11 @@ export function TourMode({
             onCancel={() => setRenaming(false)}
             onSave={(n) => {
               setRenaming(false);
-              if (n !== plan.name.trim()) void plan.save(curves, firstProfile, avoid, n);
+              // Nur der Name: gleich speichern. Ist auch die Strecke geändert, erst mit der Rückfrage beim Speichern
+              if (n !== plan.name.trim()) {
+                if (plan.dirty) plan.setName(n);
+                else void plan.save(curves, firstProfile, avoid, n);
+              }
             }}
           />
           <FunSheet fun={fun} name={routeTour.name || 'Deine Route'} visible={funOpen} onClose={() => setFunOpen(false)} check={routeCheck(warnings.length, routeTour.geprueft !== false)} twiceKm={twiceKm} line={line} />
@@ -754,7 +830,7 @@ export function TourMode({
         </View>
       </Accordion>
 
-      {pts.length >= 2 && !routeTour && !busy && <PrimaryButton label="Route planen" onPress={() => plan.planNow(profile, avoid)} />}
+      {pts.length >= 2 && !routeTour && !busy && <PrimaryButton label="Tour erstellen" onPress={() => plan.planNow(profile, avoid)} />}
 
       {group && routeTour && <GroupBlock savedId={plan.cloudId} />}
 
@@ -763,6 +839,30 @@ export function TourMode({
       <View style={styles.actions}>
         {busy || (hold && !plan.error) ? (
           <LoadingButton stage={LOAD_STAGES[plan.step ?? lastStep]} done={!busy} />
+        ) : liveEdit ? (
+          <View style={styles.liveRow}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                endLiveEdit();
+                router.back();
+              }}
+              style={({ pressed }) => [styles.liveDiscard, pressed && { opacity: 0.7 }]}>
+              <AppText style={styles.liveDiscardText}>Verwerfen</AppText>
+            </Pressable>
+            <View style={styles.flex}>
+              <PrimaryButton
+                label="Übernehmen"
+                disabled={!routeTour || !plan.changed}
+                onPress={() => {
+                  if (!routeTour) return;
+                  haptic('losfahren');
+                  applyLiveEdit({ ...routeTour, name: plan.name.trim() || routeTour.name, namen: routeTour.wegpunkte.map((p) => plan.names[keyOf(p)] ?? ''), etappen: routeTour.wegpunkte.slice(1).map((_, i) => plan.legProfile(i, profile)) }, firstProfile, avoid);
+                  router.back();
+                }}
+              />
+            </View>
+          </View>
         ) : routeTour ? (
           <ActionBar
             sheetTitle={plan.name.trim() || 'Neue Tour'}
@@ -781,61 +881,58 @@ export function TourMode({
               ],
             }}
             // Speichern als sekundärer Knopf, solange die Tour neu oder geändert ist (Konzept 7.11.)
-            save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => { if (plan.saving) return; if (!plan.cloudId) setNaming(true); else void plan.save(curves, firstProfile, avoid); } } : undefined}
+            save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => { if (plan.saving) return; if (!plan.cloudId) setNaming(true); else setAskOverwrite(true); } } : undefined}
             more={[
-              {
-                key: 'link',
-                icon: 'square.and.arrow.up',
-                label: 'Link teilen',
-                hint: 'Andere öffnen die Route direkt in CUMO DRIVE',
-                onPress: () =>
-                  void shareTourLink(
-                    {
-                      ...routeTour,
-                      name: plan.name.trim() || routeTour.name,
-                      // echte Punkte mit Namen und Profil je Etappe, damit der Empfänger sie so sieht
-                      namen: routeTour.wegpunkte.map((p) => plan.names[keyOf(p)] ?? ''),
-                      etappen: routeTour.wegpunkte.slice(1).map((_, i) => plan.legProfile(i, profile)),
-                    },
-                    firstProfile,
-                  ).catch(() => undefined),
-              },
-              {
-                key: 'gpx',
-                icon: 'doc.text',
-                label: 'Als GPX teilen',
-                onPress: () => void exportTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, 'gpx').catch(() => undefined),
-              },
+              // Duplizieren entfällt (Koray 16.11.): Varianten entstehen beim Speichern über „Als neue Tour speichern“
+              ...(plan.cloudId && plan.dirty ? [{ key: 'revert', icon: 'arrow.uturn.backward' as const, label: 'Änderungen verwerfen', onPress: revert }] : []),
+              // Link und GPX als eine Zeile „Teilen“ wie in Touren (Konsistenzprüfung 15.11., O3)
+              { key: 'share', icon: 'square.and.arrow.up', label: 'Teilen', onPress: () => setSharing(true) },
               ...(plan.cloudId ? [{ key: 'rename', icon: 'pencil' as const, label: 'Umbenennen', onPress: () => setRenaming(true) }] : []),
-              // Duplizieren (Koray 10.11.): Kopie anlegen und gleich im Planer öffnen, das Original bleibt
-              ...(plan.cloudId
-                ? [
-                    {
-                      key: 'dup',
-                      icon: 'plus.square.on.square' as const,
-                      label: 'Duplizieren',
-                      hint: 'Du bearbeitest danach die Kopie',
-                      onPress: () => {
-                        const c = plan.cloudId ? duplicateTour(plan.cloudId) : null;
-                        if (!c) return;
-                        // Herkunft bleibt: Zurück führt weiter dorthin, woher die Tour kam
-                        setEditTour(c, getEditOrigin());
-                        showToast(`${c.name} angelegt, du bearbeitest jetzt die Kopie`);
-                      },
-                    },
-                  ]
-                : []),
               // Gespeicherte Tour schließen: leert den Planer, die Tour bleibt in Meine Touren (Koray 8.11.)
               ...(plan.cloudId ? [{ key: 'close', icon: 'xmark.circle' as const, label: 'Tour schließen', hint: 'Bleibt unter Touren', onPress: resetForm }] : []),
               plan.cloudId
-                ? { key: 'delete', icon: 'trash', label: 'Route löschen', danger: true, onPress: () => setAskDelete(true) }
+                ? { key: 'delete', icon: 'trash', label: 'Tour löschen', danger: true, onPress: () => setAskDelete(true) }
                 : { key: 'reset', icon: 'arrow.counterclockwise', label: 'Planung verwerfen', danger: true, onPress: resetForm },
             ]}>
             {!session && <AppText variant="caption" muted>Wird auf dem Gerät gespeichert. Angemeldet landet die Tour auch im Web Planer.</AppText>}
           </ActionBar>
         ) : null}
         {routeTour && (
+          <ShareSheet
+            visible={sharing}
+            title={plan.name.trim() || routeTour.name}
+            onLink={() =>
+              void shareTourLink(
+                {
+                  ...routeTour,
+                  name: plan.name.trim() || routeTour.name,
+                  // echte Punkte mit Namen und Profil je Etappe, damit der Empfänger sie so sieht
+                  namen: routeTour.wegpunkte.map((p) => plan.names[keyOf(p)] ?? ''),
+                  etappen: routeTour.wegpunkte.slice(1).map((_, i) => plan.legProfile(i, profile)),
+                },
+                firstProfile,
+              ).catch(() => undefined)
+            }
+            onGpx={() => void exportTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, 'gpx').catch(() => undefined)}
+            onKml={() => void exportTour({ ...routeTour, name: plan.name.trim() || routeTour.name }, 'kml').catch(() => undefined)}
+            onClose={() => setSharing(false)}
+          />
+        )}
+        {routeTour && (
           <DeleteTourSheet tour={savedTour} visible={askDelete} onClose={() => setAskDelete(false)} onDeleted={plan.reset} />
+        )}
+        {closed.sheet}
+        {routeTour && (
+          <ActionSheet
+            visible={askOverwrite}
+            title={`Möchtest du ${savedTour?.name ?? (plan.name.trim() || routeTour.name)} überschreiben?`}
+            subtitle={overwriteNote}
+            onClose={() => setAskOverwrite(false)}
+            items={[
+              { key: 'over', icon: 'checkmark', label: 'Aktuelle Tour überschreiben', onPress: () => void overwrite() },
+              { key: 'neu', icon: 'plus', label: 'Als neue Tour speichern', onPress: () => void saveAsNew() },
+            ]}
+          />
         )}
         {!routeTour && !busy && !hold && pts.length > 0 && <SecondaryButton label="Neue Tour beginnen" onPress={plan.reset} />}
       </View>
@@ -857,7 +954,7 @@ function MoreButton({ label, onPress }: { label: string; onPress: (v: ViewRef | 
       hitSlop={4}
       onPress={() => onPress(ref.current)}
       style={({ pressed }) => [styles.more, pressed && { backgroundColor: Colors.line }]}>
-      <SymbolView name="ellipsis" size={18} tintColor={Colors.text} weight="bold" />
+      <SymbolView name="ellipsis" size={20} tintColor={Colors.text} weight="semibold" />
     </Pressable>
   );
 }
@@ -871,9 +968,16 @@ function SwipeDelete({ progress, label, onPress }: { progress: SharedValue<numbe
   return (
     <Animated.View style={[styles.swipeDeleteWrap, fade]}>
       <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.swipeDelete, pressed && { opacity: 0.8 }]}>
-        <SymbolView name="trash.fill" size={18} tintColor={Colors.onSignal} weight="semibold" />
+        <SymbolView name="trash.fill" size={20} tintColor={Colors.onSignal} weight="semibold" />
         <AppText style={styles.swipeDeleteText}>Löschen</AppText>
       </Pressable>
     </Animated.View>
   );
 }
+
+const tourStyles = StyleSheet.create({
+  nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.s },
+  nameText: { flexShrink: 1, fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30 },
+  badge: { paddingHorizontal: Spacing.s + 2, paddingVertical: Spacing.xs, borderRadius: Radius.pill, backgroundColor: Colors.warnTint },
+  badgeText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
+});

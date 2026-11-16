@@ -21,14 +21,16 @@ export function AppText({
 }
 
 // Skala vom 9.11.: display Archivo 34/36, title Inter Bold 17/22, body Inter Semibold 15/20,
-// label Abschnittstitel Inter Bold 17, caption 13/16 nur Karte und Plaketten, number Kennzahl Archivo 22
+// label Abschnittstitel Inter Bold 17, caption 15/20 für Nebenzeilen, number Kennzahl Archivo 22
 const styles = StyleSheet.create({
   base: { color: Colors.text, fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: Leading.body },
   display: { fontFamily: Fonts.display, fontSize: Type.display, lineHeight: Leading.display, textTransform: 'uppercase' },
   title: { fontFamily: Fonts.bold, fontSize: Type.title, lineHeight: Leading.title },
   body: { fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: Leading.body },
   label: { fontFamily: Fonts.bold, fontSize: Type.title, lineHeight: Leading.title, color: Colors.text },
-  caption: { fontFamily: Fonts.semibold, fontSize: Type.caption, lineHeight: Leading.caption },
+  // Nebenzeilen und Hinweise in 15 wie Labels (Konsistenzprüfung 15.11., T1). 13 gibt es nur noch direkt über
+  // Type.caption auf Karte, Plaketten und in der Tab Leiste.
+  caption: { fontFamily: Fonts.semibold, fontSize: Type.small, lineHeight: Leading.body },
   number: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, textTransform: 'uppercase', fontVariant: ['tabular-nums'] },
   muted: { color: Colors.muted },
 });

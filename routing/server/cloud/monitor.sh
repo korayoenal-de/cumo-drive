@@ -60,6 +60,42 @@ use=$(df --output=pcent / | tail -1 | tr -dc 0-9)
 avail=$(free -m | awk '/^Mem:/ {print $7}')
 [ "$avail" -lt 2048 ] && once_a_day ram "Arbeitsspeicher auf $HOST knapp: $avail MB frei"
 
+# Aktualität (Koray 14.11.: immer die neuesten Daten, und das sichergestellt). Einmal am Tag um 7 Uhr:
+# Kartenstand, Alter der Routing Daten, Valhalla, Ortssuche, Stopps, laufende Zeitpläne, neue Programmversionen.
+if [ "$(date +%H)" = "07" ] && [ "$(cat "$STATE/fresh" 2>/dev/null)" != "$(date +%F)" ]; then
+  date +%F > "$STATE/fresh"
+  now=$(date +%s)
+  age_days() { [ -e "$1" ] && echo $(( (now - $(stat -c %Y "$1")) / 86400 )) || echo -1; }
+  # Stand der OSM Karte (Zeitstempel im Kopf der Datei, sonst Dateidatum)
+  pbf=/opt/cumo-routing/data/region.osm.pbf
+  if [ -f "$pbf" ]; then
+    ts=$(osmium fileinfo -g header.option.osmosis_replication_timestamp "$pbf" 2>/dev/null)
+    osm=$( [ -n "$ts" ] && echo $(( (now - $(date -d "$ts" +%s)) / 86400 )) || age_days "$pbf")
+    [ "$osm" -gt 10 ] && once_a_day fresh_osm "Kartendaten auf $HOST sind $osm Tage alt (wöchentlicher Neuaufbau prüfen)"
+  fi
+  g=$(age_days /opt/cumo-routing/data/graph-cache)
+  [ "$g" -gt 9 ] && once_a_day fresh_gh "Routing Daten (GraphHopper) auf $HOST sind $g Tage alt"
+  if [ -d /opt/valhalla ]; then
+    v=$(age_days /opt/valhalla/custom_files/valhalla_tiles.tar)
+    [ "$v" -gt 9 ] && once_a_day fresh_vh "Valhalla Daten auf $HOST sind $v Tage alt"
+    # gleiche Version wie der öffentliche Server, der die Kreisverkehre richtig ansagt
+    own=$(curl -fs -m 10 http://127.0.0.1:8002/status | python3 -c "import sys,json;print(json.load(sys.stdin).get('version',''))" 2>/dev/null)
+    pub=$(curl -fs -m 15 https://valhalla1.openstreetmap.de/status | python3 -c "import sys,json;print(json.load(sys.stdin).get('version',''))" 2>/dev/null)
+    [ -n "$own" ] && [ -n "$pub" ] && [ "${own%%-*}" != "${pub%%-*}" ] && once_a_day ver_vh "Valhalla auf $HOST hat $own, der öffentliche $pub. Beim nächsten Neubau kommt die neue Version, sonst valhalla-update.sh starten."
+  fi
+  systemctl is-enabled --quiet cumo-photon 2>/dev/null && { p=$(age_days /opt/photon/photon_data); [ "$p" -gt 40 ] && once_a_day fresh_ph "Ortssuche auf $HOST ist $p Tage alt"; }
+  [ -f /opt/cumo-routing/poi/v1/meta.json ] && { q=$(age_days /opt/cumo-routing/poi/v1/meta.json); [ "$q" -gt 40 ] && once_a_day fresh_poi "Stopps (Tank, Aussicht, Essen) auf $HOST sind $q Tage alt"; }
+  # die wöchentlichen Zeitpläne müssen laufen
+  for t in cumo-routing-update cumo-valhalla-update cumo-photon-update; do
+    systemctl list-unit-files "$t.timer" --no-legend 2>/dev/null | grep -q . || continue
+    systemctl is-active --quiet "$t.timer" || once_a_day "timer_$t" "Zeitplan $t auf $HOST läuft nicht, die Daten werden nicht mehr erneuert"
+  done
+  # neue GraphHopper Version (nur Hinweis)
+  ghv=$(cat /opt/cumo-routing/setup-server.sh /opt/cumo-routing/routing-rebuild.sh 2>/dev/null | grep -m1 -oE "GH_VERSION=[0-9.]+" | cut -d= -f2)
+  ghl=$(curl -fs -m 15 https://api.github.com/repos/graphhopper/graphhopper/releases/latest | python3 -c "import sys,json;print(json.load(sys.stdin).get('tag_name',''))" 2>/dev/null)
+  [ -n "$ghv" ] && [ -n "$ghl" ] && [ "$ghl" != "$ghv" ] && once_a_day ver_gh "GraphHopper $ghl ist erschienen, auf $HOST läuft $ghv"
+fi
+
 if [ -f /etc/cumo-primary ]; then
   # Datenbank: Antwort unter 500 heißt erreichbar (ohne Schlüssel kommt 401)
   code=$(curl -s -m 15 -o /dev/null -w "%{http_code}" https://onfxnfkhajxvjmmvmzda.supabase.co/rest/v1/)

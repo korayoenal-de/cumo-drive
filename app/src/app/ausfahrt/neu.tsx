@@ -4,7 +4,8 @@
  * Privat ist der Standard: nur Organisator und Eingeladene sehen die Ausfahrt. Kostenfrei mit drei Fahrzeugen
  * insgesamt (du und zwei Mitfahrer); in der Community veröffentlichen und mehr Plätze gibt es mit der Mitgliedschaft.
  */
-import { askMembership, LIMITS_LIVE } from '@/lib/paywall';
+import { reverseName } from '@/lib/geocode';
+import { askMembership, limitsLive } from '@/lib/paywall';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
@@ -35,7 +36,8 @@ function dayStart(offset: number): Date {
 }
 
 export default function AusfahrtNeu() {
-  const params = useLocalSearchParams<{ tour?: string }>();
+  // invite und meetingName kommen von „Nochmal fahren“ (Koray 14.11.): dieselben Leute und derselbe Treffpunkt
+  const params = useLocalSearchParams<{ tour?: string; invite?: string; meetingName?: string }>();
   const insets = useSafeAreaInsets();
   const session = useSession();
   const ent = useEntitlement();
@@ -51,7 +53,7 @@ export default function AusfahrtNeu() {
     return Math.min(toSat, DAYS - 1);
   });
   const [minutes, setMinutes] = useState(10 * 60);
-  const [meeting, setMeeting] = useState<string | null>(null);
+  const [meeting, setMeeting] = useState<string | null>(params.meetingName || null);
   // ohne Mitgliedschaft privat mit drei Fahrzeugen insgesamt, also zwei Mitfahrern (Koray 13.11.)
   const FREE_SEATS = 2;
   const maxSeats = ent.active ? Math.max(1, maxGroupVehicles(ent) - 1) : FREE_SEATS;
@@ -61,7 +63,7 @@ export default function AusfahrtNeu() {
   const [pub, setPub] = useState(false);
   const contacts = useContacts();
   const friends = (contacts.list ?? []).filter((c) => c.status === 'kontakt');
-  const [picked, setPicked] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string[]>(() => (params.invite ? params.invite.split(',').filter(Boolean) : []));
   useEffect(() => {
     void refreshContacts();
   }, []);
@@ -80,7 +82,24 @@ export default function AusfahrtNeu() {
     d.setMinutes(minutes);
     return d;
   }, [day, minutes]);
-  const startName = tour ? tour.namen?.[0] || 'Start der Tour' : '';
+  // Treffpunkt immer als Ort (Konsistenzprüfung 15.11., K6): Name des Starts, sonst der Ort dazu
+  const given = tour?.namen?.[0]?.trim();
+  const usable = given && !/^(Dein Standort|Aktueller Standort|Start der Tour)$/i.test(given) ? given : null;
+  const [placeName, setPlaceName] = useState<string | null>(null);
+  const firstPoint = tour?.wegpunkte[0] ?? null;
+  const firstKey = !usable && firstPoint ? `${firstPoint[0]},${firstPoint[1]}` : null;
+  useEffect(() => {
+    if (!firstKey) return;
+    const [la, lo] = firstKey.split(',').map(Number);
+    let live = true;
+    reverseName([la, lo])
+      .then((n) => live && n !== 'Standort' && setPlaceName(n))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [firstKey]);
+  const startName = tour ? (usable ?? placeName ?? 'Start der Tour') : '';
   const meetingName = meeting ?? startName;
   const roundTrip = tour ? tour.wegpunkte.length > 1 && haversine(tour.wegpunkte[0], tour.wegpunkte[tour.wegpunkte.length - 1]) < 3 : false;
   const goal = tour && !roundTrip ? tour.namen?.[tour.namen.length - 1] || 'Ziel der Tour' : null;
@@ -114,7 +133,7 @@ export default function AusfahrtNeu() {
     <View style={styles.head}>
       <AppText variant="display" style={styles.flex}>Ausfahrt</AppText>
       <Pressable accessibilityRole="button" accessibilityLabel="Schließen" hitSlop={4} onPress={close} style={styles.roundBtn}>
-        <SymbolView name="xmark" size={16} weight="bold" tintColor={Colors.text} />
+        <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.text} />
       </Pressable>
     </View>
   );
@@ -170,7 +189,7 @@ export default function AusfahrtNeu() {
                   <AppText style={styles.pickName} numberOfLines={1}>{t.name}</AppText>
                   <AppText variant="caption" muted>{formatKm(t.laenge_km, 0)} km{t.folder ? `  ·  ${t.folder}` : ''}</AppText>
                 </View>
-                {t.id === tourId && <SymbolView name="checkmark" size={16} weight="bold" tintColor={Colors.text} />}
+                {t.id === tourId && <SymbolView name="checkmark" size={16} weight="semibold" tintColor={Colors.text} />}
               </Pressable>
             ))}
           </View>
@@ -208,7 +227,7 @@ export default function AusfahrtNeu() {
             <View style={styles.section}>
               <AppText style={styles.label}>Treffpunkt</AppText>
               <TextInput maxFontSizeMultiplier={1.2} value={meetingName} onChangeText={setMeeting} placeholder="Zum Beispiel Parkplatz am Start" placeholderTextColor={Colors.muted} maxLength={80} style={styles.input} accessibilityLabel="Treffpunkt" />
-              <AppText variant="caption" muted>Start der Tour, der Name ist frei wählbar.</AppText>
+              <AppText variant="caption" muted>Vorbelegt mit dem Start der Tour, frei änderbar.</AppText>
             </View>
 
             {/* Ziel und Ankunft */}
@@ -217,7 +236,7 @@ export default function AusfahrtNeu() {
                 <AppText style={styles.label}>{goal ? 'Ziel' : 'Rundtour'}</AppText>
                 <AppText style={styles.value}>{goal ?? 'zurück zum Treffpunkt'}</AppText>
               </View>
-              {arr && (
+              {arr && goal && (
                 <View style={styles.alignEnd}>
                   <AppText style={styles.label}>Ankunft</AppText>
                   <AppText style={styles.value}>etwa {clock(arr)}</AppText>
@@ -252,7 +271,7 @@ export default function AusfahrtNeu() {
                           <AppText style={styles.pickName} numberOfLines={1}>{c.name}</AppText>
                           {c.car ? <AppText variant="caption" muted numberOfLines={1}>{c.car}</AppText> : null}
                         </View>
-                        <View style={[styles.check, on && styles.checkOn]}>{on && <SymbolView name="checkmark" size={13} weight="bold" tintColor={Colors.ground} />}</View>
+                        <View style={[styles.check, on && styles.checkOn]}>{on && <SymbolView name="checkmark" size={16} weight="semibold" tintColor={Colors.ground} />}</View>
                       </Pressable>
                     );
                   })}
@@ -286,19 +305,19 @@ export default function AusfahrtNeu() {
 
             {/* Plätze */}
             <View style={styles.section}>
-              <AppText style={styles.label}>Plätze für Mitfahrer</AppText>
+              <AppText style={styles.label}>Plätze für Teilnehmer</AppText>
               <View style={styles.stepper}>
                 <StepBtn icon="minus" label="Ein Platz weniger" disabled={seats <= Math.max(1, picked.length)} onPress={() => setSeats(Math.max(1, picked.length, seats - 1))} />
                 <View style={styles.stepVal}>
                   <AppText style={styles.metric}>{seats}</AppText>
-                  <AppText variant="caption" muted>{seats === 1 ? 'Fahrzeug' : 'Fahrzeuge'}</AppText>
+                  <AppText variant="caption" muted>{seats === 1 ? 'Platz' : 'Plätze'}</AppText>
                 </View>
                 <StepBtn
                   icon="plus"
                   label="Ein Platz mehr"
-                  disabled={seats >= maxSeats && !(LIMITS_LIVE && !ent.active)}
+                  disabled={seats >= maxSeats && !(limitsLive() && !ent.active)}
                   onPress={() => {
-                    // kostenlos an der Grenze: Paywall „Nimm alle mit“ (stumm, solange LIMITS_LIVE aus ist)
+                    // kostenlos an der Grenze: Paywall „Nimm alle mit“ (stumm, solange limitsLive() aus ist)
                     if (seats >= maxSeats) {
                       void askMembership('gruppe', { vehicles: seats + 2 }).then((r) => {
                         if (r === 'member') setSeats(seats + 1);
@@ -309,12 +328,12 @@ export default function AusfahrtNeu() {
                   }}
                 />
               </View>
-              {!ent.active && <AppText variant="caption" muted>Kostenfrei fahrt ihr zu dritt, du und zwei Mitfahrer. Mehr Plätze gibt es mit der Mitgliedschaft.</AppText>}
+              {!ent.active && <AppText variant="caption" muted>Kostenfrei fahrt ihr zu dritt, du und zwei Teilnehmer. Mehr Plätze gibt es mit der Mitgliedschaft.</AppText>}
             </View>
 
             {/* Hinweis */}
             <View style={styles.section}>
-              <AppText style={styles.label}>Hinweis an Mitfahrer (optional)</AppText>
+              <AppText style={styles.label}>Hinweis an die Teilnehmer (optional)</AppText>
               <TextInput maxFontSizeMultiplier={1.2} value={note} onChangeText={setNote} placeholder="Zum Beispiel Mittag am Ziel, Rückweg frei" placeholderTextColor={Colors.muted} multiline maxLength={500} style={[styles.input, styles.inputMulti]} accessibilityLabel="Hinweis an Mitfahrer" />
             </View>
 
@@ -333,7 +352,7 @@ export default function AusfahrtNeu() {
 function StepBtn({ icon, label, onPress, disabled }: { icon: 'plus' | 'minus'; label: string; onPress: () => void; disabled?: boolean }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={[styles.step, disabled && styles.stepOff]}>
-      <SymbolView name={icon} size={18} weight="bold" tintColor={Colors.text} />
+      <SymbolView name={icon} size={20} weight="semibold" tintColor={Colors.text} />
     </Pressable>
   );
 }

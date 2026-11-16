@@ -1,14 +1,14 @@
 # CUMO DRIVE Betrieb: Leistung, Sicherung, Verfügbarkeit
 
-Stand: 12. November 2026. Geschrieben von Claude nach Korays Auftrag vom 12.11. (Unabhängigkeit, zweiter Server).
+Stand: 15. November 2026 (Abschnitt 9 neu: Valhalla, Neuaufbau, Aktualität). Geschrieben von Claude nach Korays Auftrag vom 12.11. (Unabhängigkeit, zweiter Server).
 Messwerte stammen vom 12.11. und sind Momentaufnahmen.
 
 ## Aufbau
 
 | Server | Adresse | Rolle |
 |---|---|---|
-| Server 1 (vmd211515) | 13.140.213.164, https://13-140-213-164.sslip.io | Routing (GraphHopper 11), POI Kacheln; Neuaufbau So 3 Uhr |
-| Server 2 (vmd212412) | 13.140.213.114, https://13-140-213-114.sslip.io | Routing, POI Kacheln, Ortssuche (Photon Europa, unter /photon); Neuaufbau Mo 3 Uhr; zusätzliche Gebiete Mittelitalien, Pyrenäen und Zentralmassiv (Koray 13.11.), Speicher beim Aufbau 30 GB, Landmarken zwei Profile gleichzeitig |
+| Server 1 (vmd211515) | 13.140.213.164, https://r1.cumodrive.de (Notfall https://13-140-213-164.sslip.io) | Routing (GraphHopper 11), POI Kacheln; Neuaufbau So 3 Uhr |
+| Server 2 (vmd212412) | 13.140.213.114, https://r2.cumodrive.de (Notfall https://13-140-213-114.sslip.io) | Routing, POI Kacheln, Ortssuche (Photon Europa, unter /photon); Neuaufbau Mo 3 Uhr; zusätzliche Gebiete Mittelitalien, Pyrenäen und Zentralmassiv (Koray 13.11.), Speicher beim Aufbau 30 GB, Landmarken zwei Profile gleichzeitig |
 
 Beide: Contabo Cloud VPS 12 (12 Kerne, 48 GB, 400 GB SSD), Ubuntu 24.04, Caddy davor (TLS, HTTP/2 und HTTP/3), Ordner /opt/cumo-routing.
 Skripte im Repo unter routing/server/cloud: setup-server.sh (Neuaufbau), betrieb.sh (Sicherung, Überwachung, Absicherung), harden.sh (Wächter).
@@ -75,7 +75,7 @@ Erste Sicherung in beide Richtungen am 12.11. von Hand geprüft. Offen: Supabase
 | Supabase weg | Planen und Navigieren gehen weiter (Touren lokal), Community, Abgleich und Gruppe pausieren | Supabase Statusseite |
 | LiveKit weg | Funk aus, Gruppenfahrt mit Live Positionen läuft weiter | Banner „Funk getrennt“ |
 | TomTom weg oder Kontingent leer | keine aktuellen Sperrungen, Planung läuft | Protokoll der Edge Function |
-| sslip.io weg | BEIDE Server nicht erreichbar, weil ihre Namen daran hängen | siehe Schwachstellen |
+| sslip.io weg | nichts, die App nutzt r1 und r2 unter cumodrive.de (seit 16.11.) | |
 
 ### Dauer des Neuaufbaus (korrigiert 12.11.)
 
@@ -83,11 +83,11 @@ Die frühere Angabe „etwa eine Stunde“ war falsch. Gemessen am Protokoll vom
 
 Überwachung (monitor.sh, jede Minute, Stand 13.11.): eigener Dienst, Partner, Stopps des Partners, Ortssuche, eigener Valhalla (sobald /opt/valhalla/ready existiert), alle 10 Minuten eine echte Route, gescheiterte Abläufe (Neuaufbau, Ortssuche, Sicherung, Valhalla), Platte ab 85 Prozent, Speicher unter 2 GB. Auf dem Server mit /etc/cumo-primary zusätzlich die Datenbank (Supabase) und um 8 Uhr eine Tagesmeldung. Zustandswechsel stehen in setup.log; mit einer Adresse in /etc/cumo-notify (ntfy Kanal) geht eine Nachricht aufs Handy. Vorher lief keine Meldung: der Zähler scheiterte an Leerzeichen im Dateinamen.
 
-Valhalla (Server 2, /opt/valhalla, Docker): Neubau dienstags 3:00 über cumo-valhalla-update.timer (valhalla-update.sh), währenddessen fragt die App den öffentlichen Valhalla.
+Valhalla (Server 2, /opt/valhalla, Docker): Neubau dienstags 3:00 über cumo-valhalla-update.timer (valhalla-update.sh), währenddessen fragt die App den öffentlichen Valhalla. Details in Abschnitt 9.
 
 Schwachstellen, die bleiben:
 
-1. **Namen über sslip.io:** ein fremder Gratisdienst für die Namensauflösung beider Server. Lösung: eigene Namen (zum Beispiel r1 und r2 unter rallycumo.de oder cumodrive.de), sslip bleibt als Notfall in der Liste. Braucht zwei DNS Einträge von Koray.
+1. **Namen (erledigt 16.11.):** r1.cumodrive.de und r2.cumodrive.de (A Einträge bei DomainFactory, Caddy holt die Zertifikate). sslip bleibt als Notfall in der Liste der App. Neue Server: Namen im Caddyfile ergänzen (build_cloud_init.py nutzt noch routing.rallycumo.de und sslip).
 2. **Ein Anbieter, eine Region:** beide Server stehen bei Contabo in der EU. Fällt Contabo ganz aus, bleibt Valhalla als Notfall. Später: dritter Server bei einem anderen Anbieter.
 3. **Keine Nachricht aufs Handy,** solange /etc/cumo-notify leer ist.
 4. **Routing ist offen:** jeder, der die Adresse kennt, kann Routen abfragen. Heute unkritisch, später Drosselung je Adresse im Webserver.
@@ -142,6 +142,32 @@ Offen: Linien kodiert übertragen (points_encoded) spart etwa zwei Drittel der A
 * Schlüssel: Koray (eigener), Claude (claude-cumo-drive), dazu je ein Schlüssel von Server zu Server für Kopie und Sicherung in beide Richtungen.
 * GraphHopper und Photon hören nur lokal, erreichbar nur über den Webserver.
 * Geheimnisse liegen nicht auf den Servern (kein Supabase Schlüssel, kein TomTom Schlüssel).
+
+## 9. Stand 15. November 2026
+
+### Eigener Valhalla (Server 2)
+
+* Seit 14.11. abends nutzt die App den eigenen Valhalla auf Server 2 (Caddy `/valhalla/*` auf 127.0.0.1:8002). FOSSGIS bleibt Notfall in der App; die Einstellung für FOSSGIS liegt als `/etc/caddy/Caddyfile.fossgis`.
+* Bild `ghcr.io/valhalla/valhalla-scripted:latest` (3.9.1, gleiche Version wie FOSSGIS). Gebaut wird in einem eigenen Lauf, danach startet ein Behälter, der nur ausliefert (sonst baute jeder Neustart alles neu).
+* **Ländergrenzen:** Unsere Karte besteht aus Ausschnitten, darin fehlten Frankreich und Italien in `admins.sqlite`. Ohne Land nahm Valhalla Linksverkehr an und zählte Kreisverkehrsausfahrten falsch. `valhalla-admins.sh` baut die Grenzen aus den vollständigen Geofabrik Länderdateien (Frankreich, Italien) plus unserer Karte, alle 28 Tage oder wenn ein Land fehlt, und tauscht erst nach Prüfung aller Länder.
+* **Freigabe nur nach Prüfung:** `valhalla-check.py` prüft nach jedem Bau Land und Rechtsverkehr in DE, AT, CH, IT, FR, SI und den Kreisverkehr bei Obernai („1. Ausfahrt“). Erst dann wird `/opt/valhalla/ready` gesetzt.
+
+### Neuaufbau GraphHopper (Vorfall 15.11.)
+
+* Server 1 lief seit 14.11. mit GraphHopper 11.1 (Sicherheitsupdate), beide Server.
+* Am 15.11. scheiterte der Neuaufbau: Die Kartenteile hatten verschiedene Stände (DACH vom 13., Frankreich vom 14.11.), Grenzpunkte steckten doppelt in der Datei. Danach startete der alte Graph nicht, weil schon eine neue Kurvig Datei lag („Profiles do not match“); Server 1 war etwa 5:42 bis 6:00 aus, die App plante über Server 2.
+* Behoben in `setup-server.sh`: nach dem Zusammenfügen `osmium time-filter` (behält je Objekt die neueste Version). Neue Profile liegen in `custom_models.next` und werden erst beim Tausch des Graphen übernommen, mit Rückweg. `rebuild-now.sh` enthält keine alte Kopie der Kurvig Datei mehr.
+* Kurvig seit 15.11.: Bundes und Landesstraßen nur außerorts abgewertet (Mörlenbach: vorher Abkürzung durch Nebenstraßen).
+
+### Aktualität (Überwachung 7 Uhr)
+
+`monitor.sh` meldet täglich um 7 Uhr: OSM Stand älter als 10 Tage, Graph älter als 9 Tage, Valhalla Kacheln älter als 9 Tage, Valhalla Version hinter der öffentlichen, Ortssuche oder Stopps älter als 40 Tage, inaktive Zeitpläne, neue GraphHopper Version.
+
+| Daten | Takt |
+|---|---|
+| Graph Server 1 / Server 2 | So 3 Uhr / Mo 3 Uhr |
+| Valhalla (Server 2) | Di 3 Uhr, Grenzen alle 28 Tage |
+| Ortssuche | Mi (Server 2) und Do (Server 1) 4 Uhr |
 
 ## Befehle
 

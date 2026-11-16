@@ -1,7 +1,7 @@
 /**
  * Früher sperrte die App nach der Testphase ganz. Seit der kostenlosen Version (Koray 14.11.) bleibt sie offen,
  * die Grenzen greifen dort, wo sie gelten: Losfahren außerhalb des Heimatgebiets, Gruppe, Funk.
- * Solange LIMITS_LIVE aus ist (Testphase), bleibt es beim alten Verhalten.
+ * Solange limitsLive() aus ist (Testphase), bleibt es beim alten Verhalten.
  * Ohne Anmeldung greift die Sperre nicht (das regelt die Anmeldepflicht, der Web Planer bleibt offen).
  * Dazu TrialBadge, eine kleine Pille mit den restlichen Testtagen, etwa für die Einstellungen.
  */
@@ -11,8 +11,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { signOut, useSession } from '@/lib/auth';
-import { useEntitlement } from '@/lib/entitlement';
-import { LIMITS_LIVE } from '@/lib/paywall';
+import { isFreePhase, useEntitlement } from '@/lib/entitlement';
+import { limitsLive } from '@/lib/paywall';
 
 import { Paywall } from './paywall';
 
@@ -20,7 +20,7 @@ import { Paywall } from './paywall';
 export function EntitlementGate({ children }: { children: ReactNode }) {
   const session = useSession();
   const e = useEntitlement();
-  if (LIMITS_LIVE || !session || e.loading || e.active) return <>{children}</>;
+  if (limitsLive() || !session || e.loading || e.active) return <>{children}</>;
   return (
     <Paywall
       mode="expired"
@@ -38,8 +38,11 @@ export function EntitlementGate({ children }: { children: ReactNode }) {
 /** "Test noch 9 Tage": nur sichtbar während der Testphase. */
 export function TrialBadge() {
   const e = useEntitlement();
-  if (e.loading || !e.active || e.source !== 'test' || !e.until) return null;
-  const text = e.daysLeft <= 1 ? 'Test noch 1 Tag' : `Test noch ${e.daysLeft} Tage`;
+  if (e.loading || !e.active || !e.until || !isFreePhase(e.source)) return null;
+  // Gründungstester erst in den letzten zwei Wochen erinnern
+  if (e.source === 'gruender' && e.daysLeft > 14) return null;
+  const word = e.source === 'test' ? 'Test' : 'Frei';
+  const text = e.daysLeft <= 1 ? `${word} noch 1 Tag` : `${word} noch ${e.daysLeft} Tage`;
   const urgent = e.daysLeft <= 3;
   return (
     <View style={[styles.pill, urgent && styles.pillUrgent]} accessibilityLabel={text}>

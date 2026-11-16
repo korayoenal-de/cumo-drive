@@ -67,6 +67,8 @@ final class CarPlayBridge: NSObject {
     mapVC = vc
     vc.setStyle(mapStyle)
     vc.setCar(form: carForm, color: carColor)
+    vc.showsSpeed = true
+    vc.setSpeed(kmh: speed.kmh, limit: speed.limit, estimated: speed.estimated, showSpeed: speed.show)
     if pickerReady && session == nil { vc.setHint(CarPlayBridge.pickerHint) }
 
     let t = CPMapTemplate()
@@ -168,6 +170,9 @@ final class CarPlayBridge: NSObject {
     t.hideTripPreviews()
     if trip == nil { trip = makeTrip() }
     guard let trip else { return }
+    // Ankunft unten wie die Anweisung oben dunkel (Koray 15.11.: unten hell); manche Systeme übernehmen den Stil
+    // erst, wenn er zur Fahrt noch einmal gesetzt wird
+    t.tripEstimateStyle = .dark
     session = t.startNavigationSession(for: trip)
     maneuverKey = nil
     maneuver = nil
@@ -188,6 +193,40 @@ final class CarPlayBridge: NSObject {
     return UIImage(systemName: symbol, withConfiguration: cfg) ?? UIImage(systemName: "arrow.up", withConfiguration: cfg)
   }
 
+  /// Bild auf den sichtbaren Inhalt zuschneiden (durchsichtigen Rand weg), mit etwas Luft
+  private static func trimmed(_ img: UIImage) -> UIImage {
+    // Erst in ein Bitmap zeichnen: SF Symbole (Ersatz, wenn kein eigenes Symbol da ist, etwa Kreisverkehr mit
+    // Ausfahrt) und Vektorbilder haben kein cgImage und blieben sonst klein (Koray 15.11.: "nicht ganzheitlich")
+    let fmt = UIGraphicsImageRendererFormat()
+    fmt.scale = 3
+    let size = img.size.width > 0 && img.size.height > 0 ? img.size : CGSize(width: 28, height: 28)
+    let raster = UIGraphicsImageRenderer(size: size, format: fmt).image { _ in img.draw(in: CGRect(origin: .zero, size: size)) }
+    guard let cg = raster.cgImage else { return img }
+    let w = cg.width, h = cg.height
+    guard w > 0, h > 0 else { return img }
+    var px = [UInt8](repeating: 0, count: w * h * 4)
+    guard let ctx = CGContext(data: &px, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                              space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return img }
+    ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+    var minX = w, minY = h, maxX = -1, maxY = -1
+    for y in 0..<h {
+      for x in 0..<w where px[(y * w + x) * 4 + 3] > 8 {
+        if x < minX { minX = x }
+        if x > maxX { maxX = x }
+        if y < minY { minY = y }
+        if y > maxY { maxY = y }
+      }
+    }
+    guard maxX >= minX, maxY >= minY else { return img }
+    // quadratisch und mit 6 % Luft, damit der Pfeil nicht verzerrt und nicht am Rand klebt
+    let side = Int(Double(max(maxX - minX, maxY - minY) + 1) * 1.12)
+    let cx = (minX + maxX) / 2, cy = (minY + maxY) / 2
+    let rect = CGRect(x: cx - side / 2, y: cy - side / 2, width: side, height: side).intersection(CGRect(x: 0, y: 0, width: w, height: h))
+    // Zeilen im Puffer laufen von oben nach unten wie im CGImage
+    guard let cut = cg.cropping(to: rect) else { return img }
+    return UIImage(cgImage: cut, scale: 3, orientation: .up).withRenderingMode(img.renderingMode)
+  }
+
   /// then: das Manöver danach ("Dann" wie in der App), CarPlay zeigt es unter dem ersten, wenn Platz ist
   func update(key: String, text: String, symbol: String, icon: String, distM: Double, secs: Double, restKm: Double, restSecs: Double,
               thenText: String = "", thenSymbol: String = "", thenIcon: String = "", lanes: String = "") {
@@ -203,7 +242,10 @@ final class CarPlayBridge: NSObject {
       if !thenText.isEmpty {
         let n = CPManeuver()
         n.instructionVariants = [thenText]
-        n.symbolImage = CarPlayBridge.maneuverImage(icon: thenIcon, symbol: thenSymbol, size: 28)
+        // Die eigenen Symbole haben Rand für die große Kachel. In der kleinen "Dann" Zeile skaliert CarPlay das
+        // ganze Bild samt Rand, der Pfeil wurde winzig (Koray 15.11.). Darum den leeren Rand abschneiden.
+        let thenImg = CarPlayBridge.maneuverImage(icon: thenIcon, symbol: thenSymbol, size: 28)
+        n.symbolImage = thenImg.map { CarPlayBridge.trimmed($0) }
         list.append(n)
       }
       s.upcomingManeuvers = list
@@ -325,6 +367,13 @@ final class CarPlayBridge: NSObject {
   func setGroup(_ list: [[String: Any]]) {
     group = list
     for m in allMaps { m.setGroup(list) }
+  }
+
+  /// Tempo und Tempolimit auf der Hauptkarte (Build 29)
+  private var speed: (kmh: Double?, limit: Int?, estimated: Bool, show: Bool) = (nil, nil, false, true)
+  func setSpeed(kmh: Double?, limit: Int?, estimated: Bool, showSpeed: Bool) {
+    speed = (kmh, limit, estimated, showSpeed)
+    mapVC?.setSpeed(kmh: kmh, limit: limit, estimated: estimated, showSpeed: showSpeed)
   }
 
   /// Bremshinweis (Co Pilot light): kurzer Hinweis ohne Bild

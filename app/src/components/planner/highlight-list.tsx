@@ -26,7 +26,7 @@ const KIND_LABEL: Record<string, string> = {
   rallye: 'Rallyestrecke',
   bergrennen: 'Bergrennstrecke',
   aussicht: 'Aussichtsstrecke',
-  strecke: 'Traumstrecke',
+  strecke: 'Strecke',
 };
 
 /**
@@ -137,7 +137,7 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
   }, [h, line, cum, len]);
 
   const facts: { label: string; value: string }[] = [
-    { label: 'Länge', value: `${len} km` },
+    { label: 'Strecke', value: `${len} km` },
     ...(h.hairpins >= 3 ? [{ label: 'Kehren', value: String(h.hairpins) }] : []),
     ...(h.ele ? [{ label: 'Höhe', value: `${h.ele.toLocaleString('de-DE')} m` }] : []),
     ...(h.climbM ? [{ label: 'Anstieg', value: `${Math.round(h.climbM).toLocaleString('de-DE')} m` }] : []),
@@ -159,7 +159,7 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
           accessibilityLabel="Schließen"
           onPress={onClose}
           style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
-          <SymbolView name="xmark" size={18} weight="semibold" tintColor={Colors.text} />
+          <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
         </Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.body}>

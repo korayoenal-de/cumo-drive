@@ -6,7 +6,7 @@ set -euo pipefail
 exec 9>/run/cumo-setup.lock
 flock -n 9 || { echo "$(date -Is) Neuaufbau läuft schon, Abbruch" >> /opt/cumo-routing/setup.log; exit 0; }
 BASE=/opt/cumo-routing
-GH_VERSION=11.0
+GH_VERSION=11.1
 HEAP=24g
 REGIONS=(
   europe/dach-latest.osm.pbf
@@ -38,10 +38,22 @@ for r in "${REGIONS[@]}"; do
   files+=("$f")
 done
 log "Kartendaten zusammenfügen"
-osmium merge "${files[@]}" -o data/region.new.osm.pbf --overwrite
+osmium merge "${files[@]}" -o data/region.merged.osm.pbf --overwrite
+# Die Teile haben oft verschiedene Stände (15.11.: DACH vom 13., Frankreich vom 14.), dann stecken Grenzpunkte in
+# zwei Versionen in der Datei und GraphHopper bricht ab. time-filter behält von jedem Objekt nur die neueste Version.
+osmium time-filter data/region.merged.osm.pbf -o data/region.new.osm.pbf --overwrite
+rm -f data/region.merged.osm.pbf
 log "Graph bauen (dauert mehrere Stunden, vor allem die Landmarken)"
 rm -rf data/graph-cache.new
 sed 's#data/graph-cache#data/graph-cache.new#; s#data/region.osm.pbf#data/region.new.osm.pbf#' config.yml > config.import.yml
+# Neue Profile (custom_models.next) gelten erst mit dem neuen Graphen: der laufende Graph passt nur zu den alten
+# Dateien, sonst startet er nicht (15.11.: "Profiles do not match" nach einem gescheiterten Import)
+MODELS_NEXT=0
+if [ -d custom_models.next ]; then
+  MODELS_NEXT=1
+  sed -i 's#custom_models.directory: custom_models#custom_models.directory: custom_models.next#' config.import.yml
+  log "Neue Profile aus custom_models.next"
+fi
 chown -R cumo:cumo "$BASE"
 # Import (24 GB) und laufender Server (18 GB) passen erst ab 64 GB RAM sicher nebeneinander,
 # auf 48 GB hat der Linux OOM Killer den Import beendet. Der Server pausiert darum während des Imports.
@@ -71,6 +83,11 @@ rm -rf data/graph-cache.old data/region.old.osm.pbf
 [ -f data/region.osm.pbf ] && mv data/region.osm.pbf data/region.old.osm.pbf
 mv data/graph-cache.new data/graph-cache
 mv data/region.new.osm.pbf data/region.osm.pbf
+if [ "$MODELS_NEXT" = 1 ]; then
+  rm -rf custom_models.old
+  cp -a custom_models custom_models.old
+  cp -a custom_models.next/. custom_models/
+fi
 chown -R cumo:cumo "$BASE"
 systemctl start cumo-routing
 OK=0
@@ -80,6 +97,7 @@ for i in $(seq 1 60); do
 done
 if [ "$OK" = 1 ]; then
   rm -rf data/graph-cache.old data/region.old.osm.pbf
+  [ "$MODELS_NEXT" = 1 ] && rm -rf custom_models.next custom_models.old && log "Neue Profile aktiv"
   log "Fertig, Server läuft"
 elif [ -d data/graph-cache.old ]; then
   log "Neuer Graph liefert keine Route: zurück zum alten"
@@ -87,6 +105,7 @@ elif [ -d data/graph-cache.old ]; then
   rm -rf data/graph-cache data/region.osm.pbf
   mv data/graph-cache.old data/graph-cache
   mv data/region.old.osm.pbf data/region.osm.pbf
+  if [ "$MODELS_NEXT" = 1 ] && [ -d custom_models.old ]; then rm -rf custom_models; mv custom_models.old custom_models; fi
   chown -R cumo:cumo "$BASE"
   systemctl start cumo-routing
   exit 1

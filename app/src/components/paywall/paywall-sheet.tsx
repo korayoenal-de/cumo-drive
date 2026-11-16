@@ -14,9 +14,9 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { listDrives } from '@/lib/drives';
-import { PRICES, useEntitlement, type PlanId } from '@/lib/entitlement';
+import { isFreePhase, PRICES, useEntitlement, type PlanId } from '@/lib/entitlement';
 import { readLibrary } from '@/lib/library';
-import { askMembership, closePaywall, LIMITS_LIVE, usePaywall, type PaywallCtx, type PaywallKind } from '@/lib/paywall';
+import { askMembership, closePaywall, limitsLive, usePaywall, type PaywallCtx, type PaywallKind } from '@/lib/paywall';
 import { purchase, restorePurchases } from '@/lib/purchase';
 
 type Benefit = { icon: SFSymbol; title: string; text?: string };
@@ -99,13 +99,13 @@ export function PaywallHost() {
 
 /**
  * Ende der Testphase (Fall F): einmal am letzten Testtag beim Öffnen der App, mit dem eigenen Gebrauch.
- * Stumm, solange LIMITS_LIVE aus ist.
+ * Stumm, solange limitsLive() aus ist.
  */
 function useTrialEnd() {
   const session = useSession();
   const e = useEntitlement();
   const uid = session?.user.id ?? null;
-  const due = LIMITS_LIVE && !!uid && !e.loading && e.active && e.source === 'test' && e.daysLeft <= 1;
+  const due = limitsLive() && !!uid && !e.loading && e.active && isFreePhase(e.source) && e.daysLeft <= 1;
   useEffect(() => {
     if (!due || !uid) return;
     let off = false;

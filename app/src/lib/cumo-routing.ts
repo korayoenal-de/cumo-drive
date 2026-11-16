@@ -30,7 +30,9 @@ const SERVER_REGIONS = false;
  * Eigene Routing Server (Contabo, GraphHopper mit Sportwagen Profil). Seit 12.11. zwei gleiche Server:
  * fällt einer aus oder baut gerade neu, plant die App über den anderen (Koray 12.11., Unabhängigkeit).
  */
-export const CUMO_ROUTING_SERVERS = ['https://13-140-213-164.sslip.io', 'https://13-140-213-114.sslip.io'];
+// Seit 16.11. eigene Namen unter cumodrive.de (r1, r2); die sslip Namen bleiben dahinter als Notfall, falls unser DNS
+// einmal nicht antwortet. Die Sitzung startet immer auf r1 oder r2.
+export const CUMO_ROUTING_SERVERS = ['https://r1.cumodrive.de', 'https://r2.cumodrive.de', 'https://13-140-213-164.sslip.io', 'https://13-140-213-114.sslip.io'];
 export const CUMO_ROUTING_URL = CUMO_ROUTING_SERVERS[0];
 /** Index des Servers dieser Sitzung: Start zufällig, damit sich die Last auf beide verteilt; danach bleibt es
  *  bei dem, der antwortet (gleiche Ergebnisse innerhalb einer Sitzung) */
@@ -770,6 +772,8 @@ export type PlanHint = {
   heading?: number | null;
   /** deutlich teurer, aber nicht verboten (das Stück der alten Tour, das die Fahrerin gerade umfährt) */
   penalize?: LatLon[];
+  /** Planen im Voraus (Planer): Sperrungen auf Passstraßen nur als Hinweis, nicht umfahren (Koray 16.11.) */
+  ahead?: boolean;
 };
 /** wird false, sobald der Server die Fahrtrichtung ablehnt */
 let headingOk = true;

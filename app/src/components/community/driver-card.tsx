@@ -89,7 +89,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
         ) : null}
         {canWrite ? (
           <Pressable accessibilityRole="button" onPress={() => write(d)} style={styles.primary}>
-            <AppText style={styles.primaryText}>Anschreiben</AppText>
+            <AppText style={styles.primaryText}>Nachricht</AppText>
           </Pressable>
         ) : !d.isMe ? (
           <AppText variant="caption" muted>{d.name} möchte keine Nachrichten bekommen.</AppText>
@@ -108,13 +108,13 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
                 <ActivityIndicator color={Colors.muted} />
               ) : (
                 <>
-                  <SymbolView name={status === 'kontakt' ? 'person.crop.circle.badge.checkmark' : status === 'angefragt' ? 'clock' : 'person.badge.plus'} size={18} weight="semibold" tintColor={status === 'angefragt' ? Colors.muted : Colors.text} />
+                  <SymbolView name={status === 'kontakt' ? 'person.crop.circle.badge.checkmark' : status === 'angefragt' ? 'clock' : 'person.badge.plus'} size={20} weight="semibold" tintColor={status === 'angefragt' ? Colors.muted : Colors.text} />
                   <AppText style={[styles.secondaryText, status === 'angefragt' && { color: Colors.muted }]}>{status === 'kontakt' ? 'Kontakt' : status === 'angefragt' ? 'Angefragt' : status === 'anfrage' ? 'Bestätigen' : 'Zu Kontakten'}</AppText>
                 </>
               )}
             </Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} zur Gruppenfahrt einladen`} onPress={() => setInviteOpen(true)} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
-              <SymbolView name="car.2" size={18} weight="semibold" tintColor={Colors.text} />
+              <SymbolView name="car.2" size={20} weight="semibold" tintColor={Colors.text} />
               <AppText style={styles.secondaryText}>Einladen</AppText>
             </Pressable>
           </View>
@@ -155,7 +155,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
           hitSlop={4}
           onPress={() => write(d)}
           style={[styles.round, unread > 0 && styles.roundUnread]}>
-          <SymbolView name={unread ? 'bubble.left.fill' : 'bubble.left'} size={18} weight="semibold" tintColor={unread ? Colors.signal : Colors.text} />
+          <SymbolView name={unread ? 'bubble.left.fill' : 'bubble.left'} size={20} weight="semibold" tintColor={unread ? Colors.signal : Colors.text} />
           {unread > 0 && (
             <View style={styles.unread}>
               <AppText style={styles.unreadText}>{unread > 9 ? '9+' : unread}</AppText>
@@ -171,7 +171,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
 function ContactCheck() {
   return (
     <View style={styles.check} accessibilityLabel="Kontakt">
-      <SymbolView name="checkmark" size={9} weight="heavy" tintColor={Colors.ground} />
+      <SymbolView name="checkmark" size={16} weight="semibold" tintColor={Colors.ground} />
     </View>
   );
 }
@@ -202,7 +202,7 @@ function ContactButton({ d, status }: { d: Driver; status: Contact['status'] | n
   }
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} zu Kontakten hinzufügen`} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.round}>
-      {busy ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="plus" size={18} weight="semibold" tintColor={Colors.text} />}
+      {busy ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="plus" size={20} weight="semibold" tintColor={Colors.text} />}
     </Pressable>
   );
 }
@@ -234,7 +234,7 @@ export function ContactRequests({ list }: { list: Contact[] | null }) {
             {c.car ? <AppText variant="caption" muted numberOfLines={1}>{c.car}</AppText> : null}
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel={`Anfrage von ${c.name} ablehnen`} hitSlop={4} disabled={!!busy} onPress={() => void answer(c, false)} style={styles.round}>
-            {busy === c.id + false ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="xmark" size={15} weight="bold" tintColor={Colors.muted} />}
+            {busy === c.id + false ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.muted} />}
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel={`Anfrage von ${c.name} annehmen`} disabled={!!busy} onPress={() => void answer(c, true)} style={styles.accept}>
             {busy === c.id + true ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.acceptText}>Annehmen</AppText>}
@@ -254,7 +254,7 @@ function InviteSheet({ d, visible, onClose }: { d: Driver; visible: boolean; onC
   useEffect(() => {
     if (!visible) return;
     let alive = true;
-    listAusfahrten()
+    listAusfahrten().then((l) => l.filter((x) => !x.isOver))
       .then((l) => alive && setRides(l.filter((a) => a.isOwner && a.rideStatus !== 'beendet' && freeSeats(a) > 0)))
       .catch(() => alive && setRides([]));
     return () => {
@@ -271,7 +271,7 @@ function InviteSheet({ d, visible, onClose }: { d: Driver; visible: boolean; onC
   };
   const items: SheetItem[] = [
     ...(rides ?? []).map((a) => ({ key: a.id, icon: 'car.2' as const, label: a.name, hint: longDate(a.startsAt), onPress: () => void invite(a) })),
-    { key: 'neu', icon: 'plus' as const, label: 'Neue Ausfahrt erstellen', primary: !rides?.length, onPress: () => router.push('/ausfahrt/neu') },
+    { key: 'neu', icon: 'plus' as const, label: 'Neue Ausfahrt erstellen', onPress: () => router.push('/ausfahrt/neu') },
   ];
   return (
     <ActionSheet
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   secondary: { flex: 1, height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, flexDirection: 'row', gap: Spacing.s, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.text },
   pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
-  check: { position: 'absolute', right: -3, bottom: -3, width: 18, height: 18, borderRadius: 9, backgroundColor: Colors.good, borderWidth: 2, borderColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  check: { position: 'absolute', right: -5, bottom: -5, width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.good, borderWidth: 2, borderColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   pending: { minHeight: 44, paddingHorizontal: Spacing.m, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   pendingText: { fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.muted },
   accept: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
@@ -305,7 +305,8 @@ const styles = StyleSheet.create({
   small: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.m },
   ring: { borderWidth: 3, borderRadius: 30, padding: 2 },
   ringSmall: { borderWidth: 2.5, borderRadius: 25, padding: 1.5 },
-  bigName: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, textTransform: 'uppercase' },
+  // Namen von Menschen normal geschrieben, Versalien nur für Tournamen, Überschriften und Kennzahlen (Koray 15.11.)
+  bigName: { fontFamily: Fonts.bold, fontSize: Type.metric, lineHeight: Leading.metric },
   name: { fontFamily: Fonts.semibold, fontSize: Type.title },
   label: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
   garage: { gap: Spacing.xs },

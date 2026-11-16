@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   btn: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   btnText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  danger: { backgroundColor: Colors.signalTint },
+  danger: { backgroundColor: Colors.dangerTint },
   dangerText: { color: Colors.stopText },
   input: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   error: { color: Colors.stopText, fontFamily: Fonts.semibold },

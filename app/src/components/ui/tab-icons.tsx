@@ -1,5 +1,6 @@
 /**
- * Eigene Symbole der Tableiste (Koray 10.11.): ein Raster (24), eine Strichstärke, gleiche optische Größe.
+ * Eigene Symbole der Tableiste (Koray 10.11.; seit 15.11. als Bilder in assets/tabs für die iOS Leiste, erzeugt mit
+ * scripts/tab-icons.js; bei Änderungen hier dort mitziehen und neu erzeugen): ein Raster (24), eine Strichstärke, gleiche optische Größe.
  * Die SF Symbole wichen in Größe und Strich voneinander ab, und beim Routen Symbol lag die Kurve zu nah an
  * den Kreisen. Aktiv: gefüllt und etwas kräftiger, wie bei den SF .fill Varianten.
  */
@@ -43,11 +44,14 @@ export function TabIcon({ name, on, color, size = 24 }: { name: TabIconName; on:
       {name === 'touren' && <Path d="M6.5 5.2 Q6.5 3.4 8.3 3.4 H15.7 Q17.5 3.4 17.5 5.2 V20.4 L12 16.6 L6.5 20.4 Z" fill={fill} {...common} />}
       {name === 'community' && (
         <>
-          {/* zweite Person mit Abstand zur ersten, damit sie auch gefüllt getrennt bleibt */}
-          <Circle cx={17.3} cy={7.2} r={2.5} fill={fill} {...common} />
-          <Path d="M17.4 12.6 C19.9 12.6 21.4 14.6 21.4 18" fill="none" {...common} />
-          <Circle cx={9.2} cy={8} r={3.3} fill={fill} {...common} />
-          <Path d="M3 19.6 C3 15.9 5.7 13.6 9.2 13.6 C12.7 13.6 15.4 15.9 15.4 19.6 Z" fill={fill} {...common} />
+          {/* Drei Personen wie bei WhatsApp Communitys (Koray 15.11.): eine vorne in der Mitte, zwei dahinter.
+              Die hinteren nur Kopf und Schulter, mit Abstand zur mittleren, damit sie auch gefüllt getrennt bleiben. */}
+          <Circle cx={4.5} cy={10} r={1.9} fill={fill} {...common} />
+          <Path d="M1.2 18.6 C1.2 16.2 2.6 14.6 4.6 14.6" fill="none" {...common} />
+          <Circle cx={19.5} cy={10} r={1.9} fill={fill} {...common} />
+          <Path d="M22.8 18.6 C22.8 16.2 21.4 14.6 19.4 14.6" fill="none" {...common} />
+          <Circle cx={12} cy={7.4} r={2.9} fill={fill} {...common} />
+          <Path d="M6.4 19.6 C6.4 15.9 8.9 13.7 12 13.7 C15.1 13.7 17.6 15.9 17.6 19.6 Z" fill={fill} {...common} />
         </>
       )}
       {name === 'einstellungen' && (

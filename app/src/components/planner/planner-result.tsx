@@ -39,7 +39,7 @@ export function Result({
   fun?: TourFun | null;
   funDelta?: number | null;
   onFun?: () => void;
-  tour: PlannedTour; req: TourRequest; stops: Stop[]; group: boolean; onReroll: () => void; onBack: () => void;
+  tour: PlannedTour; req: TourRequest; stops: Stop[]; group: boolean; onReroll: () => void; onBack: (saved: boolean) => void;
   /** Fahrspaß der bisher gewürfelten Runden (leer bei nur einer) und welche gerade gezeigt wird */
   rolls?: (TourFun | null)[];
   rollIdx?: number;
@@ -76,7 +76,7 @@ export function Result({
       router.push({ pathname: '/gruppe/neu', params: { tour: savedId ?? saveResult() } });
       return;
     }
-    // kostenlose Version: außerhalb des Heimatgebiets kommt die Paywall (stumm, solange LIMITS_LIVE aus ist)
+    // kostenlose Version: außerhalb des Heimatgebiets kommt die Paywall (stumm, solange limitsLive() aus ist)
     const ok = await guardDrive(tour, req.profile, req.avoid, `rundtour:${tour.wegpunkte.map((w) => w.join(',')).join(';')}`);
     if (!ok.go) {
       if (ok.save && !savedId) saveResult();
@@ -150,10 +150,10 @@ export function Result({
         }}
         save={{ saved: !!savedId, onPress: () => void saveResult() }}
         more={[
-          { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Route direkt in CUMO DRIVE', onPress: () => void shareTourLink({ ...tour, name: tour.name }, req.profile).catch(() => undefined) },
-          { key: 'adjust', icon: 'pencil', label: 'Anpassen', hint: 'Start, Zwischenziele und Ziel ändern', onPress: onAdjust },
+          { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Tour direkt in CUMO DRIVE', onPress: () => void shareTourLink({ ...tour, name: tour.name }, req.profile).catch(() => undefined) },
+          { key: 'adjust', icon: 'pencil', label: 'Anpassen', onPress: onAdjust },
           { key: 'reroll', icon: 'dice', label: 'Neu würfeln', hint: 'Gleiche Länge und Richtung, andere Strecke', onPress: onReroll },
-          { key: 'back', icon: 'trash', label: 'Tour verwerfen', hint: 'Zurück zur Auswahl', danger: true, confirm: 'Möchtest du diese Runde wirklich verwerfen?', onPress: onBack },
+          { key: 'back', icon: 'trash', label: 'Runde verwerfen', danger: true, confirm: 'Möchtest du diese Runde wirklich verwerfen?', onPress: () => onBack(!!savedId) },
         ]}>
       </ActionBar>
     </View>

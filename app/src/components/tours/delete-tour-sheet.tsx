@@ -38,7 +38,7 @@ export function DeleteTourSheet({ tour, visible, onClose, onDeleted }: { tour: S
     return (
       <ActionSheet
         visible={visible}
-        title="Auch die veröffentlichte Route löschen?"
+        title="Auch die veröffentlichte Tour löschen?"
         subtitle={`${tour.name} steht in der Community. Du entscheidest, ob sie dort bleibt.`}
         onClose={onClose}
         items={[

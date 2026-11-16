@@ -3,7 +3,7 @@
  * genau dort, wo jemand an eine Grenze der kostenlosen Version stößt. Der Fall steht oben, weitere Vorteile
  * darunter, dazu ein ehrlicher Ausweg. Nach dem Kauf geht die Aktion weiter, die das Blatt ausgelöst hat.
  *
- * STUMM: Solange LIMITS_LIVE false ist (Testphase), greift keine Grenze und kein Blatt erscheint von selbst.
+ * STUMM: Solange limitsLive() false ist (Testphase), greift keine Grenze und kein Blatt erscheint von selbst.
  * Im Prüfbereich lassen sich alle Blätter trotzdem ansehen (previewPaywall).
  *
  * Anlässe: ausserhalb (Losfahren außerhalb des Heimatgebiets), gruppe (mehr als drei Autos), funk,
@@ -12,8 +12,15 @@
  */
 import { useSyncExternalStore } from 'react';
 
-/** Hauptschalter der kostenlosen Version. Auf dem Server gilt dasselbe über public.limits_live(). */
-export const LIMITS_LIVE = false;
+import { getEntitlement } from './entitlement';
+
+/**
+ * Hauptschalter der kostenlosen Version. Kommt vom Server (public.limits_live(), ab dem Release Tag an),
+ * damit am Release Tag kein Update nötig ist.
+ */
+export function limitsLive() {
+  return getEntitlement().limits;
+}
 
 export type PaywallKind = 'ausserhalb' | 'gruppe' | 'funk' | 'heimat' | 'testende' | 'abgelaufen';
 
@@ -80,7 +87,7 @@ export function closePaywall(r: PaywallResult) {
  * nochmal und das Ergebnis ist 'repeat' (die Grenze gilt trotzdem).
  */
 export function askMembership(kind: PaywallKind, ctx: PaywallCtx = {}, onceKey?: string): Promise<PaywallResult> {
-  if (!LIMITS_LIVE) return Promise.resolve('member');
+  if (!limitsLive()) return Promise.resolve('member');
   const key = `${kind}:${onceKey ?? ''}`;
   if (onceKey && shown.has(key)) return Promise.resolve('repeat');
   if (onceKey) shown.add(key);

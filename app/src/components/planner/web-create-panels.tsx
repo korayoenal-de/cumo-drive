@@ -368,7 +368,7 @@ export function RoundResult(props: {
             { key: 'adjust', label: 'Anpassen', onPress: () => props.onAdjust(cur.tour, cur.req.profile) },
             { key: 'gpx', label: 'Als GPX herunterladen', onPress: () => void exportTour(cur.tour, 'gpx') },
             { key: 'kml', label: 'Als KML herunterladen', onPress: () => void exportTour(cur.tour, 'kml') },
-            { key: 'drop', label: 'Tour verwerfen', danger: true, onPress: () => setAsk(true) },
+            { key: 'drop', label: 'Runde verwerfen', danger: true, onPress: () => setAsk(true) },
           ]}
         />
       </div>

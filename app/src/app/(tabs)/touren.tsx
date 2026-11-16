@@ -4,7 +4,8 @@
  * Jede gespeicherte Tour ist eine Karte mit Mini Streckenbild: Tippen öffnet sie im Planer (dort
  * losfahren, als Gruppe fahren, ändern und speichern), daneben nur Teilen und Löschen.
  */
-import { router, useFocusEffect } from 'expo-router';
+import { datum, fahrzeit, meta as fmtMeta, plaetze, strecke, wann } from '@/lib/format';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -14,7 +15,11 @@ import { RouteThumb } from '@/components/tours/tour-bits';
 import { TourCard } from '@/components/tours/tour-card';
 import { DateBlock } from '@/components/community/ride-bits';
 import { clock, listAusfahrten, type Ausfahrt } from '@/lib/ausfahrten';
-import { Chip } from '@/components/ui/chip';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+
+import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { Chip, ChipRow } from '@/components/ui/chip';
+import { SwipeDelete } from '@/components/ui/swipe-delete';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
@@ -22,12 +27,13 @@ import { useSession } from '@/lib/auth';
 import { setEditTour } from '@/lib/edit-tour';
 import { backfillAuthors } from '@/lib/community';
 import { filterTours, folders, readLibrary, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
-import { getDriveTracks, listDrives, type Drive } from '@/lib/drives';
+import { deleteDrive, getDriveTracks, listDrives, type Drive } from '@/lib/drives';
 import { thumbShape } from '@/lib/route-thumb';
 import { fmtG } from '@/lib/ride-stats';
 import { importTourFile } from '@/lib/route-file';
+import { showToast } from '@/lib/toast';
 import { countCurves } from '@/lib/stats';
-import { flatten, formatKm, type LatLon, type Tour } from '@/lib/tour';
+import { flatten, formatKm, type LatLon } from '@/lib/tour';
 
 /**
  * Anstehende Ausfahrten oben in Touren (Koray 13.11.): eigene und die, zu denen du eingeladen bist oder
@@ -39,7 +45,7 @@ function Upcoming() {
     useCallback(() => {
       let alive = true;
       listAusfahrten()
-        .then((l) => alive && setRides(l.filter((a) => a.rideStatus !== 'beendet' && (a.isOwner || a.myStatus === 'zugesagt' || a.myStatus === 'eingeladen' || a.myStatus === 'angefragt'))))
+        .then((l) => alive && setRides(l.filter((a) => a.rideStatus !== 'beendet' && !a.isOver && (a.isOwner || a.myStatus === 'zugesagt' || a.myStatus === 'eingeladen' || a.myStatus === 'angefragt'))))
         .catch(() => undefined);
       return () => {
         alive = false;
@@ -52,7 +58,7 @@ function Upcoming() {
       <AppText style={styles.upLabel}>Anstehend</AppText>
       {rides.map((a) => {
         const state = a.isOwner
-          ? `${a.taken} von ${a.maxMembers} Fahrzeugen${a.openRequests ? `, ${a.openRequests} ${a.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : ''}`
+          ? fmtMeta(plaetze(Math.max(0, a.maxMembers - a.taken)).text, a.openRequests ? `${a.openRequests} ${a.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : null)
           : a.myStatus === 'eingeladen'
             ? `Einladung von ${a.ownerName}`
             : a.myStatus === 'angefragt'
@@ -68,15 +74,58 @@ function Upcoming() {
             <DateBlock d={a.startsAt} />
             <View style={styles.flex}>
               <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
-              <AppText variant="caption" muted numberOfLines={1}>{clock(a.startsAt)}{a.meeting?.name ? ` ab ${a.meeting.name}` : ''}</AppText>
-              <AppText variant="caption" style={a.myStatus === 'eingeladen' || a.openRequests ? styles.upAttn : styles.upMuted} numberOfLines={1}>{state}</AppText>
+              <AppText muted numberOfLines={1}>{fmtMeta(wann(a.startsAt), a.meeting?.name ? `ab ${a.meeting.name}` : null, a.km != null ? strecke(a.km) : null)}</AppText>
+              <AppText style={a.myStatus === 'eingeladen' || a.openRequests ? styles.upAttn : styles.upMuted} numberOfLines={1}>{state}</AppText>
             </View>
             {!a.isPublic && (
               <View style={styles.privat}>
-                <SymbolView name="lock.fill" size={11} weight="bold" tintColor={Colors.text} />
+                <SymbolView name="lock.fill" size={16} weight="semibold" tintColor={Colors.text} />
                 <AppText style={styles.privatText}>Privat</AppText>
               </View>
             )}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/**
+ * Vergangene Ausfahrten unter Gefahren (Koray 14.11.): Tippen öffnet den Rückblick mit Chat und Nochmal fahren.
+ * Nur wirklich gefahrene (Koray 15.11.): eine Ausfahrt, die nie gestartet wurde, gehört nicht unter Gefahren.
+ */
+function PastRides() {
+  const [rides, setRides] = useState<Ausfahrt[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      listAusfahrten()
+        .then((l) => alive && setRides(l.filter((a) => a.isOver && !!a.startedAt && (a.isOwner || a.myStatus === 'zugesagt')).sort((x, y) => y.startsAt.getTime() - x.startsAt.getTime())))
+        .catch(() => undefined);
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+  if (!rides.length) return null;
+  return (
+    <View style={styles.upcoming}>
+      <AppText style={styles.upLabel}>Ausfahrten</AppText>
+      {rides.map((a) => {
+        const state = a.isOwner ? 'Du hast geführt' : `Mit ${a.ownerName}`;
+        return (
+          <Pressable
+            key={a.id}
+            accessibilityRole="button"
+            accessibilityLabel={`${a.name}, ${state}`}
+            onPress={() => router.push({ pathname: '/ausfahrt/[id]', params: { id: a.id } })}
+            style={({ pressed }) => [styles.upCard, pressed && { opacity: 0.85 }]}>
+            <DateBlock d={a.startedAt ?? a.startsAt} />
+            <View style={styles.flex}>
+              <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
+              <AppText muted numberOfLines={1}>{fmtMeta(a.km != null ? strecke(a.km) : null, a.meeting?.name ? `ab ${a.meeting.name}` : null)}</AppText>
+              <AppText style={styles.upMuted} numberOfLines={1}>{state}</AppText>
+            </View>
           </Pressable>
         );
       })}
@@ -88,7 +137,7 @@ const SORTS: { id: SortKey; label: string }[] = [
   { id: 'neu', label: 'Neueste' },
   { id: 'spass', label: 'Fahrspaß' },
   { id: 'name', label: 'Name' },
-  { id: 'laenge', label: 'Länge' },
+  { id: 'laenge', label: 'Strecke' },
 ];
 
 /** Tour im Planer öffnen: dort steht sie auf der Karte, mit Losfahren und Gruppe. */
@@ -162,7 +211,10 @@ export default function Touren() {
       />
 
       {tab === 'gefahren' ? (
-        <Drives loggedIn={!!session} />
+        <>
+          {session && <PastRides />}
+          <Drives loggedIn={!!session} />
+        </>
       ) : (
         <>
 
@@ -196,19 +248,20 @@ export default function Touren() {
               accessibilityLabel="Touren durchsuchen"
               returnKeyType="search"
             />
+            {/* Chips in einer Zeile, seitlich wischbar bis an den Rand (Koray 15.11.) */}
             {dirs.length > 0 && (
-              <View style={styles.wrap}>
+              <ChipRow>
                 <Chip label="Alle" active={folder === null} onPress={() => setFolder(null)} />
                 {dirs.map((d) => (
                   <Chip key={d} label={d} active={folder === d} onPress={() => setFolder(folder === d ? null : d)} />
                 ))}
-              </View>
+              </ChipRow>
             )}
-            <View style={styles.wrap}>
+            <ChipRow>
               {SORTS.map((s) => (
                 <Chip key={s.id} label={s.label} active={sort === s.id} onPress={() => setSort(s.id)} />
               ))}
-            </View>
+            </ChipRow>
           </View>
 
           <View style={styles.list}>
@@ -228,27 +281,12 @@ export default function Touren() {
 /** Spuren so vieler Fahrten auf einmal laden (die obersten der Liste, weitere beim Blättern nicht nötig) */
 const TRACKS_FIRST = 30;
 
-/**
- * Gefahrene Strecke als ungespeicherte Tour im Planer (Tester Gregor 12.11.): dort steht sie auf der Karte,
- * mit dem Lesezeichen lässt sie sich speichern und später nochmal fahren.
- */
-function openDrive(d: Drive, line: LatLon[]) {
-  const tour: Tour = { name: d.name, laenge_km: 0, wegpunkte: [line[0], line[line.length - 1]], linie: [{ c: 'ok', p: line }], warnungen: [], geprueft: false };
-  const pts = flatten(tour);
-  tour.laenge_km = +pts[pts.length - 1].km.toFixed(1);
-  const now = new Date().toISOString();
-  setEditTour(
-    { ...tour, id: '', folder: 'Gefahren', createdAt: now, updatedAt: now, curves: d.curves ?? undefined, minutes: d.moving_min },
-    { label: 'Touren', href: '/touren' },
-  );
-  router.navigate('/');
-}
-
 /** Gefahrene Touren aus dem Konto, filterbar nach Fahrzeug. */
 function Drives({ loggedIn }: { loggedIn: boolean }) {
   const [list, setList] = useState<Drive[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [car, setCar] = useState<string | null>(null);
+  const [askDelete, setAskDelete] = useState<Drive | null>(null);
   const [tracks, setTracks] = useState<Record<string, LatLon[]>>({});
   // Spuren der obersten Fahrten nachladen: die Liste steht sofort, die Streckenbilder kommen dazu
   const firstIds = useMemo(() => (list ?? []).slice(0, TRACKS_FIRST).map((d) => d.id).join(','), [list]);
@@ -286,12 +324,12 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
   return (
     <View style={styles.gapM}>
       {cars.length > 0 && (
-        <View style={styles.wrap}>
+        <ChipRow>
           <Chip label="Alle Fahrzeuge" active={car === null} onPress={() => setCar(null)} />
           {cars.map(([id, name]) => (
             <Chip key={id} label={name} active={car === id} onPress={() => setCar(car === id ? null : id)} />
           ))}
-        </View>
+        </ChipRow>
       )}
       {err && <AppText style={styles.dangerText}>{err}</AppText>}
       {list === null && !err && <ActivityIndicator color={Colors.muted} />}
@@ -302,53 +340,78 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
       )}
       {shown.length > 0 && (
         <AppText style={styles.total}>
-          {formatKm(totalKm, 0)} km in {shown.length} {shown.length === 1 ? 'Tour' : 'Touren'}
+          {strecke(totalKm)} in {shown.length} {shown.length === 1 ? 'Fahrt' : 'Fahrten'}
         </AppText>
       )}
       <View style={styles.list}>
         {shown.map((d) => {
-          const h = Math.floor(d.moving_min / 60);
-          const m = d.moving_min % 60;
           const line = tracks[d.id];
           return (
-            <DriveCard key={d.id} line={line} label={d.name} onOpen={line ? () => openDrive(d, line) : undefined}>
+            // Von rechts nach links wischen zeigt Löschen, mit Rückfrage (Koray 15.11.)
+            <Swipeable
+              key={d.id}
+              friction={1.6}
+              rightThreshold={36}
+              overshootRight={false}
+              containerStyle={styles.swipeBox}
+              renderRightActions={(prog, _tr, m) => (
+                <SwipeDelete
+                  progress={prog}
+                  label={`Fahrt ${d.name} löschen`}
+                  onPress={() => {
+                    m.close();
+                    setAskDelete(d);
+                  }}
+                />
+              )}>
+            <DriveCard line={line} label={d.name} onOpen={() => router.push(`/fahrt/${d.id}` as Href)} onDelete={() => setAskDelete(d)}>
               <View style={[styles.rowMain, styles.flex]}>
                 <View style={styles.row}>
                   <AppText style={[styles.name, styles.flex]} numberOfLines={1}>
                     {d.name}
                   </AppText>
-                  <AppText variant="caption" muted>
-                    {new Date(d.started_at).toLocaleDateString('de-DE')}
-                  </AppText>
+                  <AppText muted>{datum(new Date(d.started_at))}</AppText>
                 </View>
-                <AppText variant="caption" muted>
-                  {[
-                    `${formatKm(Number(d.km), 0)} km`,
-                    h ? `${h}:${String(m).padStart(2, '0')} h` : `${m} min`,
-                    d.curves ? `${d.curves} Kurven` : null,
-                    d.max_lat_g ? `quer ${fmtG(Number(d.max_lat_g))}` : null,
-                    d.vehicle_name,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
+                <AppText muted>
+                  {fmtMeta(strecke(Number(d.km)), fahrzeit(d.moving_min), d.curves ? `${d.curves} Kurven` : null, d.max_lat_g ? `quer ${fmtG(Number(d.max_lat_g))}` : null, d.vehicle_name)}
                 </AppText>
               </View>
             </DriveCard>
+            </Swipeable>
           );
         })}
       </View>
+      <ConfirmSheet
+        visible={!!askDelete}
+        title="Möchtest du diese Fahrt wirklich löschen?"
+        text={askDelete ? `${askDelete.name}, ${datum(new Date(askDelete.started_at))}. Strecke, Statistik und Bewertung sind dann weg.` : undefined}
+        confirmLabel="Löschen"
+        onClose={() => setAskDelete(null)}
+        onConfirm={() => {
+          const d = askDelete;
+          setAskDelete(null);
+          if (!d) return;
+          setList((l) => (l ? l.filter((x) => x.id !== d.id) : l));
+          deleteDrive(d.id).catch((e: Error) => {
+            showToast(`Löschen hat nicht geklappt: ${e.message}`, { tone: 'error' });
+            listDrives().then(setList).catch(() => undefined);
+          });
+        }}
+      />
     </View>
   );
 }
 
-/** Karte einer Fahrt mit Mini Streckenbild; Tippen zeigt die gefahrene Strecke auf der Karte */
-function DriveCard({ line, label, onOpen, children }: { line?: LatLon[]; label: string; onOpen?: () => void; children: React.ReactNode }) {
+/** Karte einer Fahrt mit Mini Streckenbild; Tippen öffnet den Rückblick mit Statistik (Koray 15.11.) */
+function DriveCard({ line, label, onOpen, onDelete, children }: { line?: LatLon[]; label: string; onOpen?: () => void; onDelete?: () => void; children: React.ReactNode }) {
   const shape = useMemo(() => (line ? thumbShape(line) : null), [line]);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityHint={onOpen ? 'Zeigt die gefahrene Strecke auf der Karte' : undefined}
+      accessibilityHint={onOpen ? 'Zeigt Strecke, Statistik und Bewertung der Fahrt' : undefined}
+      accessibilityActions={onDelete ? [{ name: 'delete', label: 'Löschen' }] : undefined}
+      onAccessibilityAction={(e) => e.nativeEvent.actionName === 'delete' && onDelete?.()}
       disabled={!onOpen}
       onPress={onOpen}
       style={({ pressed }) => [styles.card, styles.driveRow, pressed && styles.pressed]}
@@ -369,13 +432,13 @@ const styles = StyleSheet.create({
   privat: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: Colors.surface2 },
   privatText: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
   driveRow: { flexDirection: 'row', alignItems: 'center' },
+  swipeBox: { borderRadius: Radius.l, overflow: 'hidden' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   importBtn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   gapS: { gap: Spacing.s },
   gapM: { gap: Spacing.m },
   row: { flexDirection: 'row', gap: Spacing.s },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   syncRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   list: { gap: Spacing.s },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
@@ -386,7 +449,7 @@ const styles = StyleSheet.create({
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
   secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  danger: { backgroundColor: Colors.signalTint },
+  danger: { backgroundColor: Colors.dangerTint },
   disabled: { opacity: 0.4 },
   segment: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.pill, padding: 3 },
   segItem: { flex: 1, height: Size.chip, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
@@ -413,7 +476,7 @@ const styles = StyleSheet.create({
   itemNote: { paddingHorizontal: Spacing.xs, paddingVertical: Spacing.xs },
   dangerSolid: { backgroundColor: Colors.signal },
   onSignal: { color: Colors.onSignal },
-  confirm: { gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.signalTint },
+  confirm: { gap: Spacing.s, padding: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.dangerTint },
   total: { fontFamily: Fonts.semibold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
   dangerText: { color: Colors.signal },
 });

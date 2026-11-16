@@ -133,6 +133,16 @@ export async function setRideStatus(rideId: string, status: 'laeuft' | 'beendet'
   if (error) fail(error.message);
 }
 
+/**
+ * Tour der Fahrt ersetzen (wer die Ausfahrt leitet), etwa durch die Umfahrung einer Sperrung beim Start (Koray 16.11.):
+ * Wer danach mitfährt, lädt dieselbe Strecke wie die Lead.
+ */
+export async function setRideTour(rideId: string, tour: Tour & { minutes?: number }, profile: Profile, avoid?: Avoid) {
+  // über die Datenbank: darf die Lead, alle Zugesagten bekommen eine Mitteilung (Koray 16.11.)
+  const { error } = await supabase.rpc('ride_change_tour', { ride: rideId, new_tour: packTour(tour, profile, avoid) });
+  if (error) fail(error.message);
+}
+
 /** Tour der Fahrt laden (für Eingeladene, die mitfahren). */
 export async function loadRideTour(rideId: string): Promise<{ name: string; tour: Tour & { minutes?: number }; profile: Profile; avoid?: Avoid } | null> {
   const { data, error } = await supabase.from('rides').select('name,tour').eq('id', rideId).maybeSingle();

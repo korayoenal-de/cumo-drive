@@ -81,6 +81,6 @@ const styles = StyleSheet.create({
   pressed: { backgroundColor: Colors.line },
   text: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
   removeWrap: { marginTop: Spacing.s },
-  remove: { backgroundColor: Colors.signalTint },
+  remove: { backgroundColor: Colors.dangerTint },
   removeText: { color: Colors.stopText },
 });

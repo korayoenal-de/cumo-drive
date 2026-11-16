@@ -1,6 +1,6 @@
 # CUMO DRIVE Dokumentation
 
-Stand: 10. November 2026, 17:30. Dieses Dokument ersetzt bei Widersprüchen alle älteren Stände (kontext.md, Kurzfassung vom 5.11.).
+Stand: 15. November 2026, 8:30. Dieses Dokument ersetzt bei Widersprüchen alle älteren Stände (kontext.md, Kurzfassung vom 5.11.).
 
 ## Überblick
 
@@ -10,15 +10,15 @@ Warum: calimoto ist für Motorräder gebaut und schickt Autos über zu schmale S
 
 Rollen: Koray steuert, gestaltet, fährt und testet als Heavy User und UX Designer. Claude programmiert, recherchiert und betreibt die Technik.
 
-### Stand 10. November 2026
+### Stand 15. November 2026
 
-* iOS App in TestFlight: Build 16 (CarPlay Start im Auto), Build 19 (Push), Build 20 (Funk). Runtime 1.1.0, Updates mehrmals täglich per OTA über den Kanal preview
-* Web Planer und Landingpage auf dem Stand vom 10.11.
-* Eigener Routing Server (GraphHopper 11) auf Contabo mit Ortsdichte, festen Profilen Kurvig und Sehr kurvig, distance_influence 5
-* Strecken Datenbank mit 486 kuratierten Strecken (125 Highlights, 361 bevorzugt) in DE, IT, AT, CH, FR und SI, dazu 370 Pässe und 94 Fahrregionen
-* Community mit Routen, Ausfahrten und Drivers, private Nachrichten mit Push
-* Gruppenfahrt mit Live Positionen, Kurznachrichten, Halt der Lead und Funk über LiveKit
-* Tester Gruppe "Cumo Drive App" in WhatsApp, Feedback fließt täglich ein
+* iOS App in TestFlight bis Build 29 (CarPlay mit Tempo und Tempolimit). Runtime 1.1.0, Updates mehrmals täglich per OTA über den Kanal preview
+* Zwei eigene Routing Server (GraphHopper 11.1) auf Contabo mit Ortsdichte und Profil Kurvig, eigene Ortssuche auf beiden, eigener Valhalla 3.9.1 auf Server 2 (FOSSGIS nur Notfall)
+* Strecken Datenbank mit kuratierten Strecken in DE, IT, AT, CH, FR und SI, dazu rund 370 Pässe und 94 Fahrregionen
+* Community mit Routen, Ausfahrten (mit Rückblick nach der Fahrt) und Drivers, private Nachrichten mit Push, Melden und Blockieren
+* Gruppenfahrt mit Live Positionen, Kurznachrichten, Halt der Lead mit Zustellbestätigung, Funk über LiveKit und Tour anpassen durch die Lead
+* Erste echte Gruppenfahrt (Testrunde) am 14.11.; Tester Gruppe "Cumo Drive App" in WhatsApp, Feedback fließt täglich ein
+* Paywall im Flow und Heimatgebiet gebaut, aber geparkt auf dem Zweig kostenlos-heimatgebiet (in der Testphase ist alles frei)
 
 ### Leitlinien von Koray
 
@@ -76,14 +76,17 @@ Runder Knopf oben rechts: Darstellung Standard (dunkel), Satellit, 3D Satellit (
 
 * Abbiegehinweise mit 42 eigenen Symbolen, der Pfeil baut sich vor dem Manöver auf
 * Highlights werden kurz vorher mit Karte, Sprachansage und Pegel angekündigt; Legende mit Stern Animation
-* Tempo mit Tempolimit unten links, Bremshinweis vor Kurven (5,5 m/s², nach eigenem Tempo), Kurvenwarnung ab 70er Zonen
+* Tempo mit Tempolimit unten links, daneben der Kompass (Nadel immer nach Norden, Tipp nordet die Karte, Wahl bleibt gespeichert). Im Stand fährt die Tempopille nach 2,5 s zusammen, der Kompass rückt nach links
+* Co-Pilot: Bremsempfehlung vor Kurven (5,5 m/s², nach eigenem Tempo) in der Tempopille und per Stimme, einmal je Kurve oder Kehrenkette; Abbiegeansagen haben immer Vorrang und brechen Hinweise ab
+* Kurvenansagen auf Highlights wie ein Beifahrer (Rallye Stil), Schalter in den Fahreinstellungen, Standard aus
 * Tempolimit Anzeige (Entscheidung Koray 12.11.): bekanntes Schild als Verkehrszeichen; außerorts ohne Eintrag in den Straßendaten die geschätzten 100 als graue Plakette ohne roten Ring; im Ort und auf der Autobahn wird nicht geraten. Ein Ortstempo (bis 50) endet 150 m nach dem letzten Straßennamen
-* Planung ansehen, Zwischenziel überspringen (langer Druck, mit Rückgängig), Pausieren
+* Tourmenü: Zwischenziel überspringen (mit Rückgängig), Tour anpassen (Planer über der laufenden Navigation, Übernehmen ohne Neustart), Problem melden, Pausieren, Fahrt beenden
+* Kurz hinter dem Start auf der Tour: direkt einsteigen, kein Umweg zum Startpunkt; ohne Netz versucht die App den Start selbst neu (auch aus CarPlay)
 * Abseits der Tour: gelbe Linie zurück, verpasstes Stück muss man nicht nachfahren. Weg zur Tour und zurück über den eigenen Server, um Orte herum (seit 10.11.)
 * Karte zoomt ab 50 km/h langsam heraus, mit zwei Fingern zoomen und zentriert bleiben (CarPlay zoomt ab Build 21 mit)
 * Linie nur vor dem Auto, keine 3D Gebäude über der Linie, Kamera folgt flüssig
 * Restzeit passt sich dem Tempo an (0,6 bis 1,8 fach); Live Activity auf dem Sperrbildschirm
-* CarPlay (in Entwicklung): Start im Auto mit Touren und Schnelle Runde, Führung mit eigenen Symbolen, Menü Mehr, eigenes Auto aus der Garage als Standort
+* CarPlay (in Entwicklung): Start im Auto mit Touren und Schnelle Runde, Führung mit eigenen Symbolen, Menü Mehr, eigenes Auto aus der Garage als Standort, Mitfahrer auf der Karte, Tempo und Tempolimit (ab Build 29); nach dem Ziel keine alte Tour mit Los
 
 ### Gruppenfahrt
 
@@ -91,6 +94,8 @@ Runder Knopf oben rechts: Darstellung Standard (dunkel), Satellit, 3D Satellit (
 * Kurznachrichten (Bitte warten, Alles ok, Tankstopp und weitere)
 * **Halt der Lead:** helle Pille oben rechts unter der Abbiegekarte, Gründe fächern auf (Sammeln, Parkplatz, Tanken, Pause, Fotostopp); bei allen erscheint ein großes Feld mit Ansage
 * **Funk** (ab Build 20, LiveKit): Funk Knopf gedrückt halten spricht, Banner zeigt, wer spricht; immer nur einer, die Lead kommt zuerst dran; Funk stumm; Lead kann "Nur die Lead spricht" setzen. Funk und Halt sind getrennte Funktionen
+* Halt und Kurznachrichten werden wiederholt, bis jedes Handy bestätigt (bis 10 Minuten); die Lead sieht „Bei 2 von 4 angekommen“
+* **Tour anpassen unterwegs:** nur die Lead; die neue Route geht als Übergabe Code an alle, Mitfahrer schalten um und hören „Die Lead hat die Route geändert“; wer eine eigene Route fährt, bleibt darauf
 * Gruppen Bedienung erscheint nur, wenn wirklich jemand mitfährt
 * Konzept und offene Punkte: claude/funk-konzept.md
 
@@ -117,7 +122,9 @@ Mehrere Fahrzeuge mit einem Feld für Marke und Modell, Form (Coupé, Coupé mit
 
 ### Nach der Fahrt
 
-Statistik für Autos (Kurven, Querbeschleunigung, Schnitt, Spitze) und Bewertung mit fünf Sternen (intern 0 bis 100), Daumen je Highlight. Der Pegel der Strecken lernt aus den Fahrerstimmen.
+Statistik für Autos (Kurven, Querbeschleunigung, Schnitt, Spitze) und Bewertung mit fünf weißen Sternen (intern 0 bis 100), Daumen je Highlight. Der Pegel der Strecken lernt aus den Fahrerstimmen. Konzept „Nach der Fahrt: erst die Karte“ (Leinwand vom 15.11.) wartet auf Entscheidung.
+
+Ausfahrten sind „vorbei“, wenn die Lead beendet, drei Stunden nach der geplanten Rückkehr oder um Mitternacht; danach stehen sie unter Touren, Gefahren, mit Chat und „Nochmal fahren“. Erinnerungen vor einer Ausfahrt rechnen vom aktuellen Standort (jedes Öffnen der App), nie vom Wohnort.
 
 ## Routing Logik
 
@@ -200,7 +207,7 @@ Jede Ansicht wird an den Regeln in docs/design-prinzipien.md gemessen (gespiegel
 
 JavaScript Änderungen gehen per OTA Update in Minuten aufs Handy; neue native Pakete und CarPlay brauchen einen neuen TestFlight Build. Native Pakete werden im Code so geladen, dass ältere Builds dieselben Updates ohne Absturz bekommen.
 
-* Kanal preview, Runtime 1.1.0. OTA nur aus einem sauberen Arbeitsstand ohne .env: `eas update --channel preview --environment preview`
+* Kanal preview, Runtime 1.1.0. OTA nur aus einem sauberen Arbeitsstand ohne .env: `eas update --channel preview --environment preview --platform ios` (nur iOS: Android gibt es noch nicht, der Web Planer kommt nicht per OTA; spart gut die Hälfte der Zeit, Messung 16.11.)
 * Builds: `eas build --platform ios --profile preview --auto-submit`, Expo Starter Plan seit 10.11.
 * Apple: Einzelperson, Team ID N9DX399W33, Bundle ID de.rallycumo.drive; Push Schlüssel und Profil mit Push seit 10.11.
 * Code: privates Repo github.com/korayoenal-de/cumo-drive, Branch main; jede Änderung wird committet und gepusht
@@ -214,7 +221,7 @@ JavaScript Änderungen gehen per OTA Update in Minuten aufs Handy; neue native P
 | Software | GraphHopper 11, Ortsdichte mit 4 Threads, Landmarken mit 4 Threads |
 | Regionen | DACH, Norditalien, Elsass, Lothringen, Franche Comté, Rhône Alpes, PACA, Slowenien |
 | Neuaufbau | wöchentlich So 3 Uhr, Sperre gegen doppelten Lauf, Wächter auf /health (harden.sh); App plant solange über Valhalla |
-| Adresse | https://13-140-213-164.sslip.io (DNS routing.cumodrive.de steht aus) |
+| Adresse | https://r1.cumodrive.de und https://r2.cumodrive.de, Notfall über sslip.io |
 
 ### Externe Dienste und Kosten
 
@@ -261,6 +268,13 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 | Datum | Entscheidung |
 |---|---|
+| 15.11. | Tour anpassen unterwegs: Planer über der Navigation, immer erlaubt, in der Gruppe nur die Lead; Tourmenü: Zwischenziel überspringen, Tour anpassen, dann der Rest |
+| 15.11. | Kompass in der Tempopille, Tipp nordet die Karte; Kompass bleibt immer sichtbar |
+| 15.11. | Bremsempfehlung per Stimme, Kurvenansagen freigegeben (Standard aus), Navigationsansagen haben immer Vorrang |
+| 15.11. | Erinnerung vor Ausfahrten nur vom aktuellen Standort (Variante c: ohne neue Erlaubnis sofort, mit „Immer“ später) |
+| 15.11. | Kurvig wertet Bundes und Landesstraßen nur außerorts ab; neue Profile gelten erst mit dem neuen Graphen |
+| 14.11. | Eigener Valhalla auf Server 2 mit vollständigen Ländergrenzen und Prüfung vor der Freigabe |
+| 14.11. | Ausfahrt „vorbei“ und Rückblick unter Gefahren; Paywall im Flow und Heimatgebiet gebaut, geparkt |
 | 12.11. | Zweiter Routing Server (Contabo, gleiche Größe): App wechselt bei Ausfall oder Neuaufbau automatisch, Last verteilt sich, Neuaufbau versetzt (So und Mo 3 Uhr) mit Rückweg zum alten Graph, gegenseitige Sicherung und Überwachung, eigene Ortssuche (Photon Europa). Alles dazu in docs/betrieb.md |
 | 12.11. | Ausfahrten neu: rote Zahl nur, wenn jetzt etwas zu tun ist (offene Einladung, gestartete Gruppenfahrt). Zusage verschwindet aus der Zahl und steht unter „Deine nächsten“ mit „in 8 Tagen“; heute und morgen oben mit Losfahrzeit aus der Anfahrt. Erinnerung lokal am Vortag 18 Uhr und 15 min vor der Losfahrzeit. Absagen im Blatt mit freiwilligem Grund, Veranstalter sieht Absagen still. Mitteilung, wenn der Veranstalter die Gruppenfahrt startet |
 | 12.11. | Schutz vor Missbrauch, Stufe 1: Melden (Nachricht lange drücken, Profil, Route, Ausfahrt) mit Kopie des Inhalts, Blockieren, Prüfbereich für Admins (In Ordnung, Entfernen, Sperren) mit Hinweis und Begründung an Betroffene, neue Konten schreiben Fremde erst nach 24 h an (außer gemeinsame Fahrt), höchstens 5 neue Gespräche am Tag, Abschnitt 7a in den Nutzungsbedingungen |
@@ -299,31 +313,26 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 ## Offene Punkte
 
+Die vollständige Liste steht in docs/todos.md (claude/todos.md im Projekt).
+
 ### Wartet auf Koray
 
-* [ ] Funk mit Build 20 zu zweit testen
-* [ ] Gregor: Ort der Ortsdurchfahrt und Tempowarnung nachreichen lassen
-* [ ] Restliche Screenshots für die Landingpage, Web Zip per FTP hochladen
-* [ ] WeatherKit unter Capabilities und App Services prüfen
+* [ ] Datenbank Korrektur freigeben: Einladungen „Läuft jetzt“ nach dem Ende (Migration 20261115090000_einladungen_vorbei.sql, liegt lokal, Push braucht OK)
+* [ ] Entscheidungen auf den Leinwänden: Nach der Fahrt, Navigation Bedienelemente (CarPlay Kompass), Tour anpassen (Ablehnen durch Mitfahrer, als neue Tour speichern)
+* [ ] Paywall und Heimatgebiet: Zweig kostenlos-heimatgebiet zusammenführen, wenn die Testphase endet
 * [ ] DNS für routing.cumodrive.de und Domain für den Web Planer
 * [ ] Apple Bezahlvertrag und RevenueCat
 * [ ] Impressum, AGB und Datenschutz zum Anwalt
-* [ ] Echte Netto Fahrzeiten für die Kalibrierung
 * [ ] Liste der Gründungstester
-* [ ] 3D Designer für die Fahrzeug Formen; Booking.com Partnerprogramm
-* [ ] CarPlay: Namen der Knöpfe, Rundtouren aus dem Auto speichern, Community Touren in der Liste
-* [ ] Lizenz der Esri Satellitenkarte im Web klären
 
 ### Als Nächstes (Claude)
 
-* [ ] Lead Blatt nach dem Prototyp, Ansagen warten auf freien Funk
-* [ ] Build 21: CarPlay Zoom bei Tempo, Profilfoto
-* [ ] Vermeiden als feste Einstellung, Impressum als Seite
-* [ ] Ortssuche in Routen auch über den Streckenverlauf
-* [ ] Melden und Blockieren in der Community
-* [ ] Lernen Stufe 2: nächtliche Auswertung der Signale
-* [ ] Haptik (expo-haptics) mit dem nächsten nativen Build
-* [ ] Kombi als Fahrzeug Form, Fürth in die großen Städte der Ortsdichte
+* [ ] Server 1 nach dem Neuaufbau vom 15.11. prüfen, Mörlenbach nachrechnen
+* [ ] Funk: Ursache der Abbrüche (Tester Bilder), LiveKit liegt doppelt im App Paket (eine Fassung erzwingen, mit Gerätetest)
+* [ ] Erinnerung mit Standort „Immer“ (nächster Build, expo-task-manager)
+* [ ] Tour anpassen: schmale Abbiegezeile oben im Planer
+* [ ] Fahrzeit Kalibrierung, sobald genug Fahrten abgeschlossen sind
+* [ ] Lead Blatt nach dem Prototyp, Vermeiden als feste Einstellung, Impressum als Seite
 
 ### Später
 * Schutz vor Missbrauch Stufe 2: stille Hinweise auf dem Server (Telegram, Telefonnummern, Kryptoadressen, Massenversand), Links in ersten Nachrichten nicht klickbar, Melden im Web Planer

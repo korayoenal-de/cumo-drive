@@ -26,6 +26,6 @@ export async function restorePurchases(): Promise<PurchaseResult> {
   // Auch ohne Store lohnt ein Neuladen: ein vom Betreiber zugewiesener Club oder Plan wird so sichtbar
   await refreshEntitlement();
   const e = getEntitlement();
-  if (e.active && e.source !== 'test') return { ok: true };
+  if (e.active && (e.source === 'plan' || e.source === 'club')) return { ok: true };
   return { ok: false, message: NOT_YET };
 }

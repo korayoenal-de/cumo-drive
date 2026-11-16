@@ -22,7 +22,7 @@ export function MapStylePicker() {
             onPress={() => setMapSettings({ style: m.id })}
             style={({ pressed }) => [styles.row, i > 0 && styles.sep, pressed && styles.pressed]}>
             <AppText style={styles.title}>{m.label}</AppText>
-            {on && <SymbolView name="checkmark" size={15} weight="bold" tintColor={Colors.signal} />}
+            {on && <SymbolView name="checkmark" size={16} weight="semibold" tintColor={Colors.signal} />}
           </Pressable>
         );
       })}

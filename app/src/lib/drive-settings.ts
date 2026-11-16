@@ -3,14 +3,15 @@
  * speed: eigenes Tempo und erlaubtes Tempo in der Navigation zeigen.
  * volume: Lautstärke der Ansagen im Verhältnis zur Lautstärke des iPhones (0,2 bis 1, Tester Gregor 12.11.).
  * paceNotes: Kurvenansagen wie ein Beifahrer auf Highlights (Stufe Einfach, Koray 13.11.), Standard aus.
+ * northUp: Karte in der Navigation genordet statt in Fahrtrichtung (Kompass in der Tempopille, Koray 15.11.).
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
-export type DriveSettings = { speed: boolean; volume: number; paceNotes: boolean };
+export type DriveSettings = { speed: boolean; volume: number; paceNotes: boolean; northUp: boolean };
 
 const KEY = 'cumo.drive.fahrt.v1';
-let state: DriveSettings = { speed: true, volume: 1, paceNotes: false };
+let state: DriveSettings = { speed: true, volume: 1, paceNotes: false, northUp: false };
 let loaded = false;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
@@ -45,8 +46,8 @@ export function useDriveSettings(): DriveSettings {
   );
 }
 
-/** Kurvenansagen zurückgehalten (Koray 13.11.): Schalter verborgen, Ansagen aus, bis Koray sie freigibt */
-export const PACE_NOTES_RELEASED = false;
+/** Kurvenansagen: am 13.11. zurückgehalten, am 15.11. freigegeben (Navigationsansagen haben immer Vorrang) */
+export const PACE_NOTES_RELEASED = true;
 
 /** Für die Sprachausgabe außerhalb von React */
 export function voiceVolume(): number {

@@ -123,7 +123,7 @@ export function HomeField({ p, save }: { p: Privacy; save: (patch: Partial<Priva
               accessibilityLabel="Wohnort suchen"
             />
             <Pressable accessibilityRole="button" accessibilityLabel="Abbrechen" hitSlop={4} onPress={() => setEditing(false)} style={styles.round}>
-              <SymbolView name="xmark" size={14} weight="bold" tintColor={Colors.text} />
+              <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.text} />
             </Pressable>
           </View>
           {q.trim().length >= 2 &&
@@ -185,7 +185,7 @@ function FieldHead({ label, onClose }: { label: string; onClose: () => void }) {
     <View style={styles.row}>
       <AppText variant="caption" muted style={styles.flex}>{label}</AppText>
       <Pressable accessibilityRole="button" accessibilityLabel="Verwerfen" hitSlop={4} onPress={onClose} style={styles.round}>
-        <SymbolView name="xmark" size={14} weight="bold" tintColor={Colors.text} />
+        <SymbolView name="xmark" size={16} weight="semibold" tintColor={Colors.text} />
       </Pressable>
     </View>
   );
@@ -206,7 +206,7 @@ function FieldFoot(props: { canSave: boolean; onSave: () => void; removeTitle?: 
       </Pressable>
       {removeTitle ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Entfernen" onPress={() => setAsk(true)} style={({ pressed }) => [styles.trash, pressed && styles.pressed]}>
-          <SymbolView name="trash" size={18} weight="semibold" tintColor={Colors.muted} />
+          <SymbolView name="trash" size={20} weight="semibold" tintColor={Colors.muted} />
         </Pressable>
       ) : null}
       <ConfirmSheet

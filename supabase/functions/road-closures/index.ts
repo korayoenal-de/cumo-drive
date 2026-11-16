@@ -128,6 +128,9 @@ async function fetchTile(key: string, x: number, y: number): Promise<Closure[]> 
     if (i.geometry.type !== 'LineString') continue;
     const line = slim((i.geometry.coordinates as number[][]).map(([lon, lat]) => [lat, lon] as [number, number]));
     if (line.length < 2) continue;
+    // Nur echte Vollsperrungen (Koray 14.11.: an der A5 war nur ein Fahrstreifen gesperrt, die App schickte
+    // über Nebenstraßen). Meldungen, die nur Fahrstreifen oder Spuren betreffen, zählen nicht.
+    if (laneOnly(i.properties.events?.map((e) => e.description) ?? [])) continue;
     items.push({
       id: i.properties.id ?? `${line[0][0].toFixed(5)},${line[0][1].toFixed(5)}`,
       line,
@@ -140,6 +143,14 @@ async function fetchTile(key: string, x: number, y: number): Promise<Closure[]> 
   cache.set(`${x},${y}`, { at: Date.now(), items });
   store(`${x},${y}`, items);
   return items;
+}
+
+/** Betrifft die Meldung nur einzelne Fahrstreifen (keine Vollsperrung)? */
+function laneOnly(texts: string[]): boolean {
+  if (!texts.length) return false;
+  const lane = /fahrstreifen|spur|lane|verengt|eingeengt|einspurig/i;
+  const full = /vollsperrung|straße gesperrt|fahrbahn gesperrt|road closed|in beiden richtungen gesperrt/i;
+  return texts.some((t) => lane.test(t)) && !texts.some((t) => full.test(t));
 }
 
 /** Liegt die Sperrung (ihr Rahmen) in einer der angefragten 0,5 Grad Kacheln? */

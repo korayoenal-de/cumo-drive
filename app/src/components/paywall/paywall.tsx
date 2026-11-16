@@ -60,7 +60,7 @@ export function Paywall({
       {onClose && (
         <View style={styles.topBar}>
           <Pressable accessibilityRole="button" accessibilityLabel="Schließen" onPress={onClose} hitSlop={12} style={styles.close}>
-            <SymbolView name="xmark" size={18} weight="semibold" tintColor={Colors.text} />
+            <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         </View>
       )}

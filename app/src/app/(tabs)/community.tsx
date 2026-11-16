@@ -6,6 +6,9 @@
  * Organisator nimmt an, danach Chat und am Tag die Gruppenfahrt.
  * Drivers (Koray 10.11.): Mitglieder an ihrem Wohnort, Fuhrpark und Anschreiben.
  */
+import { Kennzahlen, SeatsBadge } from '@/components/ui/kennzahlen';
+import { fahrzeit, meta as fmtMeta, strecke, wann } from '@/lib/format';
+import { useRideFun } from '@/lib/ride-fun';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,19 +22,20 @@ import { MeetingRoute } from '@/components/group/meeting-route';
 import { refreshContacts, useContacts } from '@/lib/contacts';
 import { DateBlock, RideStatus } from '@/components/community/ride-bits';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipRow } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { ReportSheet } from '@/components/moderation/report-sheet';
 import { usePrivacy } from '@/components/settings/community-profile';
-import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
+import { PublishSheet } from '@/components/tours/tour-card';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, relDay, shortDate, type Ausfahrt } from '@/lib/ausfahrten';
-import { approachMinutes, departAt, syncRideReminders } from '@/lib/ride-reminders';
+import { approachMinutes, departAt, syncRideReminders, currentSpot } from '@/lib/ride-reminders';
 import { useSession } from '@/lib/auth';
 import { kmBetween, listConversations, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
 import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
-import { deleteTour, saveTour, syncLibrary, useLibrary } from '@/lib/library';
+import { deleteTour, saveTour, syncLibrary, useLibrary, type SavedTour } from '@/lib/library';
 import { showToast } from '@/lib/toast';
 import { requestCommunityLine, setListReach, useCommunityLine, useInReach } from '@/lib/community-lines';
 import { setEditTour } from '@/lib/edit-tour';
@@ -56,6 +60,10 @@ export default function Community() {
   const session = useSession();
   const insets = useSafeAreaInsets();
   const [seg, setSeg] = useState<Seg>('routen');
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareAll, setShareAll] = useState(false);
+  const [toPublish, setToPublish] = useState<SavedTour | null>(null);
+  const myTours = useLibrary();
   const [tours, setTours] = useState<CommunityTour[] | null>(null);
   const [rides, setRides] = useState<Ausfahrt[] | null>(null);
   const [drivers, setDrivers] = useState<Driver[] | null>(null);
@@ -124,7 +132,7 @@ export default function Community() {
       })
       .catch((e: Error) => setErr(e.message));
     // private Ausfahrten stehen nur unter Touren, nicht in der Community (Koray 13.11.)
-    listAusfahrten()
+    listAusfahrten().then((l) => l.filter((x) => !x.isOver))
       .then((l) => setRides(l.filter((r) => r.isPublic)))
       .catch(() => setRides((r) => r ?? []));
     listDrivers()
@@ -285,7 +293,7 @@ export default function Community() {
   const segControl = (
     <View style={styles.seg} accessibilityRole="tablist">
       <Animated.View pointerEvents="none" style={[styles.segThumb, thumbStyle]} />
-      <SegItem label="Routen" icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} onBox={onSegBox('routen')} ownFill={!thumbReady} />
+      <SegItem label="Touren" icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} onBox={onSegBox('routen')} ownFill={!thumbReady} />
       <SegItem label="Ausfahrten" icon="calendar" count={userId ? rides?.length ?? null : null} badge={openRequests + inviteCount} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} onBox={onSegBox('ausfahrten')} ownFill={!thumbReady} />
       <SegItem label="Drivers" icon="person.2" count={userId ? drivers?.length ?? null : null} badge={unread} on={seg === 'drivers'} onPress={() => switchSeg('drivers')} onBox={onSegBox('drivers')} ownFill={!thumbReady} />
     </View>
@@ -294,7 +302,14 @@ export default function Community() {
   const header = (
     <View style={styles.head}>
       <View style={styles.headRow}>
-        <AppText style={styles.kicker}>{seg === 'routen' ? 'Routen zum Nachfahren' : seg === 'ausfahrten' ? 'Gemeinsame Ausfahrten' : 'Drivers'}</AppText>
+        <AppText style={styles.kicker}>{seg === 'routen' ? 'Touren zum Nachfahren' : seg === 'ausfahrten' ? 'Gemeinsame Ausfahrten' : 'Drivers'}</AppText>
+        {/* Eigene Tour teilen oder eine neue erstellen (Koray 15.11.), gleiche Form wie Anlegen und Nachrichten */}
+        {seg === 'routen' && userId && (
+          <Pressable accessibilityRole="button" accessibilityLabel="Tour teilen" hitSlop={4} onPress={() => setShareOpen(true)} style={styles.addBtn}>
+            <SymbolView name="plus" size={16} weight="semibold" tintColor={Colors.text} />
+            <AppText style={styles.addText}>Teilen</AppText>
+          </Pressable>
+        )}
         {seg === 'drivers' && userId && (
           <Pressable accessibilityRole="button" accessibilityLabel={`Nachrichten${unread ? `, ${unread} ungelesen` : ''}`} hitSlop={4} onPress={() => router.push('/nachrichten')} style={styles.addBtn}>
             <SymbolView name="bubble.left.and.bubble.right" size={16} weight="semibold" tintColor={Colors.text} />
@@ -308,7 +323,7 @@ export default function Community() {
         )}
         {seg === 'ausfahrten' && userId && (
           <Pressable accessibilityRole="button" accessibilityLabel="Ausfahrt anlegen" hitSlop={4} onPress={() => router.push('/ausfahrt/neu')} style={styles.addBtn}>
-            <SymbolView name="plus" size={16} weight="bold" tintColor={Colors.text} />
+            <SymbolView name="plus" size={16} weight="semibold" tintColor={Colors.text} />
             <AppText style={styles.addText}>Anlegen</AppText>
           </Pressable>
         )}
@@ -318,13 +333,42 @@ export default function Community() {
     </View>
   );
 
+  // Eigene Touren zum Teilen: noch nicht veröffentlicht, nicht unverändert aus der Community, die neuesten zuerst.
+  // Vorschau mit den acht neuesten, „Alle anzeigen“ öffnet die ganze Liste (Koray 15.11.)
+  const shareableAll = myTours
+    .filter((t) => !t.published && t.folder !== 'Community' && t.folder !== 'Gefahren')
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const shareable = shareableAll.slice(0, 8);
+  const tourItem = (t: SavedTour): SheetItem => ({
+    key: t.id,
+    icon: 'bookmark',
+    label: t.name,
+    hint: fmtMeta(strecke(t.laenge_km), t.minutes ? fahrzeit(t.minutes) : null),
+    onPress: () => setToPublish(t),
+  });
+  const shareItems: SheetItem[] = [
+    ...shareable.map(tourItem),
+    // immer da (Koray 15.11.): auch bei wenigen Touren der Weg zur ganzen Liste
+    { key: 'alle', icon: 'list.bullet' as const, label: 'Alle Touren', hint: `${shareableAll.length} ${shareableAll.length === 1 ? 'Tour' : 'Touren'} zum Teilen`, onPress: () => setShareAll(true) },
+    { key: 'neu', icon: 'plus' as const, label: 'Neue Tour erstellen', hint: 'Im Planer, danach hier teilen', onPress: () => router.navigate('/') },
+  ];
+
   return (
     <View style={styles.root}>
+      <ActionSheet
+        visible={shareOpen}
+        title="In der Community teilen"
+        subtitle={shareable.length ? 'Welche deiner Touren sollen andere nachfahren können?' : 'Du hast noch keine eigene Tour gespeichert.'}
+        items={shareItems}
+        onClose={() => setShareOpen(false)}
+      />
+      <ActionSheet visible={shareAll} title="Alle deine Touren" subtitle="Welche soll andere nachfahren können?" items={shareableAll.map(tourItem)} onClose={() => setShareAll(false)} scroll />
+      {toPublish && <PublishSheet key={toPublish.id} tour={toPublish} visible onClose={() => setToPublish(null)} onPublished={load} />}
       <MapSheet
         scrollRef={scroll}
         detent={detent}
         onDetentChange={setDetent}
-        grabberLabel={seg === 'routen' ? 'Liste der Routen' : seg === 'ausfahrten' ? 'Liste der Ausfahrten' : 'Liste der Drivers'}
+        grabberLabel={seg === 'routen' ? 'Liste der Touren' : seg === 'ausfahrten' ? 'Liste der Ausfahrten' : 'Liste der Drivers'}
         onScrollY={onScrollY}
         topReserve={topH + Spacing.s}
         header={header}
@@ -333,18 +377,18 @@ export default function Community() {
         )}>
         {seg === 'routen' ? (
           <View style={styles.body}>
-            <TextInput maxFontSizeMultiplier={1.2} value={q} onChangeText={setQ} placeholder="Route, Fahrer, Ort oder PLZ suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Routen durchsuchen" returnKeyType="search" />
-            <View style={styles.wrap}>
+            <TextInput maxFontSizeMultiplier={1.2} value={q} onChangeText={setQ} placeholder="Tour, Fahrer, Ort oder PLZ suchen" placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel="Routen durchsuchen" returnKeyType="search" />
+            <ChipRow>
               {SORTS.map((s) => (
                 <Chip key={s.id} label={s.label} active={sort === s.id} onPress={() => setSort(s.id)} />
               ))}
-            </View>
+            </ChipRow>
             {err && <AppText style={styles.error}>Community konnte nicht geladen werden: {err}</AppText>}
             {tours === null && !err && <ActivityIndicator color={Colors.muted} />}
             {tours?.length === 0 && (
               <View style={styles.card}>
                 <AppText variant="title">Noch keine Routen veröffentlicht</AppText>
-                <AppText muted>Sei der Erste: Öffne eine Tour unter Touren und tippe auf Veröffentlichen.</AppText>
+                <AppText muted>Sei der Erste: Tippe oben auf Teilen und wähle eine deiner Touren.</AppText>
               </View>
             )}
             {nearNow && <AppText muted>Auch Routen mit Start im Umkreis von {NEAR_KM} km um {nearNow.name}</AppText>}
@@ -471,7 +515,7 @@ function SegItem({ label, icon, count, badge, on, onPress, onBox, ownFill }: { o
         onPress={onPress}
         style={[styles.segItem, on && styles.segOn, on && ownFill && styles.segFill]}>
         <View>
-          <SymbolView name={icon} size={17} weight="bold" tintColor={on ? Colors.ground : Colors.muted} />
+          <SymbolView name={icon} size={20} weight="semibold" tintColor={on ? Colors.ground : Colors.muted} />
           {!on && !!badge && <View style={styles.badgeDot} />}
         </View>
         {on && (
@@ -525,10 +569,8 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
   const [fade] = useState(() => data == null);
   const km = Number(t.km);
   const author = t.author?.trim() || null;
-  const meta = useMemo(() => {
-    const date = new Date(t.published_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
-    return [`${formatKm(km, 0)} km`, t.curves ? `${t.curves} Kurven` : null, date].filter(Boolean).join('  ·  ');
-  }, [km, t.curves, t.published_at]);
+  // Meta Zeile wie überall: Strecke und Fahrzeit, Fahrspaß rechts (Konsistenzprüfung 15.11., K3, K9)
+  const meta = useMemo(() => fmtMeta(strecke(km), t.minutes ? fahrzeit(t.minutes) : null), [km, t.minutes]);
   const badge = mine ? <GoodBadge label="Von dir" /> : <FromBadge author={author} />;
 
   const open = async () => {
@@ -555,7 +597,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       // Bearbeitete Kopie nicht über das Lesezeichen löschen: die eigenen Änderungen gingen sonst verloren
       // (Koray 11.11.). Erkannt an der Länge, die nach dem Bearbeiten nicht mehr zum Original passt.
       if (!kept.published && Math.abs(kept.laenge_km - t.km) > 0.5) {
-        showToast('Du hast diese Route bearbeitet. Deine Fassung bleibt unter Touren.', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
+        showToast('Du hast diese Tour bearbeitet. Deine Fassung bleibt unter Touren.', { action: { label: 'Ansehen', onPress: () => router.navigate('/touren') } });
         return;
       }
       try {
@@ -602,7 +644,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       onPress={() => void keep()}
       hitSlop={4}
       style={({ pressed }) => [styles.round, saved && styles.roundSaved, pressed && styles.pressed]}>
-      {busy === 'save' ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name={saved ? 'bookmark.fill' : 'bookmark'} size={19} tintColor={saved ? Colors.signal : Colors.text} weight="semibold" />}
+      {busy === 'save' ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name={saved ? 'bookmark.fill' : 'bookmark'} size={20} tintColor={saved ? Colors.signal : Colors.text} weight="semibold" />}
     </Pressable>
   );
 
@@ -610,9 +652,9 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
   const withdrawSheet = (
   <ConfirmSheet
     visible={confirm}
-    title="Möchtest du diese Route wirklich aus der Community nehmen?"
+    title="Möchtest du diese Tour wirklich aus der Community entfernen?"
     text="Andere können sie dann nicht mehr öffnen. Unter Touren bleibt sie dir erhalten."
-    confirmLabel="Herausnehmen"
+    confirmLabel="Entfernen"
     onConfirm={() => {
       setBusy('withdraw');
       withdrawCommunityTour(t.id)
@@ -632,21 +674,16 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
             <AppText style={styles.bigName} numberOfLines={2}>{t.name}</AppText>
             {badge}
           </View>
-          <FunMark score={data?.fun} />
           {bookmark}
         </View>
-        <View style={styles.metrics}>
-          <Metric label="Strecke" value={`${formatKm(km, 0)} KM`} />
-          {t.minutes ? <Metric label="Fahrzeit" value={`${Math.floor(t.minutes / 60)}:${String(t.minutes % 60).padStart(2, '0')} H`} /> : null}
-          {t.curves ? <Metric label="Kurven" value={String(t.curves)} /> : null}
-        </View>
+        <Kennzahlen km={km} minutes={t.minutes} fun={data?.fun} />
         {t.description ? <AppText style={styles.desc} numberOfLines={3}>{t.description}</AppText> : null}
         <Pressable accessibilityRole="button" onPress={() => void open()} style={styles.primary}>
           {busy === 'open' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>Im Planer öffnen</AppText>}
         </Pressable>
         {!mine && (
           <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={styles.textBtn}>
-            <AppText style={styles.textBtnText}>Route melden</AppText>
+            <AppText style={styles.textBtnText}>Tour melden</AppText>
           </Pressable>
         )}
         {!mine && <ReportSheet visible={report} kind="tour" refId={t.id} onClose={() => setReport(false)} />}
@@ -723,12 +760,14 @@ function RideSections({ rides }: { rides: Ausfahrt[] }) {
   );
 }
 
-/** Heute oder morgen: Losfahrzeit aus der Anfahrt vom Wohnort, Treffpunkt und Route dorthin */
+/** Heute oder morgen: Losfahrzeit aus der Anfahrt, Treffpunkt und Route dorthin. Heute vom aktuellen Standort
+ *  (Tester 15.11.), morgen vom Wohnort, sonst gibt es noch keinen sinnvollen Ausgangspunkt. */
 function SoonCard({ r, home }: { r: Ausfahrt; home: LatLon | null }) {
   const [min, setMin] = useState<number | null>(null);
   useEffect(() => {
     let live = true;
-    void approachMinutes(r, home).then((m) => live && setMin(m));
+    const today = relDay(r.startsAt) === 'Heute';
+    void (today ? currentSpot() : Promise.resolve(home)).then((from) => approachMinutes(r, from)).then((m) => live && setMin(m));
     return () => {
       live = false;
     };
@@ -775,8 +814,11 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
   const press = usePress();
   const open = () => router.push({ pathname: '/ausfahrt/[id]', params: { id: r.id } });
   const arr = arrival(r);
-  const where = r.meeting?.name ? `Treffpunkt ${r.meeting.name}` : r.roundTrip ? 'Rundtour' : null;
+  // Treffpunkt immer als Ort (K6); ohne gewählten Treffpunkt steht nichts statt „Rundtour“
+  const where = r.meeting?.name ? `ab ${r.meeting.name}` : null;
   const free = freeSeats(r);
+  const fun = useRideFun(r.id);
+  const status = !r.isOwner && !r.myStatus && free > 0 ? null : <RideStatus r={r} />;
 
   if (big) {
     return (
@@ -785,18 +827,14 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
           <DateBlock d={r.startsAt} />
           <View style={styles.flex}>
             <AppText style={styles.bigName} numberOfLines={2}>{r.name}</AppText>
-            <AppText variant="caption" muted numberOfLines={1}>{[`${clock(r.startsAt)} Uhr`, where].filter(Boolean).join('  ·  ')}</AppText>
+            <AppText muted numberOfLines={1}>{fmtMeta(wann(r.startsAt), where)}</AppText>
           </View>
         </View>
-        <View style={styles.metrics}>
-          {r.km != null && <Metric label="Strecke" value={`${formatKm(r.km, 0)} KM`} />}
-          {arr && <Metric label={r.roundTrip ? 'Zurück' : 'Ankunft'} value={clock(arr)} />}
-          <Metric label="Plätze" value={free > 0 ? `${free} FREI` : 'VOLL'} />
-        </View>
-        {!r.roundTrip && r.goalName ? <AppText variant="caption" muted>Ziel: {r.goalName}</AppText> : null}
+        <Kennzahlen km={r.km} minutes={r.minutes} fun={fun} />
+        {!r.roundTrip && arr ? <AppText muted>{`Ankunft etwa ${clock(arr)}${r.goalName ? ` in ${r.goalName}` : ''}`}</AppText> : null}
         <View style={styles.row}>
-          <AppText variant="caption" muted style={styles.flex} numberOfLines={1}>Organisiert von {r.isOwner ? 'dir' : r.ownerName}</AppText>
-          <RideStatus r={r} />
+          <AppText muted style={styles.flex} numberOfLines={1}>Organisiert von {r.isOwner ? 'dir' : r.ownerName}</AppText>
+          {status ?? <SeatsBadge free={free} />}
         </View>
         <Pressable accessibilityRole="button" onPress={open} style={styles.primary}>
           <AppText style={styles.primaryText}>{rideAction(r)}</AppText>
@@ -817,12 +855,13 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
         <DateBlock d={r.startsAt} />
         <View style={styles.main}>
           <AppText style={styles.name} numberOfLines={2}>{r.name}</AppText>
-          <AppText variant="caption" muted numberOfLines={1} style={styles.num}>
-            {[r.isOwner || r.myStatus === 'zugesagt' ? `${relDay(r.startsAt)}, ${clock(r.startsAt)} Uhr` : `${clock(r.startsAt)} Uhr`, r.km != null ? `${formatKm(r.km, 0)} km` : null, free > 0 ? `${free} frei` : 'voll'].filter(Boolean).join('  ·  ')}
+          <AppText muted numberOfLines={1} style={styles.num}>
+            {fmtMeta(wann(r.startsAt), r.km != null ? strecke(r.km) : null)}
           </AppText>
-          <AppText variant="caption" muted numberOfLines={1}>{where ?? `Von ${r.ownerName}`}</AppText>
+          <AppText muted numberOfLines={1}>{where ?? `Von ${r.ownerName}`}</AppText>
+          {status ?? <SeatsBadge free={free} />}
         </View>
-        <RideStatus r={r} />
+        <FunMark score={fun} reserve />
       </Pressable>
     </Animated.View>
   );
@@ -854,7 +893,6 @@ const styles = StyleSheet.create({
   badgeDot: { position: 'absolute', top: -2, right: -4, width: 9, height: 9, borderRadius: 5, backgroundColor: Colors.signal, borderWidth: 1.5, borderColor: Colors.overlaySurface },
   badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 11, lineHeight: 13 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s, marginBottom: Spacing.xs },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   cardList: { paddingVertical: Spacing.m },
   main: { flex: 1, gap: 3, minHeight: 56, justifyContent: 'center' },

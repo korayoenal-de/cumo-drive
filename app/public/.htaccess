@@ -1,11 +1,13 @@
-# CUMO DRIVE Web (drive.rallycumo.de): Startseite ist die Landingpage, der Planer liegt unter /planer
+# CUMO DRIVE Web (cumodrive.de): Startseite ist die Landingpage, der Planer liegt unter /planer
 DirectoryIndex index.html
 Options -MultiViews
 RewriteEngine On
 
-# immer https
+# eine Adresse: alles (http, www, cumodrive.com, drive.rallycumo.de) dauerhaft auf https://cumodrive.de, Pfad bleibt.
+# Alte Links wie drive.rallycumo.de/t#... funktionieren weiter, der Browser behält den Teil nach # beim Weiterleiten.
+RewriteCond %{HTTP_HOST} !^cumodrive\.de$ [NC,OR]
 RewriteCond %{HTTPS} off
-RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+RewriteRule ^ https://cumodrive.de%{REQUEST_URI} [L,R=301]
 
 # saubere Adressen: /login liefert login.html
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -15,8 +17,12 @@ RewriteRule ^(.+?)/?$ $1.html [L]
 
 ErrorDocument 404 /+not-found.html
 
-# Seiten immer frisch laden, damit ein neuer Upload sofort gilt; die Skripte haben Hashes im Namen und dürfen lange im Cache bleiben
 <IfModule mod_headers.c>
+  # Konto und Planer gehören nicht in die Suche
+  SetEnvIf Request_URI "^/(planer|login|registrieren|profil|menu|garage|nachrichten|scan|karte|navigation|anpassen|ansagen|blockiert|mitgliedschaft|pruefung|fahrt|gruppe|ausfahrt|a|t)(\.html|/|$)" CD_NOINDEX
+  Header set X-Robots-Tag "noindex" env=CD_NOINDEX
+
+  # Seiten immer frisch laden, damit ein neuer Upload sofort gilt; die Skripte haben Hashes im Namen und dürfen lange im Cache bleiben
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"
   </FilesMatch>

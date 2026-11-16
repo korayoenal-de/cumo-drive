@@ -35,7 +35,8 @@ export async function navigateToMeeting(to: LatLon, place: string, way: Way): Pr
   router.push('/navigation');
 }
 
-export function MeetingRoute({ to, place }: { to: LatLon; place: string }) {
+/** primary: die Hauptaktion der Seite in Signal Orange (Ausfahrt, Koray 15.11.) */
+export function MeetingRoute({ to, place, primary = false }: { to: LatLon; place: string; primary?: boolean }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -52,15 +53,15 @@ export function MeetingRoute({ to, place }: { to: LatLon; place: string }) {
   };
   return (
     <View style={styles.box}>
-      <Pressable accessibilityRole="button" accessibilityHint="Fragt nach Schnell oder Kurvig und startet die Navigation ab deinem Standort" disabled={busy} onPress={() => setOpen(true)} style={({ pressed }) => [styles.btn, pressed && styles.pressed]}>
-        {busy ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.btnText}>Route zum Treffpunkt</AppText>}
+      <Pressable accessibilityRole="button" accessibilityHint="Fragt nach Schnell oder Kurvig und startet die Navigation ab deinem Standort" disabled={busy} onPress={() => setOpen(true)} style={({ pressed }) => [styles.btn, primary && styles.btnPrimary, pressed && styles.pressed]}>
+        {busy ? <ActivityIndicator color={primary ? Colors.onSignal : Colors.text} /> : <AppText style={[styles.btnText, primary && styles.btnTextPrimary]}>Route zum Treffpunkt</AppText>}
       </Pressable>
       <ActionSheet
         visible={open}
         title="Route zum Treffpunkt"
         subtitle={place}
         items={[
-          { key: 'schnell', icon: 'bolt.fill', label: 'Schnell', hint: 'Am schnellsten hin', primary: true, onPress: () => void go('schnell') },
+          { key: 'schnell', icon: 'bolt.fill', label: 'Schnell', hint: 'Am schnellsten hin', onPress: () => void go('schnell') },
           { key: 'kurvig', icon: 'point.topleft.down.to.point.bottomright.curvepath', label: 'Kurvig', hint: 'Schon auf dem Weg schöne Strecken', onPress: () => void go('kurvig') },
         ]}
         onClose={() => setOpen(false)}
@@ -74,6 +75,8 @@ const styles = StyleSheet.create({
   box: { gap: Spacing.m },
   btn: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   btnText: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
+  btnPrimary: { backgroundColor: Colors.signal },
+  btnTextPrimary: { color: Colors.onSignal },
   pressed: { opacity: 0.85 },
   err: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.stopText },
 });
