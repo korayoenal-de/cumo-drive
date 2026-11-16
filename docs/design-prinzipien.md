@@ -76,7 +76,7 @@ Bewusst ohne Bewegung:
 * Weit (mehr als 3 Grad Breite): Punkt, 12 pt. Region (0,6 bis 3 Grad): Symbol, 32 pt. Nah (unter 0,6 Grad): volle Marke. Heraus wechselt die Stufe erst bei 3,6 und 0,75 Grad.
 * Gewählt ist in jeder Stufe die volle Marke, hell und obenauf.
 * Orange nur für Ausfahrten. Touren hell, Fahrer mit Ring in Wagenfarbe.
-* Gleicher Start: in der Stufe Nah von selbst untereinander, in Weit und Region dürfen sich Pins überlappen. Schatten `Shadow.button` statt Kontur.
+* Gleicher Start: Pins, die sich überdecken würden, liegen in jeder Stufe nebeneinander (Nah untereinander, Region und Weit in einer Reihe, Fahrer im Kreis). Sonst ist nur der oberste zu sehen und anzutippen (Koray 16.11.). Schatten `Shadow.button` statt Kontur.
 
 ## 5. Typografie: Mittelweg (entschieden am 5.11.2026)
 * Versalien in Archivo Black nur für Tournamen und Überschriften der Ansicht sowie Kennzahlen (109 KM, 2:15 H, 47).
