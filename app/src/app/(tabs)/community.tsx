@@ -340,7 +340,6 @@ export default function Community() {
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   const shareable = shareableAll.slice(0, 8);
   const tourItem = (t: SavedTour): SheetItem => ({
-    group: 'touren',
     key: t.id,
     icon: 'bookmark',
     label: t.name,
@@ -350,8 +349,8 @@ export default function Community() {
   const shareItems: SheetItem[] = [
     ...shareable.map(tourItem),
     // immer da (Koray 15.11.): auch bei wenigen Touren der Weg zur ganzen Liste
-    { key: 'alle', icon: 'list.bullet' as const, group: 'wege', label: 'Alle Touren', hint: `${shareableAll.length} ${shareableAll.length === 1 ? 'Tour' : 'Touren'} zum Teilen`, onPress: () => setShareAll(true) },
-    { key: 'neu', icon: 'plus' as const, group: 'wege', label: 'Neue Tour erstellen', hint: 'Im Planer, danach hier teilen', onPress: () => router.navigate('/') },
+    { key: 'alle', icon: 'list.bullet' as const, label: 'Alle Touren', hint: `${shareableAll.length} ${shareableAll.length === 1 ? 'Tour' : 'Touren'} zum Teilen`, onPress: () => setShareAll(true) },
+    { key: 'neu', icon: 'plus' as const, label: 'Neue Tour erstellen', hint: 'Im Planer, danach hier teilen', onPress: () => router.navigate('/') },
   ];
 
   return (
@@ -361,8 +360,6 @@ export default function Community() {
         title="In der Community teilen"
         subtitle={shareable.length ? 'Welche deiner Touren sollen andere nachfahren können?' : 'Du hast noch keine eigene Tour gespeichert.'}
         items={shareItems}
-        // Inhaltsliste: Linie zwischen den Touren und den Wegen, auch bei wenigen (Konzept 15.11.)
-        minForLines={1}
         onClose={() => setShareOpen(false)}
       />
       <ActionSheet visible={shareAll} title="Alle deine Touren" subtitle="Welche soll andere nachfahren können?" items={shareableAll.map(tourItem)} onClose={() => setShareAll(false)} scroll />

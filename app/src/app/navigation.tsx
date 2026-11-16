@@ -1222,10 +1222,10 @@ export default function NavigationScreen() {
                 { key: 'melden', label: 'Problem melden', icon: 'exclamationmark.bubble.fill' as const, run: reportProblem },
                 ...(withOthers && funk.status !== 'nicht'
                   ? [
-                      { key: 'msg', group: 'gruppe', label: 'Kurznachricht an die Gruppe', icon: 'bubble.left.fill' as const, run: () => setMsgOpen(true) },
-                      { key: 'hoeren', group: 'gruppe', label: funk.listen ? 'Funk stumm' : 'Funk hören', icon: (funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill') as 'speaker.slash.fill', run: () => setFunkListen(!funk.listen) },
+                      { key: 'msg', label: 'Kurznachricht an die Gruppe', icon: 'bubble.left.fill' as const, run: () => setMsgOpen(true) },
+                      { key: 'hoeren', label: funk.listen ? 'Funk stumm' : 'Funk hören', icon: (funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill') as 'speaker.slash.fill', run: () => setFunkListen(!funk.listen) },
                       ...(ride.myRole === 'lead'
-                        ? [{ key: 'nurlead', group: 'gruppe', label: funk.onlyLead ? 'Alle dürfen sprechen' : 'Nur die Lead spricht', icon: 'person.wave.2.fill' as const, run: () => setOnlyLead(!funk.onlyLead) }]
+                        ? [{ key: 'nurlead', label: funk.onlyLead ? 'Alle dürfen sprechen' : 'Nur die Lead spricht', icon: 'person.wave.2.fill' as const, run: () => setOnlyLead(!funk.onlyLead) }]
                         : []),
                     ]
                   : []),

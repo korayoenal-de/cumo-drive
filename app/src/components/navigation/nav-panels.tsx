@@ -173,7 +173,7 @@ export function BottomBar({
   /** Echter Funk (ab Build 20): gedrückt halten spricht. Ohne talk öffnet der Mikrofon Knopf die Kurznachrichten. */
   talk?: { talking: boolean; waiting: boolean; disabled: boolean; onTalk: (on: boolean) => void; label?: string };
   /** Zusätzliche Einträge im Menü, etwa Kurznachricht oder Funk hören */
-  extraActions?: { key: string; label: string; icon: SFSymbol; group?: string; run: () => void }[];
+  extraActions?: { key: string; label: string; icon: SFSymbol; run: () => void }[];
 }) {
   const now = useNow();
   const [funkHint, setFunkHint] = useState(false);
@@ -207,21 +207,15 @@ export function BottomBar({
   const km = remainingKm != null ? `${remainingKm.toFixed(remainingKm < 10 ? 1 : 0).replace('.', ',')} km` : '';
   const rest = paused ? 'Pausiert' : [formatRemaining(eta, now), km].filter(Boolean).join(' · ');
   const done = extra ? Math.max(0, Math.min(100, extra.donePct)) : null;
-  // Gliederung (Konzept 15.11.): Route, Gruppe, Hilfe, Beenden zuletzt; zwischen den Themen mehr Abstand
-  const route = [
-    ...(onSkip && skipLabel ? [{ key: 'skip', label: skipLabel, icon: 'forward.end.fill' as const, run: onSkip }] : []),
-    ...(onOverview ? [{ key: 'plan', label: 'Tour anpassen', icon: 'point.topleft.down.to.point.bottomright.curvepath.fill' as const, run: onOverview }] : []),
-    paused
-      ? { key: 'weiter', label: 'Fortsetzen', icon: 'play.fill' as const, run: () => onPause(false) }
-      : { key: 'pause', label: 'Pausieren', icon: 'pause.fill' as const, run: () => onPause(true) },
-  ];
-  const extras = extraActions ?? [];
-  const themes = [route, extras.filter((a) => a.group === 'gruppe'), extras.filter((a) => a.group !== 'gruppe')];
   const actions = [
-    ...themes
-      .filter((t) => t.length)
-      .flatMap((t, ti) => t.map((a, i) => ({ ...a, signal: false, gap: ti > 0 && i === 0 }))),
-    { key: 'ende', label: 'Fahrt beenden', icon: 'stop.fill' as const, signal: true, gap: true, run: onEnd },
+    // Reihenfolge (Koray 15.11.): Zwischenziel überspringen, Tour anpassen, dann der Rest, Beenden zuletzt
+    ...(onSkip && skipLabel ? [{ key: 'skip', label: skipLabel, icon: 'forward.end.fill' as const, signal: false, run: onSkip }] : []),
+    ...(onOverview ? [{ key: 'plan', label: 'Tour anpassen', icon: 'point.topleft.down.to.point.bottomright.curvepath.fill' as const, signal: false, run: onOverview }] : []),
+    ...(extraActions ?? []).map((a) => ({ ...a, signal: false })),
+    paused
+      ? { key: 'weiter', label: 'Fortsetzen', icon: 'play.fill' as const, signal: false, run: () => onPause(false) }
+      : { key: 'pause', label: 'Pausieren', icon: 'pause.fill' as const, signal: false, run: () => onPause(true) },
+    { key: 'ende', label: 'Fahrt beenden', icon: 'stop.fill' as const, signal: true, run: onEnd },
   ];
 
   return (
@@ -242,7 +236,7 @@ export function BottomBar({
       {menu && (
         <View style={[styles.menu, { bottom: '100%' }]} pointerEvents="box-none">
           {actions.map((a, i) => (
-            <Animated.View key={a.key} entering={softEnter(i)} style={a.gap && styles.themeGap}>
+            <Animated.View key={a.key} entering={softEnter(i)}>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => {
@@ -402,7 +396,6 @@ const styles = StyleSheet.create({
   volHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   volSteps: { flexDirection: 'row' },
   menu: { position: 'absolute', right: Spacing.xl, paddingBottom: Spacing.m, alignItems: 'flex-end', gap: Spacing.s },
-  themeGap: { marginTop: Spacing.m },
   pill: { height: 52, flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingLeft: Spacing.l, paddingRight: Spacing.xl, borderRadius: 26, backgroundColor: Colors.surface2, boxShadow: Shadow.sheet },
   pillSignal: { backgroundColor: Colors.signal },
   pillText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },

@@ -16,7 +16,6 @@ import { edgeLimits, shownLimitAt } from '../navigation/speed-zones';
 import { pointAtKm, snapToRoute } from '../navigation/tracker';
 import type { NavRoute } from '../navigation/types';
 import { PASSES, passesAlong } from '../passes';
-import { groupRows } from '../sheet-groups';
 
 /** Gerade Linie nach Osten ab Heppenheim, n Punkte im Abstand von etwa stepM Metern */
 function eastLine(n: number, stepM = 50, start: LatLon = [49.64, 8.63]): LatLon[] {
@@ -386,21 +385,5 @@ describe('Restzeit aus den Zeiten der Anweisungen (Matthias 15.11.)', () => {
     // 2 km vor dem Ziel (am Ortseingang): noch 6 min, gleichmäßig verteilt wären es nur 2
     assert.equal(+(12 - minutesAt(r, 10)).toFixed(2), 6);
     assert.equal(+minutesAt({ cumKm, km: 12, minutes: 12 }, 10).toFixed(2), 10);
-  });
-});
-
-describe('groupRows', () => {
-  const lines = (r: { line: boolean }[]) => r.map((x) => (x.line ? 1 : 0)).join('');
-  it('Rot zuletzt hinter einer Linie, kurze Menüs sonst ohne Linie', () => {
-    const r = groupRows([{ group: 'a' }, { danger: true }, { group: 'b' }, { group: 'c' }]);
-    assert.equal(r[3].item.danger, true);
-    assert.equal(lines(r), '0001');
-  });
-  it('ab vier harmlosen Einträgen Linien zwischen Themen', () => {
-    const r = groupRows([{ group: 'f' }, { group: 'ae' }, { group: 'ae' }, { group: 't' }, {}, { danger: true }]);
-    assert.equal(lines(r), '010101');
-  });
-  it('Inhaltslisten trennen schon bei wenigen Einträgen', () => {
-    assert.equal(lines(groupRows([{ group: 'tour' }, { group: 'weg' }], 1)), '01');
   });
 });

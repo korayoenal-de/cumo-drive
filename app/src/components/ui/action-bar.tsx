@@ -29,8 +29,6 @@ export type MoreItem = {
   /** Frage im ConfirmSheet, etwa "Möchtest du diese Runde wirklich verwerfen?" */
   confirm?: string;
   busy?: boolean;
-  /** Thema, zwischen Themen trennt eine Linie (lib/sheet-groups.ts) */
-  group?: string;
   onPress: () => void;
 };
 
@@ -101,7 +99,7 @@ export function ActionBar({
       <FloatMenu
         anchor={anchor}
         label="Weitere Aktionen"
-        items={more.map((it) => ({ key: it.key, label: it.label, icon: it.icon, danger: it.danger, group: it.group }))}
+        items={more.map((it) => ({ key: it.key, label: it.label, icon: it.icon, danger: it.danger }))}
         onPick={(key) => {
           setAnchor(null);
           const it = more.find((x) => x.key === key);

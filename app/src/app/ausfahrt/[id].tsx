@@ -609,13 +609,13 @@ export default function AusfahrtDetail() {
         items={[
           ...(isLead && a.rideStatus === 'geplant'
             ? ([
-                { key: 'zeit', icon: 'clock', label: 'Abfahrt ändern', group: 'planung', onPress: () => setTimeSheet(true) },
-                { key: 'ort', icon: 'mappin.and.ellipse', label: 'Treffpunkt ändern', group: 'planung', onPress: () => setPlaceSheet(true) },
+                { key: 'zeit', icon: 'clock', label: 'Abfahrt ändern', onPress: () => setTimeSheet(true) },
+                { key: 'ort', icon: 'mappin.and.ellipse', label: 'Treffpunkt ändern', onPress: () => setPlaceSheet(true) },
               ] as SheetItem[])
             : []),
-          ...(a.isOwner && a.rideStatus === 'geplant' && members.length > 1 ? ([{ key: 'lead', icon: 'person.line.dotted.person', label: 'Lead übergeben', hint: 'Wer die Lead hat, startet die Ausfahrt', group: 'rolle', onPress: () => setLeadSheet(true) }] as SheetItem[]) : []),
-          ...(canTakeLead ? ([{ key: 'take', icon: 'person.line.dotted.person', label: 'Lead übernehmen', hint: `${a.ownerName} ist noch nicht gestartet`, group: 'rolle', onPress: () => void run('take', () => takeLead(a.id)) }] as SheetItem[]) : []),
-          ...(!a.isOwner ? ([{ key: 'melden', icon: 'exclamationmark.bubble', label: 'Ausfahrt melden', group: 'hilfe', onPress: () => setReport(true) }] as SheetItem[]) : []),
+          ...(a.isOwner && a.rideStatus === 'geplant' && members.length > 1 ? ([{ key: 'lead', icon: 'person.line.dotted.person', label: 'Lead übergeben', hint: 'Wer die Lead hat, startet die Ausfahrt', onPress: () => setLeadSheet(true) }] as SheetItem[]) : []),
+          ...(canTakeLead ? ([{ key: 'take', icon: 'person.line.dotted.person', label: 'Lead übernehmen', hint: `${a.ownerName} ist noch nicht gestartet`, onPress: () => void run('take', () => takeLead(a.id)) }] as SheetItem[]) : []),
+          ...(!a.isOwner ? ([{ key: 'melden', icon: 'exclamationmark.bubble', label: 'Ausfahrt melden', onPress: () => setReport(true) }] as SheetItem[]) : []),
           ...((a.myStatus === 'angefragt' || a.myStatus === 'eingeladen' || (a.myStatus === 'zugesagt' && !a.isOwner) || a.isOwner) && !inThisRide
             ? ([
                 {
