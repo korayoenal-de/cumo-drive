@@ -85,6 +85,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 ## Für Koray
 
+* [ ] cumodriversclub.de und rallycumo.de liefern dieselben Seiten doppelt aus (Status 200, canonical auf rallycumo.de): eine Domain per 301 auf die andere weiterleiten (Koray schaut separat)
+
 * [ ] Restliche sechs iPhone Screenshots für die Landingpage
 * [ ] Liste der Gründungstester vor der Veröffentlichung
 * [ ] 3D Designer für die Fahrzeug Formen beauftragen (heute Kenney Car Kit, CC0)
