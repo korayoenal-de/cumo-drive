@@ -82,7 +82,7 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
   // kleine Sellaronda und die 62 km Runde), liegen in jeder Stufe nebeneinander: sonst ist nur der oberste zu sehen und
   // anzutippen (Koray 16.11., 12:00). Nah untereinander (die Marken sind breit), Region und Weit in einer Reihe.
   const shown = useMemo(() => {
-    const groups = clusterPins(pins, region, win.width, CELL[stage], selected);
+    const groups = mergeNear(clusterPins(pins, region, win.width, CELL[stage], selected), region, win.width, CELL[stage] + GAP[stage] / 2, selected);
     return groups.flatMap((g) => (g.items.length > 1 ? fanOut(g.items, g.p, region, win.width, stage) : g.items));
   }, [pins, region, win.width, selected, stage]);
 
@@ -132,6 +132,34 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
       ))}
     </MapView>
   );
+}
+
+/**
+ * Gruppen aus Nachbarzellen zusammenlegen, wenn sie auf dem Bildschirm dichter als minPt liegen (Koray 16.11.: weit
+ * herausgezoomt lagen Pins aus benachbarten Zellen als Kreise übereinander). Der gewählte Pin bleibt für sich.
+ */
+function mergeNear<T extends { id: string; p: LatLon }>(groups: { key: string; p: LatLon; items: T[] }[], region: Region, widthPt: number, minPt: number, keep: string | null) {
+  const ptPerLon = widthPt / Math.max(1e-6, region.longitudeDelta);
+  const out: { key: string; p: LatLon; items: T[] }[] = [];
+  for (const g of groups) {
+    const solo = g.items.some((x) => x.id === keep);
+    const hit = solo
+      ? undefined
+      : out.find((o) => {
+          if (o.items.some((x) => x.id === keep)) return false;
+          const dx = (o.p[1] - g.p[1]) * ptPerLon;
+          const dy = (o.p[0] - g.p[0]) * ptPerLon / Math.cos((g.p[0] * Math.PI) / 180);
+          return Math.hypot(dx, dy) < minPt;
+        });
+    if (!hit) {
+      out.push({ ...g, items: [...g.items] });
+      continue;
+    }
+    const n = hit.items.length + g.items.length;
+    hit.p = [(hit.p[0] * hit.items.length + g.p[0] * g.items.length) / n, (hit.p[1] * hit.items.length + g.p[1] * g.items.length) / n];
+    hit.items.push(...g.items);
+  }
+  return out;
 }
 
 /**
