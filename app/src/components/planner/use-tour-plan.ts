@@ -200,7 +200,10 @@ export function useTourPlan(onPlanned?: () => void) {
           xPts.push(p);
           xProf.push(profiles[i]);
           const beyond = pastPoint(cross, at, PAST_M);
-          if (beyond && haversine(beyond, points[i + 1]) > 1500) {
+          // nur wenn es dort Richtung nächster Punkt weitergeht; zweigt er an der Passhöhe ab, entstünde ein Stich
+          // (Koray 16.11.: Falzarego, danach Valparola, fuhr erst 2 km Richtung Andraz hinunter und zurück)
+          const next = points[i + 1];
+          if (beyond && haversine(beyond, next) > 1500 && haversine(beyond, next) < haversine(p, next)) {
             xPts.push(beyond);
             xProf.push(profiles[i]);
           }
