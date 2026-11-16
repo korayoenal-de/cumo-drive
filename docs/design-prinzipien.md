@@ -71,6 +71,12 @@ Bewusst ohne Bewegung:
 * Touren mit Mini Streckenbild, Zahlen in Tabellenziffern, Status als getönte Plakette statt Text im Fließtext.
 * Zahlen gleich groß und auf einer Zeile, Einheiten klein daneben.
 
+### Nachfrage nach dem Verwerfen (Koray 16.11.2026, Leinwand „Nachfrage nach dem Verwerfen“)
+* Nach drei Rundtouren ohne Speichern oder Losfahren und dann Verwerfen: 1,5 Sekunden später ein normales Optionsblatt „Nichts Passendes dabei?“ mit Gründen als Chips.
+* Ein Tipp auf einen Grund sendet sofort; nur „Etwas anderes“ öffnet ein Textfeld mit Senden als Hauptaktion. Danach kurz Danke, das Blatt geht von selbst.
+* Einmal pro Sitzung. Zweimal hintereinander weggeschoben: sieben Tage Ruhe. Nach dem Senden: 24 Stunden Ruhe. Nie in der Navigation oder in CarPlay.
+* Start nur gerundet (Ortsmitte), von den Wegpunkten nur die Stützpunkte unterwegs.
+
 ### Pins nach Zoomstufe (Koray 16.11.2026, Leinwand „Pins nach Zoomstufe“)
 * Keine Kreise mit Zahl auf Karten. Jeder Pin bleibt einzeln, die Zoomstufe bestimmt, wie viel er zeigt.
 * Weit (mehr als 3 Grad Breite): Punkt, 12 pt. Region (0,6 bis 3 Grad): Symbol, 32 pt. Nah (unter 0,6 Grad): volle Marke. Heraus wechselt die Stufe erst bei 3,6 und 0,75 Grad.

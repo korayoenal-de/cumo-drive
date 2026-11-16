@@ -38,7 +38,7 @@ export function Result({
   fun?: TourFun | null;
   funDelta?: number | null;
   onFun?: () => void;
-  tour: PlannedTour; req: TourRequest; stops: Stop[]; group: boolean; onReroll: () => void; onBack: () => void;
+  tour: PlannedTour; req: TourRequest; stops: Stop[]; group: boolean; onReroll: () => void; onBack: (saved: boolean) => void;
   /** Fahrspaß der bisher gewürfelten Runden (leer bei nur einer) und welche gerade gezeigt wird */
   rolls?: (TourFun | null)[];
   rollIdx?: number;
@@ -146,7 +146,7 @@ export function Result({
           { key: 'link', icon: 'square.and.arrow.up', label: 'Link teilen', hint: 'Andere öffnen die Tour direkt in CUMO DRIVE', onPress: () => void shareTourLink({ ...tour, name: tour.name }, req.profile).catch(() => undefined) },
           { key: 'adjust', icon: 'pencil', label: 'Anpassen', onPress: onAdjust },
           { key: 'reroll', icon: 'dice', label: 'Neu würfeln', hint: 'Gleiche Länge und Richtung, andere Strecke', onPress: onReroll },
-          { key: 'back', icon: 'trash', label: 'Runde verwerfen', danger: true, confirm: 'Möchtest du diese Runde wirklich verwerfen?', onPress: onBack },
+          { key: 'back', icon: 'trash', label: 'Runde verwerfen', danger: true, confirm: 'Möchtest du diese Runde wirklich verwerfen?', onPress: () => onBack(!!savedId) },
         ]}>
       </ActionBar>
     </View>

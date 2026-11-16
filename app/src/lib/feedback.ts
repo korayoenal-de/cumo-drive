@@ -30,11 +30,11 @@ export function appVersion(): string {
   return id ? `${v} · ${id.slice(0, 8)}` : v;
 }
 
-export async function sendFeedback(area: FeedbackArea, note: string): Promise<void> {
+export async function sendFeedback(area: FeedbackArea, note: string, extra?: Record<string, unknown>): Promise<void> {
   const { error } = await supabase.rpc('send_feedback', {
     p_area: area,
     p_note: note.trim(),
-    p_context: { version: appVersion(), os: `${Platform.OS} ${Platform.Version}` },
+    p_context: { ...extra, version: appVersion(), os: `${Platform.OS} ${Platform.Version}` },
   });
   if (error) throw new Error(error.message || 'Senden hat nicht geklappt.');
 }

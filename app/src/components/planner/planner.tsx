@@ -37,7 +37,9 @@ import { usePillText } from './use-pill';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { AppText } from '@/components/ui/text';
-import { ActionSheet } from '@/components/ui/action-sheet';
+import { ActionSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
+import { AskFeedbackSheet } from '@/components/planner/ask-feedback-sheet';
+import { ASK_AFTER_ROLLS, ASK_DELAY_MS, mayAsk, type AskRound } from '@/lib/ask-feedback';
 import { Colors, Motion, Spacing } from '@/constants/theme';
 import { cumoAvailable, prewarmRouting } from '@/lib/cumo-routing';
 import { onEditTour, setEditBackHandler, takeEditTour, useEditOrigin } from '@/lib/edit-tour';
@@ -158,6 +160,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   // Tour planen ist der erste Tab und beim Öffnen gewählt (Koray 8.11.)
   const [mode, setMode] = useState<Mode>('tour');
   const [view, setView] = useState<Stage>({ kind: 'form' });
+  const [askRounds, setAskRounds] = useState<AskRound[] | null>(null);
   const abort = useRef<AbortController | null>(null);
   /**
    * Nächste Runde vorab rechnen (10.11.): Kurz nachdem eine Rundtour steht, rechnet die App im Hintergrund
@@ -839,7 +842,18 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             const r = rolls[i];
             if (r) setView({ kind: 'result', tour: r.tour, req: r.req, stops: r.stops });
           }}
-          onBack={() => setView({ kind: 'form' })}
+          onBack={(saved) => {
+            // Drei Runden gesehen, nichts gespeichert: einmal freundlich nachfragen (Koray 16.11.)
+            const seen = rolls.map((r) => ({ tour: r.tour, req: r.req }));
+            setView({ kind: 'form' });
+            if (!saved && seen.length >= ASK_AFTER_ROLLS) {
+              setTimeout(() => {
+                void mayAsk().then((ok) => {
+                  if (ok) setAskRounds(seen);
+                });
+              }, ASK_DELAY_MS + SHEET_GONE_MS);
+            }
+          }}
           onAdjust={() => adjustRound(view.tour, view.req.profile)}
           adding={adding}
           planned={roundStops}
@@ -1279,6 +1293,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       {body}
     </MapSheet>
     </View>
+    <AskFeedbackSheet rounds={askRounds} onDone={() => setAskRounds(null)} />
     <ActionSheet
       visible={askKeep}
       title="Änderungen behalten?"
