@@ -8,6 +8,7 @@ import { avoidedPoints } from './avoid-pass';
 import { checkLine } from './check';
 import { cumoAvailable, cumoPlan, type PlanHint } from './cumo-routing';
 import { tourFun } from './fun-score';
+import { PASSES, passesAlong } from './passes';
 import { closureExclude, closureLabel, closuresNear, closuresOnRoute, onClosedRoad, onPassRoad, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import { seamsOk, windowFor } from './plan-window';
@@ -47,6 +48,7 @@ export function directNote(n: number | undefined, legs: number): string | null {
  * Seit 10.11. (Stresstest) zählt der Fahrspaß Wert statt der km auf kurvigen Kanten: die sind auch auf
  * guten Strecken nur wenige km, und bei längeren Etappen gewann so fast immer der direkte Weg, etwa
  * Titisee nach Lindau mit 75 km Autobahn und Fahrspaß 3 statt kurvig mit Fahrspaß 40.
+ * Seit 16.11.: bringt die kurvige Variante einen Pass mehr, lohnt sie sich bis zum 1,35 fachen Weg.
  */
 function curvyWorthIt(curvy: PlannedTour, direct: PlannedTour): boolean {
   if (curvy.laenge_km <= direct.laenge_km * 1.05) return true;
@@ -58,8 +60,15 @@ function curvyWorthIt(curvy: PlannedTour, direct: PlannedTour): boolean {
   // Der direkte Weg führt zu einem guten Teil über die Autobahn: kurvig fährt fast ohne, dann lohnt es sich
   if (direct.autobahnKm != null && curvy.autobahnKm != null && direct.autobahnKm > direct.laenge_km * 0.2 && curvy.autobahnKm < direct.autobahnKm * 0.3 && curvy.laenge_km <= direct.laenge_km * 1.6)
     return true;
-  const a = tourFun(flatten(curvy).map((x) => x.p))?.score ?? 0;
-  const b = tourFun(flatten(direct).map((x) => x.p))?.score ?? 0;
+  const curvyLine = flatten(curvy).map((x) => x.p);
+  const directLine = flatten(direct).map((x) => x.p);
+  // Ein zusätzlicher Pass lohnt sich immer, solange der Umweg maßvoll bleibt (Koray 16.11.: Brixen nach Cortina fuhr
+  // durchs Pustertal statt über das Würzjoch, weil der Fahrspaß in den Bergen auf beiden Wegen schon hoch ist)
+  const directPasses = new Set(passesAlong(PASSES, directLine).map((x) => x.pass.id));
+  const extraPasses = passesAlong(PASSES, curvyLine).filter((x) => !directPasses.has(x.pass.id)).length;
+  if (extraPasses >= 1 && curvy.laenge_km <= direct.laenge_km * 1.35) return true;
+  const a = tourFun(curvyLine)?.score ?? 0;
+  const b = tourFun(directLine)?.score ?? 0;
   return a >= b + 6;
 }
 
