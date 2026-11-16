@@ -12,6 +12,7 @@ import { defaultLevel, HIGHLIGHT_ROADS, type HighlightRoad } from '../highlight-
 import { PASSES, passesAlong, warnSpeech, type Pass, type WarnKey } from '../passes';
 import { resample, type ElevationProfile } from '../stats';
 import { haversine, type LatLon } from '../tour';
+import { getLang, noteT, numberLocale, t } from '@/i18n';
 
 /** pass oder die Art der kuratierten Strecke: rallye, strecke, aussicht, bergrennen */
 export type HighlightKind = 'pass' | HighlightRoad['kind'];
@@ -355,25 +356,36 @@ function raceLabel(h: Highlight): string | null {
   if (!h.race) return null;
   const a = h.race.name.toLowerCase();
   const b = h.name.toLowerCase();
-  return b.includes(a) || a.includes(b) ? h.race.note : `${h.race.note} ${h.race.name}`;
+  const note = noteT(h.race.note);
+  return b.includes(a) || a.includes(b) ? note : `${note} ${h.race.name}`;
 }
 
 export function highlightFacts(h: Highlight): string {
   const len = Math.max(1, Math.round(h.endKm - h.startKm));
-  if (h.kind !== 'pass') return [h.note ?? null, `${len} km`, h.hairpins >= 3 ? `${h.hairpins} Kehren` : null].filter(Boolean).join(', ');
-  return [raceLabel(h), `${len} km`, h.hairpins >= 3 ? `${h.hairpins} Kehren` : null, h.ele ? `${h.ele.toLocaleString('de-DE')} m` : null].filter(Boolean).join(', ');
+  const pins = h.hairpins >= 3 ? t('{n} Kehren', { n: h.hairpins }) : null;
+  if (h.kind !== 'pass') return [h.note ? noteT(h.note) : null, `${len} km`, pins].filter(Boolean).join(', ');
+  return [raceLabel(h), `${len} km`, pins, h.ele ? `${h.ele.toLocaleString(numberLocale())} m` : null].filter(Boolean).join(', ');
 }
 
 export function highlightSpeech(h: Highlight, distM: number): string {
   const len = Math.max(1, Math.round(h.endKm - h.startKm));
-  const where = distM > 150 ? `In ${distM >= 950 ? 'einem Kilometer' : `${Math.round(distM / 100) * 100} Metern`} beginnt` : 'Jetzt beginnt';
-  const pins = h.hairpins >= 3 ? `, ${h.hairpins} Kehren` : '';
-  const what = h.kind === 'pass' ? h.name : (h.say ?? (h.note ? `die ${h.note} ${h.name}` : h.name));
+  const lang = getLang();
+  const pins = h.hairpins >= 3 ? `, ${t('{n} Kehren', { n: h.hairpins })}` : '';
   const race = raceLabel(h);
-  const extra = race ? ` Auf diesem Anstieg liegt die ${race}.` : '';
-  const legend = h.level >= 5 ? ' Eine Legende, viel Spaß.' : '';
+  const legend = h.level >= 5 ? ` ${t('Eine Legende, viel Spaß.')}` : '';
   // Warnung sachlich und kurz direkt nach der Länge, ohne Alarm (Konzept 12.11.)
   const warn = h.warn?.length ? ` ${warnSpeech(h.warn)}` : '';
+  if (lang !== 'de') {
+    // Englisch und Italienisch: Name und Art, ohne deutsche Satzbausteine aus den Daten (say)
+    const d = Math.round(distM / 100) * 100;
+    const where = distM > 150 ? t('In {dist} beginnt', { dist: distM >= 950 ? t('einem Kilometer') : t('{m} Metern', { m: d }) }) : t('Jetzt beginnt');
+    const what = h.kind === 'pass' || !h.note ? h.name : `${h.name}, ${noteT(h.note)}`;
+    const extra = race ? ` ${t('Auf diesem Anstieg liegt die {race}.', { race })}` : '';
+    return `${where} ${what}. ${t('{n} Kilometer', { n: len })}${pins}.${warn}${extra}${legend}`;
+  }
+  const where = distM > 150 ? `In ${distM >= 950 ? 'einem Kilometer' : `${Math.round(distM / 100) * 100} Metern`} beginnt` : 'Jetzt beginnt';
+  const what = h.kind === 'pass' ? h.name : (h.say ?? (h.note ? `die ${h.note} ${h.name}` : h.name));
+  const extra = race ? ` Auf diesem Anstieg liegt die ${race}.` : '';
   return `${where} ${what}. ${len} Kilometer${pins}.${warn}${extra}${legend}`;
 }
 

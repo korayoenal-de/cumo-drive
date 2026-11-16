@@ -13,7 +13,7 @@ import * as Speech from 'expo-speech';
 
 import type { Maneuver, NavRoute } from './types';
 import { chosenVoiceId } from '../voice-settings';
-import { getLang, SPEECH_LANG } from '@/i18n';
+import { getLang, SPEECH_LANG, t, type Lang } from '@/i18n';
 
 type Stage = 'weit' | 'nah' | 'jetzt';
 
@@ -29,7 +29,11 @@ export type VoiceGuide = {
   stop: () => void;
 };
 
-const ORDINAL = ['', 'erste', 'zweite', 'dritte', 'vierte', 'fünfte', 'sechste', 'siebte', 'achte'];
+const ORDINALS: Record<Lang, string[]> = {
+  de: ['', 'erste', 'zweite', 'dritte', 'vierte', 'fünfte', 'sechste', 'siebte', 'achte'],
+  en: ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'],
+  it: ['', 'prima', 'seconda', 'terza', 'quarta', 'quinta', 'sesta', 'settima', 'ottava'],
+};
 
 /**
  * Abstände der drei Stufen nach dem Tempo statt nur zwei Bänder (Klassiker: bei 100 km/h kam die Ansage zu
@@ -53,9 +57,11 @@ export function thenPhrase(m: Maneuver, after: Maneuver | undefined): string {
   if (!after || after.kind === 'start' || after.kind === 'zwischenziel' || after.kind === 'geradeaus') return '';
   const gap = (after.km - m.km) * 1000;
   if (gap > THEN_M) return '';
-  if (after.kind.startsWith('ziel')) return ' Dann bist du am Ziel.';
-  const short = nowPhrase(after).replace(/^Jetzt /, '');
-  return ` ${gap <= THEN_SOON_M ? 'Dann sofort' : 'Danach'} ${short}`;
+  if (after.kind.startsWith('ziel')) return ` ${t('Dann bist du am Ziel.')}`;
+  const now = t('Jetzt');
+  const n = nowPhrase(after);
+  const short = n.startsWith(`${now} `) ? n.slice(now.length + 1) : n;
+  return ` ${gap <= THEN_SOON_M ? t('Dann sofort') : t('Danach')} ${short}`;
 }
 
 /** Spur Hinweis aus den Kartendaten: links, rechts oder in der Mitte einordnen */
@@ -66,24 +72,30 @@ export function lanePhrase(m: Maneuver): string {
   const first = use.indexOf(true);
   const last = use.lastIndexOf(true);
   if (first < 0) return '';
-  if (first === 0 && last < l.length - 1) return last === 0 ? ' Benutze die linke Spur.' : ' Bitte links einordnen.';
-  if (last === l.length - 1 && first > 0) return first === l.length - 1 ? ' Benutze die rechte Spur.' : ' Bitte rechts einordnen.';
-  if (first > 0 && last < l.length - 1) return ' Benutze die mittlere Spur.';
+  if (first === 0 && last < l.length - 1) return last === 0 ? ` ${t('Benutze die linke Spur.')}` : ` ${t('Bitte links einordnen.')}`;
+  if (last === l.length - 1 && first > 0) return first === l.length - 1 ? ` ${t('Benutze die rechte Spur.')}` : ` ${t('Bitte rechts einordnen.')}`;
+  if (first > 0 && last < l.length - 1) return ` ${t('Benutze die mittlere Spur.')}`;
   return '';
 }
 
 /** "300 Metern", "1 Kilometer", "1,5 Kilometern" */
 function distanceWords(m: number): string {
+  const lang = getLang();
   if (m >= 950) {
     const km = Math.round(m / 500) / 2;
-    return km === 1 ? '1 Kilometer' : `${String(km).replace('.', ',')} Kilometern`;
+    const n = lang === 'en' ? String(km) : String(km).replace('.', ',');
+    if (lang === 'en') return km === 1 ? '1 kilometre' : `${n} kilometres`;
+    if (lang === 'it') return km === 1 ? '1 chilometro' : `${n} chilometri`;
+    return km === 1 ? '1 Kilometer' : `${n} Kilometern`;
   }
   const r = m >= 200 ? Math.round(m / 100) * 100 : Math.max(10, Math.round(m / 10) * 10);
-  return `${r} Metern`;
+  return lang === 'en' ? `${r} metres` : lang === 'it' ? `${r} metri` : `${r} Metern`;
 }
 
 /** Erstes Wort klein schreiben, damit "In 300 Metern rechts abbiegen" flüssig klingt. */
 function lowerFirst(s: string): string {
+  // Englisch und Italienisch: Valhalla beginnt mit dem Verb ("Turn right", "Svolta a destra")
+  if (getLang() !== 'de') return s.charAt(0).toLowerCase() + s.slice(1);
   const first = s.split(' ')[0];
   const lower = ['Rechts', 'Links', 'In', 'Auf', 'Scharf', 'Leicht', 'Nach', 'Geradeaus', 'Weiter', 'Aus', 'Bleiben', 'Halten', 'Den', 'Die', 'Der', 'Das', 'Zum', 'Zur', 'Wenden', 'Ziel'];
   return lower.includes(first) ? first.toLowerCase() + s.slice(first.length) : s;
@@ -91,63 +103,63 @@ function lowerFirst(s: string): string {
 
 /** Kurze Ansage direkt am Manöver. */
 export function nowPhrase(m: Maneuver): string {
-  if (m.back) return 'Du bist wieder auf der Tour.';
+  if (m.back) return t('Du bist wieder auf der Tour.');
   switch (m.kind) {
     case 'links':
-      return 'Jetzt links abbiegen.';
+      return t('Jetzt links abbiegen.');
     case 'rechts':
-      return 'Jetzt rechts abbiegen.';
+      return t('Jetzt rechts abbiegen.');
     case 'leicht_links':
-      return 'Jetzt leicht links halten.';
+      return t('Jetzt leicht links halten.');
     case 'leicht_rechts':
-      return 'Jetzt leicht rechts halten.';
+      return t('Jetzt leicht rechts halten.');
     case 'scharf_links':
-      return 'Jetzt scharf links abbiegen.';
+      return t('Jetzt scharf links abbiegen.');
     case 'scharf_rechts':
-      return 'Jetzt scharf rechts abbiegen.';
+      return t('Jetzt scharf rechts abbiegen.');
     case 'wenden':
     case 'wenden_rechts':
-      return 'Jetzt wenden.';
+      return t('Jetzt wenden.');
     case 'rechts_halten':
-      return 'Jetzt rechts halten.';
+      return t('Jetzt rechts halten.');
     case 'links_halten':
-      return 'Jetzt links halten.';
+      return t('Jetzt links halten.');
     case 'einfaedeln_rechts':
     case 'einfaedeln_links':
-      return 'Jetzt einfädeln.';
+      return t('Jetzt einfädeln.');
     case 'kreisverkehr_verlassen':
-      return 'Jetzt den Kreisverkehr verlassen.';
+      return t('Jetzt den Kreisverkehr verlassen.');
     case 'faehre_an_bord':
-      return 'Jetzt auf die Fähre.';
+      return t('Jetzt auf die Fähre.');
     case 'faehre_verlassen':
-      return 'Jetzt die Fähre verlassen.';
+      return t('Jetzt die Fähre verlassen.');
     case 'kreisverkehr':
-      return m.exit && m.exit < ORDINAL.length
-        ? `Jetzt in den Kreisverkehr, ${ORDINAL[m.exit]} Ausfahrt nehmen.`
-        : 'Jetzt in den Kreisverkehr fahren.';
+      return m.exit && m.exit < ORDINALS.de.length
+        ? t('Jetzt in den Kreisverkehr, {n} Ausfahrt nehmen.', { n: ORDINALS[getLang()][m.exit] })
+        : t('Jetzt in den Kreisverkehr fahren.');
     case 'auffahrt':
     case 'auffahrt_rechts':
     case 'auffahrt_links':
-      return 'Jetzt auffahren.';
+      return t('Jetzt auffahren.');
     case 'abfahrt':
     case 'abfahrt_rechts':
     case 'abfahrt_links':
-      return 'Jetzt abfahren.';
+      return t('Jetzt abfahren.');
     case 'ziel':
     case 'ziel_links':
     case 'ziel_rechts':
-      return 'Du bist am Ziel.';
+      return t('Du bist am Ziel.');
     case 'zwischenziel':
-      return 'Du bist jetzt auf der Tour.';
+      return t('Du bist jetzt auf der Tour.');
     default:
-      return 'Jetzt geradeaus weiter.';
+      return t('Jetzt geradeaus weiter.');
   }
 }
 
 /** Vorankündigung mit Entfernung. */
 export function aheadPhrase(m: Maneuver, distM: number): string {
-  const base = m.kind === 'ziel' || m.kind === 'ziel_links' || m.kind === 'ziel_rechts' ? 'bist du am Ziel.' : lowerFirst(m.speech);
-  return `In ${distanceWords(distM)} ${base}`;
+  const base = m.kind === 'ziel' || m.kind === 'ziel_links' || m.kind === 'ziel_rechts' ? t('bist du am Ziel.') : lowerFirst(m.speech);
+  return t('In {dist} {base}', { dist: distanceWords(distM), base });
 }
 
 /**

@@ -30,6 +30,7 @@ import { flatten, haversine, type LatLon, type Tour } from '../tour';
 import { cumoAvailable, cumoPlan } from '../cumo-routing';
 import { valhallaFetch, costingFor, decodePolyline6 } from '../valhalla';
 import type { Lane, Maneuver, ManeuverKind, NavRequest, NavRoute } from './types';
+import { getLang, t } from '@/i18n';
 
 /** Mindestabstand der Punkte nach dem Ausdünnen in Metern */
 const THIN_M = 40;
@@ -317,7 +318,9 @@ export function kindFor(type: number): ManeuverKind {
 
 /* ---------- Anfragen ---------- */
 
-const DIRECTIONS = { language: 'de-DE', units: 'kilometers' };
+/** Sprache der Abbiegehinweise von Valhalla folgt der App Sprache */
+const VALHALLA_LANG = { de: 'de-DE', en: 'en-US', it: 'it-IT' } as const;
+const directions = () => ({ language: VALHALLA_LANG[getLang()], units: 'kilometers' });
 
 /** Zwei Stücke, die am selben Punkt enden und beginnen, zu einem verbinden */
 function joinPieces(a: Piece, b: Piece): Piece {
@@ -375,7 +378,7 @@ async function withoutInventedUturn(first: VTrip, shape: { lat: number; lon: num
   try {
     const second = await post(
       'trace_route',
-      { shape, ...costingFor('schnell', req.avoid), shape_match: 'map_snap', trace_options: { turn_penalty_factor: UTURN_RETRY_FACTOR }, directions_options: DIRECTIONS },
+      { shape, ...costingFor('schnell', req.avoid), shape_match: 'map_snap', trace_options: { turn_penalty_factor: UTURN_RETRY_FACTOR }, directions_options: directions() },
       signal,
     );
     const better = uturns(second) < n && tripKm(second) <= tripKm(first) + 0.005 && matchedTo(second, count) >= matchedTo(first, count);
@@ -400,9 +403,9 @@ async function traceChunk(points: LatLon[], req: NavRequest, signal?: AbortSigna
     // mit den Kosten der Planung (kein Schotter, Wirtschaftswege teuer): sonst legt der Abgleich die Tour
     // zwischen zwei Punkten gern über einen parallelen Feldweg (Testfahrt 8.11.). Führt die Tour selbst
     // über ein gesperrtes Stück, findet der Abgleich so keinen Weg: dann wie bisher ohne Kosten.
-    const first = await post('trace_route', { shape, ...costingFor('schnell', req.avoid), shape_match: 'map_snap', directions_options: DIRECTIONS }, signal).catch((e: unknown) => {
+    const first = await post('trace_route', { shape, ...costingFor('schnell', req.avoid), shape_match: 'map_snap', directions_options: directions() }, signal).catch((e: unknown) => {
       if (signal?.aborted) throw e;
-      return post('trace_route', { shape, costing: 'auto', shape_match: 'map_snap', directions_options: DIRECTIONS }, signal);
+      return post('trace_route', { shape, costing: 'auto', shape_match: 'map_snap', directions_options: directions() }, signal);
     });
     const r = await withoutInventedUturn(first, shape, part.length, req, signal);
     const p = piece(r);
@@ -483,7 +486,7 @@ async function approachOnce(
     ],
     // Weg auf die Tour (Zum Start, Einsteigen) und weite Anreise: schnellste Route, das Tourprofil gilt erst auf der Tour
     ...costingFor(fast || haversine(from, to) > LONG_APPROACH_M ? 'schnell' : req.profile, req.avoid),
-    directions_options: DIRECTIONS,
+    directions_options: directions(),
   };
   const plain = piece(await post('route', body, signal));
   if (fast || haversine(from, to) > LONG_APPROACH_M) return plain;
@@ -583,7 +586,7 @@ export function lanesOf(m: Pick<VManeuver, 'lanes'>): Lane[] | undefined {
  * "Dann, in 200 Meter, ..." an. Das macht jetzt die Ansage selbst, einheitlich und mit dem richtigen Abstand.
  */
 export function firstSentence(text: string): string {
-  const i = text.search(/\.\s+Dann\b/);
+  const i = text.search(/\.\s+(Dann|Then|Poi)\b/);
   // Valhalla schreibt im Deutschen "nach Links abbiegen" groß
   return (i > 0 ? text.slice(0, i + 1) : text)
     .replace(/ nach (Links|Rechts)\b/g, (m) => m.toLowerCase())
@@ -713,8 +716,8 @@ export async function fetchNavRouteDetail(req: NavRequest, from?: LatLon, signal
       ...(startMan ?? tourMan[0]),
       type: -1,
       idx: join,
-      instruction: 'Tour erreicht. Der Tour folgen.',
-      verbal_pre_transition_instruction: 'Du erreichst die Tour. Danach der Tour folgen.',
+      instruction: t('Tour erreicht. Der Tour folgen.'),
+      verbal_pre_transition_instruction: t('Du erreichst die Tour. Danach der Tour folgen.'),
     });
     raw.sort((a, b) => a.idx - b.idx);
   } else {
@@ -910,7 +913,7 @@ export async function rejoinNavRoute(
     kind: 'geradeaus',
     back: true,
     text: 'Zurück auf der Tour. Der Tour folgen.',
-    speech: 'Dann bist du zurück auf der Tour.',
+    speech: t('Dann bist du zurück auf der Tour.'),
     index: join,
     km: cumKm[join],
   };

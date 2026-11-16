@@ -5,6 +5,7 @@
 import { onRoadData } from './road-data';
 import { bearingTo, destination } from './roundtrip';
 import { haversine, type LatLon } from './tour';
+import { t } from '@/i18n';
 
 export type PassTier = 'ikone' | 'bekannt' | 'mittel';
 
@@ -45,21 +46,21 @@ const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
 
 /** Label am Highlight: der Hauptgrund selbst, kein Oberbegriff (Wording A, 12.11.) */
 export function warnLabel(w?: readonly WarnKey[] | null): string | null {
-  return w?.length ? WARN_LABEL[w[0]] : null;
+  return w?.length ? t(WARN_LABEL[w[0]]) : null;
 }
 
 /** Die weiteren Gründe als Satz unter dem Label, zum Beispiel "Sehr steil, enge Kehren." */
 export function warnRest(w?: readonly WarnKey[] | null): string | null {
   if (!w || w.length < 2) return null;
-  const rest = w.slice(1).map((k) => WARN_LABEL[k]);
+  const rest = w.slice(1).map((k) => t(WARN_LABEL[k]));
   return `${[rest[0], ...rest.slice(1).map(lower)].join(', ')}.`;
 }
 
 /** Alle Gründe für die Ansage: "Einspurig, sehr steil und enge Kehren." */
 export function warnSpeech(w?: readonly WarnKey[] | null): string {
   if (!w?.length) return '';
-  const all = w.map((k, i) => (i ? lower(WARN_LABEL[k]) : WARN_LABEL[k]));
-  return all.length === 1 ? `${all[0]}.` : `${all.slice(0, -1).join(', ')} und ${all[all.length - 1]}.`;
+  const all = w.map((k, i) => (i ? lower(t(WARN_LABEL[k])) : t(WARN_LABEL[k])));
+  return all.length === 1 ? `${all[0]}.` : `${all.slice(0, -1).join(', ')} ${t('und')} ${all[all.length - 1]}.`;
 }
 
 export const TIER_LABEL: Record<PassTier, string> = { ikone: 'Ikone', bekannt: 'Bekannt', mittel: 'Geheimtipp' };

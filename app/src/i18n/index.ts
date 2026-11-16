@@ -100,3 +100,22 @@ export function t(de: string, vars?: Record<string, string | number>): string {
 export function _setLangForTest(l: Lang): void {
   lang = l;
 }
+
+/** Zahlen im Text: 1.234 m (de, it) oder 1,234 m (en) */
+export function numberLocale(): string {
+  return lang === 'en' ? 'en-GB' : lang === 'it' ? 'it-IT' : 'de-DE';
+}
+
+/**
+ * Unterzeile einer Strecke ("Kurvenstrecke", "Passstraße"): aus dem Wörterbuch, sonst ein allgemeines Wort,
+ * damit in Ansagen kein deutscher Begriff steht.
+ */
+export function noteT(de: string): string {
+  if (lang === 'de') return de;
+  const hit = DICT[lang][de];
+  if (hit) return hit;
+  if (/renn/i.test(de)) return DICT[lang]['Bergrennstrecke'] ?? de;
+  if (/rallye/i.test(de)) return DICT[lang]['Rallyestrecke'] ?? de;
+  if (/pass/i.test(de)) return DICT[lang]['Passstraße'] ?? de;
+  return DICT[lang]['Kurvenstrecke'] ?? de;
+}
