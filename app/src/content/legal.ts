@@ -6,6 +6,9 @@
  * Angezeigt unter /datenschutz und /agb (src/app/datenschutz.tsx, src/app/agb.tsx), verlinkt aus Landingpage und Paywall.
  */
 
+import { PRIVACY_EN, TERMS_EN } from './legal-en';
+import { PRIVACY_IT, TERMS_IT } from './legal-it';
+
 export type LegalBlock = { h: string; p?: string[]; list?: string[] };
 export type LegalDoc = { title: string; headTitle?: string; lead: string; blocks: LegalBlock[]; stand: string };
 
@@ -63,8 +66,7 @@ export const DATENSCHUTZ: LegalDoc = {
         'Eigener Routing Server bei Contabo (Contabo GmbH, Deutschland): berechnet Routen aus deinen Wegpunkten. Auftragsverarbeiter.',
         'Apple (Apple Distribution International, Irland, und Apple Inc., USA): App Store, Abos, Kartenanzeige mit Apple Maps, CarPlay und Wetter an den Pässen über WeatherKit. Für das Wetter übermitteln wir die Lage des Passes, nicht deinen Standort.',
         'Expo (650 Industries Inc., USA): liefert Aktualisierungen der App aus. Dabei fallen IP-Adresse und Gerätedaten an. Grundlage für die Übermittlung in die USA ist das EU US Data Privacy Framework.',
-        'Photon von komoot (komoot GmbH, Deutschland): Ortssuche und die Namen von Wegpunkten. Übermittelt wird der Suchbegriff oder die Koordinate.',
-        'Valhalla Server der FOSSGIS e.V. (Deutschland): Höhenprofil, Tempolimits entlang der Route und Ersatzrouting, wenn unser Server nicht erreichbar ist. Übermittelt wird die Linie der Route.',
+        'Ortssuche, Höhenprofil, Tempolimits und Stopps an der Strecke rechnen ebenfalls unsere eigenen Server bei Contabo. Nur wenn sie nicht erreichbar sind, fragt die App ersatzweise Photon von komoot (komoot GmbH, Deutschland) mit dem Suchbegriff oder der Koordinate und den Valhalla Server der FOSSGIS e.V. (Deutschland) mit der Linie der Route.',
         'TomTom (TomTom International B.V., Niederlande): liefert unserem Server Meldungen zu gesperrten Pässen und aktuellen Sperrungen. Unser Server fragt dafür grobe Kartenbereiche ab, keine Daten von dir.',
         'LiveKit (LiveKit Inc., USA, Server in Frankfurt am Main): überträgt den Funk in der Gruppenfahrt live zwischen den Teilnehmern, ohne Aufzeichnung. Übermittelt werden dein Anzeigename, eine Kennung und deine Stimme, solange du sprichst. Auftragsverarbeiter; Grundlage für eine Übermittlung in die USA sind Standardvertragsklauseln.',
         'Push Mitteilungen über Expo (650 Industries Inc., USA) und den Apple Push Dienst: Titel, kurzer Text und Gerätekennzeichen der Mitteilung.',
@@ -210,3 +212,10 @@ export const AGB: LegalDoc = {
     },
   ],
 };
+
+/** Rechtstexte in der App Sprache. Englisch und Italienisch sind Übersetzungen, die deutsche Fassung ist maßgeblich. */
+export function legalDoc(kind: 'datenschutz' | 'agb', lang: 'de' | 'en' | 'it'): LegalDoc {
+  if (lang === 'en') return kind === 'agb' ? TERMS_EN : PRIVACY_EN;
+  if (lang === 'it') return kind === 'agb' ? TERMS_IT : PRIVACY_IT;
+  return kind === 'agb' ? AGB : DATENSCHUTZ;
+}
