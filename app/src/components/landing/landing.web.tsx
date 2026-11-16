@@ -33,7 +33,12 @@ export default function Landing() {
         <meta name="description" content={DESC} />
         <meta property="og:title" content="Cumo Drive" />
         <meta property="og:description" content={DESC} />
-        <meta property="og:image" content="https://drive.rallycumo.de/landing/rundtour.jpg" />
+        <meta property="og:image" content="https://cumodrive.de/landing/rundtour.jpg" />
+        <meta property="og:url" content="https://cumodrive.de/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="de_DE" />
+        {/* eine Adresse für Google: cumodrive.de (Koray 16.11., SEO Strategie) */}
+        <link rel="canonical" href="https://cumodrive.de/" />
         <link rel="preload" href="/fonts/Archivo_900Black.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/Inter_400Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
       </Head>

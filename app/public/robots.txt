@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /planer
+Disallow: /login
+Disallow: /registrieren
+Disallow: /profil
+
+Sitemap: https://cumodrive.de/sitemap.xml
