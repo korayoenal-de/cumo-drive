@@ -161,7 +161,7 @@ export default function ScanScreen() {
             </Pressable>
           </View>
         ) : status.kind === 'scan' && permission?.granted ? (
-          <AppText style={styles.hint}>Im Web Planer auf drive.rallycumo.de bei der Tour „An die App senden“ klicken und den Code hier ins Bild halten.</AppText>
+          <AppText style={styles.hint}>Im Web Planer auf cumodrive.de bei der Tour „An die App senden“ klicken und den Code hier ins Bild halten.</AppText>
         ) : null}
       </View>
     </View>

@@ -204,7 +204,7 @@ export async function requestAusfahrt(id: string, message: string, vehicle: stri
 }
 
 /** Einladungslink einer eigenen Ausfahrt: führt zu einer Anfrage, die du annimmst (Koray 13.11.) */
-export const RIDE_LINK_BASE = 'https://drive.rallycumo.de/a';
+export const RIDE_LINK_BASE = 'https://cumodrive.de/a';
 export async function rideLink(id: string): Promise<string> {
   const { data, error } = await supabase.rpc('ride_link_key', { ride: id });
   if (error) fail(error.message);

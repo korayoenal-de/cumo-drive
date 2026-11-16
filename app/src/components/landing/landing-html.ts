@@ -220,7 +220,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
       <h1 class="cd-h1" style="font-size: clamp(52px, 5.6vw, 80px);">Kurven statt Kilometer.</h1>
       <p class="cd-lead">Die Navi App für Sportwagen. Cumo Drive plant kurvige Touren für Autos: Breite, Belag und Sperrungen geprüft, Großstädte und Ortsdurchfahrten gemieden, Pässe und Traumstrecken mit Ansage und Fahrspaß Pegel. Allein, mit deiner Gruppe und Funk oder bei einer Ausfahrt aus der Community.</p>
       <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-        <a href="/registrieren" class="cd-btn cd-btn-signal">14 Tage kostenlos fahren</a>
+        <a href="/registrieren" class="cd-btn cd-btn-signal">Kostenlos starten</a>
         <a href="#planen" class="cd-btn cd-btn-surface">So funktioniert es</a>
       </div>
     </div>
@@ -254,7 +254,7 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">01  Planen</span>
       <h3 class="cd-h3">Feierabendrunde in drei Tipps. Alpentour Etappe für Etappe.</h3>
-      <p class="cd-body"><b style="color: #F4F4F2;">Rundtour</b> startet an deinem Standort: Länge oder Dauer wählen, am Ring die Richtung ziehen oder Zufall, und die Runde wird kurvig geplant, Pässe in der Nähe gleich mit. Gefällt sie nicht, würfelst du neu. Gibt es in der Gegend keine bessere Runde, sagt dir die App das ehrlich, statt dir eine schlechtere zu zeigen.</p>
+      <p class="cd-body"><b style="color: #F4F4F2;">Rundtour</b> startet an deinem Standort oder einem Ort deiner Wahl: Länge oder Dauer wählen, am Ring die Richtung ziehen oder Zufall, und die Runde wird kurvig geplant, Pässe in der Nähe gleich mit. Gefällt sie nicht, würfelst du neu. Gibt es in der Gegend keine bessere Runde, sagt dir die App das ehrlich, statt dir eine schlechtere zu zeigen.</p>
       <p class="cd-body"><b style="color: #F4F4F2;">Tour planen</b> ist für die große Fahrt: Start, Zwischenziele und Ziel, jede Etappe mit eigenem Profil, etwa schnell nach München und dann kurvig bis Imst. Oder du planst direkt auf der Karte: Punkte halten und verschieben, die Linie lange drücken für ein neues Zwischenziel. Neu gerechnet wird nur das Stück, das sich ändert, und jede Änderung lässt sich rückgängig machen.</p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <span class="cd-chip">${mark(8, 'width="18" height="18" aria-hidden="true"')}Timmelsjoch <span style="color: #E8B03A;">+12 min</span></span>
@@ -298,9 +298,9 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
     </div>
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">03  Navigation</span>
-      <h3 class="cd-h3">„In 950 Metern beginnt der Jaufenpass. 20 Kehren.“</h3>
+      <h3 class="cd-h3">„In 600 Metern beginnt Sellajoch. 13 Kilometer, 13 Kehren. Eine Legende, viel Spaß.“</h3>
       <p class="cd-body">Kurz vor jedem Pass, jeder Bergrennstrecke und jeder Traumstraße kommt die Ansage mit Karte und Pegel. Bei den ganz großen Strecken merkst du schon an der Ansage, was dich erwartet. Im Tunnel läuft die Führung weiter, und fehlt unterwegs das Netz, findest du trotzdem zurück zur Tour.</p>
-      <div class="cd-grid2" style="padding-top: 8px;">${smallCard('Kurven mit Ansage', 'Scharfe Kurven und Kehren 150 m vorher, nur außerorts ab 70 km/h.')}${smallCard('Pause mit einem Tipp', 'Für den Kaffee am Pass: Ansagen und Zeit stehen, bis du weiterfährst.')}${smallCard('Auf dem Sperrbildschirm', 'Die Live Activity zeigt das nächste Manöver, ohne dass du die App öffnest.')}${smallCard('Abschnitt auslassen', 'Lange auf das Manöver drücken, schon geht es direkt zum nächsten Zwischenziel. Rückgängig inklusive.')}${smallCard('Abseits der Tour', 'Verfahren? Eine gelbe Linie führt ohne Wenden zurück. Fährst du bewusst anders, wählst du Neue Route ab hier, und die Tour wird über die offenen Ziele neu geplant.')}${smallCard('Bremshinweis', 'Vor engen Kurven passend zu deinem Tempo, damit du nicht zu schnell hineinfährst.')}
+      <div class="cd-grid2" style="padding-top: 8px;">${smallCard('Kurven mit Ansage', 'Scharfe Kurven und Kehren rechtzeitig vorher, außerorts ab Tempo 60.')}${smallCard('Pause mit einem Tipp', 'Für den Kaffee am Pass: Ansagen und Zeit stehen, bis du weiterfährst.')}${smallCard('Auf dem Sperrbildschirm', 'Die Live Activity zeigt das nächste Manöver, ohne dass du die App öffnest.')}${smallCard('Abschnitt auslassen', 'Lange auf das Manöver drücken, schon geht es direkt zum nächsten Zwischenziel. Rückgängig inklusive.')}${smallCard('Abseits der Tour', 'Verfahren? Eine gelbe Linie führt ohne Wenden zurück. Fährst du bewusst anders, wählst du Neue Route ab hier, und die Tour wird über die offenen Ziele neu geplant.')}${smallCard('Bremshinweis', 'Vor engen Kurven passend zu deinem Tempo, damit du nicht zu schnell hineinfährst.')}
       </div>
     </div>
   </div>
@@ -485,8 +485,8 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
 <section id="preise" class="cd-wrap" style="padding-top: 140px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 48px;">
   <div style="display: flex; flex-direction: column; gap: 18px; max-width: 860px;">
     <span class="cd-label">Preise</span>
-    <h2 class="cd-h2">14 Tage kostenlos. Dann so, wie du fährst.</h2>
-    <p class="cd-lead">Jeder Plan enthält alle Funktionen, auch Gruppenfahrten bis 6 Fahrzeuge. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.</p>
+    <h2 class="cd-h2">Kostenlos starten. Dann so, wie du fährst.</h2>
+    <p class="cd-lead">Zum Start ist 30 Tage lang alles frei, wer später dazukommt, fährt 14 Tage mit vollem Umfang. Danach planst du ohne Plan weiter überall und fährst in deinem Heimatgebiet. Jeder Plan enthält alle Funktionen, auch Gruppenfahrten bis 6 Fahrzeuge. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.</p>
   </div>
   <div class="cd-grid4">${priceCard('Jahr', '59,99 €', 'Entspricht 5 € im Monat. Abo, jederzeit kündbar.', true)}${priceCard('Saison Pass', '49 €', 'Einmalig für 6 Monate, kein Abo. Für die Monate, in denen das Auto aus der Garage darf.')}${priceCard('Monat', '14,99 €', 'Abo, jederzeit kündbar.')}${priceCard('Woche', '7,99 €', 'Für das Wochenende im Mietwagen oder die eine Tour im Urlaub. Abo, jederzeit kündbar.')}
   </div>

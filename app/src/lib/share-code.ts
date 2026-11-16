@@ -124,7 +124,7 @@ export function encodeTour(tour: Tour, profile: Profile, opts?: { full?: boolean
 }
 
 /** Web Adresse für den QR Code: Die iPhone Kamera erkennt sie als Link. Der Code steht hinter #, geht also nicht an den Server. */
-export const SHARE_BASE = 'https://drive.rallycumo.de/t';
+export const SHARE_BASE = 'https://cumodrive.de/t';
 
 export function shareUrl(code: string): string {
   return `${SHARE_BASE}#${code}`;
