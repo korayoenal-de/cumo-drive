@@ -213,13 +213,9 @@ function exclusionModel(points: LatLon[], penalize: LatLon[] = []) {
 }
 
 /**
- * Feinabstimmung je Profil zur Anfrage dazu (ohne den Graphen neu zu bauen).
- * Kurvig und Pässe: an Rundtouren ab Heppenheim getestet, 37 bis 53 Kurven pro 100 km
- * statt 24 bis 32 mit dem Grundprofil, weiter ohne unbefestigte Kilometer.
- */
-/**
- * Mindestbreite pro Anfrage, damit der laufende Server ohne neuen Import greift:
- * unter 1,9 m passt kein Sportwagen, 2,5 bis 3 m ist einspurig, bis 4,5 m wird es eng.
+ * Mindestbreite pro Anfrage, nur noch für Schnell auf Servern ohne eigenes Profil schnell (bis zum Neuaufbau mit
+ * config.next.yml, 17.11.): unter 1,9 m passt kein Sportwagen, 2,5 bis 3 m ist einspurig, bis 4,5 m wird es eng.
+ * Kurvig liegt seit 6.11. ganz im Server (Sicherheitskonzept 17.11.: Gewichtungen nicht im App Code).
  */
 const WIDTH_MODEL = [
   { if: 'max_width < 1.9', multiply_by: '0' },
@@ -227,40 +223,14 @@ const WIDTH_MODEL = [
   { else_if: 'max_width >= 3 && max_width < 4.5', multiply_by: '0.6' },
 ];
 
-function profileModel(profile: Profile): { if?: string; else_if?: string; multiply_by: string }[] {
-  if (profile === 'paesse') {
-    // Sehr kurvig: große Straßen deutlich teurer, gerade Stücke stark abgewertet
-    return [
-      { if: 'road_class == PRIMARY', multiply_by: '0.2' },
-      { if: 'road_class == SECONDARY', multiply_by: '0.55' },
-      { if: 'road_class == RESIDENTIAL', multiply_by: '0.4' },
-      { if: 'curvature > 0.95', multiply_by: '0.15' },
-      { else_if: 'curvature > 0.85', multiply_by: '0.4' },
-      { else_if: 'curvature > 0.75', multiply_by: '0.8' },
-    ];
-  }
-  if (profile === 'kurvig') {
-    return [
-      { if: 'road_class == PRIMARY', multiply_by: '0.35' },
-      { if: 'road_class == SECONDARY', multiply_by: '0.7' },
-      { if: 'road_class == RESIDENTIAL', multiply_by: '0.5' },
-      { if: 'curvature > 0.95', multiply_by: '0.3' },
-      { else_if: 'curvature > 0.85', multiply_by: '0.6' },
-    ];
-  }
-  if (profile === 'entspannt') return [{ if: 'road_class == RESIDENTIAL', multiply_by: '0.6' }];
-  return [];
-}
-
 /**
- * Profil auf dem Server. Kurvig und Sehr kurvig sind dort fest eingebaut, samt Breite und Kurven Regeln,
- * mit vorberechneten Landmarken; das ist um ein Vielfaches schneller als dieselben Regeln pro Anfrage.
- * Kennt der Server sie (noch) nicht, gehen die Regeln wie bisher mit der Anfrage an sportwagen.
+ * Profil auf dem Server. Kurvig und Schnell sind dort fest eingebaut, samt Breite, Kurven und Tempo Regeln, mit
+ * vorberechneten Landmarken. Sehr kurvig (paesse) gibt es nicht mehr, alte Touren planen kurvig.
+ * Kennt ein Server Kurvig nicht, plant er mit dem Grundprofil sportwagen (ebenfalls im Server).
  */
 function ghProfile(profile: Profile): { name: string; builtIn: boolean } {
-  if (profile === 'schnell') return { name: 'auto', builtIn: false };
-  if (profile === 'kurvig' && serverProfiles.has('kurvig')) return { name: 'kurvig', builtIn: true };
-  if (profile === 'paesse' && serverProfiles.has('sehr_kurvig')) return { name: 'sehr_kurvig', builtIn: true };
+  if (profile === 'schnell') return serverProfiles.has('schnell') ? { name: 'schnell', builtIn: true } : { name: 'auto', builtIn: false };
+  if ((profile === 'kurvig' || profile === 'paesse') && serverProfiles.has('kurvig')) return { name: 'kurvig', builtIn: true };
   return { name: 'sportwagen', builtIn: false };
 }
 
@@ -510,8 +480,9 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatL
   // Die Regionen wirken in der Bewertung der Rundtour (smart-roundtrip.ts). Zum Messen: SERVER_REGIONS = true.
   const region = SERVER_REGIONS && profile !== 'schnell' ? regionArea(near, radiusKm) : null;
   const priority = [
-    // Bei festen Server Profilen stecken Breite und Kurven Regeln schon im Profil
-    ...(builtIn ? [] : [...WIDTH_MODEL, ...profileModel(profile)]),
+    // Bei festen Server Profilen stecken Breite, Kurven und Tempo schon im Profil
+    ...(profile === 'schnell' && !builtIn ? WIDTH_MODEL : []),
+    ...(profile === 'entspannt' ? [{ if: 'road_class == RESIDENTIAL', multiply_by: '0.6' }] : []),
     ...avoidModel(avoid),
     ...(ex.priority ?? []),
     // Traumstrecken bevorzugen: alles andere etwas teurer
@@ -525,12 +496,12 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatL
   return {
     ...(features.length ? { areas: { type: 'FeatureCollection', features } } : {}),
     priority,
-    ...(!builtIn && (profile === 'kurvig' || profile === 'paesse') ? { distance_influence: 5 } : {}),
-    ...(profile === 'schnell' ? { speed: FAST_SPEED } : {}),
+    ...(profile === 'schnell' && !builtIn ? { speed: FAST_SPEED } : {}),
   };
 }
 
 /**
+ * Nur bis zum Neuaufbau, danach im Server Profil schnell (custom_models/schnell.json).
  * Schnell soll am schnellsten sein (Koray 17.11.). Der Server schätzt kurvige Bergstraßen zu schnell: München nach
  * Innsbruck führte über Kesselberg und Walchensee (laut Server 105 min, über Kufstein 111 min). Auf stark gewundenen
  * Stücken langsamer gerechnet, geht es über A 95, Garmisch und Mittenwald; auch die Fahrzeit wird ehrlicher.

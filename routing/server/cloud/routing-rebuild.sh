@@ -34,15 +34,17 @@ graphhopper:
     # die Landmarken sind dafür vorberechnet. Als Zusatz pro Anfrage dauerte eine Route mit 700 km 16 statt 2 Sekunden.
     - name: kurvig
       custom_model_files: [sportwagen.json, kurvig.json]
-    - name: sehr_kurvig
-      custom_model_files: [sportwagen.json, sehr_kurvig.json]
+    # Schnell (17.11., Sicherheitskonzept Maßnahme 3): Breite und langsamere Kurven liegen im Server statt in der App.
+    # auto bleibt ohne Landmarken für ältere App Stände.
+    - name: schnell
+      custom_model_files: [car.json, schnell.json]
+    # Sehr kurvig gibt es seit 8.11. nicht mehr in der App; das Profil ist seit 12.11. aus dem Server (spart rund eine Stunde je Neuaufbau)
 
   # Landmarken beschleunigen flexible Anfragen (Rundtouren, Änderungen zur Laufzeit)
   profiles_lm:
     - profile: sportwagen
-    - profile: auto
+    - profile: schnell
     - profile: kurvig
-    - profile: sehr_kurvig
   profiles_ch: []
 
   prepare.min_network_size: 200
@@ -74,10 +76,10 @@ cat > /opt/cumo-routing/custom_models/kurvig.json <<'CUMO_EOF'
   "distance_influence": 5,
   "priority": [
     { "if": "max_width < 1.9", "multiply_by": "0" },
-    { "else_if": "max_width >= 2.5 && max_width < 3", "multiply_by": "0.1" },
-    { "else_if": "max_width >= 3 && max_width < 4.5", "multiply_by": "0.6" },
-    { "if": "road_class == PRIMARY", "multiply_by": "0.35" },
-    { "if": "road_class == SECONDARY", "multiply_by": "0.7" },
+    { "else_if": "max_width < 3", "multiply_by": "0.1" },
+    { "else_if": "max_width >= 3 && max_width < 4.5", "multiply_by": "0.85" },
+    { "if": "road_class == PRIMARY && urban_density == RURAL", "multiply_by": "0.35" },
+    { "if": "road_class == SECONDARY && urban_density == RURAL", "multiply_by": "0.7" },
     { "if": "road_class == RESIDENTIAL", "multiply_by": "0.5" },
     { "if": "curvature > 0.95", "multiply_by": "0.3" },
     { "else_if": "curvature > 0.85", "multiply_by": "0.6" }
@@ -86,6 +88,22 @@ cat > /opt/cumo-routing/custom_models/kurvig.json <<'CUMO_EOF'
 
 CUMO_EOF
 chmod 0644 /opt/cumo-routing/custom_models/kurvig.json
+mkdir -p /opt/cumo-routing/custom_models
+cat > /opt/cumo-routing/custom_models/schnell.json <<'CUMO_EOF'
+{
+  "priority": [
+    { "if": "max_width < 1.9", "multiply_by": "0" },
+    { "else_if": "max_width >= 2.5 && max_width < 3", "multiply_by": "0.1" },
+    { "else_if": "max_width >= 3 && max_width < 4.5", "multiply_by": "0.6" }
+  ],
+  "speed": [
+    { "if": "curvature < 0.9", "multiply_by": "0.75" },
+    { "if": "curvature < 0.7", "multiply_by": "0.7" }
+  ]
+}
+
+CUMO_EOF
+chmod 0644 /opt/cumo-routing/custom_models/schnell.json
 mkdir -p /opt/cumo-routing/custom_models
 cat > /opt/cumo-routing/custom_models/sehr_kurvig.json <<'CUMO_EOF'
 {
@@ -113,6 +131,10 @@ cat > /opt/cumo-routing/custom_models/sportwagen.json <<'CUMO_EOF'
     {
       "if": "!car_access",
       "multiply_by": "0"
+    },
+    {
+      "if": "road_access == DESTINATION || road_access == CUSTOMERS",
+      "multiply_by": "0.1"
     },
     {
       "if": "road_class == TRACK || road_class == LIVING_STREET || road_class == PEDESTRIAN",
@@ -188,7 +210,6 @@ cat > /opt/cumo-routing/setup-server.sh <<'CUMO_EOF'
 # Läuft beim ersten Start über cloud init und danach wöchentlich (cumo-routing-update.timer).
 # Lädt die Kartendaten, fügt sie zusammen, baut den Graphen und startet GraphHopper neu.
 set -euo pipefail
-# nie zwei Imports gleichzeitig (6.11.: beide brachen ab, danach fehlte der Graph)
 exec 9>/run/cumo-setup.lock
 flock -w 300 9 || { echo "$(date -Is) Neuaufbau läuft schon, Abbruch" >> /opt/cumo-routing/setup.log; exit 0; }
 BASE=/opt/cumo-routing
@@ -205,6 +226,10 @@ REGIONS=(
   europe/france/provence-alpes-cote-d-azur-latest.osm.pbf
   europe/slovenia-latest.osm.pbf
 )
+# Je Server anpassbar, ohne das Skript zu ändern (Testaufbau 12.11.: Mittelitalien und Pyrenäen nur auf Server 2):
+# /etc/cumo-routing.env mit HEAP=30g und EXTRA_REGIONS="europe/italy/centro-latest.osm.pbf ..."
+[ -f /etc/cumo-routing.env ] && . /etc/cumo-routing.env
+for r in ${EXTRA_REGIONS:-}; do REGIONS+=("$r"); done
 log() { echo "$(date -Is) $*" | tee -a "$BASE/setup.log"; }
 mkdir -p "$BASE/bin" "$BASE/download" "$BASE/data"
 cd "$BASE"
@@ -220,25 +245,90 @@ for r in "${REGIONS[@]}"; do
   files+=("$f")
 done
 log "Kartendaten zusammenfügen"
-osmium merge "${files[@]}" -o data/region.new.osm.pbf --overwrite
-log "Graph bauen (dauert etwa eine Stunde)"
+osmium merge "${files[@]}" -o data/region.merged.osm.pbf --overwrite
+# Die Teile haben oft verschiedene Stände (15.11.: DACH vom 13., Frankreich vom 14.), dann stecken Grenzpunkte in
+# zwei Versionen in der Datei und GraphHopper bricht ab. time-filter behält von jedem Objekt nur die neueste Version.
+osmium time-filter data/region.merged.osm.pbf -o data/region.new.osm.pbf --overwrite
+rm -f data/region.merged.osm.pbf
+log "Graph bauen (dauert mehrere Stunden, vor allem die Landmarken)"
 rm -rf data/graph-cache.new
-sed 's#data/graph-cache#data/graph-cache.new#; s#data/region.osm.pbf#data/region.new.osm.pbf#' config.yml > config.import.yml
+# Neue Profilliste (config.next.yml, 17.11.) gilt wie neue Profile erst mit dem neuen Graphen
+CONFIG_NEXT=0
+CONFIG_SRC=config.yml
+if [ -f config.next.yml ]; then CONFIG_NEXT=1; CONFIG_SRC=config.next.yml; log "Neue Profilliste aus config.next.yml"; fi
+sed 's#data/graph-cache#data/graph-cache.new#; s#data/region.osm.pbf#data/region.new.osm.pbf#' "$CONFIG_SRC" > config.import.yml
+# Neue Profile (custom_models.next) gelten erst mit dem neuen Graphen: der laufende Graph passt nur zu den alten
+# Dateien, sonst startet er nicht (15.11.: "Profiles do not match" nach einem gescheiterten Import)
+MODELS_NEXT=0
+if [ -d custom_models.next ]; then
+  MODELS_NEXT=1
+  sed -i 's#custom_models.directory: custom_models#custom_models.directory: custom_models.next#' config.import.yml
+  log "Neue Profile aus custom_models.next"
+fi
 chown -R cumo:cumo "$BASE"
 # Import (24 GB) und laufender Server (18 GB) passen erst ab 64 GB RAM sicher nebeneinander,
-# auf 48 GB hat der Linux OOM Killer den Import beendet.
-# Der Server pausiert dann während des Imports (sonntags nachts), die App nutzt solange Valhalla.
+# auf 48 GB hat der Linux OOM Killer den Import beendet. Der Server pausiert darum während des Imports.
+# Seit 12.11. gibt es zwei Server: gebaut wird nur, wenn der andere gesund ist, die App plant solange dort.
+PEER=$(cat /etc/cumo-peer 2>/dev/null || true)
+health() { curl -fs -m 10 "$1/health" > /dev/null; }
+route_ok() { curl -fs -m 60 "http://localhost:8989/route?profile=kurvig&point=49.87,8.65&point=49.65,9.00&points_encoded=false" | grep -q '"paths"'; }
+if [ -n "$PEER" ] && ! health "$PEER"; then
+  log "Anderer Server ($PEER) antwortet nicht: Neuaufbau ausgesetzt, damit nie beide fehlen"
+  rm -rf data/graph-cache.new data/region.new.osm.pbf
+  exit 0
+fi
 MEM_GB=$(free -g | awk '/^Mem:/{print $2}')
-if [ "$MEM_GB" -lt 64 ]; then systemctl stop cumo-routing || true; fi
-sudo -u cumo java -Xmx$HEAP -XX:+ExitOnOutOfMemoryError -jar "bin/graphhopper-web-$GH_VERSION.jar" import config.import.yml >> "$BASE/import.log" 2>&1
-rm -rf data/graph-cache data/region.osm.pbf
+STOPPED=0
+if [ "$MEM_GB" -lt 64 ]; then systemctl stop cumo-routing || true; STOPPED=1; fi
+# Scheitert der Import, läuft der alte Graph sofort weiter
+if ! sudo -u cumo java -Xmx$HEAP -XX:+ExitOnOutOfMemoryError -jar "bin/graphhopper-web-$GH_VERSION.jar" import config.import.yml >> "$BASE/import.log" 2>&1; then
+  log "Import gescheitert, alter Graph bleibt"
+  rm -rf data/graph-cache.new
+  [ "$STOPPED" = 1 ] && systemctl start cumo-routing
+  exit 1
+fi
+# Tausch mit Rückweg: der alte Graph bleibt liegen, bis der neue eine Route geliefert hat
+systemctl stop cumo-routing || true
+rm -rf data/graph-cache.old data/region.old.osm.pbf
+[ -d data/graph-cache ] && mv data/graph-cache data/graph-cache.old
+[ -f data/region.osm.pbf ] && mv data/region.osm.pbf data/region.old.osm.pbf
 mv data/graph-cache.new data/graph-cache
 mv data/region.new.osm.pbf data/region.osm.pbf
+if [ "$MODELS_NEXT" = 1 ]; then
+  rm -rf custom_models.old
+  cp -a custom_models custom_models.old
+  cp -a custom_models.next/. custom_models/
+fi
+if [ "$CONFIG_NEXT" = 1 ]; then cp config.yml config.old.yml; cp config.next.yml config.yml; fi
 chown -R cumo:cumo "$BASE"
 systemctl start cumo-routing
-log "Fertig, Server läuft"
+OK=0
+for i in $(seq 1 60); do
+  sleep 15
+  if health http://localhost:8989 && route_ok; then OK=1; break; fi
+done
+if [ "$OK" = 1 ]; then
+  rm -rf data/graph-cache.old data/region.old.osm.pbf
+  [ "$MODELS_NEXT" = 1 ] && rm -rf custom_models.next custom_models.old && log "Neue Profile aktiv"
+  [ "$CONFIG_NEXT" = 1 ] && rm -f config.next.yml config.old.yml && log "Neue Profilliste aktiv"
+  log "Fertig, Server läuft"
+elif [ -d data/graph-cache.old ]; then
+  log "Neuer Graph liefert keine Route: zurück zum alten"
+  systemctl stop cumo-routing || true
+  rm -rf data/graph-cache data/region.osm.pbf
+  mv data/graph-cache.old data/graph-cache
+  mv data/region.old.osm.pbf data/region.osm.pbf
+  if [ "$MODELS_NEXT" = 1 ] && [ -d custom_models.old ]; then rm -rf custom_models; mv custom_models.old custom_models; fi
+  if [ "$CONFIG_NEXT" = 1 ] && [ -f config.old.yml ]; then mv config.old.yml config.yml; fi
+  chown -R cumo:cumo "$BASE"
+  systemctl start cumo-routing
+  exit 1
+else
+  log "Neuer Graph liefert keine Route und es gibt keinen alten"
+  exit 1
+fi
 # POI Kacheln für "Stopps an der Strecke" aus denselben Kartendaten. Ein Fehler hier stoppt das Routing nicht,
-# die App nutzt dann weiter den alten Stand oder Overpass.
+# die App nutzt dann weiter den alten Stand.
 if [ -x "$BASE/poi-tiles.sh" ]; then
   "$BASE/poi-tiles.sh" || log "POI Kacheln fehlgeschlagen, alter Stand bleibt"
 fi
@@ -254,7 +344,7 @@ After=network-online.target
 [Service]
 User=cumo
 WorkingDirectory=/opt/cumo-routing
-ExecStart=/usr/bin/java -Xmx22g -XX:+ExitOnOutOfMemoryError -jar /opt/cumo-routing/bin/graphhopper-web-11.1.jar server config.yml
+ExecStart=/usr/bin/java -Xmx22g -jar /opt/cumo-routing/bin/graphhopper-web-11.1.jar server config.yml
 Restart=always
 RestartSec=10
 
