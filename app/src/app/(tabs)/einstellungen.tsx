@@ -81,45 +81,47 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
         </View>
       ))}
 
-      <Group label={t('Fahrzeuge')}>
-        <Row title={t('Garage')} value={cars} onPress={() => router.push('/garage')} />
-        {list.length > 1 && <Row title={t('Für neue Fahrten')} value={current ? vehicleName(current) || t('Ohne Namen') : 'Keins'} onPress={() => router.push('/garage')} />}
-      </Group>
-
-      <Group label={t('Fahren')}>
-        <Row title={t('Stimme und Ansagen')} value={voice?.name ?? 'Standard'} onPress={() => router.push('/ansagen')} />
-        <Row title={t('Vermeiden')} value={avoidSummary(avoid)} onPress={() => router.push('/ansagen')} />
-        <Row title={t('Kartendarstellung')} value={MAP_STYLES.find((s) => s.id === map.style)?.label ?? 'Standard'} onPress={() => router.push('/ansagen')} />
-        <LanguageRow />
-      </Group>
-
-      {session && <CommunityGroup />}
-
+      {/* Reihenfolge (Koray 17.11.): erst was man hat (Plan, Fahrzeuge), dann wie die App fährt und aussieht, dann
+          Sichtbarkeit und Mitteilungen, Hilfe und Rechtliches, das Konto mit Abmelden und Löschen ganz unten */}
       {session && (
         <Group label={t('Mitgliedschaft')}>
           <Row title={t('Dein Plan')} value={planName ?? describeEntitlement(ent).title} onPress={() => router.push('/mitgliedschaft')} />
         </Group>
       )}
 
-      {session && <Account email={session.user.email ?? ''} />}
+      <Group label={t('Fahrzeuge')}>
+        <Row title={t('Garage')} value={cars} onPress={() => router.push('/garage')} />
+        {list.length > 1 && <Row title={t('Für neue Fahrten')} value={current ? vehicleName(current) || t('Ohne Namen') : 'Keins'} onPress={() => router.push('/garage')} />}
+      </Group>
 
-      {/* Prüfbereich nur für Admins, unten über Rechtliches (Koray 14.11.) */}
+      <Group label={t('Navigation')}>
+        <Row title={t('Stimme und Ansagen')} value={voice?.name ?? 'Standard'} onPress={() => router.push('/ansagen')} />
+        <Row title={t('Vermeiden')} value={avoidSummary(avoid)} onPress={() => router.push('/ansagen')} />
+      </Group>
+
+      <Group label={t('Darstellung')}>
+        <Row title={t('Kartendarstellung')} value={MAP_STYLES.find((s) => s.id === map.style)?.label ?? 'Standard'} onPress={() => router.push('/ansagen')} />
+        <LanguageRow />
+      </Group>
+
+      {session && <CommunityGroup />}
+
+      {session && <NotifyGroup userId={session.user.id} />}
+
+      <Group label={t('Hilfe und Rechtliches')} hint={t('Fehler, Wünsche, falsche Strecken: jede Meldung wird geprüft.')}>
+        <Row title={t('Feedback geben')} onPress={() => router.push('/feedback')} />
+        <Row title={t('Datenschutz')} onPress={() => router.push('/datenschutz')} />
+        <Row title={t('Nutzungsbedingungen')} onPress={() => router.push('/agb')} />
+      </Group>
+
+      {/* Prüfbereich nur für Admins (Koray 14.11.) */}
       {moderation.mod?.admin && (
         <Group label={t('Prüfung')} hint={t('Gemeldete Inhalte ansehen, entfernen oder Konten sperren.')}>
           <Row title={t('Prüfbereich')} value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : t('Nichts offen')} onPress={() => router.push('/pruefung')} />
         </Group>
       )}
 
-      <Group label={t('Hilfe')} hint={t('Fehler, Wünsche, falsche Strecken: jede Meldung wird geprüft.')}>
-        <Row title={t('Feedback geben')} onPress={() => router.push('/feedback')} />
-      </Group>
-
-      {session ? <NewsGroup userId={session.user.id} /> : null}
-
-      <Group label={t('Rechtliches')}>
-        <Row title={t('Datenschutz')} onPress={() => router.push('/datenschutz')} />
-        <Row title={t('Nutzungsbedingungen')} onPress={() => router.push('/agb')} />
-      </Group>
+      {session && <Account email={session.user.email ?? ''} />}
 
       {version ? <AppText style={styles.version}>Cumo Drive {version}</AppText> : null}
     </Screen>
@@ -171,17 +173,11 @@ function usePushStatus() {
 
 function CommunityGroup() {
   const { p, save, err } = usePrivacy();
-  const [push, setPush] = usePushStatus();
-  // Einschalten fragt iOS einmalig; danach (und zum Ausschalten) geht es nur in den iOS Einstellungen
-  const togglePush = async (on: boolean) => {
-    if (on && push === 'offen') {
-      await enablePush(true);
-      setPush(await pushStatus());
-    } else void Linking.openSettings();
-  };
+  const [, setPush] = usePushStatus();
   return (
     <Group label={t('Community')} hint={err ?? (p?.visible === false ? t('Du bist in der Community ausgeblendet. Gruppenfahrten und bestehende Unterhaltungen bleiben.') : t('Andere sehen deinen Namen, Wohnort und auf Wunsch deine Garage.'))}>
       <SwitchRow title={t('In Community sichtbar')} value={p?.visible ?? true} onChange={(v) => void save({ visible: v })} />
+      <SwitchRow title={t('Garage im Profil zeigen')} value={p?.showGarage ?? true} onChange={(v) => void save({ showGarage: v })} />
       <SwitchRow
         title={t('Nachrichten erlauben')}
         value={p?.allowMessages ?? true}
@@ -190,9 +186,7 @@ function CommunityGroup() {
           if (v) void enablePush(true).then(() => pushStatus().then(setPush));
         }}
       />
-      {push !== 'nicht' && <SwitchRow title={t('Mitteilungen bei Nachrichten')} value={push === 'an'} onChange={(v) => void togglePush(v)} />}
       <SwitchRow title={t('Einladungen nur von Kontakten')} value={p?.invitesContactsOnly ?? false} onChange={(v) => void save({ invitesContactsOnly: v })} />
-      <SwitchRow title={t('Garage im Profil zeigen')} value={p?.showGarage ?? true} onChange={(v) => void save({ showGarage: v })} />
       <Row title={t('Blockierte Drivers')} onPress={() => router.push('/blockiert')} />
     </Group>
   );
@@ -236,10 +230,20 @@ function Account({ email }: { email: string }) {
 }
 
 /** Neuigkeiten per E Mail: Opt in aus der Registrierung, hier jederzeit änderbar (17.11.) */
-function NewsGroup({ userId }: { userId: string }) {
+/** Mitteilungen aufs Handy und Neuigkeiten per E Mail an einer Stelle (Koray 17.11.) */
+function NotifyGroup({ userId }: { userId: string }) {
   const news = useNewsConsent(userId);
+  const [push, setPush] = usePushStatus();
+  // Einschalten fragt iOS einmalig; danach (und zum Ausschalten) geht es nur in den iOS Einstellungen
+  const togglePush = async (on: boolean) => {
+    if (on && push === 'offen') {
+      await enablePush(true);
+      setPush(await pushStatus());
+    } else void Linking.openSettings();
+  };
   return (
-    <Group label={t('E Mail')} hint={t('Neue Funktionen, Strecken und Ausfahrten.')}>
+    <Group label={t('Mitteilungen')} hint={t('Neuigkeiten: neue Funktionen, Strecken und Ausfahrten, selten und jederzeit abbestellbar.')}>
+      {push !== 'nicht' && <SwitchRow title={t('Mitteilungen bei Nachrichten')} value={push === 'an'} onChange={(v) => void togglePush(v)} />}
       <SwitchRow
         title={t('Neuigkeiten per E Mail')}
         value={news.on ?? false}

@@ -1857,5 +1857,8 @@
   "Verlängert sich am {until}.": "Renews on {until}.",
   "Gekündigt, gilt noch bis {until}.": "Cancelled, valid until {until}.",
   "Gekündigt": "Cancelled",
-  "Aktiv": "Active"
+  "Aktiv": "Active",
+  "Hilfe und Rechtliches": "Help and legal",
+  "Mitteilungen": "Notifications",
+  "Neuigkeiten: neue Funktionen, Strecken und Ausfahrten, selten und jederzeit abbestellbar.": "News: new features, roads and club drives, rarely and you can unsubscribe anytime."
 }
