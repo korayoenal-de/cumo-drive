@@ -166,7 +166,8 @@ export function Accordion({ label, summary, defaultOpen = false, children }: { l
         </Animated.View>
       </Pressable>
       {open && (
-        <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
+        // Abstand zwischen den Teilen wie im Kopf (Koray 18.11.: Chips und Hinweis klebten aneinander)
+        <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)} style={styles.gapM}>
           {children}
         </Animated.View>
       )}

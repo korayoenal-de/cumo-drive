@@ -19,6 +19,7 @@ import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, 
 
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { Chip, ChipRow } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { FUN_NAMES, FunGauge, type FunLevel } from '@/components/ui/fun-gauge';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
@@ -338,7 +339,9 @@ function SearchBody({
                   <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
                 </Pressable>
               </View>
-              <View style={styles.field}>
+              {/* eigene Zeile, nicht flex: 1 (Koray 18.11.: im Kopf ohne feste Höhe fiel das Feld auf 0 zusammen,
+                  nur die Lupe blieb stehen und die Suche ging nicht) */}
+              <View style={[styles.field, styles.fieldBlock]}>
                 <SymbolView weight="semibold" name="magnifyingglass" size={20} tintColor={Colors.muted} />
                 <TextInput maxFontSizeMultiplier={1.2}
                   value={query}
@@ -447,24 +450,24 @@ function SearchBody({
             </>
           )}
           {hotelMode && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.tabs} style={styles.tabsBox}>
-              {NEAR_TABS.map((t) => {
-                const on = t.id === nearKind;
-                return (
-                  <Pressable
-                    key={t.id}
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: on }}
-                    onPress={() => {
-                      setNearKind(t.id);
-                      Keyboard.dismiss();
-                    }}
-                    style={({ pressed }) => [styles.tab, on && styles.tabOn, pressed && styles.pressed]}>
-                    <AppText style={[styles.tabText, on && styles.tabTextOn]}>{t.label}</AppText>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+            // Reiter als Chips mit gleitender Auswahl wie überall (Koray 18.11.)
+            <ChipRow>
+              {cats.filter((c) => !stopsOnly || c.id !== 'alle').map((c) => (
+                <Chip
+                  key={c.id}
+                  label={c.label}
+                  active={c.id === cat}
+                  onSurface
+                  onPress={() => {
+                    setCat(c.id);
+                    setScale(1);
+                    if (query === current) setQuery('');
+                    // Liste braucht Platz: Tastatur einklappen
+                    if (c.id !== 'alle') Keyboard.dismiss();
+                  }}
+                />
+              ))}
+            </ChipRow>
           )}
           {hasRoute && !hotelMode && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.tabs} style={styles.tabsBox}>
@@ -754,6 +757,7 @@ const styles = StyleSheet.create({
   slotRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   slotLine: { marginLeft: 13, width: 2, height: 10, borderLeftWidth: 2, borderColor: Colors.empty, borderStyle: 'dotted' },
   fieldOn: { borderWidth: 2, borderColor: Colors.signal },
+  fieldBlock: { flex: 0, alignSelf: 'stretch' },
   slotText: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
   slotEmpty: { color: Colors.muted },
   remove: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.l },
