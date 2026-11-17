@@ -87,6 +87,9 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 * [ ] Routing Server: Prüfung des Konto Tokens im Zählmodus einspielen (routing/server/cloud/auth/install.sh), dann Branch web-token zusammenführen und Web hochladen, dann sperren
 * [ ] Web Planer: Rückfrage bei nicht erreichbarer Rundtour Länge (wie in der App, Optionen A und B)
+* [ ] Zweiter Routing Server r2 hat ältere Daten (Import 13.11., r1 15.11.) und plant andere Routen; angleichen
+* [ ] Kurvig auf distance_influence 5 (Server, Orte im Odenwald laut Routen Check 17.11.)
+* [ ] Routen Check 17.11. offen: Andraz zu kurz (Pass gezielt einbauen), Cortina Stich bei Agordo, Annecy und Lugano viele Orte
 
 ## Sprachen (EN, IT seit 16.11. in der App)
 
