@@ -49,10 +49,9 @@ function isUiText(node: ts.Node): boolean {
 const DASH = /[–—]|\S - \S/;
 // Sie Form: Höflichkeitsform groß geschrieben, nicht am Satzanfang (dort ist „Sie“ meist die Ausfahrt oder Tour)
 const SIE = /[a-zäöüß,;]\s+(Sie|Ihnen|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihres)\b/;
-// Glossar (Konsistenzprüfung 15.11.): Strecke und Fahrzeit statt Länge und Dauer, Touren statt Meine Touren,
-// Organisator statt Veranstalter, Nachricht statt Anschreiben
+// Glossar (Konsistenzprüfung 15.11.): Fahrzeit statt Dauer, Touren statt Meine Touren, Organisator statt
+// Veranstalter, Nachricht statt Anschreiben. „Länge“ darf bleiben (Koray 17.11., gewählte Länge der Rundtour).
 const GLOSSAR: [RegExp, string][] = [
-  [/\bLänge\b/, 'Strecke statt Länge'],
   [/\bDauer\b/, 'Fahrzeit statt Dauer'],
   [/\bMeine Touren\b/, 'Touren statt Meine Touren'],
   [/\bVeranstalter/, 'Organisator statt Veranstalter'],

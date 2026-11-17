@@ -225,7 +225,7 @@ Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab C
 
 **Glossar**
 - Tour: gespeichertes oder geplantes Objekt, auch in der Community (Reiter „Touren“). Runde: Tour mit gleichem Start und Ziel. Route: nur der Weg (Route zum Treffpunkt). Knopf im Planer „Tour erstellen“.
-- Strecke und Fahrzeit überall statt Länge und Dauer.
+- Strecke und Fahrzeit überall statt Länge und Dauer. Ausnahme 17.11. (Koray): „Länge“ darf bleiben, etwa für die gewählte Länge der Rundtour.
 - Highlight: kuratierte Strecke oder Pass mit Ansage. Traumstraße bleibt nur die Pegelstufe.
 - Kurven zählen alle Kurven einer Fahrt, Kehren nur Spitzkehren am Pass.
 - Ausfahrt: Termin mit Treffpunkt. Gruppenfahrt: gemeinsame Navigation mit Live Karte und Funk.

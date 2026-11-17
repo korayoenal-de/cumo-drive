@@ -5,7 +5,7 @@
  * Fake Supabase Client je virtuellem Fahrer, Realtime als Bus im Speicher, virtuelle Uhr.
  * Kein Zugriff auf das echte Supabase Projekt, keine Konten, kein Netz.
  *
- * Optionen: SIM_ONLY=G (nur Gruppe), SIM_ONLY=C,D (Ausfahrten, Nachrichten), SIM_ONLY=T (Touren und Abgleich), SIM_VERBOSE=1
+ * Optionen: SIM_ONLY=G (nur Gruppe), SIM_ONLY=C,D (Ausfahrten, Nachrichten), SIM_ONLY=T (Touren und Abgleich), SIM_ONLY=P (Pflicht Flows), SIM_VERBOSE=1
  */
 import path from 'node:path';
 
@@ -17,9 +17,10 @@ import { printTable, results } from './report';
 import { communityScenarios } from './scenarios-community';
 import { groupScenarios } from './scenarios-group';
 import { tourenScenarios } from './scenarios-touren';
+import { pflichtScenarios } from './scenarios-pflicht';
 
 async function main() {
-  const only = (process.env.SIM_ONLY ?? 'G,C,D,T').split(',').map((s: string) => s.trim().toUpperCase());
+  const only = (process.env.SIM_ONLY ?? 'G,C,D,T,P').split(',').map((s: string) => s.trim().toUpperCase());
   const t0 = performance.now();
   const { skipped } = setupDatabase(path.resolve(__dirname, '../../../supabase/migrations'), process.env.SIM_STUB ?? '/var/tmp/cumopg/stub.sql');
   console.log(`Test DB sim neu aufgebaut, übersprungene Anweisungen: ${skipped.length}`);
@@ -43,6 +44,11 @@ async function main() {
     const w = new World();
     await w.init();
     await tourenScenarios(w);
+  }
+  if (only.includes('P')) {
+    const w = new World();
+    await w.init();
+    await pflichtScenarios(w);
   }
 
   printTable();

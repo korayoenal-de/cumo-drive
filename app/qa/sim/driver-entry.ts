@@ -14,3 +14,6 @@ export * as cloudTours from '@/lib/cloud-tours';
 export * as activeTour from '@/lib/active-tour';
 export { renderHook } from './stubs/react';
 export { emitGps, isWatching } from './stubs/expo-location';
+export * as community from '@/lib/community';
+export * as moderation from '@/lib/moderation';
+export * as rideDay from '@/lib/ride-day';
