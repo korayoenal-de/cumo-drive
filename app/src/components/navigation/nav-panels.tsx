@@ -149,7 +149,7 @@ export type NavExtra = {
  * der Pausieren und Beenden aufklappt (Aufklappen statt Wechseln).
  */
 export function BottomBar({
-  eta, remainingKm, extra, voice, group, paused, showSim, bottomInset, onEnd, onPause, onVoice, onSecret, onSimulate, onFunk, onOverview, skipLabel, onSkip, talk, extraActions,
+  eta, remainingKm, extra, voice, group, paused, showSim, bottomInset, onEnd, onPause, onVoice, onSecret, onSimulate, onFunk, onOverview, skipLabel, onSkip, talk, talkLocked, extraActions,
 }: {
   eta: Date | null;
   remainingKm: number | null;
@@ -173,6 +173,8 @@ export function BottomBar({
   onSkip?: () => void;
   /** Echter Funk (ab Build 20): gedrückt halten spricht. Ohne talk öffnet der Mikrofon Knopf die Kurznachrichten. */
   talk?: { talking: boolean; waiting: boolean; disabled: boolean; onTalk: (on: boolean) => void; label?: string };
+  /** Funk ohne Mitgliedschaft (kostenlose Version): Knopf sichtbar, grau mit Schloss; Antippen ruft das auf */
+  talkLocked?: () => void;
   /** Zusätzliche Einträge im Menü, etwa Kurznachricht oder Funk hören */
   extraActions?: { key: string; label: string; icon: SFSymbol; run: () => void }[];
 }) {
@@ -276,7 +278,7 @@ export function BottomBar({
             )}
           </Pressable>
 
-          {group && !talk && (
+          {group && !talk && !talkLocked && (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('Funk')}
@@ -334,6 +336,19 @@ export function BottomBar({
               <AppText style={styles.talkText}>{talk.label ?? (talk.waiting ? tr('Warten') : tr('Funk'))}</AppText>
             </Pressable>
           )}
+          {group && !talk && talkLocked && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('Funk, gesperrt. Funk gibt es mit der Mitgliedschaft.')}
+              onPress={talkLocked}
+              style={({ pressed }) => [styles.talk, styles.talkWait, pressed && styles.pressed]}>
+              <MicIcon />
+              <AppText style={[styles.talkText, styles.talkLockedText]}>{t('Funk')}</AppText>
+              <View style={styles.talkLock}>
+                <SymbolView name="lock.fill" size={11} tintColor={Colors.ground} />
+              </View>
+            </Pressable>
+          )}
         </View>
         {showSim && (
           <Pressable accessibilityRole="button" onPress={onSimulate} style={styles.sim}>
@@ -379,6 +394,8 @@ const styles = StyleSheet.create({
   talk: { width: 76, height: 76, borderRadius: 38, marginTop: -18, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', gap: 2, boxShadow: Shadow.float },
   talkOn: { backgroundColor: '#FF7A4D', transform: [{ scale: 1.08 }] },
   talkWait: { backgroundColor: Colors.surface2 },
+  talkLockedText: { color: Colors.muted },
+  talkLock: { position: 'absolute', right: -2, bottom: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.warn, alignItems: 'center', justifyContent: 'center' },
   talkText: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.onSignal },
   bar: { borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l, paddingHorizontal: Spacing.xl, paddingTop: Spacing.l, gap: Spacing.s },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },

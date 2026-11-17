@@ -40,8 +40,11 @@ async function ausfahrten(w: World, tour: ReturnType<typeof loadSampleTour>) {
     c.expect(seen?.myStatus == null && !seen?.isOwner, 'noch kein eigener Status');
     const t = await max.app.ausfahrten.ausfahrtTour(id);
     c.expect(t?.tour.linie.length === tour.linie.length, 'Tour der Ausfahrt für Nicht Mitglieder ladbar');
-    // Ohne Abo (Testphase abgelaufen) kein Veröffentlichen
-    const up = await asAdmin(`update public.profiles set trial_ends_at = now() - interval '1 day' where id = ${lit(exp.id)}`);
+    // Ohne Abo kein Veröffentlichen. Die Phase rechnet trial_for aus dem Release Tag und dem Anlegen des Kontos
+    // (17.11.): Release vor 60 Tagen, Konto vor 20 Tagen angelegt, also gleich die kostenlose Version.
+    const up = await asAdmin(
+      `update public.app_launch set release_at = now() - interval '60 days'; update auth.users set created_at = now() - interval '20 days' where id = ${lit(exp.id)}`,
+    );
     c.expect(!up.error, `Testphase beenden (${up.error?.message ?? ''})`);
     let own = '';
     await exp.client.from('profiles').update({ trial_ends_at: new Date(Date.now() + 86400000 * 30).toISOString() }).eq('id', exp.id!).then((r) => (own = r.error?.message ?? ''));
@@ -50,6 +53,17 @@ async function ausfahrten(w: World, tour: ReturnType<typeof loadSampleTour>) {
     let e1 = '';
     await exp.app.ausfahrten.publishAusfahrt(s2, { startsAt, meeting: null, note: '', seats: 3, public: true }).catch((e: Error) => (e1 = e.message));
     c.expect(/Mitgliedschaft/.test(e1), `ohne Abo abgewiesen (${e1})`);
+    const k = await exp.client.rpc('my_entitlement');
+    const ke = k.data as { active?: boolean; source?: string } | null;
+    c.expect(ke?.active === false && ke.source === 'kostenlos', `nach dem Release ohne Testphase gleich kostenlos (${ke?.source})`);
+    // Gründungstester: Konto vor dem Release angelegt, 12 Monate ab Release frei (Koray 17.11.)
+    await asAdmin(`update auth.users set created_at = now() - interval '90 days' where id = ${lit(org.id)}`);
+    const g = await org.client.rpc('my_entitlement');
+    const ge = g.data as { active?: boolean; source?: string; until?: string } | null;
+    const monthsLeft = ge?.until ? (Date.parse(ge.until) - Date.now()) / (30.4 * 86400000) : 0;
+    c.expect(ge?.active === true && ge.source === 'gruender' && monthsLeft > 9.5 && monthsLeft < 10.5, `Gründungstester 12 Monate ab Release (${ge?.source}, ${monthsLeft.toFixed(1)} Monate übrig)`);
+    // Release Tag zurück auf leer, damit die folgenden Szenarien wie vor dem Start laufen
+    await asAdmin(`update public.app_launch set release_at = null`);
     let e2 = '';
     await org.app.ausfahrten.publishAusfahrt(saved, { startsAt: new Date(Date.now() + 5 * 60000), meeting: null, note: '', seats: 3, public: true }).catch((e: Error) => (e2 = e.message));
     c.expect(/Zukunft/.test(e2), `Abfahrt zu früh abgewiesen (${e2})`);

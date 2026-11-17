@@ -17,7 +17,7 @@ export async function purchase(planId: PlanId): Promise<PurchaseResult> {
 export async function restorePurchases(): Promise<PurchaseResult> {
   await refreshEntitlement();
   const e = getEntitlement();
-  if (e.active && e.source !== 'test') return { ok: true };
+  if (e.active && (e.source === 'plan' || e.source === 'club')) return { ok: true };
   return { ok: false, message: IN_APP };
 }
 
@@ -25,11 +25,7 @@ export function useStorePrices(): Partial<Record<PlanId, string>> {
   return {};
 }
 
-export type CurrentPlan = { id: PlanId; willRenew: boolean; until: Date | null; trial: boolean };
-
-export function useFreeTrials(): Partial<Record<PlanId, boolean>> {
-  return {};
-}
+export type CurrentPlan = { id: PlanId; willRenew: boolean; until: Date | null };
 
 export function useCurrentPlan(): CurrentPlan | null {
   return null;

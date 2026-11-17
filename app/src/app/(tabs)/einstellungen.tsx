@@ -16,13 +16,16 @@ import { avoidSummary } from '@/components/planner/planner-parts';
 import { Group, Row, SwitchRow } from '@/components/settings/settings-ui';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
-import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
+import { ActionSheet, ConfirmSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
+import { here } from '@/components/group/meeting-route';
+import { askMembership, limitsLive, previewPaywall, type PaywallKind } from '@/lib/paywall';
+import { reverseName } from '@/lib/geocode';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { useAvoid } from '@/lib/avoid-settings';
 import { refreshAvatar } from '@/lib/avatars';
 import { deleteAccount, signIn, signOut, useSession } from '@/lib/auth';
 import { useNewsConsent } from '@/lib/consent';
-import { PRICES, refreshEntitlement, useEntitlement } from '@/lib/entitlement';
+import { PRICES, refreshEntitlement, setHomeArea, useEntitlement } from '@/lib/entitlement';
 import { clearLocalTours } from '@/lib/library';
 import { MAP_STYLES, useMapSettings } from '@/lib/map-settings';
 import { noticeSeen, useModeration } from '@/lib/moderation';
@@ -35,6 +38,15 @@ import { useVoiceChoice } from '@/lib/voice-settings';
 import { chosenLang, LANGS, setLang, t, tr, useLang, type Lang } from '@/i18n';
 
 
+const PAYWALL_PREVIEWS: { kind: PaywallKind; label: string; icon: 'map.fill' | 'person.3.fill' | 'mic.fill' | 'house.fill' | 'hourglass' | 'calendar.badge.exclamationmark' }[] = [
+  { kind: 'ausserhalb', label: 'A Losfahren außerhalb', icon: 'map.fill' },
+  { kind: 'gruppe', label: 'B Viertes Auto', icon: 'person.3.fill' },
+  { kind: 'funk', label: 'C Funk', icon: 'mic.fill' },
+  { kind: 'heimat', label: 'D Heimatgebiet ändern', icon: 'house.fill' },
+  { kind: 'testende', label: 'F Ende der Testphase', icon: 'hourglass' },
+  { kind: 'abgelaufen', label: 'G Abo abgelaufen, Ausfahrt geplant', icon: 'calendar.badge.exclamationmark' },
+];
+
 /** inNav: während der Navigation als Blatt darüber geöffnet (Koray 15.11.), oben der Weg zurück zur Fahrt */
 export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {}) {
   const session = useSession();
@@ -45,9 +57,24 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
   const ent = useEntitlement();
   // Gebuchter Plan direkt sichtbar (Koray 17.11.): „Monat“ statt „Plan aktiv“
   const plan = useCurrentPlan();
-  const planBase = plan && ent.source !== 'club' ? PRICES.find((p) => p.id === plan.id)?.name : undefined;
-  // im Gratismonat des App Stores mit Hinweis (Koray 17.11.)
-  const planName = planBase && plan?.trial ? tr('{name}, Gratismonat', { name: planBase }) : planBase;
+  const planName = plan && ent.source === 'plan' ? PRICES.find((p) => p.id === plan.id)?.name : undefined;
+  const [paywallList, setPaywallList] = useState(false);
+  // Heimatgebiet auf den Standort setzen: das erste Mal frei, danach einmal; beim zweiten Ändern die Paywall
+  const changeHome = async () => {
+    if (ent.home && ent.home.changes >= 1) {
+      await askMembership('heimat', { homeName: ent.home.name ?? undefined });
+      return;
+    }
+    try {
+      const p = await here();
+      const name = await reverseName(p).catch(() => null);
+      await setHomeArea(p[0], p[1], name);
+      const where = name ?? t('dein Standort');
+      showToast(ent.home ? tr('Heimatgebiet geändert: {where}. Das war die eine Änderung.', { where }) : tr('Heimatgebiet: {where}', { where }));
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : t('Das hat nicht geklappt.'), { tone: 'error' });
+    }
+  };
   const moderation = useModeration(!!session);
   const reloadModeration = moderation.reload;
 
@@ -88,6 +115,10 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
       {session && (
         <Group label={t('Mitgliedschaft')}>
           <Row title={t('Dein Plan')} value={planName ?? describeEntitlement(ent).title} onPress={() => router.push('/mitgliedschaft')} />
+          {/* kostenlose Version: Heimatgebiet, einmal änderbar (stumm, solange limitsLive() aus ist) */}
+          {limitsLive() && !ent.active && (
+            <Row title={t('Heimatgebiet')} value={ent.home?.name ?? (ent.home ? t('Festgelegt') : t('Noch nicht festgelegt'))} onPress={() => void changeHome()} />
+          )}
         </Group>
       )}
 
@@ -120,10 +151,29 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
       {moderation.mod?.admin && (
         <Group label={t('Prüfung')} hint={t('Gemeldete Inhalte ansehen, entfernen oder Konten sperren.')}>
           <Row title={t('Prüfbereich')} value={moderation.mod.openReports ? `${moderation.mod.openReports} offen` : t('Nichts offen')} onPress={() => router.push('/pruefung')} />
+          <Row title={t('Paywalls ansehen')} value={limitsLive() ? t('Aktiv') : t('Stumm')} onPress={() => setPaywallList(true)} />
         </Group>
       )}
 
       {session && <Account email={session.user.email ?? ''} />}
+
+      {moderation.mod?.admin && (
+        <ActionSheet
+          visible={paywallList}
+          title={t('Paywalls ansehen')}
+          subtitle={limitsLive() ? t('Die Grenzen gelten.') : t('Die Grenzen sind stumm. Hier nur zur Ansicht, ein Kauf ist noch nicht möglich.')}
+          items={PAYWALL_PREVIEWS.map((x) => ({
+            key: x.kind,
+            icon: x.icon,
+            label: x.label,
+            onPress: () => {
+              setPaywallList(false);
+              setTimeout(() => void previewPaywall(x.kind), SHEET_GONE_MS);
+            },
+          }))}
+          onClose={() => setPaywallList(false)}
+        />
+      )}
 
       {version ? <AppText style={styles.version}>Cumo Drive {version}</AppText> : null}
     </Screen>

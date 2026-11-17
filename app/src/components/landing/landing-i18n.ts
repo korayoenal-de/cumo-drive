@@ -242,9 +242,9 @@ const T: [string, string, string][] = [
   // Preise
   ['Kostenlos starten. Dann so, wie du fährst.', 'Start for free. Then pay the way you drive.', 'Inizia gratis. Poi paga come guidi.'],
   [
-    'Zum Start ist 30 Tage lang alles frei, wer später dazukommt, fährt 14 Tage mit vollem Umfang. Danach planst du ohne Mitgliedschaft weiter überall und fährst in deinem Heimatgebiet. Jeder Plan enthält alle Funktionen, auch Gruppenfahrten bis 6 Fahrzeuge. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.',
-    'At launch everything is free for 30 days, and anyone joining later gets 14 days with everything included. After that you can keep planning anywhere without a membership and drive in your home area. Every plan includes all features, including group drives with up to 6 cars. Your tours, drives and cars stay in your account.',
-    'Al lancio tutto è gratuito per 30 giorni, chi arriva dopo guida 14 giorni con tutte le funzioni. Poi continui a pianificare ovunque senza abbonamento e guidi nella tua zona. Ogni piano include tutte le funzioni, anche i giri di gruppo fino a 6 auto. I tuoi giri, le guide e le auto restano nel tuo account.',
+    'Kostenlos planst du überall und fährst in deinem Heimatgebiet, mit Gruppen zu dritt. Unsere Tester fahren 12 Monate mit vollem Umfang. Jeder Plan enthält alle Funktionen, auch Gruppenfahrten bis 6 Fahrzeuge. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.',
+    'For free you plan anywhere and drive in your home area, in groups of three. Our testers get 12 months with everything included. Every plan includes all features, including group drives with up to 6 cars. Your tours, drives and cars stay in your account.',
+    'Gratis pianifichi ovunque e guidi nella tua zona, in gruppi di tre. I nostri tester guidano 12 mesi con tutte le funzioni. Ogni piano include tutte le funzioni, anche i giri di gruppo fino a 6 auto. I tuoi giri, le guide e le auto restano nel tuo account.',
   ],
   ['Jahr', 'Year', 'Anno'],
   ['59,99 €', '€59.99', '59,99 €'],

@@ -1,6 +1,7 @@
 /**
- * Sperre nach der Testphase: zeigt den Inhalt, solange die Mitgliedschaft aktiv ist oder der
- * Stand noch lädt, sonst die Paywall mit der Möglichkeit, sich abzumelden.
+ * Früher sperrte die App nach der Testphase ganz. Seit der kostenlosen Version (Koray 14.11.) bleibt sie offen,
+ * die Grenzen greifen dort, wo sie gelten: Losfahren außerhalb des Heimatgebiets, Gruppe, Funk.
+ * Solange limitsLive() aus ist (Testphase), bleibt es beim alten Verhalten.
  * Ohne Anmeldung greift die Sperre nicht (das regelt die Anmeldepflicht, der Web Planer bleibt offen).
  * Dazu TrialBadge, eine kleine Pille mit den restlichen Testtagen, etwa für die Einstellungen.
  */
@@ -10,7 +11,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { signOut, useSession } from '@/lib/auth';
-import { useEntitlement } from '@/lib/entitlement';
+import { isFreePhase, useEntitlement } from '@/lib/entitlement';
+import { limitsLive } from '@/lib/paywall';
 
 import { Paywall } from './paywall';
 import { t } from '@/i18n';
@@ -18,7 +20,7 @@ import { t } from '@/i18n';
 export function EntitlementGate({ children }: { children: ReactNode }) {
   const session = useSession();
   const e = useEntitlement();
-  if (!session || e.loading || e.active) return <>{children}</>;
+  if (limitsLive() || !session || e.loading || e.active) return <>{children}</>;
   return (
     <Paywall
       mode="expired"
@@ -33,11 +35,13 @@ export function EntitlementGate({ children }: { children: ReactNode }) {
   );
 }
 
-/** "Test noch 9 Tage": nur sichtbar während der Testphase. */
+/** "Frei noch 9 Tage": nur für Gründungstester in den letzten zwei Wochen ihrer 12 Monate. */
 export function TrialBadge() {
   const e = useEntitlement();
-  if (e.loading || !e.active || e.source !== 'test' || !e.until) return null;
-  const text = e.daysLeft <= 1 ? t('Test noch 1 Tag') : t('Test noch {daysLeft} Tage', { daysLeft: e.daysLeft });
+  if (e.loading || !e.active || !e.until || !isFreePhase(e.source)) return null;
+  // Gründungstester erst in den letzten zwei Wochen erinnern
+  if (e.source === 'gruender' && e.daysLeft > 14) return null;
+  const text = e.daysLeft <= 1 ? t('Frei noch 1 Tag') : t('Frei noch {daysLeft} Tage', { daysLeft: e.daysLeft });
   const urgent = e.daysLeft <= 3;
   return (
     <View style={[styles.pill, urgent && styles.pillUrgent]} accessibilityLabel={text}>
