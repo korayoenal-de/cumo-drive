@@ -1887,5 +1887,10 @@
   "Da ist etwas schiefgelaufen": "Qualcosa è andato storto",
   "Wir haben den Fehler automatisch erhalten und kümmern uns darum. Deine Touren sind sicher.": "Abbiamo ricevuto l'errore in automatico e ce ne occupiamo. I tuoi tour sono al sicuro.",
   "Neu laden": "Ricarica",
-  "{name}, Gratismonat": "{name}, mese gratis"
+  "{name}, Gratismonat": "{name}, mese gratis",
+  "Verbunden": "Collegati",
+  "{name} ist nicht mehr in deinen Kontakten.": "{name} non è più tra i tuoi contatti.",
+  "Möchtest du {name} aus deinen Kontakten entfernen?": "Vuoi rimuovere {name} dai tuoi contatti?",
+  "Ihr seid dann nicht mehr verbunden. Wieder verbinden geht nur mit einer neuen Anfrage.": "Non sarete più collegati. Per ricollegarvi serve una nuova richiesta.",
+  "Mit {name} verbunden, tippen zum Entfernen": "Collegato con {name}, tocca per rimuovere"
 }
