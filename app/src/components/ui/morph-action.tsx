@@ -130,6 +130,14 @@ export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphActio
     const fn = next.current;
     next.current = null;
     fn?.();
+    // der nächste Bildschirm liegt jetzt darüber; beim Zurückkommen steht wieder die volle Taste
+    setTimeout(() => {
+      left.value = 0;
+      right.value = 0;
+      shift.value = 0;
+      text.value = 1;
+      shown.value = 1;
+    }, 1200);
   }
   function launchFlight() {
     const p = pending.current;

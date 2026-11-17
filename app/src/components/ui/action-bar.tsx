@@ -9,7 +9,7 @@
  * Muster und Regeln: docs/design-prinzipien.md, Abschnitt Ebenen und Rückmeldungen.
  */
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -39,16 +39,7 @@ export type MoreItem = {
   onPress: () => void;
 };
 
-export function ActionBar({
-  primary,
-  choose,
-  top,
-  float,
-  save,
-  more: moreIn,
-  sheetTitle,
-  children,
-}: {
+type ActionBarProps = {
   /** launch: klappt vor onPress zusammen (Muster B) */
   primary: { label: string; onPress: () => void; icon?: BtnIcon; launch?: boolean };
   /**
@@ -70,7 +61,21 @@ export function ActionBar({
   sheetTitle?: string;
   /** Zusätzlicher Inhalt unter der Leiste */
   children?: ReactNode;
-}) {
+};
+
+/** Losfahren von außen: erst nach allen Rückfragen, direkt vor dem Öffnen der Navigation (Koray 17.11.) */
+export type ActionBarRef = { launch: (go: () => void) => void };
+
+export const ActionBar = forwardRef<ActionBarRef, ActionBarProps>(function ActionBar({
+  primary,
+  choose,
+  top,
+  float,
+  save,
+  more: moreIn,
+  sheetTitle,
+  children,
+}: ActionBarProps, ref) {
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const more = moreIn ?? [];
   const [ask, setAsk] = useState<MoreItem | null>(null);
@@ -92,6 +97,7 @@ export function ActionBar({
     else if (primary.launch) launchThen(primary.onPress);
     else primary.onPress();
   };
+  useImperativeHandle(ref, () => ({ launch: launchThen }));
   // Gefährliches mit Frage erst nach Rückfrage ausführen
   // Weitere Aktionen (etwa Änderungen verwerfen) sind kein Speichern: danach fliegt nichts
   const run = (it: MoreItem) => {
@@ -195,7 +201,7 @@ export function ActionBar({
       />
     </View>
   );
-}
+});
 
 type ViewRef = ComponentRef<typeof View>;
 

@@ -197,7 +197,10 @@ export default function GruppeNeu() {
       if (around || ok.tour !== base) await setRideTour(r.id, ok.tour, saved.profile ?? 'kurvig');
       await setRideStatus(r.id, 'laeuft');
       await startAsLead(r.id, saved.name, { ...base, ...ok.tour, name: saved.name }, saved.profile ?? 'kurvig');
-      router.push('/navigation');
+      // erst jetzt, nach allen Rückfragen, klappt die Taste zusammen (Koray 17.11.)
+      const nav = () => router.push('/navigation');
+      if (startRef.current) startRef.current.launch(nav);
+      else nav();
     } catch (e) {
       setErr(e instanceof Error ? e.message : tr('Die Fahrt konnte nicht starten.'));
     } finally {
@@ -298,9 +301,8 @@ export default function GruppeNeu() {
           ref={startRef}
           label={t('Gruppenfahrt starten')}
           icon={{ sf: 'steeringwheel' }}
-          busy={busy === 'start'}
           disabled={!!busy}
-          onPress={() => (startRef.current ? startRef.current.launch(() => { void start(); setTimeout(() => startRef.current?.reset(), 1200); }) : void start())}
+          onPress={start}
         />
         <AppText variant="caption" muted>
           {tr('Du fährst vorne. Wer zugesagt hat, kann jederzeit dazukommen und sieht dich live auf der Karte.')}

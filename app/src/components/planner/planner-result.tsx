@@ -3,7 +3,7 @@
  * und Aktionsleiste mit Losfahren als Hauptaktion.
  */
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 
 import { HighlightList } from '@/components/planner/highlight-list';
@@ -14,7 +14,7 @@ import { countCurves } from '@/lib/stats';
 import { FunPill } from '@/components/ui/fun-pill';
 import { type TourFun } from '@/lib/fun-score';
 import { type TourRequest } from '@/components/planner/create-tour';
-import { ActionBar } from '@/components/ui/action-bar';
+import { ActionBar, type ActionBarRef } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
 import { guardDrive } from '@/lib/drive-guard';
 import { setActiveTour } from '@/lib/active-tour';
@@ -71,6 +71,7 @@ export function Result({
   };
   const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);
   // Allein oder als Gruppe: Abfrage beim Druck auf Losfahren (Koray 7.11.); als Gruppe erst speichern, dann einladen
+  const barRef = useRef<ActionBarRef>(null);
   const drive = async (asGroup = false) => {
     if (asGroup) {
       router.push({ pathname: '/gruppe/neu', params: { tour: savedId ?? saveResult() } });
@@ -84,7 +85,10 @@ export function Result({
     }
     setActiveTour(ok.tour, req.profile, req.avoid);
     logSignal('losgefahren', tour, { mode: 'rundtour', profile: req.profile, suggested: true });
-    router.push('/navigation');
+    // Losfahren klappt erst jetzt zusammen, nach allen Rückfragen (Sperrung, Mitgliedschaft; Koray 17.11.)
+    const go = () => router.push('/navigation');
+    if (barRef.current) barRef.current.launch(go);
+    else go();
   };
   return (
     <View style={styles.sections}>
@@ -133,11 +137,11 @@ export function Result({
 
       {/* Aktionen am Ende: Losfahren, Speichern als Symbol, Seltenes im Menü */}
       <ActionBar
+        ref={barRef}
         sheetTitle={tour.name}
         primary={{
           label: tr('Losfahren'),
           icon: { sf: 'steeringwheel' },
-          launch: true,
           onPress: () => {
             drive(false);
           },
@@ -145,7 +149,7 @@ export function Result({
         choose={{
           title: tr('Wie fährst du?'),
           items: [
-            { key: 'solo', icon: 'car.fill', launch: true, label: tr('Allein losfahren'), hint: tr('Die Navigation startet sofort'), onPress: () => drive(false) },
+            { key: 'solo', icon: 'car.fill', label: tr('Allein losfahren'), hint: tr('Die Navigation startet sofort'), onPress: () => drive(false) },
             { key: 'gruppe', icon: 'person.2.fill', label: tr('Als Gruppe fahren'), hint: tr('Bis zu 6 Autos, du lädst sie im nächsten Schritt ein'), onPress: () => drive(true) },
           ],
         }}

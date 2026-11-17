@@ -836,7 +836,7 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
   const where = r.meeting?.name ? tr('ab {name}', { name: r.meeting.name }) : null;
   const free = freeSeats(r);
   const fun = useRideFun(r.id);
-  const status = !r.isOwner && !r.myStatus && free > 0 ? null : <RideStatus r={r} />;
+  const status = !r.isOwner && (!r.myStatus || r.myStatus === 'abgesagt') && free > 0 ? null : <RideStatus r={r} />;
 
   if (big) {
     return (

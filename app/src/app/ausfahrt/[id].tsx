@@ -338,7 +338,10 @@ export default function AusfahrtDetail() {
       } else {
         await rideAlong(a.id);
       }
-      router.push('/navigation');
+      // erst jetzt, nach Sperrung und Mitgliedschaft, klappt die Taste zusammen (Koray 17.11.)
+      const nav = () => router.push('/navigation');
+      if (mainRef.current) mainRef.current.launch(nav);
+      else nav();
     });
 
   // Wer leitet, wer ist da (Gemeinsam losfahren, Koray 14.11.)
@@ -367,11 +370,11 @@ export default function AusfahrtDetail() {
     if (drove) main = { label: t('Nochmal fahren'), icon: { sf: 'steeringwheel' }, onPress: () => void againRide() };
     else if (a.isOwner) main = { label: t('Neuen Termin wählen'), icon: { sf: 'calendar' }, onPress: () => setTimeSheet(true) };
   } else if (inThisRide) main = { label: t('Zur Navigation'), icon: NAV_ICON, launch: true, onPress: () => router.push('/navigation') };
-  else if (joined && a.rideStatus === 'laeuft' && !isLead) main = { label: meArrived ? tr('Jetzt mitfahren') : tr('Aufschließen'), icon: NAV_ICON, launch: true, onPress: () => void startGroup() };
-  else if (isLead && a.rideStatus === 'laeuft') main = { label: t('Jetzt losfahren'), icon: NAV_ICON, launch: true, onPress: () => void startGroup() };
+  else if (joined && a.rideStatus === 'laeuft' && !isLead) main = { label: meArrived ? tr('Jetzt mitfahren') : tr('Aufschließen'), icon: NAV_ICON, onPress: () => void startGroup() };
+  else if (isLead && a.rideStatus === 'laeuft') main = { label: t('Jetzt losfahren'), icon: NAV_ICON, onPress: () => void startGroup() };
   else if (isLead && dayMode)
     main = startOpen
-      ? { label: t('Jetzt losfahren'), icon: NAV_ICON, launch: missing.length === 0, onPress: tryStart }
+      ? { label: t('Jetzt losfahren'), icon: NAV_ICON, onPress: tryStart }
       : { label: t('Jetzt losfahren'), icon: NAV_ICON, onPress: () => undefined, disabled: true, hint: tr('Ab {v0} möglich, 2 Stunden vor der Abfahrt', { v0: clock(new Date(a.startsAt.getTime() - START_WINDOW_MS)) }) };
   // Route zum Treffpunkt ist für alle Dabei die Hauptaktion, auch Tage vorher (Koray 15.11.: man kann früher los);
   // Einladen bleibt als Zeile bei den Teilnehmern
@@ -379,7 +382,8 @@ export default function AusfahrtDetail() {
   else if (a.isOwner && free > 0 && !inviting) main = { label: t('Einladen'), icon: { sf: 'car.2' }, onPress: () => setInviting(true) };
   else if (joined) main = null;
   else if (a.myStatus === 'eingeladen') main = { label: t('Zusagen'), icon: COMMUNITY_ICON, onPress: () => undefined, fly: { key: 'yes', to: 'chat', fn: () => respondInvite(a.id, true, myVehicleLabel() || null) } };
-  else if (!a.myStatus && free > 0 && !asking) main = { label: t('Mitfahren anfragen'), icon: { sf: 'car.2' }, onPress: () => setAsking(true) };
+  // nach dem Abmelden (abgesagt) wieder anfragen können (Koray 17.11.; der Server erlaubt es schon)
+  else if ((!a.myStatus || a.myStatus === 'abgesagt') && free > 0 && !asking) main = { label: t('Mitfahren anfragen'), icon: { sf: 'car.2' }, onPress: () => setAsking(true) };
   else if (asking) main = { label: t('Anfrage senden'), icon: COMMUNITY_ICON, onPress: () => undefined, fly: { key: 'ask', to: 'status', fn: async () => { await requestAusfahrt(a.id, msg, myVehicleLabel() || null); setAsking(false); } } };
 
   // Ohne andere Hauptaktion ist die Route zum Treffpunkt die Hauptaktion, auch Tage vorher (Koray 15.11.)
@@ -654,7 +658,7 @@ export default function AusfahrtDetail() {
             <AppText muted>{a.ownerName}{tr(' hat deine Anfrage abgelehnt.')}</AppText>
           </View>
         )}
-        {!joined && !a.myStatus && free === 0 && <AppText muted>{t('Diese Ausfahrt ist ausgebucht.')}</AppText>}
+        {!joined && (!a.myStatus || a.myStatus === 'abgesagt') && free === 0 && <AppText muted>{t('Diese Ausfahrt ist ausgebucht.')}</AppText>}
 
         {err && <AppText style={styles.error}>{err}</AppText>}
 
@@ -677,7 +681,7 @@ export default function AusfahrtDetail() {
                   ref={mainRef}
                   label={main.label}
                   icon={main.icon}
-                  busy={busy === 'ask' || busy === 'start' || busy === 'yes'}
+                  busy={busy === 'ask' || busy === 'yes'}
                   disabled={!!busy || main.disabled}
                   onPress={() => {
                     const go = main.onPress;

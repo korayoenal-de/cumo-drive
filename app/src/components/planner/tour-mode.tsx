@@ -30,7 +30,7 @@ import { showToast } from '@/lib/toast';
 import { getEditOrigin, setEditTour } from '@/lib/edit-tour';
 import { DeleteTourSheet } from '@/components/tours/delete-tour-sheet';
 import { readLibrary, useLibrary } from '@/lib/library';
-import { ActionBar } from '@/components/ui/action-bar';
+import { ActionBar, type ActionBarRef } from '@/components/ui/action-bar';
 import { LoadingButton, type LoadStage } from '@/components/ui/loading-button';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type } from '@/constants/theme';
@@ -375,6 +375,7 @@ export function TourMode({
   // Allein oder als Gruppe: Abfrage beim Druck auf Losfahren (Koray 7.11.)
   /** Sperrung auf der Tour beim Losfahren: warnen und Umfahrung zeigen (Koray 16.11.) */
   const closed = useClosedCheck();
+  const barRef = useRef<ActionBarRef>(null);
   const drive = async (asGroup = false) => {
     if (!routeTour) return;
     if (asGroup) {
@@ -399,7 +400,10 @@ export function TourMode({
     }
     setActiveTour(ok.tour, firstProfile, avoid);
     logSignal('losgefahren', t, { mode: 'route', profile: firstProfile, suggested: false });
-    router.push('/navigation');
+    // Losfahren klappt erst jetzt zusammen, nach allen Rückfragen (Sperrung, Mitgliedschaft; Koray 17.11.)
+    const go = () => router.push('/navigation');
+    if (barRef.current) barRef.current.launch(go);
+    else go();
   };
 
 
@@ -870,19 +874,19 @@ export function TourMode({
           </View>
         ) : routeTour ? (
           <ActionBar
+            ref={barRef}
             sheetTitle={plan.name.trim() || tr('Neue Tour')}
             primary={{
               label: tr('Losfahren'),
               icon: { sf: 'steeringwheel' },
-              launch: true,
-              onPress: () => {
+                onPress: () => {
                 void drive(false);
               },
             }}
             choose={{
               title: tr('Wie fährst du?'),
               items: [
-                { key: 'solo', icon: 'car.fill', launch: true, label: tr('Allein losfahren'), hint: tr('Die Navigation startet sofort'), onPress: () => void drive(false) },
+                { key: 'solo', icon: 'car.fill', label: tr('Allein losfahren'), hint: tr('Die Navigation startet sofort'), onPress: () => void drive(false) },
                 { key: 'gruppe', icon: 'person.2.fill', label: tr('Als Gruppe fahren'), hint: tr('Bis zu 6 Autos, du lädst sie im nächsten Schritt ein'), onPress: () => void drive(true) },
               ],
             }}

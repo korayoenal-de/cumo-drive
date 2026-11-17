@@ -477,7 +477,7 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const status = rideStatus(r);
-  const canAsk = !r.isOwner && !r.myStatus && free > 0 && r.rideStatus === 'geplant';
+  const canAsk = !r.isOwner && (!r.myStatus || r.myStatus === 'abgesagt') && free > 0 && r.rideStatus === 'geplant';
   const act = async (fn: () => Promise<void>, done: string) => {
     setBusy(true);
     setErr(null);
