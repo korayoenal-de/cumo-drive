@@ -211,7 +211,7 @@ function Row({
       </View>
       <SymbolView weight="semibold"
         name={active ? "checkmark.circle.fill" : "play.circle"}
-        size={24}
+        size={20}
         tintColor={active ? Colors.signal : Colors.muted}
       />
     </Pressable>

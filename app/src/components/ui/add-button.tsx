@@ -24,8 +24,8 @@ export function AddButton({ label, onPress, busy, done, disabled }: { label: str
       ) : (
         <SymbolView
           name={done ? 'checkmark' : 'plus'}
-          size={18}
-          weight="bold"
+          size={20}
+          weight="semibold"
           tintColor={done ? Colors.good : Colors.text}
           fallback={<AppText style={[styles.glyph, done && styles.glyphDone]}>{done ? '✓' : '+'}</AppText>}
         />
@@ -51,7 +51,7 @@ export function RemoveButton({ label, onPress, busy, disabled }: { label: string
       {busy ? (
         <ActivityIndicator color={Colors.muted} />
       ) : (
-        <SymbolView name="xmark" size={16} weight="bold" tintColor={Colors.muted} fallback={<AppText style={[styles.glyph, styles.glyphMuted]}>✕</AppText>} />
+        <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.muted} fallback={<AppText style={[styles.glyph, styles.glyphMuted]}>✕</AppText>} />
       )}
     </Pressable>
   );

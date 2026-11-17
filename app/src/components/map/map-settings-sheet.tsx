@@ -47,7 +47,7 @@ export function MapLayersButton({ style }: { style?: object }) {
         <Animated.View style={[styles.fab, press]}>
           <SymbolView
             name="square.3.layers.3d"
-            size={22}
+            size={20}
             tintColor={Colors.text}
             weight="semibold"
           />

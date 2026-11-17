@@ -68,7 +68,7 @@ export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null
       {done ? (
         <View style={styles.thanks} accessibilityLiveRegion="polite">
           <View style={styles.check}>
-            <SymbolView name="checkmark" size={20} weight="bold" tintColor={Colors.good} />
+            <SymbolView name="checkmark" size={20} weight="semibold" tintColor={Colors.good} />
           </View>
           <View style={styles.thanksText}>
             <AppText style={styles.thanksTitle}>{t('Danke, ist angekommen')}</AppText>

@@ -19,7 +19,7 @@ export function ConsentRow({ checked, onChange, title, hint }: { checked: boolea
       accessibilityLabel={hint ? `${title}. ${hint}` : title}
       onPress={() => onChange(!checked)}
       style={styles.row}>
-      <View style={[styles.box, checked && styles.boxOn]}>{checked ? <SymbolView name="checkmark" size={14} weight="bold" tintColor={Colors.onSignal} fallback={<AppText style={styles.tick}>✓</AppText>} /> : null}</View>
+      <View style={[styles.box, checked && styles.boxOn]}>{checked ? <SymbolView name="checkmark" size={14} weight="semibold" tintColor={Colors.onSignal} fallback={<AppText style={styles.tick}>✓</AppText>} /> : null}</View>
       <View style={styles.text}>
         <AppText style={styles.title}>{title}</AppText>
         {hint ? <AppText style={styles.hint}>{hint}</AppText> : null}

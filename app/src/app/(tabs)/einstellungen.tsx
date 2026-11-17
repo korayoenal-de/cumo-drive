@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   tagGood: { backgroundColor: Colors.goodTint },
   tagMuted: { backgroundColor: Colors.surface2 },
   tagText: { fontFamily: Fonts.bold, fontSize: 13 },
-  version: { alignSelf: 'center', fontFamily: Fonts.medium, fontSize: Type.body, color: '#5E5E63' },
+  version: { alignSelf: 'center', fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.faint },
   input: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },

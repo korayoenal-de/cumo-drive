@@ -595,7 +595,7 @@ function SearchBody({
                             </View>
                           ) : (
                             <View style={[styles.icon, styles.iconTint]}>
-                              <SymbolView name={CAT_ICON[cat as Exclude<Cat, 'alle'>]} size={16} tintColor={Colors.signal} />
+                              <SymbolView name={CAT_ICON[cat as Exclude<Cat, 'alle'>]} size={16} weight="semibold" tintColor={Colors.signal} />
                             </View>
                           )}
                           <View style={styles.rowMain}>
