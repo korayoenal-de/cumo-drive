@@ -2,7 +2,8 @@
  * Pässe: eigene, geprüfte Datenbank (DE, AT, CH, IT, FR, SI) mit Stufe, Höhe, Kehren, Wintersperre.
  * calimoto findet Pässe nicht in der Suche und zeigt nur die Höhe; hier sind sie Kern der Planung.
  */
-import { onRoadData } from './road-data';
+import { lazyList } from './lazy-list';
+import { ensureRoadData, onRoadData } from './road-data';
 import { bearingTo, destination } from './roundtrip';
 import { haversine, type LatLon } from './tour';
 import { getLang, t, tr } from '@/i18n';
@@ -199,12 +200,12 @@ export function closedNote(closed: Pass[]): string {
 /** Übersicht mit aktuellem Status, bis wir eine eigene Live Quelle haben. */
 export const PASS_STATUS_URL = 'https://www.ace.de/reisen/reiseinformationen/alpenpaesse';
 
-/** Alle geprüften Pässe (DE, AT, CH, IT und Grenzpässe). */
-export const PASSES: Pass[] = [];
-// In der App sofort aus dem Paket, im Web nach der Anmeldung (road-data.web.ts)
+const ALL_PASSES: Pass[] = [];
+/** Alle geprüften Pässe (DE, AT, CH, IT und Grenzpässe). Lädt beim ersten Zugriff (lib/lazy-list.ts). */
+export const PASSES: Pass[] = lazyList(ALL_PASSES, ensureRoadData);
 onRoadData((d) => {
-  PASSES.length = 0;
-  PASSES.push(...(d.passes as Pass[]));
+  ALL_PASSES.length = 0;
+  ALL_PASSES.push(...(d.passes as Pass[]));
 });
 
 /** Kurzbeschreibung für Listen und Karten, zum Beispiel "2757 m, Ikone, 82 Kehren". */

@@ -23,6 +23,12 @@ import { remainingStops } from '../navigation/replan';
 import { errorFingerprint, topFrames } from '../error-fingerprint';
 import { pickPin, routeStroke, simplifyForScreen } from '../map-hit';
 import { closureExclude, onPassRoad } from '../road-closures';
+import { HIGHLIGHT_ROADS, PREFER_ROADS } from '../highlight-roads';
+import { RECOMMENDED } from '../recommended';
+import { roadDataLoaded } from '../road-data';
+
+// Vor jedem Test festhalten: Laden aller Module entpackt die Daten noch nicht (Performance Punkt 1, 17.11.)
+const loadedAtImport = roadDataLoaded();
 
 // Die Texte der Tests sind deutsch; der Rechner hier läuft oft auf Englisch
 _setLangForTest('de');
@@ -36,6 +42,22 @@ function eastLine(n: number, stepM = 50, start: LatLon = [49.64, 8.63]): LatLon[
 function tourOf(line: LatLon[]): Tour {
   return { name: 'Test', laenge_km: 0, wegpunkte: [line[0], line[line.length - 1]], linie: [{ c: 'ok', p: line }], warnungen: [] };
 }
+
+describe('Daten erst beim ersten Gebrauch (Performance 17.11.)', () => {
+  it('Laden der Module entpackt nichts', () => {
+    assert.equal(loadedAtImport, false);
+  });
+  it('erster Zugriff lädt, danach sind alle Listen voll und verhalten sich wie Arrays', () => {
+    assert.ok(PASSES.length > 300, `Pässe ${PASSES.length}`);
+    assert.equal(roadDataLoaded(), true);
+    assert.ok(HIGHLIGHT_ROADS.length > 100 && PREFER_ROADS.length > 100 && RECOMMENDED.length > 50);
+    assert.ok(Array.isArray(PASSES));
+    assert.equal([...PASSES].length, PASSES.length);
+    assert.equal(PASSES.filter(() => true).length, PASSES.length);
+    assert.ok(PASSES.some((p) => p.tier === 'ikone'));
+    assert.equal(Object.keys(PASSES).length, PASSES.length);
+  });
+});
 
 describe('tour', () => {
   it('haversine misst einen Breitengrad mit etwa 111 km', () => {

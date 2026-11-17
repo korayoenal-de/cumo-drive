@@ -12,7 +12,8 @@
  */
 import type { WarnKey } from '@/lib/passes';
 
-import { onRoadData } from './road-data';
+import { lazyList } from './lazy-list';
+import { ensureRoadData, onRoadData } from './road-data';
 import type { LatLon } from './tour';
 
 export type HighlightRoadKind = 'rallye' | 'strecke' | 'aussicht' | 'bergrennen';
@@ -36,7 +37,7 @@ export type HighlightRoad = {
 /** Pegel ohne eigene Angabe: Rallye und Bergrennen Traumstraße, sonst Stark */
 export const defaultLevel = (kind: HighlightRoadKind) => (kind === 'rallye' || kind === 'bergrennen' ? 4 : 3);
 
-export const HIGHLIGHT_ROADS: HighlightRoad[] = [
+const ROADS: HighlightRoad[] = [
   {
     // Insider Tipp von Koray (CUMO DRIVERS CLUB): Hirschhorn, L 3119 hoch nach Kortelshütte, durchs
     // Ulfenbachtal über Hainbrunn nach Rothenberg und die Beerfelder Straße (L 3410) Richtung Beerfelden.
@@ -554,20 +555,28 @@ function coveredBy(road: CuratedRoad, others: HighlightRoad[]) {
 }
 
 // Handgepflegte Strecken bleiben vorne, kuratierte Highlights nur dort, wo noch keine handgepflegte liegt
-const MANUAL_COUNT = HIGHLIGHT_ROADS.length;
+const MANUAL_COUNT = ROADS.length;
+const MANUAL = ROADS.slice();
+
+const PREFER: HighlightRoad[] = [];
+
+/**
+ * Alle angesagten Strecken: handgepflegte vorne, dann die kuratierten Highlights. Lädt beim ersten Zugriff
+ * (lib/lazy-list.ts), in der App aus dem Paket, im Web nach der Anmeldung (road-data.web.ts).
+ */
+export const HIGHLIGHT_ROADS: HighlightRoad[] = lazyList(ROADS, ensureRoadData);
 
 /** Strecken, die die Routenplanung bevorzugt, ohne sie anzukündigen (tier prefer). */
-export const PREFER_ROADS: HighlightRoad[] = [];
+export const PREFER_ROADS: HighlightRoad[] = lazyList(PREFER, ensureRoadData);
 
-// Kuratierte Strecken: in der App sofort aus dem Paket, im Web nach der Anmeldung (road-data.web.ts)
 onRoadData((d) => {
   const curated = d.curated as CuratedRoad[];
-  HIGHLIGHT_ROADS.length = MANUAL_COUNT;
+  ROADS.length = MANUAL_COUNT;
   for (const r of curated) {
-    if (r.tier === 'highlight' && r.line.length > 1 && !coveredBy(r, HIGHLIGHT_ROADS.slice(0, MANUAL_COUNT))) {
-      HIGHLIGHT_ROADS.push(toRoad(r));
+    if (r.tier === 'highlight' && r.line.length > 1 && !coveredBy(r, MANUAL)) {
+      ROADS.push(toRoad(r));
     }
   }
-  PREFER_ROADS.length = 0;
-  PREFER_ROADS.push(...curated.filter((r) => r.tier === 'prefer' && r.line.length > 1).map(toRoad));
+  PREFER.length = 0;
+  PREFER.push(...curated.filter((r) => r.tier === 'prefer' && r.line.length > 1).map(toRoad));
 });

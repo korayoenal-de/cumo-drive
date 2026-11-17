@@ -5,6 +5,10 @@
  *
  * Seit 17.11. (Startprüfung, Schutz des Werks) liegen sie verschleiert und mit Fingerabdruck im Paket
  * (src/data/road-pack.ts, erzeugt mit npm run pack-data) und werden beim ersten Gebrauch einmal entpackt.
+ *
+ * Seit 17.11. abends (Performance Punkt 1) nicht mehr beim Laden des JavaScript: Die Listen (HIGHLIGHT_ROADS, PASSES,
+ * RECOMMENDED) rufen ensureRoadData() beim ersten Zugriff (lib/lazy-list.ts), und das Vorladen nach der Startanimation
+ * tut es spätestens. So hält das Entpacken den Start nicht mehr auf.
  */
 import { ROAD_PACK } from '@/data/road-pack';
 import { KEY, decode } from './road-pack-codec';
@@ -12,8 +16,9 @@ import type { LatLon } from './tour';
 
 export type RoadData = { curated: unknown[]; passes: unknown[]; stops: unknown[] };
 
-const listeners = new Set<(d: RoadData) => void>();
+const listeners: ((d: RoadData) => void)[] = [];
 let data: RoadData | null = null;
+let loading = false;
 
 function unpack(): RoadData {
   if (!data) {
@@ -23,10 +28,27 @@ function unpack(): RoadData {
   return data;
 }
 
-/** Daten übergeben, sobald sie da sind; in der App sofort */
+/** Daten übergeben, sobald sie da sind: in der App beim ersten Gebrauch (ensureRoadData) */
 export function onRoadData(cb: (d: RoadData) => void) {
-  cb(unpack());
-  listeners.add(cb);
+  listeners.push(cb);
+  if (data) cb(data);
+}
+
+/** Jetzt entpacken und allen übergeben, falls noch nicht geschehen; danach nur noch ein Vergleich */
+export function ensureRoadData(): void {
+  if (data || loading) return;
+  loading = true;
+  try {
+    const d = unpack();
+    for (const cb of listeners) cb(d);
+  } finally {
+    loading = false;
+  }
+}
+
+/** Für Tests und Messung: wurde schon entpackt? */
+export function roadDataLoaded(): boolean {
+  return data !== null;
 }
 
 /** In der App immer bereit */
