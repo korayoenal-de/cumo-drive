@@ -138,7 +138,6 @@
   "An die Gruppe": "Al gruppo",
   "Andere Mitglieder sehen dich unter Drivers an diesem Ort, nur als Ortsmitte, nie mit Adresse oder Live Standort.": "Gli altri membri ti vedono in Drivers in questo luogo, solo come centro del paese, mai con indirizzo o posizione in tempo reale.",
   "Andere Tour wählen": "Scegli un altro giro",
-  "Andere dürfen mich anschreiben": "Gli altri possono scrivermi",
   "Andere finden dich unter diesem Namen und laden dich zu Gruppenfahrten ein. Mindestens 3 Zeichen.": "Gli altri ti trovano con questo nome e ti invitano alle uscite di gruppo. Almeno 3 caratteri.",
   "Andere sehen meinen Fuhrpark": "Gli altri vedono il mio garage",
   "Andere öffnen die Tour direkt in CUMO DRIVE": "Gli altri aprono il giro direttamente in CUMO DRIVE",
@@ -697,7 +696,7 @@
   "Umbenennen": "Rinomina",
   "Umfahren": "Aggira",
   "Unsere Empfehlungen: mit Parkplatz und gut für Sportwagen. Jedes andere Lokal findest du unter Alle.": "I nostri consigli: con parcheggio e adatti alle sportive. Ogni altro locale lo trovi in Tutti.",
-  "Unter Community, Drivers findest du andere Mitglieder und kannst sie anschreiben.": "In Community, Drivers trovi gli altri membri e puoi scrivergli.",
+  "Unter Community, Drivers findest du andere Mitglieder und kannst ihnen eine Nachricht schreiben.": "In Community, Drivers trovi gli altri membri e puoi scrivergli.",
   "Unter Touren ablegen": "Salva nei giri",
   "Unter Touren gespeichert": "Salvato nei giri",
   "Unter Touren gespeichert, auch in der App": "Salvato nei giri, anche nell'app",
@@ -1849,5 +1848,6 @@
   "{name}, {v1} {v2} Uhr, abgesagt": "{name}, {v1} {v2}, annullata",
   "Pläne kaufst du in der CUMO DRIVE App auf dem iPhone. Danach gilt dein Plan auch hier.": "I piani si acquistano nell'app CUMO DRIVE su iPhone. Poi il tuo piano vale anche qui.",
   "Wir haben keinen aktiven Kauf gefunden.": "Non abbiamo trovato nessun acquisto attivo.",
-  "Bitte melde dich zuerst an.": "Accedi prima, per favore."
+  "Bitte melde dich zuerst an.": "Accedi prima, per favore.",
+  "Nachricht an {name}": "Messaggio a {name}"
 }

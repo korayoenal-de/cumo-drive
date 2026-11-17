@@ -51,7 +51,7 @@ export default function Nachrichten() {
       {list?.length === 0 && (
         <View style={styles.card}>
           <AppText variant="title">{t('Noch keine Nachrichten')}</AppText>
-          <AppText muted>{t('Unter Community, Drivers findest du andere Mitglieder und kannst sie anschreiben.')}</AppText>
+          <AppText muted>{t('Unter Community, Drivers findest du andere Mitglieder und kannst ihnen eine Nachricht schreiben.')}</AppText>
         </View>
       )}
       {list?.map((c) => (

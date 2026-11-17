@@ -264,7 +264,7 @@ export function RoundTripPanel(props: {
               {tr('Kilometer')}
             </Chip>
             <Chip on={lengthBy === 'dauer'} onSurface onClick={() => setLengthBy('dauer')}>
-              {tr('Dauer')}
+              {tr('Fahrzeit')}
             </Chip>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

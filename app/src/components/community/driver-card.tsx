@@ -1,6 +1,6 @@
 /**
  * Karte eines Mitglieds unter Drivers: Name, Wohnort, Auto. Groß (gewählt auf der Karte) mit
- * Fuhrpark und der Hauptaktion Anschreiben, klein in der Liste mit Symbol zum Anschreiben.
+ * Fuhrpark und der Hauptaktion Nachricht schreiben, klein in der Liste mit Symbol dafür.
  * Kontakte (Koray 13.11.): Plus schickt eine Anfrage, danach steht dort grau Angefragt; bestätigte
  * Kontakte tragen ein Häkchen am Bild. Die große Karte lädt zu einer eigenen Ausfahrt ein.
  */
@@ -22,7 +22,7 @@ import { inviteToRide } from '@/lib/group/invites';
 import { showToast } from '@/lib/toast';
 import { type Driver } from '@/lib/drivers';
 import { useIsBlocked } from '@/lib/moderation';
-import { t } from '@/i18n';
+import { t, tr } from '@/i18n';
 
 /** Wagenfarbe des ersten Autos als Ring um den Kreis, sonst weiß */
 export const ringColor = (d: Driver) => d.garage?.find((g) => g.look)?.look?.color ?? Colors.text;
@@ -152,7 +152,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
       {(canWrite || unread > 0) && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={unread ? t('{unread} ungelesene {v1} von {name}', { unread, v1: unread === 1 ? t('Nachricht') : t('Nachrichten'), name: d.name }) : `${d.name} anschreiben`}
+          accessibilityLabel={unread ? t('{unread} ungelesene {v1} von {name}', { unread, v1: unread === 1 ? t('Nachricht') : t('Nachrichten'), name: d.name }) : tr('Nachricht an {name}', { name: d.name })}
           hitSlop={4}
           onPress={() => write(d)}
           style={[styles.round, unread > 0 && styles.roundUnread]}>

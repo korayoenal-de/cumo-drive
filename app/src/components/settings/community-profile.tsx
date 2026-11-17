@@ -1,6 +1,6 @@
 /**
  * Bausteine für das eigene Profil (Koray 10.11.): Wohnort (steht auf der Drivers Karte, auf etwa 1 km
- * gerundet), Über mich und die Schalter, ob andere einen anschreiben dürfen und den Fuhrpark sehen.
+ * gerundet), Über mich und die Schalter, ob andere einem Nachrichten schreiben dürfen und den Fuhrpark sehen.
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';

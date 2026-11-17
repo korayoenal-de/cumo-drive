@@ -4,7 +4,7 @@
  * (supabase/functions/notify), ausgelöst von Triggern in der Datenbank.
  *
  * Die App fragt erst nach der Erlaubnis, wenn es Sinn hat: beim Öffnen der Nachrichten, beim Einschalten
- * von „Andere dürfen mich anschreiben“ oder über den Knopf in den Einstellungen, nie beim Start.
+ * von „Nachrichten erlauben“ oder über den Knopf in den Einstellungen, nie beim Start.
  * Ist die Erlaubnis schon da, meldet sie den Expo Push Token bei jedem Start still im Konto an.
  * Tippen auf eine Mitteilung öffnet die Unterhaltung; ist genau diese Unterhaltung offen, erscheint keine.
  * Die Zahl am App Symbol folgt den ungelesenen privaten Nachrichten.

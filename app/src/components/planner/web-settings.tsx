@@ -132,7 +132,7 @@ function CommunityProfileWeb() {
       )}
       <span style={S.muted}>{t('Andere Mitglieder sehen dich unter Drivers an diesem Ort, nur als Ortsmitte, nie mit Adresse oder Live Standort.')}</span>
       <BirthdayWeb key={`geb${p.birthDate ?? ''}`} p={p} onSave={(patch) => void save(patch)} />
-      <Toggle id="pv-msg" on={p.allowMessages} label={t('Andere dürfen mich anschreiben')} onChange={(v) => void save({ allowMessages: v })} />
+      <Toggle id="pv-msg" on={p.allowMessages} label={t('Nachrichten erlauben')} onChange={(v) => void save({ allowMessages: v })} />
       <Toggle id="pv-inv" on={p.invitesContactsOnly} label={t('Einladungen nur von Kontakten')} onChange={(v) => void save({ invitesContactsOnly: v })} />
       <Toggle id="pv-garage" on={p.showGarage} label={t('Andere sehen meinen Fuhrpark')} onChange={(v) => void save({ showGarage: v })} />
       {busy ? <span style={S.muted}>{t('Wird gespeichert')}</span> : null}

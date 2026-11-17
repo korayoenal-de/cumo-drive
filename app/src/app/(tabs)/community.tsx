@@ -4,7 +4,7 @@
  * Routen: veröffentlichte Touren zum Nachfahren (Tippen öffnet sie im Planer, Lesezeichen speichert).
  * Ausfahrten: anstehende Gruppenfahrten mit Zeit und Treffpunkt; Mitfahren anfragen, der
  * Organisator nimmt an, danach Chat und am Tag die Gruppenfahrt.
- * Drivers (Koray 10.11.): Mitglieder an ihrem Wohnort, Fuhrpark und Anschreiben.
+ * Drivers (Koray 10.11.): Mitglieder an ihrem Wohnort, Fuhrpark und Nachricht schreiben.
  */
 import { Kennzahlen, SeatsBadge } from '@/components/ui/kennzahlen';
 import { fahrzeit, meta as fmtMeta, strecke, wann } from '@/lib/format';
