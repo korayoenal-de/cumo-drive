@@ -174,7 +174,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
               <AppText style={styles.bigName} numberOfLines={2}>{inv.name}</AppText>
               <AppText muted>{fmtMeta(tr('Lead {ownerName}', { ownerName: inv.ownerName }), km != null ? strecke(km) : null)}</AppText>
               {err?.id === inv.rideId && <AppText style={styles.error}>{err.text}</AppText>}
-              <Btn label={t('Jetzt mitfahren')} icon={{ sf: 'location.north.fill' }} primary busy={isBusy} disabled={!!busy} onPress={() => void join(inv)} />
+              <Btn label={t('Jetzt mitfahren')} icon={{ sf: 'steeringwheel' }} primary busy={isBusy} disabled={!!busy} onPress={() => void join(inv)} />
             </Animated.View>
           );
         }

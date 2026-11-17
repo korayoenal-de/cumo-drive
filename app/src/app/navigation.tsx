@@ -1587,7 +1587,7 @@ function aheadOf(r: NavRoute, at: number): LatLon[] {
 }
 
 /**
- * Start und Nochmal (Joy of Use, Koray 17.11., Muster B): Navigationspfeil, baut sich auf „Bereit“ von links nach
+ * Start und Nochmal (Joy of Use, Koray 17.11., Muster B): Lenkrad, baut sich auf „Bereit“ von links nach
  * rechts auf und klappt beim Druck von links nach rechts zusammen (Haptik losfahren), dann startet die Fahrt.
  */
 /** Zeit, bis die Navigation (Vollbild Modal) zu ist; erst dann ist der Touren Tab zu sehen */
@@ -1599,8 +1599,11 @@ function LaunchButton({ label, onGo, reveal }: { label: string; onGo: () => void
     <MorphAction
       ref={ref}
       label={label}
-      icon={{ sf: 'location.north.fill' }}
-      reveal={reveal}
+      // ein Symbol für jeden Fahrtstart: das Lenkrad (Koray 17.11.); auf Bereit erst aufbauen, wenn das Vollbild
+      // steht, dabei dreht das Lenkrad kurz ein
+      icon={{ sf: 'steeringwheel' }}
+      reveal={reveal ? MODAL_GONE_MS : undefined}
+      steer={reveal}
       onPress={() => (ref.current ? ref.current.launch(onGo) : onGo())}
     />
   );

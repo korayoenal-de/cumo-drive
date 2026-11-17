@@ -54,7 +54,9 @@ const BAR_SPACE = 96;
 
 type Full = { tour: Tour & { minutes?: number }; profile: Profile };
 
-const NAV_ICON: BtnIcon = { sf: 'location.north.fill' };
+// Fahrtstarts tragen das Lenkrad (Koray 17.11.), Zur Navigation den Pfeil
+const NAV_ICON: BtnIcon = { sf: 'steeringwheel' };
+const BACK_TO_NAV_ICON: BtnIcon = { sf: 'location.north.fill' };
 const COMMUNITY_ICON: BtnIcon = { tab: 'community' };
 
 export default function AusfahrtDetail() {
@@ -369,7 +371,7 @@ export default function AusfahrtDetail() {
   else if (over) {
     if (drove) main = { label: t('Nochmal fahren'), icon: { sf: 'steeringwheel' }, onPress: () => void againRide() };
     else if (a.isOwner) main = { label: t('Neuen Termin wählen'), icon: { sf: 'calendar' }, onPress: () => setTimeSheet(true) };
-  } else if (inThisRide) main = { label: t('Zur Navigation'), icon: NAV_ICON, launch: true, onPress: () => router.push('/navigation') };
+  } else if (inThisRide) main = { label: t('Zur Navigation'), icon: BACK_TO_NAV_ICON, launch: true, onPress: () => router.push('/navigation') };
   else if (joined && a.rideStatus === 'laeuft' && !isLead) main = { label: meArrived ? tr('Jetzt mitfahren') : tr('Aufschließen'), icon: NAV_ICON, onPress: () => void startGroup() };
   else if (isLead && a.rideStatus === 'laeuft') main = { label: t('Jetzt losfahren'), icon: NAV_ICON, onPress: () => void startGroup() };
   else if (isLead && dayMode)

@@ -8,7 +8,7 @@
  */
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
 import { BtnIconView, type BtnIcon } from '@/components/ui/btn-icon';
 import { EASE_OUT } from '@/components/ui/motion';
@@ -40,8 +40,13 @@ type Props = {
   tone?: 'signal' | 'surface';
   busy?: boolean;
   disabled?: boolean;
-  /** Muster B auf dem nächsten Bildschirm: baut sich von links nach rechts auf */
-  reveal?: boolean;
+  /**
+   * Muster B auf dem nächsten Bildschirm: baut sich von links nach rechts auf. Zahl: Wartezeit in ms, bis der
+   * Bildschirm steht (ein Vollbild Modal gleitet erst herein; Koray 17.11.: sonst lief es unsichtbar ab)
+   */
+  reveal?: boolean | number;
+  /** Lenkrad dreht beim Aufbauen kurz ein und zurück (Koray 17.11., Übergang Planer zu Bereit) */
+  steer?: boolean;
   height?: number;
   textSize?: number;
   style?: StyleProp<ViewStyle>;
@@ -49,7 +54,7 @@ type Props = {
 };
 
 export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphAction(
-  { label, icon, onPress, tone = 'signal', busy, disabled, reveal, height = Size.button, textSize = Type.button, style, accessibilityHint },
+  { label, icon, onPress, tone = 'signal', busy, disabled, reveal, steer, height = Size.button, textSize = Type.button, style, accessibilityHint },
   ref,
 ) {
   const reduced = useReducedMotion();
@@ -63,6 +68,8 @@ export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphActio
   const text = useSharedValue(reveal ? 0 : 1);
   const shown = useSharedValue(reveal ? 0 : 1);
   const revealed = useRef(!reveal);
+  const wait = typeof reveal === 'number' && !reduced ? reveal : 0;
+  const turn = useSharedValue(0);
   const bg = tone === 'signal' ? Colors.signal : Colors.surface2;
   const fg = tone === 'signal' ? Colors.onSignal : Colors.text;
   // Mitte des Symbols in der Taste (Inhalt ist mittig: Symbol, Abstand, Schrift)
@@ -94,7 +101,7 @@ export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphActio
       shift.value = 0;
       text.value = 1;
       shown.value = 1;
-    }, 700);
+    }, wait + 700);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -104,10 +111,20 @@ export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphActio
     const cx = (width - content) / 2 + 10;
     right.value = width - height;
     shift.value = height / 2 - cx;
-    shown.value = 1;
-    right.value = withTiming(0, timing);
-    shift.value = withTiming(0, timing);
-    text.value = withTiming(1, { ...timing, duration: reduced ? 0 : MORPH_MS + 80 });
+    shown.value = withDelay(wait, withTiming(1, { duration: reduced ? 0 : 120 }));
+    right.value = withDelay(wait, withTiming(0, timing));
+    shift.value = withDelay(wait, withTiming(0, timing));
+    text.value = withDelay(wait, withTiming(1, { ...timing, duration: reduced ? 0 : MORPH_MS + 80 }));
+    // kleiner Lenkeinschlag: links, ein wenig rechts, gerade (ohne Feder, wie alle Bewegungen)
+    if (steer && !reduced)
+      turn.value = withDelay(
+        wait + MORPH_MS - 60,
+        withSequence(
+          withTiming(-38, { duration: 220, easing: EASE_OUT }),
+          withTiming(14, { duration: 200, easing: EASE_OUT }),
+          withTiming(0, { duration: 180, easing: EASE_OUT }),
+        ),
+      );
   }
 
   useImperativeHandle(ref, () => ({
@@ -173,6 +190,7 @@ export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphActio
   const bgStyle = useAnimatedStyle(() => ({ left: left.value, right: right.value, opacity: shown.value }));
   const contentStyle = useAnimatedStyle(() => ({ opacity: shown.value, transform: [{ translateX: shift.value }] }));
   const textStyle = useAnimatedStyle(() => ({ opacity: text.value }));
+  const iconStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value}deg` }] }));
 
   return (
     <Pressable
@@ -191,7 +209,9 @@ export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphActio
           <ActivityIndicator color={fg} />
         ) : (
           <View style={styles.content} onLayout={onContent}>
-            <BtnIconView icon={icon} color={fg} />
+            <Animated.View style={iconStyle}>
+              <BtnIconView icon={icon} color={fg} />
+            </Animated.View>
             <Animated.View style={textStyle}>
               <AppText style={{ fontFamily: Fonts.bold, fontSize: textSize, color: fg }} numberOfLines={1}>
                 {label}
