@@ -4,9 +4,11 @@
  */
 import type { Session } from '@supabase/supabase-js';
 import { useSyncExternalStore } from 'react';
+import { Platform } from 'react-native';
 
 import { forgetPush } from './push';
 import { supabase } from './supabase';
+import { LEGAL_VERSION } from '@/content/legal';
 import { t } from '@/i18n';
 
 let session: Session | null = null;
@@ -58,7 +60,7 @@ function german(msg: string): string {
   if (/email not confirmed/i.test(msg)) return t('Die E-Mail ist noch nicht bestätigt. Bitte bestätige sie über die Mail, die wir dir geschickt haben.');
   if (/rate limit/i.test(msg)) return t('Zu viele Versuche. Bitte kurz warten.');
   if (/invalid.*email|unable to validate email/i.test(msg)) return t('Das sieht nicht nach einer gültigen E-Mail aus.');
-  return msg;
+  return t(msg);
 }
 
 export async function signIn(email: string, password: string) {
@@ -66,9 +68,16 @@ export async function signIn(email: string, password: string) {
   if (error) throw new Error(german(error.message));
 }
 
-export async function signUp(email: string, password: string) {
+/** Einwilligungen bei der Registrierung (Koray 17.11.: Opt in), landen per Trigger in der Tabelle consents */
+export type SignUpConsent = { terms: true; news: boolean };
+
+export async function signUp(email: string, password: string, consent: SignUpConsent) {
   if (password.length < 8) throw new Error('Das Passwort braucht mindestens 8 Zeichen.');
-  const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim(),
+    password,
+    options: { data: { consent: { ...consent, version: LEGAL_VERSION, source: Platform.OS === 'web' ? 'web' : 'app' } } },
+  });
   if (error) throw new Error(german(error.message));
   if (!data.session) throw new Error('Registriert. Bitte die Bestätigungsmail öffnen und dann anmelden.');
 }

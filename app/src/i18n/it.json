@@ -1824,5 +1824,14 @@
   "Runde wird verlängert": "Il giro viene allungato",
   "Runde wird gekürzt": "Il giro viene accorciato",
   "Die längste Runde in diese Richtung hat {km} km.": "Il giro più lungo in questa direzione è di {km} km.",
-  "kurvig, {dir}": "tortuoso, {dir}"
+  "kurvig, {dir}": "tortuoso, {dir}",
+  "Ich stimme den Nutzungsbedingungen zu und habe den Datenschutz gelesen.": "Accetto le condizioni d’uso e ho letto l’informativa privacy.",
+  "Neuigkeiten per E Mail": "Novità via email",
+  "Neue Funktionen, Strecken und Ausfahrten. Freiwillig, abbestellen geht jederzeit in den Einstellungen.": "Nuove funzioni, strade e uscite. Facoltativo, puoi disiscriverti in ogni momento nelle Impostazioni.",
+  "E Mail": "Email",
+  "Neue Funktionen, Strecken und Ausfahrten.": "Nuove funzioni, strade e uscite.",
+  "Bitte nutze eine dauerhafte E Mail Adresse.": "Usa un indirizzo email permanente.",
+  "Gerade zu viele neue Konten aus diesem Netz. Bitte versuch es später noch einmal.": "Troppi nuovi account da questa rete in questo momento. Riprova più tardi.",
+  "Gerade zu viele Links. Bitte versuch es später noch einmal.": "Troppi link in questo momento. Riprova più tardi.",
+  "Gerade zu viele Übergaben. Bitte versuch es später noch einmal.": "Troppi trasferimenti in questo momento. Riprova più tardi."
 }

@@ -5,7 +5,7 @@
  */
 import { useEffect, useSyncExternalStore } from 'react';
 
-import { signUp } from './auth';
+import { signUp, type SignUpConsent } from './auth';
 import { supabase } from './supabase';
 import { t } from '@/i18n';
 
@@ -128,14 +128,14 @@ export async function findProfiles(q: string): Promise<FoundProfile[]> {
 }
 
 /** Registrieren und gleich danach den Namen im Profil speichern. */
-export async function signUpWithName(email: string, password: string, name: string) {
+export async function signUpWithName(email: string, password: string, name: string, consent: SignUpConsent) {
   const n = cleanName(name);
   const problem = nameProblem(n);
   if (problem) throw new Error(problem);
   if (!(await nameAvailable(n))) throw new Error('Diesen Namen hat schon jemand. Bitte einen anderen wählen.');
   pendingName = n;
   try {
-    await signUp(email, password);
+    await signUp(email, password, consent);
   } catch (e) {
     pendingName = null;
     throw e;

@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 
 import { type Profile, type Tour } from '@/lib/tour';
-import { signIn, signOut, signUp, useSession } from '@/lib/auth';
+import { signIn, signOut, useSession } from '@/lib/auth';
 import { syncLibrary, useSyncState } from '@/lib/library';
 import { type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
@@ -173,7 +173,8 @@ export function AccountBox() {
         <button type="submit" style={S.primary} disabled={busy || !email || !pw}>
           {t('Anmelden')}
         </button>
-        <button type="button" style={S.secondaryOnSurface} disabled={busy || !email || !pw} onClick={() => void run(signUp)}>
+        {/* Registrieren mit Einwilligungen (Opt in, 17.11.) nur auf der eigenen Seite */}
+        <button type="button" style={S.secondaryOnSurface} disabled={busy} onClick={() => window.location.assign('/registrieren')}>
           {t('Registrieren')}
         </button>
       </div>

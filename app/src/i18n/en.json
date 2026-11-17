@@ -1824,5 +1824,14 @@
   "Runde wird verlängert": "The loop is being extended",
   "Runde wird gekürzt": "The loop is being shortened",
   "Die längste Runde in diese Richtung hat {km} km.": "The longest loop in this direction is {km} km.",
-  "kurvig, {dir}": "twisty, {dir}"
+  "kurvig, {dir}": "twisty, {dir}",
+  "Ich stimme den Nutzungsbedingungen zu und habe den Datenschutz gelesen.": "I accept the terms of use and have read the privacy policy.",
+  "Neuigkeiten per E Mail": "News by email",
+  "Neue Funktionen, Strecken und Ausfahrten. Freiwillig, abbestellen geht jederzeit in den Einstellungen.": "New features, roads and drives. Optional, you can unsubscribe at any time in Settings.",
+  "E Mail": "Email",
+  "Neue Funktionen, Strecken und Ausfahrten.": "New features, roads and drives.",
+  "Bitte nutze eine dauerhafte E Mail Adresse.": "Please use a permanent email address.",
+  "Gerade zu viele neue Konten aus diesem Netz. Bitte versuch es später noch einmal.": "Too many new accounts from this network right now. Please try again later.",
+  "Gerade zu viele Links. Bitte versuch es später noch einmal.": "Too many links right now. Please try again later.",
+  "Gerade zu viele Übergaben. Bitte versuch es später noch einmal.": "Too many handovers right now. Please try again later."
 }

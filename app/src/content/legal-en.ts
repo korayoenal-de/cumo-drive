@@ -6,7 +6,7 @@ import type { LegalDoc } from './legal';
 
 const CONTACT = 'kontakt@rallycumo.de';
 const IMPRINT = 'https://rallycumo.de/impressum/';
-const STAND = 'As of 16 November 2026. Draft, legal review pending. This is a translation; the German version prevails.';
+const STAND = 'As of 17 November 2026. Draft, legal review pending. This is a translation; the German version prevails.';
 
 export const PRIVACY_EN: LegalDoc = {
   title: 'Privacy',
@@ -25,6 +25,7 @@ export const PRIVACY_EN: LegalDoc = {
       h: '2. Which data we process',
       list: [
         'Account: email address, password (stored only encrypted), display name under which others invite you to group drives.',
+        'Consents: that you accepted the terms of use and acknowledged the privacy policy when registering, each with date and version, and whether you want to receive news by email.',
         'Tours: planned and saved tours with waypoints, line, names and folders, as well as tours you publish in the community.',
         'Drives: when you start navigation, the driven track with time, speed and statistics (kilometres, bends, lateral acceleration) and your rating of the drive with reasons and note.',
         'Use of planning: when you plan a loop, reroll, save, take over, publish, delete or start a tour, we store the line of the tour, its length, the profile and the calculated driving fun score. We cut off the first and last 2 km of the line beforehand so that start and destination, such as your front door, are not included.',
@@ -46,6 +47,7 @@ export const PRIVACY_EN: LegalDoc = {
         'Location: only with your permission on the iPhone, which you can withdraw at any time in Settings. Without location you can still plan, but not navigate.',
         'Improving roads: we evaluate ratings, driven tracks and the use of planning in aggregated form and without reference to you as a person, to improve the driving fun level of roads and the planning (legitimate interest, Art. 6(1)(f) GDPR). A road section is only included once at least three different drivers have used it. Nobody apart from the evaluation sees your individual entries, not even other drivers. You can object at any time at the address above.',
         'Security and abuse protection of the servers: legitimate interest (Art. 6(1)(f) GDPR).',
+        'News by email (new features, roads, drives): only if you agree when registering or in Settings and have confirmed your email address (consent, Art. 6(1)(a) GDPR). You can withdraw it at any time in Settings or via the link in every email. We keep your acceptance of the terms and privacy policy as proof for as long as your account exists (Art. 6(1)(c) GDPR).',
         'Statutory retention, for example for club licences invoiced to clubs: legal obligation (Art. 6(1)(c) GDPR).',
       ],
     },

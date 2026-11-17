@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
+import { ConsentRow, LegalLinks } from '@/components/auth/consent-row';
 import { NameField, useNameCheck } from '@/components/auth/name-field';
 import { signIn } from '@/lib/auth';
 import { signUpWithName } from '@/lib/profile';
@@ -25,7 +26,10 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
   const [err, setErr] = useState<string | null>(null);
   const [name, setName] = useState('');
   const check = useNameCheck(mode === 'register' ? name : '');
-  const ready = !!email.trim() && pw.length > 0 && !busy && (mode === 'login' || check.state === 'frei');
+  // Opt in (Koray 17.11.): Nutzungsbedingungen und Datenschutz sind Pflicht, Neuigkeiten freiwillig und aus
+  const [terms, setTerms] = useState(false);
+  const [news, setNews] = useState(false);
+  const ready = !!email.trim() && pw.length > 0 && !busy && (mode === 'login' || (check.state === 'frei' && terms));
 
   const submit = async () => {
     if (!ready) return;
@@ -33,7 +37,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
     setErr(null);
     try {
       if (mode === 'login') await signIn(email, pw);
-      else await signUpWithName(email, pw, name);
+      else await signUpWithName(email, pw, name, { terms: true, news });
     } catch (e) {
       setErr(e instanceof Error ? e.message : t('Das hat nicht geklappt.'));
     } finally {
@@ -82,6 +86,18 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             style={styles.input}
             accessibilityLabel={t('Passwort')}
           />
+          {mode === 'register' && (
+            <View style={styles.consent}>
+              <ConsentRow checked={terms} onChange={setTerms} title={t('Ich stimme den Nutzungsbedingungen zu und habe den Datenschutz gelesen.')} />
+              <LegalLinks />
+              <ConsentRow
+                checked={news}
+                onChange={setNews}
+                title={t('Neuigkeiten per E Mail')}
+                hint={t('Neue Funktionen, Strecken und Ausfahrten. Freiwillig, abbestellen geht jederzeit in den Einstellungen.')}
+              />
+            </View>
+          )}
           {err && <AppText style={styles.error}>{err}</AppText>}
           <Pressable accessibilityRole="button" disabled={!ready} onPress={() => void submit()} style={[styles.primary, !ready && styles.disabled]}>
             {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{mode === 'login' ? t('Anmelden') : t('Registrieren')}</AppText>}
@@ -111,6 +127,7 @@ const styles = StyleSheet.create({
   brandRow: { alignSelf: 'flex-start' },
   gapS: { gap: Spacing.m },
   gapM: { gap: Spacing.m },
+  consent: { gap: Spacing.xs, paddingVertical: Spacing.xs },
   brand: { color: Colors.signal, fontFamily: Fonts.bold, letterSpacing: 2 },
   input: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },

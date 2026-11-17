@@ -15,7 +15,9 @@ export type LegalDoc = { title: string; headTitle?: string; lead: string; blocks
 const KONTAKT = 'kontakt@rallycumo.de';
 const IMPRESSUM = 'https://rallycumo.de/impressum/';
 
-export const STAND = 'Stand: 16. November 2026. Entwurf, die anwaltliche Prüfung steht noch aus.';
+/** Fassung der Rechtstexte, wird bei der Registrierung als Nachweis gespeichert (consents) */
+export const LEGAL_VERSION = '2026-11-17';
+export const STAND = 'Stand: 17. November 2026. Entwurf, die anwaltliche Prüfung steht noch aus.';
 
 export const DATENSCHUTZ: LegalDoc = {
   title: 'Datenschutz',
@@ -34,6 +36,7 @@ export const DATENSCHUTZ: LegalDoc = {
       h: '2. Welche Daten wir verarbeiten',
       list: [
         'Konto: E-Mail-Adresse, Passwort (nur verschlüsselt gespeichert), Anzeigename, unter dem dich andere zur Gruppenfahrt einladen.',
+        'Einwilligungen: dass du bei der Registrierung den Nutzungsbedingungen zugestimmt und die Datenschutzerklärung zur Kenntnis genommen hast, jeweils mit Datum und Fassung, und ob du Neuigkeiten per E Mail bekommen möchtest.',
         'Touren: geplante und gespeicherte Touren mit Wegpunkten, Linie, Namen und Ordnern, außerdem Touren, die du in der Community veröffentlichst.',
         'Fahrten: wenn du eine Navigation startest, die gefahrene Spur mit Zeit, Tempo und Statistik (Kilometer, Kurven, Querbeschleunigung) sowie deine Bewertung der Fahrt mit Gründen und Notiz.',
         'Nutzung der Planung: wenn du eine Rundtour planst, neu würfelst, eine Tour speicherst, übernimmst, veröffentlichst, löschst oder losfährst, speichern wir dazu die Linie der Tour, ihre Länge, das Profil und den berechneten Fahrspaß. Die ersten und letzten 2 km der Linie schneiden wir vorher ab, damit Start und Ziel, etwa deine Haustür, nicht enthalten sind.',
@@ -55,6 +58,7 @@ export const DATENSCHUTZ: LegalDoc = {
         'Standort: nur mit deiner Erlaubnis im iPhone, die du jederzeit in den Einstellungen widerrufen kannst. Ohne Standort kannst du weiter planen, aber nicht navigieren.',
         'Verbesserung der Strecken: Bewertungen, gefahrene Spuren und die Nutzung der Planung werten wir zusammengefasst und ohne Bezug zu deiner Person aus, um den Fahrspaß Pegel von Straßen zu verbessern und die Planung zu verbessern (berechtigtes Interesse, Art. 6 Abs. 1 lit. f DSGVO). Ein Straßenabschnitt fließt erst ein, wenn mindestens drei verschiedene Fahrer ihn genutzt haben. Niemand außer der Auswertung sieht deine einzelnen Einträge, auch andere Fahrer nicht. Du kannst dem jederzeit unter der oben genannten Adresse widersprechen.',
         'Sicherheit und Missbrauchsschutz der Server: berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO).',
+        'Neuigkeiten per E Mail (neue Funktionen, Strecken, Ausfahrten): nur, wenn du bei der Registrierung oder in den Einstellungen zustimmst und deine E Mail Adresse bestätigt hast (Einwilligung, Art. 6 Abs. 1 lit. a DSGVO). Du kannst sie jederzeit in den Einstellungen oder über den Link in jeder Mail widerrufen. Die Zustimmung zu Nutzungsbedingungen und Datenschutz speichern wir als Nachweis, solange dein Konto besteht (Art. 6 Abs. 1 lit. c DSGVO).',
         'Gesetzliche Aufbewahrung, etwa bei Club Lizenzen auf Rechnung: rechtliche Verpflichtung (Art. 6 Abs. 1 lit. c DSGVO).',
       ],
     },

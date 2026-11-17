@@ -6,7 +6,7 @@ import type { LegalDoc } from './legal';
 
 const CONTACT = 'kontakt@rallycumo.de';
 const IMPRINT = 'https://rallycumo.de/impressum/';
-const STAND = 'Aggiornato al 16 novembre 2026. Bozza, verifica legale in sospeso. Questa è una traduzione; fa fede la versione tedesca.';
+const STAND = 'Aggiornato al 17 novembre 2026. Bozza, verifica legale in sospeso. Questa è una traduzione; fa fede la versione tedesca.';
 
 export const PRIVACY_IT: LegalDoc = {
   title: 'Privacy',
@@ -25,6 +25,7 @@ export const PRIVACY_IT: LegalDoc = {
       h: '2. Quali dati trattiamo',
       list: [
         'Account: indirizzo email, password (salvata solo in forma cifrata), nome visualizzato con cui gli altri ti invitano ai giri di gruppo.',
+        'Consensi: che in fase di registrazione hai accettato le condizioni d’uso e preso visione dell’informativa privacy, con data e versione, e se desideri ricevere novità via email.',
         'Tour: tour pianificati e salvati con tappe, tracciato, nomi e cartelle, e i tour che pubblichi nella community.',
         'Guide: quando avvii la navigazione, la traccia percorsa con orario, velocità e statistiche (chilometri, curve, accelerazione laterale) e la tua valutazione della guida con motivi e nota.',
         'Uso della pianificazione: quando pianifichi un giro, lo rigeneri, lo salvi, lo adotti, lo pubblichi, lo elimini o parti, salviamo il tracciato del tour, la lunghezza, il profilo e il livello di divertimento calcolato. Prima tagliamo i primi e gli ultimi 2 km del tracciato, così partenza e destinazione, per esempio la porta di casa, non sono incluse.',
@@ -46,6 +47,7 @@ export const PRIVACY_IT: LegalDoc = {
         'Posizione: solo con il tuo permesso sull’iPhone, che puoi revocare in ogni momento nelle Impostazioni. Senza posizione puoi comunque pianificare, ma non navigare.',
         'Migliorare le strade: analizziamo valutazioni, tracce percorse e uso della pianificazione in forma aggregata e senza riferimento alla tua persona, per migliorare il livello di divertimento delle strade e la pianificazione (legittimo interesse, art. 6, par. 1, lett. f GDPR). Un tratto di strada entra solo quando almeno tre piloti diversi lo hanno usato. Nessuno oltre all’analisi vede le tue singole voci, nemmeno gli altri piloti. Puoi opporti in ogni momento all’indirizzo indicato sopra.',
         'Sicurezza e protezione dagli abusi dei server: legittimo interesse (art. 6, par. 1, lett. f GDPR).',
+        'Novità via email (nuove funzioni, strade, uscite): solo se acconsenti in fase di registrazione o nelle Impostazioni e hai confermato il tuo indirizzo email (consenso, art. 6, par. 1, lett. a GDPR). Puoi revocarlo in ogni momento nelle Impostazioni o tramite il link presente in ogni email. Conserviamo l’accettazione delle condizioni e dell’informativa come prova finché il tuo account esiste (art. 6, par. 1, lett. c GDPR).',
         'Conservazione prevista dalla legge, per esempio per le licenze club fatturate ai club: obbligo legale (art. 6, par. 1, lett. c GDPR).',
       ],
     },

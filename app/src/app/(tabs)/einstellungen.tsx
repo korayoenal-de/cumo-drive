@@ -20,7 +20,8 @@ import { ActionSheet, ConfirmSheet } from '@/components/ui/action-sheet';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { useAvoid } from '@/lib/avoid-settings';
 import { refreshAvatar } from '@/lib/avatars';
-import { deleteAccount, signIn, signOut, signUp, useSession } from '@/lib/auth';
+import { deleteAccount, signIn, signOut, useSession } from '@/lib/auth';
+import { useNewsConsent } from '@/lib/consent';
 import { refreshEntitlement, useEntitlement } from '@/lib/entitlement';
 import { clearLocalTours } from '@/lib/library';
 import { MAP_STYLES, useMapSettings } from '@/lib/map-settings';
@@ -108,6 +109,8 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
       <Group label={t('Hilfe')} hint={t('Fehler, Wünsche, falsche Strecken: jede Meldung wird geprüft.')}>
         <Row title={t('Feedback geben')} onPress={() => router.push('/feedback')} />
       </Group>
+
+      {session ? <NewsGroup userId={session.user.id} /> : null}
 
       <Group label={t('Rechtliches')}>
         <Row title={t('Datenschutz')} onPress={() => router.push('/datenschutz')} />
@@ -228,6 +231,20 @@ function Account({ email }: { email: string }) {
   );
 }
 
+/** Neuigkeiten per E Mail: Opt in aus der Registrierung, hier jederzeit änderbar (17.11.) */
+function NewsGroup({ userId }: { userId: string }) {
+  const news = useNewsConsent(userId);
+  return (
+    <Group label={t('E Mail')} hint={t('Neue Funktionen, Strecken und Ausfahrten.')}>
+      <SwitchRow
+        title={t('Neuigkeiten per E Mail')}
+        value={news.on ?? false}
+        onChange={(v) => void news.set(v).catch(() => showToast(t('Das hat nicht geklappt.')))}
+      />
+    </Group>
+  );
+}
+
 function Login() {
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
@@ -273,9 +290,6 @@ function Login() {
       <View style={styles.row}>
         <Pressable accessibilityRole="button" disabled={!ready} onPress={() => run(signIn)} style={[styles.primary, styles.grow, !ready && styles.disabled]}>
           {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Anmelden')}</AppText>}
-        </Pressable>
-        <Pressable accessibilityRole="button" disabled={!ready} onPress={() => run(signUp)} style={[styles.secondary, styles.grow, !ready && styles.disabled]}>
-          <AppText style={styles.secondaryText}>{t('Registrieren')}</AppText>
         </Pressable>
       </View>
     </View>
