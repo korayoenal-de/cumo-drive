@@ -48,6 +48,9 @@ export function loadHighlightFeedback(force = false): Promise<void> {
         const raw = await AsyncStorage.getItem(KEY).catch(() => null);
         if (raw) apply(JSON.parse(raw) as HighlightFeedback[]);
       }
+      // nur mit Anmeldung (seit 17.11.), ohne Konto bleibt der kuratierte oder gespeicherte Stand
+      const { data: auth } = await supabase.auth.getSession();
+      if (!auth.session) return;
       const { data, error } = await supabase.rpc('highlight_feedback');
       if (error || !Array.isArray(data)) return;
       const rows = (data as HighlightFeedback[]).map((r) => ({ ...r, score_avg: r.score_avg == null ? null : Number(r.score_avg) }));

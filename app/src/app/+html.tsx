@@ -6,7 +6,8 @@
  *    Browsersprache), bekommt sie frisch gezeichnet statt das deutsche HTML zu übernehmen. Sonst meldete React
  *    Fehler 418 und zeigte kurz Deutsch. Expo setzt am Ende der Seite __EXPO_ROUTER_HYDRATE__ = true; das Skript
  *    hier legt den Wert vorher fest, die spätere Zuweisung ändert ihn dann nicht mehr.
- *    Gleiche Regel wie deviceLang und store.web.ts (Schlüssel cumo.sprache.v1).
+ *    Gleiche Regel wie deviceLang und store.web.ts (Schlüssel cumo.sprache.v1). Titel, Beschreibung und Verweise aus dem
+ *    vorgerenderten Kopf nimmt das Skript dann heraus, bevor die App startet; React setzt sie neu (sonst doppelt).
  */
 import { ScrollViewStyleReset, useServerDocumentContext } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
@@ -14,7 +15,10 @@ import type { PropsWithChildren } from 'react';
 const LANG_SCRIPT = `(function(){try{var c=null;try{c=localStorage.getItem('cumo.sprache.v1')}catch(e){}
 var l=c||(navigator.language||'de');var de=String(l).toLowerCase().slice(0,2)==='de';
 if(!de){document.documentElement.lang=String(l).slice(0,2);
-Object.defineProperty(globalThis,'__EXPO_ROUTER_HYDRATE__',{configurable:true,get:function(){return false},set:function(){}});}}catch(e){}})();`;
+Object.defineProperty(globalThis,'__EXPO_ROUTER_HYDRATE__',{configurable:true,get:function(){return false},set:function(){}});
+document.addEventListener('readystatechange',function(){if(document.readyState!=='interactive')return;
+var q='head title,head meta[name=description],head meta[property^="og:"],head meta[http-equiv=content-language],head link[rel=canonical],head link[rel=alternate]';
+document.querySelectorAll(q).forEach(function(n){n.remove()});});}}catch(e){}})();`;
 
 export default function Root({ children }: PropsWithChildren) {
   const { bodyAttributes, bodyNodes, htmlAttributes, headNodes } = useServerDocumentContext();
