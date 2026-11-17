@@ -14,6 +14,7 @@ export function ConsentRow({ checked, onChange, title, hint }: { checked: boolea
     <Pressable
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
+      aria-checked={checked}
       accessibilityLabel={hint ? `${title}. ${hint}` : title}
       onPress={() => onChange(!checked)}
       style={styles.row}>

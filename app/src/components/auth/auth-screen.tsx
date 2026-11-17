@@ -54,7 +54,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
               CUMO DRIVE
             </AppText>
           </Pressable>
-          <AppText variant="display">{mode === 'login' ? t('Willkommen\nzurück') : 'Konto\nanlegen'}</AppText>
+          <AppText variant="display">{mode === 'login' ? t('Willkommen\nzurück') : t('Konto\nanlegen')}</AppText>
           <AppText muted>{t('Kurvige Touren planen, in der Gruppe fahren und jede Fahrt festhalten. Deine Touren liegen in deinem Konto, in der App und im Web Planer.')}</AppText>
         </View>
 
