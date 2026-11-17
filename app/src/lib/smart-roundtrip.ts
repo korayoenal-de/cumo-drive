@@ -14,7 +14,7 @@ import { findHighlights } from './navigation/highlights';
 import { cumulativeKm } from './navigation/route';
 import { avoidedPasses, avoidedPoints } from './avoid-pass';
 import { bigCityKm, cumoAvailable, cumoPlan, cumoRoundTrips } from './cumo-routing';
-import { doubledStretch } from './doubled';
+import { corridorBack, doubledStretch } from './doubled';
 import { scoreRoute, type GhRoute } from './graphhopper';
 import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
 import { planChecked, type PlannedTour, type PlanStep } from './plan';
@@ -40,6 +40,12 @@ export type SmartRequest = {
   shown?: LatLon[][];
   /** intern: schon eine gedrehte Richtung, nicht noch einmal drehen */
   rotated?: boolean;
+  /**
+   * intern: Faktor für die Länge, mit der die Varianten geplant werden (nicht die Wunschlänge, nach der bewertet wird).
+   * Bericht 17.11.: in Tälern wurden die Runden viel zu lang (Ponte di Legno 376 statt 240 km), dann einmal mit
+   * angepasstem Radius nachplanen.
+   */
+  scale?: number;
 };
 
 export type Engine = 'cumo' | 'graphhopper' | 'valhalla';
@@ -123,7 +129,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
   const passPhase = async (): Promise<SmartTour | null> => {
     const month = new Date().getMonth() + 1;
     const dir = req.direction === 'zufall' && req.bearing === undefined ? null : heading;
-    let reachKm = req.km;
+    let reachKm = req.km * (req.scale ?? 1);
     const tried = new Set<string>();
     for (let attempt = 0; attempt < 3; attempt++) {
       // Ausgelassene Pässe (Auslassen in der Rundtour, 13.11.) kommen nicht als Ziel der Pass Runde in Frage
@@ -193,7 +199,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       const [free6, loops, circles] = await Promise.all([
         // Seeds weit auseinander, sonst überschneiden sich die Varianten zweier Würfe (seed + i) und
         // Neu würfeln bringt dieselbe Runde
-        cumoRoundTrips(req.name, req.start, req.km, heading, req.profile, req.avoid, free ? 6 : 5, (seed * 11) % 100000, signal, free),
+        cumoRoundTrips(req.name, req.start, req.km * (req.scale ?? 1), heading, req.profile, req.avoid, free ? 6 : 5, (seed * 11) % 100000, signal, free),
         curvy ? favoriteLoops(req, free ? undefined : heading, seed, signal) : Promise.resolve([]),
         circleLoops(req, heading, free, seed, signal),
         passJob,
@@ -321,6 +327,28 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
           .sort((a, b) => b.score - a.score)[0];
         if (better && better.score > best.score) return better;
       }
+      // Länge weit neben dem Wunsch: mit angepasstem Radius nachplanen, höchstens zweimal (Bericht 17.11.: Ponte di
+      // Legno 376 statt 240 km, Lienz 222 statt 110 km; Andraz sprang beim ersten Mal von 107 auf 233 km)
+      if (best && !lengthFits(best.laenge_km, req.km) && !req.rotated && !req.scale) {
+        onStep?.('route');
+        // Länge und doppelte km zusammen: 50 % daneben wiegt so viel wie 10 km doppelt (Ponte di Legno: 376 km mit 1,6 km
+        // doppelt gegen 242 km mit 2,9 km doppelt, die zweite ist klar besser)
+        const cost = (t: PlannedTour) => (Math.abs(t.laenge_km - req.km) / req.km) * 20 + spurKm(t);
+        let pick: SmartTour = best;
+        let f = 1;
+        let got = best.laenge_km;
+        for (let step = 0; step < 2 && !lengthFits(got, req.km); step++) {
+          f = Math.max(0.4, Math.min(2, f * (req.km / got)));
+          const again = await smartRoundTrip({ ...req, scale: f, rotated: true, seed: seed + 41 + step }, undefined, signal).catch((e) => {
+            if (signal?.aborted) throw e;
+            return null;
+          });
+          if (!again) break;
+          got = again.laenge_km;
+          if (cost(again) < cost(pick) - 1) pick = again;
+        }
+        if (pick !== best) return pick;
+      }
       if (best) return best;
       // Nichts in dieser Richtung (Mayrhofen nach Süden: Talende, nur Hochgebirge): erst drei andere Richtungen
       // mit dem eigenen Server, bevor der langsame Ersatzweg rechnet (Stresstest 10.11.: 78 bis 97 s über Valhalla)
@@ -362,7 +390,7 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
     onStep?.('route');
     try {
       const r = await roundTrip(
-        { start: req.start, km: req.km, direction: req.direction, bearing: turn(attempt), profile: req.profile, avoid: req.avoid, seed: seed + attempt * 7919 },
+        { start: req.start, km: req.km * (req.scale ?? 1), direction: req.direction, bearing: turn(attempt), profile: req.profile, avoid: req.avoid, seed: seed + attempt * 7919 },
         signal,
       );
       const t = await despurVias(req, r.via, onStep, signal);
@@ -394,7 +422,13 @@ function spurOf(t: PlannedTour) {
   const d = doubledStretch(line, 300, 40);
   const home = line[0];
   const points = d.points.filter((q) => haversine(q, home) > 1500);
-  return { km: d.points.length ? (d.km * points.length) / d.points.length : 0, points };
+  const km = d.points.length ? (d.km * points.length) / d.points.length : 0;
+  // dazu Hin und Zurück auf zwei Straßen im selben Tal (Bericht 17.11.: Spittal, Liesertal mit A10 und B99)
+  const c = corridorBack(line);
+  // hier 5 km um zu Hause frei: aus Städten im Tal (Bozen) geht es hin und zurück zwangsläufig auf Parallelstraßen
+  const cPoints = c.points.filter((q) => haversine(q, home) > 5000);
+  const cKm = c.points.length ? (c.km * cPoints.length) / c.points.length : 0;
+  return { km: km + cKm, points: [...points, ...cPoints] };
 }
 export function spurKm(t: PlannedTour): number {
   return spurOf(t).km;
@@ -560,7 +594,7 @@ function townPenalty(t: PlannedTour): number {
  */
 async function circleLoops(req: SmartRequest, heading: number, free: boolean, seed: number, signal?: AbortSignal) {
   // Kurvige Straßen sind etwa 1,45 mal so lang wie der Kreis
-  const circ = req.km / 1.45;
+  const circ = (req.km * (req.scale ?? 1)) / 1.45;
   const out = await Promise.all(
     [0, 1].map(async (k) => {
       try {
@@ -751,7 +785,7 @@ async function favoriteLoops(req: SmartRequest, heading: number | undefined, see
     const d = Math.abs(((bearing(req.start, mid) - heading + 540) % 360) - 180);
     return d < 70;
   };
-  const reach = req.km * 0.4;
+  const reach = req.km * (req.scale ?? 1) * 0.4;
   const near = HIGHLIGHT_ROADS.filter((r) => r.line.length > 1 && dist(r) < reach && inDir(r)).sort((a, b) => dist(a) - dist(b)).slice(0, 6);
   // Neu würfeln soll andere Strecken bringen: Reihenfolge je Seed verschieben
   // jeder dritte Wurf ganz ohne feste Traumstrecke, dann entscheiden die freien Varianten
@@ -827,7 +861,8 @@ export async function outAndBack(req: SmartRequest, signal?: AbortSignal): Promi
   if (!targets.length) return null;
   // nach Stufe und Nähe zur halben Länge, die besten acht rechnen
   const best = targets
-    .map((t) => ({ ...t, fit: t.weight * 3 - Math.abs(air(t.p) * 1.4 - half) / Math.max(5, half * 0.1) }))
+    // Länge zählt mehr als die Stufe (Bericht 17.11.: Ponte di Legno 240 km, gewählt wurde die Kaunertaler Gletscherstraße mit 319 km)
+    .map((t) => ({ ...t, fit: t.weight - Math.abs(air(t.p) * 1.4 - half) / Math.max(5, half * 0.1) }))
     .sort((x, y) => y.fit - x.fit)
     .slice(0, 8);
   const planned = await Promise.all(

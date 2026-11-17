@@ -206,3 +206,88 @@ export function arrowsAlong(line: LatLon[], spacing: number, max = 30): { p: Lat
   }
   return out;
 }
+
+/**
+ * Hin und Zurück im selben Tal auf zwei verschiedenen Straßen (Bericht 17.11.: Spittal nach Gmünd und zurück,
+ * Autobahn A10 und B99 laufen parallel, doubledStretch mit 45 m sah davon 3 km statt 25 km).
+ * Ein Punkt zählt, wenn die Route mindestens 3 km davor in Gegenrichtung an weniger als maxDist Meter vorbeikam
+ * (im Liesertal liegen die beiden Straßen 160 bis 750 m auseinander).
+ * Gezählt werden nur zusammenhängende Stücke ab minRun Metern, auf denen der Gegenpunkt stetig rückwärts läuft:
+ * so bleiben Kehrenketten an einem Pass (die Rampe liegt dicht beieinander, aber kreuz und quer) außen vor.
+ * Stücke, die ohnehin auf derselben Straße liegen (unter 45 m), zählt doubledStretch; hier nur der Rest.
+ */
+export function corridorBack(line: LatLon[], minRun = 3000, maxDist = 800): Doubled {
+  const STEP_C = 100;
+  const P = resample(line, STEP_C);
+  if (P.length < 40) return { km: 0, points: [] };
+  const cell = 0.008;
+  const grid = new Map<string, number[]>();
+  const key = (la: number, lo: number) => `${Math.floor(la / cell)}:${Math.floor(lo / cell)}`;
+  const head = (i: number) => {
+    // Richtung über 600 m, sonst wackelt sie in Kurven zu sehr
+    const a = P[Math.max(0, i - 3)];
+    const b = P[Math.min(P.length - 1, i + 3)];
+    return (Math.atan2((b[1] - a[1]) * Math.cos((a[0] * Math.PI) / 180), b[0] - a[0]) * 180) / Math.PI;
+  };
+  const H = P.map((_, i) => head(i));
+  const opposite = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180) > 110;
+  const gap = 30;
+  // je Punkt der beste Gegenpunkt davor (oder -1) und sein Abstand
+  const match: number[] = new Array(P.length).fill(-1);
+  const dist: number[] = new Array(P.length).fill(Infinity);
+  for (let i = 0; i < P.length; i++) {
+    const j0 = i - gap;
+    if (j0 >= 0) {
+      const k = key(P[j0][0], P[j0][1]);
+      const arr = grid.get(k);
+      if (arr) arr.push(j0);
+      else grid.set(k, [j0]);
+    }
+    if (j0 < 0) continue;
+    const ci = Math.floor(P[i][0] / cell);
+    const cj = Math.floor(P[i][1] / cell);
+    const prev = match[i - 1] ?? -1;
+    let best = -1;
+    let bestCost = Infinity;
+    for (let a = -1; a <= 1; a++)
+      for (let b = -1; b <= 1; b++)
+        for (const j of grid.get(`${ci + a}:${cj + b}`) ?? []) {
+          const d = haversine(P[i], P[j]);
+          if (d > maxDist || !opposite(H[i], H[j])) continue;
+          // lieber den Gegenpunkt, der zum vorigen passt (stetig rückwärts), sonst den nächsten
+          const cost = prev >= 0 ? Math.abs(j - (prev - 1)) * 50 + d : d;
+          if (cost < bestCost) {
+            bestCost = cost;
+            best = j;
+          }
+        }
+    if (best >= 0) {
+      match[i] = best;
+      dist[i] = haversine(P[i], P[best]);
+    }
+  }
+  let km = 0;
+  const points: LatLon[] = [];
+  let run: number[] = [];
+  const flush = () => {
+    if (run.length * STEP_C >= minRun) {
+      const extra = run.filter((i) => dist[i] >= 45);
+      km += (extra.length * STEP_C) / 1000;
+      extra.forEach((i, n) => {
+        if (n % 4 === 0) points.push(P[i]);
+      });
+    }
+    run = [];
+  };
+  for (let i = 0; i < P.length; i++) {
+    const ok = match[i] >= 0;
+    const steady = ok && run.length > 0 && match[i] <= match[run[run.length - 1]] + 4 && match[i] >= match[run[run.length - 1]] - 12;
+    if (ok && (run.length === 0 || steady)) run.push(i);
+    else {
+      flush();
+      if (ok) run.push(i);
+    }
+  }
+  flush();
+  return { km: +km.toFixed(1), points };
+}

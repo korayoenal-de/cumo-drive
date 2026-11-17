@@ -17,7 +17,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 import { BIG_CITIES } from '../../src/data/big-cities';
-import { doubledStretch } from '../../src/lib/doubled';
+import { corridorBack, doubledStretch } from '../../src/lib/doubled';
 import { tourFun } from '../../src/lib/fun-score';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '../../src/lib/highlight-roads';
 import { PASSES, passesAlong } from '../../src/lib/passes';
@@ -49,6 +49,8 @@ type Result = {
   curatedKm?: number;
   curatedShare?: number;
   doubledKm?: number;
+  /** Hin und Zurück auf parallelen Straßen im selben Tal (zusätzlich zu doubledKm) */
+  corridorKm?: number;
   loops?: number;
   bebautKm?: number;
   stadtKm?: number;
@@ -216,6 +218,8 @@ async function runCase(c: Case): Promise<Result> {
       core = (k > 0 ? P.slice(k, Math.max(k, P.length - k)) : P).filter((p) => haversine(p, home) > 1500);
     }
     r.doubledKm = Math.round(doubledStretch(core).km * 10) / 10;
+    r.corridorKm = Math.round(corridorBack(core).km * 10) / 10;
+    if (r.corridorKm >= 1) add(r.corridorKm >= 3 ? 'fehler' : 'hinweis', `${r.corridorKm} km im selben Tal auf einer Parallelstraße zurück`);
     if (r.doubledKm >= 1) add('fehler', `${r.doubledKm} km doppelt gefahren (Stichstraße)`);
     else if (r.doubledKm >= 0.3) add('hinweis', `${r.doubledKm} km doppelt gefahren`);
 
