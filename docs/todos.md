@@ -116,7 +116,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 * [x] Rechtstexte (Datenschutz, AGB) auf Englisch und Italienisch in der App, mit Hinweis, dass die deutsche Fassung gilt (16.11.)
 * [ ] Anwaltliche Prüfung deckt alle drei Fassungen ab (Koray mit Anwalt)
-* [ ] App Store je Sprache: Titel, Untertitel, Keywords, Beschreibung (Entwurf im Doc „App Store Angaben“), Screenshots auf Englisch und Italienisch
+* [x] App Store Texte EN und IT im Doc „App Store Angaben“ auf Stand 17.11. (Begriffe wie in der App, Längen geprüft); Koray legt Italienisch in App Store Connect an
+* [ ] Screenshots App Store und Landingpage auf Englisch und Italienisch
 * [ ] Testfahrt mit italienischer und englischer Stimme: Zahlen, Einheiten, Kehren, Passnamen (zweisprachig in Südtirol)
 * [x] Restliche Texte der App (rund 1000), Kurznachrichten der Gruppe (jedes Handy zeigt sie in seiner Sprache), Warnungen beim Anzeigen, Datum und Dezimalzeichen, Beifahrer Ansagen, englische Passnamen, Stimmenwahl je Sprache (16.11.)
 * [ ] Landingpage übersetzen
