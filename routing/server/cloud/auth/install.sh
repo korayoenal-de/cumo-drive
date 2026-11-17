@@ -28,7 +28,8 @@ install -m 644 "$HERE/cumo-auth-gate.service" /etc/systemd/system/cumo-auth-gate
 systemctl daemon-reload
 systemctl enable --now cumo-auth-gate
 systemctl restart cumo-auth-gate
-sleep 1
+# Python mit jwt und cryptography braucht auf dem Server ein paar Sekunden bis zum ersten Antworten (17.11.: nach 1 s noch nicht da)
+for i in $(seq 1 20); do curl -sf localhost:9180/stats >/dev/null && break; sleep 1; done
 curl -sf localhost:9180/stats >/dev/null || { echo "Prüfdienst startet nicht"; journalctl -u cumo-auth-gate -n 20 --no-pager; exit 1; }
 
 cp "$CF" "$BK"
