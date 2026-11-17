@@ -2,6 +2,19 @@
 
 Stand: 15. November 2026, 8:30 (gegen Code und Git Verlauf geprüft)
 
+## Sicherheit vor dem Start (Konzept 17.11., Claude Doc „Sicherheitskonzept CUMO DRIVE“)
+
+* [x] 2FA auf allen Konten, Supabase Pro (Koray 17.11.)
+* [x] Mengengrenzen im Prüfdienst, Zählmodus auf r1 und r2 (17.11. 9:52)
+* [ ] 18.11.: /stats ansehen (spitze_je_konto), Grenzen eichen, dann `bash /root/cumo-auth.sh enforce` auf beiden Servern
+* [ ] Webseite k hochladen (Kopfzeilen, Strecken kachelweise), danach Kopfzeilen live prüfen
+* [ ] Nach dem Upload und Korays OK: Branch sicherheit-migration nach main (highlight_feedback, Link Grenzen, Konten Grenze, road-data kachelweise mit Kontingent)
+* [ ] Danach in Supabase: Authentication, Hooks, Before User Created auf public.before_user_created; E Mail Bestätigung an
+* [ ] profile-next.sh auf r1 und r2 (nach dem Neuaufbau von r2), Profil schnell kommt mit dem nächsten Neuaufbau; danach FAST_SPEED und WIDTH_MODEL aus cumo-routing.ts löschen
+* [ ] OTA: Gewichtungen raus aus der App (ghProfile), Untertitel längste Runde
+* [ ] Mit dem nächsten TestFlight Build: Captcha (react-native-webview, Turnstile), App Attest, verschlüsselte App Daten
+* [ ] Nach dem Start: Rundtour Bewertung als Server Dienst, Alarm bei auffälligen Konten, Marke anmelden, AGB zum Anwalt
+
 ## Jetzt: wartet auf Koray
 
 * [ ] OSM: Relation 3931638 (nur geradeaus, B 47 in die Ampèrestraße) löschen, Rechtsabbiegen ist erlaubt (Koray 15.11., morgen am Rechner)
