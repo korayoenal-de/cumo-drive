@@ -277,8 +277,13 @@ export default function Community() {
    * Geprüft werden die Linien der Touren, die von der Stelle aus erreichbar starten (höchstens 12, nächste zuerst).
    * Eine Tour: wie bisher wählen. Mehrere: die Reihe über dem Blatt, die getroffene Marke vorne, dann die nächste Linie.
    */
-  const onMapTap = (at: LatLon | null, pinId: string | null, radiusKm: number) => {
+  const onMapTap = (tapAt: LatLon | null, pinId: string | null, radiusKm: number) => {
     const seq = ++tapSeq.current;
+    // Tipp auf eine Marke kommt ohne Kartenort: dann zählt der Start der Tour (Koray 17.11.: sonst kam die Reihe
+    // beim Tipp auf den Pin nie, obwohl dort mehrere Touren beginnen)
+    const pinTour = pinId ? tours?.find((x) => x.id === pinId) : undefined;
+    // getroffene Marke: ihr echter Start (Marken am selben Ort liegen nebeneinander versetzt)
+    const at: LatLon | null = (pinTour && pinTour.start_lat != null && pinTour.start_lon != null ? [pinTour.start_lat, pinTour.start_lon] : null) ?? tapAt;
     if (seg !== 'routen' || !at) {
       setStack(null);
       select(pinId);
