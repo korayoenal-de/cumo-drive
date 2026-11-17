@@ -11,7 +11,7 @@ BASE=/opt/cumo-routing
 
 # 1. Sperre im Neuaufbau: die erste Zeile nach "set -euo pipefail" bekommt einen flock
 if ! grep -q "cumo-setup.lock" "$BASE/setup-server.sh"; then
-  sed -i '0,/^set -euo pipefail$/s##set -euo pipefail\nexec 9>/run/cumo-setup.lock\nflock -n 9 || { echo "$(date -Is) Neuaufbau läuft schon, Abbruch" >> /opt/cumo-routing/setup.log; exit 0; }#' "$BASE/setup-server.sh"
+  sed -i '0,/^set -euo pipefail$/s##set -euo pipefail\nexec 9>/run/cumo-setup.lock\nflock -w 300 9 || { echo "$(date -Is) Neuaufbau läuft schon, Abbruch" >> /opt/cumo-routing/setup.log; exit 0; }#' "$BASE/setup-server.sh"
 fi
 # auch im Import selbst bei Speichermangel beenden
 sed -i 's#java -Xmx\$HEAP -jar#java -Xmx$HEAP -XX:+ExitOnOutOfMemoryError -jar#' "$BASE/setup-server.sh"

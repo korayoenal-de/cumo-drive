@@ -4,7 +4,7 @@
 # Lädt die Kartendaten, fügt sie zusammen, baut den Graphen und startet GraphHopper neu.
 set -euo pipefail
 exec 9>/run/cumo-setup.lock
-flock -n 9 || { echo "$(date -Is) Neuaufbau läuft schon, Abbruch" >> /opt/cumo-routing/setup.log; exit 0; }
+flock -w 300 9 || { echo "$(date -Is) Neuaufbau läuft schon, Abbruch" >> /opt/cumo-routing/setup.log; exit 0; }
 BASE=/opt/cumo-routing
 GH_VERSION=11.1
 HEAP=24g

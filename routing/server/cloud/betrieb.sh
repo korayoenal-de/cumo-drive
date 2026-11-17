@@ -98,9 +98,8 @@ once_a_day() { # schlüssel text
 }
 
 # eigener Dienst (während des eigenen Neuaufbaus absichtlich aus)
-exec 9>/run/cumo-setup.lock
-if flock -n 9; then check "Routing $HOST" http://localhost:8989/health; fi
-exec 9>&-
+# nur nachsehen, nicht festhalten: sonst brach der Neuaufbau um 3 Uhr ab, weil die Prüfung die Sperre hielt (r2, 16.11.)
+if flock -n /run/cumo-setup.lock true; then check "Routing $HOST" http://localhost:8989/health; fi
 # Partner
 if [ -n "$PEER" ]; then
   check "Routing Partner" "$PEER/health" 5
