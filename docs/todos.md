@@ -2,6 +2,14 @@
 
 Stand: 15. November 2026, 8:30 (gegen Code und Git Verlauf geprüft)
 
+## Routen Check 17.11. nachmittags
+
+* [x] Rückfrage bei über 5 km Stich, hin und zurück über den Pass hinaus, Stiche zweistufig, Länge besser getroffen (OTA und Web o, 17.11.); Fokuslauf 10 auf 3 Fehler, Morgenfälle ohne Rückschritt
+* [ ] Inntal: Orte im Serverprofil Kurvig stärker abwerten (Innsbruck 220: 46 % Orte), mit dem Neuaufbau am Sonntag
+* [ ] Andraz 170 und Innsbruck 220: gut 3 km auf einer Parallelstraße im selben Tal zurück
+* [ ] Sankt Johann 200: 1 km Stich bleibt trotz zweistufigem Herausplanen
+* Lugano 80: keine Runde dieser Länge (43, 52, 126 km), App fragt nach; MeBo bei Rolle nach Timmelsjoch bleibt bewusst (Alternative durch Orte)
+
 ## Sprachen Webseite (17.11.)
 
 * [x] Landingpage auf Englisch und Italienisch unter /en und /it, hreflang, Sitemap, Sprachlinks im Fuß; Titel und Verweise jetzt im vorgerenderten HTML
