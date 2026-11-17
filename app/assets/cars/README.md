@@ -12,3 +12,5 @@ Je Form zwei Bogen mit 8 x 5 Feldern zu 144 px, 37 Ansichten:
 
 Erzeugt mit three.js in Chromium (Renderer und Skripte im Scratchpad der Sitzung vom 9.11.2026).
 Später ersetzen die Modelle des 3D Designers diese Bogen in gleichem Format.
+
+Am 17.11.2026 verlustfrei verkleinert (Performance Punkt 3): Bogen mit oxipng neu gepackt, Masken als Graustufe mit Alpha und gleichem Alpha Kanal (tintColor nutzt nur die Deckkraft). Pixel und Deckkraft sind unverändert, zusammen 4,5 statt 3,5 MB.
