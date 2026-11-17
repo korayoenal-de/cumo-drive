@@ -48,7 +48,7 @@ Regeln:
 ### Wann sich etwas bewegt (Regeln vom 11.11.2026)
 Bewegung ist ein Akzent, kein Schmuck. Sie steht nur dort, wo sie etwas erklärt. Es gibt genau sieben Anlässe (der siebte seit 17.11.):
 
-1. **Auswahl gleitet.** In einer festen Leiste gibt es eine einzige Markierung, und sie wandert zur neuen Auswahl: Tab Leiste, Glaspille in der Community. Eine Feder (`snap`) für jede Entfernung, über drei Plätze also dreimal so schnell wie zum Nachbarn. Beim ersten Erscheinen steht sie sofort richtig.
+1. **Auswahl gleitet.** In einer festen Leiste gibt es eine einzige weiße Fläche, und sie gleitet zur neuen Auswahl: Leiste oben in der Community und alle Filterchips in einer ChipRow (seit 17.11., Leinwand „Gleitende Auswahl“, Variante Gleiten). Ohne Feder: Motion.enter (260 ms) mit EASE_OUT, kein Überschwingen. Die Schrift wird dunkel, wenn die Fläche ankommt. Beim ersten Erscheinen steht sie sofort richtig. Die Glasleiste von iOS unten bleibt, wie sie ist.
 2. **Der Finger führt.** Was man zieht, folgt dem Finger eins zu eins und rastet beim Loslassen mit `snap` ein: Blatt, Richtungsregler, Bewertungsregler, Punkte. Das läuft auf dem UI Thread, damit es auch beim Planen nicht hakt.
 3. **Aufklappen am Ort.** Optionen erscheinen dort, wo getippt wurde, gestaffelt mit EASE_OUT (siehe oben). Der Rest rückt mit `SOFT_LAYOUT` nach.
 4. **Zustand wird Ergebnis.** Laden und Ergebnis stehen an derselben Stelle und gehen ineinander über: Zurück Pille beim Anpassen, Ladeknopf, Speichern.
@@ -57,7 +57,7 @@ Bewegung ist ein Akzent, kein Schmuck. Sie steht nur dort, wo sie etwas erklärt
 7. **Aktion mit Ziel** (Koray 17.11.2026, Abschnitt unten). Prio 1 Aktionen zeigen, wohin ihr Ergebnis geht.
 
 Bewusst ohne Bewegung:
-* Chips und Textreiter (Tour planen, Rundtour) wechseln sofort. Sie liegen einzeln, dort gibt es keine Fläche, die wandern könnte.
+* Textreiter (Tour planen, Rundtour) wechseln sofort. Chips gleiten seit 17.11. (Anlass 1); nur umgebrochene Chips zum Ankreuzen (Gründe in Bewertungen und Meldungen) wechseln sofort.
 * Seiten und Listen blenden beim Tabwechsel nicht ein. Inhalt ist sofort da (Prinzip 8).
 * Keine Dauerschleifen außer beim Laden. Nie zwei Bewegungen gleichzeitig, die um Aufmerksamkeit bitten.
 * Inhalt federt im Blatt nicht über seine Enden hinaus: oben übernimmt das Blatt, unten endet er, wo er endet.

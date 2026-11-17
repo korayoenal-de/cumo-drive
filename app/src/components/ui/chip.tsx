@@ -1,24 +1,54 @@
 /**
- * Chip: kleine Auswahltaste als Pille, aktiv in Signal Orange getönt.
+ * Chip: kleine Auswahltaste als Pille, aktiv weiß.
+ *
+ * Gleitende Auswahl (Koray 17.11., Leinwand „Gleitende Auswahl“, Variante Gleiten): in einer ChipRow gibt es eine
+ * einzige weiße Fläche, sie gleitet zur neuen Wahl (Motion.enter, EASE_OUT, ohne Feder) wie die Linse der
+ * Tableiste und die Leiste oben in der Community. Die grauen Flächen zeichnet die Reihe darunter, die Chips selbst
+ * sind dann durchsichtig, damit die weiße Fläche zwischen Grund und Schrift liegt. Außerhalb einer ChipRow (Gründe
+ * zum Ankreuzen, umgebrochen) wechselt ein Chip wie bisher ohne Bewegung.
  */
-import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { EASE_OUT } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+
+type Box = { x: number; w: number; bg: string };
+type RowCtx = { report: (id: string, box: Box | null, active: boolean) => void };
+const ChipRowContext = createContext<RowCtx | null>(null);
 
 /** onSurface: der Chip liegt auf einer Surface Karte und bekommt deshalb die hellere Füllung. */
 export function Chip({
   label, active, onPress, onSurface,
 }: { label: string; active: boolean; onPress: () => void; onSurface?: boolean }) {
+  const row = useContext(ChipRowContext);
+  const id = useId();
+  const box = useRef<Box | null>(null);
+  const bg = onSurface ? Colors.surface2 : Colors.surface;
+  // Schrift wird dunkel, wenn die Fläche ankommt (nicht schon beim Losgleiten)
+  const [arrived, setArrived] = useState(active);
+  useEffect(() => {
+    row?.report(id, box.current, active);
+    const t = setTimeout(() => setArrived(active), active && row ? Motion.enter / 2 : 0);
+    return () => clearTimeout(t);
+  }, [active, row, id]);
+  const dark = row ? active && arrived : active;
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { x, width } = e.nativeEvent.layout;
+    box.current = { x, w: width, bg };
+    row?.report(id, box.current, active);
+  };
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       onPress={onPress}
-      // gedrückt wie alle Tasten (Regel Druck), die Auswahl selbst wechselt ohne Bewegung
-      style={({ pressed }) => [styles.chip, active ? styles.on : onSurface ? styles.offOnSurface : styles.off, pressed && styles.pressed]}>
-      <AppText style={[styles.label, active && styles.labelOn]}>{label}</AppText>
+      onLayout={onLayout}
+      // gedrückt wie alle Tasten (Regel Druck)
+      style={({ pressed }) => [styles.chip, row ? styles.clear : active ? styles.on : { backgroundColor: bg }, pressed && styles.pressed]}>
+      <AppText style={[styles.label, dark && styles.labelOn]}>{label}</AppText>
     </Pressable>
   );
 }
@@ -29,6 +59,37 @@ export function Chip({
  * Gründe zum Ankreuzen in Bewertungen und Meldungen bleiben umgebrochen, dort soll man alles sehen.
  */
 export function ChipRow({ children, bleed = Spacing.xl }: { children: ReactNode; bleed?: number }) {
+  const reduced = useReducedMotion();
+  const [boxes, setBoxes] = useState<Record<string, Box>>({});
+  const activeId = useRef<string | null>(null);
+  const known = useRef<Record<string, Box>>({});
+  const x = useSharedValue(0);
+  const w = useSharedValue(0);
+  const placed = useRef(false);
+  const [ctx] = useState<RowCtx>(() => ({
+    report: (id, box, active) => {
+      if (box) {
+        const old = known.current[id];
+        if (!old || old.x !== box.x || old.w !== box.w || old.bg !== box.bg) {
+          known.current = { ...known.current, [id]: box };
+          setBoxes(known.current);
+        }
+      }
+      if (active) activeId.current = id;
+      else if (activeId.current === id) return;
+      const b = activeId.current ? known.current[activeId.current] : undefined;
+      if (!b) return;
+      if (!placed.current || reduced) {
+        x.value = b.x;
+        w.value = b.w;
+        placed.current = true;
+      } else {
+        x.value = withTiming(b.x, { duration: Motion.enter, easing: EASE_OUT });
+        w.value = withTiming(b.w, { duration: Motion.enter, easing: EASE_OUT });
+      }
+    },
+  }));
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }], width: w.value, opacity: w.value > 0 ? 1 : 0 }));
   return (
     <ScrollView
       horizontal
@@ -36,7 +97,14 @@ export function ChipRow({ children, bleed = Spacing.xl }: { children: ReactNode;
       keyboardShouldPersistTaps="handled"
       style={{ marginHorizontal: -bleed, flexGrow: 0 }}
       contentContainerStyle={[styles.row, { paddingHorizontal: bleed }]}>
-      {children}
+      {/* unten die grauen Flächen, darüber die gleitende weiße, oben die Chips mit ihrer Schrift */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        {Object.entries(boxes).map(([k, b]) => (
+          <View key={k} style={[styles.under, { left: b.x, width: b.w, backgroundColor: b.bg }]} />
+        ))}
+        <Animated.View style={[styles.under, styles.on, { left: 0 }, pill]} />
+      </View>
+      <ChipRowContext.Provider value={ctx}>{children}</ChipRowContext.Provider>
     </ScrollView>
   );
 }
@@ -46,8 +114,8 @@ const styles = StyleSheet.create({
   chip: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, justifyContent: 'center' },
   // Aktiv weiß wie die Reiter der Suche; Orange bleibt der Hauptaktion vorbehalten (Koray 9.11.)
   on: { backgroundColor: Colors.text },
-  off: { backgroundColor: Colors.surface },
-  offOnSurface: { backgroundColor: Colors.surface2 },
+  clear: { backgroundColor: 'transparent' },
+  under: { position: 'absolute', top: 0, height: Size.chip, borderRadius: Radius.pill },
   pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
   label: { fontSize: Type.body, fontFamily: Fonts.semibold },
   labelOn: { color: Colors.ground, fontFamily: Fonts.bold },

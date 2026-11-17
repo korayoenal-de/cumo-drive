@@ -17,7 +17,8 @@ import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
-import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { EASE_OUT, SOFT_LAYOUT } from '@/components/ui/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CommunityMap, type CommunityPin } from '@/components/community/community-map';
@@ -337,8 +338,9 @@ export default function Community() {
     (b: { x: number; w: number } | undefined) => {
       if (!b || b.w <= 0) return;
       if (thumbPlaced.get()) {
-        thumbX.set(withSpring(b.x, Motion.snap));
-        thumbW.set(withSpring(b.w, Motion.snap));
+        // gleiten ohne Feder (Koray 17.11., Leinwand „Gleitende Auswahl“, Variante Gleiten): kein Nachfedern mehr
+        thumbX.set(withTiming(b.x, { duration: Motion.enter, easing: EASE_OUT }));
+        thumbW.set(withTiming(b.w, { duration: Motion.enter, easing: EASE_OUT }));
       } else {
         thumbX.set(b.x);
         thumbW.set(b.w);
@@ -576,7 +578,7 @@ export default function Community() {
 function SegItem({ label, icon, count, badge, on, onPress, onBox, ownFill }: { ownFill: boolean; label: string; icon: SFSymbol; count: number | null; badge?: number; on: boolean; onPress: () => void; onBox: (x: number, w: number) => void }) {
   return (
     <Animated.View
-      layout={LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)}
+      layout={SOFT_LAYOUT}
       onLayout={(e) => onBox(e.nativeEvent.layout.x, e.nativeEvent.layout.width)}>
       <Pressable
         accessibilityRole="tab"
