@@ -12,7 +12,8 @@ Stand: 15. November 2026, 8:30 (gegen Code und Git Verlauf geprüft)
 * [ ] Danach in Supabase: Authentication, Hooks, Before User Created auf public.before_user_created; E Mail Bestätigung an
 * [ ] profile-next.sh auf r1 und r2 (nach dem Neuaufbau von r2), Profil schnell kommt mit dem nächsten Neuaufbau; danach FAST_SPEED und WIDTH_MODEL aus cumo-routing.ts löschen
 * [ ] OTA: Gewichtungen raus aus der App (ghProfile), Untertitel längste Runde
-* [ ] Mit dem nächsten TestFlight Build: Captcha (react-native-webview, Turnstile), App Attest, verschlüsselte App Daten
+* [ ] Mit dem nächsten TestFlight Build: verschlüsselte App Daten
+* [x] Opt in bei der Registrierung live (Migration, Webseite m, OTA 17.11.)
 * [ ] Nach dem Start: Rundtour Bewertung als Server Dienst, Alarm bei auffälligen Konten, Marke anmelden, AGB zum Anwalt
 
 ## Jetzt: wartet auf Koray
@@ -151,6 +152,9 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [x] Aufräumen 15.11.: sechs tote Dateien und die Planungskarte ohne Auslöser entfernt, Lint ohne Warnungen, `npm test` läuft (27 Tests)
 
 ## Backlog
+
+* [ ] Captcha bei der Registrierung (Entscheidung 17.11.: Hürde für Nutzer, erst bei Missbrauch; Zahlen in signup_attempts)
+* [ ] App Attest, zusammen mit engeren Grenzen für den Web Planer (wenn es echte Nutzer gibt)
 
 * [ ] **Gastgeber Partner für Restaurants und Hotels (Idee Koray, 11.11.):** Konzept im Projekt (claude/todos.md, Stand 13.11.), wartet auf Preise
 * [ ] **Booking.com Kooperation:** bewusst zurückgestellt, erst wieder aufgreifen, wenn Koray es anstößt
