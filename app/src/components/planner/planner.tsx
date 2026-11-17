@@ -721,9 +721,25 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   );
   /** Punkt Aktion Auf der Karte zeigen */
   const [flyTo, setFlyTo] = useState<{ p: LatLon; n: number } | null>(null);
-  const focus = inTour
-    ? (pending?.p ?? (tourPts.length ? tourPts[tourPts.length - 1] : here?.p ?? null))
-    : (picked?.p ?? here?.p ?? null);
+  // Fokus der Karte (ohne Linie springt sie dorthin). Nur bei neuen Zielen springen: gewählter Pass, neuer letzter
+  // Punkt, gewählter Start. Der eigene Standort zählt nur einmal am Anfang (Koray 17.11.: beim Passo Giau sprang die
+  // Karte zurück auf den Standort, wenn die Pass Aktionen schlossen oder die App den Standort still auffrischte).
+  const lastPt = inTour && tourPts.length ? tourPts[tourPts.length - 1] : null;
+  const nextPending = inTour ? (pending?.p ?? null) : null;
+  const nextPicked = inTour ? null : (picked?.p ?? null);
+  const herePt = here?.p ?? null;
+  // Ableitung beim Rendern mit den vorigen Werten im State (React Muster für abgeleiteten Zustand), verglichen nach Wert
+  const k = (q: LatLon | null) => (q ? `${q[0]},${q[1]}` : '');
+  const [fs, setFs] = useState<{ pending: string; last: string; picked: string; p: LatLon | null }>({ pending: '', last: '', picked: '', p: null });
+  if (fs.pending !== k(nextPending) || fs.last !== k(lastPt) || fs.picked !== k(nextPicked) || (!fs.p && herePt)) {
+    let p = fs.p;
+    if (nextPending && k(nextPending) !== fs.pending) p = nextPending;
+    else if (lastPt && k(lastPt) !== fs.last) p = lastPt;
+    else if (nextPicked && k(nextPicked) !== fs.picked) p = nextPicked;
+    else if (!p && herePt) p = herePt;
+    setFs({ pending: k(nextPending), last: k(lastPt), picked: k(nextPicked), p });
+  }
+  const focus = fs.p;
 
   // Pässe, die schon als Punkt in der Route stehen, zeigt die Karte markiert
   const pickedPassIds = useMemo(
