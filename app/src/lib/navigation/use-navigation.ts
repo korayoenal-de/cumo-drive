@@ -308,7 +308,9 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       try {
         let route: NavRoute;
         if (fresh) {
-          const out = await replanFromHere(r, pos, ctrl.signal, heading);
+          // was laut Navigation noch vor einem liegt: hilft bei Runden, die dieselbe Straße hin und zurück nehmen
+          const left = current.km - (current.cumKm[Math.min(doneIndexRef.current, current.cumKm.length - 1)] ?? 0);
+          const out = await replanFromHere(r, pos, ctrl.signal, heading, left);
           reqRef.current = out.req;
           route = out.route;
           ignoredRef.current = 0;

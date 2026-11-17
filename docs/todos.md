@@ -29,6 +29,16 @@ Stand: 17. November 2026, 16:00 (gegen Code und Git Verlauf geprüft; Prüfung v
 * [x] Opt in bei der Registrierung live (Migration, Webseite m, OTA 17.11.)
 * [ ] Nach dem Start: Rundtour Bewertung als Server Dienst, Alarm bei auffälligen Konten, Marke anmelden, AGB zum Anwalt
 
+## Nutzerstimmen umgesetzt (17.11. abends)
+
+* [x] Erinnerung vor der Verlängerung: Jahr 7 Tage vorher, Saison Pass und Gratismonat 3 Tage vor dem Ende (lokal, nur mit erlaubten Mitteilungen)
+* [x] Touren bleiben nach dem Ende von Test oder Plan im Konto; die abgelaufene Mitgliedschaft bietet „Deine Touren als GPX sichern“
+* [x] Absturzberichte ohne Fremdanbieter: JavaScript Fehler und Abstürze gehen gesammelt nach Supabase (Tabelle app_errors, je Version zusammengezählt), Fehlerseite mit Neu laden statt weißem Bildschirm. Native Abstürze weiter in App Store Connect
+* [x] Verpasster Zwischenpunkt: „Neue Route ab hier“ nimmt den Fortschritt mit; auf Runden mit gleicher Hin und Rückfahrt kommen schon gefahrene Zwischenziele nicht mehr zurück (Test in lib.test.ts)
+* [x] Start: 30 Tage frei für alle Konten bis 31.12.2026, danach 14 (Migration 20261117170000_start_30_tage.sql)
+* [x] Apple Gratismonat (Einführungsangebot „1 Monat kostenlos“) für Jahr, Monat und Woche in App Store Connect, alle 175 Regionen, ab 17.11.; Paywall zeigt „Noch X Tage kostenlos“ und „Erster Monat kostenlos“
+* [ ] Fehler der App in der Prüfung (Einstellungen, Admin) anzeigen, statt nur in Supabase (Claude)
+
 ## Jetzt: wartet auf Koray
 
 * [ ] OSM: Relation 3931638 (nur geradeaus, B 47 in die Ampèrestraße) löschen, Rechtsabbiegen ist erlaubt (Koray 15.11., morgen am Rechner)

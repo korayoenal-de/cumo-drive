@@ -9,11 +9,21 @@ import { mergeIndex } from './merge';
 import { fetchNavRouteDetail } from './route';
 import type { NavRequest, NavRoute } from './types';
 
-/** Zwischenziele, die auf der Tour noch vor einem liegen (nach der Stelle, die dem Standort am nächsten ist) */
-export function remainingStops(req: NavRequest, pos: LatLon): LatLon[] {
+/**
+ * Zwischenziele, die auf der Tour noch vor einem liegen (nach der Stelle, die dem Standort am nächsten ist).
+ *
+ * remainingKm (Koray 17.11., Test verpasster Zwischenpunkt): wie viel Tour laut Navigation noch vor einem liegt. Führt
+ * die Tour zweimal über dieselbe Straße (Runde mit gleicher An und Abfahrt), ist die nächste Stelle der Linie
+ * mehrdeutig: ohne Hinweis landete man womöglich auf der Rückfahrt und alle Zwischenziele fielen weg, oder auf der
+ * Hinfahrt und schon gefahrene kamen wieder dazu. Mit dem Hinweis gewinnt unter den nahen Stellen die, die zum
+ * Fortschritt passt. Ein verpasster Zwischenpunkt, an dem man schon vorbei ist, bleibt weg: niemand wird zurückgeschickt.
+ */
+export function remainingStops(req: NavRequest, pos: LatLon, remainingKm?: number | null): LatLon[] {
   const w = req.tour.wegpunkte;
   if (w.length < 2) return w.slice(-1);
-  const line = flatten(req.tour).map((x) => x.p);
+  const pts = flatten(req.tour);
+  const line = pts.map((x) => x.p);
+  const total = pts.length ? pts[pts.length - 1].km : 0;
   const near = (p: LatLon, from = 0) => {
     let best = from;
     let bd = Infinity;
@@ -34,7 +44,20 @@ export function remainingStops(req: NavRequest, pos: LatLon): LatLon[] {
     idx.push(i);
     from = i;
   }
-  const here = near(pos);
+  let here = near(pos);
+  if (remainingKm != null && Number.isFinite(remainingKm)) {
+    const bd = haversine(pos, line[here]);
+    const doneKm = Math.max(0, total - remainingKm);
+    let bestGap = Infinity;
+    for (let i = 0; i < line.length; i++) {
+      if (haversine(pos, line[i]) > bd + 400) continue;
+      const gap = Math.abs(pts[i].km - doneKm);
+      if (gap < bestGap) {
+        bestGap = gap;
+        here = i;
+      }
+    }
+  }
   const vias = w.slice(1, -1).filter((_, k) => idx[k] > here);
   return [...vias, w[w.length - 1]];
 }
@@ -80,8 +103,10 @@ export async function replanFromHere(
   pos: LatLon,
   signal?: AbortSignal,
   heading?: number | null,
+  /** noch offene Tour Kilometer laut Navigation, für Runden mit gleicher An und Abfahrt */
+  remainingKm?: number | null,
 ): Promise<{ req: NavRequest; route: NavRoute }> {
-  const stops = remainingStops(req, pos);
+  const stops = remainingStops(req, pos, remainingKm);
   const hint = { heading, penalize: avoidedStretch(req, pos, stops) };
   const tour = await planChecked(req.tour.name, [pos, ...stops], req.profile, req.avoid, undefined, signal, false, hint);
   const next: NavRequest = { ...req, tour, entry: 'start' };

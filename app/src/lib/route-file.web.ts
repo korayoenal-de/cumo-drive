@@ -1,5 +1,5 @@
 /** Touren als GPX oder KML herunterladen und importieren (Web). */
-import { fileBase, parseRouteFile, toGpx, toKml, type Tour } from './tour';
+import { fileBase, parseRouteFile, toGpx, toGpxMany, toKml, type Tour } from './tour';
 
 export type RouteFormat = 'gpx' | 'kml';
 
@@ -10,6 +10,16 @@ export async function exportTour(tour: Tour, format: RouteFormat): Promise<void>
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `${fileBase(tour.name)}.${format}`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/** Alle Touren als eine GPX Datei herunterladen */
+export async function exportAllTours(tours: Tour[], title: string): Promise<void> {
+  const blob = new Blob([toGpxMany(tours, title)], { type: MIME.gpx });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${fileBase(title)}.gpx`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }

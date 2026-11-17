@@ -12,11 +12,11 @@ import { Inter_800ExtraBold } from '@expo-google-fonts/inter/800ExtraBold';
 import { useFonts } from 'expo-font';
 
 import { loadHighlightFeedback } from '@/lib/highlight-feedback';
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider, usePathname, type ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { EntitlementGate } from '@/components/paywall/entitlement-gate';
@@ -28,16 +28,20 @@ import { useMyProfile } from '@/lib/profile';
 import { syncVehicles } from '@/lib/vehicle';
 import { CarPlaySync } from '@/live/carplay-sync';
 import { AppIntentHandler } from '@/live/intents';
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ToastHost } from '@/components/ui/toast';
 import { endAllNavActivities } from '@/live/nav-live';
 import { StartScreen } from '@/components/ui/start-screen';
 import { preloadOnStart } from '@/lib/preload';
 import { PushHandler } from '@/lib/push';
 import { startRoutingAuth } from '@/lib/routing-auth';
+import { installErrorReporting, reportError, setErrorScreen } from '@/lib/error-report';
+import { AppText } from '@/components/ui/text';
 import { loadLang , t } from '@/i18n';
 
 SplashScreen.preventAutoHideAsync();
+// Absturzberichte so früh wie möglich (lib/error-report)
+installErrorReporting();
 
 /** So lange bleibt der Start ruhig, bis die grauen Berge gewachsen sind (der letzte steht nach etwa 1 s) */
 const START_QUIET_MS = 1100;
@@ -89,6 +93,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (intro ? fontsDone : appReady) SplashScreen.hideAsync();
   }, [intro, fontsDone, appReady]);
+  const pathname = usePathname();
+  useEffect(() => setErrorScreen(pathname), [pathname]);
   useEffect(() => {
     startRoutingAuth();
     void loadLang();
@@ -181,3 +187,28 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+/**
+ * Fehlergrenze für alle Bildschirme (Koray 17.11., Absturzberichte): statt eines weißen Bildschirms eine ruhige Seite
+ * mit Neu laden. Der Fehler geht an app_errors.
+ */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  useEffect(() => reportError(error, { extra: { boundary: true } }), [error]);
+  return (
+    <View style={errStyles.wrap}>
+      <AppText variant="display" style={errStyles.title}>{t('Da ist etwas schiefgelaufen')}</AppText>
+      <AppText muted style={errStyles.text}>{t('Wir haben den Fehler automatisch erhalten und kümmern uns darum. Deine Touren sind sicher.')}</AppText>
+      <Pressable accessibilityRole="button" onPress={() => void retry()} style={errStyles.button}>
+        <AppText style={errStyles.buttonText}>{t('Neu laden')}</AppText>
+      </Pressable>
+    </View>
+  );
+}
+
+const errStyles = StyleSheet.create({
+  wrap: { flex: 1, backgroundColor: Colors.ground, justifyContent: 'center', padding: Spacing.l, gap: Spacing.m },
+  title: { color: Colors.text },
+  text: { fontSize: Type.body },
+  button: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', marginTop: Spacing.s },
+  buttonText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.body },
+});

@@ -18,6 +18,9 @@ import { edgeLimits, shownLimitAt } from '../navigation/speed-zones';
 import { pointAtKm, snapToRoute } from '../navigation/tracker';
 import type { NavRoute } from '../navigation/types';
 import { PASSES, passesAlong } from '../passes';
+import { planReminder } from '../plan-reminder';
+import { remainingStops } from '../navigation/replan';
+import { errorFingerprint, topFrames } from '../error-fingerprint';
 import { pickPin, routeStroke, simplifyForScreen } from '../map-hit';
 import { closureExclude, onPassRoad } from '../road-closures';
 
@@ -441,5 +444,70 @@ describe('Community Karte: Treffer und Linie (Koray 17.11.)', () => {
     assert.ok(thin.length < 100, `zu viele Punkte: ${thin.length}`);
     assert.deepEqual(thin[0], line[0]);
     assert.deepEqual(thin[thin.length - 1], line[line.length - 1]);
+  });
+});
+
+describe('Erinnerung vor der Verlängerung (Koray 17.11.)', () => {
+  const now = new Date('2026-11-17T12:00:00').getTime();
+  it('Jahr: 7 Tage vorher um 10 Uhr', () => {
+    const r = planReminder({ id: 'jahr', willRenew: true, until: new Date('2027-11-17T09:00:00') }, now);
+    assert.ok(r);
+    assert.equal(r.at.getDate(), 10);
+    assert.equal(r.at.getHours(), 10);
+  });
+  it('Jahr gekündigt, Monat und Woche: keine Erinnerung', () => {
+    assert.equal(planReminder({ id: 'jahr', willRenew: false, until: new Date('2027-11-17') }, now), null);
+    assert.equal(planReminder({ id: 'monat', willRenew: true, until: new Date('2026-12-17') }, now), null);
+    assert.equal(planReminder({ id: 'woche', willRenew: true, until: new Date('2026-11-24') }, now), null);
+  });
+  it('Saison Pass: 3 Tage vor dem Ende, nicht mehr kurz davor', () => {
+    assert.ok(planReminder({ id: 'saison', willRenew: false, until: new Date('2027-05-01') }, now));
+    assert.equal(planReminder({ id: 'saison', willRenew: false, until: new Date('2026-11-19') }, now), null);
+  });
+});
+
+describe('Absturzberichte: Fingerabdruck (Koray 17.11.)', () => {
+  const stackA = 'TypeError: x\n    at renderTour (index.bundle:1:2345)\n    at map (native)\n    at TourCard (index.bundle:9:99)';
+  const stackB = 'TypeError: x\n    at renderTour (index.bundle:7:1)\n    at map (native)\n    at TourCard (index.bundle:3:12)';
+  it('gleich trotz anderer Zeilen und Zahlen', () => {
+    assert.equal(errorFingerprint('Tour 12 hat keine Linie', stackA), errorFingerprint('Tour 345 hat keine Linie', stackB));
+  });
+  it('verschieden bei anderer Meldung oder Funktion', () => {
+    assert.notEqual(errorFingerprint('A', stackA), errorFingerprint('B', stackA));
+    assert.notEqual(errorFingerprint('A', stackA), errorFingerprint('A', stackA.replace('renderTour', 'drawLine')));
+  });
+  it('liest Hermes und JavaScriptCore Stapel', () => {
+    assert.deepEqual(topFrames(stackA), ['renderTour', 'map', 'TourCard']);
+    assert.deepEqual(topFrames('renderTour@index.bundle:1:2\nTourCard@index.bundle:3:4'), ['renderTour', 'TourCard']);
+  });
+});
+
+describe('Verpasster Zwischenpunkt (Koray 17.11., Nutzerstimmen)', () => {
+  // Gerade Linie nach Osten, etwa 1 km je 0,0136 Grad Länge bei 48 Grad Breite
+  const line = (from: number, to: number, lat = 48): LatLon[] => Array.from({ length: 41 }, (_, i) => [lat, from + ((to - from) * i) / 40] as LatLon);
+  const req = (wegpunkte: LatLon[], l: LatLon[]) => ({ tour: { ...tourFromLine('t', l), wegpunkte } }) as unknown as Parameters<typeof remainingStops>[0];
+
+  it('nach einem verpassten Zwischenpunkt geht es zum nächsten weiter, nicht zurück', () => {
+    const l = line(9, 9.4);
+    const r = req([l[0], l[10], l[30], l[40]], l);
+    // neben der Tour, schon hinter Zwischenziel 1 (Index 10), vor Zwischenziel 2
+    const stops = remainingStops(r, [48.003, 9.2]);
+    assert.deepEqual(stops, [l[30], l[40]]);
+  });
+
+  it('Runde mit gleicher Hin und Rückfahrt: am Anfang bleiben alle Zwischenziele', () => {
+    // hin nach Osten, oben herum (Zwischenziele), zurück auf derselben Straße
+    const out = line(9, 9.1);
+    const loop: LatLon[] = [[48.02, 9.1], [48.04, 9.15], [48.02, 9.2], [48, 9.1]];
+    const back = [...out].reverse();
+    const l = [...out, ...loop, ...back];
+    const r = req([l[0], loop[1], loop[2], l[l.length - 1]], l);
+    const total = tourFromLine('t', l).laenge_km;
+    // kurz nach dem Start auf der gemeinsamen Straße, fast die ganze Tour liegt noch vor einem
+    const early = remainingStops(r, [48.0005, 9.02], total - 1.5);
+    assert.deepEqual(early, [loop[1], loop[2], l[l.length - 1]]);
+    // dieselbe Stelle auf der Rückfahrt: nur noch das Ziel
+    const late = remainingStops(r, [48.0005, 9.02], 1.5);
+    assert.deepEqual(late, [l[l.length - 1]]);
   });
 });

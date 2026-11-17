@@ -236,6 +236,27 @@ ${pts}
 `;
 }
 
+/**
+ * Alle Touren in einer GPX Datei, je Tour eine Spur (Koray 17.11., Nutzerstimmen: Touren nach dem Ende eines Abos nie
+ * verlieren). Gängige Planer und Navis lesen mehrere Spuren aus einer Datei.
+ */
+export function toGpxMany(tours: Tour[], title: string): string {
+  const trks = tours
+    .map((tour) => {
+      const pts = flatten(tour)
+        .map(({ p }) => `      <trkpt lat="${p[0]}" lon="${p[1]}"></trkpt>`)
+        .join('\n');
+      return `  <trk>\n    <name>${esc(tour.name)}</name>\n    <trkseg>\n${pts}\n    </trkseg>\n  </trk>`;
+    })
+    .join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" creator="CUMO DRIVE" version="1.1">
+  <metadata><name>${esc(title)}</name></metadata>
+${trks}
+</gpx>
+`;
+}
+
 /** KML für Google My Maps, Google Earth und andere Planer: Strecke plus Start, Via und Ziel. */
 export function toKml(tour: Tour): string {
   const line = flatten(tour)

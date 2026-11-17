@@ -15,10 +15,14 @@
  * es beim freundlichen Hinweis wie vorher.
  */
 import { useEffect, useState } from 'react';
-import { NativeModules, Platform } from 'react-native';
-import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
+import { AppState, NativeModules, Platform } from 'react-native';
+import * as ExpoModules from 'expo-modules-core';
+import type * as NotificationsT from 'expo-notifications';
+import Purchases, { INTRO_ELIGIBILITY_STATUS, type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 
 import { getEntitlement, refreshEntitlement, type PlanId } from './entitlement';
+import { PLAN_REMINDER_ID, planReminder } from './plan-reminder';
+import { pushStatus } from './push';
 import { supabase } from './supabase';
 import { t } from '@/i18n';
 
@@ -148,13 +152,50 @@ export function useStorePrices(): Partial<Record<PlanId, string>> {
   return prices;
 }
 
+/**
+ * Gratismonat (Koray 17.11.): Jahr, Monat und Woche haben im App Store ein Einführungsangebot „1 Monat kostenlos“
+ * für neue Abonnenten. true je Plan, wenn das Angebot existiert und dieses Konto es noch bekommt. Ohne sichere
+ * Auskunft (unbekannt) wird nichts versprochen; den genauen Stand zeigt ohnehin Apples Kaufblatt.
+ */
+export function useFreeTrials(): Partial<Record<PlanId, boolean>> {
+  const [free, setFree] = useState<Partial<Record<PlanId, boolean>>>({});
+  useEffect(() => {
+    if (!available()) return;
+    let alive = true;
+    void (async () => {
+      try {
+        if (!(await ready())) return;
+        const p = await packages();
+        const withIntro = (Object.keys(p) as PlanId[]).filter((id) => {
+          const intro = p[id]?.product.introPrice;
+          return !!intro && intro.price === 0;
+        });
+        if (!withIntro.length) return;
+        const ids = withIntro.map((id) => p[id]!.product.identifier);
+        const elig = await Purchases.checkTrialOrIntroductoryPriceEligibility(ids);
+        const out: Partial<Record<PlanId, boolean>> = {};
+        for (const id of withIntro) out[id] = elig[p[id]!.product.identifier]?.status === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE;
+        if (alive) setFree(out);
+      } catch {
+        // ohne Auskunft kein Versprechen
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return free;
+}
+
 /** Gebuchter Plan, wie der App Store ihn kennt (Anzeige in Einstellungen und Mitgliedschaft, Koray 17.11.) */
 export type CurrentPlan = {
   id: PlanId;
   /** Abo verlängert sich (Woche, Monat, Jahr); false nach Kündigung und beim Saison Pass */
   willRenew: boolean;
-  /** Ende der bezahlten Zeit oder nächste Verlängerung */
+  /** Ende der bezahlten Zeit oder nächste Verlängerung; im Gratismonat dessen Ende */
   until: Date | null;
+  /** im Gratismonat, noch nichts bezahlt */
+  trial: boolean;
 };
 
 const PLAN_OF = (productId: string | undefined): PlanId | null => {
@@ -165,13 +206,13 @@ const PLAN_OF = (productId: string | undefined): PlanId | null => {
 function planFrom(info: CustomerInfo): CurrentPlan | null {
   const pro = info.entitlements.active['pro'];
   const id = PLAN_OF(pro?.productIdentifier);
-  if (pro && id) return { id, willRenew: pro.willRenew, until: pro.expirationDate ? new Date(pro.expirationDate) : null };
+  if (pro && id) return { id, willRenew: pro.willRenew, until: pro.expirationDate ? new Date(pro.expirationDate) : null, trial: pro.periodType === 'TRIAL' };
   // Saison Pass: Abo ohne Verlängerung, gilt 183 Tage ab Kauf (wie im Webhook)
   const saison = info.nonSubscriptionTransactions
     .filter((t) => PLAN_OF(t.productIdentifier) === 'saison')
     .map((t) => new Date(t.purchaseDate).getTime() + 183 * 24 * 60 * 60 * 1000)
     .sort((a, b) => b - a)[0];
-  if (saison && saison > Date.now()) return { id: 'saison', willRenew: false, until: new Date(saison) };
+  if (saison && saison > Date.now()) return { id: 'saison', willRenew: false, until: new Date(saison), trial: false };
   return null;
 }
 
@@ -184,9 +225,36 @@ async function refreshCurrentPlan(): Promise<void> {
     if (!(await ready())) return;
     current = planFrom(await Purchases.getCustomerInfo());
     for (const l of planListeners) l(current);
+    await syncPlanReminder(current);
   } catch {
     // ohne Netz bleibt der letzte Stand
   }
+}
+
+const hasNotifications = typeof ExpoModules.requireOptionalNativeModule === 'function' && !!ExpoModules.requireOptionalNativeModule('ExpoPushTokenManager');
+
+/** Erinnerung vor der Verlängerung planen oder entfernen (lib/plan-reminder) */
+async function syncPlanReminder(plan: CurrentPlan | null): Promise<void> {
+  if (!hasNotifications) return;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const Notifications = require('expo-notifications') as typeof NotificationsT;
+  const r = (await pushStatus()) === 'an' ? planReminder(plan) : null;
+  await Notifications.cancelScheduledNotificationAsync(PLAN_REMINDER_ID).catch(() => undefined);
+  if (!r) return;
+  await Notifications.scheduleNotificationAsync({
+    identifier: PLAN_REMINDER_ID,
+    content: { title: r.title, body: r.body, data: { url: '/mitgliedschaft', type: 'plan_reminder' } },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at },
+  }).catch(() => undefined);
+}
+
+// Stand beim Start und bei jeder Rückkehr in die App holen, damit die Erinnerung auch ohne Besuch der Einstellungen
+// stimmt (etwa nach einer Kündigung in der Apple ID)
+if (available()) {
+  setTimeout(() => void refreshCurrentPlan(), 4000);
+  AppState.addEventListener('change', (st) => {
+    if (st === 'active') void refreshCurrentPlan();
+  });
 }
 
 /** Gebuchter Plan oder null (kein Kauf im App Store, Club, Testphase, Web) */

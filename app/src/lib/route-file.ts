@@ -5,7 +5,7 @@
  */
 import { Share } from 'react-native';
 
-import { fileBase, parseRouteFile, toGpx, toKml, type Tour } from './tour';
+import { fileBase, parseRouteFile, toGpx, toGpxMany, toKml, type Tour } from './tour';
 
 export type RouteFormat = 'gpx' | 'kml';
 
@@ -32,8 +32,15 @@ function sharing(): SharingModule | null {
 const MIME: Record<RouteFormat, string> = { gpx: 'application/gpx+xml', kml: 'application/vnd.google-earth.kml+xml' };
 
 export async function exportTour(tour: Tour, format: RouteFormat): Promise<void> {
-  const text = format === 'gpx' ? toGpx(tour) : toKml(tour);
-  const name = `${fileBase(tour.name)}.${format}`;
+  await shareText(format === 'gpx' ? toGpx(tour) : toKml(tour), `${fileBase(tour.name)}.${format}`, MIME[format]);
+}
+
+/** Alle Touren als eine GPX Datei teilen, etwa zum Sichern nach dem Ende der Mitgliedschaft */
+export async function exportAllTours(tours: Tour[], title: string): Promise<void> {
+  await shareText(toGpxMany(tours, title), `${fileBase(title)}.gpx`, MIME.gpx);
+}
+
+async function shareText(text: string, name: string, mimeType: string): Promise<void> {
   const F = fs();
   const S = sharing();
   if (F && S && (await S.isAvailableAsync().catch(() => false))) {
@@ -41,7 +48,7 @@ export async function exportTour(tour: Tour, format: RouteFormat): Promise<void>
     if (file.exists) file.delete();
     file.create();
     file.write(text);
-    await S.shareAsync(file.uri, { mimeType: MIME[format], dialogTitle: name });
+    await S.shareAsync(file.uri, { mimeType, dialogTitle: name });
     return;
   }
   await Share.share({ title: name, message: text });

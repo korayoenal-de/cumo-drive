@@ -32,7 +32,7 @@ import { enablePush, pushStatus, type PushStatus } from '@/lib/push';
 import { showToast } from '@/lib/toast';
 import { syncVehicles, useVehicles, vehicleName } from '@/lib/vehicle';
 import { useVoiceChoice } from '@/lib/voice-settings';
-import { chosenLang, LANGS, setLang, t, useLang, type Lang } from '@/i18n';
+import { chosenLang, LANGS, setLang, t, tr, useLang, type Lang } from '@/i18n';
 
 
 /** inNav: während der Navigation als Blatt darüber geöffnet (Koray 15.11.), oben der Weg zurück zur Fahrt */
@@ -45,7 +45,9 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
   const ent = useEntitlement();
   // Gebuchter Plan direkt sichtbar (Koray 17.11.): „Monat“ statt „Plan aktiv“
   const plan = useCurrentPlan();
-  const planName = plan && ent.source === 'plan' ? PRICES.find((p) => p.id === plan.id)?.name : undefined;
+  const planBase = plan && ent.source !== 'club' ? PRICES.find((p) => p.id === plan.id)?.name : undefined;
+  // im Gratismonat des App Stores mit Hinweis (Koray 17.11.)
+  const planName = planBase && plan?.trial ? tr('{name}, Gratismonat', { name: planBase }) : planBase;
   const moderation = useModeration(!!session);
   const reloadModeration = moderation.reload;
 
