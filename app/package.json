@@ -72,7 +72,8 @@
     "sync:functions": "cp src/data/passes.json ../supabase/functions/pass-status/passes.json",
     "test": "tsx --tsconfig scripts/replay/tsconfig.json --test src/lib/__tests__/*.test.ts",
     "qa": "tsx qa/check.ts && tsx qa/stress.ts",
-    "sync-road-data": "cp src/data/curated-roads.json src/data/passes.json src/data/recommended-stops.json ../supabase/functions/road-data/data/"
+    "sync-road-data": "cp src/data/curated-roads.json src/data/passes.json src/data/recommended-stops.json ../supabase/functions/road-data/data/",
+    "check-csp": "node scripts/check-csp.mjs"
   },
   "private": true
 }

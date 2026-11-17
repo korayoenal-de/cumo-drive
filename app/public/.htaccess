@@ -18,6 +18,20 @@ RewriteRule ^(.+?)/?$ $1.html [L]
 ErrorDocument 404 /+not-found.html
 
 <IfModule mod_headers.c>
+  # Sicherheit (Koray 17.11., Sicherheitskonzept Maßnahme 9). Kostet keine Ladezeit.
+  # CSP: Skripte nur von hier, eingebettet nur die zwei bekannten (Sprachskript aus +html.tsx und das von Expo, als Hash;
+  # npm run check-csp nach jedem Web Export prüft, ob die Hashes noch stimmen), Daten nur zu unseren Servern,
+  # Supabase, Valhalla, Photon und OpenFreeMap. Keine fremden Rahmen, kein Einbetten von cumodrive.de anderswo.
+  # Neuer Dienst im Web? Dann hier bei connect-src eintragen, sonst blockiert der Browser ihn.
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(self), camera=(self), microphone=(self), payment=(), usb=(), interest-cohort=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-/DyB/Mx3Bs3ZAUknGWSZDoauI3A7+aNSxMqOcnHl3zw=' 'sha256-67fhrP0+BkBqmgGGXTtgiVO/9EQs3QruYNU/7fnRkI8='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; worker-src 'self' blob:; child-src 'self' blob:; connect-src 'self' https://onfxnfkhajxvjmmvmzda.supabase.co wss://onfxnfkhajxvjmmvmzda.supabase.co https://r1.cumodrive.de https://r2.cumodrive.de https://13-140-213-164.sslip.io https://13-140-213-114.sslip.io https://valhalla1.openstreetmap.de https://photon.komoot.io https://tiles.openfreemap.org; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+  Header always unset X-Powered-By
+
   # Konto und Planer gehören nicht in die Suche
   SetEnvIf Request_URI "^/(planer|login|registrieren|profil|menu|garage|nachrichten|scan|karte|navigation|anpassen|ansagen|blockiert|mitgliedschaft|pruefung|fahrt|gruppe|ausfahrt|a|t)(\.html|/|$)" CD_NOINDEX
   Header set X-Robots-Tag "noindex" env=CD_NOINDEX
