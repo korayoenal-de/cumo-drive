@@ -24,3 +24,22 @@ test('Kacheln: gleiche Rechnung wie die Edge Function, Route deckt die Strecke a
   assert.ok(tiles.includes(tileOf([47.7, 11.2])));
   assert.ok(tiles.length < 40, `zu viele Kacheln: ${tiles.length}`);
 });
+
+// App Paket (17.11., Schutz des Werks): road-pack.ts muss zum Stand der JSON Dateien passen, sonst `npm run pack-data`
+test('road-pack.ts aktuell und entpackbar, Fingerabdruck klein, nichts lesbar', async () => {
+  const { createHash } = await import('node:crypto');
+  const { ROAD_PACK, ROAD_PACK_SOURCE } = await import('../../data/road-pack');
+  const { KEY, decode } = await import('../road-pack-codec');
+  const read = (f: string) => JSON.parse(readFileSync(`src/data/${f}`, 'utf8'));
+  const curated = read('curated-roads.json') as { id: string; line: number[][] }[];
+  const src = createHash('sha256').update(JSON.stringify({ curated, passes: read('passes.json'), stops: read('recommended-stops.json') })).digest('hex').slice(0, 16);
+  assert.equal(ROAD_PACK_SOURCE, src, 'road-pack.ts ist veraltet, bitte npm run pack-data');
+  const t0 = performance.now();
+  const d = JSON.parse(decode(ROAD_PACK, KEY)) as { curated: { id: string; line: number[][] }[] };
+  const ms = performance.now() - t0;
+  assert.equal(d.curated.length, curated.length);
+  const moved = d.curated.filter((r, i) => JSON.stringify(r.line) !== JSON.stringify(curated[i].line)).length;
+  assert.ok(moved > 0 && moved < curated.length * 0.05, `Fingerabdruck bei ${moved} Strecken`);
+  assert.ok(!ROAD_PACK.includes('"curated"') && !ROAD_PACK.includes(curated[0].id), 'Paket ist lesbar');
+  assert.ok(ms < 400, `Entpacken dauert ${Math.round(ms)} ms`);
+});

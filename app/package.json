@@ -75,7 +75,8 @@
     "qa": "tsx --tsconfig scripts/replay/tsconfig.json qa/check.ts && tsx --tsconfig scripts/replay/tsconfig.json qa/stress.ts",
     "sync-road-data": "cp src/data/curated-roads.json src/data/passes.json src/data/recommended-stops.json ../supabase/functions/road-data/data/",
     "check-csp": "node scripts/check-csp.mjs",
-    "vor-update": "bash qa/vor-update.sh"
+    "vor-update": "bash qa/vor-update.sh",
+    "pack-data": "tsx scripts/pack-road-data.ts"
   },
   "private": true
 }
