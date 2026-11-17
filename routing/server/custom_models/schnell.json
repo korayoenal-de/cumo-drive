@@ -1,0 +1,11 @@
+{
+  "priority": [
+    { "if": "max_width < 1.9", "multiply_by": "0" },
+    { "else_if": "max_width >= 2.5 && max_width < 3", "multiply_by": "0.1" },
+    { "else_if": "max_width >= 3 && max_width < 4.5", "multiply_by": "0.6" }
+  ],
+  "speed": [
+    { "if": "curvature < 0.9", "multiply_by": "0.75" },
+    { "if": "curvature < 0.7", "multiply_by": "0.7" }
+  ]
+}

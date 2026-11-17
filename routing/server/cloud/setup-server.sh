@@ -45,7 +45,11 @@ osmium time-filter data/region.merged.osm.pbf -o data/region.new.osm.pbf --overw
 rm -f data/region.merged.osm.pbf
 log "Graph bauen (dauert mehrere Stunden, vor allem die Landmarken)"
 rm -rf data/graph-cache.new
-sed 's#data/graph-cache#data/graph-cache.new#; s#data/region.osm.pbf#data/region.new.osm.pbf#' config.yml > config.import.yml
+# Neue Profilliste (config.next.yml, 17.11.) gilt wie neue Profile erst mit dem neuen Graphen
+CONFIG_NEXT=0
+CONFIG_SRC=config.yml
+if [ -f config.next.yml ]; then CONFIG_NEXT=1; CONFIG_SRC=config.next.yml; log "Neue Profilliste aus config.next.yml"; fi
+sed 's#data/graph-cache#data/graph-cache.new#; s#data/region.osm.pbf#data/region.new.osm.pbf#' "$CONFIG_SRC" > config.import.yml
 # Neue Profile (custom_models.next) gelten erst mit dem neuen Graphen: der laufende Graph passt nur zu den alten
 # Dateien, sonst startet er nicht (15.11.: "Profiles do not match" nach einem gescheiterten Import)
 MODELS_NEXT=0
@@ -88,6 +92,7 @@ if [ "$MODELS_NEXT" = 1 ]; then
   cp -a custom_models custom_models.old
   cp -a custom_models.next/. custom_models/
 fi
+if [ "$CONFIG_NEXT" = 1 ]; then cp config.yml config.old.yml; cp config.next.yml config.yml; fi
 chown -R cumo:cumo "$BASE"
 systemctl start cumo-routing
 OK=0
@@ -98,6 +103,7 @@ done
 if [ "$OK" = 1 ]; then
   rm -rf data/graph-cache.old data/region.old.osm.pbf
   [ "$MODELS_NEXT" = 1 ] && rm -rf custom_models.next custom_models.old && log "Neue Profile aktiv"
+  [ "$CONFIG_NEXT" = 1 ] && rm -f config.next.yml config.old.yml && log "Neue Profilliste aktiv"
   log "Fertig, Server läuft"
 elif [ -d data/graph-cache.old ]; then
   log "Neuer Graph liefert keine Route: zurück zum alten"
@@ -106,6 +112,7 @@ elif [ -d data/graph-cache.old ]; then
   mv data/graph-cache.old data/graph-cache
   mv data/region.old.osm.pbf data/region.osm.pbf
   if [ "$MODELS_NEXT" = 1 ] && [ -d custom_models.old ]; then rm -rf custom_models; mv custom_models.old custom_models; fi
+  if [ "$CONFIG_NEXT" = 1 ] && [ -f config.old.yml ]; then mv config.old.yml config.yml; fi
   chown -R cumo:cumo "$BASE"
   systemctl start cumo-routing
   exit 1

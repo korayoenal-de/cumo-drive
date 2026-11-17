@@ -236,3 +236,20 @@ main < /dev/null
 (HERE / "routing-rebuild.sh").write_text(reb)
 (HERE / "routing-rebuild.sh").chmod(0o755)
 print(f"routing-rebuild.sh geschrieben ({len(reb)} Zeichen)")
+
+# Profile für den nächsten Neuaufbau bereitlegen (17.11.): schreibt config.next.yml und custom_models.next, der laufende
+# Server bleibt unberührt. setup-server.sh übernimmt beides erst mit dem neuen Graphen (Sonntag 3 Uhr oder von Hand).
+nxt = "#!/bin/bash\n# CUMO DRIVE: neue Profile für den nächsten Neuaufbau bereitlegen, erzeugt aus build_cloud_init.py.\n"
+nxt += "# Aufruf vom Mac: ssh root@IP 'bash -s' < profile-next.sh   (ändert nichts am laufenden Server)\n"
+nxt += "set -euo pipefail\ncd /opt/cumo-routing\nrm -rf custom_models.next && mkdir -p custom_models.next\n"
+nxt += f"cat > config.next.yml <<'CUMO_EOF'\n{cfg}CUMO_EOF\n"
+for n, b in models.items():
+    nxt += f"cat > custom_models.next/{n} <<'CUMO_EOF'\n{b}CUMO_EOF\n"
+nxt += "cp setup-server.sh setup-server.sh.bak 2>/dev/null || true\n"
+# über eine neue Datei und mv: ein gerade laufender Neuaufbau liest sein altes Skript ungestört zu Ende
+nxt += f"cat > setup-server.sh.new <<'CUMO_EOF'\n{setup}CUMO_EOF\nchmod 0755 setup-server.sh.new && mv setup-server.sh.new setup-server.sh\n"
+nxt += "chown -R cumo:cumo config.next.yml custom_models.next\n"
+nxt += "echo \"Bereit für den nächsten Neuaufbau: $(grep -c '^    - name:' config.next.yml) Profile, $(ls custom_models.next | wc -l) Modelle\"\n"
+(HERE / "profile-next.sh").write_text(nxt)
+(HERE / "profile-next.sh").chmod(0o755)
+print(f"profile-next.sh geschrieben ({len(nxt)} Zeichen)")
