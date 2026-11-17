@@ -1,6 +1,6 @@
 # CUMO DRIVE ToDos
 
-Stand: 15. November 2026, 8:30 (gegen Code und Git Verlauf geprüft)
+Stand: 17. November 2026, 12:15 (gegen Code und Git Verlauf geprüft)
 
 ## Routen Check 17.11. nachmittags
 
@@ -20,11 +20,11 @@ Stand: 15. November 2026, 8:30 (gegen Code und Git Verlauf geprüft)
 * [x] 2FA auf allen Konten, Supabase Pro (Koray 17.11.)
 * [x] Mengengrenzen im Prüfdienst, Zählmodus auf r1 und r2 (17.11. 9:52)
 * [ ] 18.11.: /stats ansehen (spitze_je_konto), Grenzen eichen, dann `bash /root/cumo-auth.sh enforce` auf beiden Servern
-* [ ] Webseite k hochladen (Kopfzeilen, Strecken kachelweise), danach Kopfzeilen live prüfen
-* [ ] Nach dem Upload und Korays OK: Branch sicherheit-migration nach main (highlight_feedback, Link Grenzen, Konten Grenze, road-data kachelweise mit Kontingent)
-* [ ] Danach in Supabase: Authentication, Hooks, Before User Created auf public.before_user_created; E Mail Bestätigung an
+* [x] Webseite mit Kopfzeilen und Strecken kachelweise live, Kopfzeilen geprüft (17.11.)
+* [x] Migrationen live: highlight_feedback nur mit Anmeldung, Link Grenzen, Konten Grenze, road-data kachelweise mit Kontingent, Einwilligungen (17.11.)
+* [x] Hook Before User Created aktiv, E Mail Bestätigung an (17.11.)
 * [ ] profile-next.sh auf r1 und r2 (nach dem Neuaufbau von r2), Profil schnell kommt mit dem nächsten Neuaufbau; danach FAST_SPEED und WIDTH_MODEL aus cumo-routing.ts löschen
-* [ ] OTA: Gewichtungen raus aus der App (ghProfile), Untertitel längste Runde
+* [x] OTA: Kurvig Gewichtungen nur im Server, Untertitel längste Runde (17.11.)
 * [ ] Mit dem nächsten TestFlight Build: verschlüsselte App Daten
 * [x] Opt in bei der Registrierung live (Migration, Webseite m, OTA 17.11.)
 * [ ] Nach dem Start: Rundtour Bewertung als Server Dienst, Alarm bei auffälligen Konten, Marke anmelden, AGB zum Anwalt
@@ -84,13 +84,12 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [x] GraphHopper Free entfernt (Rundtour Bewertung lokal)
 * [x] Höhenprofil über den eigenen Valhalla (öffentlicher nur Notfall)
 * [x] Stopps nur aus eigenen POI Kacheln, Overpass raus (13.11.)
-* [ ] Web: MapLibre und Schriften selbst ausliefern statt unpkg und Google Fonts (Claude)
+* [x] Web: MapLibre und Schriften selbst ausgeliefert
 * [x] Web: Satellit (Esri) ausgeblendet (13.11.)
 * [ ] Funk: Minuten bei LiveKit beobachten (Claude)
-* [ ] Routing Server prüft das Konto Token (Caddy forward_auth, CORS für den Web Planer), danach Web mit Token (Claude, Zugang über Korays Mac)
-* [ ] Gewichtung fest in die Server Profile statt aus der App (mit dem Neuaufbau)
-* [ ] LiveKit Ship und Supabase Pro vor dem Start, mit Kostenalarm (Koray bestellt)
-* [ ] Supabase Pro bei echten Nutzern (Koray bestellt)
+* [ ] Routing Server: Token Pflicht und Mengengrenzen scharf schalten (zählen seit 17.11., scharf am 18.11.)
+* [ ] Profil Schnell fest im Server (profile-next.sh, wirksam mit dem Neuaufbau am 22.11.); Kurvig seit 17.11. nur im Server
+* [ ] LiveKit Ship vor dem Start, mit Kostenalarm (Koray bestellt); Supabase Pro seit 17.11.
 * [ ] DNS für routing.cumodrive.de und Domain für den Web Planer (Koray)
 * [ ] Marke: angemeldet, noch nicht eingetragen; Widerspruchsfrist wegen der KUMO Marken bis drei Monate nach Veröffentlichung der Eintragung
 
@@ -110,15 +109,14 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 * [ ] Passseiten auf cumodrive.de (Entwurf separat im Artefakt). Regeln (Koray 16.11.): Seiten nur für bekannte Pässe und Ikonen, die ohnehin öffentlich sind; keine Seiten für Geheimtipps, bevorzugte Strecken und Korays Insider Strecken; Linie nur als gezeichnete Form ohne Koordinaten, Ansage nur in Worten; nirgends eine maschinenlesbare Liste aller Strecken
 
-## Morgen (17.11.) mit Koray am Rechner
+## Mit Koray am Rechner
 
 * [x] Routing Server: Prüfung des Konto Tokens im Zählmodus auf r1 und r2 (17.11. 8:38), App schickt Token (geprüft), Web mit Token (cumodrive-web-g.zip)
-* [ ] Nach einem Tag Zählen scharf schalten: `bash /root/cumo-auth.sh enforce` auf beiden Servern, vorher Zähler prüfen (`curl -s localhost:9180/stats`)
 * [ ] Korays SSH Schlüssel auch auf r2 (bisher nur über r1 erreichbar)
-* [ ] Web Planer: Rückfrage bei nicht erreichbarer Rundtour Länge (wie in der App, Optionen A und B)
+* [x] Web Planer: Rückfrage bei nicht erreichbarer Rundtour Länge (17.11.)
 * [ ] Zweiter Routing Server r2 hat ältere Daten (Import 13.11., r1 15.11.) und plant andere Routen; angleichen
-* [ ] Kurvig auf distance_influence 5 (Server, Orte im Odenwald laut Routen Check 17.11.)
-* [ ] Routen Check 17.11. offen: Andraz zu kurz (Pass gezielt einbauen), Cortina Stich bei Agordo, Annecy und Lugano viele Orte
+* [x] Kurvig auf distance_influence 5 (auf beiden Servern geprüft, 17.11.)
+* [x] Routen Check 17.11. morgens: Andraz und Cortina erledigt (siehe Abschnitt oben), Lugano ohne passende Runde
 
 ## Sprachen (EN, IT seit 16.11. in der App)
 
@@ -128,8 +126,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [ ] Screenshots App Store und Landingpage auf Englisch und Italienisch
 * [ ] Testfahrt mit italienischer und englischer Stimme: Zahlen, Einheiten, Kehren, Passnamen (zweisprachig in Südtirol)
 * [x] Restliche Texte der App (rund 1000), Kurznachrichten der Gruppe (jedes Handy zeigt sie in seiner Sprache), Warnungen beim Anzeigen, Datum und Dezimalzeichen, Beifahrer Ansagen, englische Passnamen, Stimmenwahl je Sprache (16.11.)
-* [ ] Landingpage übersetzen
-* [ ] Web: beim ersten Laden in Englisch oder Italienisch meldet React einen Unterschied zum vorgerenderten deutschen HTML (Fehler 418), die Seite stimmt danach; sauber lösen beim nächsten Web Upload
+* [x] Landingpage übersetzt (/en, /it, 17.11.)
+* [x] Web: React Fehler 418 auf Englisch und Italienisch behoben (17.11.)
 * [ ] Später: Meilen für UK und USA, Italien bleibt metrisch
 
 ## Für Koray
