@@ -85,7 +85,9 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 ## Morgen (17.11.) mit Koray am Rechner
 
-* [ ] Routing Server: Prüfung des Konto Tokens im Zählmodus einspielen (routing/server/cloud/auth/install.sh), dann Branch web-token zusammenführen und Web hochladen, dann sperren
+* [x] Routing Server: Prüfung des Konto Tokens im Zählmodus auf r1 und r2 (17.11. 8:38), App schickt Token (geprüft), Web mit Token (cumodrive-web-g.zip)
+* [ ] Nach einem Tag Zählen scharf schalten: `bash /root/cumo-auth.sh enforce` auf beiden Servern, vorher Zähler prüfen (`curl -s localhost:9180/stats`)
+* [ ] Korays SSH Schlüssel auch auf r2 (bisher nur über r1 erreichbar)
 * [ ] Web Planer: Rückfrage bei nicht erreichbarer Rundtour Länge (wie in der App, Optionen A und B)
 * [ ] Zweiter Routing Server r2 hat ältere Daten (Import 13.11., r1 15.11.) und plant andere Routen; angleichen
 * [ ] Kurvig auf distance_influence 5 (Server, Orte im Odenwald laut Routen Check 17.11.)
