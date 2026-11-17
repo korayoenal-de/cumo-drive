@@ -1,0 +1,1316 @@
+{
+ "date": "2026-11-17",
+ "seed": 20261117,
+ "results": [
+  {
+   "id": "s-ffm-stg",
+   "name": "Frankfurt nach Stuttgart",
+   "group": "schnell",
+   "ok": true,
+   "ms": 4744,
+   "findings": [],
+   "km": 186,
+   "minutes": 129,
+   "bebautKm": 42.9,
+   "stadtKm": 8.6,
+   "autobahnKm": 102.4,
+   "passes": [],
+   "curatedKm": 0,
+   "curatedShare": 0,
+   "fun": 0,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "s-muc-ibk",
+   "name": "München nach Innsbruck",
+   "group": "schnell",
+   "ok": true,
+   "ms": 1724,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "schneller Weg mit nur 43 % Autobahn"
+    }
+   ],
+   "km": 140.5,
+   "minutes": 107,
+   "bebautKm": 33.7,
+   "stadtKm": 9.6,
+   "autobahnKm": 61.1,
+   "passes": [
+    "Kesselberg",
+    "Seefelder Sattel"
+   ],
+   "curatedKm": 21.2,
+   "curatedShare": 15,
+   "fun": 33,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "s-zh-mi",
+   "name": "Zürich nach Mailand",
+   "group": "schnell",
+   "ok": true,
+   "ms": 5490,
+   "findings": [],
+   "km": 279.8,
+   "minutes": 188,
+   "bebautKm": 80.7,
+   "stadtKm": 8,
+   "autobahnKm": 261.5,
+   "passes": [],
+   "curatedKm": 15.1,
+   "curatedShare": 5,
+   "fun": 0,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "s-koeln-ffm",
+   "name": "Köln nach Frankfurt",
+   "group": "schnell",
+   "ok": true,
+   "ms": 2389,
+   "findings": [],
+   "km": 178.4,
+   "minutes": 116,
+   "bebautKm": 45.8,
+   "stadtKm": 9.7,
+   "autobahnKm": 139.1,
+   "passes": [],
+   "curatedKm": 0,
+   "curatedShare": 0,
+   "fun": 1,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-arabba-cortina",
+   "name": "Arabba nach Cortina",
+   "group": "paesse",
+   "ok": true,
+   "ms": 1879,
+   "findings": [],
+   "km": 38,
+   "minutes": 35,
+   "bebautKm": 3.4,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Falzaregopass"
+   ],
+   "curatedKm": 37.1,
+   "curatedShare": 98,
+   "fun": 100,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-brixen-cortina",
+   "name": "Brixen nach Cortina",
+   "group": "paesse",
+   "ok": true,
+   "ms": 2257,
+   "findings": [],
+   "km": 91.3,
+   "minutes": 98,
+   "bebautKm": 15.3,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Würzjoch",
+    "Valparolapass",
+    "Falzaregopass"
+   ],
+   "curatedKm": 57.8,
+   "curatedShare": 63,
+   "fun": 75,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-sellaronda",
+   "name": "Sellaronda",
+   "group": "paesse",
+   "ok": true,
+   "ms": 2159,
+   "findings": [],
+   "km": 51.6,
+   "minutes": 58,
+   "bebautKm": 5.1,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Grödner Joch",
+    "Sellajoch",
+    "Pordoijoch",
+    "Campolongopass"
+   ],
+   "curatedKm": 51.5,
+   "curatedShare": 100,
+   "fun": 85,
+   "doubledKm": 0.2,
+   "loops": 0
+  },
+  {
+   "id": "p-fuenf-dolomiten",
+   "name": "Fünf Pässe Dolomiten",
+   "group": "viele",
+   "ok": true,
+   "ms": 3253,
+   "findings": [],
+   "km": 94.6,
+   "minutes": 97,
+   "bebautKm": 4.3,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Grödner Joch",
+    "Sellajoch",
+    "Pordoijoch",
+    "Falzaregopass",
+    "Passo Giau"
+   ],
+   "curatedKm": 93.7,
+   "curatedShare": 99,
+   "fun": 75,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-giau-cortina",
+   "name": "Arabba über Giau nach Cortina",
+   "group": "paesse",
+   "ok": true,
+   "ms": 1119,
+   "findings": [],
+   "km": 49.2,
+   "minutes": 49,
+   "bebautKm": 3.4,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Passo Giau"
+   ],
+   "curatedKm": 37.7,
+   "curatedShare": 77,
+   "fun": 70,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-stelvio-gavia",
+   "name": "Stilfser Joch und Gavia",
+   "group": "paesse",
+   "ok": true,
+   "ms": 5679,
+   "findings": [],
+   "km": 91.8,
+   "minutes": 107,
+   "bebautKm": 12.3,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Stilfser Joch",
+    "Umbrailpass",
+    "Gaviapass"
+   ],
+   "curatedKm": 89.9,
+   "curatedShare": 98,
+   "fun": 75,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-livigno",
+   "name": "Bormio nach Livigno",
+   "group": "paesse",
+   "ok": true,
+   "ms": 2273,
+   "findings": [],
+   "km": 36.1,
+   "minutes": 42,
+   "bebautKm": 8.8,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Foscagnopass",
+    "Passo d'Eira"
+   ],
+   "curatedKm": 0.4,
+   "curatedShare": 1,
+   "fun": 69,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-gfs",
+   "name": "Grimsel Furka Susten",
+   "group": "paesse",
+   "ok": true,
+   "ms": 1331,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "0.9 km doppelt gefahren"
+    }
+   ],
+   "km": 120.5,
+   "minutes": 110,
+   "bebautKm": 11.4,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Furkapass",
+    "Grimselpass",
+    "Sustenpass"
+   ],
+   "curatedKm": 104.9,
+   "curatedShare": 87,
+   "fun": 99,
+   "doubledKm": 0.9,
+   "loops": 0
+  },
+  {
+   "id": "p-galibier",
+   "name": "Valloire nach Briançon",
+   "group": "paesse",
+   "ok": true,
+   "ms": 1312,
+   "findings": [],
+   "km": 54.5,
+   "minutes": 54,
+   "bebautKm": 15,
+   "stadtKm": 2,
+   "autobahnKm": 0,
+   "passes": [
+    "Col du Galibier",
+    "Col du Lautaret"
+   ],
+   "curatedKm": 27.5,
+   "curatedShare": 50,
+   "fun": 73,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-iseran",
+   "name": "Bourg Saint Maurice nach Bonneval",
+   "group": "paesse",
+   "ok": true,
+   "ms": 2746,
+   "findings": [],
+   "km": 61.1,
+   "minutes": 65,
+   "bebautKm": 9.4,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Col de l'Iseran"
+   ],
+   "curatedKm": 30,
+   "curatedShare": 49,
+   "fun": 70,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-glockner",
+   "name": "Großglockner",
+   "group": "paesse",
+   "ok": true,
+   "ms": 5229,
+   "findings": [],
+   "km": 48.9,
+   "minutes": 57,
+   "bebautKm": 3.2,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Großglockner Hochalpenstraße (Hochtor)"
+   ],
+   "curatedKm": 48.5,
+   "curatedShare": 99,
+   "fun": 70,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-timmelsjoch",
+   "name": "Sölden nach Meran",
+   "group": "paesse",
+   "ok": true,
+   "ms": 4207,
+   "findings": [],
+   "km": 73.8,
+   "minutes": 63,
+   "bebautKm": 16.9,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Timmelsjoch"
+   ],
+   "curatedKm": 41.7,
+   "curatedShare": 57,
+   "fun": 99,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-vrsic",
+   "name": "Vršič",
+   "group": "paesse",
+   "ok": true,
+   "ms": 1255,
+   "findings": [],
+   "km": 45.2,
+   "minutes": 40,
+   "bebautKm": 2.3,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Vršič"
+   ],
+   "curatedKm": 18.1,
+   "curatedShare": 40,
+   "fun": 70,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "p-klausen",
+   "name": "Klausenpass",
+   "group": "paesse",
+   "ok": true,
+   "ms": 3679,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "1 kleine Schleife oder Schlenker bei 46.9104, 8.9828"
+    }
+   ],
+   "km": 47.2,
+   "minutes": 44,
+   "bebautKm": 8.3,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Klausenpass"
+   ],
+   "curatedKm": 47.1,
+   "curatedShare": 100,
+   "fun": 97,
+   "doubledKm": 0,
+   "loops": 1
+  },
+  {
+   "id": "p-st-bernhard",
+   "name": "Großer St. Bernhard",
+   "group": "paesse",
+   "ok": true,
+   "ms": 1464,
+   "findings": [],
+   "km": 92.2,
+   "minutes": 105,
+   "bebautKm": 25.7,
+   "stadtKm": 0.3,
+   "autobahnKm": 0,
+   "passes": [
+    "Col de Champex",
+    "Großer St. Bernhard"
+   ],
+   "curatedKm": 45.3,
+   "curatedShare": 49,
+   "fun": 81,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "t-schwarzwald",
+   "name": "Schwarzwaldhochstraße",
+   "group": "strecke",
+   "ok": true,
+   "ms": 1322,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "16.3 km durch Orte (33 %)"
+    }
+   ],
+   "km": 49.2,
+   "minutes": 57,
+   "bebautKm": 16.3,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Rote Lache"
+   ],
+   "curatedKm": 41.1,
+   "curatedShare": 84,
+   "fun": 76,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "t-vogesen",
+   "name": "Route des Crêtes",
+   "group": "strecke",
+   "ok": true,
+   "ms": 5245,
+   "findings": [],
+   "km": 51.4,
+   "minutes": 53,
+   "bebautKm": 14.2,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Col du Platzerwasel",
+    "Col du Haag",
+    "Grand Ballon (Route des Crêtes)",
+    "Col Amic"
+   ],
+   "curatedKm": 17.5,
+   "curatedShare": 34,
+   "fun": 82,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "m-muc-tirol",
+   "name": "München schnell, dann kurvig nach Tirol",
+   "group": "gemischt",
+   "ok": true,
+   "ms": 2020,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "1 kleine Schleife oder Schlenker bei 47.2701, 11.2586"
+    }
+   ],
+   "km": 153.4,
+   "minutes": 119,
+   "bebautKm": 38.2,
+   "stadtKm": 11.3,
+   "autobahnKm": 74.4,
+   "passes": [
+    "Seefelder Sattel"
+   ],
+   "curatedKm": 0.6,
+   "curatedShare": 0,
+   "fun": 18,
+   "doubledKm": 0,
+   "loops": 1
+  },
+  {
+   "id": "r-bensheim-120",
+   "name": "Rundtour Bensheim 120 km",
+   "group": "runde",
+   "ok": true,
+   "ms": 14747,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "43.4 km durch Orte (40 %)"
+    }
+   ],
+   "km": 108.5,
+   "minutes": 115,
+   "bebautKm": 43.4,
+   "stadtKm": 1.4,
+   "autobahnKm": 0,
+   "passes": [
+    "Kreidacher Höhe",
+    "Juhöhe"
+   ],
+   "curatedKm": 29,
+   "curatedShare": 27,
+   "fun": 61,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "r-corvara-100",
+   "name": "Rundtour Corvara 100 km",
+   "group": "runde",
+   "ok": true,
+   "ms": 10377,
+   "findings": [],
+   "km": 114.7,
+   "minutes": 118,
+   "bebautKm": 9.5,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Valparolapass",
+    "Falzaregopass",
+    "Passo Giau",
+    "Pordoijoch",
+    "Sellajoch",
+    "Grödner Joch"
+   ],
+   "curatedKm": 99.4,
+   "curatedShare": 87,
+   "fun": 75,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "r-garmisch-150",
+   "name": "Rundtour Garmisch 150 km",
+   "group": "runde",
+   "ok": true,
+   "ms": 14008,
+   "findings": [],
+   "km": 187.5,
+   "minutes": 187,
+   "bebautKm": 48.5,
+   "stadtKm": 1.9,
+   "autobahnKm": 0,
+   "passes": [
+    "Holzleitensattel",
+    "Hahntennjoch",
+    "Ammersattel",
+    "Ettaler Sattel"
+   ],
+   "curatedKm": 45,
+   "curatedShare": 24,
+   "fun": 62,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "r-freiburg-60",
+   "name": "Rundtour Freiburg 60 km",
+   "group": "runde",
+   "ok": true,
+   "ms": 4215,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "27 km durch Orte (38 %)"
+    }
+   ],
+   "km": 71.8,
+   "minutes": 87,
+   "bebautKm": 27,
+   "stadtKm": 7.8,
+   "autobahnKm": 0,
+   "passes": [],
+   "curatedKm": 19.6,
+   "curatedShare": 27,
+   "fun": 68,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "r-bozen-200",
+   "name": "Rundtour Bozen 200 km",
+   "group": "runde",
+   "ok": true,
+   "ms": 9819,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "0.5 km doppelt gefahren"
+    },
+    {
+     "level": "hinweis",
+     "what": "1 kleine Schleife oder Schlenker bei 46.3542, 11.9656"
+    }
+   ],
+   "km": 239.4,
+   "minutes": 259,
+   "bebautKm": 36.5,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Nigerpass",
+    "Karerpass",
+    "Pordoijoch",
+    "Falzaregopass",
+    "Passo Giau",
+    "Vallespass",
+    "Lavazèjoch"
+   ],
+   "curatedKm": 126.2,
+   "curatedShare": 53,
+   "fun": 79,
+   "doubledKm": 0.5,
+   "loops": 1
+  },
+  {
+   "id": "r-annecy-120",
+   "name": "Rundtour Annecy 120 km",
+   "group": "runde",
+   "ok": true,
+   "ms": 3784,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "0.3 km doppelt gefahren"
+    },
+    {
+     "level": "hinweis",
+     "what": "durch Großstadt: Annecy"
+    },
+    {
+     "level": "hinweis",
+     "what": "41.6 km durch Orte (33 %)"
+    }
+   ],
+   "km": 124.3,
+   "minutes": 160,
+   "bebautKm": 41.6,
+   "stadtKm": 3.6,
+   "autobahnKm": 0,
+   "passes": [
+    "Col de la Croix Fry",
+    "Col des Aravis",
+    "Col de la Forclaz (Annecy)"
+   ],
+   "curatedKm": 16.9,
+   "curatedShare": 14,
+   "fun": 74,
+   "doubledKm": 0.3,
+   "loops": 0
+  },
+  {
+   "id": "r-chur-150",
+   "name": "Rundtour Chur 150 km",
+   "group": "runde",
+   "ok": true,
+   "ms": 3414,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "0.3 km doppelt gefahren"
+    },
+    {
+     "level": "hinweis",
+     "what": "2 kleine Schleifen oder Schlenker bei 46.9159, 9.7676; 46.9112, 9.8060"
+    },
+    {
+     "level": "hinweis",
+     "what": "47.8 km durch Orte (36 %)"
+    }
+   ],
+   "km": 131.6,
+   "minutes": 150,
+   "bebautKm": 47.8,
+   "stadtKm": 1.7,
+   "autobahnKm": 0,
+   "passes": [
+    "Wolfgangpass",
+    "Lenzerheide Pass"
+   ],
+   "curatedKm": 16.3,
+   "curatedShare": 12,
+   "fun": 71,
+   "doubledKm": 0.3,
+   "loops": 2
+  },
+  {
+   "id": "r-lugano-80",
+   "name": "Rundtour Lugano 80 km",
+   "group": "runde",
+   "ok": true,
+   "ms": 5881,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "durch Großstadt: Lugano"
+    },
+    {
+     "level": "hinweis",
+     "what": "56.6 km durch Orte (45 %)"
+    },
+    {
+     "level": "hinweis",
+     "what": "Runde 125.6 km statt 80 km; die App bietet 102 km hin und zurück über Alpe di Neggia an"
+    }
+   ],
+   "km": 125.6,
+   "minutes": 150,
+   "bebautKm": 56.6,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Alpe di Neggia"
+   ],
+   "curatedKm": 16.8,
+   "curatedShare": 13,
+   "fun": 68,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "r-badenbaden-250",
+   "name": "Rundtour Baden-Baden 250 km",
+   "group": "runde",
+   "ok": true,
+   "ms": 5273,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "76.4 km durch Orte (30 %)"
+    }
+   ],
+   "km": 251,
+   "minutes": 250,
+   "bebautKm": 76.4,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Rote Lache"
+   ],
+   "curatedKm": 50.7,
+   "curatedShare": 20,
+   "fun": 55,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-runde-0",
+   "name": "Rundtour Linthal 160 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 5144,
+   "findings": [
+    {
+     "level": "fehler",
+     "what": "2.8 km doppelt gefahren (Stichstraße)"
+    },
+    {
+     "level": "hinweis",
+     "what": "53.2 km durch Orte (36 %)"
+    }
+   ],
+   "km": 149.5,
+   "minutes": 178,
+   "bebautKm": 53.2,
+   "stadtKm": 1.7,
+   "autobahnKm": 0,
+   "passes": [
+    "Pragelpass",
+    "Ibergeregg",
+    "Sattelegg"
+   ],
+   "curatedKm": 43.8,
+   "curatedShare": 29,
+   "fun": 72,
+   "doubledKm": 2.8,
+   "loops": 0
+  },
+  {
+   "id": "z-runde-1",
+   "name": "Rundtour Bruck 200 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 7142,
+   "findings": [],
+   "km": 179.9,
+   "minutes": 172,
+   "bebautKm": 45.5,
+   "stadtKm": 0,
+   "autobahnKm": 5.5,
+   "passes": [
+    "Großglockner Hochalpenstraße (Hochtor)",
+    "Iselsberg"
+   ],
+   "curatedKm": 46.6,
+   "curatedShare": 26,
+   "fun": 66,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-runde-2",
+   "name": "Rundtour Spittal 70 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 4395,
+   "findings": [
+    {
+     "level": "fehler",
+     "what": "3 km doppelt gefahren (Stichstraße)"
+    },
+    {
+     "level": "hinweis",
+     "what": "34.1 km durch Orte (47 %)"
+    }
+   ],
+   "km": 73.2,
+   "minutes": 78,
+   "bebautKm": 34.1,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [],
+   "curatedKm": 0,
+   "curatedShare": 0,
+   "fun": 67,
+   "doubledKm": 3,
+   "loops": 0
+  },
+  {
+   "id": "z-runde-3",
+   "name": "Rundtour Andraz 170 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 4547,
+   "findings": [
+    {
+     "level": "fehler",
+     "what": "1 km doppelt gefahren (Stichstraße)"
+    },
+    {
+     "level": "hinweis",
+     "what": "Runde 107.3 km statt 170 km; die App bietet 201 km hin und zurück über Große Dolomitenstraße an"
+    }
+   ],
+   "km": 107.3,
+   "minutes": 128,
+   "bebautKm": 13.5,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Staulanzapass",
+    "Passo Duran"
+   ],
+   "curatedKm": 44.9,
+   "curatedShare": 42,
+   "fun": 70,
+   "doubledKm": 1,
+   "loops": 0
+  },
+  {
+   "id": "z-runde-4",
+   "name": "Rundtour Ponte di Legno 240 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 8014,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "116.8 km durch Orte (31 %)"
+    },
+    {
+     "level": "fehler",
+     "what": "Länge 376 km statt 240 km, hin und zurück nur mit 319 km über Kaunertaler Gletscherstraße"
+    }
+   ],
+   "km": 376,
+   "minutes": 414,
+   "bebautKm": 116.8,
+   "stadtKm": 3.3,
+   "autobahnKm": 0,
+   "passes": [
+    "Tonalepass",
+    "Campo Carlo Magno",
+    "Passo di Croce Domini"
+   ],
+   "curatedKm": 22.1,
+   "curatedShare": 6,
+   "fun": 77,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-runde-5",
+   "name": "Rundtour Prad 100 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 1651,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "1 kleine Schleife oder Schlenker bei 46.5900, 10.4313"
+    }
+   ],
+   "km": 75.8,
+   "minutes": 76,
+   "bebautKm": 10.7,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Stilfser Joch",
+    "Umbrailpass"
+   ],
+   "curatedKm": 46.2,
+   "curatedShare": 61,
+   "fun": 81,
+   "doubledKm": 0.1,
+   "loops": 1
+  },
+  {
+   "id": "z-runde-6",
+   "name": "Rundtour Sölden 180 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 7125,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "84.7 km durch Orte (31 %)"
+    },
+    {
+     "level": "hinweis",
+     "what": "Runde 274.7 km statt 180 km; die App bietet 167 km hin und zurück über Namloser Tal an"
+    }
+   ],
+   "km": 274.7,
+   "minutes": 270,
+   "bebautKm": 84.7,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Timmelsjoch",
+    "Reschenpass",
+    "Norbertshöhe",
+    "Pillerhöhe"
+   ],
+   "curatedKm": 46.4,
+   "curatedShare": 17,
+   "fun": 78,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-runde-7",
+   "name": "Rundtour Garmisch 190 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 6918,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "57.6 km durch Orte (32 %)"
+    }
+   ],
+   "km": 178.7,
+   "minutes": 173,
+   "bebautKm": 57.6,
+   "stadtKm": 2.7,
+   "autobahnKm": 0,
+   "passes": [
+    "Ettaler Sattel"
+   ],
+   "curatedKm": 36,
+   "curatedShare": 20,
+   "fun": 47,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-runde-8",
+   "name": "Rundtour Füssen 60 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 2272,
+   "findings": [],
+   "km": 54.2,
+   "minutes": 57,
+   "bebautKm": 15.4,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [],
+   "curatedKm": 0,
+   "curatedShare": 0,
+   "fun": 34,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-runde-9",
+   "name": "Rundtour Cortina 120 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 3395,
+   "findings": [
+    {
+     "level": "fehler",
+     "what": "2.4 km doppelt gefahren (Stichstraße)"
+    }
+   ],
+   "km": 142,
+   "minutes": 173,
+   "bebautKm": 25.6,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Passo Duran",
+    "Falzaregopass"
+   ],
+   "curatedKm": 55.7,
+   "curatedShare": 39,
+   "fun": 70,
+   "doubledKm": 2.4,
+   "loops": 0
+  },
+  {
+   "id": "z-runde-10",
+   "name": "Rundtour Lienz 110 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 2961,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "1 kleine Schleife oder Schlenker bei 46.5984, 12.9461"
+    },
+    {
+     "level": "hinweis",
+     "what": "Runde 222.5 km statt 110 km; die App bietet 104 km hin und zurück über Großglockner Hochalpenstraße (Hochtor) an"
+    }
+   ],
+   "km": 222.5,
+   "minutes": 244,
+   "bebautKm": 50.7,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Gailbergsattel",
+    "Plöckenpass",
+    "Passo Sant'Antonio",
+    "Kreuzbergpass"
+   ],
+   "curatedKm": 0.8,
+   "curatedShare": 0,
+   "fun": 73,
+   "doubledKm": 0,
+   "loops": 1
+  },
+  {
+   "id": "z-runde-11",
+   "name": "Rundtour Selva di Cadore 80 km",
+   "group": "zufall",
+   "ok": true,
+   "ms": 3830,
+   "findings": [],
+   "km": 106.2,
+   "minutes": 109,
+   "bebautKm": 9,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Passo Giau",
+    "Falzaregopass",
+    "Pordoijoch",
+    "Fedaiapass"
+   ],
+   "curatedKm": 100,
+   "curatedShare": 94,
+   "fun": 75,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-paesse-0",
+   "name": "Klausenpass nach Oberalppass",
+   "group": "zufall",
+   "ok": true,
+   "ms": 566,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "22 km durch Orte (31 %)"
+    }
+   ],
+   "km": 69.9,
+   "minutes": 68,
+   "bebautKm": 22,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Klausenpass",
+    "Oberalppass"
+   ],
+   "curatedKm": 35.2,
+   "curatedShare": 50,
+   "fun": 74,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-paesse-1",
+   "name": "Kühtaisattel nach Mendelpass",
+   "group": "zufall",
+   "ok": true,
+   "ms": 1166,
+   "findings": [],
+   "km": 168.8,
+   "minutes": 152,
+   "bebautKm": 45.8,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Kühtaisattel",
+    "Timmelsjoch",
+    "Gampenpass",
+    "Mendelpass"
+   ],
+   "curatedKm": 89.8,
+   "curatedShare": 53,
+   "fun": 87,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-paesse-2",
+   "name": "Col du Granier nach Col du Glandon",
+   "group": "zufall",
+   "ok": true,
+   "ms": 848,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "Umweg: 104.4 km für 34 km Luftlinie"
+    }
+   ],
+   "km": 104.4,
+   "minutes": 124,
+   "bebautKm": 13.8,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Col du Granier",
+    "Col du Grand Cucheron",
+    "Col du Glandon"
+   ],
+   "curatedKm": 0.1,
+   "curatedShare": 0,
+   "fun": 75,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-paesse-3",
+   "name": "Col du Galibier nach Col des Aravis",
+   "group": "zufall",
+   "ok": true,
+   "ms": 1828,
+   "findings": [],
+   "km": 191.6,
+   "minutes": 215,
+   "bebautKm": 38.6,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Col du Galibier",
+    "Col du Télégraphe",
+    "Col du Chaussy",
+    "Col de la Madeleine",
+    "Col des Aravis"
+   ],
+   "curatedKm": 86.2,
+   "curatedShare": 45,
+   "fun": 75,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-paesse-4",
+   "name": "Riedbergpass nach Kühtaisattel",
+   "group": "zufall",
+   "ok": true,
+   "ms": 970,
+   "findings": [],
+   "km": 134.1,
+   "minutes": 128,
+   "bebautKm": 39.5,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Riedbergpass",
+    "Oberjochpass",
+    "Gaichtpass",
+    "Hahntennjoch",
+    "Silzer Sattel",
+    "Kühtaisattel"
+   ],
+   "curatedKm": 63.9,
+   "curatedShare": 48,
+   "fun": 77,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-paesse-5",
+   "name": "Kesselberg nach Sudelfeldpass",
+   "group": "zufall",
+   "ok": true,
+   "ms": 977,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "35 km durch Orte (45 %)"
+    }
+   ],
+   "km": 78.2,
+   "minutes": 77,
+   "bebautKm": 35,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Kesselberg",
+    "Sudelfeldpass"
+   ],
+   "curatedKm": 18.7,
+   "curatedShare": 24,
+   "fun": 56,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-paesse-6",
+   "name": "Julierpass nach Gaviapass",
+   "group": "zufall",
+   "ok": true,
+   "ms": 1023,
+   "findings": [],
+   "km": 118.4,
+   "minutes": 122,
+   "bebautKm": 22.1,
+   "stadtKm": 0,
+   "autobahnKm": 0,
+   "passes": [
+    "Julierpass",
+    "Berninapass",
+    "Forcola di Livigno",
+    "Passo d'Eira",
+    "Foscagnopass",
+    "Gaviapass"
+   ],
+   "curatedKm": 50.6,
+   "curatedShare": 43,
+   "fun": 73,
+   "doubledKm": 0,
+   "loops": 0
+  },
+  {
+   "id": "z-paesse-7",
+   "name": "Colle Fauniera nach Col Agnel",
+   "group": "zufall",
+   "ok": true,
+   "ms": 1981,
+   "findings": [
+    {
+     "level": "hinweis",
+     "what": "Umweg: 112.2 km für 35 km Luftlinie"
+    }
+   ],
+   "km": 112.2,
+   "minutes": 166,
+   "passes": [
+    "Colle Fauniera",
+    "Col Agnel"
+   ],
+   "curatedKm": 19.9,
+   "curatedShare": 18,
+   "fun": 77,
+   "doubledKm": 0,
+   "loops": 0
+  }
+ ]
+}
