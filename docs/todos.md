@@ -2,6 +2,11 @@
 
 Stand: 15. November 2026, 8:30 (gegen Code und Git Verlauf geprüft)
 
+## Sprachen Webseite (17.11.)
+
+* [x] Landingpage auf Englisch und Italienisch unter /en und /it, hreflang, Sitemap, Sprachlinks im Fuß; Titel und Verweise jetzt im vorgerenderten HTML
+* [ ] Bildschirmfotos der Landingpage auf Englisch und Italienisch (zeigen heute die deutsche App)
+
 ## Sicherheit vor dem Start (Konzept 17.11., Claude Doc „Sicherheitskonzept CUMO DRIVE“)
 
 * [x] 2FA auf allen Konten, Supabase Pro (Koray 17.11.)
