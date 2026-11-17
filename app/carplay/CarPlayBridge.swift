@@ -556,6 +556,11 @@ final class CarPlayBridge: NSObject {
       let on = !(self?.paused ?? false)
       close { self?.emit?("onPause", ["on": on]) }
     })
+    // Kompass wie auf dem iPhone: Karte genordet oder in Fahrtrichtung (Koray 17.11.)
+    let north = mapVC?.northUp ?? false
+    actions.append(CPAlertAction(title: north ? "Fahrtrichtung oben" : "Norden oben", style: .default) { [weak self] _ in
+      close { self?.setNorthUp(!north) }
+    })
     let order = ["standard", "satellit", "3d"]
     let next = order[((order.firstIndex(of: mapStyle) ?? 0) + 1) % order.count]
     actions.append(CPAlertAction(title: "Karte: \(CarPlayBridge.styleNames[next] ?? next)", style: .default) { [weak self] _ in
@@ -575,6 +580,11 @@ final class CarPlayBridge: NSObject {
     }
     let list = CPListTemplate(title: "Gruppe", sections: [CPListSection(items: items)])
     ic.pushTemplate(list, animated: true, completion: nil)
+  }
+
+  private func setNorthUp(_ on: Bool) {
+    UserDefaults.standard.set(on, forKey: "carplay.northUp")
+    for m in allMaps { m.northUp = on }
   }
 
   private func toggleOverview() {

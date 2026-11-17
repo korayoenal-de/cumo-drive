@@ -30,6 +30,11 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
   private var followCenter: CLLocationCoordinate2D?
   private var followHeading: CLLocationDirection = 0
   private var zoomScale: Double = 1
+  /// Kompass (Koray 17.11.): Karte genordet und von oben statt schräg in Fahrtrichtung, wie der Kompass auf dem iPhone.
+  /// Gilt für CarPlay für sich und bleibt über Fahrten hinweg gespeichert.
+  var northUp: Bool = UserDefaults.standard.bool(forKey: "carplay.northUp") {
+    didSet { if let s = shownCenter, following { place(s, heading: shownHeading) } }
+  }
   /// Herauszoomen bei Tempo wie in der App: ab 50 km/h langsam, ab 100 km/h ganz (Koray 10.11.)
   private var speedZoom: Double = 0
   /// Zeit der letzten Position: die Kamera gleitet über genau diesen Abstand zur nächsten (Testfahrt 8.11.: ruckelte im Takt)
@@ -416,12 +421,13 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     let t = max(0, min(1, (kmh - 50) / 50))
     // langsam folgen (etwa 8 s), damit schwankendes Tempo nicht pulsiert
     speedZoom += (t - speedZoom) * 0.012
-    map.camera = MKMapCamera(lookingAtCenter: c, fromDistance: 650 * zoomScale * (1 + speedZoom * 1.2), pitch: 50, heading: heading)
+    let camHeading = northUp ? 0 : heading
+    map.camera = MKMapCamera(lookingAtCenter: c, fromDistance: 650 * zoomScale * (1 + speedZoom * 1.2), pitch: northUp ? 0 : 50, heading: camHeading)
     // Auto in der Mitte, gedreht in die Richtung der Straße relativ zur Kamera
     if CACurrentMediaTime() - lastAppAt < 3 {
       showCar(true)
       car.coordinate = c
-      var d = (headTo - heading).truncatingRemainder(dividingBy: 360)
+      var d = (headTo - camHeading).truncatingRemainder(dividingBy: 360)
       if d > 180 { d -= 360 }
       if d < -180 { d += 360 }
       // Winkel der Straße, wie sie auf dem Bildschirm liegt: Die Karte ist geneigt, und das Auto steht wegen der
