@@ -3,6 +3,7 @@
  * Stellen ausschließen, bis die Route sauber ist oder keine Besserung mehr kommt.
  * Das unterscheidet uns von calimoto, das gesperrte Straßen nur anzeigt.
  */
+import { ensureRoadArea } from './road-data';
 import { snapEndsToStreet } from './street-snap';
 import { avoidedPoints } from './avoid-pass';
 import { checkLine } from './check';
@@ -574,6 +575,8 @@ export async function planLegs(
   signal?: AbortSignal,
 ): Promise<PlannedTour> {
   const first = profiles[0] ?? 'kurvig';
+  // Web: Strecken und Stopps entlang der Punkte nachladen (kachelweise, Sicherheitskonzept 17.11.); App: sofort fertig
+  await ensureRoadArea(points, 30);
   // Sperrungen schon jetzt holen, parallel zur Route (sonst wartet das Planen danach bis zu 6 s)
   prefetchClosures(points);
   if (points.length < 3 || profiles.every((p) => p === first)) {
