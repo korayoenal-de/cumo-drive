@@ -311,7 +311,10 @@ export default function AusfahrtDetail() {
   // Nach der Ausfahrt (Koray 14.11.): Rückblick statt Planung
   const over = a.isOver && !inThisRide;
   const drove = over && !!a.startedAt;
-  if (over) {
+  // Abgesagt (Koray 17.11.): kein Rückblick, keine Hauptaktion, nur die Absage
+  const cancelled = over && a.isCancelled && !drove;
+  if (cancelled) main = null;
+  else if (over) {
     if (drove) main = { label: t('Nochmal fahren'), onPress: () => void againRide() };
     else if (a.isOwner) main = { label: t('Neuen Termin wählen'), onPress: () => setTimeSheet(true) };
   } else if (inThisRide) main = { label: t('Zur Navigation'), onPress: () => router.push('/navigation') };
@@ -352,8 +355,8 @@ export default function AusfahrtDetail() {
 
         <View style={styles.titleBlock}>
           {over ? (
-            <View style={[styles.tag, drove ? styles.tagGood : styles.tagWarn, styles.selfStart]}>
-              <AppText style={[styles.tagText, { color: drove ? Colors.good : Colors.warn }]}>{drove ? tr('Gefahren') : tr('Nicht gestartet')}</AppText>
+            <View style={[styles.tag, drove ? styles.tagGood : cancelled ? styles.tagDanger : styles.tagWarn, styles.selfStart]}>
+              <AppText style={[styles.tagText, { color: drove ? Colors.good : cancelled ? Colors.danger : Colors.warn }]}>{drove ? tr('Gefahren') : cancelled ? tr('Abgesagt') : tr('Nicht gestartet')}</AppText>
             </View>
           ) : (
             <AppText style={styles.kicker}>{a.isPublic ? tr('Ausfahrt') : tr('Private Ausfahrt')}</AppText>
@@ -384,9 +387,15 @@ export default function AusfahrtDetail() {
           {over && !drove && (
             <View style={styles.fieldPlain}>
               <View style={styles.flex}>
-                <AppText style={styles.value}>{t('Diese Ausfahrt hat nicht stattgefunden')}</AppText>
+                <AppText style={styles.value}>{cancelled ? t('Diese Ausfahrt wurde abgesagt') : t('Diese Ausfahrt hat nicht stattgefunden')}</AppText>
                 <AppText style={styles.label}>
-                  {a.isOwner ? tr('Niemand hat sie gestartet. Mit einem neuen Termin bekommen alle, die zugesagt hatten, eine Mitteilung.') : tr('Niemand hat sie gestartet.')}
+                  {cancelled
+                    ? a.isOwner
+                      ? tr('Du hast sie abgesagt. Alle, die zugesagt hatten, sehen das.')
+                      : tr('{ownerName} hat sie abgesagt.', { ownerName: a.ownerName })
+                    : a.isOwner
+                      ? tr('Niemand hat sie gestartet. Mit einem neuen Termin bekommen alle, die zugesagt hatten, eine Mitteilung.')
+                      : tr('Niemand hat sie gestartet.')}
                 </AppText>
               </View>
             </View>
@@ -894,6 +903,7 @@ const styles = StyleSheet.create({
   tagGood: { backgroundColor: Colors.goodTint },
   tagMuted: { backgroundColor: Colors.surface2 },
   tagWarn: { backgroundColor: Colors.warnTint },
+  tagDanger: { backgroundColor: Colors.dangerTint },
   smallRound: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   inviteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.s, height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
   inputOnSurface: { backgroundColor: Colors.surface2 },

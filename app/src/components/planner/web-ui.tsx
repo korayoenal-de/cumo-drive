@@ -273,8 +273,9 @@ export const roundBtn: CSSProperties = { width: 44, height: 44, flex: 'none', bo
 const sheetRow: CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', minHeight: 56, padding: '10px 12px', border: 'none', borderRadius: Radius.m, background: 'transparent', cursor: 'pointer' };
 
 /** Getönte Plakette (Status statt Fließtext) */
-export function Badge(props: { tone: 'good' | 'warn' | 'signal' | 'muted'; children: ReactNode }) {
+export function Badge(props: { tone: 'good' | 'warn' | 'signal' | 'muted' | 'danger'; children: ReactNode }) {
   const map = {
+    danger: [Colors.dangerTint, Colors.danger],
     good: [Colors.goodTint, C.good],
     warn: [Colors.warnTint, C.warn],
     signal: [Colors.signalTint, Colors.stopText],

@@ -30,7 +30,7 @@ import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/actio
 import { PublishSheet } from '@/components/tours/tour-card';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
-import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, relDay, shortDate, type Ausfahrt } from '@/lib/ausfahrten';
+import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, relDay, shortDate, showCancelled, type Ausfahrt } from '@/lib/ausfahrten';
 import { approachMinutes, departAt, syncRideReminders, currentSpot } from '@/lib/ride-reminders';
 import { useSession } from '@/lib/auth';
 import { kmBetween, listConversations, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
@@ -133,7 +133,8 @@ export default function Community() {
       })
       .catch((e: Error) => setErr(e.message));
     // private Ausfahrten stehen nur unter Touren, nicht in der Community (Koray 13.11.)
-    listAusfahrten().then((l) => l.filter((x) => !x.isOver))
+    // abgesagte bleiben bis zum geplanten Tag sichtbar, damit Teilnehmer die Absage sehen (Koray 17.11.)
+    listAusfahrten().then((l) => l.filter((x) => !x.isOver || showCancelled(x)))
       .then((l) => setRides(l.filter((r) => r.isPublic)))
       .catch(() => setRides((r) => r ?? []));
     listDrivers()
@@ -193,6 +194,7 @@ export default function Community() {
     if (seg === 'routen')
       return shownTours.filter((t) => t.start_lat != null && t.start_lon != null).map((t) => ({ id: t.id, kind: 'route', p: [t.start_lat as number, t.start_lon as number], label: `${formatKm(Number(t.km), 0)} km` }));
     return (rides ?? [])
+      .filter((r) => !r.isCancelled)
       .map((r) => ({ r, p: r.meeting ? ([r.meeting.lat, r.meeting.lon] as LatLon) : r.start }))
       .filter((x): x is { r: Ausfahrt; p: LatLon } => !!x.p)
       .map(({ r, p }) => ({ id: r.id, kind: 'ausfahrt', p, label: shortDate(r.startsAt), count: r.taken }));
@@ -295,7 +297,7 @@ export default function Community() {
     <View style={styles.seg} accessibilityRole="tablist">
       <Animated.View pointerEvents="none" style={[styles.segThumb, thumbStyle]} />
       <SegItem label={tr('Touren')} icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} onBox={onSegBox('routen')} ownFill={!thumbReady} />
-      <SegItem label={tr('Ausfahrten')} icon="calendar" count={userId ? rides?.length ?? null : null} badge={openRequests + inviteCount} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} onBox={onSegBox('ausfahrten')} ownFill={!thumbReady} />
+      <SegItem label={tr('Ausfahrten')} icon="calendar" count={userId ? rides?.filter((r) => !r.isCancelled).length ?? null : null} badge={openRequests + inviteCount} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} onBox={onSegBox('ausfahrten')} ownFill={!thumbReady} />
       <SegItem label={tr('Drivers')} icon="person.2" count={userId ? drivers?.length ?? null : null} badge={unread} on={seg === 'drivers'} onPress={() => switchSeg('drivers')} onBox={onSegBox('drivers')} ownFill={!thumbReady} />
     </View>
   );
@@ -804,6 +806,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function rideAction(r: Ausfahrt): string {
+  if (r.isCancelled) return tr('Ausfahrt ansehen');
   if (r.isOwner) return r.openRequests ? (r.openRequests === 1 ? tr('Anfrage ansehen') : tr('{openRequests} Anfragen ansehen', { openRequests: r.openRequests })) : tr('Ausfahrt ansehen');
   if (r.myStatus === 'zugesagt') return tr('Zur Ausfahrt');
   if (r.myStatus === 'angefragt') return tr('Anfrage ansehen');
@@ -848,7 +851,7 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
     <Animated.View style={press.style}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={tr('{name}, {v1} {v2} Uhr{v3}, {free} Plätze frei', { name: r.name, v1: shortDate(r.startsAt), v2: clock(r.startsAt), v3: r.km != null ? `, ${formatKm(r.km, 0)} km` : '', free })}
+        accessibilityLabel={r.isCancelled ? tr('{name}, {v1} {v2} Uhr, abgesagt', { name: r.name, v1: shortDate(r.startsAt), v2: clock(r.startsAt) }) : tr('{name}, {v1} {v2} Uhr{v3}, {free} Plätze frei', { name: r.name, v1: shortDate(r.startsAt), v2: clock(r.startsAt), v3: r.km != null ? `, ${formatKm(r.km, 0)} km` : '', free })}
         onPress={open}
         onPressIn={press.onPressIn}
         onPressOut={press.onPressOut}

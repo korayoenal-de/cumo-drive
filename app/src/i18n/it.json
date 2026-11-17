@@ -1840,5 +1840,11 @@
   "{pass} bis {town}": "{pass} fino a {town}",
   "{name} einladen": "Invita {name}",
   "{name} eingeladen": "{name} invitato",
-  "{name} entfernen": "Rimuovi {name}"
+  "{name} entfernen": "Rimuovi {name}",
+  "Diese Ausfahrt wurde abgesagt": "Questa uscita è stata annullata",
+  "Du hast sie abgesagt. Alle, die zugesagt hatten, sehen das.": "L'hai annullata tu. Chi aveva aderito lo vede.",
+  "{ownerName} hat sie abgesagt.": "{ownerName} l'ha annullata.",
+  "Du hast sie abgesagt": "L'hai annullata tu",
+  "Abgesagt von {ownerName}": "Annullata da {ownerName}",
+  "{name}, {v1} {v2} Uhr, abgesagt": "{name}, {v1} {v2}, annullata"
 }
