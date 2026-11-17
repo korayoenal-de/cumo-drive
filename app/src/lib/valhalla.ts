@@ -5,6 +5,7 @@
  */
 import type { LatLon, Profile } from './tour';
 import { routingHeaders } from './routing-auth';
+import { decodePolyline } from './polyline';
 
 /** Öffentlicher Valhalla (FOSSGIS): nur noch Notfall, höchstens eine Anfrage je Sekunde */
 export const VALHALLA_URL = 'https://valhalla1.openstreetmap.de';
@@ -72,29 +73,7 @@ export function costingFor(profile: Profile, avoid: Avoid) {
 }
 
 /** Dekodiert eine Valhalla Polyline (Genauigkeit 6). */
-export function decodePolyline6(str: string): LatLon[] {
-  const out: LatLon[] = [];
-  let index = 0;
-  let lat = 0;
-  let lon = 0;
-  while (index < str.length) {
-    for (const which of [0, 1]) {
-      let result = 0;
-      let shift = 0;
-      let b: number;
-      do {
-        b = str.charCodeAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      const delta = result & 1 ? ~(result >> 1) : result >> 1;
-      if (which === 0) lat += delta;
-      else lon += delta;
-    }
-    out.push([lat / 1e6, lon / 1e6]);
-  }
-  return out;
-}
+export const decodePolyline6 = (str: string): LatLon[] => decodePolyline(str, 1e6);
 
 async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
   const res = await valhallaFetch(path, {

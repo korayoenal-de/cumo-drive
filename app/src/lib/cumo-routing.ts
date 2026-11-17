@@ -22,6 +22,7 @@ import { countCurves } from './stats';
 import { doubledStretch } from './doubled';
 import { haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
 import type { Avoid } from './valhalla';
+import { decodePolyline } from './polyline';
 import { onRoadData } from './road-data';
 import { routingHeaders } from './routing-auth';
 
@@ -134,6 +135,18 @@ type GhPath = {
   points: { coordinates: [number, number][] };
   details: Record<string, Detail[]>;
 };
+/** So kommt der Weg vom Server: Linie kodiert (points_encoded), Faktor wie angefragt */
+type GhPathRaw = Omit<GhPath, 'points'> & { points: string | GhPath['points']; points_encoded_multiplier?: number };
+
+/** Faktor der kodierten Linie: 1e6 hält die Genauigkeit der bisherigen Koordinaten (6 Stellen) */
+const POINTS_FACTOR = 1e6;
+
+/** Kodierte Linie des Servers in die bisherige Form [lon, lat] bringen */
+export function decodeGhPoints(p: GhPathRaw): GhPath {
+  if (typeof p.points !== 'string') return p as GhPath;
+  const factor = p.points_encoded_multiplier ?? 1e5;
+  return { ...p, points: { coordinates: decodePolyline(p.points, factor).map(([la, lo]) => [lo, la] as [number, number]) } };
+}
 
 /** Ab so vielen doppelt gefahrenen Kilometern wird neu gerechnet. */
 const DOUBLE_MAX_KM = 2;
@@ -277,7 +290,7 @@ async function send(text: string, signal?: AbortSignal): Promise<GhPath> {
 const ROUTE_TIMEOUT_MS = 30000;
 
 async function sendTo(url: string, text: string, signal?: AbortSignal): Promise<GhPath> {
-  type Out = { ok: boolean; data: { message?: string; paths?: GhPath[] }; status: number };
+  type Out = { ok: boolean; data: { message?: string; paths?: GhPathRaw[] }; status: number };
   const ask = async (zip: boolean): Promise<Out> => {
     const ctrl = new AbortController();
     const onAbort = () => ctrl.abort();
@@ -330,11 +343,12 @@ async function sendTo(url: string, text: string, signal?: AbortSignal): Promise<
     err.status = out?.status ?? 0;
     throw err;
   }
-  return out.data.paths![0];
+  return decodeGhPoints(out.data.paths![0]);
 }
 
 async function post(body: Record<string, unknown>, signal?: AbortSignal): Promise<GhPath> {
-  const text = JSON.stringify({ points_encoded: false, instructions: false, details: [...DETAILS, ...LEG_DETAILS], ...body });
+  // Linie kodiert (Performance Punkt 2, 17.11.): Antwort statt 68 KB nur 20 KB, gepackt 12 statt 19 KB
+  const text = JSON.stringify({ points_encoded: true, points_encoded_multiplier: POINTS_FACTOR, instructions: false, details: [...DETAILS, ...LEG_DETAILS], ...body });
   const now = Date.now();
   const hit = memo.get(text);
   if (hit && now - hit.at < MEMO_MS) {

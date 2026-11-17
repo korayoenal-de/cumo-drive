@@ -5,6 +5,7 @@
  */
 import { flatten, haversine, type LatLon, type Profile, type Tour } from './tour';
 import { tr } from '@/i18n';
+import { decodePolyline } from './polyline';
 
 const PREFIX = 'cumo1:';
 
@@ -38,31 +39,6 @@ function encodePolyline(points: LatLon[], factor = 1e5): string {
     out += enc(a - pLat) + enc(b - pLon);
     pLat = a;
     pLon = b;
-  }
-  return out;
-}
-
-function decodePolyline(str: string, factor = 1e5): LatLon[] {
-  const out: LatLon[] = [];
-  let i = 0;
-  let lat = 0;
-  let lon = 0;
-  while (i < str.length) {
-    const vals: number[] = [];
-    for (let k = 0; k < 2; k++) {
-      let r = 0;
-      let sh = 0;
-      let b: number;
-      do {
-        b = str.charCodeAt(i++) - 63;
-        r |= (b & 0x1f) << sh;
-        sh += 5;
-      } while (b >= 0x20);
-      vals.push(r & 1 ? ~(r >> 1) : r >> 1);
-    }
-    lat += vals[0];
-    lon += vals[1];
-    out.push([lat / factor, lon / factor]);
   }
   return out;
 }
