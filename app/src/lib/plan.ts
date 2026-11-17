@@ -18,7 +18,8 @@ import { route, valhallaFetch, type Avoid } from './valhalla';
 import { tr } from '@/i18n';
 
 /** Schritte beim Planen; traffic: Verkehrsmeldungen, compare: Varianten vergleichen (Rundtour) */
-export type PlanStep = 'route' | 'traffic' | 'check' | 'fix' | 'compare';
+/** longer und shorter: die Rundtour wird auf die Wunschlänge nachgeplant (Koray 17.11.: längeres Warten erklären) */
+export type PlanStep = 'route' | 'traffic' | 'check' | 'fix' | 'compare' | 'longer' | 'shorter';
 
 /** direkt: Etappen, auf denen die kurvige Variante nichts brachte und der direkte Weg gewählt wurde */
 export type PlannedTour = Tour & {

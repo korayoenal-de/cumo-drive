@@ -72,7 +72,9 @@ import { tr } from '@/i18n';
 
 
 /** Schritte beim ersten Planen in Tour planen, gleiche Wortwahl wie bei der Rundtour */
-const phaseIndex = (p: PlanPhase | PlanStep) => Math.max(0, PHASES.findIndex((x) => x.id === p));
+// Verlängern und Kürzen zählen im Fortschrittsbalken wie der Vergleich (die Bereiche sind je Schritt fest)
+const BAR_PHASES = PHASES.filter((x) => x.id !== 'longer' && x.id !== 'shorter');
+const phaseIndex = (p: PlanPhase | PlanStep) => Math.max(0, BAR_PHASES.findIndex((x) => x.id === (p === 'longer' || p === 'shorter' ? 'compare' : p)));
 
 /** Wort für den Toast nach dem Einplanen */
 /** Neu würfeln ohne gute Alternative (Koray 10.11.) */

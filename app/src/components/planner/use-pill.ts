@@ -16,6 +16,10 @@ function textFor(phase: PlanPhase, mode: 'tour' | 'runde', ms: number, found: nu
       return tr('Standort bestimmen');
     case 'compare':
       return tr('Beste Runde wählen');
+    case 'longer':
+      return tr('Runde wird verlängert');
+    case 'shorter':
+      return tr('Runde wird gekürzt');
     case 'traffic':
       return tr('Verkehrsmeldungen prüfen');
     case 'check':

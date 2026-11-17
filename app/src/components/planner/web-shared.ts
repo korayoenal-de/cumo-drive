@@ -19,5 +19,7 @@ export const STEP_TEXT: Record<PlanStep, string> = {
   compare: t('Beste Variante wird gewählt'),
   check: t('Etappen Check läuft'),
   fix: t('Gesperrte Stellen werden umfahren'),
+  longer: t('Runde wird verlängert'),
+  shorter: t('Runde wird gekürzt'),
 };
 

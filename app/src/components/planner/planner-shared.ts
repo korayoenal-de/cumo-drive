@@ -105,6 +105,8 @@ export const STEP_TEXT: Record<PlanStep, string> = {
   compare: tr('Beste Variante wird gewählt'),
   check: tr('Etappen Check läuft'),
   fix: tr('Gesperrte Stellen werden umfahren'),
+  longer: tr('Runde wird verlängert'),
+  shorter: tr('Runde wird gekürzt'),
 };
 
 export const keyOf = (p: LatLon) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`;

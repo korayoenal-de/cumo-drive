@@ -1820,5 +1820,7 @@
   "Kehre {dir} {where}": "Hairpin {dir} {where}",
   "dann": "then",
   "gesperrt {closed_months}": "closed {closed_months}",
-  "Heute {v0} Uhr: {name}": "Today {v0}: {name}"
+  "Heute {v0} Uhr: {name}": "Today {v0}: {name}",
+  "Runde wird verlängert": "The loop is being extended",
+  "Runde wird gekürzt": "The loop is being shortened"
 }

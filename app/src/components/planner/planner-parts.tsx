@@ -279,7 +279,7 @@ export function Progress({ phase, done, onCancel }: { phase: PlanPhase; done: Pl
           const isDone = done.includes(p.id);
           const isNow = p.id === phase;
           // Umfahren taucht nur auf, wenn der Check gesperrte Stellen gefunden hat
-          if (p.id === 'fix' && !isNow && !isDone) return null;
+          if ((p.id === 'fix' || p.id === 'longer' || p.id === 'shorter') && !isNow && !isDone) return null;
           return (
             <View key={p.id} style={styles.phaseRow}>
               <View style={styles.phaseIcon}>

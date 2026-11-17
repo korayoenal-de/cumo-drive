@@ -63,6 +63,8 @@ const LOAD_STAGES: Record<PlanStep, LoadStage> = {
   compare: { label: tr('Beste Variante wählen'), from: 62, to: 90, tau: 1500 },
   check: { label: tr('Strecke wird geprüft'), from: 62, to: 90, tau: 1500 },
   fix: { label: tr('Sperrungen werden umfahren'), from: 90, to: 97, tau: 2000 },
+  longer: { label: tr('Runde wird verlängert'), from: 62, to: 90, tau: 3000 },
+  shorter: { label: tr('Runde wird gekürzt'), from: 62, to: 90, tau: 3000 },
 };
 
 

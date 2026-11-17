@@ -25,6 +25,8 @@ const STEP_TEXT: Record<PlanStep, string> = {
   compare: tr('Beste Variante wird gewählt'),
   check: tr('Etappen Check läuft'),
   fix: tr('Gesperrte Stücke werden umfahren'),
+  longer: tr('Runde wird verlängert'),
+  shorter: tr('Runde wird gekürzt'),
 };
 
 export default function ScanScreen() {

@@ -330,7 +330,6 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       // Länge weit neben dem Wunsch: mit angepasstem Radius nachplanen, höchstens zweimal (Bericht 17.11.: Ponte di
       // Legno 376 statt 240 km, Lienz 222 statt 110 km; Andraz sprang beim ersten Mal von 107 auf 233 km)
       if (best && !lengthFits(best.laenge_km, req.km) && !req.rotated && !req.scale) {
-        onStep?.('route');
         // Länge und doppelte km zusammen: 50 % daneben wiegt so viel wie 10 km doppelt (Ponte di Legno: 376 km mit 1,6 km
         // doppelt gegen 242 km mit 2,9 km doppelt, die zweite ist klar besser)
         const cost = (t: PlannedTour) => (Math.abs(t.laenge_km - req.km) / req.km) * 20 + spurKm(t);
@@ -339,6 +338,8 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         let got = best.laenge_km;
         for (let step = 0; step < 2 && !lengthFits(got, req.km); step++) {
           // gedämpft: die Länge folgt dem Radius nicht linear (Lugano sprang sonst von 125 auf 53 km)
+          // in der Plakette oben sichtbar, warum es länger dauert (Koray 17.11.)
+          onStep?.(got < req.km ? 'longer' : 'shorter');
           f = Math.max(0.4, Math.min(2, f * Math.pow(req.km / got, 0.8)));
           const again = await smartRoundTrip({ ...req, scale: f, rotated: true, seed: seed + 41 + step }, undefined, signal).catch((e) => {
             if (signal?.aborted) throw e;

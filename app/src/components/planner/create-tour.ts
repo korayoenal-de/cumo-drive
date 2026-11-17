@@ -12,12 +12,15 @@ import type { LatLon, Profile } from '@/lib/tour';
 import type { Avoid } from '@/lib/valhalla';
 import { t } from '@/i18n';
 
-export type PlanPhase = 'start' | 'route' | 'compare' | 'traffic' | 'check' | 'fix';
+export type PlanPhase = 'start' | 'route' | 'compare' | 'longer' | 'shorter' | 'traffic' | 'check' | 'fix';
 
 export const PHASES: { id: PlanPhase; label: string }[] = [
   { id: 'start', label: t('Startort bestimmen') },
   { id: 'route', label: t('Route berechnen') },
   { id: 'compare', label: t('Beste Runde wählen') },
+  // nur sichtbar, wenn die Runde auf die Wunschlänge nachgeplant wird (Koray 17.11.)
+  { id: 'longer', label: t('Runde wird verlängert') },
+  { id: 'shorter', label: t('Runde wird gekürzt') },
   { id: 'traffic', label: t('Verkehrsmeldungen prüfen') },
   { id: 'check', label: t('Prüfen') },
   { id: 'fix', label: t('Gesperrte Stellen umfahren') },

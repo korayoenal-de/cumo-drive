@@ -1820,5 +1820,7 @@
   "Kehre {dir} {where}": "Tornante {dir} {where}",
   "dann": "poi",
   "gesperrt {closed_months}": "chiuso {closed_months}",
-  "Heute {v0} Uhr: {name}": "Oggi alle {v0}: {name}"
+  "Heute {v0} Uhr: {name}": "Oggi alle {v0}: {name}",
+  "Runde wird verlängert": "Il giro viene allungato",
+  "Runde wird gekürzt": "Il giro viene accorciato"
 }
