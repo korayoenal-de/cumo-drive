@@ -18,6 +18,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Shadow } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { clusterPins, type Region } from '@/lib/map-cluster';
+import { useMapTapGuard } from '@/lib/map-tap';
 import type { LatLon } from '@/lib/tour';
 import { tr } from '@/i18n';
 
@@ -70,6 +71,7 @@ function withSpan(pts: LatLon[], min = 0.22): LatLon[] {
 export function CommunityMap({ pins, selected, onSelect, line, bottom, top, style }: Props) {
   const settings = useMapSettings();
   const map = useRef<MapView>(null);
+  const tap = useMapTapGuard();
   const pad = { top: top + 30, right: 40, bottom: bottom + 30, left: 40 };
   const pinKey = pins.map((p) => p.id).join(',');
   const win = useWindowDimensions();
@@ -116,9 +118,12 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
       showsCompass={false}
       toolbarEnabled={false}
       pitchEnabled={false}
+      // Tippen auf die freie Karte hebt die Auswahl auf, Tippen auf einen Pin nicht. Das iPhone meldet den Pin Tipp
+      // auch der Karte (ohne marker-press), deshalb über die Sperre (lib/map-tap)
+      onMarkerPress={tap.marker}
       onPress={(e) => {
-        // Tippen auf die freie Karte hebt die Auswahl auf, Tippen auf einen Pin nicht
-        if (e.nativeEvent.action !== 'marker-press') onSelect(null);
+        if (e.nativeEvent.action === 'marker-press') return;
+        tap.map(() => onSelect(null));
       }}
       onRegionChangeComplete={onRegion}
       initialRegion={START}>

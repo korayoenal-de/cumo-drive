@@ -18,6 +18,7 @@ import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme'
 import { arrowsAlong, offsetRight, splitDoubled } from '@/lib/doubled';
 import { listDriveTracks } from '@/lib/drives';
 import { useLibrary } from '@/lib/library';
+import { useMapTapGuard } from '@/lib/map-tap';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { passPoint, PASSES } from '@/lib/passes';
 import { RADAR_FAST_MS, RADAR_MS, RADAR_REPEAT_MS, REVEAL_MS, SCAN_MS, type RadarRoad, type RadarSpot, type Scan } from '@/lib/radar';
@@ -115,6 +116,7 @@ export function RouteMap({
   }, [showDrives]);
 
   const map = useRef<MapView>(null);
+  const tap = useMapTapGuard();
   const markers = useRef<(MapMarker | null)[]>([]);
   // Apple Maps meldet einen Tipp auf einen schon ausgewählten Marker nicht noch einmal: Pass Marker nach dem Tipp
   // wieder abwählen, sonst lässt sich derselbe Pass nur einmal antippen (Koray 8.11.)
@@ -486,10 +488,15 @@ export function RouteMap({
           // Radar: Startpunkt und Radius in Bildpunkten für den Ring über der Karte
           if (radar) measureRadar(r.latitudeDelta);
         }}
+        // Das iPhone meldet einen Tipp auf eine Marke (Pass, Warnung, Stopp) auch der Karte, ohne marker-press; sonst
+        // schloss der Kartentipp gleich wieder, was die Marke geöffnet hatte (lib/map-tap)
+        onMarkerPress={tap.marker}
         onPress={(e) => {
           if (e.nativeEvent.action === 'marker-press') return;
-          setOpenWarn(null);
-          onPressMap?.();
+          tap.map(() => {
+            setOpenWarn(null);
+            onPressMap?.();
+          });
         }}
         onLongPress={
           onLongPress || onLongPressLine
