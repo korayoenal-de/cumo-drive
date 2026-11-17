@@ -86,32 +86,42 @@ export function ActionBar({
       setTimeout(() => primaryRef.current?.reset(), 1200);
     });
   };
-  const pressPrimary = () => (choose ? setChoosing(true) : primary.launch ? launchThen(primary.onPress) : primary.onPress());
+  const pressPrimary = () => {
+    setArmed(false);
+    if (choose) setChoosing(true);
+    else if (primary.launch) launchThen(primary.onPress);
+    else primary.onPress();
+  };
   // Gefährliches mit Frage erst nach Rückfrage ausführen
-  const run = (it: MoreItem) => (it.danger && it.confirm ? setAsk(it) : it.onPress());
+  // Weitere Aktionen (etwa Änderungen verwerfen) sind kein Speichern: danach fliegt nichts
+  const run = (it: MoreItem) => {
+    setArmed(false);
+    if (it.danger && it.confirm) setAsk(it);
+    else it.onPress();
+  };
   const unsaved = !!save && !save.saved;
   // bleibt über das Speichern hinaus gültig (danach ist save in der Tour undefined)
   const [afterSheet, setAfterSheet] = useState(false);
   // Gerade gespeichert: Zeile bleibt stehen, die Taste fliegt nach Touren, dann löst sich die Zeile auf.
-  // Nur nach einem Druck auf diese Taste (armed) und echtem Speichern (busy gesehen oder saved gemeldet),
+  // Nur nach einem Druck auf diese Taste (armed); Verwerfen über ⋯ entschärft wieder.
+  // (Bis 17.11. abends zusätzlich „busy gesehen“: das Speichern ist so schnell, dass busy nie gezeichnet wurde
+  // und der Flug ausblieb, Koray 17.11.)
   // nicht beim Verwerfen von Änderungen oder wenn anderswo gespeichert wird (vor der Gruppenfahrt).
   // Im selben Render abgeleitet, damit die Taste für den Flug noch steht.
   const [leaving, setLeaving] = useState(false);
   const [armed, setArmed] = useState(false);
-  const [sawBusy, setSawBusy] = useState(false);
   const [prevUnsaved, setPrevUnsaved] = useState(unsaved);
-  if (save?.busy && !sawBusy) setSawBusy(true);
   if (prevUnsaved !== unsaved) {
     setPrevUnsaved(unsaved);
     if (prevUnsaved && !unsaved) {
-      if (armed && (sawBusy || save?.saved)) setLeaving(true);
+      if (armed) setLeaving(true);
       setArmed(false);
-      setSawBusy(false);
     }
   }
   useEffect(() => {
     if (!leaving) return;
-    const wait = afterSheet ? SHEET_GONE_MS : 0;
+    // nach einem Blatt mit Tastatur (Name) etwas länger warten, bis Blatt und Tastatur ganz weg sind
+    const wait = afterSheet ? SHEET_GONE_MS + 180 : 0;
     const go = setTimeout(() => saveRef.current?.fly('touren', () => setLeaving(false)), wait);
     // falls die Taste schon weg war: nicht hängen bleiben
     const id = setTimeout(() => setLeaving(false), wait + MORPH_MS + 400);
