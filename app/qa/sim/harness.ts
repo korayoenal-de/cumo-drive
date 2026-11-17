@@ -111,8 +111,9 @@ export class World {
     if (opts.account !== false) {
       id = uuid();
       const r = await asAdmin(
-        `insert into auth.users (id, email) values (${lit(id)}, ${lit(`${name.toLowerCase().replace(/\W+/g, '.')}@sim.invalid`)});
-insert into public.profiles (id, display_name, car, allow_messages) values (${lit(id)}, ${lit(name)}, ${lit(car)}, ${opts.allowMessages === false ? 'false' : 'true'});`,
+        // zwei Tage alt: die Schutzregel für neue Konten (erst nach 24 h Fremde anschreiben) gilt hier nicht
+        `insert into auth.users (id, email, created_at) values (${lit(id)}, ${lit(`${name.toLowerCase().replace(/\W+/g, '.')}@sim.invalid`)}, now() - interval '2 days');
+insert into public.profiles (id, display_name, car, allow_messages, created_at) values (${lit(id)}, ${lit(name)}, ${lit(car)}, ${opts.allowMessages === false ? 'false' : 'true'}, now() - interval '2 days');`,
       );
       if (r.error) throw new Error(`Konto ${name}: ${r.error.message}`);
     }

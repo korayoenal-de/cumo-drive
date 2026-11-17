@@ -153,7 +153,7 @@ Ein Profil Sehr kurvig gibt es nicht mehr (gestrichen am 8.11.). Ältere Touren 
 
 **Fahrzeit:** Valhalla schätzt auf Bergetappen zu langsam. In der Navigation korrigiert ein Tempofaktor die Restzeit; Kalibrierung mit echten Netto Fahrzeiten steht aus.
 
-**Qualität:** Stresstest mit 280 Fällen (Rundtour Median 4,7 s), Simulation der Gruppenfahrt mit 22 Fällen, Tests für lib (npm test).
+**Qualität:** Pflichtlauf vor jedem Update (`npm run vor-update`): Typen, Lint, lib Tests, QS Korpus, Stresstest, Simulation mit 22 Fällen auf einer lokalen Testdatenbank, 21 feste Routen. Täglich zusätzlich der Routen Check mit 51 Routen. Katalog aller Use Cases, Faktoren und Regeln im Doc „CUMO DRIVE Testkatalog“.
 
 ## Daten
 
@@ -207,6 +207,7 @@ Jede Ansicht wird an den Regeln in docs/design-prinzipien.md gemessen (gespiegel
 
 JavaScript Änderungen gehen per OTA Update in Minuten aufs Handy; neue native Pakete und CarPlay brauchen einen neuen TestFlight Build. Native Pakete werden im Code so geladen, dass ältere Builds dieselben Updates ohne Absturz bekommen.
 
+* **Vor jedem Update ein grüner Testlauf** (Entscheidung 17.11.): im Ordner app `npm run vor-update`, etwa 4 Minuten. Rot heißt: kein OTA und kein Build.
 * Kanal preview, Runtime 1.1.0. OTA nur aus einem sauberen Arbeitsstand ohne .env: `eas update --channel preview --environment preview --platform ios` (nur iOS: Android gibt es noch nicht, der Web Planer kommt nicht per OTA; spart gut die Hälfte der Zeit, Messung 16.11.)
 * Builds: `eas build --platform ios --profile preview --auto-submit`, Expo Starter Plan seit 10.11.
 * Apple: Einzelperson, Team ID N9DX399W33, Bundle ID de.rallycumo.drive; Push Schlüssel und Profil mit Push seit 10.11.
@@ -268,6 +269,7 @@ Realistisch sind im dritten Jahr rund 385 Tsd. € netto (vorsichtig 72 Tsd. €
 
 | Datum | Entscheidung |
 |---|---|
+| 17.11. | Vor jedem Update (OTA und Build) muss ein Testlauf grün sein: `npm run vor-update` |
 | 15.11. | Tour anpassen unterwegs: Planer über der Navigation, immer erlaubt, in der Gruppe nur die Lead; Tourmenü: Zwischenziel überspringen, Tour anpassen, dann der Rest |
 | 15.11. | Kompass in der Tempopille, Tipp nordet die Karte; Kompass bleibt immer sichtbar |
 | 15.11. | Bremsempfehlung per Stimme, Kurvenansagen freigegeben (Standard aus), Navigationsansagen haben immer Vorrang |

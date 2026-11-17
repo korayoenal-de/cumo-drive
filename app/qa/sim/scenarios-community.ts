@@ -28,7 +28,7 @@ async function ausfahrten(w: World, tour: ReturnType<typeof loadSampleTour>) {
   await scenario('C5', 'Ausfahrt anlegen und in der Community sehen', async (c) => {
     const saved = org.app.library.saveTour({ ...tour, minutes: 300 }, '');
     const startsAt = new Date(Date.now() + 3 * 86400000);
-    id = await org.app.ausfahrten.publishAusfahrt(saved, { startsAt, meeting: { name: 'Tankstelle Cortina', lat: 46.54, lon: 12.13 }, note: 'Ruhig fahren', seats: 3 });
+    id = await org.app.ausfahrten.publishAusfahrt(saved, { startsAt, meeting: { name: 'Tankstelle Cortina', lat: 46.54, lon: 12.13 }, note: 'Ruhig fahren', seats: 3, public: true });
     c.expect(/^[0-9a-f-]{36}$/.test(id), 'publish_ride liefert eine ID');
     c.expect(!!org.app.library.readLibrary()[0]?.cloudId, 'Tour wurde dafür ins Konto gespeichert');
     const seen = (await max.app.ausfahrten.listAusfahrten()).find((a) => a.id === id);
@@ -48,10 +48,10 @@ async function ausfahrten(w: World, tour: ReturnType<typeof loadSampleTour>) {
     c.expect(/Mitgliedschaft kann nicht/.test(own), `Abo Spalten aus der App nicht änderbar (${own})`);
     const s2 = exp.app.library.saveTour({ ...tour }, '');
     let e1 = '';
-    await exp.app.ausfahrten.publishAusfahrt(s2, { startsAt, meeting: null, note: '', seats: 3 }).catch((e: Error) => (e1 = e.message));
+    await exp.app.ausfahrten.publishAusfahrt(s2, { startsAt, meeting: null, note: '', seats: 3, public: true }).catch((e: Error) => (e1 = e.message));
     c.expect(/Mitgliedschaft/.test(e1), `ohne Abo abgewiesen (${e1})`);
     let e2 = '';
-    await org.app.ausfahrten.publishAusfahrt(saved, { startsAt: new Date(Date.now() + 5 * 60000), meeting: null, note: '', seats: 3 }).catch((e: Error) => (e2 = e.message));
+    await org.app.ausfahrten.publishAusfahrt(saved, { startsAt: new Date(Date.now() + 5 * 60000), meeting: null, note: '', seats: 3, public: true }).catch((e: Error) => (e2 = e.message));
     c.expect(/Zukunft/.test(e2), `Abfahrt zu früh abgewiesen (${e2})`);
   });
 
@@ -162,8 +162,11 @@ async function ausfahrten(w: World, tour: ReturnType<typeof loadSampleTour>) {
     await max.app.ausfahrten.cancelAusfahrt(id).catch((e: Error) => (e2 = e.message));
     c.expect(e2 === 'Fahrt nicht gefunden', 'nur der Organisator zieht zurück');
     await org.app.ausfahrten.cancelAusfahrt(id);
-    const after = (await max.app.ausfahrten.listAusfahrten()).find((x) => x.id === id);
-    c.expect(!after, 'zurückgezogene Ausfahrt verschwindet');
+    // Seit 14.11.: Teilnehmer sehen die abgesagte Ausfahrt weiter (als beendet, für den Rückblick), alle anderen nicht mehr
+    const after = (await exp.app.ausfahrten.listAusfahrten()).find((x) => x.id === id);
+    c.expect(!after, 'zurückgezogene Ausfahrt verschwindet für Unbeteiligte');
+    const member = (await max.app.ausfahrten.listAusfahrten()).find((x) => x.id === id);
+    c.expect(!member || member.rideStatus === 'beendet', `Teilnehmer sieht sie nur noch als beendet (${member?.rideStatus})`);
     let e3 = '';
     await dora.app.ausfahrten.requestAusfahrt(id, '', null).catch((e: Error) => (e3 = e.message));
     c.expect(/gibt es nicht mehr/.test(e3), `Anfrage danach abgewiesen (${e3})`);

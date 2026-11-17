@@ -25,7 +25,7 @@ import { planLegs } from '../../src/lib/plan';
 import { outAndBack, smartRoundTrip, SPUR_MAX_KM, spurKm } from '../../src/lib/smart-roundtrip';
 import { flatten, haversine, type LatLon } from '../../src/lib/tour';
 import { DEFAULT_AVOID } from '../../src/lib/valhalla';
-import { buildCases, FOCUS, type Case } from './cases';
+import { buildCases, FIXED, FOCUS, type Case } from './cases';
 
 const arg = (k: string) => {
   const i = process.argv.indexOf(k);
@@ -350,7 +350,9 @@ async function main() {
   // --only id1,id2: nur diese Fälle (zum Nachprüfen einzelner Befunde)
   const only = arg('--only')?.split(',');
   // --focus: die Fälle aus dem Routen Check vom 17.11. nachmittags
-  const cases = (process.argv.includes('--focus') ? FOCUS : buildCases(SEED)).filter((c) => !only || only.includes(c.id));
+  // --pflicht: nur die festen Fälle, Exit 1 bei einem Fehler (Testlauf vor jedem Update, Koray 17.11.)
+  const pflicht = process.argv.includes('--pflicht');
+  const cases = (pflicht ? FIXED : process.argv.includes('--focus') ? FOCUS : buildCases(SEED)).filter((c) => !only || only.includes(c.id));
   const prev = PREV && existsSync(PREV) ? (JSON.parse(readFileSync(PREV, 'utf8')).results as Result[]) : null;
   const results: Result[] = [];
   for (const c of cases) {
@@ -361,6 +363,11 @@ async function main() {
   writeFileSync(`${OUT}/ergebnis.json`, JSON.stringify({ date: today, seed: SEED, results }, null, 1));
   writeFileSync(`${OUT}/bericht.md`, report(results, prev));
   console.log(`fertig: ${OUT}/bericht.md`);
+  const bad = results.filter((r) => r.findings.some((f) => f.level === 'fehler'));
+  if (pflicht && bad.length) {
+    console.log(`${bad.length} feste Fälle mit Fehler: ${bad.map((r) => r.id).join(', ')}`);
+    process.exit(1);
+  }
 }
 
 void main().catch((e) => {

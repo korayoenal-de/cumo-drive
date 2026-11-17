@@ -7,3 +7,4 @@ Regeln für jede Arbeit in diesem Repo (Koray 15.11.2026):
 * Mit Karte oder Navigation immer CarPlay mitdenken; native Änderungen (app/carplay, app.json Plugins) brauchen einen TestFlight Build, JavaScript geht per OTA.
 * OTA Updates, Builds und Migrationen auf main nur nach Korays OK. Schlüssel nie committen oder ausgeben. Kein `git reset --hard`.
 * Prüfen vor dem Commit im Ordner app: `npx tsc --noEmit`, `npx eslint src`, `npm test`.
+* Vor jedem Update (OTA und Build) muss ein Testlauf grün sein (Koray 17.11.2026): im Ordner app `npm run vor-update` (Typen, Lint, Tests, QS Korpus, Stresstest, Simulation, feste Routen, etwa 4 Minuten). Ist ein Schritt rot, geht kein Update raus. Bericht in `app/qa/out/vor-update.md`, Katalog der Tests: Doc „CUMO DRIVE Testkatalog“.

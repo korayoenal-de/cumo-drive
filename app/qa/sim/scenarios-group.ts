@@ -361,7 +361,7 @@ export async function groupScenarios(w: World) {
   await scenario('G14', 'Ausfahrt aus der Community wird am Termin zur Gruppenfahrt', async (c) => {
     // ausfahrt/[id].tsx: Owner setRideStatus laeuft + startAsLead, Teilnehmer rideAlong (gleiche ID)
     const saved = lead.app.library.readLibrary()[0];
-    const id = await lead.app.ausfahrten.publishAusfahrt(saved, { startsAt: new Date(Date.now() + 40 * 60000), meeting: { name: 'Parkplatz Passo', lat: 46.56, lon: 12.68 }, note: 'Sim', seats: 3 });
+    const id = await lead.app.ausfahrten.publishAusfahrt(saved, { startsAt: new Date(Date.now() + 40 * 60000), meeting: { name: 'Parkplatz Passo', lat: 46.56, lon: 12.68 }, note: 'Sim', seats: 3, public: true });
     await max.app.ausfahrten.requestAusfahrt(id, 'Bin dabei', max.car);
     await lead.app.ausfahrten.answerAnfrage(id, max.id!, true);
     await lead.app.invites.setRideStatus(id, 'laeuft');

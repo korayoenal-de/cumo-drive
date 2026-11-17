@@ -71,9 +71,10 @@
     "lint": "expo lint",
     "sync:functions": "cp src/data/passes.json ../supabase/functions/pass-status/passes.json",
     "test": "tsx --tsconfig scripts/replay/tsconfig.json --test src/lib/__tests__/*.test.ts",
-    "qa": "tsx qa/check.ts && tsx qa/stress.ts",
+    "qa": "tsx --tsconfig scripts/replay/tsconfig.json qa/check.ts && tsx --tsconfig scripts/replay/tsconfig.json qa/stress.ts",
     "sync-road-data": "cp src/data/curated-roads.json src/data/passes.json src/data/recommended-stops.json ../supabase/functions/road-data/data/",
-    "check-csp": "node scripts/check-csp.mjs"
+    "check-csp": "node scripts/check-csp.mjs",
+    "vor-update": "bash qa/vor-update.sh"
   },
   "private": true
 }
