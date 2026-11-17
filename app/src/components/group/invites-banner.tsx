@@ -14,7 +14,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { DateBlock } from '@/components/community/ride-bits';
 import { OptionsSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipGroup } from '@/components/ui/chip';
 import { IconLabel, type BtnIcon } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
@@ -211,11 +211,11 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
         subtitle={tr('{v0} sieht deine Absage. Wenn du magst, sag kurz warum.', { v0: decline?.ownerName ?? 'Der Veranstalter' })}
         onClose={() => setDecline(null)}>
         <View style={styles.sheet}>
-          <View style={styles.chips}>
+          <ChipGroup style={styles.chips}>
             {DECLINE_REASONS.map((x) => (
               <Chip key={x} label={tr(x)} active={reason === x} onSurface onPress={() => setReason(reason === x ? null : x)} />
             ))}
-          </View>
+          </ChipGroup>
           <View style={styles.row}>
             <Btn label={t('Abbrechen')} onPress={() => setDecline(null)} />
             <Btn

@@ -8,14 +8,14 @@
  * zum Ankreuzen, umgebrochen) wechselt ein Chip wie bisher ohne Bewegung.
  */
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { EASE_OUT } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 
-type Box = { x: number; w: number; bg: string };
+type Box = { x: number; y: number; w: number; bg: string };
 type RowCtx = { report: (id: string, box: Box | null, active: boolean) => void };
 const ChipRowContext = createContext<RowCtx | null>(null);
 
@@ -36,8 +36,8 @@ export function Chip({
   }, [active, row, id]);
   const dark = row ? active && arrived : active;
   const onLayout = (e: LayoutChangeEvent) => {
-    const { x, width } = e.nativeEvent.layout;
-    box.current = { x, w: width, bg };
+    const { x, y, width } = e.nativeEvent.layout;
+    box.current = { x, y, w: width, bg };
     row?.report(id, box.current, active);
   };
   return (
@@ -59,37 +59,7 @@ export function Chip({
  * Gründe zum Ankreuzen in Bewertungen und Meldungen bleiben umgebrochen, dort soll man alles sehen.
  */
 export function ChipRow({ children, bleed = Spacing.xl }: { children: ReactNode; bleed?: number }) {
-  const reduced = useReducedMotion();
-  const [boxes, setBoxes] = useState<Record<string, Box>>({});
-  const activeId = useRef<string | null>(null);
-  const known = useRef<Record<string, Box>>({});
-  const x = useSharedValue(0);
-  const w = useSharedValue(0);
-  const placed = useRef(false);
-  const [ctx] = useState<RowCtx>(() => ({
-    report: (id, box, active) => {
-      if (box) {
-        const old = known.current[id];
-        if (!old || old.x !== box.x || old.w !== box.w || old.bg !== box.bg) {
-          known.current = { ...known.current, [id]: box };
-          setBoxes(known.current);
-        }
-      }
-      if (active) activeId.current = id;
-      else if (activeId.current === id) return;
-      const b = activeId.current ? known.current[activeId.current] : undefined;
-      if (!b) return;
-      if (!placed.current || reduced) {
-        x.value = b.x;
-        w.value = b.w;
-        placed.current = true;
-      } else {
-        x.value = withTiming(b.x, { duration: Motion.enter, easing: EASE_OUT });
-        w.value = withTiming(b.w, { duration: Motion.enter, easing: EASE_OUT });
-      }
-    },
-  }));
-  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }], width: w.value, opacity: w.value > 0 ? 1 : 0 }));
+  const { ctx, layer } = useSlide();
   return (
     <ScrollView
       horizontal
@@ -97,25 +67,94 @@ export function ChipRow({ children, bleed = Spacing.xl }: { children: ReactNode;
       keyboardShouldPersistTaps="handled"
       style={{ marginHorizontal: -bleed, flexGrow: 0 }}
       contentContainerStyle={[styles.row, { paddingHorizontal: bleed }]}>
-      {/* unten die grauen Flächen, darüber die gleitende weiße, oben die Chips mit ihrer Schrift */}
-      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        {Object.entries(boxes).map(([k, b]) => (
-          <View key={k} style={[styles.under, { left: b.x, width: b.w, backgroundColor: b.bg }]} />
-        ))}
-        <Animated.View style={[styles.under, styles.on, { left: 0 }, pill]} />
-      </View>
+      {layer}
       <ChipRowContext.Provider value={ctx}>{children}</ChipRowContext.Provider>
     </ScrollView>
   );
 }
 
+/**
+ * Umbrechende Gruppe für EINE Wahl (Strecke oder Fahrzeit, Meldegrund, Bereich; Koray 18.11.): dieselbe gleitende
+ * Fläche wie in der ChipRow. Gründe zum Ankreuzen mit mehreren Treffern (Bewertung) bleiben einzelne Chips.
+ */
+export function ChipGroup({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const { ctx, layer } = useSlide();
+  return (
+    <View style={[styles.group, style]}>
+      {layer}
+      <ChipRowContext.Provider value={ctx}>{children}</ChipRowContext.Provider>
+    </View>
+  );
+}
+
+/** Die gleitende weiße Fläche: unten die grauen Flächen, darüber die weiße, oben die Chips mit ihrer Schrift */
+function useSlide() {
+  const reduced = useReducedMotion();
+  const [boxes, setBoxes] = useState<Record<string, Box>>({});
+  const activeId = useRef<string | null>(null);
+  const known = useRef<Record<string, Box>>({});
+  const on = useRef<Record<string, boolean>>({});
+  const x = useSharedValue(0);
+  const y = useSharedValue(0);
+  const w = useSharedValue(0);
+  const placed = useRef(false);
+  const [ctx] = useState<RowCtx>(() => ({
+    report: (id, box, active) => {
+      if (box) {
+        const old = known.current[id];
+        if (!old || old.x !== box.x || old.y !== box.y || old.w !== box.w || old.bg !== box.bg) {
+          known.current = { ...known.current, [id]: box };
+          setBoxes(known.current);
+        }
+      }
+      on.current[id] = active;
+      if (active) activeId.current = id;
+      else if (activeId.current === id) {
+        // abgewählt ohne neue Wahl (Chip zum Abwählen): Fläche weg, sobald klar ist, dass keine andere kam
+        setTimeout(() => {
+          if (activeId.current === id && !on.current[id]) {
+            activeId.current = null;
+            placed.current = false;
+            w.value = 0;
+          }
+        }, 0);
+        return;
+      }
+      const b = activeId.current ? known.current[activeId.current] : undefined;
+      if (!b) return;
+      if (!placed.current || reduced) {
+        x.value = b.x;
+        y.value = b.y;
+        w.value = b.w;
+        placed.current = true;
+      } else {
+        const tm = { duration: Motion.enter, easing: EASE_OUT };
+        x.value = withTiming(b.x, tm);
+        y.value = withTiming(b.y, tm);
+        w.value = withTiming(b.w, tm);
+      }
+    },
+  }));
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { translateY: y.value }], width: w.value, opacity: w.value > 0 ? 1 : 0 }));
+  const layer = (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {Object.entries(boxes).map(([k, b]) => (
+        <View key={k} style={[styles.under, { left: b.x, top: b.y, width: b.w, backgroundColor: b.bg }]} />
+      ))}
+      <Animated.View style={[styles.under, styles.on, { left: 0, top: 0 }, pill]} />
+    </View>
+  );
+  return { ctx, layer };
+}
+
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: Spacing.s },
+  group: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   chip: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, justifyContent: 'center' },
   // Aktiv weiß wie die Reiter der Suche; Orange bleibt der Hauptaktion vorbehalten (Koray 9.11.)
   on: { backgroundColor: Colors.text },
   clear: { backgroundColor: 'transparent' },
-  under: { position: 'absolute', top: 0, height: Size.chip, borderRadius: Radius.pill },
+  under: { position: 'absolute', height: Size.chip, borderRadius: Radius.pill },
   pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
   label: { fontSize: Type.body, fontFamily: Fonts.semibold },
   labelOn: { color: Colors.ground, fontFamily: Fonts.bold },

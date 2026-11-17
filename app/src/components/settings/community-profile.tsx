@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ConfirmSheet } from '@/components/ui/action-sheet';
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipGroup } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ageOf, birthDigits, loadPrivacy, parseBirthday, savePrivacy, type BirthdayShow, type Privacy } from '@/lib/drivers';
@@ -369,11 +369,11 @@ export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<P
         <AppText variant="caption" muted>{t('Das Datum selbst sieht niemand.')}</AppText>
       )}
       <AppText variant="caption" muted>{t('Sichtbar in Drivers')}</AppText>
-      <View style={styles.chips}>
+      <ChipGroup style={styles.chips}>
         {SHOW.map((o) => (
           <Chip key={o.v} label={o.label} active={show === o.v} onSurface onPress={() => setShow(o.v)} />
         ))}
-      </View>
+      </ChipGroup>
       <FieldFoot
         canSave={!!iso && changed}
         onSave={() => {

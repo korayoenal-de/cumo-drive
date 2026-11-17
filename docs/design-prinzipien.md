@@ -57,7 +57,7 @@ Bewegung ist ein Akzent, kein Schmuck. Sie steht nur dort, wo sie etwas erklärt
 7. **Aktion mit Ziel** (Koray 17.11.2026, Abschnitt unten). Prio 1 Aktionen zeigen, wohin ihr Ergebnis geht.
 
 Bewusst ohne Bewegung:
-* Textreiter (Tour planen, Rundtour) wechseln sofort. Chips gleiten seit 17.11. (Anlass 1); nur umgebrochene Chips zum Ankreuzen (Gründe in Bewertungen und Meldungen) wechseln sofort.
+* Textreiter (Tour planen, Rundtour) wechseln sofort. Chips gleiten seit 17.11. (Anlass 1), in der ChipRow wie in der umbrechenden ChipGroup für eine Wahl (Strecke oder Fahrzeit, Alle oder Kontakte, Meldegrund; 18.11.). Nur Chips mit mehreren Treffern zugleich (Gründe in der Fahrtbewertung) wechseln sofort.
 * Seiten und Listen blenden beim Tabwechsel nicht ein. Inhalt ist sofort da (Prinzip 8).
 * Keine Dauerschleifen außer beim Laden. Nie zwei Bewegungen gleichzeitig, die um Aufmerksamkeit bitten.
 * Inhalt federt im Blatt nicht über seine Enden hinaus: oben übernimmt das Blatt, unten endet er, wo er endet.

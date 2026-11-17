@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipGroup } from '@/components/ui/chip';
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
@@ -78,11 +78,11 @@ export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null
         </View>
       ) : (
         <View style={styles.body}>
-          <View style={styles.chips}>
+          <ChipGroup style={styles.chips}>
             {ASK_REASONS.map((r) => (
               <Chip key={r.id} label={r.label} active={reason === r.id} onPress={() => pick(r.id)} onSurface />
             ))}
-          </View>
+          </ChipGroup>
           {reason === 'anderes' ? (
             <>
               <TextInput

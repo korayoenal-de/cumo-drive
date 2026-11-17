@@ -28,7 +28,7 @@ import { passState, usePassLive } from '@/lib/pass-live';
 import { PASSES, passPoint, passSummary, type Pass } from '@/lib/passes';
 import { buildTour, findPlace, FRESH_MS, locate, newSeed, PHASES, toPlanError, type PlanError, type PlanPhase, type Spot, type TourRequest } from '@/components/planner/create-tour';
 import { DirectionDial } from '@/components/planner/direction-dial';
-import { Chip, ChipRow } from '@/components/ui/chip';
+import { Chip, ChipRow, ChipGroup } from '@/components/ui/chip';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { BACK_PILL_H, BackPill } from './back-pill';
@@ -1179,10 +1179,10 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
 
           <Section label={tr('Wie lang?')}>
             <View style={styles.card}>
-              <View style={styles.wrap}>
+              <ChipGroup style={styles.wrap}>
                 <Chip label={tr('Strecke')} active={lengthBy === 'km'} onSurface onPress={() => setLengthBy('km')} />
                 <Chip label={tr('Fahrzeit')} active={lengthBy === 'dauer'} onSurface onPress={() => setLengthBy('dauer')} />
-              </View>
+              </ChipGroup>
               <View style={styles.stepper}>
                 <StepButton
                   kind="minus"

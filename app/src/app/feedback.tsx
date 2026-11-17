@@ -7,7 +7,7 @@ import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
 
 import { SubScreen } from '@/components/settings/settings-ui';
-import { Chip } from '@/components/ui/chip';
+import { Chip, ChipGroup } from '@/components/ui/chip';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
@@ -41,11 +41,11 @@ export default function Feedback() {
       <AppText muted>{t('Was ist dir aufgefallen? Jede Meldung wird geprüft, und du erfährst, wenn es eine Lösung gibt.')}</AppText>
       <View style={styles.block}>
         <AppText style={styles.label}>{t('Worum geht es?')}</AppText>
-        <View style={styles.chips}>
+        <ChipGroup style={styles.chips}>
           {FEEDBACK_AREAS.map((a) => (
             <Chip key={a.id} label={a.label} active={area === a.id} onPress={() => setArea(area === a.id ? null : a.id)} />
           ))}
-        </View>
+        </ChipGroup>
       </View>
       <View style={styles.block}>
         <AppText style={styles.label}>{t('Was genau?')}</AppText>

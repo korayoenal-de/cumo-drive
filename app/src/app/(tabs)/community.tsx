@@ -27,7 +27,7 @@ import { MeetingRoute } from '@/components/group/meeting-route';
 import { refreshContacts, useContacts } from '@/lib/contacts';
 import { DateBlock, RideStatus } from '@/components/community/ride-bits';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
-import { Chip, ChipRow } from '@/components/ui/chip';
+import { Chip, ChipRow, ChipGroup } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { ReportSheet } from '@/components/moderation/report-sheet';
 import { usePrivacy } from '@/components/settings/community-profile';
@@ -500,10 +500,10 @@ export default function Community() {
                   </View>
                 )}
                 <ContactRequests list={contacts.list} />
-                <View style={styles.dsegRow}>
+                <ChipGroup style={styles.dsegRow}>
                   <Chip label={tr('Alle {others}', { others })} active={dseg === 'alle'} onPress={() => setDseg('alle')} />
                   <Chip label={tr('Kontakte {contactCount}', { contactCount })} active={dseg === 'kontakte'} onPress={() => setDseg('kontakte')} />
-                </View>
+                </ChipGroup>
                 {dseg === 'kontakte' && contactCount === 0 ? (
                   <View style={styles.card}>
                     <AppText variant="title">{tr('Noch keine Kontakte')}</AppText>
