@@ -47,6 +47,8 @@ export type Ausfahrt = {
   /** echte Fahrt: Start und Ende, wenn sie lief */
   startedAt: Date | null;
   endedAt: Date | null;
+  /** vom Organisator abgesagt, solange sie noch geplant war (Koray 17.11.) */
+  isCancelled: boolean;
 };
 
 export type Anfrage = {
@@ -86,9 +88,18 @@ type Row = {
   is_over?: boolean | null;
   started_at?: string | null;
   ended_at?: string | null;
+  is_cancelled?: boolean | null;
 };
 
 const PLACEHOLDER = /^(Start der Tour|Dein Standort|Aktueller Standort)?$/i;
+
+/** Abgesagt und der geplante Tag ist noch nicht vorbei: Teilnehmer sehen die Absage in ihren Listen (Koray 17.11.) */
+export function showCancelled(a: Ausfahrt, now = Date.now()): boolean {
+  if (!a.isCancelled) return false;
+  const end = new Date(a.startsAt);
+  end.setHours(23, 59, 59, 999);
+  return end.getTime() > now;
+}
 
 export async function listAusfahrten(): Promise<Ausfahrt[]> {
   const { data: s } = await supabase.auth.getSession();
@@ -125,6 +136,8 @@ export async function listAusfahrten(): Promise<Ausfahrt[]> {
       isOver: r.is_over ?? false,
       startedAt: r.started_at ? new Date(r.started_at) : null,
       endedAt: r.ended_at ? new Date(r.ended_at) : null,
+      // ältere Server ohne Spalte: abgesagte Ausfahrten erscheinen dort als nicht gestartet
+      isCancelled: r.is_cancelled ?? false,
     };
   });
 }

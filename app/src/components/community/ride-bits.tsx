@@ -15,8 +15,12 @@ import { t } from '@/i18n';
 /** Status als getönte Plakette */
 export function RideStatus({ r }: { r: Ausfahrt }) {
   let text: string | null = null;
-  let tone: 'good' | 'signal' | 'muted' = 'muted';
-  if (r.isOwner) {
+  let tone: 'good' | 'signal' | 'muted' | 'danger' = 'muted';
+  // Abgesagt geht vor jedem anderen Status (Koray 17.11.), rot wie alles Endgültige (Konsistenzprüfung 15.11.)
+  if (r.isCancelled) {
+    text = t('Abgesagt');
+    tone = 'danger';
+  } else if (r.isOwner) {
     text = r.openRequests ? `${r.openRequests} ${r.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : t('Deine Ausfahrt');
     tone = r.openRequests ? 'signal' : 'muted';
   } else if (r.myStatus === 'zugesagt') {
@@ -30,8 +34,8 @@ export function RideStatus({ r }: { r: Ausfahrt }) {
   else if (freeSeats(r) === 0) text = t('Ausgebucht');
   if (!text) return null;
   return (
-    <View style={[styles.tag, tone === 'good' ? styles.tagGood : tone === 'signal' ? styles.tagSignal : styles.tagMuted]}>
-      <AppText style={[styles.tagText, { color: tone === 'good' ? Colors.good : tone === 'signal' ? Colors.signal : Colors.muted }]}>{text}</AppText>
+    <View style={[styles.tag, tone === 'good' ? styles.tagGood : tone === 'signal' ? styles.tagSignal : tone === 'danger' ? styles.tagDanger : styles.tagMuted]}>
+      <AppText style={[styles.tagText, { color: tone === 'good' ? Colors.good : tone === 'signal' ? Colors.signal : tone === 'danger' ? Colors.danger : Colors.muted }]}>{text}</AppText>
     </View>
   );
 }
@@ -92,6 +96,7 @@ const styles = StyleSheet.create({
   tagGood: { backgroundColor: Colors.goodTint },
   tagSignal: { backgroundColor: Colors.signalTint },
   tagMuted: { backgroundColor: Colors.surface2 },
+  tagDanger: { backgroundColor: Colors.dangerTint },
   tagText: { fontFamily: Fonts.bold, fontSize: Type.caption },
   date: { width: 52, borderRadius: Radius.m, backgroundColor: Colors.surface2, alignItems: 'center', paddingVertical: 6 },
   dateToday: { backgroundColor: Colors.signalTint },

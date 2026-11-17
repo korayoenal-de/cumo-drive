@@ -162,11 +162,13 @@ async function ausfahrten(w: World, tour: ReturnType<typeof loadSampleTour>) {
     await max.app.ausfahrten.cancelAusfahrt(id).catch((e: Error) => (e2 = e.message));
     c.expect(e2 === 'Fahrt nicht gefunden', 'nur der Organisator zieht zurück');
     await org.app.ausfahrten.cancelAusfahrt(id);
-    // Seit 14.11.: Teilnehmer sehen die abgesagte Ausfahrt weiter (als beendet, für den Rückblick), alle anderen nicht mehr
+    // Koray 17.11.: Teilnehmer sehen die Ausfahrt als abgesagt, bis zum geplanten Tag auch in ihren Listen; alle anderen nicht mehr
     const after = (await exp.app.ausfahrten.listAusfahrten()).find((x) => x.id === id);
-    c.expect(!after, 'zurückgezogene Ausfahrt verschwindet für Unbeteiligte');
+    c.expect(!after, 'abgesagte Ausfahrt verschwindet für Unbeteiligte');
     const member = (await max.app.ausfahrten.listAusfahrten()).find((x) => x.id === id);
-    c.expect(!member || member.rideStatus === 'beendet', `Teilnehmer sieht sie nur noch als beendet (${member?.rideStatus})`);
+    c.expect(member?.isCancelled === true, `Teilnehmer sieht sie als abgesagt (${member?.rideStatus}, abgesagt ${member?.isCancelled})`);
+    c.expect(!!member && max.app.ausfahrten.showCancelled(member), 'Absage steht bis zum geplanten Tag in den Listen');
+    c.expect(member?.isPublic === true, 'bleibt als öffentliche Ausfahrt erkennbar, private stehen weiter nur unter Touren');
     let e3 = '';
     await dora.app.ausfahrten.requestAusfahrt(id, '', null).catch((e: Error) => (e3 = e.message));
     c.expect(/gibt es nicht mehr/.test(e3), `Anfrage danach abgewiesen (${e3})`);

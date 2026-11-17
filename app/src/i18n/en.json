@@ -1840,5 +1840,11 @@
   "{pass} bis {town}": "{pass} to {town}",
   "{name} einladen": "Invite {name}",
   "{name} eingeladen": "{name} invited",
-  "{name} entfernen": "Remove {name}"
+  "{name} entfernen": "Remove {name}",
+  "Diese Ausfahrt wurde abgesagt": "This drive was cancelled",
+  "Du hast sie abgesagt. Alle, die zugesagt hatten, sehen das.": "You cancelled it. Everyone who had joined can see that.",
+  "{ownerName} hat sie abgesagt.": "{ownerName} cancelled it.",
+  "Du hast sie abgesagt": "You cancelled it",
+  "Abgesagt von {ownerName}": "Cancelled by {ownerName}",
+  "{name}, {v1} {v2} Uhr, abgesagt": "{name}, {v1} {v2}, cancelled"
 }

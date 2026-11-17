@@ -7,7 +7,7 @@
  */
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, longDate, requestAusfahrt, shortDate, withdrawAusfahrt, type Ausfahrt } from '@/lib/ausfahrten';
+import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, longDate, requestAusfahrt, shortDate, showCancelled, withdrawAusfahrt, type Ausfahrt } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublished, withdrawCommunityTour, type CommunityTour } from '@/lib/community';
 import { deleteTour, saveTour, syncLibrary, useLibrary } from '@/lib/library';
@@ -67,7 +67,8 @@ export function CommunityPanel(props: {
       })
       .catch((e: Error) => setErr(e.message));
     listAusfahrten()
-      .then((l) => setRides(l.filter((r) => r.isPublic)))
+      // wie in der App: vorbei nicht, abgesagte bis zum geplanten Tag (Koray 17.11.)
+      .then((l) => setRides(l.filter((r) => r.isPublic && (!r.isOver || showCancelled(r)))))
       .catch(() => setRides((r) => r ?? []));
     listDrivers()
       .then(setDrivers)
@@ -561,7 +562,8 @@ function RideCard(props: { r: Ausfahrt; selected: boolean; onSelect: () => void;
   );
 }
 
-function rideStatus(r: Ausfahrt): { text: string; tone: 'good' | 'signal' | 'muted' } | null {
+function rideStatus(r: Ausfahrt): { text: string; tone: 'good' | 'signal' | 'muted' | 'danger' } | null {
+  if (r.isCancelled) return { text: tr('Abgesagt'), tone: 'danger' };
   if (r.isOwner) return { text: r.openRequests ? `${r.openRequests} ${r.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : tr('Deine Ausfahrt'), tone: r.openRequests ? 'signal' : 'muted' };
   if (r.myStatus === 'zugesagt') return { text: tr('Du bist dabei'), tone: 'good' };
   if (r.myStatus === 'eingeladen') return { text: tr('Eingeladen'), tone: 'signal' };

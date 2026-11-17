@@ -14,7 +14,7 @@ import { TypoTabs } from '@/components/planner/planner-parts';
 import { RouteThumb } from '@/components/tours/tour-bits';
 import { TourCard } from '@/components/tours/tour-card';
 import { DateBlock } from '@/components/community/ride-bits';
-import { clock, listAusfahrten, type Ausfahrt } from '@/lib/ausfahrten';
+import { clock, listAusfahrten, showCancelled, type Ausfahrt } from '@/lib/ausfahrten';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { ConfirmSheet } from '@/components/ui/action-sheet';
@@ -46,7 +46,7 @@ function Upcoming() {
     useCallback(() => {
       let alive = true;
       listAusfahrten()
-        .then((l) => alive && setRides(l.filter((a) => a.rideStatus !== 'beendet' && !a.isOver && (a.isOwner || a.myStatus === 'zugesagt' || a.myStatus === 'eingeladen' || a.myStatus === 'angefragt'))))
+        .then((l) => alive && setRides(l.filter((a) => ((a.rideStatus !== 'beendet' && !a.isOver) || showCancelled(a)) && (a.isOwner || a.myStatus === 'zugesagt' || a.myStatus === 'eingeladen' || a.myStatus === 'angefragt'))))
         .catch(() => undefined);
       return () => {
         alive = false;
@@ -58,13 +58,18 @@ function Upcoming() {
     <View style={styles.upcoming}>
       <AppText style={styles.upLabel}>{tr('Anstehend')}</AppText>
       {rides.map((a) => {
-        const state = a.isOwner
-          ? fmtMeta(plaetze(Math.max(0, a.maxMembers - a.taken)).text, a.openRequests ? `${a.openRequests} ${a.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : null)
-          : a.myStatus === 'eingeladen'
-            ? tr('Einladung von {ownerName}', { ownerName: a.ownerName })
-            : a.myStatus === 'angefragt'
-              ? tr('Angefragt, wartet auf Antwort')
-              : tr('Mit {ownerName}', { ownerName: a.ownerName });
+        // Abgesagt steht bis zum geplanten Tag da, damit niemand umsonst zum Treffpunkt fährt (Koray 17.11.)
+        const state = a.isCancelled
+          ? a.isOwner
+            ? tr('Du hast sie abgesagt')
+            : tr('Abgesagt von {ownerName}', { ownerName: a.ownerName })
+          : a.isOwner
+            ? fmtMeta(plaetze(Math.max(0, a.maxMembers - a.taken)).text, a.openRequests ? `${a.openRequests} ${a.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : null)
+            : a.myStatus === 'eingeladen'
+              ? tr('Einladung von {ownerName}', { ownerName: a.ownerName })
+              : a.myStatus === 'angefragt'
+                ? tr('Angefragt, wartet auf Antwort')
+                : tr('Mit {ownerName}', { ownerName: a.ownerName });
         return (
           <Pressable
             key={a.id}
@@ -76,7 +81,7 @@ function Upcoming() {
             <View style={styles.flex}>
               <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
               <AppText muted numberOfLines={1}>{fmtMeta(wann(a.startsAt), a.meeting?.name ? tr('ab {name}', { name: a.meeting.name }) : null, a.km != null ? strecke(a.km) : null)}</AppText>
-              <AppText style={a.myStatus === 'eingeladen' || a.openRequests ? styles.upAttn : styles.upMuted} numberOfLines={1}>{state}</AppText>
+              <AppText style={a.isCancelled ? styles.upDanger : a.myStatus === 'eingeladen' || a.openRequests ? styles.upAttn : styles.upMuted} numberOfLines={1}>{state}</AppText>
             </View>
             {!a.isPublic && (
               <View style={styles.privat}>
@@ -430,6 +435,7 @@ const styles = StyleSheet.create({
   upName: { fontFamily: Fonts.bold, fontSize: Type.title },
   upMuted: { color: Colors.muted },
   upAttn: { color: Colors.signal, fontFamily: Fonts.semibold },
+  upDanger: { color: Colors.danger, fontFamily: Fonts.semibold },
   privat: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: Colors.surface2 },
   privatText: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
   driveRow: { flexDirection: 'row', alignItems: 'center' },
