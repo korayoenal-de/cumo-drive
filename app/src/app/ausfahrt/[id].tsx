@@ -20,6 +20,7 @@ import { Avatar, DateBlock } from '@/components/community/ride-bits';
 import { RoutePreview } from '@/components/planner/route-preview';
 import { ReportSheet } from '@/components/moderation/report-sheet';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { AddButton } from '@/components/ui/add-button';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import {
@@ -845,16 +846,13 @@ function InviteBox({ exclude, onInvite, busyId, contacts, onPlaced, onClose, onL
               <AppText style={styles.name}>{p.displayName}</AppText>
               {p.car ? <AppText variant="caption" muted numberOfLines={1}>{p.car}</AppText> : null}
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={sent ? `${p.displayName} eingeladen` : `${p.displayName} einladen`}
-              disabled={sent || !!busyId}
-              onPress={() =>
-                void onInvite(p).then((ok) => ok && setDone((d) => new Set(d).add(p.id)))
-              }
-              style={[styles.invitePill, sent && styles.invitePillDone]}>
-              {busyId === p.id ? <ActivityIndicator color={Colors.ground} /> : <AppText style={[styles.invitePillText, sent && styles.invitePillTextDone]}>{sent ? tr('Eingeladen') : tr('Einladen')}</AppText>}
-            </Pressable>
+            <AddButton
+              label={sent ? tr('{name} eingeladen', { name: p.displayName }) : tr('{name} einladen', { name: p.displayName })}
+              busy={busyId === p.id}
+              done={sent}
+              disabled={!!busyId}
+              onPress={() => void onInvite(p).then((ok) => ok && setDone((d) => new Set(d).add(p.id)))}
+            />
           </Animated.View>
         );
       })}
@@ -900,10 +898,6 @@ const styles = StyleSheet.create({
   inviteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.s, height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
   inputOnSurface: { backgroundColor: Colors.surface2 },
   inviteBox: { gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l },
-  invitePill: { height: 44, minWidth: 96, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center' },
-  invitePillDone: { backgroundColor: Colors.goodTint },
-  invitePillText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.ground },
-  invitePillTextDone: { color: Colors.good },
   tagText: { fontFamily: Fonts.bold, fontSize: Type.caption },
   fields: { gap: Spacing.s },
   field: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.m },

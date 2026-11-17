@@ -8,6 +8,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { AddButton } from '@/components/ui/add-button';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
@@ -266,14 +267,7 @@ export default function GruppeNeu() {
                 </AppText>
               ) : null}
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`${p.displayName} einladen`}
-              disabled={!!busy || full}
-              onPress={() => void invite(p)}
-              style={[styles.smallBtn, (!!busy || full) && styles.disabled]}>
-              {busy === p.id ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.smallBtnText}>{t('Einladen')}</AppText>}
-            </Pressable>
+            <AddButton label={tr('{name} einladen', { name: p.displayName })} busy={busy === p.id} disabled={!!busy || full} onPress={() => void invite(p)} />
           </View>
         ))}
         {q.length >= 2 && !searching && suggestions.length === 0 && (
@@ -379,8 +373,6 @@ const styles = StyleSheet.create({
   mutedText: { color: Colors.muted, fontFamily: Fonts.semibold },
   removeBtn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   removeText: { color: Colors.muted, fontFamily: Fonts.bold, fontSize: Type.small },
-  smallBtn: { height: Size.chip, minWidth: 96, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
-  smallBtnText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.body },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   disabled: { opacity: 0.4 },

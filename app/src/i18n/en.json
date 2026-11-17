@@ -1837,5 +1837,7 @@
   "Konto\nanlegen": "Create\naccount",
   "Von hier keine echte Runde": "No real loop from here",
   "Die Runde fährt {km} km auf demselben Weg zurück.": "The loop drives {km} km back the same way.",
-  "{pass} bis {town}": "{pass} to {town}"
+  "{pass} bis {town}": "{pass} to {town}",
+  "{name} einladen": "Invite {name}",
+  "{name} eingeladen": "{name} invited"
 }
