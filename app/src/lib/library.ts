@@ -132,10 +132,23 @@ export function fromCommunity(t: Pick<SavedTour, 'published' | 'author' | 'folde
   return !t.published && (!!t.author || t.folder === 'Community');
 }
 
+/** Gleiche Tour für den Abgleich: Name, Länge, Start und Ziel, Ordner. Start und Ziel statt Punktzahl, weil
+ * heruntergeladene Kopien ausgedünnt sind und weniger Punkte haben. */
+function dupeKey(t: Pick<SavedTour, 'name' | 'laenge_km' | 'wegpunkte' | 'folder'>): string {
+  const a0 = t.wegpunkte[0];
+  const a1 = t.wegpunkte[t.wegpunkte.length - 1];
+  const ends = a0 && a1 ? `${a0[0].toFixed(4)},${a0[1].toFixed(4)},${a1[0].toFixed(4)},${a1[1].toFixed(4)},${t.wegpunkte.length}` : '';
+  return `${t.name}|${Math.round(t.laenge_km * 10)}|${ends}|${(t.folder ?? '').trim()}`;
+}
+
 export function saveTour(t: Tour & { minutes?: number; curves?: number; profile?: Profile; author?: string; communityId?: string; edited?: boolean }, folder: string, id?: string): SavedTour {
   const list = read();
   const now = new Date().toISOString();
-  const old = id ? list.find((x) => x.id === id) : undefined;
+  // Dieselbe Tour schon gespeichert (Koray 17.11.: zweimal Losfahren als Gruppe auf derselben Runde): die vorhandene
+  // nehmen. Sonst legte das eine Kopie an, die der Abgleich als doppelt gleich wieder löschte, und die Gruppenfahrt
+  // fand ihre Tour nicht mehr.
+  const same = !id ? list.find((x) => dupeKey(x) === dupeKey({ ...t, folder })) : undefined;
+  const old = id ? list.find((x) => x.id === id) : same;
   // Herkunft bleibt beim Überschreiben erhalten; ändert sich dabei die Strecke, gilt die Tour als abgewandelt
   const keepOrigin = old && fromCommunity(old);
   const saved: SavedTour = {
@@ -310,11 +323,7 @@ export async function syncLibrary(): Promise<void> {
     const seen = new Map<string, SavedTour>();
     const dupes: SavedTour[] = [];
     for (const t of [...read()].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
-      // Start und Ziel statt Punktzahl: heruntergeladene Kopien sind ausgedünnt und haben weniger Punkte
-      const a0 = t.wegpunkte[0];
-      const a1 = t.wegpunkte[t.wegpunkte.length - 1];
-      const ends = a0 && a1 ? `${a0[0].toFixed(4)},${a0[1].toFixed(4)},${a1[0].toFixed(4)},${a1[1].toFixed(4)},${t.wegpunkte.length}` : '';
-      const key = `${t.name}|${Math.round(t.laenge_km * 10)}|${ends}|${t.folder}`;
+      const key = dupeKey(t);
       const first = seen.get(key);
       if (first && !t.published) dupes.push(t);
       else if (!first) seen.set(key, t);
