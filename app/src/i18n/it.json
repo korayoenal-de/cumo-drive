@@ -1839,5 +1839,6 @@
   "Die Runde fährt {km} km auf demselben Weg zurück.": "Il giro ripercorre {km} km sulla stessa strada.",
   "{pass} bis {town}": "{pass} fino a {town}",
   "{name} einladen": "Invita {name}",
-  "{name} eingeladen": "{name} invitato"
+  "{name} eingeladen": "{name} invitato",
+  "{name} entfernen": "Rimuovi {name}"
 }

@@ -34,6 +34,29 @@ export function AddButton({ label, onPress, busy, done, disabled }: { label: str
   );
 }
 
+/**
+ * Runder Entfernen Knopf, Gegenstück zum Plus (Koray 17.11.: das Kreuz als Schriftzeichen war zu dünn, die Symbole
+ * sollen einheitlich sein). Gleiche Fläche, gleiches Symbol Gewicht wie das Plus, nur in Grau.
+ */
+export function RemoveButton({ label, onPress, busy, disabled }: { label: string; onPress: () => void; busy?: boolean; disabled?: boolean }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled, busy: !!busy }}
+      hitSlop={8}
+      disabled={disabled || busy}
+      onPress={onPress}
+      style={({ pressed }) => [styles.btn, pressed && styles.pressed, disabled && styles.off]}>
+      {busy ? (
+        <ActivityIndicator color={Colors.muted} />
+      ) : (
+        <SymbolView name="xmark" size={16} weight="bold" tintColor={Colors.muted} fallback={<AppText style={[styles.glyph, styles.glyphMuted]}>✕</AppText>} />
+      )}
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   btn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   done: { backgroundColor: Colors.goodTint },
@@ -41,4 +64,5 @@ const styles = StyleSheet.create({
   off: { opacity: 0.4 },
   glyph: { fontFamily: Fonts.bold, fontSize: 22, lineHeight: 24, color: Colors.text },
   glyphDone: { color: Colors.good },
+  glyphMuted: { color: Colors.muted, fontSize: 18 },
 });

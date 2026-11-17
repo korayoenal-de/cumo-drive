@@ -2,6 +2,7 @@
  * Einwilligung bei der Registrierung (Koray 17.11.: Opt in). Eine Zeile zum Antippen mit Kästchen, Pflicht oder
  * freiwillig. Die ganze Zeile ist die Trefferfläche (ab 44 pt), VoiceOver liest sie als Kästchen mit Zustand.
  */
+import { SymbolView } from 'expo-symbols';
 import * as WebBrowser from 'expo-web-browser';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -18,7 +19,7 @@ export function ConsentRow({ checked, onChange, title, hint }: { checked: boolea
       accessibilityLabel={hint ? `${title}. ${hint}` : title}
       onPress={() => onChange(!checked)}
       style={styles.row}>
-      <View style={[styles.box, checked && styles.boxOn]}>{checked ? <AppText style={styles.tick}>✓</AppText> : null}</View>
+      <View style={[styles.box, checked && styles.boxOn]}>{checked ? <SymbolView name="checkmark" size={14} weight="bold" tintColor={Colors.onSignal} fallback={<AppText style={styles.tick}>✓</AppText>} /> : null}</View>
       <View style={styles.text}>
         <AppText style={styles.title}>{title}</AppText>
         {hint ? <AppText style={styles.hint}>{hint}</AppText> : null}

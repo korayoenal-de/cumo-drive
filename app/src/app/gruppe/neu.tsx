@@ -8,7 +8,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { AddButton } from '@/components/ui/add-button';
+import { AddButton, RemoveButton } from '@/components/ui/add-button';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
@@ -343,9 +343,7 @@ function MemberLine({
         </AppText>
       </View>
       {onRemove && (
-        <Pressable accessibilityRole="button" accessibilityLabel={`${name} entfernen`} hitSlop={8} disabled={removing} onPress={onRemove} style={styles.removeBtn}>
-          {removing ? <ActivityIndicator color={Colors.muted} /> : <AppText style={styles.removeText}>✕</AppText>}
-        </Pressable>
+        <RemoveButton label={tr('{name} entfernen', { name })} busy={removing} onPress={onRemove} />
       )}
     </View>
   );
@@ -371,8 +369,6 @@ const styles = StyleSheet.create({
   warnText: { color: Colors.warn, fontFamily: Fonts.semibold },
   badgeMuted: { backgroundColor: Colors.surface2 },
   mutedText: { color: Colors.muted, fontFamily: Fonts.semibold },
-  removeBtn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  removeText: { color: Colors.muted, fontFamily: Fonts.bold, fontSize: Type.small },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   disabled: { opacity: 0.4 },
