@@ -25,7 +25,7 @@ Stand: 17. November 2026, 16:00 (gegen Code und Git Verlauf geprüft; Prüfung v
 * [x] Hook Before User Created aktiv, E Mail Bestätigung an (17.11.)
 * [ ] profile-next.sh auf r1 und r2 (nach dem Neuaufbau von r2), Profil schnell kommt mit dem nächsten Neuaufbau; danach FAST_SPEED und WIDTH_MODEL aus cumo-routing.ts löschen
 * [x] OTA: Kurvig Gewichtungen nur im Server, Untertitel längste Runde (17.11.)
-* [ ] Verschlüsselte App Daten (kuratierte Strecken, Pässe und Empfehlungen liegen heute lesbar im App Paket, siehe Startprüfung)
+* [x] App Daten verschleiert und mit Fingerabdruck app-paket (17.11., OTA; nach Änderungen an den JSON Dateien `npm run pack-data`)
 * [x] Opt in bei der Registrierung live (Migration, Webseite m, OTA 17.11.)
 * [ ] Nach dem Start: Rundtour Bewertung als Server Dienst, Alarm bei auffälligen Konten, Marke anmelden, AGB zum Anwalt
 
@@ -92,7 +92,7 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [ ] Funk: Minuten bei LiveKit beobachten (Claude)
 * [ ] Routing Server: Token Pflicht und Mengengrenzen scharf schalten (zählen seit 17.11., scharf am 18.11.)
 * [ ] Profil Schnell fest im Server (profile-next.sh, wirksam mit dem Neuaufbau am 22.11.); Kurvig seit 17.11. nur im Server
-* [ ] LiveKit Ship vor dem Start, mit Kostenalarm (Koray bestellt); Supabase Pro seit 17.11.
+* [x] LiveKit Ship (Koray 17.11.), Supabase Pro seit 17.11.
 * [ ] DNS für routing.cumodrive.de und Domain für den Web Planer (Koray)
 * [ ] Marke: angemeldet, noch nicht eingetragen; Widerspruchsfrist wegen der KUMO Marken bis drei Monate nach Veröffentlichung der Eintragung
 
