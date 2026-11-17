@@ -4,7 +4,7 @@
  * Höhenprofil, Stopps und deinen bisherigen Runden. Neu würfeln bringt eine andere Runde gleicher Länge
  * und sagt ehrlich, wenn es keine bessere mehr gibt (noGoodAlternative aus lib/smart-roundtrip).
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { buildTour, newSeed, toPlanError, type PlanPhase, type TourRequest } from '@/components/planner/create-tour';
 import { reverseName } from '@/lib/geocode';
@@ -26,6 +26,7 @@ import { spliceStop } from '@/lib/stop-splice';
 import { Spacing } from '@/constants/theme';
 
 import { type PlannedTour as LibPlannedTour } from '@/lib/plan';
+import { ensureRoadArea } from '@/lib/road-data';
 import { Accordion, Chip, Gauge, PlaceSearch, Section, Toggle } from './web-parts';
 import { ResultDetails, ResultStats, StatusLine } from './web-result';
 import { StopsPanel } from './web-tour-panels';
@@ -196,6 +197,10 @@ export function RoundTripPanel(props: {
   onCreate: (req: TourRequest) => void;
 }) {
   const [start, setStart] = useState<{ p: LatLon; name: string } | null>(props.initialStart);
+  // Strecken rund um den Start schon laden, während noch Länge und Richtung gewählt werden (kachelweise seit 17.11.)
+  useEffect(() => {
+    if (start) void ensureRoadArea([start.p], 60);
+  }, [start]);
   const [lengthBy, setLengthBy] = useState<'km' | 'dauer'>('km');
   const [kmIdx, setKmIdx] = useState(3);
   const [minIdx, setMinIdx] = useState(2);

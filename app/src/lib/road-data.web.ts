@@ -21,6 +21,8 @@ const stops = new Map<string, unknown>();
 /** schon geladene oder verweigerte Kacheln */
 const tilesDone = new Set<string>();
 let limited = false;
+/** ältere Edge Function: hat schon alles auf einmal geliefert */
+let complete = false;
 
 export function onRoadData(cb: (d: RoadData) => void) {
   listeners.add(cb);
@@ -48,6 +50,7 @@ function merge(d: Res, asked: string[]) {
   for (const r of d.curated as { id: string }[]) roads.set(r.id, r);
   for (const s of (Array.isArray(d.stops) ? d.stops : []) as { id: string }[]) stops.set(s.id, s);
   // ältere Edge Function ohne Kacheln lieferte alles auf einmal: dann gilt das Gefragte als geladen
+  if (!d.tiles) complete = true;
   for (const t of d.tiles ?? asked) tilesDone.add(t);
   for (const t of d.denied ?? []) tilesDone.add(t);
   if (d.denied?.length) limited = true;
@@ -102,6 +105,7 @@ let areaChain: Promise<unknown> = Promise.resolve();
 /** Vor dem Planen: Strecken und Stopps rund um die Punkte nachladen. Ohne Netz plant der Planer trotzdem. */
 export function ensureRoadArea(points: LatLon[], radiusKm: number): Promise<void> {
   const run = async () => {
+    if (complete) return;
     const missing = tilesAround(points, radiusKm).filter((t) => !tilesDone.has(t));
     if (!missing.length) return;
     try {
