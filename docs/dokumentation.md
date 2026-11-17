@@ -208,6 +208,7 @@ Jede Ansicht wird an den Regeln in docs/design-prinzipien.md gemessen (gespiegel
 JavaScript Änderungen gehen per OTA Update in Minuten aufs Handy; neue native Pakete und CarPlay brauchen einen neuen TestFlight Build. Native Pakete werden im Code so geladen, dass ältere Builds dieselben Updates ohne Absturz bekommen.
 
 * **Vor jedem Update ein grüner Testlauf** (Entscheidung 17.11.): im Ordner app `npm run vor-update`, etwa 4 Minuten. Rot heißt: kein OTA und kein Build.
+* **OTA aus jeder Sitzung** (17.11.): nach Korays OK einen Tag `ota-JJJJMMTT-HHMM` pushen; GitHub Actions macht Testlauf und Update. Braucht das Repo Secret EXPO_TOKEN.
 * Kanal preview, Runtime 1.1.0. OTA nur aus einem sauberen Arbeitsstand ohne .env: `eas update --channel preview --environment preview --platform ios` (nur iOS: Android gibt es noch nicht, der Web Planer kommt nicht per OTA; spart gut die Hälfte der Zeit, Messung 16.11.)
 * Builds: `eas build --platform ios --profile preview --auto-submit`, Expo Starter Plan seit 10.11.
 * Apple: Einzelperson, Team ID N9DX399W33, Bundle ID de.rallycumo.drive; Push Schlüssel und Profil mit Push seit 10.11.

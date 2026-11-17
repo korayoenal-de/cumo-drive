@@ -1,37 +1,77 @@
 name: EAS Update (TestFlight)
 
-# Schickt den aktuellen JS Stand als OTA Update an den Kanal preview,
-# also an die TestFlight Builds. Läuft bei jedem Push auf main, der die App
-# betrifft, oder per Hand unter Actions. Braucht das Repo Secret EXPO_TOKEN.
-
-# Automatisch bei Push erst wieder einschalten, wenn das Secret EXPO_TOKEN im Repo hinterlegt ist
-# (sonst schlägt jeder Lauf fehl und GitHub schickt eine Mail). Bis dahin nur per Hand.
+# Schickt den aktuellen JS Stand als OTA Update an den Kanal preview, also an die TestFlight Builds.
+#
+# Auslöser (Koray 17.11.2026):
+# * ein Tag ota-* auf einem Commit, etwa `git tag ota-20261117-1430 && git push origin ota-20261117-1430`.
+#   So kann jede Sitzung mit GitHub Zugriff ein freigegebenes Update auslösen, ohne eigenen Expo Zugang.
+# * per Hand unter Actions.
+#
+# Vor dem Update läuft immer der Pflichtlauf `npm run vor-update` (Typen, Lint, Tests, QS Korpus,
+# Stresstest, Simulation, feste Routen). Ist er rot, geht kein Update raus. Der Bericht hängt am Lauf.
+#
+# Braucht das Repo Secret EXPO_TOKEN (Expo, Account Settings, Access Tokens; trägt Koray ein).
 on:
+  push:
+    tags:
+      - 'ota-*'
   workflow_dispatch:
     inputs:
       message:
         description: Notiz zum Update
         required: false
 
+concurrency:
+  group: eas-update
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: app
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: app/package-lock.json
+      - run: npm ci
+
+      - name: Testlauf vor dem Update
+        run: npm run vor-update
+      - name: Bericht des Testlaufs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vor-update
+          path: app/qa/out/
+          if-no-files-found: ignore
+      - name: Bericht in der Zusammenfassung
+        if: always()
+        run: cat qa/out/vor-update.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+
+      - name: Expo Zugang prüfen
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Das Secret EXPO_TOKEN fehlt im Repo (Settings, Secrets and variables, Actions)."
+            exit 1
+          fi
       - uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
-      - run: npm ci
       - name: Update veröffentlichen
         env:
-          MSG: ${{ github.event.inputs.message || github.event.head_commit.message }}
-        run: eas update --channel preview --environment preview --non-interactive --message "$(printf '%s' "$MSG" | head -n 1)"
+          MSG: ${{ github.event.inputs.message || github.event.head_commit.message || github.ref_name }}
+        run: |
+          NOTE=$(git log -1 --format=%s)
+          eas update --channel preview --environment preview --platform ios --non-interactive \
+            --message "$(printf '%s' "${MSG:-$NOTE}" | head -n 1)"
