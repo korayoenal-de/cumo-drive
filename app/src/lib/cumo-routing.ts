@@ -526,8 +526,19 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatL
     ...(features.length ? { areas: { type: 'FeatureCollection', features } } : {}),
     priority,
     ...(!builtIn && (profile === 'kurvig' || profile === 'paesse') ? { distance_influence: 5 } : {}),
+    ...(profile === 'schnell' ? { speed: FAST_SPEED } : {}),
   };
 }
+
+/**
+ * Schnell soll am schnellsten sein (Koray 17.11.). Der Server schätzt kurvige Bergstraßen zu schnell: München nach
+ * Innsbruck führte über Kesselberg und Walchensee (laut Server 105 min, über Kufstein 111 min). Auf stark gewundenen
+ * Stücken langsamer gerechnet, geht es über A 95, Garmisch und Mittenwald; auch die Fahrzeit wird ehrlicher.
+ */
+const FAST_SPEED = [
+  { if: 'curvature < 0.9', multiply_by: '0.75' },
+  { if: 'curvature < 0.7', multiply_by: '0.7' },
+];
 
 /* ---------- Etappen Check auf den Server Details ---------- */
 
