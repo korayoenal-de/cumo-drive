@@ -40,6 +40,8 @@ export const Colors = {
   empty: '#3A3A3F',
   /** Schwebende Karten über der Karte (Ansagen, Pass Aktionen): ground fast deckend */
   overlay: 'rgba(11,11,12,0.94)',
+  /** Weitere Touren an derselben Stelle, grau unter der gewählten (überlagernde Touren, 17.11.) */
+  overlapLine: 'rgba(244,244,242,0.45)',
   /** Schwebende Leisten (Tableiste, Navigation unten): surface fast deckend */
   overlaySurface: 'rgba(22,22,24,0.97)',
   /** Gedrückt oder ausgewählt auf dunklem Glas */

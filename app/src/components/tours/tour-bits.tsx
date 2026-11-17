@@ -20,13 +20,14 @@ export const THUMB = 56;
  * Mini Karte der Strecke: Linie in Signalfarbe, Start als Punkt. Ohne Form (Linie lädt noch) bleibt
  * die dunkle Fläche als ruhiger Platzhalter in derselben Größe; die Linie blendet dann auf.
  */
-export const RouteThumb = memo(function RouteThumb({ shape, fade }: { shape: ThumbShape | null | undefined; fade?: boolean }) {
+/** muted: grau statt orange (nicht gewählte Tour in der Reihe überlagernder Touren, 17.11.) */
+export const RouteThumb = memo(function RouteThumb({ shape, fade, muted }: { shape: ThumbShape | null | undefined; fade?: boolean; muted?: boolean }) {
   return (
     <View style={styles.thumb} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
       {shape && (
         <Animated.View entering={fade ? FadeIn.duration(Motion.enter) : undefined}>
           <Svg width={THUMB} height={THUMB}>
-            <Polyline points={shape.points} fill="none" stroke={Colors.signal} strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round" />
+            <Polyline points={shape.points} fill="none" stroke={muted ? Colors.muted : Colors.signal} strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round" />
             <Circle cx={shape.start[0]} cy={shape.start[1]} r={3} fill={Colors.text} />
           </Svg>
         </Animated.View>

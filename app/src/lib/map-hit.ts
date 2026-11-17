@@ -111,3 +111,35 @@ export function simplifyForScreen(line: LatLon[], region: HitRegion, widthPt: nu
   }
   return line.filter((_, i) => keep[i] === 1);
 }
+
+/**
+ * Abstand vom Tipp zur nächsten Stelle einer Linie in km (örtlich flach gerechnet, für Treffer genau genug).
+ * Für überlagernde Touren (Koray 17.11.): welche Touren laufen unter dem Finger.
+ */
+export function kmToLine(line: LatLon[], at: LatLon): number {
+  if (!line.length) return Number.POSITIVE_INFINITY;
+  const kx = 111.32 * Math.cos((at[0] * Math.PI) / 180);
+  const ky = 110.57;
+  let best = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < line.length; i++) {
+    const a = line[i];
+    const b = line[Math.min(i + 1, line.length - 1)];
+    const ax = (a[1] - at[1]) * kx;
+    const ay = (a[0] - at[0]) * ky;
+    const bx = (b[1] - at[1]) * kx;
+    const by = (b[0] - at[0]) * ky;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const len = dx * dx + dy * dy;
+    const t = len > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len)) : 0;
+    const d = Math.hypot(ax + t * dx, ay + t * dy);
+    if (d < best) best = d;
+  }
+  return best;
+}
+
+/** Fangradius in km für den Ausschnitt (Treffer auf Linien gleich groß wie auf Pins) */
+export function hitKm(region: HitRegion, widthPt: number, radiusPt = HIT_RADIUS.region): number {
+  const kmPerPt = (region.longitudeDelta * 111.32 * Math.cos((region.latitude * Math.PI) / 180)) / Math.max(1, widthPt);
+  return radiusPt * kmPerPt;
+}

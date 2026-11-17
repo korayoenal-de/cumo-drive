@@ -9,6 +9,7 @@
 import { Kennzahlen, SeatsBadge } from '@/components/ui/kennzahlen';
 import { fahrzeit, meta as fmtMeta, strecke, wann } from '@/lib/format';
 import { seenTab } from '@/lib/fly';
+import { haptic } from '@/lib/haptics';
 import { flyFrom } from '@/components/ui/morph-action';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { useRideFun } from '@/lib/ride-fun';
@@ -41,6 +42,8 @@ import { copyCommunityTour, listCommunity, loadCommunityTour, removeKeepPublishe
 import { deleteTour, saveTour, syncLibrary, useLibrary, type SavedTour } from '@/lib/library';
 import { showToast } from '@/lib/toast';
 import { requestCommunityLine, setListReach, useCommunityLine, useInReach } from '@/lib/community-lines';
+import { kmToLine } from '@/lib/map-hit';
+import { OverlapRail } from '@/components/community/overlap-rail';
 import { setEditTour } from '@/lib/edit-tour';
 import { InvitesList, useInviteCount } from '@/components/group/invites-banner';
 import { formatKm, type LatLon } from '@/lib/tour';
@@ -121,6 +124,10 @@ export default function Community() {
   const driverY = useRef(new Map<string, number>());
   const [selected, setSelected] = useState<string | null>(null);
   const [line, setLine] = useState<LatLon[] | null>(null);
+  /** Überlagernde Touren an der getippten Stelle (Koray 17.11.): Reihe über dem Blatt, null ohne Überlagerung */
+  const [stack, setStack] = useState<string[] | null>(null);
+  const [stackLines, setStackLines] = useState<Record<string, LatLon[]>>({});
+  const tapSeq = useRef(0);
   const lines = useRef(new Map<string, LatLon[]>());
   const selRef = useRef<string | null>(null);
   const userId = session?.user.id;
@@ -213,6 +220,7 @@ export default function Community() {
 
   const select = (id: string | null, fromList = false) => {
     Keyboard.dismiss();
+    if (fromList || !id) setStack(null);
     selRef.current = id;
     setSelected(id);
     if (!id) {
@@ -260,8 +268,55 @@ export default function Community() {
     selRef.current = null;
     setSelected(null);
     setLine(null);
+    setStack(null);
     setDetent(1);
   };
+
+  /**
+   * Tipp auf die Karte der Touren (Koray 17.11., überlagernde Touren): welche Touren laufen unter dem Finger?
+   * Geprüft werden die Linien der Touren, die von der Stelle aus erreichbar starten (höchstens 12, nächste zuerst).
+   * Eine Tour: wie bisher wählen. Mehrere: die Reihe über dem Blatt, die getroffene Marke vorne, dann die nächste Linie.
+   */
+  const onMapTap = (at: LatLon | null, pinId: string | null, radiusKm: number) => {
+    const seq = ++tapSeq.current;
+    if (seg !== 'routen' || !at) {
+      setStack(null);
+      select(pinId);
+      return;
+    }
+    // die getroffene Marke sofort zeigen, die Prüfung der Linien folgt
+    if (pinId) select(pinId);
+    const near = (tours ?? [])
+      .filter((x) => x.start_lat != null && x.start_lon != null)
+      .map((x) => ({ x, d: kmBetween([x.start_lat as number, x.start_lon as number], at) }))
+      .filter((v) => v.d <= Math.max(Number(v.x.km), 10))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 12)
+      .map((v) => v.x);
+    void Promise.all(near.map((x) => requestCommunityLine(x).then((v) => ({ x, v, d: v ? kmToLine(v.line, at) : Number.POSITIVE_INFINITY })))).then((rs) => {
+      if (tapSeq.current !== seq) return;
+      const hits = rs.filter((r) => r.d <= radiusKm).sort((a, b) => a.d - b.d);
+      const ids = hits.map((r) => r.x.id);
+      if (pinId) {
+        const i = ids.indexOf(pinId);
+        if (i > 0) ids.splice(i, 1);
+        if (i !== 0) ids.unshift(pinId);
+      }
+      if (ids.length < 2) {
+        setStack(null);
+        if (!pinId) select(ids[0] ?? null);
+        return;
+      }
+      const ls: Record<string, LatLon[]> = {};
+      for (const r of hits) if (r.v) ls[r.x.id] = r.v.line;
+      setStackLines(ls);
+      setStack(ids);
+      haptic('rastung');
+      if (selRef.current !== ids[0]) select(ids[0]);
+    });
+  };
+  const stackTours = stack ? stack.map((id) => tours?.find((x) => x.id === id)).filter((x): x is CommunityTour => !!x) : [];
+  const otherLines = stack ? stack.filter((id) => id !== selected).map((id) => stackLines[id]).filter((l): l is LatLon[] => !!l) : undefined;
 
   const topH = insets.top + Spacing.s + 48;
 
@@ -381,7 +436,10 @@ export default function Community() {
         topReserve={topH + Spacing.s}
         header={header}
         background={(covered) => (
-          <CommunityMap pins={pins} selected={selected} onSelect={select} line={line} bottom={covered} top={topH} style={StyleSheet.absoluteFill} />
+          <>
+            <CommunityMap pins={pins} selected={selected} onSelect={select} onTap={onMapTap} others={otherLines} keepView={stackTours.length > 1} line={line} bottom={covered} top={topH} style={StyleSheet.absoluteFill} />
+            {stackTours.length > 1 && <OverlapRail tours={stackTours} active={selected} onPick={(id) => select(id)} bottom={covered + Spacing.s} />}
+          </>
         )}>
         {seg === 'routen' ? (
           <View style={styles.body}>

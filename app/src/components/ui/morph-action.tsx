@@ -6,7 +6,7 @@
  *   Haptik losfahren, dann folgt der nächste Bildschirm. Mit reveal baut sie sich dort von links nach rechts auf.
  * Ohne beides ist es eine normale Taste mit Symbol. Regeln: docs/design-prinzipien.md, Abschnitt Aktionen mit Ziel.
  */
-import { forwardRef, useImperativeHandle, useRef, useState, type ComponentRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -69,16 +69,35 @@ export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphActio
   const iconCx = (w - cw) / 2 + 10;
   const timing = { duration: reduced ? 0 : MORPH_MS, easing: EASE_OUT };
 
+  // Maße auch in Refs: beide Messungen kommen oft im selben Moment, der Zustand wäre dann noch 0
+  // (Koray 17.11.: Start baute sich nie auf und blieb unsichtbar)
+  const size = useRef({ w: 0, cw: 0 });
   const onLayout = (e: LayoutChangeEvent) => {
     const nw = e.nativeEvent.layout.width;
+    size.current.w = nw;
     setW(nw);
-    if (!revealed.current && cw > 0) startReveal(nw, cw);
+    if (!revealed.current && size.current.cw > 0) startReveal(nw, size.current.cw);
   };
   const onContent = (e: LayoutChangeEvent) => {
     const ncw = e.nativeEvent.layout.width;
+    size.current.cw = ncw;
     setCw(ncw);
-    if (!revealed.current && w > 0) startReveal(w, ncw);
+    if (!revealed.current && size.current.w > 0) startReveal(size.current.w, ncw);
   };
+  // Sicherheitsnetz: nie unsichtbar bleiben
+  useEffect(() => {
+    if (!reveal) return;
+    const id = setTimeout(() => {
+      if (revealed.current) return;
+      revealed.current = true;
+      right.value = 0;
+      shift.value = 0;
+      text.value = 1;
+      shown.value = 1;
+    }, 700);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Aufbauen: als Kreis links beginnen, nach rechts wachsen, die Schrift blendet ein
   function startReveal(width: number, content: number) {
     revealed.current = true;

@@ -18,7 +18,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Shadow } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { clusterPins, type Region } from '@/lib/map-cluster';
-import { pickPin, routeStroke, simplifyForScreen } from '@/lib/map-hit';
+import { hitKm, pickPin, routeStroke, simplifyForScreen } from '@/lib/map-hit';
 import type { LatLon } from '@/lib/tour';
 import { tr } from '@/i18n';
 
@@ -49,6 +49,15 @@ type Props = {
   selected: string | null;
   onSelect: (id: string | null) => void;
   line: LatLon[] | null;
+  /**
+   * Tipp mit Ort und Fangradius statt onSelect (überlagernde Touren, Koray 17.11.): der Bildschirm prüft, welche
+   * Touren unter dem Finger laufen. at null: Tipp auf eine Marke ohne Kartenort.
+   */
+  onTap?: (at: LatLon | null, pinId: string | null, radiusKm: number) => void;
+  /** Weitere Touren an der Stelle, grau unter der gewählten */
+  others?: LatLon[][];
+  /** Beim Wischen durch überlagernde Touren steht die Karte still, nur die Hervorhebung wandert */
+  keepView?: boolean;
   /** Höhe, die das Blatt unten verdeckt */
   bottom: number;
   top: number;
@@ -68,7 +77,7 @@ function withSpan(pts: LatLon[], min = 0.22): LatLon[] {
   return [...pts, [c[0] - h, c[1] - w], [c[0] + h, c[1] + w]];
 }
 
-export function CommunityMap({ pins, selected, onSelect, line, bottom, top, style }: Props) {
+export function CommunityMap({ pins, selected, onSelect, onTap, others, keepView, line, bottom, top, style }: Props) {
   const settings = useMapSettings();
   const map = useRef<MapView>(null);
   const pad = { top: top + 30, right: 40, bottom: bottom + 30, left: 40 };
@@ -95,6 +104,10 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
   useEffect(() => {
     latest.current = { shown, region, width: mapWidth || win.width, stage, selected };
   }, [shown, region, mapWidth, win.width, stage, selected]);
+  const onTapRef = useRef(onTap);
+  useEffect(() => {
+    onTapRef.current = onTap;
+  }, [onTap]);
   const tapRef = useRef<{ at: LatLon | null; marker: string | null; timer: ReturnType<typeof setTimeout> | null; decidedAt: number; decided: string | null }>({
     at: null,
     marker: null,
@@ -113,12 +126,14 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
       const L = latest.current;
       const near = s.at ? pickPin(L.shown, s.at, L.region, L.width, L.stage, L.selected) : null;
       const id = near?.id ?? s.marker ?? null;
+      const at = s.at;
       s.timer = null;
       s.at = null;
       s.marker = null;
       s.decidedAt = Date.now();
       s.decided = id;
-      onSelect(id);
+      if (onTapRef.current) onTapRef.current(at, id, hitKm(L.region, L.width));
+      else onSelect(id);
     }, 90);
   };
   const tapAt = (at: LatLon) => {
@@ -143,6 +158,13 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
     return { coords: simplifyForScreen(line, region, w).map(ll), stroke: routeStroke(line, region, w) };
   }, [line, region, mapWidth, win.width]);
 
+  // Weitere Touren an der Stelle: grau und dünner unter der gewählten
+  const otherDrawn = useMemo(() => {
+    if (!others?.length) return [];
+    const w = mapWidth || win.width;
+    return others.filter((o) => o.length > 1).map((o) => simplifyForScreen(o, region, w).map(ll));
+  }, [others, region, mapWidth, win.width]);
+
   // Alle Pins zeigen, wenn sich die Auswahl der Pins ändert (Routen oder Ausfahrten)
   useEffect(() => {
     if (!pins.length || selected) return;
@@ -152,9 +174,13 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinKey]);
 
-  // Gewählte Strecke ganz zeigen
+  // Gewählte Strecke ganz zeigen (nicht beim Wischen durch überlagernde Touren)
+  const keepRef = useRef(keepView);
   useEffect(() => {
-    if (!line || line.length < 2) return;
+    keepRef.current = keepView;
+  }, [keepView]);
+  useEffect(() => {
+    if (!line || line.length < 2 || keepRef.current) return;
     const step = Math.max(1, Math.floor(line.length / 200));
     const pts = line.filter((_, i) => i % step === 0).map(ll);
     map.current?.fitToCoordinates(pts, { edgePadding: pad, animated: true });
@@ -182,6 +208,9 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
       onLayout={(e) => setMapWidth(e.nativeEvent.layout.width)}
       onRegionChangeComplete={onRegion}
       initialRegion={START}>
+      {otherDrawn.map((c, i) => (
+        <Polyline key={`o${i}`} coordinates={c} strokeColor={Colors.overlapLine} strokeWidth={3} lineCap="round" lineJoin="round" zIndex={1} />
+      ))}
       {drawn && (
         <>
           {drawn.stroke.shadow > 0 && <Polyline coordinates={drawn.coords} strokeColor="rgba(0,0,0,0.45)" strokeWidth={drawn.stroke.shadow} lineCap="round" lineJoin="round" zIndex={1} />}
