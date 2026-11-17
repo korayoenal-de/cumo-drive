@@ -8,6 +8,7 @@ import { Platform } from 'react-native';
 
 import { cumoAvailable } from './cumo-routing';
 import { prefetchPassLive } from './pass-live';
+import { ensureRoadData } from './road-data';
 
 let started = false;
 
@@ -18,6 +19,9 @@ export function preloadOnStart() {
   void cumoAvailable();
   // Passstatus (Sperren) aus dem Konto
   prefetchPassLive();
+  // Strecken, Pässe und Empfehlungen entpacken, falls noch niemand danach gefragt hat (Performance Punkt 1, 17.11.):
+  // nach der Startanimation statt beim Laden des JavaScript
+  setTimeout(ensureRoadData, 0);
   // Standort früh holen: Rundtour ab hier und Karte haben ihn danach sofort
   void (async () => {
     try {

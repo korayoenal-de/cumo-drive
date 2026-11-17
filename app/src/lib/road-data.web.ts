@@ -29,6 +29,13 @@ export function onRoadData(cb: (d: RoadData) => void) {
   if (data) cb(data);
 }
 
+/** Im Web kommen die Daten vom Server (loadRoadData, ensureRoadArea); hier gibt es nichts sofort zu entpacken */
+export function ensureRoadData(): void {}
+
+export function roadDataLoaded(): boolean {
+  return !!data;
+}
+
 export function roadDataReady(): boolean {
   return !!data;
 }

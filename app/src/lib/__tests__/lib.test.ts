@@ -23,6 +23,13 @@ import { remainingStops } from '../navigation/replan';
 import { errorFingerprint, topFrames } from '../error-fingerprint';
 import { pickPin, routeStroke, simplifyForScreen } from '../map-hit';
 import { closureExclude, onPassRoad } from '../road-closures';
+import { HIGHLIGHT_ROADS, PREFER_ROADS } from '../highlight-roads';
+import { RECOMMENDED } from '../recommended';
+import { roadDataLoaded } from '../road-data';
+import { decodePolyline, encodePolyline } from '../polyline';
+
+// Vor jedem Test festhalten: Laden aller Module entpackt die Daten noch nicht (Performance Punkt 1, 17.11.)
+const loadedAtImport = roadDataLoaded();
 
 // Die Texte der Tests sind deutsch; der Rechner hier läuft oft auf Englisch
 _setLangForTest('de');
@@ -36,6 +43,22 @@ function eastLine(n: number, stepM = 50, start: LatLon = [49.64, 8.63]): LatLon[
 function tourOf(line: LatLon[]): Tour {
   return { name: 'Test', laenge_km: 0, wegpunkte: [line[0], line[line.length - 1]], linie: [{ c: 'ok', p: line }], warnungen: [] };
 }
+
+describe('Daten erst beim ersten Gebrauch (Performance 17.11.)', () => {
+  it('Laden der Module entpackt nichts', () => {
+    assert.equal(loadedAtImport, false);
+  });
+  it('erster Zugriff lädt, danach sind alle Listen voll und verhalten sich wie Arrays', () => {
+    assert.ok(PASSES.length > 300, `Pässe ${PASSES.length}`);
+    assert.equal(roadDataLoaded(), true);
+    assert.ok(HIGHLIGHT_ROADS.length > 100 && PREFER_ROADS.length > 100 && RECOMMENDED.length > 50);
+    assert.ok(Array.isArray(PASSES));
+    assert.equal([...PASSES].length, PASSES.length);
+    assert.equal(PASSES.filter(() => true).length, PASSES.length);
+    assert.ok(PASSES.some((p) => p.tier === 'ikone'));
+    assert.equal(Object.keys(PASSES).length, PASSES.length);
+  });
+});
 
 describe('tour', () => {
   it('haversine misst einen Breitengrad mit etwa 111 km', () => {
@@ -509,5 +532,22 @@ describe('Verpasster Zwischenpunkt (Koray 17.11., Nutzerstimmen)', () => {
     // dieselbe Stelle auf der Rückfahrt: nur noch das Ziel
     const late = remainingStops(r, [48.0005, 9.02], 1.5);
     assert.deepEqual(late, [l[l.length - 1]]);
+  });
+});
+
+describe('Kodierte Linien (Performance 17.11.)', () => {
+  it('Hin und zurück ohne Verlust, auch westlich und südlich, Faktor 1e6 und 1e5', () => {
+    const pts: LatLon[] = [[49.640043, 8.644979], [49.640138, 8.645439], [-33.856784, 151.215297], [40.712776, -74.005974], [0, 0]];
+    for (const f of [1e6, 1e5]) {
+      const back = decodePolyline(encodePolyline(pts, f), f);
+      assert.equal(back.length, pts.length);
+      pts.forEach((p, i) => {
+        assert.ok(Math.abs(back[i][0] - p[0]) <= 0.5 / f + 1e-12 && Math.abs(back[i][1] - p[1]) <= 0.5 / f + 1e-12, `${f} ${i}`);
+      });
+    }
+  });
+  it('bekanntes Beispiel aus der Beschreibung des Verfahrens', () => {
+    const d = decodePolyline('_p~iF~ps|U_ulLnnqC_mqNvxq`@', 1e5);
+    assert.deepEqual(d.map(([a, b]) => [+a.toFixed(5), +b.toFixed(5)]), [[38.5, -120.2], [40.7, -120.95], [43.252, -126.453]]);
   });
 });
