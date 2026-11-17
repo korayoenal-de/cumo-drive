@@ -60,8 +60,11 @@ export function ActionBar({
   top?: ReactNode;
   /** Schwebt über der Leiste, ohne etwas zu verschieben (Optionen der Gruppenfahrt) */
   float?: ReactNode;
-  /** Speichern als Symbol: Lesezeichen, gefüllt sobald gespeichert */
-  save?: { saved: boolean; busy?: boolean; onPress: () => void };
+  /**
+   * Speichern mit Touren Symbol. afterSheet: vor dem Speichern kommt ein Blatt (Name, Überschreiben); der Flug
+   * startet erst, wenn es ganz zu ist (Koray 17.11.: sonst läuft er verdeckt darunter)
+   */
+  save?: { saved: boolean; busy?: boolean; afterSheet?: boolean; onPress: () => void };
   more?: MoreItem[];
   /** Überschrift im Bottom Sheet, etwa der Name der Tour */
   sheetTitle?: string;
@@ -87,6 +90,8 @@ export function ActionBar({
   // Gefährliches mit Frage erst nach Rückfrage ausführen
   const run = (it: MoreItem) => (it.danger && it.confirm ? setAsk(it) : it.onPress());
   const unsaved = !!save && !save.saved;
+  // bleibt über das Speichern hinaus gültig (danach ist save in der Tour undefined)
+  const [afterSheet, setAfterSheet] = useState(false);
   // Gerade gespeichert: Zeile bleibt stehen, die Taste fliegt nach Touren, dann löst sich die Zeile auf.
   // Nur nach einem Druck auf diese Taste (armed) und echtem Speichern (busy gesehen oder saved gemeldet),
   // nicht beim Verwerfen von Änderungen oder wenn anderswo gespeichert wird (vor der Gruppenfahrt).
@@ -106,11 +111,15 @@ export function ActionBar({
   }
   useEffect(() => {
     if (!leaving) return;
-    saveRef.current?.fly('touren', () => setLeaving(false));
+    const wait = afterSheet ? SHEET_GONE_MS : 0;
+    const go = setTimeout(() => saveRef.current?.fly('touren', () => setLeaving(false)), wait);
     // falls die Taste schon weg war: nicht hängen bleiben
-    const id = setTimeout(() => setLeaving(false), MORPH_MS + 400);
-    return () => clearTimeout(id);
-  }, [leaving]);
+    const id = setTimeout(() => setLeaving(false), wait + MORPH_MS + 400);
+    return () => {
+      clearTimeout(go);
+      clearTimeout(id);
+    };
+  }, [leaving, afterSheet]);
   const showSaveRow = unsaved || leaving;
   const moreBtn = more.length > 0 && <MoreButton open={!!anchor} onOpen={setAnchor} />;
   void sheetTitle;
@@ -131,6 +140,7 @@ export function ActionBar({
             onPress={() => {
               if (!save || leaving) return;
               setArmed(true);
+              setAfterSheet(!!save.afterSheet);
               save.onPress();
             }}
             style={styles.flex}

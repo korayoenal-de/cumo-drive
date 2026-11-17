@@ -23,7 +23,6 @@ import { type Stop } from '@/lib/intent';
 import { type PlannedTour } from '@/lib/plan';
 import { flatten, type LatLon } from '@/lib/tour';
 import { logSignal } from '@/lib/signals';
-import { showToast } from '@/lib/toast';
 
 import { GroupBlock, Stats, StopsPlanner, Warnings, type PlannedStop } from './planner-parts';
 import { PlaceSearch, type Cat } from './place-search';
@@ -67,7 +66,7 @@ export function Result({
     const t = saveTour({ ...tour, curves, profile: req.profile }, '', savedId ?? undefined);
     setSaved({ tour, id: t.id });
     void syncLibrary();
-    showToast(tr('Unter Touren gespeichert'), { action: { label: tr('Ansehen'), onPress: () => router.navigate('/touren') } });
+    // keine Meldung: das Touren Symbol fliegt in den Tab (Aktionen mit Ziel, Koray 17.11.)
     return t.id;
   };
   const [stopCat, setStopCat] = useState<Exclude<Cat, 'alle'> | null>(null);

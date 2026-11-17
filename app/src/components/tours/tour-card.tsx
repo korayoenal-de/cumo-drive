@@ -166,9 +166,10 @@ export function PublishSheet({ tour: t, visible, onClose, onPublished }: { tour:
       onClose={onClose}>
       <PublishForm
         tour={t}
-        onDone={(text) => {
+        onDone={(text, flown) => {
           onClose();
-          showToast(text);
+          // mit Flug keine Meldung, er zeigt es schon (Koray 17.11.)
+          if (!flown) showToast(text);
           onPublished?.();
         }}
       />
@@ -177,7 +178,7 @@ export function PublishSheet({ tour: t, visible, onClose, onPublished }: { tour:
 }
 
 /** Veröffentlichen mit Name und kurzer Beschreibung, oder zurückziehen. */
-function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string) => void }) {
+function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string, flown?: boolean) => void }) {
   const session = useSession();
   const profile = useMyProfile(session?.user.id);
   const [title, setTitle] = useState(tour.name);
@@ -204,7 +205,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
         pubRef.current?.measureInWindow((x, y, w, h) => {
           if (w) setTimeout(() => flyTo({ from: { x: x + w / 2, y: y + h / 2, size: h }, target: 'community', icon: { tab: 'community' }, bg: Colors.signal, fg: Colors.onSignal }), SHEET_GONE_MS);
         });
-      onDone(done);
+      onDone(done, fly);
     } catch (e) {
       setMsg(e instanceof Error ? e.message : String(e));
     } finally {

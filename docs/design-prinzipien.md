@@ -182,7 +182,7 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 ## Aktionen mit Ziel (Joy of Use, Koray 17.11.2026, Leinwand „Joy of Use: Aktionen mit Ziel“)
 Die wichtigsten Aktionen tragen ein Symbol in der Taste und zeigen mit einer Bewegung, wohin ihr Ergebnis geht. Bausteine: `MorphAction` (components/ui/morph-action.tsx), `flyTo` und `FlyHost` (lib/fly.ts, components/ui/fly-host.tsx), `BtnIconView` und `IconLabel` (components/ui/btn-icon.tsx).
 
-**Muster A, fliegt ins Ziel.** Nach dem Erfolg schrumpft die Taste zum Kreis um ihr Symbol, das Symbol fliegt auf einem Bogen (460 ms) dorthin, wo das Ergebnis jetzt liegt, und dort erscheint eine Plakette. Haptik `ziel` bei der Landung.
+**Muster A, fliegt ins Ziel.** Nach dem Erfolg schrumpft die Taste zum Kreis um ihr Symbol, das Symbol fliegt auf einem Bogen (460 ms) dorthin, wo das Ergebnis jetzt liegt, und dort erscheint eine Plakette. Haptik `ziel` bei der Landung. Kein Toast dazu, der Flug ist die Rückmeldung (Koray 17.11.). Kommt vorher ein Blatt (Name der Tour, Überschreiben), startet der Flug erst, wenn es ganz zu ist (SHEET_GONE_MS).
 * Speichern im Planer (Tour und Rundtour): nach Name oder Überschreiben fliegt das Touren Symbol in den Touren Tab. Die Speichern Zeile löst sich auf, ⋯ rückt neben Losfahren.
 * Merken in der Community: vom Lesezeichen in den Touren Tab.
 * Veröffentlichen (Touren und Community): das Blatt geht zu, das Community Symbol fliegt in den Community Tab.

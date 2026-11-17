@@ -627,7 +627,6 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       await copyCommunityTour(t);
       // Merken (Muster A, Koray 17.11.): das Touren Symbol fliegt vom Lesezeichen in den Touren Tab
       flyFrom(keepRef.current, { target: 'touren', icon: { tab: 'touren' }, bg: Colors.surface2, fg: Colors.text });
-      showToast(tr('Gespeichert unter Touren'));
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {

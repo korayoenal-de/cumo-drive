@@ -354,7 +354,8 @@ export function TourMode({
               .catch(() => showToast(tr('Das hat nicht geklappt.'), { tone: 'error' })),
         },
       });
-    } else showToast(`${name} aktualisiert`);
+    }
+    // sonst keine Meldung: das Touren Symbol fliegt in den Tab (Aktionen mit Ziel, Koray 17.11.)
   };
 
   /** Als neue Tour speichern: die gespeicherte bleibt, der Planer zeigt danach die neue */
@@ -362,7 +363,6 @@ export function TourMode({
     const id = await plan.save(curves, firstProfile, avoid, undefined, { asCopy: true, quiet: true });
     const c = id ? readLibrary().find((x) => x.id === id) : null;
     if (!c) return;
-    showToast(`${c.name} gespeichert`);
     setEditTour(c, getEditOrigin());
   };
 
@@ -746,7 +746,8 @@ export function TourMode({
             onCancel={() => setNaming(false)}
             onSave={(n) => {
               setNaming(false);
-              void plan.save(curves, firstProfile, avoid, n);
+              // ohne Meldung, der Flug nach Touren zeigt es (Koray 17.11.)
+              void plan.save(curves, firstProfile, avoid, n, { quiet: true });
             }}
           />
           {/* Gespeicherte Tour umbenennen (Koray 10.11.): speichert sie gleich unter dem neuen Namen */}
@@ -886,7 +887,7 @@ export function TourMode({
               ],
             }}
             // Speichern als sekundärer Knopf, solange die Tour neu oder geändert ist (Konzept 7.11.)
-            save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, onPress: () => { if (plan.saving) return; if (!plan.cloudId) setNaming(true); else setAskOverwrite(true); } } : undefined}
+            save={!plan.cloudId || plan.dirty ? { saved: false, busy: plan.saving, afterSheet: true, onPress: () => { if (plan.saving) return; if (!plan.cloudId) setNaming(true); else setAskOverwrite(true); } } : undefined}
             more={[
               // Duplizieren entfällt (Koray 16.11.): Varianten entstehen beim Speichern über „Als neue Tour speichern“
               ...(plan.cloudId && plan.dirty ? [{ key: 'revert', icon: 'arrow.uturn.backward' as const, label: tr('Änderungen verwerfen'), onPress: revert }] : []),
