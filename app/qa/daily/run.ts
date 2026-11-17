@@ -25,7 +25,7 @@ import { planLegs } from '../../src/lib/plan';
 import { outAndBack, smartRoundTrip } from '../../src/lib/smart-roundtrip';
 import { flatten, haversine, type LatLon } from '../../src/lib/tour';
 import { DEFAULT_AVOID } from '../../src/lib/valhalla';
-import { buildCases, type Case } from './cases';
+import { buildCases, FOCUS, type Case } from './cases';
 
 const arg = (k: string) => {
   const i = process.argv.indexOf(k);
@@ -339,7 +339,8 @@ async function main() {
   mkdirSync(`${OUT}/linien`, { recursive: true });
   // --only id1,id2: nur diese Fälle (zum Nachprüfen einzelner Befunde)
   const only = arg('--only')?.split(',');
-  const cases = buildCases(SEED).filter((c) => !only || only.includes(c.id));
+  // --focus: die Fälle aus dem Routen Check vom 17.11. nachmittags
+  const cases = (process.argv.includes('--focus') ? FOCUS : buildCases(SEED)).filter((c) => !only || only.includes(c.id));
   const prev = PREV && existsSync(PREV) ? (JSON.parse(readFileSync(PREV, 'utf8')).results as Result[]) : null;
   const results: Result[] = [];
   for (const c of cases) {
