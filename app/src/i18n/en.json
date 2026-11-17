@@ -1887,5 +1887,10 @@
   "Da ist etwas schiefgelaufen": "Something went wrong",
   "Wir haben den Fehler automatisch erhalten und kümmern uns darum. Deine Touren sind sicher.": "We received the error automatically and are on it. Your tours are safe.",
   "Neu laden": "Reload",
-  "{name}, Gratismonat": "{name}, free month"
+  "{name}, Gratismonat": "{name}, free month",
+  "Verbunden": "Connected",
+  "{name} ist nicht mehr in deinen Kontakten.": "{name} is no longer one of your contacts.",
+  "Möchtest du {name} aus deinen Kontakten entfernen?": "Do you want to remove {name} from your contacts?",
+  "Ihr seid dann nicht mehr verbunden. Wieder verbinden geht nur mit einer neuen Anfrage.": "You will no longer be connected. Reconnecting takes a new request.",
+  "Mit {name} verbunden, tippen zum Entfernen": "Connected with {name}, tap to remove"
 }

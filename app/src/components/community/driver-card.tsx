@@ -15,7 +15,7 @@ import { BlockSheet, ReportSheet } from '@/components/moderation/report-sheet';
 import { CarSprite, frameFor } from '@/components/map/car-sprite';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
-import { ActionSheet, type SheetItem } from '@/components/ui/action-sheet';
+import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
 import { freeSeats, listAusfahrten, longDate, monthYear, type Ausfahrt } from '@/lib/ausfahrten';
 import { answerContact, removeContact, requestContact, useContacts, type Contact } from '@/lib/contacts';
 import { inviteToRide } from '@/lib/group/invites';
@@ -39,11 +39,20 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
   const status = useContacts().byId.get(d.id) ?? null;
   const [inviteOpen, setInviteOpen] = useState(false);
   const [contactBusy, setContactBusy] = useState(false);
+  // Kontakt entfernen nur mit Rückfrage (Koray 17.11.: ein Tipp auf „Kontakt“ entfernte sofort, danach musste er neu anfragen)
+  const [confirmRemove, setConfirmRemove] = useState(false);
   if (blocked && !d.isMe) return null;
-  const contactAction = async () => {
+  const contactAction = async (confirmed = false) => {
+    if (status === 'kontakt' && !confirmed) {
+      setConfirmRemove(true);
+      return;
+    }
     setContactBusy(true);
     try {
-      if (status === 'kontakt' || status === 'angefragt') await removeContact(d.id);
+      if (status === 'kontakt' || status === 'angefragt') {
+        await removeContact(d.id);
+        if (status === 'kontakt') showToast(t('{name} ist nicht mehr in deinen Kontakten.', { name: d.name }));
+      }
       else {
         const now = await requestContact(d.id);
         showToast(now === 'kontakt' ? t('{name} ist jetzt dein Kontakt.', { name: d.name }) : t('Anfrage an {name} geschickt.', { name: d.name }));
@@ -101,7 +110,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
           <View style={styles.actions}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={status === 'kontakt' ? t('{name} aus Kontakten entfernen', { name: d.name }) : status === 'angefragt' ? t('Anfrage an {name} zurückziehen', { name: d.name }) : t('{name} zu Kontakten hinzufügen', { name: d.name })}
+              accessibilityLabel={status === 'kontakt' ? t('Mit {name} verbunden, tippen zum Entfernen', { name: d.name }) : status === 'angefragt' ? t('Anfrage an {name} zurückziehen', { name: d.name }) : t('{name} zu Kontakten hinzufügen', { name: d.name })}
               disabled={contactBusy}
               onPress={() => void contactAction()}
               style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
@@ -110,7 +119,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
               ) : (
                 <>
                   <SymbolView name={status === 'kontakt' ? 'person.crop.circle.badge.checkmark' : status === 'angefragt' ? 'clock' : 'person.badge.plus'} size={20} weight="semibold" tintColor={status === 'angefragt' ? Colors.muted : Colors.text} />
-                  <AppText style={[styles.secondaryText, status === 'angefragt' && { color: Colors.muted }]}>{status === 'kontakt' ? t('Kontakt') : status === 'angefragt' ? t('Angefragt') : status === 'anfrage' ? t('Bestätigen') : t('Zu Kontakten')}</AppText>
+                  <AppText style={[styles.secondaryText, status === 'angefragt' && { color: Colors.muted }]}>{status === 'kontakt' ? t('Verbunden') : status === 'angefragt' ? t('Angefragt') : status === 'anfrage' ? t('Bestätigen') : t('Zu Kontakten')}</AppText>
                 </>
               )}
             </Pressable>
@@ -121,6 +130,16 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
           </View>
         )}
         {!d.isMe && <InviteSheet d={d} visible={inviteOpen} onClose={() => setInviteOpen(false)} />}
+        {!d.isMe && (
+          <ConfirmSheet
+            visible={confirmRemove}
+            title={t('Möchtest du {name} aus deinen Kontakten entfernen?', { name: d.name })}
+            text={t('Ihr seid dann nicht mehr verbunden. Wieder verbinden geht nur mit einer neuen Anfrage.')}
+            confirmLabel={t('Entfernen')}
+            onConfirm={() => void contactAction(true)}
+            onClose={() => setConfirmRemove(false)}
+          />
+        )}
         {!d.isMe && (
           <View style={styles.quiet}>
             <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={styles.quietBtn}>
