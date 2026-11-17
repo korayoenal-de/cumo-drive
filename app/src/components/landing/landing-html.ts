@@ -494,7 +494,7 @@ const LANDING_HTML_DE = `<div style="background: #0B0B0C; color: #F4F4F2; font-f
     <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;"><span class="cd-h3" style="font-size: 28px;">Business Account</span><span class="cd-title">Preis auf Anfrage</span></div>
     <p class="cd-body" style="font-size: 16px;">Für Clubs, Tourenveranstalter, Hotels und Autohäuser.</p>
   </div>
-  <p class="cd-body" style="font-size: 15px; max-width: 80ch;">Business Accounts laufen auf Rechnung, schreib uns an <a href="mailto:kontakt@rallycumo.de">kontakt@rallycumo.de</a>. Woche, Monat und Jahr verlängern sich automatisch, wenn du nicht spätestens 24 Stunden vor Ablauf in den Einstellungen deiner Apple ID kündigst.</p>
+  <p class="cd-body" style="font-size: 15px; max-width: 80ch;">Business Accounts laufen auf Rechnung, schreib uns an <a href="mailto:kontakt@cumodrive.com">kontakt@cumodrive.com</a>. Woche, Monat und Jahr verlängern sich automatisch, wenn du nicht spätestens 24 Stunden vor Ablauf in den Einstellungen deiner Apple ID kündigst.</p>
 </section>
 
 <!-- Abschluss -->

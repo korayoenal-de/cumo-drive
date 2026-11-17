@@ -275,7 +275,7 @@ const T: [string, string, string][] = [
 /** Texte, die in allen Sprachen gleich bleiben (Namen, Marken, Zahlen) */
 export const LANDING_SAME = new Set([
   'Cumo Drive', 'Highlights', 'CarPlay', 'Community', 'Deutsch', 'English', 'Italiano', '+12 min', '+9 min', '+18 min', '800 m', '42 km', 'KO', 'JM', 'SK',
-  'Drivers', 'Garage', 'Curve Mozzafiato.', 'Koray, CUMO DRIVERS CLUB', 'Business Account', 'kontakt@rallycumo.de', 'Cumo Drive · cumodrive.de',
+  'Drivers', 'Garage', 'Curve Mozzafiato.', 'Koray, CUMO DRIVERS CLUB', 'Business Account', 'kontakt@cumodrive.com', 'Cumo Drive · cumodrive.de',
 ]);
 
 const MAPS: Record<'en' | 'it', Map<string, string>> = {

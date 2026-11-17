@@ -12,7 +12,7 @@ import { PRIVACY_IT, TERMS_IT } from './legal-it';
 export type LegalBlock = { h: string; p?: string[]; list?: string[] };
 export type LegalDoc = { title: string; headTitle?: string; lead: string; blocks: LegalBlock[]; stand: string };
 
-const KONTAKT = 'kontakt@rallycumo.de';
+const KONTAKT = 'kontakt@cumodrive.com';
 const IMPRESSUM = 'https://rallycumo.de/impressum/';
 
 /** Fassung der Rechtstexte, wird bei der Registrierung als Nachweis gespeichert (consents) */

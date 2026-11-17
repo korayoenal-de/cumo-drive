@@ -4,7 +4,7 @@ Stand: 10. November 2026. Entwurf von Claude auf Wunsch von Koray, keine Rechtsb
 
 ## Annahmen
 * Anbieter und Verantwortlicher: CUMO DRIVERS CLUB, vertreten durch Koray Önal, wie im Impressum von rallycumo.de (Rechtsform dort nicht angegeben, behandelt wie Einzelunternehmen). Die Anschrift steht bewusst nur im verlinkten Impressum.
-* Kontakt: kontakt@rallycumo.de (wie in der App).
+* Kontakt: kontakt@cumodrive.com (wie in der App).
 * Kein Datenschutzbeauftragter nötig (weniger als 20 Personen mit Datenverarbeitung).
 * Aufsichtsbehörde Hessen.
 * Bewertungen und Spuren werden zusammengefasst ohne Personenbezug ausgewertet (berechtigtes Interesse mit Widerspruchsrecht).
@@ -30,7 +30,7 @@ Cumo Drive ist eine Navigations App für Sportwagen, mit App für das iPhone, Ca
 
 Verantwortlich für die Verarbeitung ist der Betreiber von Cumo Drive, CUMO DRIVERS CLUB, vertreten durch Koray Önal. Die vollständige Anschrift steht im Impressum unter https://rallycumo.de/impressum/.
 
-Bei Fragen zum Datenschutz erreichst du uns unter kontakt@rallycumo.de. Einen Datenschutzbeauftragten haben wir nicht bestellt, weil wir dazu nicht verpflichtet sind.
+Bei Fragen zum Datenschutz erreichst du uns unter kontakt@cumodrive.com. Einen Datenschutzbeauftragten haben wir nicht bestellt, weil wir dazu nicht verpflichtet sind.
 
 ### 2. Welche Daten wir verarbeiten
 
@@ -91,7 +91,7 @@ Die App speichert Touren, Einstellungen (zum Beispiel Kartenstil, Stimme, Tempo 
 
 ### 8. Deine Rechte
 
-Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch (Art. 15 bis 21 DSGVO). Eine Einwilligung kannst du jederzeit für die Zukunft widerrufen. Schreib uns dafür an kontakt@rallycumo.de.
+Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch (Art. 15 bis 21 DSGVO). Eine Einwilligung kannst du jederzeit für die Zukunft widerrufen. Schreib uns dafür an kontakt@cumodrive.com.
 
 Du kannst dich außerdem bei einer Datenschutz Aufsichtsbehörde beschweren, zum Beispiel beim Hessischen Beauftragten für Datenschutz und Informationsfreiheit.
 
@@ -109,7 +109,7 @@ Allgemeine Geschäftsbedingungen und Nutzungsbedingungen. Diese Bedingungen gelt
 
 ### 1. Anbieter und Geltung
 
-Anbieter ist der CUMO DRIVERS CLUB, vertreten durch Koray Önal (Anschrift im Impressum unter https://rallycumo.de/impressum/, Kontakt kontakt@rallycumo.de). Diese Bedingungen gelten für alle Nutzer. Abweichende Bedingungen von Nutzern gelten nicht.
+Anbieter ist der CUMO DRIVERS CLUB, vertreten durch Koray Önal (Anschrift im Impressum unter https://rallycumo.de/impressum/, Kontakt kontakt@cumodrive.com). Diese Bedingungen gelten für alle Nutzer. Abweichende Bedingungen von Nutzern gelten nicht.
 
 ### 2. Leistung
 

@@ -4,7 +4,7 @@
  */
 import type { LegalDoc } from './legal';
 
-const CONTACT = 'kontakt@rallycumo.de';
+const CONTACT = 'kontakt@cumodrive.com';
 const IMPRINT = 'https://rallycumo.de/impressum/';
 const STAND = 'Aggiornato al 17 novembre 2026. Bozza, verifica legale in sospeso. Questa è una traduzione; fa fede la versione tedesca.';
 

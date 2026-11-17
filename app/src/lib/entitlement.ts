@@ -61,7 +61,7 @@ export const CLUB_OFFERS = [
   { id: 'event', name: t('Event Pass'), priceText: t('149 € für eine Tour, 7 Tage'), maxVehicles: 20 },
 ] as const;
 
-export const CONTACT_EMAIL = 'kontakt@rallycumo.de';
+export const CONTACT_EMAIL = 'kontakt@cumodrive.com';
 
 /** Private Gruppen: so viele Fahrzeuge gehen ohne Club */
 export const PRIVATE_MAX_VEHICLES = 6;

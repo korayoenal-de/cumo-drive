@@ -4,7 +4,7 @@
  */
 import type { LegalDoc } from './legal';
 
-const CONTACT = 'kontakt@rallycumo.de';
+const CONTACT = 'kontakt@cumodrive.com';
 const IMPRINT = 'https://rallycumo.de/impressum/';
 const STAND = 'As of 17 November 2026. Draft, legal review pending. This is a translation; the German version prevails.';
 
