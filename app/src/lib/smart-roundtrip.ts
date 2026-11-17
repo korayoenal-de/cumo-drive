@@ -338,14 +338,16 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         let f = 1;
         let got = best.laenge_km;
         for (let step = 0; step < 2 && !lengthFits(got, req.km); step++) {
-          f = Math.max(0.4, Math.min(2, f * (req.km / got)));
+          // gedämpft: die Länge folgt dem Radius nicht linear (Lugano sprang sonst von 125 auf 53 km)
+          f = Math.max(0.4, Math.min(2, f * Math.pow(req.km / got, 0.8)));
           const again = await smartRoundTrip({ ...req, scale: f, rotated: true, seed: seed + 41 + step }, undefined, signal).catch((e) => {
             if (signal?.aborted) throw e;
             return null;
           });
           if (!again) break;
           got = again.laenge_km;
-          if (cost(again) < cost(pick) - 1) pick = again;
+          // nur nehmen, was die Wunschlänge trifft; sonst bleibt die erste Runde und die App fragt nach (Lugano)
+          if (lengthFits(got, req.km) && cost(again) < cost(pick) - 1) pick = again;
         }
         if (pick !== best) return pick;
       }
