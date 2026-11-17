@@ -142,6 +142,8 @@ Offen: Linien kodiert übertragen (points_encoded) spart etwa zwei Drittel der A
 * Schlüssel: Koray (eigener), Claude (claude-cumo-drive), dazu je ein Schlüssel von Server zu Server für Kopie und Sicherung in beide Richtungen.
 * GraphHopper und Photon hören nur lokal, erreichbar nur über den Webserver.
 * Geheimnisse liegen nicht auf den Servern (kein Supabase Schlüssel, kein TomTom Schlüssel).
+* Contabo Sicherheitsvorfall (gemeldet 17.11., Zugriff am 14.11. auf Contabo Systeme, auch VNC Konsolen): geprüft, nur bekannte Schlüssel und Anmeldungen von den beiden Servern und Korays Adresse. Seit 17.11. Passwörter von root und ubuntu auf beiden Servern gesperrt (auch über die Konsole kein Zugang per Passwort), Zugang nur per Schlüssel, im Notfall das Rettungssystem von Contabo.
+* Anmeldung an den Servern (Token Prüfung, routing/server/cloud/auth): seit 17.11. 8:38 im Zählmodus auf beiden Servern, Stand: `curl -s localhost:9180/stats`.
 
 ## 9. Stand 15. November 2026
 
