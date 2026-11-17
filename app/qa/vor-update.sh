@@ -2,10 +2,10 @@
 # Testlauf vor jedem Update (Koray 17.11.2026): ohne grünen Lauf kein OTA Update und kein Build.
 #
 # Aufruf im Ordner app:  npm run vor-update
-# Optionen:  OHNE_ROUTEN=1  lässt die festen Routen aus (nur wenn sich am Routing nichts geändert hat)
+# Optionen:  OHNE_ROUTEN=1  lässt die festen Routen und die Bedienfolgen aus (nur wenn sich am Routing nichts geändert hat)
 #
-# Schritte: Typen, Lint, lib Tests, QS Korpus, Stresstest, Simulation (lokale Testdatenbank),
-# feste Routen des Tageschecks über die echten Routing Server. Bericht in qa/out/vor-update.md.
+# Schritte: Typen, Lint, lib Tests, Textscan (Regeln für Texte), QS Korpus, Stresstest, Simulation (lokale Testdatenbank),
+# feste Routen des Tageschecks und Bedienfolgen im Planer über die echten Routing Server. Bericht in qa/out/vor-update.md.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
@@ -41,11 +41,13 @@ echo "Testlauf vor dem Update, $(date '+%d.%m.%Y %H:%M'), Stand $(git rev-parse 
 step "Typen" npx tsc --noEmit
 step "Lint" npx eslint src
 step "lib Tests" npm test --silent
+step "Textscan" npx tsx qa/textscan.ts
 step "QS Korpus" npx tsx "${TS[@]}" qa/check.ts
 step "Stresstest" stress
 step "Simulation" sim
 if [ "${OHNE_ROUTEN:-}" != 1 ]; then
   step "Feste Routen" npx tsx "${TS[@]}" qa/daily/run.ts --pflicht --out "$OUT/routen"
+  step "Bedienfolgen" npx tsx "${TS[@]}" qa/bedienfolgen.ts --folgen 2 --schritte 5
 fi
 
 {

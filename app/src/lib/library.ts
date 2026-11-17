@@ -23,6 +23,8 @@ export type SavedTour = Tour & {
   cloudId?: string;
   /** Zeitpunkt des letzten Abgleichs (updatedAt danach heißt: lokal geändert) */
   syncedAt?: string;
+  /** Stand im Konto (updated_at der Zeile) beim letzten Abgleich: ändert er sich, hat ein anderes Gerät die Tour geändert */
+  cloudAt?: string;
   /** In der Community veröffentlicht */
   published?: boolean;
   /** Aus der Community übernommen: wer sie veröffentlicht hat (Koray 10.11., Plakette „Von Timo“) */
@@ -283,8 +285,48 @@ export async function syncLibrary(): Promise<void> {
       write(read().map((x) => (x.id === t.id ? { ...x, cloudId, syncedAt: now, updatedAt: x.updatedAt > now ? x.updatedAt : now, ...(fresh ? { published: undefined } : {}) } : x)));
     }
     // 2. Touren aus dem Konto, die hier fehlen, herunterladen
-    const local = new Set(read().map((x) => x.cloudId).filter(Boolean));
     const cloud = await listCloudTours();
+    const inCloud = new Map(cloud.map((c) => [c.id, c]));
+    // 2a. Auf einem anderen Gerät gelöscht (Testkatalog R18, Koray 17.11.): hier seit dem Abgleich unverändert, im Konto
+    //     nicht mehr da, also auch hier weg. Lokal Geändertes ist in Schritt 1 schon wieder hochgegangen und bleibt.
+    const gone = read().filter((x) => x.cloudId && !inCloud.has(x.cloudId) && x.syncedAt && x.syncedAt >= x.updatedAt);
+    // Schutz: ein leeres Konto bei mehreren Touren hier ist eher ein Fehler beim Laden als lauter Löschungen
+    if (gone.length && (cloud.length > 0 || gone.length === 1)) write(read().filter((x) => !gone.some((g) => g.id === x.id)));
+    // 2b. Auf einem anderen Gerät geändert (umbenannt, verschoben, neu geplant): der Stand im Konto ist ein anderer als
+    //     beim letzten Abgleich und hier hat sich seitdem nichts getan, dann gilt der Stand aus dem Konto.
+    for (const t of read()) {
+      const c = t.cloudId ? inCloud.get(t.cloudId) : undefined;
+      if (!c || t.cloudAt === c.updated_at) continue;
+      const untouched = !!t.syncedAt && t.syncedAt >= t.updatedAt;
+      // ältere Touren ohne cloudAt und gerade Hochgeladenes: nur den Stand merken
+      if (!t.cloudAt || !untouched) {
+        write(read().map((x) => (x.id === t.id ? { ...x, cloudAt: c.updated_at } : x)));
+        continue;
+      }
+      const full = await loadCloudTour(c.id);
+      const now = new Date().toISOString();
+      write(
+        read().map((x) =>
+          x.id === t.id
+            ? {
+                ...x,
+                ...full.tour,
+                linie: thinRuns(full.tour.linie),
+                name: c.name,
+                folder: c.folder,
+                profile: c.profile,
+                curves: c.curves ?? undefined,
+                minutes: c.minutes ?? x.minutes,
+                updatedAt: now,
+                syncedAt: now,
+                cloudAt: c.updated_at,
+                fun: undefined,
+              }
+            : x,
+        ),
+      );
+    }
+    const local = new Set(read().map((x) => x.cloudId).filter(Boolean));
     // Veröffentlicht zeigt den Stand im Konto, nicht einen alten Stand auf dem Gerät (Koray 10.11.: Vogesen
     // Karussell stand als „In der Community“ in Meine Touren, war aber nicht veröffentlicht)
     const pub = new Map(cloud.map((c) => [c.id, !!c.published]));
@@ -304,6 +346,7 @@ export async function syncLibrary(): Promise<void> {
         profile: c.profile,
         cloudId: c.id,
         syncedAt: c.updated_at,
+        cloudAt: c.updated_at,
         published: c.published || undefined,
         // übernommene Touren tragen den Namen dessen, der sie veröffentlicht hat
         author: !c.published && c.folder === 'Community' && c.author ? c.author : undefined,

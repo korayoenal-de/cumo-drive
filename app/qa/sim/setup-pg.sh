@@ -16,6 +16,7 @@ if [ ! -f "$DIR/data/PG_VERSION" ]; then
 fi
 if ! "${RUN[@]}" "$BIN/pg_ctl" -D "$DIR/data" status >/dev/null 2>&1; then
   "${RUN[@]}" "$BIN/pg_ctl" -D "$DIR/data" -l "$DIR/pg.log" -w \
-    -o "-k $DIR -p $PORT -c listen_addresses='' -c fsync=off" start >/dev/null
+    -o "-k $DIR -p $PORT -c listen_addresses='' -c fsync=off -c timezone=UTC" start >/dev/null
 fi
+# Zeitzone UTC wie bei Supabase (Zeitstempel kommen dort als +00:00)
 echo "Postgres für die Simulation läuft: Socket $DIR, Port $PORT"

@@ -22,7 +22,10 @@ export type CloudTour = {
 
 export async function listCloudTours(): Promise<CloudTour[]> {
   // nur eigene Touren: veröffentlichte Touren anderer sind seit der Community ebenfalls lesbar
-  const { data: u } = await supabase.auth.getUser();
+  // Ein Fehler bei der Anmeldung (etwa ohne Netz) ist keine leere Liste: der Abgleich löscht sonst lokale Touren,
+  // die im Konto zu fehlen scheinen (Abgleich von Löschungen seit 17.11.)
+  const { data: u, error: ue } = await supabase.auth.getUser();
+  if (ue) throw new Error(ue.message);
   if (!u.user) return [];
   const { data, error } = await supabase
     .from('tours')

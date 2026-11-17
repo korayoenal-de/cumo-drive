@@ -123,6 +123,15 @@ insert into public.profiles (id, display_name, car, allow_messages, created_at) 
     return d;
   }
 
+  /** Zweites Gerät desselben Kontos (eigener Speicher und Modulzustand, gleiches Konto), etwa iPhone und Web Planer. */
+  async addDevice(of: Driver, label = 'Gerät 2'): Promise<Driver> {
+    if (!of.id) throw new Error('Zweites Gerät braucht ein Konto');
+    const d = new Driver(this, `${of.name} ${label}`, of.car, of.id);
+    this.drivers.push(d);
+    await d.signIn();
+    return d;
+  }
+
   /** Warten, bis Bus, Datenbank und Mikrotasks ruhig sind (echte Zeit, kurz). */
   async settle(maxMs = 5000) {
     const until = real.now() + maxMs;
