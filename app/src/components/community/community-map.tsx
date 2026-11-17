@@ -76,6 +76,7 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
   const pinKey = pins.map((p) => p.id).join(',');
   const win = useWindowDimensions();
   const [region, setRegion] = useState<Region>(START);
+  const [mapWidth, setMapWidth] = useState(0);
   const [stage, setStage] = useState<PinStage>(stageFor(START.longitudeDelta, 'region'));
   const onRegion = (r: Region) => {
     setRegion(r);
@@ -123,8 +124,12 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
       onMarkerPress={tap.marker}
       onPress={(e) => {
         if (e.nativeEvent.action === 'marker-press') return;
-        tap.map(() => onSelect(null));
+        // Traf der Tipp eine Marke nur knapp nicht (das iPhone meldet ihn dann der Karte), gilt die nächste Marke im
+        // Umkreis von 30 pt als getroffen (Koray 17.11.: man brauchte viele Versuche). Sonst hebt er die Auswahl auf.
+        const c = e.nativeEvent.coordinate;
+        tap.map(() => onSelect(nearestPin(shown, [c.latitude, c.longitude], region, mapWidth || win.width, stage)?.id ?? null));
       }}
+      onLayout={(e) => setMapWidth(e.nativeEvent.layout.width)}
       onRegionChangeComplete={onRegion}
       initialRegion={START}>
       {line && line.length > 1 && (
@@ -203,7 +208,14 @@ function PinMarker({ pin, on, stage, onSelect }: { pin: CommunityPin; on: boolea
   const photo = useAvatar(pin.kind === 'driver' ? pin.id : null);
   // kurz mitzeichnen, bis das Foto geladen ist, dann wieder als festes Bild
   const [settled, setSettled] = useState<string | null>(null);
-  const track = !!photo && photo !== settled;
+  // Die ersten Augenblicke mitzeichnen: wird die Marke als Bild festgehalten, bevor sie fertig aufgebaut ist, bleibt
+  // ihre Trefferfläche auf dem iPhone winzig (Koray 17.11.: Punkte erst nach vielen Versuchen getroffen)
+  const [fresh, setFresh] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setFresh(false), 600);
+    return () => clearTimeout(t);
+  }, []);
+  const track = fresh || (!!photo && photo !== settled);
   useEffect(() => {
     if (!photo) return;
     const t = setTimeout(() => setSettled(photo), 1500);
@@ -227,7 +239,7 @@ function PinMarker({ pin, on, stage, onSelect }: { pin: CommunityPin; on: boolea
 function PinDot({ pin }: { pin: CommunityPin }) {
   const bg = pin.kind === 'ausfahrt' ? Colors.signal : pin.kind === 'driver' ? (pin.ring ?? Colors.text) : Colors.text;
   return (
-    <View style={styles.room}>
+    <View style={styles.roomDot}>
       <View style={[styles.pinDot, { backgroundColor: bg }]} />
     </View>
   );
@@ -295,6 +307,8 @@ const styles = StyleSheet.create({
   driverOn: { width: 46, height: 46, borderRadius: 23, borderWidth: 3, backgroundColor: Colors.surface },
   // Rand für den Schatten: die Marke wird als Bild gezeichnet, ohne Rand schneidet sie ihn ab
   room: { padding: 12 },
+  // Punkt 12 pt plus Rand: zusammen 44 pt Trefferfläche
+  roomDot: { padding: 16 },
   pinDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: Colors.ground, boxShadow: Shadow.button },
   icon: { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.surface, boxShadow: Shadow.button, alignItems: 'center', justifyContent: 'center' },
   iconRide: { backgroundColor: Colors.signal },
@@ -311,3 +325,25 @@ const styles = StyleSheet.create({
   dotB: { backgroundColor: '#7A3018', marginLeft: -6 },
   count: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 10, lineHeight: 12 },
 });
+
+/**
+ * Nächste gezeigte Marke zu einem Tipp auf die Karte, höchstens 30 pt entfernt (Bildschirmpunkte im aktuellen
+ * Ausschnitt). In der Stufe Nah sitzt die Marke über ihrem Punkt (Spitze unten), dort zählt ihre Mitte.
+ */
+export function nearestPin(pins: CommunityPin[], at: LatLon, region: Region, widthPt: number, stage: PinStage, maxPt = 30): CommunityPin | null {
+  const perLon = widthPt / Math.max(1e-6, region.longitudeDelta);
+  const perLat = perLon / Math.cos((at[0] * Math.PI) / 180);
+  let best: CommunityPin | null = null;
+  let bestD = maxPt;
+  for (const p of pins) {
+    const lift = stage === 'nah' && p.kind !== 'driver' ? 20 : 0;
+    const dx = (p.p[1] - at[1]) * perLon;
+    const dy = (at[0] - p.p[0]) * perLat - lift;
+    const d = Math.hypot(dx, dy);
+    if (d < bestD) {
+      bestD = d;
+      best = p;
+    }
+  }
+  return best;
+}

@@ -146,6 +146,8 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.ground } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="planer" options={{ title: t('CUMO DRIVE Planer') }} />
+        <Stack.Screen name="en" options={{ title: 'Cumo Drive' }} />
+        <Stack.Screen name="it" options={{ title: 'Cumo Drive' }} />
         <Stack.Screen name="login" options={{ title: t('Login') }} />
         <Stack.Screen name="registrieren" options={{ title: t('Registrieren') }} />
         <Stack.Screen name="t" options={{ title: t('CUMO DRIVE Tour') }} />

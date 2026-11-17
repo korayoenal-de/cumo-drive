@@ -9,6 +9,8 @@
  * src/lib/entitlement.ts. Ändern sich die Daten, hier mitziehen. Texte in Du Form, ohne Gedankenstriche.
  */
 
+import { landingText, type LandingLang } from './landing-i18n';
+
 const SIGNAL = '#E2461C';
 const EMPTY = '#2C2C30';
 
@@ -191,7 +193,7 @@ html{scroll-behavior:smooth}
 @media (max-width:620px){.cp-car{padding:6px;border-radius:20px}.cp-screen{border-radius:15px}}
 `;
 
-export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; font-family: Inter, system-ui, sans-serif; font-size: 17px; line-height: 1.55; overflow-x: hidden;">
+const LANDING_HTML_DE = `<div style="background: #0B0B0C; color: #F4F4F2; font-family: Inter, system-ui, sans-serif; font-size: 17px; line-height: 1.55; overflow-x: hidden;">
 
 <!-- Kopfzeile -->
 <header class="cd-wrap" style="padding-top: 24px; padding-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
@@ -511,8 +513,36 @@ export const LANDING_HTML = `<div style="background: #0B0B0C; color: #F4F4F2; fo
   <div class="cd-wrap" style="padding-top: 40px; padding-bottom: 40px; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; font: 600 15px Inter, sans-serif; color: #9A9A9F;">
     <span>Cumo Drive · cumodrive.de</span>
     <span style="display: flex; gap: 20px;"><a href="https://rallycumo.de/impressum/" style="color: inherit; text-decoration: none;">Impressum</a><a href="/datenschutz" style="color: inherit; text-decoration: none;">Datenschutz</a><a href="/agb" style="color: inherit; text-decoration: none;">AGB</a></span>
+    <span class="cd-langs" style="display: flex; gap: 20px;"><a href="/" hreflang="de" lang="de" style="color: inherit; text-decoration: none;">Deutsch</a><a href="/en" hreflang="en" lang="en" style="color: inherit; text-decoration: none;">English</a><a href="/it" hreflang="it" lang="it" style="color: inherit; text-decoration: none;">Italiano</a></span>
     <span>Kartendaten © OpenStreetMap Mitwirkende</span>
   </div>
 </footer>
 
 </div>`;
+
+/**
+ * Landingpage in einer Sprache (Koray 17.11.: /en und /it). Die deutsche Fassung ist die Vorlage; für Englisch und
+ * Italienisch wird jeder Textknoten und jedes alt und aria-label über landing-i18n.ts ersetzt. Fehlt eine Übersetzung,
+ * bleibt der deutsche Text stehen (der Test meldet das).
+ */
+export function landingHtml(lang: LandingLang): string {
+  if (lang === 'de') return LANDING_HTML_DE;
+  const tr = (s: string) => landingText(s, lang) ?? s;
+  return LANDING_HTML_DE.replace(/>([^<>]+)</g, (all, text: string) => {
+    const t = text.trim();
+    if (!t) return all;
+    const out = tr(t);
+    return out === t ? all : `>${text.replace(t, out)}<`;
+  }).replace(/(alt|aria-label)="([^"]+)"/g, (_all, attr: string, text: string) => `${attr}="${tr(text)}"`);
+}
+
+/** Alle Texte der deutschen Vorlage (für den Test der Übersetzungen) */
+export function landingTexts(): string[] {
+  const out = new Set<string>();
+  for (const m of LANDING_HTML_DE.matchAll(/>([^<>]+)</g)) {
+    const t = m[1].trim();
+    if (t && !/^[\s\d.,:+%·]*$/.test(t)) out.add(t);
+  }
+  for (const m of LANDING_HTML_DE.matchAll(/(?:alt|aria-label)="([^"]+)"/g)) out.add(m[1]);
+  return [...out];
+}
