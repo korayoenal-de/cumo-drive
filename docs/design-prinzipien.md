@@ -212,7 +212,7 @@ Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab C
 - Zurück überall als Pille mit Herkunft (`components/ui/back-link.tsx`), ohne bekannte Herkunft „Zurück“.
 
 **Icons**
-- SF Symbols in 16 (Text, Plaketten, Zurück, Schließen) und 20 (Zeilen, Blätter, runde Tasten), immer semibold. Ausnahmen: Sterne der Bewertung und Wetter 40, Manöver eigene Zeichnung.
+- SF Symbols in 16 (Text, Plaketten, Zurück, Schließen) und 20 (Zeilen, Blätter, runde Tasten), immer semibold, auch Plus, Kreuz und Haken (geprüft 17.11.: alle Stellen semibold, keine Schriftzeichen als Symbol in der App). Ausnahmen: Sterne der Bewertung und Wetter 40, Manöver eigene Zeichnung.
 - Je Bedeutung ein Symbol: Link `link`, Teilen und GPX `square.and.arrow.up`, Kurvig Kurvenpfad, Veröffentlichen `globe`, Lead `person.line.dotted.person`.
 
 **Farben und Schrift**
@@ -236,7 +236,7 @@ Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab C
 
 Jede neue Funktion, jeder neue Screen und jede Änderung folgt dem Design System und den Regeln oben, vor allem der Konsistenzprüfung vom 15.11. So bleibt die App konsistent und neue Funktionen werden ordentlich eingebunden. Vor dem Commit prüfen:
 
-1. Bausteine wiederverwenden statt nachbauen: `Kennzahlen`, `SeatsBadge`, `BackLink`, `ActionSheet` und `ConfirmSheet`, `ShareSheet`, `Chip` und `ChipRow`, `Screen`, `MapSheet`, Formate aus `lib/format.ts`, Farben und Maße nur aus `constants/theme.ts`.
+1. Bausteine wiederverwenden statt nachbauen: `Kennzahlen`, `SeatsBadge`, `BackLink`, `ActionSheet` und `ConfirmSheet`, `ShareSheet`, `Chip` und `ChipRow`, `AddButton` und `RemoveButton` (runde 44 pt Tasten in Listen, Plus und Kreuz, 17.11.), `Screen`, `MapSheet`, Formate aus `lib/format.ts`, Farben und Maße nur aus `constants/theme.ts`.
 2. Kerndaten in der festen Reihenfolge, Kennzahlen direkt unter dem Titel, die Karte danach.
 3. Eine Hauptaktion je Ansicht, auf Detailseiten fest unten; Optionen zu einem Objekt im Blatt, Gefährliches rot unten mit Rückfrage als Frage.
 4. Wörter aus dem Glossar (Tour, Runde, Route, Strecke, Fahrzeit, Highlight, Teilnehmer, Organisator, Lead, Löschen, Entfernen, Verwerfen), Du Form, keine Gedankenstriche.

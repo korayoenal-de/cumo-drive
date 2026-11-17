@@ -1,6 +1,6 @@
 # CUMO DRIVE ToDos
 
-Stand: 17. November 2026, 12:15 (gegen Code und Git Verlauf geprüft)
+Stand: 17. November 2026, 16:00 (gegen Code und Git Verlauf geprüft; Prüfung vor dem Start im Doc „Startprüfung CUMO DRIVE“)
 
 ## Routen Check 17.11. nachmittags
 
@@ -25,7 +25,7 @@ Stand: 17. November 2026, 12:15 (gegen Code und Git Verlauf geprüft)
 * [x] Hook Before User Created aktiv, E Mail Bestätigung an (17.11.)
 * [ ] profile-next.sh auf r1 und r2 (nach dem Neuaufbau von r2), Profil schnell kommt mit dem nächsten Neuaufbau; danach FAST_SPEED und WIDTH_MODEL aus cumo-routing.ts löschen
 * [x] OTA: Kurvig Gewichtungen nur im Server, Untertitel längste Runde (17.11.)
-* [ ] Mit dem nächsten TestFlight Build: verschlüsselte App Daten
+* [ ] Verschlüsselte App Daten (kuratierte Strecken, Pässe und Empfehlungen liegen heute lesbar im App Paket, siehe Startprüfung)
 * [x] Opt in bei der Registrierung live (Migration, Webseite m, OTA 17.11.)
 * [ ] Nach dem Start: Rundtour Bewertung als Server Dienst, Alarm bei auffälligen Konten, Marke anmelden, AGB zum Anwalt
 
@@ -50,10 +50,12 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 ### Zwingend: Bezahlung
 
-* [ ] Apple Bezahlvertrag samt Steuer und Bankdaten in App Store Connect (Koray; Steuernummer und Geschäftskonto des CDC)
+* [x] Apple Bezahlvertrag, Steuerformulare und Bankkonto eingereicht (Koray 17.11., Apple prüft bis zu 24 Stunden)
 * [ ] Umsatzsteuer Identifikationsnummer für den CDC, falls noch nicht vorhanden (beim Bundeszentralamt für Steuern). Grund: App Store Erlöse sind eine Leistung an Apple Distribution International (Irland, USt-ID IE9700053D) im Reverse Charge, also netto ohne deutsche Umsatzsteuer, dazu eine Zusammenfassende Meldung je Quartal. Apple führt die Umsatzsteuer gegenüber den Käufern selbst ab. Club Lizenzen und Gastgeber Partner rechnet der CDC direkt ab, an deutsche Kunden mit 19 %. Einmal mit der Steuerberatung bestätigen (Koray)
-* [ ] RevenueCat einrichten, Abos bei Apple anlegen: Woche, Monat, Jahr, Saison Pass (49 €), 14 Tage Probezeit ab Anmeldung (Koray legt Konten an, Claude richtet ein)
-* [ ] Kauf anbinden: Paywall im Flow und Mitgliedschaft sind gebaut (Zweig kostenlos-heimatgebiet), `lib/purchase.ts` ist noch Platzhalter; Webhook auf Supabase für plan und plan_until (Claude, nach RevenueCat)
+* [x] RevenueCat eingerichtet, Abos bei Apple angelegt: Jahr, Monat, Woche, Saison Pass 49 € (17.11., Projekt Dokument „Bezahlmodell“)
+* [ ] Prüf Screenshot je Abo (Paywall aus Build 35), Abos mit der App Version zur Prüfung einreichen
+* [x] Kauf angebunden: lib/purchase.ts mit RevenueCat, Edge Function revenuecat-webhook, Secret und Webhook eingetragen (17.11., Build 35)
+* [ ] Kauf in TestFlight mit Sandbox Konto testen (Koray, Build 35)
 * [ ] Gründungstester 12 Monate frei schalten; braucht die Liste der Tester (Koray liefert, Claude baut)
 
 ### Zwingend: Recht
@@ -62,17 +64,18 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [ ] Datenschutz und AGB anwaltlich prüfen, vor allem Widerrufsrecht, Haftung, Auswertung der Spuren, Blackbox der Fahrten und Meldungen, Standort für Erinnerungen (Koray mit Anwalt)
 * [ ] Lizenzen der Dienste mit dem Anwalt: FOSSGIS Valhalla nur noch Notfall, ODbL Namensnennung (Koray)
 * [ ] Auftragsverarbeitungsverträge mit Supabase, Contabo, Expo und LiveKit abschließen und dokumentieren (Koray)
-* [ ] Händlerstatus bei Apple für die EU angeben; Anschrift und Telefonnummer werden im App Store öffentlich (Koray)
+* [x] Händlerstatus bei Apple für die EU angegeben, Kontakt kontakt@cumodrive.com (Koray 17.11.)
 
 ### Zwingend: App
 
 * [x] Melden und Blockieren (12.11.)
-* [ ] App Icon final aus dem Logo; Stand im Build prüfen (Claude, Freigabe Koray)
+* [x] App Icon final (Build 34)
 * [ ] Stabiler Build aus dem Testbetrieb: Build 29 in TestFlight; Rückmeldungen der Testrunde vom 14.11. eingearbeitet (Koray testet, Claude behebt)
 
 ### Zwingend: App Store Eintrag
 
-* [ ] Screenshots, Beschreibung, Schlagworte, Support Adresse, Altersfreigabe (Claude bereitet vor, Koray gibt frei)
+* [x] Texte DE, EN und IT in App Store Connect (Name, Untertitel, Beschreibung, Werbetext, Schlagworte, Support und Marketing URL, 17.11.)
+* [ ] Screenshots EN und IT (Koray 18.11.), Altersfreigabe, Inhaltsrechte (unter App Informationen noch offen)
 * [ ] Angaben zum Datenschutz im Store: Standort, Kontakt, Nutzerinhalte, Audio, Fahrtprotokoll (Claude bereitet vor)
 * [ ] Testkonto und Hinweise für die Apple Prüfung, auch zu Funk und Standort im Hintergrund (Claude)
 
@@ -96,9 +99,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 ## Als Nächstes (Claude)
 
 * [ ] Server 1 nach dem Neuaufbau vom 15.11. prüfen (Bereinigung, neue Kurvig Datei), Mörlenbach nachrechnen; Server 2 folgt Mo 3 Uhr
-* [ ] Erinnerung mit Standort „Immer“ (Variante c, Teil b): braucht expo-task-manager im nächsten Build
 * [ ] Tour anpassen: schmale Abbiegezeile oben im Planer, „Als neue Tour speichern“ nach der Fahrt
-* [ ] Kompass auch in CarPlay (wenn gewünscht, Build)
+* [x] Kompass auch in CarPlay (Build 34)
 * [ ] Fahrzeit Kalibrierung, sobald genug Fahrten abgeschlossen sind (Koray 15.11.: noch zu wenige)
 * [ ] Spurpfeile auch in CarPlay (Build)
 * [ ] „Auslassen“ auch in Rundtour und Web (heute nur Tour planen)
@@ -167,6 +169,7 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 * [ ] Captcha bei der Registrierung (Entscheidung 17.11.: Hürde für Nutzer, erst bei Missbrauch; Zahlen in signup_attempts)
 * [ ] App Attest, zusammen mit engeren Grenzen für den Web Planer (wenn es echte Nutzer gibt)
+* [ ] Erinnerung mit Standort „Immer“ (Variante c, Teil b): braucht expo-task-manager, einen Build und strengere Apple Prüfung (Koray 17.11.: erst bei Bedarf)
 
 * [ ] **Gastgeber Partner für Restaurants und Hotels (Idee Koray, 11.11.):** Konzept im Projekt (claude/todos.md, Stand 13.11.), wartet auf Preise
 * [ ] **Booking.com Kooperation:** bewusst zurückgestellt, erst wieder aufgreifen, wenn Koray es anstößt
@@ -184,7 +187,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * Gesammelt für Build 34: CarPlay Tempo oben bündig nachjustiert (6 statt 2 pt); Hinweis auf der Karte („Wähle oben…“) mit Innenabstand und mehr Abstand unten
 * In TestFlight bis Build 33 (15.11.: iOS Tableiste, CarPlay Linie genau am Auto, Dann Symbole zugeschnitten, Tempo oben, Rundung, dreistellige Limits); Expo Starter Plan
 * OTA nur nach Korays OK aus einem sauberen Arbeitsstand ohne .env
-* GitHub Secret EXPO_TOKEN fehlt, der Workflow eas-update.yml scheitert deshalb (Koray trägt es selbst ein)
+* OTA seit 17.11. über einen Zweig ota/JJJJMMTT-HHMM (GitHub Actions, Testlauf vor dem Update)
+* Build 34 (17.11.): App Icon, CarPlay Kompass und Feinschliff. Build 35 (17.11.): Kaufbaustein RevenueCat
 
 ## Routing Server
 
