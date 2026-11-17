@@ -24,7 +24,7 @@ import { DIRECTIONS, hillyVia, loopPoints, roundTrip, type Direction } from './r
 import { countCurves } from './stats';
 import { flatten, haversine, type LatLon, type Profile } from './tour';
 import type { Avoid } from './valhalla';
-import { onRoadData } from './road-data';
+import { ensureRoadArea, onRoadData } from './road-data';
 import { tr } from '@/i18n';
 
 export type SmartRequest = {
@@ -108,6 +108,8 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
     req.bearing ?? (req.direction === 'zufall' ? seed % 360 : DIRECTIONS.find((d) => d.id === req.direction)!.bearing);
   const candidates: SmartTour[] = [];
   let lastError: unknown = null;
+  // Web: Strecken und Stopps im Umkreis der Runde nachladen (kachelweise, Sicherheitskonzept 17.11.); App: sofort fertig
+  await ensureRoadArea([req.start], Math.max(15, req.km / 2.5) + 10);
   // Verkehrsmeldungen im Umkreis schon jetzt holen, parallel zu den Varianten (Koray 9.11.: Rundtour zu langsam)
   {
     const r = Math.max(8, req.km * 0.32) / 111;

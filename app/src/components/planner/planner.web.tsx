@@ -58,7 +58,7 @@ import { EMPTY_TOUR, keyOf, passIndex, samePts, STEP_TEXT } from './planner-shar
 import { AdjustChip, addDraftLayers, adjustText, dimTour, setDraft, useMapEdit, type AdjustState } from './web-map-edit';
 import { spurKm } from '@/lib/smart-roundtrip';
 import { useTourPlan } from './use-tour-plan';
-import { C, type PlannedTour } from './web-shared';
+import { C, useRoadArea, type PlannedTour } from './web-shared';
 import { Gallery } from './web-tour-panels';
 import { GroupPanel } from './web-account-panels';
 import { RoundResult, RoundTripPanel, useRoundTrip } from './web-create-panels';
@@ -167,12 +167,17 @@ export default function Planner() {
       }
     }
   }
-  const line = useMemo(() => (shownTour ? flatten(shownTour).map((x) => x.p) : []), [shownTour]);
+  // Geöffnete oder geplante Tour: Strecken entlang der Linie nachladen (kachelweise seit 17.11.), danach Highlights
+  // und Fahrspaß neu rechnen; roadRev macht die Linien neu, damit alle abhängigen Werte nachziehen
+  const roadRev = useRoadArea(shownTour, routeTour);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const line = useMemo(() => (shownTour ? flatten(shownTour).map((x) => x.p) : []), [shownTour, roadRev]);
   useEffect(() => {
     shownRef.current = shownTour;
   });
   const curves = useMemo(() => (line.length > 1 ? countCurves(line) : 0), [line]);
-  const routeLine = useMemo(() => (routeTour ? flatten(routeTour).map((x) => x.p) : []), [routeTour]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const routeLine = useMemo(() => (routeTour ? flatten(routeTour).map((x) => x.p) : []), [routeTour, roadRev]);
   const routeFun = useMemo(() => (routeLine.length > 1 ? tourFun(routeLine) : null), [routeLine]);
   const fun = mode === 'rundtour' && area === 'planen' ? (round.current?.fun ?? null) : routeFun;
   const elev = useElevation(line);

@@ -6,6 +6,7 @@
 import curated from '@/data/curated-roads.json';
 import passes from '@/data/passes.json';
 import stops from '@/data/recommended-stops.json';
+import type { LatLon } from './tour';
 
 export type RoadData = { curated: unknown[]; passes: unknown[]; stops: unknown[] };
 
@@ -24,4 +25,11 @@ export function roadDataReady(): boolean {
 
 export async function loadRoadData(): Promise<boolean> {
   return true;
+}
+
+/** In der App liegen alle Strecken im Paket */
+export async function ensureRoadArea(_points: LatLon[], _radiusKm: number): Promise<void> {}
+
+export function roadDataLimited(): boolean {
+  return false;
 }
