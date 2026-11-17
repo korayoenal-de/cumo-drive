@@ -1846,5 +1846,8 @@
   "{ownerName} hat sie abgesagt.": "{ownerName} l'ha annullata.",
   "Du hast sie abgesagt": "L'hai annullata tu",
   "Abgesagt von {ownerName}": "Annullata da {ownerName}",
-  "{name}, {v1} {v2} Uhr, abgesagt": "{name}, {v1} {v2}, annullata"
+  "{name}, {v1} {v2} Uhr, abgesagt": "{name}, {v1} {v2}, annullata",
+  "Pläne kaufst du in der CUMO DRIVE App auf dem iPhone. Danach gilt dein Plan auch hier.": "I piani si acquistano nell'app CUMO DRIVE su iPhone. Poi il tuo piano vale anche qui.",
+  "Wir haben keinen aktiven Kauf gefunden.": "Non abbiamo trovato nessun acquisto attivo.",
+  "Bitte melde dich zuerst an.": "Accedi prima, per favore."
 }

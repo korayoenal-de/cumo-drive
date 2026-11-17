@@ -1,8 +1,8 @@
 /**
  * Paywall der CUMO DRIVE Mitgliedschaft. Zwei Anlässe: die Testphase ist vorbei (mode "expired")
  * oder man schaut sich die Mitgliedschaft freiwillig an (mode "voluntary", mit Schließen).
- * Käufe laufen über den Adapter in lib/purchase, solange es keine Store Produkte gibt, kommt
- * dort ein freundlicher Hinweis zurück.
+ * Käufe laufen über den Adapter in lib/purchase (RevenueCat). Die Preise kommen aus dem App Store, solange
+ * sie noch laden oder ohne Store gelten die festen Preise aus entitlement.ts.
  */
 import { useState, type ReactNode } from 'react';
 import { SymbolView } from 'expo-symbols';
@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { CONTACT_EMAIL, PRICES, type PlanId, type Price } from '@/lib/entitlement';
-import { purchase, restorePurchases } from '@/lib/purchase';
+import { purchase, restorePurchases, useStorePrices } from '@/lib/purchase';
 import { t } from '@/i18n';
 
 const BENEFITS = [
@@ -39,6 +39,7 @@ export function Paywall({
   const [busy, setBusy] = useState<'buy' | 'restore' | null>(null);
   const [note, setNote] = useState<{ text: string; good: boolean } | null>(null);
   const plan = PRICES.find((p) => p.id === selected) ?? PRICES[0];
+  const storePrices = useStorePrices();
 
   const run = async (kind: 'buy' | 'restore') => {
     setBusy(kind);
@@ -91,7 +92,7 @@ export function Paywall({
 
         <View style={styles.gapS} accessibilityRole="radiogroup">
           {PRICES.map((p) => (
-            <PlanCard key={p.id} price={p} selected={p.id === selected} onPress={() => setSelected(p.id)} />
+            <PlanCard key={p.id} price={storePrices[p.id] ? { ...p, priceText: storePrices[p.id] as string } : p} selected={p.id === selected} onPress={() => setSelected(p.id)} />
           ))}
         </View>
 

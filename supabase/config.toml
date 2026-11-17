@@ -27,3 +27,8 @@ verify_jwt = false
 [functions.road-data]
 # Strecken, Pässe und Empfehlungen für den Web Planer (Koray 16.11.): nur mit Anmeldung, mit Fingerabdruck je Konto.
 verify_jwt = true
+
+[functions.revenuecat-webhook]
+# Kauf Ereignisse von RevenueCat (Koray 17.11.): ohne JWT, Schutz über den Authorization Header
+# (Edge Function Secret REVENUECAT_WEBHOOK_AUTH, gleicher Wert im RevenueCat Webhook, trägt Koray selbst ein).
+verify_jwt = false

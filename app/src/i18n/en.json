@@ -1846,5 +1846,8 @@
   "{ownerName} hat sie abgesagt.": "{ownerName} cancelled it.",
   "Du hast sie abgesagt": "You cancelled it",
   "Abgesagt von {ownerName}": "Cancelled by {ownerName}",
-  "{name}, {v1} {v2} Uhr, abgesagt": "{name}, {v1} {v2}, cancelled"
+  "{name}, {v1} {v2} Uhr, abgesagt": "{name}, {v1} {v2}, cancelled",
+  "Pläne kaufst du in der CUMO DRIVE App auf dem iPhone. Danach gilt dein Plan auch hier.": "You buy plans in the CUMO DRIVE app on your iPhone. Your plan then works here too.",
+  "Wir haben keinen aktiven Kauf gefunden.": "We couldn't find an active purchase.",
+  "Bitte melde dich zuerst an.": "Please sign in first."
 }
