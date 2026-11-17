@@ -87,29 +87,30 @@ export function ActionBar({
   // Gefährliches mit Frage erst nach Rückfrage ausführen
   const run = (it: MoreItem) => (it.danger && it.confirm ? setAsk(it) : it.onPress());
   const unsaved = !!save && !save.saved;
-  // Gerade gespeichert: Zeile bleibt kurz stehen, die Taste fliegt nach Touren, dann löst sich die Zeile auf.
-  // Nur nach echtem Speichern (busy gesehen oder saved gemeldet), nicht beim Verwerfen von Änderungen.
+  // Gerade gespeichert: Zeile bleibt stehen, die Taste fliegt nach Touren, dann löst sich die Zeile auf.
+  // Nur nach einem Druck auf diese Taste (armed) und echtem Speichern (busy gesehen oder saved gemeldet),
+  // nicht beim Verwerfen von Änderungen oder wenn anderswo gespeichert wird (vor der Gruppenfahrt).
+  // Im selben Render abgeleitet, damit die Taste für den Flug noch steht.
   const [leaving, setLeaving] = useState(false);
-  const sawBusy = useRef(false);
-  // nur nach einem Druck auf diese Taste (nicht, wenn anderswo gespeichert wird, etwa vor der Gruppenfahrt)
-  const pressedAt = useRef(0);
-  const wasUnsaved = useRef(unsaved);
-  useEffect(() => {
-    if (save?.busy) sawBusy.current = true;
-  }, [save?.busy]);
-  useEffect(() => {
-    if (wasUnsaved.current && !unsaved && (sawBusy.current || save?.saved) && Date.now() - pressedAt.current < 120_000) {
-      setLeaving(true);
-      saveRef.current?.fly('touren', () => setLeaving(false));
-      // falls die Taste schon weg war: nicht hängen bleiben
-      const id = setTimeout(() => setLeaving(false), MORPH_MS + 400);
-      sawBusy.current = false;
-      wasUnsaved.current = unsaved;
-      return () => clearTimeout(id);
+  const [armed, setArmed] = useState(false);
+  const [sawBusy, setSawBusy] = useState(false);
+  const [prevUnsaved, setPrevUnsaved] = useState(unsaved);
+  if (save?.busy && !sawBusy) setSawBusy(true);
+  if (prevUnsaved !== unsaved) {
+    setPrevUnsaved(unsaved);
+    if (prevUnsaved && !unsaved) {
+      if (armed && (sawBusy || save?.saved)) setLeaving(true);
+      setArmed(false);
+      setSawBusy(false);
     }
-    if (!unsaved) sawBusy.current = false;
-    wasUnsaved.current = unsaved;
-  }, [unsaved, save?.saved]);
+  }
+  useEffect(() => {
+    if (!leaving) return;
+    saveRef.current?.fly('touren', () => setLeaving(false));
+    // falls die Taste schon weg war: nicht hängen bleiben
+    const id = setTimeout(() => setLeaving(false), MORPH_MS + 400);
+    return () => clearTimeout(id);
+  }, [leaving]);
   const showSaveRow = unsaved || leaving;
   const moreBtn = more.length > 0 && <MoreButton open={!!anchor} onOpen={setAnchor} />;
   void sheetTitle;
@@ -117,7 +118,7 @@ export function ActionBar({
     <View style={styles.wrap}>
       {float && <View style={styles.float} pointerEvents="box-none">{float}</View>}
       {top}
-      {showSaveRow && save && (
+      {showSaveRow && (
         <Animated.View style={styles.row} exiting={FadeOut.duration(120)}>
           <MorphAction
             ref={saveRef}
@@ -126,9 +127,10 @@ export function ActionBar({
             tone="surface"
             textSize={Type.title}
             accessibilityHint={t('Unter Touren ablegen')}
-            busy={save.busy && !leaving}
+            busy={!!save?.busy && !leaving}
             onPress={() => {
-              pressedAt.current = Date.now();
+              if (!save || leaving) return;
+              setArmed(true);
               save.onPress();
             }}
             style={styles.flex}

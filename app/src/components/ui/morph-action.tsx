@@ -96,20 +96,22 @@ export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphActio
       const cx = iconCx;
       const toLeft = Math.max(0, cx - height / 2);
       const toRight = Math.max(0, w - (cx + height / 2));
+      pending.current = { target, toLeft, done, delay };
       text.value = withTiming(0, { ...timing, duration: reduced ? 0 : 160 });
       right.value = withTiming(toRight, timing);
       left.value = withTiming(toLeft, timing, (ok) => {
         if (!ok) return;
         shown.value = 0;
-        runOnJS(launchFlight)(target, toLeft, done, delay);
+        runOnJS(launchFlight)();
       });
     },
     launch(then) {
       haptic('losfahren');
+      next.current = then;
       text.value = withTiming(0, { ...timing, duration: reduced ? 0 : 160 });
       shift.value = withTiming(w - height / 2 - iconCx, timing);
       left.value = withTiming(Math.max(0, w - height), timing, (ok) => {
-        if (ok) runOnJS(then)();
+        if (ok) runOnJS(afterLaunch)();
       });
     },
     reset() {
@@ -121,12 +123,23 @@ export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphActio
     },
   }));
 
-  function launchFlight(target: FlyTarget, toLeft: number, done?: () => void, delay?: number) {
+  // Rückrufe bleiben auf dem JS Thread (in Refs), der UI Thread meldet nur „fertig“
+  const pending = useRef<{ target: FlyTarget; toLeft: number; done?: () => void; delay?: number } | null>(null);
+  const next = useRef<(() => void) | null>(null);
+  function afterLaunch() {
+    const fn = next.current;
+    next.current = null;
+    fn?.();
+  }
+  function launchFlight() {
+    const p = pending.current;
+    pending.current = null;
+    if (!p) return;
     box.current?.measureInWindow((x, y) => {
-      const go = () => flyTo({ from: { x: x + toLeft + height / 2, y: y + height / 2, size: height }, target, icon, bg, fg });
-      if (delay) setTimeout(go, delay);
+      const go = () => flyTo({ from: { x: x + p.toLeft + height / 2, y: y + height / 2, size: height }, target: p.target, icon, bg, fg });
+      if (p.delay) setTimeout(go, p.delay);
       else go();
-      done?.();
+      p.done?.();
     });
   }
 
