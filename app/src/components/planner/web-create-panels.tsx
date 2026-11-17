@@ -15,7 +15,7 @@ import { DIRECTIONS, type Direction } from '@/lib/roundtrip';
 
 import { WebDirectionDial } from './web-direction-dial';
 import { logSignal } from '@/lib/signals';
-import { lengthFits, noGoodAlternative, outAndBack, type OutAndBack } from '@/lib/smart-roundtrip';
+import { backRecommended, choiceText, needsChoice, noGoodAlternative, outAndBack, type OutAndBack } from '@/lib/smart-roundtrip';
 import { tourFun, TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
 import { countCurves } from '@/lib/stats';
 import { flatten, PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
@@ -86,7 +86,7 @@ export function useRoundTrip(opts: { setBusy: (s: string | null) => void; setErr
         if (ctrl.signal.aborted) return;
         // Keine Runde in der Wunschlänge (enge Täler): hin und zurück zum schönsten Ziel rechnen und gleich fragen
         let short: Roll['short'];
-        if (!lengthFits(tour.laenge_km, req.km)) {
+        if (needsChoice(tour, req.km)) {
           step('compare');
           const back = await outAndBack(
             { name: tr('Rundtour ab {name}', { name: req.start.name }), start: req.start.p, km: req.km, direction: req.direction, bearing: req.bearing, profile: req.profile, avoid: req.avoid },
@@ -410,12 +410,8 @@ export function RoundResult(props: {
       {short ? (
         <WebSheet
           narrow={props.narrow}
-          title={tr('Von hier keine Runde mit {km} km', { km: short.want })}
-          subtitle={
-            cur.tour.laenge_km > short.want
-              ? tr('Die kürzeste Runde in diese Richtung hat {km} km.', { km: Math.round(cur.tour.laenge_km) })
-              : tr('Die längste Runde in diese Richtung hat {km} km.', { km: Math.round(cur.tour.laenge_km) })
-          }
+          title={choiceText(cur.tour, short.want).title}
+          subtitle={choiceText(cur.tour, short.want).subtitle}
           onClose={() => setAskedFor(cur.tour)}
           rows={lengthRows(short, cur.tour, () => {
             setAskedFor(cur.tour);
@@ -445,7 +441,7 @@ export function RoundResult(props: {
 
 /** Zeilen der Rückfrage: Empfehlung oben, hin und zurück, wenn es zur Länge passt oder näher dran ist (wie lengthItems in planner.tsx) */
 function lengthRows(c: { want: number; back: OutAndBack | null }, loop: LibPlannedTour, onBack: () => void, onKeep: () => void, onStart: () => void): SheetRow[] {
-  const backFits = !!c.back && (lengthFits(c.back.laenge_km, c.want) || Math.abs(c.back.laenge_km - c.want) < Math.abs(loop.laenge_km - c.want));
+  const backFits = backRecommended(c.back, loop, c.want);
   const keep: SheetRow = { key: 'runde', label: tr('Runde mit {km} km', { km: Math.round(loop.laenge_km) }), onPress: onKeep };
   const back: SheetRow[] = c.back
     ? [{ key: 'zurueck', label: tr('{km} km hin und zurück', { km: Math.round(c.back.laenge_km) }), hint: tr('Über {name} und auf demselben Weg zurück', { name: c.back.target }), onPress: onBack }]

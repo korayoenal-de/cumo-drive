@@ -58,7 +58,7 @@ import { clearAvoidedPasses } from '@/lib/avoid-pass';
 import { useAvoid } from '@/lib/avoid-settings';
 
 import { type PlannedStop } from './planner-parts';
-import { lengthFits, noGoodAlternative, outAndBack, spurKm, type OutAndBack } from '@/lib/smart-roundtrip';
+import { backRecommended, choiceText, needsChoice, noGoodAlternative, outAndBack, spurKm, type OutAndBack } from '@/lib/smart-roundtrip';
 import { logSignal } from '@/lib/signals';
 import { showToast } from '@/lib/toast';
 import { Accordion, avoidSummary, ErrorCard, MicIcon, PrimaryButton, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
@@ -462,7 +462,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       // Keine Runde in der Wunschlänge (enge Täler wie Bonneval, Routen Check 16.11.): nicht still eine Riesenrunde
       // zeigen, sondern hin und zurück zum schönsten Ziel rechnen und gleich fragen
       let choice: { want: number; loop: PlannedTour; back: OutAndBack | null } | null = null;
-      if (!lengthFits(tour.laenge_km, req.km) && !ctrl.signal.aborted) {
+      if (needsChoice(tour, req.km) && !ctrl.signal.aborted) {
         step('compare');
         const back = await outAndBack(
           { name: tr('Rundtour ab {name}', { name: req.start.name }), start: req.start.p, km: req.km, direction: req.direction, bearing: req.bearing, profile: req.profile, avoid: req.avoid },
@@ -637,7 +637,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   /** Auswahl bei nicht erreichbarer Länge: Empfehlung oben (hin und zurück, wenn es zur Länge passt) */
   function lengthItems(c: { want: number; loop: PlannedTour; back: OutAndBack | null }) {
     // Empfehlung: hin und zurück, wenn es passt oder näher an der Wunschlänge liegt als die Runde
-    const backFits = !!c.back && (lengthFits(c.back.laenge_km, c.want) || Math.abs(c.back.laenge_km - c.want) < Math.abs(c.loop.laenge_km - c.want));
+    const backFits = backRecommended(c.back, c.loop, c.want);
     const loopItem = { key: 'runde', icon: 'arrow.triangle.2.circlepath' as const, label: tr('Runde mit {km} km', { km: Math.round(c.loop.laenge_km) }), primary: !backFits, onPress: () => undefined };
     const backItem = c.back
       ? [{ key: 'zurueck', icon: 'arrow.uturn.backward' as const, label: tr('{km} km hin und zurück', { km: Math.round(c.back.laenge_km) }), hint: tr('Über {name} und auf demselben Weg zurück', { name: c.back.target }), primary: backFits, onPress: () => pickLength('zurueck', c) }]
@@ -1395,14 +1395,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     <AskFeedbackSheet rounds={askRounds} onDone={() => setAskRounds(null)} />
     <ActionSheet
       visible={!!lengthChoice}
-      title={lengthChoice ? tr('Von hier keine Runde mit {km} km', { km: lengthChoice.want }) : undefined}
-      subtitle={
-        lengthChoice
-          ? lengthChoice.loop.laenge_km > lengthChoice.want
-            ? tr('Die kürzeste Runde in diese Richtung hat {km} km.', { km: Math.round(lengthChoice.loop.laenge_km) })
-            : tr('Die längste Runde in diese Richtung hat {km} km.', { km: Math.round(lengthChoice.loop.laenge_km) })
-          : undefined
-      }
+      title={lengthChoice ? choiceText(lengthChoice.loop, lengthChoice.want).title : undefined}
+      subtitle={lengthChoice ? choiceText(lengthChoice.loop, lengthChoice.want).subtitle : undefined}
       onClose={() => setLengthChoice(null)}
       items={lengthChoice?.items ?? []}
     />

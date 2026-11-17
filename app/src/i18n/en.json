@@ -1834,5 +1834,8 @@
   "Gerade zu viele neue Konten aus diesem Netz. Bitte versuch es später noch einmal.": "Too many new accounts from this network right now. Please try again later.",
   "Gerade zu viele Links. Bitte versuch es später noch einmal.": "Too many links right now. Please try again later.",
   "Gerade zu viele Übergaben. Bitte versuch es später noch einmal.": "Too many handovers right now. Please try again later.",
-  "Konto\nanlegen": "Create\naccount"
+  "Konto\nanlegen": "Create\naccount",
+  "Von hier keine echte Runde": "No real loop from here",
+  "Die Runde fährt {km} km auf demselben Weg zurück.": "The loop drives {km} km back the same way.",
+  "{pass} bis {town}": "{pass} to {town}"
 }

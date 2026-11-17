@@ -173,7 +173,7 @@ export function buildCases(seed: number): Case[] {
  * Sankt Johann), Orte im Inntal (Innsbruck), Schnellstraße im Profil Kurvig (Rolle nach Timmelsjoch).
  */
 const ro = (id: string, ort: string, km: number, direction: Direction, seed: number): Case => ({
-  kind: 'runde', id, name: `Rundtour ${ort.replace('-', ' ')} ${km} km`, group: 'fokus', profile: 'kurvig', start: O(ort), km, direction, seed,
+  kind: 'runde', id, name: `Rundtour ${ort.replace(/[-_]/g, ' ')} ${km} km`, group: 'fokus', profile: 'kurvig', start: O(ort), km, direction, seed,
 });
 export const FOCUS: Case[] = [
   ro('f-andraz-170', 'Andraz', 170, 'SO', 592),
@@ -186,7 +186,7 @@ export const FOCUS: Case[] = [
   ro('f-ibk-220', 'Innsbruck', 220, 'NO', 567),
   ro('f-ibk-190', 'Innsbruck', 190, 'SO', 109),
   ro('f-prad-210', 'Prad', 210, 'O', 592),
-  ro('f-stjohann-200', 'Sankt Johann', 200, 'NW', 909),
+  ro('f-stjohann-200', 'Sankt_Johann', 200, 'NW', 909),
   ro('f-bozen-190', 'Bozen', 190, 'SW', 759),
   { kind: 'route', id: 'f-rolle-timmelsjoch', name: 'Passo Rolle nach Timmelsjoch', group: 'fokus', profile: 'kurvig', points: [[46.2963, 11.78632], [46.90534, 11.09732]], profiles: ['kurvig'], expectPasses: ['Passo Rolle', 'Timmelsjoch'], maxDetour: 3.5 },
 ];

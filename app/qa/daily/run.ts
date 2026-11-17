@@ -22,7 +22,7 @@ import { tourFun } from '../../src/lib/fun-score';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '../../src/lib/highlight-roads';
 import { PASSES, passesAlong } from '../../src/lib/passes';
 import { planLegs } from '../../src/lib/plan';
-import { outAndBack, smartRoundTrip } from '../../src/lib/smart-roundtrip';
+import { outAndBack, smartRoundTrip, SPUR_MAX_KM, spurKm } from '../../src/lib/smart-roundtrip';
 import { flatten, haversine, type LatLon } from '../../src/lib/tour';
 import { DEFAULT_AVOID } from '../../src/lib/valhalla';
 import { buildCases, FOCUS, type Case } from './cases';
@@ -231,24 +231,34 @@ async function runCase(c: Case): Promise<Result> {
 
     if (c.profile !== 'schnell' || c.kind === 'runde') {
       for (const want of c.expectPasses ?? []) if (!r.passes.some((p) => p.toLowerCase().includes(want.toLowerCase()))) add('fehler', `erwarteter Pass fehlt: ${want}`);
-      const cities = bigCitiesOn(line).filter((n) => !(c.allowCities ?? []).includes(n));
+      // Großstadt am Start oder Ziel zählt nicht (Bericht 17.11.: Innsbruck, Lugano, Freiburg, Grenoble), also ohne die ersten und letzten 8 km
+      const P8 = resample(line, 100);
+      const cities = bigCitiesOn(P8.length > 170 ? P8.slice(80, P8.length - 80) : []).filter((n) => !(c.allowCities ?? []).includes(n));
       if (cities.length) add('hinweis', `durch Großstadt: ${cities.join(', ')}`);
       // Orte ohne die ersten und letzten 5 km: Start und Ziel liegen meist im Ort (Bericht 17.11.)
-      if (r.bebautKm != null && r.km && r.km > 15) {
+      // bei Strecken erst ab 50 km (Bericht 17.11.: Karerpass nach Pordoijoch durchs Fassatal hat keine andere Straße)
+      if (r.bebautKm != null && r.km && r.km > (c.kind === 'runde' ? 15 : 50)) {
         const inner = r.bebautKm - (pt.bebautStartKm ?? 0) - (pt.bebautEndKm ?? 0);
         const share = inner / (r.km - 10);
         if (share > 0.3) add('hinweis', `${Math.round(inner * 10) / 10} km durch Orte (${Math.round(share * 100)} % ohne Start und Ziel)`);
       }
       if (c.minCurated != null && r.curatedShare < c.minCurated) add('hinweis', `nur ${r.curatedShare} % auf Traumstrecken und Pässen (erwartet ab ${c.minCurated} %)`);
-      if (r.autobahnKm != null && r.autobahnKm > 3 && c.kind !== 'runde' && !c.allowMotorway) add('hinweis', `${r.autobahnKm} km Autobahn im kurvigen Profil`);
+      // erst ab 5 % der Länge (Bericht 17.11.: 5,5 km bei Gerlos auf 200 km)
+      if (r.autobahnKm != null && r.autobahnKm > Math.max(3, r.km * 0.05) && c.kind !== 'runde' && !c.allowMotorway) add('hinweis', `${r.autobahnKm} km Autobahn im kurvigen Profil`);
     }
     if (c.kind === 'runde') {
       const ratio = r.km / c.km;
-      if (ratio < 0.7 || r.km > c.km * 1.3 + 5) {
+      // wie die App: Länge weit daneben oder über 5 km Stich, dann fragt sie nach (needsChoice, 17.11.)
+      if (ratio < 0.7 || r.km > c.km * 1.3 + 5 || spurKm(tour) > SPUR_MAX_KM) {
         // Die App fragt dann und bietet hin und zurück an (Optionen A und B, 16.11.): gibt es das, ist es ein Hinweis
         const back = await outAndBack({ name: c.name, start: c.start, km: c.km, direction: c.direction, profile: c.profile, avoid: DEFAULT_AVOID }).catch(() => null);
-        if (back && back.laenge_km >= c.km * 0.7 && back.laenge_km <= c.km * 1.3 + 5) add('hinweis', `Runde ${r.km} km statt ${c.km} km; die App bietet ${Math.round(back.laenge_km)} km hin und zurück über ${back.target} an`);
-        else add('fehler', `Länge ${r.km} km statt ${c.km} km${back ? `, hin und zurück nur mit ${Math.round(back.laenge_km)} km über ${back.target}` : ', kein Ziel für hin und zurück'}`);
+        const what = ratio < 0.7 || r.km > c.km * 1.3 + 5 ? `Runde ${r.km} km statt ${c.km} km` : `Runde mit ${Math.round(spurKm(tour) * 10) / 10} km Stich`;
+        if (back && back.laenge_km >= c.km * 0.7 && back.laenge_km <= c.km * 1.3 + 5) {
+          // die App zeigt die Runde nicht still, sondern fragt: Stich und Parallelstraße der Runde sind dann nur Hinweise
+          for (const f of r.findings) if (/doppelt|Parallelstraße/.test(f.what)) f.level = 'hinweis';
+          add('hinweis', `${what}; die App fragt und bietet ${Math.round(back.laenge_km)} km hin und zurück über ${back.target} an`);
+        }
+        else add('fehler', `${what}${back ? `, hin und zurück nur mit ${Math.round(back.laenge_km)} km über ${back.target}` : ', kein Ziel für hin und zurück'}`);
       }
     } else {
       const direct = lengthKm(c.points) || 1;

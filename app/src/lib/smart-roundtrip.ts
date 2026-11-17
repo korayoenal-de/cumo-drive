@@ -20,11 +20,12 @@ import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
 import { planChecked, type PlannedTour, type PlanStep } from './plan';
 import { closureExclude, closuresNear, closuresOnRoute, prefetchClosures } from './road-closures';
 import { regionScore } from './regions';
-import { DIRECTIONS, hillyVia, loopPoints, roundTrip, type Direction } from './roundtrip';
+import { bearingTo, destination, DIRECTIONS, hillyVia, loopPoints, roundTrip, type Direction } from './roundtrip';
 import { countCurves } from './stats';
 import { flatten, haversine, type LatLon, type Profile } from './tour';
 import type { Avoid } from './valhalla';
 import { ensureRoadArea, onRoadData } from './road-data';
+import { reverseName } from './geocode';
 import { tr } from '@/i18n';
 
 export type SmartRequest = {
@@ -338,19 +339,32 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         let pick: SmartTour = best;
         let f = 1;
         let got = best.laenge_km;
-        for (let step = 0; step < 2 && !lengthFits(got, req.km); step++) {
+        const tried: { f: number; km: number }[] = [{ f: 1, km: got }];
+        for (let step = 0; step < 3 && !lengthFits(got, req.km); step++) {
           // gedämpft: die Länge folgt dem Radius nicht linear (Lugano sprang sonst von 125 auf 53 km)
           // in der Plakette oben sichtbar, warum es länger dauert (Koray 17.11.)
           onStep?.(got < req.km ? 'longer' : 'shorter');
-          f = Math.max(0.4, Math.min(2, f * Math.pow(req.km / got, 0.8)));
+          // dritter Versuch nur zwischen einem zu kurzen und einem zu langen Ergebnis (Bericht 17.11.: Lugano 43 und 126 km)
+          const lo = tried.filter((x) => x.km < req.km).sort((x, y) => y.km - x.km || y.f - x.f)[0];
+          const hi = tried.filter((x) => x.km > req.km).sort((x, y) => x.km - y.km || x.f - y.f)[0];
+          if (step === 2 && !(lo && hi)) break;
+          f =
+            step === 2 && lo && hi
+              ? lo.f + ((hi.f - lo.f) * (req.km - lo.km)) / (hi.km - lo.km)
+              : Math.max(0.4, Math.min(2, f * Math.pow(req.km / got, 0.8)));
           const again = await smartRoundTrip({ ...req, scale: f, rotated: true, seed: seed + 41 + step }, undefined, signal).catch((e) => {
             if (signal?.aborted) throw e;
             return null;
           });
           if (!again) break;
           got = again.laenge_km;
+          tried.push({ f, km: got });
+          if (process.env.DEBUG_RT) console.log('laenge', step, 'f', f.toFixed(2), 'got', got.toFixed(1), 'spur', spurKm(again).toFixed(2));
           // nur nehmen, was die Wunschlänge trifft; sonst bleibt die erste Runde und die App fragt nach (Lugano)
-          if (lengthFits(got, req.km) && cost(again) < cost(pick) - 1) pick = again;
+          // Passt die bisherige gar nicht, gewinnt die passende, solange sie kaum mehr doppelt fährt (Bericht 17.11.: Andraz
+          // 222 km bei 170 gewünscht blieb liegen, weil 107 km nach der Kostenrechnung fast gleich gut waren)
+          const fitsNow = lengthFits(got, req.km);
+          if (fitsNow && ((!lengthFits(pick.laenge_km, req.km) && spurKm(again) <= spurKm(pick) + 2) || cost(again) < cost(pick) - 1)) pick = again;
         }
         if (pick !== best) return pick;
       }
@@ -705,28 +719,35 @@ function viaAlong(t: PlannedTour, start: LatLon, away: LatLon[]): LatLon[] {
 }
 
 async function despur(t: SmartTour, req: SmartRequest, signal?: AbortSignal): Promise<SmartTour> {
-  const line = flatten(t);
-  const spur = spurOf(t);
-  if (spur.km < 0.2) return t;
-  const via: LatLon[] = [];
-  let last = 0;
-  for (const x of line) {
-    if (x.km - last < 7 || x.km > t.laenge_km - 3) continue;
-    if (spur.points.some((q) => haversine(q, x.p) < 600)) continue;
-    via.push(x.p);
-    last = x.km;
-  }
-  try {
-    const r = await cumoPlan(req.name, [req.start, ...via, req.start], req.profile, req.avoid, signal);
-    // Liegt fast die ganze Runde auf der Stichstraße (Tal ohne Ausgang), bleiben kaum Stützpunkte und die
-    // neue Runde schrumpft auf wenige km (Stresstest 10.11.: Bad Gastein 0 km, Chur 4,5 km). Länge halten.
-    if (spurKm(r) < spur.km - 0.1 && r.laenge_km >= t.laenge_km * 0.75 && r.laenge_km <= t.laenge_km * 1.25 + 3 && (r.km_je_klasse?.raus ?? 0) === 0) {
-      return { ...t, ...r, engine: 'cumo', curves: r.curves, score: t.score };
+  let cur: SmartTour = t;
+  // Erst Stützpunkte nur direkt am Stich weglassen; bleibt er (Bericht 17.11.: Cortina 3,3 km bei Agordo, Prad 2,9 km),
+  // liegen weitere Stützpunkte im selben Seitental und zwingen die Runde hinein: dann im Umkreis von 2,5 km weglassen.
+  for (const radius of [600, 2500]) {
+    const spur = spurOf(cur);
+    if (spur.km < 0.2) break;
+    const line = flatten(cur);
+    const via: LatLon[] = [];
+    let last = 0;
+    for (const x of line) {
+      if (x.km - last < 7 || x.km > cur.laenge_km - 3) continue;
+      if (spur.points.some((q) => haversine(q, x.p) < radius)) continue;
+      via.push(x.p);
+      last = x.km;
     }
-  } catch (e) {
-    if (signal?.aborted) throw e;
+    try {
+      const r = await cumoPlan(req.name, [req.start, ...via, req.start], req.profile, req.avoid, signal);
+      if (process.env.DEBUG_RT) console.log('despur', radius, cur.laenge_km.toFixed(1), spur.km.toFixed(2), '->', r.laenge_km.toFixed(1), spurKm(r).toFixed(2), 'vias', via.length);
+      // Liegt fast die ganze Runde auf der Stichstraße (Tal ohne Ausgang), bleiben kaum Stützpunkte und die
+      // neue Runde schrumpft auf wenige km (Stresstest 10.11.: Bad Gastein 0 km, Chur 4,5 km). Länge halten,
+      // gemessen an der ursprünglichen Runde.
+      if (spurKm(r) < spur.km - 0.1 && r.laenge_km >= t.laenge_km * 0.75 && r.laenge_km <= t.laenge_km * 1.25 + 3 && (r.km_je_klasse?.raus ?? 0) === 0) {
+        cur = { ...t, ...r, engine: 'cumo', curves: r.curves, score: t.score };
+      }
+    } catch (e) {
+      if (signal?.aborted) throw e;
+    }
   }
-  return t;
+  return cur;
 }
 
 /**
@@ -837,6 +858,42 @@ export function lengthFits(km: number, want: number): boolean {
   return km >= want * 0.7 && km <= want * 1.3 + 5;
 }
 
+/** Ab so vielen km auf demselben Weg zurück ist es keine echte Runde mehr (Routen Check 17.11.: Bourg Saint Maurice) */
+export const SPUR_MAX_KM = 5;
+
+/**
+ * Soll die App nachfragen, statt die Runde still zu zeigen? Wenn die Länge weit daneben liegt oder die Runde über
+ * 5 km auf demselben Weg zurückfährt (Talorte wie Bourg Saint Maurice, Bonneval). Dann bietet sie ehrlich hin und
+ * zurück an.
+ */
+export function needsChoice(t: PlannedTour, want: number): boolean {
+  return !lengthFits(t.laenge_km, want) || spurKm(t) > SPUR_MAX_KM;
+}
+
+/** Titel und Unterzeile der Rückfrage, für App und Web gleich */
+export function choiceText(loop: PlannedTour, want: number): { title: string; subtitle: string } {
+  const spur = spurKm(loop);
+  if (spur > SPUR_MAX_KM && lengthFits(loop.laenge_km, want)) {
+    return {
+      title: tr('Von hier keine echte Runde'),
+      subtitle: tr('Die Runde fährt {km} km auf demselben Weg zurück.', { km: Math.round(spur) }),
+    };
+  }
+  return {
+    title: tr('Von hier keine Runde mit {km} km', { km: want }),
+    subtitle:
+      loop.laenge_km > want
+        ? tr('Die kürzeste Runde in diese Richtung hat {km} km.', { km: Math.round(loop.laenge_km) })
+        : tr('Die längste Runde in diese Richtung hat {km} km.', { km: Math.round(loop.laenge_km) }),
+  };
+}
+
+/** Hin und zurück oben empfehlen: wenn es zur Länge passt, näher dran ist oder die Runde ohnehin weit zurückfährt */
+export function backRecommended(back: PlannedTour | null, loop: PlannedTour, want: number): boolean {
+  if (!back) return false;
+  return lengthFits(back.laenge_km, want) || Math.abs(back.laenge_km - want) < Math.abs(loop.laenge_km - want) || spurKm(loop) > SPUR_MAX_KM;
+}
+
 export type OutAndBack = SmartTour & { target: string };
 
 /**
@@ -880,7 +937,48 @@ export async function outAndBack(req: SmartRequest, signal?: AbortSignal): Promi
         }),
     ),
   );
-  const ok = planned.filter((x): x is NonNullable<typeof x> => !!x && lengthFits(x.tour.laenge_km, req.km));
+  let ok = planned.filter((x): x is NonNullable<typeof x> => !!x && lengthFits(x.tour.laenge_km, req.km));
+  // Ziel zu nah (Routen Check 17.11.: Bonneval 70 km, nur der Mont Cenis mit 45 km): über den Pass hinaus weiter, bis
+  // die halbe Länge erreicht ist, etwa über den Iseran nach Val d'Isère. Der Rückweg darf auch eine andere Straße nehmen.
+  if (!ok.length) {
+    // Kandidaten: zu kurz geplante Ziele und Ziele, die für die erste Auswahl zu nah lagen (Bonneval: der Iseran
+    // liegt nur 7 km Luftlinie entfernt); Länge bis dorthin geschätzt mit 1,4 mal der Luftlinie
+    const nearTargets = [
+      ...PASSES.filter((p) => !skipped.has(p.id)).map((p) => ({ name: p.name, p: [p.lat, p.lon] as LatLon, weight: TIER_WEIGHT[p.tier] })),
+    ].filter((t) => {
+      const d = air(t.p) * 1.4;
+      return d >= half * 0.15 && d < half * 0.45;
+    });
+    const short = [
+      ...planned
+        .filter((x): x is NonNullable<typeof x> => !!x && x.tour.laenge_km < req.km * 0.7)
+        .map((x) => ({ t: x.t, oneWay: x.tour.laenge_km / 2 })),
+      ...nearTargets.map((t) => ({ t: { ...t, fit: 0 }, oneWay: air(t.p) * 1.4 })),
+    ]
+      .sort((x, y) => y.t.weight - x.t.weight)
+      .slice(0, 4);
+    // zwei Weiten probieren, Bergstraßen sind deutlich länger als die Luftlinie (Iseran: 0,75 ergab 112 km statt 70)
+    const longer = await Promise.all(
+      short.flatMap((x) =>
+        [0.35, 0.55].map(async (k) => {
+          const rest = half - x.oneWay;
+          if (rest < 5) return null;
+          const on = destination(x.t.p, rest * k, bearingTo(req.start, x.t.p));
+          try {
+            const tour = await planChecked(tr('Hin und zurück: {name}', { name: x.t.name }), [req.start, x.t.p, on, req.start], req.profile, req.avoid, undefined, signal);
+            if (process.env.DEBUG_RT) console.log('weiter', x.t.name, k, 'rest', rest.toFixed(1), '->', tour.laenge_km.toFixed(1));
+            if (!lengthFits(tour.laenge_km, req.km)) return null;
+            const town = await reverseName(on, signal).catch(() => '');
+            return { t: { ...x.t, name: town ? tr('{pass} bis {town}', { pass: x.t.name, town }) : x.t.name }, tour };
+          } catch (e) {
+            if (signal?.aborted) throw e;
+            return null;
+          }
+        }),
+      ),
+    );
+    ok = longer.filter((x): x is NonNullable<typeof x> => !!x);
+  }
   const pool = ok.length ? ok : planned.filter((x): x is NonNullable<typeof x> => !!x);
   if (!pool.length) return null;
   // passt die Länge: höhere Stufe gewinnt, dann die nähere Länge; sonst die nächste Länge

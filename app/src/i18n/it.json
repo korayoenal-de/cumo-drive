@@ -1834,5 +1834,8 @@
   "Gerade zu viele neue Konten aus diesem Netz. Bitte versuch es später noch einmal.": "Troppi nuovi account da questa rete in questo momento. Riprova più tardi.",
   "Gerade zu viele Links. Bitte versuch es später noch einmal.": "Troppi link in questo momento. Riprova più tardi.",
   "Gerade zu viele Übergaben. Bitte versuch es später noch einmal.": "Troppi trasferimenti in questo momento. Riprova più tardi.",
-  "Konto\nanlegen": "Crea\naccount"
+  "Konto\nanlegen": "Crea\naccount",
+  "Von hier keine echte Runde": "Da qui nessun vero giro ad anello",
+  "Die Runde fährt {km} km auf demselben Weg zurück.": "Il giro ripercorre {km} km sulla stessa strada.",
+  "{pass} bis {town}": "{pass} fino a {town}"
 }
