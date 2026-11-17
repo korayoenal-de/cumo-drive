@@ -28,6 +28,10 @@ const DICT: Record<Exclude<Lang, 'de'>, Record<string, string>> = { en, it };
 /** Sprache des Geräts: de, it, sonst Englisch (Deutsch auch für AT und CH) */
 export function deviceLang(locale?: string): Lang {
   let l = locale;
+  // Vorrendern der Webseiten (expo export, ohne window): immer Deutsch. Sonst bestimmte die Sprache des Rechners,
+  // auf dem gebaut wird, die statischen Seiten (17.11.: Englisch), und deutsche Besucher sahen beim Laden kurz
+  // Englisch, dazu React Fehler 418, weil der Browser die Seite auf Deutsch neu zeichnete.
+  if (!l && typeof window === 'undefined') return 'de';
   if (!l) {
     try {
       l = Intl.DateTimeFormat().resolvedOptions().locale;

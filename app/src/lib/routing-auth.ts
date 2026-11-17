@@ -1,8 +1,9 @@
 /**
  * Anmeldung an den eigenen Servern (Koray 16.11.: Schutz vor Kopierern). Die App schickt das Supabase Token
  * des Kontos mit jeder Anfrage an Routing, Ortssuche, Valhalla und POI Kacheln. Die Server prüfen es,
- * sobald das dort eingeschaltet ist; bis dahin wird es ignoriert. Im Browser noch ohne (routing-auth.web.ts),
- * weil der Kopf eine CORS Vorabfrage auslöst, die die Server erst noch beantworten müssen.
+ * sobald das dort eingeschaltet ist; bis dahin wird es ignoriert. Gilt für App und Web Planer gleich (seit 17.11.,
+ * die Server beantworten die CORS Vorabfrage). Keine eigene .web.ts Datei: die frühere leitete im Browser auf sich
+ * selbst weiter und brach den Web Planer beim Start ab (Maximum call stack, 17.11.).
  */
 let token: string | null = null;
 let started = false;
