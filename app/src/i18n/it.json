@@ -1822,5 +1822,7 @@
   "gesperrt {closed_months}": "chiuso {closed_months}",
   "Heute {v0} Uhr: {name}": "Oggi alle {v0}: {name}",
   "Runde wird verlängert": "Il giro viene allungato",
-  "Runde wird gekürzt": "Il giro viene accorciato"
+  "Runde wird gekürzt": "Il giro viene accorciato",
+  "Die längste Runde in diese Richtung hat {km} km.": "Il giro più lungo in questa direzione è di {km} km.",
+  "kurvig, {dir}": "tortuoso, {dir}"
 }

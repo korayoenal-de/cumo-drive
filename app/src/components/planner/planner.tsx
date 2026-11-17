@@ -1396,7 +1396,13 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     <ActionSheet
       visible={!!lengthChoice}
       title={lengthChoice ? tr('Von hier keine Runde mit {km} km', { km: lengthChoice.want }) : undefined}
-      subtitle={lengthChoice ? tr('Die kürzeste Runde in diese Richtung hat {km} km.', { km: Math.round(lengthChoice.loop.laenge_km) }) : undefined}
+      subtitle={
+        lengthChoice
+          ? lengthChoice.loop.laenge_km > lengthChoice.want
+            ? tr('Die kürzeste Runde in diese Richtung hat {km} km.', { km: Math.round(lengthChoice.loop.laenge_km) })
+            : tr('Die längste Runde in diese Richtung hat {km} km.', { km: Math.round(lengthChoice.loop.laenge_km) })
+          : undefined
+      }
       onClose={() => setLengthChoice(null)}
       items={lengthChoice?.items ?? []}
     />

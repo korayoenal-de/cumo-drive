@@ -15,7 +15,7 @@ import { DIRECTIONS, type Direction } from '@/lib/roundtrip';
 
 import { WebDirectionDial } from './web-direction-dial';
 import { logSignal } from '@/lib/signals';
-import { noGoodAlternative } from '@/lib/smart-roundtrip';
+import { lengthFits, noGoodAlternative, outAndBack, type OutAndBack } from '@/lib/smart-roundtrip';
 import { tourFun, TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
 import { countCurves } from '@/lib/stats';
 import { flatten, PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
@@ -31,7 +31,7 @@ import { ResultDetails, ResultStats, StatusLine } from './web-result';
 import { StopsPanel } from './web-tour-panels';
 import { BODY, C, STEP_TEXT } from './web-shared';
 import { S } from './web-styles';
-import { ConfirmSheet, MoreMenu } from './web-ui';
+import { ConfirmSheet, MoreMenu, WebSheet, type SheetRow } from './web-ui';
 import { tr } from '@/i18n';
 
 export const KM_STEPS = [25, 50, 75, 100, 150, 200, 300];
@@ -41,7 +41,8 @@ export const NO_MORE_ROLLS = tr('Eine bessere Runde gibt es hier gerade nicht. P
 
 const PHASE_TEXT: Record<PlanPhase, string> = { ...STEP_TEXT, start: tr('Startort wird bestimmt') };
 
-export type Roll = { tour: LibPlannedTour; req: TourRequest; fun: TourFun | null };
+/** short: die Wunschlänge war von hier nicht erreichbar, dazu das Angebot hin und zurück (wie in der App, 16.11.) */
+export type Roll = { tour: LibPlannedTour; req: TourRequest; fun: TourFun | null; short?: { want: number; back: OutAndBack | null } };
 export type RoundState = { rolls: Roll[]; idx: number; savedId: string | null; savedFor: LibPlannedTour | null; note: string | null };
 
 const EMPTY: RoundState = { rolls: [], idx: -1, savedId: null, savedFor: null, note: null };
@@ -82,9 +83,23 @@ export function useRoundTrip(opts: { setBusy: (s: string | null) => void; setErr
           }
         }
         if (ctrl.signal.aborted) return;
+        // Keine Runde in der Wunschlänge (enge Täler): hin und zurück zum schönsten Ziel rechnen und gleich fragen
+        let short: Roll['short'];
+        if (!lengthFits(tour.laenge_km, req.km)) {
+          step('compare');
+          const back = await outAndBack(
+            { name: tr('Rundtour ab {name}', { name: req.start.name }), start: req.start.p, km: req.km, direction: req.direction, bearing: req.bearing, profile: req.profile, avoid: req.avoid },
+            ctrl.signal,
+          ).catch((e) => {
+            if (ctrl.signal.aborted) throw e;
+            return null;
+          });
+          if (ctrl.signal.aborted) return;
+          short = { want: req.km, back };
+        }
         const fun = tourFun(flatten(tour).map((x) => x.p));
         logSignal('geplant', tour, { mode: 'rundtour', profile: req.profile, suggested: true, fun: fun?.score ?? null });
-        const item: Roll = { tour, req, fun };
+        const item: Roll = { tour, req, fun, short };
         setSt((s) => {
           const rolls = keep ? [...s.rolls, item].slice(-5) : [item];
           return { rolls, idx: rolls.length - 1, savedId: null, savedFor: null, note: null };
@@ -150,6 +165,14 @@ export function useRoundTrip(opts: { setBusy: (s: string | null) => void; setErr
       } finally {
         setBusy(null);
       }
+    },
+    /** Hin und zurück statt der zu langen oder zu kurzen Runde */
+    pickBack: () => {
+      const b = cur?.short?.back;
+      if (!cur || !b) return;
+      const item: Roll = { ...cur, tour: b, fun: tourFun(flatten(b).map((x) => x.p)), short: undefined };
+      setSt((s) => ({ ...s, rolls: s.rolls.map((r, i) => (i === s.idx ? item : r)), savedFor: null }));
+      onShow(b);
     },
     discard: () => {
       abort.current?.abort();
@@ -308,6 +331,9 @@ export function RoundResult(props: {
   const { round } = props;
   const cur = round.current!;
   const [ask, setAsk] = useState(false);
+  // Rückfrage zur Länge einmal je Runde (Optionen A und B wie in der App)
+  const [askedFor, setAskedFor] = useState<LibPlannedTour | null>(null);
+  const short = cur.short && askedFor !== cur.tour ? cur.short : null;
   const curves = countCurves(props.line);
   const rolls = round.state.rolls;
   const prev = round.state.idx > 0 ? rolls[round.state.idx - 1].fun : null;
@@ -322,7 +348,7 @@ export function RoundResult(props: {
     <div style={S.stack}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={S.headline}>{cur.tour.name}</span>
-        <span style={S.metricLabel}>{`kurvig, ${dirWord}`}</span>
+        <span style={S.metricLabel}>{tr('kurvig, {dir}', { dir: dirWord })}</span>
       </div>
       <ResultStats tour={cur.tour} curves={curves} fun={cur.fun} onFun={props.onFun} delta={delta} />
       {cur.req.note ? <p style={{ ...S.muted, color: C.warn }}>{cur.req.note}</p> : null}
@@ -376,6 +402,25 @@ export function RoundResult(props: {
       <button style={{ ...S.secondary, flex: 'none' }} disabled={props.busy} onClick={round.reroll}>
         {tr('Neu würfeln')}
       </button>
+      {short ? (
+        <WebSheet
+          narrow={props.narrow}
+          title={tr('Von hier keine Runde mit {km} km', { km: short.want })}
+          subtitle={
+            cur.tour.laenge_km > short.want
+              ? tr('Die kürzeste Runde in diese Richtung hat {km} km.', { km: Math.round(cur.tour.laenge_km) })
+              : tr('Die längste Runde in diese Richtung hat {km} km.', { km: Math.round(cur.tour.laenge_km) })
+          }
+          onClose={() => setAskedFor(cur.tour)}
+          rows={lengthRows(short, cur.tour, () => {
+            setAskedFor(cur.tour);
+            round.pickBack();
+          }, () => setAskedFor(cur.tour), () => {
+            setAskedFor(cur.tour);
+            round.discard();
+          })}
+        />
+      ) : null}
       {ask ? (
         <ConfirmSheet
           narrow={props.narrow}
@@ -391,4 +436,15 @@ export function RoundResult(props: {
       ) : null}
     </div>
   );
+}
+
+/** Zeilen der Rückfrage: Empfehlung oben, hin und zurück, wenn es zur Länge passt oder näher dran ist (wie lengthItems in planner.tsx) */
+function lengthRows(c: { want: number; back: OutAndBack | null }, loop: LibPlannedTour, onBack: () => void, onKeep: () => void, onStart: () => void): SheetRow[] {
+  const backFits = !!c.back && (lengthFits(c.back.laenge_km, c.want) || Math.abs(c.back.laenge_km - c.want) < Math.abs(loop.laenge_km - c.want));
+  const keep: SheetRow = { key: 'runde', label: tr('Runde mit {km} km', { km: Math.round(loop.laenge_km) }), onPress: onKeep };
+  const back: SheetRow[] = c.back
+    ? [{ key: 'zurueck', label: tr('{km} km hin und zurück', { km: Math.round(c.back.laenge_km) }), hint: tr('Über {name} und auf demselben Weg zurück', { name: c.back.target }), onPress: onBack }]
+    : [];
+  const start: SheetRow = { key: 'start', label: tr('Anderen Startort wählen'), onPress: onStart };
+  return [...(backFits ? [...back, keep] : [keep, ...back]), start];
 }

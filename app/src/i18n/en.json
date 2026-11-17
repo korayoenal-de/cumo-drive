@@ -1822,5 +1822,7 @@
   "gesperrt {closed_months}": "closed {closed_months}",
   "Heute {v0} Uhr: {name}": "Today {v0}: {name}",
   "Runde wird verlängert": "The loop is being extended",
-  "Runde wird gekürzt": "The loop is being shortened"
+  "Runde wird gekürzt": "The loop is being shortened",
+  "Die längste Runde in diese Richtung hat {km} km.": "The longest loop in this direction is {km} km.",
+  "kurvig, {dir}": "twisty, {dir}"
 }
