@@ -13,14 +13,14 @@ import { t } from '@/i18n';
 
 /**
  * Woher die Freigabe kommt (Koray 16.11.): vorstart (vor dem Release Tag, alles frei), gruender (Konto vor dem
- * Release angelegt, 12 Monate ab Release), test (ab dem Release angelegt, 14 Tage ab Anlegen; die Startphase von
- * 30 Tagen entfällt seit 17.11.), plan (Kauf), club (auf Rechnung).
+ * Release angelegt, 12 Monate ab Release), kostenlos (ab dem Release angelegt, gleich die kostenlose Version; Start
+ * und Testphase entfallen seit 17.11.), test (alte Testphase, nur noch ohne Anmeldung), plan (Kauf), club (auf Rechnung).
  */
-export type EntitlementSource = 'vorstart' | 'gruender' | 'test' | 'plan' | 'club';
+export type EntitlementSource = 'vorstart' | 'gruender' | 'kostenlos' | 'test' | 'plan' | 'club';
 
 /** Freie Phase ohne Kauf, die irgendwann endet und auf die kostenlose Version fällt */
 export function isFreePhase(source: EntitlementSource) {
-  return source === 'test' || source === 'gruender';
+  return source === 'gruender';
 }
 
 export type Entitlement = {
@@ -146,7 +146,7 @@ type Raw = {
 
 function parse(raw: Raw): Entitlement {
   const until = raw.until ? new Date(raw.until) : null;
-  const known: EntitlementSource[] = ['plan', 'club', 'vorstart', 'gruender', 'test'];
+  const known: EntitlementSource[] = ['plan', 'club', 'vorstart', 'gruender', 'kostenlos', 'test'];
   const source: EntitlementSource = known.includes(raw.source as EntitlementSource) ? (raw.source as EntitlementSource) : 'test';
   return {
     loading: false,

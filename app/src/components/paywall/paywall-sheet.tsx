@@ -99,7 +99,7 @@ export function PaywallHost() {
 }
 
 /**
- * Ende der Testphase (Fall F): einmal am letzten Testtag beim Öffnen der App, mit dem eigenen Gebrauch.
+ * Ende der freien Zeit der Gründungstester (Fall F): einmal am letzten Tag beim Öffnen der App, mit dem eigenen Gebrauch.
  * Stumm, solange limitsLive() aus ist.
  */
 function useTrialEnd() {
@@ -336,9 +336,9 @@ function TrialStats({ ctx }: { ctx: PaywallCtx }) {
   return (
     <View style={styles.gapM}>
       <View style={styles.trialPill}>
-        <AppText style={[styles.capt, { color: Colors.signal }]}>{t('Test endet heute')}</AppText>
+        <AppText style={[styles.capt, { color: Colors.signal }]}>{t('Freie Zeit endet heute')}</AppText>
       </View>
-      <AppText style={styles.headline}>{t('DEINE 14 TAGE')}</AppText>
+      <AppText style={styles.headline}>{t('DEINE 12 MONATE')}</AppText>
       <View style={styles.grid}>
         {cells.map(([l, v]) => (
           <View key={l} style={styles.cell}>

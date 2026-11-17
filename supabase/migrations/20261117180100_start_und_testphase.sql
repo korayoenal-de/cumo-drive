@@ -6,8 +6,8 @@
 --
 -- Danach gilt je Konto, gemessen am Anlegen des Kontos:
 --  * vor dem Release Tag angelegt: Gründungstester, 12 Monate ab Release alles frei
---  * ab dem Release Tag angelegt: 14 Tage Testphase ab Anlegen, danach die kostenlose Version
--- Die 30 Tage Startphase entfällt (Koray 17.11.: es gibt den kostenlosen Plan). Jedes Konto bekommt genau eine Phase.
+--  * ab dem Release Tag angelegt: gleich die kostenlose Version (Quelle kostenlos)
+-- Startphase (30 Tage) und Testphase (14 Tage) entfallen (Koray 17.11.: der kostenlose Plan reicht).
 -- profiles.trial_ends_at wird dafür nicht mehr gelesen (es stünde sonst bei spät im Startfenster
 -- angelegten Konten über dem Stichtag).
 
@@ -41,8 +41,8 @@ begin
     src := 'gruender';
     until := rel + interval '12 months';
   else
-    src := 'test';
-    until := created + interval '14 days';
+    src := 'kostenlos';
+    until := null;
   end if;
 end $$;
 revoke all on function public.trial_for(uuid) from public, anon, authenticated;
@@ -114,7 +114,7 @@ begin
 end $$;
 revoke all on function public.entitlement_for(uuid) from public, anon, authenticated;
 
--- Die Startphase von 30 Tagen (Migration 20261117170000) entfällt wieder: trial_length liefert nur noch 14 Tage.
+-- Die Startphase von 30 Tagen (Migration 20261117170000) entfällt wieder.
 -- profiles.trial_ends_at wird nicht mehr gelesen, die Phase rechnet trial_for.
 create or replace function public.trial_length(created timestamptz) returns interval
 language sql immutable as $$ select interval '14 days' $$;

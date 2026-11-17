@@ -486,7 +486,7 @@ const LANDING_HTML_DE = `<div style="background: #0B0B0C; color: #F4F4F2; font-f
   <div style="display: flex; flex-direction: column; gap: 18px; max-width: 860px;">
     <span class="cd-label">Preise</span>
     <h2 class="cd-h2">Kostenlos starten. Dann so, wie du fährst.</h2>
-    <p class="cd-lead">Neue Konten fahren 14 Tage mit vollem Umfang, unsere Tester 12 Monate. Danach planst du ohne Mitgliedschaft weiter überall und fährst in deinem Heimatgebiet. Jeder Plan enthält alle Funktionen, auch Gruppenfahrten bis 6 Fahrzeuge. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.</p>
+    <p class="cd-lead">Kostenlos planst du überall und fährst in deinem Heimatgebiet, mit Gruppen zu dritt. Unsere Tester fahren 12 Monate mit vollem Umfang. Jeder Plan enthält alle Funktionen, auch Gruppenfahrten bis 6 Fahrzeuge. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.</p>
   </div>
   <div class="cd-grid4">${priceCard('Jahr', '59,99 €', 'Entspricht 5 € im Monat. Abo, jederzeit kündbar.', true)}${priceCard('Saison Pass', '49 €', 'Einmalig für 6 Monate, kein Abo. Für die Monate, in denen das Auto aus der Garage darf.')}${priceCard('Monat', '14,99 €', 'Abo, jederzeit kündbar.')}${priceCard('Woche', '7,99 €', 'Für das Wochenende im Mietwagen oder die eine Tour im Urlaub. Abo, jederzeit kündbar.')}
   </div>

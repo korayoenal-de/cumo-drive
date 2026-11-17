@@ -40,8 +40,8 @@ async function ausfahrten(w: World, tour: ReturnType<typeof loadSampleTour>) {
     c.expect(seen?.myStatus == null && !seen?.isOwner, 'noch kein eigener Status');
     const t = await max.app.ausfahrten.ausfahrtTour(id);
     c.expect(t?.tour.linie.length === tour.linie.length, 'Tour der Ausfahrt für Nicht Mitglieder ladbar');
-    // Ohne Abo (Testphase abgelaufen) kein Veröffentlichen. Die Phase rechnet trial_for aus dem Release Tag und dem
-    // Anlegen des Kontos (17.11.): Release vor 60 Tagen, Konto vor 20 Tagen angelegt, also 14 Tage Test vorbei.
+    // Ohne Abo kein Veröffentlichen. Die Phase rechnet trial_for aus dem Release Tag und dem Anlegen des Kontos
+    // (17.11.): Release vor 60 Tagen, Konto vor 20 Tagen angelegt, also gleich die kostenlose Version.
     const up = await asAdmin(
       `update public.app_launch set release_at = now() - interval '60 days'; update auth.users set created_at = now() - interval '20 days' where id = ${lit(exp.id)}`,
     );
@@ -53,6 +53,9 @@ async function ausfahrten(w: World, tour: ReturnType<typeof loadSampleTour>) {
     let e1 = '';
     await exp.app.ausfahrten.publishAusfahrt(s2, { startsAt, meeting: null, note: '', seats: 3, public: true }).catch((e: Error) => (e1 = e.message));
     c.expect(/Mitgliedschaft/.test(e1), `ohne Abo abgewiesen (${e1})`);
+    const k = await exp.client.rpc('my_entitlement');
+    const ke = k.data as { active?: boolean; source?: string } | null;
+    c.expect(ke?.active === false && ke.source === 'kostenlos', `nach dem Release ohne Testphase gleich kostenlos (${ke?.source})`);
     // Gründungstester: Konto vor dem Release angelegt, 12 Monate ab Release frei (Koray 17.11.)
     await asAdmin(`update auth.users set created_at = now() - interval '90 days' where id = ${lit(org.id)}`);
     const g = await org.client.rpc('my_entitlement');

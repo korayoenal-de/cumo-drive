@@ -121,7 +121,7 @@ export async function restorePurchases(): Promise<PurchaseResult> {
     }
   }
   const e = getEntitlement();
-  if (e.active && e.source !== 'test') return { ok: true };
+  if (e.active && (e.source === 'plan' || e.source === 'club')) return { ok: true };
   return { ok: false, message: available() ? t('Wir haben keinen aktiven Kauf gefunden.') : NOT_YET };
 }
 

@@ -16,6 +16,9 @@ import { t } from '@/i18n';
 
 export function describeEntitlement(e: Entitlement): { title: string; text: string } {
   const until = formatUntil(e.until);
+  if (!e.active && e.source === 'kostenlos') {
+    return { title: t('Kostenlos'), text: t('Du planst überall und fährst in deinem Heimatgebiet, mit Gruppen zu dritt. Mit einem Plan geht alles, überall.') };
+  }
   if (!e.active) {
     return {
       title: e.source === 'plan' ? t('Plan abgelaufen') : e.source === 'gruender' ? t('Gründungszeit vorbei') : t('Testphase vorbei'),
@@ -33,7 +36,7 @@ export function describeEntitlement(e: Entitlement): { title: string; text: stri
     return { title: t('Plan aktiv'), text: t('Gültig bis {until}.', { until }) };
   }
   if (e.source === 'vorstart') {
-    return { title: t('Testphase'), text: t('Bis zum Start ist alles frei. Danach fährst du als Gründungstester 12 Monate kostenlos.') };
+    return { title: t('Vor dem Start'), text: t('Bis zum Start ist alles frei. Danach fährst du als Gründungstester 12 Monate kostenlos.') };
   }
   if (e.source === 'gruender') {
     return { title: t('Gründungstester'), text: t('Danke fürs Mittesten. Alles frei bis {until}.', { until }) };

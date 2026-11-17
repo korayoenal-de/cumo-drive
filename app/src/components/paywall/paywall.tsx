@@ -67,7 +67,7 @@ export function Paywall({
   const ent = useEntitlement();
   const current = useCurrentPlan();
   /** Plan oder Club aktiv: „Dein Plan“ statt Verkauf */
-  const hasPlan = mode === 'voluntary' && ent.active && ent.source !== 'test';
+  const hasPlan = mode === 'voluntary' && ent.active && (ent.source === 'plan' || ent.source === 'club');
   const [changing, setChanging] = useState(false);
   const [selected, setSelected] = useState<PlanId>('jahr');
   const [busy, setBusy] = useState<'buy' | 'restore' | null>(null);

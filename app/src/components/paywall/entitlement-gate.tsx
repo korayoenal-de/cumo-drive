@@ -35,20 +35,13 @@ export function EntitlementGate({ children }: { children: ReactNode }) {
   );
 }
 
-/** "Test noch 9 Tage": nur sichtbar während der Testphase. */
+/** "Frei noch 9 Tage": nur für Gründungstester in den letzten zwei Wochen ihrer 12 Monate. */
 export function TrialBadge() {
   const e = useEntitlement();
   if (e.loading || !e.active || !e.until || !isFreePhase(e.source)) return null;
   // Gründungstester erst in den letzten zwei Wochen erinnern
   if (e.source === 'gruender' && e.daysLeft > 14) return null;
-  const text =
-    e.source === 'test'
-      ? e.daysLeft <= 1
-        ? t('Test noch 1 Tag')
-        : t('Test noch {daysLeft} Tage', { daysLeft: e.daysLeft })
-      : e.daysLeft <= 1
-        ? t('Frei noch 1 Tag')
-        : t('Frei noch {daysLeft} Tage', { daysLeft: e.daysLeft });
+  const text = e.daysLeft <= 1 ? t('Frei noch 1 Tag') : t('Frei noch {daysLeft} Tage', { daysLeft: e.daysLeft });
   const urgent = e.daysLeft <= 3;
   return (
     <View style={[styles.pill, urgent && styles.pillUrgent]} accessibilityLabel={text}>
