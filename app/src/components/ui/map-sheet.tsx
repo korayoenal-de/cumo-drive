@@ -87,6 +87,18 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
   const [boxH, setBoxH] = useState(0);
   const [headH, setHeadH] = useState(0);
 
+  // Tastatur selbst verfolgen statt automaticallyAdjustKeyboardInsets (Koray 17.11.: Blätter ließen sich weit über
+  // das Ende hinaus scrollen). iOS ließ den Abstand der Tastatur stehen, wenn sich das Blatt beim Schließen der
+  // Tastatur gleichzeitig verkleinerte; danach war unter dem Inhalt eine leere Fläche.
+  const [kbH, setKbH] = useState(0);
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardWillShow', (e) => setKbH(Math.round(e.endCoordinates.height)));
+    const hide = Keyboard.addListener('keyboardWillHide', () => setKbH(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
   const H = boxH || win.height;
   /** Platz für die schwebende Tab Leiste und die Safe Area unten */
   const bottomSpace = insets.bottom + TAB_BAR_SPACE;
@@ -271,7 +283,7 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
                 <Animated.ScrollView
                   ref={scrollRef as RefObject<Animated.ScrollView | null> | undefined}
                   style={styles.flex}
-                  contentContainerStyle={[styles.content, { paddingBottom: bottomSpace + Spacing.xl }]}
+                  contentContainerStyle={[styles.content, { paddingBottom: Math.max(bottomSpace, kbH) + Spacing.xl }]}
                   scrollEnabled={detent === 2 && !lockScroll}
                   canCancelContentTouches={!lockScroll}
                   // kein Federn über die Enden: oben übernimmt das Blatt, unten endet der Inhalt, wo er endet
@@ -281,7 +293,6 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
                   scrollEventThrottle={16}
                   keyboardShouldPersistTaps="handled"
                   keyboardDismissMode="interactive"
-                  automaticallyAdjustKeyboardInsets
                   showsVerticalScrollIndicator={false}>
                   {/* Kopf (Tabs oder Überschrift) scrollt mit; seine Höhe bestimmt die kleine Höhe des Blatts */}
                   <View onLayout={(e) => setHeadH(Math.round(e.nativeEvent.layout.height))} style={styles.head}>
