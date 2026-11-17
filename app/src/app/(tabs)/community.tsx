@@ -8,10 +8,13 @@
  */
 import { Kennzahlen, SeatsBadge } from '@/components/ui/kennzahlen';
 import { fahrzeit, meta as fmtMeta, strecke, wann } from '@/lib/format';
+import { seenTab } from '@/lib/fly';
+import { flyFrom } from '@/components/ui/morph-action';
+import { IconLabel } from '@/components/ui/btn-icon';
 import { useRideFun } from '@/lib/ride-fun';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -64,6 +67,8 @@ export default function Community() {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareAll, setShareAll] = useState(false);
   const [toPublish, setToPublish] = useState<SavedTour | null>(null);
+  // Plakette für Neues (veröffentlicht, Ausfahrt angelegt) verschwindet beim Öffnen des Tabs
+  useFocusEffect(useCallback(() => seenTab('community'), []));
   const myTours = useLibrary();
   const [tours, setTours] = useState<CommunityTour[] | null>(null);
   const [rides, setRides] = useState<Ausfahrt[] | null>(null);
@@ -557,6 +562,7 @@ function usePress() {
  */
 const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: CommunityTour; mine: boolean; big?: boolean; onChanged?: () => void }) {
   const [busy, setBusy] = useState<'open' | 'save' | 'withdraw' | null>(null);
+  const keepRef = useRef<ComponentRef<typeof View>>(null);
   const [confirm, setConfirm] = useState(false);
   const [report, setReport] = useState(false);
   // Gespeichert heißt: liegt in Meine Touren (übernommen unter Community, eigene als veröffentlichte Tour)
@@ -619,6 +625,8 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
     setBusy('save');
     try {
       await copyCommunityTour(t);
+      // Merken (Muster A, Koray 17.11.): das Touren Symbol fliegt vom Lesezeichen in den Touren Tab
+      flyFrom(keepRef.current, { target: 'touren', icon: { tab: 'touren' }, bg: Colors.surface2, fg: Colors.text });
       showToast(tr('Gespeichert unter Touren'));
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -641,6 +649,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
     </Pressable>
   ) : (
     <Pressable
+      ref={keepRef}
       accessibilityRole="button"
       accessibilityLabel={saved ? tr('{name} aus Touren entfernen', { name: t.name }) : tr('{name} unter Touren speichern', { name: t.name })}
       accessibilityState={{ selected: saved, busy: busy === 'save' }}
@@ -682,7 +691,13 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
         <Kennzahlen km={km} minutes={t.minutes} fun={data?.fun} />
         {t.description ? <AppText style={styles.desc} numberOfLines={3}>{t.description}</AppText> : null}
         <Pressable accessibilityRole="button" onPress={() => void open()} style={styles.primary}>
-          {busy === 'open' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{tr('Im Planer öffnen')}</AppText>}
+          {busy === 'open' ? (
+            <ActivityIndicator color={Colors.onSignal} />
+          ) : (
+            <IconLabel icon={{ tab: 'planen' }} color={Colors.onSignal}>
+              <AppText style={styles.primaryText}>{tr('Im Planer öffnen')}</AppText>
+            </IconLabel>
+          )}
         </Pressable>
         {!mine && (
           <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={styles.textBtn}>

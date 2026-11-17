@@ -21,6 +21,7 @@ import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { Chip, ChipRow } from '@/components/ui/chip';
 import { SwipeDelete } from '@/components/ui/swipe-delete';
 import { Screen } from '@/components/ui/screen';
+import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -32,6 +33,7 @@ import { thumbShape } from '@/lib/route-thumb';
 import { fmtG } from '@/lib/ride-stats';
 import { importTourFile } from '@/lib/route-file';
 import { showToast } from '@/lib/toast';
+import { seenTab } from '@/lib/fly';
 import { countCurves } from '@/lib/stats';
 import { flatten, formatKm, type LatLon } from '@/lib/tour';
 import { tr } from '@/i18n';
@@ -177,9 +179,10 @@ export default function Touren() {
     }
   };
 
-  // Beim Öffnen des Tabs mit dem Konto abgleichen
+  // Beim Öffnen des Tabs mit dem Konto abgleichen; die Plakette für Neues verschwindet
   useFocusEffect(
     useCallback(() => {
+      seenTab('touren');
       if (session) void syncLibrary().then(() => backfillAuthors(readLibrary()));
     }, [session]),
   );
@@ -239,7 +242,9 @@ export default function Touren() {
           <AppText variant="title">{tr('Noch keine Tour gespeichert')}</AppText>
           <AppText muted>{tr('Plan eine Tour oder eine Rundtour und tippe auf Speichern. Dann landet sie hier.')}</AppText>
           <Pressable accessibilityRole="button" onPress={() => router.navigate('/')} style={styles.primary}>
-            <AppText style={styles.primaryText}>{tr('Tour planen')}</AppText>
+            <IconLabel icon={{ tab: 'planen' }} color={Colors.onSignal}>
+<AppText style={styles.primaryText}>{tr('Tour planen')}</AppText>
+</IconLabel>
           </Pressable>
         </View>
       ) : (

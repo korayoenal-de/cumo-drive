@@ -29,6 +29,7 @@ import { syncVehicles } from '@/lib/vehicle';
 import { CarPlaySync } from '@/live/carplay-sync';
 import { AppIntentHandler } from '@/live/intents';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { FlyHost } from '@/components/ui/fly-host';
 import { ToastHost } from '@/components/ui/toast';
 import { endAllNavActivities } from '@/live/nav-live';
 import { StartScreen } from '@/components/ui/start-screen';
@@ -181,6 +182,7 @@ export default function RootLayout() {
       </EntitlementGate>
       <RideBanner />
       <ToastHost />
+      <FlyHost />
       <AppIntentHandler />
       <CarPlaySync />
       <PushHandler userId={userId} />

@@ -2,6 +2,7 @@
  * Navigationsscreen: Karte vollflächig, oben das nächste Manöver, unten Ankunft und Steuerung.
  * Läuft außerhalb der Tabs im Vollbild. Die Logik kommt aus useNavigation (src/lib/navigation).
  */
+import { MorphAction, type MorphActionRef } from '@/components/ui/morph-action';
 import { tourFun } from '@/lib/fun-score';
 import { fahrzeit, meta as fmtMeta, strecke } from '@/lib/format';
 import { setRideStatus } from '@/lib/group/invites';
@@ -1313,7 +1314,7 @@ export default function NavigationScreen() {
               {vehicles.list.length > 0 && (
                 <VehiclePick list={vehicles.list} current={vehicles.current ?? null} />
               )}
-              <BigButton label={t('Start')} onPress={() => void controls.start()} />
+              <LaunchButton label={t('Start')} reveal onGo={() => void controls.start()} />
               <View style={styles.row}>
                 <View style={styles.flex}>
                   <BigButton label={t('Schließen')} kind="ghost" onPress={close} />
@@ -1346,7 +1347,7 @@ export default function NavigationScreen() {
               <StatsGrid st={summary} />
               {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} preset={cpScore} />}
               <SavedNote saved={saved} />
-              <BigButton label={t('Fertig')} onPress={done} />
+              <DoneButton saved={saved === 'ok'} onDone={done} />
             </InfoCard>
           </ScrollView>
         )}
@@ -1362,7 +1363,7 @@ export default function NavigationScreen() {
               {arrivedStats && <StatsGrid st={arrivedStats} />}
               {(saved === null || saved === 'ok') && <DriveRatingCard driveId={driveId} highlights={driven} preset={cpScore} />}
               <SavedNote saved={saved} />
-              <BigButton label={t('Fertig')} onPress={done} />
+              <DoneButton saved={saved === 'ok'} onDone={done} />
             </InfoCard>
           </ScrollView>
         )}
@@ -1372,7 +1373,7 @@ export default function NavigationScreen() {
             <InfoCard tone="signal">
               <AppText variant="label">{t('Navigation gestoppt')}</AppText>
               <AppText>{state.error || tr('Die Route konnte nicht geladen werden.')}</AppText>
-              <BigButton label={t('Nochmal')} onPress={() => void controls.start()} />
+              <LaunchButton label={t('Nochmal')} onGo={() => void controls.start()} />
               <BigButton label={t('Schließen')} kind="ghost" onPress={close} />
             </InfoCard>
           </View>
@@ -1558,4 +1559,40 @@ function aheadOf(r: NavRoute, at: number): LatLon[] {
   const k = seg > 0 ? Math.max(0, Math.min(1, (at - r.cumKm[i]) / seg)) : 0;
   const p: LatLon = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
   return [p, ...r.shape.slice(i + 1)];
+}
+
+/**
+ * Start und Nochmal (Joy of Use, Koray 17.11., Muster B): Navigationspfeil, baut sich auf „Bereit“ von links nach
+ * rechts auf und klappt beim Druck von links nach rechts zusammen (Haptik losfahren), dann startet die Fahrt.
+ */
+/** Zeit, bis die Navigation (Vollbild Modal) zu ist; erst dann ist der Touren Tab zu sehen */
+const MODAL_GONE_MS = 380;
+
+function LaunchButton({ label, onGo, reveal }: { label: string; onGo: () => void; reveal?: boolean }) {
+  const ref = useRef<MorphActionRef>(null);
+  return (
+    <MorphAction
+      ref={ref}
+      label={label}
+      icon={{ sf: 'location.north.fill' }}
+      reveal={reveal}
+      onPress={() => (ref.current ? ref.current.launch(onGo) : onGo())}
+    />
+  );
+}
+
+/**
+ * Fertig nach der Fahrt (Muster A): ist die Fahrt gespeichert, schrumpft die Taste zum Kreis, die Navigation schließt
+ * und das Touren Symbol fliegt in den Touren Tab, wo die Fahrt unter Gefahren liegt. Sonst schließt sie nur.
+ */
+function DoneButton({ saved, onDone }: { saved: boolean; onDone: () => void }) {
+  const ref = useRef<MorphActionRef>(null);
+  return (
+    <MorphAction
+      ref={ref}
+      label={t('Fertig')}
+      icon={{ tab: 'touren' }}
+      onPress={() => (saved && ref.current ? ref.current.fly('touren', onDone, MODAL_GONE_MS) : onDone())}
+    />
+  );
 }

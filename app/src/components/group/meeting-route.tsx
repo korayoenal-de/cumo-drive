@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ActionSheet } from '@/components/ui/action-sheet';
+import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
@@ -55,7 +56,11 @@ export function MeetingRoute({ to, place, primary = false }: { to: LatLon; place
   return (
     <View style={styles.box}>
       <Pressable accessibilityRole="button" accessibilityHint={t('Fragt nach Schnell oder Kurvig und startet die Navigation ab deinem Standort')} disabled={busy} onPress={() => setOpen(true)} style={({ pressed }) => [styles.btn, primary && styles.btnPrimary, pressed && styles.pressed]}>
-        {busy ? <ActivityIndicator color={primary ? Colors.onSignal : Colors.text} /> : <AppText style={[styles.btnText, primary && styles.btnTextPrimary]}>{t('Route zum Treffpunkt')}</AppText>}
+        {busy ? <ActivityIndicator color={primary ? Colors.onSignal : Colors.text} /> : (
+          <IconLabel icon={{ sf: 'location.north.fill' }} color={primary ? Colors.onSignal : Colors.text}>
+            <AppText style={[styles.btnText, primary && styles.btnTextPrimary]}>{t('Route zum Treffpunkt')}</AppText>
+          </IconLabel>
+        )}
       </Pressable>
       <ActionSheet
         visible={open}

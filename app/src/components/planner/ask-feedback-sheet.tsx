@@ -9,6 +9,7 @@ import { SymbolView } from 'expo-symbols';
 
 import { Chip } from '@/components/ui/chip';
 import { OptionsSheet } from '@/components/ui/action-sheet';
+import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ASK_REASONS, askDismissed, sendAsk, type AskRound } from '@/lib/ask-feedback';
@@ -102,7 +103,9 @@ export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null
                 disabled={busy || text.trim().length < 3}
                 onPress={() => void send('anderes', text)}
                 style={[styles.primary, (busy || text.trim().length < 3) && styles.disabled]}>
-                {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Senden')}</AppText>}
+                {busy ? <ActivityIndicator color={Colors.onSignal} /> : <IconLabel icon={{ sf: 'arrow.up' }} color={Colors.onSignal}>
+<AppText style={styles.primaryText}>{t('Senden')}</AppText>
+</IconLabel>}
               </Pressable>
             </>
           ) : busy ? (

@@ -5,10 +5,11 @@
  * gespeichert sind. „Gruppenfahrt starten“ öffnet die Navigation und den Live Kanal der Fahrt.
  */
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { AddButton, RemoveButton } from '@/components/ui/add-button';
+import { MorphAction, type MorphActionRef } from '@/components/ui/morph-action';
 import { Screen } from '@/components/ui/screen';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
@@ -54,6 +55,7 @@ export default function GruppeNeu() {
   const [query, setQuery] = useState('');
   const [found, setFound] = useState<{ q: string; list: FoundProfile[] } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const startRef = useRef<MorphActionRef>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const max = ride?.maxMembers ?? DEFAULT_MAX_MEMBERS;
@@ -285,9 +287,15 @@ export default function GruppeNeu() {
       {err && <AppText style={styles.error}>{err}</AppText>}
 
       <View style={styles.gapS}>
-        <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void start()} style={[styles.primary, !!busy && styles.disabled]}>
-          {busy === 'start' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Gruppenfahrt starten')}</AppText>}
-        </Pressable>
+        {/* Lenkrad wie Losfahren, klappt zusammen und fährt los (Joy of Use, Koray 17.11.) */}
+        <MorphAction
+          ref={startRef}
+          label={t('Gruppenfahrt starten')}
+          icon={{ sf: 'steeringwheel' }}
+          busy={busy === 'start'}
+          disabled={!!busy}
+          onPress={() => (startRef.current ? startRef.current.launch(() => { void start(); setTimeout(() => startRef.current?.reset(), 1200); }) : void start())}
+        />
         <AppText variant="caption" muted>
           {tr('Du fährst vorne. Wer zugesagt hat, kann jederzeit dazukommen und sieht dich live auf der Karte.')}
         </AppText>

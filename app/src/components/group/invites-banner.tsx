@@ -15,6 +15,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { DateBlock } from '@/components/community/ride-bits';
 import { OptionsSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { Chip } from '@/components/ui/chip';
+import { IconLabel, type BtnIcon } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { relDay, type Ausfahrt } from '@/lib/ausfahrten';
@@ -173,7 +174,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
               <AppText style={styles.bigName} numberOfLines={2}>{inv.name}</AppText>
               <AppText muted>{fmtMeta(tr('Lead {ownerName}', { ownerName: inv.ownerName }), km != null ? strecke(km) : null)}</AppText>
               {err?.id === inv.rideId && <AppText style={styles.error}>{err.text}</AppText>}
-              <Btn label={t('Jetzt mitfahren')} primary busy={isBusy} disabled={!!busy} onPress={() => void join(inv)} />
+              <Btn label={t('Jetzt mitfahren')} icon={{ sf: 'location.north.fill' }} primary busy={isBusy} disabled={!!busy} onPress={() => void join(inv)} />
             </Animated.View>
           );
         }
@@ -191,7 +192,7 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
             ) : null}
             {err?.id === inv.rideId && <AppText style={styles.error}>{err.text}</AppText>}
             <View style={styles.row}>
-              <Btn label={t('Zusagen')} primary busy={isBusy} disabled={!!busy} onPress={() => void accept(inv)} />
+              <Btn label={t('Zusagen')} icon={{ tab: 'community' }} primary busy={isBusy} disabled={!!busy} onPress={() => void accept(inv)} />
               <Btn
                 label={t('Absagen')}
                 disabled={!!busy}
@@ -233,10 +234,18 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
   );
 }
 
-function Btn({ label, primary, busy, disabled, onPress }: { label: string; primary?: boolean; busy?: boolean; disabled?: boolean; onPress: () => void }) {
+function Btn({ label, primary, busy, disabled, onPress, icon }: { label: string; primary?: boolean; busy?: boolean; disabled?: boolean; onPress: () => void; icon?: BtnIcon }) {
   return (
     <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.btn, primary ? styles.btnPrimary : styles.btnSecondary, (pressed || disabled) && styles.dim]}>
-      {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={primary ? styles.btnPrimaryText : styles.btnText}>{label}</AppText>}
+      {busy ? (
+        <ActivityIndicator color={Colors.onSignal} />
+      ) : icon ? (
+        <IconLabel icon={icon} color={primary ? Colors.onSignal : Colors.text}>
+          <AppText style={primary ? styles.btnPrimaryText : styles.btnText}>{label}</AppText>
+        </IconLabel>
+      ) : (
+        <AppText style={primary ? styles.btnPrimaryText : styles.btnText}>{label}</AppText>
+      )}
     </Pressable>
   );
 }

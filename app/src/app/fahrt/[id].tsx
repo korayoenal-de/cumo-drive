@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteMap } from '@/components/map/route-map';
 import { BackLink } from '@/components/ui/back-link';
 import { Kennzahlen } from '@/components/ui/kennzahlen';
+import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { BAD_REASONS, getDrive, scoreWord, type DriveDetail } from '@/lib/drives';
@@ -125,7 +126,9 @@ export default function FahrtScreen() {
       {d && d.track.length > 1 && (
         <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.m }]}>
           <Pressable accessibilityRole="button" accessibilityHint={t('Zeigt die Strecke im Planer, dort kannst du sie speichern und nochmal fahren')} onPress={() => openDriveInPlanner(d, d.track)} style={({ pressed }) => [styles.primary, pressed && styles.pressed]}>
-            <AppText style={styles.primaryText}>{t('Im Planer öffnen')}</AppText>
+            <IconLabel icon={{ tab: 'planen' }} color={Colors.onSignal}>
+<AppText style={styles.primaryText}>{t('Im Planer öffnen')}</AppText>
+</IconLabel>
           </Pressable>
         </View>
       )}

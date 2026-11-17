@@ -13,6 +13,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { Avatar } from '@/components/community/ride-bits';
 import { BlockSheet, ReportSheet } from '@/components/moderation/report-sheet';
 import { CarSprite, frameFor } from '@/components/map/car-sprite';
+import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
@@ -99,7 +100,9 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
         ) : null}
         {canWrite ? (
           <Pressable accessibilityRole="button" onPress={() => write(d)} style={styles.primary}>
-            <AppText style={styles.primaryText}>{t('Nachricht')}</AppText>
+            <IconLabel icon={{ sf: 'bubble.left' }} color={Colors.onSignal}>
+<AppText style={styles.primaryText}>{t('Nachricht')}</AppText>
+</IconLabel>
           </Pressable>
         ) : !d.isMe ? (
           <AppText variant="caption" muted>{d.name}{t(' möchte keine Nachrichten bekommen.')}</AppText>

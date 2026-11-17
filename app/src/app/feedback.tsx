@@ -8,6 +8,7 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type ScrollV
 
 import { SubScreen } from '@/components/settings/settings-ui';
 import { Chip } from '@/components/ui/chip';
+import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { FEEDBACK_AREAS, sendFeedback, type FeedbackArea } from '@/lib/feedback';
@@ -62,7 +63,9 @@ export default function Feedback() {
         />
       </View>
       <Pressable accessibilityRole="button" accessibilityState={{ disabled: !ready }} disabled={!ready} onPress={() => void send()} style={[styles.primary, !ready && styles.disabled]}>
-        {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Senden')}</AppText>}
+        {busy ? <ActivityIndicator color={Colors.onSignal} /> : <IconLabel icon={{ sf: 'arrow.up' }} color={Colors.onSignal}>
+<AppText style={styles.primaryText}>{t('Senden')}</AppText>
+</IconLabel>}
       </Pressable>
     </SubScreen>
   );

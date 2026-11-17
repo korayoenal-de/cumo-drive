@@ -3,9 +3,12 @@
  * Tasten wie bei Meine Touren. Ein Tipp auf eine andere Stelle der Karte blendet ihn aus.
  */
 import { SymbolView } from 'expo-symbols';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useRef, type ComponentRef } from 'react';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeOut } from 'react-native-reanimated';
 
+import { IconLabel } from '@/components/ui/btn-icon';
+import { flyFrom } from '@/components/ui/morph-action';
 import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { WarnLabel } from '@/components/ui/warn-label';
@@ -46,6 +49,15 @@ export function MapPassActions({
         : { a: 'ziel', label: t('Als Ziel') };
   // Bei fertiger Route verlängert das neue Ziel die Tour, das alte wird Zwischenziel
   const secondary: { a: PassAction; label: string } | null = role ? null : complete ? { a: 'ziel', label: t('Als neues Ziel') } : empty ? { a: 'ziel', label: t('Als Ziel') } : null;
+  const mainRef = useRef<ComponentRef<typeof View>>(null);
+  const win = useWindowDimensions();
+  // Zur Route, Als Ziel, Als Start (Muster A, Koray 17.11.): die Passmarke fliegt von der Taste ins Blatt darunter,
+  // wo der Pass jetzt in der Punkteliste steht. Entfernen fliegt nicht.
+  const act = (a: PassAction) => {
+    if (a !== 'remove')
+      flyFrom(mainRef.current, { target: { x: Spacing.l + 28, y: win.height - bottom + 96 }, icon: { sf: 'mountain.2.fill' }, bg: Colors.signal, fg: Colors.onSignal });
+    onAction(a);
+  };
   return (
     <Animated.View
       key={pass.id}
@@ -75,13 +87,20 @@ export function MapPassActions({
         </View>
         <View style={styles.row}>
           <Pressable
+            ref={mainRef}
             accessibilityRole="button"
-            onPress={() => onAction(primary.a)}
+            onPress={() => act(primary.a)}
             style={({ pressed }) => [styles.btn, role ? styles.btnQuiet : styles.btnMain, styles.flex, pressed && styles.pressed]}>
-            <AppText style={[styles.btnText, !role && styles.onSignal]}>{primary.label}</AppText>
+            {role ? (
+              <AppText style={styles.btnText}>{primary.label}</AppText>
+            ) : (
+              <IconLabel icon={{ sf: 'mountain.2.fill' }} color={Colors.onSignal}>
+                <AppText style={[styles.btnText, styles.onSignal]}>{primary.label}</AppText>
+              </IconLabel>
+            )}
           </Pressable>
           {secondary && (
-            <Pressable accessibilityRole="button" onPress={() => onAction(secondary.a)} style={({ pressed }) => [styles.btn, styles.btnQuiet, pressed && styles.pressed]}>
+            <Pressable accessibilityRole="button" onPress={() => act(secondary.a)} style={({ pressed }) => [styles.btn, styles.btnQuiet, pressed && styles.pressed]}>
               <AppText style={styles.btnText}>{secondary.label}</AppText>
             </Pressable>
           )}

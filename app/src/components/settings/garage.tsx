@@ -5,6 +5,7 @@ import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { type Drive } from '@/lib/drives';
@@ -108,7 +109,9 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
       {!edit && (
         // kein Hauptweg der Seite, daher Zweittaste (UI Konsistenz Check 9.11.)
         <Pressable accessibilityRole="button" onPress={() => setEdit(newVehicle())} style={styles.secondary}>
-          <AppText style={styles.secondaryText}>{t('Fahrzeug hinzufügen')}</AppText>
+          <IconLabel icon={{ sf: 'plus' }} color={Colors.text}>
+<AppText style={styles.secondaryText}>{t('Fahrzeug hinzufügen')}</AppText>
+</IconLabel>
         </Pressable>
       )}
       {drives && unassigned.length > 0 && (

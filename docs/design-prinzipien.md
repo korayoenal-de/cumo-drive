@@ -46,7 +46,7 @@ Regeln:
 * Bei „Bewegung reduzieren“ nur Deckkraft, kein Aufbau, kein Puls.
 
 ### Wann sich etwas bewegt (Regeln vom 11.11.2026)
-Bewegung ist ein Akzent, kein Schmuck. Sie steht nur dort, wo sie etwas erklärt. Es gibt genau sechs Anlässe:
+Bewegung ist ein Akzent, kein Schmuck. Sie steht nur dort, wo sie etwas erklärt. Es gibt genau sieben Anlässe (der siebte seit 17.11.):
 
 1. **Auswahl gleitet.** In einer festen Leiste gibt es eine einzige Markierung, und sie wandert zur neuen Auswahl: Tab Leiste, Glaspille in der Community. Eine Feder (`snap`) für jede Entfernung, über drei Plätze also dreimal so schnell wie zum Nachbarn. Beim ersten Erscheinen steht sie sofort richtig.
 2. **Der Finger führt.** Was man zieht, folgt dem Finger eins zu eins und rastet beim Loslassen mit `snap` ein: Blatt, Richtungsregler, Bewertungsregler, Punkte. Das läuft auf dem UI Thread, damit es auch beim Planen nicht hakt.
@@ -54,6 +54,7 @@ Bewegung ist ein Akzent, kein Schmuck. Sie steht nur dort, wo sie etwas erklärt
 4. **Zustand wird Ergebnis.** Laden und Ergebnis stehen an derselben Stelle und gehen ineinander über: Zurück Pille beim Anpassen, Ladeknopf, Speichern.
 5. **Druck.** Jede Taste gibt mit `pressScale` nach, auch Chips.
 6. **Bedeutung.** Eigene Animationen haben nur der Manöverpfeil, die Legende im Fahrspaß Pegel und der Ladekreis.
+7. **Aktion mit Ziel** (Koray 17.11.2026, Abschnitt unten). Prio 1 Aktionen zeigen, wohin ihr Ergebnis geht.
 
 Bewusst ohne Bewegung:
 * Chips und Textreiter (Tour planen, Rundtour) wechseln sofort. Sie liegen einzeln, dort gibt es keine Fläche, die wandern könnte.
@@ -178,12 +179,32 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 **CarPlay**
 - Jede Änderung an Karte und Navigation wird für CarPlay mitgedacht und dort genauso umgesetzt, soweit CarPlay es zulässt.
 
+## Aktionen mit Ziel (Joy of Use, Koray 17.11.2026, Leinwand „Joy of Use: Aktionen mit Ziel“)
+Die wichtigsten Aktionen tragen ein Symbol in der Taste und zeigen mit einer Bewegung, wohin ihr Ergebnis geht. Bausteine: `MorphAction` (components/ui/morph-action.tsx), `flyTo` und `FlyHost` (lib/fly.ts, components/ui/fly-host.tsx), `BtnIconView` und `IconLabel` (components/ui/btn-icon.tsx).
+
+**Muster A, fliegt ins Ziel.** Nach dem Erfolg schrumpft die Taste zum Kreis um ihr Symbol, das Symbol fliegt auf einem Bogen (460 ms) dorthin, wo das Ergebnis jetzt liegt, und dort erscheint eine Plakette. Haptik `ziel` bei der Landung.
+* Speichern im Planer (Tour und Rundtour): nach Name oder Überschreiben fliegt das Touren Symbol in den Touren Tab. Die Speichern Zeile löst sich auf, ⋯ rückt neben Losfahren.
+* Merken in der Community: vom Lesezeichen in den Touren Tab.
+* Veröffentlichen (Touren und Community): das Blatt geht zu, das Community Symbol fliegt in den Community Tab.
+* Fertig nach der Fahrt, wenn die Fahrt gespeichert ist: die Navigation schließt, das Touren Symbol fliegt in den Touren Tab.
+* Pass zur Route, als Ziel oder als Start: die Passmarke fliegt ins Blatt zur Punkteliste.
+* Anfrage senden und Zusagen auf der Seite einer Ausfahrt (dort gibt es keine Tab Leiste): zum Hinweis „Anfrage gesendet“ beziehungsweise zum Chat oben.
+* Ausfahrt veröffentlichen: die Seite der Ausfahrt folgt sofort, darum kein Flug, nur Haptik `ziel` und die Plakette am Community Tab.
+
+**Muster B, klappt zusammen.** Die Taste klappt von links nach rechts zur runden Symboltaste zusammen (240 ms, Haptik `losfahren`), dann folgt der nächste Bildschirm. Auf „Bereit“ baut sich Start von links nach rechts auf.
+* Losfahren (nach „Allein losfahren“), Start, Nochmal, Gruppenfahrt starten, Jetzt losfahren, Jetzt mitfahren, Aufschließen, Zur Navigation.
+
+**Symbole.** Ein Symbol steht für ein Ziel. Neu sind nur Lenkrad (steeringwheel: Losfahren, Gruppenfahrt starten, Nochmal fahren), Navigationspfeil in Tasten (location.north.fill: Start, Nochmal, Jetzt losfahren, Jetzt mitfahren, Aufschließen, Route zum Treffpunkt, Zur Navigation), Radar (Nochmal scannen, eigene Zeichnung) und Fahrspuren (road.lanes: Gefahrene Strecken in den Karteneinstellungen). Alles andere ist vorhanden und bleibt: Tab Symbole für Speichern, Merken, Fertig (Touren), Veröffentlichen, Anfrage, Zusagen (Community), Im Planer öffnen, Tour planen (Planen); mountain.2.fill für den Pass, bubble.left für Nachricht, car.2 für Einladen und Mitfahren anfragen, arrow.up für Senden, plus für Fahrzeug hinzufügen. Die Zielflagge (flag.checkered) steht nur noch für das Ziel.
+
+**Grenzen.** Die Tab Leiste ist die Glasleiste von iOS; ihr Symbol lässt sich nicht animieren und ihre Lage nicht abfragen. Der Flug landet auf der gemessenen Stelle (lib/fly.ts, TAB_X) und iOS zeigt danach die Plakette, bis der Tab geöffnet wird. Modale Bildschirme liegen über dem FlyHost, darum schließen sie zuerst und der Flug startet danach an derselben Stelle. Mit „Bewegung reduzieren“ kein Flug und kein Zusammenklappen, nur Plakette und Haptik.
+
 ## Haptik (entschieden am 10.11.2026, ab Build 21)
 - Nur wenn der Finger etwas bewegt oder einen Zustand auslöst; keine Haptik für normale Taps, pro Geste ein Impuls außer Rastungen.
 - In der Fahrt nur der Funk (das Handy steckt in der Halterung, CarPlay hat keine Haptik).
 - Punkte verschieben: leicht beim Abheben, Rastung bei jeder neuen Position, weich beim Ablegen.
 - Losfahren: ein kräftiger Impuls. Langer Druck auf die Karte: leicht, wenn der Punkt sitzt. Funk: fest beim Drücken, leicht beim Loslassen.
-- Tokens in `lib/haptics.ts` (abheben, rastung, ablegen, losfahren, punkt, sendung, sendungEnde).
+- Prio 1 Aktionen (Koray 17.11.2026): weich, wenn ein Symbol im Ziel landet (`ziel`), kräftig, wenn Losfahren, Start und die anderen Fahrtstarts zusammenklappen (`losfahren`).
+- Tokens in `lib/haptics.ts` (abheben, rastung, ablegen, losfahren, ziel, punkt, sendung, sendungEnde).
 
 ## Namen (10.11.2026)
 - Der Tab heißt „Touren“ (früher Meine Touren), in allen Texten gleich: „Unter Touren gespeichert“, „Aus Touren entfernt“. „Routen“ ist der Reiter in der Community.

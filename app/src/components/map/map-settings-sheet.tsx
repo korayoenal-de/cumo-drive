@@ -108,7 +108,8 @@ const LAYERS: { key: LayerKey; icon: SFSymbol; label: string; note: string }[] =
     },
     {
       key: 'drives',
-      icon: 'flag.checkered',
+      // eigenes Symbol, die Zielflagge bleibt allein für das Ziel (Koray 17.11.)
+      icon: 'road.lanes',
       label: t('Gefahrene Strecken'),
       note: t('Deine Fahrten in Grün, so siehst du, was noch fehlt'),
     },

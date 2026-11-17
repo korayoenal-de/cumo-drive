@@ -38,6 +38,9 @@ import { useRide } from '@/lib/group/ride';
 import { declineInvite, inviteToRide, removeFromRide, respondInvite, rideOverview, setRideTour, type RideMemberRow } from '@/lib/group/invites';
 import { useClosedCheck } from '@/components/tours/closed-sheet';
 import { showToast } from '@/lib/toast';
+import { flyTo } from '@/lib/fly';
+import type { BtnIcon } from '@/components/ui/btn-icon';
+import { MorphAction, type MorphActionRef } from '@/components/ui/morph-action';
 import { findProfiles, type FoundProfile } from '@/lib/profile';
 import { formatKm, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { t, tr } from '@/i18n';
@@ -46,6 +49,9 @@ import { t, tr } from '@/i18n';
 const BAR_SPACE = 96;
 
 type Full = { tour: Tour & { minutes?: number }; profile: Profile };
+
+const NAV_ICON: BtnIcon = { sf: 'location.north.fill' };
+const COMMUNITY_ICON: BtnIcon = { tab: 'community' };
 
 export default function AusfahrtDetail() {
   // k: Schlüssel aus einem Einladungslink einer privaten Ausfahrt (Koray 13.11.)
@@ -161,6 +167,27 @@ export default function AusfahrtDetail() {
 
 
   /** Führt eine Aktion aus, lädt danach neu; true bei Erfolg */
+  const mainBox = useRef<ComponentRef<typeof View>>(null);
+  const mainRef = useRef<MorphActionRef>(null);
+  const statusRef = useRef<ComponentRef<typeof View>>(null);
+  const chatRef = useRef<ComponentRef<typeof View>>(null);
+  /**
+   * Anfrage senden und Zusagen (Muster A, ohne Tab Leiste auf dieser Seite): nach dem Erfolg fliegt das Community
+   * Symbol von der Taste dorthin, wo das Ergebnis jetzt steht (Hinweis „Anfrage gesendet“ oder der Chat oben).
+   */
+  const flyAfter = (key: string, fn: () => Promise<unknown>, to: 'status' | 'chat') => {
+    mainBox.current?.measureInWindow((x, y, w, h) => {
+      void run(key, fn).then((ok) => {
+        if (!ok) return;
+        setTimeout(() => {
+          (to === 'chat' ? chatRef : statusRef).current?.measureInWindow((tx, ty, tw, th) => {
+            if (!tw) return;
+            flyTo({ from: { x: x + w / 2, y: y + h / 2, size: h }, target: { x: tx + Math.min(tw / 2, 28), y: ty + Math.min(th / 2, 28) }, icon: COMMUNITY_ICON, bg: Colors.signal, fg: Colors.onSignal });
+          });
+        }, 80);
+      });
+    });
+  };
   const run = async (key: string, fn: () => Promise<unknown>): Promise<boolean> => {
     if (busy) return false;
     setBusy(key);
@@ -307,7 +334,9 @@ export default function AusfahrtDetail() {
   const openChat = () => router.push({ pathname: '/ausfahrt/chat', params: { id: a.id } });
 
   /** Eine Hauptaktion je Phase (Koray 14.11.): Einladen vorher, Jetzt losfahren am Tag, Navigation während der Fahrt */
-  let main: { label: string; onPress: () => void; disabled?: boolean; hint?: string } | null = null;
+  // Symbol und Bewegung je Aktion (Joy of Use, Koray 17.11.): launch klappt zusammen und fährt los,
+  // die übrigen tragen nur ihr Symbol; Anfrage senden und Zusagen fliegen nach dem Erfolg auf die Seite (flyAfter)
+  let main: { label: string; onPress: () => void; disabled?: boolean; hint?: string; icon: BtnIcon; launch?: boolean; fly?: { key: string; to: 'status' | 'chat'; fn: () => Promise<unknown> } } | null = null;
   // Nach der Ausfahrt (Koray 14.11.): Rückblick statt Planung
   const over = a.isOver && !inThisRide;
   const drove = over && !!a.startedAt;
@@ -315,23 +344,23 @@ export default function AusfahrtDetail() {
   const cancelled = over && a.isCancelled && !drove;
   if (cancelled) main = null;
   else if (over) {
-    if (drove) main = { label: t('Nochmal fahren'), onPress: () => void againRide() };
-    else if (a.isOwner) main = { label: t('Neuen Termin wählen'), onPress: () => setTimeSheet(true) };
-  } else if (inThisRide) main = { label: t('Zur Navigation'), onPress: () => router.push('/navigation') };
-  else if (joined && a.rideStatus === 'laeuft' && !isLead) main = { label: meArrived ? tr('Jetzt mitfahren') : tr('Aufschließen'), onPress: () => void startGroup() };
-  else if (isLead && a.rideStatus === 'laeuft') main = { label: t('Jetzt losfahren'), onPress: () => void startGroup() };
+    if (drove) main = { label: t('Nochmal fahren'), icon: { sf: 'steeringwheel' }, onPress: () => void againRide() };
+    else if (a.isOwner) main = { label: t('Neuen Termin wählen'), icon: { sf: 'calendar' }, onPress: () => setTimeSheet(true) };
+  } else if (inThisRide) main = { label: t('Zur Navigation'), icon: NAV_ICON, launch: true, onPress: () => router.push('/navigation') };
+  else if (joined && a.rideStatus === 'laeuft' && !isLead) main = { label: meArrived ? tr('Jetzt mitfahren') : tr('Aufschließen'), icon: NAV_ICON, launch: true, onPress: () => void startGroup() };
+  else if (isLead && a.rideStatus === 'laeuft') main = { label: t('Jetzt losfahren'), icon: NAV_ICON, launch: true, onPress: () => void startGroup() };
   else if (isLead && dayMode)
     main = startOpen
-      ? { label: t('Jetzt losfahren'), onPress: tryStart }
-      : { label: t('Jetzt losfahren'), onPress: () => undefined, disabled: true, hint: tr('Ab {v0} möglich, 2 Stunden vor der Abfahrt', { v0: clock(new Date(a.startsAt.getTime() - START_WINDOW_MS)) }) };
+      ? { label: t('Jetzt losfahren'), icon: NAV_ICON, launch: missing.length === 0, onPress: tryStart }
+      : { label: t('Jetzt losfahren'), icon: NAV_ICON, onPress: () => undefined, disabled: true, hint: tr('Ab {v0} möglich, 2 Stunden vor der Abfahrt', { v0: clock(new Date(a.startsAt.getTime() - START_WINDOW_MS)) }) };
   // Route zum Treffpunkt ist für alle Dabei die Hauptaktion, auch Tage vorher (Koray 15.11.: man kann früher los);
   // Einladen bleibt als Zeile bei den Teilnehmern
   else if (joined && meetAt) main = null;
-  else if (a.isOwner && free > 0 && !inviting) main = { label: t('Einladen'), onPress: () => setInviting(true) };
+  else if (a.isOwner && free > 0 && !inviting) main = { label: t('Einladen'), icon: { sf: 'car.2' }, onPress: () => setInviting(true) };
   else if (joined) main = null;
-  else if (a.myStatus === 'eingeladen') main = { label: t('Zusagen'), onPress: () => void run('yes', () => respondInvite(a.id, true, myVehicleLabel() || null)) };
-  else if (!a.myStatus && free > 0 && !asking) main = { label: t('Mitfahren anfragen'), onPress: () => setAsking(true) };
-  else if (asking) main = { label: t('Anfrage senden'), onPress: () => void run('ask', async () => { await requestAusfahrt(a.id, msg, myVehicleLabel() || null); setAsking(false); }) };
+  else if (a.myStatus === 'eingeladen') main = { label: t('Zusagen'), icon: COMMUNITY_ICON, onPress: () => undefined, fly: { key: 'yes', to: 'chat', fn: () => respondInvite(a.id, true, myVehicleLabel() || null) } };
+  else if (!a.myStatus && free > 0 && !asking) main = { label: t('Mitfahren anfragen'), icon: { sf: 'car.2' }, onPress: () => setAsking(true) };
+  else if (asking) main = { label: t('Anfrage senden'), icon: COMMUNITY_ICON, onPress: () => undefined, fly: { key: 'ask', to: 'status', fn: async () => { await requestAusfahrt(a.id, msg, myVehicleLabel() || null); setAsking(false); } } };
 
   // Ohne andere Hauptaktion ist die Route zum Treffpunkt die Hauptaktion, auch Tage vorher (Koray 15.11.)
   const routeMain = !main && !over && joined && !!meetAt && !inThisRide && !(meArrived && a.rideStatus === 'geplant');
@@ -343,7 +372,7 @@ export default function AusfahrtDetail() {
           <BackLink onPress={back} />
           <View style={styles.flex} />
           {joined && (
-            <Pressable accessibilityRole="button" accessibilityLabel={t('Chat öffnen')} hitSlop={4} onPress={openChat} style={styles.roundBtn}>
+            <Pressable ref={chatRef} accessibilityRole="button" accessibilityLabel={t('Chat öffnen')} hitSlop={4} onPress={openChat} style={styles.roundBtn}>
               <SymbolView name="bubble.left.and.bubble.right" size={20} weight="semibold" tintColor={Colors.text} />
             </Pressable>
           )}
@@ -594,7 +623,7 @@ export default function AusfahrtDetail() {
           </View>
         )}
         {!a.isOwner && a.myStatus === 'angefragt' && (
-          <View style={styles.info}>
+          <View ref={statusRef} style={styles.info}>
             <AppText variant="title">{t('Anfrage gesendet')}</AppText>
             <AppText muted>{a.ownerName}{tr(' entscheidet. Sobald du angenommen bist, siehst du es hier und kannst im Chat schreiben.')}</AppText>
           </View>
@@ -623,9 +652,21 @@ export default function AusfahrtDetail() {
         <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.m }]}>
           {main ? (
             <>
-              <Pressable accessibilityRole="button" onPress={main.onPress} disabled={!!busy || main.disabled} style={[styles.primary, main.disabled && styles.disabled]}>
-                {busy === 'ask' || busy === 'start' || busy === 'yes' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{main.label}</AppText>}
-              </Pressable>
+              <View ref={mainBox}>
+                <MorphAction
+                  ref={mainRef}
+                  label={main.label}
+                  icon={main.icon}
+                  busy={busy === 'ask' || busy === 'start' || busy === 'yes'}
+                  disabled={!!busy || main.disabled}
+                  onPress={() => {
+                    const go = main.onPress;
+                    if (main.fly) return flyAfter(main.fly.key, main.fly.fn, main.fly.to);
+                    if (main.launch && mainRef.current) mainRef.current.launch(() => { go(); setTimeout(() => mainRef.current?.reset(), 1200); });
+                    else go();
+                  }}
+                />
+              </View>
               {main.hint && <AppText muted style={styles.center}>{main.hint}</AppText>}
             </>
           ) : (

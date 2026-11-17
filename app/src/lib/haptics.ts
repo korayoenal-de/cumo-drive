@@ -1,5 +1,6 @@
 /**
  * Haptik, sehr gezielt (Koray 10.11.2026): nur wenn der Finger etwas bewegt oder einen Zustand auslöst.
+ * Seit 17.11. auch für die Prio 1 Aktionen: Landung im Ziel (ziel) und Losfahren oder Start (losfahren).
  * Keine Haptik für normale Taps, in der Fahrt nur der Funk. Die Namen sind Tokens wie Motion in theme.ts.
  *
  * expo-haptics ist ab Build 21 drin. Ältere Builds bekommen dieselben OTA Updates; dort fehlt das native
@@ -16,8 +17,10 @@ export type HapticKind =
   | 'rastung'
   /** Punkt abgelegt */
   | 'ablegen'
-  /** Losfahren löst aus */
+  /** Losfahren und Start klappen zusammen, die Fahrt beginnt */
   | 'losfahren'
+  /** Aktion mit Ziel: das Symbol landet im Tab oder auf der Seite (Speichern, Merken, Veröffentlichen; Koray 17.11.) */
+  | 'ziel'
   /** langer Druck auf die Karte hat einen Punkt gesetzt */
   | 'punkt'
   /** Funk gedrückt: du bist auf Sendung */
@@ -39,6 +42,7 @@ export function haptic(kind: HapticKind): void {
       case 'sendungEnde':
         return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       case 'ablegen':
+      case 'ziel':
         return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
       case 'losfahren':
         return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);

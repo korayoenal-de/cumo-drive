@@ -861,15 +861,16 @@ export function TourMode({
             sheetTitle={plan.name.trim() || tr('Neue Tour')}
             primary={{
               label: tr('Losfahren'),
+              icon: { sf: 'steeringwheel' },
+              launch: true,
               onPress: () => {
-                haptic('losfahren');
                 void drive(false);
               },
             }}
             choose={{
               title: tr('Wie fährst du?'),
               items: [
-                { key: 'solo', icon: 'car.fill', label: tr('Allein losfahren'), hint: tr('Die Navigation startet sofort'), onPress: () => void drive(false) },
+                { key: 'solo', icon: 'car.fill', launch: true, label: tr('Allein losfahren'), hint: tr('Die Navigation startet sofort'), onPress: () => void drive(false) },
                 { key: 'gruppe', icon: 'person.2.fill', label: tr('Als Gruppe fahren'), hint: tr('Bis zu 6 Autos, du lädst sie im nächsten Schritt ein'), onPress: () => void drive(true) },
               ],
             }}

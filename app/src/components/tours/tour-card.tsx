@@ -11,13 +11,14 @@ import { ShareSheet } from '@/components/tours/share-sheet';
 import { datum, fahrzeit, meta as fmtMeta, strecke } from '@/lib/format';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { SOFT_LAYOUT } from '@/components/ui/action-bar';
 import { DeleteTourSheet } from '@/components/tours/delete-tour-sheet';
-import { ActionSheet, OptionsSheet, type SheetItem } from '@/components/ui/action-sheet';
+import { ActionSheet, OptionsSheet, SHEET_GONE_MS, type SheetItem } from '@/components/ui/action-sheet';
+import { IconLabel } from '@/components/ui/btn-icon';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
@@ -32,6 +33,7 @@ import { exportTour, type RouteFormat } from '@/lib/route-file';
 import { thumbShape } from '@/lib/route-thumb';
 import { shareTourLink } from '@/lib/share-link';
 import { showToast } from '@/lib/toast';
+import { flyTo } from '@/lib/fly';
 import { flatten } from '@/lib/tour';
 import { tr } from '@/i18n';
 
@@ -191,11 +193,17 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
       if (p?.name) setAuthor((a) => a || p.name);
     });
   }, []);
-  const run = async (fn: () => Promise<unknown>, done: string) => {
+  const pubRef = useRef<ComponentRef<typeof View>>(null);
+  // Veröffentlichen (Muster A, Koray 17.11.): das Blatt geht zu, dann fliegt das Community Symbol von der Taste in den Tab
+  const run = async (fn: () => Promise<unknown>, done: string, fly = false) => {
     setBusy(true);
     setMsg(null);
     try {
       await fn();
+      if (fly)
+        pubRef.current?.measureInWindow((x, y, w, h) => {
+          if (w) setTimeout(() => flyTo({ from: { x: x + w / 2, y: y + h / 2, size: h }, target: 'community', icon: { tab: 'community' }, bg: Colors.signal, fg: Colors.onSignal }), SHEET_GONE_MS);
+        });
       onDone(done);
     } catch (e) {
       setMsg(e instanceof Error ? e.message : String(e));
@@ -251,15 +259,21 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
         maxLength={500}
         accessibilityLabel={tr('Beschreibung')}
       />
-      <Pressable accessibilityRole="button" disabled={!can} onPress={() =>
+      <Pressable ref={pubRef} accessibilityRole="button" disabled={!can} onPress={() =>
           void run(async () => {
             // neuer Name gilt auch in Meine Touren und im Konto
             const name = title.replace(/\s+/g, ' ').trim();
             if (name && name !== tour.name) renameTour(tour.id, name);
             await publishTour({ ...tour, name: name || tour.name }, shownAuthor, desc);
-          }, tr('In der Community veröffentlicht'))
+          }, tr('In der Community veröffentlicht'), true)
         } style={({ pressed }) => [styles.primary, !can && styles.disabled, pressed && styles.itemPressed]}>
-        {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{tr('Veröffentlichen')}</AppText>}
+        {busy ? (
+          <ActivityIndicator color={Colors.onSignal} />
+        ) : (
+          <IconLabel icon={{ tab: 'community' }} color={Colors.onSignal}>
+            <AppText style={styles.primaryText}>{tr('Veröffentlichen')}</AppText>
+          </IconLabel>
+        )}
       </Pressable>
       {msg && <AppText variant="caption" style={styles.danger}>{msg}</AppText>}
     </View>

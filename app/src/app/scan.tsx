@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
@@ -160,7 +161,9 @@ export default function ScanScreen() {
           <View style={styles.card}>
             <AppText>{status.text}</AppText>
             <Pressable accessibilityRole="button" style={styles.primary} onPress={retry}>
-              <AppText style={styles.primaryText}>{t('Nochmal scannen')}</AppText>
+              <IconLabel icon={{ draw: 'radar' }} color={Colors.onSignal}>
+<AppText style={styles.primaryText}>{t('Nochmal scannen')}</AppText>
+</IconLabel>
             </Pressable>
           </View>
         ) : status.kind === 'scan' && permission?.granted ? (

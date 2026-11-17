@@ -16,6 +16,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { useUnreadMessages, useUnreadWatcher } from '@/lib/drivers';
+import { useFresh } from '@/lib/fly';
 import { useRide, type RideState } from '@/lib/group/ride';
 import { t } from '@/i18n';
 
@@ -28,7 +29,9 @@ export default function TabsLayout() {
 function IosTabs() {
   useUnreadWatcher(useSession()?.user.id);
   useInvitesWatcher();
-  const unread = useUnreadMessages() + useInviteCount();
+  const unread = useUnreadMessages() + useInviteCount() + useFresh('community');
+  // Neu in Touren (gespeichert, gemerkt, gefahren), bis der Tab geöffnet wird (Aktionen mit Ziel, 17.11.)
+  const freshTours = useFresh('touren');
   const ride = useRide();
   const riding = ride.status === 'aktiv' || ride.status === 'verbinde';
   return (
@@ -51,6 +54,7 @@ function IosTabs() {
       <NativeTabs.Trigger name="touren" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/touren.png'), selected: require('../../../assets/tabs/touren-on.png') }} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('Touren')}</NativeTabs.Trigger.Label>
+        {freshTours > 0 && <NativeTabs.Trigger.Badge>{freshTours > 9 ? '9+' : String(freshTours)}</NativeTabs.Trigger.Badge>}
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="community" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/community.png'), selected: require('../../../assets/tabs/community-on.png') }} renderingMode="template" />

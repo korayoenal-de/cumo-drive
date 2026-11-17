@@ -6,7 +6,6 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 
-import { haptic } from '@/lib/haptics';
 import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
 import { shareTourLink } from '@/lib/share-link';
@@ -131,15 +130,16 @@ export function Result({
         sheetTitle={tour.name}
         primary={{
           label: tr('Losfahren'),
+          icon: { sf: 'steeringwheel' },
+          launch: true,
           onPress: () => {
-            haptic('losfahren');
             drive(false);
           },
         }}
         choose={{
           title: tr('Wie fährst du?'),
           items: [
-            { key: 'solo', icon: 'car.fill', label: tr('Allein losfahren'), hint: tr('Die Navigation startet sofort'), onPress: () => drive(false) },
+            { key: 'solo', icon: 'car.fill', launch: true, label: tr('Allein losfahren'), hint: tr('Die Navigation startet sofort'), onPress: () => drive(false) },
             { key: 'gruppe', icon: 'person.2.fill', label: tr('Als Gruppe fahren'), hint: tr('Bis zu 6 Autos, du lädst sie im nächsten Schritt ein'), onPress: () => drive(true) },
           ],
         }}

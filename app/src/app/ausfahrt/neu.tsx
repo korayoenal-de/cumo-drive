@@ -13,6 +13,9 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RoutePreview } from '@/components/planner/route-preview';
+import { IconLabel } from '@/components/ui/btn-icon';
+import { bumpTab } from '@/lib/fly';
+import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { clock, publishAusfahrt, shortDate } from '@/lib/ausfahrten';
@@ -121,6 +124,10 @@ export default function AusfahrtNeu() {
       const id = await publishAusfahrt(tour as SavedTour, { startsAt, meeting: { name: meetingName.trim() || startName, lat: start[0], lon: start[1] }, note, seats: Math.max(seats, picked.length), public: pub && ent.active });
       // gewählte Kontakte gleich einladen; scheitert eine Einladung, bleibt die Ausfahrt trotzdem stehen
       for (const uid of picked) await inviteToRide(id, uid).catch(() => undefined);
+      // Aktion mit Ziel (Koray 17.11.): die Seite der Ausfahrt folgt sofort, darum kein Flug; Haptik und die
+      // Plakette am Community Tab zeigen, wo sie jetzt liegt
+      haptic('ziel');
+      if (pub && ent.active) bumpTab('community');
       router.replace({ pathname: '/ausfahrt/[id]', params: { id } });
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -325,7 +332,13 @@ export default function AusfahrtNeu() {
 
             {err && <AppText style={styles.error}>{err}</AppText>}
             <Pressable accessibilityRole="button" onPress={() => void publish()} disabled={busy} style={[styles.primary, tooSoon && styles.primaryOff]}>
-              {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{pub ? tr('Ausfahrt veröffentlichen') : tr('Ausfahrt anlegen')}</AppText>}
+              {busy ? (
+                <ActivityIndicator color={Colors.onSignal} />
+              ) : (
+                <IconLabel icon={pub ? { tab: 'community' } : { sf: 'car.2' }} color={Colors.onSignal}>
+                  <AppText style={styles.primaryText}>{pub ? tr('Ausfahrt veröffentlichen') : tr('Ausfahrt anlegen')}</AppText>
+                </IconLabel>
+              )}
             </Pressable>
             <AppText variant="caption" muted style={styles.center}>{pub ? tr('Für alle mit Konto in der Community sichtbar, mit Treffpunkt und Zeit.') : tr('Privat: in der Community steht sie nicht.')}</AppText>
           </Animated.View>
