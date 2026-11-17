@@ -4,11 +4,11 @@
  * landing-i18n.ts. Jede Sprache hat ihre eigene Adresse mit hreflang, damit Google sie getrennt findet. Der Web Planer
  * liegt hinter Login.
  */
-import Head from 'expo-router/head';
 import { useEffect } from 'react';
 
 import { landingHtml, LANDING_CSS } from './landing-html';
 import { LANDING_META, type LandingLang } from './landing-i18n';
+import { SeoHead } from '@/components/ui/seo-head';
 import { chosenLang, setLang } from '@/i18n';
 
 /** Schriften von der eigenen Domain statt Google Fonts (Datenschutz, keine Übertragung der IP an Dritte) */
@@ -37,7 +37,7 @@ export default function Landing({ lang = 'de' }: { lang?: LandingLang }) {
   const url = SITE + (meta.path === '/' ? '/' : meta.path);
   return (
     <>
-      <Head>
+      <SeoHead>
         <title>{meta.title}</title>
         <meta name="description" content={meta.desc} />
         <meta httpEquiv="content-language" content={lang} />
@@ -55,7 +55,7 @@ export default function Landing({ lang = 'de' }: { lang?: LandingLang }) {
         <link rel="alternate" hrefLang="x-default" href={`${SITE}/`} />
         <link rel="preload" href="/fonts/Archivo_900Black.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/Inter_400Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
-      </Head>
+      </SeoHead>
       <style dangerouslySetInnerHTML={{ __html: FONT_FACES + LANDING_CSS + '.cd-scroll{position:fixed;inset:0;overflow-y:auto;scroll-behavior:smooth;background:#0B0B0C;-webkit-overflow-scrolling:touch}' }} />
       {/* eigener Scrollbereich: die App Hülle im Browser ist auf Fensterhöhe festgelegt */}
       <div className="cd-scroll" dangerouslySetInnerHTML={{ __html: landingHtml(lang) }} />

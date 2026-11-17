@@ -2,7 +2,7 @@
  * Login und Registrieren im Browser (/login, /registrieren). Wer angemeldet ist, landet im Web Planer.
  */
 import { Redirect, router } from 'expo-router';
-import Head from 'expo-router/head';
+import { SeoHead } from '@/components/ui/seo-head';
 import { Platform, View } from 'react-native';
 
 import { AuthScreen } from '@/components/auth/auth-screen';
@@ -17,10 +17,10 @@ export function WebAuth({ mode }: { mode: 'login' | 'register' }) {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.ground }}>
       {Platform.OS === 'web' && (
-        <Head>
+        <SeoHead>
           <title>{mode === 'login' ? t('Login | Cumo Drive') : t('Registrieren | Cumo Drive')}</title>
           <meta name="robots" content="noindex" />
-        </Head>
+        </SeoHead>
       )}
       <AuthScreen initialMode={mode} onHome={() => router.navigate('/')} />
     </View>

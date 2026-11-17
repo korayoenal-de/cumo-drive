@@ -4,7 +4,7 @@
  * und Logo zurück zur Startseite, in der App als normale Seite mit Schließen.
  */
 import { router } from 'expo-router';
-import Head from 'expo-router/head';
+import { SeoHead } from '@/components/ui/seo-head';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
@@ -32,10 +32,10 @@ export function LegalPage({ doc, description, other }: { doc: LegalDoc; descript
     <View style={styles.root}>
       {/* Head nur im Web: in der App zeigt expo-router sonst einen Hinweis zur Handoff Herkunft (Koray 10.11.) */}
       {web && (
-        <Head>
+        <SeoHead>
           <title>{tr('{v0} | Cumo Drive', { v0: doc.headTitle ?? doc.title })}</title>
           <meta name="description" content={description} />
-        </Head>
+        </SeoHead>
       )}
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + Spacing.l, paddingBottom: insets.bottom + Spacing.xxxl }]}>
         <View style={styles.col}>
