@@ -724,20 +724,31 @@ function toTour(name: string, wegpunkte: LatLon[], p: GhPath): PlannedTour & { c
  * km auf Autobahn und Schnellstraße, in Wohnstraßen, und nach Ortsdichte des Servers (city: Großstadt,
  * residential: bebaut), zur Bewertung (Koray 10.11.: nahe Großstädten gibt es meist keine gute Route)
  */
-function classKm(p: GhPath, shape: LatLon[]): { autobahnKm: number; wohnKm: number; stadtKm?: number; bebautKm?: number } {
-  const span = (a: number, b: number) => {
+function classKm(p: GhPath, shape: LatLon[]): { autobahnKm: number; wohnKm: number; stadtKm?: number; bebautKm?: number; bebautStartKm?: number; bebautEndKm?: number } {
+  // km ab Anfang der Etappe je Punkt: so lässt sich zählen, was in den ersten und letzten 5 km bebaut ist
+  const at: number[] = [0];
+  for (let i = 1; i < shape.length; i++) at.push(at[i - 1] + haversine(shape[i - 1], shape[i]) / 1000);
+  const total = at[at.length - 1] ?? 0;
+  const span = (a: number, b: number, from = 0, to = Infinity) => {
     let km = 0;
-    for (let i = a + 1; i <= b && i < shape.length; i++) km += haversine(shape[i - 1], shape[i]) / 1000;
+    for (let i = a + 1; i <= b && i < shape.length; i++) if (at[i] > from && at[i - 1] < to) km += Math.min(at[i], to) - Math.max(at[i - 1], from);
     return km;
   };
   let city = 0;
   let built = 0;
+  let builtStart = 0;
+  let builtEnd = 0;
   const ud = p.details.urban_density;
   if (ud) for (const [a, b, v] of ud) {
     if (v === 'city') city += span(a, b);
     else if (v === 'residential') built += span(a, b);
+    if (v === 'residential') {
+      builtStart += span(a, b, 0, Math.min(5, total / 2));
+      builtEnd += span(a, b, Math.max(total - 5, total / 2), Infinity);
+    }
   }
-  const extra = ud ? { stadtKm: +city.toFixed(1), bebautKm: +built.toFixed(1) } : {};
+  // Start und Ziel liegen meist im Ort: die ersten und letzten 5 km getrennt, damit Prüfung und Wertung sie ausnehmen können
+  const extra = ud ? { stadtKm: +city.toFixed(1), bebautKm: +built.toFixed(1), bebautStartKm: +builtStart.toFixed(1), bebautEndKm: +builtEnd.toFixed(1) } : {};
   let fast = 0;
   let res = 0;
   for (const [a, b, v] of p.details.road_class ?? []) {

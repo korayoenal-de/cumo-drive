@@ -30,6 +30,9 @@ export type PlannedTour = Tour & {
   wohnKm?: number;
   stadtKm?: number;
   bebautKm?: number;
+  /** davon bebaut (Stadt oder Wohngebiet) in den ersten und letzten 5 km */
+  bebautStartKm?: number;
+  bebautEndKm?: number;
   /** je Etappe (Wegpunkt zu Wegpunkt): Minuten und km vom Router, und ob der direkte Weg gewählt wurde.
    *  Damit lassen sich unveränderte Etappen beim Ändern wiederverwenden (plan-window.ts). */
   legMin?: number[];
@@ -517,6 +520,8 @@ export function mergeLegs(name: string, points: LatLon[], parts: PlannedTour[]):
     ...(wohn != null ? { wohnKm: +wohn.toFixed(1) } : {}),
     ...(stadt != null ? { stadtKm: +stadt.toFixed(1) } : {}),
     ...(bebaut != null ? { bebautKm: +bebaut.toFixed(1) } : {}),
+    ...(parts[0]?.bebautStartKm != null ? { bebautStartKm: parts[0].bebautStartKm } : {}),
+    ...(parts[parts.length - 1]?.bebautEndKm != null ? { bebautEndKm: parts[parts.length - 1].bebautEndKm } : {}),
     ...(perLeg
       ? {
           legMin: parts.flatMap((t) => t.legMin!),

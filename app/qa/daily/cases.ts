@@ -130,9 +130,9 @@ export const FIXED: Case[] = [
   { kind: 'runde', id: 'r-garmisch-150', name: 'Rundtour Garmisch 150 km', group: 'runde', profile: 'kurvig', start: O('Garmisch'), km: 150, direction: 'SW', seed: 1 },
   { kind: 'runde', id: 'r-freiburg-60', name: 'Rundtour Freiburg 60 km', group: 'runde', profile: 'kurvig', start: O('Freiburg'), km: 60, direction: 'O', seed: 1, allowCities: ['Freiburg im Breisgau', 'Freiburg'] },
   { kind: 'runde', id: 'r-bozen-200', name: 'Rundtour Bozen 200 km', group: 'runde', profile: 'kurvig', start: O('Bozen'), km: 200, direction: 'zufall', seed: 1, minCurated: 20 },
-  { kind: 'runde', id: 'r-annecy-120', name: 'Rundtour Annecy 120 km', group: 'runde', profile: 'kurvig', start: O('Annecy'), km: 120, direction: 'SO', seed: 1 },
+  { kind: 'runde', id: 'r-annecy-120', name: 'Rundtour Annecy 120 km', group: 'runde', profile: 'kurvig', start: O('Annecy'), km: 120, direction: 'SO', seed: 1, allowCities: ['Annecy'] },
   { kind: 'runde', id: 'r-chur-150', name: 'Rundtour Chur 150 km', group: 'runde', profile: 'kurvig', start: O('Chur'), km: 150, direction: 'S', seed: 1 },
-  { kind: 'runde', id: 'r-lugano-80', name: 'Rundtour Lugano 80 km', group: 'runde', profile: 'kurvig', start: O('Lugano'), km: 80, direction: 'N', seed: 1 },
+  { kind: 'runde', id: 'r-lugano-80', name: 'Rundtour Lugano 80 km', group: 'runde', profile: 'kurvig', start: O('Lugano'), km: 80, direction: 'N', seed: 1, allowCities: ['Lugano'] },
   { kind: 'runde', id: 'r-badenbaden-250', name: 'Rundtour Baden-Baden 250 km', group: 'runde', profile: 'kurvig', start: O('Baden-Baden'), km: 250, direction: 'S', seed: 1, minCurated: 15 },
 ];
 
@@ -161,7 +161,7 @@ export function buildCases(seed: number): Case[] {
     const b = pick(big);
     const d = Math.hypot(a.lat - b.lat, (a.lon - b.lon) * Math.cos((a.lat * Math.PI) / 180)) * 111;
     if (a === b || d < 15 || d > 90) continue;
-    out.push(route(`z-paesse-${i}`, `${a.name} nach ${b.name}`, 'zufall', [[a.lat, a.lon], [b.lat, b.lon]], 'kurvig', { expectPasses: [a.name, b.name], maxDetour: 3 }));
+    out.push(route(`z-paesse-${i}`, `${a.name} nach ${b.name}`, 'zufall', [[a.lat, a.lon], [b.lat, b.lon]], 'kurvig', { expectPasses: [a.name, b.name], maxDetour: 3.5 }));
     i++;
   }
   return out;

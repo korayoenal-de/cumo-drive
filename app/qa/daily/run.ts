@@ -2,7 +2,7 @@
  * Täglicher Routen Check (Koray 16.11.): 50 Testrouten über die echte Planung der App, jede wird geprüft.
  *
  * Starten im Ordner app:
- *   npx tsx --tsconfig scripts/replay/tsconfig.json qa/daily/run.ts [--out qa/daily/out] [--prev <ergebnis.json>] [--seed <zahl>]
+ *   npx tsx --tsconfig scripts/replay/tsconfig.json qa/daily/run.ts [--out qa/daily/out] [--prev <ergebnis.json>] [--seed <zahl>] [--only <id,id>]
  *
  * Feste Fälle (qa/daily/cases.ts) prüfen immer dieselben Klassiker, damit Rückschritte auffallen. Dazu kommen
  * wechselnde Fälle aus dem Tagesdatum (Seed): Rundtouren ab zufälligen Orten mit zufälliger Länge und
@@ -124,6 +124,31 @@ function smallLoops(line: LatLon[]): LatLon[] {
   return found;
 }
 
+/**
+ * Schleifen, die keine Fehler sind (Bericht 17.11.): Kehrschleifen auf kuratierten Strecken (dort sind sie gewollt,
+ * etwa am Klausen oberhalb Linthal) und Kehren oder Abzweige bis 2 km um eine Passhöhe (Plöcken).
+ */
+function expectedLoop(p: LatLon): boolean {
+  if (PASSES.some((x) => haversine(p, [x.lat, x.lon]) < 2000)) return true;
+  const a = Math.floor(p[0] / 0.01);
+  const o = Math.floor(p[1] / 0.014);
+  for (let da = -1; da <= 1; da++) for (let dn = -1; dn <= 1; dn++) for (const q of curatedGrid.get(`${a + da}:${o + dn}`) ?? []) if (haversine(p, q) < 100) return true;
+  return false;
+}
+
+/**
+ * Zufahrt bei Rundtouren: das Stück, das Hin und Rückweg am Start gemeinsam fahren (Dorf im Tal, Sackgasse am
+ * Ortsrand). Gilt bis 4 km als Weg nach Hause, nicht als Stichstraße (Bericht 17.11.: Andraz 1 km, Bozen 0,5 km).
+ */
+function accessKm(line: LatLon[]): number {
+  const P = resample(line, 50);
+  const R = [...P].reverse();
+  let i = 0;
+  // vom Start vorwärts und vom Ziel rückwärts, solange beide Linien auf 45 m beieinander bleiben
+  while (i < P.length / 2 && i < 80 && R.some((q, j) => Math.abs(j - i) < 6 && haversine(P[i], q) < 45)) i++;
+  return (i * 50) / 1000;
+}
+
 /** km der Route höchstens 60 m neben einer kuratierten Strecke (Traumstrecken, Highlights, bevorzugt) */
 const curatedGrid = (() => {
   const g = new Map<string, LatLon[]>();
@@ -171,7 +196,7 @@ async function runCase(c: Case): Promise<Result> {
     const line = flatten(tour).map((x) => x.p);
     r.km = Math.round(lengthKm(line) * 10) / 10;
     r.minutes = Math.round(tour.minutes);
-    const pt = tour as { bebautKm?: number; stadtKm?: number; autobahnKm?: number };
+    const pt = tour as { bebautKm?: number; stadtKm?: number; autobahnKm?: number; bebautStartKm?: number; bebautEndKm?: number };
     r.bebautKm = pt.bebautKm != null ? Math.round(pt.bebautKm * 10) / 10 : undefined;
     r.stadtKm = pt.stadtKm != null ? Math.round(pt.stadtKm * 10) / 10 : undefined;
     r.autobahnKm = pt.autobahnKm != null ? Math.round(pt.autobahnKm * 10) / 10 : undefined;
@@ -180,13 +205,21 @@ async function runCase(c: Case): Promise<Result> {
     r.curatedShare = r.km ? Math.round((r.curatedKm / r.km) * 100) : 0;
     r.fun = tourFun(line)?.score;
 
-    // Stichstraßen: doppelt gefahren, bei Rundtouren ohne die ersten und letzten 1,5 km um zu Hause
-    const core = c.kind === 'runde' ? line.filter((p) => haversine(p, c.start) > 1500) : line;
+    // Stichstraßen: doppelt gefahren, bei Rundtouren ohne die Zufahrt (bis 4 km, mindestens 1,5 km um zu Hause)
+    let core = line;
+    // auch Strecken, die am Startort enden (Grimsel Furka Susten ab Andermatt: 0,9 km waren die Zufahrt im Ort)
+    const home = c.kind === 'runde' ? c.start : haversine(c.points[0], c.points[c.points.length - 1]) < 1000 ? c.points[0] : null;
+    if (home) {
+      const acc = Math.min(4, accessKm(line)) * 1000;
+      const P = resample(line, 50);
+      const k = Math.round(acc / 50);
+      core = (k > 0 ? P.slice(k, Math.max(k, P.length - k)) : P).filter((p) => haversine(p, home) > 1500);
+    }
     r.doubledKm = Math.round(doubledStretch(core).km * 10) / 10;
     if (r.doubledKm >= 1) add('fehler', `${r.doubledKm} km doppelt gefahren (Stichstraße)`);
     else if (r.doubledKm >= 0.3) add('hinweis', `${r.doubledKm} km doppelt gefahren`);
 
-    const loops = smallLoops(line);
+    const loops = smallLoops(line).filter((p) => !expectedLoop(p));
     r.loops = loops.length;
     if (loops.length) add('hinweis', `${loops.length} kleine Schleife${loops.length > 1 ? 'n' : ''} oder Schlenker bei ${loops.slice(0, 3).map((p) => `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`).join('; ')}`);
 
@@ -196,7 +229,12 @@ async function runCase(c: Case): Promise<Result> {
       for (const want of c.expectPasses ?? []) if (!r.passes.some((p) => p.toLowerCase().includes(want.toLowerCase()))) add('fehler', `erwarteter Pass fehlt: ${want}`);
       const cities = bigCitiesOn(line).filter((n) => !(c.allowCities ?? []).includes(n));
       if (cities.length) add('hinweis', `durch Großstadt: ${cities.join(', ')}`);
-      if (r.bebautKm != null && r.km && r.bebautKm / r.km > 0.3) add('hinweis', `${r.bebautKm} km durch Orte (${Math.round((r.bebautKm / r.km) * 100)} %)`);
+      // Orte ohne die ersten und letzten 5 km: Start und Ziel liegen meist im Ort (Bericht 17.11.)
+      if (r.bebautKm != null && r.km && r.km > 15) {
+        const inner = r.bebautKm - (pt.bebautStartKm ?? 0) - (pt.bebautEndKm ?? 0);
+        const share = inner / (r.km - 10);
+        if (share > 0.3) add('hinweis', `${Math.round(inner * 10) / 10} km durch Orte (${Math.round(share * 100)} % ohne Start und Ziel)`);
+      }
       if (c.minCurated != null && r.curatedShare < c.minCurated) add('hinweis', `nur ${r.curatedShare} % auf Traumstrecken und Pässen (erwartet ab ${c.minCurated} %)`);
       if (r.autobahnKm != null && r.autobahnKm > 3 && c.kind !== 'runde' && !c.allowMotorway) add('hinweis', `${r.autobahnKm} km Autobahn im kurvigen Profil`);
     }
@@ -295,7 +333,9 @@ function report(results: Result[], prev: Result[] | null): string {
 
 async function main() {
   mkdirSync(`${OUT}/linien`, { recursive: true });
-  const cases = buildCases(SEED);
+  // --only id1,id2: nur diese Fälle (zum Nachprüfen einzelner Befunde)
+  const only = arg('--only')?.split(',');
+  const cases = buildCases(SEED).filter((c) => !only || only.includes(c.id));
   const prev = PREV && existsSync(PREV) ? (JSON.parse(readFileSync(PREV, 'utf8')).results as Result[]) : null;
   const results: Result[] = [];
   for (const c of cases) {
