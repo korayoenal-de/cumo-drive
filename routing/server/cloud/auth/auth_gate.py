@@ -1,19 +1,27 @@
 #!/usr/bin/env python3
 """
-Anmeldung an den eigenen Servern (Koray 16.11.: Schutz vor Kopierern).
+Anmeldung an den eigenen Servern (Koray 16.11.: Schutz vor Kopierern), seit 17.11. mit Mengengrenzen je Konto
+(Sicherheitskonzept Maßnahme 6).
 
 Caddy fragt vor jeder Anfrage an Routing, Ortssuche, Valhalla und POI Kacheln hier nach (forward_auth).
 Gültig ist ein Supabase Token des Projekts CUMO DRIVE (ES256, Schlüssel aus dem öffentlichen JWKS, kein Geheimnis
 auf dem Server). Läuft nur lokal auf 127.0.0.1:9180.
 
-ENFORCE=0 (Start): jede Anfrage geht durch, gezählt wird nur, wie viele ein gültiges Token tragen.
-ENFORCE=1: ohne gültiges Token Status 401.
-Zählerstand: curl -s localhost:9180/stats
+ENFORCE=0 (Start): jede Anfrage geht durch, gezählt wird nur, wie viele ein gültiges Token tragen und wie oft ein
+  Konto über einer Grenze läge. So lassen sich die Grenzen an echtem Fahren eichen, bevor sie greifen.
+ENFORCE=1: ohne gültiges Token Status 401, über der Grenze Status 429 mit Retry-After.
+
+Grenzen je Konto (Minute und Stunde) nach Art der Anfrage, großzügig für echtes Planen und Fahren, eng für ein
+Skript, das die Daten abgreift. Dazu je IP Adresse das Dreifache, gegen viele Konten von einem Rechner.
+Zählerstand: curl -s localhost:9180/stats (Spitzenwerte je Art und die fünf aktivsten Konten der letzten Stunde,
+Konten nur als kurzer Hash).
 """
+import hashlib
 import json
 import os
 import threading
 import time
+from collections import defaultdict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import jwt  # python3-jwt (PyJWT) mit python3-cryptography
@@ -23,10 +31,33 @@ ENFORCE = os.environ.get('ENFORCE', '0') == '1'
 JWKS = jwt.PyJWKClient(f'{SUPABASE_URL}/auth/v1/.well-known/jwks.json', cache_keys=True, lifespan=3600)
 ISSUER = f'{SUPABASE_URL}/auth/v1'
 
+# Art der Anfrage: (je Minute, je Stunde). Eine Rundtour plant mehrere Varianten parallel, daher route großzügig.
+LIMITS = {
+    'route': (60, 600),
+    'suche': (120, 1500),
+    'valhalla': (120, 1500),
+    'poi': (300, 5000),
+}
+IP_FACTOR = 3
+
+
+def kind_of(uri: str) -> str:
+    if uri.startswith('/poi/'):
+        return 'poi'
+    if uri.startswith('/photon'):
+        return 'suche'
+    if uri.startswith('/valhalla'):
+        return 'valhalla'
+    return 'route'
+
+
 lock = threading.Lock()
-stats = {'mit_token': 0, 'ohne_token': 0, 'ungueltig': 0, 'seit': int(time.time())}
-# gültige Tokens kurz merken, damit nicht jede Anfrage neu rechnet
-seen: dict[str, float] = {}
+stats = {'mit_token': 0, 'ohne_token': 0, 'ungueltig': 0, 'ueber_grenze': 0, 'seit': int(time.time())}
+peak = {k: [0, 0] for k in LIMITS}  # höchster Stand je Konto: [Minute, Stunde]
+# gültige Tokens kurz merken, damit nicht jede Anfrage neu rechnet: Token -> (Ablauf, Konto)
+seen: dict[str, tuple[float, str]] = {}
+# Zeitstempel der letzten Stunde je (Konto oder IP, Art)
+hits: dict[tuple[str, str], deque] = defaultdict(deque)
 
 
 def count(key: str) -> None:
@@ -34,31 +65,69 @@ def count(key: str) -> None:
         stats[key] += 1
 
 
-def valid(token: str) -> bool:
+def user_of(token: str) -> str | None:
     now = time.time()
-    exp = seen.get(token)
-    if exp and exp > now:
-        return True
+    s = seen.get(token)
+    if s and s[0] > now:
+        return s[1]
     try:
         key = JWKS.get_signing_key_from_jwt(token)
         claims = jwt.decode(token, key.key, algorithms=['ES256', 'RS256'], audience='authenticated', issuer=ISSUER)
     except Exception:
-        return False
-    if len(seen) > 5000:
-        seen.clear()
-    seen[token] = min(float(claims.get('exp', now + 60)), now + 600)
-    return True
+        return None
+    with lock:
+        if len(seen) > 5000:
+            seen.clear()
+        seen[token] = (min(float(claims.get('exp', now + 60)), now + 600), str(claims.get('sub', '')))
+    return str(claims.get('sub', ''))
+
+
+def take(who: str, kind: str, factor: int = 1) -> int:
+    """Zählt die Anfrage; liefert 0 oder die Sekunden bis wieder Platz ist."""
+    per_min, per_hour = (x * factor for x in LIMITS[kind])
+    now = time.time()
+    with lock:
+        q = hits[(who, kind)]
+        while q and q[0] < now - 3600:
+            q.popleft()
+        last_min = sum(1 for t in q if t > now - 60)
+        if last_min >= per_min:
+            return 60
+        if len(q) >= per_hour:
+            return int(q[0] + 3600 - now) + 1
+        q.append(now)
+        if factor == 1:
+            p = peak[kind]
+            p[0] = max(p[0], last_min + 1)
+            p[1] = max(p[1], len(q))
+        if len(hits) > 50000:  # Speicher begrenzen: leere Einträge weg
+            for k in [k for k, v in hits.items() if not v or v[-1] < now - 3600]:
+                del hits[k]
+    return 0
+
+
+def top_users() -> list[dict]:
+    now = time.time()
+    per: dict[str, int] = defaultdict(int)
+    with lock:
+        for (who, _kind), q in hits.items():
+            if who.startswith('u:'):
+                per[who] += sum(1 for t in q if t > now - 3600)
+    best = sorted(per.items(), key=lambda x: -x[1])[:5]
+    return [{'konto': hashlib.sha256(w.encode()).hexdigest()[:8], 'anfragen_stunde': n} for w, n in best]
 
 
 class Gate(BaseHTTPRequestHandler):
     def log_message(self, *args):  # ruhig, Caddy protokolliert schon
         pass
 
-    def reply(self, code: int, body: bytes = b'') -> None:
+    def reply(self, code: int, body: bytes = b'', retry: int = 0) -> None:
         self.send_response(code)
-        if code == 401:
+        if code in (401, 429):
             self.send_header('Access-Control-Allow-Origin', '*')
             self.send_header('Content-Type', 'application/json')
+        if retry:
+            self.send_header('Retry-After', str(retry))
         self.end_headers()
         if body:
             self.wfile.write(body)
@@ -66,18 +135,28 @@ class Gate(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith('/stats'):
             with lock:
-                body = json.dumps({**stats, 'enforce': ENFORCE}).encode()
-            return self.reply(200, body)
+                body = {**stats, 'enforce': ENFORCE, 'spitze_je_konto': {k: {'minute': v[0], 'stunde': v[1]} for k, v in peak.items()}}
+            body['grenzen'] = {k: {'minute': v[0], 'stunde': v[1]} for k, v in LIMITS.items()}
+            body['aktivste_konten'] = top_users()
+            return self.reply(200, json.dumps(body).encode())
         auth = self.headers.get('Authorization', '')
         token = auth[7:].strip() if auth.lower().startswith('bearer ') else ''
         if not token:
             count('ohne_token')
             return self.reply(401, b'{"error":"Bitte anmelden."}') if ENFORCE else self.reply(200)
-        if valid(token):
-            count('mit_token')
-            return self.reply(200)
-        count('ungueltig')
-        return self.reply(401, b'{"error":"Anmeldung abgelaufen."}') if ENFORCE else self.reply(200)
+        user = user_of(token)
+        if not user:
+            count('ungueltig')
+            return self.reply(401, b'{"error":"Anmeldung abgelaufen."}') if ENFORCE else self.reply(200)
+        count('mit_token')
+        kind = kind_of(self.headers.get('X-Forwarded-Uri', '/'))
+        ip = (self.headers.get('X-Forwarded-For', '') or '').split(',')[0].strip()
+        wait = take('u:' + user, kind) or (take('ip:' + ip, kind, IP_FACTOR) if ip else 0)
+        if wait:
+            count('ueber_grenze')
+            if ENFORCE:
+                return self.reply(429, b'{"error":"Gerade zu viele Anfragen. Bitte warte einen Moment."}', wait)
+        return self.reply(200)
 
     do_POST = do_GET
     do_HEAD = do_GET
