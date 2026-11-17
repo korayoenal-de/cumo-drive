@@ -18,7 +18,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Shadow } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { clusterPins, type Region } from '@/lib/map-cluster';
-import { useMapTapGuard } from '@/lib/map-tap';
+import { pickPin, routeStroke, simplifyForScreen } from '@/lib/map-hit';
 import type { LatLon } from '@/lib/tour';
 import { tr } from '@/i18n';
 
@@ -71,7 +71,6 @@ function withSpan(pts: LatLon[], min = 0.22): LatLon[] {
 export function CommunityMap({ pins, selected, onSelect, line, bottom, top, style }: Props) {
   const settings = useMapSettings();
   const map = useRef<MapView>(null);
-  const tap = useMapTapGuard();
   const pad = { top: top + 30, right: 40, bottom: bottom + 30, left: 40 };
   const pinKey = pins.map((p) => p.id).join(',');
   const win = useWindowDimensions();
@@ -89,6 +88,60 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
     const groups = mergeNear(clusterPins(pins, region, win.width, CELL[stage], selected), region, win.width, CELL[stage] + GAP[stage] / 2, selected);
     return groups.flatMap((g) => (g.items.length > 1 ? fanOut(g.items, g.p, region, win.width, stage) : g.items));
   }, [pins, region, win.width, selected, stage]);
+
+  // Ein Tipp kann als Kartentipp, als Markentipp oder als beides ankommen, in beliebiger Reihenfolge. Beide werden kurz
+  // gesammelt; dann entscheidet der Abstand zum Tipp, ersatzweise die gemeldete Marke.
+  const latest = useRef({ shown, region, width: win.width, stage, selected });
+  useEffect(() => {
+    latest.current = { shown, region, width: mapWidth || win.width, stage, selected };
+  }, [shown, region, mapWidth, win.width, stage, selected]);
+  const tapRef = useRef<{ at: LatLon | null; marker: string | null; timer: ReturnType<typeof setTimeout> | null; decidedAt: number; decided: string | null }>({
+    at: null,
+    marker: null,
+    timer: null,
+    decidedAt: 0,
+    decided: null,
+  });
+  useEffect(() => () => {
+    const t = tapRef.current.timer;
+    if (t) clearTimeout(t);
+  }, []);
+  const decideSoon = () => {
+    const s = tapRef.current;
+    if (s.timer) return;
+    s.timer = setTimeout(() => {
+      const L = latest.current;
+      const near = s.at ? pickPin(L.shown, s.at, L.region, L.width, L.stage, L.selected) : null;
+      const id = near?.id ?? s.marker ?? null;
+      s.timer = null;
+      s.at = null;
+      s.marker = null;
+      s.decidedAt = Date.now();
+      s.decided = id;
+      onSelect(id);
+    }, 90);
+  };
+  const tapAt = (at: LatLon) => {
+    tapRef.current.at = at;
+    decideSoon();
+  };
+  const tapMarker = (id: string) => {
+    const s = tapRef.current;
+    // Kommt die Markenmeldung erst nach der Entscheidung, zählt sie nur, wenn kein Pin getroffen schien
+    if (!s.timer && Date.now() - s.decidedAt < 350) {
+      if (s.decided === null) onSelect(id);
+      return;
+    }
+    s.marker = id;
+    decideSoon();
+  };
+
+  // Gewählte Strecke passend zum Zoom: ausgedünnt, und klein gezeichnet dünner und ohne Schatten
+  const drawn = useMemo(() => {
+    if (!line || line.length < 2) return null;
+    const w = mapWidth || win.width;
+    return { coords: simplifyForScreen(line, region, w).map(ll), stroke: routeStroke(line, region, w) };
+  }, [line, region, mapWidth, win.width]);
 
   // Alle Pins zeigen, wenn sich die Auswahl der Pins ändert (Routen oder Ausfahrten)
   useEffect(() => {
@@ -119,27 +172,24 @@ export function CommunityMap({ pins, selected, onSelect, line, bottom, top, styl
       showsCompass={false}
       toolbarEnabled={false}
       pitchEnabled={false}
-      // Tippen auf die freie Karte hebt die Auswahl auf, Tippen auf einen Pin nicht. Das iPhone meldet den Pin Tipp
-      // auch der Karte (ohne marker-press), deshalb über die Sperre (lib/map-tap)
-      onMarkerPress={tap.marker}
+      // Treffer rechnet die Karte selbst (lib/map-hit): der nächste Pin im Umkreis gewinnt, auch wenn das iPhone den
+      // Tipp keiner Marke zuordnet. Tippen auf die freie Karte hebt die Auswahl auf.
       onPress={(e) => {
         if (e.nativeEvent.action === 'marker-press') return;
-        // Traf der Tipp eine Marke nur knapp nicht (das iPhone meldet ihn dann der Karte), gilt die nächste Marke im
-        // Umkreis von 30 pt als getroffen (Koray 17.11.: man brauchte viele Versuche). Sonst hebt er die Auswahl auf.
         const c = e.nativeEvent.coordinate;
-        tap.map(() => onSelect(nearestPin(shown, [c.latitude, c.longitude], region, mapWidth || win.width, stage)?.id ?? null));
+        tapAt([c.latitude, c.longitude]);
       }}
       onLayout={(e) => setMapWidth(e.nativeEvent.layout.width)}
       onRegionChangeComplete={onRegion}
       initialRegion={START}>
-      {line && line.length > 1 && (
+      {drawn && (
         <>
-          <Polyline coordinates={line.map(ll)} strokeColor="rgba(0,0,0,0.45)" strokeWidth={8} lineCap="round" lineJoin="round" zIndex={1} />
-          <Polyline coordinates={line.map(ll)} strokeColor={Colors.signal} strokeWidth={5} lineCap="round" lineJoin="round" zIndex={2} />
+          {drawn.stroke.shadow > 0 && <Polyline coordinates={drawn.coords} strokeColor="rgba(0,0,0,0.45)" strokeWidth={drawn.stroke.shadow} lineCap="round" lineJoin="round" zIndex={1} />}
+          <Polyline coordinates={drawn.coords} strokeColor={Colors.signal} strokeWidth={drawn.stroke.width} lineCap="round" lineJoin="round" zIndex={2} />
         </>
       )}
       {shown.map((p) => (
-        <PinMarker key={p.id} pin={p} on={p.id === selected} stage={stage} onSelect={onSelect} />
+        <PinMarker key={p.id} pin={p} on={p.id === selected} stage={stage} onTap={tapMarker} />
       ))}
     </MapView>
   );
@@ -202,7 +252,7 @@ function fanOut(items: CommunityPin[], c: LatLon, region: Region, widthPt: numbe
  * Eine Marke. Die Karte zeichnet Marken einmal als Bild (tracksViewChanges aus, sonst ruckelt sie); kommt das
  * Profilfoto später, baut ein neuer Schlüssel die Marke neu.
  */
-function PinMarker({ pin, on, stage, onSelect }: { pin: CommunityPin; on: boolean; stage: PinStage; onSelect: (id: string | null) => void }) {
+function PinMarker({ pin, on, stage, onTap }: { pin: CommunityPin; on: boolean; stage: PinStage; onTap: (id: string) => void }) {
   // gewählt zeigt immer alles
   const look: PinStage = on ? 'nah' : stage;
   const photo = useAvatar(pin.kind === 'driver' ? pin.id : null);
@@ -228,7 +278,7 @@ function PinMarker({ pin, on, stage, onSelect }: { pin: CommunityPin; on: boolea
       anchor={pin.kind === 'driver' || look !== 'nah' ? { x: 0.5, y: 0.5 } : { x: 0.5, y: 1 }}
       zIndex={on ? 50 : pin.kind === 'route' ? 10 : 20}
       tracksViewChanges={track}
-      onPress={() => onSelect(pin.id)}
+      onPress={() => onTap(pin.id)}
       accessibilityLabel={pin.kind === 'route' ? tr('Route, {label}', { label: pin.label }) : pin.kind === 'driver' ? tr('Fahrer {label}', { label: pin.label }) : tr('Ausfahrt am {label}', { label: pin.label })}>
       {look === 'weit' ? <PinDot pin={pin} /> : look === 'region' ? <PinIcon pin={pin} /> : <Pin pin={pin} on={on} />}
     </Marker>
@@ -325,25 +375,3 @@ const styles = StyleSheet.create({
   dotB: { backgroundColor: '#7A3018', marginLeft: -6 },
   count: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 10, lineHeight: 12 },
 });
-
-/**
- * Nächste gezeigte Marke zu einem Tipp auf die Karte, höchstens 30 pt entfernt (Bildschirmpunkte im aktuellen
- * Ausschnitt). In der Stufe Nah sitzt die Marke über ihrem Punkt (Spitze unten), dort zählt ihre Mitte.
- */
-export function nearestPin(pins: CommunityPin[], at: LatLon, region: Region, widthPt: number, stage: PinStage, maxPt = 30): CommunityPin | null {
-  const perLon = widthPt / Math.max(1e-6, region.longitudeDelta);
-  const perLat = perLon / Math.cos((at[0] * Math.PI) / 180);
-  let best: CommunityPin | null = null;
-  let bestD = maxPt;
-  for (const p of pins) {
-    const lift = stage === 'nah' && p.kind !== 'driver' ? 20 : 0;
-    const dx = (p.p[1] - at[1]) * perLon;
-    const dy = (at[0] - p.p[0]) * perLat - lift;
-    const d = Math.hypot(dx, dy);
-    if (d < bestD) {
-      bestD = d;
-      best = p;
-    }
-  }
-  return best;
-}

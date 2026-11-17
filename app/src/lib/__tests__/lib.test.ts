@@ -18,6 +18,7 @@ import { edgeLimits, shownLimitAt } from '../navigation/speed-zones';
 import { pointAtKm, snapToRoute } from '../navigation/tracker';
 import type { NavRoute } from '../navigation/types';
 import { PASSES, passesAlong } from '../passes';
+import { pickPin, routeStroke, simplifyForScreen } from '../map-hit';
 import { closureExclude, onPassRoad } from '../road-closures';
 
 // Die Texte der Tests sind deutsch; der Rechner hier läuft oft auf Englisch
@@ -407,5 +408,38 @@ describe('Sperrungen auf Passstraßen', () => {
     const far: LatLon[] = [[46.6, 11.6], [46.4, 12.1]];
     assert.equal(closureExclude(hits, far, 'hint').length, 0);
     assert.equal(closureExclude(hits, far).length, 1);
+  });
+});
+
+describe('Community Karte: Treffer und Linie (Koray 17.11.)', () => {
+  // 400 pt breit, 8 Grad Länge: 50 pt je Grad
+  const region = { latitude: 47, longitude: 10, latitudeDelta: 8, longitudeDelta: 8 };
+  const pins = [
+    { id: 'a', kind: 'route' as const, p: [47, 10] as LatLon },
+    { id: 'b', kind: 'route' as const, p: [47, 10.4] as LatLon },
+  ];
+  it('weit: knapp daneben trifft trotzdem den nächsten Punkt', () => {
+    assert.equal(pickPin(pins, [47.1, 10.25], region, 400, 'weit')?.id, 'b');
+    assert.equal(pickPin(pins, [47, 10.1], region, 400, 'weit')?.id, 'a');
+  });
+  it('weit: freie Karte hebt die Auswahl auf', () => {
+    assert.equal(pickPin(pins, [45, 8], region, 400, 'weit'), null);
+  });
+  it('nah: die Plakette über dem Punkt zählt, auch seitlich', () => {
+    const near = { latitude: 47, longitude: 10, latitudeDelta: 0.2, longitudeDelta: 0.2 };
+    const one = [{ id: 'x', kind: 'route' as const, p: [47, 10] as LatLon }];
+    // 2000 pt je Grad: 22 pt über dem Punkt und 40 pt seitlich
+    assert.equal(pickPin(one, [47 + 22 / 2000 / Math.cos((47 * Math.PI) / 180) * 1, 10 + 40 / 2000], near, 400, 'nah')?.id, 'x');
+  });
+  it('herausgezoomt wird die Strecke dünn statt ein Fleck', () => {
+    const line: LatLon[] = Array.from({ length: 2000 }, (_, i) => [47 + Math.sin(i / 7) * 0.01, 10 + i * 0.00005] as LatLon);
+    const far = routeStroke(line, { latitude: 47, longitude: 10, latitudeDelta: 8, longitudeDelta: 8 }, 400);
+    assert.ok(far.width <= 2 && far.shadow === 0);
+    const close = routeStroke(line, { latitude: 47, longitude: 10, latitudeDelta: 0.1, longitudeDelta: 0.1 }, 400);
+    assert.equal(close.width, 5);
+    const thin = simplifyForScreen(line, { latitude: 47, longitude: 10, latitudeDelta: 8, longitudeDelta: 8 }, 400);
+    assert.ok(thin.length < 100, `zu viele Punkte: ${thin.length}`);
+    assert.deepEqual(thin[0], line[0]);
+    assert.deepEqual(thin[thin.length - 1], line[line.length - 1]);
   });
 });
