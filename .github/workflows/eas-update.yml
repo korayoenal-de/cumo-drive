@@ -3,8 +3,9 @@ name: EAS Update (TestFlight)
 # Schickt den aktuellen JS Stand als OTA Update an den Kanal preview, also an die TestFlight Builds.
 #
 # Auslöser (Koray 17.11.2026):
-# * ein Tag ota-* auf einem Commit, etwa `git tag ota-20261117-1430 && git push origin ota-20261117-1430`.
-#   So kann jede Sitzung mit GitHub Zugriff ein freigegebenes Update auslösen, ohne eigenen Expo Zugang.
+# * ein Push auf einen neuen Zweig ota/*, etwa `git push origin HEAD:ota/20261117-1430`. So kann jede Sitzung
+#   mit GitHub Zugriff ein freigegebenes Update auslösen, ohne eigenen Expo Zugang. (Tags lässt der Zugang der
+#   Sitzungen nicht zu, neue Zweige schon.) Der Lauf löscht den Zweig am Ende wieder.
 # * per Hand unter Actions.
 #
 # Vor dem Update läuft immer der Pflichtlauf `npm run vor-update` (Typen, Lint, Tests, QS Korpus,
@@ -13,13 +14,16 @@ name: EAS Update (TestFlight)
 # Braucht das Repo Secret EXPO_TOKEN (Expo, Account Settings, Access Tokens; trägt Koray ein).
 on:
   push:
-    tags:
-      - 'ota-*'
+    branches:
+      - 'ota/**'
   workflow_dispatch:
     inputs:
       message:
         description: Notiz zum Update
         required: false
+
+permissions:
+  contents: write
 
 concurrency:
   group: eas-update
@@ -75,3 +79,8 @@ jobs:
           NOTE=$(git log -1 --format=%s)
           eas update --channel preview --environment preview --platform ios --non-interactive \
             --message "$(printf '%s' "${MSG:-$NOTE}" | head -n 1)"
+
+      - name: Zweig ota/* aufräumen
+        if: always() && startsWith(github.ref, 'refs/heads/ota/')
+        working-directory: .
+        run: git push origin --delete "${GITHUB_REF#refs/heads/}" || true
