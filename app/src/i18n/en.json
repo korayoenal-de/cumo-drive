@@ -1969,5 +1969,10 @@
   "DEINE 12 MONATE": "YOUR 12 MONTHS",
   "Kostenlos": "Free",
   "Du planst überall und fährst in deinem Heimatgebiet, mit Gruppen zu dritt. Mit einem Plan geht alles, überall.": "You plan anywhere and drive in your home area, in groups of three. With a plan you can do everything, everywhere.",
-  "Vor dem Start": "Before launch"
+  "Vor dem Start": "Before launch",
+  "Verbunden": "Connected",
+  "{name} ist nicht mehr in deinen Kontakten.": "{name} is no longer one of your contacts.",
+  "Möchtest du {name} aus deinen Kontakten entfernen?": "Do you want to remove {name} from your contacts?",
+  "Ihr seid dann nicht mehr verbunden. Wieder verbinden geht nur mit einer neuen Anfrage.": "You will no longer be connected. Reconnecting takes a new request.",
+  "Mit {name} verbunden, tippen zum Entfernen": "Connected with {name}, tap to remove"
 }

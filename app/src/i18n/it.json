@@ -1969,5 +1969,10 @@
   "DEINE 12 MONATE": "I TUOI 12 MESI",
   "Kostenlos": "Gratis",
   "Du planst überall und fährst in deinem Heimatgebiet, mit Gruppen zu dritt. Mit einem Plan geht alles, überall.": "Pianifichi ovunque e guidi nella tua zona di casa, in gruppi di tre. Con un piano puoi fare tutto, ovunque.",
-  "Vor dem Start": "Prima del lancio"
+  "Vor dem Start": "Prima del lancio",
+  "Verbunden": "Collegati",
+  "{name} ist nicht mehr in deinen Kontakten.": "{name} non è più tra i tuoi contatti.",
+  "Möchtest du {name} aus deinen Kontakten entfernen?": "Vuoi rimuovere {name} dai tuoi contatti?",
+  "Ihr seid dann nicht mehr verbunden. Wieder verbinden geht nur mit einer neuen Anfrage.": "Non sarete più collegati. Per ricollegarvi serve una nuova richiesta.",
+  "Mit {name} verbunden, tippen zum Entfernen": "Collegato con {name}, tocca per rimuovere"
 }

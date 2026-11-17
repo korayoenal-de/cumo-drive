@@ -1307,7 +1307,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       lockScroll={dragging}
       grabberLabel={tr('Planer Höhe ändern')}
       hideBody={!!scan}
-      smallTrim={scan || view.kind === 'working' ? 24 : 0}
+      // Beim Rechnen ist nur der Kopf zu sehen; Abstand zur Tab Leiste halbiert (Koray 17.11.: etwa 98 pt, wirkte unten zu leer)
+      smallTrim={scan || view.kind === 'working' ? 73 : 0}
       header={header}
       background={(covered) => (
         <>
