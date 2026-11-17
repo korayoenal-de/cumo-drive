@@ -29,6 +29,13 @@ Stand: 17. November 2026, 16:00 (gegen Code und Git Verlauf geprüft; Prüfung v
 * [x] Opt in bei der Registrierung live (Migration, Webseite m, OTA 17.11.)
 * [ ] Nach dem Start: Rundtour Bewertung als Server Dienst, Alarm bei auffälligen Konten, Marke anmelden, AGB zum Anwalt
 
+## Performance aus der Startprüfung (17.11. abends, Zweig perf, wartet auf Korays OK)
+
+* [x] Punkt 1: Strecken, Pässe und Empfehlungen werden erst beim ersten Gebrauch entpackt und aufbereitet (lib/lazy-list.ts), spätestens im Vorladen nach der Startanimation. Am Rechner rund 85 ms weniger vor dem ersten Bild, auf dem iPhone geschätzt das Drei bis Vierfache
+* [x] Punkt 2: Linien vom eigenen Routing Server kodiert (Faktor 1e6, gleiche Genauigkeit). Gemessen an einer Runde Heppenheim Hirschhorn (86 km): Antwort 20 statt 68 KB, gepackt übertragen 12 statt 19 KB
+* [x] Punkt 3: Bilder verlustfrei verkleinert, Fahrzeugbogen 4,5 auf 3,5 MB, übrige PNG 1,4 auf 0,9 MB. Die Schätzung „4 MB weniger“ war zu hoch; mehr ginge nur mit sichtbarem Verlust (weniger Farben)
+* [ ] Punkt 4: Messung mit Xcode Instruments auf dem iPhone (Koray am Mac, etwa 30 Minuten)
+
 ## Nutzerstimmen umgesetzt (17.11. abends)
 
 * [x] Erinnerung vor der Verlängerung: Jahr 7 Tage vorher, Saison Pass und Gratismonat 3 Tage vor dem Ende (lokal, nur mit erlaubten Mitteilungen)
