@@ -4,6 +4,10 @@
  * Teilnehmer und Organisator, am Tag Gruppenfahrt starten. Der Organisator sieht offene Anfragen
  * mit Profil und nimmt an oder lehnt ab.
  */
+import { askMembership } from '@/lib/paywall';
+import { FREE_MAX_VEHICLES, useEntitlement } from '@/lib/entitlement';
+import { guardDrive } from '@/lib/drive-guard';
+import { avoidSetting } from '@/lib/avoid-settings';
 import { BackLink } from '@/components/ui/back-link';
 import { Kennzahlen, SeatsBadge } from '@/components/ui/kennzahlen';
 import { useRideFun } from '@/lib/ride-fun';
@@ -179,6 +183,18 @@ export default function AusfahrtDetail() {
 
   const back = () => (router.canGoBack() ? router.back() : router.navigate('/community'));
 
+  // Fall G (Koray 14.11.): Abo abgelaufen, aber mehr als drei Autos geplant. Nur der Organisator sieht das,
+  // einmal je Ausfahrt; die Mitfahrer merken nichts. Ausweg: Organisation übergeben. Stumm ohne limitsLive().
+  const ent = useEntitlement();
+  const overLimit = !!a && a.isOwner && a.rideStatus === 'geplant' && !ent.loading && !ent.active && members.length > FREE_MAX_VEHICLES;
+  useEffect(() => {
+    if (!overLimit || !a) return;
+    void askMembership('abgelaufen', { rideName: a.name, rideDate: a.startsAt, expiredAt: ent.until ?? undefined, vehicles: members.length }, a.id).then((r) => {
+      if (r === 'escape') setLeadSheet(true);
+    });
+    // nur beim Öffnen der Ausfahrt, nicht bei jeder Änderung der Liste
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overLimit, a?.id]);
   // Auto folgt der Garage bis zum Start (Koray 14.11.): steht in der Ausfahrt ein anderes als das gewählte, nachtragen
   const myVehicleNow = myVehicleLabel();
   const myRowVehicle = members.find((m) => m.userId === session?.user.id)?.vehicle ?? null;
@@ -278,16 +294,20 @@ export default function AusfahrtDetail() {
       await stopSharing();
       if (isLead && a.rideStatus !== 'laeuft') {
         if (!full) throw new Error(tr('Die Tour lädt noch, bitte gleich nochmal.'));
-        if (around) {
+        // Ausfahrt ohne Mitgliedschaft nur im Heimatgebiet (Koray 14.11.; stumm, solange limitsLive() aus ist)
+        const base = { ...(around ?? full.tour), name: a.name };
+        const ok = await guardDrive(base, full.profile, avoidSetting(), `ausfahrt:${a.id}`);
+        if (!ok.go) return;
+        if (around || ok.tour !== base) {
           // Mitfahrer laden die Tour der Ausfahrt: die Umfahrung dort ablegen (darf nur der Organisator)
           try {
-            await setRideTour(a.id, around, full.profile);
+            await setRideTour(a.id, ok.tour, full.profile);
           } catch {
             showToast(t('Die Umfahrung gilt nur für dich, die anderen fahren wie geplant.'));
           }
         }
         await startRideNow(a.id);
-        await startAsLead(a.id, a.name, { ...(around ?? full.tour), name: a.name }, full.profile);
+        await startAsLead(a.id, a.name, { ...ok.tour, name: a.name }, full.profile);
       } else {
         await rideAlong(a.id);
       }

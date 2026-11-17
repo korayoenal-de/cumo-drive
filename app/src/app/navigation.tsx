@@ -5,6 +5,7 @@
 import { tourFun } from '@/lib/fun-score';
 import { fahrzeit, meta as fmtMeta, strecke } from '@/lib/format';
 import { setRideStatus } from '@/lib/group/invites';
+import { askMembership } from '@/lib/paywall';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router, type Href } from 'expo-router';
 import * as Location from 'expo-location';
@@ -149,6 +150,26 @@ export default function NavigationScreen() {
   /** Höhe der Meldungen oben, für die Lage des Autos */
   const [topH, setTopH] = useState(0);
   const funk = useFunk();
+  // Funk ohne Mitgliedschaft (Koray 14.11.): nie eine Paywall während der Fahrt. Über 10 km/h nur eine Zeile,
+  // das Blatt kommt beim nächsten Halt. Im Stand sofort.
+  const [funkAskLater, setFunkAskLater] = useState(false);
+  const funkLocked = () => {
+    if ((state.speedKmh ?? 0) > 10) {
+      showToast('Funk gibt es mit Mitgliedschaft. Mehr beim nächsten Halt.');
+      setFunkAskLater(true);
+      return;
+    }
+    setFunkAskLater(false);
+    void askMembership('funk', {}, ride.rideId ?? 'solo');
+  };
+  useEffect(() => {
+    if (!funkAskLater || (state.speedKmh ?? 99) > 2) return;
+    const t = setTimeout(() => {
+      setFunkAskLater(false);
+      void askMembership('funk', {}, ride.rideId ?? 'solo');
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [funkAskLater, state.speedKmh, ride.rideId]);
   // einmal sagen, dass Funk gerade nicht geht, statt dauernd "verbinde neu" (Koray 14.11.)
   const funkQuietSaid = useRef(false);
   useEffect(() => {
@@ -1211,8 +1232,9 @@ export default function NavigationScreen() {
               voice={state.voice}
               group={withOthers}
               onFunk={inRide ? () => setMsgOpen(!msgOpen) : undefined}
+              talkLocked={withOthers && funk.status === 'gesperrt' ? funkLocked : undefined}
               talk={
-                withOthers && funk.status !== 'nicht'
+                withOthers && funk.status !== 'nicht' && funk.status !== 'gesperrt'
                   ? {
                       talking: funk.talking,
                       waiting: funk.waiting,
@@ -1227,7 +1249,10 @@ export default function NavigationScreen() {
                 // zurück ins Menü, ohne die Fahrt zu beenden (Koray 15.11.): Blatt über der Navigation
                 { key: 'menu', label: t('Einstellungen'), icon: 'gearshape.fill' as const, run: () => router.push('/menu' as Href) },
                 { key: 'melden', label: t('Problem melden'), icon: 'exclamationmark.bubble.fill' as const, run: reportProblem },
-                ...(withOthers && funk.status !== 'nicht'
+                ...(withOthers && funk.status === 'gesperrt'
+                  ? [{ key: 'msg', label: t('Kurznachricht an die Gruppe'), icon: 'bubble.left.fill' as const, run: () => setMsgOpen(true) }]
+                  : []),
+                ...(withOthers && funk.status !== 'nicht' && funk.status !== 'gesperrt'
                   ? [
                       { key: 'msg', label: t('Kurznachricht an die Gruppe'), icon: 'bubble.left.fill' as const, run: () => setMsgOpen(true) },
                       { key: 'hoeren', label: funk.listen ? tr('Funk stumm') : tr('Funk hören'), icon: (funk.listen ? 'speaker.slash.fill' : 'speaker.wave.2.fill') as 'speaker.slash.fill', run: () => setFunkListen(!funk.listen) },

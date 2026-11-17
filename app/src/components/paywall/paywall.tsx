@@ -13,10 +13,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
-import { CONTACT_EMAIL, formatUntil, PRICES, useEntitlement, type PlanId, type Price } from '@/lib/entitlement';
+import { CONTACT_EMAIL, formatUntil, isFreePhase, PRICES, useEntitlement, type PlanId, type Price } from '@/lib/entitlement';
 import { readLibrary } from '@/lib/library';
 import { exportAllTours } from '@/lib/route-file';
-import { manageSubscription, purchase, restorePurchases, useCurrentPlan, useFreeTrials, useStorePrices, type CurrentPlan } from '@/lib/purchase';
+import { manageSubscription, purchase, restorePurchases, useCurrentPlan, useStorePrices, type CurrentPlan } from '@/lib/purchase';
 import { t, tr } from '@/i18n';
 
 const BENEFITS = [
@@ -74,10 +74,8 @@ export function Paywall({
   const [note, setNote] = useState<{ text: string; good: boolean } | null>(null);
   const plan = PRICES.find((p) => p.id === selected) ?? PRICES[0];
   const storePrices = useStorePrices();
-  const free = useFreeTrials();
-  const anyFree = Object.values(free).some(Boolean);
   /** eigene Testphase läuft noch (Start: 30 Tage) */
-  const inTrial = mode === 'voluntary' && ent.active && ent.source === 'test' && !ent.loading;
+  const inTrial = mode === 'voluntary' && ent.active && isFreePhase(ent.source) && !!ent.until && !ent.loading;
 
   const run = async (kind: 'buy' | 'restore') => {
     setBusy(kind);
@@ -117,11 +115,7 @@ export function Paywall({
               <AppText style={styles.trialTitle}>
                 {ent.daysLeft <= 1 ? t('Noch 1 Tag kostenlos') : tr('Noch {n} Tage kostenlos', { n: ent.daysLeft })}
               </AppText>
-              <AppText muted>
-                {anyFree
-                  ? t('Du musst jetzt nichts tun. Wählst du schon jetzt Jahr, Monat oder Woche, ist der erste Monat kostenlos, abgebucht wird erst danach.')
-                  : t('Du musst jetzt nichts tun. Ein Plan, den du jetzt wählst, beginnt sofort.')}
-              </AppText>
+              <AppText muted>{t('Du musst jetzt nichts tun. Ein Plan, den du jetzt wählst, beginnt sofort.')}</AppText>
             </View>
           )}
           {!hasPlan && !inTrial && (
@@ -173,7 +167,7 @@ export function Paywall({
         {(!hasPlan || changing) && (
         <View style={styles.gapS} accessibilityRole="radiogroup">
           {PRICES.filter((p) => !current || p.id !== current.id).map((p) => (
-            <PlanCard key={p.id} price={storePrices[p.id] ? { ...p, priceText: storePrices[p.id] as string } : p} free={!!free[p.id]} selected={p.id === selected} onPress={() => setSelected(p.id)} />
+            <PlanCard key={p.id} price={storePrices[p.id] ? { ...p, priceText: storePrices[p.id] as string } : p} selected={p.id === selected} onPress={() => setSelected(p.id)} />
           ))}
         </View>
         )}
@@ -181,7 +175,7 @@ export function Paywall({
         <View style={styles.gapS}>
           {(!hasPlan || changing) && (
           <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void run('buy')} style={[styles.primary, !!busy && styles.disabled]}>
-            {busy === 'buy' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{free[selected] ? tr('{name} mit Gratismonat starten', { name: plan.name }) : t('Weiter mit ') + plan.name}</AppText>}
+            {busy === 'buy' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Weiter mit ')}{plan.name}</AppText>}
           </Pressable>
           )}
           {note && <AppText style={[styles.note, note.good && styles.noteGood]}>{note.text}</AppText>}
@@ -208,7 +202,6 @@ export function Paywall({
         <View style={styles.gapS}>
           <AppText variant="caption" muted>
             {t('Woche, Monat und Jahr verlängern sich automatisch, wenn du nicht spätestens 24 Stunden vor Ablauf in den Einstellungen deiner Apple ID kündigst. Der Saison Pass gilt 6 Monate und endet von selbst.')}
-            {anyFree ? ' ' + t('Ein Gratismonat geht in das gewählte Abo über, wenn du nicht spätestens 24 Stunden vor seinem Ende kündigst.') : ''}
           </AppText>
           {/* Pflicht bei Abos (App Store Regel 3.1.2): Nutzungsbedingungen, Apple EULA und Datenschutz */}
           <View style={styles.legal}>
@@ -239,10 +232,6 @@ function PlanStatus({ current, storePrices }: { current: CurrentPlan | null; sto
       ? tr('Über deinen Club, gültig bis {until}. Gruppen bis {maxVehicles} Fahrzeuge.', { until, maxVehicles: ent.maxVehicles })
       : !current
         ? tr('Gültig bis {until}.', { until })
-        : current.trial
-          ? current.willRenew
-            ? tr('Gratismonat bis {until}, danach beginnt dein Plan. Bis dahin wird nichts abgebucht.', { until })
-            : tr('Gratismonat gekündigt, gilt noch bis {until}.', { until })
         : current.id === 'saison'
           ? tr('Gilt bis {until} und endet von selbst.', { until })
           : current.willRenew
@@ -256,7 +245,7 @@ function PlanStatus({ current, storePrices }: { current: CurrentPlan | null; sto
         </AppText>
         <View style={[styles.statusPill, current && !current.willRenew && current.id !== 'saison' && styles.statusPillWarn]}>
           <AppText variant="caption" style={[styles.statusPillText, current && !current.willRenew && current.id !== 'saison' && styles.statusPillTextWarn]}>
-            {current && !current.willRenew && current.id !== 'saison' ? t('Gekündigt') : current?.trial ? t('Gratismonat') : t('Aktiv')}
+            {current && !current.willRenew && current.id !== 'saison' ? t('Gekündigt') : t('Aktiv')}
           </AppText>
         </View>
       </View>
@@ -276,12 +265,12 @@ const LEGAL_LINKS = [
   { label: t('Datenschutz'), url: 'https://cumodrive.de/datenschutz' },
 ];
 
-function PlanCard({ price, free, selected, onPress }: { price: Price; free: boolean; selected: boolean; onPress: () => void }) {
+function PlanCard({ price, selected, onPress }: { price: Price; selected: boolean; onPress: () => void }) {
   return (
     <Pressable
       accessibilityRole="radio"
       accessibilityState={{ selected }}
-      accessibilityLabel={`${price.name}, ${free ? t('Erster Monat kostenlos') + ', ' : ''}${price.priceText} ${price.periodText}`}
+      accessibilityLabel={`${price.name}, ${price.priceText} ${price.periodText}`}
       onPress={onPress}
       style={[styles.card, price.highlight && styles.cardHighlight, selected && styles.cardSelected]}>
       <View style={[styles.radio, selected && styles.radioOn]}>{selected && <View style={styles.radioDot} />}</View>
@@ -296,15 +285,9 @@ function PlanCard({ price, free, selected, onPress }: { price: Price; free: bool
             </View>
           )}
         </View>
-        {free ? (
-          <AppText variant="caption" style={styles.freeText}>
-            {t('Erster Monat kostenlos')}
-          </AppText>
-        ) : (
-          <AppText variant="caption" muted>
-            {price.perMonthText ?? (price.renews ? t('Abo, jederzeit kündbar') : t('Kein Abo'))}
-          </AppText>
-        )}
+        <AppText variant="caption" muted>
+          {price.perMonthText ?? (price.renews ? t('Abo, jederzeit kündbar') : t('Kein Abo'))}
+        </AppText>
       </View>
       <View style={styles.priceCol}>
         <AppText style={styles.price}>{price.priceText}</AppText>
@@ -320,7 +303,6 @@ const styles = StyleSheet.create({
   legal: { flexDirection: 'row', flexWrap: 'wrap', columnGap: Spacing.l, rowGap: Spacing.s },
   trialBox: { backgroundColor: Colors.goodTint, borderRadius: Radius.m, padding: Spacing.m, gap: Spacing.xs },
   trialTitle: { color: Colors.good, fontFamily: Fonts.bold, fontSize: Type.body },
-  freeText: { color: Colors.good, fontFamily: Fonts.semibold },
   saveTours: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   saveToursText: { color: Colors.muted, fontFamily: Fonts.semibold, fontSize: Type.body, textDecorationLine: 'underline' },
   legalLink: { color: Colors.text, textDecorationLine: 'underline', minHeight: 24 },

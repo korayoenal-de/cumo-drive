@@ -34,6 +34,7 @@ import { ActionBar } from '@/components/ui/action-bar';
 import { LoadingButton, type LoadStage } from '@/components/ui/loading-button';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type } from '@/constants/theme';
+import { guardDrive } from '@/lib/drive-guard';
 import { setActiveTour } from '@/lib/active-tour';
 import { shareTourLink } from '@/lib/share-link';
 import { exportTour } from '@/lib/route-file';
@@ -382,11 +383,21 @@ export function TourMode({
       return;
     }
     // Gerade gesperrt (Koray 16.11.): ausdrücklich warnen und die Umfahrung zeigen, statt still loszufahren
-    await closed.check(routeTour, firstProfile, avoid, (t) => startNav(t));
+    await closed.check(routeTour, firstProfile, avoid, (t) => void startNav(t));
   };
 
-  const startNav = (t: Tour) => {
-    setActiveTour({ ...t, name: plan.name.trim() || routeTour?.name || t.name }, firstProfile, avoid);
+  const startNav = async (t: Tour) => {
+    const named = { ...t, name: plan.name.trim() || routeTour?.name || t.name };
+    // kostenlose Version: außerhalb des Heimatgebiets kommt die Paywall (stumm, solange limitsLive() aus ist)
+    const ok = await guardDrive(named, firstProfile, avoid, `route:${plan.cloudId ?? named.name}`);
+    if (!ok.go) {
+      if (ok.save && (plan.dirty || !plan.cloudId)) {
+        await plan.save(curves, firstProfile, avoid);
+        showToast('Unter Touren gespeichert');
+      }
+      return;
+    }
+    setActiveTour(ok.tour, firstProfile, avoid);
     logSignal('losgefahren', t, { mode: 'route', profile: firstProfile, suggested: false });
     router.push('/navigation');
   };

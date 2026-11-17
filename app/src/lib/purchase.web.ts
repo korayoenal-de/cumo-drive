@@ -25,11 +25,7 @@ export function useStorePrices(): Partial<Record<PlanId, string>> {
   return {};
 }
 
-export type CurrentPlan = { id: PlanId; willRenew: boolean; until: Date | null; trial: boolean };
-
-export function useFreeTrials(): Partial<Record<PlanId, boolean>> {
-  return {};
-}
+export type CurrentPlan = { id: PlanId; willRenew: boolean; until: Date | null };
 
 export function useCurrentPlan(): CurrentPlan | null {
   return null;

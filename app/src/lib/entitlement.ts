@@ -11,7 +11,17 @@ import { AppState } from 'react-native';
 import { supabase } from './supabase';
 import { t } from '@/i18n';
 
-export type EntitlementSource = 'test' | 'plan' | 'club';
+/**
+ * Woher die Freigabe kommt (Koray 16.11.): vorstart (vor dem Release Tag, alles frei), gruender (Konto vor dem
+ * Release angelegt, 12 Monate ab Release), test (ab dem Release angelegt, 14 Tage ab Anlegen; die Startphase von
+ * 30 Tagen entfällt seit 17.11.), plan (Kauf), club (auf Rechnung).
+ */
+export type EntitlementSource = 'vorstart' | 'gruender' | 'test' | 'plan' | 'club';
+
+/** Freie Phase ohne Kauf, die irgendwann endet und auf die kostenlose Version fällt */
+export function isFreePhase(source: EntitlementSource) {
+  return source === 'test' || source === 'gruender';
+}
 
 export type Entitlement = {
   /** true, bis der erste Stand für das angemeldete Konto da ist */
@@ -25,7 +35,13 @@ export type Entitlement = {
   /** größte Gruppe, die dieses Konto anlegen darf */
   maxVehicles: number;
   clubName: string | null;
+  /** Heimatgebiet der kostenlosen Version (Koray 14.11.), null solange nicht festgelegt */
+  home: HomeArea | null;
+  /** Grenzen der kostenlosen Version gelten (ab dem Release Tag, vom Server) */
+  limits: boolean;
 };
+
+export type HomeArea = { lat: number; lon: number; name: string | null; changes: number; radiusKm: number };
 
 export type PlanId = 'jahr' | 'monat' | 'woche' | 'saison';
 
@@ -66,10 +82,17 @@ export const CONTACT_EMAIL = 'kontakt@cumodrive.com';
 /** Private Gruppen: so viele Fahrzeuge gehen ohne Club */
 export const PRIVATE_MAX_VEHICLES = 6;
 
+/**
+ * Kostenlose Version (Koray 14.11.): Planen überall, Fahren und Gruppenfahrt nur im Heimatgebiet,
+ * Gruppe bis drei Fahrer, Funk nur mit der Mitgliedschaft des Organisators.
+ */
+export const FREE_MAX_VEHICLES = 3;
+export const HOME_RADIUS_KM = 150;
+
 const DAY = 24 * 60 * 60 * 1000;
 
-const LOADING: Entitlement = { loading: true, active: true, source: 'test', until: null, daysLeft: 0, maxVehicles: PRIVATE_MAX_VEHICLES, clubName: null };
-const SIGNED_OUT: Entitlement = { loading: false, active: false, source: 'test', until: null, daysLeft: 0, maxVehicles: 0, clubName: null };
+const LOADING: Entitlement = { loading: true, active: true, source: 'test', until: null, daysLeft: 0, maxVehicles: PRIVATE_MAX_VEHICLES, clubName: null, home: null, limits: false };
+const SIGNED_OUT: Entitlement = { loading: false, active: false, source: 'test', until: null, daysLeft: 0, maxVehicles: 0, clubName: null, home: null, limits: false };
 /** Erstes Laden ohne Netz: offen lassen, beim nächsten Fokus wird neu gefragt */
 const OFFLINE_OPEN: Entitlement = { ...LOADING, loading: false };
 
@@ -79,16 +102,52 @@ let started = false;
 let inflight: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
+/** Frischer Kauf in der App, bis der Webhook ihn auf dem Server bestätigt (höchstens 10 Minuten) */
+let localPurchase: { until: Date | null; at: number } | null = null;
+
+function withLocalPurchase(next: Entitlement): Entitlement {
+  if (!localPurchase || next.loading) return next;
+  if (Date.now() - localPurchase.at > 10 * 60 * 1000 || (next.active && (next.source === 'plan' || next.source === 'club'))) {
+    localPurchase = null;
+    return next;
+  }
+  const until = localPurchase.until;
+  return {
+    ...next,
+    active: true,
+    source: 'plan',
+    until,
+    daysLeft: until ? Math.max(0, Math.ceil((until.getTime() - Date.now()) / DAY)) : 0,
+    maxVehicles: Math.max(next.maxVehicles, PRIVATE_MAX_VEHICLES),
+  };
+}
+
+/** Nach einem Kauf über RevenueCat: sofort freischalten, der Server zieht kurz danach nach */
+export function markPurchased(plan: PlanId, until: Date | null) {
+  void plan;
+  localPurchase = { until, at: Date.now() };
+  set(state);
+}
+
 function set(next: Entitlement) {
-  state = next;
+  state = withLocalPurchase(next);
   for (const l of listeners) l();
 }
 
-type Raw = { active?: boolean; source?: string; until?: string | null; max_vehicles?: number; club_name?: string | null };
+type Raw = {
+  active?: boolean;
+  source?: string;
+  until?: string | null;
+  max_vehicles?: number;
+  club_name?: string | null;
+  home?: { lat: number; lon: number; name: string | null; changes: number; radius_km: number } | null;
+  limits?: boolean;
+};
 
 function parse(raw: Raw): Entitlement {
   const until = raw.until ? new Date(raw.until) : null;
-  const source: EntitlementSource = raw.source === 'plan' || raw.source === 'club' ? raw.source : 'test';
+  const known: EntitlementSource[] = ['plan', 'club', 'vorstart', 'gruender', 'test'];
+  const source: EntitlementSource = known.includes(raw.source as EntitlementSource) ? (raw.source as EntitlementSource) : 'test';
   return {
     loading: false,
     active: !!raw.active,
@@ -97,6 +156,8 @@ function parse(raw: Raw): Entitlement {
     daysLeft: until ? Math.max(0, Math.ceil((until.getTime() - Date.now()) / DAY)) : 0,
     maxVehicles: typeof raw.max_vehicles === 'number' ? raw.max_vehicles : 0,
     clubName: raw.club_name ?? null,
+    home: raw.home ? { lat: raw.home.lat, lon: raw.home.lon, name: raw.home.name, changes: raw.home.changes, radiusKm: raw.home.radius_km || HOME_RADIUS_KM } : null,
+    limits: !!raw.limits,
   };
 }
 
@@ -174,8 +235,43 @@ export function getEntitlement(): Entitlement {
  * Solange der Stand lädt oder unbekannt ist, gilt die private Grenze.
  */
 export function maxGroupVehicles(e: Entitlement = getEntitlement()): number {
-  if (e.loading || e.maxVehicles <= 0) return PRIVATE_MAX_VEHICLES;
+  if (e.loading) return PRIVATE_MAX_VEHICLES;
+  if (!e.active) return FREE_MAX_VEHICLES;
+  if (e.maxVehicles <= 0) return PRIVATE_MAX_VEHICLES;
   return e.maxVehicles;
+}
+
+function km(a: [number, number], b: [number, number]) {
+  const r = Math.PI / 180;
+  const x = Math.sin(((b[0] - a[0]) * r) / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(((b[1] - a[1]) * r) / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(x));
+}
+
+/** Größter Abstand eines Punkts vom Mittelpunkt des Heimatgebiets in km (geprüft wird jeder zehnte Punkt und die Enden) */
+export function farthestFromHome(home: HomeArea, points: [number, number][]): number {
+  let max = 0;
+  const step = Math.max(1, Math.floor(points.length / 400));
+  for (let i = 0; i < points.length; i += step) max = Math.max(max, km([home.lat, home.lon], points[i]));
+  if (points.length) max = Math.max(max, km([home.lat, home.lon], points[points.length - 1]));
+  return max;
+}
+
+/**
+ * Darf dieses Konto die Strecke fahren? Mitgliedschaft: immer. Kostenlos: nur, wenn die ganze Strecke im
+ * Heimatgebiet liegt. Ohne festgelegtes Heimatgebiet: 'kein_gebiet', die App fragt dann danach.
+ */
+export type DriveCheck = 'ok' | 'kein_gebiet' | 'ausserhalb';
+export function canDrive(points: [number, number][], e: Entitlement = getEntitlement()): DriveCheck {
+  if (e.loading || e.active) return 'ok';
+  if (!e.home) return 'kein_gebiet';
+  return farthestFromHome(e.home, points) <= e.home.radiusKm ? 'ok' : 'ausserhalb';
+}
+
+/** Heimatgebiet festlegen: das erste Mal frei, danach genau eine Änderung (der Server prüft) */
+export async function setHomeArea(lat: number, lon: number, name: string | null): Promise<void> {
+  const { data, error } = await supabase.rpc('set_home_area', { lat, lon, place: name });
+  if (error) throw new Error(error.message.startsWith('Dein') || error.message.startsWith('Lege') || error.message.startsWith('Dieser') ? error.message : t('Das hat nicht geklappt. Bitte nochmal versuchen.'));
+  set(parse(data as Raw));
 }
 
 /** Datum kurz auf Deutsch, zum Beispiel 19.11.2026 */

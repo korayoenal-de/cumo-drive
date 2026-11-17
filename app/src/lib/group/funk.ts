@@ -22,8 +22,9 @@ import { supabase } from '@/lib/supabase';
 import { onFunkSignal, sendFunkSignal } from './ride';
 import { tr } from '@/i18n';
 
-/** ruht: mehrere Versuche ohne Erfolg, die App versucht es nur noch alle zwei Minuten (Koray 14.11.) */
-export type FunkStatus = 'nicht' | 'aus' | 'verbinde' | 'an' | 'getrennt' | 'fehler' | 'ruht';
+/** gesperrt: der Organisator hat keine Mitgliedschaft, Funk gibt es dann nicht (Koray 14.11.)
+ *  ruht: mehrere Versuche ohne Erfolg, die App versucht es nur noch alle zwei Minuten (Koray 14.11.) */
+export type FunkStatus = 'nicht' | 'aus' | 'verbinde' | 'an' | 'getrennt' | 'fehler' | 'ruht' | 'gesperrt';
 export type FunkState = {
   status: FunkStatus;
   /** Ich spreche gerade (Mikrofon an) */
@@ -167,6 +168,10 @@ export async function connectFunk(rideId: string, lead: boolean, again = false) 
   set(again ? { status: state.status === 'ruht' ? 'ruht' : 'getrennt' } : { status: 'verbinde', error: null });
   try {
     const { data, error } = await supabase.functions.invoke('livekit-token', { body: { ride: rideId } });
+    if ((data as { locked?: boolean } | null)?.locked) {
+      if (current === rideId) set({ status: 'gesperrt', error: (data as { error?: string }).error ?? null });
+      return;
+    }
     if (error || !data?.token) {
       // Fehlertext der Funktion lesen (bei Status 4xx/5xx steckt er im Fehlerobjekt)
       let why = (data as { error?: string } | null)?.error ?? null;
