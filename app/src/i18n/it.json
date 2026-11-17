@@ -1849,5 +1849,13 @@
   "Pläne kaufst du in der CUMO DRIVE App auf dem iPhone. Danach gilt dein Plan auch hier.": "I piani si acquistano nell'app CUMO DRIVE su iPhone. Poi il tuo piano vale anche qui.",
   "Wir haben keinen aktiven Kauf gefunden.": "Non abbiamo trovato nessun acquisto attivo.",
   "Bitte melde dich zuerst an.": "Accedi prima, per favore.",
-  "Nachricht an {name}": "Messaggio a {name}"
+  "Nachricht an {name}": "Messaggio a {name}",
+  "Abo verwalten": "Gestisci abbonamento",
+  "Plan wechseln": "Cambia piano",
+  "Kündigen und Wechseln zwischen Jahr, Monat und Woche laufen über deine Apple ID. Bezahlte Zeit bleibt dir bis zum Ende erhalten.": "Disdetta e passaggio tra anno, mese e settimana avvengono tramite il tuo ID Apple. Il periodo pagato resta tuo fino alla fine.",
+  "Gilt bis {until} und endet von selbst.": "Valido fino al {until}, poi termina da solo.",
+  "Verlängert sich am {until}.": "Si rinnova il {until}.",
+  "Gekündigt, gilt noch bis {until}.": "Disdetto, valido fino al {until}.",
+  "Gekündigt": "Disdetto",
+  "Aktiv": "Attivo"
 }

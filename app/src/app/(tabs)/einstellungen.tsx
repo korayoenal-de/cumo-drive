@@ -22,10 +22,11 @@ import { useAvoid } from '@/lib/avoid-settings';
 import { refreshAvatar } from '@/lib/avatars';
 import { deleteAccount, signIn, signOut, useSession } from '@/lib/auth';
 import { useNewsConsent } from '@/lib/consent';
-import { refreshEntitlement, useEntitlement } from '@/lib/entitlement';
+import { PRICES, refreshEntitlement, useEntitlement } from '@/lib/entitlement';
 import { clearLocalTours } from '@/lib/library';
 import { MAP_STYLES, useMapSettings } from '@/lib/map-settings';
 import { noticeSeen, useModeration } from '@/lib/moderation';
+import { useCurrentPlan } from '@/lib/purchase';
 import { useMyProfile } from '@/lib/profile';
 import { enablePush, pushStatus, type PushStatus } from '@/lib/push';
 import { showToast } from '@/lib/toast';
@@ -42,6 +43,9 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
   const [avoid] = useAvoid();
   const voice = useVoiceChoice();
   const ent = useEntitlement();
+  // Gebuchter Plan direkt sichtbar (Koray 17.11.): „Monat“ statt „Plan aktiv“
+  const plan = useCurrentPlan();
+  const planName = plan && ent.source === 'plan' ? PRICES.find((p) => p.id === plan.id)?.name : undefined;
   const moderation = useModeration(!!session);
   const reloadModeration = moderation.reload;
 
@@ -93,7 +97,7 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
 
       {session && (
         <Group label={t('Mitgliedschaft')}>
-          <Row title={t('Dein Plan')} value={describeEntitlement(ent).title} onPress={() => router.push('/mitgliedschaft')} />
+          <Row title={t('Dein Plan')} value={planName ?? describeEntitlement(ent).title} onPress={() => router.push('/mitgliedschaft')} />
         </Group>
       )}
 

@@ -16,7 +16,7 @@
  */
 import { useEffect, useState } from 'react';
 import { NativeModules, Platform } from 'react-native';
-import Purchases, { type PurchasesPackage } from 'react-native-purchases';
+import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 
 import { getEntitlement, refreshEntitlement, type PlanId } from './entitlement';
 import { supabase } from './supabase';
@@ -94,6 +94,7 @@ export async function purchase(planId: PlanId): Promise<PurchaseResult> {
     await Purchases.purchasePackage(pkg);
     // Apple hat den Kauf bestätigt. Kommt der Plan nicht gleich an, gilt er trotzdem: der Webhook holt ihn nach.
     await waitForPlan();
+    void refreshCurrentPlan();
     return { ok: true };
   } catch (e) {
     if (isCancel(e)) return { ok: false, cancelled: true, message: '' };
@@ -145,4 +146,66 @@ export function useStorePrices(): Partial<Record<PlanId, string>> {
     };
   }, []);
   return prices;
+}
+
+/** Gebuchter Plan, wie der App Store ihn kennt (Anzeige in Einstellungen und Mitgliedschaft, Koray 17.11.) */
+export type CurrentPlan = {
+  id: PlanId;
+  /** Abo verlängert sich (Woche, Monat, Jahr); false nach Kündigung und beim Saison Pass */
+  willRenew: boolean;
+  /** Ende der bezahlten Zeit oder nächste Verlängerung */
+  until: Date | null;
+};
+
+const PLAN_OF = (productId: string | undefined): PlanId | null => {
+  const m = /\.(jahr|monat|woche|saison)$/.exec(productId ?? '');
+  return m ? (m[1] as PlanId) : null;
+};
+
+function planFrom(info: CustomerInfo): CurrentPlan | null {
+  const pro = info.entitlements.active['pro'];
+  const id = PLAN_OF(pro?.productIdentifier);
+  if (pro && id) return { id, willRenew: pro.willRenew, until: pro.expirationDate ? new Date(pro.expirationDate) : null };
+  // Saison Pass: Abo ohne Verlängerung, gilt 183 Tage ab Kauf (wie im Webhook)
+  const saison = info.nonSubscriptionTransactions
+    .filter((t) => PLAN_OF(t.productIdentifier) === 'saison')
+    .map((t) => new Date(t.purchaseDate).getTime() + 183 * 24 * 60 * 60 * 1000)
+    .sort((a, b) => b - a)[0];
+  if (saison && saison > Date.now()) return { id: 'saison', willRenew: false, until: new Date(saison) };
+  return null;
+}
+
+let current: CurrentPlan | null = null;
+const planListeners = new Set<(p: CurrentPlan | null) => void>();
+
+async function refreshCurrentPlan(): Promise<void> {
+  if (!available()) return;
+  try {
+    if (!(await ready())) return;
+    current = planFrom(await Purchases.getCustomerInfo());
+    for (const l of planListeners) l(current);
+  } catch {
+    // ohne Netz bleibt der letzte Stand
+  }
+}
+
+/** Gebuchter Plan oder null (kein Kauf im App Store, Club, Testphase, Web) */
+export function useCurrentPlan(): CurrentPlan | null {
+  const [plan, setPlan] = useState<CurrentPlan | null>(current);
+  useEffect(() => {
+    planListeners.add(setPlan);
+    void refreshCurrentPlan();
+    return () => {
+      planListeners.delete(setPlan);
+    };
+  }, []);
+  return plan;
+}
+
+/** Abo verwalten: Apples eigene Seite für Kündigen und Wechseln */
+export async function manageSubscription(): Promise<void> {
+  if (available() && (await ready())) {
+    await Purchases.showManageSubscriptions();
+    void refreshCurrentPlan();
+  }
 }

@@ -1849,5 +1849,13 @@
   "Pläne kaufst du in der CUMO DRIVE App auf dem iPhone. Danach gilt dein Plan auch hier.": "You buy plans in the CUMO DRIVE app on your iPhone. Your plan then works here too.",
   "Wir haben keinen aktiven Kauf gefunden.": "We couldn't find an active purchase.",
   "Bitte melde dich zuerst an.": "Please sign in first.",
-  "Nachricht an {name}": "Message {name}"
+  "Nachricht an {name}": "Message {name}",
+  "Abo verwalten": "Manage subscription",
+  "Plan wechseln": "Change plan",
+  "Kündigen und Wechseln zwischen Jahr, Monat und Woche laufen über deine Apple ID. Bezahlte Zeit bleibt dir bis zum Ende erhalten.": "Cancelling and switching between year, month and week work through your Apple ID. Time you paid for stays yours until it ends.",
+  "Gilt bis {until} und endet von selbst.": "Valid until {until} and ends by itself.",
+  "Verlängert sich am {until}.": "Renews on {until}.",
+  "Gekündigt, gilt noch bis {until}.": "Cancelled, valid until {until}.",
+  "Gekündigt": "Cancelled",
+  "Aktiv": "Active"
 }

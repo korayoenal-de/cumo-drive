@@ -1,6 +1,8 @@
 /**
  * Paywall der CUMO DRIVE Mitgliedschaft. Zwei Anlässe: die Testphase ist vorbei (mode "expired")
  * oder man schaut sich die Mitgliedschaft freiwillig an (mode "voluntary", mit Schließen).
+ * Mit gebuchtem Plan oder Club (Koray 17.11.) zeigt sie stattdessen „Dein Plan“: welcher Plan, bis wann, ob er sich
+ * verlängert; Hauptaktion Abo verwalten (Apples Seite), Plan wechseln klappt die Pläne auf.
  * Käufe laufen über den Adapter in lib/purchase (RevenueCat). Die Preise kommen aus dem App Store, solange
  * sie noch laden oder ohne Store gelten die festen Preise aus entitlement.ts.
  */
@@ -11,9 +13,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
-import { CONTACT_EMAIL, PRICES, type PlanId, type Price } from '@/lib/entitlement';
-import { purchase, restorePurchases, useStorePrices } from '@/lib/purchase';
-import { t } from '@/i18n';
+import { CONTACT_EMAIL, formatUntil, PRICES, useEntitlement, type PlanId, type Price } from '@/lib/entitlement';
+import { manageSubscription, purchase, restorePurchases, useCurrentPlan, useStorePrices, type CurrentPlan } from '@/lib/purchase';
+import { t, tr } from '@/i18n';
 
 const BENEFITS = [
   t('Kurvige Touren planen'),
@@ -35,6 +37,11 @@ export function Paywall({
   /** zusätzlicher Inhalt ganz unten, etwa Abmelden */
   footer?: ReactNode;
 }) {
+  const ent = useEntitlement();
+  const current = useCurrentPlan();
+  /** Plan oder Club aktiv: „Dein Plan“ statt Verkauf */
+  const hasPlan = mode === 'voluntary' && ent.active && ent.source !== 'test';
+  const [changing, setChanging] = useState(false);
   const [selected, setSelected] = useState<PlanId>('jahr');
   const [busy, setBusy] = useState<'buy' | 'restore' | null>(null);
   const [note, setNote] = useState<{ text: string; good: boolean } | null>(null);
@@ -72,14 +79,18 @@ export function Paywall({
             CUMO DRIVE
           </AppText>
           <AppText variant="display" style={styles.headline}>
-            {mode === 'expired' ? t('Deine Testphase ist vorbei') : 'CUMO DRIVE Mitgliedschaft'}
+            {mode === 'expired' ? t('Deine Testphase ist vorbei') : hasPlan ? t('Dein Plan') : 'CUMO DRIVE Mitgliedschaft'}
           </AppText>
-          <AppText muted>
-            {mode === 'expired'
-              ? t('Wähle einen Plan, um weiter Touren zu planen und gemeinsam zu fahren. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.')
-              : t('Alles für kurvige Touren und Gruppenfahrten in einer Mitgliedschaft.')}
-          </AppText>
+          {!hasPlan && (
+            <AppText muted>
+              {mode === 'expired'
+                ? t('Wähle einen Plan, um weiter Touren zu planen und gemeinsam zu fahren. Deine Touren, Fahrten und Fahrzeuge bleiben in deinem Konto.')
+                : t('Alles für kurvige Touren und Gruppenfahrten in einer Mitgliedschaft.')}
+            </AppText>
+          )}
         </View>
+
+        {hasPlan && <PlanStatus current={current} storePrices={storePrices} />}
 
         <View style={styles.benefits}>
           {BENEFITS.map((b) => (
@@ -90,22 +101,55 @@ export function Paywall({
           ))}
         </View>
 
+        {hasPlan && !changing && (
+          <View style={styles.gapS}>
+            {current && current.id !== 'saison' && (
+              <Pressable accessibilityRole="button" onPress={() => void manageSubscription()} style={styles.primary}>
+                <AppText style={styles.primaryText}>{t('Abo verwalten')}</AppText>
+              </Pressable>
+            )}
+            {ent.source === 'plan' && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  setSelected((PRICES.find((p) => p.id !== current?.id) ?? PRICES[0]).id);
+                  setChanging(true);
+                }}
+                style={styles.secondary}>
+                <AppText style={styles.secondaryText}>{t('Plan wechseln')}</AppText>
+              </Pressable>
+            )}
+            {current && current.id !== 'saison' && (
+              <AppText variant="caption" muted>
+                {t('Kündigen und Wechseln zwischen Jahr, Monat und Woche laufen über deine Apple ID. Bezahlte Zeit bleibt dir bis zum Ende erhalten.')}
+              </AppText>
+            )}
+          </View>
+        )}
+
+        {(!hasPlan || changing) && (
         <View style={styles.gapS} accessibilityRole="radiogroup">
-          {PRICES.map((p) => (
+          {PRICES.filter((p) => !current || p.id !== current.id).map((p) => (
             <PlanCard key={p.id} price={storePrices[p.id] ? { ...p, priceText: storePrices[p.id] as string } : p} selected={p.id === selected} onPress={() => setSelected(p.id)} />
           ))}
         </View>
+        )}
 
         <View style={styles.gapS}>
+          {(!hasPlan || changing) && (
           <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void run('buy')} style={[styles.primary, !!busy && styles.disabled]}>
             {busy === 'buy' ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{t('Weiter mit ')}{plan.name}</AppText>}
           </Pressable>
+          )}
           {note && <AppText style={[styles.note, note.good && styles.noteGood]}>{note.text}</AppText>}
+          {!hasPlan && (
           <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void run('restore')} style={styles.secondary}>
             {busy === 'restore' ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>{t('Käufe wiederherstellen')}</AppText>}
           </Pressable>
+          )}
         </View>
 
+        {ent.source !== 'club' && (
         <View style={styles.clubBox}>
           <AppText style={styles.clubTitle}>{t('Für Clubs und Veranstalter: CUMO DRIVE Club bis 20 Fahrzeuge, auf Rechnung')}</AppText>
           <AppText variant="caption" muted>
@@ -115,6 +159,7 @@ export function Paywall({
             {CONTACT_EMAIL}
           </AppText>
         </View>
+        )}
 
         <View style={styles.gapS}>
           <AppText variant="caption" muted>
@@ -135,6 +180,44 @@ export function Paywall({
         {footer}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/** Karte „Dein Plan“: Name, Preis, Stand. Ohne Daten aus dem App Store (Web, Club, Plan vom Betreiber) nur der Stand aus dem Konto */
+function PlanStatus({ current, storePrices }: { current: CurrentPlan | null; storePrices: Partial<Record<PlanId, string>> }) {
+  const ent = useEntitlement();
+  const price = current ? PRICES.find((p) => p.id === current.id) : undefined;
+  const until = formatUntil(current?.until ?? ent.until);
+  const name = ent.source === 'club' ? (ent.clubName ?? t('Club')) : (price?.name ?? t('Plan aktiv'));
+  const status =
+    ent.source === 'club'
+      ? tr('Über deinen Club, gültig bis {until}. Gruppen bis {maxVehicles} Fahrzeuge.', { until, maxVehicles: ent.maxVehicles })
+      : !current
+        ? tr('Gültig bis {until}.', { until })
+        : current.id === 'saison'
+          ? tr('Gilt bis {until} und endet von selbst.', { until })
+          : current.willRenew
+            ? tr('Verlängert sich am {until}.', { until })
+            : tr('Gekündigt, gilt noch bis {until}.', { until });
+  return (
+    <View style={styles.statusCard} accessible accessibilityLabel={`${name}. ${status}`}>
+      <View style={styles.row}>
+        <AppText style={[styles.statusName, styles.flex]} numberOfLines={1}>
+          {name}
+        </AppText>
+        <View style={[styles.statusPill, current && !current.willRenew && current.id !== 'saison' && styles.statusPillWarn]}>
+          <AppText variant="caption" style={[styles.statusPillText, current && !current.willRenew && current.id !== 'saison' && styles.statusPillTextWarn]}>
+            {current && !current.willRenew && current.id !== 'saison' ? t('Gekündigt') : t('Aktiv')}
+          </AppText>
+        </View>
+      </View>
+      {price && (
+        <AppText style={styles.statusPrice}>
+          {storePrices[price.id] ?? price.priceText} <AppText muted>{price.periodText}</AppText>
+        </AppText>
+      )}
+      <AppText muted>{status}</AppText>
+    </View>
   );
 }
 
@@ -213,6 +296,13 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   note: { color: Colors.warn, fontFamily: Fonts.medium, fontSize: Type.small, textAlign: 'center' },
   noteGood: { color: Colors.good },
+  statusCard: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.xs },
+  statusName: { fontFamily: Fonts.display, fontSize: Type.metric, textTransform: 'uppercase' },
+  statusPrice: { fontFamily: Fonts.semibold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
+  statusPill: { backgroundColor: Colors.goodTint, borderRadius: Radius.pill, paddingHorizontal: Spacing.s, paddingVertical: 2 },
+  statusPillWarn: { backgroundColor: Colors.warnTint },
+  statusPillText: { color: Colors.good, fontFamily: Fonts.semibold },
+  statusPillTextWarn: { color: Colors.warn },
   clubBox: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.xs },
   clubTitle: { fontFamily: Fonts.semibold, fontSize: Type.body, marginBottom: Spacing.xs },
   mail: { fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.text },
