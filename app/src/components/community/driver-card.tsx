@@ -102,9 +102,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
               disabled={contactBusy}
               onPress={() => void contactAction()}
               style={({ pressed }) => [status === 'angefragt' || status === 'anfrage' ? styles.pending : styles.round, pressed && styles.pressed]}>
-              {contactBusy ? (
-                <ActivityIndicator color={Colors.muted} />
-              ) : status === 'angefragt' ? (
+              {status === 'angefragt' ? (
                 <AppText style={styles.pendingText}>{t('Angefragt')}</AppText>
               ) : status === 'anfrage' ? (
                 <AppText style={[styles.pendingText, styles.quietOn]}>{t('Annehmen')}</AppText>
@@ -242,13 +240,14 @@ function ContactButton({ d, status }: { d: Driver; status: Contact['status'] | n
   if (status === 'angefragt') {
     return (
       <Pressable accessibilityRole="button" accessibilityLabel={t('Anfrage an {name} zurückziehen', { name: d.name })} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.pending}>
-        {busy ? <ActivityIndicator color={Colors.muted} /> : <AppText style={styles.pendingText}>{t('Angefragt')}</AppText>}
+        {/* kein Wartekreis: der neue Stand steht sofort da (contacts.ts, 18.11.) */}
+        <AppText style={styles.pendingText}>{t('Angefragt')}</AppText>
       </Pressable>
     );
   }
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={t('{name} zu Kontakten hinzufügen', { name: d.name })} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.round}>
-      {busy ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="plus" size={20} weight="semibold" tintColor={Colors.text} />}
+      <SymbolView name="plus" size={20} weight="semibold" tintColor={Colors.text} />
     </Pressable>
   );
 }
