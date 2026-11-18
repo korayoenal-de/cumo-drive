@@ -84,6 +84,32 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
               {[d.age != null ? `${d.age} Jahre` : null, d.homeName ?? t('Wohnort nicht angegeben')].filter(Boolean).join('  ·  ')}
             </AppText>
           </View>
+          {/* Kontakt wie in der Liste, an derselben Stelle (Koray 18.11., Variante A): Plus, Angefragt, Annehmen, Häkchen.
+              Vorher stand hier unten ein Textlink, in der Liste aber ein Plus. */}
+          {!d.isMe && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                status === 'kontakt' ? t('{name} aus Kontakten entfernen', { name: d.name })
+                : status === 'angefragt' ? t('Anfrage an {name} zurückziehen', { name: d.name })
+                : status === 'anfrage' ? t('Anfrage von {name} bestätigen', { name: d.name })
+                : t('{name} zu Kontakten hinzufügen', { name: d.name })
+              }
+              hitSlop={4}
+              disabled={contactBusy}
+              onPress={() => void contactAction()}
+              style={({ pressed }) => [status === 'angefragt' || status === 'anfrage' ? styles.pending : styles.round, pressed && styles.pressed]}>
+              {contactBusy ? (
+                <ActivityIndicator color={Colors.muted} />
+              ) : status === 'angefragt' ? (
+                <AppText style={styles.pendingText}>{t('Angefragt')}</AppText>
+              ) : status === 'anfrage' ? (
+                <AppText style={[styles.pendingText, styles.quietOn]}>{t('Annehmen')}</AppText>
+              ) : (
+                <SymbolView name={status === 'kontakt' ? 'checkmark' : 'plus'} size={20} weight="semibold" tintColor={status === 'kontakt' ? Colors.muted : Colors.text} />
+              )}
+            </Pressable>
+          )}
         </View>
         {d.bio ? <AppText style={styles.bio}>{d.bio}</AppText> : null}
         {d.garage && d.garage.length > 0 ? (
@@ -136,25 +162,15 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
         )}
         {!d.isMe && (
           <View style={styles.quiet}>
-            {/* Kontakt als erste ruhige Option (Koray 18.11.); verbunden zeigt schon das Häkchen am Bild */}
-            <Pressable accessibilityRole="button" disabled={contactBusy} onPress={() => void contactAction()} style={styles.quietBtn}>
-              {contactBusy ? (
-                <ActivityIndicator color={Colors.muted} />
-              ) : (
-                <AppText style={[styles.quietText, status === 'anfrage' && styles.quietOn]}>
-                  {status === 'kontakt' ? t('Aus Kontakten entfernen') : status === 'angefragt' ? t('Anfrage zurückziehen') : status === 'anfrage' ? t('Anfrage bestätigen') : t('Zu Kontakten hinzufügen')}
-                </AppText>
-              )}
+            {/* Melden und Blockieren ruhig mit Symbol und Wort (Koray 18.11.): Fahne und Verbotszeichen */}
+            <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={({ pressed }) => [styles.quietBtn, pressed && styles.pressed]}>
+              <SymbolView name="flag" size={18} weight="semibold" tintColor={Colors.muted} />
+              <AppText style={styles.quietText}>{t('Melden')}</AppText>
             </Pressable>
-            {/* Melden und Blockieren als Symbole rechts (Koray 18.11.): Fahne und Verbotszeichen, je 44 pt, mit Beschriftung für VoiceOver */}
-            <View style={styles.quietIcons}>
-              <Pressable accessibilityRole="button" accessibilityLabel={t('Melden')} onPress={() => setReport(true)} style={styles.quietIcon}>
-                <SymbolView name="flag" size={20} weight="semibold" tintColor={Colors.muted} />
-              </Pressable>
-              <Pressable accessibilityRole="button" accessibilityLabel={t('Blockieren')} onPress={() => setBlock(true)} style={styles.quietIcon}>
-                <SymbolView name="nosign" size={20} weight="semibold" tintColor={Colors.muted} />
-              </Pressable>
-            </View>
+            <Pressable accessibilityRole="button" onPress={() => setBlock(true)} style={({ pressed }) => [styles.quietBtn, pressed && styles.pressed]}>
+              <SymbolView name="nosign" size={18} weight="semibold" tintColor={Colors.muted} />
+              <AppText style={styles.quietText}>{t('Blockieren')}</AppText>
+            </Pressable>
           </View>
         )}
         {!d.isMe && <ReportSheet visible={report} kind="profile" refId={d.id} userId={d.id} name={d.name} onClose={() => setReport(false)} />}
@@ -321,12 +337,10 @@ const styles = StyleSheet.create({
   pendingText: { fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.muted },
   accept: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   acceptText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
-  quiet: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', columnGap: Spacing.l },
-  quietIcons: { flexDirection: 'row', columnGap: Spacing.xs },
-  quietIcon: { width: Size.icon, height: Size.icon, alignItems: 'center', justifyContent: 'center' },
+  quiet: { flexDirection: 'row', alignItems: 'center', columnGap: Spacing.xl },
   quietOn: { color: Colors.text },
-  quietBtn: { minHeight: 44, justifyContent: 'center' },
-  quietText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
+  quietBtn: { minHeight: 44, flexDirection: 'row', alignItems: 'center', columnGap: Spacing.s },
+  quietText: { fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.muted },
   bday: { color: Colors.text, fontFamily: Fonts.bold },
   bio: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.text, lineHeight: 21 },
   flex: { flex: 1 },
