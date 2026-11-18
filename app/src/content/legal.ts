@@ -1,8 +1,9 @@
 /**
  * Rechtstexte von Cumo Drive: Datenschutzerklärung und Nutzungsbedingungen (AGB).
  *
- * ENTWURF, ANWALTLICHE PRÜFUNG AUSSTEHEND (Stand 10. November 2026). Geschrieben von Claude auf Wunsch von
- * Koray, keine Rechtsberatung. Offene Punkte für den Anwalt stehen im Projekt Doc claude/rechtstexte-entwurf.md.
+ * Fassung zum Start (Koray 18.11.2026: ohne Anwalt nach bestem Wissen fertigstellen, anwaltliche Prüfung folgt, sobald
+ * es Einnahmen gibt). Geschrieben von Claude auf Wunsch von Koray, keine Rechtsberatung. Was eine spätere Prüfung
+ * ansehen sollte, steht im Projekt Doc claude/rechtstexte-entwurf.md.
  * Angezeigt unter /datenschutz und /agb (src/app/datenschutz.tsx, src/app/agb.tsx), verlinkt aus Landingpage und Paywall.
  */
 
@@ -16,8 +17,8 @@ const KONTAKT = 'kontakt@cumodrive.com';
 const IMPRESSUM = 'https://rallycumo.de/impressum/';
 
 /** Fassung der Rechtstexte, wird bei der Registrierung als Nachweis gespeichert (consents) */
-export const LEGAL_VERSION = '2026-11-17';
-export const STAND = 'Stand: 18. November 2026. Entwurf, die anwaltliche Prüfung steht noch aus.';
+export const LEGAL_VERSION = '2026-11-18';
+export const STAND = 'Stand: 18. November 2026.';
 
 export const DATENSCHUTZ: LegalDoc = {
   title: 'Datenschutz',
@@ -153,7 +154,7 @@ export const AGB: LegalDoc = {
     {
       h: '4. Konto',
       p: [
-        'Für die App brauchst du ein Konto mit E-Mail-Adresse und Passwort. Halte dein Passwort geheim. Du kannst dein Konto jederzeit in der App löschen. Wir dürfen ein Konto sperren, wenn es gegen diese Bedingungen verstößt, nach Möglichkeit erst nach einer Warnung.',
+        'Für die App brauchst du ein Konto mit E-Mail-Adresse und Passwort. Du musst mindestens 16 Jahre alt sein. Halte dein Passwort geheim. Du kannst dein Konto jederzeit in der App löschen. Wir dürfen ein Konto sperren, wenn es gegen diese Bedingungen verstößt, nach Möglichkeit erst nach einer Warnung.',
       ],
     },
     {
@@ -162,7 +163,7 @@ export const AGB: LegalDoc = {
         'Kostenpflichtige Pläne kaufst du in der App über Apple. Es gelten die Preise, die die App vor dem Kauf anzeigt, inklusive Umsatzsteuer. Abgerechnet wird über deine Apple ID.',
         'Wochen, Monats und Jahresabo verlängern sich automatisch um dieselbe Laufzeit, wenn du nicht spätestens 24 Stunden vor Ablauf in den Einstellungen deiner Apple ID kündigst. Der Saison Pass gilt für die angegebene Zeit und endet von selbst.',
         'Bietet die App eine kostenlose Probezeit an, beginnt das gewählte Abo nach deren Ende, wenn du nicht vorher kündigst.',
-        'Erstattungen beantragst du bei Apple. Dein gesetzliches Widerrufsrecht richtet sich nach den Bedingungen von Apple; mit dem sofortigen Freischalten der Inhalte nach dem Kauf kann es vorzeitig erlöschen.',
+        'Den Kauf schließt du mit Apple ab, Apple ist Verkäufer der Abos und des Saison Passes. Ein Widerrufsrecht übst du deshalb gegenüber Apple aus, nach den Bedingungen von Apple für Käufe im App Store. Widerruf und Erstattungen beantragst du bei Apple unter reportaproblem.apple.com.',
         'Club Lizenzen und Event Pässe für Clubs und Veranstalter schließen wir gesondert ab und rechnen per Rechnung ab. Mitglieder eines Clubs mit gültiger Lizenz können die Funktionen ohne eigenes Abo nutzen, solange die Lizenz läuft.',
       ],
     },
@@ -205,7 +206,7 @@ export const AGB: LegalDoc = {
     {
       h: '9. Änderungen dieser Bedingungen',
       p: [
-        'Wir können diese Bedingungen ändern, wenn sich Gesetze, Funktionen oder Dienste ändern. Über wesentliche Änderungen informieren wir dich vorher in der App. Widersprichst du nicht innerhalb von sechs Wochen, gelten die neuen Bedingungen; auf diese Folge weisen wir in der Mitteilung hin.',
+        'Wir können diese Bedingungen ändern, wenn sich Gesetze, Funktionen oder Dienste ändern. Änderungen, die nur neue Funktionen betreffen, dich nicht schlechter stellen oder rechtlich nötig sind, gelten ab der Veröffentlichung der neuen Fassung. Über wesentliche Änderungen informieren wir dich vorher in der App oder per E Mail; sie gelten für dich erst, wenn du ihnen zustimmst. Stimmst du nicht zu, kannst du die App bis zum Ende einer bezahlten Laufzeit zu den bisherigen Bedingungen nutzen und dein Konto jederzeit löschen.',
       ],
     },
     {

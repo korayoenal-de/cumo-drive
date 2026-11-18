@@ -1,6 +1,6 @@
 # Verträge zur Auftragsverarbeitung
 
-Stand: 18. November 2026. Recherche von Claude auf den Seiten der Anbieter, keine Rechtsberatung. Die anwaltliche Prüfung steht aus.
+Stand: 18. November 2026. Recherche von Claude auf den Seiten der Anbieter, keine Rechtsberatung.
 
 Der CDC ist gegenüber den Nutzern verantwortlich. Jeder Dienst, der in unserem Auftrag Daten der Nutzer verarbeitet, braucht einen Vertrag nach Art. 28 DSGVO. Bei vier der fünf Anbieter ist dieser Vertrag schon Teil der Nutzungsbedingungen, die mit dem Konto angenommen wurden. Zu tun ist dort nur: Fassung als PDF ablegen. Bei Contabo muss der Vertrag aktiv abgeschlossen werden.
 
@@ -10,15 +10,13 @@ Der CDC ist gegenüber den Nutzern verantwortlich. Jeder Dienst, der in unserem 
 | Contabo (Contabo GmbH, Deutschland) | Routing Anfragen mit Standort und Konto Token, Server Protokolle | Aktiv im Kundenbereich: Menü „Data Processing Agreement“, „Create new Data Processing Agreement“, Kundendaten bestätigen, Dienste, Datenarten und Betroffene ankreuzen, Vorschau prüfen, abschließen | keine, Server in Deutschland | **Abschließen** (etwa 10 Minuten), für beide Server |
 | LiveKit (LiveKit Inc., USA; Server Frankfurt) | Stimme im Funk, Anzeigename, Kennung | Der Zusatz ist Teil der Nutzungsbedingungen und gilt ab deren Annahme | EU US Data Privacy Framework, ersatzweise Standardvertragsklauseln (im Zusatz) | PDF ablegen |
 | RevenueCat (RevenueCat Inc., USA) | Konto Kennung, Käufe, Abo Status | Der Zusatz ist Teil der Vereinbarung mit RevenueCat | Standardvertragsklauseln (im Zusatz) | PDF ablegen |
-| Expo (650 Industries Inc., USA) | Push Tokens und Inhalte der Mitteilungen, Update Abrufe mit IP Adresse | Die Nutzungsbedingungen (Abschnitt 3.2) nennen Expo als Auftragsverarbeiter und verweisen auf Standardvertragsklauseln. Einen eigenen Zusatz verlinken sie nicht | EU US Data Privacy Framework, Standardvertragsklauseln | **Nachfragen** über expo.dev/contact, ob es einen eigenen Zusatz gibt; sonst die Nutzungsbedingungen ablegen und den Anwalt entscheiden lassen, ob das reicht |
+| Expo (650 Industries Inc., USA) | Push Tokens und Inhalte der Mitteilungen, Update Abrufe mit IP Adresse | Die Nutzungsbedingungen (Abschnitt 3.2) nennen Expo als Auftragsverarbeiter und verweisen auf Standardvertragsklauseln. Einen eigenen Zusatz verlinken sie nicht | EU US Data Privacy Framework, Standardvertragsklauseln | **Nachfragen** über expo.dev/contact, ob es einen eigenen Zusatz gibt; sonst die Nutzungsbedingungen mit Datum ablegen |
 
 Keine Auftragsverarbeiter: Apple (eigener Verantwortlicher für App Store, Karten, Push Dienst), TomTom (bekommt keine Daten der Nutzer), komoot Photon und FOSSGIS (nur Notfall, eigene Verantwortliche).
 
-## Für den Anwalt
+## Ablage
 
-* Reicht bei Expo der Abschnitt in den Nutzungsbedingungen als Vertrag nach Art. 28?
-* Supabase: Vertragspartner ist laut Zusatz die Supabase Pte. Ltd. in Singapur. Die Datenschutzerklärung nennt das seit dem 18.11. so, vorher stand dort Supabase Inc.
-* Ablage: je Anbieter die Fassung des Zusatzes mit Datum, dazu die Liste der Unterauftragnehmer.
+Je Anbieter die Fassung des Zusatzes als PDF mit Datum ablegen, dazu die Liste der Unterauftragnehmer. Das ist der Nachweis, falls eine Behörde oder ein Nutzer fragt.
 
 ## Quellen
 

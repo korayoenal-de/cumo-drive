@@ -1,12 +1,12 @@
 /**
- * Traduzione italiana dei testi legali (src/content/legal.ts). BOZZA, verifica legale in sospeso (16 novembre 2026).
+ * Traduzione italiana dei testi legali (src/content/legal.ts). Versione di lancio del 18 novembre 2026, redatta secondo scienza e coscienza senza verifica legale.
  * Fa fede la versione tedesca. Tradotto da Claude, non è una consulenza legale.
  */
 import type { LegalDoc } from './legal';
 
 const CONTACT = 'kontakt@cumodrive.com';
 const IMPRINT = 'https://rallycumo.de/impressum/';
-const STAND = 'Aggiornato al 18 novembre 2026. Bozza, verifica legale in sospeso. Questa è una traduzione; fa fede la versione tedesca.';
+const STAND = 'Aggiornato al 18 novembre 2026. Questa è una traduzione; fa fede la versione tedesca.';
 
 export const PRIVACY_IT: LegalDoc = {
   title: 'Privacy',
@@ -142,7 +142,7 @@ export const TERMS_IT: LegalDoc = {
     {
       h: '4. Account',
       p: [
-        'L’app richiede un account con indirizzo email e password. Tieni segreta la password. Puoi eliminare l’account in ogni momento nell’app. Possiamo sospendere un account che viola queste condizioni, se possibile solo dopo un avviso.',
+        'L’app richiede un account con indirizzo email e password. Devi avere almeno 16 anni. Tieni segreta la password. Puoi eliminare l’account in ogni momento nell’app. Possiamo sospendere un account che viola queste condizioni, se possibile solo dopo un avviso.',
       ],
     },
     {
@@ -151,7 +151,7 @@ export const TERMS_IT: LegalDoc = {
         'Le offerte a pagamento le acquisti nell’app tramite Apple. Valgono i prezzi mostrati nell’app prima dell’acquisto, IVA inclusa. La fatturazione avviene tramite il tuo ID Apple.',
         'Gli abbonamenti settimanali, mensili e annuali si rinnovano automaticamente per la stessa durata, a meno che tu non li disdica nelle impostazioni del tuo ID Apple almeno 24 ore prima della scadenza. Il pass stagionale vale per il periodo indicato e termina da solo.',
         'Se l’app offre una prova gratuita, alla sua scadenza parte l’abbonamento scelto, a meno che tu non lo disdica prima.',
-        'I rimborsi li chiedi ad Apple. Il tuo diritto di recesso previsto dalla legge segue le condizioni di Apple; può decadere in anticipo se i contenuti vengono sbloccati subito dopo l’acquisto.',
+        'L’acquisto lo concludi con Apple; Apple è il venditore degli abbonamenti e del pass stagionale. Un eventuale diritto di recesso lo eserciti quindi nei confronti di Apple, secondo le condizioni di Apple per gli acquisti sull’App Store. Recesso e rimborsi li chiedi ad Apple su reportaproblem.apple.com.',
         'Le licenze club e i pass evento per club e organizzatori vengono stipulati separatamente e fatturati. I membri di un club con licenza valida possono usare le funzioni senza un proprio abbonamento finché la licenza è attiva.',
       ],
     },
@@ -194,7 +194,7 @@ export const TERMS_IT: LegalDoc = {
     {
       h: '9. Modifiche alle condizioni',
       p: [
-        'Possiamo modificare queste condizioni quando cambiano leggi, funzioni o servizi. Ti informiamo in anticipo nell’app sulle modifiche rilevanti. Se non ti opponi entro sei settimane, valgono le nuove condizioni; nella comunicazione ti segnaliamo questa conseguenza.',
+        'Possiamo modificare queste condizioni quando cambiano leggi, funzioni o servizi. Le modifiche che riguardano solo nuove funzioni, non ti penalizzano o sono richieste dalla legge valgono dalla pubblicazione della nuova versione. Sulle modifiche rilevanti ti informiamo in anticipo nell’app o via e-mail; valgono per te solo quando le accetti. Se non le accetti, puoi continuare a usare l’app alle condizioni precedenti fino alla fine di un periodo pagato ed eliminare il tuo account in qualsiasi momento.',
       ],
     },
     {

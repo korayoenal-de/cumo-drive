@@ -1,12 +1,12 @@
 /**
- * English translation of the legal texts (src/content/legal.ts). DRAFT, legal review pending (16 November 2026).
+ * English translation of the legal texts (src/content/legal.ts). Launch version of 18 November 2026, written to the best of our knowledge without legal review.
  * The German version prevails. Translated by Claude, not legal advice.
  */
 import type { LegalDoc } from './legal';
 
 const CONTACT = 'kontakt@cumodrive.com';
 const IMPRINT = 'https://rallycumo.de/impressum/';
-const STAND = 'As of 18 November 2026. Draft, legal review pending. This is a translation; the German version prevails.';
+const STAND = 'As of 18 November 2026. This is a translation; the German version prevails.';
 
 export const PRIVACY_EN: LegalDoc = {
   title: 'Privacy',
@@ -142,7 +142,7 @@ export const TERMS_EN: LegalDoc = {
     {
       h: '4. Account',
       p: [
-        'The app requires an account with email address and password. Keep your password secret. You can delete your account at any time in the app. We may suspend an account that violates these terms, where possible only after a warning.',
+        'The app requires an account with email address and password. You must be at least 16 years old. Keep your password secret. You can delete your account at any time in the app. We may suspend an account that violates these terms, where possible only after a warning.',
       ],
     },
     {
@@ -151,7 +151,7 @@ export const TERMS_EN: LegalDoc = {
         'You buy paid plans in the app via Apple. The prices shown in the app before purchase apply, including VAT. Billing is via your Apple ID.',
         'Weekly, monthly and yearly subscriptions renew automatically for the same term unless you cancel in your Apple ID settings at least 24 hours before the end. The Season Pass is valid for the stated period and ends by itself.',
         'If the app offers a free trial, the chosen subscription starts when it ends unless you cancel before.',
-        'You request refunds from Apple. Your statutory right of withdrawal follows Apple’s terms; it may expire early when content is unlocked immediately after purchase.',
+        'You conclude the purchase with Apple; Apple is the seller of the subscriptions and the season pass. You therefore exercise any right of withdrawal towards Apple, under Apple’s terms for App Store purchases. You request withdrawal and refunds from Apple at reportaproblem.apple.com.',
         'Club licences and event passes for clubs and organisers are concluded separately and invoiced. Members of a club with a valid licence can use the features without their own subscription while the licence runs.',
       ],
     },
@@ -194,7 +194,7 @@ export const TERMS_EN: LegalDoc = {
     {
       h: '9. Changes to these terms',
       p: [
-        'We may change these terms when laws, features or services change. We inform you about significant changes in the app in advance. If you do not object within six weeks, the new terms apply; we point out this consequence in the notice.',
+        'We may change these terms when laws, features or services change. Changes that only concern new features, do not put you in a worse position or are legally required apply once the new version is published. We inform you about significant changes in advance in the app or by email; they only apply to you once you agree to them. If you do not agree, you can keep using the app under the previous terms until the end of a paid period and delete your account at any time.',
       ],
     },
     {

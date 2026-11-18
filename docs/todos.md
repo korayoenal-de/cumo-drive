@@ -77,9 +77,9 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 ### Zwingend: Recht
 
-* [ ] Impressum klären: Rechtsform, ladungsfähige Anschrift, DDG statt TMG (Koray mit Anwalt); danach Impressum als eigene Seite in der App (Claude)
-* [ ] Datenschutz und AGB anwaltlich prüfen, vor allem Widerrufsrecht, Haftung, Auswertung der Spuren, Blackbox der Fahrten und Meldungen, Standort für Erinnerungen (Koray mit Anwalt)
-* [ ] Lizenzen der Dienste mit dem Anwalt: FOSSGIS Valhalla nur noch Notfall, ODbL Namensnennung (Koray)
+* [ ] Impressum auf rallycumo.de anpassen: § 5 DDG statt TMG, Verantwortlicher nach MStV, Satz zur Verbraucherschlichtung, später die Umsatzsteuer ID (Koray; Wortlaut in docs/rechtstexte-entwurf.md)
+* [x] Datenschutz und AGB nach bestem Wissen fertiggestellt, ohne Anwalt (Koray 18.11.: Anwalt erst mit Einnahmen). Widerruf über Apple, Änderungen nur mit Zustimmung, Mindestalter 16, Fehlerberichte ergänzt, Hinweis Entwurf entfernt
+* [ ] Später mit Anwalt: Restrisiken in docs/rechtstexte-entwurf.md (Haftung, berechtigtes Interesse, Expo, Club Lizenzen)
 * [ ] Auftragsverarbeitungsverträge: Contabo im Kundenbereich abschließen, bei Expo nachfragen, bei Supabase, LiveKit und RevenueCat die Fassung ablegen (Koray; Fundstellen in docs/auftragsverarbeitung.md, 18.11.)
 * [x] Händlerstatus bei Apple für die EU angegeben, Kontakt kontakt@cumodrive.com (Koray 17.11.)
 
