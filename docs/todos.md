@@ -184,6 +184,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 ## Backlog
 
+* [ ] **Lasttest Routing Server** (Koray 18.11.: Backlog): 10 Planungen gleichzeitig über 2 Minuten, abends, nur der Routing Server; Supabase bleibt außen vor. Trifft die echten Server, daher nur nach Korays OK
+* [ ] Gleiche Punkte, verschiedene Touren: Teilplanung und ganze Planung lagen im Test 28 und 43 km auseinander (Prüfung 18.11., Bedienfolgen Seed 23)
 * [ ] GitHub Secret EXPO_TOKEN eintragen, damit OTA über den Zweig ota/* aus jeder Sitzung geht (Koray 17.11.: Backlog; bis dahin veröffentlicht Claude OTA direkt nach dem Testlauf)
 * [ ] Captcha bei der Registrierung (Entscheidung 17.11.: Hürde für Nutzer, erst bei Missbrauch; Zahlen in signup_attempts)
 * [ ] App Attest, zusammen mit engeren Grenzen für den Web Planer (wenn es echte Nutzer gibt)
