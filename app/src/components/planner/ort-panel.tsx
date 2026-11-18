@@ -7,6 +7,7 @@ import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { Chip, ChipRow } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { placesNear, type NearPlace } from '@/lib/stops-along';
@@ -103,6 +104,8 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
   return (
     <View style={styles.screen}>
       <View style={styles.head}>
+        {/* Griff und Abstände wie im ActionSheet: Titel gleich weit vom oberen Rand (Koray 18.11.) */}
+        <View style={styles.grabber} />
         <View style={styles.titleRow}>
           <View style={styles.rowMain}>
             <AppText style={styles.title} numberOfLines={1}>
@@ -116,21 +119,12 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
             <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         </View>
-        <View role="tablist" style={styles.tabs}>
-          {kinds.map((k) => {
-            const on = k.id === kind;
-            return (
-              <Pressable
-                key={k.id}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: on }}
-                onPress={() => setKind(k.id)}
-                style={({ pressed }) => [styles.tab, on && styles.tabOn, pressed && styles.pressed]}>
-                <AppText style={[styles.tabText, on && styles.tabTextOn]}>{k.label}</AppText>
-              </Pressable>
-            );
-          })}
-        </View>
+        {/* Reiter als Chips mit gleitender Auswahl wie überall (Koray 18.11.) */}
+        <ChipRow>
+          {kinds.map((k) => (
+            <Chip key={k.id} label={k.label} active={k.id === kind} onSurface onPress={() => setKind(k.id)} />
+          ))}
+        </ChipRow>
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {list === undefined ? (
@@ -160,9 +154,11 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.ground },
-  head: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.l, gap: Spacing.l },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
-  title: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 28, color: Colors.text, textTransform: 'uppercase' },
+  head: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.s, paddingBottom: Spacing.xl, gap: Spacing.l },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, marginTop: Spacing.s },
+  // Titel wie in allen Blättern (ActionSheet): Inter Bold, keine Versalien; Archivo nur für Tournamen und Kennzahlen (Koray 18.11.)
+  title: { fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30, color: Colors.text },
+  grabber: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.empty },
   role: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   close: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   tabs: { flexDirection: 'row', gap: Spacing.xs },
@@ -179,7 +175,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64, paddingHorizontal: Spacing.l, paddingVertical: Spacing.s },
   rowPressed: { backgroundColor: Colors.pressTint },
   icon: { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.signalTint, alignItems: 'center', justifyContent: 'center' },
-  rowMain: { flex: 1, minWidth: 0 },
+  rowMain: { flex: 1, minWidth: 0, gap: Spacing.xs },
   name: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   muted: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted },
   dist: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },

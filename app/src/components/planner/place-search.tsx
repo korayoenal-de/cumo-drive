@@ -326,6 +326,8 @@ function SearchBody({
   return (
       <View style={styles.screen}>
         <View style={styles.head}>
+          {/* Griff und Abstände wie im ActionSheet: Titel gleich weit vom oberen Rand (Koray 18.11.) */}
+          <View style={styles.grabber} />
           {stopsOnly ? (
             <>
               <View style={styles.titleRow}>
@@ -704,7 +706,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.ground },
   // Abstände nach dem Design System (Koray 18.11.: der Kopf wirkte gequetscht): oben wie ein Blatt, zwischen
   // Titel, Feld und Chips space-l, nach unten space-xl
-  head: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xxl, paddingBottom: Spacing.xl, gap: Spacing.l },
+  head: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.s, paddingBottom: Spacing.xl, gap: Spacing.l },
   role: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   // Regel Eingaben (Koray 18.11.): Radius 14 wie jedes Feld, Rand immer da (durchsichtig), orange im Fokus
@@ -753,8 +755,10 @@ const styles = StyleSheet.create({
   gauge: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   widenLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.l },
   widenLinkText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.signal },
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m, marginBottom: Spacing.xs },
-  title: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 28, color: Colors.text, textTransform: 'uppercase' },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m, marginTop: Spacing.s, marginBottom: Spacing.xs },
+  // Titel wie in allen Blättern (ActionSheet): Inter Bold, keine Versalien; Archivo nur für Tournamen und Kennzahlen (Koray 18.11.)
+  title: { fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30, color: Colors.text },
+  grabber: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.empty },
   loading: { marginTop: Spacing.xl },
   widen: { alignSelf: 'flex-start', height: 48, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, justifyContent: 'center', backgroundColor: Colors.surface2 },
   widenText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },
