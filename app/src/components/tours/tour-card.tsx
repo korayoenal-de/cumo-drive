@@ -16,6 +16,8 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { SOFT_LAYOUT } from '@/components/ui/action-bar';
+import { SwipeDelete } from '@/components/ui/swipe-delete';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { DeleteTourSheet } from '@/components/tours/delete-tour-sheet';
 import { ActionSheet, OptionsSheet, SHEET_GONE_MS, type SheetItem } from '@/components/ui/action-sheet';
 import { IconLabel } from '@/components/ui/btn-icon';
@@ -85,7 +87,25 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
   ];
 
   return (
-    <Animated.View layout={LAYOUT} entering={FadeIn.duration(220)} exiting={FadeOut.duration(160)} style={[styles.card, cardStyle]}>
+    <Animated.View layout={LAYOUT} entering={FadeIn.duration(220)} exiting={FadeOut.duration(160)} style={cardStyle}>
+      {/* Von rechts nach links wischen zeigt Löschen, mit Rückfrage, wie bei gefahrenen Touren (Koray 18.11.) */}
+      <Swipeable
+        friction={1.6}
+        rightThreshold={36}
+        overshootRight={false}
+        containerStyle={styles.swipeBox}
+        renderRightActions={(prog, _tr, m) => (
+          <SwipeDelete
+            progress={prog}
+            radius={Radius.l + 4}
+            label={taken ? tr('{name} aus Touren entfernen', { name: t.name }) : tr('Tour {name} löschen', { name: t.name })}
+            onPress={() => {
+              m.close();
+              setSheet('delete');
+            }}
+          />
+        )}>
+      <View style={styles.card}>
       <View style={styles.row}>
         <Pressable
           accessibilityRole="button"
@@ -116,6 +136,8 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
           <SymbolView name="ellipsis" size={20} tintColor={Colors.text} weight="semibold" />
         </Pressable>
       </View>
+      </View>
+      </Swipeable>
 
       <ActionSheet visible={sheet === 'menu'} title={t.name} subtitle={meta} items={items} onClose={() => setSheet((s) => (s === 'menu' ? null : s))} />
       <ShareSheet
@@ -285,6 +307,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
 const styles = StyleSheet.create({
   labeled: { gap: Spacing.xs },
   fieldLabel: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted, marginLeft: Spacing.xs },
+  swipeBox: { borderRadius: Radius.l + 4, overflow: 'hidden' },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l + 4, padding: Spacing.m, gap: Spacing.m, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 56 },
