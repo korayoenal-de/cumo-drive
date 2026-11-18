@@ -19,11 +19,11 @@ import { exportAllTours } from '@/lib/route-file';
 import { manageSubscription, purchase, restorePurchases, useCurrentPlan, useStorePrices, type CurrentPlan } from '@/lib/purchase';
 import { t, tr } from '@/i18n';
 
+// Nur was die Mitgliedschaft über die kostenlose Version hinaus bringt (Koray 18.11.): Planen geht auch kostenlos
 const BENEFITS = [
-  t('Kurvige Touren planen'),
-  t('Gruppenfahrten bis 6 Fahrzeuge'),
-  t('Navigation mit Ansagen und Live Activity'),
-  t('Fahrten und Statistik je Fahrzeug'),
+  t('Überall losfahren, ohne Heimatgebiet'),
+  t('Gruppenfahrten bis 6 Autos statt 3'),
+  t('Funk für die ganze Gruppe'),
 ];
 
 export type PaywallMode = 'expired' | 'voluntary';
@@ -179,6 +179,19 @@ export function Paywall({
           </Pressable>
           )}
           {note && <AppText style={[styles.note, note.good && styles.noteGood]}>{note.text}</AppText>}
+          {/* Zurück zum Gratisplan (Koray 18.11.): kein eigener Plan zum Auswählen, sondern Kündigen bei Apple; greift zum Ende der Laufzeit */}
+          {changing && current && current.id !== 'saison' && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityHint={t('Öffnet die Abo Einstellungen deiner Apple ID')}
+              onPress={() => void manageSubscription()}
+              style={({ pressed }) => [styles.quiet, pressed && { opacity: 0.6 }]}>
+              <AppText style={styles.quietText}>{t('Zurück zum Gratisplan')}</AppText>
+              <AppText variant="caption" muted style={styles.quietNote}>
+                {t('Kündige dein Abo bei Apple. Bis zum Ende der bezahlten Zeit bleibt alles, wie es ist.')}
+              </AppText>
+            </Pressable>
+          )}
           {!hasPlan && (
           <Pressable accessibilityRole="button" disabled={!!busy} onPress={() => void run('restore')} style={styles.secondary}>
             {busy === 'restore' ? <ActivityIndicator color={Colors.text} /> : <AppText style={styles.secondaryText}>{t('Käufe wiederherstellen')}</AppText>}
@@ -300,6 +313,9 @@ function PlanCard({ price, selected, onPress }: { price: Price; selected: boolea
 }
 
 const styles = StyleSheet.create({
+  quiet: { minHeight: Size.icon, alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.s, gap: 2 },
+  quietText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
+  quietNote: { textAlign: 'center' },
   legal: { flexDirection: 'row', flexWrap: 'wrap', columnGap: Spacing.l, rowGap: Spacing.s },
   trialBox: { backgroundColor: Colors.goodTint, borderRadius: Radius.m, padding: Spacing.m, gap: Spacing.xs },
   trialTitle: { color: Colors.good, fontFamily: Fonts.bold, fontSize: Type.body },

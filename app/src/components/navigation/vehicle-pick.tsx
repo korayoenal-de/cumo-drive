@@ -1,6 +1,6 @@
 /**
  * Fahrzeug vor dem Start (Koray 12.11., Konzept B): eine Zeile mit dem aktuellen Auto in seiner Wagenfarbe,
- * „Wechseln“ klappt die anderen am Ort auf, Antippen wählt und klappt zu. Bei nur einem Auto ohne Wechseln.
+ * der Pfeil Knopf klappt die anderen am Ort auf, Antippen wählt und klappt zu. Bei nur einem Auto ohne Wechseln.
  */
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
@@ -42,8 +42,10 @@ export function VehiclePick({ list, current }: { list: Vehicle[]; current: Vehic
             accessibilityState={{ expanded: open }}
             accessibilityLabel={open ? t('Fahrzeugwahl schließen') : t('Fahrzeug wechseln')}
             onPress={() => setOpen((o) => !o)}
+            hitSlop={4}
             style={({ pressed }) => [styles.btn, pressed && styles.pressed]}>
-            <AppText style={styles.btnText}>{open ? t('Fertig') : t('Wechseln')}</AppText>
+            {/* Symbol statt Wort (Koray 18.11.): zwei Pfeile, offen das X wie beim Aufklappen (Regel 2) */}
+            <SymbolView name={open ? 'xmark' : 'arrow.left.arrow.right'} size={18} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         )}
       </View>
@@ -74,8 +76,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   car: { alignItems: 'center', justifyContent: 'center' },
   name: { fontFamily: Fonts.bold, fontSize: Type.title },
-  btn: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
-  btnText: { fontFamily: Fonts.semibold, fontSize: Type.body },
+  btn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
   option: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 52 },
   optionText: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.body },
   pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
