@@ -77,11 +77,18 @@ function withSpan(pts: LatLon[], min = 0.22): LatLon[] {
   return [...pts, [c[0] - h, c[1] - w], [c[0] + h, c[1] + w]];
 }
 
+/** ab dieser Breite des Ausschnitts in Grad gilt die Karte als Weltansicht */
+const WORLD_DELTA = 20;
+
 export function CommunityMap({ pins, selected, onSelect, onTap, others, keepView, line, bottom, top, style }: Props) {
   const settings = useMapSettings();
   const map = useRef<MapView>(null);
   const pad = { top: top + 30, right: 40, bottom: bottom + 30, left: 40 };
   const pinKey = pins.map((p) => p.id).join(',');
+  const padRef = useRef(pad);
+  useEffect(() => {
+    padRef.current = pad;
+  });
   const win = useWindowDimensions();
   const [region, setRegion] = useState<Region>(START);
   const [mapWidth, setMapWidth] = useState(0);
@@ -95,6 +102,9 @@ export function CommunityMap({ pins, selected, onSelect, onTap, others, keepView
   // anzutippen (Koray 16.11., 12:00). Nah untereinander (die Marken sind breit), Region und Weit in einer Reihe.
   const shown = useMemo(() => {
     const groups = mergeNear(clusterPins(pins, region, win.width, CELL[stage], selected), region, win.width, CELL[stage] + GAP[stage] / 2, selected);
+    // Ganz weit draußen (Kontinent, Globus) bleiben die Punkte an ihrem Ort: nebeneinander gelegt ergaben sie dort
+    // merkwürdige Reihen, und der gemeldete Ausschnitt taugt auf dem Globus nicht zum Rechnen (Koray 18.11.)
+    if (region.longitudeDelta > WORLD_DELTA) return groups.flatMap((g) => g.items);
     return groups.flatMap((g) => (g.items.length > 1 ? fanOut(g.items, g.p, region, win.width, stage) : g.items));
   }, [pins, region, win.width, selected, stage]);
 
@@ -131,6 +141,15 @@ export function CommunityMap({ pins, selected, onSelect, onTap, others, keepView
       s.at = null;
       s.pt = null;
       s.marker = null;
+      // Ganz weit draußen wählt ein Tipp keine einzelne Tour (die Punkte liegen aufeinander): die Karte fährt zu den
+      // Touren hin, dort sind sie einzeln zu treffen (Koray 18.11.)
+      if (L.region.longitudeDelta > WORLD_DELTA && L.shown.length > 0 && !L.selected) {
+        s.timer = null;
+        s.decidedAt = Date.now();
+        s.decided = null;
+        map.current?.fitToCoordinates(withSpan(L.shown.map((p) => p.p)).map(ll), { edgePadding: padRef.current, animated: true });
+        return;
+      }
       const finish = (near: { id: string } | null) => {
         const id = near?.id ?? marker ?? null;
         s.timer = null;

@@ -109,6 +109,7 @@ export const styles = StyleSheet.create({
 
   summary: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
   summaryHint: { minHeight: 36 },
+  hintRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s },
   go: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   goText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
 

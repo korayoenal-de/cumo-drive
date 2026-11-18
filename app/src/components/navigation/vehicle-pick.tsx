@@ -3,13 +3,13 @@
  * der Pfeil Knopf klappt die anderen am Ort auf, Antippen wählt und klappt zu. Bei nur einem Auto ohne Wechseln.
  */
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { CarSprite, carLookFor, frameFor } from '@/components/map/car-sprite';
-import { SOFT_LAYOUT } from '@/components/ui/motion';
+import { EASE_OUT, SOFT_LAYOUT } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
@@ -21,6 +21,30 @@ function Car({ v, size }: { v: Vehicle; size: number }) {
   return (
     <View style={[styles.car, { width: size * 1.2, height: size * 0.8 }]}>
       {look ? <CarSprite look={look} frame={frameFor(215)} size={size} /> : <SymbolView weight="semibold" name="car.side.fill" size={size * 0.55} tintColor={Colors.muted} />}
+    </View>
+  );
+}
+
+/**
+ * Die zwei Pfeile drehen sich zum X und zurück (Koray 18.11., Regel „Das Symbol dreht sich zum X“): beide Symbole
+ * liegen übereinander, eine Vierteldrehung blendet vom einen ins andere.
+ */
+function SwapIcon({ open }: { open: boolean }) {
+  const reduced = useReducedMotion();
+  const p = useSharedValue(open ? 1 : 0);
+  useEffect(() => {
+    p.value = withTiming(open ? 1 : 0, { duration: reduced ? 0 : Motion.enter, easing: EASE_OUT });
+  }, [open, p, reduced]);
+  const arrows = useAnimatedStyle(() => ({ opacity: 1 - p.value, transform: [{ rotate: `${p.value * 90}deg` }] }));
+  const cross = useAnimatedStyle(() => ({ opacity: p.value, transform: [{ rotate: `${(p.value - 1) * 90}deg` }] }));
+  return (
+    <View style={styles.swap}>
+      <Animated.View style={[styles.swapLayer, arrows]}>
+        <SymbolView name="arrow.left.arrow.right" size={20} weight="semibold" tintColor={Colors.text} />
+      </Animated.View>
+      <Animated.View style={[styles.swapLayer, cross]}>
+        <SymbolView name="xmark" size={20} weight="semibold" tintColor={Colors.text} />
+      </Animated.View>
     </View>
   );
 }
@@ -47,7 +71,7 @@ export function VehiclePick({ list, current }: { list: Vehicle[]; current: Vehic
             hitSlop={4}
             style={({ pressed }) => [styles.btn, pressed && styles.pressed]}>
             {/* Symbol statt Wort (Koray 18.11.): zwei Pfeile, offen das X wie beim Aufklappen (Regel 2) */}
-            <SymbolView name={open ? 'xmark' : 'arrow.left.arrow.right'} size={20} weight="semibold" tintColor={Colors.text} />
+            <SwapIcon open={open} />
           </Pressable>
         )}
       </View>
@@ -73,6 +97,8 @@ export function VehiclePick({ list, current }: { list: Vehicle[]; current: Vehic
 }
 
 const styles = StyleSheet.create({
+  swap: { width: 24, height: 24 },
+  swapLayer: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   wrap: { backgroundColor: Colors.surface2, borderRadius: Radius.l, padding: Spacing.m, gap: Spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   flex: { flex: 1 },

@@ -7,6 +7,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
+import { reportError } from './error-report';
 import { supabase } from './supabase';
 import { t } from '@/i18n';
 
@@ -108,7 +109,12 @@ async function persist(next: Garage, push = true) {
     const { data } = await supabase.auth.getUser();
     if (!data.user) return;
     const main = next.list.find((v) => v.id === next.currentId) ?? next.list[0];
-    await supabase.from('profiles').upsert({ id: data.user.id, vehicles: next.list, car: main?.model.trim().slice(0, 80) || null });
+    // Als update der eigenen Zeile, nicht als upsert (Koray 18.11.): seit die Spalte vehicles für andere nicht mehr
+    // lesbar ist (10.11.), lehnt die Datenbank das upsert ab, und der Fehler blieb stumm. So kam das zweite Auto nie
+    // im Konto an und die Community zeigte nur eins. Gleiches Vorgehen wie bei birth_date in lib/drivers.ts.
+    const row = { vehicles: next.list, car: main?.model.trim().slice(0, 80) || null };
+    const { error } = await supabase.from('profiles').update(row).eq('id', data.user.id);
+    if (error) reportError(new Error(`Garage speichern: ${error.message}`), { extra: { garage: true } });
   } catch {
     // Konto ist optional
   }

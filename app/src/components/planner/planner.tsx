@@ -189,6 +189,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   const [rolls, setRolls] = useState<{ tour: PlannedTour; req: TourRequest; stops: Stop[]; fun: TourFun | null }[]>([]);
   /** die laufende Planung kommt aus Neu würfeln: dann kippt der Würfel im Kopf einmal um */
   const [rolling, setRolling] = useState(false);
+  /** kurz nach dem Neu würfeln: der Würfel kippt neben der neuen Runde, auch wenn sie ohne Wartezeit da war */
+  const [diceShow, setDiceShow] = useState(false);
   const [funOpen, setFunOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -501,6 +503,10 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
         setRolls((r) => (keep ? [...r, item].slice(-5) : [item]));
         // die Rundtour steht: der stärkste Moment bekommt einen Impuls (Audit 18.11.)
         haptic('ergebnis');
+        if (keep) {
+          setDiceShow(true);
+          setTimeout(() => setDiceShow(false), 1800);
+        }
         setView({ kind: 'result', tour, req, stops });
         setDetent(1);
         toTop();
@@ -901,7 +907,9 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           </View>
         </View>
       ) : (
-        <AppText variant="caption" muted numberOfLines={2} style={styles.summaryHint}>
+        <View style={styles.hintRow}>
+        {view.kind === 'result' && diceShow && <DiceTip />}
+        <AppText variant="caption" muted numberOfLines={2} style={[styles.summaryHint, styles.flex]}>
           {view.kind === 'error'
             ? ''
             : view.kind === 'result'
@@ -914,6 +922,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
                   ? tr('Beschreib deine Runde in einem Satz, wir planen sie.')
                   : tr('Länge und Richtung wählen, zurück geht es zum Start ({v0}).', { v0: picked?.name ?? here?.name ?? 'dein Standort' })}
         </AppText>
+        </View>
       )}
     </>
   );
