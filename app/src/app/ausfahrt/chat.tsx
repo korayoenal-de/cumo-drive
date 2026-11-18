@@ -16,7 +16,7 @@ import { Avatar } from '@/components/community/ride-bits';
 import { ReportSheet } from '@/components/moderation/report-sheet';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Layout } from '@/constants/theme';
 import { ausfahrtTeilnehmer, clock, listAusfahrten, sendNachricht, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { enablePush, setOpenChat } from '@/lib/push';
@@ -154,10 +154,10 @@ export default function AusfahrtChat() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
   flex: { flex: 1 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.l, paddingBottom: Spacing.m, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.line },
+  head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Layout.page, paddingBottom: Spacing.m },
   roundBtn: { width: Size.icon, height: Size.icon, borderRadius: Size.icon / 2, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: Fonts.bold, fontSize: Type.title },
-  list: { padding: Spacing.l, gap: Spacing.m },
+  list: { paddingHorizontal: Layout.page, paddingVertical: Spacing.l, gap: Spacing.m },
   pinned: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'center', backgroundColor: Colors.signalTint, borderRadius: Radius.pill, paddingHorizontal: Spacing.l, paddingVertical: Spacing.s },
   pinnedText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.text },
   empty: { textAlign: 'center', marginTop: Spacing.xl },
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   bubbleMine: { backgroundColor: Colors.signalTint, borderBottomRightRadius: 6 },
   author: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.muted },
   body: { fontFamily: Fonts.medium, fontSize: Type.body, lineHeight: Leading.body },
-  time: { fontFamily: Fonts.semibold, fontSize: 11, color: Colors.muted, alignSelf: 'flex-end', fontVariant: ['tabular-nums'] },
+  time: { fontFamily: Fonts.semibold, fontSize: Type.micro, color: Colors.muted, alignSelf: 'flex-end', fontVariant: ['tabular-nums'] },
   hint: { textAlign: 'center', marginTop: Spacing.l },
   bar: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.s, paddingHorizontal: Spacing.l, paddingTop: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
   input: { flex: 1, minHeight: 44, maxHeight: 120, paddingHorizontal: Spacing.l, paddingTop: 12, paddingBottom: 12, backgroundColor: Colors.surface, borderRadius: 22, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },

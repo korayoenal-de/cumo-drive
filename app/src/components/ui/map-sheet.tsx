@@ -330,6 +330,6 @@ const styles = StyleSheet.create({
   head: { paddingTop: Spacing.l, paddingBottom: Spacing.xxl, gap: Spacing.s },
   body: { gap: Spacing.section },
   grabberZone: { height: GRAB_H, alignItems: 'center', justifyContent: 'center' },
-  grabber: { width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.surface2 },
+  grabber: { width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.empty },
   content: { paddingHorizontal: Spacing.xl },
 });

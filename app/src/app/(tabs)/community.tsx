@@ -519,7 +519,9 @@ export default function Community() {
                 )}
                 {shownDrivers.length === 0 && (dseg === 'alle' || contactCount > 0) && <AppText muted>{dseg === 'kontakte' ? tr('Kein Kontakt passt zur Suche.') : tr('Kein Mitglied passt zur Suche.')}</AppText>}
                 {shownDrivers.map((d) => (
-                  <View
+                  <Animated.View
+                    // klappt eine Karte auf, rücken die anderen weich nach (Anlass 3)
+                    layout={SOFT_LAYOUT}
                     key={d.id}
                     onLayout={(e) => {
                       driverY.current.set(d.id, e.nativeEvent.layout.y);
@@ -531,7 +533,7 @@ export default function Community() {
                     ) : (
                       <DriverCard d={d} unread={unread ? (unreadBy[d.id] ?? 0) : 0} onPress={() => select(d.id, true)} />
                     )}
-                  </View>
+                  </Animated.View>
                 ))}
               </>
             )}
@@ -973,10 +975,10 @@ const styles = StyleSheet.create({
   segThumb: { position: 'absolute', left: 0, top: 4, height: 36, borderRadius: 18, backgroundColor: Colors.text },
   segLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   segText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.ground },
-  segCount: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.ground, opacity: 0.55, fontVariant: ['tabular-nums'] },
+  segCount: { fontFamily: Fonts.bold, fontSize: Type.micro, color: Colors.ground, opacity: 0.55, fontVariant: ['tabular-nums'] },
   badge: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   badgeDot: { position: 'absolute', top: -2, right: -4, width: 9, height: 9, borderRadius: 5, backgroundColor: Colors.signal, borderWidth: 1.5, borderColor: Colors.overlaySurface },
-  badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 11, lineHeight: 13 },
+  badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: Type.micro, lineHeight: 13 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   cardList: { paddingVertical: Spacing.m },
@@ -997,7 +999,7 @@ const styles = StyleSheet.create({
   bigName: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, textTransform: 'uppercase' },
   metrics: { flexDirection: 'row', gap: Spacing.xxl },
   metric: { gap: 2 },
-  metricLabel: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
+  metricLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   metricValue: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, fontVariant: ['tabular-nums'] },
   dsegRow: { flexDirection: 'row', gap: Spacing.s },
   search: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },

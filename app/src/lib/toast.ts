@@ -5,6 +5,8 @@
  */
 import { useSyncExternalStore } from 'react';
 
+import { haptic } from './haptics';
+
 export type ToastMsg = {
   id: number;
   text: string;
@@ -43,6 +45,7 @@ export function showToast(text: string, opts: { tone?: 'ok' | 'error'; action?: 
     return;
   }
   waiting = null;
+  if (m.tone === 'error') haptic('fehler');
   start(m);
 }
 

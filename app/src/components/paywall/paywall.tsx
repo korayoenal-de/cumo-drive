@@ -12,6 +12,8 @@ import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-
 import { Pressable } from '@/components/ui/tap';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import Animated from 'react-native-reanimated';
+import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { CONTACT_EMAIL, formatUntil, isFreePhase, PRICES, useEntitlement, type PlanId, type Price } from '@/lib/entitlement';
@@ -166,11 +168,11 @@ export function Paywall({
         )}
 
         {(!hasPlan || changing) && (
-        <View style={styles.gapS} accessibilityRole="radiogroup">
+        <Animated.View entering={changing ? softEnter() : undefined} style={styles.gapS} accessibilityRole="radiogroup">
           {PRICES.filter((p) => !current || p.id !== current.id).map((p) => (
             <PlanCard key={p.id} price={storePrices[p.id] ? { ...p, priceText: storePrices[p.id] as string } : p} selected={p.id === selected} onPress={() => setSelected(p.id)} />
           ))}
-        </View>
+        </Animated.View>
         )}
 
         <View style={styles.gapS}>

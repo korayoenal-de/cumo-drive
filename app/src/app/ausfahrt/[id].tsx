@@ -18,7 +18,7 @@ import { SymbolView } from 'expo-symbols';
 import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, Share, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
-import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar, DateBlock } from '@/components/community/ride-bits';
@@ -27,8 +27,9 @@ import { ReportSheet } from '@/components/moderation/report-sheet';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AddButton } from '@/components/ui/add-button';
 import { TextField } from '@/components/ui/text-field';
+import { SOFT_LAYOUT } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Layout } from '@/constants/theme';
 import {
   answerAnfrage, arrival, ausfahrtTeilnehmer, ausfahrtTour, cancelAusfahrt, clock, freeSeats, listAnfragen,
   listAusfahrten, longDate, monthYear, requestAusfahrt, sendNachricht, withdrawAusfahrt, ausfahrtAbsagen, rideByLink, rideLink, type Absage, type Anfrage, type Ausfahrt, type LinkedRide, type Teilnehmer,
@@ -515,7 +516,7 @@ export default function AusfahrtDetail() {
           <View style={styles.section}>
             <AppText variant="title">{requests.length === 1 ? tr('Neue Anfrage') : tr('{length} neue Anfragen', { length: requests.length })}</AppText>
             {requests.map((r) => (
-              <Animated.View key={r.userId} entering={FadeIn.duration(Motion.enter)} exiting={FadeOut.duration(180)} layout={LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)} style={styles.request}>
+              <Animated.View key={r.userId} entering={FadeIn.duration(Motion.enter)} exiting={FadeOut.duration(Motion.exit)} layout={SOFT_LAYOUT} style={styles.request}>
                 <View style={styles.row}>
                   <Avatar name={r.name} userId={r.userId} />
                   <View style={styles.flex}>
@@ -584,7 +585,7 @@ export default function AusfahrtDetail() {
           })}
           {a.isOwner &&
             invited.map((m) => (
-              <Animated.View key={m.userId} entering={FadeIn.duration(Motion.enter)} exiting={FadeOut.duration(180)}>
+              <Animated.View key={m.userId} entering={FadeIn.duration(Motion.enter)} exiting={FadeOut.duration(Motion.exit)}>
                 <Pressable accessibilityRole="button" accessibilityHint={t('Optionen zur Einladung')} onPress={() => setPerson({ userId: m.userId, name: m.name, invited: true })} style={styles.member}>
                   <Avatar name={m.name} userId={m.userId} />
                   <View style={styles.flex}>
@@ -921,7 +922,7 @@ function InviteBox({ exclude, onInvite, busyId, contacts, onPlaced, onClose, onL
       {shown.map((p) => {
         const sent = done.has(p.id);
         return (
-          <Animated.View key={p.id} entering={FadeIn.duration(Motion.enter)} layout={LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)} style={styles.member}>
+          <Animated.View key={p.id} entering={FadeIn.duration(Motion.enter)} layout={SOFT_LAYOUT} style={styles.member}>
             <Avatar name={p.displayName} userId={p.id} size={36} />
             <View style={styles.flex}>
               <AppText style={styles.name}>{p.displayName}</AppText>
@@ -956,7 +957,7 @@ const styles = StyleSheet.create({
   hereText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
   root: { flex: 1, backgroundColor: Colors.ground },
   center: { alignItems: 'center', justifyContent: 'center' },
-  content: { paddingHorizontal: Spacing.xl, gap: Spacing.xl },
+  content: { paddingHorizontal: Layout.page, gap: Layout.sections },
   flex: { flex: 1 },
   bar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: Spacing.m, paddingHorizontal: Spacing.xl, gap: Spacing.s, backgroundColor: Colors.ground },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
@@ -984,7 +985,7 @@ const styles = StyleSheet.create({
   fields: { gap: Spacing.s },
   field: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.m },
   fieldPlain: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.m, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, minHeight: 60 },
-  label: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
+  label: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   value: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   preview: { borderRadius: Radius.l, overflow: 'hidden', backgroundColor: Colors.surface },
   metrics: { flexDirection: 'row', gap: Spacing.xxl },

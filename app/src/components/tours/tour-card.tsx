@@ -24,6 +24,7 @@ import { ActionSheet, OptionsSheet, SHEET_GONE_MS, type SheetItem } from '@/comp
 import { IconLabel } from '@/components/ui/btn-icon';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
 import { TextField } from '@/components/ui/text-field';
+import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -94,6 +95,8 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
         friction={1.6}
         rightThreshold={36}
         overshootRight={false}
+              // rote Taste ganz offen: Rastung (Audit 18.11.)
+              onSwipeableWillOpen={() => haptic('rastung')}
         containerStyle={styles.swipeBox}
         renderRightActions={(prog, _tr, m) => (
           <SwipeDelete
@@ -313,7 +316,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
 
 const styles = StyleSheet.create({
   labeled: { gap: Spacing.xs },
-  fieldLabel: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted, marginLeft: Spacing.xs },
+  fieldLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, marginLeft: Spacing.xs },
   swipeBox: { borderRadius: Radius.l + 4, overflow: 'hidden' },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l + 4, padding: Spacing.m, gap: Spacing.m, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },

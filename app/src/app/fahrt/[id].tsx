@@ -17,7 +17,7 @@ import { BackLink } from '@/components/ui/back-link';
 import { Kennzahlen } from '@/components/ui/kennzahlen';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
+import { Colors, Fonts, Leading, Radius, Size, Spacing, Type, Pressed, Layout } from '@/constants/theme';
 import { BAD_REASONS, getDrive, scoreWord, type DriveDetail } from '@/lib/drives';
 import { datum, meta } from '@/lib/format';
 import { openDriveInPlanner } from '@/lib/open-drive';
@@ -142,7 +142,7 @@ export default function FahrtScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  content: { paddingHorizontal: Spacing.xl, gap: Spacing.xl },
+  content: { paddingHorizontal: Layout.page, gap: Layout.sections },
   gapXs: { gap: Spacing.xs },
   preview: { height: 280, borderRadius: Radius.l, overflow: 'hidden', backgroundColor: Colors.surface },
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: Spacing.m },

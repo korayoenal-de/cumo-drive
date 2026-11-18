@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   talkWait: { backgroundColor: Colors.surface2 },
   talkLockedText: { color: Colors.muted },
   talkLock: { position: 'absolute', right: -2, bottom: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.warn, alignItems: 'center', justifyContent: 'center' },
-  talkText: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.onSignal },
+  talkText: { fontFamily: Fonts.bold, fontSize: Type.micro, color: Colors.onSignal },
   bar: { borderTopLeftRadius: Radius.l, borderTopRightRadius: Radius.l, paddingHorizontal: Spacing.xl, paddingTop: Spacing.l, gap: Spacing.s },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   etaBox: { flex: 1, minWidth: 0, gap: Spacing.s, paddingVertical: Spacing.xs },

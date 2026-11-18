@@ -17,7 +17,7 @@ import { BlockSheet, ReportSheet } from '@/components/moderation/report-sheet';
 import { ActionSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Layout } from '@/constants/theme';
 import { clock, shortDate } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { listDrivers, sendDirect, useDirectChat, type Driver } from '@/lib/drivers';
@@ -167,10 +167,10 @@ export default function Unterhaltung() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
   flex: { flex: 1 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.l, paddingBottom: Spacing.m, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors.line },
+  head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Layout.page, paddingBottom: Spacing.m },
   round: { width: Size.icon, height: Size.icon, borderRadius: Size.icon / 2, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: Fonts.bold, fontSize: Type.title },
-  list: { padding: Spacing.l, gap: Spacing.s },
+  list: { paddingHorizontal: Layout.page, paddingVertical: Spacing.l, gap: Spacing.s },
   gap: { gap: Spacing.s },
   center: { textAlign: 'center', marginVertical: Spacing.s },
   alignEnd: { alignSelf: 'flex-end', maxWidth: '82%' },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   other: { alignSelf: 'flex-start', backgroundColor: Colors.surface, borderBottomLeftRadius: 6 },
   mine: { alignSelf: 'flex-end', backgroundColor: Colors.signalTint, borderBottomRightRadius: 6 },
   body: { fontFamily: Fonts.medium, fontSize: Type.body, lineHeight: Leading.body },
-  time: { fontFamily: Fonts.semibold, fontSize: 11, color: Colors.muted, alignSelf: 'flex-end', fontVariant: ['tabular-nums'] },
+  time: { fontFamily: Fonts.semibold, fontSize: Type.micro, color: Colors.muted, alignSelf: 'flex-end', fontVariant: ['tabular-nums'] },
   bar: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.s, paddingHorizontal: Spacing.l, paddingTop: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
   input: { flex: 1, minHeight: 44, maxHeight: 120, paddingHorizontal: Spacing.l, paddingTop: 12, paddingBottom: 12, backgroundColor: Colors.surface, borderRadius: 22, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },

@@ -16,6 +16,7 @@ import { PHASES, type PlanError, type PlanPhase } from '@/components/planner/cre
 import { CAT_ICON, type Cat } from '@/components/planner/place-search';
 import { Chip, ChipRow } from '@/components/ui/chip';
 import { FunGauge } from '@/components/ui/fun-gauge';
+import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
 import { TOUR_FUN_NAMES, type TourFun } from '@/lib/fun-score';
 import { Colors, Motion, Spacing } from '@/constants/theme';
@@ -254,7 +255,11 @@ export function StepButton({ kind, disabled, onPress }: { kind: 'plus' | 'minus'
       accessibilityLabel={kind === 'plus' ? t('Länger') : t('Kürzer')}
       accessibilityState={{ disabled }}
       disabled={disabled}
-      onPress={onPress}
+      onPress={() => {
+        // Schritt für Schritt wie eine Rastung (Audit 18.11.)
+        haptic('rastung');
+        onPress();
+      }}
       style={[styles.stepBtn, disabled && styles.disabled]}>
       <View style={styles.barH} />
       {kind === 'plus' && <View style={styles.barV} />}

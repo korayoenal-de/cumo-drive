@@ -21,6 +21,7 @@ import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Chip, ChipRow } from '@/components/ui/chip';
+import { Grabber } from '@/components/ui/sheet-head';
 import { AppText } from '@/components/ui/text';
 import { FUN_NAMES, FunGauge, type FunLevel } from '@/components/ui/fun-gauge';
 import { Colors, Fonts, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
@@ -328,7 +329,7 @@ function SearchBody({
       <View style={styles.screen}>
         <View style={styles.head}>
           {/* Griff und Abstände wie im ActionSheet: Titel gleich weit vom oberen Rand (Koray 18.11.) */}
-          <View style={styles.grabber} />
+          <Grabber />
           {stopsOnly ? (
             <>
               <View style={styles.titleRow}>
@@ -759,7 +760,6 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m, marginTop: Spacing.s, marginBottom: Spacing.xs },
   // Titel wie in allen Blättern (ActionSheet): Inter Bold, keine Versalien; Archivo nur für Tournamen und Kennzahlen (Koray 18.11.)
   title: { fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30, color: Colors.text },
-  grabber: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.empty },
   loading: { marginTop: Spacing.xl },
   widen: { alignSelf: 'flex-start', height: 48, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, justifyContent: 'center', backgroundColor: Colors.surface2 },
   widenText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },

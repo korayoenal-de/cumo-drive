@@ -8,6 +8,8 @@ import { Pressable } from '@/components/ui/tap';
 
 import { IconLabel } from '@/components/ui/btn-icon';
 import { TextField } from '@/components/ui/text-field';
+import Animated from 'react-native-reanimated';
+import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { type Drive } from '@/lib/drives';
@@ -107,7 +109,12 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
         }}
         onClose={() => setAsk(null)}
       />
-      {edit && !list.some((v) => v.id === edit.id) && <VehicleForm value={edit} onChange={setEdit} onDone={() => setEdit(null)} />}
+      {/* Aufklappen am Ort (Anlass 3): das Formular gleitet herein */}
+      {edit && !list.some((v) => v.id === edit.id) && (
+        <Animated.View entering={softEnter()}>
+          <VehicleForm value={edit} onChange={setEdit} onDone={() => setEdit(null)} />
+        </Animated.View>
+      )}
       {!edit && (
         // Hauptaktion der Garage, daher in Signal Orange (Koray 18.11., löst den Konsistenz Check vom 9.11. ab)
         <Pressable accessibilityRole="button" onPress={() => setEdit(newVehicle())} style={({ pressed }) => [styles.primary, pressed && styles.pressedMain]}>

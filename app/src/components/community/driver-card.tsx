@@ -15,6 +15,7 @@ import { Avatar } from '@/components/community/ride-bits';
 import { BlockSheet, ReportSheet } from '@/components/moderation/report-sheet';
 import { CarSprite, frameFor } from '@/components/map/car-sprite';
 import { IconLabel } from '@/components/ui/btn-icon';
+import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
@@ -57,6 +58,7 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
       }
       else {
         const now = await requestContact(d.id);
+        if (now === 'kontakt') haptic('ziel');
         showToast(now === 'kontakt' ? t('{name} ist jetzt dein Kontakt.', { name: d.name }) : t('Anfrage an {name} geschickt.', { name: d.name }));
       }
     } catch (e) {
@@ -330,14 +332,14 @@ const styles = StyleSheet.create({
   // Namen von Menschen normal geschrieben, Versalien nur für Tournamen, Überschriften und Kennzahlen (Koray 15.11.)
   bigName: { fontFamily: Fonts.bold, fontSize: Type.metric, lineHeight: Leading.metric },
   name: { fontFamily: Fonts.semibold, fontSize: Type.title },
-  label: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
+  label: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   garage: { gap: Spacing.xs },
   car: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 44 },
   carName: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.body },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   roundUnread: { backgroundColor: Colors.signalTint },
   unread: { position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.surface },
-  unreadText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: 11, lineHeight: 13, fontVariant: ['tabular-nums'] },
+  unreadText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: Type.micro, lineHeight: 13, fontVariant: ['tabular-nums'] },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.button },
 });

@@ -9,6 +9,7 @@ import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-na
 import { Pressable } from '@/components/ui/tap';
 
 import { Chip, ChipRow } from '@/components/ui/chip';
+import { Grabber } from '@/components/ui/sheet-head';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { placesNear, type NearPlace } from '@/lib/stops-along';
@@ -106,7 +107,7 @@ function OrtBody({ p, name, role, withHotel, initialKind, onClose, onPick }: Pro
     <View style={styles.screen}>
       <View style={styles.head}>
         {/* Griff und Abstände wie im ActionSheet: Titel gleich weit vom oberen Rand (Koray 18.11.) */}
-        <View style={styles.grabber} />
+        <Grabber />
         <View style={styles.titleRow}>
           <View style={styles.rowMain}>
             <AppText style={styles.title} numberOfLines={1}>
@@ -159,7 +160,6 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, marginTop: Spacing.s },
   // Titel wie in allen Blättern (ActionSheet): Inter Bold, keine Versalien; Archivo nur für Tournamen und Kennzahlen (Koray 18.11.)
   title: { fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30, color: Colors.text },
-  grabber: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.empty },
   role: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   close: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   tabs: { flexDirection: 'row', gap: Spacing.xs },

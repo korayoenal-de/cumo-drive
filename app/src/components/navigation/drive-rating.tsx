@@ -15,6 +15,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { Chip } from '@/components/ui/chip';
 import { LogoFill } from '@/components/ui/fun-gauge';
 import { TextField } from '@/components/ui/text-field';
+import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { BAD_REASONS, SCORE_WEAK, rateDriveScore, scoreWord, type HighlightVote } from '@/lib/drives';
@@ -148,7 +149,11 @@ export function StarRating({ value, onChange }: { value: number | null; onChange
       <AppText style={styles.title}>{t('Wie fandest du die Tour?')}</AppText>
       <View style={styles.stars} accessibilityRole="adjustable" accessibilityValue={{ text: n ? tr('{n} von 5 Sternen, {v1}', { n, v1: scoreWord(value!) }) : tr('Noch nicht bewertet') }}>
         {[1, 2, 3, 4, 5].map((i) => (
-          <Pressable key={i} accessibilityRole="button" accessibilityLabel={`${i} ${i === 1 ? 'Stern' : 'Sterne'}`} hitSlop={4} onPress={() => onChange(STAR_SCORE[i - 1])} style={({ pressed }) => [styles.star, pressed && { transform: [{ scale: Motion.pressScale }] }]}>
+          <Pressable key={i} accessibilityRole="button" accessibilityLabel={`${i} ${i === 1 ? 'Stern' : 'Sterne'}`} hitSlop={4} onPress={() => {
+            // der Finger wählt eine Stufe: Rastung je Stern (Audit 18.11.)
+            if (i !== n) haptic('rastung');
+            onChange(STAR_SCORE[i - 1]);
+          }} style={({ pressed }) => [styles.star, pressed && { transform: [{ scale: Motion.pressScale }] }]}>
             <SymbolView name={i <= n ? 'star.fill' : 'star'} size={40} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         ))}

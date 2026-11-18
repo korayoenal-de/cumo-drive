@@ -26,7 +26,13 @@ export type HapticKind =
   /** Funk gedrückt: du bist auf Sendung */
   | 'sendung'
   /** Funk losgelassen */
-  | 'sendungEnde';
+  | 'sendungEnde'
+  /** Ergebnis ist da: die Rundtour steht (Zustand wird Ergebnis; Audit 18.11.) */
+  | 'ergebnis'
+  /** Endgültiges bestätigt: Löschen, Entfernen, Beenden */
+  | 'warnung'
+  /** Fehler ohne festen Ort (roter Toast) */
+  | 'fehler';
 
 const available =
   Platform.OS !== 'web' && typeof ExpoModules.requireOptionalNativeModule === 'function' && !!ExpoModules.requireOptionalNativeModule('ExpoHaptics');
@@ -48,6 +54,12 @@ export function haptic(kind: HapticKind): void {
         return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       case 'sendung':
         return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+      case 'ergebnis':
+        return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      case 'warnung':
+        return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      case 'fehler':
+        return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
   try {

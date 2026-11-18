@@ -14,7 +14,6 @@ import Animated, {
   Easing,
   FadeIn,
   FadeOut,
-  LinearTransition,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -24,6 +23,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { SOFT_LAYOUT } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Shadow, Spacing } from '@/constants/theme';
 import { t } from '@/i18n';
@@ -48,7 +48,7 @@ export function BackPill({ label, top, onPress, status }: { label?: string | nul
       entering={FadeIn.duration(200)}
       exiting={FadeOut.duration(150)}
       // Breite wächst und schrumpft mit Feder, der Inhalt blendet über
-      layout={LinearTransition.springify().damping(Motion.snap.damping).stiffness(Motion.snap.stiffness)}
+      layout={SOFT_LAYOUT}
       style={[styles.wrap, { top, maxWidth: win.width - Spacing.l - 76 }, anim]}>
       {mode === 'back' && (
         <Pressable accessibilityRole="button" accessibilityLabel={t('Zurück zu {label}', { label: label ? t(label) : '' })} hitSlop={4} onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} style={styles.pill}>

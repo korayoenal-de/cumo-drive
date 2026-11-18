@@ -24,8 +24,11 @@ import { SwipeDelete } from '@/components/ui/swipe-delete';
 import { Screen } from '@/components/ui/screen';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { TextField } from '@/components/ui/text-field';
+import Animated, { FadeOut } from 'react-native-reanimated';
+import { SOFT_LAYOUT } from '@/components/ui/motion';
+import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { setEditTour } from '@/lib/edit-tour';
 import { backfillAuthors } from '@/lib/community';
@@ -360,12 +363,15 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
         {shown.map((d) => {
           const line = tracks[d.id];
           return (
-            // Von rechts nach links wischen zeigt Löschen, mit Rückfrage (Koray 15.11.)
+            // Von rechts nach links wischen zeigt Löschen, mit Rückfrage (Koray 15.11.). Nach dem Löschen blendet die
+            // Karte aus und die Liste rückt nach, wie bei gespeicherten Touren (Audit 18.11.)
+            <Animated.View key={d.id} exiting={FadeOut.duration(Motion.exit)} layout={SOFT_LAYOUT}>
             <Swipeable
-              key={d.id}
               friction={1.6}
               rightThreshold={36}
               overshootRight={false}
+              // rote Taste ganz offen: Rastung (Audit 18.11.)
+              onSwipeableWillOpen={() => haptic('rastung')}
               containerStyle={styles.swipeBox}
               renderRightActions={(prog, _tr, m) => (
                 <SwipeDelete
@@ -391,6 +397,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
               </View>
             </DriveCard>
             </Swipeable>
+            </Animated.View>
           );
         })}
       </View>

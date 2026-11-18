@@ -17,6 +17,8 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { sheetEnter } from '@/components/ui/motion';
+import { Grabber } from '@/components/ui/sheet-head';
+import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { t } from '@/i18n';
@@ -83,7 +85,7 @@ export function OptionsSheet({ visible, title, subtitle, onClose, children, scro
               entering={sheetEnter}
               style={[styles.card, { marginBottom: Math.max(insets.bottom, Spacing.l) }]}
               accessibilityViewIsModal>
-              <View style={styles.grabber} />
+              <Grabber />
               {(title || subtitle) && (
                 <View style={styles.head}>
                   {!!title && <AppText style={styles.title}>{title}</AppText>}
@@ -172,6 +174,8 @@ export function ConfirmSheet({
         <Pressable
           accessibilityRole="button"
           onPress={() => {
+            // Endgültiges bestätigt: ein eigener Impuls (Audit 18.11.)
+            if (danger) haptic('warnung');
             onClose();
             onConfirm();
           }}
@@ -199,7 +203,6 @@ const styles = StyleSheet.create({
     gap: Spacing.l,
     boxShadow: Shadow.sheet,
   },
-  grabber: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: Colors.empty },
   head: { gap: Spacing.xs, paddingHorizontal: Spacing.s, paddingTop: Spacing.s },
   title: { fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30, color: Colors.text },
   subtitle: { fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: 21, color: Colors.muted },

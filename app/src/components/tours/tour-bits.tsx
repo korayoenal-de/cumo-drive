@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   badgeText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.good },
   fromBadge: { alignSelf: 'flex-start', maxWidth: '100%', marginTop: 2, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 3, paddingRight: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
   fromInitial: { width: 18, height: 18, borderRadius: 9, backgroundColor: Colors.empty, alignItems: 'center', justifyContent: 'center' },
-  fromInitialText: { fontFamily: Fonts.bold, fontSize: 10, color: Colors.text },
+  fromInitialText: { fontFamily: Fonts.bold, fontSize: Type.micro, color: Colors.text },
   fromText: { flexShrink: 1, fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.textSoft },
   fun: { alignItems: 'center', gap: 2, minWidth: 36 },
   funText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },

@@ -495,6 +495,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
         const item = { tour, req, stops, fun };
         logSignal('geplant', tour, { mode: 'rundtour', profile: req.profile, suggested: true, fun: fun?.score ?? null });
         setRolls((r) => (keep ? [...r, item].slice(-5) : [item]));
+        // die Rundtour steht: der stärkste Moment bekommt einen Impuls (Audit 18.11.)
+        haptic('ergebnis');
         setView({ kind: 'result', tour, req, stops });
         setDetent(1);
         toTop();

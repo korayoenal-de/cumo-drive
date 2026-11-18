@@ -6,9 +6,10 @@ import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
-import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { CarSprite, carLookFor, frameFor } from '@/components/map/car-sprite';
+import { SOFT_LAYOUT } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
@@ -30,7 +31,7 @@ export function VehiclePick({ list, current }: { list: Vehicle[]; current: Vehic
   if (!cur) return null;
   const others = list.filter((v) => v.id !== cur.id);
   return (
-    <Animated.View layout={LinearTransition.springify().damping(36).stiffness(260)} style={styles.wrap}>
+    <Animated.View layout={SOFT_LAYOUT} style={styles.wrap}>
       <View style={styles.row}>
         <Car v={cur} size={44} />
         <View style={styles.flex}>
@@ -46,7 +47,7 @@ export function VehiclePick({ list, current }: { list: Vehicle[]; current: Vehic
             hitSlop={4}
             style={({ pressed }) => [styles.btn, pressed && styles.pressed]}>
             {/* Symbol statt Wort (Koray 18.11.): zwei Pfeile, offen das X wie beim Aufklappen (Regel 2) */}
-            <SymbolView name={open ? 'xmark' : 'arrow.left.arrow.right'} size={18} weight="semibold" tintColor={Colors.text} />
+            <SymbolView name={open ? 'xmark' : 'arrow.left.arrow.right'} size={20} weight="semibold" tintColor={Colors.text} />
           </Pressable>
         )}
       </View>

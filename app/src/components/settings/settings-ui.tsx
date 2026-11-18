@@ -10,7 +10,7 @@ import { Pressable } from '@/components/ui/tap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Layout } from '@/constants/theme';
 import { t } from '@/i18n';
 
 /** Unterseite: Zurück Pille oben links, großer Titel, scrollender Inhalt. */
@@ -81,7 +81,7 @@ export function SwitchRow({ title, value, onChange }: { title: string; value: bo
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
-  content: { paddingHorizontal: Spacing.l, gap: Spacing.xl },
+  content: { paddingHorizontal: Layout.page, gap: Layout.sections },
   group: { gap: Spacing.s },
   groupLabel: { paddingHorizontal: 4, fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   box: { backgroundColor: Colors.surface, borderRadius: Radius.l, overflow: 'hidden' },

@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useWeatherStatus, type WeatherStatus } from '@/lib/weather';
+import { SheetHead } from '@/components/ui/sheet-head';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Shadow, Pressed } from '@/constants/theme';
 import {
@@ -114,23 +115,7 @@ function MapSettingsBody({ onClose }: { onClose: () => void }) {
   const weather = useWeatherStatus();
   return (
     <View style={styles.sheet}>
-      <View style={styles.head}>
-        <AppText style={styles.title}>{t('Karte')}</AppText>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('Schließen')}
-          onPress={onClose}
-          hitSlop={8}
-          style={styles.close}
-        >
-          <SymbolView
-            name="xmark"
-            size={16}
-            tintColor={Colors.text}
-            weight="semibold"
-          />
-        </Pressable>
-      </View>
+      <SheetHead title={t('Karte')} onClose={onClose} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.group}>
           <AppText style={styles.label}>{t('Darstellung')}</AppText>
