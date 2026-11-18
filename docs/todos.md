@@ -24,6 +24,8 @@ Stand: 18. November 2026, 14:30 (gegen Code und Git Verlauf geprüft; Prüfung v
 * [x] Testlauf weist sich mit einem Testschlüssel aus (Koray 18.11.): Kopfzeile X-Cumo-QA, Wert aus ROUTING_QA_KEY, auf den Servern in /etc/cumo-auth.env. Gebaut und lokal getestet, noch nicht eingespielt
 * [ ] 19.11. mit Koray: Testschlüssel erzeugen und eintragen (beide Server, GitHub Secret ROUTING_QA_KEY, Umgebung der Claude Sitzungen), neues cumo-auth.sh einspielen, /stats ansehen, Grenze route nach echter Spitze anheben, dann `bash /root/cumo-auth.sh enforce` auf beiden Servern
 * [ ] 19.11. mit Koray, App Store Connect: Abos mit Screenshot für die Prüfung, Adresse für die Server Mitteilungen von Apple, Store Build wählen, zur Prüfung hinzufügen
+* [ ] **Bestätigungsmail (Koray 18.11.: kam von „Supabase Auth“, auf Englisch, im Spam, mit Abmeldelink).** Gebaut: Vorlage in drei Sprachen (supabase/templates), Registrierung schickt die Sprache mit, Seite cumodrive.de/bestaetigt. Mit Koray am 19.11.: eigenen Absender per SMTP im Supabase Dashboard eintragen (noreply@cumodrive.com, Passwort gibt Koray ein), Vorlage und Betreff einfügen, Redirect URL eintragen, SPF und DKIM der Domain prüfen, Testmail. Danach OTA und Web Paket
+* [ ] „Passwort vergessen“ fehlt in App und Web (aufgefallen 18.11.); braucht dieselbe Mail Strecke
 * [ ] Screenshots EN und IT erst mit Version 1.0.1 (Koray 18.11.: Einreichung ohne, bis dahin zeigt Apple die deutschen Bilder; die deutschen dienen als Vorlage)
 * [x] Webseite mit Kopfzeilen und Strecken kachelweise live, Kopfzeilen geprüft (17.11.)
 * [x] Migrationen live: highlight_feedback nur mit Anmeldung, Link Grenzen, Konten Grenze, road-data kachelweise mit Kontingent, Einwilligungen (17.11.)

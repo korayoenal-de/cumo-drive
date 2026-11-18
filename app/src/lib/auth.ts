@@ -9,7 +9,7 @@ import { Platform } from 'react-native';
 import { forgetPush } from './push';
 import { supabase } from './supabase';
 import { LEGAL_VERSION } from '@/content/legal';
-import { t } from '@/i18n';
+import { getLang, t } from '@/i18n';
 
 let session: Session | null = null;
 /** true, sobald die gespeicherte Sitzung gelesen ist (vorher weiß man nicht, ob angemeldet) */
@@ -76,7 +76,11 @@ export async function signUp(email: string, password: string, consent: SignUpCon
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
     password,
-    options: { data: { consent: { ...consent, version: LEGAL_VERSION, source: Platform.OS === 'web' ? 'web' : 'app' } } },
+    // lang: Sprache der Bestätigungsmail (Vorlage in supabase/templates); emailRedirectTo: Seite nach dem Klick
+    options: {
+      data: { lang: getLang(), consent: { ...consent, version: LEGAL_VERSION, source: Platform.OS === 'web' ? 'web' : 'app' } },
+      emailRedirectTo: 'https://cumodrive.de/bestaetigt',
+    },
   });
   if (error) throw new Error(german(error.message));
   if (!data.session) throw new Error('Registriert. Bitte die Bestätigungsmail öffnen und dann anmelden.');
