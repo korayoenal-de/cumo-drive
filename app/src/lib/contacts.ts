@@ -38,7 +38,8 @@ function fail(message: string): never {
 /** Kontakte neu laden (beim Öffnen von Drivers und nach jeder Änderung) */
 export function refreshContacts(): Promise<void> {
   if (loading) return loading;
-  const mine: Promise<void> = (async () => {
+  let mine: Promise<void> | null = null;
+  mine = (async () => {
     try {
       const { data: s } = await supabase.auth.getSession();
       if (!s.session) return set([]);
@@ -49,12 +50,13 @@ export function refreshContacts(): Promise<void> {
       if (loading === mine) loading = null;
     }
   })();
-  loading = mine;
+  const started = mine;
+  loading = started;
   // Hängt der Abruf, gibt er den Platz nach 25 s frei; sonst bekäme jeder spätere Aufruf denselben hängenden Abruf zurück
   setTimeout(() => {
-    if (loading === mine) loading = null;
+    if (loading === started) loading = null;
   }, 25_000);
-  return mine;
+  return started;
 }
 
 /** Alle Kontakte und Anfragen; null, solange noch nicht geladen */
