@@ -567,8 +567,9 @@ export function TourMode({
                 setLegMenu(null);
                 setOrtOpen(id);
               }}
-              style={({ pressed }) => [styles.ortBtn, kind !== 'via' && styles.ortBtnZiel, pressed && { opacity: 0.75 }]}>
-              <SymbolView weight="semibold" name={kind === 'via' ? 'cup.and.saucer.fill' : 'bed.double.fill'} size={20} tintColor={kind === 'via' ? Colors.text : Colors.signal} />
+              // neutral wie das Café: Orange nur für Hauptaktion und Strecke (Koray 18.11.)
+              style={({ pressed }) => [styles.ortBtn, pressed && { opacity: 0.75 }]}>
+              <SymbolView weight="semibold" name={kind === 'via' ? 'cup.and.saucer.fill' : 'bed.double.fill'} size={20} tintColor={Colors.text} />
             </Pressable>
           )}
           {p && <MoreButton label={tr('Aktionen für {role} {v1}', { role, v1: nameOf(p) })} onPress={(v) => openMenu(kind, index, p, v)} />}

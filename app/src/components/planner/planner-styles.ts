@@ -160,7 +160,6 @@ export const styles = StyleSheet.create({
   pointArea: { flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 52 },
   more: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2, marginRight: Spacing.xs },
   ortBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2, marginRight: Spacing.s },
-  ortBtnZiel: { backgroundColor: Colors.signalTint },
   ortBadge: { minHeight: 44, justifyContent: 'center', marginRight: Spacing.s },
   // Wischen zum Löschen: der Container trägt Rundung und Einzug, rechts erscheint die rote Taste
   swipeBox: { borderRadius: Radius.m, overflow: 'hidden' },
