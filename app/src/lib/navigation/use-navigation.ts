@@ -679,8 +679,12 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       try {
-        const { route } = await rejoinNavRoute(r, current, index, pos.p, ctrl.signal, pos.h, fast);
+        const { route: joined } = await rejoinNavRoute(r, current, index, pos.p, ctrl.signal, pos.h, fast);
         if (!activeRef.current) return null;
+        // Überspringen ist gewollt, kein Verlassen der Tour (Koray 18.11.): der Weg zum nächsten Ziel gehört zur Route.
+        // Ohne rejoinIndex bleibt die Linie orange und „Abseits der Tour“ erscheint nicht.
+        const { rejoinIndex: _skip, ...route } = joined;
+        void _skip;
         setRoute(route);
         // die Simulation fährt auf der neuen Route am Standort weiter
         if (simRef.current) simRef.current.km = 0;
