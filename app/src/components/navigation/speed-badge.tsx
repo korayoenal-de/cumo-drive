@@ -222,7 +222,8 @@ export function SpeedBadge({ speedKmh, limit, estimated = false, hint, showSpeed
       </Animated.View>
 
       {/* Ebene Tempo */}
-      <View style={styles.rest} onLayout={onRest} pointerEvents="none">
+      {/* ohne Schild steht das Tempo mittig: links und rechts derselbe Rand (Koray 18.11.) */}
+      <View style={[styles.rest, showSpeed && limit == null && styles.restAlone]} onLayout={onRest} pointerEvents="none">
         {showSpeed ? (
           <>
             <Animated.View style={[styles.speed, spdStyle]}>
@@ -293,6 +294,7 @@ const styles = StyleSheet.create({
     boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
   },
   rest: { position: 'absolute', left: 0, top: 0, height: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingLeft: 18, paddingRight: 7 },
+  restAlone: { paddingLeft: 9, paddingRight: 9 },
   minRest: { width: 42 },
   warn: { position: 'absolute', left: 0, top: 0, height: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingLeft: 7, paddingRight: 20 },
   speed: { alignItems: 'center', minWidth: 38 },
