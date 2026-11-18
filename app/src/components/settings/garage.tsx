@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { type Drive } from '@/lib/drives';
 import { formatKm } from '@/lib/tour';
 import { deleteVehicle, newVehicle, saveVehicle, selectVehicle, useVehicles, vehicleName, type Vehicle } from '@/lib/vehicle';
@@ -108,10 +108,10 @@ export function Garage({ drives }: { drives: Drive[] | null }) {
       />
       {edit && !list.some((v) => v.id === edit.id) && <VehicleForm value={edit} onChange={setEdit} onDone={() => setEdit(null)} />}
       {!edit && (
-        // kein Hauptweg der Seite, daher Zweittaste (UI Konsistenz Check 9.11.)
-        <Pressable accessibilityRole="button" onPress={() => setEdit(newVehicle())} style={styles.secondary}>
-          <IconLabel icon={{ sf: 'plus' }} color={Colors.text}>
-<AppText style={styles.secondaryText}>{t('Fahrzeug hinzufügen')}</AppText>
+        // Hauptaktion der Garage, daher in Signal Orange (Koray 18.11., löst den Konsistenz Check vom 9.11. ab)
+        <Pressable accessibilityRole="button" onPress={() => setEdit(newVehicle())} style={({ pressed }) => [styles.primary, pressed && styles.pressedMain]}>
+          <IconLabel icon={{ sf: 'plus' }} color={Colors.onSignal}>
+<AppText style={styles.primaryText}>{t('Fahrzeug hinzufügen')}</AppText>
 </IconLabel>
         </Pressable>
       )}
@@ -205,6 +205,7 @@ const styles = StyleSheet.create({
   badgeText: { color: Colors.good, fontFamily: Fonts.semibold },
   input: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  pressedMain: { transform: [{ scale: Motion.pressScale }], opacity: 0.9 },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
   secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
