@@ -144,7 +144,9 @@ export async function syncVehicles() {
     const remote = ((Array.isArray(data) ? data : []) as Vehicle[]).filter((v) => v && v.id);
     const ids = new Set(state.list.map((v) => v.id));
     const merged = [...state.list, ...remote.filter((v) => !ids.has(v.id))];
-    const changed = merged.length !== state.list.length || remote.length !== merged.length;
+    // Auch zurückschreiben, wenn das Konto etwas anderes hat als das Gerät: ein Speichern ohne Netz oder vor der
+    // Anmeldung ging sonst nie ins Konto, und die Community zeigte nur einen Teil der Garage (Koray 18.11.)
+    const changed = JSON.stringify(remote) !== JSON.stringify(merged);
     await persist({ ...state, list: merged, currentId: state.currentId ?? merged[0]?.id ?? null }, changed);
   } catch {
     // Konto ist optional

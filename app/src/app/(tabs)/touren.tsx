@@ -23,7 +23,6 @@ import { SwipeDelete } from '@/components/ui/swipe-delete';
 import { Screen } from '@/components/ui/screen';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { TextField } from '@/components/ui/text-field';
-import { TabSwap } from '@/components/ui/tab-swap';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -221,8 +220,6 @@ export default function Touren() {
         onChange={setTab}
       />
 
-      {/* Typo Tabs wechseln gestaffelt (Koray 18.11., TabSwap) */}
-      <TabSwap index={tab === 'gefahren' ? 1 : 0}>
       {tab === 'gefahren' ? (
         <>
           {session && <PastRides />}
@@ -289,7 +286,6 @@ export default function Touren() {
       )}
         </>
       )}
-      </TabSwap>
     </Screen>
   );
 }

@@ -203,11 +203,7 @@ Die wichtigsten Aktionen tragen ein Symbol in der Taste und zeigen mit einer Bew
 Trifft ein Tipp auf der Karte der Community mehrere Touren (Linie oder Marke im Fangradius von 34 pt), steht über dem Blatt eine Reihe kleiner Karten (`OverlapRail`, components/community/overlap-rail.tsx), ohne eigene Zeile darüber (seit 18.11.; VoiceOver nennt die Zahl). Jede Karte: Streckenbild (aktiv orange, sonst grau), Name, Strecke und Fahrzeit, Fahrspaß. Wischen rastet je Karte ein (Haptik `rastung`) und wählt die Tour; die Karte der Welt steht dabei still, die gewählte Tour liegt orange obenauf, die anderen grau (`Colors.overlapLine`). Tipp ins Leere oder Reiterwechsel schließt die Reihe. Trifft der Tipp nur eine Tour, öffnet sie sich wie bisher direkt. Reihenfolge: getroffene Marke zuerst, dann nach Abstand der Linie zum Finger.
 
 ## Wechsel der Typo Tabs (Koray 18.11.2026)
-Gilt für alle prominenten Typo Tabs (Tour planen und Rundtour, Gespeichert und Gefahren). Baustein `TabSwap` (components/ui/tab-swap.tsx), der Inhalt des Tabs kommt als Kinder hinein.
-* Der alte Inhalt schiebt sich gestaffelt in Laufrichtung hinaus (16 pt, 150 ms je Element, 30 ms Staffel), der neue fährt aus derselben Richtung gestaffelt ein (24 pt, Motion.enter, 45 ms Staffel, EASE_OUT, ohne Feder).
-* Zum rechten Tab läuft alles von rechts nach links, zurück spiegelbildlich. Ab dem fünften Element kommt der Rest gemeinsam.
-* Sehr subtil: nur Weg und Deckkraft, keine Skalierung. Bei reduzierter Bewegung wechselt der Inhalt sofort.
-* Innerhalb eines Tabs bewegt sich nichts, wenn Inhalt erscheint oder verschwindet.
+Gestaffeltes Hinaus und Hineinschieben beim Tabwechsel ausprobiert und wieder entfernt: Typo Tabs wechseln ihren Inhalt ohne Bewegung.
 
 ## Abo und Gratisplan (Koray 18.11.2026)
 Zurück zum Gratisplan ist keine Karte zum Auswählen, sondern eine ruhige Zeile unter „Plan wechseln“, die Apples Abo Seite öffnet. Die Vorteile der Mitgliedschaft nennen nur, was die kostenlose Version nicht kann (überall losfahren, Gruppe bis 6 Autos, Funk).

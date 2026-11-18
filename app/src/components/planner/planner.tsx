@@ -29,7 +29,6 @@ import { PASSES, passPoint, passSummary, type Pass } from '@/lib/passes';
 import { buildTour, findPlace, FRESH_MS, locate, newSeed, PHASES, toPlanError, type PlanError, type PlanPhase, type Spot, type TourRequest } from '@/components/planner/create-tour';
 import { DirectionDial } from '@/components/planner/direction-dial';
 import { Chip, ChipRow, ChipGroup } from '@/components/ui/chip';
-import { TabSwap } from '@/components/ui/tab-swap';
 import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { BACK_PILL_H, BackPill } from './back-pill';
@@ -974,8 +973,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     );
   } else {
     body = (
-    // Typo Tabs wechseln gestaffelt (Koray 18.11., TabSwap)
-    <TabSwap index={mode === 'tour' ? 0 : 1}>
+    <>
 
       {mode === 'tour' ? (
         <TourMode
@@ -1248,7 +1246,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           <PrimaryButton label={tr('Tour erstellen')} onPress={createRoundTrip} />
         </>
       )}
-    </TabSwap>
+    </>
     );
   }
 
