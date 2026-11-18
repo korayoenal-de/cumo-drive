@@ -1366,7 +1366,7 @@ export default function NavigationScreen() {
         )}
 
         {summary && (
-          <ScrollView style={{ maxHeight: win.height - insets.top - Spacing.l }} contentContainerStyle={styles.pad} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView style={{ maxHeight: win.height - insets.top - Spacing.l }} contentContainerStyle={styles.pad} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive">
             <InfoCard>
               <AppText variant="label">{t('Fahrt beendet')}</AppText>
               <AppText style={styles.tourName} numberOfLines={2}>
@@ -1381,7 +1381,7 @@ export default function NavigationScreen() {
         )}
 
         {status === 'angekommen' && (
-          <ScrollView style={{ maxHeight: win.height - insets.top - Spacing.l }} contentContainerStyle={styles.pad} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView style={{ maxHeight: win.height - insets.top - Spacing.l }} contentContainerStyle={styles.pad} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive">
             <InfoCard tone="good">
               <AppText variant="label">{t('Angekommen')}</AppText>
               <AppText style={styles.congrats}>{congrats}</AppText>

@@ -15,7 +15,13 @@ export function Screen({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView onScroll={(e) => reportScroll(e.nativeEvent.contentOffset.y)} scrollEventThrottle={32} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + TAB_BAR_SPACE + Spacing.xl }]}>
+      <ScrollView
+        onScroll={(e) => reportScroll(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={32}
+        // Tastatur (Koray 18.11.): das Feld, in dem du schreibst, rückt über die Tastatur; Tippen daneben und Ziehen schließen sie
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + TAB_BAR_SPACE + Spacing.xl }]}>
         {children}
       </ScrollView>
     </SafeAreaView>
