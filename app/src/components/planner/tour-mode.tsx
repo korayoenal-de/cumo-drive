@@ -22,7 +22,7 @@ import { tourFun } from '@/lib/fun-score';
 import { directNote, type PlanStep } from '@/lib/plan';
 import { useClosedCheck } from '@/components/tours/closed-sheet';
 import { ActionSheet } from '@/components/ui/action-sheet';
-import { findPlannedRide, setRideTour } from '@/lib/group/invites';
+import { findUpcomingRide, setRideTour } from '@/lib/group/invites';
 import { FRESH_MS, locate, toPlanError, type Spot } from '@/components/planner/create-tour';
 
 import { NameDialog } from '@/components/planner/name-dialog';
@@ -344,7 +344,7 @@ export function TourMode({
     if (!id) return;
     const t = readLibrary().find((x) => x.id === id);
     const name = t?.name ?? plan.name.trim();
-    const ride = await findPlannedRide(id).catch(() => null);
+    const ride = await findUpcomingRide(id).catch(() => null);
     if (ride && t) {
       // erst nach dem Flug in den Touren Tab (Blatt zu, Flug, Landung): nie zwei Signale zugleich (Audit 18.11.)
       await new Promise((r) => setTimeout(r, 1200));

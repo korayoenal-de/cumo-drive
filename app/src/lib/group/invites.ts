@@ -77,6 +77,31 @@ export async function findPlannedRide(cloudId: string | undefined): Promise<{ id
   return row ? { id: row.id, maxMembers: row.max_members } : null;
 }
 
+/**
+ * Ausfahrt, die noch ansteht und an dieser Tour hängt (Koray 18.11.): für die Frage nach dem Überschreiben, ob die
+ * Ausfahrt die neue Fassung übernehmen soll. Anders als findPlannedRide zählt hier der Termin, nicht das Alter:
+ * eine Ausfahrt in drei Wochen wurde meist vor mehr als zwei Tagen angelegt und fiel bisher durch.
+ */
+export async function findUpcomingRide(cloudId: string | undefined): Promise<{ id: string } | null> {
+  if (!cloudId) return null;
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return null;
+  const since = new Date(Date.now() - 12 * 3600000).toISOString();
+  const fresh = new Date(Date.now() - 2 * 86400000).toISOString();
+  const { data } = await supabase
+    .from('rides')
+    .select('id')
+    .eq('owner', u.user.id)
+    .eq('tour_id', cloudId)
+    .in('status', ['geplant', 'laeuft'])
+    .or(`starts_at.gte.${since},and(starts_at.is.null,created_at.gt.${fresh})`)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const row = data as { id: string } | null;
+  return row ? { id: row.id } : null;
+}
+
 export async function inviteToRide(rideId: string, userId: string) {
   const { error } = await supabase.rpc('invite_to_ride', { ride: rideId, member: userId });
   if (error) fail(error.message);
