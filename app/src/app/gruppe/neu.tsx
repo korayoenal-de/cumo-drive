@@ -8,11 +8,12 @@ import { guardDrive } from '@/lib/drive-guard';
 import { avoidSetting } from '@/lib/avoid-settings';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { AddButton, RemoveButton } from '@/components/ui/add-button';
 import { MorphAction, type MorphActionRef } from '@/components/ui/morph-action';
 import { Screen } from '@/components/ui/screen';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -252,7 +253,7 @@ export default function GruppeNeu() {
 
       <View style={styles.card}>
         <AppText variant="label">{t('Teilnehmer einladen')}</AppText>
-        <TextInput maxFontSizeMultiplier={1.2}
+        <TextField maxFontSizeMultiplier={1.2}
           value={query}
           onChangeText={setQuery}
           placeholder={full ? tr('Die Gruppe ist voll') : tr('Name suchen')}

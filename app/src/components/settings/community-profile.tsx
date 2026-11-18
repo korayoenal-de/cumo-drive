@@ -9,6 +9,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { Chip, ChipGroup } from '@/components/ui/chip';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ageOf, birthDigits, loadPrivacy, parseBirthday, savePrivacy, type BirthdayShow, type Privacy } from '@/lib/drivers';
@@ -113,7 +114,7 @@ export function HomeField({ p, save }: { p: Privacy; save: (patch: Partial<Priva
       ) : (
         <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.edit}>
           <View style={styles.row}>
-            <TextInput maxFontSizeMultiplier={1.2}
+            <TextField maxFontSizeMultiplier={1.2}
               value={q}
               onChangeText={setQ}
               placeholder={t('Ort, zum Beispiel Bad Dürkheim')}
@@ -235,7 +236,7 @@ export function BioField({ p, save }: { p: Privacy; save: (patch: Partial<Privac
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.edit}>
       <FieldHead label={t('Über mich')} onClose={close} />
-      <TextInput
+      <TextField
         maxFontSizeMultiplier={1.2}
         value={draft}
         onChangeText={(t) => setDraft(t.slice(0, 160))}

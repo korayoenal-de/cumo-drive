@@ -4,11 +4,12 @@
  */
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 
 import { SubScreen } from '@/components/settings/settings-ui';
 import { Chip, ChipGroup } from '@/components/ui/chip';
 import { IconLabel } from '@/components/ui/btn-icon';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { FEEDBACK_AREAS, sendFeedback, type FeedbackArea } from '@/lib/feedback';
@@ -49,7 +50,7 @@ export default function Feedback() {
       </View>
       <View style={styles.block}>
         <AppText style={styles.label}>{t('Was genau?')}</AppText>
-        <TextInput
+        <TextField
           maxFontSizeMultiplier={1.2}
           value={note}
           onChangeText={setNote}

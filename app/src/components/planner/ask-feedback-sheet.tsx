@@ -4,12 +4,13 @@
  * selbst. Wegschieben, Tipp daneben oder Ausblenden zählen als weggeschoben (lib/ask-feedback.ts).
  */
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
 import { Chip, ChipGroup } from '@/components/ui/chip';
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { IconLabel } from '@/components/ui/btn-icon';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ASK_REASONS, askDismissed, sendAsk, type AskRound } from '@/lib/ask-feedback';
@@ -85,7 +86,7 @@ export function AskFeedbackSheet({ rounds, onDone }: { rounds: AskRound[] | null
           </ChipGroup>
           {reason === 'anderes' ? (
             <>
-              <TextInput
+              <TextField
                 maxFontSizeMultiplier={1.2}
                 value={text}
                 onChangeText={setText}

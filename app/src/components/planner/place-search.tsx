@@ -177,6 +177,8 @@ function SearchBody({
   onPickRoad,
   routeLoading,
 }: Props) {
+  // Fokus für den orangen Rand (Regel Eingaben, 18.11.)
+  const [typing, setTyping] = useState(false);
   const [query, setQuery] = useState(current);
   const live = usePassLive();
   const recent = useRecentPlaces();
@@ -341,9 +343,11 @@ function SearchBody({
               </View>
               {/* eigene Zeile, nicht flex: 1 (Koray 18.11.: im Kopf ohne feste Höhe fiel das Feld auf 0 zusammen,
                   nur die Lupe blieb stehen und die Suche ging nicht) */}
-              <View style={[styles.field, styles.fieldBlock]}>
+              <View style={[styles.field, styles.fieldBlock, typing && styles.fieldOn]}>
                 <SymbolView weight="semibold" name="magnifyingglass" size={20} tintColor={Colors.muted} />
                 <TextInput maxFontSizeMultiplier={1.2}
+                onFocus={() => setTyping(true)}
+                onBlur={() => setTyping(false)}
                   value={query}
                   onChangeText={setQuery}
                   placeholder={CATS.find((c) => c.id === cat)?.placeholder}
@@ -371,6 +375,8 @@ function SearchBody({
                       {sl.active ? (
                         <Animated.View entering={FadeIn.duration(180)} style={[styles.field, styles.fieldOn]}>
               <TextInput maxFontSizeMultiplier={1.2}
+                onFocus={() => setTyping(true)}
+                onBlur={() => setTyping(false)}
                 value={query}
                 onChangeText={setQuery}
                 placeholder={CATS.find((c) => c.id === cat)?.placeholder || placeholder}
@@ -417,9 +423,11 @@ function SearchBody({
             <>
               <AppText style={styles.role}>{role}</AppText>
               <View style={styles.searchRow}>
-                <View style={styles.field}>
+                <View style={[styles.field, typing && styles.fieldOn]}>
                   <SymbolView weight="semibold" name="magnifyingglass" size={20} tintColor={Colors.muted} />
               <TextInput maxFontSizeMultiplier={1.2}
+                onFocus={() => setTyping(true)}
+                onBlur={() => setTyping(false)}
                 value={query}
                 onChangeText={setQuery}
                 placeholder={CATS.find((c) => c.id === cat)?.placeholder || placeholder}
@@ -704,17 +712,20 @@ const styles = StyleSheet.create({
   head: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.l, gap: Spacing.m },
   role: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  // Regel Eingaben (Koray 18.11.): Radius 14 wie jedes Feld, Rand immer da (durchsichtig), orange im Fokus
   field: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.s,
-    height: 52,
+    height: Size.input,
     paddingHorizontal: Spacing.l,
-    borderRadius: Radius.pill,
+    borderRadius: Radius.m,
+    borderWidth: 2,
+    borderColor: 'transparent',
     backgroundColor: Colors.surface2,
   },
-  input: { flex: 1, height: '100%', fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
+  input: { flex: 1, height: '100%', fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.text },
   close: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
   content: { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xxxl, gap: Spacing.xxl },
   section: { gap: Spacing.m },
@@ -756,7 +767,7 @@ const styles = StyleSheet.create({
   slots: { flex: 1, minWidth: 0 },
   slotRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   slotLine: { marginLeft: 13, width: 2, height: 10, borderLeftWidth: 2, borderColor: Colors.empty, borderStyle: 'dotted' },
-  fieldOn: { borderWidth: 2, borderColor: Colors.signal },
+  fieldOn: { borderColor: Colors.signal },
   fieldBlock: { flex: 0, alignSelf: 'stretch' },
   slotText: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
   slotEmpty: { color: Colors.muted },

@@ -16,7 +16,7 @@ import { useRideFun } from '@/lib/ride-fun';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
-import { ActivityIndicator, Keyboard, Pressable, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, Keyboard, Pressable, StyleSheet, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { EASE_OUT, SOFT_LAYOUT } from '@/components/ui/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +33,7 @@ import { ReportSheet } from '@/components/moderation/report-sheet';
 import { usePrivacy } from '@/components/settings/community-profile';
 import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
 import { PublishSheet } from '@/components/tours/tour-card';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, relDay, shortDate, showCancelled, type Ausfahrt } from '@/lib/ausfahrten';
@@ -450,7 +451,7 @@ export default function Community() {
         )}>
         {seg === 'routen' ? (
           <View style={styles.body}>
-            <TextInput maxFontSizeMultiplier={1.2} value={q} onChangeText={setQ} placeholder={tr('Tour, Fahrer, Ort oder PLZ suchen')} placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel={tr('Routen durchsuchen')} returnKeyType="search" />
+            <TextField maxFontSizeMultiplier={1.2} value={q} onChangeText={setQ} placeholder={tr('Tour, Fahrer, Ort oder PLZ suchen')} placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel={tr('Routen durchsuchen')} returnKeyType="search" />
             <ChipRow>
               {SORTS.map((s) => (
                 <Chip key={s.id} label={s.label} active={sort === s.id} onPress={() => setSort(s.id)} />
@@ -513,7 +514,7 @@ export default function Community() {
                     </Pressable>
                   </View>
                 ) : (
-                  <TextInput maxFontSizeMultiplier={1.2} value={dq} onChangeText={setDq} placeholder={dseg === 'kontakte' ? tr('Kontakte durchsuchen') : tr('Name, Ort oder Auto suchen')} placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel={dseg === 'kontakte' ? tr('Kontakte durchsuchen') : tr('Drivers durchsuchen')} returnKeyType="search" />
+                  <TextField maxFontSizeMultiplier={1.2} value={dq} onChangeText={setDq} placeholder={dseg === 'kontakte' ? tr('Kontakte durchsuchen') : tr('Name, Ort oder Auto suchen')} placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel={dseg === 'kontakte' ? tr('Kontakte durchsuchen') : tr('Drivers durchsuchen')} returnKeyType="search" />
                 )}
                 {shownDrivers.length === 0 && (dseg === 'alle' || contactCount > 0) && <AppText muted>{dseg === 'kontakte' ? tr('Kein Kontakt passt zur Suche.') : tr('Kein Mitglied passt zur Suche.')}</AppText>}
                 {shownDrivers.map((d) => (

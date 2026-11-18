@@ -3,9 +3,10 @@
  * von Anfang an im Konto und sind in App und Web Planer dieselben.
  */
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { ConsentRow, LegalLinks } from '@/components/auth/consent-row';
@@ -60,7 +61,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
 
         <View style={styles.gapM}>
           {mode === 'register' && <NameField value={name} onChange={setName} check={check} />}
-          <TextInput maxFontSizeMultiplier={1.2}
+          <TextField maxFontSizeMultiplier={1.2}
             value={email}
             onChangeText={setEmail}
             placeholder={t('E-Mail')}
@@ -73,7 +74,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             style={styles.input}
             accessibilityLabel={t('E-Mail')}
           />
-          <TextInput maxFontSizeMultiplier={1.2}
+          <TextField maxFontSizeMultiplier={1.2}
             value={pw}
             onChangeText={setPw}
             placeholder={mode === 'register' ? t('Passwort, mindestens 8 Zeichen') : t('Passwort')}

@@ -140,6 +140,7 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 
 **Maße**
 - Haupttaste und Zweittaste 56, rund (`Size.button`, `Radius.pill`); Eingabefelder 52 mit Radius 14; Chips, Reiter als Pille und Symboltasten 44.
+- **Eingaben (Regel Koray 18.11.2026, Baustein `TextField` in components/ui/text-field.tsx):** Jedes Feld zum Schreiben hat Radius 14 und ist mindestens 52 hoch; mehrzeilig wächst es nach unten mit demselben Radius. Fläche `surface` auf dem Grund, `surface2` auf einer Karte (`onSurface`). Schrift Inter Semibold in `Type.input`, Platzhalter grau, als Beispiel in Du Form. Im Fokus 2 pt Rand in Signal Orange, überall gleich; der Rand ist immer da und nur durchsichtig, damit nichts springt. Ohne Fokus kein Rand. Zusammengesetzte Felder (Symbol plus Eingabe, etwa die Ortssuche) folgen derselben Form und demselben Fokus. Einzige Ausnahme: die Nachrichtenleiste im Chat ist rund (`pill`), weil sie mit der runden Sendetaste eine Einheit bildet; den Fokus Rand hat sie auch.
 - Radien: 14 für Felder und Zeilen, 20 für Karten und Sheets, rund für alles Antippbare.
 - Abstände: 2, 4, 8, 12, 16, 20, 28, 40, 48.
 

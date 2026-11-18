@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, Linking, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, AppState, Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/community/ride-bits';
 import { BackLink } from '@/components/ui/back-link';
@@ -15,6 +15,7 @@ import { resetPrivacy, usePrivacy } from '@/components/settings/community-profil
 import { avoidSummary } from '@/components/planner/planner-parts';
 import { Group, Row, SwitchRow } from '@/components/settings/settings-ui';
 import { Screen } from '@/components/ui/screen';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { ActionSheet, ConfirmSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { here } from '@/components/group/meeting-route';
@@ -325,7 +326,7 @@ function Login() {
   return (
     <View style={styles.card}>
       <AppText muted>{t('Mit Konto findest du deine Touren auch im Web Planer, kannst Touren veröffentlichen und deine Fahrten werden gespeichert.')}</AppText>
-      <TextInput maxFontSizeMultiplier={1.2}
+      <TextField maxFontSizeMultiplier={1.2}
         value={email}
         onChangeText={setEmail}
         placeholder={t('E-Mail')}
@@ -336,7 +337,7 @@ function Login() {
         style={styles.input}
         accessibilityLabel={t('E-Mail')}
       />
-      <TextInput maxFontSizeMultiplier={1.2}
+      <TextField maxFontSizeMultiplier={1.2}
         value={pw}
         onChangeText={setPw}
         placeholder={t('Passwort, mindestens 8 Zeichen')}

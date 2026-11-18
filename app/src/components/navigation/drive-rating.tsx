@@ -6,13 +6,14 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View, type AccessibilityActionEvent, type LayoutChangeEvent } from 'react-native';
+import { Pressable, StyleSheet, View, type AccessibilityActionEvent, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { Chip } from '@/components/ui/chip';
 import { LogoFill } from '@/components/ui/fun-gauge';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { BAD_REASONS, SCORE_WEAK, rateDriveScore, scoreWord, type HighlightVote } from '@/lib/drives';
@@ -72,7 +73,7 @@ export function DriveRatingCard({ driveId, highlights = [], preset = null }: { d
               <Chip key={r.id} label={r.label} active={reasons.includes(r.id)} onPress={() => toggle(r.id)} />
             ))}
           </View>
-          <TextInput maxFontSizeMultiplier={1.2}
+          <TextField maxFontSizeMultiplier={1.2}
             value={note}
             onChangeText={setNote}
             placeholder={t('Wo genau? Zum Beispiel: Ortsdurchfahrt nach dem Pass')}

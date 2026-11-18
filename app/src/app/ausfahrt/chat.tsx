@@ -7,12 +7,13 @@ import { BackLink } from '@/components/ui/back-link';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/community/ride-bits';
 import { ReportSheet } from '@/components/moderation/report-sheet';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { ausfahrtTeilnehmer, clock, listAusfahrten, sendNachricht, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
@@ -130,7 +131,7 @@ export default function AusfahrtChat() {
 
       {sendErr && <AppText style={[styles.error, styles.sendErr]}>{sendErr}</AppText>}
       <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.s }]}>
-        <TextInput maxFontSizeMultiplier={1.2}
+        <TextField pill maxFontSizeMultiplier={1.2}
           value={text}
           onChangeText={setText}
           placeholder={t('Nachricht')}

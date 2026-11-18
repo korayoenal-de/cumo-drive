@@ -4,9 +4,10 @@
  * Abbrechen durch Tippen daneben oder Wegziehen.
  */
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { OptionsSheet } from '@/components/ui/action-sheet';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { t } from '@/i18n';
@@ -18,7 +19,7 @@ export function NameDialog({ visible, initial, onCancel, onSave, title = t('Tour
   return (
     <OptionsSheet visible={visible} title={title} subtitle={subtitle} onClose={onCancel}>
       <View style={styles.body}>
-        <TextInput maxFontSizeMultiplier={1.2}
+        <TextField maxFontSizeMultiplier={1.2}
           value={name}
           onChangeText={setName}
           autoFocus

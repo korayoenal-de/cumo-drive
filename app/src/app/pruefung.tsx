@@ -3,11 +3,12 @@
  * In Ordnung, Entfernen (mit Hinweis an den Betroffenen) oder Konto sperren, beides mit Rückfrage.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/community/ride-bits';
 import { SubScreen } from '@/components/settings/settings-ui';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { shortDate } from '@/lib/ausfahrten';
@@ -87,7 +88,7 @@ export default function Pruefung() {
         onClose={() => setAsk(null)}
       />
       {ask && (
-        <TextInput
+        <TextField
           maxFontSizeMultiplier={1.2}
           value={why}
           onChangeText={(t) => setWhy(t.slice(0, 300))}

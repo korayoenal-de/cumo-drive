@@ -12,7 +12,7 @@ import { datum, fahrzeit, meta as fmtMeta, strecke } from '@/lib/format';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { SOFT_LAYOUT } from '@/components/ui/action-bar';
@@ -20,6 +20,7 @@ import { DeleteTourSheet } from '@/components/tours/delete-tour-sheet';
 import { ActionSheet, OptionsSheet, SHEET_GONE_MS, type SheetItem } from '@/components/ui/action-sheet';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -232,11 +233,11 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
     <View style={styles.form}>
       <View style={styles.labeled}>
         <AppText style={styles.fieldLabel}>{tr('Name der Tour')}</AppText>
-        <TextInput maxFontSizeMultiplier={1.2} value={title} onChangeText={setTitle} placeholder={tr('Name der Tour')} placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel={tr('Name der Tour')} maxLength={120} />
+        <TextField maxFontSizeMultiplier={1.2} value={title} onChangeText={setTitle} placeholder={tr('Name der Tour')} placeholderTextColor={Colors.muted} style={styles.field} accessibilityLabel={tr('Name der Tour')} maxLength={120} />
       </View>
       <View style={styles.labeled}>
         <AppText style={styles.fieldLabel}>{tr('Dein Name als Fahrer')}</AppText>
-        <TextInput maxFontSizeMultiplier={1.2}
+        <TextField maxFontSizeMultiplier={1.2}
           value={shownAuthor}
           onChangeText={(v) => {
             setTouched(true);
@@ -250,7 +251,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
         />
       </View>
       <AppText style={styles.fieldLabel}>{tr('Beschreibung (optional)')}</AppText>
-      <TextInput maxFontSizeMultiplier={1.2}
+      <TextField maxFontSizeMultiplier={1.2}
         value={desc}
         onChangeText={setDesc}
         placeholder={tr('Was macht die Tour aus? Beste Abschnitte, Stopps, Tageszeit')}

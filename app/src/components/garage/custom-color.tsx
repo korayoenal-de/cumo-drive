@@ -4,9 +4,10 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { OptionsSheet } from '@/components/ui/action-sheet';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { t, tr } from '@/i18n';
@@ -47,7 +48,7 @@ export function CustomColorButton({ value, custom, onPick }: { value: string; cu
         <View style={styles.body}>
           <View style={styles.row}>
             <View style={[styles.preview, { backgroundColor: hex ?? Colors.surface2 }]} />
-            <TextInput maxFontSizeMultiplier={1.2}
+            <TextField maxFontSizeMultiplier={1.2}
               value={text}
               onChangeText={setText}
               autoFocus

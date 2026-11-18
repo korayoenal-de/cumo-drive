@@ -8,7 +8,7 @@ import { datum, fahrzeit, meta as fmtMeta, plaetze, strecke, wann } from '@/lib/
 import { router, useFocusEffect, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { TypoTabs } from '@/components/planner/planner-parts';
 import { RouteThumb } from '@/components/tours/tour-bits';
@@ -22,6 +22,7 @@ import { Chip, ChipRow } from '@/components/ui/chip';
 import { SwipeDelete } from '@/components/ui/swipe-delete';
 import { Screen } from '@/components/ui/screen';
 import { IconLabel } from '@/components/ui/btn-icon';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -250,7 +251,7 @@ export default function Touren() {
       ) : (
         <>
           <View style={styles.gapM}>
-            <TextInput maxFontSizeMultiplier={1.2}
+            <TextField maxFontSizeMultiplier={1.2}
               value={q}
               onChangeText={setQ}
               placeholder={tr('Touren durchsuchen')}

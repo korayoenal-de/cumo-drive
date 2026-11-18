@@ -3,9 +3,10 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { IconLabel } from '@/components/ui/btn-icon';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { type Drive } from '@/lib/drives';
@@ -132,7 +133,7 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
   return (
     <View style={styles.card}>
       {/* Ein Feld für Marke und Modell, keine Spritwahl mehr (Koray 9.11.) */}
-      <TextInput maxFontSizeMultiplier={1.2}
+      <TextField maxFontSizeMultiplier={1.2}
         // roh anzeigen: vehicleName schneidet Leerzeichen am Ende ab, dann ließ sich kein Leerzeichen tippen (Tester Joe 10.11.)
         value={value.brand ? vehicleName(value) : value.model}
         onChangeText={(t) => set({ brand: '', model: t })}

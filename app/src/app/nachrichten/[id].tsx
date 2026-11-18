@@ -7,13 +7,14 @@ import { BackLink } from '@/components/ui/back-link';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/community/ride-bits';
 import { BlockSheet, ReportSheet } from '@/components/moderation/report-sheet';
 import { ActionSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { clock, shortDate } from '@/lib/ausfahrten';
@@ -129,7 +130,7 @@ export default function Unterhaltung() {
       {sendErr && <AppText style={[styles.error, styles.padH]}>{sendErr}</AppText>}
       {canWrite ? (
         <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.s }]}>
-          <TextInput maxFontSizeMultiplier={1.2} value={text} onChangeText={setText} placeholder={t('Nachricht')} placeholderTextColor={Colors.muted} multiline maxLength={1000} style={styles.input} accessibilityLabel={t('Nachricht schreiben')} />
+          <TextField pill maxFontSizeMultiplier={1.2} value={text} onChangeText={setText} placeholder={t('Nachricht')} placeholderTextColor={Colors.muted} multiline maxLength={1000} style={styles.input} accessibilityLabel={t('Nachricht schreiben')} />
           <Pressable accessibilityRole="button" accessibilityLabel={t('Senden')} accessibilityState={{ disabled: !ok }} disabled={!ok} onPress={() => void send()} style={[styles.send, !ok && styles.sendOff]}>
             {sending ? <ActivityIndicator color={Colors.onSignal} /> : <SymbolView name="arrow.up" size={20} weight="semibold" tintColor={Colors.onSignal} />}
           </Pressable>

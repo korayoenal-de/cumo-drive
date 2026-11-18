@@ -3,10 +3,11 @@
  * Danach ein Toast, auf Wunsch gleich Blockieren. Server kopiert den Inhalt zum Zeitpunkt der Meldung.
  */
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ConfirmSheet, OptionsSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { Chip, ChipGroup } from '@/components/ui/chip';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { blockUser, REASONS, reportContent, type ReportKind, type ReportReason } from '@/lib/moderation';
@@ -62,7 +63,7 @@ export function ReportSheet(props: {
             <Chip key={r.v} label={r.label} active={reason === r.v} onSurface onPress={() => setReason(r.v)} />
           ))}
         </ChipGroup>
-        <TextInput
+        <TextField
           maxFontSizeMultiplier={1.2}
           value={note}
           onChangeText={(t) => setNote(t.slice(0, 500))}

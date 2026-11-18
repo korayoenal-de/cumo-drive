@@ -16,7 +16,7 @@ import { supabase } from '@/lib/supabase';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -25,6 +25,7 @@ import { RoutePreview } from '@/components/planner/route-preview';
 import { ReportSheet } from '@/components/moderation/report-sheet';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AddButton } from '@/components/ui/add-button';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import {
@@ -256,7 +257,7 @@ export default function AusfahrtDetail() {
         <AppText style={styles.value}>{longDate(linked.startsAt)}, {clock(linked.startsAt)}{linked.km ? `  ·  ${formatKm(linked.km, 0)} km` : ''}</AppText>
         {linked.free > 0 ? (
           <>
-            <TextInput maxFontSizeMultiplier={1.2}
+            <TextField maxFontSizeMultiplier={1.2}
               value={msg}
               onChangeText={setMsg}
               placeholder={tr('Nachricht an {ownerName} (optional)', { ownerName: linked.ownerName })}
@@ -628,7 +629,7 @@ export default function AusfahrtDetail() {
         {asking && (
           <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.section}>
             <AppText style={styles.label}>{tr('Nachricht an ')}{a.ownerName} (optional)</AppText>
-            <TextInput maxFontSizeMultiplier={1.2}
+            <TextField maxFontSizeMultiplier={1.2}
               value={msg}
               onChangeText={setMsg}
               placeholder={t('Kurz zu dir und deinem Auto')}
@@ -892,7 +893,7 @@ function InviteBox({ exclude, onInvite, busyId, contacts, onPlaced, onClose, onL
         onPlaced(e.nativeEvent.layout.y);
       }}>
       <View style={styles.row}>
-        <TextInput maxFontSizeMultiplier={1.2}
+        <TextField maxFontSizeMultiplier={1.2}
           value={q}
           onChangeText={setQ}
           placeholder={t('Name eines Fahrers')}

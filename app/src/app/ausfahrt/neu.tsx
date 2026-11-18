@@ -9,7 +9,7 @@ import { askMembership, limitsLive } from '@/lib/paywall';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -17,6 +17,7 @@ import { RoutePreview } from '@/components/planner/route-preview';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { bumpTab } from '@/lib/fly';
 import { haptic } from '@/lib/haptics';
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { clock, publishAusfahrt, shortDate } from '@/lib/ausfahrten';
@@ -234,7 +235,7 @@ export default function AusfahrtNeu() {
             {/* Treffpunkt */}
             <View style={styles.section}>
               <AppText style={styles.label}>{t('Treffpunkt')}</AppText>
-              <TextInput maxFontSizeMultiplier={1.2} value={meetingName} onChangeText={setMeeting} placeholder={t('Zum Beispiel Parkplatz am Start')} placeholderTextColor={Colors.muted} maxLength={80} style={styles.input} accessibilityLabel={t('Treffpunkt')} />
+              <TextField maxFontSizeMultiplier={1.2} value={meetingName} onChangeText={setMeeting} placeholder={t('Zum Beispiel Parkplatz am Start')} placeholderTextColor={Colors.muted} maxLength={80} style={styles.input} accessibilityLabel={t('Treffpunkt')} />
               <AppText variant="caption" muted>{t('Vorbelegt mit dem Start der Tour, frei änderbar.')}</AppText>
             </View>
 
@@ -342,7 +343,7 @@ export default function AusfahrtNeu() {
             {/* Hinweis */}
             <View style={styles.section}>
               <AppText style={styles.label}>{t('Hinweis an die Teilnehmer (optional)')}</AppText>
-              <TextInput maxFontSizeMultiplier={1.2} value={note} onChangeText={setNote} placeholder={t('Zum Beispiel Mittag am Ziel, Rückweg frei')} placeholderTextColor={Colors.muted} multiline maxLength={500} style={[styles.input, styles.inputMulti]} accessibilityLabel={t('Hinweis an Mitfahrer')} />
+              <TextField maxFontSizeMultiplier={1.2} value={note} onChangeText={setNote} placeholder={t('Zum Beispiel Mittag am Ziel, Rückweg frei')} placeholderTextColor={Colors.muted} multiline maxLength={500} style={[styles.input, styles.inputMulti]} accessibilityLabel={t('Hinweis an Mitfahrer')} />
             </View>
 
             {err && <AppText style={styles.error}>{err}</AppText>}

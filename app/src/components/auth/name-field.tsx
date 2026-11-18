@@ -3,8 +3,9 @@
  * ob der Name frei ist (kurz nach dem Tippen, nicht bei jedem Buchstaben).
  */
 import { useEffect, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { cleanName, NAME_MAX, nameAvailable, nameProblem } from '@/lib/profile';
@@ -45,7 +46,7 @@ export function NameField({ value, onChange, check, onSurface }: { value: string
   const tone = check.state === 'frei' ? styles.good : check.state === 'vergeben' || check.state === 'ungueltig' || check.state === 'fehler' ? styles.bad : styles.muted;
   return (
     <View style={styles.gap}>
-      <TextInput maxFontSizeMultiplier={1.2}
+      <TextField maxFontSizeMultiplier={1.2}
         value={value}
         onChangeText={onChange}
         placeholder={t('Name, so sehen dich die anderen')}
