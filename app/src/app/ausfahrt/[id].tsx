@@ -33,6 +33,7 @@ import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Layout } f
 import {
   answerAnfrage, arrival, ausfahrtTeilnehmer, ausfahrtTour, cancelAusfahrt, clock, freeSeats, listAnfragen,
   listAusfahrten, longDate, monthYear, requestAusfahrt, sendNachricht, withdrawAusfahrt, ausfahrtAbsagen, rideByLink, rideLink, type Absage, type Anfrage, type Ausfahrt, type LinkedRide, type Teilnehmer,
+  setAusfahrtPublic,
 } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { here, MeetingRoute, navigateToMeeting } from '@/components/group/meeting-route';
@@ -727,6 +728,38 @@ export default function AusfahrtDetail() {
             ? ([
                 { key: 'zeit', icon: 'clock', label: t('Abfahrt ändern'), onPress: () => setTimeSheet(true) },
                 { key: 'ort', icon: 'mappin.and.ellipse', label: t('Treffpunkt ändern'), onPress: () => setPlaceSheet(true) },
+              ] as SheetItem[])
+            : []),
+          // Sichtbarkeit nachträglich (Koray 18.11.): teilen nur mit Mitgliedschaft wie beim Anlegen, sonst zur Mitgliedschaft.
+          // Hinweis, weil andere es merken (Konsistenzprüfung 15.11.); Zusagen, Chat und Plätze bleiben.
+          ...(a.isOwner && a.rideStatus === 'geplant' && !a.isCancelled
+            ? ([
+                a.isPublic
+                  ? {
+                      key: 'privat',
+                      icon: 'lock',
+                      label: t('Aus der Community nehmen'),
+                      hint: t('Wer dabei ist, bleibt dabei'),
+                      onPress: () =>
+                        void run('sichtbar', () => setAusfahrtPublic(a.id, false)).then((ok) => {
+                          if (ok) showToast(t('Aus der Community genommen'));
+                        }),
+                    }
+                  : {
+                      key: 'teilen',
+                      icon: 'globe',
+                      label: t('In der Community teilen'),
+                      hint: t('Alle können die Ausfahrt sehen und anfragen'),
+                      onPress: () => {
+                        if (!ent.active) {
+                          router.push('/mitgliedschaft');
+                          return;
+                        }
+                        void run('sichtbar', () => setAusfahrtPublic(a.id, true)).then((ok) => {
+                          if (ok) showToast(t('In der Community geteilt'));
+                        });
+                      },
+                    },
               ] as SheetItem[])
             : []),
           ...(a.isOwner && a.rideStatus === 'geplant' && members.length > 1 ? ([{ key: 'lead', icon: 'person.line.dotted.person', label: t('Lead übergeben'), hint: t('Wer die Lead hat, startet die Ausfahrt'), onPress: () => setLeadSheet(true) }] as SheetItem[]) : []),

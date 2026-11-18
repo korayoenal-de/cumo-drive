@@ -69,6 +69,39 @@ async function ausfahrten(w: World, tour: ReturnType<typeof loadSampleTour>) {
     c.expect(/Zukunft/.test(e2), `Abfahrt zu früh abgewiesen (${e2})`);
   });
 
+  await scenario('C5b', 'Private Ausfahrt nachträglich teilen und wieder herausnehmen', async (c) => {
+    const startsAt = new Date(Date.now() + 4 * 86400000);
+    const saved = org.app.library.readLibrary()[0];
+    const priv = await org.app.ausfahrten.publishAusfahrt(saved, { startsAt, meeting: null, note: '', seats: 3 });
+    const seenBy = async (d: typeof max) => (await d.app.ausfahrten.listAusfahrten()).find((a) => a.id === priv);
+    c.expect(!(await seenBy(max)), 'privat: andere sehen sie nicht');
+    c.expect((await seenBy(org))?.isPublic === false, 'Organisator sieht sie als privat');
+    let fremd = '';
+    await max.app.ausfahrten.setAusfahrtPublic(priv, true).catch((e: Error) => (fremd = e.message));
+    c.expect(/nicht gefunden/.test(fremd), `nur der Organisator darf teilen (${fremd})`);
+    await org.app.ausfahrten.setAusfahrtPublic(priv, true);
+    const pub = await seenBy(max);
+    c.expect(pub?.isPublic === true && pub.maxMembers === 4, `geteilt: andere sehen sie, Plätze bleiben (${pub?.maxMembers})`);
+    await max.app.ausfahrten.requestAusfahrt(priv, 'Bin dabei', null);
+    await org.app.ausfahrten.setAusfahrtPublic(priv, false);
+    c.expect((await seenBy(max))?.myStatus === 'angefragt', 'wieder privat: wer angefragt hat, sieht sie weiter');
+    c.expect(!(await seenBy(sina)), 'wieder privat: neue Leute finden sie nicht');
+    // ohne Mitgliedschaft: privat anlegen geht, teilen nicht
+    await asAdmin(`update public.app_launch set release_at = now() - interval '60 days'`);
+    const s2 = exp.app.library.readLibrary()[0];
+    const own = await exp.app.ausfahrten.publishAusfahrt(s2, { startsAt, meeting: null, note: '', seats: 2 });
+    let ohne = '';
+    await exp.app.ausfahrten.setAusfahrtPublic(own, true).catch((e: Error) => (ohne = e.message));
+    c.expect(/Mitgliedschaft/.test(ohne), `ohne Abo abgewiesen (${ohne})`);
+    await asAdmin(`update public.app_launch set release_at = null`);
+    // nach der Absage geht es nicht mehr
+    await org.app.ausfahrten.cancelAusfahrt(priv);
+    let spaet = '';
+    await org.app.ausfahrten.setAusfahrtPublic(priv, true).catch((e: Error) => (spaet = e.message));
+    c.expect(/vor der Abfahrt|nicht gefunden/.test(spaet), `abgesagt: nicht mehr teilbar (${spaet})`);
+    await exp.app.ausfahrten.cancelAusfahrt(own);
+  });
+
   await scenario('C6', 'Mitfahren anfragen', async (c) => {
     let own = '';
     await org.app.ausfahrten.requestAusfahrt(id, '', null).catch((e: Error) => (own = e.message));

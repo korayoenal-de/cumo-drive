@@ -206,6 +206,12 @@ export async function publishAusfahrt(t: SavedTour, opts: { startsAt: Date; meet
   return data as string;
 }
 
+/** In der Community teilen oder wieder herausnehmen (Koray 18.11.); Zusagen und Chat bleiben, Plätze auch */
+export async function setAusfahrtPublic(id: string, makePublic: boolean) {
+  const { error } = await supabase.rpc('ride_set_public', { ride: id, make_public: makePublic });
+  if (error) fail(error.message);
+}
+
 export async function cancelAusfahrt(id: string) {
   const { error } = await supabase.rpc('cancel_public_ride', { ride: id });
   if (error) fail(error.message);
