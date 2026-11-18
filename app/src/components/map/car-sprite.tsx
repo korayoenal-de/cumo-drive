@@ -7,7 +7,8 @@
  * Erzeugt mit scratchpad/sprites (three.js), Quelle der Modelle: assets/cars/README.md.
  */
 import { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Type } from '@/constants/theme';

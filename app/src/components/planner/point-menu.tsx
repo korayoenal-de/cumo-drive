@@ -4,7 +4,8 @@
  * Ein Tipp daneben schließt es. Entfernen steht abgesetzt auf getönter Fläche.
  */
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated from 'react-native-reanimated';
 
 import { softEnter } from '@/components/ui/motion';
@@ -45,7 +46,7 @@ export function PointMenu({ menu, onPick, onClose }: { menu: PointMenuState | nu
   const top = below ? menu.bottom + Spacing.xs : Math.max(24, menu.top - Spacing.xs - h);
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('Menü schließen')} />
+      <Pressable flat style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('Menü schließen')} />
       <View style={[styles.menu, { top, right: Spacing.xl }]} accessibilityViewIsModal accessibilityLabel={t('Aktionen für {name}', { name: menu.name })}>
         {main.map((a, i) => (
           <Animated.View key={a} entering={softEnter(i)}>
@@ -58,7 +59,7 @@ export function PointMenu({ menu, onPick, onClose }: { menu: PointMenuState | nu
         {hasRemove && (
           <Animated.View entering={softEnter(main.length)} style={styles.removeWrap}>
             <Pressable accessibilityRole="button" onPress={() => onPick('entfernen')} style={({ pressed }) => [styles.item, styles.remove, pressed && styles.pressed]}>
-              <SymbolView name={LABEL.entfernen.icon} size={20} tintColor={Colors.stopText} weight="semibold" />
+              <SymbolView name={LABEL.entfernen.icon} size={20} tintColor={Colors.danger} weight="semibold" />
               <AppText style={[styles.text, styles.removeText]}>{LABEL.entfernen.text}</AppText>
             </Pressable>
           </Animated.View>
@@ -83,5 +84,5 @@ const styles = StyleSheet.create({
   text: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
   removeWrap: { marginTop: Spacing.s },
   remove: { backgroundColor: Colors.dangerTint },
-  removeText: { color: Colors.stopText },
+  removeText: { color: Colors.danger },
 });

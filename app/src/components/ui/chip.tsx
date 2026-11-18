@@ -8,12 +8,13 @@
  * zum Ankreuzen, umgebrochen) wechselt ein Chip wie bisher ohne Bewegung.
  */
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { EASE_OUT } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 
 type Box = { x: number; y: number; w: number; bg: string };
 type RowCtx = { report: (id: string, box: Box | null, active: boolean) => void };
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
   on: { backgroundColor: Colors.text },
   clear: { backgroundColor: 'transparent' },
   under: { position: 'absolute', height: Size.chip, borderRadius: Radius.pill },
-  pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
+  pressed: Pressed,
   label: { fontSize: Type.body, fontFamily: Fonts.semibold },
   labelOn: { color: Colors.ground, fontFamily: Fonts.bold },
 });

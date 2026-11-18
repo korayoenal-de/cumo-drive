@@ -15,7 +15,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
-import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, AppState, Linking, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -61,6 +62,7 @@ import { type PlannedStop } from './planner-parts';
 import { backRecommended, choiceText, needsChoice, noGoodAlternative, outAndBack, spurKm, type OutAndBack } from '@/lib/smart-roundtrip';
 import { logSignal } from '@/lib/signals';
 import { showToast } from '@/lib/toast';
+import { ToastHost } from '@/components/ui/toast';
 import { Accordion, avoidSummary, ErrorCard, MicIcon, PrimaryButton, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
 import { Result } from './planner-result';
 import { EMPTY_TOUR, keyOf, type Mode, passIndex, type PendingPoint, roughDetourKm, samePts } from './planner-shared';
@@ -1408,6 +1410,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       )}>
       {body}
     </MapSheet>
+      {/* Tour anpassen ist ein modaler Bildschirm: eigener Toast, sonst unsichtbar (Audit 18.11.) */}
+      {liveEdit && <ToastHost />}
     </View>
     <AskFeedbackSheet rounds={askRounds} onDone={() => setAskRounds(null)} />
     <ActionSheet

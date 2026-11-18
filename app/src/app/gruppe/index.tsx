@@ -8,7 +8,8 @@ import { BackLink } from '@/components/ui/back-link';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { haptic } from '@/lib/haptics';
 import { RouteMap } from '@/components/map/route-map';
@@ -16,7 +17,7 @@ import type { OtherDriver } from '@/components/map/route-map-shared';
 import { Screen } from '@/components/ui/screen';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { setActiveTour, useActiveTour } from '@/lib/active-tour';
 import { setRideStatus } from '@/lib/group/invites';
 import { endRideForAll, leaveRide, QUICK_MESSAGES, quickText, sendMessage, setRole, shareTour, useRide, type Member, type Role } from '@/lib/group/ride';
@@ -44,8 +45,8 @@ function Start({ error }: { error: string | null }) {
         <AppText variant="label">{t('So geht es')}</AppText>
         <AppText>{t('Öffne eine gespeicherte Tour unter Touren, tippe auf Losfahren und dann auf Als Gruppe fahren. Dort lädst du bis zu 5 Teilnehmer mit ihrem Namen ein.')}</AppText>
         <AppText muted>{t('Wurdest du eingeladen, erscheint die Einladung unten über den Tabs. Nach der Zusage fährst du mit einem Tipp mit.')}</AppText>
-        <Pressable accessibilityRole="button" onPress={() => router.navigate('/touren')} style={[styles.secondary, styles.secondaryOnSurface]}>
-          <AppText style={styles.secondaryText}>{t('Zu Touren')}</AppText>
+        <Pressable accessibilityRole="button" onPress={() => router.navigate('/touren')} style={styles.primary}>
+          <AppText style={styles.primaryText}>{t('Zu Touren')}</AppText>
         </Pressable>
       </View>
       {error && <AppText style={styles.error}>{error}</AppText>}
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
   secondary: { minHeight: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   secondaryOnSurface: { backgroundColor: Colors.surface2 },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
-  error: { color: Colors.signal, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
   gapXs: { gap: Spacing.xs },
   title: { fontFamily: Fonts.display, fontSize: Type.display, lineHeight: 36, textTransform: 'uppercase' },
   mapBox: { height: 340, borderRadius: Radius.l, overflow: 'hidden', backgroundColor: Colors.surface },
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   msgChip: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: 22, backgroundColor: Colors.surface2, justifyContent: 'center' },
   msgChipText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  pressed: { opacity: 0.7 },
+  pressed: Pressed,
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingVertical: Spacing.xs },
   dot: { width: 12, height: 12, borderRadius: 6 },
   memberName: { fontFamily: Fonts.semibold, fontSize: Type.input },

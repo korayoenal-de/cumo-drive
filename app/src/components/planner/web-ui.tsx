@@ -80,7 +80,7 @@ export function WebSheet(props: { title: string; subtitle?: string; rows?: Sheet
                 key={r.key}
                 disabled={r.disabled}
                 onClick={r.onPress}
-                style={{ ...sheetRow, color: r.danger ? Colors.stopText : C.text, marginTop: r.danger && i > 0 ? Spacing.s : 0, transitionDelay: `${i * 45}ms` }}>
+                style={{ ...sheetRow, color: r.danger ? Colors.danger : C.text, marginTop: r.danger && i > 0 ? Spacing.s : 0, transitionDelay: `${i * 45}ms` }}>
                 <span style={{ font: `700 17px/22px ${BODY}` }}>{r.label}</span>
                 {r.hint ? <span style={{ font: `600 15px/20px ${BODY}`, color: C.muted }}>{r.hint}</span> : null}
               </button>
@@ -278,7 +278,7 @@ export function Badge(props: { tone: 'good' | 'warn' | 'signal' | 'muted' | 'dan
     danger: [Colors.dangerTint, Colors.danger],
     good: [Colors.goodTint, C.good],
     warn: [Colors.warnTint, C.warn],
-    signal: [Colors.signalTint, Colors.stopText],
+    signal: [Colors.signalTint, Colors.danger],
     muted: [C.surface2, C.muted],
   } as const;
   const [bg, fg] = map[props.tone];

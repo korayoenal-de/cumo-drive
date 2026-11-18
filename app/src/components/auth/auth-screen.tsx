@@ -3,7 +3,8 @@
  * von Anfang an im Konto und sind in App und Web Planer dieselben.
  */
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TextField } from '@/components/ui/text-field';
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   // inaktiv grau statt blassem Orange (UI Konsistenz Check 9.11.)
   disabled: { backgroundColor: Colors.surface2 },
-  error: { color: Colors.signal, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
   switch: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   link: { color: Colors.text, fontFamily: Fonts.semibold },
 });

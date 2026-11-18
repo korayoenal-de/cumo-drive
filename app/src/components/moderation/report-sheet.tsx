@@ -3,13 +3,14 @@
  * Danach ein Toast, auf Wunsch gleich Blockieren. Server kopiert den Inhalt zum Zeitpunkt der Meldung.
  */
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { ConfirmSheet, OptionsSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { Chip, ChipGroup } from '@/components/ui/chip';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { blockUser, REASONS, reportContent, type ReportKind, type ReportReason } from '@/lib/moderation';
 import { showToast } from '@/lib/toast';
 import { t, tr } from '@/i18n';
@@ -112,9 +113,9 @@ const styles = StyleSheet.create({
   wrap: { gap: Spacing.m },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   input: { minHeight: 88, paddingHorizontal: Spacing.l, paddingTop: Spacing.m, paddingBottom: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input, textAlignVertical: 'top' },
-  err: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  err: { color: Colors.danger, fontFamily: Fonts.semibold },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryOff: { backgroundColor: Colors.signalDeep },
   primaryText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
-  pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
+  pressed: Pressed,
 });

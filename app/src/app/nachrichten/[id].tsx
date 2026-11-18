@@ -7,7 +7,8 @@ import { BackLink } from '@/components/ui/back-link';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -183,6 +184,6 @@ const styles = StyleSheet.create({
   input: { flex: 1, minHeight: 44, maxHeight: 120, paddingHorizontal: Spacing.l, paddingTop: 12, paddingBottom: 12, backgroundColor: Colors.surface, borderRadius: 22, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   sendOff: { backgroundColor: Colors.signalDeep },
-  error: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
   padH: { paddingHorizontal: Spacing.l },
 });

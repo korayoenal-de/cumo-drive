@@ -4,14 +4,8 @@
  */
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  View,
-} from 'react-native';
+import { Modal, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -20,7 +14,7 @@ import Animated, {
 
 import { useWeatherStatus, type WeatherStatus } from '@/lib/weather';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Shadow } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Shadow, Pressed } from '@/constants/theme';
 import {
   MAP_STYLES,
   setMapSettings,
@@ -294,7 +288,7 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     backgroundColor: 'rgba(0,0,0,0.28)',
   },
-  pressed: { opacity: 0.85, transform: [{ scale: Motion.pressScale }] },
+  pressed: Pressed,
   card: {
     borderRadius: Radius.l,
     backgroundColor: Colors.surface,

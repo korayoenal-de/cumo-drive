@@ -4,12 +4,13 @@
  * Abbrechen durch Tippen daneben oder Wegziehen.
  */
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { t } from '@/i18n';
 
 export function NameDialog({ visible, initial, onCancel, onSave, title = t('Tour speichern'), subtitle = t('Unter diesem Namen findest du sie im Tab Touren.') }: { visible: boolean; initial: string; onCancel: () => void; onSave: (name: string) => void; title?: string; subtitle?: string }) {
@@ -44,5 +45,5 @@ const styles = StyleSheet.create({
   input: { height: Size.input, borderRadius: Radius.m, backgroundColor: Colors.surface2, color: Colors.text, paddingHorizontal: Spacing.l, fontFamily: Fonts.semibold, fontSize: Type.input },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.985 }] },
+  pressed: Pressed,
 });

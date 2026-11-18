@@ -4,10 +4,11 @@
  */
 import { router, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Type } from '@/constants/theme';
+import { Colors, Fonts, Type, Pressed } from '@/constants/theme';
 import { t } from '@/i18n';
 
 export function BackLink({ label = t('Zurück'), fallback = '/', onPress }: { label?: string; fallback?: Href; onPress?: () => void }) {
@@ -28,6 +29,6 @@ export function BackLink({ label = t('Zurück'), fallback = '/', onPress }: { la
 
 const styles = StyleSheet.create({
   back: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingLeft: 12, paddingRight: 16, borderRadius: 22, backgroundColor: Colors.surface, flexShrink: 0 },
-  pressed: { opacity: 0.85 },
+  pressed: Pressed,
   text: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
 });

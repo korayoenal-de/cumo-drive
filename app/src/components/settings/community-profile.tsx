@@ -4,14 +4,15 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { Chip, ChipGroup } from '@/components/ui/chip';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { ageOf, birthDigits, loadPrivacy, parseBirthday, savePrivacy, type BirthdayShow, type Privacy } from '@/lib/drivers';
 import { haptic } from '@/lib/haptics';
 import { searchTowns, type Place } from '@/lib/geocode';
@@ -403,9 +404,9 @@ export function ToggleRow({ label, value, onChange }: { label: string; value: bo
 }
 
 const styles = StyleSheet.create({
-  hint: { color: Colors.stopText },
+  hint: { color: Colors.danger },
   valueEmpty: { color: Colors.faint },
-  pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
+  pressed: Pressed,
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryOff: { backgroundColor: Colors.signalDeep },
   primaryText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
@@ -436,5 +437,5 @@ const styles = StyleSheet.create({
   bio: { height: undefined, minHeight: 88, paddingTop: Spacing.m, paddingBottom: Spacing.m, textAlignVertical: 'top' },
   count: { alignSelf: 'flex-end', fontVariant: ['tabular-nums'] },
   toggleText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  error: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });

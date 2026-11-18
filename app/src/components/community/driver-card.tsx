@@ -7,7 +7,8 @@
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Avatar } from '@/components/community/ride-bits';
@@ -15,7 +16,7 @@ import { BlockSheet, ReportSheet } from '@/components/moderation/report-sheet';
 import { CarSprite, frameFor } from '@/components/map/car-sprite';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
 import { freeSeats, listAusfahrten, longDate, monthYear, type Ausfahrt } from '@/lib/ausfahrten';
 import { answerContact, removeContact, requestContact, useContacts, type Contact } from '@/lib/contacts';
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: Spacing.s },
   secondary: { flex: 1, height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, flexDirection: 'row', gap: Spacing.s, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.text },
-  pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
+  pressed: Pressed,
   check: { position: 'absolute', right: -5, bottom: -5, width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.good, borderWidth: 2, borderColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   pending: { minHeight: 44, paddingHorizontal: Spacing.m, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   pendingText: { fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.muted },

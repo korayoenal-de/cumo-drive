@@ -11,7 +11,8 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { router, type Href } from 'expo-router';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RouteMap } from '@/components/map/route-map';
@@ -24,12 +25,13 @@ import { FunkBanner, HighlightCard, HighlightStrip, LeadHaltPill, StopAlert } fr
 import { BigButton, BottomBar, InfoCard, LANES_SHOW_M, laneSymbol, ManeuverCard, Recalculating } from '@/components/navigation/nav-panels';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Radius, Spacing, Type, Pressed } from '@/constants/theme';
 import { setActiveTour, useActiveTour } from '@/lib/active-tour';
 import { getEditOrigin, requestEditBack } from '@/lib/edit-tour';
 import { PACE_NOTES_RELEASED, setDriveSetting, useDriveSettings } from '@/lib/drive-settings';
 import { appVersion } from '@/lib/feedback';
 import { showToast } from '@/lib/toast';
+import { ToastHost } from '@/components/ui/toast';
 import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetTour, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
 import { FUN_NAMES, toFunLevel } from '@/components/ui/fun-gauge';
@@ -1413,6 +1415,8 @@ export default function NavigationScreen() {
         onConfirm={goOwn}
         onClose={() => setConfirmOwn(false)}
       />
+      {/* Meldungen in der Fahrt: unter der Abbiegekarte, über dem modalen Bildschirm sichtbar (Audit 18.11.) */}
+      <ToastHost place={{ top: (topH || insets.top + 120) + Spacing.s }} />
     </View>
   );
 }
@@ -1548,7 +1552,7 @@ const styles = StyleSheet.create({
   offBtnWide: { flex: 0, alignSelf: 'stretch' },
   offBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   offBtnMainText: { color: Colors.onSignal },
-  offPressed: { transform: [{ scale: 0.985 }], opacity: 0.9 },
+  offPressed: Pressed,
   offDash: { width: 22, height: 4, borderRadius: 2, backgroundColor: Colors.warn },
   offText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
   tourName: {

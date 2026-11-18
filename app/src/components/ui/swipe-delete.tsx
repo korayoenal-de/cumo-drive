@@ -4,11 +4,12 @@
  * (Konsistenzprüfung 15.11.); Tippen fragt noch einmal nach.
  */
 import { SymbolView } from 'expo-symbols';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Type, Pressed } from '@/constants/theme';
 import { t } from '@/i18n';
 
 export function SwipeDelete({ progress, label, onPress, radius = Radius.l }: { progress: SharedValue<number>; label: string; onPress: () => void; radius?: number }) {
@@ -27,5 +28,5 @@ const styles = StyleSheet.create({
   wrap: { paddingVertical: 2, paddingLeft: 8, paddingRight: 2 },
   btn: { flex: 1, width: 94, backgroundColor: Colors.danger, alignItems: 'center', justifyContent: 'center', gap: 2 },
   text: { fontFamily: Fonts.bold, fontSize: Type.small, color: Colors.text },
-  pressed: { opacity: 0.8 },
+  pressed: Pressed,
 });

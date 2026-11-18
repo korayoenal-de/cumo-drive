@@ -9,7 +9,8 @@
  */
 import { Slot, router } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { useInviteCount, useInvitesWatcher } from '@/components/group/invites-banner';
 import { AppText } from '@/components/ui/text';

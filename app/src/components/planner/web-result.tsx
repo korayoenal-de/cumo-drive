@@ -230,7 +230,7 @@ export const tintBox = (tone: 'good' | 'warn' | 'signal') => ({
   padding: '12px 14px',
   borderRadius: Radius.m,
   background: tone === 'good' ? Colors.goodTint : tone === 'warn' ? Colors.warnTint : Colors.signalTint,
-  color: tone === 'good' ? C.good : tone === 'warn' ? C.warn : Colors.stopText,
+  color: tone === 'good' ? C.good : tone === 'warn' ? C.warn : Colors.danger,
   font: `600 15px/21px ${BODY}`,
 });
 

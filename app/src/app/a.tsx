@@ -6,7 +6,8 @@
  */
 import { Redirect } from 'expo-router';
 import { useMemo, useSyncExternalStore } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';

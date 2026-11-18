@@ -6,7 +6,8 @@ import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, AppState, Linking, Platform, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { Avatar } from '@/components/community/ride-bits';
 import { BackLink } from '@/components/ui/back-link';
@@ -359,7 +360,7 @@ function Login() {
 
 const styles = StyleSheet.create({
   notice: { backgroundColor: Colors.signalTint, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.s },
-  noticeTitle: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.stopText },
+  noticeTitle: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.danger },
   noticeText: { fontFamily: Fonts.medium, fontSize: Type.body, lineHeight: 21, color: Colors.text },
   noticeBtn: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
   noticeBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
@@ -382,7 +383,7 @@ const styles = StyleSheet.create({
   secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   disabled: { opacity: 0.4 },
-  error: { color: Colors.signal, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });
 
 /** Sprache der App (Koray 16.11.): folgt dem iPhone, hier selbst festlegen. Ein Wechsel startet die App neu. */

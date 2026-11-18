@@ -4,7 +4,8 @@
  * selbst. Wegschieben, Tipp daneben oder Ausblenden zählen als weggeschoben (lib/ask-feedback.ts).
  */
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { SymbolView } from 'expo-symbols';
 
 import { Chip, ChipGroup } from '@/components/ui/chip';

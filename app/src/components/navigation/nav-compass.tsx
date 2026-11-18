@@ -5,7 +5,8 @@
  * im Stand, ohne Tempoanzeige und während der Bremsempfehlung. Kurz nach dem Wechsel steht der Modus daneben.
  */
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { Easing, FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 

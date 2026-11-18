@@ -2,7 +2,8 @@
  * Kartendarstellung als Auswahlzeilen für die Einstellungen; dieselbe Wahl wie im runden Kartenknopf.
  */
 import { SymbolView } from 'expo-symbols';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing, Type } from '@/constants/theme';

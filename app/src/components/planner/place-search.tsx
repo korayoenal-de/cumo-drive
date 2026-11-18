@@ -15,14 +15,15 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Modal, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Chip, ChipRow } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
 import { FUN_NAMES, FunGauge, type FunLevel } from '@/components/ui/fun-gauge';
-import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { type Place } from '@/lib/geocode';
 import { passState, usePassLive } from '@/lib/pass-live';
 import { PASSES, passPoint, passSummary, searchPasses } from '@/lib/passes';
@@ -772,5 +773,5 @@ const styles = StyleSheet.create({
   slotEmpty: { color: Colors.muted },
   remove: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.l },
   removeText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.signal },
-  pressed: { opacity: 0.85, transform: [{ scale: Motion.pressScale }] },
+  pressed: Pressed,
 });

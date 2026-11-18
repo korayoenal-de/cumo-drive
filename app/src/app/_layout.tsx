@@ -16,7 +16,8 @@ import { DarkTheme, Stack, ThemeProvider, usePathname, type ErrorBoundaryProps }
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { EntitlementGate } from '@/components/paywall/entitlement-gate';

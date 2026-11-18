@@ -4,13 +4,14 @@
 import { announceMenuOpen, useCloseOnOtherMenu } from '@/lib/navigation/open-menu';
 import { useEffect, useState, type ReactNode, useCallback } from 'react';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated from 'react-native-reanimated';
 
 import { haptic } from '@/lib/haptics';
 import { softEnter } from '@/components/ui/action-bar';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Shadow, Spacing, Type, Size } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadow, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import type { Lane, Maneuver } from '@/lib/navigation/types';
 
 import { formatClock, formatDistance, formatRemaining } from './format';
@@ -374,7 +375,7 @@ export function BigButton({ label, onPress, kind = 'signal' }: { label: string; 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
-  pressed: { opacity: 0.8 },
+  pressed: Pressed,
 
   maneuver: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   maneuverRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l },

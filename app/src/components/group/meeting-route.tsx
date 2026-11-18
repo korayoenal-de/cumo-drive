@@ -6,12 +6,13 @@
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { ActionSheet } from '@/components/ui/action-sheet';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { setActiveTour } from '@/lib/active-tour';
 import { avoidSetting } from '@/lib/avoid-settings';
 import { planChecked } from '@/lib/plan';
@@ -83,6 +84,6 @@ const styles = StyleSheet.create({
   btnText: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   btnPrimary: { backgroundColor: Colors.signal },
   btnTextPrimary: { color: Colors.onSignal },
-  pressed: { opacity: 0.85 },
-  err: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.stopText },
+  pressed: Pressed,
+  err: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.danger },
 });

@@ -16,7 +16,8 @@ import { useRideFun } from '@/lib/ride-fun';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
-import { ActivityIndicator, Keyboard, Pressable, StyleSheet, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, Keyboard, StyleSheet, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { EASE_OUT, SOFT_LAYOUT } from '@/components/ui/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,7 +36,7 @@ import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/actio
 import { PublishSheet } from '@/components/tours/tour-card';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, relDay, shortDate, showCancelled, type Ausfahrt } from '@/lib/ausfahrten';
 import { approachMinutes, departAt, syncRideReminders, currentSpot } from '@/lib/ride-reminders';
 import { useSession } from '@/lib/auth';
@@ -483,8 +484,8 @@ export default function Community() {
               <View style={styles.card}>
                 <AppText variant="title">{tr('Drivers mit Konto')}</AppText>
                 <AppText muted>{tr('Melde dich an, um andere Mitglieder zu sehen und anzuschreiben.')}</AppText>
-                <Pressable accessibilityRole="button" onPress={() => router.push('/login')} style={styles.secondary}>
-                  <AppText style={styles.secondaryText}>{tr('Anmelden')}</AppText>
+                <Pressable accessibilityRole="button" onPress={() => router.push('/login')} style={styles.primary}>
+                  <AppText style={styles.primaryText}>{tr('Anmelden')}</AppText>
                 </Pressable>
               </View>
             ) : drivers === null ? (
@@ -495,8 +496,8 @@ export default function Community() {
                   <View style={styles.card}>
                     <AppText variant="title">{tr('Zeig dich auf der Karte')}</AppText>
                     <AppText muted>{tr('Trag deinen Wohnort in deinem Profil ein. Andere sehen dich dann dort, nur als Ortsmitte.')}</AppText>
-                    <Pressable accessibilityRole="button" onPress={() => router.push('/profil')} style={styles.secondary}>
-                      <AppText style={styles.secondaryText}>{tr('Wohnort angeben')}</AppText>
+                    <Pressable accessibilityRole="button" onPress={() => router.push('/profil')} style={styles.primary}>
+                      <AppText style={styles.primaryText}>{tr('Wohnort angeben')}</AppText>
                     </Pressable>
                   </View>
                 )}
@@ -509,8 +510,8 @@ export default function Community() {
                   <View style={styles.card}>
                     <AppText variant="title">{tr('Noch keine Kontakte')}</AppText>
                     <AppText muted>{tr('Tippe bei einem Fahrer auf das Plus. Sobald er bestätigt, steht er hier und beim Einladen zu Gruppenfahrten ganz oben.')}</AppText>
-                    <Pressable accessibilityRole="button" onPress={() => setDseg('alle')} style={styles.secondary}>
-                      <AppText style={styles.secondaryText}>{tr('Fahrer entdecken')}</AppText>
+                    <Pressable accessibilityRole="button" onPress={() => setDseg('alle')} style={styles.primary}>
+                      <AppText style={styles.primaryText}>{tr('Fahrer entdecken')}</AppText>
                     </Pressable>
                   </View>
                 ) : (
@@ -543,8 +544,8 @@ export default function Community() {
               <View style={styles.card}>
                 <AppText variant="title">{tr('Ausfahrten mit Konto')}</AppText>
                 <AppText muted>{tr('Melde dich an, um anstehende Ausfahrten zu sehen und mitzufahren.')}</AppText>
-                <Pressable accessibilityRole="button" onPress={() => router.push('/login')} style={styles.secondary}>
-                  <AppText style={styles.secondaryText}>{tr('Anmelden')}</AppText>
+                <Pressable accessibilityRole="button" onPress={() => router.push('/login')} style={styles.primary}>
+                  <AppText style={styles.primaryText}>{tr('Anmelden')}</AppText>
                 </Pressable>
               </View>
             ) : rides === null ? (
@@ -553,8 +554,8 @@ export default function Community() {
               <View style={styles.card}>
                 <AppText variant="title">{tr('Noch keine Ausfahrten geplant')}</AppText>
                 <AppText muted>{tr('Lade andere zu deiner Lieblingstour ein: mit Zeit, Treffpunkt und freien Plätzen.')}</AppText>
-                <Pressable accessibilityRole="button" onPress={() => router.push('/ausfahrt/neu')} style={styles.secondary}>
-                  <AppText style={styles.secondaryText}>{tr('Ausfahrt anlegen')}</AppText>
+                <Pressable accessibilityRole="button" onPress={() => router.push('/ausfahrt/neu')} style={styles.primary}>
+                  <AppText style={styles.primaryText}>{tr('Ausfahrt anlegen')}</AppText>
                 </Pressable>
               </View>
             ) : (
@@ -985,7 +986,7 @@ const styles = StyleSheet.create({
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   roundMine: { backgroundColor: Colors.goodTint },
   roundSaved: { backgroundColor: Colors.signalTint },
-  pressed: { opacity: 0.7 },
+  pressed: Pressed,
   // Routenkarte in der Liste: Maße wie TourCard in Meine Touren
   tourCard: { backgroundColor: Colors.surface, borderRadius: Radius.l + 4, padding: Spacing.m, gap: Spacing.m, overflow: 'hidden' },
   tourRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
@@ -1004,7 +1005,7 @@ const styles = StyleSheet.create({
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.button },
   secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.bold, fontSize: Type.button },
-  error: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
   textBtn: { height: Size.chip, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', paddingHorizontal: Spacing.xl },
   textBtnText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
 });

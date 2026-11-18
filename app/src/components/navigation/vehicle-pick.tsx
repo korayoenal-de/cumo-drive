@@ -4,12 +4,13 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
 
 import { CarSprite, carLookFor, frameFor } from '@/components/map/car-sprite';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
 import { selectVehicle, vehicleName, type Vehicle } from '@/lib/vehicle';
 import { t } from '@/i18n';
@@ -79,5 +80,5 @@ const styles = StyleSheet.create({
   btn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
   option: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 52 },
   optionText: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.body },
-  pressed: { transform: [{ scale: Motion.pressScale }], opacity: 0.85 },
+  pressed: Pressed,
 });

@@ -4,7 +4,8 @@
  * Ein Tipp daneben schließt es.
  */
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated from 'react-native-reanimated';
 
 import { softEnter } from '@/components/ui/motion';
@@ -42,7 +43,7 @@ export function FloatMenu({
   const right = Math.max(Spacing.l, win.width - anchor.right);
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('Menü schließen')} />
+      <Pressable flat style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('Menü schließen')} />
       <View style={[styles.menu, { top, right }]} accessibilityViewIsModal accessibilityLabel={label}>
         {main.map((it, i) => (
           <Animated.View key={it.key} entering={softEnter(i)}>
@@ -55,7 +56,7 @@ export function FloatMenu({
         {danger.map((it, i) => (
           <Animated.View key={it.key} entering={softEnter(main.length + i)} style={styles.dangerWrap}>
             <Pressable accessibilityRole="button" onPress={() => onPick(it.key)} style={({ pressed }) => [styles.item, styles.danger, pressed && styles.pressed]}>
-              <SymbolView name={it.icon} size={20} tintColor={Colors.stopText} weight="semibold" />
+              <SymbolView name={it.icon} size={20} tintColor={Colors.danger} weight="semibold" />
               <AppText style={[styles.text, styles.dangerText]}>{it.label}</AppText>
             </Pressable>
           </Animated.View>
@@ -73,5 +74,5 @@ const styles = StyleSheet.create({
   text: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
   dangerWrap: { marginTop: Spacing.s },
   danger: { backgroundColor: Colors.dangerTint },
-  dangerText: { color: Colors.stopText },
+  dangerText: { color: Colors.danger },
 });

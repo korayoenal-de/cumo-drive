@@ -4,7 +4,8 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useRef, type ComponentRef } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeOut } from 'react-native-reanimated';
 
 import { IconLabel } from '@/components/ui/btn-icon';
@@ -12,7 +13,7 @@ import { flyFrom } from '@/components/ui/morph-action';
 import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
 import { WarnLabel } from '@/components/ui/warn-label';
-import { Colors, Fonts, Motion, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Type, Pressed } from '@/constants/theme';
 import { warnRest, type Pass } from '@/lib/passes';
 import { t } from '@/i18n';
 
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
   onSignal: { color: Colors.onSignal },
   num: { minWidth: 26, height: 26, paddingHorizontal: 6, borderRadius: 13, backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   numText: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
-  pressed: { opacity: 0.85, transform: [{ scale: Motion.pressScale }] },
+  pressed: Pressed,
 });
 
 /**

@@ -4,12 +4,13 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { t, tr } from '@/i18n';
 
 /** #RGB oder #RRGGBB, mit oder ohne Raute; zurück als #RRGGBB in Großbuchstaben oder null */
@@ -87,5 +88,5 @@ const styles = StyleSheet.create({
   primaryText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
   disabled: { backgroundColor: Colors.surface2 },
   disabledText: { color: Colors.muted },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.985 }] },
+  pressed: Pressed,
 });

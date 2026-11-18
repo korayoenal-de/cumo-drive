@@ -3,12 +3,13 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { IconLabel } from '@/components/ui/btn-icon';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { type Drive } from '@/lib/drives';
 import { formatKm } from '@/lib/tour';
 import { deleteVehicle, newVehicle, saveVehicle, selectVehicle, useVehicles, vehicleName, type Vehicle } from '@/lib/vehicle';
@@ -205,13 +206,13 @@ const styles = StyleSheet.create({
   badgeText: { color: Colors.good, fontFamily: Fonts.semibold },
   input: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  pressedMain: { transform: [{ scale: Motion.pressScale }], opacity: 0.9 },
+  pressedMain: Pressed,
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
   secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   disabled: { opacity: 0.4 },
   padH: { paddingHorizontal: Spacing.l },
-  error: { color: Colors.signal, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
   danger: { backgroundColor: Colors.dangerTint },
   dangerText: { color: Colors.signal },
 });

@@ -9,7 +9,8 @@
  */
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, type ReactNode } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { Gesture, GestureDetector, GestureHandlerRootView, ScrollView as GHScrollView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -17,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { sheetEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type, Size } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { t } from '@/i18n';
 
 const AnimatedScroll = Animated.createAnimatedComponent(GHScrollView);
@@ -74,7 +75,7 @@ export function OptionsSheet({ visible, title, subtitle, onClose, children, scro
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <GestureHandlerRootView style={styles.flex}>
         <KeyboardAvoidingView behavior="padding" style={styles.flex}>
-          <Pressable accessibilityRole="button" accessibilityLabel={t('Schließen')} onPress={onClose} style={styles.backdrop} />
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Schließen')} onPress={onClose} flat style={styles.backdrop} />
           <GestureDetector gesture={pan}>
             {/* außen das Ziehen, innen das Hereinfahren: beide nutzen transform */}
             <Animated.View style={[styles.dragWrap, dragStyle]}>
@@ -125,7 +126,7 @@ export function ActionSheet({ visible, title, subtitle, items, onClose, scroll =
             // Wie das schwebende Menü (Koray 8.11.): Zeilen ohne eigene Fläche, Symbol ohne Kreis, Löschen getönt
             style={({ pressed }) => [styles.item, it.danger && styles.itemDanger, it.primary && styles.itemPrimary, pressed && (it.primary ? styles.primaryPressed : styles.itemPressed)]}>
             <View style={styles.icon}>
-              <SymbolView name={it.icon} size={20} tintColor={it.danger ? Colors.stopText : it.primary ? Colors.signal : Colors.text} weight="semibold" />
+              <SymbolView name={it.icon} size={20} tintColor={it.danger ? Colors.danger : it.primary ? Colors.signal : Colors.text} weight="semibold" />
             </View>
             <View style={styles.flex}>
               <AppText style={[styles.label, it.danger && styles.danger, it.primary && styles.signal]}>{it.label}</AppText>
@@ -208,12 +209,12 @@ const styles = StyleSheet.create({
   itemDanger: { marginTop: Spacing.s, backgroundColor: Colors.dangerTint },
   itemPressed: { backgroundColor: Colors.line },
   itemPrimary: { backgroundColor: Colors.signalTint, paddingVertical: Spacing.s, marginBottom: Spacing.xs },
-  primaryPressed: { opacity: 0.8 },
+  primaryPressed: Pressed,
   signal: { color: Colors.signal },
   icon: { width: 24, alignItems: 'center', justifyContent: 'center' },
   label: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   hint: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  danger: { color: Colors.stopText },
+  danger: { color: Colors.danger },
   confirmRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingTop: Spacing.s },
   cancel: { flex: 1, height: 56, alignItems: 'center', justifyContent: 'center' },
   cancelText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.text },

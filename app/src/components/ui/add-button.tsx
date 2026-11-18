@@ -4,10 +4,11 @@
  * Ruhige Fläche wie der Entfernen Knopf daneben, 44 pt, nach dem Hinzufügen ein grüner Haken.
  */
 import { SymbolView } from 'expo-symbols';
-import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Size } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Pressed } from '@/constants/theme';
 
 export function AddButton({ label, onPress, busy, done, disabled }: { label: string; onPress: () => void; busy?: boolean; done?: boolean; disabled?: boolean }) {
   return (
@@ -60,7 +61,7 @@ export function RemoveButton({ label, onPress, busy, disabled }: { label: string
 const styles = StyleSheet.create({
   btn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   done: { backgroundColor: Colors.goodTint },
-  pressed: { opacity: 0.7 },
+  pressed: Pressed,
   off: { opacity: 0.4 },
   glyph: { fontFamily: Fonts.bold, fontSize: 22, lineHeight: 24, color: Colors.text },
   glyphDone: { color: Colors.good },

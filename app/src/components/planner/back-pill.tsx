@@ -8,7 +8,8 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, {
   Easing,
   FadeIn,

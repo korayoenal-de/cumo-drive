@@ -3,7 +3,8 @@
  * Später mit eigenem App Build MapLibre: dann wird nur diese Datei ersetzt, die Props bleiben.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType } from 'react';
-import { AppState, Easing as RNEasing, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, Easing as RNEasing, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';

@@ -16,7 +16,8 @@ import { supabase } from '@/lib/supabase';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Share, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -49,6 +50,7 @@ import { MorphAction, type MorphActionRef } from '@/components/ui/morph-action';
 import { findProfiles, type FoundProfile } from '@/lib/profile';
 import { formatKm, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { t, tr } from '@/i18n';
+import { useToastAbove } from '@/components/ui/toast';
 
 /** Platz unter dem Inhalt für die feste Leiste unten */
 const BAR_SPACE = 96;
@@ -65,6 +67,8 @@ export default function AusfahrtDetail() {
   // ping: aus der Mitteilung „fragt, wann du da bist“ (Gemeinsam losfahren, Koray 14.11.)
   const { id, k, ping } = useLocalSearchParams<{ id: string; k?: string; ping?: string }>();
   const insets = useSafeAreaInsets();
+  // feste Hauptaktion unten (56 plus Ränder): der Toast steht darüber
+  useToastAbove(Size.button + Spacing.m * 2 + Spacing.s);
   const session = useSession();
   const ride = useRide();
   const [a, setA] = useState<Ausfahrt | null | undefined>(undefined);
@@ -1004,7 +1008,7 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.4 },
   textBtn: { height: Size.chip, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', paddingHorizontal: Spacing.xl },
   textBtnText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  error: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });
 
 /** Netzfehler in Du Form statt „fetch failed: Abgebrochen“ */

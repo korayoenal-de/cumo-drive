@@ -8,7 +8,8 @@ import { guardDrive } from '@/lib/drive-guard';
 import { avoidSetting } from '@/lib/avoid-settings';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { AddButton, RemoveButton } from '@/components/ui/add-button';
 import { MorphAction, type MorphActionRef } from '@/components/ui/morph-action';
@@ -389,5 +390,5 @@ const styles = StyleSheet.create({
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   disabled: { opacity: 0.4 },
-  error: { color: Colors.signal, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });

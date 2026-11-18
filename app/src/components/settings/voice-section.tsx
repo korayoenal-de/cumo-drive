@@ -20,7 +20,7 @@ import { AppText } from "@/components/ui/text";
 import {
   Colors,
   Fonts,
-  Motion,
+  Pressed,
   Radius,
   Spacing,
   Type,
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     color: Colors.muted,
   },
   value: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
-  pressed: { opacity: 0.85, transform: [{ scale: Motion.pressScale }] },
+  pressed: Pressed,
   loading: { paddingVertical: Spacing.xl },
   list: { maxHeight: 380 },
   listInner: { gap: Spacing.xs },

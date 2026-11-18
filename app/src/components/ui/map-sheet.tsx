@@ -228,9 +228,14 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
     // Unter voller Höhe bleibt der Inhalt immer oben, der Kopf ist dann immer zu sehen
     if (detent < 2 && oy > 1) scrollRef?.current?.scrollTo({ y: 0, animated: false });
   }
+  // JavaScript nur alle 8 pt und am oberen Ende rufen, nicht bei jedem Bild (Audit 18.11.)
+  const sentY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
-    scrollY.set(e.contentOffset.y);
-    scheduleOnRN(onScrollJS, e.contentOffset.y);
+    const oy = e.contentOffset.y;
+    scrollY.set(oy);
+    if (Math.abs(oy - sentY.get()) < 8 && oy > 1) return;
+    sentY.set(oy);
+    scheduleOnRN(onScrollJS, oy);
   });
 
   const step = (d: number) => onDetentChange(Math.max(0, Math.min(2, detent + d)) as Detent);

@@ -5,7 +5,8 @@
 import { ShareSheet } from '@/components/tours/share-sheet';
 import { router } from 'expo-router';
 import { type ComponentRef, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { interpolate, type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SymbolView } from 'expo-symbols';
@@ -345,6 +346,8 @@ export function TourMode({
     const name = t?.name ?? plan.name.trim();
     const ride = await findPlannedRide(id).catch(() => null);
     if (ride && t) {
+      // erst nach dem Flug in den Touren Tab (Blatt zu, Flug, Landung): nie zwei Signale zugleich (Audit 18.11.)
+      await new Promise((r) => setTimeout(r, 1200));
       showToast(tr('{name} aktualisiert. Deine Ausfahrt fährt noch die alte Fassung.', { name }), {
         action: {
           label: tr('Übernehmen'),

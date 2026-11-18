@@ -5,7 +5,8 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';
-import { Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated from 'react-native-reanimated';
 
 import { RouteMap } from '@/components/map/route-map';
@@ -13,7 +14,7 @@ import { softEnter } from '@/components/ui/action-bar';
 import { FUN_NAMES, FunGauge, toFunLevel } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
 import { WarnLabel } from '@/components/ui/warn-label';
-import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadow, Spacing, Type, Pressed } from '@/constants/theme';
 import { allowPass, avoidPass, useAvoidedPasses } from '@/lib/avoid-pass';
 import { findHighlights, highlightFacts, type Highlight } from '@/lib/navigation/highlights';
 import { cumulativeKm } from '@/lib/navigation/route';
@@ -277,5 +278,5 @@ const styles = StyleSheet.create({
   noteText: { fontFamily: Fonts.regular, fontSize: Type.body, lineHeight: 21, color: Colors.muted },
   link: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
   linkText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.signal },
-  pressed: { opacity: 0.85, transform: [{ scale: Motion.pressScale }] },
+  pressed: Pressed,
 });

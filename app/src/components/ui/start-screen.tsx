@@ -8,7 +8,8 @@
  * Alles läuft auf dem UI Thread: ein Zeitwert treibt Pfade, Farben und Schrift.
  */
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -335,7 +336,7 @@ export function StartScreen({ ready, onDone }: { ready: boolean; onDone: () => v
   return (
     <Animated.View style={[StyleSheet.absoluteFill, styles.root, rootStyle]} accessibilityLabel={tr('CUMO DRIVE wird geladen')} accessibilityRole="image">
       <Sky width={width} height={height} still={reduced} />
-      <Pressable style={StyleSheet.absoluteFill} onPress={skip} accessibilityRole="button" accessibilityLabel={tr('Startanimation überspringen')}>
+      <Pressable flat style={StyleSheet.absoluteFill} onPress={skip} accessibilityRole="button" accessibilityLabel={tr('Startanimation überspringen')}>
         <Svg width={width} height={height} viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="xMidYMid slice">
           <Defs>
             <RadialGradient id="glow" cx="50%" cy="50%" r="50%">

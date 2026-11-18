@@ -8,7 +8,8 @@
 import { meta as fmtMeta, strecke, wann } from '@/lib/format';
 import { router } from 'expo-router';
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { ActivityIndicator, AppState, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
   live: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.good },
   liveText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.good },
-  error: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
   row: { flexDirection: 'row', gap: Spacing.s },
   sheet: { gap: Spacing.l },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },

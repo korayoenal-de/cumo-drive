@@ -4,17 +4,19 @@
  */
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { haptic } from '@/lib/haptics';
 import { RouteMap } from '@/components/map/route-map';
 import { CLASS_LINE, tourWarnings } from '@/components/map/route-map-shared';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { useActiveTour } from '@/lib/active-tour';
 import { formatKm } from '@/lib/tour';
 import { t } from '@/i18n';
+import { ToastHost } from '@/components/ui/toast';
 
 export default function KarteScreen() {
   const active = useActiveTour();
@@ -81,6 +83,7 @@ export default function KarteScreen() {
           <AppText style={styles.goText}>{t('Losfahren')}</AppText>
         </Pressable>
       </View>
+      <ToastHost />
     </View>
   );
 }
@@ -123,5 +126,5 @@ const styles = StyleSheet.create({
   chipTextOn: { color: Colors.text, fontFamily: Fonts.semibold },
   go: { marginHorizontal: Spacing.l, height: 58, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   goText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
-  pressed: { opacity: 0.8 },
+  pressed: Pressed,
 });

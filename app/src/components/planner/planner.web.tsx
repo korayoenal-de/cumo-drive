@@ -930,7 +930,7 @@ function MapMenuCard(props: {
       {inRoute ? (
         <button
           role="menuitem"
-          style={{ ...S.menuItem, color: Colors.stopText }}
+          style={{ ...S.menuItem, color: Colors.danger }}
           onClick={() => {
             props.onClose();
             if (menu.wp != null) props.onRemoveAt(menu.wp);

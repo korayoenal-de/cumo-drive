@@ -5,7 +5,8 @@
 import { BackLink } from '@/components/ui/back-link';
 import { SymbolView } from 'expo-symbols';
 import { Children, isValidElement, type ReactNode, type RefObject } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, Switch, View, type ScrollViewInstance } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
@@ -90,5 +91,5 @@ const styles = StyleSheet.create({
   pressed: { backgroundColor: Colors.surface2 },
   title: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
   value: { maxWidth: '50%', fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted },
-  danger: { color: Colors.stopText },
+  danger: { color: Colors.danger },
 });

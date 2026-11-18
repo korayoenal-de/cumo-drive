@@ -5,11 +5,12 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { Chip, ChipRow } from '@/components/ui/chip';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { placesNear, type NearPlace } from '@/lib/stops-along';
 import { formatKm, type LatLon } from '@/lib/tour';
 import { t } from '@/i18n';
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   muted: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.muted },
   dist: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
-  pressed: { opacity: 0.75 },
+  pressed: Pressed,
 });
 
 /**

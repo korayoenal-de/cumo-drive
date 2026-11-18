@@ -5,7 +5,8 @@
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconLabel } from '@/components/ui/btn-icon';
@@ -19,6 +20,7 @@ import { decodeTour, extractCode } from '@/lib/share-code';
 import { isShortCode, resolveShareCode } from '@/lib/share-link';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
 import { t, tr } from '@/i18n';
+import { ToastHost } from '@/components/ui/toast';
 
 const STEP_TEXT: Record<PlanStep, string> = {
   route: tr('Strecke wird berechnet'),
@@ -170,6 +172,7 @@ export default function ScanScreen() {
           <AppText style={styles.hint}>{t('Im Web Planer auf cumodrive.de bei der Tour „An die App senden“ klicken und den Code hier ins Bild halten.')}</AppText>
         ) : null}
       </View>
+      <ToastHost />
     </View>
   );
 }

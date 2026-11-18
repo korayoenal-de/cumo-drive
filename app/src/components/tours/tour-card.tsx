@@ -12,7 +12,8 @@ import { datum, fahrzeit, meta as fmtMeta, strecke } from '@/lib/format';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { SOFT_LAYOUT } from '@/components/ui/action-bar';
@@ -24,7 +25,7 @@ import { IconLabel } from '@/components/ui/btn-icon';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Spacing, Type, Size } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { creditLine, publishTour, unpublishTour } from '@/lib/community';
 import { loadProfile } from '@/lib/group/ride';
@@ -322,7 +323,7 @@ const styles = StyleSheet.create({
   meta: { fontVariant: ['tabular-nums'] },
   round: { minWidth: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   item: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
-  itemPressed: { opacity: 0.7, transform: [{ scale: Motion.pressScale }] },
+  itemPressed: Pressed,
   form: { gap: Spacing.s },
   field: { minHeight: Size.input, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   area: { minHeight: 88, textAlignVertical: 'top' },

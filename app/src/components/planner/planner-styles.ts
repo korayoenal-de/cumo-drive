@@ -1,7 +1,7 @@
 /** Styles des Planers, gemeinsam für alle Planer Dateien. Alle Werte aus den Design Tokens. */
 import { StyleSheet } from 'react-native';
 
-import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   // Tour anpassen unterwegs: Verwerfen als ruhiger Text, Übernehmen als Hauptaktion (Koray 15.11.)
@@ -21,7 +21,7 @@ export const styles = StyleSheet.create({
   stopChipText: { fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.text },
   stopIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.signalTint },
   stopRemove: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
-  pressedSoft: { opacity: 0.8, transform: [{ scale: Motion.pressScale }] },
+  pressedSoft: Pressed,
   linkRow: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.l },
   deleteLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.m },
   deleteLinkText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
@@ -77,7 +77,7 @@ export const styles = StyleSheet.create({
   secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   secondaryOnSurface: { backgroundColor: Colors.surface2 },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.input, color: Colors.text },
-  pressed: { opacity: 0.8 },
+  pressed: Pressed,
   disabled: { opacity: 0.35 },
 
   startRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
@@ -105,7 +105,7 @@ export const styles = StyleSheet.create({
   phaseDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: Colors.line },
   phaseDotDone: { backgroundColor: Colors.good, borderColor: Colors.good },
 
-  errorCard: { backgroundColor: Colors.signalTint },
+  errorCard: { backgroundColor: Colors.dangerTint },
 
   summary: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 48 },
   summaryHint: { minHeight: 36 },
@@ -129,7 +129,7 @@ export const styles = StyleSheet.create({
   funLabelRow: { flexDirection: 'row', alignItems: 'baseline', gap: Spacing.s },
   funValueRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   funDelta: { fontFamily: Fonts.bold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
-  pressedDim: { opacity: 0.6 },
+  pressedDim: Pressed,
   // Balken und Zeile darunter mit 12 statt 8 Abstand (Koray 13.11.)
   workBox: { gap: Spacing.m },
   cancelChip: { height: 44, paddingHorizontal: Spacing.l, borderRadius: 22, justifyContent: 'center', backgroundColor: Colors.surface2 },

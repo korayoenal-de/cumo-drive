@@ -7,13 +7,14 @@
  * Ohne beides ist es eine normale Taste mit Symbol. Regeln: docs/design-prinzipien.md, Abschnitt Aktionen mit Ziel.
  */
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ComponentRef } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
 import { BtnIconView, type BtnIcon } from '@/components/ui/btn-icon';
 import { EASE_OUT } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Size, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Type, Pressed } from '@/constants/theme';
 import { flyTo, type FlyTarget } from '@/lib/fly';
 import { haptic } from '@/lib/haptics';
 
@@ -233,6 +234,6 @@ const styles = StyleSheet.create({
   bg: { position: 'absolute', top: 0, bottom: 0 },
   fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   content: { flexDirection: 'row', alignItems: 'center', gap: ICON_GAP },
-  pressed: { opacity: 0.85, transform: [{ scale: Motion.pressScale }] },
+  pressed: Pressed,
   disabled: { opacity: 0.4 },
 });

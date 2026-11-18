@@ -4,13 +4,14 @@
  * hebt sie orange hervor, die anderen sind grau. Tipp ins Leere schließt die Reihe (im Bildschirm).
  */
 import { useEffect, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated from 'react-native-reanimated';
 
 import { FunMark, RouteThumb } from '@/components/tours/tour-bits';
 import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Pressed } from '@/constants/theme';
 import type { CommunityTour } from '@/lib/community';
 import { useCommunityLine } from '@/lib/community-lines';
 import { fahrzeit, meta as fmtMeta, strecke } from '@/lib/format';
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
   row: { paddingHorizontal: Spacing.l, gap: GAP },
   card: { width: RAIL_CARD_W, height: 76, borderRadius: Radius.l, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.overlay },
   cardOn: { backgroundColor: Colors.surface2 },
-  pressed: { opacity: 0.85 },
+  pressed: Pressed,
   text: { flex: 1, minWidth: 0, gap: 2 },
   name: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.text },
   meta: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted, fontVariant: ['tabular-nums'] },

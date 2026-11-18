@@ -8,7 +8,8 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
-import { Image, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Linking, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { Marker } from 'react-native-maps';
 
 import { OptionsSheet } from '@/components/ui/action-sheet';

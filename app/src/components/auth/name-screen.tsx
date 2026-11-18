@@ -3,7 +3,8 @@
  * Ohne Namen kann einen niemand zu einer Gruppenfahrt einladen.
  */
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NameField, useNameCheck } from '@/components/auth/name-field';
@@ -67,6 +68,6 @@ const styles = StyleSheet.create({
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   disabled: { opacity: 0.4 },
-  error: { color: Colors.signal, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
   switch: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
 });

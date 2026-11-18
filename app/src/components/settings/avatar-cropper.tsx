@@ -5,14 +5,15 @@
  * Die Gesten laufen auf dem UI Thread (Design Prinzip: der Finger führt).
  */
 import { Image } from 'expo-image';
-import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Mask, Rect, Circle } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Pressed } from '@/constants/theme';
 import type { Crop, Picked } from '@/lib/avatars';
 import { t } from '@/i18n';
 
@@ -142,5 +143,5 @@ const styles = StyleSheet.create({
   btnMain: { backgroundColor: Colors.signal },
   btnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   btnMainText: { color: Colors.onSignal },
-  pressed: { opacity: 0.85 },
+  pressed: Pressed,
 });

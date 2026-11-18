@@ -7,11 +7,12 @@
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { listDrives } from '@/lib/drives';
 import { isFreePhase, PRICES, useEntitlement, type PlanId } from '@/lib/entitlement';
@@ -401,8 +402,8 @@ const styles = StyleSheet.create({
   radioSel: { borderWidth: 7, borderColor: Colors.signal },
   cta: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   ctaText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
-  pressed: { opacity: 0.88 },
-  note: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.stopText, textAlign: 'center' },
+  pressed: Pressed,
+  note: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.danger, textAlign: 'center' },
   escapes: { flexDirection: 'row', gap: Spacing.s },
   escape: { flex: 1, height: 48, alignItems: 'center', justifyContent: 'center' },
   escapeText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.text },

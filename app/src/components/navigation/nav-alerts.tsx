@@ -10,13 +10,14 @@
 import { announceMenuOpen, useCloseOnOtherMenu } from '@/lib/navigation/open-menu';
 import { SymbolView } from 'expo-symbols';
 import { useState, useCallback } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { AppText } from '@/components/ui/text';
 import { WarnLabel, ZigzagIcon } from '@/components/ui/warn-label';
-import { Colors, Fonts, Motion, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type, Pressed } from '@/constants/theme';
 import type { FunkState } from '@/lib/group/funk';
 import { quickText, STOP_REASONS, type RideMsg, type RideStop, type StopReason } from '@/lib/group/ride';
 import { highlightFacts, type Highlight } from '@/lib/navigation/highlights';
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
   reasonText: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.onSignal },
   toast: { paddingVertical: Spacing.m },
   toastText: { fontFamily: Fonts.semibold, fontSize: Type.title },
-  pressed: { opacity: 0.75 },
+  pressed: Pressed,
   strip: { gap: Spacing.s, paddingTop: Spacing.m },
   stripRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   stripName: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.text },

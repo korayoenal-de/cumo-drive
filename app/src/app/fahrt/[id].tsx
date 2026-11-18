@@ -8,7 +8,8 @@
  */
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RouteMap } from '@/components/map/route-map';
@@ -16,19 +17,22 @@ import { BackLink } from '@/components/ui/back-link';
 import { Kennzahlen } from '@/components/ui/kennzahlen';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { BAD_REASONS, getDrive, scoreWord, type DriveDetail } from '@/lib/drives';
 import { datum, meta } from '@/lib/format';
 import { openDriveInPlanner } from '@/lib/open-drive';
 import { fmtG } from '@/lib/ride-stats';
 import type { LatLon, Tour } from '@/lib/tour';
 import { t } from '@/i18n';
+import { useToastAbove } from '@/components/ui/toast';
 
 const OLD_RATING: Record<number, string> = { 1: t('Nicht gut'), 2: 'Gut', 3: t('Sensationell') };
 
 export default function FahrtScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  // feste Hauptaktion unten (56 plus Ränder): der Toast steht darüber
+  useToastAbove(Size.button + Spacing.m * 2 + Spacing.s);
   const [d, setD] = useState<DriveDetail | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -149,5 +153,5 @@ const styles = StyleSheet.create({
   bar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: Spacing.m, paddingHorizontal: Spacing.xl, backgroundColor: Colors.ground },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.button },
-  pressed: { opacity: 0.85 },
+  pressed: Pressed,
 });

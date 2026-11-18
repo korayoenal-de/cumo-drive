@@ -3,13 +3,14 @@
  * so leise wie die Runden Chips. Antippen öffnet die Erklärung mit den vier Teilen und der Skala.
  */
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { ElevationChart } from '@/components/planner/elevation-chart';
 import { OptionsSheet } from '@/components/ui/action-sheet';
 import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Pressed } from '@/constants/theme';
 import { TOUR_FUN_NAMES, TOUR_FUN_STEPS, type FunFacet, type TourFun } from '@/lib/fun-score';
 import type { LatLon } from '@/lib/tour';
 import { t } from '@/i18n';
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
   },
   active: { backgroundColor: Colors.line },
   best: { borderColor: Colors.signal },
-  pressed: { opacity: 0.7 },
+  pressed: Pressed,
   value: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
   delta: { height: 28, paddingHorizontal: 10, borderRadius: 14, justifyContent: 'center' },
   deltaUp: { backgroundColor: Colors.goodTint },

@@ -4,7 +4,8 @@
  */
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { SubScreen } from '@/components/settings/settings-ui';
 import { Chip, ChipGroup } from '@/components/ui/chip';

@@ -9,7 +9,8 @@ import { askMembership, limitsLive } from '@/lib/paywall';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -30,6 +31,7 @@ import { formatMinutes } from '@/lib/intent';
 import { useLibrary, type SavedTour } from '@/lib/library';
 import { formatKm, haversine } from '@/lib/tour';
 import { t, tr } from '@/i18n';
+import { ToastHost } from '@/components/ui/toast';
 
 const DAYS = 28;
 
@@ -360,6 +362,7 @@ export default function AusfahrtNeu() {
           </Animated.View>
         )}
       </ScrollView>
+      <ToastHost />
     </View>
   );
 }
@@ -417,5 +420,5 @@ const styles = StyleSheet.create({
   primaryOff: { backgroundColor: Colors.signalDeep },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.button },
   warn: { color: Colors.warn },
-  error: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });

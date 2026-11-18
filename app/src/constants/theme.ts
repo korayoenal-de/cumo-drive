@@ -55,6 +55,8 @@ export const Colors = {
  * alles Bedienbare in Inter. Nichts unter 15 pt außer Caption auf Karte, Plaketten und Tab Leiste.
  */
 export const Type = {
+  /** Kleinstschrift: Zähler in Plaketten, Uhrzeit im Chat, Initialen (Audit 18.11., vorher feste 10 bis 12) */
+  micro: 11,
   /** nur Kartenpins, Plaketten, Tab Leiste */
   caption: 13,
   /** früher 14; jetzt wie body, damit nichts unter 15 pt fällt */
@@ -150,6 +152,10 @@ export const Motion = {
   enter: 260,
   /** Dauer, mit der ein Bottom Sheet hereinfährt (ms) */
   sheet: 300,
+  /** Ausblenden und Verschwinden (ms), kürzer als das Erscheinen (Audit 18.11., vorher 120 bis 180 gemischt) */
+  exit: 160,
+  /** Kleinste Wechsel wie ein Symbol, das erscheint (ms) */
+  quick: 120,
   pressScale: 0.985,
   /**
    * Größenänderung von Bedienelementen (Puls beim Speichern, aktiver Tab, Anheben beim Ziehen):
@@ -158,3 +164,25 @@ export const Motion = {
    */
   pop: 0.02,
 } as const;
+
+/**
+ * Abstände mit Rolle (Audit 18.11.2026): dieselbe Rolle hat überall denselben Wert. Die Werte kommen aus Spacing.
+ */
+export const Layout = {
+  /** Seitenrand, auf jeder Seite und in jeder Ebene */
+  page: Spacing.xl,
+  /** zwischen Abschnitten einer Seite; im Kartenblatt des Planers Spacing.section */
+  sections: Spacing.xxl,
+  /** Titel einer Seite oder Ebene zum ersten Inhalt */
+  titleGap: Spacing.xl,
+  /** Abschnittstitel zu seinem Inhalt */
+  labelGap: Spacing.m,
+  /** zwischen Karten einer Liste */
+  list: Spacing.s,
+  /** Karte innen und Lücke in der Karte */
+  card: Spacing.l,
+  cardGap: Spacing.m,
+} as const;
+
+/** Gedrückt: jede Taste gibt gleich nach (Regel Druck). Kommt über den Baustein Pressable aus components/ui/tap. */
+export const Pressed = { transform: [{ scale: Motion.pressScale }], opacity: 0.85 } as const;

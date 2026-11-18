@@ -3,7 +3,8 @@
  * In Ordnung, Entfernen (mit Hinweis an den Betroffenen) oder Konto sperren, beides mit Rückfrage.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { Avatar } from '@/components/community/ride-bits';
 import { SubScreen } from '@/components/settings/settings-ui';
@@ -107,14 +108,14 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.s },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  kicker: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.stopText },
+  kicker: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.danger },
   snap: { backgroundColor: Colors.surface2, borderRadius: Radius.m, padding: Spacing.m },
   snapText: { fontFamily: Fonts.medium, fontSize: Type.body, lineHeight: 21 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   btn: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   btnText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   danger: { backgroundColor: Colors.dangerTint },
-  dangerText: { color: Colors.stopText },
+  dangerText: { color: Colors.danger },
   input: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
-  error: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });

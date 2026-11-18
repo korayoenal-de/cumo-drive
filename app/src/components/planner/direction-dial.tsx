@@ -3,7 +3,8 @@
  * (rastet auf acht Richtungen ein), der Fächer zeigt, wohin die Runde führt. In der Mitte Zufall.
  */
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';

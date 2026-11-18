@@ -8,7 +8,8 @@ import { datum, fahrzeit, meta as fmtMeta, plaetze, strecke, wann } from '@/lib/
 import { router, useFocusEffect, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { TypoTabs } from '@/components/planner/planner-parts';
 import { RouteThumb } from '@/components/tours/tour-bits';
@@ -24,7 +25,7 @@ import { Screen } from '@/components/ui/screen';
 import { IconLabel } from '@/components/ui/btn-icon';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { setEditTour } from '@/lib/edit-tour';
 import { backfillAuthors } from '@/lib/community';
@@ -474,7 +475,7 @@ const styles = StyleSheet.create({
   tourCard: { backgroundColor: Colors.surface, borderRadius: Radius.l, paddingHorizontal: Spacing.m, paddingVertical: Spacing.m, gap: Spacing.s },
   head: { gap: 2, paddingHorizontal: Spacing.xs },
   actions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
-  pressed: { opacity: 0.7 },
+  pressed: Pressed,
   pillPrimary: { flex: 1, height: 44, paddingHorizontal: Spacing.m, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   pillPrimaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.body },
   pill: { height: 44, paddingHorizontal: Spacing.m, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },

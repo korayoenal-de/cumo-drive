@@ -1,6 +1,7 @@
 /** Blockierte Drivers (Koray 12.11.): Liste mit Aufheben. */
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { Avatar } from '@/components/community/ride-bits';
 import { SubScreen } from '@/components/settings/settings-ui';
@@ -58,5 +59,5 @@ const styles = StyleSheet.create({
   name: { flex: 1, fontFamily: Fonts.bold, fontSize: Type.title },
   btn: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   btnText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  error: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });

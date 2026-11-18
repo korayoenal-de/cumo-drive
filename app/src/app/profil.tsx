@@ -3,7 +3,8 @@
  * darunter die Vorschau, wie andere dich unter Drivers sehen. Oben das Profilfoto (13.11.): Tippen klappt die
  * Möglichkeiten auf (Fotos, Kamera, entfernen), wie überall in der App direkt an der Stelle.
  */
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 
@@ -17,7 +18,7 @@ import { haptic } from '@/lib/haptics';
 import { BioField, BirthdayField, HomeField, usePrivacy } from '@/components/settings/community-profile';
 import { SubScreen } from '@/components/settings/settings-ui';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { shownBirthday } from '@/lib/drivers';
 import { setDisplayName, useMyProfile } from '@/lib/profile';
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
   photoBtn: { width: 96, height: 96 },
   photoBadge: { position: 'absolute', right: 0, bottom: 0, width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: Colors.ground },
   gapS: { gap: Spacing.s },
-  pressed: { opacity: 0.85 },
+  pressed: Pressed,
   grow: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   label: { paddingHorizontal: 4, fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
@@ -246,5 +247,5 @@ const styles = StyleSheet.create({
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   disabled: { opacity: 0.4 },
   padH: { paddingHorizontal: Spacing.l },
-  error: { color: Colors.stopText, fontFamily: Fonts.semibold },
+  error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });

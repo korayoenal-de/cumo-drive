@@ -4,7 +4,8 @@
  */
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Linking, PanResponder, Pressable, Switch, View } from 'react-native';
+import { ActivityIndicator, Linking, PanResponder, Switch, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import { SymbolView } from 'expo-symbols';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { EASE_OUT } from '@/components/ui/motion';

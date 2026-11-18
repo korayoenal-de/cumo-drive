@@ -10,7 +10,8 @@
  */
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ComponentRef, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { ActionSheet, SHEET_GONE_MS, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
@@ -18,7 +19,7 @@ import { FloatMenu, type Anchor } from '@/components/ui/float-menu';
 import type { BtnIcon } from '@/components/ui/btn-icon';
 import { MorphAction, MORPH_MS, type MorphActionRef } from '@/components/ui/morph-action';
 import { SOFT_LAYOUT } from '@/components/ui/motion';
-import { Colors, Motion, Spacing, Type } from '@/constants/theme';
+import { Colors, Motion, Spacing, Type, Pressed } from '@/constants/theme';
 import { t } from '@/i18n';
 
 
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   flex: { flex: 1 },
   float: { position: 'absolute', left: 0, right: 0, bottom: '100%', paddingBottom: Spacing.s, zIndex: 2 },
-  pressed: { opacity: 0.8, transform: [{ scale: Motion.pressScale }] },
+  pressed: Pressed,
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   big: { width: 56, height: 56, borderRadius: 28 },
   roundOpen: { backgroundColor: Colors.line },

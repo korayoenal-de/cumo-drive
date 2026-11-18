@@ -4,7 +4,8 @@
  */
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { Linking, Pressable, View } from 'react-native';
+import { Linking, View } from 'react-native';
+import { Pressable } from '@/components/ui/tap';
 
 import { HighlightList } from '@/components/planner/highlight-list';
 import { closedHint, usePassLive } from '@/lib/pass-live';
