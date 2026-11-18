@@ -5,7 +5,7 @@
  *
  * Legende (animate): subtiler Austausch zwischen Segmenten und Stern, nie beides zugleich (siehe LegendGauge).
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -86,11 +86,32 @@ const EASE_OUT = Easing.out(Easing.cubic);
 const EASE_IN_OUT = Easing.inOut(Easing.quad);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-export function FunGauge({ level, size = 20, animate = false }: { level: FunLevel; size?: number; animate?: boolean }) {
+/**
+ * intro (Joy of Use, kleine Belohnungen): beim ersten Zeigen füllen sich die Segmente einmal im Uhrzeigersinn bis zur
+ * Stufe. Nur dort, wo ein Highlight einzeln gezeigt wird (Details, Ansage), nicht in Listen.
+ */
+/** Abstand der Segmente beim einmaligen Füllen (ms) */
+const INTRO_STEP_MS = 70;
+
+export function FunGauge({ level, size = 20, animate = false, intro = false }: { level: FunLevel; size?: number; animate?: boolean; intro?: boolean }) {
   const reduced = useReducedMotion();
   const label = tr('Fahrspaß {v0}, {level} von 5', { v0: FUN_NAMES[level], level });
-  if (animate && level === 5 && !reduced) return <LegendGauge size={size} label={label} />;
-  const n = FILLED[level];
+  const full = FILLED[level];
+  const legend = animate && level === 5 && !reduced;
+  const fill = intro && !reduced && !legend;
+  const [shown, setShown] = useState(fill ? 0 : full);
+  useEffect(() => {
+    if (!fill) return;
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setShown(i);
+      if (i >= full) clearInterval(id);
+    }, INTRO_STEP_MS);
+    return () => clearInterval(id);
+  }, [fill, full]);
+  if (legend) return <LegendGauge size={size} label={label} />;
+  const n = fill ? Math.min(shown, full) : full;
   // Kleine Logos (unter 24 pt) ohne graue Flächen, nur die orangen Segmente (Koray 7.11.)
   const small = size < 24;
   return (

@@ -51,7 +51,7 @@ export function HighlightCard({ h, distM }: { h: Highlight; distM: number }) {
             {[warnRest(h.warn)?.replace(/\.$/, ''), highlightFacts(h)].filter(Boolean).join(' · ')}
           </AppText>
         </View>
-        <FunGauge level={toFunLevel(h.level)} size={44} animate />
+        <FunGauge level={toFunLevel(h.level)} size={44} animate intro />
       </View>
     </GlassPanel>
   );

@@ -75,7 +75,7 @@ export function FunSheet({ fun, name, visible, onClose, check, twiceKm = 0, line
       {fun && (
         <View style={styles.sheet}>
           <View style={styles.head}>
-            <FunGauge level={fun.level} size={48} />
+            <FunGauge level={fun.level} size={48} intro />
             <View style={styles.flex}>
               <View style={styles.scoreRow}>
                 <AppText style={styles.big}>{fun.score}</AppText>

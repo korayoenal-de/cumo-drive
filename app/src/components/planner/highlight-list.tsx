@@ -153,7 +153,7 @@ function HighlightDetail({ h, line, cum, onClose }: { h: Highlight; line: LatLon
         <RouteMap tour={part} interactive={false} style={StyleSheet.absoluteFill} />
         {/* Fahrspaß Pegel als kleine Plakette neben dem X (Koray 13.11.: schwebte vorher ohne Bezug unter dem Titel) */}
         <View style={styles.levelPill} accessible accessibilityLabel={t('Fahrspaß {v0}', { v0: FUN_NAMES[lv] })}>
-          <FunGauge level={lv} size={24} animate={lv >= 5} />
+          <FunGauge level={lv} size={24} animate={lv >= 5} intro />
           <AppText style={styles.levelPillText}>{FUN_NAMES[lv]}</AppText>
         </View>
         <Pressable

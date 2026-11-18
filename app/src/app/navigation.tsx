@@ -32,6 +32,7 @@ import { PACE_NOTES_RELEASED, setDriveSetting, useDriveSettings } from '@/lib/dr
 import { appVersion } from '@/lib/feedback';
 import { showToast } from '@/lib/toast';
 import { ToastHost } from '@/components/ui/toast';
+import { useCountUp } from '@/components/ui/count-up';
 import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetTour, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
 import { FUN_NAMES, toFunLevel } from '@/components/ui/fun-gauge';
@@ -1438,15 +1439,17 @@ function SavedNote({ saved }: { saved: string | null }) {
 
 /** Fahrtstatistik nach der Fahrt (Konsistenzprüfung 15.11., K10, T2): Label über dem Wert wie überall, ohne leere Zellen */
 function StatsGrid({ st }: { st: RideStats }) {
+  // Strecke und Kurven zählen einmal hoch, wenn die Statistik erscheint (Joy of Use, kleine Belohnungen)
+  const p = useCountUp();
   const items: [string, string | null][] = [
-    [tr('Strecke'), strecke(st.km)],
+    [tr('Strecke'), strecke(p < 1 ? Math.round(st.km * p) : st.km)],
     [tr('Fahrzeit'), fahrzeit(st.movingMin)],
     ['Schnitt', `${Math.round(st.avgKmh)} km/h`],
     ['Spitze', st.maxKmh ? `${Math.round(st.maxKmh.value)} km/h` : null],
     [st.maxLatG ? `Quer, Kurve ${st.maxLatG.side}` : 'Quer', st.maxLatG ? fmtG(st.maxLatG.value) : null],
     [tr('Stärkste Bremsung'), st.maxBrakeG ? fmtG(st.maxBrakeG.value) : null],
     [tr('Stärkste Beschleunigung'), st.maxAccelG ? fmtG(st.maxAccelG.value) : null],
-    [tr('Kurven'), String(st.curves)],
+    [tr('Kurven'), String(Math.round(st.curves * p))],
   ];
   return (
     <View style={styles.statsGrid}>

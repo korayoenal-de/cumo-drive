@@ -34,6 +34,7 @@ import { FunSheet, routeCheck } from '@/components/ui/fun-pill';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { BACK_PILL_H, BackPill } from './back-pill';
 import { RadarChip, ScanChip } from './radar-chip';
+import { DiceTip } from './dice-tip';
 import { usePillText } from './use-pill';
 import { tourFun, type TourFun } from '@/lib/fun-score';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
@@ -186,6 +187,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   const lastStops = useRef<Stop[]>([]);
   /** Gewürfelte Runden mit Fahrspaß Wert, damit man zu einer besseren zurückkehren kann (höchstens fünf) */
   const [rolls, setRolls] = useState<{ tour: PlannedTour; req: TourRequest; stops: Stop[]; fun: TourFun | null }[]>([]);
+  /** die laufende Planung kommt aus Neu würfeln: dann kippt der Würfel im Kopf einmal um */
+  const [rolling, setRolling] = useState(false);
   const [funOpen, setFunOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -413,6 +416,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   async function run(prepare: (signal: AbortSignal) => Promise<TourRequest>, stops: Stop[], seed = newSeed(), keep = false, ready?: Promise<PlannedTour>) {
     abort.current?.abort();
     if (!ready) dropNextRoll();
+    setRolling(keep);
     // für Neu würfeln: was gerade zu sehen ist, und die bisherigen Runden zum Vergleich
     const before = view;
     const earlier = keep ? rolls : [];
@@ -887,6 +891,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           {/* Balken mit Prozent statt Logo (Koray 8.11.) */}
           <ProgressBar step={phaseIndex(view.phase)} expectMs={12000} done={radar?.phase === 'aufloesen'} doneMs={REVEAL_MS - 300} />
           <View style={styles.summary}>
+            {rolling && radar?.phase !== 'aufloesen' && <DiceTip />}
             <AppText variant="title" style={styles.flex} numberOfLines={1}>
               {radar?.phase === 'aufloesen' ? tr('Fertig') : `Rundtour, ${roundKm} km`}
             </AppText>

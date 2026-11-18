@@ -18,7 +18,7 @@ Jede Rückfrage, jedes Menü und jede Meldung nutzt genau eines dieser Muster. B
 | **Bottom Sheet mit Inhalt** (`OptionsSheet`) | kurze Eingabe zu einem Objekt, höchstens zwei Felder | In der Community veröffentlichen | Tipp daneben, Fertig |
 | **Ebene** (Modal als Page Sheet) | eigene Aufgabe mit viel Inhalt oder Tastatur, Wischen nach unten schließt | Ortssuche, Highlight Details, Karteneinstellungen | Wischen, X oben |
 | **Schwebende Karte über der Karte** | Aktionen zu etwas auf der Karte, die Karte bleibt sichtbar | angetippter Pass, neuer Punkt durch langen Druck | Tipp auf die Karte |
-| **Toast** | Bestätigung einer erledigten Aktion, nichts mehr zu tun | Gespeichert unter Touren, Tour gelöscht, In der Community veröffentlicht | verschwindet nach 2,6 s, mit Folgeaktion nach 5 s |
+| **Toast** | Bestätigung einer erledigten Aktion ohne sichtbares Ergebnis, nichts mehr zu tun (Speichern, Merken und Veröffentlichen fliegen stattdessen, siehe Aktionen mit Ziel) | Tour gelöscht, Exportiert, Fahrzeug gelöscht | verschwindet nach 2,6 s, mit Folgeaktion nach 5 s |
 | **Hinweis im Inhalt** | Zustand oder Fehler, der zu einer Stelle gehört | Feld leer, Route geändert und nicht gespeichert, Standort nicht freigegeben | verschwindet, wenn der Grund weg ist |
 | **Vollbild** | Modus, der alles andere ersetzt | Navigation, QR Scan, Mitgliedschaft | eigener Knopf |
 
@@ -36,7 +36,7 @@ Regeln:
 * Duplizieren gibt es nicht mehr; Varianten entstehen über „Als neue Tour speichern“. Im ⋯ des Planers steht bei Änderungen „Änderungen verwerfen“.
 * Hängt eine geplante Ausfahrt an der Tour, bietet der Toast nach dem Überschreiben „Übernehmen“ an.
 
-## 3. Bewegung mit Federn (Bounce geregelt am 6.11.2026)
+## 3. Bewegung (ohne Überschwingen, geregelt am 6.11.2026)
 * Alle Animationen nutzen `Motion` aus `theme.ts`. Keine linearen Übergänge.
 * Ebenen und Optionen (Bottom Sheets, schwebende Aktionen, Toasts, Listen) erscheinen ohne Feder: Auslaufkurve EASE_OUT, Sheets 300 ms, Optionen 260 ms, gestaffelt 45 ms (components/ui/motion.ts). Seit 6.11. nachmittags, weil die Federn dort noch nachwippten.
 * Federn `press` (Drücken) und `snap` nur noch für Gesten und Druck (Blatt ziehen, Tab Leiste, Drücken), ohne Überschwingen. Keine Standard Feder von Reanimated.
@@ -121,7 +121,7 @@ Bewusst ohne Bewegung:
 Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 
 **Schrift**
-- Archivo nur für Gelesenes: Screen Titel (Display 34/36), Titel von Ebenen (26/30), Tournamen, Kennzahlen (22/26). Immer Archivo 900, kein zweites Gewicht.
+- Archivo nur für Gelesenes: Screen Titel (Display 34/36), Tournamen und Highlight Namen (26/30), Kennzahlen (22/26). Immer Archivo 900, kein zweites Gewicht. Titel von Ebenen und Blättern stehen seit 18.11. in Inter Bold 26/30, normal geschrieben (`SheetHead`).
 - Alles Bedienbare in Inter. Große Haupt Reiter (Tour planen, Rundtour; Gespeichert, Gefahren): Inter ExtraBold 26/30, normal geschrieben, inaktiv `tabOff` #57575C (Variante D, 9.11.).
 - Titel und Tasten Inter Bold 17/22, Zeilen und Labels Inter Semibold 15/20, Caption 13/16 nur auf der Karte, auf Plaketten und in der Tab Leiste. Nichts sonst unter 15 pt.
 - Versalien nur in Archivo.
@@ -130,7 +130,7 @@ Gilt für alle Screens; Werte stehen als Tokens in `app/src/constants/theme.ts`.
 - ActionSheet: Optionen zu einem Objekt (2 bis 6 Zeilen).
 - ConfirmSheet: Rückfrage vor Endgültigem.
 - OptionsSheet: ein bis zwei Felder, auch der Name beim Speichern. Zentrierte Dialoge gibt es nicht.
-- Vollfläche (pageSheet): Suche, Orte in der Nähe, Highlight, Karteneinstellungen; Kopf mit Titel 26, Rolle grau, Schließen 44.
+- Vollfläche (pageSheet): Suche, Orte in der Nähe, Highlight, Karteneinstellungen; Kopf überall gleich (`SheetHead`, components/ui/sheet-head.tsx): Anfasser, Titel Inter Bold 26, Schließen 44.
 - Schwebendes Menü: schnelle Aktionen am Auslöser (⋯).
 - Ausnahme: das Menü in der Navigation schließt nach 4 s von selbst.
 - Abdunkelung immer `scrim` (0.5), Flächen über der Karte `overlay` oder `overlaySurface`.
@@ -208,13 +208,38 @@ Gestaffeltes Hinaus und Hineinschieben beim Tabwechsel ausprobiert und wieder en
 ## Abo und Gratisplan (Koray 18.11.2026)
 Zurück zum Gratisplan ist keine Karte zum Auswählen, sondern eine ruhige Zeile unter „Plan wechseln“, die Apples Abo Seite öffnet. Die Vorteile der Mitgliedschaft nennen nur, was die kostenlose Version nicht kann (überall losfahren, Gruppe bis 6 Autos, Funk).
 
+## Audit 18.11.2026 (Koray: komplett umsetzen)
+Bericht im Projekt: `claude/design-audit-2026-11-18.md`. Daraus gelten diese Regeln:
+
+**Druck.** `Pressable` kommt aus `components/ui/tap.tsx`, nicht aus react-native. Jede Taste gibt damit gleich nach (`Pressed` in theme.ts: 98,5 Prozent und Deckkraft 0,85). Ohne eigenen Stil nur Deckkraft. `flat` für große Flächen (Abdunkelung, ganzer Bildschirm). Eigene Druckstile nur, wo die Fläche selbst wechselt (Zeile im Blatt).
+
+**Abstände mit Rolle** (`Layout` in theme.ts): Seitenrand 20 auf jeder Seite und in jeder Ebene, zwischen Abschnitten 28 (im Kartenblatt des Planers 40), Titel zum Inhalt 20, Abschnittstitel zum Inhalt 12, zwischen Karten 8, Karte innen 16 mit Lücke 12. Seiten mit Zurück Pille beginnen 8 unter dem sicheren Rand, Tab Seiten 20.
+
+**Schrift.** Graue Labels nie unter 15. Kleinstschrift `Type.micro` (11) nur für Zähler in Plaketten, Uhrzeit im Chat und Initialen.
+
+**Hauptaktion.** Ist eine Taste die einzige Aktion der Ansicht oder eines leeren Zustands, ist sie orange (Fahrzeug hinzufügen, Ausfahrt anlegen, Anmelden, Fahrer entdecken, Wohnort angeben, Zu Touren).
+
+**Fehler** sind rot (`danger`, `dangerTint`), auch im Toast. `stopText` ist nur noch ein alter Name im Token.
+
+**Toast.** Steht über der Tab Leiste, auf Seiten mit fester Hauptaktion darüber (`useToastAbove`), in der Navigation unter der Abbiegekarte. Jeder modale Bildschirm bindet einen eigenen `ToastHost` ein, sonst liegt er verdeckt im Wurzel Layout. Fliegt ein Symbol ins Ziel, wartet der Toast. Ein Toast mit Folgeaktion wird von einer Nebenmeldung nicht verdrängt, sie kommt danach.
+
+**Bewegung.** Dauern nur aus Tokens: `enter` 260, `sheet` 300, `exit` 160, `quick` 120. Nachrücken immer `SOFT_LAYOUT`, nie mit Feder. Aufklappen am Ort gilt auch für: Formular in der Garage, Plan wechseln, Fahrerkarte, gefahrene Tour löschen.
+
+**Kleine Belohnungen** (Leinwand „Joy of Use“, Weitere Fälle): Würfel kippt beim Neu würfeln einmal um (`DiceTip`). Strecke und Kurven zählen in der Statistik nach der Fahrt einmal hoch (`useCountUp`). Der Fahrspaß Pegel füllt sich einmal im Uhrzeigersinn, wo ein Highlight einzeln gezeigt wird (`FunGauge intro`: Details, Ansage, Fahrspaß Blatt). Offen: die neue Linie zeichnet sich vom Start aus auf die Karte.
+
+**Treffer auf Karten.** Tipps werden über echte Bildschirmpunkte entschieden (`pickOnScreen`, lib/map-hit.ts), der nächste Punkt im Umkreis gewinnt, auch in 3D Satellit. Pässe haben eine Trefferfläche von 44 pt.
+
+**Offen aus dem Audit:** Paywall und leere Zustände neu denken (erst als Leinwand), Radio als ein Baustein, Design System Artefakt und Projekt Doku nachziehen, Liste der Touren mit einem gemeinsamen Satz Blätter.
+
 ## Haptik (entschieden am 10.11.2026, ab Build 21)
 - Nur wenn der Finger etwas bewegt oder einen Zustand auslöst; keine Haptik für normale Taps, pro Geste ein Impuls außer Rastungen.
 - In der Fahrt nur der Funk (das Handy steckt in der Halterung, CarPlay hat keine Haptik).
 - Punkte verschieben: leicht beim Abheben, Rastung bei jeder neuen Position, weich beim Ablegen.
 - Losfahren: ein kräftiger Impuls. Langer Druck auf die Karte: leicht, wenn der Punkt sitzt. Funk: fest beim Drücken, leicht beim Loslassen.
 - Prio 1 Aktionen (Koray 17.11.2026): weich, wenn ein Symbol im Ziel landet (`ziel`), kräftig, wenn Losfahren, Start und die anderen Fahrtstarts zusammenklappen (`losfahren`).
-- Tokens in `lib/haptics.ts` (abheben, rastung, ablegen, losfahren, ziel, punkt, sendung, sendungEnde).
+- Tokens in `lib/haptics.ts` (abheben, rastung, ablegen, losfahren, ziel, punkt, sendung, sendungEnde, ergebnis, warnung, fehler).
+- Seit 18.11. (Audit): Rastung je Stern der Fahrtbewertung, je Schritt bei Länger und Kürzer und wenn die rote Löschtaste beim Wischen ganz offen ist. `ergebnis`, wenn die Rundtour steht. `warnung`, wenn Endgültiges bestätigt wird. `fehler` bei einem roten Toast. `ziel`, wenn ein Kontakt bestätigt ist.
+- Ausnahmen von „in der Fahrt nur der Funk“: langer Druck auf die Karte (Punkt) und Halt der Lead, beides löst der Finger bewusst aus.
 
 ## Namen (10.11.2026)
 - Der Tab heißt „Touren“ (früher Meine Touren), in allen Texten gleich: „Unter Touren gespeichert“, „Aus Touren entfernt“. „Routen“ ist der Reiter in der Community.
