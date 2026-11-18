@@ -684,8 +684,14 @@ export function TourMode({
 
       {/* Detailansicht einer gespeicherten Tour (Koray 16.11.): Name mit Plakette bei Änderung; Umbenennen im ⋯ */}
       {plan.cloudId && routeTour && (
-        <View style={tourStyles.nameRow}>
-          <AppText variant="title" numberOfLines={2} style={tourStyles.nameText} accessibilityRole="header">
+        // Tipp auf den Namen benennt um, wie Umbenennen im ⋯ (Koray 18.11.)
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={plan.name.trim() || routeTour.name}
+          accessibilityHint={tr('Umbenennen')}
+          onPress={() => setRenaming(true)}
+          style={({ pressed }) => [tourStyles.nameRow, pressed && { opacity: 0.7 }]}>
+          <AppText variant="title" numberOfLines={2} style={tourStyles.nameText}>
             {plan.name.trim() || routeTour.name}
           </AppText>
           {plan.dirty && (
@@ -693,7 +699,7 @@ export function TourMode({
               <AppText style={tourStyles.badgeText}>{tr('Geändert')}</AppText>
             </View>
           )}
-        </View>
+        </Pressable>
       )}
 
       <Section label={tr('Route')} action={pts.length ? { label: tr('Zurücksetzen'), onPress: resetForm } : undefined}>

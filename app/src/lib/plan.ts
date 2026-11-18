@@ -619,6 +619,10 @@ export async function planChanged(
   onStep?: (s: PlanStep) => void,
   signal?: AbortSignal,
 ): Promise<PlannedTour | null> {
+  // Ein Punkt fällt weg: ganz neu planen. Sonst bleiben die Etappen daneben auf dem Weg, den sie wegen des
+  // entfernten Punkts genommen hatten, und Einfügen plus Entfernen führt nicht zur alten Tour zurück
+  // (Bedienfolgen R2, 18.11.: 144 statt 140 km)
+  if (profiles.length < prevProfiles.length) return null;
   const w = windowFor(prev, prevProfiles, points, profiles);
   if (!w) return null;
   const middle = await planLegs(name, w.points, w.profiles, avoid, onStep, signal);

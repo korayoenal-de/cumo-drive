@@ -460,6 +460,22 @@ function SearchBody({
           {hotelMode && (
             // Reiter als Chips mit gleitender Auswahl wie überall (Koray 18.11.)
             <ChipRow>
+              {NEAR_TABS.map((nt) => (
+                <Chip
+                  key={nt.id}
+                  label={nt.label}
+                  active={nt.id === nearKind}
+                  onSurface
+                  onPress={() => {
+                    setNearKind(nt.id);
+                    Keyboard.dismiss();
+                  }}
+                />
+              ))}
+            </ChipRow>
+          )}
+          {hasRoute && !hotelMode && (
+            <ChipRow>
               {cats.filter((c) => !stopsOnly || c.id !== 'alle').map((c) => (
                 <Chip
                   key={c.id}
@@ -476,29 +492,6 @@ function SearchBody({
                 />
               ))}
             </ChipRow>
-          )}
-          {hasRoute && !hotelMode && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.tabs} style={styles.tabsBox}>
-              {cats.filter((c) => !stopsOnly || c.id !== 'alle').map((c) => {
-                const on = c.id === cat;
-                return (
-                  <Pressable
-                    key={c.id}
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: on }}
-                    onPress={() => {
-                      setCat(c.id);
-                      setScale(1);
-                      if (query === current) setQuery('');
-                      // Liste braucht Platz: Tastatur einklappen
-                      if (c.id !== 'alle') Keyboard.dismiss();
-                    }}
-                    style={({ pressed }) => [styles.tab, on && styles.tabOn, pressed && styles.pressed]}>
-                    <AppText style={[styles.tabText, on && styles.tabTextOn]}>{c.label}</AppText>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
           )}
         </View>
 
@@ -709,7 +702,9 @@ function SearchBody({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: Colors.ground },
-  head: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.l, gap: Spacing.m },
+  // Abstände nach dem Design System (Koray 18.11.: der Kopf wirkte gequetscht): oben wie ein Blatt, zwischen
+  // Titel, Feld und Chips space-l, nach unten space-xl
+  head: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xxl, paddingBottom: Spacing.xl, gap: Spacing.l },
   role: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   // Regel Eingaben (Koray 18.11.): Radius 14 wie jedes Feld, Rand immer da (durchsichtig), orange im Fokus
@@ -734,7 +729,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64, paddingHorizontal: Spacing.l, paddingVertical: Spacing.s },
   rowPressed: { backgroundColor: Colors.pressTint },
   icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface2 },
-  rowMain: { flex: 1, minWidth: 0 },
+  rowMain: { flex: 1, minWidth: 0, gap: Spacing.xs },
   name: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   sub: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, fontVariant: ['tabular-nums'] },
   recNote: { fontFamily: Fonts.semibold, fontSize: Type.caption + 2, lineHeight: 19, color: Colors.muted, marginBottom: Spacing.xs },
@@ -758,7 +753,7 @@ const styles = StyleSheet.create({
   gauge: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   widenLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.l },
   widenLinkText: { fontFamily: Fonts.bold, fontSize: Type.input, color: Colors.signal },
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.m, marginBottom: Spacing.xs },
   title: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: 28, color: Colors.text, textTransform: 'uppercase' },
   loading: { marginTop: Spacing.xl },
   widen: { alignSelf: 'flex-start', height: 48, paddingHorizontal: Spacing.xl, borderRadius: Radius.pill, justifyContent: 'center', backgroundColor: Colors.surface2 },
