@@ -38,7 +38,8 @@ const SORTS: { id: Sort; label: string }[] = [
   { id: 'lang', label: tr('Lang') },
 ];
 
-const ringColor = (d: Driver) => d.garage?.find((g) => g.look)?.look?.color ?? C.text;
+// Ring immer weiß, wie in der App (Koray 18.11.)
+const ringColor = (_d: Driver) => C.text;
 
 export function CommunityPanel(props: {
   selected: string | null;

@@ -27,8 +27,11 @@ import { type Driver } from '@/lib/drivers';
 import { useIsBlocked } from '@/lib/moderation';
 import { t, tr } from '@/i18n';
 
-/** Wagenfarbe des ersten Autos als Ring um den Kreis, sonst weiß */
-export const ringColor = (d: Driver) => d.garage?.find((g) => g.look)?.look?.color ?? Colors.text;
+/**
+ * Ring um den Kreis: immer weiß (Koray 18.11.). Bis dahin trug er die Wagenfarbe des ersten Autos; das las sich wie
+ * ein Status, und dunkle Farben verschwanden auf dem Grund. Die Wagenfarbe zeigt der Fuhrpark der aufgeklappten Karte.
+ */
+export const ringColor = (_d: Driver) => Colors.text;
 
 const write = (d: Driver) => router.push({ pathname: '/nachrichten/[id]', params: { id: d.id, name: d.name } });
 
