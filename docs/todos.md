@@ -23,7 +23,8 @@ Stand: 18. November 2026, 14:30 (gegen Code und Git Verlauf geprüft; Prüfung v
 * [ ] Prüfdienst mit Herkunft (ohne_token_nach_art, nach_absender, ip_adressen) und ungedeckelten Spitzen einspielen (cumo-auth.sh vom 18.11., Zählmodus), einen Tag zählen
 * [x] Testlauf weist sich mit einem Testschlüssel aus (Koray 18.11.): Kopfzeile X-Cumo-QA, Wert aus ROUTING_QA_KEY, auf den Servern in /etc/cumo-auth.env. Gebaut und lokal getestet, noch nicht eingespielt
 * [ ] 19.11. mit Koray: Testschlüssel erzeugen und eintragen (beide Server, GitHub Secret ROUTING_QA_KEY, Umgebung der Claude Sitzungen), neues cumo-auth.sh einspielen, /stats ansehen, Grenze route nach echter Spitze anheben, dann `bash /root/cumo-auth.sh enforce` auf beiden Servern
-* [ ] 19.11. mit Koray, App Store Connect: Screenshots EN und IT, Abos mit Screenshot für die Prüfung, Adresse für die Server Mitteilungen von Apple, Store Build wählen, zur Prüfung hinzufügen
+* [ ] 19.11. mit Koray, App Store Connect: Abos mit Screenshot für die Prüfung, Adresse für die Server Mitteilungen von Apple, Store Build wählen, zur Prüfung hinzufügen
+* [ ] Screenshots EN und IT erst mit Version 1.0.1 (Koray 18.11.: Einreichung ohne, bis dahin zeigt Apple die deutschen Bilder; die deutschen dienen als Vorlage)
 * [x] Webseite mit Kopfzeilen und Strecken kachelweise live, Kopfzeilen geprüft (17.11.)
 * [x] Migrationen live: highlight_feedback nur mit Anmeldung, Link Grenzen, Konten Grenze, road-data kachelweise mit Kontingent, Einwilligungen (17.11.)
 * [x] Hook Before User Created aktiv, E Mail Bestätigung an (17.11.)
