@@ -181,7 +181,9 @@ export function Accordion({ label, summary, defaultOpen = false, children }: { l
         </Animated.View>
       </Pressable>
       {mounted && (
-        <Animated.View style={[{ overflow: 'hidden' }, body]}>
+        // Die Fläche schneidet beim Wachsen ab; sie reicht bis an den Rand des Blatts, damit wischbare Reihen
+        // (ChipRow) rechts bis an den Rand laufen (Koray 18.11.)
+        <Animated.View style={[accClip, body]}>
           {/* Abstand zwischen den Teilen wie im Kopf (Koray 18.11.: Chips und Hinweis klebten aneinander) */}
           <Animated.View style={[styles.gapM, accAbs, inner]} onLayout={(e) => contentH.set(e.nativeEvent.layout.height)}>
             {children}
@@ -192,7 +194,8 @@ export function Accordion({ label, summary, defaultOpen = false, children }: { l
   );
 }
 // Inhalt liegt frei über der wachsenden Fläche, damit er seine volle Höhe misst
-const accAbs = { position: 'absolute', left: 0, right: 0, top: 0 } as const;
+const accAbs = { position: 'absolute', left: Spacing.xl, right: Spacing.xl, top: 0 } as const;
+const accClip = { overflow: 'hidden', marginHorizontal: -Spacing.xl } as const;
 
 /** Kurzfassung der Vermeiden Schalter für die zugeklappte Kopfzeile */
 export function avoidSummary(a: { closures: boolean; ferries: boolean; tolls: boolean; rough: boolean }): string {
