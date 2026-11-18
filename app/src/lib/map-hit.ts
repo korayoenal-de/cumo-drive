@@ -143,3 +143,39 @@ export function hitKm(region: HitRegion, widthPt: number, radiusPt = HIT_RADIUS.
   const kmPerPt = (region.longitudeDelta * 111.32 * Math.cos((region.latitude * Math.PI) / 180)) / Math.max(1, widthPt);
   return radiusPt * kmPerPt;
 }
+
+/**
+ * Treffer über echte Bildschirmpunkte (Koray 18.11.): die Karte selbst sagt, wo eine Marke gerade liegt
+ * (pointForCoordinate). Das stimmt auch in 3D Satellit und auf dem Globus, wo der gemeldete Ausschnitt und die
+ * Mercator Rechnung oben daneben liegen und Tipps deshalb ins Leere gingen. Die nächste Marke im Umkreis gewinnt.
+ * lift und wide beschreiben eine Plakette über ihrem Punkt (Stufe Nah). Schlägt die Abfrage fehl: undefined, dann
+ * rechnet der Aufrufer wie bisher.
+ */
+export async function pickOnScreen<T extends { id: string; p: LatLon }>(
+  pins: T[],
+  tap: { x: number; y: number },
+  project: (p: LatLon) => Promise<{ x: number; y: number }>,
+  radius: (pin: T) => number,
+  shape?: (pin: T) => { lift: number; wide: boolean },
+): Promise<T | null | undefined> {
+  try {
+    const pts = await Promise.all(pins.map((p) => project(p.p)));
+    let best: T | null = null;
+    let bestD = Infinity;
+    pins.forEach((p, i) => {
+      const pt = pts[i];
+      if (!pt || !Number.isFinite(pt.x) || !Number.isFinite(pt.y)) return;
+      const sh = shape?.(p) ?? { lift: 0, wide: false };
+      const dx = pt.x - tap.x;
+      const dy = pt.y - sh.lift - tap.y;
+      const d = Math.hypot(sh.wide ? dx * 0.55 : dx, dy);
+      if (d <= radius(p) && d < bestD) {
+        bestD = d;
+        best = p;
+      }
+    });
+    return best;
+  } catch {
+    return undefined;
+  }
+}

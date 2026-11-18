@@ -18,7 +18,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Shadow } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { clusterPins, type Region } from '@/lib/map-cluster';
-import { hitKm, pickPin, routeStroke, simplifyForScreen } from '@/lib/map-hit';
+import { HIT_RADIUS, hitKm, pickOnScreen, pickPin, routeStroke, simplifyForScreen } from '@/lib/map-hit';
 import type { LatLon } from '@/lib/tour';
 import { tr } from '@/i18n';
 
@@ -108,8 +108,9 @@ export function CommunityMap({ pins, selected, onSelect, onTap, others, keepView
   useEffect(() => {
     onTapRef.current = onTap;
   }, [onTap]);
-  const tapRef = useRef<{ at: LatLon | null; marker: string | null; timer: ReturnType<typeof setTimeout> | null; decidedAt: number; decided: string | null }>({
+  const tapRef = useRef<{ at: LatLon | null; pt: { x: number; y: number } | null; marker: string | null; timer: ReturnType<typeof setTimeout> | null; decidedAt: number; decided: string | null }>({
     at: null,
+    pt: null,
     marker: null,
     timer: null,
     decidedAt: 0,
@@ -124,20 +125,41 @@ export function CommunityMap({ pins, selected, onSelect, onTap, others, keepView
     if (s.timer) return;
     s.timer = setTimeout(() => {
       const L = latest.current;
-      const near = s.at ? pickPin(L.shown, s.at, L.region, L.width, L.stage, L.selected) : null;
-      const id = near?.id ?? s.marker ?? null;
       const at = s.at;
-      s.timer = null;
+      const pt = s.pt;
+      const marker = s.marker;
       s.at = null;
+      s.pt = null;
       s.marker = null;
-      s.decidedAt = Date.now();
-      s.decided = id;
-      if (onTapRef.current) onTapRef.current(at, id, hitKm(L.region, L.width));
-      else onSelect(id);
+      const finish = (near: { id: string } | null) => {
+        const id = near?.id ?? marker ?? null;
+        s.timer = null;
+        s.decidedAt = Date.now();
+        s.decided = id;
+        if (onTapRef.current) onTapRef.current(at, id, hitKm(L.region, L.width));
+        else onSelect(id);
+      };
+      const byRegion = () => (at ? pickPin(L.shown, at, L.region, L.width, L.stage, L.selected) : null);
+      const m = map.current;
+      // Erst über echte Bildschirmpunkte (stimmt auch in 3D Satellit und auf dem Globus), sonst wie bisher gerechnet
+      if (pt && m) {
+        const lookOf = (p: CommunityPin): PinStage => (p.id === L.selected ? 'nah' : L.stage);
+        void pickOnScreen(
+          L.shown,
+          pt,
+          (p) => m.pointForCoordinate(ll(p)),
+          (p) => HIT_RADIUS[lookOf(p)],
+          (p) => {
+            const plate = lookOf(p) === 'nah' && p.kind !== 'driver';
+            return { lift: plate ? 22 : 0, wide: plate };
+          },
+        ).then((hit) => finish(hit === undefined ? byRegion() : hit));
+      } else finish(byRegion());
     }, 90);
   };
-  const tapAt = (at: LatLon) => {
+  const tapAt = (at: LatLon, pt: { x: number; y: number } | null) => {
     tapRef.current.at = at;
+    tapRef.current.pt = pt;
     decideSoon();
   };
   const tapMarker = (id: string) => {
@@ -203,7 +225,8 @@ export function CommunityMap({ pins, selected, onSelect, onTap, others, keepView
       onPress={(e) => {
         if (e.nativeEvent.action === 'marker-press') return;
         const c = e.nativeEvent.coordinate;
-        tapAt([c.latitude, c.longitude]);
+        const pos = e.nativeEvent.position;
+        tapAt([c.latitude, c.longitude], pos && Number.isFinite(pos.x) ? { x: pos.x, y: pos.y } : null);
       }}
       onLayout={(e) => setMapWidth(e.nativeEvent.layout.width)}
       onRegionChangeComplete={onRegion}

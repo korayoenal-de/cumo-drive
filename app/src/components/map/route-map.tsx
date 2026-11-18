@@ -23,6 +23,7 @@ import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { passPoint, PASSES } from '@/lib/passes';
 import { RADAR_FAST_MS, RADAR_MS, RADAR_REPEAT_MS, REVEAL_MS, SCAN_MS, type RadarRoad, type RadarSpot, type Scan } from '@/lib/radar';
 import { haversine, trimDecimals, type CheckClass, type LatLon, type Tour } from '@/lib/tour';
+import { pickOnScreen } from '@/lib/map-hit';
 import { haptic } from '@/lib/haptics';
 import { CarSprite, carLookFor, frameFor, TOP_FRAME } from '@/components/map/car-sprite';
 import { useVehicles } from '@/lib/vehicle';
@@ -42,6 +43,8 @@ const FOLLOW_PAUSE_MS = 10000;
 const ll = ([latitude, longitude]: LatLon): LatLng => ({ latitude, longitude });
 
 const MAP_TYPE: Record<MapStyle, 'mutedStandard' | 'hybrid' | 'hybridFlyover'> = { standard: 'mutedStandard', satellit: 'hybrid', '3d': 'hybridFlyover' };
+/** Fangradius für Pässe in Punkten, wie auf der Community Karte */
+const PASS_HIT_PT = 30;
 const TIER_DOT = { ikone: Colors.signal, bekannt: Colors.warn, mittel: Colors.text } as const;
 
 /** Spuren der eigenen Fahrten, einmal geladen und dann behalten */
@@ -493,9 +496,26 @@ export function RouteMap({
         onMarkerPress={tap.marker}
         onPress={(e) => {
           if (e.nativeEvent.action === 'marker-press') return;
+          const pos = e.nativeEvent.position;
+          // der Wächter verwirft den Kartentipp, wenn dieselbe Berührung schon eine Marke getroffen hat
           tap.map(() => {
-            setOpenWarn(null);
-            onPressMap?.();
+            const plain = () => {
+              setOpenWarn(null);
+              onPressMap?.();
+            };
+            // Pässe sind kleine Punkte: knapp daneben getippt zählt trotzdem (Koray 18.11.). Die Karte sagt, wo sie
+            // auf dem Bildschirm liegen, das stimmt auch in 3D Satellit.
+            const m = map.current;
+            if (onPressPass && layers && settings.passes && shownPasses.length && m && pos && Number.isFinite(pos.x)) {
+              void pickOnScreen(
+                shownPasses.map((ps) => ({ id: ps.id, p: passPoint(ps), ps })),
+                { x: pos.x, y: pos.y },
+                (p) => m.pointForCoordinate(ll(p)),
+                () => PASS_HIT_PT,
+              ).then((hit) => (hit ? onPressPass(hit.ps) : plain()));
+              return;
+            }
+            plain();
           });
         }}
         onLongPress={
@@ -537,10 +557,12 @@ export function RouteMap({
                   : undefined
               }
               tracksViewChanges={false}>
-              <View
-                accessibilityLabel={`${ps.name}, ${ps.ele.toLocaleString('de-DE')} m`}
-                style={[styles.passDot, { backgroundColor: TIER_DOT[ps.tier] }, pickedPassIds?.has(ps.id) && styles.passPicked, selectedPassId === ps.id && !pickedPassIds?.has(ps.id) && styles.passSelected]}
-              />
+              {/* 44 pt Trefferfläche um den kleinen Punkt (Prinzip 7) */}
+              <View style={styles.passHit} accessibilityLabel={`${ps.name}, ${ps.ele.toLocaleString('de-DE')} m`}>
+                <View
+                  style={[styles.passDot, { backgroundColor: TIER_DOT[ps.tier] }, pickedPassIds?.has(ps.id) && styles.passPicked, selectedPassId === ps.id && !pickedPassIds?.has(ps.id) && styles.passSelected]}
+                />
+              </View>
             </Marker>
           ))}
         {weatherItems.length > 0 && <WeatherMarkers items={weatherItems} onPress={setWeatherOpen} />}
@@ -965,6 +987,7 @@ const styles = StyleSheet.create({
   },
   // kleiner Pfeil (Dreieck nach oben, die Drehung gibt die Fahrtrichtung)
   arrow: { width: 0, height: 0, borderLeftWidth: 4, borderRightWidth: 4, borderBottomWidth: 7, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: Colors.ground },
+  passHit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   passDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: Colors.ground },
   // wie der Knopf Karteneinstellungen (48 pt, deckend, Schatten nach unten), darunter rechts
   compass: { position: 'absolute', right: Spacing.l, width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', boxShadow: Shadow.button },

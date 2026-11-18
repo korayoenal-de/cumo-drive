@@ -21,7 +21,7 @@ import { PASSES, passesAlong } from '../passes';
 import { planReminder } from '../plan-reminder';
 import { remainingStops } from '../navigation/replan';
 import { errorFingerprint, topFrames } from '../error-fingerprint';
-import { pickPin, routeStroke, simplifyForScreen } from '../map-hit';
+import { pickOnScreen, pickPin, routeStroke, simplifyForScreen } from '../map-hit';
 import { closureExclude, onPassRoad } from '../road-closures';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '../highlight-roads';
 import { RECOMMENDED } from '../recommended';
@@ -447,6 +447,17 @@ describe('Community Karte: Treffer und Linie (Koray 17.11.)', () => {
   it('weit: knapp daneben trifft trotzdem den nächsten Punkt', () => {
     assert.equal(pickPin(pins, [47.1, 10.25], region, 400, 'weit')?.id, 'b');
     assert.equal(pickPin(pins, [47, 10.1], region, 400, 'weit')?.id, 'a');
+  });
+  it('Bildschirmpunkte: der nächste Punkt im Umkreis gewinnt, auch wenn die Karte verzerrt ist (Koray 18.11.)', async () => {
+    // Projektion wie auf dem Globus: nichts davon passt zur Mercator Rechnung
+    const project = async (p: LatLon) => ({ x: p[1] === 10 ? 100 : 180, y: 300 });
+    assert.equal((await pickOnScreen(pins, { x: 160, y: 310 }, project, () => 34))?.id, 'b');
+    assert.equal((await pickOnScreen(pins, { x: 110, y: 295 }, project, () => 34))?.id, 'a');
+    assert.equal(await pickOnScreen(pins, { x: 300, y: 600 }, project, () => 34), null);
+    // Plakette über dem Punkt: 22 pt höher, seitlich breiter gefangen
+    assert.equal((await pickOnScreen(pins, { x: 120, y: 278 }, project, () => 38, () => ({ lift: 22, wide: true })))?.id, 'a');
+    // Abfrage schlägt fehl: undefined, der Aufrufer rechnet wie bisher
+    assert.equal(await pickOnScreen(pins, { x: 1, y: 1 }, async () => Promise.reject(new Error('x')), () => 34), undefined);
   });
   it('weit: freie Karte hebt die Auswahl auf', () => {
     assert.equal(pickPin(pins, [45, 8], region, 400, 'weit'), null);
