@@ -21,9 +21,10 @@ export const THUMB = 56;
  * die dunkle Fläche als ruhiger Platzhalter in derselben Größe; die Linie blendet dann auf.
  */
 /** muted: grau statt orange (nicht gewählte Tour in der Reihe überlagernder Touren, 17.11.) */
-export const RouteThumb = memo(function RouteThumb({ shape, fade, muted }: { shape: ThumbShape | null | undefined; fade?: boolean; muted?: boolean }) {
+/** raised: in flachen Listen auf dem Grund liegt das Bild auf surface (Fläche mit Grund, Koray 18.11.) */
+export const RouteThumb = memo(function RouteThumb({ shape, fade, muted, raised }: { shape: ThumbShape | null | undefined; fade?: boolean; muted?: boolean; raised?: boolean }) {
   return (
-    <View style={styles.thumb} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+    <View style={[styles.thumb, raised && styles.raised]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
       {shape && (
         <Animated.View entering={fade ? FadeIn.duration(Motion.enter) : undefined}>
           <Svg width={THUMB} height={THUMB}>
@@ -73,6 +74,7 @@ export function FunMark({ score, reserve }: { score: number | null | undefined; 
 
 const styles = StyleSheet.create({
   thumb: { width: THUMB, height: THUMB, borderRadius: Radius.m, backgroundColor: Colors.ground, overflow: 'hidden' },
+  raised: { backgroundColor: Colors.surface },
   badge: { alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.goodTint },
   badgeText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.good },
   fromBadge: { alignSelf: 'flex-start', maxWidth: '100%', marginTop: 2, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 3, paddingRight: Spacing.s, paddingVertical: 2, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },

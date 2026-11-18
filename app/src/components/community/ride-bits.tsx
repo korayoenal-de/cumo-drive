@@ -8,7 +8,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
 import { useAvatar } from '@/lib/avatars';
-import { Colors, Fonts, Leading, Radius, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Type } from '@/constants/theme';
 import { freeSeats, initials, weekday, type Ausfahrt } from '@/lib/ausfahrten';
 import { t } from '@/i18n';
 
@@ -98,9 +98,10 @@ const styles = StyleSheet.create({
   tagMuted: { backgroundColor: Colors.surface2 },
   tagDanger: { backgroundColor: Colors.dangerTint },
   tagText: { fontFamily: Fonts.bold, fontSize: Type.caption },
-  date: { width: 52, borderRadius: Radius.m, backgroundColor: Colors.surface2, alignItems: 'center', paddingVertical: 6 },
-  dateToday: { backgroundColor: Colors.signalTint },
+  // Typo Spalte ohne Kachel (Fläche mit Grund, Koray 18.11.): Wochentag grau über dem Tag, heute beides orange
+  date: { width: 44, alignItems: 'center' },
+  dateToday: {},
   dateWd: { fontFamily: Fonts.bold, fontSize: 13, lineHeight: 16, color: Colors.muted },
-  dateDay: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, color: Colors.text },
+  dateDay: { fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: Leading.h2, color: Colors.text, fontVariant: ['tabular-nums'] },
   dateSignal: { color: Colors.signal },
 });

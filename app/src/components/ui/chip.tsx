@@ -49,7 +49,7 @@ export function Chip({
       onLayout={onLayout}
       // gedrückt wie alle Tasten (Regel Druck)
       style={({ pressed }) => [styles.chip, row ? styles.clear : active ? styles.on : { backgroundColor: bg }, pressed && styles.pressed]}>
-      <AppText style={[styles.label, dark && styles.labelOn]}>{label}</AppText>
+      <AppText style={[styles.label, row && !dark && styles.labelOff, dark && styles.labelOn]}>{label}</AppText>
     </Pressable>
   );
 }
@@ -140,7 +140,8 @@ function useSlide() {
   const layer = (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {Object.entries(boxes).map(([k, b]) => (
-        <View key={k} style={[styles.under, { left: b.x, top: b.y, width: b.w, backgroundColor: b.bg }]} />
+        // inaktive Chips ohne Fläche (Fläche mit Grund, Koray 18.11.): nur die gleitende weiße Fläche ist gefüllt
+        <View key={k} style={[styles.under, { left: b.x, top: b.y, width: b.w }]} />
       ))}
       <Animated.View style={[styles.under, styles.on, { left: 0, top: 0 }, pill]} />
     </View>
@@ -159,4 +160,5 @@ const styles = StyleSheet.create({
   pressed: Pressed,
   label: { fontSize: Type.body, fontFamily: Fonts.semibold },
   labelOn: { color: Colors.ground, fontFamily: Fonts.bold },
+  labelOff: { color: Colors.textSoft },
 });

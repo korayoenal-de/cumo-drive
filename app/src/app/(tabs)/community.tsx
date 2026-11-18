@@ -36,7 +36,7 @@ import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/actio
 import { PublishSheet } from '@/components/tours/tour-card';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
+import { Colors, Fonts, Layout, Leading, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, relDay, shortDate, showCancelled, type Ausfahrt } from '@/lib/ausfahrten';
 import { approachMinutes, departAt, syncRideReminders, currentSpot } from '@/lib/ride-reminders';
 import { useSession } from '@/lib/auth';
@@ -189,6 +189,22 @@ export default function Community() {
     return l.sort((a, b) => Number(b.isMe) - Number(a.isMe) || dist(a) - dist(b) || a.name.localeCompare(b.name, 'de'));
   }, [drivers, dq, dseg, contacts]);
   const contactCount = (drivers ?? []).filter((d) => contacts.byId.get(d.id) === 'kontakt').length;
+  /**
+   * Abschnitte statt Status in jeder Zeile (Fläche mit Grund, Koray 18.11.): du, Kontakte, Angefragt, Weitere Drivers.
+   * Titel nur, wenn es mehr als einen Abschnitt gibt. Unter Kontakte ist die Liste schon gefiltert, dort ohne Titel.
+   */
+  const driverGroups = useMemo(() => {
+    if (dseg === 'kontakte') return [{ key: 'alle', title: null as string | null, list: shownDrivers }];
+    const st = (d: Driver) => contacts.byId.get(d.id) ?? null;
+    const raw = [
+      { key: 'ich', title: null as string | null, list: shownDrivers.filter((d) => d.isMe) },
+      { key: 'kontakte', title: tr('Kontakte'), list: shownDrivers.filter((d) => !d.isMe && st(d) === 'kontakt') },
+      { key: 'angefragt', title: tr('Angefragt'), list: shownDrivers.filter((d) => !d.isMe && st(d) === 'angefragt') },
+      { key: 'weitere', title: tr('Weitere Drivers'), list: shownDrivers.filter((d) => !d.isMe && st(d) !== 'kontakt' && st(d) !== 'angefragt') },
+    ].filter((g) => g.list.length > 0);
+    const titled = raw.filter((g) => g.title).length > 1;
+    return raw.map((g) => ({ ...g, title: titled ? g.title : null }));
+  }, [dseg, shownDrivers, contacts]);
   const others = (drivers ?? []).filter((d) => !d.isMe).length;
 
   const pins: CommunityPin[] = useMemo(() => {
@@ -518,23 +534,34 @@ export default function Community() {
                   <TextField maxFontSizeMultiplier={1.2} value={dq} onChangeText={setDq} placeholder={dseg === 'kontakte' ? tr('Kontakte durchsuchen') : tr('Name, Ort oder Auto suchen')} placeholderTextColor={Colors.muted} style={styles.search} accessibilityLabel={dseg === 'kontakte' ? tr('Kontakte durchsuchen') : tr('Drivers durchsuchen')} returnKeyType="search" />
                 )}
                 {shownDrivers.length === 0 && (dseg === 'alle' || contactCount > 0) && <AppText muted>{dseg === 'kontakte' ? tr('Kein Kontakt passt zur Suche.') : tr('Kein Mitglied passt zur Suche.')}</AppText>}
-                {shownDrivers.map((d) => (
-                  <Animated.View
-                    // klappt eine Karte auf, rücken die anderen weich nach (Anlass 3)
-                    layout={SOFT_LAYOUT}
-                    key={d.id}
-                    onLayout={(e) => {
-                      driverY.current.set(d.id, e.nativeEvent.layout.y);
-                    }}>
-                    {d.id === selected ? (
-                      <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} zuklappen`} onPress={() => select(null)}>
-                        <DriverCard d={d} big />
-                      </Pressable>
-                    ) : (
-                      <DriverCard d={d} unread={unread ? (unreadBy[d.id] ?? 0) : 0} onPress={() => select(d.id, true)} />
-                    )}
-                  </Animated.View>
-                ))}
+                {driverGroups.flatMap((g, gi) => [
+                  ...(g.title
+                    ? [
+                        <Animated.View layout={SOFT_LAYOUT} key={`t-${g.key}`} style={gi > 0 ? styles.groupGap : undefined}>
+                          <AppText style={styles.groupTitle} accessibilityRole="header">
+                            {g.title} <AppText style={styles.groupCount}>{g.list.length}</AppText>
+                          </AppText>
+                        </Animated.View>,
+                      ]
+                    : []),
+                  ...g.list.map((d) => (
+                    <Animated.View
+                      // klappt eine Karte auf, rücken die anderen weich nach (Anlass 3)
+                      layout={SOFT_LAYOUT}
+                      key={d.id}
+                      onLayout={(e) => {
+                        driverY.current.set(d.id, e.nativeEvent.layout.y);
+                      }}>
+                      {d.id === selected ? (
+                        <Pressable accessibilityRole="button" accessibilityLabel={`${d.name} zuklappen`} onPress={() => select(null)}>
+                          <DriverCard d={d} big />
+                        </Pressable>
+                      ) : (
+                        <DriverCard d={d} grouped={g.key === 'angefragt'} unread={unread ? (unreadBy[d.id] ?? 0) : 0} onPress={() => select(d.id, true)} />
+                      )}
+                    </Animated.View>
+                  )),
+                ])}
               </>
             )}
           </View>
@@ -967,6 +994,10 @@ const styles = StyleSheet.create({
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, height: Size.icon, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
   addText: { fontFamily: Fonts.bold, fontSize: Type.body },
   body: { gap: Spacing.s, paddingBottom: Spacing.xl },
+  // Abschnitte der Drivers (Fläche mit Grund, 18.11.): Titel Inter Bold 17, Zahl grau, Abstand wie zwischen Abschnitten
+  groupTitle: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text, marginBottom: Layout.labelGap - Spacing.s },
+  groupCount: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.muted },
+  groupGap: { marginTop: Layout.sections - Spacing.s },
   segWrap: { position: 'absolute', left: Spacing.l, right: Spacing.l, alignItems: 'flex-start' },
   seg: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', height: 44, padding: 4, gap: 2, borderRadius: 22, backgroundColor: Colors.overlaySurface, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' },
   segItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 36, minWidth: 40, paddingHorizontal: 11, borderRadius: 18 },
