@@ -32,7 +32,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Layout } from '@/constants/theme';
 import {
   answerAnfrage, arrival, ausfahrtTeilnehmer, ausfahrtTour, cancelAusfahrt, clock, freeSeats, listAnfragen,
-  listAusfahrten, longDate, monthYear, requestAusfahrt, sendNachricht, withdrawAusfahrt, ausfahrtAbsagen, rideByLink, rideLink, type Absage, type Anfrage, type Ausfahrt, type LinkedRide, type Teilnehmer,
+  listAusfahrten, longDate, requestAusfahrt, sendNachricht, withdrawAusfahrt, ausfahrtAbsagen, rideByLink, rideLink, type Absage, type Anfrage, type Ausfahrt, type LinkedRide, type Teilnehmer,
   setAusfahrtPublic,
 } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
@@ -533,7 +533,7 @@ export default function AusfahrtDetail() {
                   <View style={styles.flex}>
                     <AppText style={styles.name}>{r.name}</AppText>
                     <AppText variant="caption" muted numberOfLines={2}>
-                      {[r.memberSince ? tr('Dabei seit {v0}', { v0: monthYear(r.memberSince) }) : null, r.drives ? `${r.drives} Fahrten` : null, r.driveKm ? `${formatKm(r.driveKm, 0)} km` : null].filter(Boolean).join('  ·  ') || tr('Neu bei CUMO DRIVE')}
+                      {[r.drives ? `${r.drives} Fahrten` : null, r.driveKm ? `${formatKm(r.driveKm, 0)} km` : null].filter(Boolean).join('  ·  ') || tr('Neu bei CUMO DRIVE')}
                     </AppText>
                   </View>
                 </View>

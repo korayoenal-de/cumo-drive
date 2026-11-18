@@ -19,7 +19,7 @@ import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
-import { freeSeats, listAusfahrten, longDate, monthYear, type Ausfahrt } from '@/lib/ausfahrten';
+import { freeSeats, listAusfahrten, longDate, type Ausfahrt } from '@/lib/ausfahrten';
 import { answerContact, removeContact, requestContact, useContacts, type Contact } from '@/lib/contacts';
 import { inviteToRide } from '@/lib/group/invites';
 import { showToast } from '@/lib/toast';
@@ -80,7 +80,8 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
             <AppText style={styles.bigName} numberOfLines={1}>{d.name}{d.isMe ? ' (du)' : ''}</AppText>
             {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>{t('Hat heute Geburtstag')}</AppText> : null}
             <AppText variant="caption" muted numberOfLines={1}>
-              {[d.age != null ? `${d.age} Jahre` : null, d.homeName ?? t('Wohnort nicht angegeben'), d.memberSince ? t('dabei seit {v0}', { v0: monthYear(d.memberSince) }) : null].filter(Boolean).join('  ·  ')}
+              {/* „dabei seit" zum Start ausgeblendet (Koray 18.11.): alle Konten sind neu, die Angabe sagt noch nichts */}
+              {[d.age != null ? `${d.age} Jahre` : null, d.homeName ?? t('Wohnort nicht angegeben')].filter(Boolean).join('  ·  ')}
             </AppText>
           </View>
         </View>
@@ -145,12 +146,15 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
                 </AppText>
               )}
             </Pressable>
-            <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={styles.quietBtn}>
-              <AppText style={styles.quietText}>{t('Melden')}</AppText>
-            </Pressable>
-            <Pressable accessibilityRole="button" onPress={() => setBlock(true)} style={styles.quietBtn}>
-              <AppText style={styles.quietText}>{t('Blockieren')}</AppText>
-            </Pressable>
+            {/* Melden und Blockieren als Symbole rechts (Koray 18.11.): Fahne und Verbotszeichen, je 44 pt, mit Beschriftung für VoiceOver */}
+            <View style={styles.quietIcons}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t('Melden')} onPress={() => setReport(true)} style={styles.quietIcon}>
+                <SymbolView name="flag" size={20} weight="semibold" tintColor={Colors.muted} />
+              </Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel={t('Blockieren')} onPress={() => setBlock(true)} style={styles.quietIcon}>
+                <SymbolView name="nosign" size={20} weight="semibold" tintColor={Colors.muted} />
+              </Pressable>
+            </View>
           </View>
         )}
         {!d.isMe && <ReportSheet visible={report} kind="profile" refId={d.id} userId={d.id} name={d.name} onClose={() => setReport(false)} />}
@@ -317,7 +321,9 @@ const styles = StyleSheet.create({
   pendingText: { fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.muted },
   accept: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   acceptText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
-  quiet: { flexDirection: 'row', flexWrap: 'wrap', columnGap: Spacing.l },
+  quiet: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', columnGap: Spacing.l },
+  quietIcons: { flexDirection: 'row', columnGap: Spacing.xs },
+  quietIcon: { width: Size.icon, height: Size.icon, alignItems: 'center', justifyContent: 'center' },
   quietOn: { color: Colors.text },
   quietBtn: { minHeight: 44, justifyContent: 'center' },
   quietText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },

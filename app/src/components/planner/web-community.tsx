@@ -607,7 +607,7 @@ function DriverCard(props: { d: Driver; km: number | null; selected: boolean; on
           ) : null}
           {d.birthdayToday ? <span style={{ ...S.metricLabel, color: C.text, fontWeight: 700 }}>{tr('Hat heute Geburtstag')}</span> : null}
           {d.age != null ? <span style={S.metricLabel}>{d.age}{tr(' Jahre')}</span> : null}
-          {d.memberSince ? <span style={S.metricLabel}>{tr('Dabei seit ')}{d.memberSince.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</span> : null}
+          {/* „Dabei seit" zum Start ausgeblendet (Koray 18.11.) */}
           {!d.isMe ? (
             <span style={appHint}>{d.allowMessages ? tr('Nachrichten an Drivers schreibst du in der App unter Community.') : tr('Dieser Driver möchte gerade keine Nachrichten bekommen.')}</span>
           ) : null}
