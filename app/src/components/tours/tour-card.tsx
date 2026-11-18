@@ -48,6 +48,8 @@ const LAYOUT = SOFT_LAYOUT;
 
 export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: SavedTour) => void }) {
   const [sheet, setSheet] = useState<'menu' | 'share' | 'publish' | 'delete' | 'rename' | null>(null);
+  const [everOpen, setEverOpen] = useState(false);
+  if (sheet !== null && !everOpen) setEverOpen(true);
   const scale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 
@@ -144,6 +146,10 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
       </View>
       </Swipeable>
 
+      {/* Die fünf Blätter entstehen erst beim ersten Öffnen (Prüfung vor der Veröffentlichung 18.11.): vorher trug jede
+          Karte der Liste alle fünf mit, bei vielen Touren spürbar */}
+      {everOpen && (
+        <>
       <ActionSheet visible={sheet === 'menu'} title={t.name} subtitle={meta} items={items} onClose={() => setSheet((s) => (s === 'menu' ? null : s))} />
       <ShareSheet
         visible={sheet === 'share'}
@@ -170,6 +176,8 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
         }}
       />
       <DeleteTourSheet tour={t} visible={sheet === 'delete'} onClose={() => setSheet(null)} />
+        </>
+      )}
     </Animated.View>
   );
 }
@@ -328,7 +336,6 @@ const styles = StyleSheet.create({
   name: { fontFamily: Fonts.semibold, fontSize: Type.title, lineHeight: 21 },
   meta: { fontVariant: ['tabular-nums'] },
   round: { minWidth: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  item: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Spacing.m, borderRadius: Radius.m, backgroundColor: Colors.surface2 },
   itemPressed: Pressed,
   form: { gap: Spacing.s },
   field: { minHeight: Size.input, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },

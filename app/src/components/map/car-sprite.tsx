@@ -214,7 +214,6 @@ const styles = StyleSheet.create({
   thumb: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1A1A1D', borderRightWidth: 1, borderRightColor: Colors.ground },
   thumbOn: { backgroundColor: '#2A2A2E' },
   thumbBar: { position: 'absolute', left: 10, right: 10, bottom: 4, height: 3, borderRadius: 2, backgroundColor: Colors.text },
-  coverLabel: { textAlign: 'center', fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   stage: { alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: '#1F1F22', paddingVertical: 4 },
 });
 

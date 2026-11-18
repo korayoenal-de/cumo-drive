@@ -1,6 +1,6 @@
 # CUMO DRIVE Dokumentation
 
-Stand: 15. November 2026, 8:30. Dieses Dokument ersetzt bei Widersprüchen alle älteren Stände (kontext.md, Kurzfassung vom 5.11.).
+Stand: 15. November 2026, 8:30. Neuere Stände: Design Regeln vom 18.11. in design-prinzipien.md (Abschnitt Audit), Prüfung vor der Veröffentlichung in pruefung-vor-veroeffentlichung-2026-11-18.md. Dieses Dokument ersetzt bei Widersprüchen alle älteren Stände (kontext.md, Kurzfassung vom 5.11.).
 
 ## Überblick
 

@@ -7,8 +7,8 @@
 import { useMemo, useRef, useState, type DragEvent } from 'react';
 
 import { directNote, type PlannedTour } from '@/lib/plan';
-import { closedHint, passState, type LiveRow } from '@/lib/pass-live';
-import { passPoint, passSummary, type Pass } from '@/lib/passes';
+import { closedHint, type LiveRow } from '@/lib/pass-live';
+import { passPoint, type Pass } from '@/lib/passes';
 import { formatKm, legs, LEG_PROFILE_CHOICES, type LatLon, type Profile } from '@/lib/tour';
 import { type TourFun } from '@/lib/fun-score';
 import { type Avoid } from '@/lib/valhalla';
@@ -384,7 +384,3 @@ export function RoutePanel(props: {
   );
 }
 
-/** Kurzbeschreibung eines Passes für die schwebende Karte über der Karte */
-export function passNote(pass: Pass, live: Map<string, LiveRow> | null): string {
-  return passSummary(pass, undefined, passState(pass, live).note);
-}

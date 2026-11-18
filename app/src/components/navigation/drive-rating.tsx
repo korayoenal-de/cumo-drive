@@ -6,14 +6,11 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, type AccessibilityActionEvent, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { Chip } from '@/components/ui/chip';
-import { LogoFill } from '@/components/ui/fun-gauge';
 import { TextField } from '@/components/ui/text-field';
 import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
@@ -159,110 +156,6 @@ export function StarRating({ value, onChange }: { value: number | null; onChange
         ))}
       </View>
       <AppText style={[styles.word, styles.starWord]}>{n ? scoreWord(value!) : tr('Tippe auf einen Stern')}</AppText>
-    </View>
-  );
-}
-
-export function ScoreSlider({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
-  const [w, setW] = useState(0);
-  const [live, setLive] = useState<number | null>(value);
-  const span = Math.max(1, w - KNOB);
-  /** 0 bis 1 */
-  const p = useSharedValue(value != null ? value / 100 : 0.5);
-  const touched = useSharedValue(value != null ? 1 : 0);
-  const press = useSharedValue(0);
-  const spanSv = useSharedValue(span);
-  useEffect(() => {
-    spanSv.set(span);
-  }, [span, spanSv]);
-
-  // Zahl und Wort laufen beim Ziehen mit (nur wenn sich die ganze Zahl ändert)
-  useAnimatedReaction(
-    () => (touched.get() ? Math.round(p.get() * 100) : -1),
-    (n, prev) => {
-      if (n !== prev && n >= 0) scheduleOnRN(setLive, n);
-    },
-  );
-
-  const commit = (n: number) => onChange(n);
-  const at = (x: number) => {
-    'worklet';
-    return Math.max(0, Math.min(1, (x - KNOB / 2) / spanSv.get()));
-  };
-  // Ziehen nur waagerecht, damit die Seite sich weiter senkrecht scrollen lässt
-  const pan = Gesture.Pan()
-    .activeOffsetX([-6, 6])
-    .failOffsetY([-12, 12])
-    .onStart((e) => {
-      touched.set(1);
-      press.set(withSpring(1, Motion.press));
-      p.set(at(e.x));
-    })
-    .onUpdate((e) => {
-      p.set(at(e.x));
-    })
-    .onEnd(() => {
-      scheduleOnRN(commit, Math.round(p.get() * 100));
-    })
-    .onFinalize(() => {
-      press.set(withSpring(0, Motion.press));
-    });
-  // Tippen springt mit Feder an die Stelle
-  const tap = Gesture.Tap().onEnd((e) => {
-    touched.set(1);
-    const t = at(e.x);
-    p.set(withSpring(t, Motion.snap));
-    scheduleOnRN(commit, Math.round(t * 100));
-  });
-  const gesture = Gesture.Race(pan, tap);
-
-  const fill = useAnimatedStyle(() => ({ width: KNOB / 2 + p.get() * spanSv.get(), opacity: touched.get() ? 1 : 0 }));
-  const knob = useAnimatedStyle(() => ({
-    transform: [{ translateX: p.get() * spanSv.get() }, { scale: 1 + press.get() * 0.18 }],
-    opacity: touched.get() ? 1 : 0.45,
-  }));
-  const shown = live ?? value;
-
-  function onAction(e: AccessibilityActionEvent) {
-    const cur = value ?? 50;
-    const next = e.nativeEvent.actionName === 'increment' ? Math.min(100, cur + 10) : Math.max(0, cur - 10);
-    touched.set(1);
-    p.set(withSpring(next / 100, Motion.snap));
-    setLive(next);
-    onChange(next);
-  }
-
-  return (
-    <View style={styles.box}>
-      <AppText style={styles.title}>{t('Wie fandest du die Tour?')}</AppText>
-      <View style={styles.head}>
-        <LogoFill progress={p} size={44} />
-        <View style={styles.headText}>
-          <AppText style={[styles.big, shown == null && styles.bigOff]}>{shown != null ? shown : '–'}</AppText>
-          <AppText style={[styles.word, shown != null && styles.wordOn]}>{shown != null ? scoreWord(shown) : tr('Zieh den Regler')}</AppText>
-        </View>
-      </View>
-      <GestureHandlerRootView>
-        <GestureDetector gesture={gesture}>
-          <View
-            accessible
-            accessibilityRole="adjustable"
-            accessibilityLabel={t('Wie fandest du die Tour, 0 bis 100')}
-            accessibilityValue={{ text: value != null ? `${value}, ${scoreWord(value)}` : tr('Noch nicht bewertet') }}
-            accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-            onAccessibilityAction={onAction}
-            onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)}
-            style={styles.slider}>
-            <View style={styles.rail} />
-            <Animated.View pointerEvents="none" style={[styles.fill, fill]} />
-            <Animated.View pointerEvents="none" style={[styles.knob, knob]} />
-          </View>
-        </GestureDetector>
-      </GestureHandlerRootView>
-      <View style={styles.ends}>
-        <AppText style={styles.end}>{t('Enttäuschend')}</AppText>
-        <AppText style={styles.end}>{t('Sensationell')}</AppText>
-      </View>
     </View>
   );
 }

@@ -25,9 +25,3 @@ export function reportScroll(y: number) {
   else if (dy < -6) go(0);
 }
 
-/** Volle Größe, etwa beim Tabwechsel */
-export function expandTabBar() {
-  lastY = 0;
-  target = 0;
-  tabBarCompact.set(withSpring(0, Motion.snap));
-}

@@ -15,7 +15,7 @@ import Animated, {
 import { useWeatherStatus, type WeatherStatus } from '@/lib/weather';
 import { SheetHead } from '@/components/ui/sheet-head';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Shadow, Pressed } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type, Shadow, Pressed } from '@/constants/theme';
 import {
   MAP_STYLES,
   setMapSettings,
@@ -206,29 +206,6 @@ const styles = StyleSheet.create({
     boxShadow: Shadow.button,
   },
   sheet: { flex: 1, backgroundColor: Colors.ground },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xxl,
-    paddingBottom: Spacing.m,
-  },
-  title: {
-    fontFamily: Fonts.display,
-    fontSize: Type.h2,
-    lineHeight: 30,
-    textTransform: 'uppercase',
-    color: Colors.text,
-  },
-  close: {
-    width: Size.icon,
-    height: Size.icon,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.surface2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   content: {
     paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.xxxl,

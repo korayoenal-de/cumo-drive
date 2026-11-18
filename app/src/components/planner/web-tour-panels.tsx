@@ -4,71 +4,20 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { reverseName } from '@/lib/geocode';
-import { flatten, formatKm, type LatLon, type Profile, type Tour } from '@/lib/tour';
-import { type Avoid } from '@/lib/valhalla';
-import { createHandoff } from '@/lib/handoff';
-import { encodeTour, shareUrl } from '@/lib/share-code';
+import { flatten, type LatLon } from '@/lib/tour';
 
-import QRCode from 'qrcode';
 import { passState, type LiveRow } from '@/lib/pass-live';
 import { STOP_KINDS, stopsAlong, type StopHit, type StopKind } from '@/lib/stops-along';
 import { photoDate, photoUrl, thumbUrl, type PhotoGroup } from '@/lib/photos';
 import { PASSES, passSummary, searchPasses, type Pass } from '@/lib/passes';
 import { highlightsForLeg, passLevel, type HighlightCandidate } from '@/lib/highlight-candidates';
 
-import { Colors, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 
 import { BODY, C, type PlannedTour } from './web-shared';
 import { Chip, Gauge, Section } from './web-parts';
 import { S } from './web-styles';
 import { t } from '@/i18n';
-
-/**
- * QR Code für die App. Bevorzugt ein kurzer Übergabe Code über Supabase (die App bekommt die
- * exakt geplante Tour); ohne Verbindung fällt er auf Stützpunkte im Code zurück (App plant neu).
- */
-export function SendToApp(props: { tour: Tour; profile: Profile; avoid: Avoid; onClose: () => void }) {
-  const { tour, profile, avoid } = props;
-  const [qr, setQr] = useState<{ tour: Tour; url: string; short: boolean } | null>(null);
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      let code: string;
-      let short = true;
-      try {
-        code = await createHandoff(tour, profile, avoid);
-      } catch {
-        code = encodeTour(tour, profile);
-        short = false;
-      }
-      const url = await QRCode.toDataURL(shareUrl(code), { errorCorrectionLevel: 'M', margin: 3, width: 720, color: { dark: Colors.ground, light: '#FFFFFF' } });
-      if (alive) setQr({ tour, url, short });
-    })().catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-  }, [tour, profile, avoid]);
-  const current = qr && qr.tour === tour ? qr : null;
-  return (
-    <div style={S.overlay} onClick={props.onClose}>
-      <div role="dialog" aria-modal="true" aria-label={t('An die App senden')} style={{ ...S.dialog, width: 400 }} onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-          <span style={{ ...S.metricValue, fontSize: 22 }}>{t('An die App senden')}</span>
-          <button aria-label={t('Schließen')} style={S.closeBtn} onClick={props.onClose}>
-            ×
-          </button>
-        </div>
-        {current ? <img src={current.url} alt={t('QR Code der Tour')} style={S.qrImg} /> : <div style={{ ...S.qrImg, background: '#fff' }} />}
-        <p style={{ ...S.muted, fontSize: 15 }}>
-          {t('Mit der iPhone Kamera scannen, die Tour öffnet sich in Cumo Drive.')}{' '}
-          {current && !current.short
-            ? t('Ohne Verbindung zum Server enthält der Code nur Stützpunkte, die App plant die Strecke neu.')
-            : t('Die App übernimmt die Tour genau so, wie sie hier geplant ist.')}
-        </p>
-      </div>
-    </div>
-  );
-}
 
 /* ---------- Fotos ---------- */
 
@@ -211,44 +160,6 @@ const detourMin = (offM: number) => Math.max(1, Math.round(((2 * offM) / 1000 / 
 const FUN_NAMES: Record<number, string> = { get 1() { return t('Nett'); }, get 2() { return t('Lohnend'); }, get 3() { return t('Stark'); }, get 4() { return t('Traumstraße'); }, get 5() { return t('Legende'); } };
 /** Umweg wie in der App: gelbe Plakette */
 const detourTag: React.CSSProperties = { flex: 'none', padding: '3px 8px', borderRadius: 10, background: 'rgba(232,176,58,0.16)', color: C.warn, font: `700 13px ${BODY}`, fontVariantNumeric: 'tabular-nums' };
-
-/** Bekannte Pässe in die Tour einbauen: Suche nach Name plus Vorschläge in der Nähe der Route. */
-export function AddPass(props: { near: { pass: Pass; dKm: number }[]; live: Map<string, LiveRow> | null; busy: boolean; onAdd: (p: Pass) => void }) {
-  const [q, setQ] = useState('');
-  const searching = q.trim().length >= 2;
-  const hits: { pass: Pass; dKm: number | null }[] = searching ? searchPasses(PASSES, q, 5).map((pass) => ({ pass, dKm: null })) : props.near;
-  return (
-    <Section title={t('Pässe einbauen')} aside={!searching && props.near.length ? t('in der Nähe') : undefined}>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Pass suchen, zum Beispiel Stelvio')} style={S.search} aria-label={t('Pass suchen')} />
-      {hits.length ? (
-        <ol style={S.passList}>
-          {hits.map(({ pass, dKm }) => (
-            <li key={pass.id} style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: Spacing.s }}>
-              <span style={pass.tier === 'ikone' ? S.passDotIcon : S.passDot} />
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={S.passName}>{pass.name}</span>
-                <span style={S.dropDetail}>
-                  {[passSummary(pass, undefined, passState(pass, props.live).note), dKm != null ? t('{v0} km neben der Route', { v0: formatKm(dKm, dKm < 10 ? 1 : 0) }) : null].filter(Boolean).join(', ')}
-                </span>
-              </span>
-              <button
-                style={{ ...S.secondary, flex: 'none', padding: '0 12px' }}
-                disabled={props.busy}
-                onClick={() => {
-                  props.onAdd(pass);
-                  setQ('');
-                }}>
-                {t('Einbauen')}
-              </button>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p style={S.muted}>{searching ? t('Kein Pass gefunden.') : t('Keine bekannten Pässe in der Nähe der Route.')}</p>
-      )}
-    </Section>
-  );
-}
 
 export function Gallery(props: {
   gallery: { g: PhotoGroup; i: number | null };

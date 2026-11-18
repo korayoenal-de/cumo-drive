@@ -387,8 +387,6 @@ const styles = StyleSheet.create({
   warnText: { color: Colors.warn, fontFamily: Fonts.semibold },
   badgeMuted: { backgroundColor: Colors.surface2 },
   mutedText: { color: Colors.muted, fontFamily: Fonts.semibold },
-  primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
-  primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   disabled: { opacity: 0.4 },
   error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });

@@ -60,11 +60,6 @@ async function load(userId: string) {
   }
 }
 
-/** Profil neu laden (zum Beispiel nach dem Zurückkommen in die App). */
-export function reloadMyProfile() {
-  if (state.userId) void load(state.userId);
-}
-
 /**
  * Eigenes Profil für die angemeldete Person. undefined solange es lädt (oder ohne Netz nicht geladen werden konnte).
  * userId kommt aus der Sitzung (useSession), damit sich das Profil beim Kontowechsel neu lädt.

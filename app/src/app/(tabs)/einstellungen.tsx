@@ -380,8 +380,6 @@ const styles = StyleSheet.create({
   input: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
-  secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
   disabled: { opacity: 0.4 },
   error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });

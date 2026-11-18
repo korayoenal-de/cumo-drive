@@ -1541,7 +1541,6 @@ const styles = StyleSheet.create({
   skipText: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
   skipBtn: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   skipBtnText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
-  curve: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'flex-start', backgroundColor: Colors.overlay, borderRadius: Radius.pill, paddingVertical: Spacing.s, paddingHorizontal: Spacing.l },
   groupBack: { alignSelf: 'flex-start', height: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.overlay, alignItems: 'center', justifyContent: 'center' },
   groupBackText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   routeNote: { alignSelf: 'stretch', gap: 2, backgroundColor: Colors.text, borderRadius: Radius.l, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m },

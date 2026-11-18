@@ -16,7 +16,7 @@ import { Avatar } from '@/components/community/ride-bits';
 import { ReportSheet } from '@/components/moderation/report-sheet';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Layout } from '@/constants/theme';
+import { Colors, Fonts, Leading, Motion, Radius, Spacing, Type, Layout } from '@/constants/theme';
 import { ausfahrtTeilnehmer, clock, listAusfahrten, sendNachricht, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { enablePush, setOpenChat } from '@/lib/push';
@@ -155,7 +155,6 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
   flex: { flex: 1 },
   head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Layout.page, paddingBottom: Spacing.m },
-  roundBtn: { width: Size.icon, height: Size.icon, borderRadius: Size.icon / 2, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: Fonts.bold, fontSize: Type.title },
   list: { paddingHorizontal: Layout.page, paddingVertical: Spacing.l, gap: Spacing.m },
   pinned: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, alignSelf: 'center', backgroundColor: Colors.signalTint, borderRadius: Radius.pill, paddingHorizontal: Spacing.l, paddingVertical: Spacing.s },

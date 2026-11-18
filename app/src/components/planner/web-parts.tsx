@@ -6,9 +6,9 @@ import { type LatLon } from '@/lib/tour';
 import { type ElevationProfile } from '@/lib/stats';
 import { passState, usePassLive } from '@/lib/pass-live';
 import { PASSES, passPoint, passSummary, searchPasses } from '@/lib/passes';
-import { Spacing, Type } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 
-import { C, DISPLAY } from './web-shared';
+import { C } from './web-shared';
 import { S } from './web-styles';
 import { t, tr } from '@/i18n';
 
@@ -174,19 +174,6 @@ export function ElevationChart(props: { e: ElevationProfile; onHoverKm: (km: num
         <path d={d} fill="none" stroke={C.text} strokeWidth={1.4} />
         {idx >= 0 ? <line x1={x(e.km[idx])} x2={x(e.km[idx])} y1={0} y2={H} stroke={C.signal} strokeWidth={1.5} /> : null}
       </svg>
-    </div>
-  );
-}
-
-export function Stat(props: { big: string; unit?: string; label: string; tone?: 'stop' | 'good'; small?: boolean }) {
-  const color = props.tone === 'stop' ? C.signal : props.tone === 'good' ? C.good : C.text;
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <span style={{ fontFamily: DISPLAY, fontSize: props.small ? 20 : 30, lineHeight: 1, color, fontVariantNumeric: 'tabular-nums' }}>
-        {props.big}
-        {props.unit ? <span style={{ fontSize: Type.body }}> {props.unit}</span> : null}
-      </span>
-      <span style={S.small}>{props.label}</span>
     </div>
   );
 }

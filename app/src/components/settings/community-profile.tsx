@@ -4,7 +4,7 @@
  */
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { StyleSheet, Switch, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -394,15 +394,6 @@ export function BirthdayField({ p, save }: { p: Privacy; save: (patch: Partial<P
   );
 }
 
-export function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <View style={styles.toggle}>
-      <AppText style={[styles.flex, styles.toggleText]}>{label}</AppText>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: Colors.signal, false: Colors.surface2 }} accessibilityLabel={label} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   hint: { color: Colors.danger },
   valueEmpty: { color: Colors.faint },
@@ -437,5 +428,4 @@ const styles = StyleSheet.create({
   bio: { height: undefined, minHeight: 88, paddingTop: Spacing.m, paddingBottom: Spacing.m, textAlignVertical: 'top' },
   count: { alignSelf: 'flex-end', fontVariant: ['tabular-nums'] },
   toggleText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });

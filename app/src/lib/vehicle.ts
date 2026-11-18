@@ -9,7 +9,6 @@ import { useSyncExternalStore } from 'react';
 
 import { reportError } from './error-report';
 import { supabase } from './supabase';
-import { t } from '@/i18n';
 
 export type Fuel = 'super_plus' | 'super' | 'diesel' | 'elektro';
 
@@ -30,13 +29,6 @@ export type Vehicle = {
   /** Form und Lackfarbe des Kartensymbols (components/map/car-sprite.tsx) */
   look?: { form: 'coupe' | 'coupe-fluegel' | 'cabrio' | 'fastback' | 'limousine' | 'kombi' | 'gelaende'; color: string };
 };
-
-export const FUELS: { id: Fuel; label: string }[] = [
-  { id: 'super_plus', label: t('Super Plus') },
-  { id: 'super', label: 'Super' },
-  { id: 'diesel', label: t('Diesel') },
-  { id: 'elektro', label: t('Elektro') },
-];
 
 export const newVehicle = (): Vehicle => ({ id: Math.random().toString(36).slice(2, 10), model: '', widthM: null, clearanceCm: null, rangeKm: null, fuel: 'super_plus' });
 
@@ -167,7 +159,3 @@ export function vehicleName(v: Vehicle): string {
   return b && !m.toLowerCase().startsWith(b.toLowerCase()) ? `${b} ${m}`.trim() : m || b;
 }
 
-export function vehicleSummary(v: Vehicle, withModel = true): string {
-  // Sprit wird seit 9.11. nicht mehr gewählt und nicht mehr angezeigt
-  return withModel ? vehicleName(v) : '';
-}

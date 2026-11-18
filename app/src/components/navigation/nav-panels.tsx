@@ -380,7 +380,6 @@ const styles = StyleSheet.create({
   maneuver: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   maneuverRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l },
   arrowBox: { width: 84, height: 84, borderRadius: Radius.m, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  exit: { position: 'absolute', bottom: 2, fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.onSignal },
   dist: { fontFamily: Fonts.display, fontSize: 46, lineHeight: 50, fontVariant: ['tabular-nums'] },
   distUnit: { fontFamily: Fonts.display, fontSize: Type.h2, color: Colors.muted, textTransform: 'uppercase' },
   instruction: { fontFamily: Fonts.bold, fontSize: Type.button, lineHeight: 23 },

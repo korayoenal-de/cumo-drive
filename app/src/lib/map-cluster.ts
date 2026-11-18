@@ -52,8 +52,3 @@ export function clusterPins<T extends { id: string; p: LatLon }>(pins: T[], regi
   return out;
 }
 
-/** 1200 wird 1,2 Tsd. */
-export function clusterLabel(n: number): string {
-  if (n < 1000) return String(n);
-  return `${(n / 1000).toFixed(n < 10000 ? 1 : 0).replace('.', ',')} Tsd.`;
-}

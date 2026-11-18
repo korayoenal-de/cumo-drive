@@ -188,80 +188,11 @@ function RebuildTri({ d, step, t }: { d: string; step: number; t: SharedValue<nu
 
 export const toFunLevel = (v: number | null | undefined): FunLevel => Math.max(1, Math.min(5, Math.round(v ?? 3))) as FunLevel;
 
-/**
- * Logo als Fortschritt beim Erstellen einer Tour (Ladescreen Konzept C, Koray 8.11.): zwei Segmente je Schritt,
- * innerhalb eines Schritts wächst es langsam weiter, damit es lebt. done füllt den Kreis und dreht ihn wie im Startscreen ein.
- */
-export function LogoProgress({ step, done = false, size = 36 }: { step: number; done?: boolean; size?: number }) {
-  const reduced = useReducedMotion();
-  const n = useSharedValue(0);
-  const turn = useSharedValue(0);
-  useEffect(() => {
-    if (done) {
-      n.set(withTiming(N, { duration: reduced ? 0 : 350, easing: EASE_OUT }));
-      turn.set(withTiming(1, { duration: reduced ? 0 : 900, easing: Easing.bezier(0.34, 1.56, 0.64, 1) }));
-      return;
-    }
-    const base = Math.max(0, Math.min(3, step)) * 2;
-    if (reduced) {
-      n.set(base + 2);
-      return;
-    }
-    // erst zügig auf den Anfang des Schritts, dann langsam fast bis ans Ende
-    n.set(withTiming(base + 0.6, { duration: 450, easing: EASE_OUT }, () => n.set(withTiming(base + 1.8, { duration: 6000, easing: EASE_OUT }))));
-  }, [step, done, reduced, n, turn]);
-  const spin = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get() * STEP}deg` }] }));
-  return (
-    <Animated.View style={[{ width: size, height: size }, spin]} accessible accessibilityRole="progressbar" accessibilityLabel={tr('Fortschritt, Schritt {v0} von 4', { v0: Math.min(4, step + 1) })}>
-      <Svg width={size} height={size} viewBox="0 0 24 24">
-        {SEGS.map((d, i) => (
-          <Path key={`b${i}`} d={d} fill={OFF} />
-        ))}
-        {SEGS.map((d, i) => (
-          <FillSeg key={i} d={d} index={i} n={n} />
-        ))}
-      </Svg>
-    </Animated.View>
-  );
-}
-
 function FillSeg({ d, index, n }: { d: string; index: number; n: SharedValue<number> }) {
   const props = useAnimatedProps(() => ({ fillOpacity: Math.max(0, Math.min(1, n.get() - index)) }));
   return <AnimatedPath d={d} fill={Colors.signal} animatedProps={props} />;
 }
 
-/**
- * Ladeanzeige im Stil der App (Koray 8.11.): das Logo mit grauen Segmenten, darüber läuft ein oranger
- * Schweif im Uhrzeigersinn ab 6 Uhr. Ohne Bewegung (reduzierte Bewegung) drei feste orange Segmente.
- */
-export function LogoSpinner({ size = 28, label = tr('Lädt') }: { size?: number; label?: string }) {
-  const reduced = useReducedMotion();
-  const t = useSharedValue(0);
-  useEffect(() => {
-    if (reduced) return;
-    t.set(withRepeat(withTiming(N, { duration: 1100, easing: Easing.linear }), -1, false));
-    return () => cancelAnimation(t);
-  }, [reduced, t]);
-  return (
-    <View accessible accessibilityRole="progressbar" accessibilityLabel={label}>
-      <Svg width={size} height={size} viewBox="0 0 24 24">
-        {SEGS.map((d, i) => (
-          <Path key={`b${i}`} d={d} fill={OFF} />
-        ))}
-        {SEGS.map((d, i) => (reduced ? i < 3 && <Path key={i} d={d} fill={Colors.signal} /> : <ChaseSeg key={i} d={d} index={i} t={t} />))}
-      </Svg>
-    </View>
-  );
-}
-
-function ChaseSeg({ d, index, t }: { d: string; index: number; t: SharedValue<number> }) {
-  const props = useAnimatedProps(() => {
-    // Abstand hinter dem Kopf des Schweifs, 0 bis N
-    const behind = (((t.get() - index) % N) + N) % N;
-    return { fillOpacity: behind < 3.2 ? 1 - behind / 3.2 : 0 };
-  });
-  return <AnimatedPath d={d} fill={Colors.signal} animatedProps={props} />;
-}
 
 /**
  * Logo als Füllstand (Bewertungsregler, 8.11.2026): progress 0 bis 1 füllt die acht Segmente im

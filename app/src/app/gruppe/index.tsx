@@ -254,7 +254,6 @@ const styles = StyleSheet.create({
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.title },
   secondary: { minHeight: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.l },
-  secondaryOnSurface: { backgroundColor: Colors.surface2 },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
   error: { color: Colors.danger, fontFamily: Fonts.semibold },
   gapXs: { gap: Spacing.xs },

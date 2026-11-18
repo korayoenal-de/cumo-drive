@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/community/ride-bits';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Size, Spacing, Type, Radius } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Type, Radius } from '@/constants/theme';
 import { clock, shortDate } from '@/lib/ausfahrten';
 import { listConversations, refreshUnread, type Conversation } from '@/lib/drivers';
 import { enablePush } from '@/lib/push';
@@ -90,7 +90,6 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
   content: { paddingHorizontal: Spacing.xl, gap: Spacing.m },
   head: { flexDirection: 'row' },
-  round: { width: Size.icon, height: Size.icon, borderRadius: Size.icon / 2, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.s },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64 },

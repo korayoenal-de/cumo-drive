@@ -184,19 +184,6 @@ export function likelyClosed(p: Pass, month: number): boolean {
   return month >= 11 || month <= 5;
 }
 
-/** Pässe auf einer Linie, die im Monat wahrscheinlich gesperrt sind (nur als Hinweis). */
-export function closedAlong(list: Pass[], line: LatLon[], month: number): Pass[] {
-  return passesAlong(list, line)
-    .map((x) => x.pass)
-    .filter((p) => likelyClosed(p, month));
-}
-
-/** Text für den Hinweis, zum Beispiel "Stilfser Joch (Nov bis Mai) und Gavia". */
-export function closedNote(closed: Pass[]): string {
-  const names = closed.map((p) => (p.closed_months ? `${p.name} (${p.closed_months})` : p.name));
-  return names.length > 1 ? tr('{v0} und {v1}', { v0: names.slice(0, -1).join(', '), v1: names[names.length - 1] }) : names[0] ?? '';
-}
-
 /** Übersicht mit aktuellem Status, bis wir eine eigene Live Quelle haben. */
 export const PASS_STATUS_URL = 'https://www.ace.de/reisen/reiseinformationen/alpenpaesse';
 

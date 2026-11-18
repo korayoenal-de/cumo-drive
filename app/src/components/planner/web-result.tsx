@@ -16,7 +16,7 @@ import { allowPass, avoidPass, useAvoidedPasses } from '@/lib/avoid-pass';
 import { PASS_STATUS_URL, PASSES, passesAlong, TIER_LABEL, warnLabel, warnSpeech } from '@/lib/passes';
 import { elevationProfile, type ElevationProfile } from '@/lib/stats';
 import { formatKm, type LatLon, type Tour, type Warning } from '@/lib/tour';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 
 import { Metric, Section, ElevationChart, Gauge } from './web-parts';
 import { FunPillWeb } from './web-fun';
@@ -225,13 +225,5 @@ export function StatusLine(props: { tone: 'good' | 'warn' | 'muted'; text: strin
     </span>
   );
 }
-
-export const tintBox = (tone: 'good' | 'warn' | 'signal') => ({
-  padding: '12px 14px',
-  borderRadius: Radius.m,
-  background: tone === 'good' ? Colors.goodTint : tone === 'warn' ? Colors.warnTint : Colors.signalTint,
-  color: tone === 'good' ? C.good : tone === 'warn' ? C.warn : Colors.danger,
-  font: `600 15px/21px ${BODY}`,
-});
 
 export type { Tour };

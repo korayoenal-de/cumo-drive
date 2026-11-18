@@ -70,13 +70,6 @@ export const PRICES: Price[] = [
   { id: 'saison', name: t('Saison Pass'), amount: 49, priceText: '49 €', periodText: t('einmalig für 6 Monate'), perMonthText: null, renews: false, days: 183, highlight: false },
 ];
 
-/** Club Angebote laufen auf Rechnung außerhalb der App und werden vom Betreiber zugewiesen. */
-export const CLUB_OFFERS = [
-  { id: 'club_s', name: 'Club S', priceText: t('490 € pro Jahr'), maxVehicles: 12 },
-  { id: 'club_l', name: 'Club L', priceText: t('890 € pro Jahr'), maxVehicles: 20 },
-  { id: 'event', name: t('Event Pass'), priceText: t('149 € für eine Tour, 7 Tage'), maxVehicles: 20 },
-] as const;
-
 export const CONTACT_EMAIL = 'kontakt@cumodrive.com';
 
 /** Private Gruppen: so viele Fahrzeuge gehen ohne Club */
@@ -120,13 +113,6 @@ function withLocalPurchase(next: Entitlement): Entitlement {
     daysLeft: until ? Math.max(0, Math.ceil((until.getTime() - Date.now()) / DAY)) : 0,
     maxVehicles: Math.max(next.maxVehicles, PRIVATE_MAX_VEHICLES),
   };
-}
-
-/** Nach einem Kauf über RevenueCat: sofort freischalten, der Server zieht kurz danach nach */
-export function markPurchased(plan: PlanId, until: Date | null) {
-  void plan;
-  localPurchase = { until, at: Date.now() };
-  set(state);
 }
 
 function set(next: Entitlement) {

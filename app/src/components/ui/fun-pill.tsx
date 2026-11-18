@@ -31,16 +31,6 @@ export function FunPill({ fun, onPress, active, best, hint = t('Zeigt, wie der W
   );
 }
 
-/** Unterschied zur vorigen Runde: grün, wenn besser, sonst neutral */
-export function FunDelta({ delta }: { delta: number }) {
-  const up = delta >= 0;
-  return (
-    <View style={[styles.delta, up ? styles.deltaUp : styles.deltaDown]} accessibilityLabel={up ? t('besser als die vorige Runde um {n}', { n: Math.abs(delta) }) : t('schlechter als die vorige Runde um {n}', { n: Math.abs(delta) })}>
-      <AppText style={[styles.deltaText, { color: up ? Colors.good : Colors.muted }]}>{up ? `+${delta}` : `−${Math.abs(delta)}`}</AppText>
-    </View>
-  );
-}
-
 /** Farben der vier Teile im gestapelten Balken, vom kräftigsten zum hellsten Orange */
 const TONES = ['#E2461C', '#EF6A43', '#F48D6C', '#F7B29A'];
 

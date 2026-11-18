@@ -194,8 +194,6 @@ function VehicleForm({ value, onChange, onDone }: { value: Vehicle; onChange: (v
 }
 
 const styles = StyleSheet.create({
-  deleteLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.m },
-  deleteText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   dots: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
   dotRing: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
   dotRingOn: { borderColor: Colors.text },
@@ -205,7 +203,6 @@ const styles = StyleSheet.create({
   gapS: { gap: Spacing.xs },
   gapM: { gap: Spacing.m },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   name: { fontFamily: Fonts.semibold, fontSize: Type.title },
   stat: { fontFamily: Fonts.semibold, fontSize: Type.body, fontVariant: ['tabular-nums'] },
@@ -217,9 +214,4 @@ const styles = StyleSheet.create({
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.input },
   secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-  disabled: { opacity: 0.4 },
-  padH: { paddingHorizontal: Spacing.l },
-  error: { color: Colors.danger, fontFamily: Fonts.semibold },
-  danger: { backgroundColor: Colors.dangerTint },
-  dangerText: { color: Colors.signal },
 });

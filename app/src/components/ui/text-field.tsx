@@ -45,9 +45,6 @@ export const TextField = forwardRef<ComponentRef<typeof TextInput>, TextFieldPro
   );
 });
 
-/** Rand und Form für zusammengesetzte Felder (Symbol plus Eingabe in einer Fläche, etwa die Ortssuche) */
-export const fieldFrame = (focused: boolean) => [styles.enforced, focused && styles.focused];
-
 const styles = StyleSheet.create({
   base: { minHeight: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, color: Colors.text, fontSize: Type.input },
   onSurface: { backgroundColor: Colors.surface2 },

@@ -1,18 +1,11 @@
 /**
  * Abschnitt "Mitgliedschaft" für die Einstellungen: aktueller Stand und der Weg zur Paywall.
  */
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { Pressable } from '@/components/ui/tap';
 
-import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
-import { formatUntil, PRICES, refreshEntitlement, useEntitlement, type Entitlement } from '@/lib/entitlement';
+import { formatUntil, PRICES, type Entitlement } from '@/lib/entitlement';
 
 import { limitsLive } from '@/lib/paywall';
 
-import { TrialBadge } from './entitlement-gate';
 import { t } from '@/i18n';
 
 export function describeEntitlement(e: Entitlement): { title: string; text: string } {
@@ -48,46 +41,3 @@ export function describeEntitlement(e: Entitlement): { title: string; text: stri
   };
 }
 
-export function MembershipSection() {
-  const e = useEntitlement();
-  useFocusEffect(
-    useCallback(() => {
-      void refreshEntitlement();
-    }, []),
-  );
-  const d = describeEntitlement(e);
-  return (
-    <View style={styles.gapM}>
-      <AppText variant="label">{t('Mitgliedschaft')}</AppText>
-      <View style={styles.card}>
-        {e.loading ? (
-          <ActivityIndicator color={Colors.muted} />
-        ) : (
-          <View style={styles.gapS}>
-            <View style={styles.row}>
-              <AppText style={[styles.title, styles.flex]} numberOfLines={1}>
-                {d.title}
-              </AppText>
-              <TrialBadge />
-            </View>
-            <AppText muted>{d.text}</AppText>
-          </View>
-        )}
-        <Pressable accessibilityRole="button" onPress={() => router.push('/mitgliedschaft')} style={styles.secondary}>
-          <AppText style={styles.secondaryText}>{t('Mitgliedschaft ansehen')}</AppText>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  gapS: { gap: Spacing.xs },
-  gapM: { gap: Spacing.m },
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
-  card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
-  title: { fontFamily: Fonts.semibold, fontSize: Type.title },
-  secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  secondaryText: { fontFamily: Fonts.semibold, fontSize: Type.body },
-});

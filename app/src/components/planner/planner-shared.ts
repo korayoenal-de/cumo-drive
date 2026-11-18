@@ -5,15 +5,12 @@ import { fahrzeit } from '@/lib/format';
 import { useEffect, useMemo, useState } from 'react';
 
 import { passPoint, type Pass } from '@/lib/passes';
-import { Colors } from '@/constants/theme';
 import { searchPlaces, type Place } from '@/lib/geocode';
 import { searchAddress } from '@/lib/address-search';
 import { type PlanStep } from '@/lib/plan';
 import { resample } from '@/lib/stats';
 import { haversine, PROFILES, type LatLon, type Profile, type Tour } from '@/lib/tour';
 import { tr } from '@/i18n';
-
-export const WARN = Colors.warn;
 
 /**
  * Ortsvorschläge beim Tippen: ab zwei Zeichen, 300 ms nach dem letzten Tastendruck,

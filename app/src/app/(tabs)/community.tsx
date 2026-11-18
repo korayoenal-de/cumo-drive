@@ -1005,8 +1005,6 @@ const styles = StyleSheet.create({
   search: { height: Size.input, paddingHorizontal: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.button },
-  secondary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  secondaryText: { fontFamily: Fonts.bold, fontSize: Type.button },
   error: { color: Colors.danger, fontFamily: Fonts.semibold },
   textBtn: { height: Size.chip, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', paddingHorizontal: Spacing.xl },
   textBtnText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },

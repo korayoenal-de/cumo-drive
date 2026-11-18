@@ -286,10 +286,6 @@ export function setOwnRoute(on: boolean) {
   }
   lastPosAt = 0;
 }
-export function isOwnRoute() {
-  return ownRoute;
-}
-
 export async function joinRide(code: string, name: string, car: string, role: Role = 'mitfahrer', tourCode: string | null = null) {
   await leaveRide();
   const c = normalizeCode(code);
