@@ -147,6 +147,7 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
         <Row title={t('Feedback geben')} onPress={() => router.push('/feedback')} />
         <Row title={t('Datenschutz')} onPress={() => router.push('/datenschutz')} />
         <Row title={t('Nutzungsbedingungen')} onPress={() => router.push('/agb')} />
+        <Row title={t('Impressum')} onPress={() => router.push('/impressum')} />
       </Group>
 
       {/* Prüfbereich nur für Admins (Koray 14.11.) */}

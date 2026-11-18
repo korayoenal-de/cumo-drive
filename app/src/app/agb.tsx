@@ -1,4 +1,4 @@
-/** Nutzungsbedingungen (Entwurf, anwaltliche Prüfung ausstehend), Inhalt in src/content/legal.ts. */
+/** Nutzungsbedingungen, Inhalt in src/content/legal.ts. */
 import { LegalPage } from '@/components/legal/legal-page';
 import { legalDoc } from '@/content/legal';
 import { t, useLang } from '@/i18n';

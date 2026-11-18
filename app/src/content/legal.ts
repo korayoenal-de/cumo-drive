@@ -7,14 +7,14 @@
  * Angezeigt unter /datenschutz und /agb (src/app/datenschutz.tsx, src/app/agb.tsx), verlinkt aus Landingpage und Paywall.
  */
 
-import { PRIVACY_EN, TERMS_EN } from './legal-en';
-import { PRIVACY_IT, TERMS_IT } from './legal-it';
+import { IMPRINT_EN, PRIVACY_EN, TERMS_EN } from './legal-en';
+import { IMPRINT_IT, PRIVACY_IT, TERMS_IT } from './legal-it';
 
 export type LegalBlock = { h: string; p?: string[]; list?: string[] };
 export type LegalDoc = { title: string; headTitle?: string; lead: string; blocks: LegalBlock[]; stand: string };
 
 const KONTAKT = 'kontakt@cumodrive.com';
-const IMPRESSUM = 'https://rallycumo.de/impressum/';
+const IMPRESSUM = 'https://cumodrive.de/impressum';
 
 /** Fassung der Rechtstexte, wird bei der Registrierung als Nachweis gespeichert (consents) */
 export const LEGAL_VERSION = '2026-11-18';
@@ -220,9 +220,45 @@ export const AGB: LegalDoc = {
   ],
 };
 
+/**
+ * Eigenes Impressum von CUMO DRIVE (Koray 18.11.2026: losgelöst vom Impressum des Clubs auf rallycumo.de).
+ * Anschrift wie im Vertrag mit Contabo und im Impressum des Clubs. Ohne Telefonnummer: zweiter schneller
+ * Kontaktweg ist das Feedback in der App.
+ */
+export const IMPRESSUM_DOC: LegalDoc = {
+  title: 'Impressum',
+  lead: 'Angaben gemäß § 5 DDG für die App Cumo Drive, den Web Planer und die Webseite cumodrive.de.',
+  stand: STAND,
+  blocks: [
+    {
+      h: 'Anbieter',
+      p: ['CUMO DRIVERS CLUB', 'vertreten durch Koray Önal', 'Ludwigstraße 62b', '64646 Heppenheim', 'Deutschland'],
+    },
+    {
+      h: 'Kontakt',
+      p: [`E Mail: ${KONTAKT}`, 'In der App erreichst du uns außerdem unter Einstellungen, Feedback. Wir antworten in der Regel innerhalb von zwei Werktagen.'],
+    },
+    {
+      h: 'Verantwortlich für den Inhalt',
+      p: ['Verantwortlich nach § 18 Abs. 2 MStV: Koray Önal, Anschrift wie oben.'],
+    },
+    {
+      h: 'Verbraucherstreitbeilegung',
+      p: ['Wir nehmen nicht an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teil und sind dazu nicht verpflichtet.'],
+    },
+    {
+      h: 'Inhalte und Daten',
+      p: [
+        'Kartendaten stammen teilweise von OpenStreetMap (© OpenStreetMap Mitwirkende, Lizenz ODbL). Die Strecken und Pass Datenbank, Texte, Bewertungen und das Logo von Cumo Drive sind urheberrechtlich geschützt.',
+        'Für Inhalte fremder Seiten, auf die wir verlinken, sind deren Betreiber verantwortlich.',
+      ],
+    },
+  ],
+};
+
 /** Rechtstexte in der App Sprache. Englisch und Italienisch sind Übersetzungen, die deutsche Fassung ist maßgeblich. */
-export function legalDoc(kind: 'datenschutz' | 'agb', lang: 'de' | 'en' | 'it'): LegalDoc {
-  if (lang === 'en') return kind === 'agb' ? TERMS_EN : PRIVACY_EN;
-  if (lang === 'it') return kind === 'agb' ? TERMS_IT : PRIVACY_IT;
-  return kind === 'agb' ? AGB : DATENSCHUTZ;
+export function legalDoc(kind: 'datenschutz' | 'agb' | 'impressum', lang: 'de' | 'en' | 'it'): LegalDoc {
+  if (lang === 'en') return kind === 'impressum' ? IMPRINT_EN : kind === 'agb' ? TERMS_EN : PRIVACY_EN;
+  if (lang === 'it') return kind === 'impressum' ? IMPRINT_IT : kind === 'agb' ? TERMS_IT : PRIVACY_IT;
+  return kind === 'impressum' ? IMPRESSUM_DOC : kind === 'agb' ? AGB : DATENSCHUTZ;
 }

@@ -512,7 +512,7 @@ const LANDING_HTML_DE = `<div style="background: #0B0B0C; color: #F4F4F2; font-f
 <footer>
   <div class="cd-wrap" style="padding-top: 40px; padding-bottom: 40px; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; font: 600 15px Inter, sans-serif; color: #9A9A9F;">
     <span>Cumo Drive · cumodrive.de</span>
-    <span style="display: flex; gap: 20px;"><a href="https://rallycumo.de/impressum/" style="color: inherit; text-decoration: none;">Impressum</a><a href="/datenschutz" style="color: inherit; text-decoration: none;">Datenschutz</a><a href="/agb" style="color: inherit; text-decoration: none;">AGB</a></span>
+    <span style="display: flex; gap: 20px;"><a href="/impressum" style="color: inherit; text-decoration: none;">Impressum</a><a href="/datenschutz" style="color: inherit; text-decoration: none;">Datenschutz</a><a href="/agb" style="color: inherit; text-decoration: none;">AGB</a></span>
     <span class="cd-langs" style="display: flex; gap: 20px;"><a href="/" hreflang="de" lang="de" style="color: inherit; text-decoration: none;">Deutsch</a><a href="/en" hreflang="en" lang="en" style="color: inherit; text-decoration: none;">English</a><a href="/it" hreflang="it" lang="it" style="color: inherit; text-decoration: none;">Italiano</a></span>
     <span>Kartendaten © OpenStreetMap Mitwirkende</span>
   </div>

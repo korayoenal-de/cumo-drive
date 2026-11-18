@@ -14,7 +14,7 @@ Stand: 18. November 2026. Fassung zum Start, von Claude nach bestem Wissen ferti
 
 ## Annahmen, auf denen die Texte beruhen
 
-* Anbieter und Verantwortlicher: CUMO DRIVERS CLUB, vertreten durch Koray Önal, behandelt wie ein Einzelunternehmen. Die Anschrift steht nur im verlinkten Impressum.
+* Anbieter und Verantwortlicher: CUMO DRIVERS CLUB, vertreten durch Koray Önal, behandelt wie ein Einzelunternehmen. Die Anschrift steht im eigenen Impressum (cumodrive.de/impressum).
 * Kein Datenschutzbeauftragter nötig (weniger als 20 Personen mit Datenverarbeitung). Aufsichtsbehörde Hessen.
 * Auswertung von Bewertungen, Spuren und Nutzung der Planung: zusammengefasst und ohne Personenbezug, auf Grundlage des berechtigten Interesses mit Widerspruchsrecht. Start und Ziel werden um 2 km gekürzt, ein Abschnitt zählt erst ab drei Fahrern.
 * Keine Teilnahme an der Verbraucherschlichtung. Die Plattform der EU zur Online Streitbeilegung gibt es seit Juli 2025 nicht mehr, ein Link darauf ist nicht mehr nötig.
@@ -22,7 +22,7 @@ Stand: 18. November 2026. Fassung zum Start, von Claude nach bestem Wissen ferti
 
 ## Noch zu tun (Koray)
 
-* **Impressum auf rallycumo.de:** Die Überschrift nennt noch „§ 5 TMG“. Das Gesetz heißt seit Mai 2024 Digitale Dienste Gesetz: „Angaben gemäß § 5 DDG“. Ergänzen: „Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: Koray Önal, Anschrift wie oben“, den Satz „Wir nehmen nicht an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teil und sind dazu nicht verpflichtet“ und die Umsatzsteuer Identifikationsnummer, sobald sie da ist.
+* **Impressum:** CUMO DRIVE hat seit dem 18.11. ein eigenes Impressum unter cumodrive.de/impressum und in der App (Einstellungen), in drei Sprachen. Ohne Telefonnummer; zweiter Kontaktweg ist das Feedback in der App. Das Impressum von rallycumo.de gehört nur noch zum Club (dort steht noch „§ 5 TMG“ statt DDG, kein Thema für die App).
 * **Verträge zur Auftragsverarbeitung:** siehe `docs/auftragsverarbeitung.md`. Die Datenschutzerklärung sagt, dass diese Verträge bestehen. Contabo muss dafür vor dem Start abgeschlossen sein.
 * **Web:** Die geänderten Texte kommen erst mit dem nächsten Web Paket auf cumodrive.de.
 

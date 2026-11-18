@@ -5,7 +5,7 @@
 import type { LegalDoc } from './legal';
 
 const CONTACT = 'kontakt@cumodrive.com';
-const IMPRINT = 'https://rallycumo.de/impressum/';
+const IMPRINT = 'https://cumodrive.de/impressum';
 const STAND = 'Aggiornato al 18 novembre 2026. Questa è una traduzione; fa fede la versione tedesca.';
 
 export const PRIVACY_IT: LegalDoc = {
@@ -204,6 +204,25 @@ export const TERMS_IT: LegalDoc = {
         'Non partecipiamo a procedure di risoluzione delle controversie davanti a un organismo di conciliazione per i consumatori e non siamo obbligati a farlo.',
         'Se una disposizione è invalida, le altre restano valide.',
         'In caso di dubbio fa fede la versione tedesca di queste condizioni.',
+      ],
+    },
+  ],
+};
+
+export const IMPRINT_IT: LegalDoc = {
+  title: 'Note legali',
+  lead: 'Informazioni ai sensi del § 5 DDG (legge tedesca sui servizi digitali) per l’app Cumo Drive, il planner web e il sito cumodrive.de.',
+  stand: STAND,
+  blocks: [
+    { h: 'Fornitore', p: ['CUMO DRIVERS CLUB', 'rappresentato da Koray Önal', 'Ludwigstraße 62b', '64646 Heppenheim', 'Germania'] },
+    { h: 'Contatto', p: [`E-mail: ${CONTACT}`, 'Nell’app ci raggiungi anche in Impostazioni, Feedback. Di solito rispondiamo entro due giorni lavorativi.'] },
+    { h: 'Responsabile dei contenuti', p: ['Responsabile ai sensi del § 18, comma 2 MStV: Koray Önal, indirizzo come sopra.'] },
+    { h: 'Risoluzione delle controversie dei consumatori', p: ['Non partecipiamo a procedure di risoluzione delle controversie davanti a un organismo di conciliazione per i consumatori e non siamo tenuti a farlo.'] },
+    {
+      h: 'Contenuti e dati',
+      p: [
+        'I dati cartografici provengono in parte da OpenStreetMap (© contributori di OpenStreetMap, licenza ODbL). La banca dati di strade e passi, i testi, le valutazioni e il logo di Cumo Drive sono protetti dal diritto d’autore.',
+        'Dei contenuti dei siti esterni a cui rimandiamo sono responsabili i rispettivi gestori.',
       ],
     },
   ],

@@ -5,7 +5,7 @@
 import type { LegalDoc } from './legal';
 
 const CONTACT = 'kontakt@cumodrive.com';
-const IMPRINT = 'https://rallycumo.de/impressum/';
+const IMPRINT = 'https://cumodrive.de/impressum';
 const STAND = 'As of 18 November 2026. This is a translation; the German version prevails.';
 
 export const PRIVACY_EN: LegalDoc = {
@@ -204,6 +204,25 @@ export const TERMS_EN: LegalDoc = {
         'We do not participate in dispute resolution proceedings before a consumer arbitration board and are not obliged to do so.',
         'If a provision is invalid, the remaining provisions remain valid.',
         'In case of doubt, the German version of these terms prevails.',
+      ],
+    },
+  ],
+};
+
+export const IMPRINT_EN: LegalDoc = {
+  title: 'Legal notice',
+  lead: 'Information according to § 5 DDG (German Digital Services Act) for the Cumo Drive app, the web planner and the website cumodrive.de.',
+  stand: STAND,
+  blocks: [
+    { h: 'Provider', p: ['CUMO DRIVERS CLUB', 'represented by Koray Önal', 'Ludwigstraße 62b', '64646 Heppenheim', 'Germany'] },
+    { h: 'Contact', p: [`Email: ${CONTACT}`, 'In the app you can also reach us under Settings, Feedback. We usually reply within two working days.'] },
+    { h: 'Responsible for content', p: ['Responsible according to § 18 (2) MStV: Koray Önal, address as above.'] },
+    { h: 'Consumer dispute resolution', p: ['We do not take part in dispute resolution proceedings before a consumer arbitration board and are not obliged to do so.'] },
+    {
+      h: 'Content and data',
+      p: [
+        'Map data comes in part from OpenStreetMap (© OpenStreetMap contributors, ODbL licence). The road and pass database, texts, ratings and the Cumo Drive logo are protected by copyright.',
+        'The operators of external sites we link to are responsible for their content.',
       ],
     },
   ],

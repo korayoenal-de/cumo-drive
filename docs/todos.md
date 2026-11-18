@@ -77,10 +77,10 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 ### Zwingend: Recht
 
-* [ ] Impressum auf rallycumo.de anpassen: § 5 DDG statt TMG, Verantwortlicher nach MStV, Satz zur Verbraucherschlichtung, später die Umsatzsteuer ID (Koray; Wortlaut in docs/rechtstexte-entwurf.md)
+* [x] Eigenes Impressum für CUMO DRIVE (cumodrive.de/impressum und in der App, drei Sprachen, 18.11.); alle Verweise umgestellt
 * [x] Datenschutz und AGB nach bestem Wissen fertiggestellt, ohne Anwalt (Koray 18.11.: Anwalt erst mit Einnahmen). Widerruf über Apple, Änderungen nur mit Zustimmung, Mindestalter 16, Fehlerberichte ergänzt, Hinweis Entwurf entfernt
 * [ ] Später mit Anwalt: Restrisiken in docs/rechtstexte-entwurf.md (Haftung, berechtigtes Interesse, Expo, Club Lizenzen)
-* [ ] Auftragsverarbeitungsverträge: Contabo im Kundenbereich abschließen, bei Expo nachfragen, bei Supabase, LiveKit und RevenueCat die Fassung ablegen (Koray; Fundstellen in docs/auftragsverarbeitung.md, 18.11.)
+* [ ] Auftragsverarbeitungsverträge: Contabo im Kundenbereich abschließen, Contabo abgeschlossen und Expo angefragt (18.11.), bei Supabase, LiveKit und RevenueCat die Fassung ablegen (Koray; Fundstellen in docs/auftragsverarbeitung.md, 18.11.)
 * [x] Händlerstatus bei Apple für die EU angegeben, Kontakt kontakt@cumodrive.com (Koray 17.11.)
 
 ### Zwingend: App
