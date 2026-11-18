@@ -22,8 +22,8 @@ export type PassAction = 'via' | 'start' | 'ziel' | 'remove';
  * Vorlage für jeden Tipp auf die Karte (Koray 18.11.): Pass oder neuer Punkt nach langem Druck. Oben Symbol, Name
  * und eine graue Zeile, darunter die Hauptaktion in voller Breite und die anderen Rollen als ruhige Tasten.
  * Tasten ohne Symbol (wirkte gepresst), kein Abbrechen: ein Tipp daneben schließt.
- *  * fertige Route: „Zwischenziel hinzufügen“, darunter „Als Start“ und „Als Ziel“
- *  * noch ohne Ziel oder Start: die fehlende Rolle als Hauptaktion, die andere daneben
+ *  * immer alle drei Rollen (Koray 18.11. mittags): ohne Start ist „Als Start“ die Hauptaktion, sonst
+ *    „Zwischenziel hinzufügen“; die beiden anderen stehen darunter nebeneinander
  *  * Pass schon in der Route: nur „Aus der Route entfernen“
  */
 export function MapPassActions({
@@ -31,7 +31,6 @@ export function MapPassActions({
   name,
   note,
   role,
-  complete,
   hasStart,
   detourKm,
   bottom,
@@ -44,7 +43,6 @@ export function MapPassActions({
   note?: string;
   /** Rolle in der Route (Start, Ziel, Zwischenziel 2), null wenn noch nicht drin */
   role: string | null;
-  complete: boolean;
   /** Der Start ist schon gesetzt */
   hasStart: boolean;
   detourKm: number | null;
@@ -55,8 +53,9 @@ export function MapPassActions({
   const sub = role ? [note, t('{role} der Route', { role })].filter(Boolean).join(' · ') : [note, detour].filter(Boolean).join(' · ');
   const start = { a: 'start' as const, label: t('Als Start') };
   const ziel = { a: 'ziel' as const, label: t('Als Ziel') };
-  const primary: { a: PassAction; label: string } = role ? { a: 'remove', label: t('Aus der Route entfernen') } : complete ? { a: 'via', label: t('Zwischenziel hinzufügen') } : hasStart ? ziel : start;
-  const others: { a: PassAction; label: string }[] = role ? [] : complete ? [start, ziel] : hasStart ? [start] : [ziel];
+  const via = { a: 'via' as const, label: t('Zwischenziel hinzufügen') };
+  const primary: { a: PassAction; label: string } = role ? { a: 'remove', label: t('Aus der Route entfernen') } : hasStart ? via : start;
+  const others: { a: PassAction; label: string }[] = role ? [] : hasStart ? [start, ziel] : [{ ...via, label: t('Als Zwischenziel') }, ziel];
   const symbol = pass ? 'mountain.2.fill' : 'mappin';
   const mainRef = useRef<ComponentRef<typeof View>>(null);
   const win = useWindowDimensions();
@@ -67,7 +66,7 @@ export function MapPassActions({
     onAction(a);
   };
   const quiet = (o: { a: PassAction; label: string }) => (
-    <Pressable key={o.a} accessibilityRole="button" onPress={() => act(o.a)} style={({ pressed }) => [styles.btn, styles.btnQuiet, complete && styles.flex, pressed && styles.pressed]}>
+    <Pressable key={o.a} accessibilityRole="button" onPress={() => act(o.a)} style={({ pressed }) => [styles.btn, styles.btnQuiet, styles.flex, pressed && styles.pressed]}>
       <AppText style={styles.btnText}>{o.label}</AppText>
     </Pressable>
   );
@@ -76,7 +75,7 @@ export function MapPassActions({
       ref={mainRef}
       accessibilityRole="button"
       onPress={() => act(primary.a)}
-      style={({ pressed }) => [styles.btn, role ? styles.btnQuiet : styles.btnMain, !complete && styles.flex, pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.btn, role ? styles.btnQuiet : styles.btnMain, pressed && styles.pressed]}>
       <AppText style={[styles.btnText, !role && styles.onSignal]}>{primary.label}</AppText>
     </Pressable>
   );
@@ -109,17 +108,8 @@ export function MapPassActions({
             ) : null}
           </View>
         </View>
-        {complete && !role ? (
-          <>
-            {main}
-            <View style={styles.row}>{others.map(quiet)}</View>
-          </>
-        ) : (
-          <View style={styles.row}>
-            {main}
-            {others.map(quiet)}
-          </View>
-        )}
+        {main}
+        {others.length > 0 && <View style={styles.row}>{others.map(quiet)}</View>}
       </View>
     </Animated.View>
   );

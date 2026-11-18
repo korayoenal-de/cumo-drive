@@ -817,6 +817,9 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       if (tourPlan.start && i === 0) tourPlan.removeStart(profile, avoid);
       else if (tourPlan.ziel && i === pts.length - 1) tourPlan.removeZiel(profile, avoid);
       else if (i >= 0) tourPlan.removeVia(i - (tourPlan.start ? 1 : 0), profile, avoid);
+    } else if (a === 'via' && !tourPlan.complete) {
+      // ausdrücklich als Zwischenziel gewählt, auch wenn Start oder Ziel noch fehlen (Koray 18.11.)
+      tourPlan.setSlot('via', pending.p, profile, avoid, pending.name ?? undefined);
     } else if (a !== 'remove') tourPlan.add(a, pending.p, profile, avoid, pending.name ?? undefined);
     setPending(null);
   }
@@ -835,10 +838,6 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     setMapEdit(true);
     // Blatt auf die kleinste Höhe wie beim Pass (Koray 18.11.): mehr Platz für Karte und Auswahl
     workOnMap();
-    if (!tourPts.length) {
-      tourPlan.add('start', p, profile, avoid);
-      return;
-    }
     // Die Wahl schwebt über der Karte wie beim Pass (Koray 18.11.), das Blatt bleibt, wo es ist
     setSelVia(null);
     setPending({ p, name: null });
@@ -1420,7 +1419,6 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
               name={placeOverlay.name ?? tr('Neuer Punkt')}
               note={passOverlay ? passSummary(passOverlay, undefined, passState(passOverlay, live).note) : undefined}
               role={passRole}
-              complete={tourPlan.complete}
               hasStart={!!tourPlan.start}
               detourKm={tourPlan.complete && passRole == null ? roughDetourKm(tourPts, passOverlay ? passPoint(passOverlay) : placeOverlay.p) : null}
               bottom={covered + Spacing.m}
