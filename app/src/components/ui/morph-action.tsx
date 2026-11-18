@@ -227,7 +227,8 @@ export const MorphAction = forwardRef<MorphActionRef, Props>(function MorphActio
 
 /** Runder Symbolknopf (Lesezeichen, Pass) als Startpunkt eines Flugs: misst sich und schickt das Symbol los */
 export function flyFrom(view: ComponentRef<typeof View> | null, opts: { target: FlyTarget; icon: BtnIcon; bg: string; fg: string }) {
-  view?.measureInWindow((x, y, w, h) => flyTo({ from: { x: x + w / 2, y: y + h / 2, size: Math.max(w, h) }, ...opts }));
+  // Kreis so groß wie die Taste hoch ist, nie so breit wie sie (Koray 18.11.: bei „Zur Route hinzufügen“ flog ein riesiger Kreis)
+  view?.measureInWindow((x, y, w, h) => flyTo({ from: { x: x + w / 2, y: y + h / 2, size: Math.min(w, h) }, ...opts }));
 }
 
 const styles = StyleSheet.create({
