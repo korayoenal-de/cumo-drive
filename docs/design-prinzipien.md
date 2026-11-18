@@ -50,7 +50,7 @@ Bewegung ist ein Akzent, kein Schmuck. Sie steht nur dort, wo sie etwas erklärt
 
 1. **Auswahl gleitet.** In einer festen Leiste gibt es eine einzige weiße Fläche, und sie gleitet zur neuen Auswahl: Leiste oben in der Community und alle Filterchips in einer ChipRow (seit 17.11., Leinwand „Gleitende Auswahl“, Variante Gleiten). Ohne Feder: Motion.enter (260 ms) mit EASE_OUT, kein Überschwingen. Die Schrift wird dunkel, wenn die Fläche ankommt. Beim ersten Erscheinen steht sie sofort richtig. Die Glasleiste von iOS unten bleibt, wie sie ist.
 2. **Der Finger führt.** Was man zieht, folgt dem Finger eins zu eins und rastet beim Loslassen mit `snap` ein: Blatt, Richtungsregler, Bewertungsregler, Punkte. Das läuft auf dem UI Thread, damit es auch beim Planen nicht hakt.
-3. **Aufklappen am Ort.** Optionen erscheinen dort, wo getippt wurde, gestaffelt mit EASE_OUT (siehe oben). Der Rest rückt mit `SOFT_LAYOUT` nach.
+3. **Aufklappen am Ort.** Optionen erscheinen dort, wo getippt wurde, gestaffelt mit EASE_OUT (siehe oben). Der Rest rückt mit `SOFT_LAYOUT` nach. Aufklappbare Bereiche (Accordion: Vermeiden, Unterwegs einplanen) wachsen in der Höhe mit EASE_OUT in `Motion.enter`, der Inhalt blendet von leicht oben ein, der Pfeil dreht mit; Schließen läuft rückwärts (Koray 18.11.).
 4. **Zustand wird Ergebnis.** Laden und Ergebnis stehen an derselben Stelle und gehen ineinander über: Zurück Pille beim Anpassen, Ladeknopf, Speichern.
 5. **Druck.** Jede Taste gibt mit `pressScale` nach, auch Chips.
 6. **Bedeutung.** Eigene Animationen haben nur der Manöverpfeil, die Legende im Fahrspaß Pegel und der Ladekreis.

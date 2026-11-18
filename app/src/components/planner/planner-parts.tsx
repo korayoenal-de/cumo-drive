@@ -6,9 +6,9 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, PanResponder, Pressable, Switch, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import { EASE_OUT } from '@/components/ui/motion';
 
-import { SOFT_LAYOUT } from '@/components/ui/action-bar';
 import Svg, { Path } from 'react-native-svg';
 
 import { PHASES, type PlanError, type PlanPhase } from '@/components/planner/create-tour';
@@ -137,15 +137,30 @@ export function Section({ label, action, children }: { label: string; action?: {
  * Zu zeigt die Kopfzeile, was eingestellt ist; der Pfeil dreht sich beim Aufklappen.
  */
 export function Accordion({ label, summary, defaultOpen = false, children }: { label: string; summary?: string; defaultOpen?: boolean; children: ReactNode }) {
+  // Aufklappen am Ort (Regel 3, Koray 18.11.: Öffnen und Schließen ohne Bewegung fiel auf): die Höhe wächst mit
+  // EASE_OUT (Motion.enter), der Inhalt blendet von leicht oben ein, alles darunter rückt dadurch weich nach.
+  // Schließen läuft rückwärts, erst danach verschwindet der Inhalt. Pfeil dreht ohne Feder mit.
+  const reduced = useReducedMotion();
   const [open, setOpen] = useState(defaultOpen);
-  const turn = useSharedValue(defaultOpen ? 1 : 0);
-  const chevron = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get() * 180}deg` }] }));
+  const [mounted, setMounted] = useState(defaultOpen);
+  const contentH = useSharedValue(0);
+  const p = useSharedValue(defaultOpen ? 1 : 0);
+  const tm = { duration: reduced ? 0 : Motion.enter, easing: EASE_OUT };
+  const chevron = useAnimatedStyle(() => ({ transform: [{ rotate: `${p.get() * 180}deg` }] }));
+  const body = useAnimatedStyle(() => ({ height: contentH.get() * p.get(), opacity: Math.min(1, p.get() * 1.6) }));
+  const inner = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - p.get()) * -8 }] }));
   const toggle = () => {
-    turn.set(withSpring(open ? 0 : 1, Motion.snap));
-    setOpen(!open);
+    if (open) {
+      setOpen(false);
+      p.set(withTiming(0, tm, (ok) => ok && runOnJS(setMounted)(false)));
+    } else {
+      setMounted(true);
+      setOpen(true);
+      p.set(withTiming(1, tm));
+    }
   };
   return (
-    <Animated.View layout={SOFT_LAYOUT} style={styles.gapM}>
+    <View style={styles.gapM}>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
@@ -165,15 +180,19 @@ export function Accordion({ label, summary, defaultOpen = false, children }: { l
           <SymbolView name="chevron.down" size={16} weight="semibold" tintColor={Colors.muted} />
         </Animated.View>
       </Pressable>
-      {open && (
-        // Abstand zwischen den Teilen wie im Kopf (Koray 18.11.: Chips und Hinweis klebten aneinander)
-        <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)} style={styles.gapM}>
-          {children}
+      {mounted && (
+        <Animated.View style={[{ overflow: 'hidden' }, body]}>
+          {/* Abstand zwischen den Teilen wie im Kopf (Koray 18.11.: Chips und Hinweis klebten aneinander) */}
+          <Animated.View style={[styles.gapM, accAbs, inner]} onLayout={(e) => contentH.set(e.nativeEvent.layout.height)}>
+            {children}
+          </Animated.View>
         </Animated.View>
       )}
-    </Animated.View>
+    </View>
   );
 }
+// Inhalt liegt frei über der wachsenden Fläche, damit er seine volle Höhe misst
+const accAbs = { position: 'absolute', left: 0, right: 0, top: 0 } as const;
 
 /** Kurzfassung der Vermeiden Schalter für die zugeklappte Kopfzeile */
 export function avoidSummary(a: { closures: boolean; ferries: boolean; tolls: boolean; rough: boolean }): string {
