@@ -287,6 +287,32 @@ export async function sendNachricht(id: string, body: string) {
   if (error) fail(error.message);
 }
 
+/** Chat einer Ausfahrt in der Liste der Nachrichten (Koray 18.11.) */
+export type RideChat = { rideId: string; name: string; startsAt: Date | null; lastBody: string; lastAt: Date; lastFromMe: boolean; lastName: string; unread: number };
+
+/** Chats der Ausfahrten, bei denen ich dabei bin und in denen schon etwas steht, neueste zuerst */
+export async function listRideChats(): Promise<RideChat[]> {
+  const { data: s } = await supabase.auth.getSession();
+  if (!s.session) return [];
+  const { data, error } = await supabase.rpc('my_ride_chats');
+  if (error) fail(error.message);
+  return ((data ?? []) as { ride: string; name: string | null; starts_at: string | null; last_body: string; last_at: string; last_from_me: boolean; last_name: string | null; unread: number }[]).map((r) => ({
+    rideId: r.ride,
+    name: r.name ?? tr('Ausfahrt'),
+    startsAt: r.starts_at ? new Date(r.starts_at) : null,
+    lastBody: r.last_body,
+    lastAt: new Date(r.last_at),
+    lastFromMe: r.last_from_me,
+    lastName: r.last_name ?? tr('Fahrer'),
+    unread: r.unread ?? 0,
+  }));
+}
+
+/** Chat als gelesen merken; ohne Netz oder Recht passiert nichts */
+export async function markRideChatSeen(id: string) {
+  await supabase.rpc('ride_chat_mark_seen', { ride: id });
+}
+
 /** Nachrichten laden und live halten (Realtime, dazu alle 20 s nachladen falls die Verbindung hakt). */
 export function useNachrichten(id: string | undefined) {
   const [list, setList] = useState<Nachricht[] | null>(null);

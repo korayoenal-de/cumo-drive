@@ -17,13 +17,15 @@ import { ReportSheet } from '@/components/moderation/report-sheet';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Spacing, Type, Layout } from '@/constants/theme';
-import { ausfahrtTeilnehmer, clock, listAusfahrten, sendNachricht, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
+import { ausfahrtTeilnehmer, clock, listAusfahrten, markRideChatSeen, sendNachricht, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
+import { refreshUnread } from '@/lib/drivers';
 import { useSession } from '@/lib/auth';
 import { enablePush, setOpenChat } from '@/lib/push';
 import { t } from '@/i18n';
 
 export default function AusfahrtChat() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // name und from kommen aus der Liste der Nachrichten (Koray 18.11.): Titel auch bei vergangenen Ausfahrten, Zurück nennt die Herkunft
+  const { id, name: nameParam, from } = useLocalSearchParams<{ id: string; name?: string; from?: string }>();
   const insets = useSafeAreaInsets();
   const session = useSession();
   const me = session?.user.id;
@@ -57,6 +59,15 @@ export default function AusfahrtChat() {
       .catch(() => undefined);
   }, [id]);
 
+  // Offen heißt gelesen: beim Öffnen und bei jeder neuen Nachricht, solange der Chat sichtbar ist
+  const count = list?.length ?? -1;
+  useFocusEffect(
+    useCallback(() => {
+      if (!id || count < 0) return;
+      void markRideChatSeen(id).then(() => refreshUnread());
+    }, [id, count]),
+  );
+
   const names = useMemo(() => new Map(members.map((m) => [m.userId, m.name])), [members]);
 
   const send = async () => {
@@ -80,9 +91,9 @@ export default function AusfahrtChat() {
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.head, { paddingTop: insets.top + Spacing.s }]}>
-        <BackLink label={t('Ausfahrt')} onPress={back} />
+        <BackLink label={from === 'nachrichten' ? t('Nachrichten') : t('Ausfahrt')} onPress={back} />
         <View style={styles.flex}>
-          <AppText style={styles.title} numberOfLines={1}>{a?.name ?? t('Chat')}</AppText>
+          <AppText style={styles.title} numberOfLines={1}>{a?.name ?? nameParam ?? t('Chat')}</AppText>
           {a && (
             <AppText variant="caption" muted numberOfLines={1}>
               {fmtMeta(wann(a.startsAt), `${members.length} Teilnehmer`)}

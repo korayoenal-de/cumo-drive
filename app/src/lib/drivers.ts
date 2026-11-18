@@ -309,7 +309,9 @@ const listeners = new Set<() => void>();
 export async function refreshUnread() {
   try {
     const { data: s } = await supabase.auth.getSession();
-    const n = s.session ? (((await supabase.rpc('unread_messages')).data as number | null) ?? 0) : 0;
+    // Unterhaltungen und Chats der Ausfahrten zusammen (Koray 18.11.); fehlt die zweite Funktion, zählt nur die erste
+    const [direct, rides] = s.session ? await Promise.all([supabase.rpc('unread_messages'), supabase.rpc('unread_ride_messages')]) : [null, null];
+    const n = ((direct?.data as number | null) ?? 0) + ((rides?.data as number | null) ?? 0);
     if (n !== unread) {
       unread = n;
       for (const l of listeners) l();
@@ -350,6 +352,8 @@ export function useUnreadWatcher(userId: string | undefined) {
     const ch = supabase
       .channel(`unread:${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient=eq.${userId}` }, () => void refreshUnread())
+      // Chats der Ausfahrten: Realtime liefert nur, was ich lesen darf
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ride_messages' }, () => void refreshUnread())
       .subscribe();
     const t = setInterval(() => void refreshUnread(), 60000);
     return () => {

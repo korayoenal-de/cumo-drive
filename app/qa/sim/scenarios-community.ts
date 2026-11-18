@@ -194,6 +194,25 @@ async function ausfahrten(w: World, tour: ReturnType<typeof loadSampleTour>) {
     await w.settle();
   });
 
+  await scenario('C9b', 'Chat der Ausfahrt steht unter Nachrichten, mit ungelesen und gelesen', async (c) => {
+    const chat = async (d: typeof max) => (await d.app.ausfahrten.listRideChats()).find((x) => x.rideId === id);
+    const unread = async (d: typeof max) => ((await d.client.rpc('unread_ride_messages')).data as number | null) ?? -1;
+    const m = await chat(max);
+    c.expect(!!m && m.lastBody.includes('später') && m.lastName === 'Conrad Gast' && !m.lastFromMe, `Max sieht den Chat mit der letzten Nachricht (${m?.lastName}: ${m?.lastBody})`);
+    c.expect(m?.unread === 2 && (await unread(max)) === 2, `zwei ungelesen, auch in der Plakette (${m?.unread})`);
+    const cc = await chat(carl);
+    c.expect(cc?.lastFromMe === true && cc.unread === 1, `eigene Nachrichten zählen nicht als ungelesen (${cc?.unread})`);
+    c.expect(!(await chat(sina)) && (await unread(sina)) === 0, 'Abgelehnte sieht den Chat nicht');
+    await sina.app.ausfahrten.markRideChatSeen(id);
+    await max.app.ausfahrten.markRideChatSeen(id);
+    c.expect((await chat(max))?.unread === 0 && (await unread(max)) === 0, 'nach dem Öffnen gelesen');
+    await org.app.ausfahrten.sendNachricht(id, 'Bis morgen');
+    const m2 = await chat(max);
+    c.expect(m2?.unread === 1 && m2.lastBody === 'Bis morgen', `neue Nachricht wieder ungelesen (${m2?.unread})`);
+    const seen = await max.client.from('ride_chat_seen').select('ride_id');
+    c.expect(!!seen.error || ((seen.data ?? []) as unknown[]).length === 0, 'Lesestand direkt nicht lesbar');
+  });
+
   await scenario('C10', 'Absagen, Anfrage zurückziehen, Ausfahrt zurückziehen', async (c) => {
     await carl.app.ausfahrten.withdrawAusfahrt(id);
     const a = (await carl.app.ausfahrten.listAusfahrten()).find((x) => x.id === id);
