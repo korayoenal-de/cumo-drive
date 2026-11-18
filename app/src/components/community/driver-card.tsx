@@ -98,40 +98,27 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
             <AppText style={styles.carName}>{d.car}</AppText>
           </View>
         ) : null}
-        {canWrite ? (
-          <Pressable accessibilityRole="button" onPress={() => write(d)} style={styles.primary}>
-            <IconLabel icon={{ sf: 'bubble.left' }} color={Colors.onSignal}>
-<AppText style={styles.primaryText}>{t('Nachricht')}</AppText>
-</IconLabel>
-          </Pressable>
-        ) : !d.isMe ? (
-          <AppText variant="caption" muted>{d.name}{t(' möchte keine Nachrichten bekommen.')}</AppText>
-        ) : (
-          <AppText variant="caption" muted>{t('So sehen dich andere. Wohnort, Nachrichten und Fuhrpark stellst du in den Einstellungen ein.')}</AppText>
-        )}
+        {/* Nachricht und Einladen in einer Zeile (Koray 18.11.); die Kontaktbeziehung steht ruhig unten bei Melden und Blockieren */}
         {!d.isMe && (
           <View style={styles.actions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={status === 'kontakt' ? t('Mit {name} verbunden, tippen zum Entfernen', { name: d.name }) : status === 'angefragt' ? t('Anfrage an {name} zurückziehen', { name: d.name }) : t('{name} zu Kontakten hinzufügen', { name: d.name })}
-              disabled={contactBusy}
-              onPress={() => void contactAction()}
-              style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
-              {contactBusy ? (
-                <ActivityIndicator color={Colors.muted} />
-              ) : (
-                <>
-                  <SymbolView name={status === 'kontakt' ? 'person.crop.circle.badge.checkmark' : status === 'angefragt' ? 'clock' : 'person.badge.plus'} size={20} weight="semibold" tintColor={status === 'angefragt' ? Colors.muted : Colors.text} />
-                  <AppText style={[styles.secondaryText, status === 'angefragt' && { color: Colors.muted }]}>{status === 'kontakt' ? t('Verbunden') : status === 'angefragt' ? t('Angefragt') : status === 'anfrage' ? t('Bestätigen') : t('Zu Kontakten')}</AppText>
-                </>
-              )}
-            </Pressable>
+            {canWrite && (
+              <Pressable accessibilityRole="button" onPress={() => write(d)} style={({ pressed }) => [styles.primary, styles.flex, pressed && styles.pressed]}>
+                <IconLabel icon={{ sf: 'bubble.left' }} color={Colors.onSignal}>
+                  <AppText style={styles.primaryText}>{t('Nachricht')}</AppText>
+                </IconLabel>
+              </Pressable>
+            )}
             <Pressable accessibilityRole="button" accessibilityLabel={t('{name} zur Gruppenfahrt einladen', { name: d.name })} onPress={() => setInviteOpen(true)} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
               <SymbolView name="car.2" size={20} weight="semibold" tintColor={Colors.text} />
               <AppText style={styles.secondaryText}>{t('Einladen')}</AppText>
             </Pressable>
           </View>
         )}
+        {!canWrite && !d.isMe ? (
+          <AppText variant="caption" muted>{d.name}{t(' möchte keine Nachrichten bekommen.')}</AppText>
+        ) : d.isMe ? (
+          <AppText variant="caption" muted>{t('So sehen dich andere. Wohnort, Nachrichten und Fuhrpark stellst du in den Einstellungen ein.')}</AppText>
+        ) : null}
         {!d.isMe && <InviteSheet d={d} visible={inviteOpen} onClose={() => setInviteOpen(false)} />}
         {!d.isMe && (
           <ConfirmSheet
@@ -145,6 +132,16 @@ export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: b
         )}
         {!d.isMe && (
           <View style={styles.quiet}>
+            {/* Kontakt als erste ruhige Option (Koray 18.11.); verbunden zeigt schon das Häkchen am Bild */}
+            <Pressable accessibilityRole="button" disabled={contactBusy} onPress={() => void contactAction()} style={styles.quietBtn}>
+              {contactBusy ? (
+                <ActivityIndicator color={Colors.muted} />
+              ) : (
+                <AppText style={[styles.quietText, status === 'anfrage' && styles.quietOn]}>
+                  {status === 'kontakt' ? t('Aus Kontakten entfernen') : status === 'angefragt' ? t('Anfrage zurückziehen') : status === 'anfrage' ? t('Anfrage bestätigen') : t('Zu Kontakten hinzufügen')}
+                </AppText>
+              )}
+            </Pressable>
             <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={styles.quietBtn}>
               <AppText style={styles.quietText}>{t('Melden')}</AppText>
             </Pressable>
@@ -317,7 +314,8 @@ const styles = StyleSheet.create({
   pendingText: { fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.muted },
   accept: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   acceptText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
-  quiet: { flexDirection: 'row', gap: Spacing.l },
+  quiet: { flexDirection: 'row', flexWrap: 'wrap', columnGap: Spacing.l },
+  quietOn: { color: Colors.text },
   quietBtn: { minHeight: 44, justifyContent: 'center' },
   quietText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   bday: { color: Colors.text, fontFamily: Fonts.bold },
