@@ -223,12 +223,18 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
     setBusy(true);
     setMsg(null);
     try {
+      // Lage der Taste vor dem Senden messen: nach dem Erfolg schließt das Blatt sofort, dann gibt es sie nicht mehr
+      // (vorher kam die Messung zu spät, der Flug blieb aus und eine Meldung gab es auch nicht; Koray 18.11.)
+      const box = fly
+        ? await new Promise<{ x: number; y: number; h: number } | null>((res) => {
+            const v = pubRef.current;
+            if (!v) return res(null);
+            v.measureInWindow((x, y, w, h) => res(w ? { x: x + w / 2, y: y + h / 2, h } : null));
+          })
+        : null;
       await fn();
-      if (fly)
-        pubRef.current?.measureInWindow((x, y, w, h) => {
-          if (w) setTimeout(() => flyTo({ from: { x: x + w / 2, y: y + h / 2, size: h }, target: 'community', icon: { tab: 'community' }, bg: Colors.signal, fg: Colors.onSignal }), SHEET_GONE_MS);
-        });
-      onDone(done, fly);
+      if (box) setTimeout(() => flyTo({ from: { x: box.x, y: box.y, size: box.h }, target: 'community', icon: { tab: 'community' }, bg: Colors.signal, fg: Colors.onSignal }), SHEET_GONE_MS);
+      onDone(done, !!box);
     } catch (e) {
       setMsg(e instanceof Error ? e.message : String(e));
     } finally {
