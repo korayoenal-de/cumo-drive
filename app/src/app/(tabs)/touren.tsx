@@ -27,6 +27,7 @@ import { TextField } from '@/components/ui/text-field';
 import Animated, { FadeOut } from 'react-native-reanimated';
 import { SOFT_LAYOUT } from '@/components/ui/motion';
 import { haptic } from '@/lib/haptics';
+import { isOffline } from '@/lib/friendly-error';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -236,7 +237,11 @@ export default function Touren() {
         <View style={styles.syncRow}>
           {sync.running && <ActivityIndicator color={Colors.muted} />}
           <AppText variant="caption" muted style={styles.flex}>
-            {sync.running ? tr('Wird mit deinem Konto abgeglichen') : tr('Abgleich hat nicht geklappt: {error}', { error: sync.error })}
+            {sync.running
+              ? tr('Wird mit deinem Konto abgeglichen')
+              : isOffline(sync.error)
+                ? tr('Ohne Internet siehst du die Touren von diesem Gerät. Der Abgleich mit deinem Konto folgt, sobald du wieder online bist.')
+                : tr('Abgleich hat nicht geklappt: {error}', { error: sync.error })}
           </AppText>
         </View>
       )}

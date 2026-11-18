@@ -1984,5 +1984,10 @@
   "Aus Kontakten entfernen": "Remove from contacts",
   "Anfrage bestätigen": "Confirm request",
   "Zu Kontakten hinzufügen": "Add to contacts",
-  "Tour {name} löschen": "Delete tour {name}"
+  "Tour {name} löschen": "Delete tour {name}",
+  "Keine Verbindung zum Internet. Versuch es gleich nochmal.": "No internet connection. Try again in a moment.",
+  "Ohne Internet siehst du die Touren von diesem Gerät. Der Abgleich mit deinem Konto folgt, sobald du wieder online bist.": "Without internet you see the tours on this device. Syncing with your account follows once you are back online.",
+  "Ohne Internet geht das gerade nicht. Versuch es nochmal, sobald du wieder online bist.": "This does not work without internet. Try again once you are back online.",
+  "Gib der Tour einen Namen.": "Give the tour a name.",
+  "Trag deinen Namen als Fahrer ein, dann kannst du veröffentlichen.": "Enter your driver name, then you can publish."
 }

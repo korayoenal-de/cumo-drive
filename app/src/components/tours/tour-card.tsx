@@ -25,6 +25,7 @@ import { IconLabel } from '@/components/ui/btn-icon';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
 import { TextField } from '@/components/ui/text-field';
 import { haptic } from '@/lib/haptics';
+import { friendlyError } from '@/lib/friendly-error';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -240,7 +241,7 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
       if (box) setTimeout(() => flyTo({ from: { x: box.x, y: box.y, size: box.h }, target: 'community', icon: { tab: 'community' }, bg: Colors.signal, fg: Colors.onSignal }), SHEET_GONE_MS);
       onDone(done, !!box);
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : String(e));
+      setMsg(friendlyError(e, tr('Ohne Internet geht das gerade nicht. Versuch es nochmal, sobald du wieder online bist.')));
     } finally {
       setBusy(false);
     }
@@ -310,6 +311,8 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
         )}
       </Pressable>
       {msg && <AppText variant="caption" style={styles.danger}>{msg}</AppText>}
+      {/* gesperrte Taste erklärt sich (Koray 18.11.): ohne Netz kam der Name nicht, die Taste blieb stumm grau */}
+      {!msg && !busy && !can && <AppText variant="caption" muted>{!title.trim() ? tr('Gib der Tour einen Namen.') : tr('Trag deinen Namen als Fahrer ein, dann kannst du veröffentlichen.')}</AppText>}
     </View>
   );
 }

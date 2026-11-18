@@ -1984,5 +1984,10 @@
   "Aus Kontakten entfernen": "Rimuovi dai contatti",
   "Anfrage bestätigen": "Conferma la richiesta",
   "Zu Kontakten hinzufügen": "Aggiungi ai contatti",
-  "Tour {name} löschen": "Elimina il giro {name}"
+  "Tour {name} löschen": "Elimina il giro {name}",
+  "Keine Verbindung zum Internet. Versuch es gleich nochmal.": "Nessuna connessione a internet. Riprova tra poco.",
+  "Ohne Internet siehst du die Touren von diesem Gerät. Der Abgleich mit deinem Konto folgt, sobald du wieder online bist.": "Senza internet vedi i giri di questo dispositivo. La sincronizzazione con il tuo account segue appena torni online.",
+  "Ohne Internet geht das gerade nicht. Versuch es nochmal, sobald du wieder online bist.": "Senza internet ora non funziona. Riprova appena torni online.",
+  "Gib der Tour einen Namen.": "Dai un nome al giro.",
+  "Trag deinen Namen als Fahrer ein, dann kannst du veröffentlichen.": "Inserisci il tuo nome da pilota, poi puoi pubblicare."
 }
