@@ -1,6 +1,6 @@
 # CUMO DRIVE ToDos
 
-Stand: 17. November 2026, 16:00 (gegen Code und Git Verlauf geprüft; Prüfung vor dem Start im Doc „Startprüfung CUMO DRIVE“)
+Stand: 18. November 2026, 14:30 (gegen Code und Git Verlauf geprüft; Prüfung vor dem Start im Doc „Startprüfung CUMO DRIVE“)
 
 ## Routen Check 17.11. nachmittags
 
@@ -80,7 +80,7 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 * [ ] Impressum klären: Rechtsform, ladungsfähige Anschrift, DDG statt TMG (Koray mit Anwalt); danach Impressum als eigene Seite in der App (Claude)
 * [ ] Datenschutz und AGB anwaltlich prüfen, vor allem Widerrufsrecht, Haftung, Auswertung der Spuren, Blackbox der Fahrten und Meldungen, Standort für Erinnerungen (Koray mit Anwalt)
 * [ ] Lizenzen der Dienste mit dem Anwalt: FOSSGIS Valhalla nur noch Notfall, ODbL Namensnennung (Koray)
-* [ ] Auftragsverarbeitungsverträge mit Supabase, Contabo, Expo und LiveKit abschließen und dokumentieren (Koray)
+* [ ] Auftragsverarbeitungsverträge: Contabo im Kundenbereich abschließen, bei Expo nachfragen, bei Supabase, LiveKit und RevenueCat die Fassung ablegen (Koray; Fundstellen in docs/auftragsverarbeitung.md, 18.11.)
 * [x] Händlerstatus bei Apple für die EU angegeben, Kontakt kontakt@cumodrive.com (Koray 17.11.)
 
 ### Zwingend: App
@@ -93,8 +93,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 * [x] Texte DE, EN und IT in App Store Connect (Name, Untertitel, Beschreibung, Werbetext, Schlagworte, Support und Marketing URL, 17.11.)
 * [ ] Screenshots EN und IT (Koray 18.11.), Altersfreigabe, Inhaltsrechte (unter App Informationen noch offen)
-* [ ] Angaben zum Datenschutz im Store: Standort, Kontakt, Nutzerinhalte, Audio, Fahrtprotokoll (Claude bereitet vor)
-* [ ] Testkonto und Hinweise für die Apple Prüfung, auch zu Funk und Standort im Hintergrund (Claude)
+* [ ] Angaben zum Datenschutz im Store eintragen: Vorlage im Doc „App Store Angaben“ auf Stand 18.11. (mit Käufen und Fehlerberichten), Koray trägt ein
+* [ ] Testkonto mit aktiver Mitgliedschaft anlegen (Koray); Hinweise für die Apple Prüfung stehen im Doc „App Store Angaben“ (18.11., mit Abos, Konto löschen, englischen Beschriftungen)
 
 ### Unabhängigkeit, vor dem Start
 
@@ -185,7 +185,7 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 ## Backlog
 
 * [ ] **Lasttest Routing Server** (Koray 18.11.: Backlog): 10 Planungen gleichzeitig über 2 Minuten, abends, nur der Routing Server; Supabase bleibt außen vor. Trifft die echten Server, daher nur nach Korays OK
-* [ ] Gleiche Punkte, verschiedene Touren: Teilplanung und ganze Planung lagen im Test 28 und 43 km auseinander (Prüfung 18.11., Bedienfolgen Seed 23)
+* [ ] Gleiche Punkte, verschiedene Touren (Prüfung 18.11.): Ursache gefunden. Der Vergleich Kurvig gegen den direkten Weg (`curvyWorthIt`) entscheidet für alle Etappen einer Tour gemeinsam. Ändert sich eine Etappe, kann die Entscheidung für die ganze Tour kippen (Miltenberg, Amorbach, Hirschhorn, Michelstadt: mit Ziel Beerfelden 99,8 km direkt, mit Ziel Lindenfels 154,1 km kurvig). Vorschlag: je Etappe entscheiden. Wartet auf Korays Entscheidung, weil es die Routen aller Touren mit Zwischenzielen ändert
 * [ ] GitHub Secret EXPO_TOKEN eintragen, damit OTA über den Zweig ota/* aus jeder Sitzung geht (Koray 17.11.: Backlog; bis dahin veröffentlicht Claude OTA direkt nach dem Testlauf)
 * [ ] Captcha bei der Registrierung (Entscheidung 17.11.: Hürde für Nutzer, erst bei Missbrauch; Zahlen in signup_attempts)
 * [ ] App Attest, zusammen mit engeren Grenzen für den Web Planer (wenn es echte Nutzer gibt)

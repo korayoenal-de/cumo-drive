@@ -6,7 +6,7 @@ import type { LegalDoc } from './legal';
 
 const CONTACT = 'kontakt@cumodrive.com';
 const IMPRINT = 'https://rallycumo.de/impressum/';
-const STAND = 'Aggiornato al 17 novembre 2026. Bozza, verifica legale in sospeso. Questa è una traduzione; fa fede la versione tedesca.';
+const STAND = 'Aggiornato al 18 novembre 2026. Bozza, verifica legale in sospeso. Questa è una traduzione; fa fede la versione tedesca.';
 
 export const PRIVACY_IT: LegalDoc = {
   title: 'Privacy',
@@ -34,6 +34,7 @@ export const PRIVACY_IT: LegalDoc = {
         'Radio nel giro di gruppo: la tua voce solo mentre tieni premuto il tasto radio. Viene trasmessa in diretta agli altri partecipanti e non viene registrata né salvata.',
         'Notifiche: se le consenti, un token del dispositivo per le notifiche push su messaggi, inviti e richieste.',
         'Feedback: quando tocchi Segnala un problema, la posizione, ciò che l’app mostrava in quel momento, gli ultimi minuti della guida e la versione dell’app; quando valuti male una guida, valutazione, motivi e nota; quando invii un feedback nelle Impostazioni, area, testo e versione dell’app. Esaminiamo ogni segnalazione per correggere errori e migliorare l’app (legittimo interesse, art. 6, par. 1, lett. f GDPR) e ti avvisiamo quando il tuo feedback è stato realizzato.',
+        'Segnalazioni di errore: se l’app si blocca o si verifica un errore, inviamo il messaggio di errore con il punto del programma, la versione dell’app, la schermata e il sistema operativo, insieme all’ID del tuo account se hai effettuato l’accesso. Posizioni e contenuti non sono inclusi. Gli errori uguali vengono contati insieme per poterli correggere (legittimo interesse, art. 6, par. 1, lett. f GDPR).',
         'Posizione: durante la pianificazione e la navigazione, per guidarti e per pianificare giri dalla tua posizione. Nel giro di gruppo gli altri partecipanti vedono la tua posizione in diretta finché il giro è in corso.',
         'Fotocamera e microfono: la fotocamera solo per leggere un codice QR dal planner web; non salviamo immagini. Il microfono solo per la radio, mentre tieni premuto il tasto.',
         'Acquisto: se hai un abbonamento e quando scade. I dati di pagamento li vede solo Apple, noi no.',
@@ -55,7 +56,7 @@ export const PRIVACY_IT: LegalDoc = {
       h: '4. Chi riceve i dati',
       p: ['Trasmettiamo dati solo ai servizi che servono per la rispettiva funzione. Con i responsabili del trattamento esistono accordi ai sensi dell’art. 28 GDPR.'],
       list: [
-        'Supabase (Supabase Inc., server a Francoforte sul Meno): account, tour, guide, veicoli, stato dei passi e connessione in tempo reale dei giri di gruppo. Responsabile del trattamento.',
+        'Supabase (Supabase Pte. Ltd., Singapore, server a Francoforte sul Meno): account, tour, guide, veicoli, messaggi, uscite con chat, feedback, segnalazioni di errore, stato dei passi e connessione in tempo reale dei giri di gruppo. Responsabile del trattamento; i trasferimenti fuori dall’UE si basano sulle clausole contrattuali tipo.',
         'I nostri server di routing presso Contabo (Contabo GmbH, Germania): calcolano i percorsi dalle tue tappe. Responsabile del trattamento.',
         'Anche la ricerca dei luoghi, il profilo altimetrico, i limiti di velocità e le soste lungo il percorso vengono calcolati dai nostri server presso Contabo. Solo se non sono raggiungibili l’app ripiega su Photon di komoot (komoot GmbH, Germania) con il termine cercato o la coordinata e sul server Valhalla di FOSSGIS e.V. (Germania) con il tracciato del percorso.',
         'Apple (Apple Distribution International, Irlanda, e Apple Inc., USA): App Store, abbonamenti, visualizzazione mappe con Apple Mappe, CarPlay e meteo ai passi tramite WeatherKit. Per il meteo inviamo la posizione del passo, non la tua.',
@@ -73,7 +74,7 @@ export const PRIVACY_IT: LegalDoc = {
       list: [
         'Account, tour, guide e veicoli finché li elimini o elimini l’account.',
         'Voci sull’uso della pianificazione per al massimo 24 mesi; poi restano solo i valori aggregati per tratto di strada.',
-        'Feedback e registri di guida da Segnala un problema per al massimo 12 mesi.',
+        'Feedback, segnalazioni di errore e registri di guida da Segnala un problema per al massimo 12 mesi.',
         'Le posizioni in diretta nei giri di gruppo non vengono salvate, ma solo scambiate tra i partecipanti durante il giro.',
         'Log dei server per al massimo 14 giorni.',
         'Dati di fatturazione per le licenze club per il tempo richiesto dal diritto commerciale e fiscale (fino a 10 anni).',

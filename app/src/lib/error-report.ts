@@ -11,6 +11,7 @@ import { Platform } from 'react-native';
 
 import { errorFingerprint } from './error-fingerprint';
 import { appVersion } from './feedback';
+import { isOffline } from './friendly-error';
 import { supabase } from './supabase';
 
 type Report = { fingerprint: string; message: string; stack: string | null; fatal: boolean; version: string; context: Record<string, unknown> };
@@ -125,4 +126,28 @@ export function installErrorReporting(): void {
     reportError(e, { fatal: !!fatal });
     prev(e, fatal);
   });
+  trackRejections();
+}
+
+/**
+ * Abgelehnte Promises, die niemand abfängt (Prüfung 18.11.): React Native meldet sie nur in der Entwicklung.
+ * Im fertigen Build hängen wir uns an Hermes, sonst bleibt ein Fehler in einem `void laden()` unsichtbar.
+ * Fehlendes Netz und abgebrochene Anfragen sind kein Fehler der App und werden nicht gemeldet.
+ */
+function trackRejections() {
+  if (__DEV__) return;
+  const h = (globalThis as unknown as { HermesInternal?: { enablePromiseRejectionTracker?: (o: { allRejections: boolean; onUnhandled: (id: number, rejection: unknown) => void; onHandled: (id: number) => void }) => void } }).HermesInternal;
+  try {
+    h?.enablePromiseRejectionTracker?.({
+      allRejections: true,
+      onUnhandled: (_id, rejection) => {
+        if (rejection == null || isOffline(rejection)) return;
+        if (rejection instanceof Error && rejection.name === 'AbortError') return;
+        reportError(rejection, { extra: { promise: true } });
+      },
+      onHandled: () => undefined,
+    });
+  } catch {
+    // ohne Hermes bleibt es beim bisherigen Stand
+  }
 }

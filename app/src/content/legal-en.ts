@@ -6,7 +6,7 @@ import type { LegalDoc } from './legal';
 
 const CONTACT = 'kontakt@cumodrive.com';
 const IMPRINT = 'https://rallycumo.de/impressum/';
-const STAND = 'As of 17 November 2026. Draft, legal review pending. This is a translation; the German version prevails.';
+const STAND = 'As of 18 November 2026. Draft, legal review pending. This is a translation; the German version prevails.';
 
 export const PRIVACY_EN: LegalDoc = {
   title: 'Privacy',
@@ -34,6 +34,7 @@ export const PRIVACY_EN: LegalDoc = {
         'Radio in a group drive: your voice only while you hold the radio button. It is transmitted live to the other participants and is not recorded or stored.',
         'Notifications: if you allow them, a device token for push notifications about messages, invitations and requests.',
         'Feedback: when you tap Report a problem, the position, what the app was showing at that moment, the last minutes of the drive and the app version; when you rate a drive poorly, rating, reasons and note; when you send feedback in Settings, area, text and app version. We review every report to fix bugs and improve the app (legitimate interest, Art. 6(1)(f) GDPR) and let you know when your feedback has been implemented.',
+        'Error reports: if the app crashes or an error occurs, we send the error message with the place in the program, the app version, the screen and the operating system, together with your account ID if you are signed in. Locations and content are not included. Identical errors are counted together so we can fix them (legitimate interest, Art. 6(1)(f) GDPR).',
         'Location: during planning and navigation, to guide you and to plan loops from your location. In a group drive the other participants see your position live while the drive is running.',
         'Camera and microphone: the camera only to read a QR code from the web planner; we do not store images. The microphone only for the radio, while you hold the button.',
         'Purchase: whether you have a subscription and when it ends. Only Apple sees payment details, we do not.',
@@ -55,7 +56,7 @@ export const PRIVACY_EN: LegalDoc = {
       h: '4. Who receives data',
       p: ['We only pass data to services we need for the respective function. Data processing agreements under Art. 28 GDPR are in place with processors.'],
       list: [
-        'Supabase (Supabase Inc., servers in Frankfurt am Main): account, tours, drives, vehicles, pass status and the real time connection of group drives. Processor.',
+        'Supabase (Supabase Pte. Ltd., Singapore, servers in Frankfurt am Main): account, tours, drives, vehicles, messages, club drives with chat, feedback, error reports, pass status and the real time connection of group drives. Processor; transfers outside the EU are based on standard contractual clauses.',
         'Our own routing servers at Contabo (Contabo GmbH, Germany): calculate routes from your waypoints. Processor.',
         'Place search, elevation profile, speed limits and stops along the route are also calculated by our own servers at Contabo. Only if they are unavailable does the app fall back to Photon by komoot (komoot GmbH, Germany) with the search term or coordinate and the Valhalla server of FOSSGIS e.V. (Germany) with the line of the route.',
         'Apple (Apple Distribution International, Ireland, and Apple Inc., USA): App Store, subscriptions, map display with Apple Maps, CarPlay and weather at the passes via WeatherKit. For the weather we send the location of the pass, not your location.',
@@ -73,7 +74,7 @@ export const PRIVACY_EN: LegalDoc = {
       list: [
         'Account, tours, drives and vehicles until you delete them or delete your account.',
         'Entries on the use of planning for at most 24 months; after that only the aggregated values per road section remain.',
-        'Feedback and drive logs from Report a problem for at most 12 months.',
+        'Feedback, error reports and drive logs from Report a problem for at most 12 months.',
         'Live positions in group drives are not stored, only exchanged between participants during the drive.',
         'Server logs for at most 14 days.',
         'Invoice data for club licences as long as commercial and tax law requires (up to 10 years).',
