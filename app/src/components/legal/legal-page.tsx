@@ -8,21 +8,24 @@ import { SeoHead } from '@/components/ui/seo-head';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Polygon } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import type { LegalDoc } from '@/content/legal';
 import { t, tr } from '@/i18n';
 
+// Logo S3 (acht Segmente um den achtzackigen Stern), dieselben Pfade wie im App Icon. Bis 18.11. stand hier noch
+// das alte Zeichen mit sieben Dreiecken.
 const MARK = [
-  '12.00,16.20 7.29,22.09 16.71,22.09',
-  '8.72,14.62 1.17,14.61 7.05,21.98',
-  '7.91,11.07 3.21,5.16 1.11,14.35',
-  '10.18,8.22 11.87,0.86 3.37,4.95',
-  '13.82,8.22 20.63,4.95 12.13,0.86',
-  '16.09,11.07 22.89,14.35 20.79,5.16',
-  '15.28,14.62 16.95,21.98 22.83,14.61',
+  'M8.97,16.80 L3.94,20.06 A11.4,11.4 0 0 0 12.00,23.40 L10.75,17.53 Q10.39,15.88 8.97,16.80 Z',
+  'M6.47,13.25 L0.60,12.00 A11.4,11.4 0 0 0 3.94,20.06 L7.20,15.03 Q8.12,13.61 6.47,13.25 Z',
+  'M7.20,8.97 L3.94,3.94 A11.4,11.4 0 0 0 0.60,12.00 L6.47,10.75 Q8.12,10.39 7.20,8.97 Z',
+  'M10.75,6.47 L12.00,0.60 A11.4,11.4 0 0 0 3.94,3.94 L8.97,7.20 Q10.39,8.12 10.75,6.47 Z',
+  'M15.03,7.20 L20.06,3.94 A11.4,11.4 0 0 0 12.00,0.60 L13.25,6.47 Q13.61,8.12 15.03,7.20 Z',
+  'M17.53,10.75 L23.40,12.00 A11.4,11.4 0 0 0 20.06,3.94 L16.80,8.97 Q15.88,10.39 17.53,10.75 Z',
+  'M16.80,15.03 L20.06,20.06 A11.4,11.4 0 0 0 23.40,12.00 L17.53,13.25 Q15.88,13.61 16.80,15.03 Z',
+  'M13.25,17.53 L12.00,23.40 A11.4,11.4 0 0 0 20.06,20.06 L15.03,16.80 Q13.61,15.88 13.25,17.53 Z',
 ];
 
 export function LegalPage({ doc, description, other }: { doc: LegalDoc; description: string; other: { href: '/agb' | '/datenschutz'; label: string } }) {
@@ -43,8 +46,8 @@ export function LegalPage({ doc, description, other }: { doc: LegalDoc; descript
           <View style={styles.head}>
             <Pressable accessibilityRole="link" accessibilityLabel={web ? tr('Zur Startseite') : tr('Schließen')} onPress={home} style={styles.logo}>
               <Svg width={26} height={26} viewBox="0 0 24 24">
-                {MARK.map((pts) => (
-                  <Polygon key={pts} points={pts} fill={Colors.signal} />
+                {MARK.map((d) => (
+                  <Path key={d} d={d} fill={Colors.signal} />
                 ))}
               </Svg>
               <AppText style={styles.logoText}>CUMO DRIVE</AppText>
