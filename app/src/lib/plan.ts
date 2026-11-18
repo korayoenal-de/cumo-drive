@@ -173,6 +173,8 @@ export async function planChecked(
   signal?: AbortSignal,
   snapMajor = false,
   hint?: PlanHint,
+  /** false: nicht gegen den direkten Weg vergleichen, die Entscheidung fiel schon je Etappe (planGroup) */
+  compare = true,
 ): Promise<PlannedTour> {
   // Start und Ziel auf eine richtige Straße, nie auf Zufahrten oder Tankstellengelände (Koray 14.11.).
   // Die Tour behält die Punkte, die der Nutzer gesetzt hat: der Planer vergleicht sie mit seinen Punkten,
@@ -180,10 +182,10 @@ export async function planChecked(
   const asSet = points;
   points = await snapEndsToStreet(points, signal);
   if (points !== asSet && points.some((p, i) => p !== asSet[i])) {
-    const t = await planCheckedInner(name, points, profile, avoid, onStep, signal, snapMajor, hint);
+    const t = await planCheckedInner(name, points, profile, avoid, onStep, signal, snapMajor, hint, compare);
     return withUTurnWarnings({ ...t, wegpunkte: asSet }, points);
   }
-  return withUTurnWarnings(await planCheckedInner(name, points, profile, avoid, onStep, signal, snapMajor, hint), points);
+  return withUTurnWarnings(await planCheckedInner(name, points, profile, avoid, onStep, signal, snapMajor, hint, compare), points);
 }
 
 const uturnKm = (ts: UTurn[]) => ts.reduce((a, u) => a + u.km, 0);
@@ -258,10 +260,11 @@ async function planCheckedInner(
   signal?: AbortSignal,
   snapMajor = false,
   hint?: PlanHint,
+  compare = true,
 ): Promise<PlannedTour> {
   // Pässe mit Warnung, die du herausgenommen hast (Doch umfahren): Passhöhe gesperrt, außer sie ist selbst ein Punkt
   const skip = avoidedPoints().filter((q) => !points.some((w) => haversine(w, q) < 400));
-  let first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, skip, true, hint);
+  let first = await planCore(name, points, profile, avoid, onStep, signal, snapMajor, skip, compare, hint);
   // Wendeschleife durch einen Punkt auf der Gegenfahrbahn (Matthias 15.11.): Punkt auf den Hinweg legen und
   // neu rechnen. Die Tour behält die gesetzten Punkte, sonst gilt sie im Planer als veraltet.
   const turns = unwantedUTurns(lineOf(first), points);
@@ -566,6 +569,74 @@ export const closureLabels = (hits: ClosureHit[]): string[] => [...new Set(hits.
 /** Der Planer plant im Voraus: Wintersperren auf Pässen informieren nur (Grundregel), unterwegs wird umfahren */
 const AHEAD: PlanHint = { ahead: true };
 
+const isCurvy = (p: Profile) => p === 'kurvig' || p === 'paesse';
+
+/**
+ * Je Etappe entscheiden, ob kurvig sich lohnt (Koray 18.11.). Vorher fiel die Entscheidung für die ganze Tour:
+ * ein anderes Ziel konnte alle Etappen kippen (Miltenberg, Amorbach, Hirschhorn, Michelstadt: mit Ziel Beerfelden
+ * 99,8 km direkt, mit Ziel Lindenfels 154,1 km kurvig). Liefert je Etappe true, wenn dort der direkte Weg gilt.
+ * Eine Abfrage je Variante und Etappe, mit Frist; im Zweifel bleibt die Etappe kurvig.
+ */
+async function directLegs(name: string, points: LatLon[], profile: Profile, avoid: Avoid, signal?: AbortSignal): Promise<boolean[]> {
+  return Promise.all(
+    points.slice(1).map(async (b, i) => {
+      const pts = [points[i], b];
+      // lange Etappen fahren direkt Autobahn, dort wird nicht verglichen (wie bisher für die ganze Tour)
+      if (haversine(pts[0], pts[1]) > COMPARE_MAX_M) return false;
+      try {
+        return await withBudget(signal, COMPARE_BUDGET_MS, async (s) => {
+          const [curvy, quick] = await Promise.all([
+            cumoPlan(name, pts, profile, avoid, s, [], true, AHEAD),
+            cumoPlan(name, pts, 'schnell', avoid, s, [], true, AHEAD),
+          ]);
+          const direct = (quick.km_je_klasse?.raus ?? 0) === 0 ? quick : await cumoPlan(name, pts, 'schnell', avoid, s, [], false, AHEAD);
+          return !curvyWorthIt(curvy, direct);
+        });
+      } catch (e) {
+        if (signal?.aborted) throw e;
+        return false;
+      }
+    }),
+  );
+}
+
+/** Aufeinander folgende Etappen mit demselben Profil: ein Stück, damit am Zwischenziel nicht gewendet wird */
+async function planGroup(name: string, points: LatLon[], profile: Profile, avoid: Avoid, onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<PlannedTour> {
+  const legs = points.length - 1;
+  const marked = (t: PlannedTour, direct: boolean): PlannedTour => {
+    const all = { ...t, legDirekt: Array.from({ length: t.wegpunkte.length - 1 }, () => direct) };
+    return direct ? { ...all, direkt: t.wegpunkte.length - 1 } : all;
+  };
+  if (legs < 2 || !isCurvy(profile) || !(await cumoAvailable())) {
+    const t = await planChecked(name, points, profile, avoid, onStep, signal, false, AHEAD);
+    return marked(t, !!t.direkt);
+  }
+  // Die kurvige Tour am Stück läuft schon, während je Etappe verglichen wird: meist bleibt alles kurvig,
+  // dann kostet die Entscheidung keine Wartezeit
+  const spec = new AbortController();
+  const onAbort = () => spec.abort();
+  signal?.addEventListener('abort', onAbort);
+  const whole = planChecked(name, points, profile, avoid, onStep, spec.signal, false, AHEAD, false);
+  whole.catch(() => {});
+  try {
+    const direct = await directLegs(name, points, profile, avoid, signal);
+    if (!direct.some(Boolean)) return marked(await whole, false);
+    spec.abort();
+    const groups: { from: number; to: number; direct: boolean }[] = [];
+    direct.forEach((d, i) => {
+      const last = groups[groups.length - 1];
+      if (last && last.direct === d) last.to = i + 1;
+      else groups.push({ from: i, to: i + 1, direct: d });
+    });
+    const parts = await Promise.all(
+      groups.map(async (g) => marked(await planChecked(name, points.slice(g.from, g.to + 1), g.direct ? 'schnell' : profile, avoid, onStep, signal, false, AHEAD, false), g.direct)),
+    );
+    return parts.length === 1 ? parts[0] : mergeLegs(name, points, parts);
+  } finally {
+    signal?.removeEventListener('abort', onAbort);
+  }
+}
+
 export async function planLegs(
   name: string,
   points: LatLon[],
@@ -579,12 +650,6 @@ export async function planLegs(
   await ensureRoadArea(points, 30);
   // Sperrungen schon jetzt holen, parallel zur Route (sonst wartet das Planen danach bis zu 6 s)
   prefetchClosures(points);
-  if (points.length < 3 || profiles.every((p) => p === first)) {
-    const t = await planChecked(name, points, first, avoid, onStep, signal, false, AHEAD);
-    // in einem Stück geplant: gilt für alle Etappen
-    const all = { ...t, legDirekt: points.slice(1).map(() => !!t.direkt) };
-    return t.direkt ? { ...all, direkt: points.length - 1 } : all;
-  }
   // Etappen mit eigenem Profil gleichzeitig planen statt nacheinander (10.11.); aufeinander folgende
   // Etappen mit demselben Profil bleiben ein Stück, dort gilt weiter kein Wenden am Zwischenziel
   const groups: { from: number; to: number; profile: Profile }[] = [];
@@ -594,13 +659,8 @@ export async function planLegs(
     if (last && last.profile === p) last.to = i + 1;
     else groups.push({ from: i, to: i + 1, profile: p });
   }
-  const parts = await Promise.all(
-    groups.map(async (g) => {
-      const t = await planChecked(name, points.slice(g.from, g.to + 1), g.profile, avoid, onStep, signal, false, AHEAD);
-      const all = { ...t, legDirekt: Array.from({ length: g.to - g.from }, () => !!t.direkt) };
-      return t.direkt ? { ...all, direkt: g.to - g.from } : all;
-    }),
-  );
+  if (groups.length <= 1) return planGroup(name, points, first, avoid, onStep, signal);
+  const parts = await Promise.all(groups.map((g) => planGroup(name, points.slice(g.from, g.to + 1), g.profile, avoid, onStep, signal)));
   return mergeLegs(name, points, parts);
 }
 

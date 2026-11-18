@@ -21,7 +21,9 @@ Stand: 18. November 2026, 14:30 (gegen Code und Git Verlauf geprüft; Prüfung v
 * [x] Mengengrenzen im Prüfdienst, Zählmodus auf r1 und r2 (17.11. 9:52)
 * [x] 18.11. 16:33: /stats angesehen. r1: 333 mit Token, 35.618 ohne. r2: 881 mit, 8.074 ohne, 120 mal über der Grenze (route stand auf 60 je Minute, genau der Grenze). Nicht scharf geschaltet: Herkunft der Anfragen ohne Token unklar, und der Testlauf (feste Routen, Bedienfolgen, GitHub Actions) fragt selbst ohne Token
 * [ ] Prüfdienst mit Herkunft (ohne_token_nach_art, nach_absender, ip_adressen) und ungedeckelten Spitzen einspielen (cumo-auth.sh vom 18.11., Zählmodus), einen Tag zählen
-* [ ] Vor dem Scharfschalten: Testlauf braucht eine Anmeldung an den Servern (Entscheidung Koray), Grenze route nach echter Spitze anheben, dann `bash /root/cumo-auth.sh enforce` auf beiden Servern
+* [x] Testlauf weist sich mit einem Testschlüssel aus (Koray 18.11.): Kopfzeile X-Cumo-QA, Wert aus ROUTING_QA_KEY, auf den Servern in /etc/cumo-auth.env. Gebaut und lokal getestet, noch nicht eingespielt
+* [ ] 19.11. mit Koray: Testschlüssel erzeugen und eintragen (beide Server, GitHub Secret ROUTING_QA_KEY, Umgebung der Claude Sitzungen), neues cumo-auth.sh einspielen, /stats ansehen, Grenze route nach echter Spitze anheben, dann `bash /root/cumo-auth.sh enforce` auf beiden Servern
+* [ ] 19.11. mit Koray, App Store Connect: Screenshots EN und IT, Abos mit Screenshot für die Prüfung, Adresse für die Server Mitteilungen von Apple, Store Build wählen, zur Prüfung hinzufügen
 * [x] Webseite mit Kopfzeilen und Strecken kachelweise live, Kopfzeilen geprüft (17.11.)
 * [x] Migrationen live: highlight_feedback nur mit Anmeldung, Link Grenzen, Konten Grenze, road-data kachelweise mit Kontingent, Einwilligungen (17.11.)
 * [x] Hook Before User Created aktiv, E Mail Bestätigung an (17.11.)
@@ -187,7 +189,7 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 ## Backlog
 
 * [ ] **Lasttest Routing Server** (Koray 18.11.: Backlog): 10 Planungen gleichzeitig über 2 Minuten, abends, nur der Routing Server; Supabase bleibt außen vor. Trifft die echten Server, daher nur nach Korays OK
-* [ ] Gleiche Punkte, verschiedene Touren (Prüfung 18.11.): Ursache gefunden. Der Vergleich Kurvig gegen den direkten Weg (`curvyWorthIt`) entscheidet für alle Etappen einer Tour gemeinsam. Ändert sich eine Etappe, kann die Entscheidung für die ganze Tour kippen (Miltenberg, Amorbach, Hirschhorn, Michelstadt: mit Ziel Beerfelden 99,8 km direkt, mit Ziel Lindenfels 154,1 km kurvig). Vorschlag: je Etappe entscheiden. Wartet auf Korays Entscheidung, weil es die Routen aller Touren mit Zwischenzielen ändert
+* [x] Gleiche Punkte, verschiedene Touren: Kurvig gegen den direkten Weg wird je Etappe entschieden (Koray 18.11., `planGroup` und `directLegs` in plan.ts). Miltenberg, Amorbach, Hirschhorn, Michelstadt: die drei gemeinsamen Etappen sind mit Ziel Beerfelden und Ziel Lindenfels gleich (18,8, 43,1 und 48,5 km). Noch nicht per OTA veröffentlicht
 * [ ] GitHub Secret EXPO_TOKEN eintragen, damit OTA über den Zweig ota/* aus jeder Sitzung geht (Koray 17.11.: Backlog; bis dahin veröffentlicht Claude OTA direkt nach dem Testlauf)
 * [ ] Captcha bei der Registrierung (Entscheidung 17.11.: Hürde für Nutzer, erst bei Missbrauch; Zahlen in signup_attempts)
 * [ ] App Attest, zusammen mit engeren Grenzen für den Web Planer (wenn es echte Nutzer gibt)

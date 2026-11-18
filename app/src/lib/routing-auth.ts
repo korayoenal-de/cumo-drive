@@ -22,7 +22,15 @@ export function startRoutingAuth(): void {
   });
 }
 
+/**
+ * Testlauf (vor-update, GitHub Actions) ohne Konto: eigener Schlüssel aus der Umgebung des Rechners, seit 18.11.
+ * In der App und im Web Planer gibt es die Variable nicht (kein EXPO_PUBLIC), dort bleibt es beim Token des Kontos.
+ */
+const qaKey = (): string | undefined => (typeof process !== 'undefined' ? process.env?.ROUTING_QA_KEY : undefined);
+
 /** Kopfzeile für Anfragen an die eigenen Server */
 export function routingHeaders(): Record<string, string> {
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  if (token) return { Authorization: `Bearer ${token}` };
+  const qa = qaKey();
+  return qa ? { 'X-Cumo-QA': qa } : {};
 }

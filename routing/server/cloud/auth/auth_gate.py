@@ -17,6 +17,7 @@ Zählerstand: curl -s localhost:9180/stats (Spitzenwerte je Art und die fünf ak
 Konten nur als kurzer Hash).
 """
 import hashlib
+import hmac
 import json
 import os
 import threading
@@ -28,6 +29,9 @@ import jwt  # python3-jwt (PyJWT) mit python3-cryptography
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://onfxnfkhajxvjmmvmzda.supabase.co')
 ENFORCE = os.environ.get('ENFORCE', '0') == '1'
+# Schlüssel für den eigenen Testlauf (vor-update, GitHub Actions), seit 18.11.: Kopfzeile X-Cumo-QA. Liegt nur in
+# /etc/cumo-auth.env (QA_KEY=...), nie im Repo. Leer heißt: kein Testzugang. Zählt als 'testlauf', ohne Mengengrenze.
+QA_KEY = os.environ.get('QA_KEY', '').strip()
 JWKS = jwt.PyJWKClient(f'{SUPABASE_URL}/auth/v1/.well-known/jwks.json', cache_keys=True, lifespan=3600)
 ISSUER = f'{SUPABASE_URL}/auth/v1'
 
@@ -52,7 +56,7 @@ def kind_of(uri: str) -> str:
 
 
 lock = threading.Lock()
-stats = {'mit_token': 0, 'ohne_token': 0, 'ungueltig': 0, 'ueber_grenze': 0, 'seit': int(time.time())}
+stats = {'mit_token': 0, 'testlauf': 0, 'ohne_token': 0, 'ungueltig': 0, 'ueber_grenze': 0, 'seit': int(time.time())}
 # Wer kommt ohne Token (18.11.: 35.618 ohne gegen 333 mit Token, Herkunft unklar): je Art der Anfrage und je Art des
 # Absenders, dazu die Zahl verschiedener IP Adressen. Erst damit lässt sich sagen, wen das Scharfschalten aussperrt.
 ohne_art: dict[str, int] = defaultdict(int)
@@ -167,7 +171,7 @@ class Gate(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith('/stats'):
             with lock:
-                body = {**stats, 'enforce': ENFORCE, 'spitze_je_konto': {k: {'minute': v[0], 'stunde': v[1]} for k, v in peak.items()}}
+                body = {**stats, 'enforce': ENFORCE, 'testschluessel': bool(QA_KEY and len(QA_KEY) >= 24), 'spitze_je_konto': {k: {'minute': v[0], 'stunde': v[1]} for k, v in peak.items()}}
             body['grenzen'] = {k: {'minute': v[0], 'stunde': v[1]} for k, v in LIMITS.items()}
             body['aktivste_konten'] = top_users()
             with lock:
@@ -177,6 +181,10 @@ class Gate(BaseHTTPRequestHandler):
             return self.reply(200, json.dumps(body).encode())
         auth = self.headers.get('Authorization', '')
         token = auth[7:].strip() if auth.lower().startswith('bearer ') else ''
+        qa = self.headers.get('X-Cumo-QA', '')
+        if QA_KEY and len(QA_KEY) >= 24 and qa and hmac.compare_digest(qa.encode(), QA_KEY.encode()):
+            count('testlauf')
+            return self.reply(200)
         kind = kind_of(self.headers.get('X-Forwarded-Uri', '/'))
         ip = (self.headers.get('X-Forwarded-For', '') or '').split(',')[0].strip()
         if not token:

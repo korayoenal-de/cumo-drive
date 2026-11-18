@@ -48,6 +48,10 @@ jobs:
       - run: npm ci
 
       - name: Testlauf vor dem Update
+        # Die Routing Server verlangen eine Anmeldung; der Testlauf weist sich mit dem Secret ROUTING_QA_KEY aus
+        # (trägt Koray ein, derselbe Wert wie in /etc/cumo-auth.env auf den Servern)
+        env:
+          ROUTING_QA_KEY: ${{ secrets.ROUTING_QA_KEY }}
         run: npm run vor-update
       - name: Bericht des Testlaufs
         if: always()

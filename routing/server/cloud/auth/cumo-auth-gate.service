@@ -4,6 +4,8 @@ After=network-online.target
 
 [Service]
 Environment=ENFORCE=0
+# Testschlüssel für den eigenen Testlauf, optional: QA_KEY=... (Datei gehört root, Rechte 600)
+EnvironmentFile=-/etc/cumo-auth.env
 ExecStart=/usr/bin/python3 /opt/cumo-routing/auth/auth_gate.py
 Restart=always
 RestartSec=2
