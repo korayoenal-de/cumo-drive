@@ -30,6 +30,8 @@ export type PlanErrorKind = 'permission' | 'services' | 'position' | 'notfound' 
 
 export class PlanError extends Error {
   kind: PlanErrorKind;
+  /** das Gerät hat gar kein Netz (Flugmodus, kein Empfang): eigener Text statt „Dienst nicht erreichbar“ */
+  offline?: boolean;
   constructor(kind: PlanErrorKind, message: string) {
     super(message);
     this.kind = kind;
@@ -162,7 +164,13 @@ export function toPlanError(e: unknown, signal?: AbortSignal): PlanError {
   if (e instanceof PlanError) return e;
   if (signal?.aborted || (e instanceof Error && e.name === 'AbortError')) return new PlanError('aborted', 'Abgebrochen.');
   const msg = e instanceof Error ? e.message : String(e);
-  if (/network request failed|failed to fetch|networkerror|load failed|timed? ?out/i.test(msg) || e instanceof TypeError) {
+  // Kein Netz am Gerät (Koray 18.11.: im Flugmodus stand nur „etwas ist schiefgegangen“)
+  if (/keine verbindung|internet|offline|not connected|appears to be offline/i.test(msg)) {
+    const off = new PlanError('network', t('Du hast gerade keine Verbindung zum Internet.'));
+    off.offline = true;
+    return off;
+  }
+  if (/network request failed|failed to fetch|fetch failed|networkerror|load failed|timed? ?out/i.test(msg) || e instanceof TypeError) {
     return new PlanError('network', t('Der Routenplaner ist gerade nicht erreichbar.'));
   }
   if (msg.startsWith('Routenplaner')) {

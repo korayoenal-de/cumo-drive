@@ -1989,5 +1989,7 @@
   "Ohne Internet siehst du die Touren von diesem Gerät. Der Abgleich mit deinem Konto folgt, sobald du wieder online bist.": "Senza internet vedi i giri di questo dispositivo. La sincronizzazione con il tuo account segue appena torni online.",
   "Ohne Internet geht das gerade nicht. Versuch es nochmal, sobald du wieder online bist.": "Senza internet ora non funziona. Riprova appena torni online.",
   "Gib der Tour einen Namen.": "Dai un nome al giro.",
-  "Trag deinen Namen als Fahrer ein, dann kannst du veröffentlichen.": "Inserisci il tuo nome da pilota, poi puoi pubblicare."
+  "Trag deinen Namen als Fahrer ein, dann kannst du veröffentlichen.": "Inserisci il tuo nome da pilota, poi puoi pubblicare.",
+  "Du hast gerade keine Verbindung zum Internet.": "Al momento non hai connessione a internet.",
+  "Zum Planen brauchst du Internet. Schalte den Flugmodus aus oder such dir Empfang. Gespeicherte Touren kannst du auch ohne Netz fahren.": "Per pianificare serve internet. Disattiva la modalità aereo o cerca campo. I giri salvati puoi guidarli anche senza rete."
 }

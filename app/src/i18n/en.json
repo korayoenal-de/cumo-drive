@@ -1989,5 +1989,7 @@
   "Ohne Internet siehst du die Touren von diesem Gerät. Der Abgleich mit deinem Konto folgt, sobald du wieder online bist.": "Without internet you see the tours on this device. Syncing with your account follows once you are back online.",
   "Ohne Internet geht das gerade nicht. Versuch es nochmal, sobald du wieder online bist.": "This does not work without internet. Try again once you are back online.",
   "Gib der Tour einen Namen.": "Give the tour a name.",
-  "Trag deinen Namen als Fahrer ein, dann kannst du veröffentlichen.": "Enter your driver name, then you can publish."
+  "Trag deinen Namen als Fahrer ein, dann kannst du veröffentlichen.": "Enter your driver name, then you can publish.",
+  "Du hast gerade keine Verbindung zum Internet.": "You have no internet connection right now.",
+  "Zum Planen brauchst du Internet. Schalte den Flugmodus aus oder such dir Empfang. Gespeicherte Touren kannst du auch ohne Netz fahren.": "Planning needs internet. Turn off airplane mode or find reception. You can still drive saved tours without a connection."
 }

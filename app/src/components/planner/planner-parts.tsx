@@ -346,10 +346,12 @@ export function ErrorCard({
   const needsPlace = error.kind === 'permission' || error.kind === 'services' || error.kind === 'position';
   return (
     <View style={styles.gapL}>
+      {/* „Das hat nicht geklappt“ steht schon im Kopf des Blatts: hier nur, was los ist und was hilft (Koray 18.11.) */}
       <View style={[styles.card, styles.errorCard]}>
-        <AppText variant="label" style={styles.signalText}>{t('Das hat nicht geklappt')}</AppText>
         <AppText variant="title">{error.message}</AppText>
-        <AppText variant="caption" muted>{help[error.kind]}</AppText>
+        <AppText variant="caption" muted>
+          {error.offline ? t('Zum Planen brauchst du Internet. Schalte den Flugmodus aus oder such dir Empfang. Gespeicherte Touren kannst du auch ohne Netz fahren.') : help[error.kind]}
+        </AppText>
       </View>
       {(error.kind === 'permission' || error.kind === 'services') && (
         <PrimaryButton label={t('Einstellungen öffnen')} onPress={() => void Linking.openSettings()} />

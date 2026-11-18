@@ -903,7 +903,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       ) : (
         <AppText variant="caption" muted numberOfLines={2} style={styles.summaryHint}>
           {view.kind === 'error'
-            ? view.error.message
+            ? ''
             : view.kind === 'result'
               ? `${PROFILE_WORD[view.req.profile]}, ${view.req.towardName ? tr('Richtung {towardName}', { towardName: view.req.towardName }) : dirPhrase(view.req.direction)}${roundStops.length ? tr(', mit {length} {v1}', { length: roundStops.length, v1: roundStops.length === 1 ? tr('Stopp') : tr('Stopps') }) : ''}`
               : mode === 'tour'

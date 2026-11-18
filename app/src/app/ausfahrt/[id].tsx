@@ -16,7 +16,7 @@ import { supabase } from '@/lib/supabase';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, Share, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Keyboard, ScrollView, Share, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -68,6 +68,16 @@ export default function AusfahrtDetail() {
   // ping: aus der Mitteilung „fragt, wann du da bist“ (Gemeinsam losfahren, Koray 14.11.)
   const { id, k, ping } = useLocalSearchParams<{ id: string; k?: string; ping?: string }>();
   const insets = useSafeAreaInsets();
+  // Höhe der Tastatur: die feste Hauptaktion rückt darüber
+  const [kbH, setKbH] = useState(0);
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardWillShow', (e) => setKbH(Math.round(e.endCoordinates.height)));
+    const hide = Keyboard.addListener('keyboardWillHide', () => setKbH(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
   // feste Hauptaktion unten (56 plus Ränder): der Toast steht darüber
   useToastAbove(Size.button + Spacing.m * 2 + Spacing.s);
   const session = useSession();
@@ -681,7 +691,8 @@ export default function AusfahrtDetail() {
       {/* Hauptaktion fest unten, eine je Phase (Konsistenzprüfung 15.11., O5): vorher Route zum Treffpunkt,
           am Tag Jetzt losfahren, während der Fahrt Zur Navigation, danach Nochmal fahren */}
       {(main || routeMain) && (
-        <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.m }]}>
+        // mit Tastatur sitzt die Hauptaktion direkt darüber, sonst lag „Anfrage senden“ beim Schreiben verdeckt (Koray 18.11.)
+        <View style={[styles.bar, kbH > 0 ? { bottom: kbH, paddingBottom: Spacing.m } : { paddingBottom: insets.bottom + Spacing.m }]}>
           {main ? (
             <>
               <View ref={mainBox}>
