@@ -53,11 +53,40 @@ def kind_of(uri: str) -> str:
 
 lock = threading.Lock()
 stats = {'mit_token': 0, 'ohne_token': 0, 'ungueltig': 0, 'ueber_grenze': 0, 'seit': int(time.time())}
+# Wer kommt ohne Token (18.11.: 35.618 ohne gegen 333 mit Token, Herkunft unklar): je Art der Anfrage und je Art des
+# Absenders, dazu die Zahl verschiedener IP Adressen. Erst damit lässt sich sagen, wen das Scharfschalten aussperrt.
+ohne_art: dict[str, int] = defaultdict(int)
+ohne_wer: dict[str, int] = defaultdict(int)
+ohne_ips: set[str] = set()
 peak = {k: [0, 0] for k in LIMITS}  # höchster Stand je Konto: [Minute, Stunde]
 # gültige Tokens kurz merken, damit nicht jede Anfrage neu rechnet: Token -> (Ablauf, Konto)
 seen: dict[str, tuple[float, str]] = {}
 # Zeitstempel der letzten Stunde je (Konto oder IP, Art)
 hits: dict[tuple[str, str], deque] = defaultdict(deque)
+
+
+def sender_of(agent: str, origin: str) -> str:
+    a = agent.lower()
+    if origin:
+        return 'web ' + origin.split('//')[-1][:40]
+    if 'cfnetwork' in a or 'darwin' in a or 'expo' in a or 'cumo' in a:
+        return 'app'
+    if a.startswith('node') or 'undici' in a:
+        return 'testlauf (node)'
+    if 'mozilla' in a:
+        return 'browser ohne origin'
+    if not a:
+        return 'ohne kennung'
+    return 'sonst: ' + a[:30]
+
+
+def count_without(kind: str, sender: str, ip: str) -> None:
+    with lock:
+        ohne_art[kind] += 1
+        if len(ohne_wer) < 40 or sender in ohne_wer:
+            ohne_wer[sender] += 1
+        if ip and len(ohne_ips) < 5000:
+            ohne_ips.add(ip)
 
 
 def count(key: str) -> None:
@@ -91,15 +120,18 @@ def take(who: str, kind: str, factor: int = 1) -> int:
         while q and q[0] < now - 3600:
             q.popleft()
         last_min = sum(1 for t in q if t > now - 60)
-        if last_min >= per_min:
-            return 60
-        if len(q) >= per_hour:
-            return int(q[0] + 3600 - now) + 1
+        wait = 60 if last_min >= per_min else (int(q[0] + 3600 - now) + 1 if len(q) >= per_hour else 0)
+        # Im Zählmodus auch über der Grenze weiterzählen, sonst zeigt die Spitze nie mehr als die Grenze (18.11.:
+        # route stand genau auf 60 bei 120 Überschreitungen, der echte Bedarf blieb unsichtbar)
+        if wait and ENFORCE:
+            return wait
         q.append(now)
         if factor == 1:
             p = peak[kind]
             p[0] = max(p[0], last_min + 1)
             p[1] = max(p[1], len(q))
+        if wait:
+            return wait
         if len(hits) > 50000:  # Speicher begrenzen: leere Einträge weg
             for k in [k for k, v in hits.items() if not v or v[-1] < now - 3600]:
                 del hits[k]
@@ -138,19 +170,24 @@ class Gate(BaseHTTPRequestHandler):
                 body = {**stats, 'enforce': ENFORCE, 'spitze_je_konto': {k: {'minute': v[0], 'stunde': v[1]} for k, v in peak.items()}}
             body['grenzen'] = {k: {'minute': v[0], 'stunde': v[1]} for k, v in LIMITS.items()}
             body['aktivste_konten'] = top_users()
+            with lock:
+                body['ohne_token_nach_art'] = dict(ohne_art)
+                body['ohne_token_nach_absender'] = dict(sorted(ohne_wer.items(), key=lambda x: -x[1])[:12])
+                body['ohne_token_ip_adressen'] = len(ohne_ips)
             return self.reply(200, json.dumps(body).encode())
         auth = self.headers.get('Authorization', '')
         token = auth[7:].strip() if auth.lower().startswith('bearer ') else ''
+        kind = kind_of(self.headers.get('X-Forwarded-Uri', '/'))
+        ip = (self.headers.get('X-Forwarded-For', '') or '').split(',')[0].strip()
         if not token:
             count('ohne_token')
+            count_without(kind, sender_of(self.headers.get('User-Agent', ''), self.headers.get('Origin', '')), ip)
             return self.reply(401, b'{"error":"Bitte anmelden."}') if ENFORCE else self.reply(200)
         user = user_of(token)
         if not user:
             count('ungueltig')
             return self.reply(401, b'{"error":"Anmeldung abgelaufen."}') if ENFORCE else self.reply(200)
         count('mit_token')
-        kind = kind_of(self.headers.get('X-Forwarded-Uri', '/'))
-        ip = (self.headers.get('X-Forwarded-For', '') or '').split(',')[0].strip()
         wait = take('u:' + user, kind) or (take('ip:' + ip, kind, IP_FACTOR) if ip else 0)
         if wait:
             count('ueber_grenze')

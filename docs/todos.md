@@ -19,7 +19,9 @@ Stand: 18. November 2026, 14:30 (gegen Code und Git Verlauf geprüft; Prüfung v
 
 * [x] 2FA auf allen Konten, Supabase Pro (Koray 17.11.)
 * [x] Mengengrenzen im Prüfdienst, Zählmodus auf r1 und r2 (17.11. 9:52)
-* [ ] 18.11.: /stats ansehen (spitze_je_konto), Grenzen eichen, dann `bash /root/cumo-auth.sh enforce` auf beiden Servern
+* [x] 18.11. 16:33: /stats angesehen. r1: 333 mit Token, 35.618 ohne. r2: 881 mit, 8.074 ohne, 120 mal über der Grenze (route stand auf 60 je Minute, genau der Grenze). Nicht scharf geschaltet: Herkunft der Anfragen ohne Token unklar, und der Testlauf (feste Routen, Bedienfolgen, GitHub Actions) fragt selbst ohne Token
+* [ ] Prüfdienst mit Herkunft (ohne_token_nach_art, nach_absender, ip_adressen) und ungedeckelten Spitzen einspielen (cumo-auth.sh vom 18.11., Zählmodus), einen Tag zählen
+* [ ] Vor dem Scharfschalten: Testlauf braucht eine Anmeldung an den Servern (Entscheidung Koray), Grenze route nach echter Spitze anheben, dann `bash /root/cumo-auth.sh enforce` auf beiden Servern
 * [x] Webseite mit Kopfzeilen und Strecken kachelweise live, Kopfzeilen geprüft (17.11.)
 * [x] Migrationen live: highlight_feedback nur mit Anmeldung, Link Grenzen, Konten Grenze, road-data kachelweise mit Kontingent, Einwilligungen (17.11.)
 * [x] Hook Before User Created aktiv, E Mail Bestätigung an (17.11.)
