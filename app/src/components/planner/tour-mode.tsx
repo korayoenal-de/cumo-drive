@@ -50,7 +50,7 @@ import { OrtSheet, type NearKind } from './ort-panel';
 import { PointMenu, type PointAction, type PointMenuState } from './point-menu';
 import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
-import { Accordion, avoidSummary, DragArea, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, SmallButton, Stats, StopsPlanner, Toggle, Warnings } from './planner-parts';
+import { Accordion, avoidSummary, DragArea, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, Stats, StopsPlanner, Toggle, Warnings } from './planner-parts';
 import { keyOf, type PendingPoint, type PointKind, profileWord, samePts } from './planner-shared';
 
 import { styles } from './planner-styles';
@@ -154,9 +154,6 @@ export function TourMode({
   const hint = closedHint(along.map((x) => x.pass), live);
 
 
-  const add = (kind: PointKind, p: LatLon, known?: string) => {
-    plan.add(kind, p, profile, avoid, known);
-  };
 
   const nameOf = (p: LatLon) => plan.names[keyOf(p)] ?? `${p[0].toFixed(4)}, ${p[1].toFixed(4)}`;
 
@@ -302,12 +299,6 @@ export function TourMode({
       onSwitch={(sl) => openEdit({ kind: sl.kind, index: sl.index, insert: sl.insert })}
     />
   );
-
-  function addPending(kind: PointKind) {
-    if (!pending) return;
-    add(kind, pending.p, pending.name ?? undefined);
-    setPending(null);
-  }
 
   const total = routeTour?.laenge_km ?? 0;
   const warnings = routeTour ? uniqueWarnings(routeTour.warnungen.filter((w) => w.klasse !== 'ok'), (w) => w) : [];
@@ -671,20 +662,6 @@ export function TourMode({
     <>
       {search}
       <PointMenu menu={menu} onPick={onMenu} onClose={() => setMenu(null)} />
-      {pending && !pending.pass && (
-        <View style={[styles.card, styles.pendingCard]}>
-          <View style={styles.flex}>
-            <AppText variant="label">{tr('Neuer Punkt')}</AppText>
-            <AppText variant="title">{pending.name ?? `${pending.p[0].toFixed(4)}, ${pending.p[1].toFixed(4)}`}</AppText>
-          </View>
-          <View style={styles.wrap}>
-            <SmallButton label={tr('Als Start')} onPress={() => addPending('start')} />
-            {plan.complete && <SmallButton label={tr('Als Zwischenziel')} onPress={() => addPending('via')} />}
-            <SmallButton label={plan.complete ? tr('Als neues Ziel') : tr('Als Ziel')} onPress={() => addPending('ziel')} strong />
-            <SmallButton label={tr('Abbrechen')} onPress={() => setPending(null)} />
-          </View>
-        </View>
-      )}
 
       {/* Detailansicht einer gespeicherten Tour (Koray 16.11.): Name mit Plakette bei Änderung; Umbenennen im ⋯ */}
       {plan.cloudId && routeTour && (

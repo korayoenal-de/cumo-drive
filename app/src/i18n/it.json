@@ -1994,5 +1994,8 @@
   "Zum Planen brauchst du Internet. Schalte den Flugmodus aus oder such dir Empfang. Gespeicherte Touren kannst du auch ohne Netz fahren.": "Per pianificare serve internet. Disattiva la modalità aereo o cerca campo. I giri salvati puoi guidarli anche senza rete.",
   "Alle können die Ausfahrt sehen und anfragen": "Tutti possono vedere l'uscita e chiedere di partecipare",
   "In der Community geteilt": "Condivisa nella community",
-  "Wer dabei ist, bleibt dabei": "Chi partecipa resta dentro"
+  "Wer dabei ist, bleibt dabei": "Chi partecipa resta dentro",
+  "Zwischenziel hinzufügen": "Aggiungi come tappa",
+  "Umweg grob {detourKm} km": "Deviazione circa {detourKm} km",
+  "{role} der Route": "{role} del percorso"
 }

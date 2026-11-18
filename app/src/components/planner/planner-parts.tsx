@@ -62,17 +62,6 @@ export function LocationIcon() {
   );
 }
 
-export function SmallButton({ label, onPress, strong }: { label: string; onPress: () => void; strong?: boolean }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [styles.small, strong && styles.smallStrong, pressed && styles.pressed]}>
-      <AppText style={[styles.smallText, strong && styles.onSignal]}>{label}</AppText>
-    </Pressable>
-  );
-}
-
 /** Kleines Zeichen vor einem Punkt: Ring für den Start, Nummer für Zwischenziele, Fahne für das Ziel. */
 export function PointSymbol({ kind, label }: { kind: PointKind; label: string }) {
   if (kind === 'start') {

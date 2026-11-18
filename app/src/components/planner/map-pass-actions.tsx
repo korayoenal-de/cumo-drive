@@ -1,6 +1,6 @@
 /**
- * Angetippter Pass auf der Karte: schwebt über der Karte direkt über dem Blatt, mit den Aktionen als
- * Tasten wie bei Meine Touren. Ein Tipp auf eine andere Stelle der Karte blendet ihn aus.
+ * Angetippter Pass oder neuer Punkt auf der Karte: schwebt über der Karte direkt über dem Blatt, mit den
+ * Aktionen als Tasten. Ein Tipp auf eine andere Stelle der Karte blendet die Karte aus.
  */
 import { SymbolView } from 'expo-symbols';
 import { useRef, type ComponentRef } from 'react';
@@ -8,7 +8,6 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeOut } from 'react-native-reanimated';
 
-import { IconLabel } from '@/components/ui/btn-icon';
 import { flyFrom } from '@/components/ui/morph-action';
 import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
@@ -19,93 +18,108 @@ import { t } from '@/i18n';
 
 export type PassAction = 'via' | 'start' | 'ziel' | 'remove';
 
+/**
+ * Vorlage für jeden Tipp auf die Karte (Koray 18.11.): Pass oder neuer Punkt nach langem Druck. Oben Symbol, Name
+ * und eine graue Zeile, darunter die Hauptaktion in voller Breite und die anderen Rollen als ruhige Tasten.
+ * Tasten ohne Symbol (wirkte gepresst), kein Abbrechen: ein Tipp daneben schließt.
+ *  * fertige Route: „Zwischenziel hinzufügen“, darunter „Als Start“ und „Als Ziel“
+ *  * noch ohne Ziel oder Start: die fehlende Rolle als Hauptaktion, die andere daneben
+ *  * Pass schon in der Route: nur „Aus der Route entfernen“
+ */
 export function MapPassActions({
   pass,
+  name,
   note,
   role,
   complete,
-  empty,
+  hasStart,
   detourKm,
   bottom,
   onAction,
 }: {
-  pass: Pass;
-  note: string;
+  /** Pass, sonst ein freier Punkt */
+  pass?: Pass | null;
+  /** Name des freien Punkts */
+  name?: string;
+  note?: string;
   /** Rolle in der Route (Start, Ziel, Zwischenziel 2), null wenn noch nicht drin */
   role: string | null;
   complete: boolean;
-  /** Noch kein Punkt gesetzt */
-  empty: boolean;
+  /** Der Start ist schon gesetzt */
+  hasStart: boolean;
   detourKm: number | null;
   bottom: number;
   onAction: (a: PassAction) => void;
 }) {
-  const sub = role ? t('{note} · {role} der Route', { note, role }) : detourKm != null ? t('{note} · Umweg grob {detourKm} km', { note, detourKm }) : note;
-  const primary: { a: PassAction; label: string } = role
-    ? { a: 'remove', label: t('Aus der Route entfernen') }
-    : complete
-      ? { a: 'via', label: t('Zur Route hinzufügen') }
-      : empty
-        ? { a: 'start', label: t('Als Start') }
-        : { a: 'ziel', label: t('Als Ziel') };
-  // Bei fertiger Route verlängert das neue Ziel die Tour, das alte wird Zwischenziel
-  const secondary: { a: PassAction; label: string } | null = role ? null : complete ? { a: 'ziel', label: t('Als neues Ziel') } : empty ? { a: 'ziel', label: t('Als Ziel') } : null;
+  const detour = detourKm != null ? t('Umweg grob {detourKm} km', { detourKm }) : null;
+  const sub = role ? [note, t('{role} der Route', { role })].filter(Boolean).join(' · ') : [note, detour].filter(Boolean).join(' · ');
+  const start = { a: 'start' as const, label: t('Als Start') };
+  const ziel = { a: 'ziel' as const, label: t('Als Ziel') };
+  const primary: { a: PassAction; label: string } = role ? { a: 'remove', label: t('Aus der Route entfernen') } : complete ? { a: 'via', label: t('Zwischenziel hinzufügen') } : hasStart ? ziel : start;
+  const others: { a: PassAction; label: string }[] = role ? [] : complete ? [start, ziel] : hasStart ? [start] : [ziel];
+  const symbol = pass ? 'mountain.2.fill' : 'mappin';
   const mainRef = useRef<ComponentRef<typeof View>>(null);
   const win = useWindowDimensions();
-  // Zur Route, Als Ziel, Als Start (Muster A, Koray 17.11.): die Passmarke fliegt von der Taste ins Blatt darunter,
-  // wo der Pass jetzt in der Punkteliste steht. Entfernen fliegt nicht.
+  // Hinzufügen (Muster A, Koray 17.11.): die Marke fliegt von der Haupttaste ins Blatt darunter, wo der Punkt jetzt
+  // in der Punkteliste steht. Entfernen fliegt nicht.
   const act = (a: PassAction) => {
-    if (a !== 'remove')
-      flyFrom(mainRef.current, { target: { x: Spacing.l + 28, y: win.height - bottom + 96 }, icon: { sf: 'mountain.2.fill' }, bg: Colors.signal, fg: Colors.onSignal });
+    if (a !== 'remove') flyFrom(mainRef.current, { target: { x: Spacing.l + 28, y: win.height - bottom + 96 }, icon: { sf: symbol }, bg: Colors.signal, fg: Colors.onSignal });
     onAction(a);
   };
+  const quiet = (o: { a: PassAction; label: string }) => (
+    <Pressable key={o.a} accessibilityRole="button" onPress={() => act(o.a)} style={({ pressed }) => [styles.btn, styles.btnQuiet, complete && styles.flex, pressed && styles.pressed]}>
+      <AppText style={styles.btnText}>{o.label}</AppText>
+    </Pressable>
+  );
+  const main = (
+    <Pressable
+      ref={mainRef}
+      accessibilityRole="button"
+      onPress={() => act(primary.a)}
+      style={({ pressed }) => [styles.btn, role ? styles.btnQuiet : styles.btnMain, !complete && styles.flex, pressed && styles.pressed]}>
+      <AppText style={[styles.btnText, !role && styles.onSignal]}>{primary.label}</AppText>
+    </Pressable>
+  );
   return (
     <Animated.View
-      key={pass.id}
+      key={pass ? pass.id : 'punkt'}
       entering={softEnter()}
       exiting={FadeOut.duration(120)}
       style={[styles.wrap, { bottom }]}
       pointerEvents="box-none">
       <View style={styles.card}>
         <View style={styles.head}>
-          <SymbolView weight="semibold" name="mountain.2.fill" size={20} tintColor={Colors.signal} />
-          <View style={[styles.flex, pass.warn?.length ? styles.warned : null]}>
+          <SymbolView weight="semibold" name={symbol} size={20} tintColor={Colors.signal} />
+          <View style={[styles.flex, pass?.warn?.length ? styles.warned : null]}>
             {/* Warnung vor dem Hinzufügen: Label unter dem Namen, weitere Gründe darunter (Koray 12.11. abends) */}
             <AppText style={styles.name} numberOfLines={1}>
-              {pass.name}
+              {pass ? pass.name : name}
             </AppText>
-            <WarnLabel warn={pass.warn} />
+            {pass && <WarnLabel warn={pass.warn} />}
             {/* zwei Zeilen: Höhe, Stufe, Sperrung und Rolle passen sonst nicht (Koray 16.11.) */}
-            <AppText style={styles.sub} numberOfLines={2}>
-              {sub}
-            </AppText>
-            {warnRest(pass.warn) ? (
+            {sub ? (
+              <AppText style={styles.sub} numberOfLines={2}>
+                {sub}
+              </AppText>
+            ) : null}
+            {pass && warnRest(pass.warn) ? (
               <AppText style={styles.sub} numberOfLines={1}>
                 {warnRest(pass.warn)}
               </AppText>
             ) : null}
           </View>
         </View>
-        <View style={styles.row}>
-          <Pressable
-            ref={mainRef}
-            accessibilityRole="button"
-            onPress={() => act(primary.a)}
-            style={({ pressed }) => [styles.btn, role ? styles.btnQuiet : styles.btnMain, styles.flex, pressed && styles.pressed]}>
-            {role ? (
-              <AppText style={styles.btnText}>{primary.label}</AppText>
-            ) : (
-              <IconLabel icon={{ sf: 'mountain.2.fill' }} color={Colors.onSignal}>
-                <AppText style={[styles.btnText, styles.onSignal]}>{primary.label}</AppText>
-              </IconLabel>
-            )}
-          </Pressable>
-          {secondary && (
-            <Pressable accessibilityRole="button" onPress={() => act(secondary.a)} style={({ pressed }) => [styles.btn, styles.btnQuiet, pressed && styles.pressed]}>
-              <AppText style={styles.btnText}>{secondary.label}</AppText>
-            </Pressable>
-          )}
-        </View>
+        {complete && !role ? (
+          <>
+            {main}
+            <View style={styles.row}>{others.map(quiet)}</View>
+          </>
+        ) : (
+          <View style={styles.row}>
+            {main}
+            {others.map(quiet)}
+          </View>
+        )}
       </View>
     </Animated.View>
   );

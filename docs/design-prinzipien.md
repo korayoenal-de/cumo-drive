@@ -288,6 +288,16 @@ Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab C
 - Organisator legt an, Lead führt und startet, Teilnehmer sind alle Leute einer Ausfahrt. Drivers nur als Community Reiter. Nachricht statt Anschreiben.
 - Lob am Ende: „Starke Runde!“ nur bei Runden, sonst „Angekommen in Imst“, zum Treffpunkt „Du bist am Treffpunkt“.
 
+## Tipp auf die Karte: eine Vorlage (Koray 18.11.2026)
+
+Alles, was auf der Karte angetippt oder gesetzt wird (Pass, Highlight, neuer Punkt nach langem Druck), nutzt dieselbe schwebende Karte über dem Blatt (`MapPassActions`, `MapPointActions`).
+
+* Oben Symbol, Name und eine graue Zeile (Stufe, Umweg grob in km oder die Rolle in der Route).
+* Fertige Route: „Zwischenziel hinzufügen“ als Hauptaktion in voller Breite, darunter „Als Start“ und „Als Ziel“ als ruhige Tasten. Fehlt noch Start oder Ziel, ist die fehlende Rolle die Hauptaktion.
+* Tasten ohne Symbol. Kein Abbrechen: ein Tipp daneben schließt.
+* Sobald auf der Karte gearbeitet wird, geht das Blatt auf die kleinste Höhe (`workOnMap`), damit Karte und Auswahl Platz haben.
+* Die Wahl steht nie im Blatt. Die frühere getönte Karte „Neuer Punkt“ mit vier Tasten ist entfernt.
+
 ## Pflicht für jede Neuerung (Koray 15.11.2026)
 
 Jede neue Funktion, jeder neue Screen und jede Änderung folgt dem Design System und den Regeln oben, vor allem der Konsistenzprüfung vom 15.11. So bleibt die App konsistent und neue Funktionen werden ordentlich eingebunden. Vor dem Commit prüfen:

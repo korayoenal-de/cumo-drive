@@ -1994,5 +1994,8 @@
   "Zum Planen brauchst du Internet. Schalte den Flugmodus aus oder such dir Empfang. Gespeicherte Touren kannst du auch ohne Netz fahren.": "Planning needs internet. Turn off airplane mode or find reception. You can still drive saved tours without a connection.",
   "Alle können die Ausfahrt sehen und anfragen": "Everyone can see the club drive and ask to join",
   "In der Community geteilt": "Shared in the community",
-  "Wer dabei ist, bleibt dabei": "Everyone who is in stays in"
+  "Wer dabei ist, bleibt dabei": "Everyone who is in stays in",
+  "Zwischenziel hinzufügen": "Add as stop",
+  "Umweg grob {detourKm} km": "Detour about {detourKm} km",
+  "{role} der Route": "{role} of the route"
 }
