@@ -99,6 +99,17 @@ export function MapSheet({ detent, onDetentChange, header, children, background,
       hide.remove();
     };
   }, []);
+  // Tastatur auf: das Blatt geht ganz auf, sonst liegt das Feld, in dem du schreibst, unter der Tastatur
+  // (Koray 18.11., Suche in der Community bei halber Höhe)
+  const detentRef = useRef(detent);
+  const changeRef = useRef(onDetentChange);
+  useEffect(() => {
+    detentRef.current = detent;
+    changeRef.current = onDetentChange;
+  });
+  useEffect(() => {
+    if (kbH > 0 && detentRef.current < 2) changeRef.current(2);
+  }, [kbH]);
   const H = boxH || win.height;
   /** Platz für die schwebende Tab Leiste und die Safe Area unten */
   const bottomSpace = insets.bottom + TAB_BAR_SPACE;
