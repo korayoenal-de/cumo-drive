@@ -22,8 +22,8 @@ export type PassAction = 'via' | 'start' | 'ziel' | 'remove';
  * Vorlage für jeden Tipp auf die Karte (Koray 18.11.): Pass oder neuer Punkt nach langem Druck. Oben Symbol, Name
  * und eine graue Zeile, darunter die Hauptaktion in voller Breite und die anderen Rollen als ruhige Tasten.
  * Tasten ohne Symbol (wirkte gepresst), kein Abbrechen: ein Tipp daneben schließt.
- *  * immer alle drei Rollen (Koray 18.11. mittags): ohne Start ist „Als Start“ die Hauptaktion, sonst
- *    „Zwischenziel hinzufügen“; die beiden anderen stehen darunter nebeneinander
+ *  * ohne Start (Koray 18.11. mittags): nur „Als Start“ als Hauptaktion und „Als Ziel“ daneben
+ *  * mit Start: „Zwischenziel hinzufügen“ in voller Breite, darunter „Als Start“ und „Als Ziel“
  *  * Pass schon in der Route: nur „Aus der Route entfernen“
  */
 export function MapPassActions({
@@ -55,7 +55,7 @@ export function MapPassActions({
   const ziel = { a: 'ziel' as const, label: t('Als Ziel') };
   const via = { a: 'via' as const, label: t('Zwischenziel hinzufügen') };
   const primary: { a: PassAction; label: string } = role ? { a: 'remove', label: t('Aus der Route entfernen') } : hasStart ? via : start;
-  const others: { a: PassAction; label: string }[] = role ? [] : hasStart ? [start, ziel] : [{ ...via, label: t('Als Zwischenziel') }, ziel];
+  const others: { a: PassAction; label: string }[] = role ? [] : hasStart ? [start, ziel] : [ziel];
   const symbol = pass ? 'mountain.2.fill' : 'mappin';
   const mainRef = useRef<ComponentRef<typeof View>>(null);
   const win = useWindowDimensions();
@@ -66,7 +66,7 @@ export function MapPassActions({
     onAction(a);
   };
   const quiet = (o: { a: PassAction; label: string }) => (
-    <Pressable key={o.a} accessibilityRole="button" onPress={() => act(o.a)} style={({ pressed }) => [styles.btn, styles.btnQuiet, styles.flex, pressed && styles.pressed]}>
+    <Pressable key={o.a} accessibilityRole="button" onPress={() => act(o.a)} style={({ pressed }) => [styles.btn, styles.btnQuiet, hasStart && styles.flex, pressed && styles.pressed]}>
       <AppText style={styles.btnText}>{o.label}</AppText>
     </Pressable>
   );
@@ -75,7 +75,7 @@ export function MapPassActions({
       ref={mainRef}
       accessibilityRole="button"
       onPress={() => act(primary.a)}
-      style={({ pressed }) => [styles.btn, role ? styles.btnQuiet : styles.btnMain, pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.btn, role ? styles.btnQuiet : styles.btnMain, !role && !hasStart && styles.flex, pressed && styles.pressed]}>
       <AppText style={[styles.btnText, !role && styles.onSignal]}>{primary.label}</AppText>
     </Pressable>
   );
@@ -108,8 +108,17 @@ export function MapPassActions({
             ) : null}
           </View>
         </View>
-        {main}
-        {others.length > 0 && <View style={styles.row}>{others.map(quiet)}</View>}
+        {role || hasStart ? (
+          <>
+            {main}
+            {others.length > 0 && <View style={styles.row}>{others.map(quiet)}</View>}
+          </>
+        ) : (
+          <View style={styles.row}>
+            {main}
+            {others.map(quiet)}
+          </View>
+        )}
       </View>
     </Animated.View>
   );

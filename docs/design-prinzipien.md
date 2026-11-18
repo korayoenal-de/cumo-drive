@@ -293,7 +293,7 @@ Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab C
 Alles, was auf der Karte angetippt oder gesetzt wird (Pass, Highlight, neuer Punkt nach langem Druck), nutzt dieselbe schwebende Karte über dem Blatt (`MapPassActions`, `MapPointActions`).
 
 * Oben Symbol, Name und eine graue Zeile (Stufe, Umweg grob in km oder die Rolle in der Route).
-* Immer alle drei Rollen: die Hauptaktion in voller Breite, darunter die beiden anderen als ruhige Tasten. Ohne Start ist „Als Start“ die Hauptaktion, sonst „Zwischenziel hinzufügen“. Auch der erste Punkt fragt nach, nichts wird ungefragt gesetzt.
+* Ohne Start nur zwei Rollen: „Als Start“ als Hauptaktion, „Als Ziel“ daneben. Mit Start alle drei: „Zwischenziel hinzufügen“ in voller Breite, darunter „Als Start“ und „Als Ziel“ als ruhige Tasten. Auch der erste Punkt fragt nach, nichts wird ungefragt gesetzt.
 * Tasten ohne Symbol. Kein Abbrechen: ein Tipp daneben schließt.
 * Sobald auf der Karte gearbeitet wird, geht das Blatt auf die kleinste Höhe (`workOnMap`), damit Karte und Auswahl Platz haben.
 * Die Wahl steht nie im Blatt. Die frühere getönte Karte „Neuer Punkt“ mit vier Tasten ist entfernt.
