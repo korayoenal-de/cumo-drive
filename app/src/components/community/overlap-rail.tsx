@@ -15,7 +15,7 @@ import type { CommunityTour } from '@/lib/community';
 import { useCommunityLine } from '@/lib/community-lines';
 import { fahrzeit, meta as fmtMeta, strecke } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
-import { t, tr } from '@/i18n';
+import { tr } from '@/i18n';
 
 export const RAIL_CARD_W = 280;
 const GAP = 10;
@@ -40,9 +40,7 @@ export function OverlapRail({ tours, active, onPick, bottom }: { tours: Communit
   };
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom }]}>
-      <Animated.View entering={softEnter()} style={styles.label}>
-        <AppText style={styles.labelText}>{tr('{n} Touren an dieser Stelle', { n: tours.length })}</AppText>
-      </Animated.View>
+      {/* ohne Zeile „n Touren an dieser Stelle“ (Koray 18.11.), die Reihe spricht für sich; VoiceOver nennt die Zahl */}
       <ScrollView
         ref={ref}
         horizontal
@@ -52,7 +50,7 @@ export function OverlapRail({ tours, active, onPick, bottom }: { tours: Communit
         onMomentumScrollEnd={onEnd}
         contentContainerStyle={styles.row}
         accessibilityRole="list"
-        accessibilityLabel={t('Touren an dieser Stelle')}>
+        accessibilityLabel={tr('{n} Touren an dieser Stelle', { n: tours.length })}>
         {tours.map((x, i) => (
           <Animated.View key={x.id} entering={softEnter(i + 1)}>
             <RailCard t={x} on={x.id === active} pos={i + 1} of={tours.length} onPress={() => onPick(x.id)} />
@@ -90,8 +88,6 @@ function RailCard({ t: x, on, pos, of, onPress }: { t: CommunityTour; on: boolea
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, gap: Spacing.s },
-  label: { marginLeft: Spacing.l, alignSelf: 'flex-start', height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: Colors.overlay, justifyContent: 'center' },
-  labelText: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
   row: { paddingHorizontal: Spacing.l, gap: GAP },
   card: { width: RAIL_CARD_W, height: 76, borderRadius: Radius.l, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.overlay },
   cardOn: { backgroundColor: Colors.surface2 },
