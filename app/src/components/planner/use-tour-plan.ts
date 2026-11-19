@@ -332,6 +332,8 @@ export function useTourPlan(onPlanned?: () => void) {
     const cut = reanchorLoop({ ...planned, etappen: lp }, p);
     if (!cut) return false;
     const loop = cut.tour;
+    const snap = snapshot();
+    const undo = { action: { label: tr('Rückgängig'), onPress: () => restore(snap) } };
     const loopLp = (loop.etappen ?? fitLegs([null], loop.wegpunkte.length - 2)) as LegProfile[];
     const avoidKey = `${JSON.stringify(avoid)}|${avoidedKey()}`;
     abort.current?.abort();
@@ -349,10 +351,10 @@ export function useTourPlan(onPlanned?: () => void) {
       plannedAs.current.set(t, { raw: t, profiles: loopLp.map((x) => x ?? profile), avoid: avoidKey });
       setPlanned(t);
       onPlanned?.();
-      showToast(tr('Die Runde startet jetzt hier. Die Strecke bleibt gleich.'));
+      showToast(tr('Die Runde startet jetzt hier. Die Strecke bleibt gleich.'), undo);
       return true;
     }
-    showToast(tr('Die Runde bleibt gleich. Geplant wird nur die Anfahrt.'));
+    showToast(tr('Die Runde bleibt gleich. Geplant wird nur die Anfahrt.'), undo);
     // abseits: Anfahrt zum Einstieg und zurück planen, die Runde bleibt
     const points = [p, ...loop.wegpunkte, p];
     const nextLp: LegProfile[] = [null, ...loopLp, null];

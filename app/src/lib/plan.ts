@@ -13,7 +13,7 @@ import { tourFun } from './fun-score';
 import { PASSES, passesAlong } from './passes';
 import { closureExclude, closureLabel, closuresNear, closuresOnRoute, onClosedRoad, onPassRoad, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
-import { lineKm, runFor, seamsOk, turnAt, windowFor } from './plan-window';
+import { keepLegs, lineKm, runFor, seamsOk, turnAt, windowFor } from './plan-window';
 import { movePointsOffUTurns, unwantedUTurns, type UTurn } from './uturn';
 import { route, valhallaFetch, type Avoid } from './valhalla';
 import { tr } from '@/i18n';
@@ -682,6 +682,13 @@ export async function planChanged(
   // Ein Punkt fällt weg: ganz neu planen. Sonst bleiben die Etappen daneben auf dem Weg, den sie wegen des
   // entfernten Punkts genommen hatten, und Einfügen plus Entfernen führt nicht zur alten Tour zurück
   // (Bedienfolgen R2, 18.11.: 144 statt 140 km)
+  // Ausnahme (19.11.): Fällt nur der Start oder nur das Ziel weg, verbindet sich nichts neu. Der Rest bleibt stehen.
+  if (profiles.length === prevProfiles.length - 1 && points.length >= 2) {
+    const old = prev.wegpunkte;
+    const eq = (from: number) => points.every((p, i) => p[0] === old[from + i][0] && p[1] === old[from + i][1]) && profiles.every((x, i) => x === prevProfiles[from + i]);
+    const kept = eq(1) ? keepLegs(prev, 1, old.length - 1) : eq(0) ? keepLegs(prev, 0, old.length - 2) : null;
+    if (kept) return { ...kept, name };
+  }
   if (profiles.length < prevProfiles.length) return null;
   const w = windowFor(prev, prevProfiles, points, profiles);
   if (!w) {

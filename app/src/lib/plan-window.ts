@@ -398,8 +398,11 @@ export function reanchorLoop<T extends PlannedTour>(prev: T, p: LatLon): { tour:
     }
     idx.push(pts.length - 1);
   }
-  const at = idx.findIndex((x, i) => i > 0 && i < n - 1 && x === j);
-  if (at > 0) {
+  // Liegt dort schon ein Zwischenziel (bis 500 m entlang der Strecke), wird es der Start: kein zweiter Punkt daneben
+  // (geprüft am Vogesen Karussell: Barr aus der Ortssuche lag 40 m neben dem Zwischenziel Barr)
+  const near = idx.map((x, i) => (i > 0 && i < n - 1 ? Math.abs(pts[x].km - pts[j].km) : Infinity));
+  const at = near.indexOf(Math.min(...near));
+  if (at > 0 && near[at] <= 0.5) {
     const r = rotateLoop(prev, at);
     return r ? { tour: r, entry: w[at], offM } : null;
   }
@@ -423,4 +426,13 @@ export function reanchorLoop<T extends PlannedTour>(prev: T, p: LatLon): { tour:
   delete tour.bebautStartKm;
   delete tour.bebautEndKm;
   return { tour, entry, offM };
+}
+
+/** Etappen a bis b der Tour unverändert herausnehmen (Start oder Ziel entfernt); null, wenn die Punkte nicht zuzuordnen sind */
+export function keepLegs(prev: PlannedTour, a: number, b: number): PlannedTour | null {
+  if (a < 0 || b > prev.wegpunkte.length - 1 || b - a < 1 || !prev.linie.length) return null;
+  const pts = flat(prev);
+  const idx = waypointIndex(pts, prev);
+  if (!idx) return null;
+  return slice(prev, pts, idx, legMinutes(prev, pts, idx), a, b);
 }
