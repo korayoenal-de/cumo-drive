@@ -7,22 +7,24 @@
  * aber nicht).
  */
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 
 import { LegalPage } from '@/components/legal/legal-page';
 import { t, useLang } from '@/i18n';
 
+const noSubscribe = () => () => {};
+/** Supabase hängt bei einem ungültigen Link den Grund an die Adresse */
+function linkFailed(): boolean {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return false;
+  return /[#&?]error(_code|_description)?=/.test(`${window.location.hash}&${window.location.search}`);
+}
+
 export default function Bestaetigt() {
   useLang();
   const web = Platform.OS === 'web';
-  // Erst nach dem Laden im Browser bekannt; bis dahin gilt der Normalfall
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    if (!web || typeof window === 'undefined') return;
-    const where = `${window.location.hash}&${window.location.search}`;
-    if (/[#&?]error(_code|_description)?=/.test(where)) setFailed(true);
-  }, [web]);
+  // Erst im Browser bekannt; beim Vorrendern gilt der Normalfall
+  const failed = useSyncExternalStore(noSubscribe, linkFailed, () => false);
 
   if (failed) {
     return (
