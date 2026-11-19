@@ -84,7 +84,7 @@ export const PRIVACY_IT: LegalDoc = {
     {
       h: '6. Eliminare l’account',
       p: [
-        'Puoi eliminare il tuo account in ogni momento nell’app in Impostazioni, Account, Elimina account. Eliminiamo quindi account, tour, guide, veicoli, valutazioni, feedback e le voci sull’uso della pianificazione. Anche i tour pubblicati nella community scompaiono. Restano le analisi aggregate senza riferimento personale. Un abbonamento lo disdici separatamente nelle impostazioni del tuo ID Apple.',
+        'Puoi eliminare il tuo account in ogni momento nell’app in Impostazioni, Account, Elimina account, e anche nel web planner in Impostazioni. Eliminiamo quindi account, tour, guide, veicoli, valutazioni, feedback e le voci sull’uso della pianificazione. Anche i tour pubblicati nella community scompaiono. Restano le analisi aggregate senza riferimento personale. Un abbonamento lo disdici separatamente nelle impostazioni del tuo ID Apple.',
       ],
     },
     {

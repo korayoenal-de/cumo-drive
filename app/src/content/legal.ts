@@ -96,7 +96,7 @@ export const DATENSCHUTZ: LegalDoc = {
     {
       h: '6. Konto löschen',
       p: [
-        'Du kannst dein Konto jederzeit in der App unter Einstellungen, Konto, Konto löschen entfernen. Dabei löschen wir Konto, Touren, Fahrten, Fahrzeuge, deine Bewertungen, deine Rückmeldungen und die Einträge zur Nutzung der Planung. Veröffentlichte Community Touren verschwinden ebenfalls. Bereits zusammengefasste Auswertungen ohne Personenbezug bleiben bestehen. Ein Abo kündigst du getrennt davon in den Einstellungen deiner Apple ID.',
+        'Du kannst dein Konto jederzeit in der App unter Einstellungen, Konto, Konto löschen entfernen, ebenso im Web Planer unter Einstellungen. Dabei löschen wir Konto, Touren, Fahrten, Fahrzeuge, deine Bewertungen, deine Rückmeldungen und die Einträge zur Nutzung der Planung. Veröffentlichte Community Touren verschwinden ebenfalls. Bereits zusammengefasste Auswertungen ohne Personenbezug bleiben bestehen. Ein Abo kündigst du getrennt davon in den Einstellungen deiner Apple ID.',
       ],
     },
     {

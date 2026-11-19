@@ -4,12 +4,12 @@
 import { useEffect, useState } from 'react';
 
 import { type Profile, type Tour } from '@/lib/tour';
-import { signIn, signOut, useSession } from '@/lib/auth';
-import { syncLibrary, useSyncState } from '@/lib/library';
+import { deleteAccount, signIn, signOut, useSession } from '@/lib/auth';
+import { clearLocalTours, syncLibrary, useSyncState } from '@/lib/library';
 import { type Avoid } from '@/lib/valhalla';
 import { createHandoff } from '@/lib/handoff';
 import { createRide, joinRide, leaveRide, loadProfile, normalizeCode, QUICK_MESSAGES, quickText, sendMessage, setRole, useRide } from '@/lib/group/ride';
-import { Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 
 import { C } from './web-shared';
 import { Chip } from './web-parts';
@@ -112,6 +112,52 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
   );
 }
 
+/**
+ * Konto löschen im Web (Koray 19.11.2026): registrieren kann man sich im Web, also muss man hier auch wieder
+ * herauskommen. Dieselbe Funktion und dieselben Worte wie in der App (einstellungen.tsx). Bestätigt wird an Ort und
+ * Stelle statt in einem Blatt, weil der Web Planer keine Blätter hat; der Text bleibt stehen, bis man sich entscheidet.
+ */
+function DeleteAccount() {
+  const [ask, setAsk] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  if (!ask) {
+    return (
+      <button style={{ ...S.link, color: C.muted }} onClick={() => setAsk(true)}>
+        {t('Konto löschen')}
+      </button>
+    );
+  }
+  const remove = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await deleteAccount();
+      clearLocalTours();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : t('Löschen hat nicht geklappt.'));
+      setBusy(false);
+    }
+  };
+  return (
+    <div role="group" aria-label={t('Konto löschen')} style={{ display: 'flex', flexDirection: 'column', gap: Spacing.s }}>
+      <b>{t('Möchtest du dein Konto wirklich löschen?')}</b>
+      <span style={S.small}>
+        {t('Touren, Fahrten, Fahrzeuge, Bewertungen und dein Name werden endgültig gelöscht, auch in der Community. Das lässt sich nicht rückgängig machen. Ein Abo kündigst du separat in den Einstellungen deiner Apple ID.')}
+      </span>
+      {err ? <span role="alert" style={{ ...S.small, color: Colors.danger }}>{err}</span> : null}
+      <div style={S.btnRow}>
+        <button style={{ ...S.secondaryOnSurface, minHeight: 44, background: Colors.dangerTint, color: Colors.danger, fontWeight: 700 }} disabled={busy} onClick={() => void remove()}>
+          {busy ? t('Konto wird gelöscht') : t('Löschen')}
+        </button>
+        <button style={{ ...S.secondaryOnSurface, minHeight: 44 }} disabled={busy} onClick={() => setAsk(false)}>
+          {t('Abbrechen')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** Anmelden, damit Touren im Konto liegen und in der App erscheinen. */
 export function AccountBox() {
   const session = useSession();
@@ -143,6 +189,7 @@ export function AccountBox() {
               ? t('Abgleich fehlgeschlagen: {error}', { error: sync.error })
               : t('Deine Touren liegen im Konto und erscheinen in der App unter Touren.')}
         </span>
+        <DeleteAccount />
       </div>
     );
   }

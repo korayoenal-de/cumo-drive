@@ -84,7 +84,7 @@ export const PRIVACY_EN: LegalDoc = {
     {
       h: '6. Deleting your account',
       p: [
-        'You can delete your account at any time in the app under Settings, Account, Delete account. We then delete your account, tours, drives, vehicles, ratings, feedback and the entries on the use of planning. Published community tours disappear as well. Aggregated evaluations without personal reference remain. You cancel a subscription separately in the settings of your Apple ID.',
+        'You can delete your account at any time in the app under Settings, Account, Delete account, and also in the web planner under Settings. We then delete your account, tours, drives, vehicles, ratings, feedback and the entries on the use of planning. Published community tours disappear as well. Aggregated evaluations without personal reference remain. You cancel a subscription separately in the settings of your Apple ID.',
       ],
     },
     {
