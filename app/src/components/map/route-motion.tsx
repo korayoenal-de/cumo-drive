@@ -41,6 +41,9 @@ const FLOW_TICK_MS = 40;
  * Läuft auf der Karte immer, auch während gerechnet wird.
  */
 const FLOW_COLOR = "#E2461C";
+/** Spur aus fünf kurzen Strichen, nach hinten leiser; Abstand in Bildpunkten */
+const TRAIL_OPACITY = [1, 0.7, 0.45, 0.25, 0.12];
+const TRAIL_STEP_PX = 9;
 const SHIMMER_MS = 1100;
 const TICK_MS = 40;
 
@@ -76,11 +79,71 @@ function useProgress(
   return st.key === key ? st.p : 0;
 }
 
-/** Stücke des Scheins auf der Linie; bei einer Runde läuft er über Start und Ziel weiter, ohne abzureißen */
-function flowPieces(head: number, len: number, total: number, closed: boolean): [number, number][] {
-  const out: [number, number][] = [[Math.max(0, head - len), head]];
-  if (closed && head < len) out.push([total - (len - head), total]);
-  return out.filter(([a, b]) => b - a > 0.05);
+/** Lage und Fahrtrichtung (Grad, 0 = Norden) an Stelle km der Linie */
+function pointDir(
+  pts: { p: LatLon; km: number }[],
+  km: number,
+): { p: LatLon; deg: number } {
+  const seg = lineBetween(pts, Math.max(0, km - 0.03), km + 0.03);
+  const a = seg[0];
+  const b = seg[seg.length - 1];
+  const cos = Math.cos((a[0] * Math.PI) / 180);
+  const deg = (Math.atan2((b[1] - a[1]) * cos, b[0] - a[0]) * 180) / Math.PI;
+  return { p: lineBetween(pts, km, km + 1e-6)[0], deg: (deg + 360) % 360 };
+}
+
+/**
+ * Lichtspur als kleine Marker statt als Linie (Koray 19.11., 23:46): Apple Karten kennt für Linien keine feste
+ * Reihenfolge, eine Linie, die sich dauernd neu anlegt, lag mal unter der weißen Route und blitzte. Marker liegen
+ * immer über allen Linien und wandern ohne Neuanlegen, die Schlüssel bleiben gleich.
+ */
+function Trail({
+  pts,
+  headKm,
+  stepKm,
+  total,
+  closed,
+  color,
+  from = 0,
+  to = Infinity,
+}: {
+  pts: { p: LatLon; km: number }[];
+  headKm: number;
+  stepKm: number;
+  total: number;
+  closed: boolean;
+  color: string;
+  from?: number;
+  to?: number;
+}) {
+  return (
+    <>
+      {TRAIL_OPACITY.map((o, i) => {
+        let k = headKm - i * stepKm;
+        if (k < 0 && closed) k += total;
+        const hidden = k < Math.max(0, from) || k > Math.min(total, to);
+        const at = pointDir(pts, Math.min(total, Math.max(0, k)));
+        return (
+          <Marker
+            key={`spur-${i}`}
+            coordinate={ll(at.p)}
+            anchor={{ x: 0.5, y: 0.5 }}
+            flat
+            rotation={at.deg}
+            zIndex={9}
+            tracksViewChanges={false}
+          >
+            <View
+              style={[
+                styles.trail,
+                { backgroundColor: color, opacity: hidden ? 0 : o },
+              ]}
+            />
+          </Marker>
+        );
+      })}
+    </>
+  );
 }
 
 export function RouteMotion({
@@ -122,7 +185,7 @@ export function RouteMotion({
     [pts, spacingKm],
   );
   const headKm = total * flowAt;
-  const glow = Math.max(0.8, total * 0.05);
+  const stepKm = mpp ? (mpp * TRAIL_STEP_PX) / 1000 : total / 300;
   const closed =
     pts.length > 2 && haversine(pts[0].p, pts[pts.length - 1].p) < 400;
 
@@ -161,9 +224,6 @@ export function RouteMotion({
     <>
       {dim &&
         dim.spans.map(([a, b], i) => {
-          const len = b - a;
-          // Schimmer: ein Drittel der Etappe wandert in Fahrtrichtung darüber
-          const s = a - len * 0.3 + len * 1.3 * shimmer;
           return [
             casing(
               `dim-r-${dim.key}-${i}`,
@@ -177,15 +237,23 @@ export function RouteMotion({
               3,
               "rgba(244,244,242,0.3)",
             ),
-            !reduced &&
-              stroke(
-                `dim-s-${dim.key}-${i}-${Math.round(shimmer * 40)}`,
-                lineBetween(pts, Math.max(a, s), Math.min(b, s + len * 0.3)),
-                4,
-                "rgba(255,255,255,0.85)",
-              ),
           ];
         })}
+      {dim &&
+        !reduced &&
+        dim.spans.map(([a, b], i) => (
+          <Trail
+            key={`schimmer-${i}`}
+            pts={pts}
+            headKm={a + (b - a) * shimmer}
+            stepKm={stepKm}
+            total={total}
+            closed={false}
+            color={Colors.text}
+            from={a}
+            to={b}
+          />
+        ))}
       {grow &&
         grow.spans.map(([a, b], i) => {
           const end = a + (b - a) * easeOut(grown);
@@ -204,18 +272,16 @@ export function RouteMotion({
             ),
           ];
         })}
-      {flowing &&
-        flowPieces(headKm, glow, total, closed).map(([a, b], i) => [
-          <Polyline
-            key={`fluss-k-${i}-${Math.round(headKm * 20)}`}
-            coordinates={lineBetween(pts, a, b).map(ll)}
-            strokeColor={FLOW_COLOR}
-            strokeWidth={2}
-            lineCap="round"
-            lineJoin="round"
-            zIndex={6}
-          />,
-        ])}
+      {flowing && (
+        <Trail
+          pts={pts}
+          headKm={headKm}
+          stepKm={stepKm}
+          total={total}
+          closed={closed}
+          color={FLOW_COLOR}
+        />
+      )}
       {!dim &&
         arrows.map((a) => (
           <Marker
@@ -235,6 +301,8 @@ export function RouteMotion({
 }
 
 const styles = StyleSheet.create({
+  // ein Strich der Spur, längs zur Fahrtrichtung (0 Grad = nach oben)
+  trail: { width: 3, height: 9, borderRadius: 1.5 },
   // wie die Pfeile auf doppelt gefahrenen Stücken: dunkles Dreieck in der weißen Linie
   arrow: {
     width: 0,
