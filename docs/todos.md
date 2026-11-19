@@ -194,6 +194,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 ## Backlog
 
+* [ ] **„Fläche mit Grund“ (flache Listen, Flächen nur für Zustand, Eingabe, Hervorhebung): geparkt auf dem Zweig `flaeche-mit-grund`** (Commit c3bb6dd). Am 19.11. kurz per OTA draußen und wieder zurückgenommen. Korays Urteil: Abstände fehlten, es wirkte trostlos und unfertig. Ohne Flächen muss alles andere genauer ausgearbeitet sein, vor allem das Spiel mit den Abständen. Später ansehen, vor einem neuen Anlauf erst als Entwurf im Artefakt
+
 * [ ] **Lasttest Routing Server** (Koray 18.11.: Backlog): 10 Planungen gleichzeitig über 2 Minuten, abends, nur der Routing Server; Supabase bleibt außen vor. Trifft die echten Server, daher nur nach Korays OK
 * [x] Gleiche Punkte, verschiedene Touren: Kurvig gegen den direkten Weg wird je Etappe entschieden (Koray 18.11., `planGroup` und `directLegs` in plan.ts). Miltenberg, Amorbach, Hirschhorn, Michelstadt: die drei gemeinsamen Etappen sind mit Ziel Beerfelden und Ziel Lindenfels gleich (18,8, 43,1 und 48,5 km). Noch nicht per OTA veröffentlicht
 * [ ] GitHub Secret EXPO_TOKEN eintragen, damit OTA über den Zweig ota/* aus jeder Sitzung geht (Koray 17.11.: Backlog; bis dahin veröffentlicht Claude OTA direkt nach dem Testlauf)
