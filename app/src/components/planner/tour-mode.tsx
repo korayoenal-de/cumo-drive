@@ -411,8 +411,6 @@ export function TourMode({
   }
 
   function actionsFor(kind: PointKind): PointAction[] {
-    // In einer Rundtour sind Start und Ziel derselbe Ort: ein Zwischenziel wird Start, die Runde dreht sich weiter
-    if (kind === 'via' && isLoop) return ['start', 'karte', 'entfernen'];
     return kind === 'via' ? ['start', 'ziel', 'karte', 'entfernen'] : kind === 'start' ? [...(isLoop || !plan.ziel ? [] : (['ziel'] as PointAction[])), 'karte', 'entfernen'] : [...(isLoop || !plan.start ? [] : (['start'] as PointAction[])), 'karte', 'entfernen'];
   }
 
@@ -453,7 +451,9 @@ export function TourMode({
       plan.swap(profile, avoid);
       return;
     }
-    if (isLoop && kindAt === 'via') {
+    // Rundtour: „Als Start setzen“ dreht die Runde, die Strecke bleibt gleich. „Als Ziel setzen“ bricht sie auf wie
+    // in jeder Tour: der Punkt wandert ans Ende, das alte Ziel wird Zwischenziel (Koray 19.11.2026)
+    if (isLoop && kindAt === 'via' && a === 'start') {
       plan.rotate(m.idx, profile, avoid);
       showToast(tr('Die Runde startet jetzt in {name}. Die Strecke bleibt gleich.', { name: m.name }), { action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) } });
       return;
