@@ -194,6 +194,8 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 ## Backlog
 
+* [ ] **Reiter Touren neu gliedern: Gespeichert, Geplant, Gefahren** (Koray 19.11.: gefällt, erstmal Backlog). Heute stehen Ausfahrten unter „Anstehend“ über den Touren, ohne Rolle und ohne das Wort. Idee: drei Reiter als Weg einer Tour. Gespeichert ohne Termin, Geplant alles mit Termin (organisiert, dabei, angefragt, auch privat, mit Rolle in jeder Karte), Gefahren. Entwurf im Artefakt „Touren und Ausfahrten: klarer Aufbau“ (https://claude.ai/artifact/MuuYbw18jECD48PQDGScXz), zweite Reihe. Offen: „Geplant“ ist neben „Tour planen“ doppelt belegt, Reiter 22 statt 26 pt, mit welchem Reiter die Seite öffnet
+
 * [ ] **„Fläche mit Grund“ (flache Listen, Flächen nur für Zustand, Eingabe, Hervorhebung): geparkt auf dem Zweig `flaeche-mit-grund`** (Commit c3bb6dd). Am 19.11. kurz per OTA draußen und wieder zurückgenommen. Korays Urteil: Abstände fehlten, es wirkte trostlos und unfertig. Ohne Flächen muss alles andere genauer ausgearbeitet sein, vor allem das Spiel mit den Abständen. Später ansehen, vor einem neuen Anlauf erst als Entwurf im Artefakt
 
 * [ ] **Lasttest Routing Server** (Koray 18.11.: Backlog): 10 Planungen gleichzeitig über 2 Minuten, abends, nur der Routing Server; Supabase bleibt außen vor. Trifft die echten Server, daher nur nach Korays OK
