@@ -484,11 +484,54 @@ export function bigCityKm(line: LatLon[], waypoints: LatLon[]): number {
   return +km.toFixed(1);
 }
 
+/**
+ * Kein Genuss: Tunnel und Autobahnen (Koray 19.11.2026). Auslöser war der Routen Check: die Rundtour ab Valloire fuhr
+ * durch den Fréjus Tunnel (13 km, Maut) und 16 km Autobahn. Das Serverprofil Kurvig wertet beides nicht eigens ab, eine
+ * Autobahn zählt dort nur als gerade Straße. Maut bleibt bewusst unberührt: viele Pässe kosten Maut (Großglockner,
+ * Timmelsjoch), das ist gewollt.
+ *
+ * Tunnel nur mild (0,5): das Modell kennt keine Länge, und Passstraßen haben Galerien und kurze Tunnel. Gemessen an den
+ * festen Runden: mit 0,25 verlor Bozen 200 km Karerpass, Nigerpass und Pordoijoch (Tunnel im Eggental), mit 0,5 und 0,6
+ * blieb sie unverändert und Chur wurde etwas besser. Gilt für Kurvig in Rundtour und Route; Schnell bleibt, wie es ist.
+ * RT_NO_DULL nur zum Messen.
+ */
+const DULL_MODEL = [
+  { if: 'road_environment == TUNNEL', multiply_by: '0.5' },
+  { if: 'road_class == MOTORWAY', multiply_by: '0.15' },
+];
+const NO_DULL = typeof process !== 'undefined' && !!process.env?.RT_NO_DULL;
+
+/**
+ * Lange, teure Mauttunnel: in einer Rundtour ganz gesperrt, weil die milde Abwertung oben sie nicht verhindert (Fréjus
+ * spart 70 km, Mont Blanc über 100). Je ein Punkt tief im Berg, aus der Linie des eigenen Servers, damit die kleine
+ * Sperrfläche (rund 60 m) nur die Röhre trifft. Geprüft am 19.11.: mit Sperre plant der Server Modane nach Bardonecchia
+ * 94 statt 22 km und Chamonix nach Courmayeur 139 statt 22 km.
+ * Nicht dabei: Großer Sankt Bernhard (Tunnel und Passstraße liegen dort zu dicht beieinander, die Sperre träfe beide),
+ * Munt la Schera und Felbertauern (gehören zu klassischen Runden, Maut moderat).
+ * Nur in Rundtouren: wer von A nach B plant, braucht den Tunnel vielleicht wirklich.
+ */
+const TOLL_TUNNELS: LatLon[] = [
+  [45.11305, 6.69981], // Fréjus
+  [45.86004, 6.90714], // Mont Blanc
+];
+let roundTrips = 0;
+/** Solange eine Rundtour geplant wird, gelten ihre Regeln (gesperrte Mauttunnel) für alle Abfragen an den Server */
+export async function roundTripScope<T>(run: () => Promise<T>): Promise<T> {
+  roundTrips++;
+  try {
+    return await run();
+  } finally {
+    roundTrips--;
+  }
+}
+
 function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatLon[] = [], near: LatLon[] = [], radiusKm = 30) {
   const builtIn = ghProfile(profile).builtIn;
-  const ex = exclusionModel(exclude, penalize) as { areas?: { features: unknown[] }; priority?: { if: string; multiply_by: string }[] };
-  const fav = profile === 'kurvig' || profile === 'paesse' ? favoriteArea(near, radiusKm) : null;
-  const city = profile === 'kurvig' || profile === 'paesse' ? cityArea(near, radiusKm) : null;
+  const curvy0 = profile === 'kurvig' || profile === 'paesse';
+  const ex = exclusionModel(curvy0 && roundTrips > 0 && !NO_DULL ? [...TOLL_TUNNELS, ...exclude] : exclude, penalize) as { areas?: { features: unknown[] }; priority?: { if: string; multiply_by: string }[] };
+  const curvy = curvy0;
+  const fav = curvy ? favoriteArea(near, radiusKm) : null;
+  const city = curvy ? cityArea(near, radiusKm) : null;
   // Fahrregionen (Koray 10.11.) bewusst nicht auf dem Server: Straßen außerhalb abzuwerten ließ die Suche viel mehr
   // Straßen prüfen, Routen brauchten im Test 5,7 bis 6,8 statt 3,9 s, ohne messbar mehr Fahrspaß (Stresstest 3).
   // Die Regionen wirken in der Bewertung der Rundtour (smart-roundtrip.ts). Zum Messen: SERVER_REGIONS = true.
@@ -498,6 +541,7 @@ function model(avoid: Avoid, exclude: LatLon[], profile: Profile, penalize: LatL
     ...(profile === 'schnell' && !builtIn ? WIDTH_MODEL : []),
     ...(profile === 'entspannt' ? [{ if: 'road_class == RESIDENTIAL', multiply_by: '0.6' }] : []),
     ...avoidModel(avoid),
+    ...(curvy && !NO_DULL ? DULL_MODEL : []),
     ...(ex.priority ?? []),
     // Traumstrecken bevorzugen: alles andere etwas teurer
     ...(fav ? [{ if: '!in_fav', multiply_by: '0.7' }] : []),

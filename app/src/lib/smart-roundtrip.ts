@@ -13,7 +13,7 @@ import { HIGHLIGHT_ROADS, type HighlightRoad } from './highlight-roads';
 import { findHighlights } from './navigation/highlights';
 import { cumulativeKm } from './navigation/route';
 import { avoidedPasses, avoidedPoints } from './avoid-pass';
-import { bigCityKm, cumoAvailable, cumoPlan, cumoRoundTrips } from './cumo-routing';
+import { bigCityKm, cumoAvailable, cumoPlan, cumoRoundTrips, roundTripScope } from './cumo-routing';
 import { corridorBack, doubledStretch } from './doubled';
 import { scoreRoute, type GhRoute } from './graphhopper';
 import { PASSES, passLoopVia, TIER_WEIGHT } from './passes';
@@ -131,7 +131,12 @@ async function budgeted<T>(ms: number, parent: AbortSignal | undefined, run: (si
   }
 }
 
-export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<SmartTour> {
+export function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<SmartTour> {
+  // Regeln nur für Rundtouren (gesperrte Mauttunnel, cumo-routing.ts)
+  return roundTripScope(() => planRoundTrip(req, onStep, signal));
+}
+
+async function planRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<SmartTour> {
   const T0 = Date.now();
   const seed = req.seed ?? Math.floor(Math.random() * 1e6);
   const heading =
