@@ -273,7 +273,7 @@ Leinwand „Konsistenzprüfung App“ mit allen Screens und Blättern. Gilt ab C
 
 **Farben und Schrift**
 - `danger` #FF5A52 und `dangerTint` für Fehler und Endgültiges, die Bestätigung beim Löschen ist rot. Signal Orange bleibt der Hauptaktion und den Strecken.
-- Datumsblock als Typo Spalte ohne Fläche, nur heute in Orange (seit 18.11., Fläche mit Grund).
+- Datumsblock neutral, nur heute in Orange.
 - Namen von Menschen nie in Versalien, auch groß im Profil (Koray 15.11.); Versalien bleiben Tournamen, Überschriften und Kennzahlen.
 - Plaketten nur mit Inhalt: keine 0 (Koray 15.11.).
 - Nebenzeilen und Hinweise 15 pt (`caption` Variante). 13 pt nur über `Type.caption` auf Karte, Plaketten und in der Tab Leiste.
@@ -298,23 +298,10 @@ Alles, was auf der Karte angetippt oder gesetzt wird (Pass, Highlight, neuer Pun
 * Sobald auf der Karte gearbeitet wird, geht das Blatt auf die kleinste Höhe (`workOnMap`), damit Karte und Auswahl Platz haben.
 * Die Wahl steht nie im Blatt. Die frühere getönte Karte „Neuer Punkt“ mit vier Tasten ist entfernt.
 
-## Fläche mit Grund (Koray 18.11.2026, Leinwand „Weniger Boxen, mehr Raum“)
-
-Flächen (`surface`, `surface2`) gruppieren nicht mehr, sie sind ein Signal. Gruppiert wird über Abstand, Abschnittstitel und Typografie. Löst die Regel „Karten auf surface, zwischen Karten einer Liste 8“ ab.
-
-* Eine Fläche gibt es nur aus einem von drei Gründen: **Zustand** (aufgeklappt, gewählt, ungelesen), **Eingabe** (Feld, Taste, aktiver Chip) oder **Hervorhebung** (genau ein Element ist wichtiger als der Rest, etwa die nächste Ausfahrt).
-* Listen sind flach: Zeilen ohne Fläche auf dem Grund, mindestens 44 hoch, die ganze Zeile ist die Trefferfläche, zwischen Zeilen `Layout.rows` (16). Abschnitte mit Titel (Inter Bold 17, Zahl grau daneben) statt Status in jeder Zeile.
-* Keine Fläche in einer Fläche, wenn sie nichts zeigt: Datum als Typo Spalte ohne Kachel (`DateBlock`, heute orange), Privat als Schloss mit grauem Wort, Nachricht als freies Symbol. Runde gefüllte Tasten bleiben, wo sie eine Aktion sind, die man sonst übersieht (Plus für Kontakt, Import).
-* Chips in einer `ChipRow` oder `ChipGroup`: nur der aktive ist gefüllt (die gleitende weiße Fläche), alle anderen sind Text in `textSoft` mit derselben Trefferfläche.
-* Aufgeklappt ist die einzige Karte einer Liste (Fahrerkarte unter Drivers). Melden und Blockieren stehen dort im ⋯ Blatt, Blockieren rot unten.
-* Wischen zum Löschen bleibt: flache Zeilen tragen dafür den Grund als Hintergrund.
-* Streckenbilder liegen in flachen Listen auf `surface` (`RouteThumb raised`), damit sie sich vom Grund abheben.
-
 ## Pflicht für jede Neuerung (Koray 15.11.2026)
 
 Jede neue Funktion, jeder neue Screen und jede Änderung folgt dem Design System und den Regeln oben, vor allem der Konsistenzprüfung vom 15.11. So bleibt die App konsistent und neue Funktionen werden ordentlich eingebunden. Vor dem Commit prüfen:
 
-1. Fläche mit Grund (18.11.): Listen flach, Fläche nur für Zustand, Eingabe oder Hervorhebung.
 1. Bausteine wiederverwenden statt nachbauen: `Kennzahlen`, `SeatsBadge`, `BackLink`, `ActionSheet` und `ConfirmSheet`, `ShareSheet`, `Chip` und `ChipRow`, `AddButton` und `RemoveButton` (runde 44 pt Tasten in Listen, Plus und Kreuz, 17.11.), `Screen`, `MapSheet`, Formate aus `lib/format.ts`, Farben und Maße nur aus `constants/theme.ts`.
 2. Kerndaten in der festen Reihenfolge, Kennzahlen direkt unter dem Titel, die Karte danach.
 3. Eine Hauptaktion je Ansicht, auf Detailseiten fest unten; Optionen zu einem Objekt im Blatt, Gefährliches rot unten mit Rückfrage als Frage.

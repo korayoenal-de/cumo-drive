@@ -18,7 +18,7 @@ import { IconLabel } from '@/components/ui/btn-icon';
 import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
-import { ActionSheet, ConfirmSheet, SHEET_GONE_MS, type SheetItem } from '@/components/ui/action-sheet';
+import { ActionSheet, ConfirmSheet, type SheetItem } from '@/components/ui/action-sheet';
 import { freeSeats, listAusfahrten, longDate, type Ausfahrt } from '@/lib/ausfahrten';
 import { answerContact, removeContact, requestContact, useContacts, type Contact } from '@/lib/contacts';
 import { inviteToRide } from '@/lib/group/invites';
@@ -35,13 +35,11 @@ export const ringColor = (_d: Driver) => Colors.text;
 
 const write = (d: Driver) => router.push({ pathname: '/nachrichten/[id]', params: { id: d.id, name: d.name } });
 
-export function DriverCard({ d, big, unread = 0, onPress, grouped }: { d: Driver; big?: boolean; /** ungelesene Nachrichten von diesem Fahrer (Koray 10.11.) */ unread?: number; onPress?: () => void; /** steht unter einem Abschnitt, der den Status schon nennt (Angefragt): kein Status in der Zeile (18.11.) */ grouped?: boolean }) {
+export function DriverCard({ d, big, unread = 0, onPress }: { d: Driver; big?: boolean; /** ungelesene Nachrichten von diesem Fahrer (Koray 10.11.) */ unread?: number; onPress?: () => void }) {
   const meta = [d.car, d.homeName ?? null].filter(Boolean).join('  ·  ');
   const canWrite = !d.isMe && d.allowMessages;
   const [report, setReport] = useState(false);
   const [block, setBlock] = useState(false);
-  // Melden und Blockieren im ⋯ Blatt (Fläche mit Grund, Koray 18.11.): ein Einstieg für Optionen, rot unten
-  const [menu, setMenu] = useState(false);
   // blockiert: sofort weg, bis die Liste neu geladen ist (Koray 12.11.)
   const blocked = useIsBlocked(d.id);
   const status = useContacts().byId.get(d.id) ?? null;
@@ -113,11 +111,6 @@ export function DriverCard({ d, big, unread = 0, onPress, grouped }: { d: Driver
               )}
             </Pressable>
           )}
-          {!d.isMe && (
-            <Pressable accessibilityRole="button" accessibilityLabel={t('Optionen für {name}', { name: d.name })} hitSlop={4} onPress={() => setMenu(true)} style={({ pressed }) => [styles.more, pressed && styles.pressed]}>
-              <SymbolView name="ellipsis" size={20} weight="semibold" tintColor={Colors.muted} />
-            </Pressable>
-          )}
         </View>
         {d.bio ? <AppText style={styles.bio}>{d.bio}</AppText> : null}
         {d.garage && d.garage.length > 0 ? (
@@ -169,15 +162,17 @@ export function DriverCard({ d, big, unread = 0, onPress, grouped }: { d: Driver
           />
         )}
         {!d.isMe && (
-          <ActionSheet
-            visible={menu}
-            title={d.name}
-            items={[
-              { key: 'melden', icon: 'flag', label: t('Melden'), onPress: () => { setMenu(false); setTimeout(() => setReport(true), SHEET_GONE_MS); } },
-              { key: 'block', icon: 'nosign', label: t('Blockieren'), danger: true, onPress: () => { setMenu(false); setTimeout(() => setBlock(true), SHEET_GONE_MS); } },
-            ]}
-            onClose={() => setMenu(false)}
-          />
+          <View style={styles.quiet}>
+            {/* Melden und Blockieren ruhig mit Symbol und Wort (Koray 18.11.): Fahne und Verbotszeichen */}
+            <Pressable accessibilityRole="button" onPress={() => setReport(true)} style={({ pressed }) => [styles.quietBtn, pressed && styles.pressed]}>
+              <SymbolView name="flag" size={18} weight="semibold" tintColor={Colors.muted} />
+              <AppText style={styles.quietText}>{t('Melden')}</AppText>
+            </Pressable>
+            <Pressable accessibilityRole="button" onPress={() => setBlock(true)} style={({ pressed }) => [styles.quietBtn, pressed && styles.pressed]}>
+              <SymbolView name="nosign" size={18} weight="semibold" tintColor={Colors.muted} />
+              <AppText style={styles.quietText}>{t('Blockieren')}</AppText>
+            </Pressable>
+          </View>
         )}
         {!d.isMe && <ReportSheet visible={report} kind="profile" refId={d.id} userId={d.id} name={d.name} onClose={() => setReport(false)} />}
         {!d.isMe && <BlockSheet visible={block} userId={d.id} name={d.name} onClose={() => setBlock(false)} />}
@@ -186,8 +181,7 @@ export function DriverCard({ d, big, unread = 0, onPress, grouped }: { d: Driver
   }
 
   return (
-    // flache Zeile ohne Fläche (Fläche mit Grund, Koray 18.11.); die Fläche bekommt nur die aufgeklappte Karte
-    <Pressable accessibilityRole="button" accessibilityLabel={`${d.name}${meta ? `, ${meta}` : ''}${status === 'angefragt' ? `, ${t('Angefragt')}` : ''}`} onPress={onPress} style={styles.small}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${d.name}${meta ? `, ${meta}` : ''}`} onPress={onPress} style={[styles.card, styles.small]}>
       <View style={[styles.ringSmall, { borderColor: ringColor(d) }]}>
         <Avatar name={d.name} userId={d.id} size={40} />
         {status === 'kontakt' && <ContactCheck />}
@@ -197,14 +191,14 @@ export function DriverCard({ d, big, unread = 0, onPress, grouped }: { d: Driver
         {d.birthdayToday ? <AppText variant="caption" style={styles.bday}>{t('Hat heute Geburtstag')}</AppText> : null}
         {meta ? <AppText variant="caption" muted numberOfLines={1}>{meta}</AppText> : null}
       </View>
-      {!d.isMe && status !== 'kontakt' && !(grouped && status === 'angefragt') && <ContactButton d={d} status={status} />}
+      {!d.isMe && status !== 'kontakt' && <ContactButton d={d} status={status} />}
       {(canWrite || unread > 0) && (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={unread ? t('{unread} ungelesene {v1} von {name}', { unread, v1: unread === 1 ? t('Nachricht') : t('Nachrichten'), name: d.name }) : tr('Nachricht an {name}', { name: d.name })}
           hitSlop={4}
           onPress={() => write(d)}
-          style={[styles.round, styles.free, unread > 0 && styles.roundUnread]}>
+          style={[styles.round, unread > 0 && styles.roundUnread]}>
           <SymbolView name={unread ? 'bubble.left.fill' : 'bubble.left'} size={20} weight="semibold" tintColor={unread ? Colors.signal : Colors.text} />
           {unread > 0 && (
             <View style={styles.unread}>
@@ -245,14 +239,14 @@ function ContactButton({ d, status }: { d: Driver; status: Contact['status'] | n
   };
   if (status === 'angefragt') {
     return (
-      <Pressable accessibilityRole="button" accessibilityLabel={t('Anfrage an {name} zurückziehen', { name: d.name })} hitSlop={4} disabled={busy} onPress={() => void run()} style={[styles.pending, styles.roundGround]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('Anfrage an {name} zurückziehen', { name: d.name })} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.pending}>
         {/* kein Wartekreis: der neue Stand steht sofort da (contacts.ts, 18.11.) */}
         <AppText style={styles.pendingText}>{t('Angefragt')}</AppText>
       </Pressable>
     );
   }
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={t('{name} zu Kontakten hinzufügen', { name: d.name })} hitSlop={4} disabled={busy} onPress={() => void run()} style={[styles.round, styles.roundGround]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('{name} zu Kontakten hinzufügen', { name: d.name })} hitSlop={4} disabled={busy} onPress={() => void run()} style={styles.round}>
       <SymbolView name="plus" size={20} weight="semibold" tintColor={Colors.text} />
     </Pressable>
   );
@@ -345,18 +339,16 @@ const styles = StyleSheet.create({
   pendingText: { fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.muted },
   accept: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   acceptText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.onSignal },
+  quiet: { flexDirection: 'row', alignItems: 'center', columnGap: Spacing.xl },
   quietOn: { color: Colors.text },
+  quietBtn: { minHeight: 44, flexDirection: 'row', alignItems: 'center', columnGap: Spacing.s },
+  quietText: { fontFamily: Fonts.semibold, fontSize: Type.small, color: Colors.muted },
   bday: { color: Colors.text, fontFamily: Fonts.bold },
   bio: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.text, lineHeight: 21 },
   flex: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
-  small: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 56 },
-  // Nachricht frei stehend, ungelesen bleibt getönt (Zustand)
-  free: { backgroundColor: 'transparent' },
-  more: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -Spacing.s },
-  // Plus auf dem Grund in surface (Design System: zweite Aktionen auf ground in surface)
-  roundGround: { backgroundColor: Colors.surface },
+  small: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.m },
   ring: { borderWidth: 3, borderRadius: 30, padding: 2 },
   ringSmall: { borderWidth: 2.5, borderRadius: 25, padding: 1.5 },
   // Namen von Menschen normal geschrieben, Versalien nur für Tournamen, Überschriften und Kennzahlen (Koray 15.11.)
@@ -368,7 +360,7 @@ const styles = StyleSheet.create({
   carName: { flex: 1, fontFamily: Fonts.semibold, fontSize: Type.body },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   roundUnread: { backgroundColor: Colors.signalTint },
-  unread: { position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
+  unread: { position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.surface },
   unreadText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: Type.micro, lineHeight: 13, fontVariant: ['tabular-nums'] },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: Colors.onSignal, fontFamily: Fonts.bold, fontSize: Type.button },

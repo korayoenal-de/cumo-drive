@@ -104,7 +104,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
         renderRightActions={(prog, _tr, m) => (
           <SwipeDelete
             progress={prog}
-            radius={Radius.m}
+            radius={Radius.l + 4}
             label={taken ? tr('{name} aus Touren entfernen', { name: t.name }) : tr('Tour {name} löschen', { name: t.name })}
             onPress={() => {
               m.close();
@@ -140,7 +140,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
         </Pressable>
         <FunMark score={t.fun} />
         <Pressable accessibilityRole="button" accessibilityLabel={tr('Optionen für {name}', { name: t.name })} onPress={() => setSheet('menu')} hitSlop={4} style={({ pressed }) => [styles.round, pressed && styles.itemPressed]}>
-          <SymbolView name="ellipsis" size={20} tintColor={Colors.muted} weight="semibold" />
+          <SymbolView name="ellipsis" size={20} tintColor={Colors.text} weight="semibold" />
         </Pressable>
       </View>
       </View>
@@ -185,7 +185,7 @@ export function TourCard({ tour: t, onOpen }: { tour: SavedTour; onOpen: (t: Sav
 /** Mini Karte der Strecke (RouteThumb), Form einmal je Tour gerechnet */
 function TourThumb({ tour }: { tour: SavedTour }) {
   const shape = useMemo(() => thumbShape(flatten(tour).map((x) => x.p)), [tour]);
-  return <RouteThumb shape={shape} raised />;
+  return <RouteThumb shape={shape} />;
 }
 
 /**
@@ -328,16 +328,14 @@ function PublishForm({ tour, onDone }: { tour: SavedTour; onDone: (toast: string
 const styles = StyleSheet.create({
   labeled: { gap: Spacing.xs },
   fieldLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, marginLeft: Spacing.xs },
-  swipeBox: { borderRadius: Radius.m, overflow: 'hidden' },
-  // flache Zeile ohne Fläche (Fläche mit Grund, Koray 18.11.); der Grund als Hintergrund deckt beim Wischen die rote Taste
-  card: { backgroundColor: Colors.ground, gap: Spacing.m },
+  swipeBox: { borderRadius: Radius.l + 4, overflow: 'hidden' },
+  card: { backgroundColor: Colors.surface, borderRadius: Radius.l + 4, padding: Spacing.m, gap: Spacing.m, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 56 },
   text: { flex: 1, gap: 3 },
   name: { fontFamily: Fonts.semibold, fontSize: Type.title, lineHeight: 21 },
   meta: { fontVariant: ['tabular-nums'] },
-  // ⋯ frei stehend, die Trefferfläche bleibt 44 (Fläche mit Grund)
-  round: { minWidth: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: -Spacing.s },
+  round: { minWidth: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   itemPressed: Pressed,
   form: { gap: Spacing.s },
   field: { minHeight: Size.input, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m, backgroundColor: Colors.surface2, borderRadius: Radius.m, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },

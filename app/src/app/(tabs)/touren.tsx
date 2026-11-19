@@ -29,7 +29,7 @@ import { SOFT_LAYOUT } from '@/components/ui/motion';
 import { haptic } from '@/lib/haptics';
 import { isOffline } from '@/lib/friendly-error';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Layout, Motion, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
+import { Colors, Fonts, Motion, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { setEditTour } from '@/lib/edit-tour';
 import { backfillAuthors } from '@/lib/community';
@@ -64,10 +64,8 @@ function Upcoming() {
   if (!rides.length) return null;
   return (
     <View style={styles.upcoming}>
-      <AppText style={styles.upLabel}>
-        {tr('Anstehend')} <AppText style={styles.upCount}>{rides.length}</AppText>
-      </AppText>
-      {rides.map((a, i) => {
+      <AppText style={styles.upLabel}>{tr('Anstehend')}</AppText>
+      {rides.map((a) => {
         // Abgesagt steht bis zum geplanten Tag da, damit niemand umsonst zum Treffpunkt fährt (Koray 17.11.)
         const state = a.isCancelled
           ? a.isOwner
@@ -86,8 +84,7 @@ function Upcoming() {
             accessibilityRole="button"
             accessibilityLabel={`${a.name}, ${clock(a.startsAt)}, ${state}${a.isPublic ? '' : ', privat'}`}
             onPress={() => router.push({ pathname: '/ausfahrt/[id]', params: { id: a.id } })}
-            // Fläche mit Grund (Koray 18.11.): nur die nächste Ausfahrt ist eine Karte, die weiteren stehen flach
-            style={({ pressed }) => [i === 0 ? styles.upCard : styles.upRow, i > 0 && styles.upRowGap, pressed && { opacity: 0.85 }]}>
+            style={({ pressed }) => [styles.upCard, pressed && { opacity: 0.85 }]}>
             <DateBlock d={a.startsAt} />
             <View style={styles.flex}>
               <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
@@ -96,7 +93,7 @@ function Upcoming() {
             </View>
             {!a.isPublic && (
               <View style={styles.privat}>
-                <SymbolView name="lock.fill" size={16} weight="semibold" tintColor={Colors.muted} />
+                <SymbolView name="lock.fill" size={16} weight="semibold" tintColor={Colors.text} />
                 <AppText style={styles.privatText}>{tr('Privat')}</AppText>
               </View>
             )}
@@ -136,7 +133,7 @@ function PastRides() {
             accessibilityRole="button"
             accessibilityLabel={`${a.name}, ${state}`}
             onPress={() => router.push({ pathname: '/ausfahrt/[id]', params: { id: a.id } })}
-            style={({ pressed }) => [styles.upRow, pressed && { opacity: 0.85 }]}>
+            style={({ pressed }) => [styles.upCard, pressed && { opacity: 0.85 }]}>
             <DateBlock d={a.startedAt ?? a.startsAt} />
             <View style={styles.flex}>
               <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
@@ -442,39 +439,33 @@ function DriveCard({ line, label, onOpen, onDelete, children }: { line?: LatLon[
       onAccessibilityAction={(e) => e.nativeEvent.actionName === 'delete' && onDelete?.()}
       disabled={!onOpen}
       onPress={onOpen}
-      style={({ pressed }) => [styles.flatRow, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.card, styles.driveRow, pressed && styles.pressed]}
     >
-      <RouteThumb shape={shape} fade raised />
+      <RouteThumb shape={shape} fade />
       {children}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  // Abschnitt mit Titel, Abstand zu den Reitern größer als zwischen Abschnitten (Fläche mit Grund, 18.11.)
-  upcoming: { gap: Layout.rows, marginBottom: Spacing.l },
-  upLabel: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text, marginBottom: Layout.labelGap - Layout.rows },
-  upCount: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.muted },
-  upCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l },
-  // flache Zeile, eingerückt wie der Inhalt der Karte darüber, damit Datum und Name eine Linie bilden
-  upRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l, paddingHorizontal: Spacing.l, minHeight: 44 },
-  upRowGap: { marginTop: Spacing.xs },
+  upcoming: { gap: Spacing.s },
+  upLabel: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
+  upCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l },
   upName: { fontFamily: Fonts.bold, fontSize: Type.title },
   upMuted: { color: Colors.muted },
   upAttn: { color: Colors.signal, fontFamily: Fonts.semibold },
   upDanger: { color: Colors.danger, fontFamily: Fonts.semibold },
-  privat: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  privatText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
-  // flache Zeile mit Grund als Hintergrund, damit Wischen zum Löschen die rote Taste sauber freigibt
-  flatRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: Colors.ground, minHeight: 56 },
-  swipeBox: { borderRadius: Radius.m, overflow: 'hidden' },
+  privat: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: Colors.surface2 },
+  privatText: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.text },
+  driveRow: { flexDirection: 'row', alignItems: 'center' },
+  swipeBox: { borderRadius: Radius.l, overflow: 'hidden' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
-  importBtn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
+  importBtn: { width: Size.icon, height: Size.icon, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   gapM: { gap: Spacing.m },
   row: { flexDirection: 'row', gap: Spacing.s },
   syncRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
-  list: { gap: Layout.rows },
+  list: { gap: Spacing.s },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   rowMain: { gap: 2, minHeight: 44, justifyContent: 'center' },
   name: { fontFamily: Fonts.semibold, fontSize: Type.title },

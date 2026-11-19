@@ -177,10 +177,8 @@ export const Layout = {
   titleGap: Spacing.xl,
   /** Abschnittstitel zu seinem Inhalt */
   labelGap: Spacing.m,
-  /** zwischen Karten einer Liste (nur noch, wo jede Zeile eine Fläche braucht) */
+  /** zwischen Karten einer Liste */
   list: Spacing.s,
-  /** zwischen flachen Zeilen einer Liste ohne Fläche (Fläche mit Grund, Koray 18.11.) */
-  rows: Spacing.l,
   /** Karte innen und Lücke in der Karte */
   card: Spacing.l,
   cardGap: Spacing.m,
