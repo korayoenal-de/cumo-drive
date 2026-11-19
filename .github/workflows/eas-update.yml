@@ -6,6 +6,9 @@ name: EAS Update (TestFlight)
 # * ein Push auf einen neuen Zweig ota/*, etwa `git push origin HEAD:ota/20261117-1430`. So kann jede Sitzung
 #   mit GitHub Zugriff ein freigegebenes Update auslösen, ohne eigenen Expo Zugang. (Tags lässt der Zugang der
 #   Sitzungen nicht zu, neue Zweige schon.) Der Lauf löscht den Zweig am Ende wieder.
+# * ein Push auf einen neuen Zweig store/*, etwa `git push origin HEAD:store/20261119-1500`: dasselbe für den Kanal
+#   production, also für die Kunden im App Store (Koray 19.11.2026, Store Build 36). Reihenfolge: erst ota/* an die
+#   Tester, nach Korays OK store/* an die Kunden.
 # * per Hand unter Actions.
 #
 # Vor dem Update läuft immer der Pflichtlauf `npm run vor-update` (Typen, Lint, Tests, QS Korpus,
@@ -16,6 +19,7 @@ on:
   push:
     branches:
       - 'ota/**'
+      - 'store/**'
   workflow_dispatch:
     inputs:
       message:
@@ -81,10 +85,13 @@ jobs:
           MSG: ${{ github.event.inputs.message || github.event.head_commit.message || github.ref_name }}
         run: |
           NOTE=$(git log -1 --format=%s)
-          eas update --channel preview --environment preview --platform ios --non-interactive \
+          # store/* geht an die Kunden (Kanal production), alles andere an die Tester (Kanal preview)
+          case "$GITHUB_REF" in refs/heads/store/*) CH=production ;; *) CH=preview ;; esac
+          echo "Kanal: $CH"
+          eas update --channel "$CH" --environment "$CH" --platform ios --non-interactive \
             --message "$(printf '%s' "${MSG:-$NOTE}" | head -n 1)"
 
-      - name: Zweig ota/* aufräumen
-        if: always() && startsWith(github.ref, 'refs/heads/ota/')
+      - name: Zweig ota/* oder store/* aufräumen
+        if: always() && (startsWith(github.ref, 'refs/heads/ota/') || startsWith(github.ref, 'refs/heads/store/'))
         working-directory: .
         run: git push origin --delete "${GITHUB_REF#refs/heads/}" || true
