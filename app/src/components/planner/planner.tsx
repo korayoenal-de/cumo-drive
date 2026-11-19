@@ -67,6 +67,8 @@ import { ToastHost } from '@/components/ui/toast';
 import { Accordion, avoidSummary, ErrorCard, MicIcon, PrimaryButton, Radio, Section, StepButton, Toggle, TypoTabs, VehiclePick } from './planner-parts';
 import { Result } from './planner-result';
 import { EMPTY_TOUR, keyOf, type Mode, passIndex, type PendingPoint, roughDetourKm, samePts } from './planner-shared';
+import { changedLegs, legSpans } from '@/lib/route-change';
+import type { LineMotion } from '@/components/map/route-motion';
 import { PlaceSearch } from './place-search';
 import { styles } from './planner-styles';
 import { useTourPlan } from './use-tour-plan';
@@ -727,7 +729,34 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   const oldPlanned = tourPlan.planned;
   // alte Linie mit den neuen Punkten, damit Start und Ziel schon an der neuen Stelle stehen
   const staleTour = useMemo<Tour | null>(() => (oldPlanned ? { ...oldPlanned, wegpunkte: tourPts, warnungen: [] } : null), [oldPlanned, tourPts]);
-  const mapTour: Tour = view.kind === 'result' ? view.tour : inTour ? (routeTour ?? (adjustBusy && staleTour ? staleTour : draftTour)) : EMPTY_TOUR;
+  // Jede Neuplanung einer schon geplanten Tour (Karte oder Liste): die alte Linie bleibt stehen, nur die Etappen,
+  // die sich ändern, werden blass und schimmern (Koray 19.11.2026: was fest ist, bleibt fest). Früher war die ganze
+  // Linie blass und eine gestrichelte Gerade lief durch alle Punkte, das sah aus, als würde alles neu geplant.
+  const busyEdit = inTour && !!tourPlan.step && !!oldPlanned && !tourFits;
+  const dimSpans = useMemo(
+    () => (busyEdit && oldPlanned ? legSpans(oldPlanned, changedLegs(oldPlanned.wegpunkte, tourPts).oldChanged) : null),
+    [busyEdit, oldPlanned, tourPts],
+  );
+  const mapTour: Tour = view.kind === 'result' ? view.tour : inTour ? (routeTour ?? (busyEdit && staleTour ? staleTour : draftTour)) : EMPTY_TOUR;
+  // Ergebnis da: nur die neuen Etappen zeichnen sich auf (Design Artefakt „Punkte, Zeiten, Richtung“). Die Richtung
+  // zeigt ein leiser Lichtschein, der dauernd über die Linie läuft (flow), solange nichts gerechnet wird.
+  const lineTour = view.kind === 'result' ? view.tour : routeTour;
+  const lastLine = useRef<Tour | null>(null);
+  const [grow, setGrow] = useState<LineMotion | null>(null);
+  useEffect(() => {
+    if (!lineTour || !lineTour.linie.length || lineTour === lastLine.current) return;
+    const prev = lastLine.current;
+    lastLine.current = lineTour;
+    const fresh = prev ? changedLegs(prev.wegpunkte, lineTour.wegpunkte).newChanged : null;
+    const spans = fresh && fresh.some(Boolean) && !fresh.every(Boolean) ? legSpans(lineTour, fresh) : null;
+    if (spans && spans.length) {
+      const g: LineMotion = { mode: 'grow', spans, key: `wachsen-${Date.now()}` };
+      setGrow(g);
+      const id = setTimeout(() => setGrow((cur) => (cur === g ? null : cur)), 650);
+      return () => clearTimeout(id);
+    }
+    setGrow(null);
+  }, [lineTour]);
   const names = tourPlan.names;
   const pins = useMemo(
     () => (inTour ? tourPts.slice(1, -1).map((p, i) => ({ id: `via${i}-${keyOf(p)}`, p, label: String(i + 1), title: names[keyOf(p)] ?? tr('Zwischenziel {v0}', { v0: i + 1 }) })) : undefined),
@@ -1363,8 +1392,9 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           onDragPoint={inTour && tourPlan.complete ? onDragPoint : undefined}
           onDragStart={inTour ? workOnMap : undefined}
           onLongPressLine={inTour && tourPlan.complete && routeTour ? onLongPressLine : undefined}
-          stale={adjustBusy}
-          draft={adjustBusy ? tourPts : undefined}
+          stale={busyEdit && !dimSpans}
+          lineMotion={busyEdit ? (dimSpans?.length ? { mode: 'dim', spans: dimSpans, key: JSON.stringify(dimSpans) } : null) : grow}
+          flow={!!lineTour && !busyEdit}
           onPressMap={placeOverlay || selVia != null ? () => {
             setPending(null);
             setSelVia(null);

@@ -17,6 +17,8 @@ import Svg, { Path } from 'react-native-svg';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 import { arrowsAlong, offsetRight, splitDoubled } from '@/lib/doubled';
+import { withoutSpans } from '@/lib/route-change';
+import { RouteMotion } from '@/components/map/route-motion';
 import { listDriveTracks } from '@/lib/drives';
 import { useLibrary } from '@/lib/library';
 import { useMapTapGuard } from '@/lib/map-tap';
@@ -81,7 +83,8 @@ export function RouteMap({
   onDragStart,
   onLongPressLine,
   stale,
-  draft,
+  lineMotion,
+  flow,
   overlayTop = 0,
   pickedPassIds,
   selectedPassId,
@@ -150,9 +153,11 @@ export function RouteMap({
 
   // Doppelt gefahrene Stücke (Hin und Rückweg auf derselben Straße) zeigt die Karte als zwei versetzte
   // Linien mit Richtungspfeilen, damit man sieht, dass die Straße zweimal gefahren wird. Nicht beim Mitfahren.
+  // Etappen, die sich gerade ändern, zeichnet RouteMotion (blass oder neu aufgezeichnet): hier ausgespart
+  const drawLinie = useMemo(() => (lineMotion?.spans.length ? withoutSpans(tour.linie, lineMotion.spans) : tour.linie), [tour, lineMotion]);
   const parts = useMemo(
-    () => (followUser ? tour.linie.map((r) => [{ p: r.p, doubled: false }]) : splitDoubled(tour.linie.map((r) => r.p))),
-    [tour, followUser],
+    () => (followUser ? drawLinie.map((r) => [{ p: r.p, doubled: false }]) : splitDoubled(drawLinie.map((r) => r.p))),
+    [drawLinie, followUser],
   );
   /** Meter je Bildpunkt, aus dem sichtbaren Ausschnitt; daraus Versatz und Pfeilabstand */
   const [mpp, setMpp] = useState(0);
@@ -167,7 +172,7 @@ export function RouteMap({
     // manchmal die Farbe (Linie wird schwarz). Mit neuem Schlüssel wird sie neu angelegt.
     const k = (c: CheckClass, p: LatLon[], extra: string) => `${c}-${extra}-${p.length}-${p[0][0].toFixed(5)}-${p[p.length - 1][1].toFixed(5)}`;
     return order.flatMap((c) =>
-      tour.linie.flatMap((r, ri) =>
+      drawLinie.flatMap((r, ri) =>
         r.c !== c
           ? []
           : parts[ri].map((part) => {
@@ -178,7 +183,7 @@ export function RouteMap({
     );
     // offKey fasst offM in Stufen zusammen, damit nicht jede kleine Zoomänderung neu zeichnet
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tour, parts, offKey]);
+  }, [drawLinie, parts, offKey]);
   const arrows = useMemo(
     () => (offM ? runs.filter((r) => r.doubled).flatMap((r) => arrowsAlong(r.coords.map((x) => [x.latitude, x.longitude] as LatLon), mpp * 90, 12)) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -578,17 +583,6 @@ export function RouteMap({
             zIndex={CLASS_LINE[r.c].z}
           />
         ))}
-        {draft && draft.length >= 2 && (
-          <Polyline
-            key={`entwurf-${draft.map((p) => p.join(',')).join(';')}`}
-            coordinates={draft.map(ll)}
-            strokeColor="rgba(244,244,242,0.85)"
-            strokeWidth={3}
-            lineDashPattern={[6, 8]}
-            lineCap="round"
-            zIndex={12}
-          />
-        )}
         {runs.map((r, i) => (
           <Polyline
             key={`linie-${r.key}-${i}`}
@@ -601,6 +595,7 @@ export function RouteMap({
           />
         ))}
 
+        {(lineMotion || flow) && tour.linie.length > 0 && <RouteMotion tour={tour} motion={lineMotion ?? null} flow={!!flow && focused} mpp={mpp} />}
         {arrows.map((a, i) => (
           <Marker key={`pfeil-${offKey}-${i}-${a.p[0].toFixed(5)}`} coordinate={ll(a.p)} anchor={{ x: 0.5, y: 0.5 }} flat rotation={a.deg} zIndex={8} tracksViewChanges={false}>
             <View style={styles.arrow} />

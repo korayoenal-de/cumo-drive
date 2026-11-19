@@ -1,6 +1,7 @@
 /**
  * Gemeinsames für die Karte (Handy und Web): Props, Farben je Klasse, kleine Helfer.
  */
+import type { LineMotion } from './route-motion';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { Pass } from '@/lib/passes';
@@ -56,10 +57,15 @@ export type RouteMapProps = {
   onPressPass?: (pass: Pass) => void;
   /** Punkte halten und ziehen (Koray 11.11.): 'start', 'ziel' oder die id eines Pins, mit der neuen Lage */
   onDragPoint?: (id: string, p: LatLon) => void;
-  /** Gestrichelte Hilfslinie durch die Punkte, solange gerechnet wird (Koray 11.11.) */
-  draft?: LatLon[];
-  /** Strecke wird gerade neu gerechnet: Linie blass zeigen (Ziehen, Koray 11.11.) */
+  /** Strecke wird gerade neu gerechnet und die Etappen lassen sich nicht zuordnen: ganze Linie blass (Ziehen, Koray 11.11.) */
   stale?: boolean;
+  /**
+   * Nur die Etappen, die sich ändern (Koray 19.11.2026): blass mit Schimmer, solange gerechnet wird, danach
+   * zeichnen sie sich neu auf. Der Rest der Linie bleibt fest. Die gestrichelte Hilfslinie durch alle Punkte ist weg.
+   */
+  lineMotion?: LineMotion | null;
+  /** Richtung zeigen (nur Planer): leiser Lichtschein läuft dauernd in Fahrtrichtung, dazu Pfeile in der Linie */
+  flow?: boolean;
   /** Ein Punkt wird angehoben (Beginn des Ziehens) */
   onDragStart?: () => void;
   /** Langer Druck auf die Linie der Tour (statt irgendwo auf die Karte): dort entsteht ein Ziehpunkt */

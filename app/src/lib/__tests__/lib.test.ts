@@ -634,3 +634,41 @@ describe('Rundtour weiterdrehen und Umsortieren (Gregor 19.11.2026)', () => {
     assert.equal(runFor(open, [...prof], [s, a, b, c], [...prof]), null);
   });
 });
+
+describe('route-change (feste Teile bleiben fest, Koray 19.11.)', async () => {
+  const { changedLegs, legSpans, withoutSpans, arrowsWithKm } = await import('../route-change');
+  const S: LatLon = [46.0, 11.0];
+  const A: LatLon = [46.0, 11.1];
+  const B: LatLon = [46.1, 11.1];
+  const C: LatLon = [46.1, 11.0];
+  const N: LatLon = [46.05, 11.15];
+  const line = (pts: LatLon[]) => {
+    const out: LatLon[] = [];
+    for (let i = 0; i < pts.length - 1; i++) for (let k = 0; k < 10; k++) out.push([pts[i][0] + ((pts[i + 1][0] - pts[i][0]) * k) / 10, pts[i][1] + ((pts[i + 1][1] - pts[i][1]) * k) / 10]);
+    out.push(pts[pts.length - 1]);
+    return out;
+  };
+  const tour = (pts: LatLon[]): Tour => ({ name: 't', laenge_km: 0, wegpunkte: pts, linie: [{ c: 'ok', p: line(pts) }], warnungen: [] });
+  it('Einfügen: nur die geteilte Etappe ändert sich', () => {
+    const r = changedLegs([S, A, B, C, S], [S, A, N, B, C, S]);
+    assert.deepEqual(r.oldChanged, [false, true, false, false]);
+    assert.deepEqual(r.newChanged, [false, true, true, false, false]);
+  });
+  it('Bereich der Etappe auf der Linie, Rest bleibt gezeichnet', () => {
+    const t = tour([S, A, B, C, S]);
+    const spans = legSpans(t, [false, true, false, false]);
+    assert.ok(spans && spans.length === 1);
+    const total = flatten(t)[flatten(t).length - 1].km;
+    const kept = withoutSpans(t.linie, spans!);
+    const keptKm = kept.reduce((s, r) => s + r.p.slice(1).reduce((x, p, i) => x + haversine(r.p[i], p) / 1000, 0), 0);
+    assert.ok(Math.abs(keptKm + (spans![0][1] - spans![0][0]) - total) < 0.05, `${keptKm} + Bereich = ${total}`);
+    assert.equal(kept.length, 2);
+  });
+  it('Pfeile liegen in Fahrtrichtung und aufsteigend', () => {
+    const a = arrowsWithKm(flatten(tour([S, A, B])), 2);
+    assert.ok(a.length > 3);
+    assert.ok(a.every((x, i) => i === 0 || x.km > a[i - 1].km));
+    // erstes Stück nach Osten: etwa 90 Grad
+    assert.ok(Math.abs(a[0].deg - 90) < 5, String(a[0].deg));
+  });
+});
