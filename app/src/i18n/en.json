@@ -2029,5 +2029,7 @@
   "Passwort speichern": "Save password",
   "Zurück zur Anmeldung": "Back to login",
   "Neues Passwort | Cumo Drive": "New password | Cumo Drive",
-  "Die Runde startet jetzt in {name}. Die Strecke bleibt gleich.": "The loop now starts in {name}. The route stays the same."
+  "Die Runde startet jetzt in {name}. Die Strecke bleibt gleich.": "The loop now starts in {name}. The route stays the same.",
+  "Die Runde startet jetzt hier. Die Strecke bleibt gleich.": "The loop now starts here. The route stays the same.",
+  "Die Runde bleibt gleich. Geplant wird nur die Anfahrt.": "The loop stays the same. Only the approach is planned."
 }

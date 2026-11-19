@@ -319,19 +319,7 @@ export function rotateLoop<T extends PlannedTour>(prev: T, k: number): T | null 
     });
   }
   if (j <= 0 || j >= pts.length - 1) return null;
-  const total = pts[pts.length - 1].km;
-  const cut = pts[j].km;
-  const order = [...pts.slice(j), ...pts.slice(1, j + 1)];
-  const linie: Tour['linie'] = [];
-  for (let i = 1; i < order.length; i++) {
-    const c = order[i].c;
-    const last = linie[linie.length - 1];
-    if (last && last.c === c) last.p.push(order[i].p);
-    else linie.push({ c, p: [order[i - 1].p, order[i].p] });
-  }
-  const warnungen: Warning[] = prev.warnungen
-    .map((x) => ({ ...x, start_km: +((((x.start_km - cut) % total) + total) % total).toFixed(2) }))
-    .sort((a, b) => a.start_km - b.start_km);
+  const { linie, warnungen } = turnLine(prev, pts, j);
   const turn = <X,>(a: X[] | undefined, len: number): X[] | undefined => (a && a.length === len ? [...a.slice(k), ...a.slice(0, k)] : undefined);
   const out: T = {
     ...prev,
@@ -348,4 +336,91 @@ export function rotateLoop<T extends PlannedTour>(prev: T, k: number): T | null 
   delete out.bebautStartKm;
   delete out.bebautEndKm;
   return out;
+}
+
+/** Linie und Warnungen einer geschlossenen Runde, neu begonnen am Linienpunkt j */
+function turnLine(prev: PlannedTour, pts: Flat[], j: number): { linie: Tour['linie']; warnungen: Warning[] } {
+  const total = pts[pts.length - 1].km;
+  const cut = pts[j].km;
+  const order = [...pts.slice(j), ...pts.slice(1, j + 1)];
+  const linie: Tour['linie'] = [];
+  for (let i = 1; i < order.length; i++) {
+    const c = order[i].c;
+    const last = linie[linie.length - 1];
+    if (last && last.c === c) last.p.push(order[i].p);
+    else linie.push({ c, p: [order[i - 1].p, order[i].p] });
+  }
+  const warnungen: Warning[] = prev.warnungen
+    .map((x) => ({ ...x, start_km: +((((x.start_km - cut) % total) + total) % total).toFixed(2) }))
+    .sort((a, b) => a.start_km - b.start_km);
+  return { linie, warnungen };
+}
+
+/**
+ * Rundtour an einem beliebigen Ort neu beginnen (Koray 19.11.2026: Gregor wollte den Start nach Norden legen).
+ * Die Runde wird an der Stelle aufgeschnitten, die p am nächsten liegt. Dieser Einstieg wird Start und Ziel,
+ * der alte Start bleibt als Zwischenziel, die Strecke bleibt dieselbe. offM sagt, wie weit p von der Strecke
+ * entfernt ist: liegt p abseits, plant der Aufrufer die Anfahrt zum Einstieg und zurück (plan.ts, joinLoop).
+ */
+export function reanchorLoop<T extends PlannedTour>(prev: T, p: LatLon): { tour: T; entry: LatLon; offM: number } | null {
+  const w = prev.wegpunkte;
+  const n = w.length;
+  if (n < 2 || !same(w[0], w[n - 1])) return null;
+  const pts = flat(prev);
+  if (pts.length < 3 || haversine(pts[0].p, pts[pts.length - 1].p) > 400) return null;
+  let j = 0;
+  let offM = Infinity;
+  pts.forEach((q, i) => {
+    const d = haversine(p, q.p);
+    if (d < offM) {
+      offM = d;
+      j = i;
+    }
+  });
+  if (j === 0 || j === pts.length - 1) return { tour: prev, entry: w[0], offM };
+  let idx = waypointIndex(pts, prev);
+  if (!idx) {
+    // Wegpunkte abseits der Linie: der Reihe nach die nächste Stelle nehmen
+    idx = [0];
+    let cursor = 0;
+    for (let i = 1; i < n - 1; i++) {
+      let best = cursor;
+      let bd = Infinity;
+      for (let k = cursor; k < pts.length; k++) {
+        const d = haversine(w[i], pts[k].p);
+        if (d < bd) {
+          bd = d;
+          best = k;
+        }
+      }
+      idx.push(best);
+      cursor = best;
+    }
+    idx.push(pts.length - 1);
+  }
+  const at = idx.findIndex((x, i) => i > 0 && i < n - 1 && x === j);
+  if (at > 0) {
+    const r = rotateLoop(prev, at);
+    return r ? { tour: r, entry: w[at], offM } : null;
+  }
+  // Etappe m der alten Runde enthält den Einstieg
+  let m = 0;
+  while (m < n - 2 && idx[m + 1] <= j) m++;
+  const entry = pts[j].p;
+  const { linie, warnungen } = turnLine(prev, pts, j);
+  const e = prev.etappen && prev.etappen.length === n - 1 ? prev.etappen : null;
+  const tour: T = {
+    ...prev,
+    wegpunkte: [entry, ...w.slice(m + 1, n - 1), w[0], ...w.slice(1, m + 1), entry],
+    linie,
+    warnungen,
+    namen: undefined,
+    etappen: e ? [e[m], ...e.slice(m + 1), ...e.slice(0, m), e[m]] : undefined,
+    legMin: undefined,
+    legKm: undefined,
+    legDirekt: undefined,
+  };
+  delete tour.bebautStartKm;
+  delete tour.bebautEndKm;
+  return { tour, entry, offM };
 }

@@ -28,7 +28,7 @@ import { RECOMMENDED } from '../recommended';
 import { roadDataLoaded } from '../road-data';
 import { decodePolyline, encodePolyline } from '../polyline';
 import type { PlannedTour } from '../plan';
-import { rotateLoop, runFor } from '../plan-window';
+import { reanchorLoop, rotateLoop, runFor } from '../plan-window';
 
 // Vor jedem Test festhalten: Laden aller Module entpackt die Daten noch nicht (Performance Punkt 1, 17.11.)
 const loadedAtImport = roadDataLoaded();
@@ -599,6 +599,25 @@ describe('Rundtour weiterdrehen und Umsortieren (Gregor 19.11.2026)', () => {
     assert.equal(rotateLoop({ ...loop, wegpunkte: corner.slice(0, 4) }, 1), null);
     assert.equal(rotateLoop(loop, 0), null);
     assert.equal(rotateLoop(loop, 4), null);
+  });
+
+  it('beginnt die Runde an einem Ort zwischen zwei Punkten, der alte Start bleibt Zwischenziel', () => {
+    // Mitte der Seite von A nach B, 300 m daneben
+    const p: LatLon = [49.65, 8.704];
+    const r = reanchorLoop(loop, p)!;
+    assert.ok(r);
+    assert.ok(r.offM > 200 && r.offM < 400);
+    assert.deepEqual(r.entry, line[15]);
+    assert.deepEqual(r.tour.wegpunkte, [line[15], corner[2], corner[3], corner[0], corner[1], line[15]]);
+    const pts = lineOf(r.tour);
+    assert.equal(pts.length, line.length);
+    assert.deepEqual(pts[0], line[15]);
+    assert.deepEqual(pts[pts.length - 1], line[15]);
+    assert.ok(Math.abs(lenOf(r.tour) - lenOf(loop)) < 0.01);
+    // genau an einem Zwischenziel: wie Drehen
+    assert.deepEqual(reanchorLoop(loop, corner[2])!.tour.wegpunkte, rotateLoop(loop, 2)!.wegpunkte);
+    // am alten Start: nichts zu tun
+    assert.equal(reanchorLoop(loop, corner[0])!.tour, loop);
   });
 
   it('findet beim Umsortieren die Etappen in der Mitte wieder', () => {

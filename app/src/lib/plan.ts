@@ -703,3 +703,14 @@ export async function planChanged(
   const merged = mergeLegs(name, points, parts);
   return seamsOk(merged, w, middle) ? merged : null;
 }
+
+/**
+ * Anfahrt zu einer Rundtour und zurück (Koray 19.11.2026): Der neue Start p liegt abseits der Runde. Geplant
+ * werden nur der Weg zum Einstieg und der Rückweg, die Runde selbst (loop, beginnt und endet am Einstieg) bleibt
+ * Punkt für Punkt stehen. Am Einstieg darf gewendet werden, deshalb keine Nahtprüfung.
+ */
+export async function joinLoop(loop: PlannedTour, name: string, p: LatLon, profile: Profile, avoid: Avoid, onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<PlannedTour> {
+  const entry = loop.wegpunkte[0];
+  const [pre, post] = await Promise.all([planLegs(name, [p, entry], [profile], avoid, onStep, signal), planLegs(name, [entry, p], [profile], avoid, onStep, signal)]);
+  return mergeLegs(name, [p, ...loop.wegpunkte, p], [pre, loop, post]);
+}

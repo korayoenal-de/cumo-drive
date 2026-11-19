@@ -11,8 +11,8 @@ import { fromCommunity, readLibrary, saveTour, syncLibrary, type SavedTour } fro
 import { reverseName } from '@/lib/geocode';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '@/lib/highlight-roads';
 import { avoidedKey, clearAvoidedPasses } from '@/lib/avoid-pass';
-import { planChanged, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
-import { rotateLoop } from '@/lib/plan-window';
+import { joinLoop, planChanged, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
+import { reanchorLoop, rotateLoop } from '@/lib/plan-window';
 import { insertVia, movePoint } from '@/lib/route-edit';
 import { flatten, haversine, normProfile, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
@@ -316,6 +316,75 @@ export function useTourPlan(onPlanned?: () => void) {
     return replaced ?? (prev && haversine(prev, entry) < 2000 ? 'Zwischenziel' : null);
   }
 
+  /** Abstand, bis zu dem ein Ort als auf der Runde liegend gilt (Meter): darunter wird nur gedreht, darüber die Anfahrt geplant */
+  const ON_LOOP_M = 250;
+
+  /**
+   * Rundtour an einem neuen Ort beginnen (Koray 19.11.2026, Feedback Gregor): Die Runde bleibt Punkt für Punkt
+   * stehen. Liegt p auf der Runde, wird sie nur gedreht. Liegt p abseits, kommt der Einstieg als Zwischenziel
+   * dazu, und geplant werden nur die Anfahrt dorthin und der Rückweg. false: keine geplante Runde, der Aufrufer
+   * macht weiter wie bisher.
+   */
+  function restart(p: LatLon, profile: Profile, avoid: Avoid): boolean {
+    const all = [start, ...vias, ziel].filter((x): x is LatLon => !!x);
+    if (!planned || !planned.linie.length || planned.wegpunkte.length !== all.length) return false;
+    const lp = fitLegs(legProfiles, vias.length);
+    const cut = reanchorLoop({ ...planned, etappen: lp }, p);
+    if (!cut) return false;
+    const loop = cut.tour;
+    const loopLp = (loop.etappen ?? fitLegs([null], loop.wegpunkte.length - 2)) as LegProfile[];
+    const avoidKey = `${JSON.stringify(avoid)}|${avoidedKey()}`;
+    abort.current?.abort();
+    setError(null);
+    setSaveMsg(null);
+    if (cut.offM <= ON_LOOP_M) {
+      // auf der Runde: der gewählte Ort ist der neue Start, die Linie beginnt an der nächsten Stelle
+      const w = [p, ...loop.wegpunkte.slice(1, -1), p];
+      const t: PlannedTour = { ...loop, wegpunkte: w };
+      setStep(null);
+      setStart(p);
+      setVias(w.slice(1, -1));
+      setZiel(p);
+      setLegProfiles(loopLp);
+      plannedAs.current.set(t, { raw: t, profiles: loopLp.map((x) => x ?? profile), avoid: avoidKey });
+      setPlanned(t);
+      onPlanned?.();
+      showToast(tr('Die Runde startet jetzt hier. Die Strecke bleibt gleich.'));
+      return true;
+    }
+    showToast(tr('Die Runde bleibt gleich. Geplant wird nur die Anfahrt.'));
+    // abseits: Anfahrt zum Einstieg und zurück planen, die Runde bleibt
+    const points = [p, ...loop.wegpunkte, p];
+    const nextLp: LegProfile[] = [null, ...loopLp, null];
+    rememberName(cut.entry);
+    setStart(p);
+    setVias(points.slice(1, -1));
+    setZiel(p);
+    setLegProfiles(nextLp);
+    const ctrl = new AbortController();
+    abort.current = ctrl;
+    setStep('route');
+    void (async () => {
+      try {
+        const nm = name.trim() || tr('Neue Tour');
+        const t = await joinLoop(loop, nm, p, profile, avoid, (st) => !ctrl.signal.aborted && setStep(st), ctrl.signal);
+        if (ctrl.signal.aborted) return;
+        plannedAs.current.set(t, { raw: t, profiles: nextLp.map((x) => x ?? profile), avoid: avoidKey });
+        setPlanned(t);
+        setRoadWarn(roadCoverage(points, t));
+        onPlanned?.();
+      } catch (e) {
+        if (ctrl.signal.aborted) return;
+        const err = toPlanError(e, ctrl.signal);
+        setPlanned(null);
+        setError(err.kind === 'network' ? err.message : tr('Für diese Punkte hat der Routenplaner keine Strecke gefunden. Verschieb einen Punkt etwas oder nimm ein anderes Profil.'));
+      } finally {
+        if (abort.current === ctrl) setStep(null);
+      }
+    })();
+    return true;
+  }
+
   /** Punkt in ein Feld setzen: Start, Ziel oder Zwischenziel an Stelle index (am Ende: neu). */
   function setSlot(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string, index?: number) {
     if (kind === 'via' && (index == null || index >= vias.length)) {
@@ -323,6 +392,8 @@ export function useTourPlan(onPlanned?: () => void) {
       return;
     }
     rememberName(p, known);
+    // Rundtour: ein neuer Start verlegt Start und Ziel zusammen, die Runde bleibt stehen (Koray 19.11.2026)
+    if (kind === 'start' && start && ziel && keyOf(start) === keyOf(ziel) && vias.length && restart(p, profile, avoid)) return;
     if (kind === 'start') apply(p, vias, ziel, legProfiles, profile, avoid);
     else if (kind === 'ziel') apply(start, vias, p, legProfiles, profile, avoid);
     else {
