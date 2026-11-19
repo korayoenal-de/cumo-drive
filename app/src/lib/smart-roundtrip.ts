@@ -103,7 +103,36 @@ function scoreTour(t: PlannedTour, curves: number, fastKm: number, targetKm: num
   return scoreRoute(ghLike, targetKm) - (t.km_je_klasse?.raus ?? 0) * 40 - (t.km_je_klasse?.pruefen ?? 0) * 20 - (t.km_klein ?? 0) * 12;
 }
 
+/**
+ * Zeitgrenze für die Nacharbeit an einer Runde (Koray 19.11.2026, Routen Check: Linthal 220 km plante 39 s, Bonneval
+ * 270 km 29 s). Gemessen an Linthal: erste Planung 6 bis 8 s, die beiden gedrehten Richtungen weitere 20 s, das
+ * Nachplanen der Länge noch einmal 10 bis 23 s, und am Ende stand trotzdem eine Rückfrage. Die erste Planung läuft
+ * unverändert. Danach gilt ein gemeinsames Budget: ist es aufgebraucht, bleibt die beste bisherige Runde, und die App
+ * fragt wie bisher nach, wenn Länge oder Stich nicht passen.
+ */
+// RT_EXTRA_MS nur für Messungen im Routen Check (Vergleich ohne Zeitgrenze)
+const EXTRA_MS = +(process.env.RT_EXTRA_MS ?? 12_000);
+
+/** Läuft höchstens ms lang; danach wird die Arbeit abgebrochen und null geliefert. Ein Abbruch von außen geht durch. */
+async function budgeted<T>(ms: number, parent: AbortSignal | undefined, run: (signal: AbortSignal) => Promise<T>): Promise<T | null> {
+  if (ms <= 0) return null;
+  const ctl = new AbortController();
+  const onAbort = () => ctl.abort();
+  parent?.addEventListener('abort', onAbort);
+  const timer = setTimeout(() => ctl.abort(), ms);
+  try {
+    return await run(ctl.signal);
+  } catch (e) {
+    if (parent?.aborted) throw e;
+    return null;
+  } finally {
+    clearTimeout(timer);
+    parent?.removeEventListener('abort', onAbort);
+  }
+}
+
 export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<SmartTour> {
+  const T0 = Date.now();
   const seed = req.seed ?? Math.floor(Math.random() * 1e6);
   const heading =
     req.bearing ?? (req.direction === 'zufall' ? seed % 360 : DIRECTIONS.find((d) => d.id === req.direction)!.bearing);
@@ -314,25 +343,39 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
       // Stresstest 10.11.: in Alpentälern (Chur nach Westen, Brig nach Osten, Sölden) führt die gewählte
       // Richtung oft in ein Tal ohne Ausgang, Pässe im Winter zu. Dann zusätzlich 60 Grad links und rechts
       // davon probieren; genommen wird eine gedrehte Runde nur, wenn sie trotz Abweichung klar besser ist.
-      if (best && !req.rotated && spurKm(best) > Math.max(3, req.km * 0.06)) {
+      if (process.env.DEBUG_RT && !req.rotated && !req.scale) console.log('zeit basis', Date.now() - T0, 'ms', best ? `${best.laenge_km.toFixed(0)} km spur ${spurKm(best).toFixed(1)}` : 'nichts');
+      // ab hier Nacharbeit mit Zeitgrenze (EXTRA_MS)
+      const deadline = Date.now() + EXTRA_MS;
+      const left = () => deadline - Date.now();
+      // Stresstest 10.11.: in Alpentälern (Chur nach Westen, Brig nach Osten, Sölden) führt die gewählte
+      // Richtung oft in ein Tal ohne Ausgang, Pässe im Winter zu. Dann zusätzlich 60 Grad links und rechts
+      // davon probieren; genommen wird eine gedrehte Runde nur, wenn sie trotz Abweichung klar besser ist.
+      const rotate = async (): Promise<SmartTour | undefined> => {
+        if (!best || req.rotated || spurKm(best) <= Math.max(3, req.km * 0.06) || left() < 3000) return undefined;
         onStep?.('compare');
-        const alt = await Promise.all(
-          [-60, 60].map((d) =>
-            smartRoundTrip({ ...req, bearing: (heading + d + 360) % 360, rotated: true, seed: seed + (d > 0 ? 17 : 29) }, undefined, signal).catch((e) => {
-              if (signal?.aborted) throw e;
-              return null;
-            }),
-          ),
-        );
+        const alt =
+          (await budgeted(left(), signal, (sig) =>
+            Promise.all(
+              [-60, 60].map((d) =>
+                smartRoundTrip({ ...req, bearing: (heading + d + 360) % 360, rotated: true, seed: seed + (d > 0 ? 17 : 29) }, undefined, sig).catch((e) => {
+                  if (signal?.aborted) throw e;
+                  return null;
+                }),
+              ),
+            ),
+          )) ?? [];
         const better = alt
           .filter((t): t is SmartTour => !!t && t.laenge_km >= req.km * 0.35 && spurKm(t) < spurKm(best) - 2)
           .map((t) => ({ ...t, score: t.score - 250 }))
           .sort((a, b) => b.score - a.score)[0];
-        if (better && better.score > best.score) return better;
-      }
+        if (process.env.DEBUG_RT) console.log('zeit gedreht', Date.now() - T0, 'ms', alt.map((t) => (t ? `${t.laenge_km.toFixed(0)} km spur ${spurKm(t).toFixed(1)}` : 'nichts')).join(' | ') || 'Zeit um');
+        return better && better.score > best.score ? better : undefined;
+      };
       // Länge weit neben dem Wunsch: mit angepasstem Radius nachplanen, höchstens zweimal (Bericht 17.11.: Ponte di
       // Legno 376 statt 240 km, Lienz 222 statt 110 km; Andraz sprang beim ersten Mal von 107 auf 233 km)
-      if (best && !lengthFits(best.laenge_km, req.km) && !req.rotated && !req.scale) {
+      const needLength = !!best && !lengthFits(best.laenge_km, req.km) && !req.rotated && !req.scale;
+      const fixLength = async (): Promise<SmartTour | undefined> => {
+        if (!best || !needLength) return undefined;
         // Länge und doppelte km zusammen: 50 % daneben wiegt so viel wie 10 km doppelt (Ponte di Legno: 376 km mit 1,6 km
         // doppelt gegen 242 km mit 2,9 km doppelt, die zweite ist klar besser)
         const cost = (t: PlannedTour) => (Math.abs(t.laenge_km - req.km) / req.km) * 20 + spurKm(t);
@@ -341,33 +384,36 @@ export async function smartRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) =
         let got = best.laenge_km;
         const tried: { f: number; km: number }[] = [{ f: 1, km: got }];
         for (let step = 0; step < 3 && !lengthFits(got, req.km); step++) {
-          // gedämpft: die Länge folgt dem Radius nicht linear (Lugano sprang sonst von 125 auf 53 km)
-          // in der Plakette oben sichtbar, warum es länger dauert (Koray 17.11.)
-          onStep?.(got < req.km ? 'longer' : 'shorter');
           // dritter Versuch nur zwischen einem zu kurzen und einem zu langen Ergebnis (Bericht 17.11.: Lugano 43 und 126 km)
           const lo = tried.filter((x) => x.km < req.km).sort((x, y) => y.km - x.km || y.f - x.f)[0];
           const hi = tried.filter((x) => x.km > req.km).sort((x, y) => x.km - y.km || x.f - y.f)[0];
           if (step === 2 && !(lo && hi)) break;
+          // Budget fast aufgebraucht: kein neuer Versuch mehr, die bisher beste Runde bleibt
+          if (left() < 1500) break;
+          // gedämpft: die Länge folgt dem Radius nicht linear (Lugano sprang sonst von 125 auf 53 km)
+          // in der Plakette oben sichtbar, warum es länger dauert (Koray 17.11.)
+          onStep?.(got < req.km ? 'longer' : 'shorter');
           f =
             step === 2 && lo && hi
               ? lo.f + ((hi.f - lo.f) * (req.km - lo.km)) / (hi.km - lo.km)
               : Math.max(0.4, Math.min(2, f * Math.pow(req.km / got, 0.8)));
-          const again = await smartRoundTrip({ ...req, scale: f, rotated: true, seed: seed + 41 + step }, undefined, signal).catch((e) => {
-            if (signal?.aborted) throw e;
-            return null;
-          });
+          const again = await budgeted(left(), signal, (sig) => smartRoundTrip({ ...req, scale: f, rotated: true, seed: seed + 41 + step }, undefined, sig));
+          if (process.env.DEBUG_RT) console.log('zeit laenge', Date.now() - T0, 'ms', again ? `f ${f.toFixed(2)} ${again.laenge_km.toFixed(0)} km spur ${spurKm(again).toFixed(1)}` : 'nichts oder Zeit um');
           if (!again) break;
           got = again.laenge_km;
           tried.push({ f, km: got });
-          if (process.env.DEBUG_RT) console.log('laenge', step, 'f', f.toFixed(2), 'got', got.toFixed(1), 'spur', spurKm(again).toFixed(2));
           // nur nehmen, was die Wunschlänge trifft; sonst bleibt die erste Runde und die App fragt nach (Lugano)
           // Passt die bisherige gar nicht, gewinnt die passende, solange sie kaum mehr doppelt fährt (Bericht 17.11.: Andraz
           // 222 km bei 170 gewünscht blieb liegen, weil 107 km nach der Kostenrechnung fast gleich gut waren)
           const fitsNow = lengthFits(got, req.km);
           if (fitsNow && ((!lengthFits(pick.laenge_km, req.km) && spurKm(again) <= spurKm(pick) + 2) || cost(again) < cost(pick) - 1)) pick = again;
         }
-        if (pick !== best) return pick;
-      }
+        return pick !== best ? pick : undefined;
+      };
+      // Reihenfolge nach Bedarf (19.11.): stimmt die Länge nicht, zuerst die Länge, weil das Budget selten für beides
+      // reicht (Linthal: die gedrehten Richtungen brauchten 20 s und brachten nichts, die Länge 10 s und half)
+      const reworked = needLength ? ((await fixLength()) ?? (await rotate())) : await rotate();
+      if (reworked) return reworked;
       if (best) return best;
       // Nichts in dieser Richtung (Mayrhofen nach Süden: Talende, nur Hochgebirge): erst drei andere Richtungen
       // mit dem eigenen Server, bevor der langsame Ersatzweg rechnet (Stresstest 10.11.: 78 bis 97 s über Valhalla)
