@@ -31,6 +31,23 @@ export function appVersion(): string {
   return id ? `${v} · ${id.slice(0, 8)}` : v;
 }
 
+/**
+ * Für die Zeile in den Einstellungen (Koray 19.11.2026): Version und Stand des geladenen Updates mit Datum und
+ * Uhrzeit, etwa "1.0.0 · Update 19.11. 23:05". So sieht man auf dem Handy sofort, ob ein neues Update schon da ist.
+ */
+export function appVersionLine(): string {
+  const v = Constants.expoConfig?.version ?? '?';
+  let at: Date | null = null;
+  try {
+    at = Updates.updateId ? (Updates.createdAt ?? null) : null;
+  } catch {
+    at = null;
+  }
+  if (!at) return v;
+  const two = (n: number) => String(n).padStart(2, '0');
+  return `${v} · Update ${at.getDate()}.${at.getMonth() + 1}. ${two(at.getHours())}:${two(at.getMinutes())}`;
+}
+
 export async function sendFeedback(area: FeedbackArea, note: string, extra?: Record<string, unknown>): Promise<void> {
   const { error } = await supabase.rpc('send_feedback', {
     p_area: area,

@@ -34,9 +34,13 @@ export type LineMotion = {
 const GROW_MS = 520;
 /** Lichtschein: etwa 40 km je Sekunde, eine Runde zwischen 5 und 12 s; Takt langsamer, er läuft ja dauernd */
 const FLOW_KMS = 40;
-const FLOW_TICK_MS = 66;
-/** leise: Signal Orange halb durchsichtig auf der weißen Linie, kein Punkt, kein Leuchten */
-const FLOW_COLOR = "rgba(226,70,28,0.5)";
+const FLOW_TICK_MS = 40;
+/**
+ * Wie im Scribble (Koray 19.11., 23:13: die halb durchsichtige Fassung war nicht zu sehen): ein Stück der Linie
+ * in Signal Orange mit weichem Hof, ohne Kopfpunkt. Läuft auf der Karte immer, auch während gerechnet wird.
+ */
+const FLOW_COLOR = "#E2461C";
+const FLOW_HALO = "rgba(226,70,28,0.32)";
 const SHIMMER_MS = 1100;
 const TICK_MS = 40;
 
@@ -72,6 +76,13 @@ function useProgress(
   return st.key === key ? st.p : 0;
 }
 
+/** Stücke des Scheins auf der Linie; bei einer Runde läuft er über Start und Ziel weiter, ohne abzureißen */
+function flowPieces(head: number, len: number, total: number, closed: boolean): [number, number][] {
+  const out: [number, number][] = [[Math.max(0, head - len), head]];
+  if (closed && head < len) out.push([total - (len - head), total]);
+  return out.filter(([a, b]) => b - a > 0.05);
+}
+
 export function RouteMotion({
   tour,
   motion,
@@ -96,7 +107,7 @@ export function RouteMotion({
   );
   const grown = useProgress(grow && !reduced ? grow.key : null, GROW_MS);
   const flowMs = Math.min(12000, Math.max(5000, (total / FLOW_KMS) * 1000));
-  const flowing = flow && !reduced && !motion && total > 0;
+  const flowing = flow && !reduced && total > 0;
   const flowAt = useProgress(
     flowing ? `fluss-${total.toFixed(2)}` : null,
     flowMs,
@@ -111,7 +122,7 @@ export function RouteMotion({
     [pts, spacingKm],
   );
   const headKm = total * flowAt;
-  const glow = Math.max(0.6, total * 0.05);
+  const glow = Math.max(1, total * 0.08);
   const closed =
     pts.length > 2 && haversine(pts[0].p, pts[pts.length - 1].p) < 400;
 
@@ -194,22 +205,26 @@ export function RouteMotion({
           ];
         })}
       {flowing &&
-        stroke(
-          `fluss-${Math.round(headKm * 20)}`,
-          lineBetween(pts, Math.max(0, headKm - glow), headKm),
-          4,
-          FLOW_COLOR,
-        )}
-      {/* Runde: der Schein läuft über Start und Ziel weiter, ohne abzureißen */}
-      {flowing &&
-        closed &&
-        headKm < glow &&
-        stroke(
-          `fluss-w-${Math.round(headKm * 20)}`,
-          lineBetween(pts, total - (glow - headKm), total),
-          4,
-          FLOW_COLOR,
-        )}
+        flowPieces(headKm, glow, total, closed).map(([a, b], i) => [
+          <Polyline
+            key={`fluss-h-${i}-${Math.round(headKm * 20)}`}
+            coordinates={lineBetween(pts, a, b).map(ll)}
+            strokeColor={FLOW_HALO}
+            strokeWidth={10}
+            lineCap="round"
+            lineJoin="round"
+            zIndex={5}
+          />,
+          <Polyline
+            key={`fluss-k-${i}-${Math.round(headKm * 20)}`}
+            coordinates={lineBetween(pts, a, b).map(ll)}
+            strokeColor={FLOW_COLOR}
+            strokeWidth={4}
+            lineCap="round"
+            lineJoin="round"
+            zIndex={6}
+          />,
+        ])}
       {!dim &&
         arrows.map((a) => (
           <Marker

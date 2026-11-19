@@ -43,6 +43,7 @@ export default function KarteScreen() {
         tour={tour}
         style={StyleSheet.absoluteFill}
         showUser
+        flow
         highlightIndex={focus}
         onPressWarning={setFocus}
         edgePadding={{ top: insets.top + 80, right: 40, bottom: bottomH + 30, left: 40 }}

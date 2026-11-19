@@ -1394,7 +1394,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           onLongPressLine={inTour && tourPlan.complete && routeTour ? onLongPressLine : undefined}
           stale={busyEdit && !dimSpans}
           lineMotion={busyEdit ? (dimSpans?.length ? { mode: 'dim', spans: dimSpans, key: JSON.stringify(dimSpans) } : null) : grow}
-          flow={!!lineTour && !busyEdit}
+          flow={inTour || view.kind === 'result'}
           onPressMap={placeOverlay || selVia != null ? () => {
             setPending(null);
             setSelVia(null);

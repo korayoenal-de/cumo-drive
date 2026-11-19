@@ -13,7 +13,7 @@ import MapView, { AnimatedRegion, Circle, Marker, Polyline, type LatLng } from '
 import { useIsFocused } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Rect } from 'react-native-svg';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Shadow, Spacing, Type } from '@/constants/theme';
 import { arrowsAlong, offsetRight, splitDoubled } from '@/lib/doubled';
@@ -630,7 +630,7 @@ export function RouteMap({
         {ziel && !roundTrip && (
           <Marker
             coordinate={ll(ziel)}
-            anchor={{ x: 0.5, y: 0.5 }}
+            anchor={END_ANCHOR}
             title={onDragPoint ? undefined : tr('Ziel')}
             draggable={!!onDragPoint}
             onDragStart={() => {
@@ -642,15 +642,13 @@ export function RouteMap({
               onDragPoint?.('ziel', [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
             }}
             zIndex={20}>
-            <View style={styles.ziel}>
-              <View style={styles.zielInner} />
-            </View>
+            <EndTag kind="ziel" />
           </Marker>
         )}
         {start && (
           <Marker
             coordinate={ll(start)}
-            anchor={{ x: 0.5, y: 0.5 }}
+            anchor={END_ANCHOR}
             title={onDragPoint && !roundTrip ? undefined : roundTrip ? tr('Start und Ziel') : tr('Start')}
             draggable={!!onDragPoint && !roundTrip}
             onDragStart={() => {
@@ -662,9 +660,7 @@ export function RouteMap({
               onDragPoint?.('start', [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
             }}
             zIndex={21}>
-            <View style={styles.startHalo}>
-              <View style={styles.start} />
-            </View>
+            <EndTag kind={roundTrip ? 'runde' : 'start'} />
           </Marker>
         )}
 
@@ -876,6 +872,48 @@ function WarnCard({ top, klasse, name, reasons, onClose }: { top: number; klasse
  * (Akku in der Navigation, 8.11.)
  */
 const llCache = new WeakMap<LatLon[], { latitude: number; longitude: number }[]>();
+/** Höhe des Schilds samt Stiel und Punkt; der Anker sitzt auf der Mitte des Punkts */
+const END_H = 24 + 6 + 10;
+const END_ANCHOR = { x: 0.5, y: (END_H - 5) / END_H };
+
+/** Kleine Zielflagge im Schild: Karomuster 4 mal 4 */
+function Checker({ size = 10 }: { size?: number }) {
+  const c = size / 4;
+  return (
+    <Svg width={size} height={size}>
+      <Rect width={size} height={size} fill={Colors.text} />
+      {[0, 1, 2, 3].flatMap((r) => [0, 1, 2, 3].filter((k) => (r + k) % 2 === 0).map((k) => <Rect key={`${r}-${k}`} x={k * c} y={r * c} width={c} height={c} fill={Colors.ground} />))}
+    </Svg>
+  );
+}
+
+/** Start, Ziel oder beides (Runde) als Schild wie an einer Rallye Etappe (Konzept B, Design Artefakt 19.11.) */
+function EndTag({ kind }: { kind: 'start' | 'ziel' | 'runde' }) {
+  const label = kind === 'start' ? tr('Start') : kind === 'ziel' ? tr('Ziel') : tr('Start und Ziel');
+  const startPart = (
+    <View style={[styles.endPart, styles.endStart]}>
+      <AppText style={[styles.endText, { color: Colors.onSignal }]}>{t('START')}</AppText>
+    </View>
+  );
+  const zielPart = (
+    <View style={[styles.endPart, styles.endZiel]}>
+      <Checker />
+      <AppText style={[styles.endText, { color: Colors.ground }]}>{t('ZIEL')}</AppText>
+    </View>
+  );
+  const tone = kind === 'ziel' ? Colors.text : Colors.signal;
+  return (
+    <View style={styles.endWrap} accessibilityLabel={label}>
+      <View style={styles.endTag}>
+        {kind !== 'ziel' && startPart}
+        {kind !== 'start' && zielPart}
+      </View>
+      <View style={[styles.endStem, { backgroundColor: tone }]} />
+      <View style={[styles.endDot, { backgroundColor: tone }]} />
+    </View>
+  );
+}
+
 function llCached(p: LatLon[]) {
   let c = llCache.get(p);
   if (!c) {
@@ -945,10 +983,15 @@ const styles = StyleSheet.create({
   radarRing: { position: 'absolute', borderWidth: 2, borderColor: 'rgba(226,70,28,0.9)', backgroundColor: 'rgba(226,70,28,0.1)' },
   box: { backgroundColor: Colors.surface, overflow: 'hidden' },
   noTouch: { pointerEvents: 'none' },
-  start: { width: 14, height: 14, borderRadius: 7, backgroundColor: Colors.signal, borderWidth: 2, borderColor: Colors.ground },
-  startHalo: { width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(226,70,28,0.3)', alignItems: 'center', justifyContent: 'center' },
-  ziel: { width: 18, height: 18, borderRadius: 4, backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
-  zielInner: { width: 6, height: 6, backgroundColor: Colors.ground },
+  // Start und Ziel als Schild (Koray 19.11.2026, Konzept B): Tafel mit Wort, kurzer Stiel, Punkt genau auf dem Ort
+  endWrap: { height: END_H, alignItems: 'center' },
+  endTag: { height: 24, flexDirection: 'row', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.55)' },
+  endPart: { height: 24, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9 },
+  endStart: { backgroundColor: Colors.signal },
+  endZiel: { backgroundColor: Colors.text },
+  endText: { fontFamily: Fonts.display, fontSize: 12, letterSpacing: 0.5 },
+  endStem: { width: 2, height: 6 },
+  endDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: Colors.ground },
   warn: { width: 24, height: 24, borderRadius: Radius.s, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
   warnOn: { transform: [{ scale: 1.3 }], borderColor: Colors.text },
   warnCard: {

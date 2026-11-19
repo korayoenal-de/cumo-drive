@@ -3,6 +3,7 @@
  * gruppiert Fahrzeuge, Fahren, Community, Mitgliedschaft, Konto und Rechtliches. Details liegen eine Ebene tiefer.
  */
 import Constants from 'expo-constants';
+import { appVersionLine } from '@/lib/feedback';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useState } from 'react';
@@ -178,7 +179,7 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
         />
       )}
 
-      {version ? <AppText style={styles.version}>Cumo Drive {version}</AppText> : null}
+      {version ? <AppText style={styles.version}>Cumo Drive {appVersionLine()}</AppText> : null}
     </Screen>
   );
 }
