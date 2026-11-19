@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
 import { reportError } from './error-report';
+import { claimDevice, onAccountWipe } from './account-scope';
 import { supabase } from './supabase';
 
 export type Fuel = 'super_plus' | 'super' | 'diesel' | 'elektro';
@@ -43,6 +44,13 @@ const listeners = new Set<() => void>();
 function emit() {
   for (const l of listeners) l();
 }
+
+// Kontowechsel oder Abmelden: die Garage des vorigen Kontos verschwindet vom Gerät (account-scope.ts)
+onAccountWipe(() => {
+  state = { list: [], currentId: null, updatedAt: 0 };
+  loaded = true;
+  emit();
+});
 
 async function load() {
   if (loaded) return;
@@ -137,6 +145,8 @@ export async function syncVehicles() {
   try {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
+    // erst prüfen, wem das Gerät gehört: sonst wandert die Garage eines anderen Kontos in dieses
+    await claimDevice(u.user.id);
     // seit 10.11. liest nur noch my_vehicles die eigene Garage (fremde Konten sehen sie über community_drivers)
     const { data } = await supabase.rpc('my_vehicles');
     const remote = ((Array.isArray(data) ? data : []) as Vehicle[]).filter((v) => v && v.id);

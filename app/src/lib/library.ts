@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
+import { claimDevice, onAccountWipe } from './account-scope';
 import { deleteCloudTour, listCloudTours, loadCloudTour, saveCloudTour } from './cloud-tours';
 import { logSignal, tourKey } from './signals';
 import { supabase } from './supabase';
@@ -93,6 +94,13 @@ function hydrate(): Promise<void> {
   })();
   return hydrating;
 }
+
+// Kontowechsel oder Abmelden: die Touren des vorigen Kontos verschwinden vom Gerät (account-scope.ts)
+onAccountWipe(() => {
+  cache = [];
+  hydrating = Promise.resolve();
+  for (const l of listeners) l();
+});
 
 /** Wartet, bis die gespeicherten Touren geladen sind (App: AsyncStorage). Im Browser sofort. */
 async function loaded(): Promise<void> {
@@ -274,6 +282,8 @@ export async function syncLibrary(): Promise<void> {
     setSync({ running: false });
     return;
   }
+  // erst prüfen, wem das Gerät gehört: sonst sieht dieses Konto die Touren eines anderen und lädt sie hoch
+  await claimDevice(data.session.user.id);
   try {
     // 1. lokal neue oder geänderte Touren hochladen
     for (const t of read()) {

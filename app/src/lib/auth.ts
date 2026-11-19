@@ -6,6 +6,7 @@ import type { Session } from '@supabase/supabase-js';
 import { useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 
+import { releaseDevice } from './account-scope';
 import { forgetPush } from './push';
 import { supabase } from './supabase';
 import { LEGAL_VERSION } from '@/content/legal';
@@ -60,6 +61,9 @@ function german(msg: string): string {
   if (/email not confirmed/i.test(msg)) return t('Die E-Mail ist noch nicht bestätigt. Bitte bestätige sie über die Mail, die wir dir geschickt haben.');
   if (/rate limit/i.test(msg)) return t('Zu viele Versuche. Bitte kurz warten.');
   if (/invalid.*email|unable to validate email/i.test(msg)) return t('Das sieht nicht nach einer gültigen E-Mail aus.');
+  // Die Mail ging nicht raus oder der Mailserver war zu langsam (Koray 19.11.: englische Rohmeldungen im Formular)
+  if (/error sending|sending confirmation|context deadline|request_timeout/i.test(msg)) return t('Die Bestätigungsmail ging gerade nicht raus. Bitte versuch es in einer Minute noch einmal.');
+  if (/abort|network request failed|failed to fetch|timeout/i.test(msg)) return t('Das hat zu lange gedauert. Bitte prüf deine Verbindung und versuch es noch einmal.');
   return t(msg);
 }
 
@@ -106,9 +110,13 @@ export async function deleteAccount() {
   // Tokens fallen per Kaskade mit, hier nur den lokalen Stand räumen
   await forgetPush();
   await supabase.auth.signOut();
+  await releaseDevice();
 }
 
 export async function signOut() {
   await forgetPush();
   await supabase.auth.signOut();
+  // Garage, Touren und zuletzt gesuchte Orte vom Gerät nehmen: sie liegen im Konto, und das nächste Konto auf
+  // diesem Gerät darf sie nicht sehen (account-scope.ts)
+  await releaseDevice();
 }

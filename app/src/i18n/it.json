@@ -2004,5 +2004,7 @@
   "Deine E Mail Adresse ist bestätigt. Öffne jetzt CUMO DRIVE auf deinem iPhone und melde dich mit deiner E Mail und deinem Passwort an.": "Il tuo indirizzo email è confermato. Ora apri CUMO DRIVE sul tuo iPhone e accedi con email e password.",
   "Deine E Mail Adresse für Cumo Drive ist bestätigt.": "Il tuo indirizzo email per Cumo Drive è confermato.",
   "Anfrage von {name} bestätigen": "Accetta la richiesta di {name}",
-  "Geschafft. Öffne die Bestätigungsmail und melde dich danach hier an.": "Fatto. Apri l'email di conferma e poi accedi qui."
+  "Geschafft. Öffne die Bestätigungsmail und melde dich danach hier an.": "Fatto. Apri l'email di conferma e poi accedi qui.",
+  "Die Bestätigungsmail ging gerade nicht raus. Bitte versuch es in einer Minute noch einmal.": "Al momento non è stato possibile inviare l'email di conferma. Riprova tra un minuto.",
+  "Das hat zu lange gedauert. Bitte prüf deine Verbindung und versuch es noch einmal.": "Ci è voluto troppo tempo. Controlla la connessione e riprova."
 }

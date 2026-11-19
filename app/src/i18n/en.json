@@ -2004,5 +2004,7 @@
   "Deine E Mail Adresse ist bestätigt. Öffne jetzt CUMO DRIVE auf deinem iPhone und melde dich mit deiner E Mail und deinem Passwort an.": "Your email address is confirmed. Now open CUMO DRIVE on your iPhone and sign in with your email and password.",
   "Deine E Mail Adresse für Cumo Drive ist bestätigt.": "Your email address for Cumo Drive is confirmed.",
   "Anfrage von {name} bestätigen": "Accept request from {name}",
-  "Geschafft. Öffne die Bestätigungsmail und melde dich danach hier an.": "Done. Open the confirmation email, then sign in here."
+  "Geschafft. Öffne die Bestätigungsmail und melde dich danach hier an.": "Done. Open the confirmation email, then sign in here.",
+  "Die Bestätigungsmail ging gerade nicht raus. Bitte versuch es in einer Minute noch einmal.": "The confirmation email could not be sent right now. Please try again in a minute.",
+  "Das hat zu lange gedauert. Bitte prüf deine Verbindung und versuch es noch einmal.": "That took too long. Please check your connection and try again."
 }

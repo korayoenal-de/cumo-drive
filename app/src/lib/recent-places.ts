@@ -5,6 +5,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
+import { onAccountWipe } from './account-scope';
 import type { Place } from './geocode';
 
 const KEY = 'cumo.recentPlaces';
@@ -17,6 +18,13 @@ const listeners = new Set<() => void>();
 function emit() {
   for (const l of listeners) l();
 }
+
+// Kontowechsel oder Abmelden: zuletzt gesuchte Orte gehören zum vorigen Konto (account-scope.ts)
+onAccountWipe(() => {
+  list = [];
+  loaded = true;
+  emit();
+});
 
 function load() {
   if (loaded) return;
