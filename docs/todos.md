@@ -30,6 +30,10 @@ Stand: 18. November 2026, 14:30 (gegen Code und Git Verlauf geprüft; Prüfung v
 * [ ] Nach der Einreichung prüfen: Bekommt der Angefragte bei einer Kontaktanfrage eine Push Mitteilung? Sonst Vorschlag mit Schalter in den Einstellungen (braucht eine Migration, Koray 18.11.: morgen ansehen)
 * [ ] Navigation, aus der Busfahrt vom 18.11.: Ansage, wenn die App nah am Ziel direkt hinführt statt zurück auf die Tour (Vorschlag „Du fährst jetzt direkt zum Ziel“, wartet auf Korays Ja); Auto stand neben der Linie, erst mit Fahrtprotokoll aus dem Auto verfolgen
 * [x] 18.11. abends per OTA: Fahrerkarte Variante A (Kontakt Knopf wie in der Liste, Melden und Blockieren mit Symbol und Wort), „dabei seit“ ausgeblendet, Ring immer weiß, Kontakte ohne endlosen Wartekreis, alle Supabase Anfragen mit Frist von 20 s
+* [ ] **Store Build 36** (19.11., Profil production, eigener Kanal production, Stand cd938f4): in der Version wählen und nach Korays OK einreichen. Veröffentlichung steht auf manuell. Abos mit Prüf Screenshot, Server Mitteilungen auf RevenueCat (Produktion und Sandbox) erledigt
+* [ ] Vor dem Start: Händlerstatus nach dem Gesetz über digitale Dienste steht bei Apple seit 17.11. auf „In Prüfung“; ohne Bestätigung erscheint die App nicht in der EU (Koray: Postfach auf Rückfragen prüfen)
+* [ ] Am Tag der Veröffentlichung: `update public.app_launch set release_at = ...` (bis dahin ist für alle alles frei, auch für das Prüfkonto)
+* [ ] Mit 1.0.1 (braucht einen Build): Berechtigungstexte (Standort, Mikrofon, Kamera, Fotos) auch auf Englisch und Italienisch; Store Beschreibung nennt 14 Tage, die App gibt bis Jahresende 30
 * [ ] Screenshots EN und IT erst mit Version 1.0.1 (Koray 18.11.: Einreichung ohne, bis dahin zeigt Apple die deutschen Bilder; die deutschen dienen als Vorlage)
 * [x] Webseite mit Kopfzeilen und Strecken kachelweise live, Kopfzeilen geprüft (17.11.)
 * [x] Migrationen live: highlight_feedback nur mit Anmeldung, Link Grenzen, Konten Grenze, road-data kachelweise mit Kontingent, Einwilligungen (17.11.)
