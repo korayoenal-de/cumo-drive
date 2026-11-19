@@ -27,6 +27,8 @@ import { HIGHLIGHT_ROADS, PREFER_ROADS } from '../highlight-roads';
 import { RECOMMENDED } from '../recommended';
 import { roadDataLoaded } from '../road-data';
 import { decodePolyline, encodePolyline } from '../polyline';
+import type { PlannedTour } from '../plan';
+import { rotateLoop, runFor } from '../plan-window';
 
 // Vor jedem Test festhalten: Laden aller Module entpackt die Daten noch nicht (Performance Punkt 1, 17.11.)
 const loadedAtImport = roadDataLoaded();
@@ -560,5 +562,56 @@ describe('Kodierte Linien (Performance 17.11.)', () => {
   it('bekanntes Beispiel aus der Beschreibung des Verfahrens', () => {
     const d = decodePolyline('_p~iF~ps|U_ulLnnqC_mqNvxq`@', 1e5);
     assert.deepEqual(d.map(([a, b]) => [+a.toFixed(5), +b.toFixed(5)]), [[38.5, -120.2], [40.7, -120.95], [43.252, -126.453]]);
+  });
+});
+
+describe('Rundtour weiterdrehen und Umsortieren (Gregor 19.11.2026)', () => {
+  // Quadrat S, A, B, C, S mit je elf Punkten je Seite
+  const corner: LatLon[] = [[49.6, 8.6], [49.6, 8.7], [49.7, 8.7], [49.7, 8.6], [49.6, 8.6]];
+  const line: LatLon[] = [];
+  for (let i = 0; i < 4; i++) for (let s = i === 0 ? 0 : 1; s <= 10; s++) line.push([corner[i][0] + ((corner[i + 1][0] - corner[i][0]) * s) / 10, corner[i][1] + ((corner[i + 1][1] - corner[i][1]) * s) / 10]);
+  const loop: PlannedTour = {
+    name: 'Karussell', laenge_km: 37, wegpunkte: corner, minutes: 40, fixes: 0, namen: ['S', 'A', 'B', 'C', 'S'],
+    linie: [{ c: 'ok', p: line.slice(0, 16) }, { c: 'pruefen', p: line.slice(15) }],
+    warnungen: [{ klasse: 'pruefen', start_km: 30, laenge_km: 1, name: 'x', ort: '', gruende: [], mitte: line[35] }],
+  };
+  const lineOf = (t: PlannedTour) => flatten(t).map((x) => x.p);
+  const lenOf = (t: PlannedTour) => flatten(t).slice(-1)[0].km;
+
+  it('dreht die Runde auf den zweiten Punkt, die Strecke bleibt dieselbe', () => {
+    const r = rotateLoop(loop, 2)!;
+    assert.ok(r);
+    assert.deepEqual(r.wegpunkte, [corner[2], corner[3], corner[0], corner[1], corner[2]]);
+    assert.deepEqual(r.namen, ['B', 'C', 'S', 'A', 'B']);
+    const pts = lineOf(r);
+    assert.deepEqual(pts[0], corner[2]);
+    assert.deepEqual(pts[pts.length - 1], corner[2]);
+    assert.equal(pts.length, line.length);
+    assert.ok(Math.abs(lenOf(r) - lenOf(loop)) < 0.01);
+    // jedes Stück der alten Linie kommt genau einmal vor
+    const seg = (a: LatLon[]) => new Set(a.slice(1).map((p, i) => `${a[i]}>${p}`));
+    assert.deepEqual([...seg(pts)].sort(), [...seg(line)].sort());
+    // die Warnung wandert mit: vorher bei km 30, die Naht liegt bei etwa km 18,3
+    assert.ok(Math.abs(r.warnungen[0].start_km - (30 - flatten(loop)[20].km)) < 0.05);
+  });
+
+  it('dreht nichts, was keine Runde ist oder kein Zwischenziel meint', () => {
+    assert.equal(rotateLoop({ ...loop, wegpunkte: corner.slice(0, 4) }, 1), null);
+    assert.equal(rotateLoop(loop, 0), null);
+    assert.equal(rotateLoop(loop, 4), null);
+  });
+
+  it('findet beim Umsortieren die Etappen in der Mitte wieder', () => {
+    const [s, a, b, c] = corner;
+    const prof = ['kurvig', 'kurvig', 'kurvig'] as const;
+    const open: PlannedTour = { ...loop, wegpunkte: [s, a, b, c], linie: [{ c: 'ok', p: line.slice(0, 31) }], warnungen: [], namen: undefined };
+    // erster Punkt ans Ende: A nach B nach C bleibt, nur C nach S ist neu
+    const r = runFor(open, [...prof], [a, b, c, s], [...prof])!;
+    assert.ok(r);
+    assert.deepEqual(r.kept.wegpunkte, [a, b, c]);
+    assert.equal(r.before, null);
+    assert.deepEqual(r.after?.points, [c, s]);
+    // nichts geändert: kein Teilstück
+    assert.equal(runFor(open, [...prof], [s, a, b, c], [...prof]), null);
   });
 });

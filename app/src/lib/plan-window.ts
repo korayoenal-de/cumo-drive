@@ -212,3 +212,140 @@ export function seamsOk(merged: PlannedTour, w: WindowPlan, middle: PlannedTour)
   if (w.tail && km2 != null && spurAt(pts, km2) > w.spurBefore[1] + 150) return false;
   return true;
 }
+
+/** Länge der Linie in km, so wie die Nahtprüfung sie misst */
+export function lineKm(tour: Pick<Tour, 'linie'>): number {
+  const pts = flat(tour);
+  return pts.length ? pts[pts.length - 1].km : 0;
+}
+
+/** Wenden an der Stelle km der Tour (Meter), für die Nahtprüfung außerhalb dieser Datei */
+export function turnAt(tour: Pick<Tour, 'linie'>, km: number): number {
+  const pts = flat(tour);
+  return pts.length < 2 ? 0 : spurAt(pts, km);
+}
+
+export type RunPlan = {
+  /** das längste unveränderte Stück, irgendwo in der Tour */
+  kept: PlannedTour;
+  /** Punkte und Profile davor und danach, die neu geplant werden; null, wenn dort nichts liegt */
+  before: { points: LatLon[]; profiles: Profile[] } | null;
+  after: { points: LatLon[]; profiles: Profile[] } | null;
+  /** Wenden an den Enden des Stücks in der alten Tour (Meter) */
+  spurBefore: [number, number];
+};
+
+/**
+ * Umsortieren (Gregor 19.11.2026): Rückt ein Punkt von vorn nach hinten, passt weder der Anfang noch das Ende
+ * zur alten Tour, die Etappen in der Mitte sind aber dieselben. Sucht die längste Folge von Etappen, die in der
+ * alten und der neuen Reihenfolge gleich ist, und lässt sie stehen. null: es gibt keine, oder nichts hat sich geändert.
+ */
+export function runFor(prev: PlannedTour, prevProf: Profile[], points: LatLon[], profiles: Profile[]): RunPlan | null {
+  const oldPts = prev.wegpunkte;
+  const oldLegs = oldPts.length - 1;
+  const legs = points.length - 1;
+  if (oldLegs < 1 || legs < 1 || !prev.linie.length) return null;
+  let best = { o: 0, n: 0, len: 0 };
+  for (let o = 0; o < oldLegs; o++) {
+    for (let n = 0; n < legs; n++) {
+      let len = 0;
+      while (o + len < oldLegs && n + len < legs && same(oldPts[o + len], points[n + len]) && same(oldPts[o + len + 1], points[n + len + 1]) && prevProf[o + len] === profiles[n + len]) len++;
+      if (len > best.len) best = { o, n, len };
+    }
+  }
+  if (best.len === 0 || best.len >= legs) return null;
+  const pts = flat(prev);
+  const idx = waypointIndex(pts, prev);
+  if (!idx) return null;
+  const mins = legMinutes(prev, pts, idx);
+  const { o, n, len } = best;
+  return {
+    kept: slice(prev, pts, idx, mins, o, o + len),
+    before: n > 0 ? { points: points.slice(0, n + 1), profiles: profiles.slice(0, n) } : null,
+    after: n + len < legs ? { points: points.slice(n + len), profiles: profiles.slice(n + len) } : null,
+    spurBefore: [n > 0 ? endSpur(o === 0) : 0, n + len < legs ? endSpur(o + len === oldLegs, o + len) : 0],
+  };
+
+  /**
+   * Wenden am Ende des Stücks in der alten Tour. Liegt das Ende am Start oder Ziel einer Runde, zählt, wie weit
+   * Abfahrt und Ankunft dort schon dieselbe Straße nehmen: dreht sich die Runde weiter, ist das kein neues Wenden.
+   */
+  function endSpur(atTourEnd: boolean, w = o): number {
+    if (!atTourEnd) return spurAt(pts, pts[idx![w]].km);
+    if (!same(oldPts[0], oldPts[oldLegs])) return 0;
+    const total = pts[pts.length - 1].km;
+    const near = (km: number): LatLon => {
+      let lo = 0;
+      let hi = pts.length - 1;
+      while (hi - lo > 1) {
+        const mid = (lo + hi) >> 1;
+        if (pts[mid].km < km) lo = mid;
+        else hi = mid;
+      }
+      const f = (km - pts[lo].km) / Math.max(1e-9, pts[hi].km - pts[lo].km);
+      return [pts[lo].p[0] + (pts[hi].p[0] - pts[lo].p[0]) * f, pts[lo].p[1] + (pts[hi].p[1] - pts[lo].p[1]) * f];
+    };
+    let spur = 0;
+    for (let d = 25; d <= 4000 && d / 1000 < total / 2; d += 25) {
+      if (haversine(near(d / 1000), near(total - d / 1000)) > 40) break;
+      spur = d;
+    }
+    return spur;
+  }
+}
+
+/**
+ * Rundtour weiterdrehen (Gregor 19.11.2026): Wegpunkt k wird Start und Ziel, die Strecke bleibt Punkt für Punkt
+ * dieselbe. Die Linie wird an der Stelle des Wegpunkts aufgeschnitten und in neuer Reihenfolge zusammengesetzt,
+ * ohne Netz und ohne neue Planung. null, wenn die Tour keine geschlossene Runde ist.
+ */
+export function rotateLoop<T extends PlannedTour>(prev: T, k: number): T | null {
+  const w = prev.wegpunkte;
+  const n = w.length;
+  if (n < 3 || k <= 0 || k >= n - 1 || !same(w[0], w[n - 1])) return null;
+  const pts = flat(prev);
+  if (pts.length < 3 || haversine(pts[0].p, pts[pts.length - 1].p) > 400) return null;
+  const idx = waypointIndex(pts, prev);
+  let j = idx ? idx[k] : -1;
+  if (j < 0) {
+    // Wegpunkte abseits der Linie (importierte Tour): an der nächsten Stelle der Linie aufschneiden
+    let bd = Infinity;
+    pts.forEach((q, i) => {
+      const d = haversine(w[k], q.p);
+      if (d < bd) {
+        bd = d;
+        j = i;
+      }
+    });
+  }
+  if (j <= 0 || j >= pts.length - 1) return null;
+  const total = pts[pts.length - 1].km;
+  const cut = pts[j].km;
+  const order = [...pts.slice(j), ...pts.slice(1, j + 1)];
+  const linie: Tour['linie'] = [];
+  for (let i = 1; i < order.length; i++) {
+    const c = order[i].c;
+    const last = linie[linie.length - 1];
+    if (last && last.c === c) last.p.push(order[i].p);
+    else linie.push({ c, p: [order[i - 1].p, order[i].p] });
+  }
+  const warnungen: Warning[] = prev.warnungen
+    .map((x) => ({ ...x, start_km: +((((x.start_km - cut) % total) + total) % total).toFixed(2) }))
+    .sort((a, b) => a.start_km - b.start_km);
+  const turn = <X,>(a: X[] | undefined, len: number): X[] | undefined => (a && a.length === len ? [...a.slice(k), ...a.slice(0, k)] : undefined);
+  const out: T = {
+    ...prev,
+    wegpunkte: [...w.slice(k), ...w.slice(1, k + 1)],
+    linie,
+    warnungen,
+    namen: prev.namen && prev.namen.length === n ? [...prev.namen.slice(k), ...prev.namen.slice(1, k + 1)] : undefined,
+    etappen: turn(prev.etappen, n - 1),
+    legMin: turn(prev.legMin, n - 1),
+    legKm: turn(prev.legKm, n - 1),
+    legDirekt: turn(prev.legDirekt, n - 1),
+  };
+  // Anteil bebaut an Start und Ziel gilt für den alten Start
+  delete out.bebautStartKm;
+  delete out.bebautEndKm;
+  return out;
+}

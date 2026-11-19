@@ -13,7 +13,7 @@ import { tourFun } from './fun-score';
 import { PASSES, passesAlong } from './passes';
 import { closureExclude, closureLabel, closuresNear, closuresOnRoute, onClosedRoad, onPassRoad, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
-import { seamsOk, windowFor } from './plan-window';
+import { lineKm, runFor, seamsOk, turnAt, windowFor } from './plan-window';
 import { movePointsOffUTurns, unwantedUTurns, type UTurn } from './uturn';
 import { route, valhallaFetch, type Avoid } from './valhalla';
 import { tr } from '@/i18n';
@@ -684,7 +684,20 @@ export async function planChanged(
   // (Bedienfolgen R2, 18.11.: 144 statt 140 km)
   if (profiles.length < prevProfiles.length) return null;
   const w = windowFor(prev, prevProfiles, points, profiles);
-  if (!w) return null;
+  if (!w) {
+    // Umsortiert: vorn und hinten passt nichts, in der Mitte bleiben Etappen gleich (plan-window.ts, runFor)
+    const r = runFor(prev, prevProfiles, points, profiles);
+    if (!r) return null;
+    const [pre, post] = await Promise.all([
+      r.before ? planLegs(name, r.before.points, r.before.profiles, avoid, onStep, signal) : null,
+      r.after ? planLegs(name, r.after.points, r.after.profiles, avoid, onStep, signal) : null,
+    ]);
+    const all = mergeLegs(name, points, [pre, r.kept, post].filter((t): t is PlannedTour => !!t));
+    const km1 = pre ? lineKm(pre) : 0;
+    if (pre && turnAt(all, km1) > r.spurBefore[0] + 150) return null;
+    if (post && turnAt(all, km1 + lineKm(r.kept)) > r.spurBefore[1] + 150) return null;
+    return all;
+  }
   const middle = await planLegs(name, w.points, w.profiles, avoid, onStep, signal);
   const parts = [w.head, middle, w.tail].filter((t): t is PlannedTour => !!t);
   const merged = mergeLegs(name, points, parts);

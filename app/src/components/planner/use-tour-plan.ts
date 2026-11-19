@@ -12,6 +12,7 @@ import { reverseName } from '@/lib/geocode';
 import { HIGHLIGHT_ROADS, PREFER_ROADS } from '@/lib/highlight-roads';
 import { avoidedKey, clearAvoidedPasses } from '@/lib/avoid-pass';
 import { planChanged, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
+import { rotateLoop } from '@/lib/plan-window';
 import { insertVia, movePoint } from '@/lib/route-edit';
 import { flatten, haversine, normProfile, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
@@ -508,7 +509,9 @@ export function useTourPlan(onPlanned?: () => void) {
     if (t.linie.length) {
       const shown: PlannedTour = { ...t, minutes: t.minutes ?? Math.round((t.laenge_km / 55) * 60), fixes: 0 };
       // auch die gespeicherte Strecke bleibt beim Ändern stehen, wo sich nichts ändert (importierte Touren behalten ihre Linie)
-      if (w.length >= 3) plannedAs.current.set(shown, { raw: shown, profiles: lp.map((x) => x ?? profile), avoid: JSON.stringify(avoid) });
+      // derselbe Schlüssel wie in plan(): ohne den Teil der gemiedenen Pässe passte er nie, und die erste Änderung
+      // an einer geöffneten Tour plante alles neu (gefunden 19.11.2026)
+      if (w.length >= 3) plannedAs.current.set(shown, { raw: shown, profiles: lp.map((x) => x ?? profile), avoid: `${JSON.stringify(avoid)}|${avoidedKey()}` });
       setPlanned(shown);
       onPlanned?.();
     } else if (s && z) void plan([s, ...v, z], lp.map((x) => x ?? profile), avoid, t.name);
@@ -560,6 +563,29 @@ export function useTourPlan(onPlanned?: () => void) {
       }
       const i = idx - 1;
       apply(start, vias.filter((_, k) => k !== i), ziel, lp.filter((_, k) => k !== i + 1), profile, avoid);
+    },
+    /**
+     * Rundtour weiterdrehen (Gregor 19.11.2026): Der Punkt an Stelle idx wird Start und Ziel, die Strecke bleibt
+     * dieselbe und wird nicht neu geplant. Ohne geplante Runde: Punkte umstellen und planen wie bisher.
+     */
+    rotate: (idx: number, profile: Profile, avoid: Avoid) => {
+      const all = [start, ...vias, ziel].filter((p): p is LatLon => !!p);
+      if (all.length < 3 || idx <= 0 || idx >= all.length - 1) return;
+      const lp = fitLegs(legProfiles, vias.length);
+      const next = [...all.slice(idx), ...all.slice(1, idx + 1)];
+      const nextLp = [...lp.slice(idx), ...lp.slice(0, idx)];
+      const rot = planned && planned.wegpunkte.length === all.length ? rotateLoop(planned, idx) : null;
+      if (!rot) return apply(next[0], next.slice(1, -1), next[next.length - 1], nextLp, profile, avoid);
+      abort.current?.abort();
+      setStep(null);
+      setError(null);
+      setStart(next[0]);
+      setVias(next.slice(1, -1));
+      setZiel(next[next.length - 1]);
+      setLegProfiles(nextLp);
+      plannedAs.current.set(rot, { raw: rot, profiles: nextLp.map((x) => x ?? profile), avoid: `${JSON.stringify(avoid)}|${avoidedKey()}` });
+      setPlanned(rot);
+      onPlanned?.();
     },
     swap: (profile: Profile, avoid: Avoid) => apply(ziel, [...vias].reverse(), start, [...fitLegs(legProfiles, vias.length)].reverse(), profile, avoid),
   };
