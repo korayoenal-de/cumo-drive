@@ -4,11 +4,10 @@
  * - Ändern: Was fest ist, bleibt fest. Nur die Etappen, die neu gerechnet werden, stehen blass in ihrer alten
  *   Form da, ein Lichtschimmer läuft darüber, solange gerechnet wird (mode 'dim').
  * - Ergebnis: Nur die neuen Etappen zeichnen sich in Fahrtrichtung auf (mode 'grow'), der Rest steht schon.
- * - Richtung (Koray 19.11.: subtil und durchgängig): Ein leiser Lichtschein läuft ohne Pause in Fahrtrichtung
- *   über die Linie, immer gleich schnell. Dazu stehen kleine Pfeile in der Linie. Nur im Planer, nie in der Fahrt.
+ * - Eine laufende Richtungsanzeige (Schein, dann Punktkette) gab es am 19. und 20.11. kurz; Koray: zu viel, entfernt.
  *
  * Die Linie selbst zeichnet route-map.tsx; die Bereiche in spans lässt sie dort aus, damit hier nichts doppelt liegt.
- * Bei reduzierter Bewegung: blass ohne Schimmer, sofort fertig gezeichnet, nur die Pfeile.
+ * Bei reduzierter Bewegung: blass ohne Schimmer, sofort fertig gezeichnet.
  */
 import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -16,7 +15,7 @@ import { useReducedMotion } from "react-native-reanimated";
 import { Marker, Polyline, type LatLng } from "react-native-maps";
 
 import { Colors } from "@/constants/theme";
-import { arrowsWithKm, lineBetween } from "@/lib/route-change";
+import { lineBetween } from "@/lib/route-change";
 import { flatten, type LatLon, type Tour } from "@/lib/tour";
 
 const ll = ([latitude, longitude]: LatLon): LatLng => ({ latitude, longitude });
@@ -32,16 +31,6 @@ export type LineMotion = {
 
 /** Dauern (ms): Aufzeichnen wie eine Ebene, Lichtlauf ruhig über die ganze Tour */
 const GROW_MS = 520;
-/**
- * Richtung als Punktkette (Koray 20.11.2026, nach dem Vorbild, das er gut fand): kleine dunkle Punkte in der
- * weißen Linie, gleichmäßig verteilt, die langsam und durchgängig in Fahrtrichtung weiterlaufen. Vorher: ein
- * oranger Schein, erst unsichtbar, dann zu laut, dann blitzend unter der Linie.
- * Abstand in Bildpunkten, ein Punkt rückt in CHAIN_MS um einen Abstand weiter, höchstens CHAIN_MAX Punkte.
- */
-const CHAIN_PX = 26;
-const CHAIN_MS = 1800;
-const CHAIN_MAX = 60;
-const CHAIN_TICK_MS = 50;
 /** Spur aus fünf kurzen Strichen, nach hinten leiser (Schimmer auf Etappen, die neu gerechnet werden) */
 const TRAIL_OPACITY = [1, 0.7, 0.45, 0.25, 0.12];
 const TRAIL_STEP_PX = 9;
@@ -150,12 +139,10 @@ function Trail({
 export function RouteMotion({
   tour,
   motion,
-  flow,
   mpp,
 }: {
   tour: Tour;
   motion: LineMotion | null;
-  flow: boolean;
   mpp: number;
 }) {
   const reduced = useReducedMotion();
@@ -170,25 +157,7 @@ export function RouteMotion({
     true,
   );
   const grown = useProgress(grow && !reduced ? grow.key : null, GROW_MS);
-  const flowing = flow && !reduced && total > 0;
-  const chainAt = useProgress(
-    flowing ? "kette" : null,
-    CHAIN_MS,
-    true,
-    CHAIN_TICK_MS,
-  );
-  const chainKm = Math.max(
-    mpp ? (mpp * CHAIN_PX) / 1000 : 0,
-    total / CHAIN_MAX,
-  );
-  const chainN = flowing ? Math.max(0, Math.floor(total / chainKm)) : 0;
 
-  // Pfeile etwa alle 160 Bildpunkte, höchstens 24, damit die Karte ruhig bleibt
-  const spacingKm = mpp ? (mpp * 160) / 1000 : total / 12;
-  const arrows = useMemo(
-    () => arrowsWithKm(pts, spacingKm, 24),
-    [pts, spacingKm],
-  );
   const stepKm = mpp ? (mpp * TRAIL_STEP_PX) / 1000 : total / 300;
 
   if (!pts.length) return null;
@@ -274,36 +243,6 @@ export function RouteMotion({
             ),
           ];
         })}
-      {/* Punktkette: feste Schlüssel, die Punkte wandern nur weiter (kein Neuanlegen, kein Blitzen) */}
-      {Array.from({ length: chainN }, (_, i) => {
-        const at = pointDir(pts, Math.min(total, (i + chainAt) * chainKm));
-        return (
-          <Marker
-            key={`kette-${i}`}
-            coordinate={ll(at.p)}
-            anchor={{ x: 0.5, y: 0.5 }}
-            zIndex={8}
-            tracksViewChanges={false}
-          >
-            <View style={styles.chain} />
-          </Marker>
-        );
-      })}
-      {!dim &&
-        !flowing &&
-        arrows.map((a) => (
-          <Marker
-            key={`richtung-${a.km.toFixed(3)}-${a.p[0].toFixed(5)}`}
-            coordinate={ll(a.p)}
-            anchor={{ x: 0.5, y: 0.5 }}
-            flat
-            rotation={a.deg}
-            zIndex={7}
-            tracksViewChanges={false}
-          >
-            <View style={styles.arrow} />
-          </Marker>
-        ))}
     </>
   );
 }
@@ -311,22 +250,4 @@ export function RouteMotion({
 const styles = StyleSheet.create({
   // ein Strich der Spur, längs zur Fahrtrichtung (0 Grad = nach oben)
   trail: { width: 3, height: 9, borderRadius: 1.5 },
-  // ein Glied der Punktkette: dunkel in der weißen Linie, wie die Richtungspfeile
-  chain: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.ground,
-  },
-  // wie die Pfeile auf doppelt gefahrenen Stücken: dunkles Dreieck in der weißen Linie
-  arrow: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 4,
-    borderRightWidth: 4,
-    borderBottomWidth: 7,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderBottomColor: Colors.ground,
-  },
 });

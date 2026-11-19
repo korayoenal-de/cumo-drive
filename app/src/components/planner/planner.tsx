@@ -738,8 +738,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
     [busyEdit, oldPlanned, tourPts],
   );
   const mapTour: Tour = view.kind === 'result' ? view.tour : inTour ? (routeTour ?? (busyEdit && staleTour ? staleTour : draftTour)) : EMPTY_TOUR;
-  // Ergebnis da: nur die neuen Etappen zeichnen sich auf (Design Artefakt „Punkte, Zeiten, Richtung“). Die Richtung
-  // zeigt ein leiser Lichtschein, der dauernd über die Linie läuft (flow), solange nichts gerechnet wird.
+  // Ergebnis da: nur die neuen Etappen zeichnen sich auf (Design Artefakt „Punkte, Zeiten, Richtung“). Eine laufende
+  // Richtungsanzeige gab es kurz (Schein, dann Punktkette) und ist auf Korays Wunsch wieder weg (20.11.: zu viel).
   const lineTour = view.kind === 'result' ? view.tour : routeTour;
   const lastLine = useRef<Tour | null>(null);
   const [grow, setGrow] = useState<LineMotion | null>(null);
@@ -1394,7 +1394,6 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           onLongPressLine={inTour && tourPlan.complete && routeTour ? onLongPressLine : undefined}
           stale={busyEdit && !dimSpans}
           lineMotion={busyEdit ? (dimSpans?.length ? { mode: 'dim', spans: dimSpans, key: JSON.stringify(dimSpans) } : null) : grow}
-          flow={inTour || view.kind === 'result'}
           onPressMap={placeOverlay || selVia != null ? () => {
             setPending(null);
             setSelVia(null);

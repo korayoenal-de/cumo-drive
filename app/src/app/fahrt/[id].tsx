@@ -100,7 +100,7 @@ export default function FahrtScreen() {
             {/* echte Karte statt Strichbild (Koray 15.11.), mit den Orten der Spitzenwerte */}
             {tour && (
               <View style={styles.preview}>
-                <RouteMap tour={tour} pins={pins} flow style={StyleSheet.absoluteFill} edgePadding={{ top: 48, right: 32, bottom: 32, left: 32 }} />
+                <RouteMap tour={tour} pins={pins} style={StyleSheet.absoluteFill} edgePadding={{ top: 48, right: 32, bottom: 32, left: 32 }} />
               </View>
             )}
             {pins.length > 0 && <AppText muted>{t('Die Spitzenwerte sind auf der Karte markiert.')}</AppText>}

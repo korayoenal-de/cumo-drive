@@ -64,8 +64,6 @@ export type RouteMapProps = {
    * zeichnen sie sich neu auf. Der Rest der Linie bleibt fest. Die gestrichelte Hilfslinie durch alle Punkte ist weg.
    */
   lineMotion?: LineMotion | null;
-  /** Richtung zeigen (nur Planer): leiser Lichtschein läuft dauernd in Fahrtrichtung, dazu Pfeile in der Linie */
-  flow?: boolean;
   /** Ein Punkt wird angehoben (Beginn des Ziehens) */
   onDragStart?: () => void;
   /** Langer Druck auf die Linie der Tour (statt irgendwo auf die Karte): dort entsteht ein Ziehpunkt */

@@ -84,7 +84,6 @@ export function RouteMap({
   onLongPressLine,
   stale,
   lineMotion,
-  flow,
   overlayTop = 0,
   pickedPassIds,
   selectedPassId,
@@ -599,7 +598,7 @@ export function RouteMap({
           />
         ))}
 
-        {(lineMotion || flow) && tour.linie.length > 0 && <RouteMotion tour={tour} motion={lineMotion ?? null} flow={!!flow && focused} mpp={mpp} />}
+        {lineMotion && tour.linie.length > 0 && <RouteMotion tour={tour} motion={lineMotion} mpp={mpp} />}
         {arrows.map((a, i) => (
           <Marker key={`pfeil-${offKey}-${i}-${a.p[0].toFixed(5)}`} coordinate={ll(a.p)} anchor={{ x: 0.5, y: 0.5 }} flat rotation={a.deg} zIndex={8} tracksViewChanges={false}>
             <View style={styles.arrow} />

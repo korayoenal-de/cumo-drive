@@ -149,7 +149,7 @@ function Active() {
       </View>
 
       <View style={styles.mapBox}>
-        <RouteMap tour={hasTour ? active!.tour : EMPTY_TOUR} others={others} showUser flow style={StyleSheet.absoluteFill} />
+        <RouteMap tour={hasTour ? active!.tour : EMPTY_TOUR} others={others} showUser style={StyleSheet.absoluteFill} />
         {others.length === 0 && (
           <View style={styles.mapHint} pointerEvents="none">
             <AppText variant="caption">{t('Noch niemand sonst unterwegs.')}</AppText>
