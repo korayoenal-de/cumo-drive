@@ -68,6 +68,14 @@ export async function signIn(email: string, password: string) {
   if (error) throw new Error(german(error.message));
 }
 
+/** Registrierung hat geklappt, die Adresse muss noch bestätigt werden */
+export class SignUpPending extends Error {
+  constructor() {
+    super('Registriert. Bitte die Bestätigungsmail öffnen und dann anmelden.');
+    this.name = 'SignUpPending';
+  }
+}
+
 /** Einwilligungen bei der Registrierung (Koray 17.11.: Opt in), landen per Trigger in der Tabelle consents */
 export type SignUpConsent = { terms: true; news: boolean };
 
@@ -83,7 +91,9 @@ export async function signUp(email: string, password: string, consent: SignUpCon
     },
   });
   if (error) throw new Error(german(error.message));
-  if (!data.session) throw new Error('Registriert. Bitte die Bestätigungsmail öffnen und dann anmelden.');
+  // Kein Fehler: das Konto ist angelegt und wartet auf den Klick in der Mail. Eigene Klasse, damit das Formular es
+  // grün als Erfolg zeigt statt rot (Koray 19.11.)
+  if (!data.session) throw new SignUpPending();
 }
 
 /**

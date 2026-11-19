@@ -12,7 +12,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { ConsentRow, LegalLinks } from '@/components/auth/consent-row';
 import { NameField, useNameCheck } from '@/components/auth/name-field';
-import { signIn } from '@/lib/auth';
+import { signIn, SignUpPending } from '@/lib/auth';
 import { signUpWithName } from '@/lib/profile';
 import { t } from '@/i18n';
 
@@ -26,6 +26,8 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
   const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Erfolg nach dem Registrieren: grün, und das Formular steht schon auf Anmelden
+  const [done, setDone] = useState<string | null>(null);
   const [name, setName] = useState('');
   const check = useNameCheck(mode === 'register' ? name : '');
   // Opt in (Koray 17.11.): Nutzungsbedingungen und Datenschutz sind Pflicht, Neuigkeiten freiwillig und aus
@@ -37,11 +39,16 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
     if (!ready) return;
     setBusy(true);
     setErr(null);
+    setDone(null);
     try {
       if (mode === 'login') await signIn(email, pw);
       else await signUpWithName(email, pw, name, { terms: true, news });
     } catch (e) {
-      setErr(e instanceof Error ? e.message : t('Das hat nicht geklappt.'));
+      if (e instanceof SignUpPending) {
+        setDone(t('Geschafft. Öffne die Bestätigungsmail und melde dich danach hier an.'));
+        setMode('login');
+        setPw('');
+      } else setErr(e instanceof Error ? e.message : t('Das hat nicht geklappt.'));
     } finally {
       setBusy(false);
     }
@@ -101,6 +108,11 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             </View>
           )}
           {err && <AppText style={styles.error}>{err}</AppText>}
+          {done && (
+            <AppText accessibilityLiveRegion="polite" style={styles.done}>
+              {done}
+            </AppText>
+          )}
           <Pressable accessibilityRole="button" disabled={!ready} onPress={() => void submit()} style={[styles.primary, !ready && styles.disabled]}>
             {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{mode === 'login' ? t('Anmelden') : t('Registrieren')}</AppText>}
           </Pressable>
@@ -137,6 +149,7 @@ const styles = StyleSheet.create({
   // inaktiv grau statt blassem Orange (UI Konsistenz Check 9.11.)
   disabled: { backgroundColor: Colors.surface2 },
   error: { color: Colors.danger, fontFamily: Fonts.semibold },
+  done: { color: Colors.good, fontFamily: Fonts.semibold },
   switch: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   link: { color: Colors.text, fontFamily: Fonts.semibold },
 });

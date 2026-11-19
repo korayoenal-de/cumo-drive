@@ -28,7 +28,18 @@ const MARK = [
   'M13.25,17.53 L12.00,23.40 A11.4,11.4 0 0 0 20.06,20.06 L15.03,16.80 Q13.61,15.88 13.25,17.53 Z',
 ];
 
-export function LegalPage({ doc, description, other }: { doc: LegalDoc; description: string; other: { href: '/agb' | '/datenschutz'; label: string } }) {
+export function LegalPage({
+  doc,
+  description,
+  other,
+  action,
+}: {
+  doc: LegalDoc;
+  description: string;
+  other: { href: '/agb' | '/datenschutz'; label: string };
+  /** Eine Hauptaktion unter dem Einleitungstext, etwa „Zum Web Planer" nach der Bestätigung der Adresse */
+  action?: { label: string; onPress: () => void };
+}) {
   const insets = useSafeAreaInsets();
   const web = Platform.OS === 'web';
   const home = () => (web ? router.navigate('/') : router.canGoBack() ? router.back() : router.replace('/'));
@@ -63,6 +74,11 @@ export function LegalPage({ doc, description, other }: { doc: LegalDoc; descript
             {doc.title}
           </AppText>
           <AppText style={styles.lead}>{doc.lead}</AppText>
+          {action && (
+            <Pressable accessibilityRole="button" onPress={action.onPress} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
+              <AppText style={styles.actionText}>{action.label}</AppText>
+            </Pressable>
+          )}
 
           {doc.blocks.map((b) => (
             <View key={b.h} style={styles.block}>
@@ -120,6 +136,8 @@ const styles = StyleSheet.create({
   foot: { gap: Spacing.m, paddingTop: Spacing.xxl },
   stand: { fontFamily: Fonts.semibold, fontSize: 14, color: Colors.muted },
   /** Leise Taste wie die Zurück Pille: Fläche surface, rund, 44 hoch (Koray 10.11.) */
+  action: { alignSelf: 'flex-start', height: Size.button, paddingHorizontal: Spacing.xxl, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center', marginTop: Spacing.l },
+  actionText: { fontFamily: Fonts.bold, fontSize: Type.button, color: Colors.onSignal },
   quiet: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   quietText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   pressed: { backgroundColor: Colors.surface2, transform: [{ scale: Motion.pressScale }] },
