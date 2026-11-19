@@ -180,13 +180,17 @@ export type WindowPlan = {
  * Zerlegt die bisherige Tour für die neuen Punkte. null: nichts wiederverwendbar (oder nichts geändert),
  * dann wird wie bisher alles geplant.
  */
-export function windowFor(prev: PlannedTour, prevProf: Profile[], points: LatLon[], profiles: Profile[]): WindowPlan | null {
+export function windowFor(prev: PlannedTour, prevProf: Profile[], points: LatLon[], profiles: Profile[], widenHead = 0, widenTail = 0): WindowPlan | null {
   const oldPts = prev.wegpunkte;
   if (oldPts.length < 2 || points.length < 2 || !prev.linie.length) return null;
-  const { head, tail } = unchangedLegs(oldPts, prevProf, points, profiles);
+  const same = unchangedLegs(oldPts, prevProf, points, profiles);
   const legs = points.length - 1;
   const oldLegs = oldPts.length - 1;
-  if (head + tail === 0 || head + tail >= legs) return null;
+  if (same.head + same.tail === 0 || same.head + same.tail >= legs) return null;
+  // widen: so viele unveränderte Etappen vorn oder hinten zusätzlich neu planen (nach einem Wenden an der Naht)
+  const head = Math.max(0, same.head - widenHead);
+  const tail = Math.max(0, same.tail - widenTail);
+  if (head + tail === 0) return null;
   const pts = flat(prev);
   const idx = waypointIndex(pts, prev);
   if (!idx) return null;
@@ -201,16 +205,15 @@ export function windowFor(prev: PlannedTour, prevProf: Profile[], points: LatLon
 }
 
 /**
- * Nahtstellen prüfen: Fährt die zusammengefügte Tour an einem unveränderten Punkt jetzt hin und auf demselben
+ * Nahtstellen prüfen (seamTurns): Fährt die zusammengefügte Tour an einem unveränderten Punkt jetzt hin und auf demselben
  * Weg zurück (das neue Stück kennt die Fahrtrichtung davor nicht), taugt das Ergebnis nicht.
+ * Liefert je Naht: [vorn gewendet, hinten gewendet].
  */
-export function seamsOk(merged: PlannedTour, w: WindowPlan, middle: PlannedTour): boolean {
+export function seamTurns(merged: PlannedTour, w: WindowPlan, middle: PlannedTour): [boolean, boolean] {
   const pts = flat(merged);
   const km1 = w.head ? flat(w.head).slice(-1)[0].km : null;
   const km2 = km1 != null || w.tail ? (km1 ?? 0) + flat(middle).slice(-1)[0].km : null;
-  if (w.head && km1 != null && spurAt(pts, km1) > w.spurBefore[0] + 150) return false;
-  if (w.tail && km2 != null && spurAt(pts, km2) > w.spurBefore[1] + 150) return false;
-  return true;
+  return [!!w.head && km1 != null && spurAt(pts, km1) > w.spurBefore[0] + 150, !!w.tail && km2 != null && spurAt(pts, km2) > w.spurBefore[1] + 150];
 }
 
 /** Länge der Linie in km, so wie die Nahtprüfung sie misst */

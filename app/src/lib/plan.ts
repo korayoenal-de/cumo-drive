@@ -13,7 +13,7 @@ import { tourFun } from './fun-score';
 import { PASSES, passesAlong } from './passes';
 import { closureExclude, closureLabel, closuresNear, closuresOnRoute, onClosedRoad, onPassRoad, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
-import { keepLegs, lineKm, runFor, seamsOk, turnAt, windowFor } from './plan-window';
+import { keepLegs, lineKm, runFor, seamTurns, turnAt, windowFor } from './plan-window';
 import { movePointsOffUTurns, unwantedUTurns, type UTurn } from './uturn';
 import { route, valhallaFetch, type Avoid } from './valhalla';
 import { tr } from '@/i18n';
@@ -679,9 +679,9 @@ export async function planChanged(
   onStep?: (s: PlanStep) => void,
   signal?: AbortSignal,
 ): Promise<PlannedTour | null> {
-  // Ein Punkt fällt weg: ganz neu planen. Sonst bleiben die Etappen daneben auf dem Weg, den sie wegen des
-  // entfernten Punkts genommen hatten, und Einfügen plus Entfernen führt nicht zur alten Tour zurück
-  // (Bedienfolgen R2, 18.11.: 144 statt 140 km)
+  // Ein Punkt fällt weg (Koray 19.11.2026, löst die Regel vom 18.11. ab): Auch dann werden nur die Nachbarn neu
+  // verbunden, der Rest bleibt stehen. Gemessen am Vogesen Karussell blieben beim Neuplanen nur 59 % der übrigen
+  // Strecke erhalten. Dafür führt Einfügen und Entfernen nicht immer exakt zur alten Tour zurück (wenige km).
   // Ausnahme (19.11.): Fällt nur der Start oder nur das Ziel weg, verbindet sich nichts neu. Der Rest bleibt stehen.
   if (profiles.length === prevProfiles.length - 1 && points.length >= 2) {
     const old = prev.wegpunkte;
@@ -689,7 +689,6 @@ export async function planChanged(
     const kept = eq(1) ? keepLegs(prev, 1, old.length - 1) : eq(0) ? keepLegs(prev, 0, old.length - 2) : null;
     if (kept) return { ...kept, name };
   }
-  if (profiles.length < prevProfiles.length) return null;
   const w = windowFor(prev, prevProfiles, points, profiles);
   if (!w) {
     // Umsortiert: vorn und hinten passt nichts, in der Mitte bleiben Etappen gleich (plan-window.ts, runFor)
@@ -705,10 +704,23 @@ export async function planChanged(
     if (post && turnAt(all, km1 + lineKm(r.kept)) > r.spurBefore[1] + 150) return null;
     return all;
   }
-  const middle = await planLegs(name, w.points, w.profiles, avoid, onStep, signal);
-  const parts = [w.head, middle, w.tail].filter((t): t is PlannedTour => !!t);
-  const merged = mergeLegs(name, points, parts);
-  return seamsOk(merged, w, middle) ? merged : null;
+  // Wendet die Tour an einer Naht (das neue Stück kennt die Fahrtrichtung davor nicht), kommt auf dieser Seite
+  // die nächste Etappe dazu. Höchstens zweimal, danach plant der Aufrufer alles neu.
+  let win = w;
+  let widenHead = 0;
+  let widenTail = 0;
+  for (let attempt = 0; ; attempt++) {
+    const middle = await planLegs(name, win.points, win.profiles, avoid, onStep, signal);
+    const merged = mergeLegs(name, points, [win.head, middle, win.tail].filter((t): t is PlannedTour => !!t));
+    const [turnHead, turnTail] = seamTurns(merged, win, middle);
+    if (!turnHead && !turnTail) return merged;
+    if (attempt >= 2) return null;
+    if (turnHead) widenHead++;
+    if (turnTail) widenTail++;
+    const next = windowFor(prev, prevProfiles, points, profiles, widenHead, widenTail);
+    if (!next) return null;
+    win = next;
+  }
 }
 
 /**

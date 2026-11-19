@@ -7,7 +7,7 @@
  * über die echten Routing Server. Nach jedem Schritt prüft der Test die Regeln:
  *
  *   R1  die Route läuft durch alle Punkte, in der gewählten Reihenfolge
- *   R2  Einfügen und wieder entfernen ergibt dieselbe Route
+ *   R2  Einfügen und wieder entfernen ergibt dieselbe Route (seit 19.11. bis auf wenige km: der Rest der Tour bleibt stehen)
  *   R3  unveränderte Etappen vorn und hinten bleiben genau gleich
  *   R4  Schnell ist auf derselben Etappe nicht langsamer als Kurvig
  *   R6  Etappen ergeben Strecke und Fahrzeit, die Linie ist so lang wie die Strecke
@@ -270,7 +270,9 @@ async function folge(n: number) {
         // Liegt es an der Teilplanung? Ganz neu geplant müsste wieder die alte Route herauskommen
         const full = await planLegs('Bedienfolge', st.pts, st.prof, DEFAULT_AVOID);
         const fullSame = Math.abs(full.laenge_km - before.laenge_km) <= Math.max(0.5, before.laenge_km * 0.02);
-        if (back.windowed && fullSame)
+        // Seit 19.11. bleibt beim Entfernen der Rest der Tour stehen (Koray): wenige km Abweichung sind hingenommen,
+        // ein Fehler ist es erst über 3 km und 5 %
+        if (back.windowed && fullSame && dk > Math.max(3, before.laenge_km * 0.05))
           add('fehler', 'R2', `nach Einfügen und Entfernen ${back.t.laenge_km} statt ${before.laenge_km} km; ganz neu geplant wären es wieder ${full.laenge_km} km (die Teilplanung bleibt auf dem Umweg)`, s);
         else add('hinweis', 'R2', `nach Einfügen und Entfernen ${back.t.laenge_km} statt ${before.laenge_km} km, ganz neu geplant ${full.laenge_km} km (die Route davor kam selbst aus einer Teilplanung, oder der Router plant dieselben Punkte anders)`, s);
       }
