@@ -37,7 +37,7 @@ ISSUER = f'{SUPABASE_URL}/auth/v1'
 
 # Art der Anfrage: (je Minute, je Stunde). Eine Rundtour plant mehrere Varianten parallel, daher route großzügig.
 LIMITS = {
-    'route': (60, 600),
+    'route': (300, 2000),  # 19.11.: echte Spitze 132 je Minute und 177 je Stunde (große Rundtour), vorher 60 und 600
     'suche': (120, 1500),
     'valhalla': (120, 1500),
     'poi': (300, 5000),
