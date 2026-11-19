@@ -451,15 +451,10 @@ export function TourMode({
       plan.swap(profile, avoid);
       return;
     }
-    // Rundtour: „Als Start setzen“ dreht die Runde, die Strecke bleibt gleich. „Als Ziel setzen“ bricht sie auf wie
-    // in jeder Tour: der Punkt wandert ans Ende, das alte Ziel wird Zwischenziel (Koray 19.11.2026)
-    if (isLoop && kindAt === 'via' && a === 'start') {
-      plan.rotate(m.idx, profile, avoid);
+    // Rundtour: „Als Start setzen“ dreht die Runde, die Strecke bleibt gleich. Sonst wandert der Punkt an den Anfang
+    // oder ans Ende, der alte Start oder das alte Ziel wird Zwischenziel (Koray 19.11.2026; use-tour-plan.ts, viaAs)
+    if (plan.viaAs(m.idx, a === 'start' ? 'start' : 'ziel', profile, avoid))
       showToast(tr('Die Runde startet jetzt in {name}. Die Strecke bleibt gleich.', { name: m.name }), { action: { label: tr('Rückgängig'), onPress: () => plan.restore(snap) } });
-      return;
-    }
-    const rest = allPts.map((_, k) => k).filter((k) => k !== m.idx);
-    plan.reorder(a === 'start' ? [m.idx, ...rest] : [...rest, m.idx], profile, avoid);
   }
 
   /** Eine Zeile der Punktliste: die ganze Fläche tippen (ändern) oder halten und ziehen (verschieben), ⋯ für Aktionen. */

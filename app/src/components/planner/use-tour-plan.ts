@@ -565,7 +565,7 @@ export function useTourPlan(onPlanned?: () => void) {
     else setPlanned(null);
   }
 
-  return {
+  const api = {
     start, vias, ziel, complete, pts, names, name, setName, planned, step, error, cloudId, saving, saveMsg, dirty, changed,
     legProfile, setSlot, add, dragVia, insertAt, insertRoad, roadWarn, save, reset, load, snapshot, restore,
     /** Laufende Planung abbrechen, die Punkte bleiben stehen */
@@ -636,4 +636,22 @@ export function useTourPlan(onPlanned?: () => void) {
     },
     swap: (profile: Profile, avoid: Avoid) => apply(ziel, [...vias].reverse(), start, [...fitLegs(legProfiles, vias.length)].reverse(), profile, avoid),
   };
+  /**
+   * Zwischenziel an Stelle idx (0 = Start) als Start oder Ziel setzen, aus der Liste und aus der Karte.
+   * Der bisherige Start oder das bisherige Ziel wird Zwischenziel, nichts geht verloren (Koray 19.11.2026).
+   * In einer Rundtour dreht „start“ die Runde, die Strecke bleibt gleich: dann kommt true zurück.
+   */
+  function viaAs(idx: number, as: 'start' | 'ziel', profile: Profile, avoid: Avoid): boolean {
+    const all = [start, ...vias, ziel].filter((p): p is LatLon => !!p);
+    if (idx <= 0 || idx >= all.length - 1) return false;
+    const loop = !!start && !!ziel && keyOf(start) === keyOf(ziel);
+    if (loop && as === 'start') {
+      api.rotate(idx, profile, avoid);
+      return true;
+    }
+    const rest = all.map((_, k) => k).filter((k) => k !== idx);
+    api.reorder(as === 'start' ? [idx, ...rest] : [...rest, idx], profile, avoid);
+    return false;
+  }
+  return { ...api, viaAs };
 }

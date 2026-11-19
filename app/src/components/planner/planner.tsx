@@ -808,10 +808,27 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   }
 
   /** Aktion für den angetippten Pass, direkt auf die Route */
+  /** Zwischenziel an Stelle idx aus der Karte heraus als Start oder Ziel setzen, wie in der Liste */
+  function viaFromMap(idx: number, as: 'start' | 'ziel') {
+    setMapEdit(true);
+    const p = tourPts[idx];
+    const snap = tourPlan.snapshot();
+    const turned = tourPlan.viaAs(idx, as, profile, avoid);
+    if (turned && p) showToast(tr('Die Runde startet jetzt in {name}. Die Strecke bleibt gleich.', { name: tourPlan.names[keyOf(p)] ?? tr('Zwischenziel {v0}', { v0: idx }) }), { action: { label: tr('Rückgängig'), onPress: () => tourPlan.restore(snap) } });
+    setSelVia(null);
+  }
+
   function onPassAction(a: PassAction) {
     setMapEdit(true);
     if (!pending) return;
     const pts = tourPlan.pts;
+    // Pass, der schon Zwischenziel ist: als Start oder Ziel umsetzen statt ein zweites Mal hinzufügen
+    const at = pending.pass ? passIndex(pts, pending.pass) : -1;
+    if ((a === 'start' || a === 'ziel') && tourPlan.complete && at > 0 && at < pts.length - 1) {
+      viaFromMap(at, a);
+      setPending(null);
+      return;
+    }
     if (a === 'remove' && pending.pass) {
       const i = passIndex(pts, pending.pass);
       if (tourPlan.start && i === 0) tourPlan.removeStart(profile, avoid);
@@ -1411,6 +1428,8 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
                 tourPlan.removeVia(selVia, profile, avoid);
                 setSelVia(null);
               }}
+              onStart={() => viaFromMap(selVia + 1, 'start')}
+              onZiel={() => viaFromMap(selVia + 1, 'ziel')}
             />
           )}
           {placeOverlay && (
@@ -1419,6 +1438,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
               name={placeOverlay.name ?? tr('Neuer Punkt')}
               note={passOverlay ? passSummary(passOverlay, undefined, passState(passOverlay, live).note) : undefined}
               role={passRole}
+              isVia={passRoleIdx > 0 && passRoleIdx < tourPts.length - 1}
               hasStart={!!tourPlan.start}
               detourKm={tourPlan.complete && passRole == null ? roughDetourKm(tourPts, passOverlay ? passPoint(passOverlay) : placeOverlay.p) : null}
               bottom={covered + Spacing.m}

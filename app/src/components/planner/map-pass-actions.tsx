@@ -31,6 +31,7 @@ export function MapPassActions({
   name,
   note,
   role,
+  isVia,
   hasStart,
   detourKm,
   bottom,
@@ -44,6 +45,8 @@ export function MapPassActions({
   /** Rolle in der Route (Start, Ziel, Zwischenziel 2), null wenn noch nicht drin */
   role: string | null;
   /** Der Start ist schon gesetzt */
+  /** der Punkt ist schon Zwischenziel der Route: dann lässt er sich hier auch als Start oder Ziel setzen (Koray 19.11.2026) */
+  isVia?: boolean;
   hasStart: boolean;
   detourKm: number | null;
   bottom: number;
@@ -55,7 +58,7 @@ export function MapPassActions({
   const ziel = { a: 'ziel' as const, label: t('Als Ziel') };
   const via = { a: 'via' as const, label: t('Zwischenziel hinzufügen') };
   const primary: { a: PassAction; label: string } = role ? { a: 'remove', label: t('Aus der Route entfernen') } : hasStart ? via : start;
-  const others: { a: PassAction; label: string }[] = role ? [] : hasStart ? [start, ziel] : [ziel];
+  const others: { a: PassAction; label: string }[] = role ? (isVia ? [start, ziel] : []) : hasStart ? [start, ziel] : [ziel];
   const symbol = pass ? 'mountain.2.fill' : 'mappin';
   const mainRef = useRef<ComponentRef<typeof View>>(null);
   const win = useWindowDimensions();
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
  * Angetippter Punkt der Route (Zwischenziel oder Highlight, Koray 10.11.): gleiche schwebende Karte wie beim
  * Pass, mit der Nummer auf der Karte und der Aktion Entfernen.
  */
-export function MapPointActions({ label, name, role, bottom, onRemove }: { label: string; name: string; role: string; bottom: number; onRemove: () => void }) {
+export function MapPointActions({ label, name, role, bottom, onRemove, onStart, onZiel }: { label: string; name: string; role: string; bottom: number; onRemove: () => void; onStart: () => void; onZiel: () => void }) {
   return (
     <Animated.View key={`${label}-${name}`} entering={softEnter()} exiting={FadeOut.duration(120)} style={[styles.wrap, { bottom }]} pointerEvents="box-none">
       <View style={styles.card}>
@@ -176,6 +179,15 @@ export function MapPointActions({ label, name, role, bottom, onRemove }: { label
         <Pressable accessibilityRole="button" onPress={onRemove} style={({ pressed }) => [styles.btn, styles.btnQuiet, pressed && styles.pressed]}>
           <AppText style={styles.btnText}>{t('Aus der Route entfernen')}</AppText>
         </Pressable>
+        {/* wie in der Liste unter den drei Punkten: das Zwischenziel wird Start oder Ziel (Koray 19.11.2026) */}
+        <View style={styles.row}>
+          <Pressable accessibilityRole="button" onPress={onStart} style={({ pressed }) => [styles.btn, styles.btnQuiet, styles.flex, pressed && styles.pressed]}>
+            <AppText style={styles.btnText}>{t('Als Start')}</AppText>
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={onZiel} style={({ pressed }) => [styles.btn, styles.btnQuiet, styles.flex, pressed && styles.pressed]}>
+            <AppText style={styles.btnText}>{t('Als Ziel')}</AppText>
+          </Pressable>
+        </View>
       </View>
     </Animated.View>
   );
