@@ -30,6 +30,11 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <script dangerouslySetInnerHTML={{ __html: LANG_SCRIPT }} />
         <ScrollViewStyleReset />
+        {/* Favicon unter eigenen Namen mit Version (Koray 19.11.): Browser behalten ein altes /favicon.ico sehr lange,
+            ein neuer Name wird sofort geladen. Bei einem neuen Logo die Version im Dateinamen erhöhen. */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/cumo-icon-32-v2.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/cumo-icon-192-v2.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/cumo-icon-180-v2.png" />
         {headNodes}
       </head>
       <body {...bodyAttributes}>
