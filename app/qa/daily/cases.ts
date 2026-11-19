@@ -142,21 +142,33 @@ function rng(seed: number) {
   return () => (s = (s * 16807) % 2147483647) / 2147483647;
 }
 
-/** 20 wechselnde Fälle: 12 Rundtouren, 8 Strecken zwischen zwei nahen Pässen */
+/**
+ * Täglicher Check mit 25 Routen (Koray 19.11.: die Routen werden immer besser, halbieren): 15 feste aus FIXED,
+ * je Art die aussagekräftigsten und alle Rundtouren mit offenen Befunden, dazu 10 wechselnde. Der Testlauf vor
+ * jedem Update (--pflicht) prüft weiter alle festen Fälle.
+ */
+export const DAILY_FIXED_IDS = [
+  's-ffm-stg', 's-muc-ibk',
+  'p-fuenf-dolomiten', 'p-stelvio-gavia', 'p-gfs', 'p-galibier', 'p-glockner',
+  't-schwarzwald', 'm-muc-tirol',
+  'r-bensheim-120', 'r-corvara-100', 'r-bozen-200', 'r-chur-150', 'r-lugano-80', 'r-badenbaden-250',
+];
+
+/** 10 wechselnde Fälle: 6 Rundtouren, 4 Strecken zwischen zwei nahen Pässen */
 export function buildCases(seed: number): Case[] {
   const r = rng(seed);
   const pick = <T,>(a: T[]) => a[Math.floor(r() * a.length)];
   const starts = Object.keys(ORTE).filter((n) => !['Frankfurt', 'Stuttgart', 'München', 'Köln', 'Mailand', 'Zürich'].includes(n));
   const dirs: Direction[] = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW', 'zufall'];
-  const out: Case[] = [...FIXED];
-  for (let i = 0; i < 12; i++) {
+  const out: Case[] = FIXED.filter((c) => DAILY_FIXED_IDS.includes(c.id));
+  for (let i = 0; i < 6; i++) {
     const s = pick(starts);
     const km = Math.round((40 + r() * 230) / 10) * 10;
     out.push({ kind: 'runde', id: `z-runde-${i}`, name: `Rundtour ${s.replace('_', ' ')} ${km} km`, group: 'zufall', profile: 'kurvig', start: O(s), km, direction: pick(dirs), seed: 1 + Math.floor(r() * 999) });
   }
   const big = PASSES.filter((p) => p.tier !== 'mittel');
   let tries = 0;
-  for (let i = 0; i < 8 && tries < 500; tries++) {
+  for (let i = 0; i < 4 && tries < 500; tries++) {
     const a = pick(big);
     const b = pick(big);
     const d = Math.hypot(a.lat - b.lat, (a.lon - b.lon) * Math.cos((a.lat * Math.PI) / 180)) * 111;

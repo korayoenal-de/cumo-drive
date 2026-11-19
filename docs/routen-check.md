@@ -1,6 +1,6 @@
 # Täglicher Routen Check
 
-Idee von Koray (16.11.2026): Jeden Tag 50 Testrouten über die echte Planung der App, jede wird geprüft, danach ein Bericht mit Befunden und Vorschlägen.
+Idee von Koray (16.11.2026): Jeden Tag 50 Testrouten über die echte Planung der App, jede wird geprüft, danach ein Bericht mit Befunden und Vorschlägen. Seit 19.11. halbiert auf 25 Routen (Koray: die Routen werden immer besser).
 
 ## Ablauf
 
@@ -14,7 +14,7 @@ Der Lauf ändert nie Code auf main und spielt keine Updates ein. Vorschläge set
 
 ## Fälle (qa/daily/cases.ts)
 
-30 feste Fälle, jeden Tag gleich, damit Rückschritte auffallen:
+31 feste Fälle in `FIXED`, alle im Testlauf vor jedem Update (`--pflicht`). Der tägliche Check nimmt davon 15, jeden Tag dieselben (`DAILY_FIXED_IDS`): Frankfurt nach Stuttgart, München nach Innsbruck, Fünf Pässe Dolomiten, Stilfser Joch und Gavia, Grimsel Furka Susten, Galibier, Großglockner, Schwarzwaldhochstraße, München nach Tirol und die Rundtouren Bensheim, Corvara, Bozen, Chur, Lugano, Baden-Baden. Alle festen Fälle:
 
 * Schnell: Frankfurt nach Stuttgart, München nach Innsbruck, Zürich nach Mailand, Köln nach Frankfurt
 * Pässe: Arabba nach Cortina, Brixen nach Cortina, Sellaronda, fünf Dolomitenpässe in einer Tour, Stilfser Joch und Gavia, Livigno, Grimsel Furka Susten, Galibier, Iseran, Großglockner, Timmelsjoch, Vršič, Klausen, Großer St. Bernhard
@@ -22,7 +22,7 @@ Der Lauf ändert nie Code auf main und spielt keine Updates ein. Vorschläge set
 * Gemischt: München schnell, dann kurvig nach Tirol
 * Rundtouren von 60 bis 250 km in DE, IT, AT, CH und FR
 
-20 wechselnde Fälle aus dem Tagesdatum: 12 Rundtouren ab zufälligen Orten mit zufälliger Länge und Richtung, 8 Strecken zwischen zwei Pässen.
+10 wechselnde Fälle aus dem Tagesdatum: 6 Rundtouren ab zufälligen Orten mit zufälliger Länge und Richtung, 4 Strecken zwischen zwei Pässen (bis 18.11. 12 und 8).
 
 ## Prüfungen
 

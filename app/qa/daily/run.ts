@@ -1,5 +1,5 @@
 /**
- * Täglicher Routen Check (Koray 16.11.): 50 Testrouten über die echte Planung der App, jede wird geprüft.
+ * Täglicher Routen Check (Koray 16.11., seit 19.11. halbiert): 25 Testrouten über die echte Planung der App, jede wird geprüft.
  *
  * Starten im Ordner app:
  *   npx tsx --tsconfig scripts/replay/tsconfig.json qa/daily/run.ts [--out qa/daily/out] [--prev <ergebnis.json>] [--seed <zahl>] [--only <id,id>]

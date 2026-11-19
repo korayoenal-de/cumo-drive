@@ -153,7 +153,7 @@ Ein Profil Sehr kurvig gibt es nicht mehr (gestrichen am 8.11.). Ältere Touren 
 
 **Fahrzeit:** Valhalla schätzt auf Bergetappen zu langsam. In der Navigation korrigiert ein Tempofaktor die Restzeit; Kalibrierung mit echten Netto Fahrzeiten steht aus.
 
-**Qualität:** Pflichtlauf vor jedem Update (`npm run vor-update`): Typen, Lint, lib Tests, QS Korpus, Stresstest, Simulation mit 22 Fällen auf einer lokalen Testdatenbank, 21 feste Routen. Täglich zusätzlich der Routen Check mit 51 Routen. Katalog aller Use Cases, Faktoren und Regeln im Doc „CUMO DRIVE Testkatalog“.
+**Qualität:** Pflichtlauf vor jedem Update (`npm run vor-update`): Typen, Lint, lib Tests, QS Korpus, Stresstest, Simulation mit 22 Fällen auf einer lokalen Testdatenbank, 21 feste Routen. Täglich zusätzlich der Routen Check mit 25 Routen (seit 19.11., vorher 51). Katalog aller Use Cases, Faktoren und Regeln im Doc „CUMO DRIVE Testkatalog“.
 
 ## Daten
 
