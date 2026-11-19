@@ -420,7 +420,8 @@ export function reanchorLoop<T extends PlannedTour>(prev: T, p: LatLon): { tour:
     wegpunkte: [entry, ...w.slice(m + 1, n - 1), w[0], ...w.slice(1, m + 1), entry],
     linie,
     warnungen,
-    namen: undefined,
+    // der Einstieg hat keinen Namen; die Namen der übrigen Punkte wandern mit
+    namen: prev.namen && prev.namen.length === n ? ['', ...prev.namen.slice(m + 1, n - 1), prev.namen[0], ...prev.namen.slice(1, m + 1), ''] : undefined,
     etappen: e ? [e[m], ...e.slice(m + 1), ...e.slice(0, m), e[m]] : undefined,
     legMin: undefined,
     legKm: undefined,

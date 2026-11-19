@@ -63,6 +63,7 @@ import { DEFAULT_AVOID } from '@/lib/valhalla';
 import { currentVehicle, useVehicles } from '@/lib/vehicle';
 import { VehiclePick } from '@/components/navigation/vehicle-pick';
 import { fmtG, rideStats, type RideStats, type Sample } from '@/lib/ride-stats';
+import { reanchorLoop } from '@/lib/plan-window';
 import { flatten, formatKm, haversine, type LatLon, type Tour } from '@/lib/tour';
 import { t, tr } from '@/i18n';
 import { closureNameT } from '@/lib/warning-dedupe';
@@ -80,9 +81,10 @@ const TOP_BASE_H = 200;
 
 export default function NavigationScreen() {
   useKeepAwake();
-  const active = useActiveTour();
+  /** die gewählte Tour, wie sie geplant ist; gefahren wird active (bei Rundtouren ab dem Einstieg gedreht, siehe unten) */
+  const picked = useActiveTour();
   // Fahrspaß vor dem Start wie im Planer (Konsistenzprüfung 15.11., K1)
-  const activeTour = active?.tour ?? null;
+  const activeTour = picked?.tour ?? null;
   const funScore = useMemo(() => (activeTour ? (tourFun(flatten(activeTour).map((x) => x.p))?.score ?? null) : null), [activeTour]);
   const insets = useSafeAreaInsets();
   const win = useWindowDimensions();
@@ -109,16 +111,36 @@ export default function NavigationScreen() {
     };
   }, []);
   const toStartKm = useMemo(() => {
-    const first = active ? flatten(active.tour)[0]?.p : undefined;
+    const first = picked ? flatten(picked.tour)[0]?.p : undefined;
     return here && first ? haversine(here, first) / 1000 : null;
-  }, [here, active]);
+  }, [here, picked]);
   const far = toStartKm != null && toStartKm > 30;
+  /** Rundtour: Start und Ziel sind derselbe Punkt */
+  const isLoop = useMemo(() => {
+    const w = picked?.tour.wegpunkte ?? [];
+    return w.length > 2 && w[0][0] === w[w.length - 1][0] && w[0][1] === w[w.length - 1][1];
+  }, [picked]);
   // Keine Wahl Einsteigen oder Startpunkt (Koray 14.11.): bei der Anfahrt zum Treffpunkt und wenn man schon
   // am Start steht (höchstens 300 m, etwa mit "Aktuelle Position" als Start)
-  const noEntryChoice = (toStartKm != null && toStartKm <= 0.3) || !!active?.tour.name.startsWith(tr('Zum Treffpunkt {place}', { place: '' }).trim());
+  const noEntryChoice = (toStartKm != null && toStartKm <= 0.3) || !!picked?.tour.name.startsWith(tr('Zum Treffpunkt {place}', { place: '' }).trim());
   const [entryTouched, setEntryTouched] = useState(false);
   // weit weg: über den Startpunkt in die ganze Tour (nur zum Start navigieren ist kein Anwendungsfall, Koray 6.11.)
-  const effEntry: NavEntry = noEntryChoice ? 'start' : entryTouched ? entry : far ? 'start' : entry;
+  // Rundtour: Einsteigen kostet nichts (die ganze Runde bleibt), deshalb auch bei weiter Anreise die Vorgabe
+  const effEntry: NavEntry = noEntryChoice ? 'start' : entryTouched ? entry : far && !isLoop ? 'start' : entry;
+  const ride = useRide();
+  /**
+   * Einsteigen in eine Rundtour (Koray 19.11.2026): Die Runde wird an der Stelle aufgeschnitten, die dem Standort
+   * am nächsten liegt, und von dort ganz gefahren. Vorher schnitt Einsteigen das Stück davor ab, und die Fahrt
+   * endete am alten Ziel (Gregor: in Barr eingestiegen, Ende in Gérardmer, 114 von 287 km fehlten).
+   * Nicht in der Gruppenfahrt, dort fahren alle dieselbe Tour. here wird nur einmal vor dem Start gelesen,
+   * die Tour dreht sich unterwegs also nicht weiter.
+   */
+  const active = useMemo(() => {
+    if (!picked || !isLoop || !here || effEntry !== 'einsteigen' || ride.status === 'aktiv') return picked;
+    const cut = reanchorLoop({ ...picked.tour, minutes: picked.tour.minutes ?? 0, fixes: 0 }, here);
+    if (!cut || cut.tour.wegpunkte === picked.tour.wegpunkte) return picked;
+    return { ...picked, tour: { ...picked.tour, wegpunkte: cut.tour.wegpunkte, linie: cut.tour.linie, warnungen: cut.tour.warnungen, namen: cut.tour.namen, etappen: cut.tour.etappen } };
+  }, [picked, isLoop, here, effEntry, ride.status]);
   const req = useMemo<NavRequest | null>(
     () =>
       active
@@ -132,7 +154,6 @@ export default function NavigationScreen() {
     [active, effEntry],
   );
   const [state, controls] = useNavigation(req);
-  const ride = useRide();
   const vehicles = useVehicles();
   const inRide = ride.status === 'aktiv';
   // Gruppen Bedienung nur, wenn wirklich jemand mitfährt (Tester Gregor 10.11.: allein gefahren, trotzdem Kurznachrichten)
@@ -1307,7 +1328,7 @@ export default function NavigationScreen() {
                     {
                       id: 'einsteigen',
                       label: t('Einsteigen'),
-                      hint: t('Schnell auf die Tour, möglichst nah am Anfang'),
+                      hint: isLoop ? t('Schnell auf die Runde, dann die ganze Runde ab dort') : t('Schnell auf die Tour, möglichst nah am Anfang'),
                     },
                     {
                       id: 'start',
