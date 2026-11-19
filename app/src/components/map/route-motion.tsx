@@ -33,14 +33,14 @@ export type LineMotion = {
 /** Dauern (ms): Aufzeichnen wie eine Ebene, Lichtlauf ruhig über die ganze Tour */
 const GROW_MS = 520;
 /** Lichtschein: etwa 40 km je Sekunde, eine Runde zwischen 5 und 12 s; Takt langsamer, er läuft ja dauernd */
-const FLOW_KMS = 40;
+const FLOW_KMS = 14;
 const FLOW_TICK_MS = 40;
 /**
- * Wie im Scribble (Koray 19.11., 23:13: die halb durchsichtige Fassung war nicht zu sehen): ein Stück der Linie
- * in Signal Orange mit weichem Hof, ohne Kopfpunkt. Läuft auf der Karte immer, auch während gerechnet wird.
+ * Koray 19.11.: erst nicht zu sehen (halb durchsichtig), dann zu laut und zu schnell (mit Hof, 40 km je s).
+ * Jetzt ein schmaler oranger Faden in der Mitte der weißen Linie, ruhig, ohne Hof und ohne Kopfpunkt.
+ * Läuft auf der Karte immer, auch während gerechnet wird.
  */
 const FLOW_COLOR = "#E2461C";
-const FLOW_HALO = "rgba(226,70,28,0.32)";
 const SHIMMER_MS = 1100;
 const TICK_MS = 40;
 
@@ -106,7 +106,7 @@ export function RouteMotion({
     true,
   );
   const grown = useProgress(grow && !reduced ? grow.key : null, GROW_MS);
-  const flowMs = Math.min(12000, Math.max(5000, (total / FLOW_KMS) * 1000));
+  const flowMs = Math.min(24000, Math.max(9000, (total / FLOW_KMS) * 1000));
   const flowing = flow && !reduced && total > 0;
   const flowAt = useProgress(
     flowing ? `fluss-${total.toFixed(2)}` : null,
@@ -122,7 +122,7 @@ export function RouteMotion({
     [pts, spacingKm],
   );
   const headKm = total * flowAt;
-  const glow = Math.max(1, total * 0.08);
+  const glow = Math.max(0.8, total * 0.05);
   const closed =
     pts.length > 2 && haversine(pts[0].p, pts[pts.length - 1].p) < 400;
 
@@ -207,19 +207,10 @@ export function RouteMotion({
       {flowing &&
         flowPieces(headKm, glow, total, closed).map(([a, b], i) => [
           <Polyline
-            key={`fluss-h-${i}-${Math.round(headKm * 20)}`}
-            coordinates={lineBetween(pts, a, b).map(ll)}
-            strokeColor={FLOW_HALO}
-            strokeWidth={10}
-            lineCap="round"
-            lineJoin="round"
-            zIndex={5}
-          />,
-          <Polyline
             key={`fluss-k-${i}-${Math.round(headKm * 20)}`}
             coordinates={lineBetween(pts, a, b).map(ll)}
             strokeColor={FLOW_COLOR}
-            strokeWidth={4}
+            strokeWidth={2}
             lineCap="round"
             lineJoin="round"
             zIndex={6}

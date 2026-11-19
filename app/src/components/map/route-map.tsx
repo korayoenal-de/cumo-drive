@@ -631,6 +631,7 @@ export function RouteMap({
           <Marker
             coordinate={ll(ziel)}
             anchor={END_ANCHOR}
+            centerOffset={END_OFFSET}
             title={onDragPoint ? undefined : tr('Ziel')}
             draggable={!!onDragPoint}
             onDragStart={() => {
@@ -649,6 +650,7 @@ export function RouteMap({
           <Marker
             coordinate={ll(start)}
             anchor={END_ANCHOR}
+            centerOffset={END_OFFSET}
             title={onDragPoint && !roundTrip ? undefined : roundTrip ? tr('Start und Ziel') : tr('Start')}
             draggable={!!onDragPoint && !roundTrip}
             onDragStart={() => {
@@ -875,6 +877,8 @@ const llCache = new WeakMap<LatLon[], { latitude: number; longitude: number }[]>
 /** Höhe des Schilds samt Stiel und Punkt; der Anker sitzt auf der Mitte des Punkts */
 const END_H = 24 + 6 + 10;
 const END_ANCHOR = { x: 0.5, y: (END_H - 5) / END_H };
+/** Apple Karten kennt anchor nicht, dort verschiebt centerOffset die Mitte (Punkt um END_H/2 minus Radius nach oben) */
+const END_OFFSET = { x: 0, y: -(END_H / 2 - 5) };
 
 /** Kleine Zielflagge im Schild: Karomuster 4 mal 4 */
 function Checker({ size = 10 }: { size?: number }) {
