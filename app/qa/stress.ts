@@ -18,12 +18,45 @@ const bad = (area: string, msg: string) => { fails++; console.log(`FEHLER  [${ar
 function safe<T>(area: string, f: () => T): T | undefined {
   try { return f(); } catch (e) { bad(area, `wirft: ${(e as Error).message}`); return undefined; }
 }
+/**
+ * Tempo des Rechners (Koray 19.11.2026). Die Budgets unten sind an einem normalen Rechner geeicht. Auf einem geteilten
+ * Rechner bei GitHub lief am 19.11. alles gleichmäßig 1,7 mal langsamer, und „Position ohne Hinweis" riss ihr Budget
+ * (1.690 und 1.770 statt 970 ms), ohne dass sich am Code etwas geändert hatte: kein Update ging raus.
+ * Darum misst der Test zuerst eine feste Rechenaufgabe (dieselbe Art Arbeit: Winkel und Abstände) und streckt die
+ * Budgets um den Faktor, um den der Rechner langsamer ist als die Eichung. Schneller als die Eichung zählt nicht
+ * (Faktor mindestens 1), und mehr als das Dreifache wird nicht ausgeglichen: dann ist der Lauf ohnehin nicht belastbar.
+ * So wird weiter rot, was im Code langsamer wurde, aber nicht mehr, was am Rechner liegt.
+ */
+const CALIB_REF_MS = 14;
+function calibrate(): number {
+  // wie die Kernlogik: viele kleine Punkt Paare im Speicher, je Punkt Abstand und Winkel
+  const pts: [number, number][] = Array.from({ length: 300_000 }, (_, i) => [46 + (i % 1000) * 1e-4, 11 + (i % 777) * 1e-4]);
+  let best = Infinity;
+  for (let run = 0; run < 15; run++) {
+    const t0 = performance.now();
+    let acc = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const [la, lo] = pts[i];
+      const [la0, lo0] = pts[i - 1];
+      const h = Math.sin((la - la0) * 0.0087) ** 2 + Math.cos(la * 0.0174) * Math.cos(la0 * 0.0174) * Math.sin((lo - lo0) * 0.0087) ** 2;
+      acc += Math.asin(Math.sqrt(Math.min(1, h))) + Math.atan2(lo - lo0, la - la0);
+    }
+    if (acc !== acc) throw new Error('Eichung liefert keine Zahl');
+    best = Math.min(best, performance.now() - t0);
+  }
+  return best;
+}
+const CALIB_MS = calibrate();
+const SPEED = Math.min(3, Math.max(1, CALIB_MS / CALIB_REF_MS));
+console.log(`tempo   Eichung ${CALIB_MS.toFixed(1)} ms (Bezug ${CALIB_REF_MS} ms), Budgets mal ${SPEED.toFixed(2)}`);
+
 function timed(area: string, budgetMs: number, f: () => unknown) {
+  const budget = budgetMs * SPEED;
   const t0 = performance.now();
   safe(area, f);
   const ms = performance.now() - t0;
-  console.log(`${ms > budgetMs ? 'LANGSAM' : 'zeit   '} ${area}: ${ms.toFixed(1)} ms (Budget ${budgetMs})`);
-  if (ms > budgetMs) fails++;
+  console.log(`${ms > budget ? 'LANGSAM' : 'zeit   '} ${area}: ${ms.toFixed(1)} ms (Budget ${budget.toFixed(0)}${SPEED > 1 ? `, geeicht ${budgetMs}` : ''})`);
+  if (ms > budget) fails++;
 }
 
 // 1. Entartete Eingaben
