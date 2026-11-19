@@ -152,6 +152,7 @@ export const TERMS_IT: LegalDoc = {
         'Le offerte a pagamento le acquisti nell’app tramite Apple. Valgono i prezzi mostrati nell’app prima dell’acquisto, IVA inclusa. La fatturazione avviene tramite il tuo ID Apple.',
         'Gli abbonamenti settimanali, mensili e annuali si rinnovano automaticamente per la stessa durata, a meno che tu non li disdica nelle impostazioni del tuo ID Apple almeno 24 ore prima della scadenza. Il pass stagionale vale per il periodo indicato e termina da solo.',
         'Se l’app offre una prova gratuita, alla sua scadenza parte l’abbonamento scelto, a meno che tu non lo disdica prima.',
+        'Senza un piano usi la versione gratuita: pianifichi ovunque e guidi nella tua zona di casa, attualmente entro 120 km da casa tua, in gruppi fino a tre auto e senza radio. Puoi cambiare la zona di casa una volta. Possiamo adeguare in futuro il contenuto della versione gratuita.',
         'L’acquisto lo concludi con Apple; Apple è il venditore degli abbonamenti e del pass stagionale. Un eventuale diritto di recesso lo eserciti quindi nei confronti di Apple, secondo le condizioni di Apple per gli acquisti sull’App Store. Recesso e rimborsi li chiedi ad Apple su reportaproblem.apple.com.',
         'Le licenze club e i pass evento per club e organizzatori vengono stipulati separatamente e fatturati. I membri di un club con licenza valida possono usare le funzioni senza un proprio abbonamento finché la licenza è attiva.',
       ],

@@ -1973,7 +1973,7 @@
   "Freie Zeit endet heute": "Free period ends today",
   "DEINE 12 MONATE": "YOUR 12 MONTHS",
   "Kostenlos": "Free",
-  "Du planst überall und fährst in deinem Heimatgebiet, mit Gruppen zu dritt. Mit einem Plan geht alles, überall.": "You plan anywhere and drive in your home area, in groups of three. With a plan you can do everything, everywhere.",
+  "Du planst überall und fährst in deinem Heimatgebiet, {km} km um deinen Heimatort, mit Gruppen zu dritt. Mit einem Plan geht alles, überall.": "You plan anywhere and drive in your home area, {km} km around your home town, in groups of three. With a plan you can do everything, everywhere.",
   "Vor dem Start": "Before launch",
   "Überall losfahren, ohne Heimatgebiet": "Drive anywhere, no home area",
   "Gruppenfahrten bis 6 Autos statt 3": "Group drives with up to 6 cars instead of 3",

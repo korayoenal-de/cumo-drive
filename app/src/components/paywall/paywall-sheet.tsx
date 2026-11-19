@@ -15,7 +15,7 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
 import { listDrives } from '@/lib/drives';
-import { isFreePhase, PRICES, useEntitlement, type PlanId } from '@/lib/entitlement';
+import { getEntitlement, HOME_RADIUS_KM, isFreePhase, PRICES, useEntitlement, type PlanId } from '@/lib/entitlement';
 import { readLibrary } from '@/lib/library';
 import { askMembership, closePaywall, limitsLive, usePaywall, type PaywallCtx, type PaywallKind } from '@/lib/paywall';
 import { purchase, restorePurchases } from '@/lib/purchase';
@@ -320,7 +320,7 @@ function Visual({ kind, ctx }: { kind: PaywallKind; ctx: PaywallCtx }) {
     <View style={[styles.card, styles.center]}>
       <View style={styles.homePill}>
         <SymbolView name="house.fill" size={15} tintColor={Colors.good} />
-        <AppText style={[styles.rowTitle, { color: Colors.good }]}>{ctx.homeName ?? t('Dein Heimatgebiet')}, 150 km</AppText>
+        <AppText style={[styles.rowTitle, { color: Colors.good }]}>{ctx.homeName ?? t('Dein Heimatgebiet')}, {getEntitlement().home?.radiusKm ?? HOME_RADIUS_KM} km</AppText>
       </View>
     </View>
   );

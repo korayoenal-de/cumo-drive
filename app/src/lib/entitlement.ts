@@ -80,7 +80,8 @@ export const PRIVATE_MAX_VEHICLES = 6;
  * Gruppe bis drei Fahrer, Funk nur mit der Mitgliedschaft des Organisators.
  */
 export const FREE_MAX_VEHICLES = 3;
-export const HOME_RADIUS_KM = 150;
+/** Radius des Heimatgebiets in km (Koray 19.11.2026: 120 statt 150). Maßgeblich ist der Wert vom Server, das hier ist der Ersatz. */
+export const HOME_RADIUS_KM = 120;
 
 const DAY = 24 * 60 * 60 * 1000;
 

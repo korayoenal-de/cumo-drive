@@ -18,7 +18,7 @@ Nach den 30 Tagen gibt es keine weiteren 14 Tage. Die Testphase läuft bei uns i
 
 Wer keinen Plan kauft, fällt auf die kostenlose Version, gesperrt wird niemand:
 
-* Planen überall, Fahren nur im Heimatgebiet (Kreis von 150 km, einmal änderbar)
+* Planen überall, Fahren nur im Heimatgebiet (Kreis von 120 km um den Heimatort, einmal änderbar; bis 19.11.2026 waren es 150 km)
 * Gruppenfahrt mit 3 Fahrern insgesamt, im Heimatgebiet, ohne Walkie Talkie
 * Funk für die ganze Gruppe, wenn der Organisator ein Abo hat
 * Ausfahrten: Teilnahme für 3 Personen insgesamt, anlegen nur mit Abo

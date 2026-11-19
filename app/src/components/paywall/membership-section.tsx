@@ -2,7 +2,7 @@
  * Abschnitt "Mitgliedschaft" für die Einstellungen: aktueller Stand und der Weg zur Paywall.
  */
 
-import { formatUntil, PRICES, type Entitlement } from '@/lib/entitlement';
+import { formatUntil, HOME_RADIUS_KM, PRICES, type Entitlement } from '@/lib/entitlement';
 
 import { limitsLive } from '@/lib/paywall';
 
@@ -11,7 +11,7 @@ import { t } from '@/i18n';
 export function describeEntitlement(e: Entitlement): { title: string; text: string } {
   const until = formatUntil(e.until);
   if (!e.active && e.source === 'kostenlos') {
-    return { title: t('Kostenlos'), text: t('Du planst überall und fährst in deinem Heimatgebiet, mit Gruppen zu dritt. Mit einem Plan geht alles, überall.') };
+    return { title: t('Kostenlos'), text: t('Du planst überall und fährst in deinem Heimatgebiet, {km} km um deinen Heimatort, mit Gruppen zu dritt. Mit einem Plan geht alles, überall.', { km: e.home?.radiusKm ?? HOME_RADIUS_KM }) };
   }
   if (!e.active) {
     return {

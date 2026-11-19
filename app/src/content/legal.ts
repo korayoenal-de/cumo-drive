@@ -164,6 +164,7 @@ export const AGB: LegalDoc = {
         'Kostenpflichtige Pläne kaufst du in der App über Apple. Es gelten die Preise, die die App vor dem Kauf anzeigt, inklusive Umsatzsteuer. Abgerechnet wird über deine Apple ID.',
         'Wochen, Monats und Jahresabo verlängern sich automatisch um dieselbe Laufzeit, wenn du nicht spätestens 24 Stunden vor Ablauf in den Einstellungen deiner Apple ID kündigst. Der Saison Pass gilt für die angegebene Zeit und endet von selbst.',
         'Bietet die App eine kostenlose Probezeit an, beginnt das gewählte Abo nach deren Ende, wenn du nicht vorher kündigst.',
+        'Ohne Plan nutzt du die kostenlose Version: Du planst überall und fährst in deinem Heimatgebiet, derzeit im Umkreis von 120 km um deinen Heimatort, mit Gruppen bis drei Fahrzeuge und ohne Funk. Das Heimatgebiet kannst du einmal ändern. Den Umfang der kostenlosen Version können wir für die Zukunft anpassen.',
         'Den Kauf schließt du mit Apple ab, Apple ist Verkäufer der Abos und des Saison Passes. Ein Widerrufsrecht übst du deshalb gegenüber Apple aus, nach den Bedingungen von Apple für Käufe im App Store. Widerruf und Erstattungen beantragst du bei Apple unter reportaproblem.apple.com.',
         'Club Lizenzen und Event Pässe für Clubs und Veranstalter schließen wir gesondert ab und rechnen per Rechnung ab. Mitglieder eines Clubs mit gültiger Lizenz können die Funktionen ohne eigenes Abo nutzen, solange die Lizenz läuft.',
       ],

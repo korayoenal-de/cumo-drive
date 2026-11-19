@@ -152,6 +152,7 @@ export const TERMS_EN: LegalDoc = {
         'You buy paid plans in the app via Apple. The prices shown in the app before purchase apply, including VAT. Billing is via your Apple ID.',
         'Weekly, monthly and yearly subscriptions renew automatically for the same term unless you cancel in your Apple ID settings at least 24 hours before the end. The Season Pass is valid for the stated period and ends by itself.',
         'If the app offers a free trial, the chosen subscription starts when it ends unless you cancel before.',
+        'Without a plan you use the free version: you plan anywhere and drive in your home area, currently within 120 km of your home town, in groups of up to three cars and without radio. You can change your home area once. We may adjust the scope of the free version for the future.',
         'You conclude the purchase with Apple; Apple is the seller of the subscriptions and the season pass. You therefore exercise any right of withdrawal towards Apple, under Apple’s terms for App Store purchases. You request withdrawal and refunds from Apple at reportaproblem.apple.com.',
         'Club licences and event passes for clubs and organisers are concluded separately and invoiced. Members of a club with a valid licence can use the features without their own subscription while the licence runs.',
       ],
