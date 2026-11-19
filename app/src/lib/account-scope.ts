@@ -11,7 +11,10 @@
  * - Vor jedem Abgleich prüft claimDevice, wem das Gerät gehört. Ist es ein anderes Konto (Sitzung abgelaufen, ohne
  *   Abmelden gewechselt), wird ebenfalls geräumt, bevor etwas zusammengeführt wird.
  * - Geräte ohne Vermerk (Stand vor diesem Update) werden dem angemeldeten Konto zugeschrieben und nicht geräumt,
- *   damit niemand beim Update etwas verliert.
+ *   damit niemand beim Update etwas verliert. Das gilt nur für eine laufende Sitzung.
+ * - Wer sich neu anmeldet, startet ohne Reste: liegt kein Vermerk vor, räumt clearUnowned vor der Anmeldung
+ *   (Koray 19.11.: in einem Browser ohne Vermerk stand das Auto eines früheren Kontos im neuen Konto). Ohne Konto
+ *   lässt sich die App nicht nutzen, es gibt also keine Daten eines Gastes, die dabei verloren gehen könnten.
  *
  * Einstellungen des Geräts (Stimme, Karte, Vermeiden, Sprache) bleiben, sie sagen nichts über eine Person.
  */
@@ -84,4 +87,15 @@ export async function releaseDevice() {
   } catch {
     // siehe oben
   }
+}
+
+/** Vor einer neuen Anmeldung: Daten ohne Vermerk stammen von einem früheren Konto und werden nicht übernommen */
+export async function clearUnowned() {
+  try {
+    if (await AsyncStorage.getItem(OWNER_KEY)) return;
+  } catch {
+    return;
+  }
+  claimed = null;
+  await wipe();
 }

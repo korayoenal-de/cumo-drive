@@ -6,7 +6,7 @@ import type { Session } from '@supabase/supabase-js';
 import { useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 
-import { releaseDevice } from './account-scope';
+import { clearUnowned, releaseDevice } from './account-scope';
 import { forgetPush } from './push';
 import { supabase } from './supabase';
 import { LEGAL_VERSION } from '@/content/legal';
@@ -68,6 +68,8 @@ function german(msg: string): string {
 }
 
 export async function signIn(email: string, password: string) {
+  // Reste eines früheren Kontos ohne Vermerk räumen, bevor der Abgleich sie dem neuen Konto zuschreibt
+  await clearUnowned();
   const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
   if (error) throw new Error(german(error.message));
 }
