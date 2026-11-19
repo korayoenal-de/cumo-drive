@@ -78,6 +78,8 @@ export type RouteMapProps = {
   onPressMap?: () => void;
   /** Pässe, die schon als Punkt in der Planung stehen: sie erscheinen markiert */
   pickedPassIds?: ReadonlySet<string>;
+  /** Zwischenziel, dessen Aktionen gerade über der Karte schweben: 30 % größer (Koray 20.11.), id wie in pins */
+  selectedPinId?: string | null;
   /** Pass, dessen Aktionen gerade über der Karte schweben: groß, hell umrandet, obenauf (Koray 16.11.) */
   selectedPassId?: string | null;
   /** Kompass unter dem Knopf Karteneinstellungen (Abstand von oben); null blendet ihn aus (Blatt höher als Mitte). Erscheint nur bei gedrehter Karte. */

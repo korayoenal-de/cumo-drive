@@ -88,6 +88,7 @@ export function RouteMap({
   overlayTop = 0,
   pickedPassIds,
   selectedPassId,
+  selectedPinId,
   compassTop,
   legalBottom,
   flyTo,
@@ -143,6 +144,9 @@ export function RouteMap({
     return () => clearTimeout(t);
   }, [pinsKey]);
   const pinsFresh = pinsFreshKey !== pinsKey;
+  // Punkt in der Hand (Ziehen) oder gewählt: 30 % größer, bis er losgelassen wird (Koray 20.11.2026)
+  const [held, setHeld] = useState<string | null>(null);
+  const big = (id: string) => held === id || selectedPinId === id;
   const insets = useSafeAreaInsets();
   const [ready, setReady] = useState(false);
   // nach eigenem Verschieben folgt die Kamera eine Weile nicht
@@ -636,14 +640,16 @@ export function RouteMap({
             draggable={!!onDragPoint}
             onDragStart={() => {
               haptic('abheben');
+              setHeld('ziel');
               onDragStart?.();
             }}
             onDragEnd={(e) => {
               haptic('ablegen');
+              setHeld(null);
               onDragPoint?.('ziel', [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
             }}
             zIndex={20}>
-            <EndTag kind="ziel" />
+            <EndTag kind="ziel" big={big('ziel')} />
           </Marker>
         )}
         {start && (
@@ -655,14 +661,16 @@ export function RouteMap({
             draggable={!!onDragPoint && !roundTrip}
             onDragStart={() => {
               haptic('abheben');
+              setHeld('start');
               onDragStart?.();
             }}
             onDragEnd={(e) => {
               haptic('ablegen');
+              setHeld(null);
               onDragPoint?.('start', [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
             }}
             zIndex={21}>
-            <EndTag kind={roundTrip ? 'runde' : 'start'} />
+            <EndTag kind={roundTrip ? 'runde' : 'start'} big={big('start')} />
           </Marker>
         )}
 
@@ -711,14 +719,16 @@ export function RouteMap({
             draggable={!!onDragPoint}
             onDragStart={() => {
               haptic('abheben');
+              setHeld(pin.id);
               onDragStart?.();
             }}
             onDragEnd={(e) => {
               haptic('ablegen');
+              setHeld(null);
               onDragPoint?.(pin.id, [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
             }}
-            tracksViewChanges={pinsFresh}>
-            <View style={styles.pin}>
+            tracksViewChanges={pinsFresh || big(pin.id)}>
+            <View style={[styles.pin, big(pin.id) && styles.big]}>
               <AppText style={styles.pinText}>{pin.label}</AppText>
             </View>
           </Marker>
@@ -892,7 +902,7 @@ function Checker({ size = 10 }: { size?: number }) {
 }
 
 /** Start, Ziel oder beides (Runde) als Schild wie an einer Rallye Etappe (Konzept B, Design Artefakt 19.11.) */
-function EndTag({ kind }: { kind: 'start' | 'ziel' | 'runde' }) {
+function EndTag({ kind, big }: { kind: 'start' | 'ziel' | 'runde'; big?: boolean }) {
   const label = kind === 'start' ? tr('Start') : kind === 'ziel' ? tr('Ziel') : tr('Start und Ziel');
   const startPart = (
     <View style={[styles.endPart, styles.endStart]}>
@@ -907,7 +917,7 @@ function EndTag({ kind }: { kind: 'start' | 'ziel' | 'runde' }) {
   );
   const tone = kind === 'ziel' ? Colors.text : Colors.signal;
   return (
-    <View style={styles.endWrap} accessibilityLabel={label}>
+    <View style={[styles.endWrap, big && styles.bigEnd]} accessibilityLabel={label}>
       <View style={styles.endTag}>
         {kind !== 'ziel' && startPart}
         {kind !== 'start' && zielPart}
@@ -989,6 +999,9 @@ const styles = StyleSheet.create({
   noTouch: { pointerEvents: 'none' },
   // Start und Ziel als Schild (Koray 19.11.2026, Konzept B): Tafel mit Wort, kurzer Stiel, Punkt genau auf dem Ort
   endWrap: { height: END_H, alignItems: 'center' },
+  // in der Hand oder gewählt: 30 % größer; beim Schild um den Punkt unten, damit er auf dem Ort bleibt
+  big: { transform: [{ scale: 1.3 }] },
+  bigEnd: { transformOrigin: `50% ${END_H - 5}px`, transform: [{ scale: 1.3 }] },
   endTag: { height: 24, flexDirection: 'row', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.55)' },
   endPart: { height: 24, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9 },
   endStart: { backgroundColor: Colors.signal },
