@@ -59,6 +59,8 @@ function german(msg: string): string {
   if (/already registered|already exists/i.test(msg)) return t('Diese E-Mail ist schon registriert. Bitte anmelden.');
   if (/password should be at least|weak password/i.test(msg)) return t('Das Passwort braucht mindestens 8 Zeichen.');
   if (/email not confirmed/i.test(msg)) return t('Die E-Mail ist noch nicht bestätigt. Bitte bestätige sie über die Mail, die wir dir geschickt haben.');
+  if (/security purposes|only request this after/i.test(msg)) return t('Bitte warte kurz, bevor du es noch einmal versuchst.');
+  if (/should be different|same password/i.test(msg)) return t('Das neue Passwort muss sich vom alten unterscheiden.');
   if (/rate limit/i.test(msg)) return t('Zu viele Versuche. Bitte kurz warten.');
   if (/invalid.*email|unable to validate email/i.test(msg)) return t('Das sieht nicht nach einer gültigen E-Mail aus.');
   // Die Mail ging nicht raus oder der Mailserver war zu langsam (Koray 19.11.: englische Rohmeldungen im Formular)
@@ -100,6 +102,48 @@ export async function signUp(email: string, password: string, consent: SignUpCon
   // Kein Fehler: das Konto ist angelegt und wartet auf den Klick in der Mail. Eigene Klasse, damit das Formular es
   // grün als Erfolg zeigt statt rot (Koray 19.11.)
   if (!data.session) throw new SignUpPending();
+}
+
+/**
+ * Passwort vergessen (Koray 19.11.2026): schickt eine Mail mit Link auf cumodrive.de/passwort. Meldet nie, ob es
+ * zu der Adresse ein Konto gibt.
+ */
+export async function requestPasswordReset(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: 'https://cumodrive.de/passwort' });
+  if (error) throw new Error(german(error.message));
+}
+
+/** Code, den diese Seite schon eingelöst hat */
+let redeemed: string | null = null;
+
+/** Der Link aus der Mail ist abgelaufen oder schon benutzt */
+export class ResetLinkInvalid extends Error {
+  constructor() {
+    super('Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere bitte einen neuen an.');
+    this.name = 'ResetLinkInvalid';
+  }
+}
+
+/**
+ * Neues Passwort setzen, auf der Seite /passwort: Code aus der Mail einlösen, Passwort ändern, wieder abmelden.
+ * Der Code wird erst beim Absenden eingelöst, damit ein Mailprogramm, das Links vorab öffnet, ihn nicht verbraucht.
+ * Danach meldet man sich mit dem neuen Passwort an, in der App oder im Web Planer.
+ */
+export async function setNewPassword(tokenHash: string | null, password: string) {
+  if (password.length < 8) throw new Error(t('Das Passwort braucht mindestens 8 Zeichen.'));
+  if (!tokenHash) throw new ResetLinkInvalid();
+  // Immer erst den Code einlösen: nur er sagt, um welches Konto es geht. Eine Sitzung, die im Browser schon besteht,
+  // kann ein anderes Konto sein. Ausnahme ist der zweite Versuch mit demselben Code (etwa nach einem abgelehnten
+  // Passwort): dann ist er schon eingelöst und die Sitzung daraus steht noch.
+  if (redeemed !== tokenHash) {
+    const { error: bad } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+    if (bad) throw new ResetLinkInvalid();
+    redeemed = tokenHash;
+  }
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw new Error(german(error.message));
+  redeemed = null;
+  await signOut();
 }
 
 /**

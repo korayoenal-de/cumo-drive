@@ -12,16 +12,29 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { ConsentRow, LegalLinks } from '@/components/auth/consent-row';
 import { NameField, useNameCheck } from '@/components/auth/name-field';
-import { signIn, SignUpPending } from '@/lib/auth';
+import { router } from 'expo-router';
+import { requestPasswordReset, ResetLinkInvalid, setNewPassword, signIn, SignUpPending } from '@/lib/auth';
 import { signUpWithName } from '@/lib/profile';
 import { t } from '@/i18n';
 
 /** Im Browser (/login, /registrieren) schmal und mittig, mit Logo zurück zur Startseite. */
 const WEB = Platform.OS === 'web';
 
-export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'login' | 'register'; onHome?: () => void } = {}) {
+/**
+ * login und register wie bisher. reset: Passwort vergessen, nur die Adresse, schickt den Link. newpw: Ziel des Links
+ * (Seite /passwort), nur das neue Passwort (Koray 19.11.2026).
+ */
+type Mode = 'login' | 'register' | 'reset' | 'newpw';
+
+/** Code aus dem Link der Mail, nur im Browser */
+function resetToken(): string | null {
+  if (!WEB || typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.search).get('token_hash');
+}
+
+export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: Mode; onHome?: () => void } = {}) {
   const insets = useSafeAreaInsets();
-  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
@@ -33,7 +46,9 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
   // Opt in (Koray 17.11.): Nutzungsbedingungen und Datenschutz sind Pflicht, Neuigkeiten freiwillig und aus
   const [terms, setTerms] = useState(false);
   const [news, setNews] = useState(false);
-  const ready = !!email.trim() && pw.length > 0 && !busy && (mode === 'login' || (check.state === 'frei' && terms));
+  const needEmail = mode !== 'newpw';
+  const needPw = mode !== 'reset';
+  const ready = (!needEmail || !!email.trim()) && (!needPw || pw.length > 0) && !busy && (mode !== 'register' || (check.state === 'frei' && terms));
 
   const submit = async () => {
     if (!ready) return;
@@ -41,9 +56,27 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
     setErr(null);
     setDone(null);
     try {
-      if (mode === 'login') await signIn(email, pw);
-      else await signUpWithName(email, pw, name, { terms: true, news });
+      if (mode === 'login') {
+        await signIn(email, pw);
+        // Die Seite /passwort leitet Angemeldete nicht selbst weiter, anders als /login
+        if (WEB && initialMode === 'newpw') router.replace('/planer');
+      } else if (mode === 'reset') {
+        await requestPasswordReset(email);
+        setDone(t('Wenn es zu dieser Adresse ein Konto gibt, ist eine Mail mit dem Link unterwegs. Schau auch im Spam Ordner nach.'));
+        setMode('login');
+      } else if (mode === 'newpw') {
+        await setNewPassword(resetToken(), pw);
+        setDone(t('Dein Passwort ist geändert. Melde dich jetzt damit an, hier oder in der App.'));
+        setMode('login');
+        setPw('');
+      } else await signUpWithName(email, pw, name, { terms: true, news });
     } catch (e) {
+      if (e instanceof ResetLinkInvalid) {
+        setErr(t('Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere bitte einen neuen an.'));
+        setMode('reset');
+        setPw('');
+        return;
+      }
       if (e instanceof SignUpPending) {
         setDone(t('Geschafft. Öffne die Bestätigungsmail und melde dich danach hier an.'));
         setMode('login');
@@ -63,13 +96,21 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
               CUMO DRIVE
             </AppText>
           </Pressable>
-          <AppText variant="display">{mode === 'login' ? t('Willkommen\nzurück') : t('Konto\nanlegen')}</AppText>
-          <AppText muted>{t('Kurvige Touren planen, in der Gruppe fahren und jede Fahrt festhalten. Deine Touren liegen in deinem Konto, in der App und im Web Planer.')}</AppText>
+          <AppText variant="display">
+            {mode === 'login' ? t('Willkommen\nzurück') : mode === 'register' ? t('Konto\nanlegen') : mode === 'reset' ? t('Passwort\nvergessen') : t('Neues\nPasswort')}
+          </AppText>
+          <AppText muted>
+            {mode === 'reset'
+              ? t('Gib deine E Mail Adresse ein. Wir schicken dir einen Link, mit dem du ein neues Passwort setzt.')
+              : mode === 'newpw'
+                ? t('Wähle ein neues Passwort für dein Konto. Danach meldest du dich damit an.')
+                : t('Kurvige Touren planen, in der Gruppe fahren und jede Fahrt festhalten. Deine Touren liegen in deinem Konto, in der App und im Web Planer.')}
+          </AppText>
         </View>
 
         <View style={styles.gapM}>
           {mode === 'register' && <NameField value={name} onChange={setName} check={check} />}
-          <TextField maxFontSizeMultiplier={1.2}
+          {needEmail && <TextField maxFontSizeMultiplier={1.2}
             value={email}
             onChangeText={setEmail}
             placeholder={t('E-Mail')}
@@ -78,23 +119,36 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             autoComplete="email"
             textContentType="emailAddress"
             keyboardType="email-address"
-            returnKeyType="next"
+            returnKeyType={needPw ? 'next' : 'go'}
+            onSubmitEditing={needPw ? undefined : () => void submit()}
             style={styles.input}
             accessibilityLabel={t('E-Mail')}
-          />
-          <TextField maxFontSizeMultiplier={1.2}
+          />}
+          {needPw && <TextField maxFontSizeMultiplier={1.2}
             value={pw}
             onChangeText={setPw}
-            placeholder={mode === 'register' ? t('Passwort, mindestens 8 Zeichen') : t('Passwort')}
+            placeholder={mode === 'register' ? t('Passwort, mindestens 8 Zeichen') : mode === 'newpw' ? t('Neues Passwort, mindestens 8 Zeichen') : t('Passwort')}
             placeholderTextColor={Colors.muted}
             secureTextEntry
-            autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-            textContentType={mode === 'register' ? 'newPassword' : 'password'}
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            textContentType={mode === 'login' ? 'password' : 'newPassword'}
             returnKeyType="go"
             onSubmitEditing={() => void submit()}
             style={styles.input}
-            accessibilityLabel={t('Passwort')}
-          />
+            accessibilityLabel={mode === 'newpw' ? t('Neues Passwort') : t('Passwort')}
+          />}
+          {mode === 'login' && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setMode('reset');
+                setErr(null);
+                setDone(null);
+              }}
+              style={styles.forgot}>
+              <AppText style={styles.link}>{t('Passwort vergessen?')}</AppText>
+            </Pressable>
+          )}
           {mode === 'register' && (
             <View style={styles.consent}>
               <ConsentRow checked={terms} onChange={setTerms} title={t('Ich stimme den Nutzungsbedingungen zu und habe den Datenschutz gelesen.')} />
@@ -114,7 +168,7 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             </AppText>
           )}
           <Pressable accessibilityRole="button" disabled={!ready} onPress={() => void submit()} style={[styles.primary, !ready && styles.disabled]}>
-            {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{mode === 'login' ? t('Anmelden') : t('Registrieren')}</AppText>}
+            {busy ? <ActivityIndicator color={Colors.onSignal} /> : <AppText style={styles.primaryText}>{mode === 'login' ? t('Anmelden') : mode === 'register' ? t('Registrieren') : mode === 'reset' ? t('Link senden') : t('Passwort speichern')}</AppText>}
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -124,8 +178,8 @@ export function AuthScreen({ initialMode = 'login', onHome }: { initialMode?: 'l
             }}
             style={styles.switch}>
             <AppText muted>
-              {mode === 'login' ? t('Noch kein Konto? ') : t('Schon ein Konto? ')}
-              <AppText style={styles.link}>{mode === 'login' ? t('Registrieren') : t('Anmelden')}</AppText>
+              {mode === 'login' ? t('Noch kein Konto? ') : mode === 'register' ? t('Schon ein Konto? ') : ''}
+              <AppText style={styles.link}>{mode === 'login' ? t('Registrieren') : mode === 'register' ? t('Anmelden') : t('Zurück zur Anmeldung')}</AppText>
             </AppText>
           </Pressable>
         </View>
@@ -150,6 +204,7 @@ const styles = StyleSheet.create({
   disabled: { backgroundColor: Colors.surface2 },
   error: { color: Colors.danger, fontFamily: Fonts.semibold },
   done: { color: Colors.good, fontFamily: Fonts.semibold },
+  forgot: { minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center' },
   switch: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   link: { color: Colors.text, fontFamily: Fonts.semibold },
 });

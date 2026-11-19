@@ -2012,5 +2012,21 @@
   "Der Link zur Bestätigung ist nicht mehr gültig.": "Il link di conferma non è più valido.",
   "Zur Anmeldung": "Vai all'accesso",
   "Wir bestätigen gerade deine E Mail Adresse.": "Stiamo confermando il tuo indirizzo email.",
-  "Deine E Mail Adresse für Cumo Drive wird bestätigt.": "Il tuo indirizzo email per Cumo Drive è in fase di conferma."
+  "Deine E Mail Adresse für Cumo Drive wird bestätigt.": "Il tuo indirizzo email per Cumo Drive è in fase di conferma.",
+  "Bitte warte kurz, bevor du es noch einmal versuchst.": "Attendi un momento prima di riprovare.",
+  "Das neue Passwort muss sich vom alten unterscheiden.": "La nuova password deve essere diversa dalla precedente.",
+  "Wenn es zu dieser Adresse ein Konto gibt, ist eine Mail mit dem Link unterwegs. Schau auch im Spam Ordner nach.": "Se esiste un account con questo indirizzo, è in arrivo un’email con il link. Controlla anche la cartella spam.",
+  "Dein Passwort ist geändert. Melde dich jetzt damit an, hier oder in der App.": "La tua password è stata cambiata. Accedi ora con quella, qui o nell’app.",
+  "Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere bitte einen neuen an.": "Questo link è scaduto o è già stato usato. Richiedine uno nuovo.",
+  "Passwort\nvergessen": "Password\ndimenticata",
+  "Neues\nPasswort": "Nuova\npassword",
+  "Gib deine E Mail Adresse ein. Wir schicken dir einen Link, mit dem du ein neues Passwort setzt.": "Inserisci il tuo indirizzo email. Ti inviamo un link per impostare una nuova password.",
+  "Wähle ein neues Passwort für dein Konto. Danach meldest du dich damit an.": "Scegli una nuova password per il tuo account. Poi accedi con quella.",
+  "Neues Passwort, mindestens 8 Zeichen": "Nuova password, almeno 8 caratteri",
+  "Neues Passwort": "Nuova password",
+  "Passwort vergessen?": "Password dimenticata?",
+  "Link senden": "Invia link",
+  "Passwort speichern": "Salva password",
+  "Zurück zur Anmeldung": "Torna all’accesso",
+  "Neues Passwort | Cumo Drive": "Nuova password | Cumo Drive"
 }

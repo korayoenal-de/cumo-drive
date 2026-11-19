@@ -5,6 +5,7 @@ Stand 19.11.2026. Die Vorlagen werden im Supabase Dashboard eingetragen (Authent
 | Vorlage | Datei | Betreff |
 | --- | --- | --- |
 | Confirm signup | confirm-signup.html | siehe unten |
+| Reset password | reset-password.html | siehe unten (seit 19.11.) |
 
 Betreff (ein Feld, drei Sprachen):
 
@@ -27,3 +28,11 @@ Der Link zeigt auf unsere eigene Seite und trägt nur den Code: `https://cumodri
 SMTP in Supabase: Host `smtp-relay.brevo.com`, Port 587, Benutzer aus Brevo (SMTP und API), Passwort ist der SMTP Schlüssel aus Brevo (trägt Koray ein). Das Postfach beim Hoster war zu langsam: Supabase bricht nach 10 Sekunden ab und nimmt die Registrierung zurück.
 
 DNS für cumodrive.com (DomainFactory): TXT `@` mit dem Brevo Code, CNAME `brevo1._domainkey` und `brevo2._domainkey` auf die DKIM Namen von Brevo, TXT `_dmarc` mit `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com`. Geprüft an einer Mail vom 19.11.: SPF, DKIM und DMARC bestanden.
+
+## Passwort vergessen (seit 19.11.2026)
+
+Vorlage „Reset password“ aus `reset-password.html`. Der Link zeigt auf `https://cumodrive.de/passwort?token_hash={{ .TokenHash }}&type=recovery`; die Seite löst den Code erst beim Absenden ein, setzt das Passwort und meldet wieder ab (`setNewPassword` in `auth.ts`). Betreff:
+
+```
+{{ $l := printf "%v" .Data.lang }}{{ if eq $l "en" }}New password for CUMO DRIVE{{ else if eq $l "it" }}Nuova password per CUMO DRIVE{{ else }}Neues Passwort für CUMO DRIVE{{ end }}
+```

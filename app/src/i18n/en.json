@@ -2012,5 +2012,21 @@
   "Der Link zur Bestätigung ist nicht mehr gültig.": "The confirmation link is no longer valid.",
   "Zur Anmeldung": "Go to sign in",
   "Wir bestätigen gerade deine E Mail Adresse.": "We are confirming your email address.",
-  "Deine E Mail Adresse für Cumo Drive wird bestätigt.": "Your email address for Cumo Drive is being confirmed."
+  "Deine E Mail Adresse für Cumo Drive wird bestätigt.": "Your email address for Cumo Drive is being confirmed.",
+  "Bitte warte kurz, bevor du es noch einmal versuchst.": "Please wait a moment before trying again.",
+  "Das neue Passwort muss sich vom alten unterscheiden.": "The new password must be different from the old one.",
+  "Wenn es zu dieser Adresse ein Konto gibt, ist eine Mail mit dem Link unterwegs. Schau auch im Spam Ordner nach.": "If there is an account for this address, an email with the link is on its way. Check your spam folder too.",
+  "Dein Passwort ist geändert. Melde dich jetzt damit an, hier oder in der App.": "Your password has been changed. Log in with it now, here or in the app.",
+  "Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere bitte einen neuen an.": "This link has expired or has already been used. Please request a new one.",
+  "Passwort\nvergessen": "Forgot\npassword",
+  "Neues\nPasswort": "New\npassword",
+  "Gib deine E Mail Adresse ein. Wir schicken dir einen Link, mit dem du ein neues Passwort setzt.": "Enter your email address. We will send you a link to set a new password.",
+  "Wähle ein neues Passwort für dein Konto. Danach meldest du dich damit an.": "Choose a new password for your account. Then log in with it.",
+  "Neues Passwort, mindestens 8 Zeichen": "New password, at least 8 characters",
+  "Neues Passwort": "New password",
+  "Passwort vergessen?": "Forgot password?",
+  "Link senden": "Send link",
+  "Passwort speichern": "Save password",
+  "Zurück zur Anmeldung": "Back to login",
+  "Neues Passwort | Cumo Drive": "New password | Cumo Drive"
 }
