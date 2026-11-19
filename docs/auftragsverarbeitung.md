@@ -1,6 +1,6 @@
 # Verträge zur Auftragsverarbeitung
 
-Stand: 18. November 2026. Recherche von Claude auf den Seiten der Anbieter, keine Rechtsberatung.
+Stand: 19. November 2026. Recherche von Claude auf den Seiten der Anbieter, keine Rechtsberatung.
 
 Der CDC ist gegenüber den Nutzern verantwortlich. Jeder Dienst, der in unserem Auftrag Daten der Nutzer verarbeitet, braucht einen Vertrag nach Art. 28 DSGVO. Bei vier der fünf Anbieter ist dieser Vertrag schon Teil der Nutzungsbedingungen, die mit dem Konto angenommen wurden. Zu tun ist dort nur: Fassung als PDF ablegen. Bei Contabo muss der Vertrag aktiv abgeschlossen werden.
 
@@ -8,6 +8,7 @@ Der CDC ist gegenüber den Nutzern verantwortlich. Jeder Dienst, der in unserem 
 |---|---|---|---|---|
 | Supabase (Supabase Pte. Ltd., Singapur; Server Frankfurt) | Konto, Touren, Fahrten, Nachrichten, Ausfahrten, Rückmeldungen, Fehlerberichte | Der Zusatz zur Datenverarbeitung ist Teil der Nutzungsbedingungen und gilt ab deren Annahme. Mit der Annahme gelten auch die Standardvertragsklauseln als unterschrieben | Standardvertragsklauseln (im Zusatz enthalten) | PDF der aktuellen Fassung ablegen. Im Dashboard unter den Dokumenten der Organisation nachsehen, ob dort ein unterschriebenes Exemplar angeboten wird |
 | Contabo (Contabo GmbH, Deutschland) | Routing Anfragen mit Standort und Konto Token, Server Protokolle | Aktiv im Kundenbereich: Menü „Data Processing Agreement“, „Create new Data Processing Agreement“, Kundendaten bestätigen, Dienste, Datenarten und Betroffene ankreuzen, Vorschau prüfen, abschließen | keine, Server in Deutschland | Abgeschlossen am 18.11.2026 für beide Server (Koray). PDF im Projektordner ablegen |
+| Brevo (Sendinblue SAS, Frankreich) | E Mail Adresse, Inhalt der Bestätigungsmail, Zustelldaten | Noch zu prüfen: bei Brevo ist der Vertrag zur Auftragsverarbeitung nach unserem Stand Teil der Nutzungsbedingungen. Im Konto nachsehen und die Fassung sichern | keine nach unserem Stand, Sitz in der EU; Unterauftragnehmer in der Liste von Brevo prüfen | Seit 19.11.2026 im Einsatz für die Bestätigungsmail. Vertrag prüfen und PDF ablegen |
 | LiveKit (LiveKit Inc., USA; Server Frankfurt) | Stimme im Funk, Anzeigename, Kennung | Der Zusatz ist Teil der Nutzungsbedingungen und gilt ab deren Annahme | EU US Data Privacy Framework, ersatzweise Standardvertragsklauseln (im Zusatz) | PDF ablegen |
 | RevenueCat (RevenueCat Inc., USA) | Konto Kennung, Käufe, Abo Status | Der Zusatz ist Teil der Vereinbarung mit RevenueCat | Standardvertragsklauseln (im Zusatz) | PDF ablegen |
 | Expo (650 Industries Inc., USA) | Push Tokens und Inhalte der Mitteilungen, Update Abrufe mit IP Adresse | Die Nutzungsbedingungen (Abschnitt 3.2) nennen Expo als Auftragsverarbeiter und verweisen auf Standardvertragsklauseln. Einen eigenen Zusatz verlinken sie nicht | EU US Data Privacy Framework, Standardvertragsklauseln | Angefragt am 18.11. Antwort vom Expo Support am selben Tag: Der Zusatz wird gerade überarbeitet und ist derzeit nicht verfügbar, Expo meldet sich. Antwort ablegen, bis dahin gelten die Nutzungsbedingungen mit Datum |

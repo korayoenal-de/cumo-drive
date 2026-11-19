@@ -6,7 +6,7 @@ import type { LegalDoc } from './legal';
 
 const CONTACT = 'kontakt@cumodrive.com';
 const IMPRINT = 'https://cumodrive.de/impressum';
-const STAND = 'As of 18 November 2026. This is a translation; the German version prevails.';
+const STAND = 'As of 19 November 2026. This is a translation; the German version prevails.';
 
 export const PRIVACY_EN: LegalDoc = {
   title: 'Privacy',
@@ -57,6 +57,7 @@ export const PRIVACY_EN: LegalDoc = {
       p: ['We only pass data to services we need for the respective function. Data processing agreements under Art. 28 GDPR are in place with processors.'],
       list: [
         'Supabase (Supabase Pte. Ltd., Singapore, servers in Frankfurt am Main): account, tours, drives, vehicles, messages, club drives with chat, feedback, error reports, pass status and the real time connection of group drives. Processor; transfers outside the EU are based on standard contractual clauses.',
+        'Brevo (Sendinblue SAS, France): sends the email that confirms your email address on our behalf. Your email address, the content of that email and delivery data are transmitted. Processor based in the EU.',
         'Our own routing servers at Contabo (Contabo GmbH, Germany): calculate routes from your waypoints. Processor.',
         'Place search, elevation profile, speed limits and stops along the route are also calculated by our own servers at Contabo. Only if they are unavailable does the app fall back to Photon by komoot (komoot GmbH, Germany) with the search term or coordinate and the Valhalla server of FOSSGIS e.V. (Germany) with the line of the route.',
         'Apple (Apple Distribution International, Ireland, and Apple Inc., USA): App Store, subscriptions, map display with Apple Maps, CarPlay and weather at the passes via WeatherKit. For the weather we send the location of the pass, not your location.',

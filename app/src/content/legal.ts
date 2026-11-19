@@ -17,8 +17,8 @@ const KONTAKT = 'kontakt@cumodrive.com';
 const IMPRESSUM = 'https://cumodrive.de/impressum';
 
 /** Fassung der Rechtstexte, wird bei der Registrierung als Nachweis gespeichert (consents) */
-export const LEGAL_VERSION = '2026-11-18';
-export const STAND = 'Stand: 18. November 2026.';
+export const LEGAL_VERSION = '2026-11-19';
+export const STAND = 'Stand: 19. November 2026.';
 
 export const DATENSCHUTZ: LegalDoc = {
   title: 'Datenschutz',
@@ -69,6 +69,7 @@ export const DATENSCHUTZ: LegalDoc = {
       p: ['Wir geben Daten nur an Dienste weiter, die wir für die jeweilige Funktion brauchen. Mit Auftragsverarbeitern bestehen Verträge nach Art. 28 DSGVO.'],
       list: [
         'Supabase (Supabase Pte. Ltd., Singapur, Server in Frankfurt am Main): Konto, Touren, Fahrten, Fahrzeuge, Nachrichten, Ausfahrten mit Chat, Rückmeldungen, Fehlerberichte, Passstatus und die Echtzeit Verbindung der Gruppenfahrt. Auftragsverarbeiter; Grundlage für eine Übermittlung außerhalb der EU sind Standardvertragsklauseln.',
+        'Brevo (Sendinblue SAS, Frankreich): verschickt in unserem Auftrag die Mail zur Bestätigung deiner E Mail Adresse. Übermittelt werden deine E Mail Adresse, der Inhalt dieser Mail und Zustelldaten. Auftragsverarbeiter mit Sitz in der EU.',
         'Eigener Routing Server bei Contabo (Contabo GmbH, Deutschland): berechnet Routen aus deinen Wegpunkten. Auftragsverarbeiter.',
         'Apple (Apple Distribution International, Irland, und Apple Inc., USA): App Store, Abos, Kartenanzeige mit Apple Maps, CarPlay und Wetter an den Pässen über WeatherKit. Für das Wetter übermitteln wir die Lage des Passes, nicht deinen Standort.',
         'Expo (650 Industries Inc., USA): liefert Aktualisierungen der App aus. Dabei fallen IP-Adresse und Gerätedaten an. Grundlage für die Übermittlung in die USA ist das EU US Data Privacy Framework.',

@@ -2010,5 +2010,7 @@
   "Link nicht mehr gültig": "Link no longer valid",
   "Dieser Link ist abgelaufen oder wurde schon benutzt. Melde dich an. Klappt das nicht, registriere dich bitte noch einmal, dann bekommst du eine neue Mail.": "This link has expired or was already used. Sign in. If that does not work, please register again and you will get a new email.",
   "Der Link zur Bestätigung ist nicht mehr gültig.": "The confirmation link is no longer valid.",
-  "Zur Anmeldung": "Go to sign in"
+  "Zur Anmeldung": "Go to sign in",
+  "Wir bestätigen gerade deine E Mail Adresse.": "We are confirming your email address.",
+  "Deine E Mail Adresse für Cumo Drive wird bestätigt.": "Your email address for Cumo Drive is being confirmed."
 }

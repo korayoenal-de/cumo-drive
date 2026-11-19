@@ -6,7 +6,7 @@ import type { LegalDoc } from './legal';
 
 const CONTACT = 'kontakt@cumodrive.com';
 const IMPRINT = 'https://cumodrive.de/impressum';
-const STAND = 'Aggiornato al 18 novembre 2026. Questa è una traduzione; fa fede la versione tedesca.';
+const STAND = 'Aggiornato al 19 novembre 2026. Questa è una traduzione; fa fede la versione tedesca.';
 
 export const PRIVACY_IT: LegalDoc = {
   title: 'Privacy',
@@ -57,6 +57,7 @@ export const PRIVACY_IT: LegalDoc = {
       p: ['Trasmettiamo dati solo ai servizi che servono per la rispettiva funzione. Con i responsabili del trattamento esistono accordi ai sensi dell’art. 28 GDPR.'],
       list: [
         'Supabase (Supabase Pte. Ltd., Singapore, server a Francoforte sul Meno): account, tour, guide, veicoli, messaggi, uscite con chat, feedback, segnalazioni di errore, stato dei passi e connessione in tempo reale dei giri di gruppo. Responsabile del trattamento; i trasferimenti fuori dall’UE si basano sulle clausole contrattuali tipo.',
+        'Brevo (Sendinblue SAS, Francia): invia per nostro conto l’email di conferma del tuo indirizzo email. Vengono trasmessi il tuo indirizzo email, il contenuto di questa email e i dati di consegna. Responsabile del trattamento con sede nell’UE.',
         'I nostri server di routing presso Contabo (Contabo GmbH, Germania): calcolano i percorsi dalle tue tappe. Responsabile del trattamento.',
         'Anche la ricerca dei luoghi, il profilo altimetrico, i limiti di velocità e le soste lungo il percorso vengono calcolati dai nostri server presso Contabo. Solo se non sono raggiungibili l’app ripiega su Photon di komoot (komoot GmbH, Germania) con il termine cercato o la coordinata e sul server Valhalla di FOSSGIS e.V. (Germania) con il tracciato del percorso.',
         'Apple (Apple Distribution International, Irlanda, e Apple Inc., USA): App Store, abbonamenti, visualizzazione mappe con Apple Mappe, CarPlay e meteo ai passi tramite WeatherKit. Per il meteo inviamo la posizione del passo, non la tua.',
