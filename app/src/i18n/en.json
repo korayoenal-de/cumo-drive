@@ -2006,5 +2006,9 @@
   "Anfrage von {name} bestätigen": "Accept request from {name}",
   "Geschafft. Öffne die Bestätigungsmail und melde dich danach hier an.": "Done. Open the confirmation email, then sign in here.",
   "Die Bestätigungsmail ging gerade nicht raus. Bitte versuch es in einer Minute noch einmal.": "The confirmation email could not be sent right now. Please try again in a minute.",
-  "Das hat zu lange gedauert. Bitte prüf deine Verbindung und versuch es noch einmal.": "That took too long. Please check your connection and try again."
+  "Das hat zu lange gedauert. Bitte prüf deine Verbindung und versuch es noch einmal.": "That took too long. Please check your connection and try again.",
+  "Link nicht mehr gültig": "Link no longer valid",
+  "Dieser Link ist abgelaufen oder wurde schon benutzt. Melde dich an. Klappt das nicht, registriere dich bitte noch einmal, dann bekommst du eine neue Mail.": "This link has expired or was already used. Sign in. If that does not work, please register again and you will get a new email.",
+  "Der Link zur Bestätigung ist nicht mehr gültig.": "The confirmation link is no longer valid.",
+  "Zur Anmeldung": "Go to sign in"
 }

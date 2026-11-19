@@ -2006,5 +2006,9 @@
   "Anfrage von {name} bestätigen": "Accetta la richiesta di {name}",
   "Geschafft. Öffne die Bestätigungsmail und melde dich danach hier an.": "Fatto. Apri l'email di conferma e poi accedi qui.",
   "Die Bestätigungsmail ging gerade nicht raus. Bitte versuch es in einer Minute noch einmal.": "Al momento non è stato possibile inviare l'email di conferma. Riprova tra un minuto.",
-  "Das hat zu lange gedauert. Bitte prüf deine Verbindung und versuch es noch einmal.": "Ci è voluto troppo tempo. Controlla la connessione e riprova."
+  "Das hat zu lange gedauert. Bitte prüf deine Verbindung und versuch es noch einmal.": "Ci è voluto troppo tempo. Controlla la connessione e riprova.",
+  "Link nicht mehr gültig": "Link non più valido",
+  "Dieser Link ist abgelaufen oder wurde schon benutzt. Melde dich an. Klappt das nicht, registriere dich bitte noch einmal, dann bekommst du eine neue Mail.": "Questo link è scaduto o è già stato usato. Accedi. Se non funziona, registrati di nuovo e riceverai una nuova email.",
+  "Der Link zur Bestätigung ist nicht mehr gültig.": "Il link di conferma non è più valido.",
+  "Zur Anmeldung": "Vai all'accesso"
 }
