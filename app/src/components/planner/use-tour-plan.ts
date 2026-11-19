@@ -114,7 +114,8 @@ export function useTourPlan(onPlanned?: () => void) {
   const plannedAs = useRef(new WeakMap<PlannedTour, { raw: PlannedTour; profiles: Profile[]; avoid: string }>());
 
   /** full: alles neu planen, auch wenn sich nichts geändert hat (Taste Neu planen, anderes Vermeiden) */
-  async function plan(points: LatLon[], profiles: Profile[], avoid: Avoid, tourName = name, full = false) {
+  /** from: statt der gezeigten Tour diese als Vorlage nehmen (gedrehte Runde); dann darf an der Naht gewendet werden */
+  async function plan(points: LatLon[], profiles: Profile[], avoid: Avoid, tourName = name, full = false, from?: { raw: PlannedTour; profiles: Profile[]; avoid: string }) {
     abort.current?.abort();
     const ctrl = new AbortController();
     abort.current = ctrl;
@@ -128,11 +129,11 @@ export function useTourPlan(onPlanned?: () => void) {
       const onStep = (st: PlanStep) => !ctrl.signal.aborted && setStep(st);
       // herausgenommene Pässe gehören zum Schlüssel: ändert sich die Liste, wird nichts wiederverwendet
       const avoidKey = `${JSON.stringify(avoid)}|${avoidedKey()}`;
-      const before = !full && planned ? plannedAs.current.get(planned) : undefined;
+      const before = from ?? (!full && planned ? plannedAs.current.get(planned) : undefined);
       let raw: PlannedTour | null = null;
       if (before && before.avoid === avoidKey) {
         try {
-          raw = await planChanged(before.raw, before.profiles, nm, xPts, xProf, avoid, onStep, ctrl.signal);
+          raw = await planChanged(before.raw, before.profiles, nm, xPts, xProf, avoid, onStep, ctrl.signal, !!from);
         } catch (e) {
           // das Teilstück ließ sich nicht planen: unten alles neu, dort kommt auch die Fehlermeldung
           if (ctrl.signal.aborted) throw e;
@@ -268,6 +269,50 @@ export function useTourPlan(onPlanned?: () => void) {
     return true;
   }
 
+  /**
+   * Neuer Start abseits der Punkte einer Rundtour (Koray 19.11.2026, Große Sellaronda): Der Ort kommt dort in die
+   * Runde, wo er den kleinsten Umweg macht, und wird Start und Ziel. Die Punkte sortieren sich von dort aus neu,
+   * der alte Start bleibt als ein Zwischenziel stehen. Geplant werden nur die beiden Stücke am neuen Start, der
+   * Rest der Strecke bleibt Punkt für Punkt gleich. false: keine geplante Runde, der Aufrufer ersetzt wie bisher.
+   */
+  function moveLoopStart(p: LatLon, profile: Profile, avoid: Avoid): boolean {
+    const all = [start, ...vias, ziel].filter((x): x is LatLon => !!x);
+    const n = all.length;
+    if (!planned || !planned.linie.length || planned.wegpunkte.length !== n || n < 3) return false;
+    // p steht danach vor all[k]
+    const k = insertVia(all, p).indexOf(p);
+    if (k < 1 || k > n - 1) return false;
+    const lp = fitLegs(legProfiles, vias.length);
+    const avoidKey = `${JSON.stringify(avoid)}|${avoidedKey()}`;
+    const reg = plannedAs.current.get(planned);
+    let from: { raw: PlannedTour; profiles: Profile[]; avoid: string } | null = null;
+    if (k === n - 1) from = reg ?? { raw: planned, profiles: lp.map((x) => x ?? profile), avoid: avoidKey };
+    else {
+      // die Vorlage mit Stützpunkten mitdrehen, sonst passt danach keine Etappe mehr
+      const kk = reg ? reg.raw.wegpunkte.findIndex((q, i) => i > 0 && i < reg.raw.wegpunkte.length - 1 && keyOf(q) === keyOf(all[k])) : -1;
+      const rawRot = reg && kk > 0 ? rotateLoop(reg.raw, kk) : null;
+      if (reg && rawRot) from = { raw: rawRot, profiles: [...reg.profiles.slice(kk), ...reg.profiles.slice(0, kk)], avoid: reg.avoid };
+      else {
+        const rot = rotateLoop(planned, k);
+        if (rot) from = { raw: rot, profiles: [...lp.slice(k), ...lp.slice(0, k)].map((x) => x ?? profile), avoid: avoidKey };
+      }
+    }
+    if (!from) return false;
+    const order = [...all.slice(k, -1), ...all.slice(0, k)];
+    // die geteilte Etappe gibt ihr Profil an die beiden neuen Stücke weiter
+    const split = lp[k - 1] ?? null;
+    const nextLp: LegProfile[] = [split, ...lp.slice(k), ...lp.slice(0, k - 1), split];
+    const snap = snapshot();
+    remember();
+    setStart(p);
+    setVias(order);
+    setZiel(p);
+    setLegProfiles(nextLp);
+    void plan([p, ...order, p], nextLp.map((x) => x ?? profile), avoid, name, false, from);
+    showToast(tr('Die Runde startet jetzt hier. Der Rest der Strecke bleibt gleich.'), { action: { label: tr('Rückgängig'), onPress: () => restore(snap) } });
+    return true;
+  }
+
   /** Punkt in ein Feld setzen: Start, Ziel oder Zwischenziel an Stelle index (am Ende: neu). */
   function setSlot(kind: PointKind, p: LatLon, profile: Profile, avoid: Avoid, known?: string, index?: number) {
     if (kind === 'via' && (index == null || index >= vias.length)) {
@@ -275,8 +320,9 @@ export function useTourPlan(onPlanned?: () => void) {
       return;
     }
     rememberName(p, known);
-    // Rundtour: liegt der neue Start auf einem Zwischenziel, dreht sich die Runde dorthin (restart). Sonst ersetzt er den Start
-    if (kind === 'start' && start && ziel && keyOf(start) === keyOf(ziel) && vias.length && restart(p, profile, avoid)) return;
+    // Rundtour: liegt der neue Start auf einem Zwischenziel, dreht sich die Runde dorthin (restart). Sonst kommt er
+    // an der passenden Stelle in die Runde und sie beginnt dort (moveLoopStart)
+    if (kind === 'start' && start && ziel && keyOf(start) === keyOf(ziel) && vias.length && (restart(p, profile, avoid) || moveLoopStart(p, profile, avoid))) return;
     if (kind === 'start') apply(p, vias, ziel, legProfiles, profile, avoid);
     else if (kind === 'ziel') apply(start, vias, p, legProfiles, profile, avoid);
     else {

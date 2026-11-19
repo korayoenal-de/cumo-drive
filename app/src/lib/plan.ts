@@ -678,6 +678,8 @@ export async function planChanged(
   avoid: Avoid,
   onStep?: (s: PlanStep) => void,
   signal?: AbortSignal,
+  /** lenient: ein Wenden an der Naht hinnehmen statt aufzugeben (neuer Start einer Rundtour, der Rest soll stehen bleiben) */
+  lenient = false,
 ): Promise<PlannedTour | null> {
   // Ein Punkt fällt weg (Koray 19.11.2026, löst die Regel vom 18.11. ab): Auch dann werden nur die Nachbarn neu
   // verbunden, der Rest bleibt stehen. Gemessen am Vogesen Karussell blieben beim Neuplanen nur 59 % der übrigen
@@ -700,6 +702,7 @@ export async function planChanged(
     ]);
     const all = mergeLegs(name, points, [pre, r.kept, post].filter((t): t is PlannedTour => !!t));
     const km1 = pre ? lineKm(pre) : 0;
+    if (lenient) return all;
     if (pre && turnAt(all, km1) > r.spurBefore[0] + 150) return null;
     if (post && turnAt(all, km1 + lineKm(r.kept)) > r.spurBefore[1] + 150) return null;
     return all;
