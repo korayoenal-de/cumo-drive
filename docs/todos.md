@@ -20,16 +20,16 @@ Stand: 18. November 2026, 14:30 (gegen Code und Git Verlauf geprüft; Prüfung v
 * [x] 2FA auf allen Konten, Supabase Pro (Koray 17.11.)
 * [x] Mengengrenzen im Prüfdienst, Zählmodus auf r1 und r2 (17.11. 9:52)
 * [x] 18.11. 16:33: /stats angesehen. r1: 333 mit Token, 35.618 ohne. r2: 881 mit, 8.074 ohne, 120 mal über der Grenze (route stand auf 60 je Minute, genau der Grenze). Nicht scharf geschaltet: Herkunft der Anfragen ohne Token unklar, und der Testlauf (feste Routen, Bedienfolgen, GitHub Actions) fragt selbst ohne Token
-* [ ] Prüfdienst mit Herkunft (ohne_token_nach_art, nach_absender, ip_adressen) und ungedeckelten Spitzen einspielen (cumo-auth.sh vom 18.11., Zählmodus), einen Tag zählen
+* [x] **Routing Server scharf seit 19.11. 10:50** (r1 und r2): ohne gültiges Konto Status 401, Grenze Route 300 je Minute und 2000 je Stunde (echte Spitze war 132 und 177), Testschlüssel in /etc/cumo-auth.env, als GitHub Secret ROUTING_QA_KEY und in der Sitzung. Zählung davor: kein Eintrag von App oder Web ohne Konto, über 95 % eigener Testlauf, Rest Roboter (scrapy). Geprüft: Testlauf grün gegen die scharfen Server, Planung in der App mit echtem Konto (Koray). Zurück: `bash /root/cumo-auth.sh count` auf beiden Servern
+* [ ] ROUTING_QA_KEY als Umgebungsvariable für künftige Claude Sitzungen eintragen (Koray); ohne ihn sind die festen Routen im Testlauf dort rot. OTA über den Zweig ota/* braucht ihn nicht in der Sitzung
+* [x] „Passwort vergessen“ in App und Web (19.11.): Link auf der Anmeldung, Mail in drei Sprachen, Seite cumodrive.de/passwort. Web Paket x, OTA be84b32d
 * [x] Testlauf weist sich mit einem Testschlüssel aus (Koray 18.11.): Kopfzeile X-Cumo-QA, Wert aus ROUTING_QA_KEY, auf den Servern in /etc/cumo-auth.env. Gebaut und lokal getestet, noch nicht eingespielt
-* [ ] 19.11. mit Koray: Testschlüssel erzeugen und eintragen (beide Server, GitHub Secret ROUTING_QA_KEY, Umgebung der Claude Sitzungen), neues cumo-auth.sh einspielen, /stats ansehen, Grenze route nach echter Spitze anheben, dann `bash /root/cumo-auth.sh enforce` auf beiden Servern
 * [ ] 19.11. mit Koray, App Store Connect: Abos mit Screenshot für die Prüfung, Adresse für die Server Mitteilungen von Apple, Store Build wählen, zur Prüfung hinzufügen
 * [x] **Bestätigungsmail (Koray 18.11.), erledigt 19.11.** Versand über Brevo (smtp-relay.brevo.com, Domain cumodrive.com mit DKIM und DMARC bestätigt), Vorlage in drei Sprachen, Link auf cumodrive.de/bestaetigt mit Code statt Adresse bei supabase.co, Seite löst den Code selbst ein. Test von Koray: Mail im Posteingang bei iCloud, Bestätigung, Anmeldung und leere Garage passen. Dazu: Konto löschen im Web Planer, neue Anmeldung übernimmt keine Reste eines früheren Kontos, Brevo in der Datenschutzerklärung. Web Paket w und OTA 4e942e93 (Stand 2a4ccee). Details in supabase/templates/README.md
 * [ ] Brevo: Vertrag zur Auftragsverarbeitung im Konto prüfen und als PDF ablegen; Abmeldezeile (List Unsubscribe) für diese Mails abschalten, falls möglich; DMARC nach einigen Tagen von none auf quarantine; Mail Limit in Supabase (30 je Stunde) vor dem Start anheben
 * [ ] Nach der Einreichung prüfen: Bekommt der Angefragte bei einer Kontaktanfrage eine Push Mitteilung? Sonst Vorschlag mit Schalter in den Einstellungen (braucht eine Migration, Koray 18.11.: morgen ansehen)
 * [ ] Navigation, aus der Busfahrt vom 18.11.: Ansage, wenn die App nah am Ziel direkt hinführt statt zurück auf die Tour (Vorschlag „Du fährst jetzt direkt zum Ziel“, wartet auf Korays Ja); Auto stand neben der Linie, erst mit Fahrtprotokoll aus dem Auto verfolgen
 * [x] 18.11. abends per OTA: Fahrerkarte Variante A (Kontakt Knopf wie in der Liste, Melden und Blockieren mit Symbol und Wort), „dabei seit“ ausgeblendet, Ring immer weiß, Kontakte ohne endlosen Wartekreis, alle Supabase Anfragen mit Frist von 20 s
-* [ ] „Passwort vergessen“ fehlt in App und Web (aufgefallen 18.11.); braucht dieselbe Mail Strecke
 * [ ] Screenshots EN und IT erst mit Version 1.0.1 (Koray 18.11.: Einreichung ohne, bis dahin zeigt Apple die deutschen Bilder; die deutschen dienen als Vorlage)
 * [x] Webseite mit Kopfzeilen und Strecken kachelweise live, Kopfzeilen geprüft (17.11.)
 * [x] Migrationen live: highlight_feedback nur mit Anmeldung, Link Grenzen, Konten Grenze, road-data kachelweise mit Kontingent, Einwilligungen (17.11.)
@@ -201,7 +201,7 @@ Rahmen (Entscheidung Koray, 13.11.): maximal schlank starten, ohne neue Gesellsc
 
 * [ ] **Lasttest Routing Server** (Koray 18.11.: Backlog): 10 Planungen gleichzeitig über 2 Minuten, abends, nur der Routing Server; Supabase bleibt außen vor. Trifft die echten Server, daher nur nach Korays OK
 * [x] Gleiche Punkte, verschiedene Touren: Kurvig gegen den direkten Weg wird je Etappe entschieden (Koray 18.11., `planGroup` und `directLegs` in plan.ts). Miltenberg, Amorbach, Hirschhorn, Michelstadt: die drei gemeinsamen Etappen sind mit Ziel Beerfelden und Ziel Lindenfels gleich (18,8, 43,1 und 48,5 km). Noch nicht per OTA veröffentlicht
-* [ ] GitHub Secret EXPO_TOKEN eintragen, damit OTA über den Zweig ota/* aus jeder Sitzung geht (Koray 17.11.: Backlog; bis dahin veröffentlicht Claude OTA direkt nach dem Testlauf)
+* [x] GitHub Secret EXPO_TOKEN eingetragen (Koray 19.11., eigener Token beim Expo Roboter „Github“). Probelauf über einen Zweig ota/* steht noch aus
 * [ ] Captcha bei der Registrierung (Entscheidung 17.11.: Hürde für Nutzer, erst bei Missbrauch; Zahlen in signup_attempts)
 * [ ] App Attest, zusammen mit engeren Grenzen für den Web Planer (wenn es echte Nutzer gibt)
 * [ ] Erinnerung mit Standort „Immer“ (Variante c, Teil b): braucht expo-task-manager, einen Build und strengere Apple Prüfung (Koray 17.11.: erst bei Bedarf)
