@@ -440,3 +440,9 @@ export function keepLegs(prev: PlannedTour, a: number, b: number): PlannedTour |
   if (!idx) return null;
   return slice(prev, pts, idx, legMinutes(prev, pts, idx), a, b);
 }
+
+/** Lassen sich alle Wegpunkte der Reihe nach auf der Linie finden? (für geöffnete Touren mit Stützpunkten) */
+export function waypointsOnLine(tour: PlannedTour): boolean {
+  const pts = flat(tour);
+  return pts.length > 1 && !!waypointIndex(pts, tour);
+}

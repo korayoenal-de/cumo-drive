@@ -1391,6 +1391,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
             label={origin?.label}
             top={insets.top + Spacing.s}
             onPress={() => goBack()}
+            onUndo={inTour && tourPlan.canUndo ? () => tourPlan.undo() : null}
             status={
               adjustBusy
                 ? { kind: 'busy', text: tr('Strecke wird angepasst') }

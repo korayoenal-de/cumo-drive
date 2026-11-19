@@ -35,21 +35,26 @@ export type PillStatus =
   | { kind: 'busy'; text: string }
   | { kind: 'done'; text: string; tone?: 'warn'; onUndo: () => void };
 
-export function BackPill({ label, top, onPress, status }: { label?: string | null; top: number; onPress?: () => void; status?: PillStatus | null }) {
+/**
+ * onUndo (Koray 19.11.2026): runde Taste Rückgängig rechts neben der Pille, solange es im Planer einen Schritt
+ * zurück gibt. Sie steht auch ohne Pille da. Während die Pille selbst „Rückgängig“ anbietet oder rechnet, ruht sie.
+ */
+export function BackPill({ label, top, onPress, status, onUndo }: { label?: string | null; top: number; onPress?: () => void; status?: PillStatus | null; onUndo?: (() => void) | null }) {
   const press = useSharedValue(1);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: press.get() }] }));
   const win = useWindowDimensions();
   const mode = status?.kind ?? (label ? 'back' : null);
-  if (!mode) return null;
+  const showUndo = !!onUndo && !status;
+  if (!mode && !showUndo) return null;
   const pressIn = () => press.set(withSpring(Motion.pressScale, Motion.press));
   const pressOut = () => press.set(withSpring(1, Motion.press));
-  return (
+  const pill = !mode ? null : (
     <Animated.View
       entering={FadeIn.duration(200)}
       exiting={FadeOut.duration(150)}
       // Breite wächst und schrumpft mit Feder, der Inhalt blendet über
       layout={SOFT_LAYOUT}
-      style={[styles.wrap, { top, maxWidth: win.width - Spacing.l - 76 }, anim]}>
+      style={[styles.wrap, anim]}>
       {mode === 'back' && (
         <Pressable accessibilityRole="button" accessibilityLabel={t('Zurück zu {label}', { label: label ? t(label) : '' })} hitSlop={4} onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} style={styles.pill}>
           <Animated.View key="back" entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)} style={styles.row}>
@@ -92,6 +97,18 @@ export function BackPill({ label, top, onPress, status }: { label?: string | nul
       )}
     </Animated.View>
   );
+  return (
+    <View style={[styles.line, { top, maxWidth: win.width - Spacing.l - 76 }]} pointerEvents="box-none">
+      {pill}
+      {showUndo && (
+        <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)} layout={SOFT_LAYOUT} style={styles.undoWrap}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Rückgängig')} hitSlop={4} onPress={onUndo ?? undefined} style={styles.undoBtn}>
+            <SymbolView name="arrow.uturn.backward" size={18} weight="semibold" tintColor={Colors.text} />
+          </Pressable>
+        </Animated.View>
+      )}
+    </View>
+  );
 }
 
 /** Ladebalken an der Unterkante der Pille: wächst gleichmäßig, wird nie ganz voll, bis die Strecke da ist */
@@ -122,7 +139,10 @@ function PulseDot() {
 
 const styles = StyleSheet.create({
   // rechts bleibt Platz für die Karteneinstellungen (44 breit plus Rand): lange Texte kürzen statt darunter laufen
-  wrap: { position: 'absolute', left: Spacing.l, borderRadius: BACK_PILL_H / 2, boxShadow: Shadow.button },
+  line: { position: 'absolute', left: Spacing.l, flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  wrap: { flexShrink: 1, borderRadius: BACK_PILL_H / 2, boxShadow: Shadow.button },
+  undoWrap: { borderRadius: BACK_PILL_H / 2, boxShadow: Shadow.button },
+  undoBtn: { width: BACK_PILL_H, height: BACK_PILL_H, borderRadius: BACK_PILL_H / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.overlay },
   pill: {
     height: BACK_PILL_H,
     borderRadius: BACK_PILL_H / 2,

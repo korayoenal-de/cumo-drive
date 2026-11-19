@@ -9,10 +9,10 @@ import { toPlanError } from '@/components/planner/create-tour';
 import { clearEditOrigin } from '@/lib/edit-tour';
 import { fromCommunity, readLibrary, saveTour, syncLibrary, type SavedTour } from '@/lib/library';
 import { reverseName } from '@/lib/geocode';
-import { HIGHLIGHT_ROADS, PREFER_ROADS } from '@/lib/highlight-roads';
 import { avoidedKey, clearAvoidedPasses } from '@/lib/avoid-pass';
 import { planChanged, planLegs, type PlannedTour, type PlanStep } from '@/lib/plan';
-import { rotateLoop } from '@/lib/plan-window';
+import { expandPoints } from '@/lib/plan-expand';
+import { rotateLoop, waypointsOnLine } from '@/lib/plan-window';
 import { insertVia, movePoint } from '@/lib/route-edit';
 import { flatten, haversine, normProfile, type LatLon, type Profile } from '@/lib/tour';
 import { type Avoid } from '@/lib/valhalla';
@@ -23,69 +23,6 @@ import { t, tr } from '@/i18n';
 
 
 export type TourPlan = ReturnType<typeof useTourPlan>;
-
-/**
- * Zwischenziel mitten auf einer kuratierten Strecke, etwa eine Passhöhe (Koray 9.11., Hahntennjoch):
- * Die Route fährt über den Punkt hinaus ein Stück auf der Strecke weiter, in der Richtung, die besser zwischen
- * den Nachbarpunkten liegt, statt zu wenden. Den Weg davor und danach wählt der Router (16.11., Sellajoch).
- * Sonst fährt der Router zur Passhöhe hinauf und auf demselben Weg wieder hinunter.
- * Nur Strecken bis 40 km, und nur wenn der Punkt nicht am Anfang oder Ende liegt.
- */
-function crossingFor(p: LatLon, prev: LatLon, next: LatLon): LatLon[] | null {
-  let best: { line: LatLon[]; d: number } | null = null;
-  for (const r of [...HIGHLIGHT_ROADS, ...PREFER_ROADS]) {
-    const line = r.line;
-    if (line.length < 3) continue;
-    const a = line[0];
-    const b = line[line.length - 1];
-    if (Math.abs(a[0] - p[0]) > 0.4 || Math.abs(a[1] - p[1]) > 0.6) continue;
-    let near = Infinity;
-    for (const q of line) near = Math.min(near, haversine(q, p));
-    if (near > 400 || haversine(a, p) < 1500 || haversine(b, p) < 1500) continue;
-    let len = 0;
-    for (let i = 1; i < line.length; i++) len += haversine(line[i - 1], line[i]);
-    if (len > 40000) continue;
-    if (!best || near < best.d) best = { line, d: near };
-  }
-  if (!best) return null;
-  const l = best.line;
-  const fwd = haversine(prev, l[0]) + haversine(l[l.length - 1], next);
-  const back = haversine(prev, l[l.length - 1]) + haversine(l[0], next);
-  return fwd <= back ? l : [...l].reverse();
-}
-
-/** So weit über einen Pass hinaus wird die Strecke erzwungen: über die Passhöhe, nicht zurück */
-const PAST_M = 2000;
-
-/** Punkt der Linie etwa m Meter nach dem Index at (oder das Ende, wenn sie vorher aufhört) */
-function pastPoint(line: LatLon[], at: number, m: number): LatLon | null {
-  let d = 0;
-  for (let i = at + 1; i < line.length; i++) {
-    d += haversine(line[i - 1], line[i]);
-    if (d >= m) return line[i];
-  }
-  return at < line.length - 1 ? line[line.length - 1] : null;
-}
-
-/** Stützpunkte entlang einer Strecke: etwa alle 2,5 km und der Ausstieg, die ersten 1,5 km frei */
-function shapePoints(line: LatLon[]): LatLon[] {
-  const out: LatLon[] = [];
-  let since = 0;
-  let total = 0;
-  for (let i = 1; i < line.length; i++) {
-    const d = haversine(line[i - 1], line[i]);
-    since += d;
-    total += d;
-    if (since >= 2500 && total >= 1500) {
-      out.push(line[i]);
-      since = 0;
-    }
-  }
-  const end = line[line.length - 1];
-  if (!out.length || haversine(out[out.length - 1], end) > 600) out.push(end);
-  else out[out.length - 1] = end;
-  return out;
-}
 
 /**
  * Zustand und Aktionen der Route: feste Felder Start, Zwischenziele, Ziel (wie im Web Planer).
@@ -185,40 +122,8 @@ export function useTourPlan(onPlanned?: () => void) {
     setSaveMsg(null);
     setStep('route');
     try {
-      // Strecken auffächern: nach ihrem Einstieg die Stützpunkte, mit dem Profil der folgenden Etappe
-      const xPts: LatLon[] = [];
-      const xProf: Profile[] = [];
-      points.forEach((p, i) => {
-        const inner = i > 0 && i < points.length - 1;
-        const cross = inner && !roads.current[keyOf(p)] ? crossingFor(p, points[i - 1], points[i + 1]) : null;
-        if (cross) {
-          // Nur ein Stück über den Punkt hinaus auf der Strecke weiter, damit die Route nicht denselben Weg
-          // zurückfährt. Wohin danach, entscheidet der nächste Punkt (Koray 16.11.: Sellajoch zum Pordoijoch
-          // führte erst bis Canazei, dem Ende der Strecke Sellajoch, und wieder hinauf)
-          let at = 0;
-          cross.forEach((q, k) => {
-            if (haversine(q, p) < haversine(cross[at], p)) at = k;
-          });
-          xPts.push(p);
-          xProf.push(profiles[i]);
-          const beyond = pastPoint(cross, at, PAST_M);
-          // nur wenn es dort Richtung nächster Punkt weitergeht; zweigt er an der Passhöhe ab, entstünde ein Stich
-          // (Koray 16.11.: Falzarego, danach Valparola, fuhr erst 2 km Richtung Andraz hinunter und zurück)
-          const next = points[i + 1];
-          if (beyond && haversine(beyond, next) > 1500 && haversine(beyond, next) < haversine(p, next)) {
-            xPts.push(beyond);
-            xProf.push(profiles[i]);
-          }
-          return;
-        }
-        xPts.push(p);
-        if (i < profiles.length) xProf.push(profiles[i]);
-        const r = inner ? roads.current[keyOf(p)] : undefined;
-        if (r) for (const q of shapePoints(r.line)) {
-          xPts.push(q);
-          xProf.push(profiles[i]);
-        }
-      });
+      // Strecken auffächern: nach ihrem Einstieg die Stützpunkte, mit dem Profil der folgenden Etappe (plan-expand.ts)
+      const { xPts, xProf } = expandPoints(points, profiles, roads.current);
       const nm = tourName.trim() || tr('Neue Tour');
       const onStep = (st: PlanStep) => !ctrl.signal.aborted && setStep(st);
       // herausgenommene Pässe gehören zum Schlüssel: ändert sich die Liste, wird nichts wiederverwendet
@@ -254,6 +159,7 @@ export function useTourPlan(onPlanned?: () => void) {
 
   /** Felder übernehmen und, sobald Start und Ziel stehen, sofort neu planen. */
   function apply(s: LatLon | null, v: LatLon[], z: LatLon | null, lp: LegProfile[], profile: Profile, avoid: Avoid) {
+    remember();
     const fitted = fitLegs(lp, v.length);
     setStart(s);
     setVias(v);
@@ -344,6 +250,7 @@ export function useTourPlan(onPlanned?: () => void) {
     const rot = rotateLoop(planned, at);
     if (!rot) return false;
     const snap = snapshot();
+    remember();
     const next = rot.wegpunkte;
     const nextLp = [...lp.slice(at), ...lp.slice(0, at)];
     abort.current?.abort();
@@ -470,6 +377,7 @@ export function useTourPlan(onPlanned?: () => void) {
   }
 
   function reset() {
+    forget();
     abort.current?.abort();
     clearAvoidedPasses();
     origin.current = null;
@@ -494,8 +402,32 @@ export function useTourPlan(onPlanned?: () => void) {
   function snapshot() {
     return { start, vias, ziel, legProfiles, names, name, planned, cloudId, folder, base, loaded };
   }
+  /**
+   * Verlauf für die Taste Rückgängig auf der Karte (Koray 19.11.2026): der Stand vor jeder Änderung an den Punkten,
+   * höchstens 30 Schritte. Öffnen und Zurücksetzen einer Tour leeren ihn.
+   */
+  const history = useRef<ReturnType<typeof snapshot>[]>([]);
+  const [undoSteps, setUndoSteps] = useState(0);
+  function remember() {
+    history.current = [...history.current.slice(-29), snapshot()];
+    setUndoSteps(history.current.length);
+  }
+  function forget() {
+    history.current = [];
+    setUndoSteps(0);
+  }
+  function undo() {
+    const last = history.current[history.current.length - 1];
+    if (last) restore(last);
+  }
   function restore(s: ReturnType<typeof snapshot>) {
     abort.current?.abort();
+    // alles ab diesem Stand fällt aus dem Verlauf (auch wenn Rückgängig aus einem Hinweis kam)
+    const at = history.current.findLastIndex((h) => h.start === s.start && h.vias === s.vias && h.ziel === s.ziel && h.planned === s.planned);
+    if (at >= 0) {
+      history.current = history.current.slice(0, at);
+      setUndoSteps(history.current.length);
+    }
     setStart(s.start);
     setVias(s.vias);
     setZiel(s.ziel);
@@ -514,6 +446,7 @@ export function useTourPlan(onPlanned?: () => void) {
   /** Gespeicherte Tour zum Ändern laden: erster Wegpunkt Start, letzter Ziel, dazwischen Zwischenziele. Speichern ersetzt dieselbe Tour. */
   function load(t: SavedTour, profile: Profile, avoid: Avoid) {
     abort.current?.abort();
+    forget();
     clearAvoidedPasses();
     origin.current = fromCommunity(t) ? { author: t.author, communityId: t.communityId, edited: t.edited } : null;
     const w = t.wegpunkte;
@@ -558,7 +491,15 @@ export function useTourPlan(onPlanned?: () => void) {
       // auch die gespeicherte Strecke bleibt beim Ändern stehen, wo sich nichts ändert (importierte Touren behalten ihre Linie)
       // derselbe Schlüssel wie in plan(): ohne den Teil der gemiedenen Pässe passte er nie, und die erste Änderung
       // an einer geöffneten Tour plante alles neu (gefunden 19.11.2026)
-      if (w.length >= 3) plannedAs.current.set(shown, { raw: shown, profiles: lp.map((x) => x ?? profile), avoid: `${JSON.stringify(avoid)}|${avoidedKey()}` });
+      if (w.length >= 3) {
+        // Mit denselben Stützpunkten vermerken, mit denen plan() bei der nächsten Änderung vergleicht (Koray 19.11.,
+        // Große Sellaronda): sonst passen an den Pässen die Punkte nicht zusammen, und fast alles wird neu geplant.
+        // Liegen die Stützpunkte nicht auf der gespeicherten Linie, bleibt es bei den sichtbaren Punkten.
+        const prof = lp.map((x) => x ?? profile);
+        const x = expandPoints(w, prof, roads.current);
+        const fits = x.xPts.length > w.length && waypointsOnLine({ ...shown, wegpunkte: x.xPts });
+        plannedAs.current.set(shown, fits ? { raw: { ...shown, wegpunkte: x.xPts }, profiles: x.xProf, avoid: `${JSON.stringify(avoid)}|${avoidedKey()}` } : { raw: shown, profiles: prof, avoid: `${JSON.stringify(avoid)}|${avoidedKey()}` });
+      }
       setPlanned(shown);
       onPlanned?.();
     } else if (s && z) void plan([s, ...v, z], lp.map((x) => x ?? profile), avoid, t.name);
@@ -623,6 +564,7 @@ export function useTourPlan(onPlanned?: () => void) {
       const nextLp = [...lp.slice(idx), ...lp.slice(0, idx)];
       const rot = planned && planned.wegpunkte.length === all.length ? rotateLoop(planned, idx) : null;
       if (!rot) return apply(next[0], next.slice(1, -1), next[next.length - 1], nextLp, profile, avoid);
+      remember();
       abort.current?.abort();
       setStep(null);
       setError(null);
@@ -653,5 +595,5 @@ export function useTourPlan(onPlanned?: () => void) {
     api.reorder(as === 'start' ? [idx, ...rest] : [...rest, idx], profile, avoid);
     return false;
   }
-  return { ...api, viaAs };
+  return { ...api, viaAs, undo, canUndo: undoSteps > 0 };
 }
