@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RoutePreview } from '@/components/planner/route-preview';
 import { IconLabel } from '@/components/ui/btn-icon';
+import { OptionsSheet } from '@/components/ui/action-sheet';
+import { Chip, ChipRow } from '@/components/ui/chip';
 import { bumpTab } from '@/lib/fly';
 import { haptic } from '@/lib/haptics';
 import { TextField } from '@/components/ui/text-field';
@@ -34,6 +36,15 @@ import { t, tr } from '@/i18n';
 import { ToastHost } from '@/components/ui/toast';
 
 const DAYS = 28;
+/** weiter voraus über den Kalender (Gregor 20.11.2026: Karfreitag planen), bis ein Jahr */
+const MAX_DAYS = 365;
+const MONTHS = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
+const WD_GRID = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+/** Tage seit heute bis d (Kalendertage) */
+function offsetOf(d: Date): number {
+  return Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - dayStart(0).getTime()) / 86400000);
+}
 
 function dayStart(offset: number): Date {
   const d = new Date();
@@ -60,6 +71,8 @@ export default function AusfahrtNeu() {
     return Math.min(toSat, DAYS - 1);
   });
   const [minutes, setMinutes] = useState(10 * 60);
+  const [calendar, setCalendar] = useState(false);
+  const [calMonth, setCalMonth] = useState(0);
   const [meeting, setMeeting] = useState<string | null>(params.meetingName || null);
   // ohne Mitgliedschaft privat mit drei Fahrzeugen insgesamt, also zwei Mitfahrern (Koray 13.11.)
   const FREE_SEATS = 2;
@@ -222,6 +235,16 @@ export default function AusfahrtNeu() {
                     </Pressable>
                   );
                 })}
+                {day >= DAYS && (
+                  <Pressable accessibilityRole="radio" accessibilityState={{ selected: true }} accessibilityLabel={shortDate(dayStart(day))} onPress={() => setCalendar(true)} style={[styles.day, styles.dayOn]}>
+                    <AppText style={[styles.dayWd, styles.dayTextOn]}>{shortDate(dayStart(day)).split(' ')[0]}</AppText>
+                    <AppText style={[styles.dayNum, styles.dayTextOn]}>{dayStart(day).getDate()}.{dayStart(day).getMonth() + 1}.</AppText>
+                  </Pressable>
+                )}
+                <Pressable accessibilityRole="button" accessibilityLabel={t('Anderes Datum wählen')} onPress={() => setCalendar(true)} style={styles.day}>
+                  <SymbolView name="calendar" size={20} weight="semibold" tintColor={Colors.text} />
+                  <AppText style={styles.dayWd}>{t('Später')}</AppText>
+                </Pressable>
               </ScrollView>
               <View style={styles.stepper}>
                 <StepBtn icon="minus" label={t('15 Minuten früher')} onPress={() => setMinutes((m) => Math.max(0, m - 15))} />
@@ -362,6 +385,48 @@ export default function AusfahrtNeu() {
           </Animated.View>
         )}
       </ScrollView>
+      <OptionsSheet visible={calendar} title={t('Datum wählen')} subtitle={t('Bis zu einem Jahr im Voraus.')} onClose={() => setCalendar(false)} scroll>
+        <ChipRow bleed={Spacing.l}>
+          {Array.from({ length: 13 }, (_, m) => {
+            const first = new Date(dayStart(0).getFullYear(), dayStart(0).getMonth() + m, 1);
+            return <Chip key={m} label={`${MONTHS[first.getMonth()]} ${String(first.getFullYear()).slice(2)}`} active={calMonth === m} onPress={() => setCalMonth(m)} onSurface />;
+          })}
+        </ChipRow>
+        <View style={styles.grid}>
+          {WD_GRID.map((w) => (
+            <AppText key={w} style={styles.gridHead}>{w}</AppText>
+          ))}
+          {(() => {
+            const first = new Date(dayStart(0).getFullYear(), dayStart(0).getMonth() + calMonth, 1);
+            const lead = (first.getDay() + 6) % 7;
+            const count = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+            return [
+              ...Array.from({ length: lead }, (_, i) => <View key={`l${i}`} style={styles.gridCell} />),
+              ...Array.from({ length: count }, (_, i) => {
+                const d = new Date(first.getFullYear(), first.getMonth(), i + 1);
+                const off = offsetOf(d);
+                const ok = off >= 0 && off <= MAX_DAYS;
+                const on = off === day;
+                return (
+                  <Pressable
+                    key={i}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: on, disabled: !ok }}
+                    accessibilityLabel={shortDate(d)}
+                    disabled={!ok}
+                    onPress={() => {
+                      setDay(off);
+                      setCalendar(false);
+                    }}
+                    style={[styles.gridCell, styles.gridDay, on && styles.dayOn, !ok && styles.gridOff]}>
+                    <AppText style={[styles.dayNum, on && styles.dayTextOn]}>{i + 1}</AppText>
+                  </Pressable>
+                );
+              }),
+            ];
+          })()}
+        </View>
+      </OptionsSheet>
       <ToastHost />
     </View>
   );
@@ -407,6 +472,11 @@ const styles = StyleSheet.create({
   dayWd: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted },
   dayNum: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text, fontVariant: ['tabular-nums'] },
   dayTextOn: { color: Colors.ground },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: Spacing.s },
+  gridHead: { width: `${100 / 7}%`, textAlign: 'center', fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted, paddingVertical: Spacing.xs },
+  gridCell: { width: `${100 / 7}%`, height: 44 },
+  gridDay: { alignItems: 'center', justifyContent: 'center', borderRadius: 22 },
+  gridOff: { opacity: 0.3 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.s },
   step: { width: Size.icon, height: Size.icon, borderRadius: Size.icon / 2, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   stepOff: { opacity: 0.35 },
