@@ -154,7 +154,7 @@ async function rideDay(e: Extract<Event, { type: 'ride_ping' | 'ride_changed' | 
   const place = (r.meeting_point as { name?: string } | null)?.name ?? 'Treffpunkt';
   if (e.type === 'ride_ping') {
     if (!e.to || !UUID.test(e.to)) return [];
-    return [{ user: e.to, title: r.name, body: short(`${who} fragt, wann du da bist.`), data: { url: `${url}?ping=1`, type: 'ride_ping' } }];
+    return [{ user: e.to, title: r.name, body: short(`${who} fragt, wann du da bist. Tippe, um zu antworten.`), data: { url: `${url}?ping=1`, type: 'ride_ping' } }];
   }
   const { data: members } = await db.from('ride_members').select('user_id').eq('ride_id', r.id).eq('status', 'zugesagt').limit(200);
   const all = ((members ?? []) as { user_id: string }[]).map((x) => x.user_id).filter((u) => u !== e.actor);

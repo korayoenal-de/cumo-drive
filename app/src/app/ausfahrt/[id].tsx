@@ -36,10 +36,11 @@ import {
   setAusfahrtPublic,
 } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
-import { here, MeetingRoute, navigateToMeeting } from '@/components/group/meeting-route';
+import { here, MeetingRoute } from '@/components/group/meeting-route';
+import { WhenSheet } from '@/components/group/when-sheet';
 import { ActionSheet, type SheetItem } from '@/components/ui/action-sheet';
 import { reverseName } from '@/lib/geocode';
-import { changeRide, checkArrived, DAY_BEFORE_MS, giveLead, pingMember, rideDay, START_WINDOW_MS, startRideNow, startSharing, stopSharing, TAKE_LEAD_AFTER_MS, takeLead, type DayRow } from '@/lib/ride-day';
+import { changeRide, checkArrived, DAY_BEFORE_MS, giveLead, pingMember, rideDay, START_WINDOW_MS, startRideNow, stopSharing, TAKE_LEAD_AFTER_MS, takeLead, type DayRow } from '@/lib/ride-day';
 import { refreshContacts, useContacts, type Contact } from '@/lib/contacts';
 import { myVehicleLabel, rideAlong, startAsLead } from '@/lib/group/start';
 import { useRide } from '@/lib/group/ride';
@@ -373,8 +374,10 @@ export default function AusfahrtDetail() {
   // sie stehen und zählt als ungelesen, der Punkt am Community Tab zeigt sie
   const pingAndAsk = (uid: string, name: string) =>
     run(`ping-${uid}`, async () => {
+      const first = name.trim().split(/\s+/)[0] || name;
       await pingMember(a.id, uid);
-      await sendNachricht(a.id, tr('{name}, wann bist du da?', { name: name.trim().split(/\s+/)[0] || name })).catch(() => undefined);
+      await sendNachricht(a.id, tr('{name}, wann bist du da?', { name: first })).catch(() => undefined);
+      showToast(tr('Gefragt. {name} bekommt eine Mitteilung, die Frage steht im Chat.', { name: first }));
     });
   // Du wurdest angepingt: Hinweis oben, 30 Minuten lang oder bis du da bist, Antippen öffnet „Wann bist du da?“
   const myDay = me ? dayOf(me) : null;
@@ -604,7 +607,7 @@ export default function AusfahrtDetail() {
             const d = dayOf(m.userId);
             const self = me === m.userId;
             const pinged = d?.pingedAt && now - d.pingedAt.getTime() < 30 * 60000 ? Math.max(1, Math.round((now - d.pingedAt.getTime()) / 60000)) : null;
-            const sub = [d?.isLead && !m.isOwner ? 'Lead' : m.isOwner ? 'Organisator' : null, dayMode && !d?.arrived && pinged ? tr('angepingt vor {pinged} min', { pinged }) : m.vehicle].filter(Boolean).join('  ·  ') || 'Mitfahrer';
+            const sub = [d?.isLead && !m.isOwner ? 'Lead' : m.isOwner ? 'Organisator' : null, dayMode && !d?.arrived && pinged ? tr('gefragt vor {pinged} min', { pinged }) : m.vehicle].filter(Boolean).join('  ·  ') || 'Mitfahrer';
             return (
               <Pressable key={m.userId} accessibilityRole="button" disabled={self} onPress={() => setPerson({ userId: m.userId, name: m.name, invited: false })} style={styles.member}>
                 <Avatar name={m.name} userId={m.userId} />
@@ -618,9 +621,9 @@ export default function AusfahrtDetail() {
                   ) : d?.etaMin != null ? (
                     <AppText style={styles.eta}>in {d.etaMin} min</AppText>
                   ) : isLead && !self ? (
-                    <Pressable accessibilityRole="button" accessibilityLabel={`${m.name} anpingen`} onPress={() => void pingAndAsk(m.userId, m.name)} style={styles.pingBtn}>
+                    <Pressable accessibilityRole="button" accessibilityLabel={tr('{name} fragen, wann er da ist', { name: m.name })} onPress={() => void pingAndAsk(m.userId, m.name)} style={styles.pingBtn}>
                       {busy === `ping-${m.userId}` ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="bell" size={16} weight="semibold" tintColor={Colors.text} />}
-                      <AppText style={styles.pingText}>{t('Anpingen')}</AppText>
+                      <AppText style={styles.pingText}>{t('Wann bist du da?')}</AppText>
                     </Pressable>
                   ) : null)}
               </Pressable>
@@ -822,7 +825,7 @@ export default function AusfahrtDetail() {
             ? [
                 { key: 'nachricht', icon: 'bubble.left', label: t('Nachricht'), onPress: () => router.push({ pathname: '/nachrichten/[id]', params: { id: person.userId } }) },
                 ...(isLead && dayMode && !person.invited && !dayOf(person.userId)?.arrived
-                  ? ([{ key: 'ping', icon: 'bell', label: t('Anpingen'), hint: t('Fragt, wann er da ist'), onPress: () => void pingAndAsk(person.userId, person.name) }] as SheetItem[])
+                  ? ([{ key: 'ping', icon: 'bell', label: t('Wann bist du da?'), hint: t('Bekommt eine Mitteilung, die Frage steht im Chat'), onPress: () => void pingAndAsk(person.userId, person.name) }] as SheetItem[])
                   : []),
                 ...(a.isOwner && a.rideStatus === 'geplant'
                   ? ([
@@ -893,28 +896,15 @@ export default function AusfahrtDetail() {
         onConfirm={() => void startGroup()}
         onClose={() => setStartAsk(false)}
       />
-      {/* Angepingt: Wann bist du da? */}
-      <ActionSheet
+      {/* Gefragt: Wann bist du da? (gleiches Blatt wie im Chat) */}
+      <WhenSheet
         visible={pingOpen && joined && !isLead && a.rideStatus === 'geplant'}
-        title={t('Wann bist du da?')}
-        subtitle={tr('{meetingName}, Abfahrt {v1}. Teile deinen Standort bis zur Ankunft, dann sieht die Gruppe, wann du kommst.', { meetingName, v1: clock(a.startsAt) })}
-        items={[
-          {
-            key: 'teilen',
-            icon: 'location.fill',
-            label: t('Teilen und hinfahren'),
-            hint: t('Die Gruppe sieht deinen Standort bis zur Ankunft'),
-            onPress: () =>
-              void run('teilen', async () => {
-                if (!meetAt) return;
-                startSharing(a.id, meetAt);
-                await navigateToMeeting(meetAt, meetingName, 'schnell');
-              }),
-          },
-          { key: 'ohne', icon: 'figure.wave', label: t('Fahrt ohne mich los'), hint: t('Schickt eine Nachricht an die Gruppe'), onPress: () => void run('ohne', () => sendNachricht(a.id, tr('Fahrt ohne mich los, ich komme nicht rechtzeitig.'))) },
-          { key: 'chat', icon: 'bubble.left', label: t('Nachricht'), onPress: openChat },
-        ]}
+        rideId={a.id}
+        meetAt={meetAt}
+        meetingName={meetingName}
+        startsAt={a.startsAt}
         onClose={() => setPingOpen(false)}
+        onChat={openChat}
       />
 
       {/* Rückfrage als Blatt wie überall (Prüfung 11.11.) */}

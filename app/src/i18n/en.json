@@ -2053,5 +2053,21 @@
   "Schnell auf die Runde, dann die ganze Runde ab dort": "Quickly onto the loop, then the whole loop from there",
   "Chats": "Chats",
   "Noch keine Unterhaltungen mit anderen Fahrern.": "No conversations with other drivers yet.",
-  "Keine aktuellen Chats von Ausfahrten.": "No current club drive chats."
+  "Keine aktuellen Chats von Ausfahrten.": "No current club drive chats.",
+  "Gefragt. {name} bekommt eine Mitteilung, die Frage steht im Chat.": "Asked. {name} gets a notification, the question is in the chat.",
+  "gefragt vor {pinged} min": "asked {pinged} min ago",
+  "{name} fragen, wann er da ist": "Ask {name} when they'll arrive",
+  "Bekommt eine Mitteilung, die Frage steht im Chat": "Gets a notification, the question is in the chat",
+  "Antwort steht im Chat": "Reply is in the chat",
+  "Standort geteilt": "Location shared",
+  "Die Gruppe sieht, wann du ankommst": "The group sees when you arrive",
+  "In 10 min da": "There in 10 min",
+  "In 30 min da": "There in 30 min",
+  "Bin schon da": "I'm already here",
+  "Bin in 10 min da.": "I'll be there in 10 min.",
+  "Bin in 30 min da.": "I'll be there in 30 min.",
+  "Bin schon da.": "I'm already here.",
+  "Bin unterwegs, mein Standort ist geteilt.": "On my way, my location is shared.",
+  "Antippen zum Antworten": "Tap to reply",
+  "{meetingName}, Abfahrt {v1}": "{meetingName}, departure {v1}"
 }

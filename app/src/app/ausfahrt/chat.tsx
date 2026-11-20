@@ -22,7 +22,8 @@ import { ActionSheet } from '@/components/ui/action-sheet';
 import { refreshUnread } from '@/lib/drivers';
 import { useSession } from '@/lib/auth';
 import { enablePush, setOpenChat } from '@/lib/push';
-import { t } from '@/i18n';
+import { WhenSheet } from '@/components/group/when-sheet';
+import { t, tr } from '@/i18n';
 
 export default function AusfahrtChat() {
   // name und from kommen aus der Liste der Nachrichten (Koray 18.11.): Titel auch bei vergangenen Ausfahrten, Zurück nennt die Herkunft
@@ -42,6 +43,8 @@ export default function AusfahrtChat() {
   // eigene Nachricht lange drücken: bearbeiten oder löschen (Koray 20.11.2026)
   const [own, setOwn] = useState<Nachricht | null>(null);
   const [editing, setEditing] = useState<Nachricht | null>(null);
+  // „Koray, wann bist du da?“ an mich antippen: dasselbe Blatt wie auf der Ausfahrt (Koray 20.11.2026)
+  const [whenOpen, setWhenOpen] = useState(false);
 
   // Solange der Chat offen ist, keine Mitteilung für ihn; beim ersten Öffnen nach der Erlaubnis fragen
   useFocusEffect(
@@ -73,6 +76,9 @@ export default function AusfahrtChat() {
   );
 
   const names = useMemo(() => new Map(members.map((m) => [m.userId, m.name])), [members]);
+  const myFirst = (me && names.get(me)?.trim().split(/\s+/)[0]) || null;
+  const askedMe = (m: Nachricht) =>
+    !!myFirst && m.userId !== me && a?.rideStatus === 'geplant' && m.body.trim() === tr('{name}, wann bist du da?', { name: myFirst });
 
   const send = async () => {
     if (!id || !text.trim() || sending) return;
@@ -128,16 +134,20 @@ export default function AusfahrtChat() {
           const prev = list[i - 1];
           const first = !prev || prev.userId !== m.userId;
           const name = names.get(m.userId) ?? t('Fahrer');
+          const asked = askedMe(m);
           return (
             <Animated.View key={m.id} entering={FadeInDown.duration(Motion.enter)} style={[styles.msgRow, mine && styles.msgRowMine, !first && styles.msgFollow]}>
               {!mine && (first ? <Avatar name={name} userId={m.userId} size={32} /> : <View style={styles.avatarGap} />)}
               <Pressable
                 delayLongPress={350}
+                onPress={asked ? () => setWhenOpen(true) : undefined}
+                accessibilityRole={asked ? 'button' : undefined}
                 onLongPress={() => (mine ? setOwn(m) : setReport({ ref: String(m.id), userId: m.userId, name }))}
                 accessibilityHint={mine ? t('Lange drücken, um die Nachricht zu bearbeiten oder zu löschen') : t('Lange drücken, um die Nachricht zu melden')}
                 style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
                 {!mine && first && <AppText style={styles.author}>{name}</AppText>}
                 <AppText style={styles.body}>{m.body}</AppText>
+                {asked && <AppText style={styles.askedHint}>{t('Antippen zum Antworten')}</AppText>}
                 <AppText style={styles.time}>{m.editedAt ? `${t('bearbeitet')} · ${clock(m.createdAt)}` : clock(m.createdAt)}</AppText>
               </Pressable>
             </Animated.View>
@@ -171,6 +181,17 @@ export default function AusfahrtChat() {
           {sending ? <ActivityIndicator color={Colors.onSignal} /> : <SymbolView name="arrow.up" size={20} weight="semibold" tintColor={Colors.onSignal} />}
         </Pressable>
       </View>
+      {a && (
+        <WhenSheet
+          visible={whenOpen}
+          rideId={a.id}
+          meetAt={a.meeting ? [a.meeting.lat, a.meeting.lon] : a.start}
+          meetingName={a.meeting?.name?.trim() || tr('Start der Tour')}
+          startsAt={a.startsAt}
+          onClose={() => setWhenOpen(false)}
+          onSent={() => void reload()}
+        />
+      )}
       <ActionSheet
         visible={!!own}
         onClose={() => setOwn(null)}
@@ -202,6 +223,7 @@ export default function AusfahrtChat() {
 }
 
 const styles = StyleSheet.create({
+  askedHint: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.signal, marginTop: 2 },
   root: { flex: 1, backgroundColor: Colors.ground },
   flex: { flex: 1 },
   head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingHorizontal: Layout.page, paddingBottom: Spacing.m },

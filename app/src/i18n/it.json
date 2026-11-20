@@ -2053,5 +2053,21 @@
   "Schnell auf die Runde, dann die ganze Runde ab dort": "Rapidamente sul giro, poi tutto il giro da lì",
   "Chats": "Chat",
   "Noch keine Unterhaltungen mit anderen Fahrern.": "Ancora nessuna conversazione con altri piloti.",
-  "Keine aktuellen Chats von Ausfahrten.": "Nessuna chat recente delle uscite."
+  "Keine aktuellen Chats von Ausfahrten.": "Nessuna chat recente delle uscite.",
+  "Gefragt. {name} bekommt eine Mitteilung, die Frage steht im Chat.": "Chiesto. {name} riceve una notifica, la domanda è nella chat.",
+  "gefragt vor {pinged} min": "chiesto {pinged} min fa",
+  "{name} fragen, wann er da ist": "Chiedi a {name} quando arriva",
+  "Bekommt eine Mitteilung, die Frage steht im Chat": "Riceve una notifica, la domanda è nella chat",
+  "Antwort steht im Chat": "Risposta nella chat",
+  "Standort geteilt": "Posizione condivisa",
+  "Die Gruppe sieht, wann du ankommst": "Il gruppo vede quando arrivi",
+  "In 10 min da": "Tra 10 min",
+  "In 30 min da": "Tra 30 min",
+  "Bin schon da": "Sono già qui",
+  "Bin in 10 min da.": "Arrivo tra 10 min.",
+  "Bin in 30 min da.": "Arrivo tra 30 min.",
+  "Bin schon da.": "Sono già qui.",
+  "Bin unterwegs, mein Standort ist geteilt.": "Sono in viaggio, la mia posizione è condivisa.",
+  "Antippen zum Antworten": "Tocca per rispondere",
+  "{meetingName}, Abfahrt {v1}": "{meetingName}, partenza {v1}"
 }
