@@ -382,6 +382,13 @@ export async function syncLibrary(): Promise<void> {
       else if (!first) seen.set(key, t);
     }
     for (const d of dupes) deleteTour(d.id);
+    // 3c. Kopie der eigenen veröffentlichten Tour (Koray 20.11.2026: „In der Community“ ist nur ein Status, kein Grund
+    //     für eine Kopie). Aus der Community übernommen, unverändert und gleich bis auf den Ordner: die Kopie geht.
+    const ownKeys = new Set(read().filter((t) => t.published).map((t) => dupeKey({ ...t, folder: '' })));
+    for (const t of read()) {
+      if (t.published || t.edited || !fromCommunity(t)) continue;
+      if (ownKeys.has(dupeKey({ ...t, folder: '' }))) deleteTour(t.id);
+    }
     setSync({ running: false, last: new Date().toISOString() });
   } catch (e) {
     setSync({ running: false, error: (e as Error).message });
