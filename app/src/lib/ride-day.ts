@@ -5,6 +5,7 @@
  */
 import * as Location from 'expo-location';
 
+import { haptic } from './haptics';
 import { supabase } from './supabase';
 import { haversine, type LatLon } from './tour';
 import { tr } from '@/i18n';
@@ -49,6 +50,7 @@ export const changeRide = (ride: string, startsAt: Date | null, meeting: { name:
   call('ride_change', { ride, new_starts: startsAt?.toISOString() ?? null, new_meeting: meeting });
 
 /** Bin ich am Treffpunkt? Dann meldet die App "da" (ohne den Standort zu teilen) */
+const arrivedFelt = new Set<string>();
 export async function checkArrived(ride: string, meeting: LatLon): Promise<boolean> {
   const perm = await Location.getForegroundPermissionsAsync();
   if (perm.status !== 'granted') return false;
@@ -56,6 +58,11 @@ export async function checkArrived(ride: string, meeting: LatLon): Promise<boole
   if (!loc) return false;
   if (haversine([loc.coords.latitude, loc.coords.longitude], meeting) > ARRIVED_M) return false;
   await call('ride_arrived', { ride });
+  // Ankunft am Treffpunkt einmal spüren (Audit 20.11.2026, Haptik ergebnis)
+  if (!arrivedFelt.has(ride)) {
+    arrivedFelt.add(ride);
+    haptic('ergebnis');
+  }
   return true;
 }
 

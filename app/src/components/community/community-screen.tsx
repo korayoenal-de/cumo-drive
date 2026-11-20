@@ -28,6 +28,7 @@ import { MeetingRoute } from '@/components/group/meeting-route';
 import { refreshContacts, useContacts } from '@/lib/contacts';
 import { DateBlock, RideStatus } from '@/components/community/ride-bits';
 import { FromBadge, FunMark, GoodBadge, RouteThumb } from '@/components/tours/tour-bits';
+import { HeadPill, IconButton } from '@/components/ui/button';
 import { Chip, ChipRow, ChipGroup } from '@/components/ui/chip';
 import { MapSheet, type Detent } from '@/components/ui/map-sheet';
 import { ReportSheet } from '@/components/moderation/report-sheet';
@@ -425,27 +426,14 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
         <AppText style={styles.kicker}>{seg === 'routen' ? tr('Touren zum Nachfahren') : seg === 'ausfahrten' ? tr('Gemeinsame Ausfahrten') : 'Drivers'}</AppText>
         {/* Eigene Tour teilen oder eine neue erstellen (Koray 15.11.), gleiche Form wie Anlegen und Nachrichten */}
         {seg === 'routen' && userId && (
-          <Pressable accessibilityRole="button" accessibilityLabel={tr('Tour teilen')} hitSlop={4} onPress={() => setShareOpen(true)} style={styles.addBtn}>
-            <SymbolView name="plus" size={16} weight="semibold" tintColor={Colors.text} />
-            <AppText style={styles.addText}>{tr('Teilen')}</AppText>
-          </Pressable>
+          <HeadPill icon="plus" label={tr('Teilen')} accessibilityLabel={tr('Tour teilen')} onPress={() => setShareOpen(true)} />
         )}
         {/* Nachrichten in der Community immer oben rechts, als Symbol Taste neben der Kopf Pille (Audit 20.11.2026) */}
         {mode === 'community' && userId && (
-          <Pressable accessibilityRole="button" accessibilityLabel={unread ? tr('Nachrichten, {n} ungelesen', { n: unread }) : tr('Nachrichten')} hitSlop={4} onPress={() => router.push('/nachrichten')} style={styles.roundHead}>
-            <SymbolView name="bubble.left.and.bubble.right" size={18} weight="semibold" tintColor={Colors.text} />
-            {unread > 0 && (
-              <View style={[styles.badge, styles.badgeCorner]}>
-                <AppText style={styles.badgeText}>{unread > 9 ? '9+' : unread}</AppText>
-              </View>
-            )}
-          </Pressable>
+          <IconButton icon="bubble.left.and.bubble.right" label={tr('Nachrichten')} badge={unread} on="surface" onPress={() => router.push('/nachrichten')} />
         )}
         {seg === 'ausfahrten' && userId && (
-          <Pressable accessibilityRole="button" accessibilityLabel={tr('Ausfahrt anlegen')} hitSlop={4} onPress={() => router.push('/ausfahrt/neu')} style={styles.addBtn}>
-            <SymbolView name="plus" size={16} weight="semibold" tintColor={Colors.text} />
-            <AppText style={styles.addText}>{tr('Anlegen')}</AppText>
-          </Pressable>
+          <HeadPill icon="plus" label={tr('Anlegen')} accessibilityLabel={tr('Ausfahrt anlegen')} onPress={() => router.push('/ausfahrt/neu')} />
         )}
       </View>
       {selTour && <RouteCard key={selTour.id} t={selTour} mine={userId === selTour.owner} big onChanged={() => { select(null); load(); }} />}
@@ -1068,8 +1056,6 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  roundHead: { width: Size.icon, height: Size.icon, borderRadius: Size.icon / 2, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  badgeCorner: { position: 'absolute', top: -2, right: -2 },
   filters: { marginBottom: Spacing.s },
   soonState: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
   section: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, marginTop: Spacing.m },
@@ -1081,8 +1067,6 @@ const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', alignItems: 'center', minHeight: 44, gap: Spacing.s },
   // Überschrift des Bereichs in der Headline Schrift (Koray 10.11.), wie Meine Touren
   kicker: { flex: 1, fontFamily: Fonts.display, fontSize: Type.h2, lineHeight: Leading.h2, textTransform: 'uppercase', color: Colors.text },
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, height: Size.icon, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
-  addText: { fontFamily: Fonts.bold, fontSize: Type.body },
   body: { gap: Spacing.s, paddingBottom: Spacing.xl },
   segWrap: { position: 'absolute', left: Spacing.l, right: Spacing.l, alignItems: 'flex-start' },
   seg: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', height: 44, padding: 4, gap: 2, borderRadius: 22, backgroundColor: Colors.overlaySurface, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' },

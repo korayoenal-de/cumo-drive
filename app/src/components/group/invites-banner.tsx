@@ -114,7 +114,8 @@ export function InvitesList({ rides, onChanged, onPick }: { rides?: Ausfahrt[] |
     try {
       await respondInvite(inv.rideId, true, myVehicleLabel());
       setInvites(invites.map((i) => (i.rideId === inv.rideId ? { ...i, myStatus: 'zugesagt' } : i)));
-      haptic('ablegen');
+      // Zusagen ist ein Ziel: die Ausfahrt landet bei dir (Audit 20.11.2026, Haptik ziel)
+      haptic('ziel');
       const starts = inv.startsAt ? new Date(inv.startsAt) : null;
       showToast(starts && relDay(starts) !== 'Heute' && relDay(starts) !== 'Morgen' ? tr('Du bist dabei. Wir erinnern dich am Vortag.') : tr('Du bist dabei.'));
       onChanged?.();
@@ -214,7 +215,8 @@ export function InvitesList({ rides, onChanged, onPick }: { rides?: Ausfahrt[] |
             ) : null}
             {err?.id === inv.rideId && <AppText style={styles.error}>{err.text}</AppText>}
             <View style={styles.row}>
-              <Btn label={t('Zusagen')} icon={{ tab: 'community' }} primary busy={isBusy} disabled={!!busy} onPress={() => void accept(inv)} />
+              {/* in der Liste grau, Orange erst auf der Seite der Ausfahrt (Audit 20.11.2026, Regel 1) */}
+              <Btn label={t('Zusagen')} icon={{ tab: 'community' }} busy={isBusy} disabled={!!busy} onPress={() => void accept(inv)} />
               <Btn
                 label={t('Absagen')}
                 disabled={!!busy}
@@ -260,7 +262,7 @@ function Btn({ label, primary, busy, disabled, onPress, icon }: { label: string;
   return (
     <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.btn, primary ? styles.btnPrimary : styles.btnSecondary, (pressed || disabled) && styles.dim]}>
       {busy ? (
-        <ActivityIndicator color={Colors.onSignal} />
+        <ActivityIndicator color={primary ? Colors.onSignal : Colors.text} />
       ) : icon ? (
         <IconLabel icon={icon} color={primary ? Colors.onSignal : Colors.text}>
           <AppText style={primary ? styles.btnPrimaryText : styles.btnText}>{label}</AppText>

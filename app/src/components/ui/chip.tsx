@@ -13,6 +13,7 @@ import { Pressable } from '@/components/ui/tap';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { EASE_OUT } from '@/components/ui/motion';
+import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 
@@ -45,7 +46,11 @@ export function Chip({
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
-      onPress={onPress}
+      onPress={() => {
+        // Wechsel der Auswahl rastet ein wie ein iOS Picker (Audit 20.11.2026: Haptik im Baustein statt an jeder Stelle)
+        if (!active) haptic('rastung');
+        onPress();
+      }}
       onLayout={onLayout}
       // gedrückt wie alle Tasten (Regel Druck)
       style={({ pressed }) => [styles.chip, row ? styles.clear : active ? styles.on : { backgroundColor: bg }, pressed && styles.pressed]}>
