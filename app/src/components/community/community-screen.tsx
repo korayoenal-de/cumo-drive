@@ -458,7 +458,7 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
     ...shareable.map(tourItem),
     // immer da (Koray 15.11.): auch bei wenigen Touren der Weg zur ganzen Liste
     { key: 'alle', icon: 'list.bullet' as const, label: tr('Alle Touren'), hint: shareableAll.length === 1 ? tr('1 Tour zum Teilen') : tr('{n} Touren zum Teilen', { n: shareableAll.length }), onPress: () => setShareAll(true) },
-    { key: 'neu', icon: 'plus' as const, label: tr('Neue Tour erstellen'), hint: tr('Im Planer, danach hier teilen'), onPress: () => router.navigate('/') },
+    { key: 'neu', icon: 'plus' as const, label: tr('Neue Tour'), hint: tr('Im Planer, danach hier teilen'), onPress: () => router.navigate('/') },
   ];
 
   return (
@@ -986,12 +986,10 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function rideAction(r: Ausfahrt): string {
-  if (r.isCancelled) return tr('Ausfahrt ansehen');
-  if (r.isOwner) return r.openRequests ? (r.openRequests === 1 ? tr('Anfrage ansehen') : tr('{openRequests} Anfragen ansehen', { openRequests: r.openRequests })) : tr('Ausfahrt ansehen');
-  if (r.myStatus === 'zugesagt') return tr('Zur Ausfahrt');
-  if (r.myStatus === 'angefragt') return tr('Anfrage ansehen');
-  if (r.myStatus === 'eingeladen') return tr('Einladung ansehen');
-  return freeSeats(r) > 0 ? tr('Mitfahren anfragen') : tr('Ausfahrt ansehen');
+  // Wörterbuch (Audit 20.11.2026): keine „ansehen“ Tasten, „Zur …“ für Orte, Handlungen beim Namen
+  if (r.isOwner && r.openRequests) return r.openRequests === 1 ? tr('Anfrage beantworten') : tr('{openRequests} Anfragen beantworten', { openRequests: r.openRequests });
+  if (!r.isCancelled && !r.isOwner && (!r.myStatus || r.myStatus === 'abgesagt') && freeSeats(r) > 0) return tr('Mitfahren anfragen');
+  return tr('Zur Ausfahrt');
 }
 
 function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {

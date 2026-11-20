@@ -73,7 +73,7 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
         </button>
       </div>
       <span style={S.small}>
-        {ride.status === 'verbinde' ? 'Verbinde …' : t('{length} in der Gruppe, du bist {v1}', { length: ride.members.length, v1: { lead: t('Lead'), schluss: t('Schlusslicht'), mitfahrer: t('Mitfahrer') }[ride.myRole] })}
+        {ride.status === 'verbinde' ? 'Verbinde …' : t('{length} in der Gruppe, du bist {v1}', { length: ride.members.length, v1: { lead: t('Lead'), schluss: t('Schlusslicht'), mitfahrer: t('Teilnehmer') }[ride.myRole] })}
         {ride.tourCode ? t(', Tour geteilt') : ''}
       </span>
       <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: Spacing.xs }}>

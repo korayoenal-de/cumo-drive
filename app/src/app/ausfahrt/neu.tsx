@@ -345,7 +345,7 @@ export default function AusfahrtNeu() {
             {/* Hinweis */}
             <View style={styles.section}>
               <AppText style={styles.label}>{t('Hinweis an die Teilnehmer (optional)')}</AppText>
-              <TextField maxFontSizeMultiplier={1.2} value={note} onChangeText={setNote} placeholder={t('Zum Beispiel Mittag am Ziel, Rückweg frei')} placeholderTextColor={Colors.muted} multiline maxLength={500} style={[styles.input, styles.inputMulti]} accessibilityLabel={t('Hinweis an Mitfahrer')} />
+              <TextField maxFontSizeMultiplier={1.2} value={note} onChangeText={setNote} placeholder={t('Zum Beispiel Mittag am Ziel, Rückweg frei')} placeholderTextColor={Colors.muted} multiline maxLength={500} style={[styles.input, styles.inputMulti]} accessibilityLabel={t('Hinweis an die Teilnehmer')} />
             </View>
 
             {err && <AppText style={styles.error}>{err}</AppText>}

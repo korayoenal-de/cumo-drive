@@ -648,7 +648,7 @@ export default function AusfahrtDetail() {
             const d = dayOf(m.userId);
             const self = me === m.userId;
             const pinged = d?.pingedAt && now - d.pingedAt.getTime() < 30 * 60000 ? Math.max(1, Math.round((now - d.pingedAt.getTime()) / 60000)) : null;
-            const sub = [d?.isLead && !m.isOwner ? 'Lead' : m.isOwner ? 'Organisator' : null, dayMode && !d?.arrived && pinged ? tr('gefragt vor {pinged} min', { pinged }) : m.vehicle].filter(Boolean).join('  ·  ') || 'Mitfahrer';
+            const sub = [d?.isLead && !m.isOwner ? tr('Lead') : m.isOwner ? tr('Organisator') : null, dayMode && !d?.arrived && pinged ? tr('gefragt vor {pinged} min', { pinged }) : m.vehicle].filter(Boolean).join('  ·  ') || tr('Teilnehmer');
             return (
               <Pressable key={m.userId} accessibilityRole="button" disabled={self} onPress={() => setPerson({ userId: m.userId, name: m.name, invited: false })} style={styles.member}>
                 <Avatar name={m.name} userId={m.userId} />

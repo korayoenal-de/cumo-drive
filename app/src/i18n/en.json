@@ -2107,5 +2107,8 @@
   "{name} möchte dich als Kontakt hinzufügen": "{name} wants to add you as a contact",
   "{name} ist jetzt dein Kontakt": "{name} is now your contact",
   "{name} fährt bei {ride} mit": "{name} joins {ride}",
-  "deiner Ausfahrt": "your drive"
+  "deiner Ausfahrt": "your drive",
+  "Anfrage beantworten": "Answer request",
+  "{openRequests} Anfragen beantworten": "Answer {openRequests} requests",
+  "Organisator": "Organiser"
 }

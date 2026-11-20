@@ -2107,5 +2107,8 @@
   "{name} möchte dich als Kontakt hinzufügen": "{name} vuole aggiungerti come contatto",
   "{name} ist jetzt dein Kontakt": "{name} è ora un tuo contatto",
   "{name} fährt bei {ride} mit": "{name} partecipa a {ride}",
-  "deiner Ausfahrt": "la tua uscita"
+  "deiner Ausfahrt": "la tua uscita",
+  "Anfrage beantworten": "Rispondi alla richiesta",
+  "{openRequests} Anfragen beantworten": "Rispondi a {openRequests} richieste",
+  "Organisator": "Organizzatore"
 }

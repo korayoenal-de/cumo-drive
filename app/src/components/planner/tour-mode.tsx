@@ -941,7 +941,7 @@ export function TourMode({
             ]}
           />
         )}
-        {!routeTour && !busy && !hold && pts.length > 0 && <SecondaryButton label={tr('Neue Tour beginnen')} onPress={plan.reset} />}
+        {!routeTour && !busy && !hold && pts.length > 0 && <SecondaryButton label={tr('Neue Tour')} onPress={plan.reset} />}
       </View>
       )}
     </>
