@@ -23,6 +23,7 @@ import { regionScore } from './regions';
 import { bearingTo, destination, DIRECTIONS, hillyVia, loopPoints, roundTrip, type Direction } from './roundtrip';
 import { countCurves } from './stats';
 import { flatten, haversine, type LatLon, type Profile } from './tour';
+import { tourFun } from './fun-score';
 import type { Avoid } from './valhalla';
 import { ensureRoadArea, onRoadData } from './road-data';
 import { reverseName } from './geocode';
@@ -90,6 +91,26 @@ export function noGoodAlternative(t: PlannedTour, prev: PlannedTour[], km: numbe
   if (spur > Math.max(3, km * 0.06) && spur > Math.min(...prev.map(spurKm)) + 1) return true;
   return fun != null && bestFun != null && fun < bestFun - 15;
 }
+
+/**
+ * Fahrspaß der Runde 0 bis 100, wie ihn die App anzeigt (Koray und Björn 20.11.2026: Rundtour ab Lorsch, Würfe mit 20,
+ * 54, 43, 65; eine 20 sollte gar nicht erst kommen). Einmal je Runde gerechnet.
+ */
+const funCache = new WeakMap<PlannedTour, number>();
+export function funOf(t: PlannedTour): number {
+  const hit = funCache.get(t);
+  if (hit != null) return hit;
+  const f = tourFun(flatten(t).map((x) => x.p))?.score ?? 0;
+  funCache.set(t, f);
+  return f;
+}
+/** Gewicht des Fahrspaß in der Bewertung: 10 Punkte Fahrspaß wiegen so viel wie etwa 13 Kurven je 100 km */
+const FUN_WEIGHT = 4;
+/**
+ * Mindestschwelle für gewürfelte Runden (Koray 20.11.2026): unter 51 Fahrspaß soll keine Runde kommen, solange es eine
+ * bessere gibt. Runden darunter verlieren in der Wertung deutlich, und die Suche probiert weitere Richtungen.
+ */
+export const FUN_FLOOR = 51;
 
 /**
  * Gleiche Bewertung für alle Kandidaten; gesperrte km wiegen schwer. Prüfstellen (Zufahrten,
@@ -251,7 +272,7 @@ async function planRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) => void, 
       // ihr Hin und Zurück nur ein Drittel, und sie gewannen gegen bessere freie Runden (Bensheim, Osten:
       // 10,9 km Hin und Zurück über die Juhöhe, bei jedem Neu würfeln dieselbe Runde).
       const base = (t: PlannedTour & { curves: number }) =>
-        scoreTour(t, t.curves, 0, req.km) + favKm(t) * 4 + regionPoints(t, req.profile === 'entspannt') + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading) - townPenalty(t) + (passBonus.get(t) ?? 0);
+        scoreTour(t, t.curves, 0, req.km) + funOf(t) * FUN_WEIGHT - (funOf(t) < FUN_FLOOR ? 1500 : 0) + favKm(t) * 4 + regionPoints(t, req.profile === 'entspannt') + highlightBonus(t) - offCourse(t, req.start, free ? undefined : heading) - townPenalty(t) + (passBonus.get(t) ?? 0);
       const passCands = candidates.splice(0);
       const ranked = [...free6, ...loops, ...circles]
         .filter((t) => (t.km_je_klasse?.raus ?? 0) === 0)
@@ -419,6 +440,28 @@ async function planRoundTrip(req: SmartRequest, onStep?: (s: PlanStep) => void, 
       // reicht (Linthal: die gedrehten Richtungen brauchten 20 s und brachten nichts, die Länge 10 s und half)
       const reworked = needLength ? ((await fixLength()) ?? (await rotate())) : await rotate();
       if (reworked) return reworked;
+      // Unter der Schwelle (Koray 20.11.: Lorsch nach Südosten in die Rheinebene, Fahrspaß 18): bei zufälliger Richtung
+      // die beiden anderen Drittel des Kreises probieren, bei gewählter Richtung 60 Grad links und rechts davon.
+      // Genommen wird die Runde mit klar mehr Fahrspaß; erreicht keine die Schwelle, bleibt die beste.
+      const anyHeading = req.direction === 'zufall' && req.bearing === undefined;
+      if (best && !req.rotated && funOf(best) < FUN_FLOOR && left() > 3000) {
+        onStep?.('compare');
+        const alt =
+          (await budgeted(left(), signal, (sig) =>
+            Promise.all(
+              (anyHeading ? [120, 240] : [-60, 60]).map((d) =>
+                smartRoundTrip({ ...req, bearing: (heading + d + 360) % 360, rotated: true, seed: seed + d + 3 }, undefined, sig).catch((e) => {
+                  if (signal?.aborted) throw e;
+                  return null;
+                }),
+              ),
+            ),
+          )) ?? [];
+        const better = alt
+          .filter((t): t is SmartTour => !!t && lengthFits(t.laenge_km, req.km) && spurKm(t) <= Math.max(3, spurKm(best) + 1))
+          .sort((a, b) => funOf(b) - funOf(a))[0];
+        if (better && funOf(better) >= funOf(best) + 10) return better;
+      }
       if (best) return best;
       // Nichts in dieser Richtung (Mayrhofen nach Süden: Talende, nur Hochgebirge): erst drei andere Richtungen
       // mit dem eigenen Server, bevor der langsame Ersatzweg rechnet (Stresstest 10.11.: 78 bis 97 s über Valhalla)
