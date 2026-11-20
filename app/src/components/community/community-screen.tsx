@@ -6,6 +6,7 @@
  * Organisator nimmt an, danach Chat und am Tag die Gruppenfahrt.
  * Drivers (Koray 10.11.): Mitglieder an ihrem Wohnort, Fuhrpark und Nachricht schreiben.
  */
+import { friendlyError } from '@/lib/friendly-error';
 import { Kennzahlen, SeatsBadge } from '@/components/ui/kennzahlen';
 import { fahrzeit, meta as fmtMeta, strecke, wann } from '@/lib/format';
 import { seenTab } from '@/lib/fly';
@@ -179,7 +180,7 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
         setTours(l);
         setErr(null);
       })
-      .catch((e: Error) => setErr(e.message));
+      .catch((e: unknown) => setErr(friendlyError(e)));
     // private Ausfahrten: eigene und zugesagte stehen auch hier, mit „Privat“ (Koray 20.11.2026: in der Community
     // angelegt, also dort erwartet; vorher seit 13.11. nur unter Touren). Andere sehen sie weiter nicht.
     // abgesagte bleiben bis zum geplanten Tag sichtbar, damit Teilnehmer die Absage sehen (Koray 17.11.)
@@ -599,7 +600,14 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
                         ['offen', tr('Offen'), rideGroups.offen.length],
                       ] as const
                     ).map(([key, label, n]) => (
-                      <Chip key={key} label={n ? `${label} ${n}` : label} active={rideFilter === key} onPress={() => setRideFilter(key)} />
+                      // Einladungen und Anfragen warten auf dich: oranger Kreis; Kommende und Offen sind nur Anzahlen
+                      <Chip
+                        key={key}
+                        label={n && (key === 'kommende' || key === 'offen') ? `${label} ${n}` : label}
+                        badge={key === 'einladungen' || key === 'anfragen' ? n : undefined}
+                        active={rideFilter === key}
+                        onPress={() => setRideFilter(key)}
+                      />
                     ))}
                   </ChipRow>
                 </View>
@@ -810,7 +818,7 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
       setBusy('withdraw');
       withdrawCommunityTour(t.id)
         .then(() => onChanged?.())
-        .catch((e: Error) => setErr(e.message))
+        .catch((e: unknown) => setErr(friendlyError(e)))
         .finally(() => setBusy(null));
     }}
     onClose={() => setConfirm(false)}

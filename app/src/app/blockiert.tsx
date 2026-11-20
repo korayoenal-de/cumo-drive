@@ -1,4 +1,5 @@
 /** Blockierte Drivers (Koray 12.11.): Liste mit Aufheben. */
+import { friendlyError } from '@/lib/friendly-error';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
@@ -18,7 +19,7 @@ export default function Blockiert() {
   useEffect(() => {
     listBlocks()
       .then(setList)
-      .catch((e: Error) => setErr(e.message));
+      .catch((e: unknown) => setErr(friendlyError(e)));
   }, []);
   const lift = async (b: Blocked) => {
     setBusy(b.userId);

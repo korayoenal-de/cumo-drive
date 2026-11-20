@@ -21,10 +21,14 @@ type Box = { x: number; y: number; w: number; bg: string };
 type RowCtx = { report: (id: string, box: Box | null, active: boolean) => void };
 const ChipRowContext = createContext<RowCtx | null>(null);
 
-/** onSurface: der Chip liegt auf einer Surface Karte und bekommt deshalb die hellere Füllung. */
+/**
+ * onSurface: der Chip liegt auf einer Surface Karte und bekommt deshalb die hellere Füllung.
+ * badge: Neues, das auf dich wartet (ungelesen, Einladung, Anfrage), als oranger Kreis mit Zahl wie am Tab (Koray 20.11.2026).
+ * Reine Anzahlen (Kommende 7) bleiben Text im Label.
+ */
 export function Chip({
-  label, active, onPress, onSurface,
-}: { label: string; active: boolean; onPress: () => void; onSurface?: boolean }) {
+  label, active, onPress, onSurface, badge,
+}: { label: string; active: boolean; onPress: () => void; onSurface?: boolean; badge?: number }) {
   const row = useContext(ChipRowContext);
   const id = useId();
   const box = useRef<Box | null>(null);
@@ -46,6 +50,7 @@ export function Chip({
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
+      accessibilityLabel={badge ? `${label}, ${badge} neu` : label}
       onPress={() => {
         // Wechsel der Auswahl rastet ein wie ein iOS Picker (Audit 20.11.2026: Haptik im Baustein statt an jeder Stelle)
         if (!active) haptic('rastung');
@@ -53,8 +58,13 @@ export function Chip({
       }}
       onLayout={onLayout}
       // gedrückt wie alle Tasten (Regel Druck)
-      style={({ pressed }) => [styles.chip, row ? styles.clear : active ? styles.on : { backgroundColor: bg }, pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.chip, !!badge && styles.chipBadge, row ? styles.clear : active ? styles.on : { backgroundColor: bg }, pressed && styles.pressed]}>
       <AppText style={[styles.label, dark && styles.labelOn]}>{label}</AppText>
+      {!!badge && (
+        <View style={styles.badge}>
+          <AppText style={styles.badgeText}>{badge > 9 ? '9+' : badge}</AppText>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -157,6 +167,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: Spacing.s },
   group: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   chip: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, justifyContent: 'center' },
+  chipBadge: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingRight: Spacing.m },
+  badge: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: Type.micro, lineHeight: 13 },
   // Aktiv weiß wie die Reiter der Suche; Orange bleibt der Hauptaktion vorbehalten (Koray 9.11.)
   on: { backgroundColor: Colors.text },
   clear: { backgroundColor: 'transparent' },

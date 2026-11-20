@@ -11,7 +11,7 @@
 import { BackLink } from "@/components/ui/back-link";
 import { router, useFocusEffect } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
 import { Pressable } from "@/components/ui/tap";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -45,6 +45,7 @@ import {
 } from "@/lib/drivers";
 import { answerContact, refreshContacts } from "@/lib/contacts";
 import { enablePush } from "@/lib/push";
+import { friendlyError } from "@/lib/friendly-error";
 import { t, tr } from "@/i18n";
 
 type Row =
@@ -69,7 +70,9 @@ export default function Nachrichten() {
   const insets = useSafeAreaInsets();
   const [list, setList] = useState<Row[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>("ausfahrten");
+  // Vorauswahl (Koray 20.11.2026): dort, wo Neues wartet, zuerst Privat; ohne Neues Privat, weil der Weg aus der Community kommt
+  const [filter, setFilter] = useState<Filter>("privat");
+  const picked = useRef(false);
   const [activity, setActivity] = useState<Activity[]>([]);
   const [busyAsk, setBusyAsk] = useState<string | null>(null);
   const [del, setDel] = useState<Row | null>(null);
@@ -98,9 +101,19 @@ export default function Nachrichten() {
               return !h || r.at.getTime() > h.getTime();
             });
             setList(shown.sort((x, y) => y.at.getTime() - x.at.getTime()));
+            if (!picked.current) {
+              picked.current = true;
+              const unreadIn = (k: Row["kind"]) => shown.some((r) => r.kind === k && unreadOf(r) > 0);
+              if (!unreadIn("direct") && unreadIn("ride")) setFilter("ausfahrten");
+            }
             setErr(null);
           })
-          .catch((e: Error) => setErr(e.message));
+          // Nachladen im Hintergrund (Netz kurz weg, App im Hintergrund): die geladene Liste bleibt, keine Meldung
+          // (Koray 20.11.2026: „Error: fetch failed: Abgebrochen“). Nur ohne jede Liste eine verständliche Meldung.
+          .catch((e: unknown) => setList((l) => {
+            if (!l) setErr(friendlyError(e));
+            return l;
+          }));
       void load();
       void listActivity().then(setActivity);
       void refreshUnread();
@@ -173,7 +186,18 @@ export default function Nachrichten() {
             key === "aktivitaet"
               ? activity.filter((x) => x.kind === "kontaktanfrage").length
               : (list ?? []).filter((r) => visible(r, key)).reduce((sum, r) => sum + unreadOf(r), 0);
-          return <Chip key={key} label={n ? `${label} ${n}` : label} active={filter === key} onPress={() => setFilter(key)} />;
+          return (
+            <Chip
+              key={key}
+              label={label}
+              badge={n}
+              active={filter === key}
+              onPress={() => {
+                picked.current = true;
+                setFilter(key);
+              }}
+            />
+          );
         })}
       </ChipRow>
       {list === null && !err && <ActivityIndicator color={Colors.muted} />}

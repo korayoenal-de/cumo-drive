@@ -27,7 +27,7 @@ import { TextField } from '@/components/ui/text-field';
 import Animated, { FadeOut } from 'react-native-reanimated';
 import { SOFT_LAYOUT } from '@/components/ui/motion';
 import { haptic } from '@/lib/haptics';
-import { isOffline } from '@/lib/friendly-error';
+import { friendlyError, isOffline } from '@/lib/friendly-error';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Motion, Radius, Spacing, Type, Size, Pressed } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
@@ -269,7 +269,7 @@ function Drives({ loggedIn }: { loggedIn: boolean }) {
           setList(l);
           setErr(null);
         })
-        .catch((e: Error) => setErr(e.message));
+        .catch((e: unknown) => setErr(friendlyError(e)));
     }, [loggedIn]),
   );
   if (!loggedIn)
