@@ -238,7 +238,7 @@ export default function AusfahrtDetail() {
     }
   };
 
-  const back = () => (router.canGoBack() ? router.back() : router.navigate('/community'));
+  const back = () => (router.canGoBack() ? router.back() : router.navigate('/ausfahrten'));
 
   // Fall G (Koray 14.11.): Abo abgelaufen, aber mehr als drei Autos geplant. Nur der Organisator sieht das,
   // einmal je Ausfahrt; die Mitfahrer merken nichts. Ausweg: Organisation übergeben. Stumm ohne limitsLive().

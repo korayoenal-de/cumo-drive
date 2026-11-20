@@ -97,7 +97,7 @@ export default function AusfahrtChat() {
     }
   };
 
-  const back = () => (router.canGoBack() ? router.back() : router.navigate('/community'));
+  const back = () => (router.canGoBack() ? router.back() : router.navigate('/ausfahrten'));
   const canSend = !!text.trim() && !sending;
 
   return (

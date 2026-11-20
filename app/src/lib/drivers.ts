@@ -323,14 +323,29 @@ export async function refreshUnread() {
     const { data: s } = await supabase.auth.getSession();
     // Unterhaltungen und Chats der Ausfahrten zusammen (Koray 18.11.); fehlt die zweite Funktion, zählt nur die erste
     const [direct, rides] = s.session ? await Promise.all([supabase.rpc('unread_messages'), supabase.rpc('unread_ride_messages')]) : [null, null];
-    const n = ((direct?.data as number | null) ?? 0) + ((rides?.data as number | null) ?? 0);
-    if (n !== unread) {
+    const d = (direct?.data as number | null) ?? 0;
+    const r = (rides?.data as number | null) ?? 0;
+    const n = d + r;
+    if (n !== unread || d !== unreadSplit.direct) {
       unread = n;
+      unreadSplit = { direct: d, ride: r };
       for (const l of listeners) l();
     }
   } catch {
     // ohne Netz bleibt der letzte Stand
   }
+}
+
+/** Getrennt für die Tabs (20.11.2026): private Chats an der Community, Chats der Ausfahrten am Tab Ausfahrten */
+let unreadSplit = { direct: 0, ride: 0 };
+export function useUnreadSplit(): { direct: number; ride: number } {
+  return useSyncExternalStore(
+    (l) => {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
+    () => unreadSplit,
+  );
 }
 
 export function useUnreadMessages(): number {

@@ -8,7 +8,7 @@ import { useSyncExternalStore } from 'react';
 
 import type { BtnIcon } from '@/components/ui/btn-icon';
 
-export type FlyTab = 'planen' | 'touren' | 'community';
+export type FlyTab = 'planen' | 'touren' | 'ausfahrten' | 'community';
 export type FlyTarget = FlyTab | { x: number; y: number };
 
 export type Flight = {
@@ -26,7 +26,8 @@ export type Flight = {
  * Mitte der Tab Symbole als Anteil der Breite, gemessen am 17.11. auf dem iPhone (393 pt breit: 72, 139, 214, 305);
  * die Höhe ist der untere Rand plus 23 pt. Die Leiste von iOS gibt ihre Lage nicht heraus.
  */
-export const TAB_X: Record<FlyTab, number> = { planen: 72 / 393, touren: 139 / 393, community: 214 / 393 };
+// Seit 20.11.2026 fünf Tabs ohne Wörter, gleich breit: geschätzt aus der Leiste (etwa 27 bis 366 pt), auf dem Gerät nachmessen
+export const TAB_X: Record<FlyTab, number> = { planen: 61 / 393, touren: 129 / 393, ausfahrten: 197 / 393, community: 264 / 393 };
 export const TAB_Y_ABOVE_INSET = 23;
 
 let flights: Flight[] = [];
@@ -57,7 +58,7 @@ export function useFlights(): Flight[] {
 }
 
 /** Neues je Tab, bis der Tab geöffnet wird (Plakette an der Leiste) */
-let fresh: Record<FlyTab, number> = { planen: 0, touren: 0, community: 0 };
+let fresh: Record<FlyTab, number> = { planen: 0, touren: 0, ausfahrten: 0, community: 0 };
 
 export function bumpTab(tab: FlyTab): void {
   fresh = { ...fresh, [tab]: fresh[tab] + 1 };

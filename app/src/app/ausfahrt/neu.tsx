@@ -131,7 +131,7 @@ export default function AusfahrtNeu() {
       // Aktion mit Ziel (Koray 17.11.): die Seite der Ausfahrt folgt sofort, darum kein Flug; Haptik und die
       // Plakette am Community Tab zeigen, wo sie jetzt liegt
       haptic('ziel');
-      if (pub && ent.active) bumpTab('community');
+      bumpTab('ausfahrten');
       router.replace({ pathname: '/ausfahrt/[id]', params: { id } });
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));

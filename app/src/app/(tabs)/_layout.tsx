@@ -20,7 +20,7 @@ import { useInviteCount, useInvitesWatcher } from '@/components/group/invites-ba
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
 import { useSession } from '@/lib/auth';
-import { useUnreadMessages, useUnreadWatcher } from '@/lib/drivers';
+import { useUnreadMessages, useUnreadSplit, useUnreadWatcher } from '@/lib/drivers';
 import { useFresh } from '@/lib/fly';
 import { useRide, type RideState } from '@/lib/group/ride';
 import { t } from '@/i18n';
@@ -36,7 +36,11 @@ function IosTabs() {
   useInvitesWatcher();
   const messages = useUnreadMessages();
   const invites = useInviteCount();
-  const unread = messages + invites + useFresh('community');
+  // Plaketten je Tab (20.11.2026): Ausfahrten zählt Einladungen, Chats der Ausfahrten und Neues dort, Community die
+  // privaten Nachrichten und Neues dort
+  const split = useUnreadSplit();
+  const unread = split.direct + useFresh('community');
+  const rideBadge = split.ride + invites + useFresh('ausfahrten');
   // Zahl am App Symbol wie bei anderen Apps (Koray 20.11.2026): ungelesene Nachrichten (auch Chats der Ausfahrten,
   // dort landet seitdem auch das Anpingen) und offene Einladungen. Ohne Erlaubnis für Mitteilungen bleibt sie aus.
   useEffect(() => {
@@ -65,24 +69,29 @@ function IosTabs() {
         </NativeTabs.BottomAccessory>
       ) : null}
       {/* eigene Abstände der Ansichten bleiben (Screen, MapSheet), darum keine automatischen Einzüge */}
-      <NativeTabs.Trigger name="index" disableAutomaticContentInsets>
+      <NativeTabs.Trigger name="index" disableAutomaticContentInsets accessibilityLabel={t('Planen')}>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/planen.png'), selected: require('../../../assets/tabs/planen-on.png') }} renderingMode="template" />
-        <NativeTabs.Trigger.Label>{t('Planen')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{t('Planen')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="touren" disableAutomaticContentInsets>
+      <NativeTabs.Trigger name="touren" disableAutomaticContentInsets accessibilityLabel={t('Touren')}>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/touren.png'), selected: require('../../../assets/tabs/touren-on.png') }} renderingMode="template" />
-        <NativeTabs.Trigger.Label>{t('Touren')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{t('Touren')}</NativeTabs.Trigger.Label>
         {freshTours > 0 && <NativeTabs.Trigger.Badge>{freshTours > 9 ? '9+' : String(freshTours)}</NativeTabs.Trigger.Badge>}
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="community" disableAutomaticContentInsets>
+      <NativeTabs.Trigger name="ausfahrten" disableAutomaticContentInsets accessibilityLabel={t('Ausfahrten')}>
+        <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/ausfahrten.png'), selected: require('../../../assets/tabs/ausfahrten-on.png') }} renderingMode="template" />
+        <NativeTabs.Trigger.Label hidden>{t('Ausfahrten')}</NativeTabs.Trigger.Label>
+        {rideBadge > 0 && <NativeTabs.Trigger.Badge>{rideBadge > 9 ? '9+' : String(rideBadge)}</NativeTabs.Trigger.Badge>}
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="community" disableAutomaticContentInsets accessibilityLabel={t('Community')}>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/community.png'), selected: require('../../../assets/tabs/community-on.png') }} renderingMode="template" />
-        <NativeTabs.Trigger.Label>{t('Community')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{t('Community')}</NativeTabs.Trigger.Label>
         {/* ohne Neues gar keine Plakette (Koray 15.11.: "hidden" zeigte trotzdem eine 0) */}
         {unread > 0 && <NativeTabs.Trigger.Badge>{unread > 9 ? '9+' : String(unread)}</NativeTabs.Trigger.Badge>}
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="einstellungen" disableAutomaticContentInsets>
+      <NativeTabs.Trigger name="einstellungen" disableAutomaticContentInsets accessibilityLabel={t('Einstellungen')}>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/einstellungen.png'), selected: require('../../../assets/tabs/einstellungen-on.png') }} renderingMode="template" />
-        <NativeTabs.Trigger.Label>{t('Einstellungen')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{t('Einstellungen')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );

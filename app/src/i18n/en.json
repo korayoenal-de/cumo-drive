@@ -2093,5 +2093,13 @@
   "Die Gruppenfahrt läuft.": "The group drive is on.",
   "Abfahrtszeit erreicht. Starte die Gruppenfahrt auf der Seite der Ausfahrt.": "Departure time reached. Start the group drive on the club drive page.",
   "Abfahrtszeit erreicht. Die Lead startet die Gruppenfahrt.": "Departure time reached. The lead starts the group drive.",
-  "Zur Gruppenfahrt": "To the group drive"
+  "Zur Gruppenfahrt": "To the group drive",
+  "Kommende": "Upcoming",
+  "Einladungen": "Invitations",
+  "Anfragen": "Requests",
+  "Offen": "Open",
+  "Keine offenen Einladungen. Wer dich zu einer Ausfahrt einlädt, steht hier.": "No open invitations. Anyone inviting you to a club drive shows up here.",
+  "Keine offenen Anfragen. Hier stehen Anfragen an deine Ausfahrten und deine eigenen bei anderen.": "No open requests. Requests to your drives and your own requests to others show up here.",
+  "Gerade keine offenen Ausfahrten anderer. Leg selbst eine an und lade andere ein.": "No open drives by others right now. Create one yourself and invite others.",
+  "Nachrichten, {n} ungelesen": "Messages, {n} unread"
 }

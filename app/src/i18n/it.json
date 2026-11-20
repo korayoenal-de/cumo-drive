@@ -2093,5 +2093,13 @@
   "Die Gruppenfahrt läuft.": "Il giro di gruppo è in corso.",
   "Abfahrtszeit erreicht. Starte die Gruppenfahrt auf der Seite der Ausfahrt.": "Ora di partenza raggiunta. Avvia il giro di gruppo nella pagina dell'uscita.",
   "Abfahrtszeit erreicht. Die Lead startet die Gruppenfahrt.": "Ora di partenza raggiunta. Il capogruppo avvia il giro.",
-  "Zur Gruppenfahrt": "Al giro di gruppo"
+  "Zur Gruppenfahrt": "Al giro di gruppo",
+  "Kommende": "Prossime",
+  "Einladungen": "Inviti",
+  "Anfragen": "Richieste",
+  "Offen": "Aperte",
+  "Keine offenen Einladungen. Wer dich zu einer Ausfahrt einlädt, steht hier.": "Nessun invito aperto. Chi ti invita a un'uscita compare qui.",
+  "Keine offenen Anfragen. Hier stehen Anfragen an deine Ausfahrten und deine eigenen bei anderen.": "Nessuna richiesta aperta. Qui trovi le richieste alle tue uscite e le tue presso altri.",
+  "Gerade keine offenen Ausfahrten anderer. Leg selbst eine an und lade andere ein.": "Al momento nessuna uscita aperta di altri. Creane una e invita gli altri.",
+  "Nachrichten, {n} ungelesen": "Messaggi, {n} non letti"
 }
