@@ -51,6 +51,7 @@ export function CommunityPanel(props: {
 }) {
   const session = useSession();
   const userId = session?.user.id;
+  const myLibrary = useLibrary();
   const [seg, setSeg] = useState<Seg>('routen');
   const [tours, setTours] = useState<CommunityTour[] | null>(null);
   const [rides, setRides] = useState<Ausfahrt[] | null>(null);
@@ -160,6 +161,9 @@ export function CommunityPanel(props: {
               onSelect={() => props.onSelect(props.selected === t.id ? null : t.id, t.start_lat != null && t.start_lon != null ? [t.start_lat, t.start_lon] : undefined)}
               onOpen={async () => {
                 try {
+                  // eigene Tour: das Original öffnen statt einer Kopie (wie in der App, Koray 20.11.2026)
+                  const own = userId === t.owner ? myLibrary.find((x) => x.cloudId === t.id) : undefined;
+                  if (own) return props.onOpenTour(own, own.profile ?? t.profile);
                   const full = await loadCommunityTour(t.id);
                   // Herkunft mitgeben: gespeichert gilt sie als Community Tour (wie in der App)
                   props.onOpenTour({ ...full.tour, name: t.name, author: t.author?.trim() || undefined, communityId: t.id }, full.profile);

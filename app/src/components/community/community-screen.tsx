@@ -824,6 +824,14 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
     setBusy('open');
     setErr(null);
     try {
+      // deine eigene veröffentlichte Tour: das Original aus Touren öffnen, keine Kopie „Von dir“ (Koray 20.11.2026:
+      // Große Sellaronda stand doppelt, einmal „In der Community“ und einmal „Von Koray“)
+      const own = mine ? library.find((x) => x.cloudId === t.id) : undefined;
+      if (own) {
+        setEditTour(own, { label: 'Community', href: '/community' });
+        router.navigate('/');
+        return;
+      }
       const full = await loadCommunityTour(t.id);
       const now = new Date().toISOString();
       // ungespeicherte Kopie: ohne id, Speichern im Planer legt sie unter Community in Meine Touren
