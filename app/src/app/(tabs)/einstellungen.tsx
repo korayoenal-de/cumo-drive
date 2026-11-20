@@ -143,6 +143,7 @@ export default function Einstellungen({ inNav = false }: { inNav?: boolean } = {
       {session && <CommunityGroup />}
 
       {session && <NotifyGroup userId={session.user.id} />}
+      {session && <NotifyLevels />}
 
       <Group label={t('Hilfe und Rechtliches')} hint={t('Fehler, Wünsche, falsche Strecken: jede Meldung wird geprüft.')}>
         <Row title={t('Feedback geben')} onPress={() => router.push('/feedback')} />
@@ -306,6 +307,23 @@ function NotifyGroup({ userId }: { userId: string }) {
         onChange={(v) => void news.set(v).catch(() => showToast(t('Das hat nicht geklappt.')))}
       />
     </Group>
+  );
+}
+
+/** Mitteilungen in zwei Stufen (Konzept „Ausfahrt im Fokus“, Koray 20.11.2026), je eine Gruppe mit Hinweis */
+function NotifyLevels() {
+  const { p, save } = usePrivacy();
+  const [push] = usePushStatus();
+  if (push !== 'an') return null;
+  return (
+    <>
+      <Group label={t('Dringend')} hint={t('Chats deiner Ausfahrten, private Nachrichten, Anfragen und Absagen zu deinen Ausfahrten. Mit Ton und Zahl am App Symbol.')}>
+        <SwitchRow title={t('Dringende Mitteilungen')} value={p?.notifyUrgent ?? true} onChange={(v) => void save({ notifyUrgent: v })} />
+      </Group>
+      <Group label={t('Leise')} hint={t('Kontaktanfragen, neue Kontakte und Zusagen. Ohne Ton, nur in der Mitteilungszentrale.')}>
+        <SwitchRow title={t('Leise Mitteilungen')} value={p?.notifyQuiet ?? true} onChange={(v) => void save({ notifyQuiet: v })} />
+      </Group>
+    </>
   );
 }
 

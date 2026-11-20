@@ -19,7 +19,8 @@ type Event =
   | { type: 'ride_lead'; ride: string; actor: string; to?: string; taken?: boolean }
   | { type: 'feedback_done'; id: string; to: string; actor?: string | null };
 
-type Note = { user: string; title: string; body: string; data: { url: string; chat?: string; type: string } };
+/** quiet: leise Stufe (Konzept „Ausfahrt im Fokus“, 20.11.2026): ohne Ton, iOS stellt sie nur in die Mitteilungszentrale */
+type Note = { user: string; title: string; body: string; data: { url: string; chat?: string; type: string }; quiet?: boolean };
 
 type ExpoTicket = { status: 'ok' | 'error'; id?: string; message?: string; details?: { error?: string } };
 
@@ -100,13 +101,13 @@ async function rideMember(e: Extract<Event, { type: 'ride_member' }>): Promise<N
     return [{ user: r.owner, title: 'Neue Anfrage', body: short(`${await nameOf(e.user)} möchte bei ${ride} mitfahren.`), data }];
   }
   if (e.old === 'angefragt' && e.status === 'zugesagt') {
-    return [{ user: e.user, title: 'Du bist dabei', body: short(`Deine Anfrage für ${ride} ist angenommen.`), data }];
+    return [{ user: e.user, title: 'Du bist dabei', body: short(`Deine Anfrage für ${ride} ist angenommen.`), data, quiet: true }];
   }
   if (e.old === 'angefragt' && e.status === 'abgelehnt') {
     return [{ user: e.user, title: 'Anfrage abgelehnt', body: short(`Für ${ride} hat es diesmal nicht geklappt.`), data }];
   }
   if (e.old === 'eingeladen' && e.status === 'zugesagt' && e.user !== r.owner) {
-    return [{ user: r.owner, title: 'Zusage', body: short(`${await nameOf(e.user)} fährt bei ${ride} mit.`), data }];
+    return [{ user: r.owner, title: 'Zusage', body: short(`${await nameOf(e.user)} fährt bei ${ride} mit.`), data, quiet: true }];
   }
   if (e.old === 'eingeladen' && e.status === 'abgesagt' && e.user !== r.owner) {
     const why = (m.message as string | null)?.trim();
@@ -139,8 +140,8 @@ async function contact(e: Extract<Event, { type: 'contact' }>): Promise<Note[]> 
   const who = await nameOf(e.actor);
   const data = { url: '/community', type: 'contact' };
   return e.state === 'pending'
-    ? [{ user: e.to, title: 'Kontaktanfrage', body: short(`${who} möchte dich als Kontakt hinzufügen.`), data }]
-    : [{ user: e.to, title: 'Neuer Kontakt', body: short(`${who} hat deine Anfrage angenommen.`), data }];
+    ? [{ user: e.to, title: 'Kontaktanfrage', body: short(`${who} möchte dich als Kontakt hinzufügen.`), data, quiet: true }]
+    : [{ user: e.to, title: 'Neuer Kontakt', body: short(`${who} ist jetzt dein Kontakt.`), data, quiet: true }];
 }
 
 /** Gemeinsam losfahren (Koray 14.11.): Anpingen, Ort oder Zeit geändert, Lead gewechselt */
@@ -174,7 +175,7 @@ async function feedbackDone(e: Extract<Event, { type: 'feedback_done' }>): Promi
   if (!f?.owner || f.owner !== e.to) return [];
   const what = f.source === 'melden' ? 'Deine Meldung aus der Fahrt' : f.source === 'bewertung' ? 'Dein Hinweis aus der Bewertung' : 'Dein Feedback';
   const quote = typeof f.note === 'string' && f.note.trim() ? ` („${short(f.note, 60)}“)` : '';
-  return [{ user: f.owner, title: 'Danke, ist behoben', body: short(`${what}${quote} ist umgesetzt und in der App.`), data: { url: '/', type: 'feedback_done' } }];
+  return [{ user: f.owner, title: 'Danke, ist behoben', body: short(`${what}${quote} ist umgesetzt und in der App.`), data: { url: '/', type: 'feedback_done' }, quiet: true }];
 }
 
 async function notes(e: Event): Promise<Note[]> {
@@ -190,7 +191,15 @@ async function notes(e: Event): Promise<Note[]> {
   return e.actor ? list.filter((n) => n.user !== e.actor) : list;
 }
 
-async function send(list: Note[]): Promise<{ sent: number; removed: number }> {
+async function send(all: Note[]): Promise<{ sent: number; removed: number }> {
+  if (!all.length) return { sent: 0, removed: 0 };
+  // Stufen in den Einstellungen abgeschaltet: diese Mitteilungen gar nicht schicken
+  const { data: prefs } = await db.from('profiles').select('id,notify_urgent,notify_quiet').in('id', [...new Set(all.map((n) => n.user))]);
+  const pref = new Map(((prefs ?? []) as { id: string; notify_urgent: boolean | null; notify_quiet: boolean | null }[]).map((p) => [p.id, p]));
+  const list = all.filter((n) => {
+    const p = pref.get(n.user);
+    return n.quiet ? p?.notify_quiet !== false : p?.notify_urgent !== false;
+  });
   if (!list.length) return { sent: 0, removed: 0 };
   const users = [...new Set(list.map((n) => n.user))];
   const { data: rows } = await db.from('push_tokens').select('token,user_id').in('user_id', users);
@@ -203,7 +212,12 @@ async function send(list: Note[]): Promise<{ sent: number; removed: number }> {
   const messages = tokens.flatMap((t) =>
     list
       .filter((n) => n.user === t.user_id)
-      .map((n) => ({ to: t.token, title: n.title, body: n.body, data: n.data, sound: 'default', badge: badge.get(n.user) ?? 0, channelId: 'default', priority: 'high' })),
+      .map((n) =>
+        n.quiet
+          ? // leise: kein Ton, keine Zahl am Symbol, nur in der Mitteilungszentrale
+            { to: t.token, title: n.title, body: n.body, data: n.data, interruptionLevel: 'passive', channelId: 'default', priority: 'normal' }
+          : { to: t.token, title: n.title, body: n.body, data: n.data, sound: 'default', badge: badge.get(n.user) ?? 0, channelId: 'default', priority: 'high' },
+      ),
   );
   const headers: Record<string, string> = { Accept: 'application/json', 'Accept-Encoding': 'gzip, deflate', 'Content-Type': 'application/json' };
   // Optional: Expo Zugangstoken, falls in Expo die erweiterte Push Sicherheit eingeschaltet ist

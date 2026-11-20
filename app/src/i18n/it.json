@@ -2081,5 +2081,11 @@
   "Läuft": "In corso",
   "Du fährst mit": "Partecipi",
   "Du organisierst": "Organizzi tu",
-  "Noch keine Nachrichten. Stimm dich mit der Gruppe ab.": "Ancora nessun messaggio. Accordati con il gruppo."
+  "Noch keine Nachrichten. Stimm dich mit der Gruppe ab.": "Ancora nessun messaggio. Accordati con il gruppo.",
+  "Dringend": "Urgenti",
+  "Leise": "Silenziose",
+  "Dringende Mitteilungen": "Notifiche urgenti",
+  "Leise Mitteilungen": "Notifiche silenziose",
+  "Chats deiner Ausfahrten, private Nachrichten, Anfragen und Absagen zu deinen Ausfahrten. Mit Ton und Zahl am App Symbol.": "Chat delle tue uscite, messaggi privati, richieste e disdette. Con suono e numero sull'icona.",
+  "Kontaktanfragen, neue Kontakte und Zusagen. Ohne Ton, nur in der Mitteilungszentrale.": "Richieste di contatto, nuovi contatti e conferme. Senza suono, solo nel Centro notifiche."
 }

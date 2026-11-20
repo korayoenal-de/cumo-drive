@@ -2081,5 +2081,11 @@
   "Läuft": "Live",
   "Du fährst mit": "You're in",
   "Du organisierst": "You're organising",
-  "Noch keine Nachrichten. Stimm dich mit der Gruppe ab.": "No messages yet. Coordinate with the group."
+  "Noch keine Nachrichten. Stimm dich mit der Gruppe ab.": "No messages yet. Coordinate with the group.",
+  "Dringend": "Urgent",
+  "Leise": "Quiet",
+  "Dringende Mitteilungen": "Urgent notifications",
+  "Leise Mitteilungen": "Quiet notifications",
+  "Chats deiner Ausfahrten, private Nachrichten, Anfragen und Absagen zu deinen Ausfahrten. Mit Ton und Zahl am App Symbol.": "Chats of your club drives, private messages, requests and cancellations for your drives. With sound and app badge.",
+  "Kontaktanfragen, neue Kontakte und Zusagen. Ohne Ton, nur in der Mitteilungszentrale.": "Contact requests, new contacts and confirmations. Silent, only in Notification Centre."
 }
