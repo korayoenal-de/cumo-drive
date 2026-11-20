@@ -346,9 +346,24 @@ async function sendTo(url: string, text: string, signal?: AbortSignal): Promise<
   return decodeGhPoints(out.data.paths![0]);
 }
 
+/**
+ * Suchfaktor für Anfragen mit eigenem Modell (Performance Messung 20.11.2026). Der Abzug außerhalb der Traumstrecken
+ * (mal 0,7) macht die Schätzung der Landmarken zu vorsichtig, der Server durchsuchte zwei bis vier Mal so viele Knoten.
+ * Gepaarte Messung mit 9 Würfen (Lorsch, Tegernsee, Bohinj): 7 bis 25 % weniger durchsuchte Knoten, Wurf um Lorsch
+ * im Mittel 13,2 statt 18,0 s, in 8 von 9 Paaren dieselbe Runde, im neunten Fahrspaß 67 statt 65. Nur bei custom_model.
+ */
+const SEARCH_EPSILON = 1.4;
+
 async function post(body: Record<string, unknown>, signal?: AbortSignal): Promise<GhPath> {
   // Linie kodiert (Performance Punkt 2, 17.11.): Antwort statt 68 KB nur 20 KB, gepackt 12 statt 19 KB
-  const text = JSON.stringify({ points_encoded: true, points_encoded_multiplier: POINTS_FACTOR, instructions: false, details: [...DETAILS, ...LEG_DETAILS], ...body });
+  const text = JSON.stringify({
+    points_encoded: true,
+    points_encoded_multiplier: POINTS_FACTOR,
+    instructions: false,
+    details: [...DETAILS, ...LEG_DETAILS],
+    ...(body.custom_model ? { 'astarbi.epsilon': SEARCH_EPSILON } : {}),
+    ...body,
+  });
   const now = Date.now();
   const hit = memo.get(text);
   if (hit && now - hit.at < MEMO_MS) {

@@ -2111,5 +2111,10 @@
   "{openRequests} Anfragen beantworten": "Rispondi a {openRequests} richieste",
   "Organisator": "Organizzatore",
   "Ausfahrten in der Community": "Uscite nella community",
-  "Gerade keine öffentlichen Ausfahrten. Leg selbst eine an und lade andere ein.": "Al momento nessuna uscita pubblica. Creane una e invita gli altri."
+  "Gerade keine öffentlichen Ausfahrten. Leg selbst eine an und lade andere ein.": "Al momento nessuna uscita pubblica. Creane una e invita gli altri.",
+  "Ausfahrt entfernt": "Uscita rimossa",
+  "Ausfahrt abgesagt": "Uscita annullata",
+  "Du bist ausgetragen": "Non partecipi più",
+  "Austragen": "Esci",
+  "{action}: {name}": "{action}: {name}"
 }

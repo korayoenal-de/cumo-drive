@@ -16,7 +16,7 @@ import { IconLabel } from '@/components/ui/btn-icon';
 import { useRideFun } from '@/lib/ride-fun';
 import { router, useFocusEffect } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { ActivityIndicator, Keyboard, StyleSheet, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -39,7 +39,9 @@ import { PublishSheet } from '@/components/tours/tour-card';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
-import { arrival, ausfahrtTour, clock, freeSeats, listAusfahrten, relDay, shortDate, showCancelled, type Ausfahrt } from '@/lib/ausfahrten';
+import { arrival, ausfahrtTour, cancelAusfahrt, clock, freeSeats, hiddenRides, hideRide, listAusfahrten, relDay, shortDate, showCancelled, withdrawAusfahrt, type Ausfahrt } from '@/lib/ausfahrten';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import { SwipeDelete } from '@/components/ui/swipe-delete';
 import { approachMinutes, departAt, syncRideReminders, currentSpot } from '@/lib/ride-reminders';
 import { useSession } from '@/lib/auth';
 import { kmBetween, listConversations, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
@@ -89,6 +91,9 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
   const myTours = useLibrary();
   const [tours, setTours] = useState<CommunityTour[] | null>(null);
   const [rides, setRides] = useState<Ausfahrt[] | null>(null);
+  // Tab Ausfahrten: per Wischen entfernte (abgesagte, vergangene) und die Rückfrage vor Absagen oder Austragen
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [ask, setAsk] = useState<{ r: Ausfahrt; kind: 'absagen' | 'austragen' } | null>(null);
   const [drivers, setDrivers] = useState<Driver[] | null>(null);
   const [dq, setDq] = useState('');
   // Drivers: alle oder nur Kontakte (TestFlight Review, Koray 13.11.)
@@ -185,6 +190,7 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
     // Geladen werden öffentliche und alle, an denen du beteiligt bist. Die Community zeigt davon nur die öffentlichen
     // (Schaufenster), der Tab Ausfahrten nur deine (Koray 20.11.2026).
     // abgesagte bleiben bis zum geplanten Tag sichtbar, damit Teilnehmer die Absage sehen (Koray 17.11.)
+    if (mode === 'ausfahrten') void hiddenRides().then(setHidden);
     listAusfahrten().then((l) => l.filter((x) => !x.isOver || showCancelled(x)))
       .then((l) => setRides(l.filter((r) => r.isPublic || r.isOwner || r.myStatus === 'zugesagt' || r.myStatus === 'angefragt')))
       .catch(() => setRides((r) => r ?? []));
@@ -193,7 +199,7 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
       .catch(() => setDrivers((d) => d ?? []));
     void refreshContacts();
     void refreshUnread();
-  }, []);
+  }, [mode]);
 
   useFocusEffect(
     useCallback(() => {
@@ -229,7 +235,9 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
 
   const inviteCount = useInviteCount();
   const rideGroups = useMemo(() => {
-    const l = rides ?? [];
+    const all = rides ?? [];
+    // im Tab Ausfahrten fehlen die, die du weggewischt hast; das Schaufenster der Community zeigt weiter alle
+    const l = mode === 'ausfahrten' ? all.filter((r) => !hidden.has(r.id)) : all;
     const anfragen = l.filter((r) => (r.isOwner && r.openRequests > 0) || r.myStatus === 'angefragt');
     return {
       kommende: l.filter((r) => r.isOwner || r.myStatus === 'zugesagt'),
@@ -238,9 +246,9 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
       offen: l.filter((r) => r.isPublic && !r.isOwner && (!r.myStatus || r.myStatus === 'abgesagt') && !r.isCancelled),
       // Community als Schaufenster (Koray 20.11.2026): jede öffentliche Ausfahrt, auch deine eigenen und die, bei denen
       // du dabei bist. Private stehen nur unter Ausfahrten; abgesagte sehen nur Beteiligte.
-      community: l.filter((r) => r.isPublic && (!r.isCancelled || r.isOwner || r.myStatus === 'zugesagt')),
+      community: all.filter((r) => r.isPublic && (!r.isCancelled || r.isOwner || r.myStatus === 'zugesagt')),
     };
-  }, [rides]);
+  }, [rides, hidden, mode]);
   /** Community, Bereich Ausfahrten: alle öffentlichen und deine eigenen; im Tab Ausfahrten nur deine (ohne fremde, offene) */
   const publicRides = mode === 'community' && seg === 'ausfahrten';
 
@@ -431,6 +439,68 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
     </View>
   );
 
+  /**
+   * Wischen von rechts nach links im Tab Ausfahrten (Koray 20.11.2026): abgesagte und vergangene sofort entfernen (nur
+   * für dich, die Tour bleibt unter Touren); eine aktive absagen oder sich austragen erst nach Rückfrage, weil alle
+   * anderen eine Mitteilung bekommen.
+   */
+  const removeRide = (r: Ausfahrt) => {
+    setHidden((h) => new Set(h).add(r.id));
+    hideRide(r.id)
+      .then(() => showToast(tr('Ausfahrt entfernt')))
+      .catch((e: Error) => {
+        setHidden((h) => {
+          const n = new Set(h);
+          n.delete(r.id);
+          return n;
+        });
+        showToast(friendlyError(e), { tone: 'error' });
+      });
+  };
+  const runAsk = () => {
+    if (!ask) return;
+    const { r, kind } = ask;
+    setAsk(null);
+    (kind === 'absagen' ? cancelAusfahrt(r.id) : withdrawAusfahrt(r.id))
+      .then(() => {
+        haptic('warnung');
+        showToast(kind === 'absagen' ? tr('Ausfahrt abgesagt') : r.myStatus === 'angefragt' ? tr('Anfrage zurückgezogen') : tr('Du bist ausgetragen'));
+        load();
+      })
+      .catch((e: Error) => showToast(friendlyError(e), { tone: 'error' }));
+  };
+  const swipeRide = (r: Ausfahrt, child: ReactNode): ReactNode => {
+    if (mode !== 'ausfahrten') return child;
+    const done = r.isCancelled || r.isOver || r.rideStatus === 'beendet';
+    if (!done && r.rideStatus === 'laeuft') return child;
+    if (!done && !r.isOwner && r.myStatus !== 'zugesagt' && r.myStatus !== 'angefragt') return child;
+    const word = done ? tr('Entfernen') : r.isOwner ? tr('Absagen') : r.myStatus === 'angefragt' ? tr('Zurückziehen') : tr('Austragen');
+    return (
+      <Swipeable
+        key={r.id}
+        friction={1.6}
+        rightThreshold={36}
+        overshootRight={false}
+        onSwipeableWillOpen={() => haptic('rastung')}
+        renderRightActions={(prog, _tr, m) => (
+          <SwipeDelete
+            progress={prog}
+            radius={Radius.l}
+            word={word}
+            icon={done ? 'trash.fill' : 'xmark'}
+            label={tr('{action}: {name}', { action: word, name: r.name })}
+            onPress={() => {
+              m.close();
+              if (done) removeRide(r);
+              else setAsk({ r, kind: r.isOwner ? 'absagen' : 'austragen' });
+            }}
+          />
+        )}>
+        {child}
+      </Swipeable>
+    );
+  };
+
   const header = (
     <View style={styles.head}>
       <View style={styles.headRow}>
@@ -474,6 +544,15 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
 
   return (
     <View style={styles.root}>
+      {/* gleiche Rückfrage wie in der Ausfahrt selbst */}
+      <ConfirmSheet
+        visible={!!ask}
+        title={ask?.kind === 'absagen' ? tr('Möchtest du diese Ausfahrt wirklich absagen?') : ask?.r.myStatus === 'angefragt' ? tr('Möchtest du deine Anfrage wirklich zurückziehen?') : tr('Möchtest du wirklich nicht mehr mitfahren?')}
+        text={ask?.kind === 'absagen' ? tr('Alle, die zugesagt haben, sehen die Ausfahrt dann als abgesagt.') : undefined}
+        confirmLabel={ask?.kind === 'absagen' ? tr('Absagen') : ask?.r.myStatus === 'angefragt' ? tr('Zurückziehen') : tr('Absagen')}
+        onConfirm={runAsk}
+        onClose={() => setAsk(null)}
+      />
       <ActionSheet
         visible={shareOpen}
         title={tr('In der Community teilen')}
@@ -635,12 +714,12 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
                   )
                 ) : rideFilter === 'anfragen' ? (
                   rideGroups.anfragen.length ? (
-                    rideGroups.anfragen.filter((r) => r.id !== selected).map((r) => <RideCard key={r.id} r={r} />)
+                    rideGroups.anfragen.filter((r) => r.id !== selected).map((r) => <View key={r.id}>{swipeRide(r, <RideCard r={r} />)}</View>)
                   ) : (
                     <AppText muted>{tr('Keine offenen Anfragen. Hier stehen Anfragen an deine Ausfahrten und deine eigenen bei anderen.')}</AppText>
                   )
                 ) : rideGroups.kommende.length ? (
-                  <RideSections rides={rideGroups.kommende.filter((r) => r.id !== selected)} />
+                  <RideSections rides={rideGroups.kommende.filter((r) => r.id !== selected)} wrap={swipeRide} />
                 ) : (
                   <View style={styles.card}>
                     <AppText variant="title">{tr('Noch keine Ausfahrten geplant')}</AppText>
@@ -911,11 +990,13 @@ const RouteCard = memo(function RouteCard({ t, mine, big, onChanged }: { t: Comm
  * Ausfahrten nach Bedeutung (Koray 12.11.): oben, was heute oder morgen ansteht (mit Losfahrzeit),
  * dann „Deine nächsten“ (zugesagt oder eigene), dann „Offen für alle“. Plant dabei die Erinnerungen.
  */
-function RideSections({ rides }: { rides: Ausfahrt[] }) {
+function RideSections({ rides, wrap }: { rides: Ausfahrt[]; wrap?: (r: Ausfahrt, child: ReactNode) => ReactNode }) {
+  const w = (r: Ausfahrt, child: ReactNode) => <View key={r.id}>{wrap ? wrap(r, child) : child}</View>;
   const { p } = usePrivacy();
   const home = p?.home ?? null;
   const mine = rides.filter((r) => r.isOwner || r.myStatus === 'zugesagt');
-  const soon = mine.filter((r) => r.rideStatus === 'geplant' && (relDay(r.startsAt) === 'Heute' || relDay(r.startsAt) === 'Morgen'));
+  // abgesagte nie oben als „Heute“ oder „Morgen“ (Koray 20.11.2026, Slowenia Madness), sie stehen in der Liste
+  const soon = mine.filter((r) => r.rideStatus === 'geplant' && !r.isCancelled && (relDay(r.startsAt) === 'Heute' || relDay(r.startsAt) === 'Morgen'));
   const next = mine.filter((r) => !soon.includes(r));
   const other = rides.filter((r) => !mine.includes(r));
   const key = mine.map((r) => `${r.id}:${r.startsAt.getTime()}:${r.rideStatus}`).join('|');
@@ -928,9 +1009,9 @@ function RideSections({ rides }: { rides: Ausfahrt[] }) {
     <>
       {soon.map((r) => <SoonCard key={r.id} r={r} home={home} />)}
       {next.length > 0 && <AppText style={styles.section}>{tr('Deine nächsten')}</AppText>}
-      {next.map((r) => <RideCard key={r.id} r={r} />)}
+      {next.map((r) => w(r, <RideCard r={r} />))}
       {other.length > 0 && mine.length > 0 && <AppText style={styles.section}>{tr('Offen für alle')}</AppText>}
-      {other.map((r) => <RideCard key={r.id} r={r} />)}
+      {other.map((r) => w(r, <RideCard r={r} />))}
     </>
   );
 }

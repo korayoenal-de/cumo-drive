@@ -2111,5 +2111,10 @@
   "{openRequests} Anfragen beantworten": "Answer {openRequests} requests",
   "Organisator": "Organiser",
   "Ausfahrten in der Community": "Drives in the community",
-  "Gerade keine öffentlichen Ausfahrten. Leg selbst eine an und lade andere ein.": "No public drives right now. Create one yourself and invite others."
+  "Gerade keine öffentlichen Ausfahrten. Leg selbst eine an und lade andere ein.": "No public drives right now. Create one yourself and invite others.",
+  "Ausfahrt entfernt": "Drive removed",
+  "Ausfahrt abgesagt": "Drive cancelled",
+  "Du bist ausgetragen": "You have left the drive",
+  "Austragen": "Leave",
+  "{action}: {name}": "{action}: {name}"
 }

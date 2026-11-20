@@ -231,6 +231,19 @@ export function ridesChanged(): void {
   for (const fn of changeListeners) fn();
 }
 
+/** Ausfahrten, die ich aus meiner Liste entfernt habe (abgesagte und vergangene, Koray 20.11.2026) */
+export async function hiddenRides(): Promise<Set<string>> {
+  const { data, error } = await supabase.from('chat_hidden').select('chat').like('chat', 'ausfahrt:%');
+  // ältere Datenbank: nichts ausgeblendet
+  if (error) return new Set();
+  return new Set((data ?? []).map((r: { chat: string }) => r.chat.slice('ausfahrt:'.length)));
+}
+
+export async function hideRide(id: string): Promise<void> {
+  const { error } = await supabase.from('chat_hidden').upsert({ chat: `ausfahrt:${id}`, hidden_at: new Date().toISOString() }, { onConflict: 'user_id,chat' });
+  if (error) fail(error.message);
+}
+
 export async function cancelAusfahrt(id: string) {
   const { error } = await supabase.rpc('cancel_public_ride', { ride: id });
   if (error) fail(error.message);
