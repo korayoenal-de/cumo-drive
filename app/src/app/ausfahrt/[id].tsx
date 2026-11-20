@@ -707,7 +707,10 @@ export default function AusfahrtDetail() {
               busyId={busy?.startsWith('inv-') ? busy.slice(4) : null}
               contacts={(contacts.list ?? []).filter((c) => c.status === 'kontakt')}
               onPlaced={(y) => scrollRef.current?.scrollTo({ y: Math.max(0, sectionY.current + y - insets.top - Size.button - Spacing.l), animated: true })}
-              onClose={() => setInviting(false)}
+              onClose={() => {
+                Keyboard.dismiss();
+                setInviting(false);
+              }}
               onLink={() =>
                 void run('link', async () => {
                   const url = await rideLink(a.id);
@@ -767,8 +770,9 @@ export default function AusfahrtDetail() {
 
       {/* Hauptaktion fest unten, eine je Phase (Konsistenzprüfung 15.11., O5): vorher Route zum Treffpunkt,
           am Tag Jetzt losfahren, während der Fahrt Zur Navigation, danach Nochmal fahren */}
-      {(main || routeMain) && (
-        // mit Tastatur sitzt die Hauptaktion direkt darüber, sonst lag „Anfrage senden“ beim Schreiben verdeckt (Koray 18.11.)
+      {(main || routeMain) && (kbH === 0 || asking) && (
+        // mit Tastatur sitzt die Hauptaktion direkt darüber, sonst lag „Anfrage senden“ beim Schreiben verdeckt (Koray 18.11.).
+        // Nur dort: beim Einladen verdeckte sie sonst das Suchfeld und blieb über der Tastatur stehen (Koray 20.11.2026)
         <View style={[styles.bar, kbH > 0 ? { bottom: kbH, paddingBottom: Spacing.m } : { paddingBottom: insets.bottom + Spacing.m }]}>
           {main ? (
             <>
