@@ -220,15 +220,28 @@ export async function setAusfahrtPublic(id: string, makePublic: boolean) {
   if (error) fail(error.message);
 }
 
+/** Ausfahrten haben sich geändert (Absage, Zusage, Austragen): Leiste und Listen laden sofort neu statt nach bis zu
+ *  einer Minute (Koray 20.11.2026: nach der Absage stand die Ausfahrt noch in der Leiste) */
+const changeListeners = new Set<() => void>();
+export function onRidesChanged(fn: () => void): () => void {
+  changeListeners.add(fn);
+  return () => changeListeners.delete(fn);
+}
+export function ridesChanged(): void {
+  for (const fn of changeListeners) fn();
+}
+
 export async function cancelAusfahrt(id: string) {
   const { error } = await supabase.rpc('cancel_public_ride', { ride: id });
   if (error) fail(error.message);
+  ridesChanged();
 }
 
 /** Mitfahren anfragen; bei einer privaten Ausfahrt mit dem Schlüssel aus dem Einladungslink */
 export async function requestAusfahrt(id: string, message: string, vehicle: string | null, key?: string | null) {
   const { error } = await supabase.rpc('request_ride', { ride: id, msg: message.trim() || null, my_vehicle: vehicle?.trim() || null, k: key ?? null });
   if (error) fail(error.message);
+  ridesChanged();
 }
 
 /** Einladungslink einer eigenen Ausfahrt: führt zu einer Anfrage, die du annimmst (Koray 13.11.) */
@@ -258,6 +271,7 @@ export async function rideByLink(id: string, key: string): Promise<LinkedRide | 
 export async function withdrawAusfahrt(id: string) {
   const { error } = await supabase.rpc('withdraw_ride', { ride: id });
   if (error) fail(error.message);
+  ridesChanged();
 }
 
 export async function listAnfragen(id: string): Promise<Anfrage[]> {
@@ -278,6 +292,7 @@ export async function listAnfragen(id: string): Promise<Anfrage[]> {
 export async function answerAnfrage(id: string, userId: string, accept: boolean) {
   const { error } = await supabase.rpc('answer_request', { ride: id, member: userId, accept });
   if (error) fail(error.message);
+  ridesChanged();
 }
 
 // Chat ---------------------------------------------------------------------------------------

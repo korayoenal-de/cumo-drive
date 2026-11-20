@@ -21,7 +21,7 @@ import { AppState, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
-import { listAusfahrten, listRideChats, type Ausfahrt } from '@/lib/ausfahrten';
+import { listAusfahrten, listRideChats, onRidesChanged, type Ausfahrt } from '@/lib/ausfahrten';
 import { useSession } from '@/lib/auth';
 import { strecke, tagKurz, uhr, wann } from '@/lib/format';
 import { haversine, type LatLon } from '@/lib/tour';
@@ -76,9 +76,11 @@ export function useAusfahrtBar(): BarState | null {
   useEffect(() => {
     const id = setInterval(load, 60000);
     const sub = AppState.addEventListener('change', (s) => s === 'active' && load());
+    const off = onRidesChanged(load);
     return () => {
       clearInterval(id);
       sub.remove();
+      off();
     };
   }, [load]);
   return st;
