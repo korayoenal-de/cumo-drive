@@ -2100,7 +2100,6 @@
   "Offen": "Open",
   "Keine offenen Einladungen. Wer dich zu einer Ausfahrt einlädt, steht hier.": "No open invitations. Anyone inviting you to a club drive shows up here.",
   "Keine offenen Anfragen. Hier stehen Anfragen an deine Ausfahrten und deine eigenen bei anderen.": "No open requests. Requests to your drives and your own requests to others show up here.",
-  "Gerade keine offenen Ausfahrten anderer. Leg selbst eine an und lade andere ein.": "No open drives by others right now. Create one yourself and invite others.",
   "Nachrichten, {n} ungelesen": "Messages, {n} unread",
   "Aktivität": "Activity",
   "Noch keine Aktivität. Hier stehen Kontaktanfragen, neue Kontakte und Zusagen zu deinen Ausfahrten.": "No activity yet. Contact requests, new contacts and confirmations for your drives show up here.",
@@ -2110,5 +2109,7 @@
   "deiner Ausfahrt": "your drive",
   "Anfrage beantworten": "Answer request",
   "{openRequests} Anfragen beantworten": "Answer {openRequests} requests",
-  "Organisator": "Organiser"
+  "Organisator": "Organiser",
+  "Ausfahrten in der Community": "Drives in the community",
+  "Gerade keine öffentlichen Ausfahrten. Leg selbst eine an und lade andere ein.": "No public drives right now. Create one yourself and invite others."
 }

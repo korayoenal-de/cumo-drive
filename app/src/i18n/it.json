@@ -2100,7 +2100,6 @@
   "Offen": "Aperte",
   "Keine offenen Einladungen. Wer dich zu einer Ausfahrt einlädt, steht hier.": "Nessun invito aperto. Chi ti invita a un'uscita compare qui.",
   "Keine offenen Anfragen. Hier stehen Anfragen an deine Ausfahrten und deine eigenen bei anderen.": "Nessuna richiesta aperta. Qui trovi le richieste alle tue uscite e le tue presso altri.",
-  "Gerade keine offenen Ausfahrten anderer. Leg selbst eine an und lade andere ein.": "Al momento nessuna uscita aperta di altri. Creane una e invita gli altri.",
   "Nachrichten, {n} ungelesen": "Messaggi, {n} non letti",
   "Aktivität": "Attività",
   "Noch keine Aktivität. Hier stehen Kontaktanfragen, neue Kontakte und Zusagen zu deinen Ausfahrten.": "Ancora nessuna attività. Qui trovi richieste di contatto, nuovi contatti e conferme alle tue uscite.",
@@ -2110,5 +2109,7 @@
   "deiner Ausfahrt": "la tua uscita",
   "Anfrage beantworten": "Rispondi alla richiesta",
   "{openRequests} Anfragen beantworten": "Rispondi a {openRequests} richieste",
-  "Organisator": "Organizzatore"
+  "Organisator": "Organizzatore",
+  "Ausfahrten in der Community": "Uscite nella community",
+  "Gerade keine öffentlichen Ausfahrten. Leg selbst eine an und lade andere ein.": "Al momento nessuna uscita pubblica. Creane una e invita gli altri."
 }

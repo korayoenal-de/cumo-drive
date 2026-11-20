@@ -70,10 +70,11 @@ const NEAR_KM = 50;
 
 /**
  * Zwei Tabs aus einem Bildschirm (Koray 20.11.2026, Audit): Community zeigt Touren zum Nachfahren und Drivers,
- * Ausfahrten hat einen eigenen Tab mit den Filtern Kommende, Einladungen, Anfragen und Offen.
+ * Ausfahrten hat einen eigenen Tab mit den persönlichen Filtern Kommende, Einladungen und Anfragen. Öffentliche
+ * Ausfahrten anderer stehen in der Community als eigener Bereich neben Touren und Drivers (Koray 20.11.2026).
  */
 export type ScreenMode = 'community' | 'ausfahrten';
-type RideFilter = 'kommende' | 'einladungen' | 'anfragen' | 'offen';
+type RideFilter = 'kommende' | 'einladungen' | 'anfragen';
 
 export function CommunityScreen({ mode }: { mode: ScreenMode }) {
   const session = useSession();
@@ -181,8 +182,8 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
         setErr(null);
       })
       .catch((e: unknown) => setErr(friendlyError(e)));
-    // private Ausfahrten: eigene und zugesagte stehen auch hier, mit „Privat“ (Koray 20.11.2026: in der Community
-    // angelegt, also dort erwartet; vorher seit 13.11. nur unter Touren). Andere sehen sie weiter nicht.
+    // Geladen werden öffentliche und alle, an denen du beteiligt bist. Die Community zeigt davon nur die öffentlichen
+    // (Schaufenster), der Tab Ausfahrten nur deine (Koray 20.11.2026).
     // abgesagte bleiben bis zum geplanten Tag sichtbar, damit Teilnehmer die Absage sehen (Koray 17.11.)
     listAusfahrten().then((l) => l.filter((x) => !x.isOver || showCancelled(x)))
       .then((l) => setRides(l.filter((r) => r.isPublic || r.isOwner || r.myStatus === 'zugesagt' || r.myStatus === 'angefragt')))
@@ -226,6 +227,23 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
   const contactCount = (drivers ?? []).filter((d) => contacts.byId.get(d.id) === 'kontakt').length;
   const others = (drivers ?? []).filter((d) => !d.isMe).length;
 
+  const inviteCount = useInviteCount();
+  const rideGroups = useMemo(() => {
+    const l = rides ?? [];
+    const anfragen = l.filter((r) => (r.isOwner && r.openRequests > 0) || r.myStatus === 'angefragt');
+    return {
+      kommende: l.filter((r) => r.isOwner || r.myStatus === 'zugesagt'),
+      anfragen,
+      anfragenZahl: anfragen.reduce((n, r) => n + (r.isOwner ? r.openRequests : 1), 0),
+      offen: l.filter((r) => r.isPublic && !r.isOwner && (!r.myStatus || r.myStatus === 'abgesagt') && !r.isCancelled),
+      // Community als Schaufenster (Koray 20.11.2026): jede öffentliche Ausfahrt, auch deine eigenen und die, bei denen
+      // du dabei bist. Private stehen nur unter Ausfahrten; abgesagte sehen nur Beteiligte.
+      community: l.filter((r) => r.isPublic && (!r.isCancelled || r.isOwner || r.myStatus === 'zugesagt')),
+    };
+  }, [rides]);
+  /** Community, Bereich Ausfahrten: alle öffentlichen und deine eigenen; im Tab Ausfahrten nur deine (ohne fremde, offene) */
+  const publicRides = mode === 'community' && seg === 'ausfahrten';
+
   const pins: CommunityPin[] = useMemo(() => {
     if (seg === 'drivers') {
       // gleicher Ort: leicht im Kreis versetzt, damit sich die Kreise nicht verdecken
@@ -243,31 +261,22 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
     }
     if (seg === 'routen')
       return shownTours.filter((t) => t.start_lat != null && t.start_lon != null).map((t) => ({ id: t.id, kind: 'route', p: [t.start_lat as number, t.start_lon as number], label: `${formatKm(Number(t.km), 0)} km` }));
+    const shownIds = new Set((publicRides ? rideGroups.community : rideGroups.offen).map((r) => r.id));
     const ridePins: CommunityPin[] = (rides ?? [])
-      .filter((r) => !r.isCancelled)
+      .filter((r) => !r.isCancelled && (publicRides ? shownIds.has(r.id) : !shownIds.has(r.id)))
       .map((r) => ({ r, p: r.meeting ? ([r.meeting.lat, r.meeting.lon] as LatLon) : r.start }))
       .filter((x): x is { r: Ausfahrt; p: LatLon } => !!x.p)
       .map(({ r, p }) => ({ id: r.id, kind: 'ausfahrt', p, label: shortDate(r.startsAt), count: r.taken }));
+    if (publicRides) return ridePins;
     // Einladungen, die nicht schon als Ausfahrt in der Liste stehen: Pin am Start ihrer Route
     const invitePins: CommunityPin[] = invites
       .filter((i) => !(rides ?? []).some((r) => r.id === i.rideId) && inviteLines[i.rideId])
       .map((i) => ({ id: i.rideId, kind: 'ausfahrt', p: inviteLines[i.rideId][0], label: i.startsAt ? shortDate(new Date(i.startsAt)) : '' }));
     return [...ridePins, ...invitePins];
-  }, [seg, shownTours, rides, shownDrivers, invites, inviteLines]);
+  }, [seg, shownTours, rides, shownDrivers, invites, inviteLines, rideGroups, publicRides]);
   const firstInvite = invites.find((i) => i.myStatus === 'eingeladen' && inviteLines[i.rideId]);
-  const mapLine = line ?? (seg === 'ausfahrten' && !selected && firstInvite ? inviteLines[firstInvite.rideId] : null);
+  const mapLine = line ?? (mode === 'ausfahrten' && !selected && firstInvite ? inviteLines[firstInvite.rideId] : null);
 
-  const inviteCount = useInviteCount();
-  const rideGroups = useMemo(() => {
-    const l = rides ?? [];
-    const anfragen = l.filter((r) => (r.isOwner && r.openRequests > 0) || r.myStatus === 'angefragt');
-    return {
-      kommende: l.filter((r) => r.isOwner || r.myStatus === 'zugesagt'),
-      anfragen,
-      anfragenZahl: anfragen.reduce((n, r) => n + (r.isOwner ? r.openRequests : 1), 0),
-      offen: l.filter((r) => r.isPublic && !r.isOwner && (!r.myStatus || r.myStatus === 'abgesagt') && !r.isCancelled),
-    };
-  }, [rides]);
   const selTour = seg === 'routen' ? tours?.find((t) => t.id === selected) ?? null : null;
   const selRide = seg === 'ausfahrten' ? rides?.find((r) => r.id === selected) ?? null : null;
   const meDriver = drivers?.find((d) => d.isMe) ?? null;
@@ -417,6 +426,7 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
     <View style={styles.seg} accessibilityRole="tablist">
       <Animated.View pointerEvents="none" style={[styles.segThumb, thumbStyle]} />
       <SegItem label={tr('Touren')} icon="point.topleft.down.to.point.bottomright.curvepath" count={tours?.length ?? null} on={seg === 'routen'} onPress={() => switchSeg('routen')} onBox={onSegBox('routen')} ownFill={!thumbReady} />
+      <SegItem label={tr('Ausfahrten')} icon="calendar" count={userId && rides ? rideGroups.community.length : null} on={seg === 'ausfahrten'} onPress={() => switchSeg('ausfahrten')} onBox={onSegBox('ausfahrten')} ownFill={!thumbReady} />
       <SegItem label={tr('Drivers')} icon="person.2" count={userId ? drivers?.length ?? null : null} on={seg === 'drivers'} onPress={() => switchSeg('drivers')} onBox={onSegBox('drivers')} ownFill={!thumbReady} />
     </View>
   );
@@ -424,7 +434,7 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
   const header = (
     <View style={styles.head}>
       <View style={styles.headRow}>
-        <AppText style={styles.kicker}>{seg === 'routen' ? tr('Touren zum Nachfahren') : seg === 'ausfahrten' ? tr('Gemeinsame Ausfahrten') : 'Drivers'}</AppText>
+        <AppText style={styles.kicker}>{seg === 'routen' ? tr('Touren zum Nachfahren') : seg === 'ausfahrten' ? (publicRides ? tr('Ausfahrten in der Community') : tr('Gemeinsame Ausfahrten')) : 'Drivers'}</AppText>
         {/* Eigene Tour teilen oder eine neue erstellen (Koray 15.11.), gleiche Form wie Anlegen und Nachrichten */}
         {seg === 'routen' && userId && (
           <HeadPill icon="plus" label={tr('Teilen')} accessibilityLabel={tr('Tour teilen')} onPress={() => setShareOpen(true)} />
@@ -587,9 +597,16 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
               </View>
             ) : rides === null ? (
               <ActivityIndicator color={Colors.muted} />
+            ) : publicRides ? (
+              // Community (Koray 20.11.2026): alle öffentlichen Ausfahrten, deine eigenen eingeschlossen
+              rideGroups.community.length ? (
+                <RideSections rides={rideGroups.community.filter((r) => r.id !== selected)} />
+              ) : (
+                <AppText muted>{tr('Gerade keine öffentlichen Ausfahrten. Leg selbst eine an und lade andere ein.')}</AppText>
+              )
             ) : (
               <>
-                {/* Filter statt Abschnitten (Koray 20.11.2026): Kommende, Einladungen, Anfragen (an meine und meine eigenen), Offen */}
+                {/* Filter statt Abschnitten (Koray 20.11.2026): Kommende, Einladungen, Anfragen (an meine und meine eigenen); öffentliche anderer in der Community */}
                 <View style={styles.filters}>
                   <ChipRow>
                     {(
@@ -597,13 +614,12 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
                         ['kommende', tr('Kommende'), rideGroups.kommende.length],
                         ['einladungen', tr('Einladungen'), inviteCount],
                         ['anfragen', tr('Anfragen'), rideGroups.anfragenZahl],
-                        ['offen', tr('Offen'), rideGroups.offen.length],
                       ] as const
                     ).map(([key, label, n]) => (
-                      // Einladungen und Anfragen warten auf dich: oranger Kreis; Kommende und Offen sind nur Anzahlen
+                      // Einladungen und Anfragen warten auf dich: oranger Kreis; Kommende ist nur eine Anzahl
                       <Chip
                         key={key}
-                        label={n && (key === 'kommende' || key === 'offen') ? `${label} ${n}` : label}
+                        label={n && key === 'kommende' ? `${label} ${n}` : label}
                         badge={key === 'einladungen' || key === 'anfragen' ? n : undefined}
                         active={rideFilter === key}
                         onPress={() => setRideFilter(key)}
@@ -622,12 +638,6 @@ export function CommunityScreen({ mode }: { mode: ScreenMode }) {
                     rideGroups.anfragen.filter((r) => r.id !== selected).map((r) => <RideCard key={r.id} r={r} />)
                   ) : (
                     <AppText muted>{tr('Keine offenen Anfragen. Hier stehen Anfragen an deine Ausfahrten und deine eigenen bei anderen.')}</AppText>
-                  )
-                ) : rideFilter === 'offen' ? (
-                  rideGroups.offen.length ? (
-                    <RideSections rides={rideGroups.offen.filter((r) => r.id !== selected)} />
-                  ) : (
-                    <AppText muted>{tr('Gerade keine offenen Ausfahrten anderer. Leg selbst eine an und lade andere ein.')}</AppText>
                   )
                 ) : rideGroups.kommende.length ? (
                   <RideSections rides={rideGroups.kommende.filter((r) => r.id !== selected)} />
