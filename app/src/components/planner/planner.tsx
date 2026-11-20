@@ -259,6 +259,9 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   const [selVia, setSelVia] = useState<number | null>(null);
   /** Letzte Änderung kam von der Karte (langer Druck, Pass Aktion): Ausschnitt nicht anpassen */
   const [mapEdit, setMapEdit] = useState(false);
+  // Geöffnete Tour einpassen, sobald ihre Linie da ist und das Blatt steht (Koray 20.11.2026)
+  const fitOnOpen = useRef(false);
+  const [fitKey, setFitKey] = useState(0);
   /** Ergebnis nach dem Ziehen, ein paar Sekunden in der Pille oben links mit Rückgängig */
   const [adjustDone, setAdjustDone] = useState<{ text: string; tone?: 'warn'; snap: ReturnType<ReturnType<typeof useTourPlan>['snapshot']> } | null>(null);
   useEffect(() => {
@@ -289,6 +292,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       setMapEdit(false);
       onMap.current = false;
       setProfile(p);
+      fitOnOpen.current = true;
       loadTour(t, p, avoid);
     };
     // Vorgemerkt, bevor der Planer da war, oder später, während er schon offen ist
@@ -742,6 +746,13 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   // Richtungsanzeige gab es kurz (Schein, dann Punktkette) und ist auf Korays Wunsch wieder weg (20.11.: zu viel).
   const lineTour = view.kind === 'result' ? view.tour : routeTour;
   const lastLine = useRef<Tour | null>(null);
+  useEffect(() => {
+    if (!routeTour || !fitOnOpen.current) return;
+    fitOnOpen.current = false;
+    // Blatt fährt etwa 300 ms (Token sheet), danach steht der sichtbare Teil der Karte fest
+    const id = setTimeout(() => setFitKey((k) => k + 1), 420);
+    return () => clearTimeout(id);
+  }, [routeTour]);
   const [grow, setGrow] = useState<LineMotion | null>(null);
   useEffect(() => {
     if (!lineTour || !lineTour.linie.length || lineTour === lastLine.current) return;
@@ -1401,6 +1412,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           overlayTop={origin ? BACK_PILL_H + Spacing.s : 0}
           pickedPassIds={inTour ? pickedPassIds : undefined}
           selectedPassId={passOverlay?.id ?? null}
+          fitKey={fitKey}
           selectedPinId={inTour && selVia != null && !placeOverlay ? (pins?.[selVia]?.id ?? null) : null}
           // Kompass unter den Karteneinstellungen, nur solange das Blatt höchstens auf Mitte steht (Koray 16.11.)
           compassTop={detent <= 1 ? insets.top + Spacing.s + 48 + Spacing.s : null}

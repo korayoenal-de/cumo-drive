@@ -88,6 +88,7 @@ export function RouteMap({
   pickedPassIds,
   selectedPassId,
   selectedPinId,
+  fitKey,
   compassTop,
   legalBottom,
   flyTo,
@@ -446,6 +447,15 @@ export function RouteMap({
     // position nur als Schalter (an oder aus), die Werte kommen über motion
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, following, !!position, me, appActive, focused]);
+
+  // Tour geöffnet (Koray 20.11.2026): einpassen, wenn das Blatt steht. Sonst passte die Karte, während das Blatt
+  // noch fuhr, und die Tour lag klein in einem viel zu großen Ausschnitt
+  useEffect(() => {
+    if (!fitKey || !ready || fitCoords.length < 2) return;
+    map.current?.fitToCoordinates(fitCoords, { edgePadding: pad, animated: true });
+    // nur beim Auslösen
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitKey, ready]);
 
   // Planung ansehen: Folgen kurz aussetzen und die ganze Linie zeigen
   useEffect(() => {
