@@ -362,3 +362,19 @@ export function useUnreadWatcher(userId: string | undefined) {
     };
   }, [userId]);
 }
+
+/**
+ * Chats löschen (Koray 20.11.2026, Wischen in der Liste der Nachrichten): nur für mich ausblenden. Der Chat kommt mit
+ * der nächsten neuen Nachricht wieder, für die anderen bleibt alles erhalten. key: 'dm:<Partner>' oder 'ride:<Ausfahrt>'.
+ */
+export async function hiddenChats(): Promise<Map<string, Date>> {
+  const { data, error } = await supabase.from('chat_hidden').select('chat, hidden_at');
+  // ältere Datenbank ohne Tabelle: nichts ausgeblendet
+  if (error) return new Map();
+  return new Map((data ?? []).map((r: { chat: string; hidden_at: string }) => [r.chat, new Date(r.hidden_at)]));
+}
+
+export async function hideChat(key: string): Promise<void> {
+  const { error } = await supabase.from('chat_hidden').upsert({ chat: key, hidden_at: new Date().toISOString() }, { onConflict: 'user_id,chat' });
+  if (error) fail(error.message);
+}

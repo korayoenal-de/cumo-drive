@@ -2069,5 +2069,9 @@
   "Bin schon da.": "I'm already here.",
   "Bin unterwegs, mein Standort ist geteilt.": "On my way, my location is shared.",
   "Antippen zum Antworten": "Tap to reply",
-  "{meetingName}, Abfahrt {v1}": "{meetingName}, departure {v1}"
+  "{meetingName}, Abfahrt {v1}": "{meetingName}, departure {v1}",
+  "Chat gelöscht": "Chat deleted",
+  "Chat {name} löschen": "Delete chat {name}",
+  "Chat löschen?": "Delete chat?",
+  "Der Chat verschwindet aus deiner Liste, bis jemand etwas Neues schreibt. Für die anderen bleibt alles erhalten.": "The chat disappears from your list until someone writes something new. Nothing changes for the others."
 }

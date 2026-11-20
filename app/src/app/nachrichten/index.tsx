@@ -5,55 +5,99 @@
  * Filter als Chips (Koray 20.11., Rückmeldung aus der Testgruppe): Alle, Ausfahrten, Chats. Unter Alle fallen die
  * Chats vergangener Ausfahrten nach 14 Tagen heraus, solange nichts Ungelesenes drin steht; unter Ausfahrten
  * bleiben sie, mit dem Datum der Ausfahrt.
+ *
+ * Wischen von rechts nach links löscht einen Chat (Koray 20.11.), wie bei WhatsApp nur für mich: er verschwindet aus
+ * der Liste, bis eine neue Nachricht kommt; für die anderen bleibt alles erhalten.
  */
-import { BackLink } from '@/components/ui/back-link';
-import { router, useFocusEffect } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { Pressable } from '@/components/ui/tap';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BackLink } from "@/components/ui/back-link";
+import { router, useFocusEffect } from "expo-router";
+import { SymbolView } from "expo-symbols";
+import { useCallback, useState, type ReactNode } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable } from "@/components/ui/tap";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Avatar } from '@/components/community/ride-bits';
-import { Chip, ChipRow } from '@/components/ui/chip';
-import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Spacing, Type, Radius } from '@/constants/theme';
-import { clock, listRideChats, shortDate, type RideChat } from '@/lib/ausfahrten';
-import { listConversations, refreshUnread, type Conversation } from '@/lib/drivers';
-import { enablePush } from '@/lib/push';
-import { t, tr } from '@/i18n';
+import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 
-type Row = { kind: 'direct'; at: Date; c: Conversation } | { kind: 'ride'; at: Date; r: RideChat };
+import { Avatar } from "@/components/community/ride-bits";
+import { ConfirmSheet } from "@/components/ui/action-sheet";
+import { SwipeDelete } from "@/components/ui/swipe-delete";
+import { haptic } from "@/lib/haptics";
+import { showToast } from "@/lib/toast";
+import { Chip, ChipRow } from "@/components/ui/chip";
+import { AppText } from "@/components/ui/text";
+import { Colors, Fonts, Spacing, Type, Radius } from "@/constants/theme";
+import {
+  clock,
+  listRideChats,
+  markRideChatSeen,
+  shortDate,
+  type RideChat,
+} from "@/lib/ausfahrten";
+import {
+  hiddenChats,
+  hideChat,
+  listConversations,
+  markRead,
+  refreshUnread,
+  type Conversation,
+} from "@/lib/drivers";
+import { enablePush } from "@/lib/push";
+import { t, tr } from "@/i18n";
 
-type Filter = 'alle' | 'ausfahrten' | 'chats';
+type Row =
+  | { kind: "direct"; at: Date; c: Conversation }
+  | { kind: "ride"; at: Date; r: RideChat };
+
+type Filter = "alle" | "ausfahrten" | "chats";
 /** Chats vergangener Ausfahrten verschwinden nach so vielen Tagen aus Alle */
 const PAST_DAYS = 14;
 
-const unreadOf = (r: Row) => (r.kind === 'ride' ? r.r.unread : r.c.unread);
+const keyOf = (r: Row) =>
+  r.kind === "ride" ? `ride:${r.r.rideId}` : `dm:${r.c.partner}`;
+const unreadOf = (r: Row) => (r.kind === "ride" ? r.r.unread : r.c.unread);
 function visible(r: Row, f: Filter, now = Date.now()): boolean {
-  if (f === 'chats') return r.kind === 'direct';
-  if (f === 'ausfahrten') return r.kind === 'ride';
-  if (r.kind === 'direct' || unreadOf(r) > 0) return true;
+  if (f === "chats") return r.kind === "direct";
+  if (f === "ausfahrten") return r.kind === "ride";
+  if (r.kind === "direct" || unreadOf(r) > 0) return true;
   const day = r.r.startsAt ?? r.at;
   return now - day.getTime() < PAST_DAYS * 86400000;
 }
 
-const when = (d: Date) => (d.toDateString() === new Date().toDateString() ? clock(d) : shortDate(d));
+const when = (d: Date) =>
+  d.toDateString() === new Date().toDateString() ? clock(d) : shortDate(d);
 
 export default function Nachrichten() {
   const insets = useSafeAreaInsets();
   const [list, setList] = useState<Row[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>('alle');
+  const [filter, setFilter] = useState<Filter>("alle");
+  const [del, setDel] = useState<Row | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       const load = () =>
         // Die Chats der Ausfahrten dürfen fehlen (ältere Datenbank, kurzer Fehler), die Unterhaltungen nicht
-        Promise.all([listConversations(), listRideChats().catch(() => [] as RideChat[])])
-          .then(([direct, rides]) => {
-            const rows: Row[] = [...direct.map((c) => ({ kind: 'direct' as const, at: c.lastAt, c })), ...rides.map((r) => ({ kind: 'ride' as const, at: r.lastAt, r }))];
-            setList(rows.sort((x, y) => y.at.getTime() - x.at.getTime()));
+        Promise.all([
+          listConversations(),
+          listRideChats().catch(() => [] as RideChat[]),
+          hiddenChats(),
+        ])
+          .then(([direct, rides, hidden]) => {
+            const rows: Row[] = [
+              ...direct.map((c) => ({
+                kind: "direct" as const,
+                at: c.lastAt,
+                c,
+              })),
+              ...rides.map((r) => ({ kind: "ride" as const, at: r.lastAt, r })),
+            ];
+            // gelöschte Chats bleiben weg, bis eine neuere Nachricht kommt
+            const shown = rows.filter((r) => {
+              const h = hidden.get(keyOf(r));
+              return !h || r.at.getTime() > h.getTime();
+            });
+            setList(shown.sort((x, y) => y.at.getTime() - x.at.getTime()));
             setErr(null);
           })
           .catch((e: Error) => setErr(e.message));
@@ -66,23 +110,76 @@ export default function Nachrichten() {
     }, []),
   );
 
+  const remove = (row: Row) => {
+    setList((l) => l?.filter((r) => keyOf(r) !== keyOf(row)) ?? l);
+    const read =
+      row.kind === "ride"
+        ? markRideChatSeen(row.r.rideId)
+        : markRead(row.c.partner);
+    hideChat(keyOf(row))
+      .then(() => read)
+      .then(() => refreshUnread())
+      .then(() => showToast(t("Chat gelöscht")))
+      .catch((e: Error) => showToast(e.message, { tone: "error" }));
+  };
+  const swipe = (row: Row, name: string, child: ReactNode) => (
+    <Swipeable
+      key={keyOf(row)}
+      friction={1.6}
+      rightThreshold={36}
+      overshootRight={false}
+      onSwipeableWillOpen={() => haptic("rastung")}
+      renderRightActions={(prog, _tr, m) => (
+        <SwipeDelete
+          progress={prog}
+          radius={Radius.m}
+          label={tr("Chat {name} löschen", { name })}
+          onPress={() => {
+            m.close();
+            setDel(row);
+          }}
+        />
+      )}
+    >
+      {child}
+    </Swipeable>
+  );
+
   return (
-    <ScrollView style={styles.root} contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s, paddingBottom: insets.bottom + Spacing.xxxl }]}>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={[
+        styles.content,
+        {
+          paddingTop: insets.top + Spacing.s,
+          paddingBottom: insets.bottom + Spacing.xxxl,
+        },
+      ]}
+    >
       <View style={styles.head}>
-        <BackLink label={t('Community')} fallback="/community" />
+        <BackLink label={t("Community")} fallback="/community" />
       </View>
-      <AppText variant="display">{t('Nachrichten')}</AppText>
+      <AppText variant="display">{t("Nachrichten")}</AppText>
       {!!list?.length && (
         <ChipRow>
           {(
             [
-              ['alle', t('Alle')],
-              ['ausfahrten', t('Ausfahrten')],
-              ['chats', t('Chats')],
+              ["alle", t("Alle")],
+              ["ausfahrten", t("Ausfahrten")],
+              ["chats", t("Chats")],
             ] as const
           ).map(([key, label]) => {
-            const n = list.filter((r) => visible(r, key)).reduce((sum, r) => sum + unreadOf(r), 0);
-            return <Chip key={key} label={n && key !== 'alle' ? `${label} ${n}` : label} active={filter === key} onPress={() => setFilter(key)} />;
+            const n = list
+              .filter((r) => visible(r, key))
+              .reduce((sum, r) => sum + unreadOf(r), 0);
+            return (
+              <Chip
+                key={key}
+                label={n && key !== "alle" ? `${label} ${n}` : label}
+                active={filter === key}
+                onPress={() => setFilter(key)}
+              />
+            );
           })}
         </ChipRow>
       )}
@@ -90,78 +187,151 @@ export default function Nachrichten() {
       {err && <AppText style={styles.error}>{err}</AppText>}
       {list?.length === 0 && (
         <View style={styles.card}>
-          <AppText variant="title">{t('Noch keine Nachrichten')}</AppText>
-          <AppText muted>{t('Unter Community, Drivers findest du andere Mitglieder und kannst ihnen eine Nachricht schreiben.')}</AppText>
+          <AppText variant="title">{t("Noch keine Nachrichten")}</AppText>
+          <AppText muted>
+            {t(
+              "Unter Community, Drivers findest du andere Mitglieder und kannst ihnen eine Nachricht schreiben.",
+            )}
+          </AppText>
         </View>
       )}
       {!!list?.length && !list.some((r) => visible(r, filter)) && (
-        <AppText muted>{filter === 'chats' ? t('Noch keine Unterhaltungen mit anderen Fahrern.') : t('Keine aktuellen Chats von Ausfahrten.')}</AppText>
+        <AppText muted>
+          {filter === "chats"
+            ? t("Noch keine Unterhaltungen mit anderen Fahrern.")
+            : t("Keine aktuellen Chats von Ausfahrten.")}
+        </AppText>
       )}
-      {list?.filter((r) => visible(r, filter)).map((row) => {
-        if (row.kind === 'ride') {
-          const r = row.r;
-          return (
+      {list
+        ?.filter((r) => visible(r, filter))
+        .map((row) => {
+          if (row.kind === "ride") {
+            const r = row.r;
+            return swipe(
+              row,
+              r.name,
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${tr("Ausfahrt")} ${r.name}${r.unread ? `, ${r.unread} ungelesen` : ""}, ${r.lastBody}`}
+                onPress={() =>
+                  router.push({
+                    pathname: "/ausfahrt/chat",
+                    params: { id: r.rideId, name: r.name, from: "nachrichten" },
+                  })
+                }
+                style={styles.row}
+              >
+                {/* Gruppe statt Person: das Symbol der Ausfahrt im Kreis, gleiche Größe wie ein Profilbild */}
+                <View style={styles.group}>
+                  <SymbolView
+                    name="car.2"
+                    size={20}
+                    weight="semibold"
+                    tintColor={Colors.text}
+                  />
+                </View>
+                <View style={styles.flex}>
+                  <View style={styles.line}>
+                    <AppText
+                      style={[styles.name, styles.flex]}
+                      numberOfLines={1}
+                    >
+                      {r.name}
+                      {filter === "ausfahrten" && r.startsAt ? (
+                        <AppText
+                          muted
+                          style={styles.rideDay}
+                        >{`  ${shortDate(r.startsAt)}`}</AppText>
+                      ) : null}
+                    </AppText>
+                    <AppText
+                      style={[styles.time, r.unread ? styles.timeUnread : null]}
+                    >
+                      {when(r.lastAt)}
+                    </AppText>
+                  </View>
+                  <View style={styles.line}>
+                    <AppText
+                      muted={!r.unread}
+                      style={[
+                        styles.flex,
+                        styles.preview,
+                        r.unread ? styles.unreadText : null,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {r.lastFromMe ? tr("Du") : r.lastName}: {r.lastBody}
+                    </AppText>
+                    {r.unread > 0 && (
+                      <View style={styles.badge}>
+                        <AppText style={styles.badgeText}>{r.unread}</AppText>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </Pressable>,
+            );
+          }
+          const c = row.c;
+          return swipe(
+            row,
+            c.name,
             <Pressable
-              key={`ride-${r.rideId}`}
               accessibilityRole="button"
-              accessibilityLabel={`${tr('Ausfahrt')} ${r.name}${r.unread ? `, ${r.unread} ungelesen` : ''}, ${r.lastBody}`}
-              onPress={() => router.push({ pathname: '/ausfahrt/chat', params: { id: r.rideId, name: r.name, from: 'nachrichten' } })}
-              style={styles.row}>
-              {/* Gruppe statt Person: das Symbol der Ausfahrt im Kreis, gleiche Größe wie ein Profilbild */}
-              <View style={styles.group}>
-                <SymbolView name="car.2" size={20} weight="semibold" tintColor={Colors.text} />
-              </View>
+              accessibilityLabel={`${c.name}${c.unread ? `, ${c.unread} ungelesen` : ""}, ${c.lastBody}`}
+              onPress={() =>
+                router.push({
+                  pathname: "/nachrichten/[id]",
+                  params: { id: c.partner, name: c.name },
+                })
+              }
+              style={styles.row}
+            >
+              <Avatar name={c.name} userId={c.partner} />
               <View style={styles.flex}>
                 <View style={styles.line}>
                   <AppText style={[styles.name, styles.flex]} numberOfLines={1}>
-                    {r.name}
-                    {filter === 'ausfahrten' && r.startsAt ? <AppText muted style={styles.rideDay}>{`  ${shortDate(r.startsAt)}`}</AppText> : null}
+                    {c.name}
                   </AppText>
-                  <AppText style={[styles.time, r.unread ? styles.timeUnread : null]}>{when(r.lastAt)}</AppText>
+                  <AppText
+                    style={[styles.time, c.unread ? styles.timeUnread : null]}
+                  >
+                    {when(c.lastAt)}
+                  </AppText>
                 </View>
                 <View style={styles.line}>
-                  <AppText muted={!r.unread} style={[styles.flex, styles.preview, r.unread ? styles.unreadText : null]} numberOfLines={1}>
-                    {r.lastFromMe ? tr('Du') : r.lastName}: {r.lastBody}
+                  <AppText
+                    muted={!c.unread}
+                    style={[
+                      styles.flex,
+                      styles.preview,
+                      c.unread ? styles.unreadText : null,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {c.lastFromMe ? "Du: " : ""}
+                    {c.lastBody}
                   </AppText>
-                  {r.unread > 0 && (
+                  {c.unread > 0 && (
                     <View style={styles.badge}>
-                      <AppText style={styles.badgeText}>{r.unread}</AppText>
+                      <AppText style={styles.badgeText}>{c.unread}</AppText>
                     </View>
                   )}
                 </View>
               </View>
-            </Pressable>
+            </Pressable>,
           );
-        }
-        const c = row.c;
-        return (
-          <Pressable
-            key={c.partner}
-            accessibilityRole="button"
-            accessibilityLabel={`${c.name}${c.unread ? `, ${c.unread} ungelesen` : ''}, ${c.lastBody}`}
-            onPress={() => router.push({ pathname: '/nachrichten/[id]', params: { id: c.partner, name: c.name } })}
-            style={styles.row}>
-            <Avatar name={c.name} userId={c.partner} />
-            <View style={styles.flex}>
-              <View style={styles.line}>
-                <AppText style={[styles.name, styles.flex]} numberOfLines={1}>{c.name}</AppText>
-                <AppText style={[styles.time, c.unread ? styles.timeUnread : null]}>{when(c.lastAt)}</AppText>
-              </View>
-              <View style={styles.line}>
-                <AppText muted={!c.unread} style={[styles.flex, styles.preview, c.unread ? styles.unreadText : null]} numberOfLines={1}>
-                  {c.lastFromMe ? 'Du: ' : ''}
-                  {c.lastBody}
-                </AppText>
-                {c.unread > 0 && (
-                  <View style={styles.badge}>
-                    <AppText style={styles.badgeText}>{c.unread}</AppText>
-                  </View>
-                )}
-              </View>
-            </View>
-          </Pressable>
-        );
-      })}
+        })}
+      <ConfirmSheet
+        visible={!!del}
+        title={t("Chat löschen?")}
+        text={t(
+          "Der Chat verschwindet aus deiner Liste, bis jemand etwas Neues schreibt. Für die anderen bleibt alles erhalten.",
+        )}
+        confirmLabel={t("Löschen")}
+        onConfirm={() => del && remove(del)}
+        onClose={() => setDel(null)}
+      />
     </ScrollView>
   );
 }
@@ -169,20 +339,56 @@ export default function Nachrichten() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.ground },
   content: { paddingHorizontal: Spacing.xl, gap: Spacing.m },
-  head: { flexDirection: 'row' },
+  head: { flexDirection: "row" },
   flex: { flex: 1 },
-  card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.s },
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, minHeight: 64 },
-  group: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
-  line: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s },
+  card: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.l,
+    padding: Spacing.l,
+    gap: Spacing.s,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.m,
+    minHeight: 64,
+    backgroundColor: Colors.ground,
+  },
+  group: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.surface2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  line: { flexDirection: "row", alignItems: "center", gap: Spacing.s },
   name: { fontFamily: Fonts.bold, fontSize: Type.title },
   rideDay: { fontFamily: Fonts.semibold, fontSize: Type.caption },
   // Vorschau wie bei WhatsApp: letzte Nachricht in 15 pt, Zeit rechts, ungelesen orange (Koray 10.11.)
   preview: { fontFamily: Fonts.medium, fontSize: Type.body },
   unreadText: { fontFamily: Fonts.bold, color: Colors.text },
-  time: { fontFamily: Fonts.semibold, fontSize: Type.caption, color: Colors.muted, fontVariant: ['tabular-nums'] },
+  time: {
+    fontFamily: Fonts.semibold,
+    fontSize: Type.caption,
+    color: Colors.muted,
+    fontVariant: ["tabular-nums"],
+  },
   timeUnread: { color: Colors.signal },
-  badge: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: Type.micro, lineHeight: 13 },
+  badge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    backgroundColor: Colors.signal,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeText: {
+    color: Colors.onSignal,
+    fontFamily: Fonts.extrabold,
+    fontSize: Type.micro,
+    lineHeight: 13,
+  },
   error: { color: Colors.danger, fontFamily: Fonts.semibold },
 });

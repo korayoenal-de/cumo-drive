@@ -2069,5 +2069,9 @@
   "Bin schon da.": "Sono già qui.",
   "Bin unterwegs, mein Standort ist geteilt.": "Sono in viaggio, la mia posizione è condivisa.",
   "Antippen zum Antworten": "Tocca per rispondere",
-  "{meetingName}, Abfahrt {v1}": "{meetingName}, partenza {v1}"
+  "{meetingName}, Abfahrt {v1}": "{meetingName}, partenza {v1}",
+  "Chat gelöscht": "Chat eliminata",
+  "Chat {name} löschen": "Elimina chat {name}",
+  "Chat löschen?": "Eliminare la chat?",
+  "Der Chat verschwindet aus deiner Liste, bis jemand etwas Neues schreibt. Für die anderen bleibt alles erhalten.": "La chat sparisce dalla tua lista finché qualcuno scrive qualcosa di nuovo. Per gli altri non cambia nulla."
 }
