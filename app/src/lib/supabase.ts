@@ -39,3 +39,16 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     detectSessionInUrl: Platform.OS === 'web' && !isServer,
   },
 });
+
+let channelSeq = 0;
+/**
+ * Eindeutiger Name für einen Realtime Kanal, der nur Datenbank Änderungen hört (Absturz 20.11.2026, Chat einer
+ * Ausfahrt): Kommt ein Bildschirm zurück, läuft sein Effekt neu, bevor removeChannel den alten Kanal gleichen
+ * Namens abgebaut hat. supabase.channel() gibt dann den alten, schon abonnierten Kanal zurück, und .on() wirft.
+ * Mit eigenem Namen je Aufbau kann das nicht passieren. Nicht für Broadcast oder Presence: dort muss der Name
+ * auf allen Geräten gleich sein.
+ */
+export function freshChannel(name: string): string {
+  channelSeq += 1;
+  return `${name}#${channelSeq}`;
+}

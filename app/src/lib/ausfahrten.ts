@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 
 import { saveCloudTour } from './cloud-tours';
 import { patchTour, type SavedTour } from './library';
-import { supabase } from './supabase';
+import { freshChannel, supabase } from './supabase';
 import { unpackTour, type Packed } from './tour-pack';
 import type { LatLon, Profile, Tour } from './tour';
 import { tr } from '@/i18n';
@@ -353,7 +353,7 @@ export function useNachrichten(id: string | undefined) {
         .catch((e: Error) => alive && setError(e.message));
     void load();
     const ch = supabase
-      .channel(`ride-chat:${id}`)
+      .channel(freshChannel(`ride-chat:${id}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ride_messages', filter: `ride_id=eq.${id}` }, (p) => {
         const r = p.new as { id: number; user_id: string; body: string; created_at: string };
         setList((l) => (l && !l.some((m) => m.id === r.id) ? [...l, { id: r.id, userId: r.user_id, body: r.body, createdAt: new Date(r.created_at) }] : l));

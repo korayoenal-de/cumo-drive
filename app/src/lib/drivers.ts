@@ -9,7 +9,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { CarLook } from '@/components/map/car-sprite';
 
 import { reverseName } from './geocode';
-import { supabase } from './supabase';
+import { freshChannel, supabase } from './supabase';
 import type { LatLon } from './tour';
 import { tr } from '@/i18n';
 
@@ -282,7 +282,7 @@ export function useDirectChat(me: string | undefined, partner: string | undefine
     };
     void load();
     const ch = supabase
-      .channel(`dm:${me}:${partner}`)
+      .channel(freshChannel(`dm:${me}:${partner}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, (p) => {
         const m = toMsg(p.new as Parameters<typeof toMsg>[0]);
         const mine = (m.sender === me && m.recipient === partner) || (m.sender === partner && m.recipient === me);
@@ -350,7 +350,7 @@ export function useUnreadWatcher(userId: string | undefined) {
     if (!userId) return;
     void refreshUnread();
     const ch = supabase
-      .channel(`unread:${userId}`)
+      .channel(freshChannel(`unread:${userId}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient=eq.${userId}` }, () => void refreshUnread())
       // Chats der Ausfahrten: Realtime liefert nur, was ich lesen darf
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ride_messages' }, () => void refreshUnread())
