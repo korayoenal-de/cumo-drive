@@ -2101,5 +2101,11 @@
   "Keine offenen Einladungen. Wer dich zu einer Ausfahrt einlädt, steht hier.": "Nessun invito aperto. Chi ti invita a un'uscita compare qui.",
   "Keine offenen Anfragen. Hier stehen Anfragen an deine Ausfahrten und deine eigenen bei anderen.": "Nessuna richiesta aperta. Qui trovi le richieste alle tue uscite e le tue presso altri.",
   "Gerade keine offenen Ausfahrten anderer. Leg selbst eine an und lade andere ein.": "Al momento nessuna uscita aperta di altri. Creane una e invita gli altri.",
-  "Nachrichten, {n} ungelesen": "Messaggi, {n} non letti"
+  "Nachrichten, {n} ungelesen": "Messaggi, {n} non letti",
+  "Aktivität": "Attività",
+  "Noch keine Aktivität. Hier stehen Kontaktanfragen, neue Kontakte und Zusagen zu deinen Ausfahrten.": "Ancora nessuna attività. Qui trovi richieste di contatto, nuovi contatti e conferme alle tue uscite.",
+  "{name} möchte dich als Kontakt hinzufügen": "{name} vuole aggiungerti come contatto",
+  "{name} ist jetzt dein Kontakt": "{name} è ora un tuo contatto",
+  "{name} fährt bei {ride} mit": "{name} partecipa a {ride}",
+  "deiner Ausfahrt": "la tua uscita"
 }

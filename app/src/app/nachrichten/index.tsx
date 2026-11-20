@@ -2,9 +2,8 @@
  * Nachrichten: Unterhaltungen mit anderen Fahrern und die Chats der Ausfahrten in einer Liste (Koray 18.11.),
  * neueste oben, ungelesene mit Plakette.
  *
- * Filter als Chips (Koray 20.11., Rückmeldung aus der Testgruppe): Alle, Ausfahrten, Chats. Unter Alle fallen die
- * Chats vergangener Ausfahrten nach 14 Tagen heraus, solange nichts Ungelesenes drin steht; unter Ausfahrten
- * bleiben sie, mit dem Datum der Ausfahrt.
+ * Filter als Chips (Koray 20.11.2026, Konzept „Ausfahrt im Fokus“): Ausfahrten, Privat, Aktivität. Aktivität sammelt
+ * die leisen Dinge: offene Kontaktanfragen, neue Kontakte und Zusagen zu deinen Ausfahrten.
  *
  * Wischen von rechts nach links löscht einen Chat (Koray 20.11.), wie bei WhatsApp nur für mich: er verschwindet aus
  * der Liste, bis eine neue Nachricht kommt; für die anderen bleibt alles erhalten.
@@ -26,7 +25,7 @@ import { haptic } from "@/lib/haptics";
 import { showToast } from "@/lib/toast";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { AppText } from "@/components/ui/text";
-import { Colors, Fonts, Spacing, Type, Radius } from "@/constants/theme";
+import { Colors, Fonts, Size, Spacing, Type, Radius } from "@/constants/theme";
 import {
   clock,
   listRideChats,
@@ -37,11 +36,14 @@ import {
 import {
   hiddenChats,
   hideChat,
+  listActivity,
   listConversations,
   markRead,
   refreshUnread,
+  type Activity,
   type Conversation,
 } from "@/lib/drivers";
+import { answerContact, refreshContacts } from "@/lib/contacts";
 import { enablePush } from "@/lib/push";
 import { t, tr } from "@/i18n";
 
@@ -49,19 +51,15 @@ type Row =
   | { kind: "direct"; at: Date; c: Conversation }
   | { kind: "ride"; at: Date; r: RideChat };
 
-type Filter = "alle" | "ausfahrten" | "chats";
-/** Chats vergangener Ausfahrten verschwinden nach so vielen Tagen aus Alle */
-const PAST_DAYS = 14;
+type Filter = "ausfahrten" | "privat" | "aktivitaet";
 
 const keyOf = (r: Row) =>
   r.kind === "ride" ? `ride:${r.r.rideId}` : `dm:${r.c.partner}`;
 const unreadOf = (r: Row) => (r.kind === "ride" ? r.r.unread : r.c.unread);
-function visible(r: Row, f: Filter, now = Date.now()): boolean {
-  if (f === "chats") return r.kind === "direct";
+function visible(r: Row, f: Filter): boolean {
+  if (f === "privat") return r.kind === "direct";
   if (f === "ausfahrten") return r.kind === "ride";
-  if (r.kind === "direct" || unreadOf(r) > 0) return true;
-  const day = r.r.startsAt ?? r.at;
-  return now - day.getTime() < PAST_DAYS * 86400000;
+  return false;
 }
 
 const when = (d: Date) =>
@@ -71,7 +69,9 @@ export default function Nachrichten() {
   const insets = useSafeAreaInsets();
   const [list, setList] = useState<Row[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>("alle");
+  const [filter, setFilter] = useState<Filter>("ausfahrten");
+  const [activity, setActivity] = useState<Activity[]>([]);
+  const [busyAsk, setBusyAsk] = useState<string | null>(null);
   const [del, setDel] = useState<Row | null>(null);
 
   useFocusEffect(
@@ -102,6 +102,7 @@ export default function Nachrichten() {
           })
           .catch((e: Error) => setErr(e.message));
       void load();
+      void listActivity().then(setActivity);
       void refreshUnread();
       // Beim ersten Öffnen der Nachrichten nach der Erlaubnis für Mitteilungen fragen (iOS fragt nur einmal)
       void enablePush(true);
@@ -160,32 +161,90 @@ export default function Nachrichten() {
         <BackLink label={t("Community")} fallback="/community" />
       </View>
       <AppText variant="display">{t("Nachrichten")}</AppText>
-      {!!list?.length && (
-        <ChipRow>
-          {(
-            [
-              ["alle", t("Alle")],
-              ["ausfahrten", t("Ausfahrten")],
-              ["chats", t("Chats")],
-            ] as const
-          ).map(([key, label]) => {
-            const n = list
-              .filter((r) => visible(r, key))
-              .reduce((sum, r) => sum + unreadOf(r), 0);
-            return (
-              <Chip
-                key={key}
-                label={n && key !== "alle" ? `${label} ${n}` : label}
-                active={filter === key}
-                onPress={() => setFilter(key)}
-              />
-            );
-          })}
-        </ChipRow>
-      )}
+      <ChipRow>
+        {(
+          [
+            ["ausfahrten", t("Ausfahrten")],
+            ["privat", t("Privat")],
+            ["aktivitaet", t("Aktivität")],
+          ] as const
+        ).map(([key, label]) => {
+          const n =
+            key === "aktivitaet"
+              ? activity.filter((x) => x.kind === "kontaktanfrage").length
+              : (list ?? []).filter((r) => visible(r, key)).reduce((sum, r) => sum + unreadOf(r), 0);
+          return <Chip key={key} label={n ? `${label} ${n}` : label} active={filter === key} onPress={() => setFilter(key)} />;
+        })}
+      </ChipRow>
       {list === null && !err && <ActivityIndicator color={Colors.muted} />}
       {err && <AppText style={styles.error}>{err}</AppText>}
-      {list?.length === 0 && (
+      {filter === "aktivitaet" && (
+        <View style={styles.activity}>
+          {activity.length === 0 && <AppText muted>{t("Noch keine Aktivität. Hier stehen Kontaktanfragen, neue Kontakte und Zusagen zu deinen Ausfahrten.")}</AppText>}
+          {activity.map((x) => (
+            <Pressable
+              key={`${x.kind}-${x.actor}-${x.ride ?? ""}`}
+              accessibilityRole="button"
+              disabled={x.kind === "kontaktanfrage"}
+              onPress={() =>
+                x.kind === "zusage" && x.ride
+                  ? router.push({ pathname: "/ausfahrt/[id]", params: { id: x.ride } })
+                  : router.push({ pathname: "/nachrichten/[id]", params: { id: x.actor, name: x.name } })
+              }
+              style={styles.row}
+            >
+              <Avatar name={x.name} userId={x.actor} />
+              <View style={styles.flex}>
+                <AppText style={styles.activityText}>
+                  {x.kind === "kontaktanfrage"
+                    ? tr("{name} möchte dich als Kontakt hinzufügen", { name: x.name })
+                    : x.kind === "kontakt"
+                      ? tr("{name} ist jetzt dein Kontakt", { name: x.name })
+                      : tr("{name} fährt bei {ride} mit", { name: x.name, ride: x.rideName ?? tr("deiner Ausfahrt") })}
+                </AppText>
+                <AppText style={styles.time}>{when(x.at)}</AppText>
+                {x.kind === "kontaktanfrage" && (
+                  <View style={styles.askRow}>
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={!!busyAsk}
+                      onPress={() => {
+                        setBusyAsk(x.actor);
+                        answerContact(x.actor, false)
+                          .then(() => setActivity((l) => l.filter((y) => !(y.kind === "kontaktanfrage" && y.actor === x.actor))))
+                          .catch((e: Error) => showToast(e.message, { tone: "error" }))
+                          .finally(() => setBusyAsk(null));
+                      }}
+                      style={styles.askBtn}
+                    >
+                      <AppText style={styles.askText}>{t("Ablehnen")}</AppText>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={!!busyAsk}
+                      onPress={() => {
+                        setBusyAsk(x.actor);
+                        answerContact(x.actor, true)
+                          .then(() => {
+                            haptic("ziel");
+                            void refreshContacts();
+                            return listActivity().then(setActivity);
+                          })
+                          .catch((e: Error) => showToast(e.message, { tone: "error" }))
+                          .finally(() => setBusyAsk(null));
+                      }}
+                      style={styles.askBtn}
+                    >
+                      <AppText style={styles.askText}>{t("Annehmen")}</AppText>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      )}
+      {filter !== "aktivitaet" && list?.length === 0 && (
         <View style={styles.card}>
           <AppText variant="title">{t("Noch keine Nachrichten")}</AppText>
           <AppText muted>
@@ -195,9 +254,9 @@ export default function Nachrichten() {
           </AppText>
         </View>
       )}
-      {!!list?.length && !list.some((r) => visible(r, filter)) && (
+      {filter !== "aktivitaet" && !!list?.length && !list.some((r) => visible(r, filter)) && (
         <AppText muted>
-          {filter === "chats"
+          {filter === "privat"
             ? t("Noch keine Unterhaltungen mit anderen Fahrern.")
             : t("Keine aktuellen Chats von Ausfahrten.")}
         </AppText>
@@ -337,6 +396,11 @@ export default function Nachrichten() {
 }
 
 const styles = StyleSheet.create({
+  activity: { gap: Spacing.m },
+  activityText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
+  askRow: { flexDirection: "row", gap: Spacing.s, marginTop: Spacing.s },
+  askBtn: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface2, alignItems: "center", justifyContent: "center" },
+  askText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   root: { flex: 1, backgroundColor: Colors.ground },
   content: { paddingHorizontal: Spacing.xl, gap: Spacing.m },
   head: { flexDirection: "row" },

@@ -405,3 +405,21 @@ export async function hideChat(key: string): Promise<void> {
   const { error } = await supabase.from('chat_hidden').upsert({ chat: key, hidden_at: new Date().toISOString() }, { onConflict: 'user_id,chat' });
   if (error) fail(error.message);
 }
+
+/** Aktivität (20.11.2026): offene Kontaktanfragen, neue Kontakte, Zusagen zu meinen Ausfahrten; neueste zuerst */
+export type Activity = { kind: 'kontaktanfrage' | 'kontakt' | 'zusage'; actor: string; name: string; ride: string | null; rideName: string | null; at: Date };
+export async function listActivity(): Promise<Activity[]> {
+  const { data: s } = await supabase.auth.getSession();
+  if (!s.session) return [];
+  const { data, error } = await supabase.rpc('my_activity');
+  // ältere Datenbank ohne Funktion: leer statt Fehler
+  if (error) return [];
+  return ((data ?? []) as { kind: Activity['kind']; actor: string; actor_name: string | null; ride: string | null; ride_name: string | null; at: string }[]).map((r) => ({
+    kind: r.kind,
+    actor: r.actor,
+    name: r.actor_name ?? tr('Fahrer'),
+    ride: r.ride,
+    rideName: r.ride_name,
+    at: new Date(r.at),
+  }));
+}
