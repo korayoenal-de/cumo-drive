@@ -176,6 +176,7 @@ export function RouteMap({
   /** Meter je Bildpunkt, aus dem sichtbaren Ausschnitt; daraus Versatz und Pfeilabstand */
   const [mpp, setMpp] = useState(0);
   const [boxH, setBoxH] = useState(0);
+  const [boxW, setBoxW] = useState(0);
   const offM = mpp ? Math.max(3, mpp * 4) : 0;
   const offKey = offM ? Math.round(Math.log2(offM) * 4) : 0;
 
@@ -243,10 +244,94 @@ export function RouteMap({
     });
   }, [layers, settings.passes, settings.passesAll, tour, posLat, posLon]);
 
+  // Einpassen in den sichtbaren Teil über dem Blatt (Koray 20.11.2026: geöffnete Tour viel zu weit weg).
+  // MapKit rechnet bei fitToCoordinates den Kartenrand (mapPadding, das Blatt) und edgePadding nicht verlässlich
+  // zusammen; mit dem Blatt auf Mitte blieb kaum Höhe übrig und die Tour lag winzig im Alpenausschnitt.
+  // Darum selbst messen: wo liegt die Tour gerade auf dem Schirm, wie viel Platz ist frei, und die Kamera dann
+  // um genau diesen Faktor heranholen und verschieben. Klappt etwas nicht, bleibt das alte Einpassen.
+  const fitRun = useRef(0);
+  const fitView = useRef({ boxW, boxH, pad, mapPadding, insets });
+  // vor den Effekten unten, die einpassen: die laufen danach und sehen schon die neuen Werte
+  useEffect(() => {
+    fitView.current = { boxW, boxH, pad, mapPadding, insets };
+  });
+  const fitPts = useCallback((coords: LatLng[], extra = 0) => {
+    const m = map.current;
+    if (!m || coords.length < 2) return;
+    const run = ++fitRun.current;
+    const { boxW: w, boxH: h, pad: ep, mapPadding: mp, insets: ins } = fitView.current;
+    const native = () => m.fitToCoordinates(coords, { edgePadding: { top: ep.top + extra, right: ep.right + extra, bottom: ep.bottom + extra, left: ep.left + extra }, animated: true });
+    if (w <= 0 || h <= 0) return native();
+    // Freie Fläche: Kartenrand plus Abstand; das Blatt reicht bis zur Safe Area, die steckt schon in edgePadding unten
+    const sheet = mp?.bottom ? mp.bottom + ins.bottom : 0;
+    const top = (mp?.top ?? 0) + ep.top + extra;
+    const left = (mp?.left ?? 0) + ep.left + extra;
+    const right = (mp?.right ?? 0) + ep.right + extra;
+    const bottom = Math.max(ep.bottom, sheet + ep.bottom - ins.bottom) + extra;
+    const vw = w - left - right;
+    const vh = h - top - bottom;
+    if (vw < 40 || vh < 40) return native();
+    let n = -90;
+    let s = 90;
+    let wst = 180;
+    let est = -180;
+    for (const c of coords) {
+      n = Math.max(n, c.latitude);
+      s = Math.min(s, c.latitude);
+      wst = Math.min(wst, c.longitude);
+      est = Math.max(est, c.longitude);
+    }
+    void (async () => {
+      try {
+        let cam = await m.getCamera();
+        // Gedreht oder gekippt stimmt die Messung nicht: erst nach Norden und flach stellen
+        if (Math.abs(cam.heading ?? 0) > 0.5 || Math.abs(cam.pitch ?? 0) > 0.5) {
+          m.setCamera({ heading: 0, pitch: 0 });
+          await new Promise((r) => setTimeout(r, 30));
+          cam = await m.getCamera();
+        }
+        const [a, b, c] = await Promise.all([
+          m.pointForCoordinate({ latitude: n, longitude: wst }),
+          m.pointForCoordinate({ latitude: s, longitude: est }),
+          m.pointForCoordinate(cam.center),
+        ]);
+        if (run !== fitRun.current) return;
+        const tw = Math.max(1, Math.abs(b.x - a.x));
+        const th = Math.max(1, Math.abs(b.y - a.y));
+        // Faktor, um den die Karte heranholt (größer als 1) oder weiter weg geht
+        // Nicht näher als etwa 1,5 km Höhe (Start und Ziel am selben Ort ergeben sonst eine winzige Fläche)
+        const kMax = cam.altitude ? Math.max(1, cam.altitude / 1500) : cam.zoom != null ? 2 ** Math.max(0, 15 - cam.zoom) : 4096;
+        const k = Math.min(vw / tw, vh / th, kMax);
+        if (!Number.isFinite(k) || k <= 0) return native();
+        // Mitte der Tour soll nach dem Zoom in der Mitte der freien Fläche liegen
+        const tx = (a.x + b.x) / 2;
+        const ty = (a.y + b.y) / 2;
+        const gx = left + vw / 2;
+        const gy = top + vh / 2;
+        const dx = gx - (c.x + k * (tx - c.x));
+        const dy = gy - (c.y + k * (ty - c.y));
+        const center = await m.coordinateForPoint({ x: c.x - dx / k, y: c.y - dy / k });
+        if (run !== fitRun.current) return;
+        m.animateCamera(
+          {
+            center,
+            heading: 0,
+            pitch: 0,
+            ...(cam.altitude ? { altitude: cam.altitude / k } : {}),
+            ...(cam.zoom != null ? { zoom: cam.zoom + Math.log2(k) } : {}),
+          },
+          { duration: 600 },
+        );
+      } catch {
+        if (run === fitRun.current) native();
+      }
+    })();
+  }, []);
+
   // Ausschnitt an die Tour anpassen, solange keine Warnung gewählt ist und die Kamera nicht folgt
   useEffect(() => {
     if (!ready || !autoFit || followUser || highlightIndex != null || fitCoords.length < 2) return;
-    map.current?.fitToCoordinates(fitCoords, { edgePadding: pad, animated: true });
+    fitPts(fitCoords);
     // pad ist ein Objekt, die Werte reichen als Abhängigkeit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, autoFit, followUser, highlightIndex, fitCoords, pad.top, pad.right, pad.bottom, pad.left]);
@@ -303,7 +388,7 @@ export function RouteMap({
   const scanKey = scan ? scan.pts.map((p) => p.join(',')).join(';') : '';
   useEffect(() => {
     if (!ready || !scan || scan.pts.length < 2) return;
-    const t = setTimeout(() => map.current?.fitToCoordinates(scan.pts.map(ll), { edgePadding: { top: pad.top + 30, right: pad.right + 30, bottom: pad.bottom + 30, left: pad.left + 30 }, animated: true }), 280);
+    const t = setTimeout(() => fitPts(scan.pts.map(ll), 30), 280);
     return () => clearTimeout(t);
     // scanKey fasst die Punkte zusammen
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -325,7 +410,7 @@ export function RouteMap({
     if (!ready || followUser || fitCoords.length >= 2 || groupKey === 0) return;
     const pts = [...groupPts, ...(position ? [position] : [])].map(ll);
     if (pts.length === 1) map.current?.animateCamera({ center: pts[0], zoom: 13, altitude: 8000, pitch: 0, heading: 0 }, { duration: 600 });
-    else map.current?.fitToCoordinates(pts, { edgePadding: pad, animated: true });
+    else fitPts(pts);
     // nur bei neuer Teilnehmerzahl neu einpassen, nicht bei jeder Bewegung
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, followUser, fitCoords.length, groupKey]);
@@ -468,7 +553,7 @@ export function RouteMap({
   // noch fuhr, und die Tour lag klein in einem viel zu großen Ausschnitt
   useEffect(() => {
     if (!fitKey || !ready || fitCoords.length < 2) return;
-    map.current?.fitToCoordinates(fitCoords, { edgePadding: pad, animated: true });
+    fitPts(fitCoords);
     // nur beim Auslösen
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitKey, ready]);
@@ -476,7 +561,7 @@ export function RouteMap({
   // Planung ansehen: Folgen kurz aussetzen und die ganze Linie zeigen
   useEffect(() => {
     if (!overview || !ready) return;
-    const t = setTimeout(() => map.current?.fitToCoordinates(fitCoords, { edgePadding: pad, animated: true }), 60);
+    const t = setTimeout(() => fitPts(fitCoords), 60);
     return () => clearTimeout(t);
     // nur beim Auslösen, nicht bei jeder neuen Linie
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -490,7 +575,10 @@ export function RouteMap({
   }, [paused]);
 
   return (
-    <View style={[styles.box, style, !interactive && styles.noTouch]} onLayout={(e) => setBoxH(e.nativeEvent.layout.height)}>
+    <View style={[styles.box, style, !interactive && styles.noTouch]} onLayout={(e) => {
+        setBoxH(e.nativeEvent.layout.height);
+        setBoxW(e.nativeEvent.layout.width);
+      }}>
       <MapView
         ref={map}
         mapPadding={mapPadding}
