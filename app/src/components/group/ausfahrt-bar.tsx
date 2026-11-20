@@ -9,7 +9,8 @@
  * Bewusste Abweichung von der Leinwand (72 hoch, eigene schwebende Fläche): die Leiste sitzt im Zubehörplatz der
  * iOS Tab Leiste (wie die laufende Gruppenfahrt und der Mini Player in Apple Music). Dort ist sie etwa 48 hoch, iOS
  * blendet sie in der Navigation, auf Detailseiten und bei offener Tastatur selbst aus, und Toast und Karte rechnen
- * sie schon ein. Der Datumsblock ist darum 36 statt 48.
+ * sie schon ein. Der Datumsblock füllt die ganze Höhe links ohne Abstand, mit der Rundung der Leiste
+ * (Koray 20.11.2026: vorher klein und gepresst, die Rundungen passten nicht).
  */
 import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
@@ -141,16 +142,26 @@ export function AusfahrtBar({ state }: { state: BarState }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  bar: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingLeft: Spacing.s, paddingRight: Spacing.l },
-  date: { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  bar: { flex: 1, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: Spacing.m, paddingRight: Spacing.l },
+  // linke Kappe der Leiste: volle Höhe, außen so rund wie die Leiste, innen gerade
+  date: {
+    alignSelf: 'stretch',
+    width: 72,
+    borderTopLeftRadius: 999,
+    borderBottomLeftRadius: 999,
+    backgroundColor: Colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 6,
+  },
   dateToday: { backgroundColor: Colors.signal },
   dateLive: { backgroundColor: Colors.goodTint, gap: 2 },
-  dateSmall: { fontFamily: Fonts.semibold, fontSize: 10, lineHeight: 12, color: Colors.muted },
-  dateDay: { fontFamily: Fonts.display, fontSize: 16, lineHeight: 18, color: Colors.text },
-  dateTime: { fontFamily: Fonts.bold, fontSize: 11, lineHeight: 13, fontVariant: ['tabular-nums'] },
+  dateSmall: { fontFamily: Fonts.semibold, fontSize: 13, lineHeight: 16, color: Colors.muted },
+  dateDay: { fontFamily: Fonts.display, fontSize: 20, lineHeight: 22, color: Colors.text },
+  dateTime: { fontFamily: Fonts.bold, fontSize: 16, lineHeight: 19, fontVariant: ['tabular-nums'] },
   onSignal: { color: Colors.onSignal },
   liveText: { color: Colors.good },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.good },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.good },
   title: { fontFamily: Fonts.semibold, fontSize: Type.small },
   sub: { fontFamily: Fonts.medium, fontSize: Type.caption },
 });
