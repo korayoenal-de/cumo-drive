@@ -262,6 +262,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
   // Geöffnete Tour einpassen, sobald ihre Linie da ist und das Blatt steht (Koray 20.11.2026)
   const fitOnOpen = useRef(false);
   const [fitKey, setFitKey] = useState(0);
+  const [weatherNote, setWeatherNote] = useState<string | null>(null);
   /** Ergebnis nach dem Ziehen, ein paar Sekunden in der Pille oben links mit Rückgängig */
   const [adjustDone, setAdjustDone] = useState<{ text: string; tone?: 'warn'; snap: ReturnType<ReturnType<typeof useTourPlan>['snapshot']> } | null>(null);
   useEffect(() => {
@@ -1056,6 +1057,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
       {mode === 'tour' ? (
         <TourMode
           liveEdit={liveEdit}
+          weatherNote={weatherNote}
           plan={tourPlan}
           here={here}
           onHere={setHere}
@@ -1413,6 +1415,7 @@ export default function Planner({ liveEdit = false }: { /** Tour anpassen unterw
           pickedPassIds={inTour ? pickedPassIds : undefined}
           selectedPassId={passOverlay?.id ?? null}
           fitKey={fitKey}
+          onWeatherNote={setWeatherNote}
           selectedPinId={inTour && selVia != null && !placeOverlay ? (pins?.[selVia]?.id ?? null) : null}
           // Kompass unter den Karteneinstellungen, nur solange das Blatt höchstens auf Mitte steht (Koray 16.11.)
           compassTop={detent <= 1 ? insets.top + Spacing.s + 48 + Spacing.s : null}

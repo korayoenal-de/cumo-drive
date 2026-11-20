@@ -80,6 +80,8 @@ export type RouteMapProps = {
   selectedPinId?: string | null;
   /** Wechselt der Wert, passt die Karte die ganze Tour neu ein (Tour geöffnet, Blatt steht), Koray 20.11. */
   fitKey?: number;
+  /** Wetter Warnungen entlang der Route als eine Zeile (oder null), fürs Blatt im Planer */
+  onWeatherNote?: (note: string | null) => void;
   /** Pass, dessen Aktionen gerade über der Karte schweben: groß, hell umrandet, obenauf (Koray 16.11.) */
   selectedPassId?: string | null;
   /** Kompass unter dem Knopf Karteneinstellungen (Abstand von oben); null blendet ihn aus (Blatt höher als Mitte). Erscheint nur bei gedrehter Karte. */

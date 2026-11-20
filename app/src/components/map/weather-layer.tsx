@@ -19,6 +19,7 @@ import { passesAlong, PASSES, type Pass } from '@/lib/passes';
 import { flatten, haversine, type LatLon, type Tour } from '@/lib/tour';
 import { fmtTemp, passWeather, weatherAttribution, weatherAvailable, weatherReason, type PassWeather } from '@/lib/weather';
 import { t } from '@/i18n';
+import { pickWeather } from '@/lib/weather-pick';
 
 type Item = { pass: Pass; km: number; at: number; w: PassWeather | null };
 
@@ -39,7 +40,7 @@ export function useRouteWeather(tour: Tour & { minutes?: number }, on: boolean):
       if (ends.some((e) => haversine(e, p) < 2000)) continue;
       if (kept.some((k) => haversine([k.pass.lat, k.pass.lon], p) < 3000)) continue;
       kept.push({ pass: x.pass, km: x.km, inMin: minutes * (x.km / total) });
-      if (kept.length >= 12) break;
+      if (kept.length >= 20) break;
     }
     return kept;
   }, [tour, on]);
@@ -59,11 +60,32 @@ export function useRouteWeather(tour: Tour & { minutes?: number }, on: boolean):
   return state && state.along === along ? state.items : [];
 }
 
-export function WeatherMarkers({ items, onPress }: { items: Item[]; onPress: (it: Item) => void }) {
+/** Plaketten Kandidaten mit Wetter, für die Auswahl (weather-pick.ts) */
+export function weatherCandidates(items: Item[]) {
+  return items
+    .filter((it) => it.w)
+    .map((it) => ({ id: it.pass.id, name: it.pass.name, km: it.km, ele: it.pass.ele, tier: it.pass.tier, symbol: it.w!.symbol, temp: it.w!.temp, reason: weatherReason(it.w!), it }));
+}
+
+/**
+ * Wetter auf der Karte (Koray 20.11.2026): Auswahl nach pickWeather (Warnungen zuerst, 25 km Abstand, nichts
+ * Doppeltes, höchstens fünf). Dazu auf dem Bildschirm: eine Plakette braucht 70 pt Abstand zu wichtigeren und
+ * 60 pt zu START und ZIEL, herausgezoomt fallen deshalb weitere weg. mpp: Meter je Bildpunkt.
+ */
+export function WeatherMarkers({ items, onPress, mpp, ends }: { items: Item[]; onPress: (it: Item) => void; mpp: number; ends: LatLon[] }) {
+  const picked = useMemo(() => pickWeather(weatherCandidates(items)), [items]);
+  const px = (a: LatLon, b: LatLon) => (mpp > 0 ? haversine(a, b) / mpp : Infinity);
+  const shown: typeof picked = [];
+  for (const c of picked) {
+    const p: LatLon = [c.it.pass.lat, c.it.pass.lon];
+    if (ends.some((e) => px(e, p) < 60)) continue;
+    if (shown.some((k) => px([k.it.pass.lat, k.it.pass.lon], p) < 70)) continue;
+    shown.push(c);
+  }
   return (
     <>
-      {items
-        .filter((it) => it.w)
+      {shown
+        .map((c) => c.it)
         .map((it) => {
           const w = it.w!;
           const reason = weatherReason(w);

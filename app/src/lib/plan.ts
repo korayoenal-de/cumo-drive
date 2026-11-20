@@ -13,7 +13,7 @@ import { tourFun } from './fun-score';
 import { PASSES, passesAlong } from './passes';
 import { closureExclude, closureLabel, closuresNear, closuresOnRoute, onClosedRoad, onPassRoad, prefetchClosures, type ClosureHit } from './road-closures';
 import { flatten, haversine, type CheckClass, type LatLon, type Profile, type Tour, type Warning } from './tour';
-import { keepLegs, lineKm, runFor, seamTurns, turnAt, windowFor } from './plan-window';
+import { keepLegs, lineKm, runFor, seamTurns, turnAt, windowFor, type WindowPlan } from './plan-window';
 import { movePointsOffUTurns, unwantedUTurns, type UTurn } from './uturn';
 import { route, valhallaFetch, type Avoid } from './valhalla';
 import { tr } from '@/i18n';
@@ -709,14 +709,20 @@ export async function planChanged(
   }
   // Wendet die Tour an einer Naht (das neue Stück kennt die Fahrtrichtung davor nicht), kommt auf dieser Seite
   // die nächste Etappe dazu. Höchstens zweimal, danach plant der Aufrufer alles neu.
+  // Wird das Wenden nur mit einem großen Umweg über eigentlich feste Etappen vermieden, bleibt die erste Fassung
+  // mit dem Wenden am Punkt stehen (Koray 19.11.: was fest ist, bleibt fest). Bedienfolgen 20.11.: Eberbach vor
+  // Michelstadt eingefügt, die feste Etappe Michelstadt Hirschhorn wurde von 34 auf 52 km umgeplant und blieb nach
+  // dem Entfernen von Eberbach als Umweg stehen.
   let win = w;
   let widenHead = 0;
   let widenTail = 0;
+  let first: PlannedTour | null = null;
   for (let attempt = 0; ; attempt++) {
-    const middle = await planLegs(name, win.points, win.profiles, avoid, onStep, signal);
+    const middle = await planMiddle(name, win, avoid, onStep, signal);
     const merged = mergeLegs(name, points, [win.head, middle, win.tail].filter((t): t is PlannedTour => !!t));
+    first ??= merged;
     const [turnHead, turnTail] = seamTurns(merged, win, middle);
-    if (!turnHead && !turnTail) return merged;
+    if (!turnHead && !turnTail) return merged === first || keptStill(first, merged, w, widenHead, widenTail) ? merged : first;
     if (attempt >= 2) return null;
     if (turnHead) widenHead++;
     if (turnTail) widenTail++;
@@ -724,6 +730,47 @@ export async function planChanged(
     if (!next) return null;
     win = next;
   }
+}
+
+/**
+ * Das neue Stück mit je einem Punkt Anlauf davor und dahinter planen und nur die Mitte behalten (Bedienfolgen
+ * 20.11.2026): So kennt der Router die Fahrtrichtung an den Nähten wie bei einer ganzen Planung. Ohne Anlauf
+ * plante er zum Beispiel Weinheim nach Michelstadt allein 48 statt 42 km, und nach Einfügen und Entfernen
+ * eines Punkts blieb ein Umweg stehen.
+ */
+async function planMiddle(name: string, win: WindowPlan, avoid: Avoid, onStep?: (s: PlanStep) => void, signal?: AbortSignal): Promise<PlannedTour> {
+  const before = win.head && win.head.wegpunkte.length >= 2 ? win.head.wegpunkte[win.head.wegpunkte.length - 2] : null;
+  const after = win.tail && win.tail.wegpunkte.length >= 2 ? win.tail.wegpunkte[1] : null;
+  if (!before && !after) return planLegs(name, win.points, win.profiles, avoid, onStep, signal);
+  const pts = [...(before ? [before] : []), ...win.points, ...(after ? [after] : [])];
+  const profs = [...(before ? [win.profiles[0]] : []), ...win.profiles, ...(after ? [win.profiles[win.profiles.length - 1]] : [])];
+  try {
+    const ctx = await planLegs(name, pts, profs, avoid, onStep, signal);
+    const mid = keepLegs({ ...ctx, wegpunkte: pts }, before ? 1 : 0, pts.length - 1 - (after ? 1 : 0));
+    if (mid) return { ...mid, name };
+  } catch (e) {
+    if (signal?.aborted) throw e;
+  }
+  return planLegs(name, win.points, win.profiles, avoid, onStep, signal);
+}
+
+/**
+ * Die mit eingeplanten festen Etappen sind so gut wie gleich: höchstens 0,5 km oder 3 %. Das sind vorn die letzten
+ * widenHead Etappen des ersten vorderen Stücks, hinten die ersten widenTail Etappen des ersten hinteren Stücks.
+ */
+function keptStill(first: PlannedTour, merged: PlannedTour, w: WindowPlan, widenHead: number, widenTail: number): boolean {
+  const a = first.legKm;
+  const b = merged.legKm;
+  if (!a || !b || a.length !== b.length) return true;
+  const close = (x: number, y: number) => Math.abs(x - y) <= Math.max(0.5, x * 0.03);
+  const headLegs = w.head ? w.head.wegpunkte.length - 1 : 0;
+  const tailLegs = w.tail ? w.tail.wegpunkte.length - 1 : 0;
+  for (let i = headLegs - widenHead; i < headLegs; i++) if (i >= 0 && !close(a[i], b[i])) return false;
+  for (let k = 0; k < widenTail; k++) {
+    const i = a.length - tailLegs + k;
+    if (i < a.length && !close(a[i], b[i])) return false;
+  }
+  return true;
 }
 
 /**

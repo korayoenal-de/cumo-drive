@@ -672,3 +672,24 @@ describe('route-change (feste Teile bleiben fest, Koray 19.11.)', async () => {
     assert.ok(Math.abs(a[0].deg - 90) < 5, String(a[0].deg));
   });
 });
+
+describe('weather-pick (Koray 20.11.: weniger Wetter auf der Karte)', async () => {
+  const { pickWeather, weatherNote } = await import('../weather-pick');
+  const c = (id: string, km: number, extra: Partial<{ reason: string | null; tier: 'ikone' | 'bekannt' | 'mittel'; ele: number; symbol: string; temp: number }> = {}) => ({
+    id, name: id, km, ele: 1000, tier: 'mittel' as const, symbol: 'cloud', temp: 5, reason: null, ...extra,
+  });
+  it('Warnung zuerst, dann 25 km Abstand', () => {
+    const got = pickWeather([c('a', 10), c('b', 20, { reason: 'Glätte möglich' }), c('c', 30), c('d', 60, { symbol: 'sun' })]);
+    assert.deepEqual(got.map((x) => x.id), ['b', 'd']);
+  });
+  it('gleiches Wetter in der Nähe entfällt, höchstens fünf', () => {
+    const got = pickWeather([c('a', 0), c('b', 40), c('c', 200, { symbol: 'sun' }), ...[300, 330, 360, 390, 420].map((k, i) => c(`x${i}`, k, { symbol: `s${i}` }))]);
+    assert.ok(!got.some((x) => x.id === 'b') || !got.some((x) => x.id === 'a'));
+    assert.ok(got.length <= 5);
+  });
+  it('Zeile fürs Blatt', () => {
+    const tr = (s: string, v?: Record<string, string>) => s.replace(/\{(\w+)\}/g, (_, k) => v?.[k] ?? '');
+    assert.equal(weatherNote([c('Grand Ballon', 50, { reason: 'Glätte möglich' }), c('Hohneck', 20, { reason: 'Glätte möglich' }), c('x', 70)], tr), 'Glätte möglich am Hohneck und am Grand Ballon');
+    assert.equal(weatherNote([c('x', 70)], tr), null);
+  });
+});

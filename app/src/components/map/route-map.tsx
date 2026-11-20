@@ -30,7 +30,8 @@ import { pickOnScreen } from '@/lib/map-hit';
 import { haptic } from '@/lib/haptics';
 import { CarSprite, carLookFor, frameFor, TOP_FRAME } from '@/components/map/car-sprite';
 import { useVehicles } from '@/lib/vehicle';
-import { useRouteWeather, WeatherMarkers, WeatherSheet } from '@/components/map/weather-layer';
+import { useRouteWeather, weatherCandidates, WeatherMarkers, WeatherSheet } from '@/components/map/weather-layer';
+import { weatherNote } from '@/lib/weather-pick';
 
 import { POS_INTERVAL_MS, predictPosition } from '@/lib/group/predict';
 import { CLASS_LINE, ROLE_COLOR, sampleLine, tourWarnings, type OtherDriver, type RouteMapProps } from './route-map-shared';
@@ -89,6 +90,7 @@ export function RouteMap({
   selectedPassId,
   selectedPinId,
   fitKey,
+  onWeatherNote,
   compassTop,
   legalBottom,
   flyTo,
@@ -102,6 +104,13 @@ export function RouteMap({
   // Wetter an den Pässen der Route (Ebene Wetter, nur im Planer)
   const weatherItems = useRouteWeather(tour, layers && settings.weather && tour.linie.length > 0);
   const [weatherOpen, setWeatherOpen] = useState<(typeof weatherItems)[number] | null>(null);
+  // Warnungen entlang der Route als eine Zeile fürs Blatt (Koray 20.11.): auch was auf der Karte keinen Platz hat
+  const note = useMemo(() => weatherNote(weatherCandidates(weatherItems), (s, v) => tr(s, v)), [weatherItems]);
+  useEffect(() => {
+    onWeatherNote?.(note);
+    // nur wenn sich die Zeile ändert
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [note]);
   const showTours = layers && settings.myTours;
   const tourLines = useMemo(
     () => (showTours ? library.map((t) => ({ id: t.id, p: sampleLine(t, 250).map(ll) })).filter((t) => t.p.length > 1) : []),
@@ -584,7 +593,7 @@ export function RouteMap({
               </View>
             </Marker>
           ))}
-        {weatherItems.length > 0 && <WeatherMarkers items={weatherItems} onPress={setWeatherOpen} />}
+        {weatherItems.length > 0 && <WeatherMarkers items={weatherItems} onPress={setWeatherOpen} mpp={mpp} ends={[start, ziel].filter(Boolean) as LatLon[]} />}
         {runs.map((r, i) => (
           <Polyline
             key={`rand-${r.key}-${i}`}

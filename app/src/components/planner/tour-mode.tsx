@@ -74,7 +74,7 @@ const LOAD_STAGES: Record<PlanStep, LoadStage> = {
 export type EditTarget = { kind: PointKind; index?: number; insert?: boolean };
 
 export function TourMode({
-  liveEdit = false, plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onDragChange, onListEdit, onShowPoint,
+  liveEdit = false, plan, here, onHere, profile, avoid, setAvoid, group, pending, setPending, onDragChange, onListEdit, onShowPoint, weatherNote,
 }: {
   /** Tour anpassen unterwegs: Übernehmen und Verwerfen statt Losfahren (Koray 15.11.) */
   liveEdit?: boolean;
@@ -95,6 +95,8 @@ export function TourMode({
   onListEdit: () => void;
   /** Auf der Karte zeigen: Blatt klein, Karte fliegt zum Punkt */
   onShowPoint?: (p: LatLon) => void;
+  /** Wetter Warnungen entlang der Route in einer Zeile (Koray 20.11.), von der Karte */
+  weatherNote?: string | null;
 }) {
   const session = useSession();
   const live = usePassLive();
@@ -729,6 +731,12 @@ export function TourMode({
       {routeTour && (
         <>
           <Stats km={total} minutes={routeTour.minutes} curves={curves} fun={fun} onFun={() => setFunOpen(true)} />
+          {!!weatherNote && (
+            <View style={tourStyles.weatherRow} accessibilityLabel={tr('Wetter: {note}', { note: weatherNote })}>
+              <SymbolView name="cloud.sleet.fill" size={16} weight="semibold" type="monochrome" tintColor={Colors.warn} />
+              <AppText variant="caption" muted style={tourStyles.weatherText}>{weatherNote}</AppText>
+            </View>
+          )}
           {!!directNote(routeTour.direkt, Math.max(1, pts.length - 1)) && (
             <AppText variant="caption" muted>{directNote(routeTour.direkt, Math.max(1, pts.length - 1))}</AppText>
           )}
@@ -979,4 +987,7 @@ const tourStyles = StyleSheet.create({
   nameText: { flexShrink: 1, fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30 },
   badge: { paddingHorizontal: Spacing.s + 2, paddingVertical: Spacing.xs, borderRadius: Radius.pill, backgroundColor: Colors.warnTint },
   badgeText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
+  // Wetter Warnungen unter den Kennzahlen: Symbol gelb, Text grau, keine eigene Fläche (Ruhe)
+  weatherRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s },
+  weatherText: { flex: 1, minWidth: 0 },
 });
