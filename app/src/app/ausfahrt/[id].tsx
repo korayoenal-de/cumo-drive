@@ -33,8 +33,9 @@ import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Layout } f
 import {
   answerAnfrage, arrival, ausfahrtTeilnehmer, ausfahrtTour, cancelAusfahrt, clock, freeSeats, listAnfragen,
   listAusfahrten, longDate, requestAusfahrt, sendNachricht, withdrawAusfahrt, ausfahrtAbsagen, rideByLink, rideLink, type Absage, type Anfrage, type Ausfahrt, type LinkedRide, type Teilnehmer,
-  setAusfahrtPublic,
+  setAusfahrtPublic, useNachrichten,
 } from '@/lib/ausfahrten';
+import { tagKurz } from '@/lib/format';
 import { useSession } from '@/lib/auth';
 import { here, MeetingRoute } from '@/components/group/meeting-route';
 import { WhenSheet } from '@/components/group/when-sheet';
@@ -64,6 +65,12 @@ type Full = { tour: Tour & { minutes?: number }; profile: Profile };
 const NAV_ICON: BtnIcon = { sf: 'steeringwheel' };
 const BACK_TO_NAV_ICON: BtnIcon = { sf: 'location.north.fill' };
 const COMMUNITY_ICON: BtnIcon = { tab: 'community' };
+
+/** „in 1:12 h“, „in 25 min“ bis zur Abfahrt */
+function countdownLabel(ms: number): string {
+  const min = Math.max(0, Math.round(ms / 60000));
+  return min < 60 ? tr('in {n} min', { n: min }) : tr('in {h}:{m} h', { h: Math.floor(min / 60), m: String(min % 60).padStart(2, '0') });
+}
 
 export default function AusfahrtDetail() {
   // k: Schlüssel aus einem Einladungslink einer privaten Ausfahrt (Koray 13.11.)
@@ -181,6 +188,9 @@ export default function AusfahrtDetail() {
   }, [startKey]);
 
   const funScore = useRideFun(id);
+  // Ausfahrt im Fokus (Koray 20.11.2026): am Tag der Ausfahrt steht der Chat oben, mit den letzten drei Nachrichten
+  const chatOnTop = !!a && !a.isOver && a.rideStatus === 'geplant' && (a.isOwner || a.myStatus === 'zugesagt') && tagKurz(a.startsAt) === t('Heute');
+  const { list: chatList } = useNachrichten(chatOnTop ? id : undefined);
 
   useEffect(() => {
     if (!id) return;
@@ -445,6 +455,16 @@ export default function AusfahrtDetail() {
             <View style={[styles.tag, drove ? styles.tagGood : cancelled ? styles.tagDanger : styles.tagWarn, styles.selfStart]}>
               <AppText style={[styles.tagText, { color: drove ? Colors.good : cancelled ? Colors.danger : Colors.warn }]}>{drove ? tr('Gefahren') : cancelled ? tr('Abgesagt') : tr('Nicht gestartet')}</AppText>
             </View>
+          ) : chatOnTop ? (
+            // am Tag: Countdown neutral, „Du fährst mit“ getönt in Grün
+            <View style={styles.tagRow}>
+              <View style={[styles.tag, styles.tagNeutral]}>
+                <AppText style={styles.tagText}>{a.startsAt.getTime() > now ? countdownLabel(a.startsAt.getTime() - now) : t('Jetzt')}</AppText>
+              </View>
+              <View style={[styles.tag, styles.tagGood]}>
+                <AppText style={[styles.tagText, { color: Colors.good }]}>{a.isOwner ? t('Du organisierst') : t('Du fährst mit')}</AppText>
+              </View>
+            </View>
           ) : (
             <AppText style={styles.kicker}>{a.isPublic ? tr('Ausfahrt') : tr('Private Ausfahrt')}</AppText>
           )}
@@ -461,12 +481,33 @@ export default function AusfahrtDetail() {
           </Pressable>
         )}
 
+        {chatOnTop && (
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Chat öffnen')} onPress={openChat} style={styles.chatCard}>
+            <AppText style={styles.label}>{t('Chat')}</AppText>
+            {(chatList ?? []).slice(-3).map((m) => (
+              <View key={m.id} style={styles.chatLine}>
+                <AppText style={styles.chatName} numberOfLines={1}>
+                  {m.userId === me ? t('Du') : (members.find((x) => x.userId === m.userId)?.name.split(/\s+/)[0] ?? t('Fahrer'))}
+                </AppText>
+                <AppText style={styles.chatBody} numberOfLines={2}>
+                  {m.body}
+                </AppText>
+              </View>
+            ))}
+            {chatList?.length === 0 && <AppText muted>{t('Noch keine Nachrichten. Stimm dich mit der Gruppe ab.')}</AppText>}
+            <View style={styles.chatInput}>
+              <AppText muted style={styles.flex}>{t('Nachricht')}</AppText>
+              <SymbolView name="arrow.up.circle.fill" size={24} tintColor={Colors.muted} />
+            </View>
+          </Pressable>
+        )}
+
         {/* Kennzahlen direkt unter dem Titel, Reihe wie im Planer (Konsistenzprüfung 15.11., K1, K4) */}
         <Kennzahlen
           km={a.km}
           minutes={drove && a.endedAt && a.startedAt ? Math.round((a.endedAt.getTime() - a.startedAt.getTime()) / 60000) : a.minutes}
           fun={funScore}
-          extra={drove && members.length > 0 ? [{ label: t('Autos'), value: String(members.length) }] : []}
+          extra={drove && members.length > 0 ? [{ label: t('Autos'), value: String(members.length) }] : !over ? [{ label: t('Plätze'), value: `${a.taken}/${a.maxMembers}` }] : []}
         />
 
         <View style={styles.fields}>
@@ -474,8 +515,8 @@ export default function AusfahrtDetail() {
             <DateBlock d={a.startedAt ?? a.startsAt} />
             <View style={styles.flex}>
               <AppText style={styles.label}>{drove ? tr('Gefahren') : over ? tr('Geplant für') : tr('Abfahrt')}</AppText>
-              <AppText style={styles.value}>
-                {longDate(a.startedAt ?? a.startsAt)}, {clock(a.startedAt ?? a.startsAt)}
+              <AppText style={[styles.value, chatOnTop && { color: Colors.signal }]}>
+                {chatOnTop ? t('Heute') : longDate(a.startedAt ?? a.startsAt)}, {clock(a.startedAt ?? a.startsAt)}
                 {drove && a.endedAt ? ` bis ${clock(a.endedAt)}` : ''}
               </AppText>
             </View>
@@ -1040,6 +1081,13 @@ const styles = StyleSheet.create({
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, minHeight: 44 },
   roundBtn: { width: Size.icon, height: Size.icon, borderRadius: Size.icon / 2, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   titleBlock: { gap: Spacing.s },
+  tagRow: { flexDirection: 'row', gap: Spacing.s },
+  tagNeutral: { backgroundColor: Colors.surface2 },
+  chatCard: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.s },
+  chatLine: { gap: 2 },
+  chatName: { fontFamily: Fonts.bold, fontSize: Type.caption, color: Colors.muted },
+  chatBody: { fontFamily: Fonts.medium, fontSize: Type.body, color: Colors.text },
+  chatInput: { marginTop: Spacing.xs, height: 44, borderRadius: 22, paddingHorizontal: Spacing.l, paddingRight: Spacing.s, backgroundColor: Colors.surface2, flexDirection: 'row', alignItems: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   kicker: { flex: 1, fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.muted },
   tag: { height: 28, paddingHorizontal: 10, borderRadius: 14, justifyContent: 'center' },

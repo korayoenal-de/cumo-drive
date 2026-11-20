@@ -2078,5 +2078,8 @@
   "in {h}:{m} h": "tra {h}:{m} h",
   "{n} neu": "{n} nuovi",
   "{n} fahren mit": "{n} partecipano",
-  "Läuft": "In corso"
+  "Läuft": "In corso",
+  "Du fährst mit": "Partecipi",
+  "Du organisierst": "Organizzi tu",
+  "Noch keine Nachrichten. Stimm dich mit der Gruppe ab.": "Ancora nessun messaggio. Accordati con il gruppo."
 }

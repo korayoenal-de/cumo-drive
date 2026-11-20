@@ -2078,5 +2078,8 @@
   "in {h}:{m} h": "in {h}:{m} h",
   "{n} neu": "{n} new",
   "{n} fahren mit": "{n} riding",
-  "Läuft": "Live"
+  "Läuft": "Live",
+  "Du fährst mit": "You're in",
+  "Du organisierst": "You're organising",
+  "Noch keine Nachrichten. Stimm dich mit der Gruppe ab.": "No messages yet. Coordinate with the group."
 }
