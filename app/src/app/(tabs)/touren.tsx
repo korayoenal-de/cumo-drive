@@ -4,7 +4,7 @@
  * Jede gespeicherte Tour ist eine Karte mit Mini Streckenbild: Tippen öffnet sie im Planer (dort
  * losfahren, als Gruppe fahren, ändern und speichern), daneben nur Teilen und Löschen.
  */
-import { datum, fahrzeit, meta as fmtMeta, plaetze, strecke, wann } from '@/lib/format';
+import { datum, fahrzeit, meta as fmtMeta, strecke } from '@/lib/format';
 import { router, useFocusEffect, type Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -15,7 +15,7 @@ import { TypoTabs } from '@/components/planner/planner-parts';
 import { RouteThumb } from '@/components/tours/tour-bits';
 import { TourCard } from '@/components/tours/tour-card';
 import { DateBlock } from '@/components/community/ride-bits';
-import { clock, listAusfahrten, showCancelled, type Ausfahrt } from '@/lib/ausfahrten';
+import { listAusfahrten, type Ausfahrt } from '@/lib/ausfahrten';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { ConfirmSheet } from '@/components/ui/action-sheet';
@@ -43,66 +43,6 @@ import { seenTab } from '@/lib/fly';
 import { countCurves } from '@/lib/stats';
 import { flatten, formatKm, type LatLon } from '@/lib/tour';
 import { tr } from '@/i18n';
-
-/**
- * Anstehende Ausfahrten oben in Touren (Koray 13.11.): eigene und die, zu denen du eingeladen bist oder
- * angefragt hast. Private Ausfahrten stehen nur hier und nicht in der Community.
- */
-function Upcoming() {
-  const [rides, setRides] = useState<Ausfahrt[]>([]);
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      listAusfahrten()
-        .then((l) => alive && setRides(l.filter((a) => ((a.rideStatus !== 'beendet' && !a.isOver) || showCancelled(a)) && (a.isOwner || a.myStatus === 'zugesagt' || a.myStatus === 'eingeladen' || a.myStatus === 'angefragt'))))
-        .catch(() => undefined);
-      return () => {
-        alive = false;
-      };
-    }, []),
-  );
-  if (!rides.length) return null;
-  return (
-    <View style={styles.upcoming}>
-      <AppText style={styles.upLabel}>{tr('Anstehend')}</AppText>
-      {rides.map((a) => {
-        // Abgesagt steht bis zum geplanten Tag da, damit niemand umsonst zum Treffpunkt fährt (Koray 17.11.)
-        const state = a.isCancelled
-          ? a.isOwner
-            ? tr('Du hast sie abgesagt')
-            : tr('Abgesagt von {ownerName}', { ownerName: a.ownerName })
-          : a.isOwner
-            ? fmtMeta(plaetze(Math.max(0, a.maxMembers - a.taken)).text, a.openRequests ? `${a.openRequests} ${a.openRequests === 1 ? 'Anfrage' : 'Anfragen'}` : null)
-            : a.myStatus === 'eingeladen'
-              ? tr('Einladung von {ownerName}', { ownerName: a.ownerName })
-              : a.myStatus === 'angefragt'
-                ? tr('Angefragt, wartet auf Antwort')
-                : tr('Mit {ownerName}', { ownerName: a.ownerName });
-        return (
-          <Pressable
-            key={a.id}
-            accessibilityRole="button"
-            accessibilityLabel={`${a.name}, ${clock(a.startsAt)}, ${state}${a.isPublic ? '' : ', privat'}`}
-            onPress={() => router.push({ pathname: '/ausfahrt/[id]', params: { id: a.id } })}
-            style={({ pressed }) => [styles.upCard, pressed && { opacity: 0.85 }]}>
-            <DateBlock d={a.startsAt} />
-            <View style={styles.flex}>
-              <AppText style={styles.upName} numberOfLines={1}>{a.name}</AppText>
-              <AppText muted numberOfLines={1}>{fmtMeta(wann(a.startsAt), a.meeting?.name ? tr('ab {name}', { name: a.meeting.name }) : null, a.km != null ? strecke(a.km) : null)}</AppText>
-              <AppText style={a.isCancelled ? styles.upDanger : a.myStatus === 'eingeladen' || a.openRequests ? styles.upAttn : styles.upMuted} numberOfLines={1}>{state}</AppText>
-            </View>
-            {!a.isPublic && (
-              <View style={styles.privat}>
-                <SymbolView name="lock.fill" size={16} weight="semibold" tintColor={Colors.text} />
-                <AppText style={styles.privatText}>{tr('Privat')}</AppText>
-              </View>
-            )}
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
 
 /**
  * Vergangene Ausfahrten unter Gefahren (Koray 14.11.): Tippen öffnet den Rückblick mit Chat und Nochmal fahren.
@@ -213,7 +153,7 @@ export default function Touren() {
       </View>
       {importMsg && <AppText variant="caption" muted>{importMsg}</AppText>}
 
-      {session && <Upcoming />}
+      {/* anstehende Ausfahrten stehen seit 20.11.2026 nur im Tab Ausfahrten (ein Ort je Ausfahrt) */}
 
       {/* Wie im Planer: Reiter als große Schrift, aktiv hell, inaktiv grau (Koray 8.11.) */}
       <TypoTabs

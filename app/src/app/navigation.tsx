@@ -1533,7 +1533,7 @@ const styles = StyleSheet.create({
   radio: {
     width: 24,
     height: 24,
-    borderRadius: Radius.s,
+    borderRadius: Radius.m,
     borderWidth: 2,
     borderColor: Colors.muted,
     alignItems: 'center',

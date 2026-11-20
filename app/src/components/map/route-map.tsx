@@ -1027,7 +1027,7 @@ const styles = StyleSheet.create({
   endText: { fontFamily: Fonts.display, fontSize: 12, letterSpacing: 0.5 },
   endStem: { width: 2, height: 6 },
   endDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: Colors.ground },
-  warn: { width: 24, height: 24, borderRadius: Radius.s, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
+  warn: { width: 24, height: 24, borderRadius: Radius.m, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
   warnOn: { transform: [{ scale: 1.3 }], borderColor: Colors.text },
   warnCard: {
     position: 'absolute',
@@ -1040,7 +1040,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.l,
     backgroundColor: Colors.overlaySurface,
   },
-  warnCardDot: { width: 24, height: 24, borderRadius: Radius.s, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  warnCardDot: { width: 24, height: 24, borderRadius: Radius.m, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   warnCardBody: { flex: 1, gap: 2 },
   warnCardTitle: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
   warnCardText: { fontSize: Type.body, color: Colors.muted },

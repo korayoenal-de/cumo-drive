@@ -69,7 +69,7 @@ export function FloatMenu({
 const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: Colors.scrim },
   menu: { position: 'absolute', width: WIDTH, padding: Spacing.s, borderRadius: Radius.l + 2, backgroundColor: Colors.surface2, boxShadow: Shadow.float },
-  item: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, height: ITEM_H, paddingHorizontal: Spacing.m, borderRadius: Radius.s },
+  item: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, height: ITEM_H, paddingHorizontal: Spacing.m, borderRadius: Radius.m },
   pressed: { backgroundColor: Colors.line },
   text: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
   dangerWrap: { marginTop: Spacing.s },

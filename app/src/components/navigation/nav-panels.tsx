@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   street: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, marginTop: 2 },
   then: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingTop: Spacing.m },
   lanes: { flexDirection: 'row', alignSelf: 'flex-start', gap: 4, paddingTop: Spacing.m },
-  lane: { width: 36, height: 36, borderRadius: Radius.s, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.04)' },
+  lane: { width: 36, height: 36, borderRadius: Radius.m, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.04)' },
   laneUse: { backgroundColor: 'rgba(255,255,255,0.14)' },
 
   info: { borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },

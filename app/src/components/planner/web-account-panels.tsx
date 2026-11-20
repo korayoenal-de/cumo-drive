@@ -31,7 +31,7 @@ export function GroupPanel(props: { tour: Tour; profile: Profile; avoid: Avoid; 
     const canShare = !props.isSample && props.tour.linie.length > 0;
     return (
       <div style={S.groupBox}>
-        <p style={{ margin: 0 }}>{t('Alle Mitfahrer sehen sich live auf der Karte, in der App und hier im Planer. Sprechfunk folgt.')}</p>
+        <p style={{ margin: 0 }}>{t('Alle Teilnehmer sehen sich live auf der Karte, in der App und hier im Planer. Sprechfunk folgt.')}</p>
         <input id="grp-name" aria-label={t('Dein Name')} placeholder={t('Dein Name')} value={name} onChange={(e) => setName(e.target.value)} style={{ ...S.search, height: 44, background: C.surface2 }} />
         <button
           style={S.primary}

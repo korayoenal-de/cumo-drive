@@ -180,10 +180,10 @@ const styles = StyleSheet.create({
   mine: { alignSelf: 'flex-end', backgroundColor: Colors.signalTint, borderBottomRightRadius: 6 },
   body: { fontFamily: Fonts.medium, fontSize: Type.body, lineHeight: Leading.body },
   time: { fontFamily: Fonts.semibold, fontSize: Type.micro, color: Colors.muted, alignSelf: 'flex-end', fontVariant: ['tabular-nums'] },
-  bar: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.s, paddingHorizontal: Spacing.l, paddingTop: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
+  bar: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.s, paddingHorizontal: Layout.page, paddingTop: Spacing.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.line },
   input: { flex: 1, minHeight: 44, maxHeight: 120, paddingHorizontal: Spacing.l, paddingTop: 12, paddingBottom: 12, backgroundColor: Colors.surface, borderRadius: 22, color: Colors.text, fontFamily: Fonts.medium, fontSize: Type.input },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   sendOff: { backgroundColor: Colors.signalDeep },
   error: { color: Colors.danger, fontFamily: Fonts.semibold },
-  padH: { paddingHorizontal: Spacing.l },
+  padH: { paddingHorizontal: Layout.page },
 });

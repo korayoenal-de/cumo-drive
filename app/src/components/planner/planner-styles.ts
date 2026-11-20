@@ -124,7 +124,7 @@ export const styles = StyleSheet.create({
   // Suchfeld und Vorschläge in einer gemeinsamen Fläche, damit die Vorschläge sichtbar zum Feld gehören
   slotPlaceholder: { color: Colors.muted },
   stopRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingVertical: Spacing.s },
-  small: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.s, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
+  small: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.m, backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center' },
   smallStrong: { backgroundColor: Colors.signal },
   smallText: { fontFamily: Fonts.semibold, fontSize: Type.small },
 

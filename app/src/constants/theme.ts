@@ -132,8 +132,7 @@ export const Spacing = {
 
 /** Drei Radien (9.11.): m für Felder und Zeilen, l für Karten und Sheets, pill für Tasten, Chips, Reiter */
 export const Radius = {
-  /** früher 12; zusammengelegt mit m */
-  s: 14,
+  /** s (früher 12, dann gleich m) entfällt seit dem Audit 20.11.2026 */
   m: 14,
   l: 20,
   pill: 999,

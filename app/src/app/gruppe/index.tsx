@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   gapXs: { gap: Spacing.xs },
   title: { fontFamily: Fonts.display, fontSize: Type.display, lineHeight: 36, textTransform: 'uppercase' },
   mapBox: { height: 340, borderRadius: Radius.l, overflow: 'hidden', backgroundColor: Colors.surface },
-  mapHint: { position: 'absolute', left: Spacing.m, right: Spacing.m, bottom: Spacing.m, padding: Spacing.s, borderRadius: Radius.s, backgroundColor: Colors.overlay, alignItems: 'center' },
+  mapHint: { position: 'absolute', left: Spacing.m, right: Spacing.m, bottom: Spacing.m, padding: Spacing.s, borderRadius: Radius.m, backgroundColor: Colors.overlay, alignItems: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   msgChip: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: 22, backgroundColor: Colors.surface2, justifyContent: 'center' },
   msgChipText: { fontFamily: Fonts.semibold, fontSize: Type.body },

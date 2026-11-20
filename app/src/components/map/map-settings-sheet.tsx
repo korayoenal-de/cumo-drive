@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   preview: {
     alignSelf: 'stretch',
     height: 64,
-    borderRadius: Radius.s,
+    borderRadius: Radius.m,
     overflow: 'hidden',
   },
   previewRoad: {

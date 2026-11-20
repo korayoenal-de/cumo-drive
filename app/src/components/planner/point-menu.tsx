@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface2,
     boxShadow: Shadow.float,
   },
-  item: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, height: ITEM_H, paddingHorizontal: Spacing.m, borderRadius: Radius.s },
+  item: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, height: ITEM_H, paddingHorizontal: Spacing.m, borderRadius: Radius.m },
   pressed: { backgroundColor: Colors.line },
   text: { fontFamily: Fonts.semibold, fontSize: Type.title, color: Colors.text },
   removeWrap: { marginTop: Spacing.s },
