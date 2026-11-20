@@ -2087,5 +2087,7 @@
   "Dringende Mitteilungen": "Urgent notifications",
   "Leise Mitteilungen": "Quiet notifications",
   "Chats deiner Ausfahrten, private Nachrichten, Anfragen und Absagen zu deinen Ausfahrten. Mit Ton und Zahl am App Symbol.": "Chats of your club drives, private messages, requests and cancellations for your drives. With sound and app badge.",
-  "Kontaktanfragen, neue Kontakte und Zusagen. Ohne Ton, nur in der Mitteilungszentrale.": "Contact requests, new contacts and confirmations. Silent, only in Notification Centre."
+  "Kontaktanfragen, neue Kontakte und Zusagen. Ohne Ton, nur in der Mitteilungszentrale.": "Contact requests, new contacts and confirmations. Silent, only in Notification Centre.",
+  "{name} ansehen": "View {name}",
+  "Zeigt Route, Fahrspaß und Teilnehmer": "Shows route, driving fun and participants"
 }

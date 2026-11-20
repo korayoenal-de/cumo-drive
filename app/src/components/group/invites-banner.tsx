@@ -20,6 +20,7 @@ import { OptionsSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { Chip, ChipGroup } from '@/components/ui/chip';
 import { IconLabel, type BtnIcon } from '@/components/ui/btn-icon';
 import { AppText } from '@/components/ui/text';
+import { SymbolView } from 'expo-symbols';
 import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type } from '@/constants/theme';
 import { relDay, type Ausfahrt } from '@/lib/ausfahrten';
 import { haptic } from '@/lib/haptics';
@@ -189,14 +190,24 @@ export function InvitesList({ rides, onChanged, onPick }: { rides?: Ausfahrt[] |
         }
         return (
           <Animated.View key={inv.rideId} entering={FadeIn.duration(Motion.enter)} style={styles.card} accessibilityRole="summary">
-            {/* Kopf antippen zeigt die Route auf der Karte; rechts der Fahrspaß wie bei jeder Ausfahrt (K1, 20.11.) */}
-            <Pressable accessibilityRole="button" accessibilityLabel={tr('{name} auf der Karte zeigen', { name: inv.name })} onPress={() => onPick?.(inv.rideId)} style={styles.head}>
+            {/* Kopf antippen öffnet die Ausfahrt mit Karte, Strecke, Fahrspaß und Teilnehmern, damit man vor dem Zusagen
+                sieht, ob sich der Weg lohnt (Matthias 20.11.2026); die Karte darüber zeigt die Route der ersten Einladung */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={tr('{name} ansehen', { name: inv.name })}
+              accessibilityHint={t('Zeigt Route, Fahrspaß und Teilnehmer')}
+              onPress={() => {
+                onPick?.(inv.rideId);
+                router.push({ pathname: '/ausfahrt/[id]', params: { id: inv.rideId } });
+              }}
+              style={styles.head}>
               {starts ? <DateBlock d={starts} /> : null}
               <View style={styles.flex}>
                 <AppText muted>{inv.ownerName}{tr(' lädt dich ein')}</AppText>
                 <AppText style={styles.title} numberOfLines={2}>{inv.name}</AppText>
               </View>
               <InviteFun rideId={inv.rideId} />
+              <SymbolView name="chevron.right" size={14} weight="semibold" tintColor={Colors.muted} />
             </Pressable>
             {line || km != null ? (
               <AppText muted>{fmtMeta(line, km != null ? strecke(km) : null)}</AppText>
