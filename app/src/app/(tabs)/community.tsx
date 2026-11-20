@@ -890,23 +890,49 @@ function SoonCard({ r, home }: { r: Ausfahrt; home: LatLon | null }) {
       live = false;
     };
   }, [r, home]);
+  // nach der Abfahrtszeit keine Losfahrzeit und keine Anfahrt mehr (Koray 20.11.2026: um 11:15 stand noch
+  // „Losfahren 5:18“ für 10:00), sondern der Stand und der Weg zur Ausfahrt
+  const [late, setLate] = useState(false);
+  useEffect(() => {
+    const check = () => setLate(r.startsAt.getTime() <= Date.now());
+    check();
+    const id = setInterval(check, 30000);
+    return () => clearInterval(id);
+  }, [r.startsAt]);
+  const after = late || r.rideStatus === 'laeuft';
+  const open = () => router.push({ pathname: '/ausfahrt/[id]', params: { id: r.id } });
   const to = r.meeting ? ([r.meeting.lat, r.meeting.lon] as LatLon) : r.start;
   const place = r.meeting?.name || tr('Start der Tour');
   const others = Math.max(0, r.taken - 1);
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.card}>
-      <Pressable accessibilityRole="button" accessibilityHint={tr('Öffnet die Ausfahrt')} onPress={() => router.push({ pathname: '/ausfahrt/[id]', params: { id: r.id } })} style={styles.soonHead}>
+      <Pressable accessibilityRole="button" accessibilityHint={tr('Öffnet die Ausfahrt')} onPress={open} style={styles.soonHead}>
         <AppText style={styles.soonWhen}>{r.isPublic ? relDay(r.startsAt) : `${relDay(r.startsAt)} · ${tr('Privat')}`}</AppText>
         <AppText style={styles.bigName} numberOfLines={2}>{r.name}</AppText>
       </Pressable>
       <View style={styles.metrics}>
-        {min != null && <Metric label={tr('Losfahren')} value={clock(departAt(r, min))} />}
+        {!after && min != null && <Metric label={tr('Losfahren')} value={clock(departAt(r, min))} />}
         <Metric label={tr('Treffpunkt')} value={clock(r.startsAt)} />
-        {min != null && <Metric label={tr('Anfahrt')} value={min >= 60 ? `${Math.floor(min / 60)}:${String(min % 60).padStart(2, '0')} H` : `${min} MIN`} />}
+        {!after && min != null && <Metric label={tr('Anfahrt')} value={min >= 60 ? `${Math.floor(min / 60)}:${String(min % 60).padStart(2, '0')} H` : `${min} MIN`} />}
       </View>
+      {after && (
+        <AppText style={styles.soonState}>
+          {r.rideStatus === 'laeuft'
+            ? tr('Die Gruppenfahrt läuft.')
+            : r.isOwner
+              ? tr('Abfahrtszeit erreicht. Starte die Gruppenfahrt auf der Seite der Ausfahrt.')
+              : tr('Abfahrtszeit erreicht. Die Lead startet die Gruppenfahrt.')}
+        </AppText>
+      )}
       <AppText muted>{[place, r.isOwner ? tr('du organisierst') : `${r.ownerName}${others > 1 ? tr(' und {v0} weitere', { v0: others - 1 }) : ''}`].join('  ·  ')}</AppText>
       {/* eigene Navigation, Schnell voreingestellt (Koray 14.11.: nie Apple Karten oder Google Maps) */}
-      {to ? <MeetingRoute to={to} place={place} /> : null}
+      {after ? (
+        <Pressable accessibilityRole="button" onPress={open} style={styles.primary}>
+          <AppText style={styles.primaryText}>{r.rideStatus === 'laeuft' ? tr('Zur Gruppenfahrt') : tr('Zur Ausfahrt')}</AppText>
+        </Pressable>
+      ) : to ? (
+        <MeetingRoute to={to} place={place} />
+      ) : null}
     </Animated.View>
   );
 }
@@ -991,6 +1017,7 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  soonState: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.text },
   section: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted, marginTop: Spacing.m },
   soonHead: { gap: Spacing.xs },
   soonWhen: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.signal },

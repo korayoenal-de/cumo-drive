@@ -2089,5 +2089,9 @@
   "Chats deiner Ausfahrten, private Nachrichten, Anfragen und Absagen zu deinen Ausfahrten. Mit Ton und Zahl am App Symbol.": "Chats of your club drives, private messages, requests and cancellations for your drives. With sound and app badge.",
   "Kontaktanfragen, neue Kontakte und Zusagen. Ohne Ton, nur in der Mitteilungszentrale.": "Contact requests, new contacts and confirmations. Silent, only in Notification Centre.",
   "{name} ansehen": "View {name}",
-  "Zeigt Route, Fahrspaß und Teilnehmer": "Shows route, driving fun and participants"
+  "Zeigt Route, Fahrspaß und Teilnehmer": "Shows route, driving fun and participants",
+  "Die Gruppenfahrt läuft.": "The group drive is on.",
+  "Abfahrtszeit erreicht. Starte die Gruppenfahrt auf der Seite der Ausfahrt.": "Departure time reached. Start the group drive on the club drive page.",
+  "Abfahrtszeit erreicht. Die Lead startet die Gruppenfahrt.": "Departure time reached. The lead starts the group drive.",
+  "Zur Gruppenfahrt": "To the group drive"
 }

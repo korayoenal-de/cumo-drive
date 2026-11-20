@@ -2089,5 +2089,9 @@
   "Chats deiner Ausfahrten, private Nachrichten, Anfragen und Absagen zu deinen Ausfahrten. Mit Ton und Zahl am App Symbol.": "Chat delle tue uscite, messaggi privati, richieste e disdette. Con suono e numero sull'icona.",
   "Kontaktanfragen, neue Kontakte und Zusagen. Ohne Ton, nur in der Mitteilungszentrale.": "Richieste di contatto, nuovi contatti e conferme. Senza suono, solo nel Centro notifiche.",
   "{name} ansehen": "Vedi {name}",
-  "Zeigt Route, Fahrspaß und Teilnehmer": "Mostra percorso, divertimento e partecipanti"
+  "Zeigt Route, Fahrspaß und Teilnehmer": "Mostra percorso, divertimento e partecipanti",
+  "Die Gruppenfahrt läuft.": "Il giro di gruppo è in corso.",
+  "Abfahrtszeit erreicht. Starte die Gruppenfahrt auf der Seite der Ausfahrt.": "Ora di partenza raggiunta. Avvia il giro di gruppo nella pagina dell'uscita.",
+  "Abfahrtszeit erreicht. Die Lead startet die Gruppenfahrt.": "Ora di partenza raggiunta. Il capogruppo avvia il giro.",
+  "Zur Gruppenfahrt": "Al giro di gruppo"
 }
