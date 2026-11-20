@@ -298,6 +298,27 @@ Alles, was auf der Karte angetippt oder gesetzt wird (Pass, Highlight, neuer Pun
 * Sobald auf der Karte gearbeitet wird, geht das Blatt auf die kleinste Höhe (`workOnMap`), damit Karte und Auswahl Platz haben.
 * Die Wahl steht nie im Blatt. Die frühere getönte Karte „Neuer Punkt“ mit vier Tasten ist entfernt.
 
+## Konsistenz Audit 20.11.2026 (Koray: entschieden)
+
+**Tabs.** Fünf Tabs ohne Wörter, nur Symbole: Planen, Touren, Ausfahrten (Kalender mit kleiner Strecke), Community, Einstellungen. VoiceOver Namen bleiben (accessibilityLabel am Trigger). Ausfahrten hat die Filter Kommende, Einladungen, Anfragen (an meine und meine eigenen) und Offen. Community zeigt Touren zum Nachfahren und Drivers, Nachrichten als Symbol Taste oben rechts. Jede Ausfahrt hat genau einen Ort: anstehende stehen nicht mehr unter Touren. Die schnelle Gruppenfahrt aus dem Planer bleibt vorerst, wie sie ist.
+
+**Nachrichten.** Filter Ausfahrten, Privat, Aktivität. Aktivität sammelt die leisen Dinge: offene Kontaktanfragen (direkt annehmen oder ablehnen), neue Kontakte, Zusagen zu meinen Ausfahrten.
+
+**Tastensystem** (components/ui/button.tsx): Button primary (Signal, 56, eine je Ansicht, nie in Listen), secondary (eine Stufe heller als der Untergrund), quiet (nur Text), IconButton (44 rund; Fläche nach Untergrund: ground, surface, map), HeadPill (Symbol und Wort im Kopf, höchstens eine je Kopf). Listen haben keine orange Taste; die Karte selbst öffnet. Ausnahme: die Karte „Heute“. Einladungen: „Zusagen“ grau in der Liste, Orange erst auf der Seite der Ausfahrt. Neue Tasten nur aus diesen Bausteinen.
+
+**Wörterbuch.**
+* Abbrechen: Eingaben gehen verloren. Fertig: Eingaben bleiben. Schließen: nichts verändert. Zurück: nur der Pfeil oben links.
+* Löschen: eigenes Objekt ist weg. Entfernen: aus einer Liste oder Route, das Objekt bleibt. Verwerfen: Ungespeichertes.
+* Keine Ansehen Tasten. „Zur …“ für Orte (Zur Ausfahrt, Zur Gruppenfahrt), Handlungen beim Namen (Mitfahren anfragen, Anfragen beantworten).
+* Organisator hat angelegt, die Lead fährt vorne und startet. Teilnehmer einer Ausfahrt, Fahrer allgemein, Drivers ist der Bereich. „Mitfahrer“ entfällt.
+* Tour: geplante Strecke. Runde: Start gleich Ziel. Route: nur der Modus im Planer. Fahrt: was gefahren wurde. Ausfahrt: mit anderen, mit Termin. Gruppenfahrt: die laufende Ausfahrt.
+* Chat: der Raum einer Ausfahrt. Nachrichten: die Liste. Neu: im Kopf „Anlegen“, als Titel „Neue Tour“ oder „Neue Ausfahrt“.
+* Kontakt ist der einzige Begriff für die Verbindung zweier Fahrer.
+
+**Haptik.** Im Baustein statt an jeder Stelle: Chip rastet beim Wechsel ein (rastung). Neu: Zusagen (ziel), Ankunft am Treffpunkt einmal (ergebnis), Kontaktanfrage annehmen (ziel). Schalter haben die Haptik von iOS. Keine Haptik beim Senden von Nachrichten und während der Fahrt außer Funk.
+
+**Flächen, Rundungen, Abstände.** Auf dem Grund surface, in einer Karte surface2, über der Karte overlay. Radius m 14 (Felder), l 20 (Karten), pill (alles Runde); Radius s entfällt. Seitenrand überall Layout.page (20), auch in den Eingabeleisten der Chats.
+
 ## Pflicht für jede Neuerung (Koray 15.11.2026)
 
 Jede neue Funktion, jeder neue Screen und jede Änderung folgt dem Design System und den Regeln oben, vor allem der Konsistenzprüfung vom 15.11. So bleibt die App konsistent und neue Funktionen werden ordentlich eingebunden. Vor dem Commit prüfen:
