@@ -210,6 +210,12 @@ export function RouteMap({
   const all = tour.linie.flatMap((r) => r.p);
   const start = tour.wegpunkte[0] ?? all[0];
   const ziel = tour.wegpunkte[tour.wegpunkte.length - 1] ?? all[all.length - 1];
+  // Weit herausgezoomt (Pins nach Zoomstufe, 16.11.; Gregor 20.11.2026): Start und Ziel nur als kleine Punkte, sonst
+  // überdecken die Plaketten einander und die Nummern der Wegpunkte. Mit Abstand zwischen Hin und Zurück, damit nichts flackert.
+  const [endCompact, setEndCompact] = useState(false);
+  // Meter je Punkt: ab etwa 3,5 Grad sichtbarer Breite (Stufe Weit), zurück unter etwa 2,7 Grad
+  const endNext = mpp ? (endCompact ? mpp > 360 : mpp > 460) : endCompact;
+  if (endNext !== endCompact) setEndCompact(endNext);
   const roundTrip = !!start && !!ziel && Math.abs(start[0] - ziel[0]) + Math.abs(start[1] - ziel[1]) < 0.0005;
   const pad = edgePadding ?? EDGE;
 
@@ -653,8 +659,9 @@ export function RouteMap({
         {ziel && !roundTrip && (
           <Marker
             coordinate={ll(ziel)}
-            anchor={END_ANCHOR}
-            centerOffset={END_OFFSET}
+            key={`ziel-${endCompact ? 'punkt' : 'tag'}`}
+            anchor={endCompact ? DOT_ANCHOR : END_ANCHOR}
+            centerOffset={endCompact ? DOT_OFFSET : END_OFFSET}
             // ohne title: sonst öffnet Apple Karten beim Antippen und Halten eine leere weiße Sprechblase (Gregor 20.11.2026);
             // VoiceOver bekommt den Namen über die Plakette selbst
             ref={(m) => {
@@ -675,14 +682,15 @@ export function RouteMap({
               onDragPoint?.('ziel', [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
             }}
             zIndex={20}>
-            <EndTag kind="ziel" big={big('ziel')} />
+            {endCompact ? <EndDot kind="ziel" /> : <EndTag kind="ziel" big={big('ziel')} />}
           </Marker>
         )}
         {start && (
           <Marker
             coordinate={ll(start)}
-            anchor={END_ANCHOR}
-            centerOffset={END_OFFSET}
+            key={`start-${endCompact ? 'punkt' : 'tag'}`}
+            anchor={endCompact ? DOT_ANCHOR : END_ANCHOR}
+            centerOffset={endCompact ? DOT_OFFSET : END_OFFSET}
             // ohne title: sonst öffnet Apple Karten beim Antippen und Halten eine leere weiße Sprechblase (Gregor 20.11.2026);
             // VoiceOver bekommt den Namen über die Plakette selbst
             ref={(m) => {
@@ -703,7 +711,7 @@ export function RouteMap({
               onDragPoint?.('start', [e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude]);
             }}
             zIndex={21}>
-            <EndTag kind={roundTrip ? 'runde' : 'start'} big={big('start')} />
+            {endCompact ? <EndDot kind={roundTrip ? 'runde' : 'start'} /> : <EndTag kind={roundTrip ? 'runde' : 'start'} big={big('start')} />}
           </Marker>
         )}
 
@@ -935,6 +943,19 @@ function Checker({ size = 10 }: { size?: number }) {
 }
 
 /** Start, Ziel oder beides (Runde) als Schild wie an einer Rallye Etappe (Konzept B, Design Artefakt 19.11.) */
+const DOT_ANCHOR = { x: 0.5, y: 0.5 };
+const DOT_OFFSET = { x: 0, y: 0 };
+
+/** Weit herausgezoomt: Start orange, Ziel weiß, Runde halb und halb; ohne Schrift */
+function EndDot({ kind }: { kind: 'start' | 'ziel' | 'runde' }) {
+  const label = kind === 'start' ? tr('Start') : kind === 'ziel' ? tr('Ziel') : tr('Start und Ziel');
+  return (
+    <View accessibilityLabel={label} style={[styles.endSmall, { backgroundColor: kind === 'ziel' ? Colors.text : Colors.signal }]}>
+      {kind === 'runde' && <View style={styles.endSmallHalf} />}
+    </View>
+  );
+}
+
 function EndTag({ kind, big }: { kind: 'start' | 'ziel' | 'runde'; big?: boolean }) {
   const label = kind === 'start' ? tr('Start') : kind === 'ziel' ? tr('Ziel') : tr('Start und Ziel');
   const startPart = (
@@ -1042,6 +1063,8 @@ const styles = StyleSheet.create({
   endText: { fontFamily: Fonts.display, fontSize: 12, letterSpacing: 0.5 },
   endStem: { width: 2, height: 6 },
   endDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: Colors.ground },
+  endSmall: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: Colors.ground, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.5)' },
+  endSmallHalf: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 5, backgroundColor: Colors.text },
   warn: { width: 24, height: 24, borderRadius: Radius.m, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.ground },
   warnOn: { transform: [{ scale: 1.3 }], borderColor: Colors.text },
   warnCard: {
