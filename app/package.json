@@ -76,7 +76,8 @@
     "sync-road-data": "cp src/data/curated-roads.json src/data/passes.json src/data/recommended-stops.json ../supabase/functions/road-data/data/",
     "check-csp": "node scripts/check-csp.mjs",
     "vor-update": "bash qa/vor-update.sh",
-    "pack-data": "tsx scripts/pack-road-data.ts"
+    "pack-data": "tsx scripts/pack-road-data.ts",
+    "web:export": "expo export --platform web && node scripts/static-landing.mjs && node scripts/check-csp.mjs"
   },
   "private": true
 }

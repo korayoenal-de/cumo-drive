@@ -11,16 +11,7 @@ import { LANDING_META, type LandingLang } from './landing-i18n';
 import { SeoHead } from '@/components/ui/seo-head';
 import { chosenLang, setLang } from '@/i18n';
 
-/** Schriften von der eigenen Domain statt Google Fonts (Datenschutz, keine Übertragung der IP an Dritte) */
-const FONT_FACES = [
-  ['Archivo', 800, 'Archivo_800ExtraBold'],
-  ['Archivo', 900, 'Archivo_900Black'],
-  ['Inter', 400, 'Inter_400Regular'],
-  ['Inter', 600, 'Inter_600SemiBold'],
-  ['Inter', 700, 'Inter_700Bold'],
-]
-  .map(([f, w, file]) => `@font-face{font-family:${f};font-weight:${w};font-style:normal;font-display:swap;src:url(/fonts/${file}.ttf) format("truetype")}`)
-  .join('');
+/** Schriften von der eigenen Domain statt Google Fonts (Datenschutz): die @font-face Regeln stehen in +html.tsx */
 
 const SITE = 'https://cumodrive.de';
 const LANGS: LandingLang[] = ['de', 'en', 'it'];
@@ -53,10 +44,11 @@ export default function Landing({ lang = 'de' }: { lang?: LandingLang }) {
           <link key={l} rel="alternate" hrefLang={l} href={SITE + (LANDING_META[l].path === '/' ? '/' : LANDING_META[l].path)} />
         ))}
         <link rel="alternate" hrefLang="x-default" href={`${SITE}/`} />
-        <link rel="preload" href="/fonts/Archivo_900Black.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/Inter_400Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+        {/* die zwei Schnitte der ersten Bildschirmhöhe sofort, alle anderen lädt der Browser bei Bedarf */}
+        <link rel="preload" href="/fonts/Archivo_900Black.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/Inter_600SemiBold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       </SeoHead>
-      <style dangerouslySetInnerHTML={{ __html: FONT_FACES + LANDING_CSS + '.cd-scroll{position:fixed;inset:0;overflow-y:auto;scroll-behavior:smooth;background:#0B0B0C;-webkit-overflow-scrolling:touch}' }} />
+      <style dangerouslySetInnerHTML={{ __html: LANDING_CSS + '.cd-scroll{position:fixed;inset:0;overflow-y:auto;scroll-behavior:smooth;background:#0B0B0C;-webkit-overflow-scrolling:touch}' }} />
       {/* eigener Scrollbereich: die App Hülle im Browser ist auf Fensterhöhe festgelegt */}
       <div className="cd-scroll" dangerouslySetInnerHTML={{ __html: landingHtml(lang) }} />
     </>

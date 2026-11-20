@@ -132,7 +132,7 @@ a{color:#F4F4F2}a:hover{color:#FFFFFF}
 .cd-title{font:700 20px/1.25 Inter,system-ui,sans-serif;color:#F4F4F2}
 .cd-icon{width:48px;height:48px;border-radius:24px;background:#29130E;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .cd-phone{border-radius:48px;padding:9px;background:#1C1C1F;box-shadow:0 40px 90px rgba(0,0,0,0.7),inset 0 0 0 1px rgba(255,255,255,0.06);box-sizing:border-box}
-.cd-phone img{display:block;width:100%;border-radius:40px}
+.cd-phone img{display:block;width:100%;height:auto;border-radius:40px}
 .cd-chip{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:8px 16px;box-sizing:border-box;line-height:1.3;border-radius:20px;background:#232326;font:600 15px Inter,system-ui,sans-serif;color:#F4F4F2}
 .cd-two{display:flex;gap:72px;align-items:center}
 .cd-grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
@@ -227,8 +227,8 @@ const LANDING_HTML_DE = `<div style="background: #0B0B0C; color: #F4F4F2; font-f
       </div>
     </div>
     <div class="cd-phones" style="flex: 0 0 auto; position: relative; display: flex; gap: 28px; align-items: flex-end; justify-content: flex-end;">
-      <div class="cd-phone" style="width: 290px; max-width: 70vw;"><img src="/landing/rundtour.jpg" alt="Sellaronda auf der Karte mit Sellajoch, Pordoijoch, Campolongopass und Grödner Joch"></div>
-      <div class="cd-phone cd-hide-sm" style="width: 230px; margin-bottom: 88px;"><img src="/landing/navigation.jpg" alt="Ansage in der Navigation: in 650 m Sellajoch, Legende, 13 km, 13 Kehren, 2.218 m"></div>
+      <div class="cd-phone" style="width: 290px; max-width: 70vw;"><img src="/landing/rundtour.webp" width="600" height="1301" fetchpriority="high" decoding="async" alt="Sellaronda auf der Karte mit Sellajoch, Pordoijoch, Campolongopass und Grödner Joch"></div>
+      <div class="cd-phone cd-hide-sm" style="width: 230px; margin-bottom: 88px;"><img src="/landing/navigation.webp" width="600" height="1301" loading="lazy" decoding="async" alt="Ansage in der Navigation: in 650 m Sellajoch, Legende, 13 km, 13 Kehren, 2.218 m"></div>
     </div>
   </div>
 </section>
@@ -250,8 +250,8 @@ const LANDING_HTML_DE = `<div style="background: #0B0B0C; color: #F4F4F2; font-f
 <section id="planen" class="cd-wrap" style="padding-top: 140px; padding-bottom: 70px;">
   <div class="cd-two">
     <div class="cd-phones" style="flex: 0 0 auto; display: flex; gap: 24px; align-items: flex-start;">
-      <div class="cd-phone" style="width: 270px; max-width: 70vw;"><img src="/landing/schnelle-runde.jpg" alt="Rundtour ab Corvara: Länge 100 km, Richtung Süd" style="aspect-ratio: 760 / 1450; object-fit: cover; object-position: top;"></div>
-      <div class="cd-phone cd-hide-sm" style="width: 270px; margin-top: 96px;"><img src="/landing/route-paesse.jpg" style="aspect-ratio: 760 / 1300; object-fit: cover; object-position: top;" alt="Sellaronda als Route: Start Wolkenstein, Sellajoch, Pordoijoch, Campolongopass und Grödner Joch als Wegpunkte"></div>
+      <div class="cd-phone" style="width: 270px; max-width: 70vw;"><img src="/landing/schnelle-runde.webp" width="600" height="1301" loading="lazy" decoding="async" alt="Rundtour ab Corvara: Länge 100 km, Richtung Süd" style="aspect-ratio: 760 / 1450; object-fit: cover; object-position: top;"></div>
+      <div class="cd-phone cd-hide-sm" style="width: 270px; margin-top: 96px;"><img src="/landing/route-paesse.webp" width="600" height="1301" loading="lazy" decoding="async" style="aspect-ratio: 760 / 1300; object-fit: cover; object-position: top;" alt="Sellaronda als Route: Start Wolkenstein, Sellajoch, Pordoijoch, Campolongopass und Grödner Joch als Wegpunkte"></div>
     </div>
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">01  Planen</span>
@@ -272,7 +272,7 @@ const LANDING_HTML_DE = `<div style="background: #0B0B0C; color: #F4F4F2; font-f
 <section id="highlights" class="cd-wrap" style="padding-top: 70px; padding-bottom: 70px;">
   <div class="cd-two" style="flex-direction: row-reverse;">
     <div class="cd-phones" style="flex: 0 0 auto; display: flex; justify-content: flex-end;">
-      <div class="cd-phone" style="width: 300px; max-width: 70vw;"><img src="/landing/highlights.jpg" alt="Kleine Sellaronda: 62 km, 1:11 h, Fahrspaß 96, Hinweis Pordoijoch gesperrt, vier Highlights mit Pegel, Sellajoch und Pordoijoch als Legende"></div>
+      <div class="cd-phone" style="width: 300px; max-width: 70vw;"><img src="/landing/highlights.webp" width="600" height="1301" loading="lazy" decoding="async" alt="Kleine Sellaronda: 62 km, 1:11 h, Fahrspaß 96, Hinweis Pordoijoch gesperrt, vier Highlights mit Pegel, Sellajoch und Pordoijoch als Legende"></div>
     </div>
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">02  Highlights und Fahrspaß Pegel</span>
@@ -292,7 +292,7 @@ const LANDING_HTML_DE = `<div style="background: #0B0B0C; color: #F4F4F2; font-f
 <section class="cd-wrap" style="padding-top: 70px; padding-bottom: 140px;">
   <div class="cd-two">
     <div class="cd-side" style="flex: 0 0 auto; display: flex; flex-direction: column; gap: 16px; width: 440px; max-width: 100%;">
-      <div style="border-radius: 32px; overflow: hidden; box-shadow: 0 40px 90px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.06);"><img src="/landing/ansage.jpg" alt="Abbiegehinweis in 500 m, darunter das laufende Highlight Sellajoch, noch 12 km" style="display: block; width: 100%;"></div>
+      <div style="border-radius: 32px; overflow: hidden; box-shadow: 0 40px 90px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.06);"><img src="/landing/ansage.webp" width="900" height="672" loading="lazy" decoding="async" alt="Abbiegehinweis in 500 m, darunter das laufende Highlight Sellajoch, noch 12 km" style="display: block; width: 100%;"></div>
       <div style="display: flex; align-items: center; gap: 12px; align-self: flex-start; height: 44px; padding: 0 18px; border-radius: 22px; background: #161618;">
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12a6 6 0 0 1 6-6h8M15 2l4 4-4 4" stroke="#E8B03A" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         <span style="font: 600 15px Inter, sans-serif; color: #E8B03A;">Scharfe Rechtskurve · 120 m</span>
@@ -388,7 +388,7 @@ const LANDING_HTML_DE = `<div style="background: #0B0B0C; color: #F4F4F2; font-f
       <p class="cd-body">Die Community hat drei Bereiche. Unter Touren zum Nachfahren liegen veröffentlichte Touren anderer Fahrer, ein Tipp öffnet sie im Planer. Unter Ausfahrten verabredest du dich zu gemeinsamen Touren, Einladungen kommen als Mitteilung. Unter Drivers findest du Fahrer aus deiner Gegend, mit Profilfoto und Fuhrpark, und schreibst ihnen direkt, mit allen Gesprächen an einem Ort. Wer stört, den meldest oder blockierst du mit zwei Tipps.</p>
     </div>
     <div class="cd-side" style="flex: 0 0 auto; width: 420px; max-width: 100%;">
-      <div class="cd-phone" style="width: 290px; max-width: 70vw; margin: 0 auto;"><img src="/landing/ausfahrt.jpg" alt="Gemeinsame Ausfahrt ab Tegernsee am Freitag, 148 km, 2:57 h, du bist dabei"></div>
+      <div class="cd-phone" style="width: 290px; max-width: 70vw; margin: 0 auto;"><img src="/landing/ausfahrt.webp" width="600" height="1301" loading="lazy" decoding="async" alt="Gemeinsame Ausfahrt ab Tegernsee am Freitag, 148 km, 2:57 h, du bist dabei"></div>
     </div>
   </div>
   <div class="cd-grid3">${featureCard('route', 'Touren zum Nachfahren', 'Veröffentlichte Touren anderer Fahrer, etwa die Sellaronda groß und klein. Antippen öffnet eine Kopie im Planer, das Lesezeichen legt sie unter Touren ab. Deine abgewandelte Fassung teilst du mit Hinweis auf das Original.')}${featureCard('calendar', 'Ausfahrten', 'Gemeinsame Ausfahrten mit Termin, Treffpunkt und Plätzen. Du fragst an oder wirst eingeladen, der Organisator nimmt an, und im Chat klärt ihr den Rest.')}${featureCard('people', 'Drivers', 'Mitglieder mit ungefährem Wohnort auf der Karte und private Nachrichten. Was andere von dir sehen, auch deinen Fuhrpark, stellst du selbst ein.')}
@@ -399,8 +399,8 @@ const LANDING_HTML_DE = `<div style="background: #0B0B0C; color: #F4F4F2; font-f
 <section class="cd-wrap" style="padding-top: 70px; padding-bottom: 140px; display: flex; flex-direction: column; gap: 48px;">
   <div class="cd-two" style="flex-direction: row-reverse;">
     <div class="cd-phones" style="flex: 0 0 auto; display: flex; gap: 24px; align-items: flex-start;">
-      <div class="cd-phone cd-hide-sm" style="width: 260px; margin-top: 96px;"><img src="/landing/paesse-karte.jpg" alt="Passo Giau auf der Karte gewählt, 2.236 m, Ikone, mit Als Start und Als Ziel"></div>
-      <div class="cd-phone" style="width: 270px; max-width: 70vw;"><img src="/landing/meine-touren.jpg" style="aspect-ratio: 760 / 1300; object-fit: cover; object-position: top;" alt="Touren: anstehende Ausfahrt ab Tegernsee, gespeicherte Touren nach Fahrspaß mit Kleiner und Großer Sellaronda"></div>
+      <div class="cd-phone cd-hide-sm" style="width: 260px; margin-top: 96px;"><img src="/landing/paesse-karte.webp" width="600" height="1301" loading="lazy" decoding="async" alt="Passo Giau auf der Karte gewählt, 2.236 m, Ikone, mit Als Start und Als Ziel"></div>
+      <div class="cd-phone" style="width: 270px; max-width: 70vw;"><img src="/landing/meine-touren.webp" width="600" height="1301" loading="lazy" decoding="async" style="aspect-ratio: 760 / 1300; object-fit: cover; object-position: top;" alt="Touren: anstehende Ausfahrt ab Tegernsee, gespeicherte Touren nach Fahrspaß mit Kleiner und Großer Sellaronda"></div>
     </div>
     <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
       <span class="cd-label">06  Touren</span>

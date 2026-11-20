@@ -63,15 +63,21 @@ const theme = {
 };
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    Archivo_800ExtraBold,
-    Archivo_900Black,
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-    Inter_800ExtraBold,
-  });
+  // Im Web kommen die Schriften als WOFF2 über +html.tsx (nur was die Seite zeigt); expo-font hängte dort sieben TTF
+  // Dateien mit preload in jede Seite (Performance Messung 20.11.2026)
+  const [loaded, error] = useFonts(
+    Platform.OS === 'web'
+      ? {}
+      : {
+          Archivo_800ExtraBold,
+          Archivo_900Black,
+          Inter_400Regular,
+          Inter_500Medium,
+          Inter_600SemiBold,
+          Inter_700Bold,
+          Inter_800ExtraBold,
+        },
+  );
 
   // In der App nur mit Konto: Touren, Fahrten und Fahrzeuge liegen im Konto (der Web Planer bleibt offen)
   const session = useSession();

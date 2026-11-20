@@ -1,6 +1,9 @@
 # CUMO DRIVE Web (cumodrive.de): Startseite ist die Landingpage, der Planer liegt unter /planer
 DirectoryIndex index.html
 Options -MultiViews
+# Bilder der Landingpage als WebP und Schriften als WOFF2 (Performance 20.11.2026)
+AddType image/webp .webp
+AddType font/woff2 .woff2
 RewriteEngine On
 
 # eine Adresse: alles (http, www, cumodrive.com, drive.rallycumo.de) dauerhaft auf https://cumodrive.de, Pfad bleibt.
@@ -40,7 +43,7 @@ ErrorDocument 404 /+not-found.html
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
-  <FilesMatch "\.(js|css|woff2?|ttf|png|jpg|svg)$">
+  <FilesMatch "\.(js|css|woff2?|ttf|png|jpg|webp|svg)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 </IfModule>
