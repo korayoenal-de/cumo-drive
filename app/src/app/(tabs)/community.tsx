@@ -48,7 +48,7 @@ import { requestCommunityLine, setListReach, useCommunityLine, useInReach } from
 import { kmToLine } from '@/lib/map-hit';
 import { OverlapRail } from '@/components/community/overlap-rail';
 import { setEditTour } from '@/lib/edit-tour';
-import { InvitesList, useInviteCount } from '@/components/group/invites-banner';
+import { InvitesList, useInviteCount, useInvites } from '@/components/group/invites-banner';
 import { formatKm, type LatLon } from '@/lib/tour';
 import { looksLikeAddress, searchAddress } from '@/lib/address-search';
 import { searchTowns, type Place } from '@/lib/geocode';
@@ -132,6 +132,30 @@ export default function Community() {
   const [stackLines, setStackLines] = useState<Record<string, LatLon[]>>({});
   const tapSeq = useRef(0);
   const lines = useRef(new Map<string, LatLon[]>());
+  // Einladungen (Koray 20.11.2026, Foto von Björn): auch private Fahrten, zu denen du eingeladen bist, stehen mit
+  // Pin auf der Karte, und die Route der ersten zeigt die Karte, solange nichts gewählt ist
+  const invites = useInvites();
+  const [inviteLines, setInviteLines] = useState<Record<string, LatLon[]>>({});
+  const inviteKey = invites.map((i) => i.rideId).join(',');
+  useEffect(() => {
+    let live = true;
+    for (const inv of invites.slice(0, 3)) {
+      if (inviteLines[inv.rideId]) continue;
+      ausfahrtTour(inv.rideId)
+        .then((full) => {
+          const pts = full ? full.tour.linie.flatMap((l) => l.p) : null;
+          if (!live || !pts || pts.length < 2) return;
+          lines.current.set(inv.rideId, pts);
+          setInviteLines((m) => ({ ...m, [inv.rideId]: pts }));
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      live = false;
+    };
+    // nur wenn sich die Einladungen ändern
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inviteKey]);
   const selRef = useRef<string | null>(null);
   const userId = session?.user.id;
   const win = useWindowDimensions();
@@ -208,12 +232,19 @@ export default function Community() {
     }
     if (seg === 'routen')
       return shownTours.filter((t) => t.start_lat != null && t.start_lon != null).map((t) => ({ id: t.id, kind: 'route', p: [t.start_lat as number, t.start_lon as number], label: `${formatKm(Number(t.km), 0)} km` }));
-    return (rides ?? [])
+    const ridePins: CommunityPin[] = (rides ?? [])
       .filter((r) => !r.isCancelled)
       .map((r) => ({ r, p: r.meeting ? ([r.meeting.lat, r.meeting.lon] as LatLon) : r.start }))
       .filter((x): x is { r: Ausfahrt; p: LatLon } => !!x.p)
       .map(({ r, p }) => ({ id: r.id, kind: 'ausfahrt', p, label: shortDate(r.startsAt), count: r.taken }));
-  }, [seg, shownTours, rides, shownDrivers]);
+    // Einladungen, die nicht schon als Ausfahrt in der Liste stehen: Pin am Start ihrer Route
+    const invitePins: CommunityPin[] = invites
+      .filter((i) => !(rides ?? []).some((r) => r.id === i.rideId) && inviteLines[i.rideId])
+      .map((i) => ({ id: i.rideId, kind: 'ausfahrt', p: inviteLines[i.rideId][0], label: i.startsAt ? shortDate(new Date(i.startsAt)) : '' }));
+    return [...ridePins, ...invitePins];
+  }, [seg, shownTours, rides, shownDrivers, invites, inviteLines]);
+  const firstInvite = invites.find((i) => i.myStatus === 'eingeladen' && inviteLines[i.rideId]);
+  const mapLine = line ?? (seg === 'ausfahrten' && !selected && firstInvite ? inviteLines[firstInvite.rideId] : null);
 
   const inviteCount = useInviteCount();
   const openRequests = (rides ?? []).reduce((n, r) => n + (r.isOwner ? r.openRequests : 0), 0);
@@ -446,7 +477,7 @@ export default function Community() {
         header={header}
         background={(covered) => (
           <>
-            <CommunityMap pins={pins} selected={selected} onSelect={select} onTap={onMapTap} others={otherLines} keepView={stackTours.length > 1} line={line} bottom={covered} top={topH} style={StyleSheet.absoluteFill} />
+            <CommunityMap pins={pins} selected={selected} onSelect={select} onTap={onMapTap} others={otherLines} keepView={stackTours.length > 1} line={mapLine} bottom={covered} top={topH} style={StyleSheet.absoluteFill} />
             {stackTours.length > 1 && <OverlapRail tours={stackTours} active={selected} onPick={(id) => select(id)} bottom={covered + Spacing.s} />}
           </>
         )}>
@@ -541,7 +572,7 @@ export default function Community() {
         ) : (
           <View style={styles.body}>
             {/* Einladungen zu Gruppenfahrten stehen hier oben, nicht mehr über jedem Screen (Koray 11.11.) */}
-            {userId && <InvitesList rides={rides} onChanged={load} />}
+            {userId && <InvitesList rides={rides} onChanged={load} onPick={(id) => select(id, true)} />}
             {!userId ? (
               <View style={styles.card}>
                 <AppText variant="title">{tr('Ausfahrten mit Konto')}</AppText>

@@ -1125,6 +1125,7 @@
   " und am ": " e al ",
   "{reason} am {name} und an {n} weiteren Pässen": "{reason} al {name} e su altri {n} passi",
   "Wetter: {note}": "Meteo: {note}",
+  "{name} auf der Karte zeigen": "Mostra {name} sulla mappa",
   "START": "PARTENZA",
   "ZIEL": "ARRIVO",
   "Start und Ziel": "Partenza e arrivo",

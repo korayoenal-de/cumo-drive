@@ -14,6 +14,8 @@ import { Pressable } from '@/components/ui/tap';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { DateBlock } from '@/components/community/ride-bits';
+import { FunMark } from '@/components/tours/tour-bits';
+import { useRideFun } from '@/lib/ride-fun';
 import { OptionsSheet, SHEET_GONE_MS } from '@/components/ui/action-sheet';
 import { Chip, ChipGroup } from '@/components/ui/chip';
 import { IconLabel, type BtnIcon } from '@/components/ui/btn-icon';
@@ -88,10 +90,16 @@ export function useInviteCount(): number {
   return useInvites().length;
 }
 
+/** Fahrspaß der eingeladenen Fahrt, wie auf den Karten der Ausfahrten (eigene Komponente wegen des Hooks je Karte) */
+function InviteFun({ rideId }: { rideId: string }) {
+  const fun = useRideFun(rideId);
+  return <FunMark score={fun} reserve />;
+}
+
 const DECLINE_REASONS = ['Termin passt nicht', 'Auto nicht fit', 'Zu weit', 'Anderes'];
 
 /** Karten oben in den Ausfahrten; rides liefert Treffpunkt und Strecke, wenn die Fahrt öffentlich ist */
-export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; onChanged?: () => void }) {
+export function InvitesList({ rides, onChanged, onPick }: { rides?: Ausfahrt[] | null; onChanged?: () => void; onPick?: (rideId: string) => void }) {
   const shown = useInvites().slice(0, 3);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<{ id: string; text: string } | null>(null);
@@ -181,13 +189,15 @@ export function InvitesList({ rides, onChanged }: { rides?: Ausfahrt[] | null; o
         }
         return (
           <Animated.View key={inv.rideId} entering={FadeIn.duration(Motion.enter)} style={styles.card} accessibilityRole="summary">
-            <View style={styles.head}>
+            {/* Kopf antippen zeigt die Route auf der Karte; rechts der Fahrspaß wie bei jeder Ausfahrt (K1, 20.11.) */}
+            <Pressable accessibilityRole="button" accessibilityLabel={tr('{name} auf der Karte zeigen', { name: inv.name })} onPress={() => onPick?.(inv.rideId)} style={styles.head}>
               {starts ? <DateBlock d={starts} /> : null}
               <View style={styles.flex}>
                 <AppText muted>{inv.ownerName}{tr(' lädt dich ein')}</AppText>
                 <AppText style={styles.title} numberOfLines={2}>{inv.name}</AppText>
               </View>
-            </View>
+              <InviteFun rideId={inv.rideId} />
+            </Pressable>
             {line || km != null ? (
               <AppText muted>{fmtMeta(line, km != null ? strecke(km) : null)}</AppText>
             ) : null}
