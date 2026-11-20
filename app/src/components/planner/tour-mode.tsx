@@ -744,6 +744,7 @@ export function TourMode({
             key={naming ? 'offen' : 'zu'}
             visible={naming}
             initial={plan.name.trim() && plan.name !== tr('Neue Tour') ? plan.name.trim() : routeTour.name || tr('Neue Tour')}
+            asPlaceholder={!(plan.name.trim() && plan.name !== tr('Neue Tour'))}
             onCancel={() => setNaming(false)}
             onSave={(n) => {
               setNaming(false);

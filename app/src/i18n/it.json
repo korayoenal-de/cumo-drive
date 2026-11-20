@@ -2116,5 +2116,6 @@
   "Ausfahrt abgesagt": "Uscita annullata",
   "Du bist ausgetragen": "Non partecipi più",
   "Austragen": "Esci",
-  "{action}: {name}": "{action}: {name}"
+  "{action}: {name}": "{action}: {name}",
+  "Leer gespeichert heißt sie {name}": "Se resta vuoto, si chiamerà {name}"
 }

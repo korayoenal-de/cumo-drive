@@ -13,9 +13,14 @@ import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 import { t } from '@/i18n';
 
-export function NameDialog({ visible, initial, onCancel, onSave, title = t('Tour speichern'), subtitle = t('Unter diesem Namen findest du sie im Tab Touren.') }: { visible: boolean; initial: string; onCancel: () => void; onSave: (name: string) => void; title?: string; subtitle?: string }) {
+/**
+ * asPlaceholder (Koray 20.11.2026, neue Tour): der vorgeschlagene Name steht nur als Platzhalter im Feld, nicht als Text.
+ * Tippen ins Feld blendet ihn aus, du schreibst direkt los; leer gespeichert gilt der Vorschlag.
+ */
+export function NameDialog({ visible, initial, onCancel, onSave, title = t('Tour speichern'), subtitle = t('Unter diesem Namen findest du sie im Tab Touren.'), asPlaceholder }: { visible: boolean; initial: string; onCancel: () => void; onSave: (name: string) => void; title?: string; subtitle?: string; asPlaceholder?: boolean }) {
   // beim Öffnen neu eingehängt (key), daher reicht der Startwert
-  const [name, setName] = useState(initial);
+  const [name, setName] = useState(asPlaceholder ? '' : initial);
+  const [focused, setFocused] = useState(false);
   const save = () => onSave(name.trim() || initial);
   return (
     <OptionsSheet visible={visible} title={title} subtitle={subtitle} onClose={onCancel}>
@@ -23,14 +28,17 @@ export function NameDialog({ visible, initial, onCancel, onSave, title = t('Tour
         <TextField maxFontSizeMultiplier={1.2}
           value={name}
           onChangeText={setName}
-          autoFocus
-          selectTextOnFocus
+          autoFocus={!asPlaceholder}
+          selectTextOnFocus={!asPlaceholder}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           returnKeyType="done"
           onSubmitEditing={save}
-          placeholder={t('Name der Tour')}
+          placeholder={asPlaceholder ? (focused ? '' : initial) : t('Name der Tour')}
           placeholderTextColor={Colors.muted}
           style={styles.input}
           accessibilityLabel={t('Name der Tour')}
+          accessibilityHint={asPlaceholder ? t('Leer gespeichert heißt sie {name}', { name: initial }) : undefined}
         />
         <Pressable accessibilityRole="button" onPress={save} style={({ pressed }) => [styles.primary, pressed && styles.pressed]}>
           <AppText style={styles.primaryText}>{t('Speichern')}</AppText>

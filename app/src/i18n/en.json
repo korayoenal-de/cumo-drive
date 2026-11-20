@@ -2116,5 +2116,6 @@
   "Ausfahrt abgesagt": "Drive cancelled",
   "Du bist ausgetragen": "You have left the drive",
   "Austragen": "Leave",
-  "{action}: {name}": "{action}: {name}"
+  "{action}: {name}": "{action}: {name}",
+  "Leer gespeichert heißt sie {name}": "Saved empty, it is called {name}"
 }
