@@ -149,6 +149,14 @@ export async function ausfahrtTour(id: string): Promise<{ tour: Tour & { minutes
   return unpackTour(data as Packed);
 }
 
+/** Name, Quelle (gespeicherte Tour) und ob du der Organisator bist; für die Vollbild Karte einer Ausfahrt */
+export async function rideSource(id: string): Promise<{ name: string; tourId: string | null; isOwner: boolean } | null> {
+  const [{ data: u }, { data }] = await Promise.all([supabase.auth.getUser(), supabase.from('rides').select('name,tour_id,owner').eq('id', id).maybeSingle()]);
+  const row = data as { name: string; tour_id: string | null; owner: string } | null;
+  if (!row) return null;
+  return { name: row.name, tourId: row.tour_id, isOwner: !!u.user && row.owner === u.user.id };
+}
+
 export type Absage = { userId: string; name: string; reason: string | null };
 
 /** Absagen für den Veranstalter, still ohne Zahl (Koray 12.11.) */

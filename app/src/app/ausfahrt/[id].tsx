@@ -22,7 +22,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar, DateBlock } from '@/components/community/ride-bits';
-import { RoutePreview } from '@/components/planner/route-preview';
+import { RouteMap } from '@/components/map/route-map';
 import { ReportSheet } from '@/components/moderation/report-sheet';
 import { ConfirmSheet } from '@/components/ui/action-sheet';
 import { AddButton } from '@/components/ui/add-button';
@@ -510,10 +510,20 @@ export default function AusfahrtDetail() {
           )}
         </View>
 
+        {/* Echte Karte statt Strichbild (Koray 20.11.2026): Antippen öffnet die Vollbild Karte der Ausfahrt */}
         {full && (
-          <View style={styles.preview}>
-            <RoutePreview tour={full.tour} height={180} />
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={tr('Karte von {name} groß zeigen', { name: a.name })}
+            onPress={() => router.push({ pathname: '/karte', params: { ausfahrt: a.id } })}
+            style={[styles.preview, styles.previewMap]}>
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              <RouteMap tour={{ ...full.tour, name: a.name }} interactive={false} style={StyleSheet.absoluteFill} />
+            </View>
+            <View style={styles.previewHint} pointerEvents="none">
+              <SymbolView name="arrow.up.left.and.arrow.down.right" size={16} weight="semibold" tintColor={Colors.text} />
+            </View>
+          </Pressable>
         )}
 
         {a.note ? (
@@ -1029,6 +1039,9 @@ const styles = StyleSheet.create({
   label: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.muted },
   value: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
   preview: { borderRadius: Radius.l, overflow: 'hidden', backgroundColor: Colors.surface },
+  previewMap: { height: 220 },
+  // Zeichen für groß: rund oben rechts, wie die Kartentasten
+  previewHint: { position: 'absolute', top: Spacing.m, right: Spacing.m, width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.overlay, alignItems: 'center', justifyContent: 'center' },
   note: { gap: Spacing.xs, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l },
   section: { gap: Spacing.m },
   request: { gap: Spacing.m, backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l },
