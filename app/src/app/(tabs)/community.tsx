@@ -171,10 +171,11 @@ export default function Community() {
         setErr(null);
       })
       .catch((e: Error) => setErr(e.message));
-    // private Ausfahrten stehen nur unter Touren, nicht in der Community (Koray 13.11.)
+    // private Ausfahrten: eigene und zugesagte stehen auch hier, mit „Privat“ (Koray 20.11.2026: in der Community
+    // angelegt, also dort erwartet; vorher seit 13.11. nur unter Touren). Andere sehen sie weiter nicht.
     // abgesagte bleiben bis zum geplanten Tag sichtbar, damit Teilnehmer die Absage sehen (Koray 17.11.)
     listAusfahrten().then((l) => l.filter((x) => !x.isOver || showCancelled(x)))
-      .then((l) => setRides(l.filter((r) => r.isPublic)))
+      .then((l) => setRides(l.filter((r) => r.isPublic || r.isOwner || r.myStatus === 'zugesagt')))
       .catch(() => setRides((r) => r ?? []));
     listDrivers()
       .then(setDrivers)
@@ -895,7 +896,7 @@ function SoonCard({ r, home }: { r: Ausfahrt; home: LatLon | null }) {
   return (
     <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.card}>
       <Pressable accessibilityRole="button" accessibilityHint={tr('Öffnet die Ausfahrt')} onPress={() => router.push({ pathname: '/ausfahrt/[id]', params: { id: r.id } })} style={styles.soonHead}>
-        <AppText style={styles.soonWhen}>{relDay(r.startsAt)}</AppText>
+        <AppText style={styles.soonWhen}>{r.isPublic ? relDay(r.startsAt) : `${relDay(r.startsAt)} · ${tr('Privat')}`}</AppText>
         <AppText style={styles.bigName} numberOfLines={2}>{r.name}</AppText>
       </Pressable>
       <View style={styles.metrics}>
@@ -951,7 +952,11 @@ function RideCard({ r, big }: { r: Ausfahrt; big?: boolean }) {
         <Kennzahlen km={r.km} minutes={r.minutes} fun={fun} />
         {!r.roundTrip && arr ? <AppText muted>{tr('Ankunft etwa {v0}{v1}', { v0: clock(arr), v1: r.goalName ? ` in ${r.goalName}` : '' })}</AppText> : null}
         <View style={styles.row}>
-          <AppText muted style={styles.flex} numberOfLines={1}>{tr('Organisiert von ')}{r.isOwner ? 'dir' : r.ownerName}</AppText>
+          <AppText muted style={styles.flex} numberOfLines={1}>
+            {tr('Organisiert von ')}
+            {r.isOwner ? 'dir' : r.ownerName}
+            {r.isPublic ? '' : ` · ${tr('Privat')}`}
+          </AppText>
           {status ?? <SeatsBadge free={free} />}
         </View>
         <Pressable accessibilityRole="button" onPress={open} style={styles.primary}>
