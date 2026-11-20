@@ -84,7 +84,9 @@ export function useAusfahrtBar(): BarState | null {
 }
 
 function countdown(ms: number): string {
-  const min = Math.max(0, Math.round(ms / 60000));
+  // Abfahrt erreicht, aber noch nicht gestartet: nicht „in 0 min“ (Koray 20.11.2026)
+  if (ms <= 60000) return t('Jetzt');
+  const min = Math.round(ms / 60000);
   return min < 60 ? tr('in {n} min', { n: min }) : tr('in {h}:{m} h', { h: Math.floor(min / 60), m: String(min % 60).padStart(2, '0') });
 }
 
