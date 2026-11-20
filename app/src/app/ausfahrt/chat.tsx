@@ -17,7 +17,8 @@ import { ReportSheet } from '@/components/moderation/report-sheet';
 import { TextField } from '@/components/ui/text-field';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Leading, Motion, Radius, Spacing, Type, Layout } from '@/constants/theme';
-import { ausfahrtTeilnehmer, clock, listAusfahrten, markRideChatSeen, sendNachricht, useNachrichten, type Ausfahrt, type Teilnehmer } from '@/lib/ausfahrten';
+import { ausfahrtTeilnehmer, clock, deleteNachricht, editNachricht, listAusfahrten, markRideChatSeen, sendNachricht, useNachrichten, type Ausfahrt, type Nachricht, type Teilnehmer } from '@/lib/ausfahrten';
+import { ActionSheet } from '@/components/ui/action-sheet';
 import { refreshUnread } from '@/lib/drivers';
 import { useSession } from '@/lib/auth';
 import { enablePush, setOpenChat } from '@/lib/push';
@@ -38,6 +39,9 @@ export default function AusfahrtChat() {
   const scroll = useRef<ScrollViewInstance>(null);
   // fremde Nachricht lange drücken: melden (Koray 12.11.)
   const [report, setReport] = useState<{ ref: string; userId: string; name: string } | null>(null);
+  // eigene Nachricht lange drücken: bearbeiten oder löschen (Koray 20.11.2026)
+  const [own, setOwn] = useState<Nachricht | null>(null);
+  const [editing, setEditing] = useState<Nachricht | null>(null);
 
   // Solange der Chat offen ist, keine Mitteilung für ihn; beim ersten Öffnen nach der Erlaubnis fragen
   useFocusEffect(
@@ -75,7 +79,9 @@ export default function AusfahrtChat() {
     setSending(true);
     setSendErr(null);
     try {
-      await sendNachricht(id, text);
+      if (editing) await editNachricht(editing.id, text);
+      else await sendNachricht(id, text);
+      setEditing(null);
       setText('');
       void reload();
     } catch (e) {
@@ -111,7 +117,7 @@ export default function AusfahrtChat() {
         {a?.meeting && (
           <View style={styles.pinned}>
             <SymbolView name="mappin.and.ellipse" size={16} weight="semibold" tintColor={Colors.signal} />
-            <AppText style={styles.pinnedText} numberOfLines={2}>{t('Treffpunkt ')}{a.meeting.name}, {clock(a.startsAt)}</AppText>
+            <AppText style={styles.pinnedText} numberOfLines={2}>{a.meeting.name?.trim() ? `${t('Treffpunkt ')}${a.meeting.name.trim()}` : t('Treffpunkt')}, {clock(a.startsAt)}</AppText>
           </View>
         )}
         {list === null && !error && <ActivityIndicator color={Colors.muted} />}
@@ -126,14 +132,13 @@ export default function AusfahrtChat() {
             <Animated.View key={m.id} entering={FadeInDown.duration(Motion.enter)} style={[styles.msgRow, mine && styles.msgRowMine, !first && styles.msgFollow]}>
               {!mine && (first ? <Avatar name={name} userId={m.userId} size={32} /> : <View style={styles.avatarGap} />)}
               <Pressable
-                disabled={mine}
                 delayLongPress={350}
-                onLongPress={() => setReport({ ref: String(m.id), userId: m.userId, name })}
-                accessibilityHint={mine ? undefined : t('Lange drücken, um die Nachricht zu melden')}
+                onLongPress={() => (mine ? setOwn(m) : setReport({ ref: String(m.id), userId: m.userId, name }))}
+                accessibilityHint={mine ? t('Lange drücken, um die Nachricht zu bearbeiten oder zu löschen') : t('Lange drücken, um die Nachricht zu melden')}
                 style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
                 {!mine && first && <AppText style={styles.author}>{name}</AppText>}
                 <AppText style={styles.body}>{m.body}</AppText>
-                <AppText style={styles.time}>{clock(m.createdAt)}</AppText>
+                <AppText style={styles.time}>{m.editedAt ? `${t('bearbeitet')} · ${clock(m.createdAt)}` : clock(m.createdAt)}</AppText>
               </Pressable>
             </Animated.View>
           );
@@ -142,6 +147,15 @@ export default function AusfahrtChat() {
       </ScrollView>
 
       {sendErr && <AppText style={[styles.error, styles.sendErr]}>{sendErr}</AppText>}
+      {editing && (
+        <View style={styles.editRow}>
+          <SymbolView name="pencil" size={16} weight="semibold" tintColor={Colors.muted} />
+          <AppText muted style={styles.flex} numberOfLines={1}>{t('Nachricht bearbeiten')}</AppText>
+          <Pressable accessibilityRole="button" hitSlop={10} onPress={() => { setEditing(null); setText(''); }}>
+            <AppText style={styles.editCancel}>{t('Abbrechen')}</AppText>
+          </Pressable>
+        </View>
+      )}
       <View style={[styles.bar, { paddingBottom: insets.bottom + Spacing.s }]}>
         <TextField pill maxFontSizeMultiplier={1.2}
           value={text}
@@ -157,6 +171,31 @@ export default function AusfahrtChat() {
           {sending ? <ActivityIndicator color={Colors.onSignal} /> : <SymbolView name="arrow.up" size={20} weight="semibold" tintColor={Colors.onSignal} />}
         </Pressable>
       </View>
+      <ActionSheet
+        visible={!!own}
+        onClose={() => setOwn(null)}
+        items={[
+          // ob es noch geht (24 Stunden), prüft die Datenbank und meldet es sonst
+          ...(own
+            ? [{ key: 'edit', icon: 'pencil' as const, label: t('Bearbeiten'), onPress: () => { setEditing(own); setText(own.body); } }]
+            : []),
+          {
+            key: 'delete',
+            icon: 'trash' as const,
+            label: t('Löschen'),
+            danger: true,
+            onPress: () => {
+              const m = own;
+              if (!m) return;
+              void deleteNachricht(m.id)
+                .then(() => {
+                  void reload();
+                })
+                .catch((e: Error) => setSendErr(e.message));
+            },
+          },
+        ]}
+      />
       <ReportSheet visible={!!report} kind="ride_message" refId={report?.ref ?? ''} userId={report?.userId} name={report?.name} onClose={() => setReport(null)} />
     </KeyboardAvoidingView>
   );
@@ -188,4 +227,6 @@ const styles = StyleSheet.create({
   sendOff: { backgroundColor: Colors.signalDeep },
   error: { color: Colors.danger, fontFamily: Fonts.semibold },
   sendErr: { paddingHorizontal: Spacing.l },
+  editRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingHorizontal: Spacing.l, paddingTop: Spacing.s },
+  editCancel: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
 });

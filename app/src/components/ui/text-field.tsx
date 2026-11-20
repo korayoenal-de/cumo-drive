@@ -50,6 +50,8 @@ const styles = StyleSheet.create({
   onSurface: { backgroundColor: Colors.surface2 },
   multi: { paddingTop: Spacing.m, paddingBottom: Spacing.m, textAlignVertical: 'top' },
   enforced: { borderRadius: Radius.m, borderWidth: 2, borderColor: 'transparent', fontFamily: Fonts.semibold },
-  pill: { borderRadius: Radius.pill },
+  // Rund nur, solange das Feld einzeilig ist: fester Radius der halben Mindesthöhe. Mit Radius.pill wurde eine
+  // mehrzeilige Nachricht zur Ellipse, oben und unten war Text abgeschnitten (Koray 20.11.2026, Chat der Ausfahrt)
+  pill: { borderRadius: Size.input / 2 },
   focused: { borderColor: Colors.signal },
 });

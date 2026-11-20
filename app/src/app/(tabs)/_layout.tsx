@@ -7,6 +7,8 @@
  * Neue Nachrichten und Einladungen als Plakette am Community Tab, die laufende Gruppenfahrt als Zeile über der
  * Leiste (bottom accessory, wie der Mini Player in Apple Music).
  */
+import * as Notifications from 'expo-notifications';
+import { useEffect } from 'react';
 import { Slot, router } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -30,7 +32,14 @@ export default function TabsLayout() {
 function IosTabs() {
   useUnreadWatcher(useSession()?.user.id);
   useInvitesWatcher();
-  const unread = useUnreadMessages() + useInviteCount() + useFresh('community');
+  const messages = useUnreadMessages();
+  const invites = useInviteCount();
+  const unread = messages + invites + useFresh('community');
+  // Zahl am App Symbol wie bei anderen Apps (Koray 20.11.2026): ungelesene Nachrichten (auch Chats der Ausfahrten,
+  // dort landet seitdem auch das Anpingen) und offene Einladungen. Ohne Erlaubnis für Mitteilungen bleibt sie aus.
+  useEffect(() => {
+    void Notifications.setBadgeCountAsync(messages + invites).catch(() => undefined);
+  }, [messages, invites]);
   // Neu in Touren (gespeichert, gemerkt, gefahren), bis der Tab geöffnet wird (Aktionen mit Ziel, 17.11.)
   const freshTours = useFresh('touren');
   const ride = useRide();

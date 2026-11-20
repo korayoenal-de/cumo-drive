@@ -64,7 +64,7 @@ export type Anfrage = {
 
 export type Teilnehmer = { userId: string; name: string; vehicle: string | null; isOwner: boolean };
 
-export type Nachricht = { id: number; userId: string; body: string; createdAt: Date };
+export type Nachricht = { id: number; userId: string; body: string; createdAt: Date; editedAt?: Date | null };
 
 function fail(message: string): never {
   // Meldungen aus den Funktionen sind deutsch, technische Fehler bekommen einen Standardtext
@@ -283,15 +283,30 @@ export async function answerAnfrage(id: string, userId: string, accept: boolean)
 // Chat ---------------------------------------------------------------------------------------
 
 export async function loadNachrichten(id: string): Promise<Nachricht[]> {
-  const { data, error } = await supabase.from('ride_messages').select('id,user_id,body,created_at').eq('ride_id', id).order('created_at').limit(300);
+  const { data, error } = await supabase.from('ride_messages').select('id,user_id,body,created_at,edited_at').eq('ride_id', id).order('created_at').limit(300);
   if (error) fail(error.message);
-  return ((data ?? []) as { id: number; user_id: string; body: string; created_at: string }[]).map((r) => ({ id: r.id, userId: r.user_id, body: r.body, createdAt: new Date(r.created_at) }));
+  return ((data ?? []) as { id: number; user_id: string; body: string; created_at: string; edited_at?: string | null }[]).map((r) => ({ id: r.id, userId: r.user_id, body: r.body, createdAt: new Date(r.created_at), editedAt: r.edited_at ? new Date(r.edited_at) : null }));
 }
 
 export async function sendNachricht(id: string, body: string) {
   const text = body.trim().slice(0, 1000);
   if (!text) return;
   const { error } = await supabase.from('ride_messages').insert({ ride_id: id, body: text });
+  if (error) fail(error.message);
+}
+
+/** Eigene Nachricht bearbeiten (Koray 20.11.2026): nur der Text, nur in den ersten 24 Stunden (Datenbank prüft) */
+export async function editNachricht(messageId: number, body: string) {
+  const text = body.trim().slice(0, 1000);
+  if (!text) return;
+  const { data, error } = await supabase.from('ride_messages').update({ body: text }).eq('id', messageId).select('id');
+  if (error) fail(error.message);
+  if (!data?.length) fail(tr('Bearbeiten geht nur in den ersten 24 Stunden.'));
+}
+
+/** Eigene Nachricht löschen */
+export async function deleteNachricht(messageId: number) {
+  const { error } = await supabase.from('ride_messages').delete().eq('id', messageId);
   if (error) fail(error.message);
 }
 
@@ -342,6 +357,15 @@ export function useNachrichten(id: string | undefined) {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ride_messages', filter: `ride_id=eq.${id}` }, (p) => {
         const r = p.new as { id: number; user_id: string; body: string; created_at: string };
         setList((l) => (l && !l.some((m) => m.id === r.id) ? [...l, { id: r.id, userId: r.user_id, body: r.body, createdAt: new Date(r.created_at) }] : l));
+      })
+      // bearbeitet oder gelöscht: gleich zeigen (Koray 20.11.)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ride_messages', filter: `ride_id=eq.${id}` }, (p) => {
+        const r = p.new as { id: number; body: string; edited_at?: string | null };
+        setList((l) => l?.map((m) => (m.id === r.id ? { ...m, body: r.body, editedAt: r.edited_at ? new Date(r.edited_at) : m.editedAt } : m)) ?? l);
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ride_messages' }, (p) => {
+        const r = p.old as { id?: number };
+        if (r.id != null) setList((l) => l?.filter((m) => m.id !== r.id) ?? l);
       })
       .subscribe();
     const t = setInterval(load, 20000);

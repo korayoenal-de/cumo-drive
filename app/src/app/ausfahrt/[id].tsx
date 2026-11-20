@@ -369,6 +369,18 @@ export default function AusfahrtDetail() {
   const dayMode = joined && a.rideStatus === 'geplant' && a.startsAt.getTime() - now < DAY_BEFORE_MS;
   const startOpen = now >= a.startsAt.getTime() - START_WINDOW_MS;
   const dayOf = (uid: string) => day.find((r) => r.userId === uid) ?? null;
+  // Anpingen schreibt die Frage auch in den Chat (Koray 20.11.2026): Mitteilung weggewischt, Frage weg. Im Chat bleibt
+  // sie stehen und zählt als ungelesen, der Punkt am Community Tab zeigt sie
+  const pingAndAsk = (uid: string, name: string) =>
+    run(`ping-${uid}`, async () => {
+      await pingMember(a.id, uid);
+      await sendNachricht(a.id, tr('{name}, wann bist du da?', { name: name.trim().split(/\s+/)[0] || name })).catch(() => undefined);
+    });
+  // Du wurdest angepingt: Hinweis oben, 30 Minuten lang oder bis du da bist, Antippen öffnet „Wann bist du da?“
+  const myDay = me ? dayOf(me) : null;
+  const pingedMin = myDay?.pingedAt && !myDay.arrived && now - myDay.pingedAt.getTime() < 30 * 60000 ? Math.max(1, Math.round((now - myDay.pingedAt.getTime()) / 60000)) : null;
+  const leadId = day.find((r) => r.isLead)?.userId ?? null;
+  const leadName = members.find((m) => m.userId === leadId)?.name ?? a.ownerName;
   const missing = members.filter((m) => m.userId !== me && !dayOf(m.userId)?.arrived);
   const meArrived = !!(me && dayOf(me)?.arrived);
   const canTakeLead = !isLead && a.myStatus === 'zugesagt' && a.rideStatus === 'geplant' && now > a.startsAt.getTime() + TAKE_LEAD_AFTER_MS;
@@ -435,6 +447,16 @@ export default function AusfahrtDetail() {
           )}
           <AppText variant="display">{a.name}</AppText>
         </View>
+
+        {dayMode && !isLead && pingedMin != null && (
+          <Pressable accessibilityRole="button" onPress={() => setPingOpen(true)} style={styles.pinged}>
+            <SymbolView name="bell.fill" size={18} weight="semibold" tintColor={Colors.signal} />
+            <View style={styles.flex1}>
+              <AppText style={styles.pingedTitle}>{tr('{name} fragt, wann du da bist', { name: leadName })}</AppText>
+              <AppText muted>{tr('vor {n} min, antippen zum Antworten', { n: pingedMin })}</AppText>
+            </View>
+          </Pressable>
+        )}
 
         {/* Kennzahlen direkt unter dem Titel, Reihe wie im Planer (Konsistenzprüfung 15.11., K1, K4) */}
         <Kennzahlen
@@ -596,7 +618,7 @@ export default function AusfahrtDetail() {
                   ) : d?.etaMin != null ? (
                     <AppText style={styles.eta}>in {d.etaMin} min</AppText>
                   ) : isLead && !self ? (
-                    <Pressable accessibilityRole="button" accessibilityLabel={`${m.name} anpingen`} onPress={() => void run(`ping-${m.userId}`, () => pingMember(a.id, m.userId))} style={styles.pingBtn}>
+                    <Pressable accessibilityRole="button" accessibilityLabel={`${m.name} anpingen`} onPress={() => void pingAndAsk(m.userId, m.name)} style={styles.pingBtn}>
                       {busy === `ping-${m.userId}` ? <ActivityIndicator color={Colors.muted} /> : <SymbolView name="bell" size={16} weight="semibold" tintColor={Colors.text} />}
                       <AppText style={styles.pingText}>{t('Anpingen')}</AppText>
                     </Pressable>
@@ -800,7 +822,7 @@ export default function AusfahrtDetail() {
             ? [
                 { key: 'nachricht', icon: 'bubble.left', label: t('Nachricht'), onPress: () => router.push({ pathname: '/nachrichten/[id]', params: { id: person.userId } }) },
                 ...(isLead && dayMode && !person.invited && !dayOf(person.userId)?.arrived
-                  ? ([{ key: 'ping', icon: 'bell', label: t('Anpingen'), hint: t('Fragt, wann er da ist'), onPress: () => void run(`ping-${person.userId}`, () => pingMember(a.id, person.userId)) }] as SheetItem[])
+                  ? ([{ key: 'ping', icon: 'bell', label: t('Anpingen'), hint: t('Fragt, wann er da ist'), onPress: () => void pingAndAsk(person.userId, person.name) }] as SheetItem[])
                   : []),
                 ...(a.isOwner && a.rideStatus === 'geplant'
                   ? ([
@@ -1004,6 +1026,10 @@ function InviteBox({ exclude, onInvite, busyId, contacts, onPlaced, onClose, onL
 
 
 const styles = StyleSheet.create({
+  // Angepingt: getönte Fläche in Signal (Zustand statt Rahmen), Glocke links
+  pinged: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m, padding: Spacing.l, borderRadius: Radius.l, backgroundColor: 'rgba(226,70,28,0.14)' },
+  pingedTitle: { fontFamily: Fonts.bold, fontSize: Type.title, color: Colors.text },
+  flex1: { flex: 1, minWidth: 0 },
   selfStart: { alignSelf: 'flex-start' },
   hereCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.l, minHeight: 72, borderRadius: Radius.l, backgroundColor: Colors.goodTint, paddingHorizontal: Spacing.l, paddingVertical: Spacing.m },
   hereIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.good, alignItems: 'center', justifyContent: 'center' },
