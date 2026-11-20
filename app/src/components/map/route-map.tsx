@@ -138,6 +138,7 @@ export function RouteMap({
   // Apple Maps meldet einen Tipp auf einen schon ausgewählten Marker nicht noch einmal: Pass Marker nach dem Tipp
   // wieder abwählen, sonst lässt sich derselbe Pass nur einmal antippen (Koray 8.11.)
   const passRefs = useRef(new Map<string, MapMarker | null>());
+  const endRefs = useRef<{ start: MapMarker | null; ziel: MapMarker | null }>({ start: null, ziel: null });
   // Drehung der Kamera in Grad, für den Kompass im Planer
   const [camHeading, setCamHeading] = useState(0);
   const focused = useIsFocused();
@@ -654,9 +655,16 @@ export function RouteMap({
             coordinate={ll(ziel)}
             anchor={END_ANCHOR}
             centerOffset={END_OFFSET}
-            title={onDragPoint ? undefined : tr('Ziel')}
+            // ohne title: sonst öffnet Apple Karten beim Antippen und Halten eine leere weiße Sprechblase (Gregor 20.11.2026);
+            // VoiceOver bekommt den Namen über die Plakette selbst
+            ref={(m) => {
+              endRefs.current.ziel = m;
+            }}
+            onSelect={() => setTimeout(() => endRefs.current.ziel?.hideCallout(), 0)}
+            onPress={() => setTimeout(() => endRefs.current.ziel?.hideCallout(), 0)}
             draggable={!!onDragPoint}
             onDragStart={() => {
+              endRefs.current.ziel?.hideCallout();
               haptic('abheben');
               setHeld('ziel');
               onDragStart?.();
@@ -675,9 +683,16 @@ export function RouteMap({
             coordinate={ll(start)}
             anchor={END_ANCHOR}
             centerOffset={END_OFFSET}
-            title={onDragPoint && !roundTrip ? undefined : roundTrip ? tr('Start und Ziel') : tr('Start')}
+            // ohne title: sonst öffnet Apple Karten beim Antippen und Halten eine leere weiße Sprechblase (Gregor 20.11.2026);
+            // VoiceOver bekommt den Namen über die Plakette selbst
+            ref={(m) => {
+              endRefs.current.start = m;
+            }}
+            onSelect={() => setTimeout(() => endRefs.current.start?.hideCallout(), 0)}
+            onPress={() => setTimeout(() => endRefs.current.start?.hideCallout(), 0)}
             draggable={!!onDragPoint && !roundTrip}
             onDragStart={() => {
+              endRefs.current.start?.hideCallout();
               haptic('abheben');
               setHeld('start');
               onDragStart?.();
