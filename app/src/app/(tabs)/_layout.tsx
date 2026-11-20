@@ -5,7 +5,8 @@
  *
  * Symbole: unsere eigenen (components/ui/tab-icons.tsx) als Bilder in assets/tabs, von iOS eingefärbt.
  * Neue Nachrichten und Einladungen als Plakette am Community Tab, die laufende Gruppenfahrt als Zeile über der
- * Leiste (bottom accessory, wie der Mini Player in Apple Music).
+ * Leiste (bottom accessory, wie der Mini Player in Apple Music). Ohne Gruppenfahrt steht dort ab 24 Stunden vorher
+ * die nächste Ausfahrt (Ausfahrt im Fokus, 20.11.2026).
  */
 import * as Notifications from 'expo-notifications';
 import { useEffect } from 'react';
@@ -14,6 +15,7 @@ import { NativeTabs } from 'expo-router/native-tabs';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
 
+import { AusfahrtBar, useAusfahrtBar } from '@/components/group/ausfahrt-bar';
 import { useInviteCount, useInvitesWatcher } from '@/components/group/invites-banner';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
@@ -44,6 +46,8 @@ function IosTabs() {
   const freshTours = useFresh('touren');
   const ride = useRide();
   const riding = ride.status === 'aktiv' || ride.status === 'verbinde';
+  // Ausfahrt im Fokus (Koray 20.11.2026): die nächste Ausfahrt ab 24 Stunden vorher; die laufende Gruppenfahrt geht vor
+  const bar = useAusfahrtBar();
   return (
     <NativeTabs
       minimizeBehavior="never"
@@ -51,11 +55,15 @@ function IosTabs() {
       iconColor={{ default: Colors.muted, selected: Colors.text }}
       labelStyle={{ default: { color: Colors.muted }, selected: { color: Colors.text } }}
       badgeBackgroundColor={Colors.signal}>
-      {riding && (
+      {riding ? (
         <NativeTabs.BottomAccessory>
           <RideAccessory ride={ride} />
         </NativeTabs.BottomAccessory>
-      )}
+      ) : bar ? (
+        <NativeTabs.BottomAccessory>
+          <AusfahrtBar state={bar} />
+        </NativeTabs.BottomAccessory>
+      ) : null}
       {/* eigene Abstände der Ansichten bleiben (Screen, MapSheet), darum keine automatischen Einzüge */}
       <NativeTabs.Trigger name="index" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon src={{ default: require('../../../assets/tabs/planen.png'), selected: require('../../../assets/tabs/planen-on.png') }} renderingMode="template" />

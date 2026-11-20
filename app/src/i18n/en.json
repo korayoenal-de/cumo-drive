@@ -2073,5 +2073,10 @@
   "Chat gelöscht": "Chat deleted",
   "Chat {name} löschen": "Delete chat {name}",
   "Chat löschen?": "Delete chat?",
-  "Der Chat verschwindet aus deiner Liste, bis jemand etwas Neues schreibt. Für die anderen bleibt alles erhalten.": "The chat disappears from your list until someone writes something new. Nothing changes for the others."
+  "Der Chat verschwindet aus deiner Liste, bis jemand etwas Neues schreibt. Für die anderen bleibt alles erhalten.": "The chat disappears from your list until someone writes something new. Nothing changes for the others.",
+  "in {n} min": "in {n} min",
+  "in {h}:{m} h": "in {h}:{m} h",
+  "{n} neu": "{n} new",
+  "{n} fahren mit": "{n} riding",
+  "Läuft": "Live"
 }
