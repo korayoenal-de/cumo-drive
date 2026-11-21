@@ -35,6 +35,7 @@ import { ToastHost } from '@/components/ui/toast';
 import { useCountUp } from '@/components/ui/count-up';
 import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetTour, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { roundaboutTurn } from '@/lib/navigation/roundabout';
+import { thresholds } from '@/lib/navigation/voice';
 import { FUN_NAMES, toFunLevel } from '@/components/ui/fun-gauge';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
 import { useSession } from '@/lib/auth';
@@ -770,8 +771,18 @@ export default function NavigationScreen() {
     const t = r.maneuvers[state.next + 1];
     // Spurpfeile wie auf dem iPhone, ab 1,5 km vor dem Manöver (neuer Schlüssel, damit CarPlay das Bild zeigt)
     const lanes = m.lanes && state.distToNextM < LANES_SHOW_M ? m.lanes.map((l) => `${laneSymbol(l.dirs)}|${l.use ? 'u' : l.ok ? 'o' : 'x'}`).join(',') : '';
+    // Stand des Manövers fürs Auto, an den Stufen der Ansage: weit kündigt an, nah bereitet vor, jetzt führt aus
+    const th = thresholds(state.speedKmh);
+    const d = state.distToNextM;
+    const phase = d <= th.jetzt ? 'execute' : d <= th.nah ? 'prepare' : d <= th.weit ? 'initial' : 'continue';
+    const routeId = `${r.shape.length}-${r.km.toFixed(2)}`;
     carPlayUpdate({
-      key: `${r.shape.length}-${r.km.toFixed(2)}-${state.next}${soon ? '-on' : ''}${rejoin > 20 ? '-zurueck' : ''}${lanes ? '-spur' : ''}`,
+      key: `${routeId}-${state.next}${soon ? '-on' : ''}${rejoin > 20 ? '-zurueck' : ''}${lanes ? '-spur' : ''}`,
+      kind: m.kind,
+      ...(m.exit ? { exit: m.exit } : {}),
+      mid: `${routeId}-${state.next}`,
+      phase,
+      ...(t ? { thenKind: t.kind, ...(t.exit ? { thenExit: t.exit } : {}), thenMid: `${routeId}-${state.next + 1}` } : {}),
       ...(lanes ? { lanes } : {}),
       text: rejoin > 20 ? tr('Zurück zur Tour: {text}', { text: m.text }) : m.text,
       symbol: symbolForKind(m.kind, m.exit),

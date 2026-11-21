@@ -52,7 +52,14 @@ final class CumoCarPlay: Module {
         thenText: p["thenText"] as? String ?? "",
         thenSymbol: p["thenSymbol"] as? String ?? "",
         thenIcon: p["thenIcon"] as? String ?? "",
-        lanes: p["lanes"] as? String ?? ""
+        lanes: p["lanes"] as? String ?? "",
+        kind: p["kind"] as? String ?? "",
+        exit: Int(num("exit")),
+        mid: p["mid"] as? String ?? "",
+        thenKind: p["thenKind"] as? String ?? "",
+        thenExit: Int(num("thenExit")),
+        thenMid: p["thenMid"] as? String ?? "",
+        phase: p["phase"] as? String ?? ""
       )
     }.runOnQueue(.main)
 

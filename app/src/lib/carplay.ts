@@ -17,6 +17,11 @@ type Update = {
   thenText?: string; thenSymbol?: string; thenIcon?: string;
   /** Spurempfehlung "sfsymbol|u,sfsymbol|x" von links nach rechts (u empfohlen, o möglich, x falsch), ab Build 29 */
   lanes?: string;
+  /**
+   * Metadaten fürs Kombiinstrument und Head-up Display (Build 38, iOS 17.4): Manöverart wie in der App, Ausfahrt im
+   * Kreisverkehr, eindeutige Kennung je Manöver und Stand (continue, initial, prepare, execute)
+   */
+  kind?: string; exit?: number; mid?: string; thenKind?: string; thenExit?: number; thenMid?: string; phase?: string;
 };
 type Sub = { remove: () => void };
 type CarPlayModule = {

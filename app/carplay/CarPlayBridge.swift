@@ -20,6 +20,8 @@ final class CarPlayBridge: NSObject {
   private var trip: CPTrip?
   private var maneuverKey: String?
   private var maneuver: CPManeuver?
+  /// Manöver, die schon als Metadaten an das Auto gingen (Kombiinstrument und Head-up Display, Koray 21.11.)
+  private var sharedMids = Set<String>()
   private var panning = false
   /// Sprachansagen an (Knopf auf dem Autodisplay, Zustand kommt aus der App)
   private var voiceOn = true
@@ -163,6 +165,7 @@ final class CarPlayBridge: NSObject {
   // MARK: Führung
 
   func startGuidance() {
+    sharedMids.removeAll()
     guard let t = mapTemplate, session == nil else { return }
     // offene Listen schließen, die Führung gehört auf die Karte
     if planning { cancelPlanning() }
@@ -238,8 +241,14 @@ final class CarPlayBridge: NSObject {
 
   /// then: das Manöver danach ("Dann" wie in der App), CarPlay zeigt es unter dem ersten, wenn Platz ist
   func update(key: String, text: String, symbol: String, icon: String, distM: Double, secs: Double, restKm: Double, restSecs: Double,
-              thenText: String = "", thenSymbol: String = "", thenIcon: String = "", lanes: String = "") {
+              thenText: String = "", thenSymbol: String = "", thenIcon: String = "", lanes: String = "",
+              kind: String = "", exit: Int = 0, mid: String = "", thenKind: String = "", thenExit: Int = 0, thenMid: String = "",
+              phase: String = "") {
     guard let s = session else { return }
+    if #available(iOS 17.4, *), !phase.isEmpty {
+      let st = CarPlayBridge.maneuverState(phase)
+      if s.maneuverState != st { s.maneuverState = st }
+    }
     if key != maneuverKey {
       let m = CPManeuver()
       m.instructionVariants = [text]
@@ -252,6 +261,7 @@ final class CarPlayBridge: NSObject {
       m.initialTravelEstimates = CPTravelEstimates(distanceRemaining: CarPlayBridge.distance(distM), timeRemaining: secs)
       // Spurempfehlung wie auf dem iPhone (13.11.): als Bild unter der Anweisung
       if !lanes.isEmpty, let img = CarPlayBridge.laneImage(lanes) { m.junctionImage = img }
+      CarPlayBridge.describe(m, kind: kind, exit: exit)
       var list = [m]
       if !thenText.isEmpty {
         let n = CPManeuver()
@@ -260,7 +270,15 @@ final class CarPlayBridge: NSObject {
         // ganze Bild samt Rand, der Pfeil wurde winzig (Koray 15.11.). Darum den leeren Rand abschneiden.
         let thenImg = CarPlayBridge.maneuverImage(icon: thenIcon, symbol: thenSymbol, size: 28)
         n.symbolImage = thenImg.map { CarPlayBridge.trimmed($0) }
+        CarPlayBridge.describe(n, kind: thenKind, exit: thenExit)
         list.append(n)
+      }
+      // Metadaten fürs Auto: jedes Manöver einmal, in der Reihenfolge der Fahrt
+      if #available(iOS 17.4, *), !kind.isEmpty {
+        var fresh: [CPManeuver] = []
+        if !mid.isEmpty, !sharedMids.contains(mid) { sharedMids.insert(mid); fresh.append(m) }
+        if list.count > 1, !thenMid.isEmpty, !sharedMids.contains(thenMid) { sharedMids.insert(thenMid); fresh.append(list[1]) }
+        if !fresh.isEmpty { s.add(fresh) }
       }
       s.upcomingManeuvers = list
       maneuverKey = key
@@ -270,6 +288,59 @@ final class CarPlayBridge: NSObject {
     }
     if let t = mapTemplate, let trip {
       t.updateEstimates(CPTravelEstimates(distanceRemaining: CarPlayBridge.distance(restKm * 1000), timeRemaining: restSecs), for: trip)
+    }
+  }
+
+  /// Art, Kreuzung und Verkehrsseite eines Manövers für Kombiinstrument und Head-up Display (ab iOS 17.4). Das Auto
+  /// zeichnet daraus seine eigenen Pfeile; ohne diese Angaben blieb das Head-up Display im BMW leer, während Google
+  /// Maps dort Pfeile zeigte (Koray 21.11.). Unsere Fahrgebiete fahren alle rechts.
+  static func describe(_ m: CPManeuver, kind: String, exit: Int) {
+    guard #available(iOS 17.4, *), !kind.isEmpty else { return }
+    m.maneuverType = maneuverType(kind, exit: exit)
+    m.junctionType = kind.hasPrefix("kreisverkehr") ? .roundabout : .intersection
+    m.trafficSide = .right
+  }
+
+  @available(iOS 17.4, *)
+  static func maneuverType(_ kind: String, exit: Int) -> CPManeuverType {
+    switch kind {
+    case "start": return .startRoute
+    case "ziel": return .arriveAtDestination
+    case "ziel_links": return .arriveAtDestinationLeft
+    case "ziel_rechts": return .arriveAtDestinationRight
+    case "zwischenziel": return .followRoad
+    case "geradeaus": return .straightAhead
+    case "leicht_links": return .slightLeftTurn
+    case "links": return .leftTurn
+    case "scharf_links": return .sharpLeftTurn
+    case "leicht_rechts": return .slightRightTurn
+    case "rechts": return .rightTurn
+    case "scharf_rechts": return .sharpRightTurn
+    case "wenden", "wenden_rechts": return .uTurn
+    case "links_halten", "einfaedeln_links": return .keepLeft
+    case "rechts_halten", "einfaedeln_rechts": return .keepRight
+    case "auffahrt", "auffahrt_rechts", "auffahrt_links": return .onRamp
+    case "abfahrt": return .offRamp
+    case "abfahrt_rechts": return .highwayOffRampRight
+    case "abfahrt_links": return .highwayOffRampLeft
+    case "faehre_an_bord": return .enter_Ferry
+    case "faehre_verlassen": return .exitFerry
+    case "kreisverkehr_verlassen": return .exitRoundabout
+    case "kreisverkehr":
+      let exits: [CPManeuverType] = [.roundaboutExit1, .roundaboutExit2, .roundaboutExit3, .roundaboutExit4, .roundaboutExit5,
+                                      .roundaboutExit6, .roundaboutExit7, .roundaboutExit8, .roundaboutExit9, .roundaboutExit10]
+      return exit >= 1 && exit <= exits.count ? exits[exit - 1] : .enterRoundabout
+    default: return .noTurn
+    }
+  }
+
+  @available(iOS 17.4, *)
+  static func maneuverState(_ phase: String) -> CPManeuverState {
+    switch phase {
+    case "initial": return .initial
+    case "prepare": return .prepare
+    case "execute": return .execute
+    default: return .`continue`
     }
   }
 
@@ -310,6 +381,7 @@ final class CarPlayBridge: NSObject {
     session = nil
     maneuverKey = nil
     maneuver = nil
+    sharedMids.removeAll()
     overviewOn = false
     updateButtons()
     showPreview()
@@ -668,6 +740,10 @@ final class CarPlayBridge: NSObject {
 }
 
 extension CarPlayBridge: CPMapTemplateDelegate {
+  /// Manöver als Metadaten ans Auto (Kombiinstrument, Head-up Display), ab iOS 17.4
+  @available(iOS 17.4, *)
+  func mapTemplateShouldProvideNavigationMetadata(_ mapTemplate: CPMapTemplate) -> Bool { true }
+
   func mapTemplate(_ mapTemplate: CPMapTemplate, startedTrip trip: CPTrip, using routeChoice: CPRouteChoice) {
     mapTemplate.hideTripPreviews()
     emit?("onStart", [:])
