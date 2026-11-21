@@ -19,7 +19,7 @@ import { Colors, Fonts, Shadow } from '@/constants/theme';
 import { useMapSettings, type MapStyle } from '@/lib/map-settings';
 import { clusterPins, type Region } from '@/lib/map-cluster';
 import { HIT_RADIUS, hitKm, pickOnScreen, pickPin, routeStroke, simplifyForScreen } from '@/lib/map-hit';
-import type { LatLon } from '@/lib/tour';
+import { haversine, type LatLon } from '@/lib/tour';
 import { tr } from '@/i18n';
 
 export type CommunityPin = { id: string; kind: 'route' | 'ausfahrt' | 'driver'; p: LatLon; label: string; count?: number; ring?: string };
@@ -105,7 +105,9 @@ export function CommunityMap({ pins, selected, onSelect, onTap, others, keepView
     // Ganz weit draußen (Kontinent, Globus) bleiben die Punkte an ihrem Ort: nebeneinander gelegt ergaben sie dort
     // merkwürdige Reihen, und der gemeldete Ausschnitt taugt auf dem Globus nicht zum Rechnen (Koray 18.11.)
     if (region.longitudeDelta > WORLD_DELTA) return groups.flatMap((g) => g.items);
-    return groups.flatMap((g) => (g.items.length > 1 ? fanOut(g.items, g.p, region, win.width, stage) : g.items));
+    // Nur Pins am selben Ort auffächern; nahe, aber verschiedene Starts bleiben an ihrem Ort (Koray 21.11.: 21 Passrunden
+    // in den Alpen wurden über die Gruppen zu einer langen waagrechten Reihe quer über die Karte, nicht nachvollziehbar)
+    return groups.flatMap((g) => sameSpot(g.items).flatMap((s) => (s.items.length > 1 ? fanOut(s.items, s.p, region, win.width, stage) : s.items)));
   }, [pins, region, win.width, selected, stage]);
 
   // Ein Tipp kann als Kartentipp, als Markentipp oder als beides ankommen, in beliebiger Reihenfolge. Beide werden kurz
@@ -290,6 +292,18 @@ function mergeNear<T extends { id: string; p: LatLon }>(groups: { key: string; p
     const n = hit.items.length + g.items.length;
     hit.p = [(hit.p[0] * hit.items.length + g.p[0] * g.items.length) / n, (hit.p[1] * hit.items.length + g.p[1] * g.items.length) / n];
     hit.items.push(...g.items);
+  }
+  return out;
+}
+
+/** Pins am selben Start (höchstens 150 m auseinander) zusammenfassen, etwa große und kleine Sellaronda */
+const SAME_SPOT_M = 150;
+function sameSpot(items: CommunityPin[]): { p: LatLon; items: CommunityPin[] }[] {
+  const out: { p: LatLon; items: CommunityPin[] }[] = [];
+  for (const it of items) {
+    const hit = out.find((o) => haversine(o.p, it.p) < SAME_SPOT_M);
+    if (hit) hit.items.push(it);
+    else out.push({ p: it.p, items: [it] });
   }
   return out;
 }
