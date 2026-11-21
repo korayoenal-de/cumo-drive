@@ -22,6 +22,8 @@ type Update = {
    * Kreisverkehr, eindeutige Kennung je Manöver und Stand (continue, initial, prepare, execute)
    */
   kind?: string; exit?: number; mid?: string; thenKind?: string; thenExit?: number; thenMid?: string; phase?: string;
+  /** Straße, auf der du gerade fährst (Name oder Nummer), fürs Head-up Display */
+  road?: string;
 };
 type Sub = { remove: () => void };
 type CarPlayModule = {

@@ -782,6 +782,7 @@ export default function NavigationScreen() {
       ...(m.exit ? { exit: m.exit } : {}),
       mid: `${routeId}-${state.next}`,
       phase,
+      ...(r.maneuvers[state.next - 1]?.street ? { road: r.maneuvers[state.next - 1].street } : {}),
       ...(t ? { thenKind: t.kind, ...(t.exit ? { thenExit: t.exit } : {}), thenMid: `${routeId}-${state.next + 1}` } : {}),
       ...(lanes ? { lanes } : {}),
       text: rejoin > 20 ? tr('Zurück zur Tour: {text}', { text: m.text }) : m.text,

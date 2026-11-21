@@ -243,8 +243,9 @@ final class CarPlayBridge: NSObject {
   func update(key: String, text: String, symbol: String, icon: String, distM: Double, secs: Double, restKm: Double, restSecs: Double,
               thenText: String = "", thenSymbol: String = "", thenIcon: String = "", lanes: String = "",
               kind: String = "", exit: Int = 0, mid: String = "", thenKind: String = "", thenExit: Int = 0, thenMid: String = "",
-              phase: String = "") {
+              phase: String = "", road: String = "") {
     guard let s = session else { return }
+    if #available(iOS 17.4, *), !road.isEmpty, s.currentRoadNameVariants != [road] { s.currentRoadNameVariants = [road] }
     if #available(iOS 17.4, *), !phase.isEmpty {
       let st = CarPlayBridge.maneuverState(phase)
       if s.maneuverState != st { s.maneuverState = st }
@@ -268,7 +269,9 @@ final class CarPlayBridge: NSObject {
         n.instructionVariants = [thenText]
         // Die eigenen Symbole haben Rand für die große Kachel. In der kleinen "Dann" Zeile skaliert CarPlay das
         // ganze Bild samt Rand, der Pfeil wurde winzig (Koray 15.11.). Darum den leeren Rand abschneiden.
-        let thenImg = CarPlayBridge.maneuverImage(icon: thenIcon, symbol: thenSymbol, size: 28)
+        // Kräftige Fassung (-s) für die 18 pt der Zeile „Dann“, sonst die normale (Koray 21.11.)
+        let small = thenIcon.isEmpty ? "" : thenIcon + "-s"
+        let thenImg = CarPlayBridge.maneuverImage(icon: UIImage(named: small) != nil ? small : thenIcon, symbol: thenSymbol, size: 28)
         n.symbolImage = thenImg.map { CarPlayBridge.trimmed($0) }
         CarPlayBridge.describe(n, kind: thenKind, exit: thenExit)
         list.append(n)
