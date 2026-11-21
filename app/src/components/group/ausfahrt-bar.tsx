@@ -11,6 +11,8 @@
  * blendet sie in der Navigation, auf Detailseiten und bei offener Tastatur selbst aus, und Toast und Karte rechnen
  * sie schon ein. Der Datumsblock füllt die ganze Höhe links ohne Abstand, mit der Rundung der Leiste
  * (Koray 20.11.2026: vorher klein und gepresst, die Rundungen passten nicht).
+ * Nach unten scrollen blendet sie aus, nach oben scrollen holt sie zurück (Koray 21.11.2026, lib/tab-bar.ts), damit
+ * das Ende eines Blatts nicht hinter ihr liegt.
  */
 import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';

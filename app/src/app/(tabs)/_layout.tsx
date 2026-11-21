@@ -16,6 +16,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/tap';
 
 import { AusfahrtBar, useAusfahrtBar } from '@/components/group/ausfahrt-bar';
+import { useScrolledDown } from '@/lib/tab-bar';
 import { useInviteCount, useInvitesWatcher } from '@/components/group/invites-banner';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Spacing, Type } from '@/constants/theme';
@@ -52,6 +53,8 @@ function IosTabs() {
   const riding = ride.status === 'aktiv' || ride.status === 'verbinde';
   // Ausfahrt im Fokus (Koray 20.11.2026): die nächste Ausfahrt ab 24 Stunden vorher; die laufende Gruppenfahrt geht vor
   const bar = useAusfahrtBar();
+  // Beim Scrollen nach unten tritt die Ausfahrt Leiste zur Seite, nach oben kommt sie zurück (Koray 21.11.2026)
+  const scrolledDown = useScrolledDown();
   return (
     <NativeTabs
       minimizeBehavior="never"
@@ -63,7 +66,7 @@ function IosTabs() {
         <NativeTabs.BottomAccessory>
           <RideAccessory ride={ride} />
         </NativeTabs.BottomAccessory>
-      ) : bar ? (
+      ) : bar && !scrolledDown ? (
         <NativeTabs.BottomAccessory>
           <AusfahrtBar state={bar} />
         </NativeTabs.BottomAccessory>
