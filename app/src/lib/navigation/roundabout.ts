@@ -25,3 +25,19 @@ export function roundaboutTurn(route: NavRoute, i: number): number | null {
   const dir = (Math.atan2((b[1] - a[1]) * k, b[0] - a[0]) * 180) / Math.PI;
   return norm(dir - inHeading);
 }
+
+/**
+ * Richtung, in die ein Manöver führt (Grad, rechts positiv, 0 geradeaus), für Kombiinstrument und Head-up Display
+ * (Koray 21.11., Testrunde: ohne Winkel zeigte der BMW bei Abbiegungen nur die Meter, und den Kreisverkehr mit der
+ * 2. Ausfahrt geradeaus zeichnete er mit Ausfahrt bei 9 Uhr). Kreisverkehr wie roundaboutTurn, sonst die Richtung
+ * 20 m vor gegen 30 m nach dem Manöver.
+ */
+export function maneuverAngle(route: NavRoute, i: number): number | null {
+  const m = route.maneuvers[i];
+  if (!m || route.shape.length < 3) return null;
+  if (m.kind === 'kreisverkehr') return roundaboutTurn(route, i);
+  if (m.kind === 'start' || m.kind.startsWith('ziel') || m.kind === 'zwischenziel') return null;
+  const a = pointAtKm(route, Math.max(0, m.km - 0.02)).heading;
+  const b = pointAtKm(route, Math.min(route.km, m.km + 0.03)).heading;
+  return norm(b - a);
+}

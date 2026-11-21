@@ -24,6 +24,8 @@ type Update = {
   kind?: string; exit?: number; mid?: string; thenKind?: string; thenExit?: number; thenMid?: string; phase?: string;
   /** Straße, auf der du gerade fährst (Name oder Nummer), fürs Head-up Display */
   road?: string;
+  /** Richtung des Manövers in Grad, rechts positiv, 0 geradeaus (Build 41) */
+  angle?: number; thenAngle?: number;
 };
 type Sub = { remove: () => void };
 type CarPlayModule = {

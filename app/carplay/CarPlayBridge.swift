@@ -243,7 +243,7 @@ final class CarPlayBridge: NSObject {
   func update(key: String, text: String, symbol: String, icon: String, distM: Double, secs: Double, restKm: Double, restSecs: Double,
               thenText: String = "", thenSymbol: String = "", thenIcon: String = "", lanes: String = "",
               kind: String = "", exit: Int = 0, mid: String = "", thenKind: String = "", thenExit: Int = 0, thenMid: String = "",
-              phase: String = "", road: String = "") {
+              phase: String = "", road: String = "", angle: Double? = nil, thenAngle: Double? = nil) {
     guard let s = session else { return }
     if #available(iOS 17.4, *), !road.isEmpty, s.currentRoadNameVariants != [road] { s.currentRoadNameVariants = [road] }
     if #available(iOS 17.4, *), !phase.isEmpty {
@@ -262,7 +262,7 @@ final class CarPlayBridge: NSObject {
       m.initialTravelEstimates = CPTravelEstimates(distanceRemaining: CarPlayBridge.distance(distM), timeRemaining: secs)
       // Spurempfehlung wie auf dem iPhone (13.11.): als Bild unter der Anweisung
       if !lanes.isEmpty, let img = CarPlayBridge.laneImage(lanes) { m.junctionImage = img }
-      CarPlayBridge.describe(m, kind: kind, exit: exit)
+      CarPlayBridge.describe(m, kind: kind, exit: exit, angle: angle)
       var list = [m]
       if !thenText.isEmpty {
         let n = CPManeuver()
@@ -273,7 +273,7 @@ final class CarPlayBridge: NSObject {
         let small = thenIcon.isEmpty ? "" : thenIcon + "-s"
         let thenImg = CarPlayBridge.maneuverImage(icon: UIImage(named: small) != nil ? small : thenIcon, symbol: thenSymbol, size: 28)
         n.symbolImage = thenImg.map { CarPlayBridge.trimmed($0) }
-        CarPlayBridge.describe(n, kind: thenKind, exit: thenExit)
+        CarPlayBridge.describe(n, kind: thenKind, exit: thenExit, angle: thenAngle)
         list.append(n)
       }
       // Metadaten fürs Auto: jedes Manöver einmal, in der Reihenfolge der Fahrt
@@ -297,11 +297,18 @@ final class CarPlayBridge: NSObject {
   /// Art, Kreuzung und Verkehrsseite eines Manövers für Kombiinstrument und Head-up Display (ab iOS 17.4). Das Auto
   /// zeichnet daraus seine eigenen Pfeile; ohne diese Angaben blieb das Head-up Display im BMW leer, während Google
   /// Maps dort Pfeile zeigte (Koray 21.11.). Unsere Fahrgebiete fahren alle rechts.
-  static func describe(_ m: CPManeuver, kind: String, exit: Int) {
+  static func describe(_ m: CPManeuver, kind: String, exit: Int, angle: Double? = nil) {
     guard #available(iOS 17.4, *), !kind.isEmpty else { return }
     m.maneuverType = maneuverType(kind, exit: exit)
     m.junctionType = kind.hasPrefix("kreisverkehr") ? .roundabout : .intersection
     m.trafficSide = .right
+    // Richtung, in die es hinausgeht (rechts positiv, 0 geradeaus): daraus zeichnet das Auto den Pfeil. Ohne Winkel
+    // zeigte der BMW bei Abbiegungen nur die Meter, und den Kreisverkehr geradeaus mit Ausfahrt bei 9 Uhr (21.11.).
+    if let a = angle {
+      let exitAngle = Measurement(value: a, unit: UnitAngle.degrees)
+      m.junctionExitAngle = exitAngle
+      m.junctionElementAngles = [exitAngle]
+    }
   }
 
   @available(iOS 17.4, *)

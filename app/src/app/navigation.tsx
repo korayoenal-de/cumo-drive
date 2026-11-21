@@ -34,7 +34,7 @@ import { showToast } from '@/lib/toast';
 import { ToastHost } from '@/components/ui/toast';
 import { useCountUp } from '@/components/ui/count-up';
 import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetTour, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
-import { roundaboutTurn } from '@/lib/navigation/roundabout';
+import { maneuverAngle, roundaboutTurn } from '@/lib/navigation/roundabout';
 import { thresholds } from '@/lib/navigation/voice';
 import { FUN_NAMES, toFunLevel } from '@/components/ui/fun-gauge';
 import { endAllNavActivities, endNavActivity, showNavActivity, symbolForKind } from '@/live/nav-live';
@@ -478,6 +478,11 @@ export default function NavigationScreen() {
     const r = state.route;
     return r ? r.maneuvers.map((_, i) => roundaboutTurn(r, i)) : [];
   }, [state.route]);
+  // Richtung je Manöver fürs Head-up Display (CarPlay Metadaten)
+  const angles = useMemo(() => {
+    const r = state.route;
+    return r ? r.maneuvers.map((_, i) => maneuverAngle(r, i)) : [];
+  }, [state.route]);
   // nur den noch zu fahrenden Teil des Rückwegs zeigen, in 10 m Schritten und genau an der Stelle abgeschnitten
   // (Koray 9.11.: die gelbe Linie hing hinter dem Auto nach, weil sie am vorigen Stützpunkt begann)
   const doneStep = state.route && state.remainingKm != null ? Math.floor((state.route.km - state.remainingKm) * 100) : 0;
@@ -782,8 +787,9 @@ export default function NavigationScreen() {
       ...(m.exit ? { exit: m.exit } : {}),
       mid: `${routeId}-${state.next}`,
       phase,
+      ...(angles[state.next] != null ? { angle: Math.round(angles[state.next]!) } : {}),
       ...(r.maneuvers[state.next - 1]?.street ? { road: r.maneuvers[state.next - 1].street } : {}),
-      ...(t ? { thenKind: t.kind, ...(t.exit ? { thenExit: t.exit } : {}), thenMid: `${routeId}-${state.next + 1}` } : {}),
+      ...(t ? { thenKind: t.kind, ...(t.exit ? { thenExit: t.exit } : {}), thenMid: `${routeId}-${state.next + 1}`, ...(angles[state.next + 1] != null ? { thenAngle: Math.round(angles[state.next + 1]!) } : {}) } : {}),
       ...(lanes ? { lanes } : {}),
       text: rejoin > 20 ? tr('Zurück zur Tour: {text}', { text: m.text }) : m.text,
       symbol: symbolForKind(m.kind, m.exit),
@@ -794,7 +800,7 @@ export default function NavigationScreen() {
       restKm: state.remainingKm ?? 0,
       restSecs,
     });
-  }, [cpRunning, state.route, state.next, state.distToNextM, state.remainingKm, state.eta, state.speedKmh, state.offRouteM, state.status, turns]);
+  }, [cpRunning, state.route, state.next, state.distToNextM, state.remainingKm, state.eta, state.speedKmh, state.offRouteM, state.status, turns, angles]);
   // beim Verlassen der Tour einmal deutlich auf dem Autodisplay melden (höchstens einmal pro Minute)
   const cpOffAt = useRef(0);
   const cpOff = cpRunning && (state.offRouteM ?? 0) > CP_OFF_M;

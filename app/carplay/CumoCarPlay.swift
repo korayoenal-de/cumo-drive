@@ -60,7 +60,9 @@ final class CumoCarPlay: Module {
         thenExit: Int(num("thenExit")),
         thenMid: p["thenMid"] as? String ?? "",
         phase: p["phase"] as? String ?? "",
-        road: p["road"] as? String ?? ""
+        road: p["road"] as? String ?? "",
+        angle: (p["angle"] as? NSNumber)?.doubleValue,
+        thenAngle: (p["thenAngle"] as? NSNumber)?.doubleValue
       )
     }.runOnQueue(.main)
 
