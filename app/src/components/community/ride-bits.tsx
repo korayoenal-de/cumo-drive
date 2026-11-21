@@ -8,7 +8,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
 import { useAvatar } from '@/lib/avatars';
-import { Colors, Fonts, Leading, Radius, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Radius, Spacing, Type } from '@/constants/theme';
 import { freeSeats, initials, weekday, type Ausfahrt } from '@/lib/ausfahrten';
 import { t } from '@/i18n';
 
@@ -92,12 +92,13 @@ const styles = StyleSheet.create({
   avatar: { backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarText: { fontFamily: Fonts.extrabold, color: Colors.text },
   spinner: { alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(11,11,12,0.6)' },
-  tag: { height: 28, paddingHorizontal: 10, borderRadius: 14, justifyContent: 'center' },
+  // gleiche Plakette wie SeatsBadge (kennzahlen.tsx): so breit wie der Text, nicht über die ganze Zeile (Koray 21.11.2026)
+  tag: { alignSelf: 'flex-start', paddingHorizontal: Spacing.s + 2, paddingVertical: 3, borderRadius: Radius.pill },
   tagGood: { backgroundColor: Colors.goodTint },
   tagSignal: { backgroundColor: Colors.signalTint },
   tagMuted: { backgroundColor: Colors.surface2 },
   tagDanger: { backgroundColor: Colors.dangerTint },
-  tagText: { fontFamily: Fonts.bold, fontSize: Type.caption },
+  tagText: { fontFamily: Fonts.bold, fontSize: Type.caption, lineHeight: Leading.caption },
   date: { width: 52, borderRadius: Radius.m, backgroundColor: Colors.surface2, alignItems: 'center', paddingVertical: 6 },
   dateToday: { backgroundColor: Colors.signalTint },
   dateWd: { fontFamily: Fonts.bold, fontSize: 13, lineHeight: 16, color: Colors.muted },
