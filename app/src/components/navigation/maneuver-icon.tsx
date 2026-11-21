@@ -27,7 +27,7 @@ import Svg, { G, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { Colors } from '@/constants/theme';
 import type { ManeuverKind } from '@/lib/navigation/types';
 
-import { SHAFT_INSIDE_HEAD, symbolFor, symbolGeometry, type NavSymbol, type Paint, type Shape } from './maneuver-geometry';
+import { roundaboutExit, roundaboutSmall, SHAFT_INSIDE_HEAD, SMALL_BELOW, symbolFor, symbolGeometry, type NavSymbol, type Paint, type Shape } from './maneuver-geometry';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -38,7 +38,10 @@ const GHOST = 0.3;
 const never = { reduceMotion: ReduceMotion.Never };
 
 export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground = Colors.ground, soon = false }: { symbol: NavSymbol; size?: number; color?: string; ground?: string; soon?: boolean }) {
-  const g = symbolGeometry(symbol);
+  // klein im Kreisverkehr: Kreis mit Nummer und freiem Zeiger statt des kleinteiligen großen Symbols (Koray 21.11.2026)
+  const smallExit = size < SMALL_BELOW ? roundaboutExit(symbol) : null;
+  const small = smallExit != null;
+  const g = small ? roundaboutSmall(smallExit) : symbolGeometry(symbol);
   const paint: Record<Paint, string> = { ink: color, faint: color, ground, signal: Colors.signal };
   const reduce = useReducedMotion();
   const p = useSharedValue(1);
@@ -91,7 +94,10 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
   const total = lens.reduce((n, l) => n + l, 0);
   const starts = lens.map((_, i) => lens.slice(0, i).reduce((n, l) => n + l, 0));
   // Fortschritt, bei dem die Linie (mit runder Kappe) die Basis der Spitze erreicht
-  const headAt = total > 0 ? Math.max(0.5, (total - SHAFT_INSIDE_HEAD - 3) / total) : 0.9;
+  // wie weit der Schaft in die Spitze läuft: je Spitze (die kleinere im Kreisverkehr läuft weniger weit hinein)
+  const lastShaft = [...g.shapes].reverse().find((s) => s.t === 'stroke' && !!s.len);
+  const inside = lastShaft?.t === 'stroke' ? (lastShaft.inside ?? SHAFT_INSIDE_HEAD) : SHAFT_INSIDE_HEAD;
+  const headAt = total > 0 ? Math.max(0.5, (total - inside - 3) / total) : 0.9;
   const isInk = (s: Shape) => (s.t === 'stroke' && !!s.len) || (s.t === 'fill' && !!s.round);
   // Schwache Ebene: Umgebung (Ring, Straße) und der ganze Pfeil in EINER Gruppe, die als Ganzes
   // transparent wird. So liegen Ring und schwacher Pfeil nicht übereinander und es ist nur ein Pfad
@@ -108,7 +114,7 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
       // Schaft unter einer Spitze: hält an der Basis (samt runder Kappe), bis die Spitze voll ist
       const next = g.shapes[i + 1];
       const intoHead = next?.t === 'fill' && !!next.round;
-      return <DrawnStroke key={i} shape={s} color={paint[s.paint]} from={starts[i]} total={total} p={p} stopBefore={intoHead ? SHAFT_INSIDE_HEAD + s.w / 2 : 0} release={headAt + 0.025} />;
+      return <DrawnStroke key={i} shape={s} color={paint[s.paint]} from={starts[i]} total={total} p={p} stopBefore={intoHead ? (s.inside ?? SHAFT_INSIDE_HEAD) + s.w / 2 : 0} release={headAt + 0.025} />;
     }
     if (s.t === 'fill' && s.round && draw) return <DrawnHead key={i} d={s.d} color={paint[s.paint]} p={p} at={headAt} />;
     // Umgebung liegt beim Aufbau schon in der schwachen Ebene
@@ -132,7 +138,7 @@ export function NavSymbolIcon({ symbol, size = 64, color = Colors.text, ground =
       <Svg width={size} height={size} viewBox="0 0 64 64">
         {g.mirror ? <G transform="matrix(-1 0 0 1 64 0)">{all}</G> : all}
         {g.ring && /_([1-9])$/.test(symbol) && (
-          <SvgText x={g.ring.x} y={g.ring.y + 5} fontSize={14} fontWeight="800" fill={color} textAnchor="middle">
+          <SvgText x={g.ring.x} y={g.ring.y + (small ? 6.5 : 5)} fontSize={small ? 18 : 14} fontWeight="800" fill={color} textAnchor="middle">
             {symbol.slice(-1)}
           </SvgText>
         )}

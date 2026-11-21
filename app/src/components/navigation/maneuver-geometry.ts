@@ -96,7 +96,8 @@ export const SYMBOL_NAMES: Record<Exclude<NavSymbol, RoundaboutSymbol>, string> 
  */
 export type RoundDir = 'r' | 'hr' | 'g' | 'hl' | 'l' | 'w';
 export type RoundaboutSymbol = `kreisverkehr_${RoundDir}_${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7}`;
-export const ROUND_DIR_ANGLE: Record<RoundDir, number> = { r: 90, hr: 40, g: 0, hl: -40, l: -90, w: -140 };
+// zurück −125 statt −140: mit −140 lief die Spitze in die Zufahrt (Koray 21.11.2026, Symbol 26)
+export const ROUND_DIR_ANGLE: Record<RoundDir, number> = { r: 90, hr: 40, g: 0, hl: -40, l: -90, w: -125 };
 const ROUND_DIR_NAME: Record<RoundDir, string> = { r: tr('rechts'), hr: tr('halbrechts'), g: tr('geradeaus'), hl: tr('halblinks'), l: tr('links'), w: tr('zurück') };
 
 /** Alle Symbole mit Namen, auch die Kreisverkehr Richtungen (für die Bilder in CarPlay) */
@@ -120,7 +121,7 @@ export function roundDir(turn: number): RoundDir {
 /** ink: Hauptfarbe, faint: Hauptfarbe schwach (Umgebung), ground: Untergrund, signal: Akzent */
 export type Paint = 'ink' | 'faint' | 'ground' | 'signal';
 export type Shape =
-  | { t: 'stroke'; d: string; w: number; paint: Paint; len?: number }
+  | { t: 'stroke'; d: string; w: number; paint: Paint; len?: number; inside?: number }
   | { t: 'fill'; d: string; paint: Paint; evenodd?: boolean; round?: boolean };
 
 export type IconGeometry = {
@@ -197,15 +198,21 @@ class Pen {
 
 type Part = { pts: Pt[]; emit: (o: Pt) => Shape };
 
+/** Spitze in normaler Größe und kleiner für Kreisverkehr und Kehre (Koray 21.11.2026: die große stieß an den Ring) */
+type Head = { len: number; half: number };
+const HEAD: Head = { len: HEAD_LEN, half: HEAD_HALF };
+const HEAD_SMALL: Head = { len: 12, half: 7.5 };
+
 /** Pfeil aus einem Stift: Schaft bis unter die Spitze, dann die Spitze. */
-function arrow(pen: Pen, post = 0, paint: Paint = 'ink'): Part[] {
-  pen.fwd(post + HEAD_LEN - UNDER);
-  const tip = add(pen.p, unit(pen.h), UNDER);
-  const head = headPts(tip, pen.h);
+function arrow(pen: Pen, post = 0, paint: Paint = 'ink', h: Head = HEAD): Part[] {
+  const under = h.len * 0.6;
+  pen.fwd(post + h.len - under);
+  const tip = add(pen.p, unit(pen.h), under);
+  const head = headPts(tip, pen.h, h.len, h.half);
   const shaftD = pen.d;
   const len = pen.len;
   return [
-    { pts: pen.pts, emit: (o) => ({ t: 'stroke', d: shift(shaftD, o), w: STROKE, paint, len }) },
+    { pts: pen.pts, emit: (o) => ({ t: 'stroke', d: shift(shaftD, o), w: STROKE, paint, len, inside: h.len - under }) },
     { pts: head, emit: (o) => ({ t: 'fill', d: poly(head, o), paint, round: true }) },
   ];
 }
@@ -335,14 +342,15 @@ let ringCenter = { x: 32, y: 32 };
 /** Ring Abschnitt plus Ausfahrt: Bogen als eigener Strich, Ausfahrt als Pfeil. */
 function arrowFrom(pen: Pen, exitPt: Pt, exit: number): Part[] {
   const ringPart: Part = { pts: pen.pts, emit: lineEmit(pen.d, pen.len) };
+  // Luft zwischen Ring und Spitze: 10 gerade Strecke vor der kleineren Spitze (vorher 4 plus große Spitze)
   const out = new Pen(exitPt, exit).fwd(4);
-  return [ringPart, ...arrow(out, 2)];
+  return [ringPart, ...arrow(out, 6, 'ink', HEAD_SMALL)];
 }
 const lineEmit = (d: string, len: number) => (o: Pt): Shape => ({ t: 'stroke', d: shift(d, o), w: STROKE, paint: 'ink', len });
 
 /** Kehre: schräg hoch, enge Kehre, schräg zurück hoch. */
 function hairpin(): Shape[] {
-  return compose(arrow(new Pen(O, 62).fwd(20).arc(7, -124).fwd(16), 2));
+  return compose(arrow(new Pen(O, 62).fwd(20).arc(7, -124).fwd(16), 2, 'ink', HEAD_SMALL));
 }
 
 const circle = (cx: number, cy: number, r: number) => `M ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} Z`;
@@ -517,8 +525,35 @@ export function symbolGeometry(sym: NavSymbol): IconGeometry {
   }
 }
 
+/**
+ * Kreisverkehr klein, unter SMALL_BELOW pt (Koray 21.11.2026: die Kleinteiligkeit funktioniert klein nicht): Kreis mit
+ * der Nummer der Ausfahrt und ein freier Zeiger in Ausfahrtrichtung, mit sichtbarer Lücke zum Kreis.
+ */
+export const SMALL_BELOW = 40;
+export function roundaboutSmall(exit: number): IconGeometry {
+  const R = 14;
+  const GAP = 4;
+  const ring = new Pen({ x: -R, y: 0 }, 0).arc(R, 180).arc(R, 180);
+  const tip = add(O, unit(exit), R + 3 + GAP + 11);
+  const head = headPts(tip, exit, 11, 8.5);
+  const shapes = compose([
+    { pts: ring.pts, emit: (o) => ({ t: 'stroke', d: shift(ring.d, o), w: 6, paint: 'ink' }) },
+    { pts: head, emit: (o) => ({ t: 'fill', d: poly(head, o), paint: 'ink', round: true }) },
+  ]);
+  return { shapes, nudge: unit(exit), ring: { x: lastOffset.x, y: lastOffset.y } };
+}
+
+/** Ausfahrtrichtung eines Kreisverkehr Symbols, null bei anderen Symbolen */
+export function roundaboutExit(sym: NavSymbol): number | null {
+  const rd = /^kreisverkehr_(r|hr|g|hl|l|w)_\d$/.exec(sym);
+  if (rd) return ROUND_DIR_ANGLE[rd[1] as RoundDir];
+  const n = /^kreisverkehr_([1-5])$/.exec(sym);
+  if (n) return ROUNDABOUT_EXITS[Number(n[1]) - 1];
+  return sym === 'kreisverkehr' ? 30 : null;
+}
+
 /** Ausfahrtrichtung je Nummer, gegen den Uhrzeigersinn: rechts, schräg geradeaus, schräg links, links, fast zurück */
-export const ROUNDABOUT_EXITS = [90, 30, -30, -90, -140];
+export const ROUNDABOUT_EXITS = [90, 30, -30, -90, -125];
 
 /** Symbol für ein Manöver, im Kreisverkehr mit Ausfahrt Nummer. */
 /** turn: gemessene Richtung beim Verlassen des Kreisverkehrs (roundaboutTurn), hat Vorrang vor der Nummer */

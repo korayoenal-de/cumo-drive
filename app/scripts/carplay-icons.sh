@@ -6,8 +6,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 tmp=$(mktemp -d)
-node --experimental-strip-types scripts/nav-icons.mts "$tmp" > /dev/null
-rm -rf assets/carplay-icons && mkdir -p assets/carplay-icons
+# tsx statt node: die Geometrie nutzt den Pfad Alias @/ (Übersetzungen)
+npx tsx --tsconfig scripts/replay/tsconfig.json scripts/nav-icons.mts "$tmp" > /dev/null
+# nur die eigenen Bilder ersetzen, die Autos (car-*) kommen aus einem anderen Skript
+mkdir -p assets/carplay-icons && rm -f assets/carplay-icons/nav-*.png assets/carplay-icons/fun-*.png
 for f in "$tmp"/*.svg; do
   n=$(basename "$f" .svg)
   rsvg-convert -w 128 -h 128 "$f" -o "assets/carplay-icons/$n@2x.png"
@@ -18,7 +20,7 @@ for f in "$tmp"/*.svg; do
   rsvg-convert -w 192 -h 192 "$tmp/$n-on.tmp" -o "assets/carplay-icons/$n-on@3x.png"
 done
 # Logo als Pegel für die Highlight Hinweise (fun-1 bis fun-5)
-node --experimental-strip-types scripts/fun-icons.mts "$tmp/fun" > /dev/null
+npx tsx --tsconfig scripts/replay/tsconfig.json scripts/fun-icons.mts "$tmp/fun" > /dev/null
 for f in "$tmp"/fun/*.svg; do
   n=$(basename "$f" .svg)
   rsvg-convert -w 128 -h 128 "$f" -o "assets/carplay-icons/$n@2x.png"
