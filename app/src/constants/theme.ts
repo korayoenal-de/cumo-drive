@@ -69,6 +69,8 @@ export const Type = {
   title: 17,
   button: 17,
   h3: 17,
+  /** Inhalt unter einem Label, eine Stufe unter den Reitern: Tourname im Planer (Koray 21.11.2026, Variante 1) */
+  lead: 20,
   /** große Reiter (Gespeichert, Gefahren; Schnelle Runde, Route): Inter Bold, normal geschrieben */
   tab: 26,
   /** Kennzahlen in Archivo (412 KM, 2:15 H) */
@@ -81,7 +83,7 @@ export const Type = {
 } as const;
 
 /** Zeilenhöhen passend zur Skala */
-export const Leading = { micro: 13, caption: 16, body: 20, title: 22, tab: 30, metric: 26, h2: 30, display: 36 } as const;
+export const Leading = { micro: 13, caption: 16, body: 20, title: 22, lead: 26, tab: 30, metric: 26, h2: 30, display: 36 } as const;
 
 /** Feste Größen für Bedienelemente (Prinzip 7: Treffer ab 44 pt) */
 export const Size = {

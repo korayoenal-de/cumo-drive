@@ -35,7 +35,7 @@ import { ActionBar, type ActionBarRef } from '@/components/ui/action-bar';
 import { LoadingButton, type LoadStage } from '@/components/ui/loading-button';
 import { AppText } from '@/components/ui/text';
 import { Plakette } from '@/components/ui/plakette';
-import { Colors, Fonts, Motion, Shadow, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Motion, Shadow, Spacing, Type } from '@/constants/theme';
 import { guardDrive } from '@/lib/drive-guard';
 import { setActiveTour } from '@/lib/active-tour';
 import { shareTourLink } from '@/lib/share-link';
@@ -677,12 +677,14 @@ export function TourMode({
           accessibilityHint={tr('Umbenennen')}
           onPress={() => setRenaming(true)}
           style={({ pressed }) => [tourStyles.nameRow, pressed && { opacity: 0.7 }]}>
-          <AppText variant="title" numberOfLines={2} style={tourStyles.nameText}>
-            {plan.name.trim() || routeTour.name}
-          </AppText>
-          {plan.dirty && (
-            <Plakette label={tr('Geändert')} tone="warn" />
-          )}
+          {/* Hierarchie (Koray 21.11.2026, Variante 1): Label grau über dem Namen, Name eine Stufe unter den Reitern */}
+          <View style={tourStyles.nameCol}>
+            <AppText muted>{tr('Name')}</AppText>
+            <AppText numberOfLines={2} style={tourStyles.nameText}>
+              {plan.name.trim() || routeTour.name}
+            </AppText>
+          </View>
+          {plan.dirty && <Plakette label={tr('Geändert')} tone="warn" />}
         </Pressable>
       )}
 
@@ -984,7 +986,8 @@ function SwipeDelete({ progress, label, onPress }: { progress: SharedValue<numbe
 
 const tourStyles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.s },
-  nameText: { flexShrink: 1, fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30 },
+  nameCol: { flexShrink: 1 },
+  nameText: { fontFamily: Fonts.semibold, fontSize: Type.lead, lineHeight: Leading.lead, color: Colors.text },
   // Wetter Warnungen unter den Kennzahlen: Symbol gelb, Text grau, keine eigene Fläche (Ruhe)
   weatherRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s },
   weatherText: { flex: 1, minWidth: 0 },
