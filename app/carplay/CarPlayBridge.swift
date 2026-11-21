@@ -227,6 +227,15 @@ final class CarPlayBridge: NSObject {
     return UIImage(cgImage: cut, scale: 3, orientation: .up).withRenderingMode(img.renderingMode)
   }
 
+  /// Bild auf eine feste Kantenlänge in Punkten bringen, im Maßstab des Autodisplays
+  private static func fitted(_ img: UIImage, side: CGFloat, scale: CGFloat) -> UIImage {
+    let fmt = UIGraphicsImageRendererFormat()
+    fmt.scale = max(1, scale)
+    let size = CGSize(width: side, height: side)
+    let out = UIGraphicsImageRenderer(size: size, format: fmt).image { _ in img.draw(in: CGRect(origin: .zero, size: size)) }
+    return out.withRenderingMode(img.renderingMode)
+  }
+
   /// then: das Manöver danach ("Dann" wie in der App), CarPlay zeigt es unter dem ersten, wenn Platz ist
   func update(key: String, text: String, symbol: String, icon: String, distM: Double, secs: Double, restKm: Double, restSecs: Double,
               thenText: String = "", thenSymbol: String = "", thenIcon: String = "", lanes: String = "") {
@@ -234,7 +243,12 @@ final class CarPlayBridge: NSObject {
     if key != maneuverKey {
       let m = CPManeuver()
       m.instructionVariants = [text]
-      m.symbolImage = CarPlayBridge.maneuverImage(icon: icon, symbol: symbol, size: 44)
+      // Symbol neben die Entfernung (Koray 21.11., Vergleich mit Google Maps): CarPlay stellt das Symbol nur dann links
+      // neben die Entfernung, wenn es höchstens etwa 50 pt breit ist; größere Bilder setzt es allein darüber und
+      // braucht eine Zeile mehr. Darum Rand weg und auf 44 pt in der Auflösung des Autodisplays.
+      m.symbolImage = CarPlayBridge.maneuverImage(icon: icon, symbol: symbol, size: 44).map {
+        CarPlayBridge.fitted(CarPlayBridge.trimmed($0), side: 44, scale: interfaceController?.carTraitCollection.displayScale ?? 2)
+      }
       m.initialTravelEstimates = CPTravelEstimates(distanceRemaining: CarPlayBridge.distance(distM), timeRemaining: secs)
       // Spurempfehlung wie auf dem iPhone (13.11.): als Bild unter der Anweisung
       if !lanes.isEmpty, let img = CarPlayBridge.laneImage(lanes) { m.junctionImage = img }
