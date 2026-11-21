@@ -36,6 +36,7 @@ import { LoadingButton, type LoadStage } from '@/components/ui/loading-button';
 import { AppText } from '@/components/ui/text';
 import { Plakette } from '@/components/ui/plakette';
 import { Colors, Fonts, Leading, Motion, Shadow, Spacing, Type } from '@/constants/theme';
+import { Chip, ChipGroup } from '@/components/ui/chip';
 import { guardDrive } from '@/lib/drive-guard';
 import { setActiveTour } from '@/lib/active-tour';
 import { shareTourLink } from '@/lib/share-link';
@@ -51,7 +52,7 @@ import { OrtSheet, type NearKind } from './ort-panel';
 import { PointMenu, type PointAction, type PointMenuState } from './point-menu';
 import { nearestOnLine, STOP_SNAP_M } from '@/lib/stop-splice';
 import { allowTurnAt } from '@/lib/cumo-routing';
-import { Accordion, avoidSummary, DragArea, GroupBlock, Pill, PointSymbol, PrimaryButton, SecondaryButton, Section, Stats, StopsPlanner, Toggle, Warnings } from './planner-parts';
+import { Accordion, avoidSummary, DragArea, GroupBlock, PointSymbol, PrimaryButton, SecondaryButton, Section, Stats, StopsPlanner, Toggle, Warnings } from './planner-parts';
 import { keyOf, type PendingPoint, type PointKind, profileWord, samePts } from './planner-shared';
 
 import { styles } from './planner-styles';
@@ -639,19 +640,21 @@ export function TourMode({
               )}
             </View>
             {choosing && (
-              <View style={styles.wrap}>
+              // Filterchips wie überall: weiße Fläche gleitet zur Wahl (Koray 21.11.: vorher eigene orange Pillen ohne
+              // Bewegung). Die Wahl schließt erst, wenn die Fläche angekommen ist, sonst sähe man das Gleiten nicht.
+              <ChipGroup>
                 {LEG_PROFILE_CHOICES.map((c) => (
-                  <Pill
+                  <Chip
                     key={c.id}
                     label={c.label}
                     active={lp === c.id}
                     onPress={() => {
-                      setLegMenu(null);
                       if (c.id !== lp) plan.setLegProfile(i, c.id, profile, avoid);
+                      setTimeout(() => setLegMenu((m) => (m === i ? null : m)), c.id !== lp ? Motion.enter + 120 : 0);
                     }}
                   />
                 ))}
-              </View>
+              </ChipGroup>
             )}
           </View>
         ) : (

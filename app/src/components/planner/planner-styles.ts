@@ -161,8 +161,4 @@ export const styles = StyleSheet.create({
   profilePill: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, justifyContent: 'center' },
   profilePillOn: { backgroundColor: Colors.surface2 },
   profileText: { fontFamily: Fonts.semibold, fontSize: Type.small },
-  pill: { minHeight: 44, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
-  pillOn: { backgroundColor: Colors.signal },
-  pillText: { fontFamily: Fonts.medium, fontSize: Type.small },
-  pillTextOn: { color: Colors.onSignal, fontFamily: Fonts.bold },
 });

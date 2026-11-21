@@ -92,19 +92,6 @@ export function PointSymbol({ kind, label }: { kind: PointKind; label: string })
   );
 }
 
-/** Kompakte Taste in Pillenform mit 44 pt Höhe; active hebt sie in Signalfarbe hervor. */
-export function Pill({ label, onPress, active }: { label: string; onPress: () => void; active?: boolean }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={active !== undefined ? { selected: active } : undefined}
-      onPress={onPress}
-      style={({ pressed }) => [styles.pill, active && styles.pillOn, pressed && styles.pressed]}>
-      <AppText style={[styles.pillText, active && styles.pillTextOn]}>{label}</AppText>
-    </Pressable>
-  );
-}
-
 /* Bausteine */
 
 export function Section({ label, action, children }: { label: string; action?: { label: string; onPress: () => void }; children: ReactNode }) {
