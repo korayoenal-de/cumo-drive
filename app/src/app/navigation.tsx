@@ -776,10 +776,12 @@ export default function NavigationScreen() {
     const t = r.maneuvers[state.next + 1];
     // Spurpfeile wie auf dem iPhone, ab 1,5 km vor dem Manöver (neuer Schlüssel, damit CarPlay das Bild zeigt)
     const lanes = m.lanes && state.distToNextM < LANES_SHOW_M ? m.lanes.map((l) => `${laneSymbol(l.dirs)}|${l.use ? 'u' : l.ok ? 'o' : 'x'}`).join(',') : '';
-    // Stand des Manövers fürs Auto, an den Stufen der Ansage: weit kündigt an, nah bereitet vor, jetzt führt aus
+    // Stand des Manövers fürs Auto (Koray 21.11., Testrunde mit Head-up Display): Im Stand „ausführen“ blendet der BMW
+    // den Pfeil aus und zeigt nur die Meter (30 m vor der Ampel), darum erst ganz am Manöver. „Weiterfahren“ zeigt
+    // ebenfalls nur Meter, darum ab 2 km (oder der Vorankündigung, wenn sie früher kommt) schon „angekündigt“.
     const th = thresholds(state.speedKmh);
     const d = state.distToNextM;
-    const phase = d <= th.jetzt ? 'execute' : d <= th.nah ? 'prepare' : d <= th.weit ? 'initial' : 'continue';
+    const phase = d <= 12 ? 'execute' : d <= th.nah ? 'prepare' : d <= Math.max(th.weit, 2000) ? 'initial' : 'continue';
     const routeId = `${r.shape.length}-${r.km.toFixed(2)}`;
     carPlayUpdate({
       key: `${routeId}-${state.next}${soon ? '-on' : ''}${rejoin > 20 ? '-zurueck' : ''}${lanes ? '-spur' : ''}`,
