@@ -4,8 +4,8 @@
  * Je Pass: Startpunkte in sechs Richtungen in zwei Abständen um die Passhöhe (kurze und lange Runde). Geplant wird
  * Start, Passhöhe und zurück über einen Nachbarpass oder einen Wendepunkt quer zur Anfahrt, im Profil kurvig. Nur
  * echte Rundtouren: höchstens 8 % doppelt gefahren. Behalten
- * werden Runden, die wirklich über die Passhöhe führen, mit Fahrspaß ab 60; davon die drei besten mit verschiedenen
- * Startorten. Auf der Seite steht nur die gezeichnete Form (0 bis 100, ohne Koordinaten), Strecke,
+ * werden Runden, die wirklich über die Passhöhe führen, mit Fahrspaß ab 60; davon je Längenband (bis 110, bis 170,
+ * darüber) die beste, verschiedene Startorte und Schleifen. Auf der Seite steht nur die gezeichnete Form (0 bis 100, ohne Koordinaten), Strecke,
  * Fahrzeit, Fahrspaß und der Name.
  *
  * Aufruf (braucht ROUTING_QA_KEY): npx tsx --tsconfig scripts/replay/tsconfig.json scripts/pass-tours.ts [ikone|bekannt] [ausgabe.json]
@@ -163,22 +163,31 @@ async function candidatesFor(pass: Pass): Promise<Candidate[]> {
   return out;
 }
 
-const far = (a: LatLon, b: LatLon) => Math.hypot(a[0] - b[0], (a[1] - b[1]) * 0.7) > 0.05;
+/** Startorte mindestens 12 km auseinander */
+const far = (a: LatLon, b: LatLon) => haversine(a, b) > 12000;
+/** Dieselbe Schleife mit anderem Startort (Prad und Val Müstair, Lauf 3 am 21.11.): gleiche Pässe, ähnliche Länge */
+const sameLoop = (a: Candidate, b: Candidate) =>
+  Math.abs(a.km - b.km) < Math.max(a.km, b.km) * 0.12 && a.others.map((q) => q.id).sort().join() === b.others.map((q) => q.id).sort().join();
+/** Verschiedene Längen zeigen (Sella lieferte drei Runden über 200 km): erst die beste je Band, dann auffüllen */
+const band = (km: number) => (km <= 110 ? 0 : km <= 170 ? 1 : 2);
 
 (async () => {
   const list = PASSES.filter((p) => p.tier === tier);
   const result: Record<string, unknown> = {};
   for (const pass of list) {
     const c = (await candidatesFor(pass)).sort((a, b) => b.fun - a.fun);
-    // die drei besten mit verschiedenen Startorten (nicht zweimal derselbe Ort, Lauf 2 am 21.11.)
     const pick: (Candidate & { from: string })[] = [];
-    for (const x of c) {
-      if (pick.length >= 3) break;
-      if (!pick.every((p) => far(p.start, x.start))) continue;
+    const tryAdd = async (x: Candidate) => {
+      if (pick.length >= 3 || pick.some((p) => p === x || !far(p.start, x.start) || sameLoop(p, x))) return;
       const from = await localName(x.start);
-      if (pick.some((p) => p.from === from)) continue;
+      if (pick.some((p) => p.from === from)) return;
       pick.push({ ...x, from });
+    };
+    for (const b of [0, 1, 2]) {
+      const best = c.find((x) => band(x.km) === b);
+      if (best) await tryAdd(best);
     }
+    for (const x of c) await tryAdd(x);
     const tours = [];
     for (const t of pick.sort((a, b) => a.km - b.km)) {
       const from = t.from;
@@ -193,7 +202,12 @@ const far = (a: LatLon, b: LatLon) => Math.hypot(a[0] - b[0], (a[1] - b[1]) * 0.
         open: { start: t.start.map((v) => +v.toFixed(3)), via: [[pass.lat, pass.lon], t.via.map((v) => +v.toFixed(3))] },
       });
     }
-    result[pass.id] = { name: pass.name, candidates: c.length, tours };
+    result[pass.id] = {
+      name: pass.name,
+      tours,
+      // alle Kandidaten ohne Form, um die Auswahl ohne neue Planung zu ändern
+      candidates: c.map(({ form: _f, others, ...x }) => ({ ...x, others: others.map((q) => q.id) })),
+    };
     console.log(`${pass.name}: ${c.length} Kandidaten, ${tours.map((t) => `${t.name} (${t.km} km, ${t.fun})`).join(' | ')}`);
   }
   writeFileSync(outFile, JSON.stringify(result, null, 1));
