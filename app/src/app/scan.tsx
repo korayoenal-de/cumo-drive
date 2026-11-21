@@ -35,13 +35,17 @@ const STEP_TEXT: Record<PlanStep, string> = {
 export default function ScanScreen() {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
-  const [status, setStatus] = useState<{ kind: 'scan' } | { kind: 'busy'; text: string; name: string } | { kind: 'error'; text: string }>({ kind: 'scan' });
+  const { code } = useLocalSearchParams<{ code?: string }>();
+  // Über einen geteilten Link geöffnet (WhatsApp, Koray 21.11.): keine Kamera, kein Scanner, gleich laden. Vorher stand
+  // dort „Zum Scannen braucht die App die Kamera“ und die Freigabe wurde abgefragt, obwohl nichts zu scannen war.
+  const viaLink = !!code;
+  const [status, setStatus] = useState<{ kind: 'scan' } | { kind: 'busy'; text: string; name: string } | { kind: 'error'; text: string }>(
+    viaLink ? { kind: 'busy', text: tr('Link wird geladen'), name: tr('Geteilte Tour') } : { kind: 'scan' },
+  );
   const handled = useRef(false);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => () => abort.current?.abort(), []);
-
-  const { code } = useLocalSearchParams<{ code?: string }>();
 
   const onScan = async (r: BarcodeScanningResult) => {
     if (handled.current) return;
@@ -113,12 +117,15 @@ export default function ScanScreen() {
 
   const retry = () => {
     handled.current = false;
-    setStatus({ kind: 'scan' });
+    if (viaLink) {
+      setStatus({ kind: 'busy', text: tr('Link wird geladen'), name: tr('Geteilte Tour') });
+      void onScan({ data: String(code) } as BarcodeScanningResult);
+    } else setStatus({ kind: 'scan' });
   };
 
   return (
     <View style={styles.root}>
-      {permission?.granted && status.kind !== 'busy' ? (
+      {!viaLink && permission?.granted && status.kind !== 'busy' ? (
         <CameraView
           style={StyleSheet.absoluteFill}
           facing="back"
@@ -128,14 +135,22 @@ export default function ScanScreen() {
       ) : null}
 
       <View style={[styles.top, { paddingTop: insets.top + Spacing.m }]}>
-        <AppText variant="title">{t('Tour vom Planer holen')}</AppText>
+        <AppText variant="title">{viaLink ? t('Geteilte Tour') : t('Tour vom Planer holen')}</AppText>
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.close}>
           <AppText style={styles.closeText}>{t('Schließen')}</AppText>
         </Pressable>
       </View>
 
       <View style={styles.center}>
-        {!permission ? null : !permission.granted ? (
+        {status.kind === 'busy' ? (
+          <View style={styles.card}>
+            <ActivityIndicator color={Colors.signal} />
+            <AppText variant="title" numberOfLines={2}>
+              {status.name}
+            </AppText>
+            <AppText muted>{status.text}</AppText>
+          </View>
+        ) : viaLink || !permission ? null : !permission.granted ? (
           <View style={styles.card}>
             <AppText>{t('Zum Scannen braucht die App die Kamera.')}</AppText>
             <Pressable
@@ -144,14 +159,6 @@ export default function ScanScreen() {
               onPress={() => (permission.canAskAgain ? requestPermission() : Linking.openSettings())}>
               <AppText style={styles.primaryText}>{permission.canAskAgain ? tr('Kamera erlauben') : tr('Einstellungen öffnen')}</AppText>
             </Pressable>
-          </View>
-        ) : status.kind === 'busy' ? (
-          <View style={styles.card}>
-            <ActivityIndicator color={Colors.signal} />
-            <AppText variant="title" numberOfLines={2}>
-              {status.name}
-            </AppText>
-            <AppText muted>{status.text}</AppText>
           </View>
         ) : (
           <View style={styles.frame} />
@@ -163,9 +170,13 @@ export default function ScanScreen() {
           <View style={styles.card}>
             <AppText>{status.text}</AppText>
             <Pressable accessibilityRole="button" style={styles.primary} onPress={retry}>
-              <IconLabel icon={{ draw: 'radar' }} color={Colors.onSignal}>
-<AppText style={styles.primaryText}>{t('Nochmal scannen')}</AppText>
-</IconLabel>
+              {viaLink ? (
+                <AppText style={styles.primaryText}>{t('Nochmal versuchen')}</AppText>
+              ) : (
+                <IconLabel icon={{ draw: 'radar' }} color={Colors.onSignal}>
+                  <AppText style={styles.primaryText}>{t('Nochmal scannen')}</AppText>
+                </IconLabel>
+              )}
             </Pressable>
           </View>
         ) : status.kind === 'scan' && permission?.granted ? (
