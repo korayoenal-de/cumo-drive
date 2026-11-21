@@ -353,6 +353,13 @@ describe('Tempolimit am Ortsausgang', () => {
     assert.ok(l.every((x) => x.known && x.v === 50));
   });
 
+  it('Autobahn ohne Tempolimit zeigt kein Schild (A6, Koray 21.11.)', () => {
+    const a6 = (speed_limit: number | 'unlimited') => ({ length: 1, road_class: 'motorway', speed_limit, names: ['A 6'] });
+    const l = edgeLimits([a6(120), a6('unlimited'), { length: 1, road_class: 'motorway', names: ['A 6'] }], null);
+    assert.deepEqual(l.map((x) => x.known), [true, false, false]);
+    assert.deepEqual(l.map((x) => x.v), [120, 130, 130]);
+  });
+
   it('70 und mehr gelten bis zum nächsten Schild weiter', () => {
     const l = edgeLimits([{ ...town, speed_limit: 70 }, open(0.5), open(0.5)], null);
     assert.ok(l.every((x) => x.known && x.v === 70));

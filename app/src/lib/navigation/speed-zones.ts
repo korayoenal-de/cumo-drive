@@ -48,7 +48,6 @@ const TOWN_CARRY_M = 150;
 const SMALL = new Set(['residential', 'service_other', 'service']);
 
 function tagged(e: Edge): number | null {
-  if (e.speed_limit === 'unlimited') return 130;
   return typeof e.speed_limit === 'number' && e.speed_limit > 0 ? e.speed_limit : null;
 }
 
@@ -64,6 +63,9 @@ export function edgeLimits(edges: Edge[], carry: Lim | null): Lim[] {
   let last = carry;
   return edges.map((e) => {
     const cls = e.road_class ?? '';
+    // Ohne Tempolimit (Autobahn freigegeben): kein Schild zeigen (Koray 21.11. auf der A6: Plakette sagte 130). Für
+    // Kurven und Bremshinweise gilt weiter 130 als Richtwert, darum v 130, aber nicht als bekanntes Schild.
+    if (e.speed_limit === 'unlimited') return (last = { v: 130, known: false, cls, openM: 0 });
     const t = tagged(e);
     if (t != null) return (last = { v: t, known: true, cls, openM: 0 });
     // Kreisverkehr ohne Schild (Koray 13.11.: am Ortsrand stand kurz die graue 100): ein Schild davor gilt
