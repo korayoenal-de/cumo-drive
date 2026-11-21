@@ -7,15 +7,16 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 
 import { AppText } from '@/components/ui/text';
+import { Plakette, type PlaketteTone } from '@/components/ui/plakette';
 import { useAvatar } from '@/lib/avatars';
-import { Colors, Fonts, Leading, Radius, Spacing, Type } from '@/constants/theme';
+import { Colors, Fonts, Leading, Radius, Type } from '@/constants/theme';
 import { freeSeats, initials, weekday, type Ausfahrt } from '@/lib/ausfahrten';
 import { t } from '@/i18n';
 
 /** Status als getönte Plakette */
 export function RideStatus({ r }: { r: Ausfahrt }) {
   let text: string | null = null;
-  let tone: 'good' | 'signal' | 'muted' | 'danger' = 'muted';
+  let tone: PlaketteTone = 'muted';
   // Abgesagt geht vor jedem anderen Status (Koray 17.11.), rot wie alles Endgültige (Konsistenzprüfung 15.11.)
   if (r.isCancelled) {
     text = t('Abgesagt');
@@ -33,11 +34,7 @@ export function RideStatus({ r }: { r: Ausfahrt }) {
   else if (r.myStatus === 'abgelehnt') text = t('Abgelehnt');
   else if (freeSeats(r) === 0) text = t('Ausgebucht');
   if (!text) return null;
-  return (
-    <View style={[styles.tag, tone === 'good' ? styles.tagGood : tone === 'signal' ? styles.tagSignal : tone === 'danger' ? styles.tagDanger : styles.tagMuted]}>
-      <AppText style={[styles.tagText, { color: tone === 'good' ? Colors.good : tone === 'signal' ? Colors.signal : tone === 'danger' ? Colors.danger : Colors.muted }]}>{text}</AppText>
-    </View>
-  );
+  return <Plakette label={text} tone={tone} />;
 }
 
 /** Datumsblock neutral, nur heute in Signal Orange (Konsistenzprüfung 15.11., C3) */
@@ -92,13 +89,6 @@ const styles = StyleSheet.create({
   avatar: { backgroundColor: Colors.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarText: { fontFamily: Fonts.extrabold, color: Colors.text },
   spinner: { alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(11,11,12,0.6)' },
-  // gleiche Plakette wie SeatsBadge (kennzahlen.tsx): so breit wie der Text, nicht über die ganze Zeile (Koray 21.11.2026)
-  tag: { alignSelf: 'flex-start', paddingHorizontal: Spacing.s + 2, paddingVertical: 3, borderRadius: Radius.pill },
-  tagGood: { backgroundColor: Colors.goodTint },
-  tagSignal: { backgroundColor: Colors.signalTint },
-  tagMuted: { backgroundColor: Colors.surface2 },
-  tagDanger: { backgroundColor: Colors.dangerTint },
-  tagText: { fontFamily: Fonts.bold, fontSize: Type.caption, lineHeight: Leading.caption },
   date: { width: 52, borderRadius: Radius.m, backgroundColor: Colors.surface2, alignItems: 'center', paddingVertical: 6 },
   dateToday: { backgroundColor: Colors.signalTint },
   dateWd: { fontFamily: Fonts.bold, fontSize: 13, lineHeight: 16, color: Colors.muted },

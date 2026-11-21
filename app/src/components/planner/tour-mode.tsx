@@ -34,7 +34,8 @@ import { readLibrary, useLibrary } from '@/lib/library';
 import { ActionBar, type ActionBarRef } from '@/components/ui/action-bar';
 import { LoadingButton, type LoadStage } from '@/components/ui/loading-button';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Motion, Radius, Shadow, Spacing, Type } from '@/constants/theme';
+import { Plakette } from '@/components/ui/plakette';
+import { Colors, Fonts, Motion, Shadow, Spacing, Type } from '@/constants/theme';
 import { guardDrive } from '@/lib/drive-guard';
 import { setActiveTour } from '@/lib/active-tour';
 import { shareTourLink } from '@/lib/share-link';
@@ -680,9 +681,7 @@ export function TourMode({
             {plan.name.trim() || routeTour.name}
           </AppText>
           {plan.dirty && (
-            <View style={tourStyles.badge}>
-              <AppText style={tourStyles.badgeText}>{tr('Geändert')}</AppText>
-            </View>
+            <Plakette label={tr('Geändert')} tone="warn" />
           )}
         </Pressable>
       )}
@@ -986,8 +985,6 @@ function SwipeDelete({ progress, label, onPress }: { progress: SharedValue<numbe
 const tourStyles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.s },
   nameText: { flexShrink: 1, fontFamily: Fonts.bold, fontSize: Type.h2, lineHeight: 30 },
-  badge: { paddingHorizontal: Spacing.s + 2, paddingVertical: Spacing.xs, borderRadius: Radius.pill, backgroundColor: Colors.warnTint },
-  badgeText: { fontFamily: Fonts.semibold, fontSize: Type.body, color: Colors.warn },
   // Wetter Warnungen unter den Kennzahlen: Symbol gelb, Text grau, keine eigene Fläche (Ruhe)
   weatherRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.s },
   weatherText: { flex: 1, minWidth: 0 },

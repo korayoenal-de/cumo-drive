@@ -42,6 +42,7 @@ import { Colors, Fonts, Leading, Motion, Radius, Size, Spacing, Type, Pressed } 
 import { arrival, ausfahrtTour, cancelAusfahrt, clock, freeSeats, hiddenRides, hideRide, listAusfahrten, relDay, shortDate, showCancelled, withdrawAusfahrt, type Ausfahrt } from '@/lib/ausfahrten';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SwipeDelete } from '@/components/ui/swipe-delete';
+import { Zaehler } from '@/components/ui/plakette';
 import { approachMinutes, departAt, syncRideReminders, currentSpot } from '@/lib/ride-reminders';
 import { useSession } from '@/lib/auth';
 import { kmBetween, listConversations, listDrivers, refreshUnread, useUnreadMessages, type Driver } from '@/lib/drivers';
@@ -767,11 +768,7 @@ function SegItem({ label, icon, count, badge, on, onPress, onBox, ownFill }: { o
           <Animated.View entering={FadeIn.duration(Motion.enter)} style={styles.segLabel}>
             <AppText style={styles.segText}>{label}</AppText>
             {count != null && <AppText style={styles.segCount}>{count}</AppText>}
-            {!!badge && (
-              <View style={styles.badge}>
-                <AppText style={styles.badgeText}>{badge}</AppText>
-              </View>
-            )}
+            {!!badge && <Zaehler n={badge} />}
           </Animated.View>
         )}
       </Pressable>
@@ -1182,9 +1179,7 @@ const styles = StyleSheet.create({
   segLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   segText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.ground },
   segCount: { fontFamily: Fonts.bold, fontSize: Type.micro, color: Colors.ground, opacity: 0.55, fontVariant: ['tabular-nums'] },
-  badge: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
   badgeDot: { position: 'absolute', top: -2, right: -4, width: 9, height: 9, borderRadius: 5, backgroundColor: Colors.signal, borderWidth: 1.5, borderColor: Colors.overlaySurface },
-  badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: Type.micro, lineHeight: 13 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.m },
   card: { backgroundColor: Colors.surface, borderRadius: Radius.l, padding: Spacing.l, gap: Spacing.m },
   cardList: { paddingVertical: Spacing.m },

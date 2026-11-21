@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 import { softEnter } from '@/components/ui/motion';
 import { AppText } from '@/components/ui/text';
+import { Plakette } from '@/components/ui/plakette';
 import { Colors, Fonts, Radius, Spacing, Type, Size } from '@/constants/theme';
 import { CONTACT_EMAIL, formatUntil, isFreePhase, PRICES, useEntitlement, type PlanId, type Price } from '@/lib/entitlement';
 import { readLibrary } from '@/lib/library';
@@ -294,11 +295,7 @@ function PlanCard({ price, selected, onPress }: { price: Price; selected: boolea
         <View style={styles.row}>
           <AppText style={styles.planName}>{price.name}</AppText>
           {price.highlight && (
-            <View style={styles.pill}>
-              <AppText variant="caption" style={styles.pillText}>
-                {t('Bester Preis')}
-              </AppText>
-            </View>
+            <Plakette label={t('Bester Preis')} tone="solid" />
           )}
         </View>
         <AppText variant="caption" muted>
@@ -346,8 +343,6 @@ const styles = StyleSheet.create({
   radioOn: { backgroundColor: Colors.signal },
   radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.onSignal },
   planName: { fontFamily: Fonts.bold, fontSize: Type.title },
-  pill: { backgroundColor: Colors.signal, borderRadius: Radius.pill, paddingHorizontal: Spacing.s, paddingVertical: 2 },
-  pillText: { color: Colors.onSignal, fontFamily: Fonts.semibold, fontSize: Type.caption },
   priceCol: { alignItems: 'flex-end' },
   price: { fontFamily: Fonts.display, fontSize: Type.metric, fontVariant: ['tabular-nums'] },
   primary: { height: Size.button, borderRadius: Radius.pill, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },

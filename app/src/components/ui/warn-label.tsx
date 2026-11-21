@@ -3,11 +3,10 @@
  * zum Beispiel "Einspurig" oder "Sehr schmal". Die einzige Warnung dieser Art in der App.
  * Das Zeichen ist eine Passstraße von oben; Gelb ist die Farbe für prüfen, Orange bleibt der Hauptaktion.
  */
-import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Type } from '@/constants/theme';
+import { Plakette } from '@/components/ui/plakette';
+import { Colors, Type } from '@/constants/theme';
 import { warnLabel, type WarnKey } from '@/lib/passes';
 
 export function ZigzagIcon({ size = 15, color = Colors.warn }: { size?: number; color?: string }) {
@@ -21,17 +20,5 @@ export function ZigzagIcon({ size = 15, color = Colors.warn }: { size?: number; 
 export function WarnLabel({ warn }: { warn?: readonly WarnKey[] | null }) {
   const label = warnLabel(warn);
   if (!label) return null;
-  return (
-    <View style={styles.pill} accessible accessibilityLabel={`Warnung: ${label}`}>
-      <ZigzagIcon />
-      <AppText style={styles.text} numberOfLines={1}>
-        {label}
-      </AppText>
-    </View>
-  );
+  return <Plakette label={label} tone="warn" lead={<ZigzagIcon size={Type.caption} />} accessibilityLabel={`Warnung: ${label}`} />;
 }
-
-const styles = StyleSheet.create({
-  pill: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 11, paddingVertical: 5, borderRadius: 13, backgroundColor: Colors.warnTint },
-  text: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.warn },
-});

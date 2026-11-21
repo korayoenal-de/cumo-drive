@@ -11,9 +11,10 @@
  * Die Morph Taste (morph-action.tsx) bleibt die Hauptaktion mit Flug und Morph; sie folgt denselben Maßen.
  */
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { IconLabel, type BtnIcon } from '@/components/ui/btn-icon';
+import { Zaehler } from '@/components/ui/plakette';
 import { Pressable } from '@/components/ui/tap';
 import { AppText } from '@/components/ui/text';
 import { Colors, Fonts, Radius, Size, Spacing, Type } from '@/constants/theme';
@@ -95,11 +96,7 @@ export function IconButton({
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={badge ? `${label}, ${badge}` : label} hitSlop={4} onPress={onPress} style={[styles.icon, { backgroundColor: ICON_BG[on] }]}>
       <SymbolView name={icon} size={18} weight="semibold" tintColor={Colors.text} />
-      {!!badge && (
-        <View style={styles.badge}>
-          <AppText style={styles.badgeText}>{badge > 9 ? '9+' : badge}</AppText>
-        </View>
-      )}
+      {!!badge && <Zaehler n={badge} style={styles.badge} />}
     </Pressable>
   );
 }
@@ -120,8 +117,7 @@ const styles = StyleSheet.create({
   text: { fontFamily: Fonts.bold, fontSize: Type.button },
   textCompact: { fontSize: Type.body },
   icon: { width: Size.icon, height: Size.icon, borderRadius: Size.icon / 2, alignItems: 'center', justifyContent: 'center' },
-  badge: { position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: Type.micro, lineHeight: 13 },
+  badge: { position: 'absolute', top: -Spacing.hair, right: -Spacing.hair },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: Size.icon, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, backgroundColor: Colors.surface2 },
   pillText: { fontFamily: Fonts.bold, fontSize: Type.body, color: Colors.text },
 });

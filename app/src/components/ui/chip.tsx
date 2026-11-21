@@ -15,6 +15,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTimin
 import { EASE_OUT } from '@/components/ui/motion';
 import { haptic } from '@/lib/haptics';
 import { AppText } from '@/components/ui/text';
+import { Zaehler } from '@/components/ui/plakette';
 import { Colors, Fonts, Motion, Radius, Size, Spacing, Type, Pressed } from '@/constants/theme';
 
 type Box = { x: number; y: number; w: number; bg: string };
@@ -60,11 +61,7 @@ export function Chip({
       // gedrückt wie alle Tasten (Regel Druck)
       style={({ pressed }) => [styles.chip, !!badge && styles.chipBadge, row ? styles.clear : active ? styles.on : { backgroundColor: bg }, pressed && styles.pressed]}>
       <AppText style={[styles.label, dark && styles.labelOn]}>{label}</AppText>
-      {!!badge && (
-        <View style={styles.badge}>
-          <AppText style={styles.badgeText}>{badge > 9 ? '9+' : badge}</AppText>
-        </View>
-      )}
+      {!!badge && <Zaehler n={badge} />}
     </Pressable>
   );
 }
@@ -168,8 +165,6 @@ const styles = StyleSheet.create({
   group: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s },
   chip: { height: Size.chip, paddingHorizontal: Spacing.l, borderRadius: Radius.pill, justifyContent: 'center' },
   chipBadge: { flexDirection: 'row', alignItems: 'center', gap: Spacing.s, paddingRight: Spacing.m },
-  badge: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: Colors.signal, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: Colors.onSignal, fontFamily: Fonts.extrabold, fontSize: Type.micro, lineHeight: 13 },
   // Aktiv weiß wie die Reiter der Suche; Orange bleibt der Hauptaktion vorbehalten (Koray 9.11.)
   on: { backgroundColor: Colors.text },
   clear: { backgroundColor: 'transparent' },

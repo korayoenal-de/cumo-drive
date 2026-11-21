@@ -8,7 +8,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { FunGauge } from '@/components/ui/fun-gauge';
 import { AppText } from '@/components/ui/text';
-import { Colors, Fonts, Leading, Radius, Spacing, Type } from '@/constants/theme';
+import { Plakette } from '@/components/ui/plakette';
+import { Colors, Fonts, Leading, Spacing, Type } from '@/constants/theme';
 import { tourFunLevel, TOUR_FUN_NAMES } from '@/lib/fun-score';
 import { fahrzeit, plaetze, strecke } from '@/lib/format';
 import { t } from '@/i18n';
@@ -52,13 +53,7 @@ function Cell({ label, value }: Kennzahl) {
 /** Plätze als Plakette: grün viele, gelb der letzte, grau ausgebucht */
 export function SeatsBadge({ free }: { free: number }) {
   const s = plaetze(free);
-  const bg = s.tone === 'good' ? Colors.goodTint : s.tone === 'warn' ? Colors.warnTint : Colors.surface2;
-  const fg = s.tone === 'good' ? Colors.good : s.tone === 'warn' ? Colors.warn : Colors.muted;
-  return (
-    <View style={[styles.badge, { backgroundColor: bg }]}>
-      <AppText style={[styles.badgeText, { color: fg }]}>{s.text}</AppText>
-    </View>
-  );
+  return <Plakette label={s.text} tone={s.tone === 'good' ? 'good' : s.tone === 'warn' ? 'warn' : 'muted'} />;
 }
 
 const styles = StyleSheet.create({
@@ -67,6 +62,4 @@ const styles = StyleSheet.create({
   label: { fontFamily: Fonts.semibold, fontSize: Type.body, lineHeight: Leading.body, color: Colors.muted },
   value: { fontFamily: Fonts.display, fontSize: Type.metric, lineHeight: Leading.metric, textTransform: 'uppercase', fontVariant: ['tabular-nums'], color: Colors.text },
   funRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  badge: { alignSelf: 'flex-start', paddingHorizontal: Spacing.s + 2, paddingVertical: 3, borderRadius: Radius.pill },
-  badgeText: { fontFamily: Fonts.bold, fontSize: Type.caption, lineHeight: Leading.caption },
 });
