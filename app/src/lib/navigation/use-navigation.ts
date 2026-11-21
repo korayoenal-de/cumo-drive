@@ -528,8 +528,12 @@ export function useNavigation(req: NavRequest | null): [NavState, NavControls] {
       const first = route.maneuvers[0];
       if (first) voice().say(first.speech);
 
+      // distanceInterval 0 (Koray 21.11., Testfahrt): Mit 10 m meldete iOS im Stand gar keine Position mehr. Nach
+      // 2,5 Sekunden Stille hielt die Tunnel Überbrückung das für ein Funkloch und fuhr mit dem letzten Tempo (20 km/h)
+      // weiter: Das Auto stand, CarPlay zeigte 20 km/h und die Restzeit lief. Jetzt kommt im Stand jede Sekunde eine
+      // Position mit Tempo 0, und die Überbrückung greift nur noch, wenn wirklich keine Position kommt.
       subRef.current = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 10 },
+        { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 0 },
         (loc) => {
           if (simRef.current || pausedRef.current) return; // Simulation hat Vorrang, Pause hält an
           const { latitude, longitude, heading, speed, accuracy } = loc.coords;
