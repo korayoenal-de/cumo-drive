@@ -120,8 +120,9 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
     view.addSubview(speedView)
     NSLayoutConstraint.activate([
       speedView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
-      // oben bündig mit der Anweisung von CarPlay (Koray 15.11.: mit 10 stand sie 8 pt tiefer, mit 2 etwa 4 pt zu hoch)
-      speedView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 6),
+      // oben bündig mit der Anweisung von CarPlay (Koray 15.11.: mit 10 stand sie 8 pt tiefer, mit 2 etwa 4 pt zu hoch;
+      // 21.11.: mit 6 fehlte noch 1 pt)
+      speedView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 5),
     ])
   }
 
@@ -613,7 +614,9 @@ final class CarMapViewController: UIViewController, MKMapViewDelegate {
 final class CarAnnotation: MKPointAnnotation {}
 
 /// Tempo Plakette wie in der App (speed-badge.tsx): dunkle Pille, Tempo groß mit km/h, rechts das Schild.
-/// Zu schnell tönt nur die Fläche (warn), ohne Ton und ohne Wertung. Mindestens 44 pt hoch.
+/// Zu schnell tönt nur die Fläche (warn), ohne Ton und ohne Wertung.
+/// Etwa 25 % kleiner seit 21.11.2026 (Koray: nahm zu viel Platz, das Tempo war so groß wie die Entfernung der Anweisung):
+/// 42 statt 56 hoch, Tempo in der Größe der Anweisungszeile (18), damit es unter der Entfernung steht, nicht daneben.
 final class CarSpeedView: UIView {
   private let value = UILabel()
   private let unit = UILabel()
@@ -625,7 +628,7 @@ final class CarSpeedView: UIView {
   private static let red = UIColor(red: 200 / 255, green: 30 / 255, blue: 30 / 255, alpha: 1)
   private static let text = UIColor(red: 244 / 255, green: 244 / 255, blue: 242 / 255, alpha: 1)
   private static let muted = UIColor(red: 154 / 255, green: 154 / 255, blue: 159 / 255, alpha: 1)
-  private let signSize: CGFloat = 44
+  private let signSize: CGFloat = 32
   /// rechts so viel Rand wie links, wenn kein Schild da ist (sonst steht das Tempo schief, Koray 15.11.)
   private var trailingPad: NSLayoutConstraint!
   private var leadingPad: NSLayoutConstraint!
@@ -636,19 +639,19 @@ final class CarSpeedView: UIView {
     // gleiche Rundung wie die Flächen von CarPlay (Anweisung, Ankunft), nicht ganz rund (Koray 15.11.)
     layer.cornerRadius = 12
     layer.masksToBounds = true
-    value.font = .monospacedDigitSystemFont(ofSize: 24, weight: .heavy)
+    value.font = .monospacedDigitSystemFont(ofSize: 18, weight: .heavy)
     value.textColor = CarSpeedView.text
     value.textAlignment = .center
     unit.text = "km/h"
-    unit.font = .systemFont(ofSize: 11, weight: .semibold)
+    unit.font = .systemFont(ofSize: 9, weight: .semibold)
     unit.textColor = CarSpeedView.muted
     unit.textAlignment = .center
     speedCol.axis = .vertical
     speedCol.alignment = .center
-    speedCol.spacing = -2
+    speedCol.spacing = -3
     speedCol.addArrangedSubview(value)
     speedCol.addArrangedSubview(unit)
-    sign.font = .monospacedDigitSystemFont(ofSize: 17, weight: .heavy)
+    sign.font = .monospacedDigitSystemFont(ofSize: 13, weight: .heavy)
     sign.textAlignment = .center
     // dreistellig (100, 120) passt sonst nicht in den roten Ring (Koray 15.11.)
     sign.adjustsFontSizeToFitWidth = true
@@ -659,22 +662,22 @@ final class CarSpeedView: UIView {
     NSLayoutConstraint.activate([
       sign.widthAnchor.constraint(equalToConstant: signSize),
       sign.heightAnchor.constraint(equalToConstant: signSize),
-      speedCol.widthAnchor.constraint(greaterThanOrEqualToConstant: 44),
+      speedCol.widthAnchor.constraint(greaterThanOrEqualToConstant: 34),
     ])
     stack.axis = .horizontal
     stack.alignment = .center
-    stack.spacing = 8
+    stack.spacing = 6
     stack.addArrangedSubview(speedCol)
     stack.addArrangedSubview(sign)
     stack.translatesAutoresizingMaskIntoConstraints = false
     addSubview(stack)
-    trailingPad = stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6)
-    leadingPad = stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12)
+    trailingPad = stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -5)
+    leadingPad = stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10)
     NSLayoutConstraint.activate([
       leadingPad,
       trailingPad,
-      stack.topAnchor.constraint(equalTo: topAnchor, constant: 6),
-      stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
+      stack.topAnchor.constraint(equalTo: topAnchor, constant: 5),
+      stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -5),
     ])
     isAccessibilityElement = true
   }
@@ -688,7 +691,7 @@ final class CarSpeedView: UIView {
     if let limit {
       sign.isHidden = false
       sign.text = "\(limit)"
-      sign.font = .monospacedDigitSystemFont(ofSize: limit >= 100 ? 14 : 17, weight: .heavy)
+      sign.font = .monospacedDigitSystemFont(ofSize: limit >= 100 ? 11 : 13, weight: .heavy)
       if estimated {
         sign.backgroundColor = UIColor(white: 0.32, alpha: 1)
         sign.textColor = CarSpeedView.text
@@ -696,15 +699,15 @@ final class CarSpeedView: UIView {
       } else {
         sign.backgroundColor = .white
         sign.textColor = .black
-        sign.layer.borderWidth = 4.5
+        sign.layer.borderWidth = 3.5
         sign.layer.borderColor = CarSpeedView.red.cgColor
       }
     } else {
       sign.isHidden = true
     }
-    // nur Tempo: rundum 12, nur Schild: rundum 6, beides: links 12 rechts 6
-    trailingPad.constant = sign.isHidden ? -12 : -6
-    leadingPad.constant = speedCol.isHidden ? 6 : 12
+    // nur Tempo: rundum 10, nur Schild: rundum 5, beides: links 10 rechts 5
+    trailingPad.constant = sign.isHidden ? -10 : -5
+    leadingPad.constant = speedCol.isHidden ? 5 : 10
     let over = showSpeed && !estimated && limit != nil && v > (limit ?? 0) + 4
     backgroundColor = over ? CarSpeedView.warnBg : CarSpeedView.rest
     accessibilityLabel = [showSpeed ? "\(v) km/h" : nil, limit.map { "Limit \($0)" }].compactMap { $0 }.joined(separator: ", ")
