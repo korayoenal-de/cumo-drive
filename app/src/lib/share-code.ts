@@ -18,7 +18,63 @@ export type SharedTour = {
   waypoints?: LatLon[];
   names?: string[];
   legs?: (Profile | null)[];
+  /** Die Original Linie (importierte Touren, Weg A von Koray 21.11.): die App öffnet sie unverändert, ohne Neuplanung */
+  line?: LatLon[];
 };
+
+/**
+ * Touren, die nicht aus unserem Planer kommen (Import aus GPX oder KML, gefahrene Strecken): Ihre Wegpunkte tragen die
+ * Strecke nicht, oft nur Start und Ziel. Aus den Stützpunkten nachgeplant kam eine calimoto Runde ab Heppenheim nur
+ * ähnlich an, und jede Änderung ließ sie auf Heppenheim nach Heppenheim zusammenfallen (Koray 21.11.).
+ */
+export function keepsLine(tour: Tour & { folder?: string }): boolean {
+  return tour.geprueft === false || tour.folder === 'Importiert';
+}
+
+/** Linie ausdünnen (Douglas Peucker, Toleranz in Metern), damit sie in einen kurzen Link passt */
+export function simplifyLine(line: LatLon[], tolM: number): LatLon[] {
+  if (line.length < 3) return line;
+  const k = Math.cos((line[0][0] * Math.PI) / 180);
+  const xy = line.map(([la, lo]) => [lo * k * 111320, la * 111320]);
+  const keep = new Uint8Array(line.length);
+  keep[0] = keep[line.length - 1] = 1;
+  const stack: [number, number][] = [[0, line.length - 1]];
+  while (stack.length) {
+    const [a, b] = stack.pop()!;
+    const [ax, ay] = xy[a];
+    const [bx, by] = xy[b];
+    const dx = bx - ax;
+    const dy = by - ay;
+    const len = Math.hypot(dx, dy);
+    let best = -1;
+    let bestD = tolM;
+    for (let i = a + 1; i < b; i++) {
+      const [px, py] = xy[i];
+      const d = len ? Math.abs(dy * (px - ax) - dx * (py - ay)) / len : Math.hypot(px - ax, py - ay);
+      if (d > bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    if (best >= 0) {
+      keep[best] = 1;
+      stack.push([a, best], [best, b]);
+    }
+  }
+  return line.filter((_, i) => keep[i]);
+}
+
+/** Platz für die Linie: Der Server nimmt Codes bis 20.000 Zeichen, Base64 macht aus 3 Zeichen 4 */
+const LINE_BUDGET = 12000;
+
+function encodeLine(tour: Tour): string | null {
+  const line = flatten(tour).map((x) => x.p);
+  for (const tol of [4, 8, 15, 30, 60]) {
+    const enc = encodePolyline(simplifyLine(line, tol), 1e5);
+    if (enc.length <= LINE_BUDGET) return enc;
+  }
+  return null;
+}
 
 function encodePolyline(points: LatLon[], factor = 1e5): string {
   let out = '';
@@ -83,7 +139,7 @@ export function supportPoints(tour: Tour, stepKm = 6, maxPoints = 26): LatLon[] 
   return out;
 }
 
-export function encodeTour(tour: Tour, profile: Profile, opts?: { full?: boolean }): string {
+export function encodeTour(tour: Tour, profile: Profile, opts?: { full?: boolean; line?: boolean }): string {
   // 4 Nachkommastellen (etwa 10 m) und höchstens 26 Stützpunkte halten den QR Code grob,
   // damit die iPhone Kamera ihn auch vom Bildschirm sicher liest. Die App plant ohnehin neu.
   // full (geteilter Link, Koray 10.11.): dazu die echten Punkte mit Namen, sonst kamen beim Empfänger
@@ -96,7 +152,8 @@ export function encodeTour(tour: Tour, profile: Profile, opts?: { full?: boolean
           ...(tour.etappen && tour.etappen.length === tour.wegpunkte.length - 1 ? { e: tour.etappen } : {}),
         }
       : {};
-  const payload = { n: tour.name.slice(0, 40), p: profile, q: 4, v: encodePolyline(supportPoints(tour), 1e4), ...extra };
+  const l = opts?.line ? encodeLine(tour) : null;
+  const payload = { n: tour.name.slice(0, 40), p: profile, q: 4, v: encodePolyline(supportPoints(tour), 1e4), ...extra, ...(l ? { l } : {}) };
   return PREFIX + b64urlEncode(JSON.stringify(payload));
 }
 
@@ -126,16 +183,18 @@ export function decodeTour(code: string): SharedTour | null {
   const raw = extractCode(code);
   if (!raw.startsWith(PREFIX)) return null;
   try {
-    const d = JSON.parse(b64urlDecode(raw.slice(PREFIX.length))) as { n?: string; p?: Profile; q?: number; v?: string; w?: string; m?: string[]; e?: (Profile | null)[] };
+    const d = JSON.parse(b64urlDecode(raw.slice(PREFIX.length))) as { n?: string; p?: Profile; q?: number; v?: string; w?: string; m?: string[]; e?: (Profile | null)[]; l?: string };
     if (!d.v) return null;
     const points = decodePolyline(d.v, d.q === 4 ? 1e4 : 1e5);
     if (points.length < 2) return null;
     const waypoints = d.w ? decodePolyline(d.w, 1e5) : undefined;
+    const line = d.l ? decodePolyline(d.l, 1e5) : undefined;
     return {
       name: d.n || tr('Tour vom Planer'),
       profile: d.p ?? 'kurvig',
       points,
       ...(waypoints && waypoints.length >= 2 ? { waypoints, names: d.m, legs: d.e } : {}),
+      ...(line && line.length >= 2 ? { line } : {}),
     };
   } catch {
     return null;

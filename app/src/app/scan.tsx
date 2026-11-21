@@ -19,6 +19,8 @@ import { setEditTour } from '@/lib/edit-tour';
 import { decodeTour, extractCode } from '@/lib/share-code';
 import { isShortCode, resolveShareCode } from '@/lib/share-link';
 import { DEFAULT_AVOID } from '@/lib/valhalla';
+import { countCurves } from '@/lib/stats';
+import { flatten, type Tour } from '@/lib/tour';
 import { t, tr } from '@/i18n';
 import { ToastHost } from '@/components/ui/toast';
 
@@ -83,6 +85,25 @@ export default function ScanScreen() {
       return;
     }
     handled.current = true;
+    const now = new Date().toISOString();
+    // Original Linie dabei (importierte Tour, Koray 21.11.): unverändert öffnen, nicht neu planen
+    if (shared.line) {
+      const line = shared.line;
+      const base: Tour = {
+        name: shared.name,
+        laenge_km: 0,
+        wegpunkte: shared.waypoints ?? [line[0], line[line.length - 1]],
+        ...(shared.names ? { namen: shared.names } : {}),
+        linie: [{ c: 'ok', p: line }],
+        warnungen: [],
+        geprueft: false,
+      };
+      const pts = flatten(base);
+      const tour = { ...base, laenge_km: +pts[pts.length - 1].km.toFixed(1), curves: countCurves(line) };
+      setEditTour({ ...tour, id: '', folder: 'Geteilt', createdAt: now, updatedAt: now, profile: shared.profile });
+      router.dismissTo('/');
+      return;
+    }
     const ctrl = new AbortController();
     abort.current = ctrl;
     setStatus({ kind: 'busy', text: STEP_TEXT.route, name: shared.name });
@@ -96,7 +117,6 @@ export default function ScanScreen() {
         ctrl.signal,
       );
       // wie bei der Community: ungespeicherte Kopie im Planer, das Lesezeichen legt sie unter Geteilt ab
-      const now = new Date().toISOString();
       // Mit echten Punkten (Link ab 10.11.): Start, Zwischenziele und Ziel samt Namen statt der Stützpunkte
       const own = shared.waypoints ? { wegpunkte: shared.waypoints, namen: shared.names, etappen: shared.legs } : {};
       setEditTour({ ...tour, ...own, id: '', folder: 'Geteilt', createdAt: now, updatedAt: now, profile: shared.profile });

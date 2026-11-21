@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { _setLangForTest } from '../../i18n';
 
 import { arrowsAlong, doubledStretch, offsetRight, splitDoubled } from '../doubled';
-import { decodeTour, encodeTour, extractCode } from '../share-code';
+import { decodeTour, encodeTour, extractCode, keepsLine } from '../share-code';
 import { flatten, haversine, type LatLon, type Tour } from '../tour';
 import { findHighlights } from '../navigation/highlights';
 import { cumulativeKm, tourFromLine } from '../navigation/route';
@@ -125,6 +125,38 @@ describe('share-code', () => {
   it('liest den Code aus Web Adresse und Link', () => {
     assert.equal(extractCode('https://drive.rallycumo.de/t#cumo1:abc'), 'cumo1:abc');
     assert.equal(extractCode('exp://x/--/scan?code=cumo1%3Aabc&x=1'), 'cumo1:abc');
+  });
+
+  it('schickt bei importierten Touren die Original Linie mit, passend in den kurzen Link (Koray 21.11.)', () => {
+    // 195 km kurvige Runde aus einem Import, Punkt alle 20 m, nur Start und Ziel als Wegpunkte
+    const line: [number, number][] = [];
+    for (let i = 0; i <= 9750; i++) {
+      const a = (i / 9750) * 2 * Math.PI;
+      line.push([49.64 + 0.25 * Math.sin(a) + 0.002 * Math.sin(i / 7), 8.64 + 0.38 * (1 - Math.cos(a)) + 0.002 * Math.cos(i / 9)]);
+    }
+    const t = { ...tourOf(line), name: 'calimoto Runde', geprueft: false, wegpunkte: [line[0], line[line.length - 1]] };
+    assert.ok(keepsLine(t));
+    const code = encodeTour(t, 'kurvig', { full: true, line: true });
+    assert.ok(code.length <= 20000, `${code.length}`);
+    const back = decodeTour(code);
+    assert.ok(back?.line && back.line.length > 200, `${back?.line?.length}`);
+    // Stichprobe: jeder Originalpunkt liegt nahe an der ausgedünnten Linie (Abstand zum Segment, in Metern)
+    const toSeg = (p: [number, number], a: [number, number], b: [number, number]) => {
+      const k = Math.cos((p[0] * Math.PI) / 180) * 111320;
+      const [px, py, ax, ay, bx, by] = [p[1] * k, p[0] * 111320, a[1] * k, a[0] * 111320, b[1] * k, b[0] * 111320];
+      const L = (bx - ax) ** 2 + (by - ay) ** 2;
+      const u = L ? Math.max(0, Math.min(1, ((px - ax) * (bx - ax) + (py - ay) * (by - ay)) / L)) : 0;
+      return Math.hypot(px - ax - u * (bx - ax), py - ay - u * (by - ay));
+    };
+    const bl = back.line;
+    for (let i = 0; i < line.length; i += 250) {
+      let d = Infinity;
+      for (let j = 1; j < bl.length; j++) d = Math.min(d, toSeg(line[i], bl[j - 1], bl[j]));
+      assert.ok(d < 70, `${i}: ${d}`);
+    }
+    // geplante Touren bleiben ohne Linie
+    assert.equal(keepsLine({ ...t, geprueft: true }), false);
+    assert.equal(decodeTour(encodeTour({ ...t, geprueft: true }, 'kurvig', { full: true }))?.line, undefined);
   });
 
   it('lehnt fremde Codes ab', () => {

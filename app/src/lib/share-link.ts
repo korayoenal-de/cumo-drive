@@ -7,7 +7,7 @@
  */
 import { Share } from 'react-native';
 
-import { encodeTour, shareUrl } from './share-code';
+import { encodeTour, keepsLine, shareUrl } from './share-code';
 import { supabase } from './supabase';
 import { formatKm, type Profile, type Tour } from './tour';
 import { tr } from '@/i18n';
@@ -38,7 +38,8 @@ export async function tourLinkText(tour: Tour, profile: Profile): Promise<string
   const code = encodeTour(tour, profile, { full: true });
   let url = shareUrl(code);
   try {
-    url = shareUrl(await createShortCode(code));
+    // Importierte Touren mit Original Linie, die passt nur in den kurzen Link (Koray 21.11., Weg A)
+    url = shareUrl(await createShortCode(keepsLine(tour) ? encodeTour(tour, profile, { full: true, line: true }) : code));
   } catch {
     // ohne Netz oder Server: langer Link
   }
