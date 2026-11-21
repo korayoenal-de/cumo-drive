@@ -37,6 +37,7 @@ import { AppText } from '@/components/ui/text';
 import { Plakette } from '@/components/ui/plakette';
 import { Colors, Fonts, Leading, Motion, Shadow, Spacing, Type } from '@/constants/theme';
 import { Chip, ChipGroup } from '@/components/ui/chip';
+import { Unfold } from '@/components/ui/unfold';
 import { guardDrive } from '@/lib/drive-guard';
 import { setActiveTour } from '@/lib/active-tour';
 import { shareTourLink } from '@/lib/share-link';
@@ -145,6 +146,8 @@ export function TourMode({
   }));
   /** Etappe, deren Profilauswahl gerade offen ist */
   const [legMenu, setLegMenu] = useState<number | null>(null);
+  // gerade gewählt, aber noch nicht geplant: die Fläche gleitet schon hin
+  const [legPick, setLegPick] = useState<{ leg: number; profile: Profile } | null>(null);
 
   const flat = useMemo(() => (routeTour ? flatten(routeTour) : []), [routeTour]);
   const line = useMemo(() => flat.map((x) => x.p), [flat]);
@@ -639,23 +642,32 @@ export function TourMode({
                 </AppText>
               )}
             </View>
-            {choosing && (
-              // Filterchips wie überall: weiße Fläche gleitet zur Wahl (Koray 21.11.: vorher eigene orange Pillen ohne
-              // Bewegung). Die Wahl schließt erst, wenn die Fläche angekommen ist, sonst sähe man das Gleiten nicht.
+            {/* Filterchips wie überall: weiße Fläche gleitet zur Wahl (Koray 21.11.: vorher eigene orange Pillen ohne
+                Bewegung). Ablauf nach dem Tipp: Fläche gleitet, kurz stehen, dann klappt die Reihe weich zu und erst
+                jetzt wird neu geplant, damit nichts während des Gleitens springt (Koray 21.11.: ging abgehackt zu). */}
+            <Unfold open={choosing}>
               <ChipGroup>
                 {LEG_PROFILE_CHOICES.map((c) => (
                   <Chip
                     key={c.id}
                     label={c.label}
-                    active={lp === c.id}
+                    active={(legPick?.leg === i ? legPick.profile : lp) === c.id}
                     onPress={() => {
-                      if (c.id !== lp) plan.setLegProfile(i, c.id, profile, avoid);
-                      setTimeout(() => setLegMenu((m) => (m === i ? null : m)), c.id !== lp ? Motion.enter + 120 : 0);
+                      if (c.id === lp) {
+                        setLegMenu(null);
+                        return;
+                      }
+                      setLegPick({ leg: i, profile: c.id });
+                      setTimeout(() => {
+                        setLegMenu((m) => (m === i ? null : m));
+                        plan.setLegProfile(i, c.id, profile, avoid);
+                        setLegPick(null);
+                      }, Motion.enter + 160);
                     }}
                   />
                 ))}
               </ChipGroup>
-            )}
+            </Unfold>
           </View>
         ) : (
           <View style={styles.legGap} />
