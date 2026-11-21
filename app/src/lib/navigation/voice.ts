@@ -262,17 +262,27 @@ let releaseTimer: ReturnType<typeof setTimeout> | null = null;
 let heldByFunk = false;
 export function holdAudioSession(on: boolean) {
   heldByFunk = on;
+  // Der Funk stellt die Sitzung auf seine Art ein: danach muss die nächste Ansage sie wieder selbst einstellen
+  sessionOn = false;
   if (on && releaseTimer) {
     clearTimeout(releaseTimer);
     releaseTimer = null;
   }
 }
+/**
+ * Läuft die Tonsitzung schon? Dann nicht neu einstellen (Koray 21.11., Testfahrt mit CarPlay: „… in Richtung
+ * Lampertheim nehmen“ brach vor „Lampertheim“ ab). Jede neue Ansage in der Warteschlange stellte die Sitzung neu ein,
+ * während die vorige noch lief; im Auto baut das den Tonweg kurz um und schneidet das Ende der laufenden Ansage ab.
+ */
+let sessionOn = false;
 function audioOn() {
   if (heldByFunk) return;
   const a = getAudio();
   if (!a) return;
   if (releaseTimer) clearTimeout(releaseTimer);
   releaseTimer = null;
+  if (sessionOn) return;
+  sessionOn = true;
   void a.setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'duckOthers', shouldPlayInBackground: true }).catch(() => {});
   void a.setIsAudioActiveAsync(true).catch(() => {});
 }
@@ -284,6 +294,7 @@ function audioOff() {
   if (releaseTimer) clearTimeout(releaseTimer);
   releaseTimer = setTimeout(() => {
     if (queue.length > 0 || heldByFunk) return;
+    sessionOn = false;
     void a.setIsAudioActiveAsync(false).catch(() => {});
   }, 1500);
 }
