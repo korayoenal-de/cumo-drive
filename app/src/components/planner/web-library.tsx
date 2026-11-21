@@ -10,7 +10,7 @@ import { useSession } from '@/lib/auth';
 import { creditLine, publishTour, removeKeepPublished, unpublishTour } from '@/lib/community';
 import { TOUR_FUN_NAMES, tourFunLevel } from '@/lib/fun-score';
 import { loadProfile } from '@/lib/group/ride';
-import { deleteTour, filterTours, folders, fromCommunity, renameTour, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
+import { deleteTour, filterTours, fromCommunity, renameTour, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
 import { useMyProfile } from '@/lib/profile';
 import { exportTour, type RouteFormat } from '@/lib/route-file';
 import { copyTourLink } from '@/lib/share-link';
@@ -36,10 +36,9 @@ export function LibraryPanel(props: { currentId: string | null; onOpen: (t: Save
   const list = useLibrary();
   const sync = useSyncState();
   const [q, setQ] = useState('');
-  const [folder, setFolder] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>('neu');
-  const shown = filterTours(list, q, folder, sort);
-  const fs = folders(list).filter((d) => d !== 'Community');
+  // keine Ordner Chips mehr (Koray 21.11.2026: Alle und Importiert braucht niemand), die Suche findet Ordner weiter
+  const shown = filterTours(list, q, null, sort);
   return (
     <div style={S.stack}>
       <ViewTitle>{tr('Touren')}</ViewTitle>
@@ -55,18 +54,6 @@ export function LibraryPanel(props: { currentId: string | null; onOpen: (t: Save
       ) : (
         <>
           <input id="lib-search" aria-label={tr('Touren durchsuchen')} placeholder={tr('Touren durchsuchen')} value={q} onChange={(e) => setQ(e.target.value)} style={{ ...S.search, height: 52 }} />
-          {fs.length ? (
-            <div style={S.chips}>
-              <Chip on={folder === null} onClick={() => setFolder(null)}>
-                {tr('Alle')}
-              </Chip>
-              {fs.map((f) => (
-                <Chip key={f} on={folder === f} onClick={() => setFolder(folder === f ? null : f)}>
-                  {f}
-                </Chip>
-              ))}
-            </div>
-          ) : null}
           <div style={S.chips} role="radiogroup" aria-label={tr('Sortierung')}>
             {SORTS.map((s) => (
               <Chip key={s.id} on={sort === s.id} onClick={() => setSort(s.id)}>

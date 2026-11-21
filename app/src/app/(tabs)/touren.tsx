@@ -33,7 +33,7 @@ import { Colors, Fonts, Motion, Radius, Spacing, Type, Size, Pressed } from '@/c
 import { useSession } from '@/lib/auth';
 import { setEditTour } from '@/lib/edit-tour';
 import { backfillAuthors } from '@/lib/community';
-import { filterTours, folders, readLibrary, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
+import { filterTours, readLibrary, saveTour, syncLibrary, useLibrary, useSyncState, type SavedTour, type SortKey } from '@/lib/library';
 import { deleteDrive, getDriveTracks, listDrives, type Drive } from '@/lib/drives';
 import { thumbShape } from '@/lib/route-thumb';
 import { fmtG } from '@/lib/ride-stats';
@@ -105,7 +105,6 @@ export default function Touren() {
   const session = useSession();
   const sync = useSyncState();
   const [q, setQ] = useState('');
-  const [folder, setFolder] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>('neu');
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [tab, setTab] = useState<'gespeichert' | 'gefahren'>('gespeichert');
@@ -134,8 +133,7 @@ export default function Touren() {
   );
 
   // Übernommene Touren erkennt man an der Plakette „Von …“, ein eigener Filter dafür entfällt (Koray 10.11.)
-  const dirs = useMemo(() => folders(list).filter((d) => d !== 'Community'), [list]);
-  const shown = useMemo(() => filterTours(list, q, folder, sort), [list, q, folder, sort]);
+  const shown = useMemo(() => filterTours(list, q, null, sort), [list, q, sort]);
 
   return (
     <Screen>
@@ -209,15 +207,7 @@ export default function Touren() {
               accessibilityLabel={tr('Touren durchsuchen')}
               returnKeyType="search"
             />
-            {/* Chips in einer Zeile, seitlich wischbar bis an den Rand (Koray 15.11.) */}
-            {dirs.length > 0 && (
-              <ChipRow>
-                <Chip label={tr('Alle')} active={folder === null} onPress={() => setFolder(null)} />
-                {dirs.map((d) => (
-                  <Chip key={d} label={d} active={folder === d} onPress={() => setFolder(folder === d ? null : d)} />
-                ))}
-              </ChipRow>
-            )}
+            {/* nur die Sortierung; Ordner Chips entfallen (Koray 21.11.2026: Alle und Importiert braucht niemand) */}
             <ChipRow>
               {SORTS.map((s) => (
                 <Chip key={s.id} label={s.label} active={sort === s.id} onPress={() => setSort(s.id)} />
