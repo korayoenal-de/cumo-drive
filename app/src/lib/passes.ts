@@ -28,6 +28,11 @@ export type Pass = {
   source: string;
   /** Warnung am Highlight (Koray 12.11.): Gründe als Bausteine, der erste ist das Label. Schotter steht nie in den Daten. */
   warn?: WarnKey[];
+  /**
+   * Offizielle Kehren je Auffahrt, ab dem Talort (Koray 21.11.2026: Ansage sagte 47, die Nordrampe hat 48 nummerierte).
+   * Die Ansage nimmt diese Zahl, wenn eine Seite fast ganz gefahren wird; sonst die gezählten Kehren.
+   */
+  ramps?: { from: string; lat: number; lon: number; hairpins: number }[];
 };
 
 export type WarnKey = 'einspurig' | 'schmal' | 'ausgesetzt' | 'kehren' | 'ampel' | 'einbahn' | 'pflaster' | 'steil';

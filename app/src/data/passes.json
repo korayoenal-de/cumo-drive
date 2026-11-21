@@ -24,6 +24,20 @@
     "warn": [
       "kehren",
       "schmal"
+    ],
+    "ramps": [
+      {
+        "from": "Prad",
+        "lat": 46.6175,
+        "lon": 10.5917,
+        "hairpins": 48
+      },
+      {
+        "from": "Bormio",
+        "lat": 46.4672,
+        "lon": 10.3711,
+        "hairpins": 34
+      }
     ]
   },
   {

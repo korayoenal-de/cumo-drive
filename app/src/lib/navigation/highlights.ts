@@ -141,6 +141,35 @@ function hairpinBounds(pins: number[], topKm: number): { start: number; end: num
   return { start: Math.max(0, start - 1), end: end + 1 };
 }
 
+/** Punkt der Route bei km (nächster Stützpunkt reicht für die Zuordnung zur Auffahrt) */
+function pointAt(shape: LatLon[], cumKm: number[], km: number): LatLon {
+  const i = cumKm.findIndex((k) => k >= km);
+  return shape[i < 0 ? shape.length - 1 : i];
+}
+
+/** Anteil einer Auffahrt, ab dem die offizielle Zahl gilt statt der gezählten Kehren */
+const RAMP_SHARE = 0.8;
+
+/**
+ * Kehren eines Passabschnitts: je Seite der Passhöhe gezählt; liegt für die Auffahrt dieser Seite eine offizielle Zahl
+ * vor und wurden mindestens 80 % davon gezählt, gilt die offizielle (die 48 nummerierten Kehren ab Prad statt 47).
+ * Zugeordnet wird die Auffahrt, deren Talort dem Rand des Abschnitts auf dieser Seite am nächsten liegt.
+ */
+function officialHairpins(pass: Pass, shape: LatLon[], cumKm: number[], pins: number[], startKm: number, topKm: number, endKm: number): number {
+  const sides: [number, number][] = [
+    [startKm, topKm],
+    [topKm, endKm],
+  ];
+  let total = 0;
+  for (const [i, [a, b]] of sides.entries()) {
+    const counted = pins.filter((k) => (i === 0 ? k >= a && k < b : k >= a && k <= b)).length;
+    const edge = pointAt(shape, cumKm, i === 0 ? a : b);
+    const ramp = pass.ramps?.length && counted ? [...pass.ramps].sort((x, y) => haversine(edge, [x.lat, x.lon]) - haversine(edge, [y.lat, y.lon]))[0] : null;
+    total += ramp && counted >= ramp.hairpins * RAMP_SHARE && counted <= ramp.hairpins * 1.2 ? ramp.hairpins : counted;
+  }
+  return total;
+}
+
 export function findHighlights(
   shape: LatLon[],
   cumKm: number[],
@@ -167,7 +196,7 @@ export function findHighlights(
     const hi = next != null ? (km + next) / 2 : total;
     const startKm = Math.max(0, lo, Math.min(b.start, km - 0.5));
     const endKm = Math.min(total, hi, Math.max(b.end, km + 0.5));
-    const n = pins.filter((k) => k >= startKm && k <= endKm).length;
+    const n = officialHairpins(pass, shape, cumKm, pins, startKm, v?.top ?? km, endKm);
     out.push({
       id: pass.id,
       kind: 'pass',
