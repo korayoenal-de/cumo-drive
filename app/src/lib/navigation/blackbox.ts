@@ -13,7 +13,7 @@ import type { NavRoute } from './types';
 export type BbKind =
   /** Position: [lat, lon, kmh, Kurs, Genauigkeit, Abstand zur Route, km auf der Route, fortgeschrieben 1/0] */
   | 'gps'
-  /** Ansage, Text */
+  /** Ansage: Text beim Start; am Ende [ende|abbruch|fehler, letzte Zeichen] */
   | 'say'
   /** neue Route: km, Zahl der Manöver, Rückweg Index, Quelle, Linie (Polyline 1e5), Manöver [km, Art, Text, Ansage, Ausfahrt] */
   | 'route'

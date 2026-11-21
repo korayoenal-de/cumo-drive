@@ -8,6 +8,7 @@ import { requireOptionalNativeModule } from 'expo';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
+import { setVoiceOutput } from './navigation/voice';
 import { flatten, type Tour } from './tour';
 
 /** icon: eigenes Navigationssymbol (Bild im App Paket, etwa nav-links), symbol: SF Symbol als Ersatz */
@@ -27,6 +28,8 @@ type Update = {
   /** Richtung des Manövers in Grad, rechts positiv, 0 geradeaus (Build 41) */
   angle?: number; thenAngle?: number;
 };
+/** Ein Manöver der Route für Kombiinstrument und Head-up Display: Kennung, Art, Ausfahrt, Richtung, Text, Straße danach */
+export type ManeuverInfo = { mid: string; kind: string; exit?: number; angle?: number; text: string; street?: string };
 type Sub = { remove: () => void };
 type CarPlayModule = {
   isConnected(): Promise<boolean>;
@@ -54,6 +57,9 @@ type CarPlayModule = {
   // ab Build 16: Start im Auto ohne iPhone (Meine Touren, Schnelle Runde)
   setLibrary?(list: CarTourItem[]): Promise<void>;
   endPlanning?(message: string): Promise<void>;
+  // ab Build 43: alle Manöver der Route fürs Head-up Display, Tonsitzung für Ansagen nach Apples Vorgabe
+  setManeuvers?(items: ManeuverInfo[]): Promise<void>;
+  voiceSession?(on: boolean): Promise<void>;
   addListener(event: CarPlayEvent, cb: (e: CarPlayPayload) => void): Sub;
 };
 type CarPlayEvent =
@@ -81,6 +87,18 @@ export const carPlayTrims = !!(native as { trimsRoute?: boolean } | null)?.trims
 export const carPlayHasPicker = !!native?.setLibrary;
 
 const quiet = (p: Promise<unknown> | undefined) => void p?.catch(() => undefined);
+
+// Ansagen: Die Sprachausgabe muss wissen, ob der Ton ins Auto geht (dort kommt er verzögert an), und nutzt ab
+// Build 43 die Tonsitzung für Ansagen aus dem eigenen Modul
+if (native) {
+  if (native.voiceSession) setVoiceOutput({ session: (on) => quiet(native.voiceSession?.(on)) });
+  native
+    .isConnected()
+    .then((on) => setVoiceOutput({ carPlay: on }))
+    .catch(() => undefined);
+  native.addListener('onConnect', () => setVoiceOutput({ carPlay: true }));
+  native.addListener('onDisconnect', () => setVoiceOutput({ carPlay: false }));
+}
 
 /** Höchstens 1500 Punkte, das reicht für die Linie auf dem Autodisplay. */
 function linePoints(tour: Tour): number[][] {
@@ -139,6 +157,14 @@ export function carPlayStart() {
 
 export function carPlayUpdate(p: Update) {
   quiet(native?.update(p));
+}
+
+/**
+ * Alle Manöver der Route auf einmal, bei jeder neuen Route (ab Build 43). Das Auto zeigt im Head-up Display nur
+ * Manöver mit Pfeil, die es vorab als Liste bekommen hat (Koray 21.11.: mal Pfeil, mal nur Meter).
+ */
+export function carPlaySetManeuvers(items: ManeuverInfo[]) {
+  quiet(native?.setManeuvers?.(items));
 }
 
 export function carPlayStop(arrived: boolean) {

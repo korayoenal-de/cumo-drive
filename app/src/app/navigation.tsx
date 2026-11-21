@@ -33,7 +33,7 @@ import { appVersion } from '@/lib/feedback';
 import { showToast } from '@/lib/toast';
 import { ToastHost } from '@/components/ui/toast';
 import { useCountUp } from '@/components/ui/count-up';
-import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetTour, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
+import { carPlayAlert, carPlayAskRating, carPlayHint, carPlaySetGroup, carPlaySetManeuvers, carPlaySetMenu, carPlayCamera, carPlayHasRejoin, carPlayTrims, carPlaySetGuide, carPlaySetRejoin, carPlaySetSpeed, carPlaySetTour, carPlaySetVoice, carPlayStart, carPlayStop, carPlayUpdate, takeCarPlayStart, useCarPlayEvent } from '@/lib/carplay';
 import { maneuverAngle, roundaboutTurn } from '@/lib/navigation/roundabout';
 import { thresholds } from '@/lib/navigation/voice';
 import { FUN_NAMES, toFunLevel } from '@/components/ui/fun-gauge';
@@ -743,6 +743,23 @@ export default function NavigationScreen() {
   }, [cpRunning, state.voice]);
   useCarPlayEvent('onVoice', () => controls.setVoice(!state.voice));
   useEffect(() => () => carPlaySetGuide(null), []);
+  // Alle Manöver der Route vorab ans Auto (Kombiinstrument, Head-up Display), bei jeder neuen Route. Steht vor dem
+  // laufenden Abgleich darunter, damit die Liste zuerst ankommt; die Kennungen sind dieselben wie dort.
+  useEffect(() => {
+    const r = state.route;
+    if (!cpRunning || !r) return;
+    const routeId = `${r.shape.length}-${r.km.toFixed(2)}`;
+    carPlaySetManeuvers(
+      r.maneuvers.map((x, k) => ({
+        mid: `${routeId}-${k}`,
+        kind: x.kind,
+        ...(x.exit ? { exit: x.exit } : {}),
+        ...(angles[k] != null ? { angle: Math.round(angles[k]!) } : {}),
+        text: x.text,
+        ...(x.street ? { street: x.street } : {}),
+      })),
+    );
+  }, [cpRunning, state.route, angles]);
   useEffect(() => {
     const r = state.route;
     const m = r?.maneuvers[state.next];

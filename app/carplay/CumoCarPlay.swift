@@ -1,3 +1,4 @@
+internal import AVFoundation
 internal import ExpoModulesCore
 
 /// Inline Expo Modul: verbindet die Navigation in JavaScript mit CarPlay (CarPlayBridge).
@@ -65,6 +66,24 @@ final class CumoCarPlay: Module {
         thenAngle: (p["thenAngle"] as? NSNumber)?.doubleValue
       )
     }.runOnQueue(.main)
+
+    // Build 43: alle Manöver der Route für Kombiinstrument und Head-up Display
+    AsyncFunction("setManeuvers") { (items: [[String: Any]]) in
+      CarPlayBridge.shared.setManeuvers(items)
+    }.runOnQueue(.main)
+
+    // Build 43: Tonsitzung für Ansagen, wie Apple sie für Navigations Apps in CarPlay verlangt (eigener Kanal für
+    // Ansagen). Vorher lief die Ansage über den Musikkanal; im Auto kam ihr Ende verzögert an und wurde beim
+    // Freigeben abgeschnitten („nach links ab“ statt „abbiegen“, Koray 21.11.).
+    AsyncFunction("voiceSession") { (on: Bool) in
+      let a = AVAudioSession.sharedInstance()
+      if on {
+        try? a.setCategory(.playback, mode: .voicePrompt, options: [.interruptSpokenAudioAndMixWithOthers, .duckOthers])
+        try? a.setActive(true)
+      } else {
+        try? a.setActive(false, options: .notifyOthersOnDeactivation)
+      }
+    }
 
     AsyncFunction("stopGuidance") { (arrived: Bool) in
       CarPlayBridge.shared.stopGuidance(arrived: arrived)

@@ -11,6 +11,7 @@
 import { voiceVolume } from '../drive-settings';
 import * as Speech from 'expo-speech';
 
+import { bbLog } from './blackbox';
 import type { Maneuver, NavRoute } from './types';
 import { chosenVoiceId } from '../voice-settings';
 import { getLang, SPEECH_LANG, t, type Lang } from '@/i18n';
@@ -275,12 +276,34 @@ export function holdAudioSession(on: boolean) {
  * während die vorige noch lief; im Auto baut das den Tonweg kurz um und schneidet das Ende der laufenden Ansage ab.
  */
 let sessionOn = false;
+/**
+ * Wohin der Ton geht (gesetzt von lib/carplay.ts). carPlay: Das Autodisplay ist verbunden. session: Tonsitzung für
+ * Ansagen aus dem eigenen Modul (ab Build 43: Kategorie playback, Modus voicePrompt, wie Apple es für
+ * Navigations Apps in CarPlay verlangt); ohne sie die allgemeine Tonsitzung von expo-audio.
+ */
+const output: { carPlay: boolean; session: ((on: boolean) => void) | null } = { carPlay: false, session: null };
+export function setVoiceOutput(o: { carPlay?: boolean; session?: (on: boolean) => void }) {
+  if (o.carPlay != null) output.carPlay = o.carPlay;
+  if (o.session) output.session = o.session;
+}
+/**
+ * So lange nach dem Ende der letzten Ansage bleibt der Ton belegt. Im Auto 3,5 Sekunden (Koray 21.11., Testfahrten mit
+ * CarPlay: „nach links ab“ statt „abbiegen“, „Richtung Lampertheim nehmen“ ohne Ende): iOS meldet das Ende, sobald
+ * es die Ansage abgegeben hat; über CarPlay ist sie dann noch unterwegs zum Lautsprecher, und mit 1,5 Sekunden wurde
+ * ihr Schluss mit der Freigabe abgeschnitten. Die Musik bleibt dafür im Auto zwei Sekunden länger leise.
+ */
+export const releaseDelayMs = (carPlay: boolean) => (carPlay ? 3500 : 1500);
 function audioOn() {
   if (heldByFunk) return;
-  const a = getAudio();
-  if (!a) return;
   if (releaseTimer) clearTimeout(releaseTimer);
   releaseTimer = null;
+  if (output.session) {
+    if (!sessionOn) output.session(true);
+    sessionOn = true;
+    return;
+  }
+  const a = getAudio();
+  if (!a) return;
   if (sessionOn) return;
   sessionOn = true;
   void a.setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'duckOthers', shouldPlayInBackground: true }).catch(() => {});
@@ -288,15 +311,16 @@ function audioOn() {
 }
 function audioOff() {
   if (heldByFunk) return;
-  const a = getAudio();
-  if (!a) return;
-  // kurz warten, falls gleich die nächste Ansage kommt
+  const a = output.session ? null : getAudio();
+  if (!a && !output.session) return;
+  // warten, bis die Ansage ganz zu hören war und falls gleich die nächste kommt
   if (releaseTimer) clearTimeout(releaseTimer);
   releaseTimer = setTimeout(() => {
     if (queue.length > 0 || heldByFunk) return;
     sessionOn = false;
-    void a.setIsAudioActiveAsync(false).catch(() => {});
-  }, 1500);
+    if (output.session) output.session(false);
+    else void a?.setIsAudioActiveAsync(false).catch(() => {});
+  }, releaseDelayMs(output.carPlay));
 }
 
 /** Läuft gerade eine Navigationsansage oder wartet eine? Dann wird nichts abgebrochen. */
@@ -307,13 +331,15 @@ export function navigationSpeaking(): boolean {
 function enqueue(item: Spoken) {
   queue.push(item);
   audioOn();
-  const done = () => {
+  const done = (how: 'ende' | 'abbruch' | 'fehler') => () => {
     if (item.dead) return;
     item.dead = true;
     queue = queue.filter((x) => x !== item);
+    // Ende jeder Ansage ins Fahrtprotokoll (Koray 21.11.: abgeschnittene Ansagen ließen sich nicht nachvollziehen)
+    bbLog('say', [how, item.text.slice(-24)]);
     if (!queue.length) audioOff();
   };
-  Speech.speak(item.text, { language: SPEECH_LANG[getLang()], voice: chosenVoiceId(), rate: 1.0, volume: voiceVolume(), onDone: done, onStopped: done, onError: done });
+  Speech.speak(item.text, { language: SPEECH_LANG[getLang()], voice: chosenVoiceId(), rate: 1.0, volume: voiceVolume(), onDone: done('ende'), onStopped: done('abbruch'), onError: done('fehler') });
 }
 
 function defaultSpeak(text: string, rank: SpeechRank = 0) {
